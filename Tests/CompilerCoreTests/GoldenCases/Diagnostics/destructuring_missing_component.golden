@@ -30,19 +30,6 @@
     {
       "file": "destructuring_missing_component.kt",
       "range": {
-        "start": { "line": 4, "character": 8 },
-        "end": { "line": 4, "character": 8 }
-      },
-      "severity": 2,
-      "severityLabel": "warning",
-      "code": "KSWIFTK-PARSE-0002",
-      "source": "kswiftk",
-      "message": "Expected property name.",
-      "codeActions": [{ "title": "Insert placeholder name", "kind": "quickfix" }]
-    },
-    {
-      "file": "destructuring_missing_component.kt",
-      "range": {
         "start": { "line": 9, "character": 4 },
         "end": { "line": 11, "character": 5 }
       },

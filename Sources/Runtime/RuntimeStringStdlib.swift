@@ -723,6 +723,76 @@ public func kk_string_indexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
     return -1
 }
 
+// MARK: - String.indexOf(String, startIndex) / indexOfFirst / indexOfLast
+
+@_cdecl("kk_string_indexOf_from")
+public func kk_string_indexOf_from(_ strRaw: Int, _ otherRaw: Int, _ startIndex: Int) -> Int {
+    let source = runtimeStringScalars(strRaw)
+    let other = runtimeStringScalars(otherRaw)
+
+    let start = max(0, min(startIndex, source.count))
+    if other.isEmpty {
+        return start
+    }
+    if other.count > source.count - start {
+        return -1
+    }
+
+    for offset in start ... (source.count - other.count)
+        where source[offset ..< (offset + other.count)].elementsEqual(other)
+    {
+        return offset
+    }
+    return -1
+}
+
+@_cdecl("kk_string_indexOfFirst")
+public func kk_string_indexOfFirst(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard fnPtr != 0 else { return -1 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for (index, scalar) in scalars.enumerated() {
+        let charRaw = Int(scalar.value)
+        var thrown = 0
+        let result = lambda(closureRaw, charRaw, &thrown)
+        if thrown != 0 {
+            runtimePropagateThrownOrTrap(thrown, outThrown: outThrown, context: "indexOfFirst predicate")
+            return -1
+        }
+        if maybeUnbox(result) != 0 {
+            return index
+        }
+    }
+    return -1
+}
+
+@_cdecl("kk_string_indexOfLast")
+public func kk_string_indexOfLast(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard fnPtr != 0 else { return -1 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var lastIndex = -1
+    for (index, scalar) in scalars.enumerated() {
+        let charRaw = Int(scalar.value)
+        var thrown = 0
+        let result = lambda(closureRaw, charRaw, &thrown)
+        if thrown != 0 {
+            runtimePropagateThrownOrTrap(thrown, outThrown: outThrown, context: "indexOfLast predicate")
+            return -1
+        }
+        if maybeUnbox(result) != 0 {
+            lastIndex = index
+        }
+    }
+    return lastIndex
+}
+
 // MARK: - STDLIB-190: first / last / single / firstOrNull / lastOrNull
 
 @_cdecl("kk_string_first")

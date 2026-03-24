@@ -103,9 +103,20 @@ extension BuildASTPhase {
             guard isStatementLikeKind(node.kind) else { continue }
 
             let rawTokens = collectTokens(from: nodeID, in: arena)
-            // Only strip semicolons at the top brace level so that
-            // semicolons inside nested blocks / lambda bodies are preserved.
-            let filtered = filterTopLevelSemicolons(rawTokens)
+            // Strip only top-level semicolons; keep semicolons inside braces so
+            // that nested block expressions (e.g. `if (c) { a; b }`) can still
+            // split on them later in ExpressionParser.
+            let filtered: [Token] = {
+                var result: [Token] = []
+                var braceDepth = 0
+                for token in rawTokens {
+                    if token.kind == .symbol(.lBrace) { braceDepth += 1 }
+                    if token.kind == .symbol(.rBrace) { braceDepth = max(0, braceDepth - 1) }
+                    if token.kind == .symbol(.semicolon) && braceDepth == 0 { continue }
+                    result.append(token)
+                }
+                return result
+            }()
             guard !filtered.isEmpty else { continue }
 
             // If the first token is `.` or `?.`, merge into the previous group.

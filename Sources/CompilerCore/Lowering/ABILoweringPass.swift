@@ -44,6 +44,19 @@ final class ABILoweringPass: LoweringPass {
         let types = ctx.sema?.types
         let symbols = ctx.sema?.symbols
 
+        let inlineArithmeticCallees: Set<InternedString> = [
+            ctx.interner.intern("kk_op_add"),
+            ctx.interner.intern("kk_op_sub"),
+            ctx.interner.intern("kk_op_mul"),
+            ctx.interner.intern("kk_op_div"),
+            ctx.interner.intern("kk_op_mod"),
+            ctx.interner.intern("kk_op_udiv"),
+            ctx.interner.intern("kk_op_urem"),
+            ctx.interner.intern("kk_op_uadd"),
+            ctx.interner.intern("kk_op_usub"),
+            ctx.interner.intern("kk_op_umul"),
+        ]
+
         var signatureByName: [InternedString: FunctionSignature] = [:]
         if let symbols {
             for decl in module.arena.declarations {
@@ -186,6 +199,24 @@ final class ABILoweringPass: LoweringPass {
                     continue
                 }
 
+                // Handle binary: unbox Any/reference-typed operands when the
+                // result is a primitive (smart-cast after `is` check).
+                if case let .binary(op, lhs, rhs, result) = instruction, let types {
+                    let newLhs = unboxBinaryOperandIfNeeded(
+                        operand: lhs, resultExpr: result,
+                        module: module, types: types, symbols: symbols,
+                        unboxCallees: unboxCallees, newBody: &newBody
+                    )
+                    let newRhs = unboxBinaryOperandIfNeeded(
+                        operand: rhs, resultExpr: result,
+                        module: module, types: types, symbols: symbols,
+                        unboxCallees: unboxCallees, newBody: &newBody
+                    )
+                    newBody.append(.binary(op: op, lhs: newLhs, rhs: newRhs, result: result))
+                    idx += 1
+                    continue
+                }
+
                 guard case let .call(callSymbol, callee, arguments, result, _, thrownResult, isSuperCall) = instruction else {
                     newBody.append(instruction)
                     idx += 1
@@ -214,7 +245,7 @@ final class ABILoweringPass: LoweringPass {
                 if signature == nil {
                     signature = signatureByName[callee]
                 }
-                let boxedArguments: [KIRExprID]
+                var boxedArguments: [KIRExprID]
                 if let signature, let types {
                     let receiverOffset = signature.receiverType != nil ? 1 : 0
                     boxedArguments = applyArgumentBoxing(
@@ -229,6 +260,22 @@ final class ABILoweringPass: LoweringPass {
                     )
                 } else {
                     boxedArguments = arguments
+                }
+
+                // Unbox Any/reference-typed arguments for inline arithmetic
+                // calls (kk_op_add, etc.) when the result is a primitive.
+                // These calls have no FunctionSignature so the normal
+                // argument-boxing path above leaves them untouched.
+                if signature == nil, let types, let result,
+                   inlineArithmeticCallees.contains(callee)
+                {
+                    for i in boxedArguments.indices {
+                        boxedArguments[i] = unboxBinaryOperandIfNeeded(
+                            operand: boxedArguments[i], resultExpr: result,
+                            module: module, types: types, symbols: symbols,
+                            unboxCallees: unboxCallees, newBody: &newBody
+                        )
+                    }
                 }
 
                 let resolvedUnbox = resolveUnboxForCall(

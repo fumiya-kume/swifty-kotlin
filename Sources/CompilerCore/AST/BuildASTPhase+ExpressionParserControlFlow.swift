@@ -484,6 +484,13 @@ extension BuildASTPhase.ExpressionParser {
     /// Parses a do-while body from the consumed token slice, preferring local
     /// declaration/assignment forms before falling back to expression parsing.
     private func parseDoWhileBodyExpression(from bodyTokens: ArraySlice<Token>) -> ExprID? {
+        // When the body is a braced block, parse it as-is so that semicolons
+        // are preserved for intra-block statement splitting.
+        if let first = bodyTokens.first, first.kind == .symbol(.lBrace) {
+            return BuildASTPhase.ExpressionParser(
+                tokens: bodyTokens, interner: interner, astArena: astArena
+            ).parse()
+        }
         let sanitized = bodyTokens.filter { $0.kind != .symbol(.semicolon) }
         guard !sanitized.isEmpty else {
             return nil

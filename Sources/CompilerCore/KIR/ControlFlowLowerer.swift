@@ -900,6 +900,26 @@ final class ControlFlowLowerer {
         ))
 
         // Destructure: call componentN on the element
+        // Determine the element type so we can resolve external link names (e.g. kk_pair_first)
+        let iterableType = sema.bindings.exprTypes[iterableExpr] ?? sema.types.anyType
+        let isRangeExpr = ControlFlowTypeChecker.isRangeExpression(iterableExpr, ast: ast)
+        let elementType: TypeID = TypeCheckHelpers().iterableElementType(
+            for: iterableType, isRangeExpr: isRangeExpr, sema: sema, interner: interner
+        ) ?? sema.types.anyType
+        let nonNullElementType = sema.types.makeNonNullable(elementType)
+
+        // Detect if iterating over a Map type. The map iterator yields keys, so
+        // for destructuring we need special handling: component1 = key (from next),
+        // component2 = kk_map_get(map, key).
+        let isMapIteration: Bool = {
+            guard case let .classType(ct) = sema.types.kind(of: sema.types.makeNonNullable(iterableType)),
+                  let sym = sema.symbols.symbol(ct.classSymbol)
+            else { return false }
+            let mapName = interner.intern("Map")
+            let mutableMapName = interner.intern("MutableMap")
+            return sym.name == mapName || sym.name == mutableMapName
+        }()
+
         var previousValues: [(SymbolID, KIRExprID?)] = []
         for (index, name) in names.enumerated() {
             guard let name else {
@@ -915,14 +935,44 @@ final class ControlFlowLowerer {
             ])
             let componentType = candidates.first.flatMap { sema.symbols.propertyType(for: $0) } ?? sema.types.anyType
             let componentResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: componentType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: componentName,
-                arguments: [nextValueID],
-                result: componentResult,
-                canThrow: false,
-                thrownResult: nil
-            ))
+
+            if isMapIteration, componentIndex == 1 {
+                // Map destructuring component1 = key, which is the iterator next value
+                instructions.append(.copy(from: nextValueID, to: componentResult))
+            } else if isMapIteration, componentIndex == 2 {
+                // Map destructuring component2 = value, obtained via kk_map_get(map, key)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_map_get"),
+                    arguments: [iterableID, nextValueID],
+                    result: componentResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            } else {
+                // Resolve componentN to externalLinkName when available (Pair, Triple, etc.)
+                let memberCandidates = TypeCheckHelpers().collectMemberFunctionCandidates(
+                    named: componentName,
+                    receiverType: nonNullElementType,
+                    sema: sema
+                )
+                let resolvedCallee: InternedString = if let chosen = memberCandidates.first,
+                                                        let linkName = sema.symbols.externalLinkName(for: chosen),
+                                                        !linkName.isEmpty
+                {
+                    interner.intern(linkName)
+                } else {
+                    componentName
+                }
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: resolvedCallee,
+                    arguments: [nextValueID],
+                    result: componentResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            }
 
             if let symbol = candidates.first {
                 previousValues.append((symbol, driver.ctx.localValue(for: symbol)))
