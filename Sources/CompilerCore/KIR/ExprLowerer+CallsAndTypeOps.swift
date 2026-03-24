@@ -75,6 +75,18 @@ extension ExprLowerer {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         let intType = sema.types.make(.primitive(.int, .nonNull))
+        // When the target type is a reified type parameter, emit a symbolRef
+        // to the synthetic token parameter so that inline expansion can
+        // substitute the concrete type token at the call site.
+        if case let .typeParam(typeParam) = sema.types.kind(of: targetType),
+           let symbolInfo = sema.symbols.symbol(typeParam.symbol),
+           symbolInfo.flags.contains(.reifiedTypeParameter),
+           let tokenSymbol = reifiedTypeTokenSymbol(for: symbolInfo.name, sema: sema)
+        {
+            let tokenExpr = arena.appendExpr(.symbolRef(tokenSymbol), type: intType)
+            instructions.append(.constValue(result: tokenExpr, value: .symbolRef(tokenSymbol)))
+            return tokenExpr
+        }
         let encoded = RuntimeTypeCheckToken.encode(type: targetType, sema: sema, interner: interner)
         let tokenExpr = arena.appendExpr(.intLiteral(encoded), type: intType)
         instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encoded)))

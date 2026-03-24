@@ -430,6 +430,7 @@ final class RuntimeCoroutineScope: @unchecked Sendable {
     private let lock = NSLock()
     private var children: [Int] = [] // opaque handles (RuntimeJobHandle or RuntimeAsyncTask)
     private(set) var isCancelled = false
+    let isSupervisor: Bool
     fileprivate var parent: RuntimeCoroutineScope?
 
     // CORO-003: Task-local scope registry (replaces TLS).
@@ -486,6 +487,10 @@ final class RuntimeCoroutineScope: @unchecked Sendable {
         }
     }
 
+    init(isSupervisor: Bool = false) {
+        self.isSupervisor = isSupervisor
+    }
+
     func registerChild(_ handle: Int) {
         // Take an additional retain so the scope keeps the child alive
         // even if user code calls takeRetainedValue (e.g. kk_kxmini_async_await)
@@ -511,13 +516,24 @@ final class RuntimeCoroutineScope: @unchecked Sendable {
         }
     }
 
-    func waitForChildren() {
+    func waitForChildren() -> Int {
         lock.lock()
         let currentChildren = children
         children.removeAll()
         lock.unlock()
-        for child in currentChildren {
-            _ = runtimeJoinChild(child)
+        var firstFailure = 0
+        var cancelledRemainingChildren = false
+        for (index, child) in currentChildren.enumerated() {
+            let childResult = runtimeJoinChild(child)
+            if firstFailure == 0, runtimeCoroutineIsThrowableResult(childResult) {
+                firstFailure = childResult
+                if !isSupervisor, !cancelledRemainingChildren {
+                    cancelledRemainingChildren = true
+                    for remainingChild in currentChildren.dropFirst(index + 1) {
+                        runtimeCancelChild(remainingChild)
+                    }
+                }
+            }
             if let ptr = UnsafeMutableRawPointer(bitPattern: child) {
                 // Check the per-handle flag to see if user code already consumed the passRetained.
                 // This is scope-independent: the flag lives on the handle object itself,
@@ -544,7 +560,24 @@ final class RuntimeCoroutineScope: @unchecked Sendable {
                 }
             }
         }
+        return firstFailure
     }
+}
+
+private func runtimeCoroutineIsThrowableResult(_ result: Int) -> Bool {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: result) else {
+        return false
+    }
+    // Only attempt the dynamic cast if the pointer is a known runtime object.
+    // Raw integer results (e.g. 3 from `async { 1 + 2 }`) are not valid
+    // object pointers and would crash swift_retain inside tryCast.
+    let isRegistered = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: pointer))
+    }
+    guard isRegistered else {
+        return false
+    }
+    return tryCast(pointer, to: RuntimeThrowableBox.self) != nil
 }
 
 /// CORO-003: Per-thread task key used to index into the task-scope map.
@@ -2235,6 +2268,21 @@ public func kk_coroutine_scope_new() -> Int {
     return Int(bitPattern: ptr)
 }
 
+@_cdecl("kk_supervisor_scope_new")
+public func kk_supervisor_scope_new() -> Int {
+    let scope = RuntimeCoroutineScope(isSupervisor: true)
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(scope).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+
+    // Push: save parent scope and set this as current via the task-scope map
+    scope.parent = RuntimeCoroutineScope.current
+    RuntimeCoroutineScope.current = scope
+
+    return Int(bitPattern: ptr)
+}
+
 /// Cancels the given coroutine scope and all its children.
 @_cdecl("kk_coroutine_scope_cancel")
 public func kk_coroutine_scope_cancel(_ scopeHandle: Int) -> Int {
@@ -2253,7 +2301,7 @@ public func kk_coroutine_scope_wait(_ scopeHandle: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_scope_wait received invalid scope handle")
     }
     let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(ptr).takeUnretainedValue()
-    scope.waitForChildren()
+    let firstFailure = scope.waitForChildren()
 
     // Pop: restore parent scope in the task-scope map (CORO-003)
     RuntimeCoroutineScope.current = scope.parent
@@ -2263,7 +2311,7 @@ public func kk_coroutine_scope_wait(_ scopeHandle: Int) -> Int {
         state.objectPointers.remove(UInt(bitPattern: ptr))
     }
     Unmanaged<RuntimeCoroutineScope>.fromOpaque(ptr).release()
-    return 0
+    return firstFailure
 }
 
 /// Registers a child job/deferred handle with the given scope.
@@ -2325,8 +2373,8 @@ public func kk_coroutine_scope_run(_ entryPointRaw: Int, _ functionID: Int) -> I
     let result = runSuspendEntryLoopWithContinuation(
         entryPointRaw: entryPointRaw, continuation: continuation
     )
-    _ = kk_coroutine_scope_wait(scopeHandle)
-    return result
+    let firstFailure = kk_coroutine_scope_wait(scopeHandle)
+    return firstFailure != 0 ? firstFailure : result
 }
 
 /// Convenience with pre-built continuation.
@@ -2342,8 +2390,43 @@ public func kk_coroutine_scope_run_with_cont(_ entryPointRaw: Int, _ continuatio
         contState.scope = scope
     }
     let result = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
-    _ = kk_coroutine_scope_wait(scopeHandle)
-    return result
+    let firstFailure = kk_coroutine_scope_wait(scopeHandle)
+    return firstFailure != 0 ? firstFailure : result
+}
+
+/// Creates a supervisor scope, runs the block synchronously, waits for all children.
+/// Unlike `coroutineScope`, child failures do not cancel siblings (SupervisorJob semantics).
+/// Used as the lowering target for `supervisorScope { }` blocks.
+@_cdecl("kk_supervisor_scope_run")
+public func kk_supervisor_scope_run(_ entryPointRaw: Int, _ functionID: Int) -> Int {
+    let scopeHandle = kk_supervisor_scope_new()
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(
+        UnsafeMutableRawPointer(bitPattern: scopeHandle)!
+    ).takeUnretainedValue()
+    let continuation = kk_coroutine_continuation_new(functionID)
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = scope
+    }
+    let result = runSuspendEntryLoopWithContinuation(
+        entryPointRaw: entryPointRaw, continuation: continuation
+    )
+    let firstFailure = kk_coroutine_scope_wait(scopeHandle)
+    return firstFailure != 0 ? firstFailure : result
+}
+
+/// Supervisor scope variant with pre-built continuation.
+@_cdecl("kk_supervisor_scope_run_with_cont")
+public func kk_supervisor_scope_run_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
+    let scopeHandle = kk_supervisor_scope_new()
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(
+        UnsafeMutableRawPointer(bitPattern: scopeHandle)!
+    ).takeUnretainedValue()
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = scope
+    }
+    let result = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+    let firstFailure = kk_coroutine_scope_wait(scopeHandle)
+    return firstFailure != 0 ? firstFailure : result
 }
 
 // MARK: - Coroutine yield()
@@ -2597,7 +2680,7 @@ func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) 
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
             _ = kk_coroutine_state_exit(continuation, 0)
-            resultBox.value = 0
+            resultBox.value = outThrown
             completionGate.signal()
             return
         }
