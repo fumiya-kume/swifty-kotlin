@@ -2206,16 +2206,16 @@ final class CallTypeChecker {
             return nil
         }
         let knownNames = KnownCompilerNames(interner: interner)
+        let arrayListName = interner.intern("ArrayList")
+        let linkedListName = interner.intern("LinkedList")
+        let hashSetName = interner.intern("HashSet")
+        let linkedHashSetName = interner.intern("LinkedHashSet")
         let isExpectedCollection: Bool = switch kind {
         case .list:
-            let arrayListName = interner.intern("ArrayList")
-            let linkedListName = interner.intern("LinkedList")
             knownNames.isConcreteListLikeSymbol(symbol)
                 || symbol.name == arrayListName
                 || symbol.name == linkedListName
         case .set:
-            let hashSetName = interner.intern("HashSet")
-            let linkedHashSetName = interner.intern("LinkedHashSet")
             knownNames.isSetLikeSymbol(symbol)
                 || symbol.name == hashSetName
                 || symbol.name == linkedHashSetName
@@ -2251,8 +2251,8 @@ final class CallTypeChecker {
             return nil
         }
         return (
-            makeConcreteType(from: expectedClassType.args[0], sema: sema),
-            makeConcreteType(from: expectedClassType.args[1], sema: sema)
+            makeConcreteType(from: expectedClassType.args[0], sema: sema.types),
+            makeConcreteType(from: expectedClassType.args[1], sema: sema.types)
         )
     }
 
@@ -2279,8 +2279,8 @@ final class CallTypeChecker {
             return nil
         }
         return (
-            makeConcreteType(from: argClassType.args[0], sema: sema),
-            makeConcreteType(from: argClassType.args[1], sema: sema)
+            makeConcreteType(from: argClassType.args[0], sema: sema.types),
+            makeConcreteType(from: argClassType.args[1], sema: sema.types)
         )
     }
 
