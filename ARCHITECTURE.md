@@ -1,3 +1,5 @@
+> ⚠️ **このファイルは [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) に移動しました。最新版はそちらを参照してください。**
+
 # ARCHITECTURE.md
 
 > **Purpose**: AI 向け認知ナビゲーションガイド。「このタスクではどこを触ればよいか」を素早く判断するための地図。

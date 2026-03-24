@@ -251,6 +251,18 @@ final class RuntimeIndexingIterableBox {
     }
 }
 
+/// Iterator for `withIndex()` result. Each call to `next()` yields an
+/// `IndexedValue<E>` pair (index, element) represented as `RuntimePairBox`.
+final class RuntimeIndexingIteratorBox {
+    let elements: [Int]
+    var index: Int
+
+    init(elements: [Int]) {
+        self.elements = elements
+        index = 0
+    }
+}
+
 /// Iterator box for `List` iteration via `for (x in list)`.
 final class RuntimeListIteratorBox {
     let elements: [Int]

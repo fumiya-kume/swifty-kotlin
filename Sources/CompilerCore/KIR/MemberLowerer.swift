@@ -16,7 +16,8 @@ final class MemberLowerer {
         sema: SemaModule,
         arena: KIRArena,
         interner: StringInterner,
-        propertyConstantInitializers: [SymbolID: KIRExprKind]
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        compilationCtx: CompilationContext? = nil
     ) -> (directMembers: [KIRDeclID], allDecls: [KIRDeclID]) {
         var directMembers: [KIRDeclID] = []
         var allDecls: [KIRDeclID] = []
@@ -181,12 +182,39 @@ final class MemberLowerer {
                     sema: sema,
                     arena: arena,
                     interner: interner,
-                    propertyConstantInitializers: propertyConstantInitializers
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    compilationCtx: compilationCtx
                 )
                 let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: nestedDirect)))
                 directMembers.append(kirID)
                 allDecls.append(kirID)
                 allDecls.append(contentsOf: nestedAll)
+
+                // Lower constructors for nested classes (inner and static).
+                // Without this, nested class constructors would not be emitted
+                // into KIR and codegen would produce undefined symbol references.
+                if let compilationCtx {
+                    let ctorFQName = (sema.symbols.symbol(symbol)?.fqName ?? []) + [interner.intern("<init>")]
+                    let ctorSymbols = sema.symbols.lookupAll(fqName: ctorFQName)
+                    let shared = KIRLoweringSharedContext(
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers
+                    )
+                    for ctorSymbol in ctorSymbols {
+                        let ctorDecls = driver.lowerConstructor(
+                            ctorSymbol: ctorSymbol,
+                            ctorFQName: ctorFQName,
+                            classDecl: nested,
+                            ownerSymbol: symbol,
+                            shared: shared,
+                            compilationCtx: compilationCtx
+                        )
+                        allDecls.append(contentsOf: ctorDecls)
+                    }
+                }
             case let .interfaceDecl(nestedInterface):
                 // Interface properties have no backing storage; pass empty list.
                 var nestedInterfaceAllObjects = nestedInterface.nestedObjects
