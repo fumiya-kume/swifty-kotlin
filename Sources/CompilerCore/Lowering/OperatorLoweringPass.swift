@@ -234,6 +234,16 @@ final class OperatorLoweringPass: LoweringPass {
             ))
             return true
         }
+        if let classToStringResult = rewriteClassToStringPrintlnArgument(
+            argument: arguments[0], arena: arena, sema: ctx.sema,
+            interner: ctx.interner, body: &newBody
+        ) {
+            newBody.append(.call(
+                symbol: symbol, callee: callee, arguments: [classToStringResult],
+                result: result, canThrow: canThrow, thrownResult: thrownResult, isSuperCall: isSuperCall
+            ))
+            return true
+        }
         return false
     }
 
@@ -519,5 +529,82 @@ final class OperatorLoweringPass: LoweringPass {
             rendered = appendConcat(rendered, appendStringConversion(loaded, type: propertyType))
         }
         return appendConcat(rendered, appendStringLiteral(")"))
+    }
+
+    /// Rewrites `println(classInstance)` for non-data class types that have a
+    /// `toString()` method override.  Emits a direct call to the class's
+    /// `toString()` implementation and returns the resulting string expression
+    /// so the caller can pass it to `kk_println_any`.
+    private func rewriteClassToStringPrintlnArgument(
+        argument: KIRExprID,
+        arena: KIRArena,
+        sema: SemaModule?,
+        interner: StringInterner,
+        body: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard let sema,
+              let argumentType = arena.exprType(argument)
+        else {
+            return nil
+        }
+
+        // Resolve the class symbol from the argument type.
+        let classSymbolID: SymbolID
+        switch sema.types.kind(of: argumentType) {
+        case let .classType(classType):
+            classSymbolID = classType.classSymbol
+        default:
+            return nil
+        }
+
+        guard let classSymbol = sema.symbols.symbol(classSymbolID),
+              (classSymbol.kind == .class || classSymbol.kind == .object || classSymbol.kind == .enumClass)
+        else {
+            return nil
+        }
+
+        // Skip data classes/objects — they are handled by dedicated rewrites.
+        if classSymbol.flags.contains(.dataType) {
+            return nil
+        }
+
+        // Find the toString() method symbol for this class.
+        let toStringName = interner.intern("toString")
+        let toStringFQName = classSymbol.fqName + [toStringName]
+        let toStringSymbol: SymbolID? = sema.symbols.lookupAll(fqName: toStringFQName).first(where: { id in
+            guard let sym = sema.symbols.symbol(id),
+                  sym.kind == .function else {
+                return false
+            }
+            // Skip synthetic stubs (e.g., kotlin.text.StringBuilder.toString),
+            // which are already lowered via normal member-call pathways.
+            guard !sym.flags.contains(.synthetic) else {
+                return false
+            }
+            let sig = sema.symbols.functionSignature(for: id)
+            // toString() takes no value parameters.
+            return sig?.parameterTypes.isEmpty ?? true
+        })
+
+        guard let toStringSym = toStringSymbol else {
+            return nil
+        }
+
+        let stringType = sema.types.stringType
+        let toStringResult = arena.appendExpr(
+            .temporary(Int32(arena.expressions.count)),
+            type: stringType
+        )
+        // Emit a direct call to the toString() method with the object as receiver.
+        body.append(.call(
+            symbol: toStringSym,
+            callee: toStringName,
+            arguments: [argument],
+            result: toStringResult,
+            canThrow: false,
+            thrownResult: nil,
+            isSuperCall: false
+        ))
+        return toStringResult
     }
 }
