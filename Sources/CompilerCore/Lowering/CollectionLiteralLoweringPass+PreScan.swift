@@ -240,6 +240,14 @@ extension CollectionLiteralLoweringPass {
             sequenceExprIDs: &sequenceExprIDs,
             stringExprIDs: &stringExprIDs
         )
+        // Classify map property accessor results: keys/entries -> set, values -> list.
+        if let result {
+            if callee == lookup.kkMapKeysName || callee == lookup.kkMapEntriesName {
+                setExprIDs.insert(result.rawValue)
+            } else if callee == lookup.kkMapValuesName {
+                listExprIDs.insert(result.rawValue)
+            }
+        }
         // STDLIB-565: Classify File constructor calls.
         // KNOWN LIMITATION: Only direct File("...") / kk_file_new constructor
         // calls are seeded here.  File receivers originating from function

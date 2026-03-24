@@ -148,6 +148,7 @@ struct CollectionLiteralLookupTables {
     let kkListReversedName: InternedString
     let kkListAsReversedName: InternedString
     let kkListSortedName: InternedString
+    let kkSetSortedName: InternedString
     let kkListDistinctName: InternedString
     let kkListDistinctByName: InternedString
     let kkListShuffledName: InternedString
@@ -281,6 +282,9 @@ struct CollectionLiteralLookupTables {
     let kkMapIteratorHasNextName: InternedString
     let kkMapIteratorNextName: InternedString
     let kkMutableMapPutAllName: InternedString
+    let kkMapKeysName: InternedString
+    let kkMapValuesName: InternedString
+    let kkMapEntriesName: InternedString
 
     let kkArraySizeName: InternedString
     let kkArrayNewName: InternedString
@@ -714,6 +718,7 @@ struct CollectionLiteralLookupTables {
         kkListReversedName = interner.intern("kk_list_reversed")
         kkListAsReversedName = interner.intern("kk_list_as_reversed")
         kkListSortedName = interner.intern("kk_list_sorted")
+        kkSetSortedName = interner.intern("kk_set_sorted")
         kkListDistinctName = interner.intern("kk_list_distinct")
         kkListDistinctByName = interner.intern("kk_list_distinctBy")
         kkListShuffledName = interner.intern("kk_list_shuffled")
@@ -842,6 +847,9 @@ struct CollectionLiteralLookupTables {
         kkMapIteratorHasNextName = interner.intern("kk_map_iterator_hasNext")
         kkMapIteratorNextName = interner.intern("kk_map_iterator_next")
         kkMutableMapPutAllName = interner.intern("kk_mutable_map_putAll")
+        kkMapKeysName = interner.intern("kk_map_keys")
+        kkMapValuesName = interner.intern("kk_map_values")
+        kkMapEntriesName = interner.intern("kk_map_entries")
 
         kkArraySizeName = interner.intern("kk_array_size")
         kkArrayNewName = interner.intern("kk_array_new")

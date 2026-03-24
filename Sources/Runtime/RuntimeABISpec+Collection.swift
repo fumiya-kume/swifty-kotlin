@@ -1466,6 +1466,14 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let setSortedSpec = RuntimeABIFunctionSpec(
+            name: "kk_set_sorted",
+            parameters: [
+                RuntimeABIParameter(name: "setRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         let distinctSpec = RuntimeABIFunctionSpec(
             name: "kk_list_distinct",
             parameters: [
@@ -1571,7 +1579,7 @@ public extension RuntimeABISpec {
                 hofSpec("kk_list_runningReduceIndexed"),
                 RuntimeABIFunctionSpec(name: "kk_list_scanIndexed", parameters: [RuntimeABIParameter(name: "listRaw", type: .intptr), RuntimeABIParameter(name: "initial", type: .intptr), RuntimeABIParameter(name: "fnPtr", type: .intptr), RuntimeABIParameter(name: "closureRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Collection"),
                 sumOfSpec, maxOrNullSpec, minOrNullSpec,
-                takeSpec, dropSpec, reversedSpec, asReversedSpec, sortedSpec, distinctSpec,
+                takeSpec, dropSpec, reversedSpec, asReversedSpec, sortedSpec, setSortedSpec, distinctSpec,
                 shuffledSpec, shuffledRandomSpec, randomSpec, randomOrNullSpec,
                 RuntimeABIFunctionSpec(
                     name: "kk_list_flatten",
