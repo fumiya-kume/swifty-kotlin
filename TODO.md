@@ -34,8 +34,6 @@
   - 現状: 一部 `KClassType` 等はあるが、`anyType` フォールバックやエッジが残る
 - [ ] REFL-002: `T::class` のメタデータ下げとスタンドアロン参照の型精度
   - 現状: `ExprLowerer+ControlFlowAndBlocks.swift` 等で `kk_kclass_create` 経路あり。全経路・診断は未固定
-- [ ] REFL-003: 呼び出し可能参照 (`::foo`) の `KFunction` / `KProperty` 同一性と下げ
-  - 現状: `ExprTypeChecker+NameLambdaAndCallableRefInference.swift` 等で kind 束縛あり。KIR/実行時・リフレクション API まで含め差分あり
 - [ ] CODE-001: **例外経路**でインラインした `finally` のスロー先を Kotlin に合わせる
   - 現状: `return` / `break` / `continue` 前の enclosing `finally` インラインは実装済み（`ExprLowerer+ControlFlowAndBlocks.swift` の `TODO(CODE-001)` は例外ルーティング）
 - [ ] CORO-004: サスペンドを `DispatchSemaphore` 待ちではない継続モデルにする
@@ -48,17 +46,22 @@
   - 現状: `valueOf` / `kk_enum_make_values_array` 等の合成・Runtime は存在（`DataEnumSealedSynthesisPass.swift`, `RuntimeEnum.swift`）。初期化順や未カバーケースは要 diff
 - [ ] ENUM-002: `enumValues` / `entries` の **Array vs List** など ABI 上の Kotlin 差分の整理
   - 現状: `kk_enum_make_values_array` が `List` を返す（`RuntimeEnum.swift`）。Kotlin JVM の `Array` との差を diff で固定するか方針決定
-- [ ] VAL-001: Value class のアンボックス化とマングリング
-  - 現状: `ValueClassUnboxingPass` disabled 等（`LoweringPhase.swift`）
-- [ ] DATA-001: Data class `copy()` の **primary ctor 不在・シグネチャ異常**時のフォールバックとエッジ
-  - 現状: 通常 ctor がある data class は引数付き `copy` を合成（`DataEnumSealedSynthesisPass.swift` `appendSyntheticDataCopyIfNeeded`）。ctor 解決失敗時のみ self-return
-- [ ] CLSR-001: クロージャキャプチャ・`kk_lambda_invoke` まわりの Kotlin 完全一致（`LambdaClosureConversionPass.swift` は実装拡大済み、差分は diff で固定）
+
+- [x] STDLIB-664: `File.appendText(String)` の実装（Sema/Runtime/Lowering/Codegen）
+- [x] STDLIB-665: `File.readBytes()` の実装確認（既存実装）
+
+- [x] REFL-005: `KClass.isInstance` / `members` / `constructors` と `KType` / `typeOf<T>()` の実装
+  - [x] Sema に `KClass` リフレクション API を登録
+  - [x] Runtime に `kk_kclass_isInstance` / `kk_kclass_members` / `kk_kclass_constructors` を実装
+  - [x] `KType` / `KTypeProjection` / `kk_typeof` を実装
+  - [x] KIR lowering でメンバ呼び出しと `typeOf<T>()` をサポート
+  - **完了条件**: `String::class.members.size` や `typeOf<String>()` が `kotlinc` と一致する
 
 ---
 
 ### 📦 Stdlib — sequence / iterator ビルダー（stdlib 版）
 
-- [ ] STDLIB-330: `sequence {}` ビルダー（`kotlin.sequences.sequence`）を実装する (eager builder 版実装済み)
+- [x] STDLIB-330: `sequence {}` ビルダー（`kotlin.sequences.sequence`）を実装する (lazy evaluation 版実装済み)
   - [x] Sema に `sequence` stub と `SequenceScope` / `yield` / `yieldAll` を登録する（`HeaderHelpers+SyntheticTODOAndIOStubs.swift`）
   - [x] Runtime に `kk_sequence_builder_create` / `kk_sequence_builder_yield` / `kk_sequence_builder_yieldAll` / `kk_sequence_builder_build` を追加する（`Sources/Runtime/RuntimeSequence.swift`）
   - [x] Lowering で `sequence {}` → `kk_sequence_builder_build`、`yield` / `yieldAll` → `kk_sequence_builder_yield` / `kk_sequence_builder_yieldAll` に変換する（`CollectionLiteralLoweringPass+CallRewrite.swift`）
@@ -85,9 +88,9 @@
 
 - [ ] STDLIB-532: `Map?.orEmpty()` 拡張
 - [ ] STDLIB-533: `List?.orEmpty()` 拡張
-- [ ] STDLIB-534: `String?.orEmpty()` 拡張
+- [x] STDLIB-534: `String?.orEmpty()` 拡張
 - [ ] STDLIB-538: `ListIterator.hasPrevious()` / `previous()`
-- [ ] STDLIB-539: `ArrayList` 型エイリアスの golden テスト（型スタブは `HeaderHelpers+SyntheticComparableAndCollectionStubs` で登録済み）
+- [x] STDLIB-539: `ArrayList` 型エイリアスの golden テスト（型スタブは `HeaderHelpers+SyntheticComparableAndCollectionStubs` で登録済み）
 - [ ] STDLIB-540: `LinkedList` 型エイリアスの golden テスト（`ArrayList` / `HashMap` / `LinkedHashMap` も同ファイルでスタブ登録済み）
 - [ ] STDLIB-541: `HashMap` 型エイリアスの golden テスト
 - [ ] STDLIB-542: `LinkedHashMap` 型エイリアスの golden テスト
@@ -107,14 +110,14 @@
 - [x] STDLIB-575: `commonPrefixWith(other, ignoreCase)` オーバーロード
 - [x] STDLIB-576: `commonSuffixWith(other, ignoreCase)` オーバーロード
 - [x] STDLIB-581: `String.toByteArray(Charset)` / charset 付き `encodeToByteArray` の完全互換（無印版は `kk_string_encodeToByteArray` 等で対応）
-- [ ] STDLIB-666: `String.lineSequence()` の stub / Runtime / Lowering と `lines()` との差分検証
+- [x] STDLIB-666: `String.lineSequence()` の stub / Runtime / Lowering と `lines()` との差分検証
 
 #### G. kotlin.time / kotlin.system
 
 - [ ] STDLIB-657: `exitProcess(Int)` の `Nothing` 終了セマンティクスと下げ（`RuntimeSystem.swift`）
 - [ ] STDLIB-660: `measureTimedValue { }` の stub / Lowering / Runtime（`RuntimeDuration.swift` の STDLIB-231 相当コメント参照）
 - [ ] STDLIB-661: `Duration.inWholeMicroseconds` の Sema / `kk_duration_*` / ABI
-- [ ] STDLIB-662: `Duration.inWholeHours` の Sema / `kk_duration_*` / ABI
+- [x] STDLIB-662: `Duration.inWholeHours` の Sema / `kk_duration_*` / ABI (既存実装済み)
 - [x] STDLIB-663: `Long` 受け Duration 工場（例 `5L.seconds`）の Sema stub（`HeaderHelpers+SyntheticDurationStubs.swift` は Int のみ）
 
 #### H. kotlin.Result / kotlin.contracts
