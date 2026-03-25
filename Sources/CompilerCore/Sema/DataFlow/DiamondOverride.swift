@@ -93,12 +93,12 @@ extension DataFlowSemaPhase {
 
     /// Collects conflicting default method names across direct interface supertypes.
     ///
-    /// This considers transitive interface inheritance: if a direct interface supertype inherits
-    /// a default method from a parent interface, it still counts as providing that default.
+    /// This considers transitive interface inheritance and follows Kotlin's rules:
+    /// 1. Only the most specific implementation (deepest override) for each method name
+    /// 2. Conflicts occur only when multiple most specific implementations exist
+    /// 3. Methods inherited from a common ancestor don't conflict if not overridden
     ///
-    /// To avoid false positives (e.g. two direct supertypes inheriting the same default method
-    /// from a common ancestor), we group by the *implementation symbol* (the function symbol ID)
-    /// rather than only the direct interface ID.
+    /// Returns methodName -> [conflictingInterfaceIDs] for actual conflicts only.
     private func collectDiamondConflicts(
         for symbol: SymbolID,
         symbols: SymbolTable
@@ -110,15 +110,15 @@ extension DataFlowSemaPhase {
 
         guard interfaceSupertypes.count >= 2 else { return [:] }
 
-        // methodName -> implFunctionSymbolID -> providingDirectInterfaceIDs
-        var providersByName: [InternedString: [SymbolID: Set<SymbolID>]] = [:]
+        // methodName -> (implementationSymbolID, providingInterfaceID, inheritanceDepth)
+        var mostSpecificImpls: [InternedString: [(SymbolID, SymbolID, Int)]] = [:]
 
         for directInterfaceID in interfaceSupertypes {
             var visited: Set<SymbolID> = []
-            var queue: [SymbolID] = [directInterfaceID]
+            var queue: [(SymbolID, Int)] = [(directInterfaceID, 0)]
 
             while !queue.isEmpty {
-                let currentInterfaceID = queue.removeFirst()
+                let (currentInterfaceID, depth) = queue.removeFirst()
                 guard visited.insert(currentInterfaceID).inserted else { continue }
                 guard let ifaceSym = symbols.symbol(currentInterfaceID) else { continue }
 
@@ -128,25 +128,41 @@ extension DataFlowSemaPhase {
                           !childSym.flags.contains(.abstractType)
                     else { continue }
 
-                    providersByName[childSym.name, default: [:]][childID, default: []]
-                        .insert(directInterfaceID)
+                    let methodName = childSym.name
+                    // Record this implementation with its inheritance depth
+                    mostSpecificImpls[methodName, default: []].append((childID, directInterfaceID, depth))
                 }
 
                 let parentInterfaces = symbols.directSupertypes(for: currentInterfaceID)
                     .filter { symbols.symbol($0)?.kind == .interface }
                     .sorted(by: { $0.rawValue < $1.rawValue })
 
-                queue.append(contentsOf: parentInterfaces)
+                queue.append(contentsOf: parentInterfaces.map { ($0, depth + 1) })
             }
         }
 
         var conflicts: [InternedString: Set<SymbolID>] = [:]
-        for (methodName, implementations) in providersByName where implementations.keys.count >= 2 {
-            let ifaceSet = implementations.values.reduce(into: Set<SymbolID>()) { acc, ids in
-                acc.formUnion(ids)
+        for (methodName, implementations) in mostSpecificImpls {
+            // Find the most specific implementations (maximum depth)
+            let maxDepth = implementations.map { $0.2 }.max() ?? 0
+            let mostSpecific = implementations.filter { $0.2 == maxDepth }
+            
+            // Group by implementation symbol to identify identical implementations
+            var implGroups: [SymbolID: Set<SymbolID>] = [:]
+            for (implSymbol, directInterface, _) in mostSpecific {
+                implGroups[implSymbol, default: []].insert(directInterface)
             }
-            guard ifaceSet.count >= 2 else { continue }
-            conflicts[methodName] = ifaceSet
+            
+            // Conflict exists only if there are multiple different implementations
+            // provided by different direct interfaces
+            if implGroups.count > 1 {
+                let conflictingInterfaces = implGroups.values.reduce(into: Set<SymbolID>()) { acc, interfaces in
+                    acc.formUnion(interfaces)
+                }
+                if conflictingInterfaces.count >= 2 {
+                    conflicts[methodName] = conflictingInterfaces
+                }
+            }
         }
 
         return conflicts

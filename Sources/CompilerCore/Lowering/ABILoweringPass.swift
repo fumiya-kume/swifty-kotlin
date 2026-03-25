@@ -67,8 +67,8 @@ final class ABILoweringPass: LoweringPass {
             }
         }
 
-        module.arena.transformFunctions { function in
-            var updated = function
+        func transformFunction(_ function: KIRFunction) -> KIRFunction {
+            var updated: KIRFunction = function
             var newBody: [KIRInstruction] = []
             newBody.reserveCapacity(function.body.count)
 
@@ -219,7 +219,7 @@ final class ABILoweringPass: LoweringPass {
                     continue
                 }
 
-                guard case let .call(callSymbol, callee, arguments, result, _, thrownResult, isSuperCall) = instruction else {
+                guard case let .call(callSymbol, callee, arguments, result, _, thrownResult, isSuperCall, _) = instruction else {
                     newBody.append(instruction)
                     idx += 1
                     continue
@@ -341,6 +341,7 @@ final class ABILoweringPass: LoweringPass {
             updated.replaceBody(newBody)
             return updated
         }
+        module.arena.transformFunctions(transformFunction)
         module.recordLowering(Self.name)
     }
 

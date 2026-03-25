@@ -121,8 +121,8 @@ extension CollectionLiteralLoweringPass {
             interner: ctx.interner
         )
 
-        module.arena.transformFunctions { function in
-            var updated = function
+        func transformFunction(_ function: KIRFunction) -> KIRFunction {
+            var updated: KIRFunction = function
 
             // Phase 1: Identify collection-typed expression IDs
             var listExprIDs: Set<Int32> = []
@@ -166,7 +166,7 @@ extension CollectionLiteralLoweringPass {
 
             for instruction in function.body {
                 switch instruction {
-                case let .call(symbol, callee, arguments, result, canThrow, thrownResult, _):
+                case let .call(symbol, callee, arguments, result, canThrow, thrownResult, _, _):
                     // --- Rewrite listOf/mutableListOf/emptyList/emptyArray → kk_list_of / kk_emptyList / kk_empty_array ---
                     // --- Rewrite arrayOf/intArrayOf/... → kk_array_of ---
                     // Only rewrite calls whose symbol resolves to a known
@@ -242,13 +242,6 @@ extension CollectionLiteralLoweringPass {
                                 loweredBody.append(.constValue(result: idxExpr, value: .intLiteral(Int64(i))))
                                 let storedArg: KIRExprID
                                 if let types = ctx.sema?.types,
-                                   let elementType = collectionFactoryElementType(
-                                       symbol: symbol,
-                                       result: result,
-                                       module: module,
-                                       ctx: ctx
-                                   ),
-                                   case .any = types.kind(of: elementType),
                                    let argType = module.arena.exprType(arg),
                                    let boxCallee = primitiveBoxCalleeName(
                                        for: argType,
@@ -258,7 +251,7 @@ extension CollectionLiteralLoweringPass {
                                 {
                                     let boxedArg = module.arena.appendExpr(
                                         .temporary(Int32(module.arena.expressions.count)),
-                                        type: elementType
+                                        type: types.anyType
                                     )
                                     loweredBody.append(.call(
                                         symbol: nil,
@@ -457,13 +450,38 @@ extension CollectionLiteralLoweringPass {
                             for (i, arg) in arguments.enumerated() {
                                 let idxExpr = module.arena.appendExpr(.intLiteral(Int64(i)), type: nil)
                                 loweredBody.append(.constValue(result: idxExpr, value: .intLiteral(Int64(i))))
+                                let storedArg: KIRExprID
+                                if let types = ctx.sema?.types,
+                                   let argType = module.arena.exprType(arg),
+                                   let boxCallee = primitiveBoxCalleeName(
+                                       for: argType,
+                                       types: types,
+                                       interner: ctx.interner
+                                   )
+                                {
+                                    let boxedArg = module.arena.appendExpr(
+                                        .temporary(Int32(module.arena.expressions.count)),
+                                        type: types.anyType
+                                    )
+                                    loweredBody.append(.call(
+                                        symbol: nil,
+                                        callee: boxCallee,
+                                        arguments: [arg],
+                                        result: boxedArg,
+                                        canThrow: false,
+                                        thrownResult: nil
+                                    ))
+                                    storedArg = boxedArg
+                                } else {
+                                    storedArg = arg
+                                }
                                 let setResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)), type: nil
                                 )
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkArraySetName,
-                                    arguments: [arrayExpr, idxExpr, arg],
+                                    arguments: [arrayExpr, idxExpr, storedArg],
                                     result: setResult,
                                     canThrow: false,
                                     thrownResult: nil
@@ -3335,7 +3353,7 @@ extension CollectionLiteralLoweringPass {
                     }
 
                     // foldIndexed: args = [receiver, initial, lambda, closureRaw?]
-                    if (callee == lookup.foldIndexedName || callee == lookup.kkListFoldIndexedName), (arguments.count == 3 || arguments.count == 4) {
+                    if (callee == lookup.foldIndexedName || callee == lookup.kkListFoldIndexedName || callee == lookup.kkSequenceFoldIndexedName), (arguments.count == 3 || arguments.count == 4) {
                         let receiverID = arguments[0]
                         if listExprIDs.contains(receiverID.rawValue) || sequenceExprIDs.contains(receiverID.rawValue) {
                             let initialID = arguments[1]
@@ -3350,7 +3368,7 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
                     // reduceIndexed: args = [receiver, lambda, closureRaw?]
-                    if (callee == lookup.reduceIndexedName || callee == lookup.kkListReduceIndexedName), (arguments.count == 2 || arguments.count == 3) {
+                    if (callee == lookup.reduceIndexedName || callee == lookup.kkListReduceIndexedName || callee == lookup.kkSequenceReduceIndexedName), (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]
                         if listExprIDs.contains(receiverID.rawValue) || sequenceExprIDs.contains(receiverID.rawValue) {
                             let lambdaID = arguments[1]
@@ -3959,6 +3977,7 @@ extension CollectionLiteralLoweringPass {
             updated.replaceBody(loweredBody)
             return updated
         }
+        module.arena.transformFunctions(transformFunction)
         module.recordLowering(Self.name)
     }
 }

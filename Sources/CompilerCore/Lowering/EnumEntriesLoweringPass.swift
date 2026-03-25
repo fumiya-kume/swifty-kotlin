@@ -62,7 +62,7 @@ final class EnumEntriesLoweringPass: LoweringPass {
         entriesName: InternedString,
         entriesGetName: InternedString
     ) -> KIRInstruction? {
-        guard case let .call(symbol, _, _, result, _, _, _) = instruction,
+        guard case let .call(symbol, _, _, result, _, _, _, _) = instruction,
               let propSym = symbol,
               let propInfo = sema.symbols.symbol(propSym),
               propInfo.kind == .property,

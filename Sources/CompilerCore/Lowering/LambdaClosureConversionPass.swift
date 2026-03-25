@@ -60,7 +60,7 @@ final class LambdaClosureConversionPass: LoweringPass {
             for decl in module.arena.declarations {
                 guard case let .function(fn) = decl else { continue }
                 for instruction in fn.body {
-                    if case let .call(symbol, callee, arguments, _, canThrow, _, _) = instruction {
+                    if case let .call(symbol, callee, arguments, _, canThrow, _, _, _) = instruction {
                         let arity = arguments.count
                         if let symbol {
                             index.arityBySymbol[symbol, default: []].insert(arity)
@@ -105,7 +105,7 @@ final class LambdaClosureConversionPass: LoweringPass {
         for decl in module.arena.declarations {
             guard case let .function(function) = decl else { continue }
             for instruction in function.body {
-                if case let .call(_, callee, _, _, _, _, _) = instruction,
+                if case let .call(_, callee, _, _, _, _, _, _) = instruction,
                    callee == markerCallee
                 {
                     return true
@@ -465,7 +465,7 @@ final class LambdaClosureConversionPass: LoweringPass {
 
         for instruction in function.body {
             switch instruction {
-            case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
+            case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
                 if callee == markerCallee {
                     loweredBody.append(.call(
                         symbol: symbol,
@@ -474,7 +474,8 @@ final class LambdaClosureConversionPass: LoweringPass {
                         result: result,
                         canThrow: canThrow,
                         thrownResult: thrownResult,
-                        isSuperCall: isSuperCall
+                        isSuperCall: isSuperCall,
+                        qualifiedSuperType: qualifiedSuperType
                     ))
                     continue
                 }
@@ -576,7 +577,7 @@ final class LambdaClosureConversionPass: LoweringPass {
         for instruction in function.body {
             let exprIDs: [KIRExprID?]
             switch instruction {
-            case let .call(_, _, _, result, _, _, _):
+            case let .call(_, _, _, result, _, _, _, _):
                 exprIDs = [result]
             case let .virtualCall(_, _, _, _, result, _, _, _):
                 exprIDs = [result]

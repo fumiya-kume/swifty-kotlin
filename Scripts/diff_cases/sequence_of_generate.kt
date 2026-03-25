@@ -35,4 +35,3 @@ fun main() {
         .toList()
     println(chained)
 }
-// SKIP-DIFF: sequence parity pending

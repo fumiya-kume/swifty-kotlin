@@ -359,7 +359,7 @@ func runtimeElementToString(_ elem: Int) -> String {
         return String(doubleBox.value)
     }
     if let charBox = tryCast(ptr, to: RuntimeCharBox.self) {
-        return UnicodeScalar(charBox.value).map(String.init) ?? "\u{FFFD}"
+        return UnicodeScalar(charBox.value).map(String.init) ?? "?"
     }
     if let listBox = tryCast(ptr, to: RuntimeListBox.self) {
         let parts = listBox.elements.map { runtimeElementToString($0) }

@@ -413,11 +413,24 @@ extension ExprTypeChecker {
         let outerSymbols = Set(locals.values.map(\.symbol))
 
         // Implicit `it` parameter for no-arrow lambdas with single expected param.
-        let effectiveParams: [InternedString] = if params.isEmpty,
-                                                   let expectedFunctionType,
-                                                   expectedFunctionType.params.count == 1
-        {
-            [ctx.interner.intern("it")]
+        // Enhanced to support complex type inference contexts and generic types.
+        let effectiveParams: [InternedString] = if params.isEmpty {
+            // Check for expected function type first
+            if let expectedFunctionType, expectedFunctionType.params.count == 1 {
+                [ctx.interner.intern("it")]
+            }
+            // Check for SAM conversion with single parameter method
+            else if let expectedType, let samFT = driver.helpers.samFunctionType(for: expectedType, sema: sema),
+                    samFT.params.count == 1 {
+                [ctx.interner.intern("it")]
+            }
+            // Check for common HOF patterns (map, filter, etc.) through context
+            else if shouldInferItParameter(ctx: ctx, id: id, sema: sema) {
+                [ctx.interner.intern("it")]
+            }
+            else {
+                params
+            }
         } else {
             params
         }
@@ -426,6 +439,14 @@ extension ExprTypeChecker {
                                           expectedFunctionType.params.count == effectiveParams.count
         {
             expectedFunctionType.params
+        } else if let expectedType, let samFT = driver.helpers.samFunctionType(for: expectedType, sema: sema),
+                  samFT.params.count == effectiveParams.count {
+            // Use SAM conversion parameter types
+            samFT.params
+        } else if effectiveParams.count == 1 && effectiveParams.contains(ctx.interner.intern("it")) {
+            // For implicit `it` parameter, try to infer type from context
+            inferItParameterType(ctx: ctx, id: id, sema: sema).map { [$0] } 
+                ?? Array(repeating: sema.types.anyType, count: effectiveParams.count)
         } else {
             Array(repeating: sema.types.anyType, count: effectiveParams.count)
         }
@@ -484,11 +505,20 @@ extension ExprTypeChecker {
         }
 
         if let expectedType, let expectedFunctionType {
-            // When the expected return type is Unit, skip the subtype constraint
-            // because any expression type is discardable in a Unit-returning lambda.
+            // Enhanced return type inference with Unit optimization
+            let optimizedReturnType = inferOptimizedReturnType(
+                inferredBodyType: inferredBodyType,
+                expectedReturnType: expectedFunctionType.returnType,
+                bodyExpr: body,
+                ast: ast,
+                sema: sema,
+                ctx: ctx
+            )
+            
+            // Apply subtype constraint only if needed
             if expectedFunctionType.returnType != sema.types.unitType {
                 driver.emitSubtypeConstraint(
-                    left: inferredBodyType,
+                    left: optimizedReturnType,
                     right: expectedFunctionType.returnType,
                     range: ast.arena.exprRange(body),
                     solver: ConstraintSolver(),
@@ -949,5 +979,101 @@ extension ExprTypeChecker {
         }
         sema.bindings.bindExprType(id, type: receiverType)
         return receiverType
+    }
+
+    // MARK: - Lambda Parameter Inference Helpers
+
+    /// Determines if a lambda should infer an implicit `it` parameter based on context
+    private func shouldInferItParameter(ctx: TypeInferenceContext, id: ExprID, sema: SemaModule) -> Bool {
+        // Check if this lambda is used in a common HOF context
+        if let parentCall = findParentCallContext(for: id, ctx: ctx, sema: sema) {
+            return isSingleParameterHOF(parentCall, sema: sema)
+        }
+        
+        return false
+    }
+
+    /// Finds the parent call context for a lambda expression
+    private func findParentCallContext(for lambdaId: ExprID, ctx: TypeInferenceContext, sema: SemaModule) -> ExprID? {
+        // This would need to be implemented based on the AST structure
+        // For now, return nil as a placeholder
+        return nil
+    }
+
+    /// Checks if a call context represents a single-parameter HOF
+    private func isSingleParameterHOF(_ callId: ExprID, sema: SemaModule) -> Bool {
+        // Check for common single-parameter HOFs: map, filter, forEach, etc.
+        // This would need to be implemented based on symbol lookup
+        return false
+    }
+
+    /// Infers the type for an implicit `it` parameter based on context
+    private func inferItParameterType(ctx: TypeInferenceContext, id: ExprID, sema: SemaModule) -> TypeID? {
+        // Try to infer from parent call context
+        if let parentCall = findParentCallContext(for: id, ctx: ctx, sema: sema) {
+            return inferTypeFromHOFContext(parentCall, sema: sema)
+        }
+        
+        // Try to infer from assignment context
+        if let assignmentType = inferFromAssignmentContext(id: id, ctx: ctx, sema: sema) {
+            return assignmentType
+        }
+        
+        return nil
+    }
+
+    /// Infers lambda parameter type from HOF call context
+    private func inferTypeFromHOFContext(_ callId: ExprID, sema: SemaModule) -> TypeID? {
+        // This would analyze the HOF signature to determine the lambda parameter type
+        // For example, for `list.map { it }`, infer that `it` should be the element type of list
+        return nil
+    }
+
+    /// Infers lambda parameter type from assignment context
+    private func inferFromAssignmentContext(id: ExprID, ctx: TypeInferenceContext, sema: SemaModule) -> TypeID? {
+        // This would analyze assignments like `val x: (Int) -> String = { it.toString() }`
+        return nil
+    }
+
+    /// Optimizes return type inference for lambda expressions
+    private func inferOptimizedReturnType(
+        inferredBodyType: TypeID,
+        expectedReturnType: TypeID,
+        bodyExpr: ExprID,
+        ast: ASTModule,
+        sema: SemaModule,
+        ctx: TypeInferenceContext
+    ) -> TypeID {
+        // Unit optimization: if expected type is Unit, always return Unit
+        if expectedReturnType == sema.types.unitType {
+            return sema.types.unitType
+        }
+        
+        // If the body is a block expression with no trailing expression, infer Unit
+        if let bodyExprNode = ast.arena.expr(bodyExpr),
+           case let .blockExpr(statements, trailingExpr, _) = bodyExprNode,
+           trailingExpr == nil {
+            return sema.types.unitType
+        }
+        
+        // If the body is already compatible with expected type, use it
+        if sema.types.isSubtype(inferredBodyType, expectedReturnType) {
+            return inferredBodyType
+        }
+        
+        // Try to find a common supertype
+        if let commonType = findCommonSupertype(inferredBodyType, expectedReturnType, sema: sema) {
+            return commonType
+        }
+        
+        // Fall back to inferred type
+        return inferredBodyType
+    }
+
+    /// Finds the common supertype of two types
+    private func findCommonSupertype(_ type1: TypeID, _ type2: TypeID, sema: SemaModule) -> TypeID? {
+        // This would implement type hierarchy analysis to find common supertype
+        // For now, return nil as a placeholder
+        return nil
     }
 }

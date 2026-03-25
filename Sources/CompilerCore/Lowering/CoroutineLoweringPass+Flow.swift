@@ -41,8 +41,8 @@ extension CoroutineLoweringPass {
         let kkFlowRetainName = ctx.interner.intern("kk_flow_retain")
         let kkFlowReleaseName = ctx.interner.intern("kk_flow_release")
 
-        module.arena.transformFunctions { function in
-            var updated = function
+        func transformFunction(_ function: KIRFunction) -> KIRFunction {
+            var updated: KIRFunction = function
 
             var flowExprIDs: Set<Int32> = []
             var flowGlobalSymbols: Set<SymbolID> = []
@@ -104,7 +104,7 @@ extension CoroutineLoweringPass {
 
                 for instruction in function.body {
                     switch instruction {
-                    case let .call(symbol, callee, arguments, result, _, _, _):
+                    case let .call(symbol, callee, arguments, result, _, _, _, _):
                         if callee == flowName, arguments.count == 1, symbol == nil {
                             if markFlowExpr(result) { changed = true }
                             continue
@@ -189,7 +189,7 @@ extension CoroutineLoweringPass {
 
             let hasFlowLikeCalls = function.body.contains { instruction in
                 switch instruction {
-                case let .call(_, callee, _, _, _, _, _):
+                case let .call(_, callee, _, _, _, _, _, _):
                     callee == flowName || callee == emitName || callee == collectName ||
                         callee == mapName || callee == filterName || callee == takeName ||
                         callee == kkFlowCreateName || callee == kkFlowEmitName || callee == kkFlowCollectName
@@ -213,7 +213,7 @@ extension CoroutineLoweringPass {
             }
             for instruction in function.body {
                 switch instruction {
-                case let .call(_, callee, arguments, _, _, _, _):
+                case let .call(_, callee, arguments, _, _, _, _, _):
                     if callee == mapName || callee == filterName || callee == takeName,
                        arguments.count == 2 || ((callee == mapName || callee == filterName) && arguments.count == 3)
                     {
@@ -267,5 +267,6 @@ extension CoroutineLoweringPass {
             updated.replaceBody(loweredBody)
             return updated
         }
+        module.arena.transformFunctions(transformFunction)
     }
 }

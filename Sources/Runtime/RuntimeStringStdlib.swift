@@ -6,6 +6,10 @@ private func runtimeStringScalars(_ raw: Int) -> [UnicodeScalar] {
     Array(runtimeStringFromRawOrPanic(raw, caller: #function).unicodeScalars)
 }
 
+private func runtimeStringUTF16CodeUnits(_ raw: Int) -> [UInt16] {
+    Array(runtimeStringFromRawOrPanic(raw, caller: #function).utf16)
+}
+
 private func runtimeStringFromScalars(_ scalars: some Sequence<UnicodeScalar>) -> String {
     String(String.UnicodeScalarView(scalars))
 }
@@ -793,64 +797,64 @@ public func kk_string_indexOfLast(
 @_cdecl("kk_string_first")
 public func kk_string_first(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    let scalars = runtimeStringScalars(strRaw)
-    guard let first = scalars.first else {
+    let codeUnits = runtimeStringUTF16CodeUnits(strRaw)
+    guard let first = codeUnits.first else {
         runtimeSetThrown(outThrown, message: "Char sequence is empty.")
         return 0
     }
-    return kk_box_char(Int(first.value))
+    return kk_box_char(Int(first))
 }
 
 @_cdecl("kk_string_last")
 public func kk_string_last(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    let scalars = runtimeStringScalars(strRaw)
-    guard let last = scalars.last else {
+    let codeUnits = runtimeStringUTF16CodeUnits(strRaw)
+    guard let last = codeUnits.last else {
         runtimeSetThrown(outThrown, message: "Char sequence is empty.")
         return 0
     }
-    return kk_box_char(Int(last.value))
+    return kk_box_char(Int(last))
 }
 
 @_cdecl("kk_string_single")
 public func kk_string_single(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    let scalars = runtimeStringScalars(strRaw)
-    guard scalars.count == 1 else {
-        let msg = scalars.isEmpty
+    let codeUnits = runtimeStringUTF16CodeUnits(strRaw)
+    guard codeUnits.count == 1 else {
+        let msg = codeUnits.isEmpty
             ? "Char sequence is empty."
             : "Char sequence has more than one element."
         runtimeSetThrown(outThrown, message: msg)
         return 0
     }
-    return kk_box_char(Int(scalars[0].value))
+    return kk_box_char(Int(codeUnits[0]))
 }
 
 @_cdecl("kk_string_firstOrNull")
 public func kk_string_firstOrNull(_ strRaw: Int) -> Int {
-    let scalars = runtimeStringScalars(strRaw)
-    guard let first = scalars.first else {
+    let codeUnits = runtimeStringUTF16CodeUnits(strRaw)
+    guard let first = codeUnits.first else {
         return runtimeNullSentinelInt
     }
-    return kk_box_char(Int(first.value))
+    return kk_box_char(Int(first))
 }
 
 @_cdecl("kk_string_lastOrNull")
 public func kk_string_lastOrNull(_ strRaw: Int) -> Int {
-    let scalars = runtimeStringScalars(strRaw)
-    guard let last = scalars.last else {
+    let codeUnits = runtimeStringUTF16CodeUnits(strRaw)
+    guard let last = codeUnits.last else {
         return runtimeNullSentinelInt
     }
-    return kk_box_char(Int(last.value))
+    return kk_box_char(Int(last))
 }
 
 @_cdecl("kk_string_singleOrNull")
 public func kk_string_singleOrNull(_ strRaw: Int) -> Int {
-    let scalars = runtimeStringScalars(strRaw)
-    guard scalars.count == 1 else {
+    let codeUnits = runtimeStringUTF16CodeUnits(strRaw)
+    guard codeUnits.count == 1 else {
         return runtimeNullSentinelInt
     }
-    return kk_box_char(Int(scalars[0].value))
+    return kk_box_char(Int(codeUnits[0]))
 }
 
 // MARK: - STDLIB-187: isEmpty / isNotEmpty / isBlank / isNotBlank
@@ -1704,7 +1708,7 @@ func runtimeStringFromRawOrPanic(_ raw: Int, caller: StaticString) -> String {
 
 private func runtimeCharacterFromRaw(_ raw: Int) -> String {
     guard let scalar = runtimeUnicodeScalarFromRaw(raw) else {
-        return "\u{FFFD}"
+        return "?"
     }
     return String(scalar)
 }
@@ -2159,4 +2163,189 @@ public func kk_bignum_toString(_ numRaw: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_bignum_toString received invalid BigNumber handle")
     }
     return runtimeMakeStringRaw(box.value)
+}
+
+// MARK: - STDLIB-HOF-023: Advanced String Higher-Order Functions
+
+@_cdecl("kk_string_mapIndexed")
+public func kk_string_mapIndexed(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard fnPtr != 0 else { return strRaw }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mappedElements: [Int] = []
+    for (index, scalar) in scalars.enumerated() {
+        var thrown = 0
+        let result = lambda(closureRaw, index, Int(scalar.value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeMakeStringRaw("") }
+        mappedElements.append(result)
+    }
+    return runtimeMakeListRaw(mappedElements)
+}
+
+@_cdecl("kk_string_mapNotNull")
+public func kk_string_mapNotNull(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard fnPtr != 0 else { return strRaw }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mappedElements: [Int] = []
+    for scalar in scalars {
+        var thrown = 0
+        let result = lambda(closureRaw, Int(scalar.value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeMakeStringRaw("") }
+        if result != runtimeNullSentinelInt {
+            mappedElements.append(result)
+        }
+    }
+    return runtimeMakeListRaw(mappedElements)
+}
+
+@_cdecl("kk_string_filterIndexed")
+public func kk_string_filterIndexed(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard fnPtr != 0 else { return runtimeMakeStringRaw(runtimeStringFromRawOrPanic(strRaw, caller: #function)) }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var filtered: [UnicodeScalar] = []
+    for (index, scalar) in scalars.enumerated() {
+        var thrown = 0
+        let result = lambda(closureRaw, index, Int(scalar.value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeMakeStringRaw("") }
+        if result != 0 { filtered.append(scalar) }
+    }
+    return runtimeMakeStringRaw(runtimeStringFromScalars(filtered))
+}
+
+@_cdecl("kk_string_filterNot")
+public func kk_string_filterNot(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard fnPtr != 0 else { return runtimeMakeStringRaw(runtimeStringFromRawOrPanic(strRaw, caller: #function)) }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var filtered: [UnicodeScalar] = []
+    for scalar in scalars {
+        var thrown = 0
+        let result = lambda(closureRaw, Int(scalar.value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeMakeStringRaw("") }
+        if result == 0 { filtered.append(scalar) }
+    }
+    return runtimeMakeStringRaw(runtimeStringFromScalars(filtered))
+}
+
+@_cdecl("kk_string_takeWhile")
+public func kk_string_takeWhile(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard fnPtr != 0 else { return runtimeMakeStringRaw(runtimeStringFromRawOrPanic(strRaw, caller: #function)) }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var taken: [UnicodeScalar] = []
+    for scalar in scalars {
+        var thrown = 0
+        let result = lambda(closureRaw, Int(scalar.value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeMakeStringRaw("") }
+        if result == 0 { break }
+        taken.append(scalar)
+    }
+    return runtimeMakeStringRaw(runtimeStringFromScalars(taken))
+}
+
+@_cdecl("kk_string_dropWhile")
+public func kk_string_dropWhile(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard fnPtr != 0 else { return runtimeMakeStringRaw(runtimeStringFromRawOrPanic(strRaw, caller: #function)) }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var dropIndex = 0
+    for scalar in scalars {
+        var thrown = 0
+        let result = lambda(closureRaw, Int(scalar.value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeMakeStringRaw("") }
+        if result == 0 { break }
+        dropIndex += 1
+    }
+    return runtimeMakeStringRaw(runtimeStringFromScalars(Array(scalars.dropFirst(dropIndex))))
+}
+
+@_cdecl("kk_string_splitToSequence")
+public func kk_string_splitToSequence(_ strRaw: Int, _ delimRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeStringFromRawOrPanic(delimRaw, caller: #function)
+    
+    if delimiter.isEmpty {
+        let singleElement = runtimeMakeStringRaw(source)
+        let seq = RuntimeSequenceBox(steps: [.source(elements: [singleElement])])
+        return registerRuntimeObject(seq)
+    }
+    
+    let splitStrings = runtimeSplitString(source, delimiter: delimiter).map { runtimeMakeStringRaw($0) }
+    let seq = RuntimeSequenceBox(steps: [.source(elements: splitStrings)])
+    return registerRuntimeObject(seq)
+}
+
+@_cdecl("kk_string_joinToString")
+public func kk_string_joinToString(
+    _ strListRaw: Int, _ separatorRaw: Int, _ prefixRaw: Int, _ postfixRaw: Int
+) -> Int {
+    guard let list = runtimeListBox(from: strListRaw) else {
+        return runtimeMakeStringRaw("")
+    }
+    
+    let separator = extractString(from: UnsafeMutableRawPointer(bitPattern: separatorRaw)) ?? ", "
+    let prefix = extractString(from: UnsafeMutableRawPointer(bitPattern: prefixRaw)) ?? ""
+    let postfix = extractString(from: UnsafeMutableRawPointer(bitPattern: postfixRaw)) ?? ""
+    
+    let strings = list.elements.compactMap { extractString(from: UnsafeMutableRawPointer(bitPattern: $0)) }
+    let result = prefix + strings.joined(separator: separator) + postfix
+    return runtimeMakeStringRaw(result)
+}
+
+@_cdecl("kk_string_find")
+public func kk_string_find(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard fnPtr != 0 else { return runtimeNullSentinelInt }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for scalar in scalars {
+        var thrown = 0
+        let result = lambda(closureRaw, Int(scalar.value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if result != 0 { return kk_box_char(Int(scalar.value)) }
+    }
+    return runtimeNullSentinelInt
+}
+
+@_cdecl("kk_string_findLast")
+public func kk_string_findLast(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard fnPtr != 0 else { return runtimeNullSentinelInt }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var foundChar: UnicodeScalar?
+    for scalar in scalars {
+        var thrown = 0
+        let result = lambda(closureRaw, Int(scalar.value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if result != 0 { foundChar = scalar }
+    }
+    if let char = foundChar {
+        return kk_box_char(Int(char.value))
+    }
+    return runtimeNullSentinelInt
 }

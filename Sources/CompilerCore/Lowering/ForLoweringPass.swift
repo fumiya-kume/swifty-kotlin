@@ -8,7 +8,7 @@ final class ForLoweringPass: LoweringPass {
         for decl in module.arena.declarations {
             guard case let .function(function) = decl else { continue }
             for instruction in function.body {
-                if case let .call(_, callee, _, _, _, _, _) = instruction,
+                if case let .call(_, callee, _, _, _, _, _, _) = instruction,
                    callee == marker
                 {
                     return true
@@ -23,13 +23,13 @@ final class ForLoweringPass: LoweringPass {
         let hasNext = ctx.interner.intern("kk_range_hasNext")
         let next = ctx.interner.intern("kk_range_next")
 
-        module.arena.transformFunctions { function in
+        module.arena.transformFunctions { (function: KIRFunction) -> KIRFunction in
             var updated = function
             var rewrittenBody: [KIRInstruction] = []
             var didRewrite = false
 
             for instruction in function.body {
-                guard case let .call(symbol, callee, arguments, result, _, _, _) = instruction,
+                guard case let .call(symbol, callee, arguments, result, _, _, _, _) = instruction,
                       callee == marker,
                       let iteratorValue = arguments.first
                 else {

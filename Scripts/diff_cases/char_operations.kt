@@ -62,4 +62,3 @@ fun main() {
     println("rtlChar.category: ${rtlChar.category}")
     println("rtlChar.directionality: ${rtlChar.directionality}")  // Should be RIGHT_TO_LEFT
 }
-// SKIP-DIFF: Char operation parity pending

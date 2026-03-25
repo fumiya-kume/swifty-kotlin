@@ -1107,7 +1107,7 @@ extension CollectionLiteralLoweringPass {
     ) -> ComparatorSource {
         for inst in body {
             switch inst {
-            case let .call(_, callee, arguments, result, _, _, _):
+            case let .call(_, callee, arguments, result, _, _, _, _):
                 if let result, result.rawValue == exprID.rawValue {
                     if callee == ascendingCallee { return .ascending }
                     if callee == descendingCallee { return .descending }

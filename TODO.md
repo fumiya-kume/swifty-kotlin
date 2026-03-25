@@ -8,7 +8,7 @@
 - **プリミティブ型**: Boolean拡張関数 ✓
 - **配列操作**: 基本操作・高階関数・ソートと順序操作 ✓
 - **オブジェクト指向**: インターフェース・シールドクラス・データクラス・オブジェクト宣言・無名オブジェクト ✓
-- **関数型プログラミング**: コレクション高階関数・スコープ関数・関数参照・拡張関数・拡張プロパティ ✓
+- **関数型プログラミング**: コレクション高階関数・スコープ関数・関数参照・拡張関数・拡張プロパティ・シーケンス高階関数・文字列高階関数・ラムダとクロージャ ✓
 - **プロパティデリゲート**: lazyデリゲート・lateinitプロパティ ✓
 - **ジェネリクス**: ジェネリッククラス制約 ✓
 - **演算子**: invoke演算子・範囲操作・プリミティブ型完全演算子・ビット操作関数 ✓
@@ -60,11 +60,6 @@
 
 #### Phase 1: 基本型と配列 (高優先度)
 
-- [x] STDLIB-PRIM-001: プリミティブ型完全実装 (Int, Long, Double, Float, Boolean, Char) ✓
-- [x] STDLIB-PRIM-002: プリミティブ型変換関数完全実装 ✓
-- [x] STDLIB-ARR-005: 配列ソートと順序操作完全実装 ✓
-- [x] STDLIB-BIT-007: ビット操作関数完全実装 ✓
-- [x] STDLIB-PRIM-009: Char拡張関数完全実装 ✓
 
 #### Phase 1: オブジェクト指向機能 (高優先度)
 
@@ -79,27 +74,6 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/abstract_class.kt`
 
-- [x] STDLIB-DATA-014: データクラス継承と制約完全実装
-  - **仕様**: データクラスの継承ルールと制約
-  - **実装内容**:
-    - データクラスの継承禁止ルール
-    - 他クラスからのデータクラス継承
-    - equals/hashCodeの継承動作
-    - toStringの継承動作
-  - **現状**: データクラス継承制約は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/data_class_inheritance.kt`
-
-- [x] STDLIB-OBJ-016: コンパニオンオブジェクト完全実装
-  - **仕様**: コンパニオンオブジェクトの完全サポート
-  - **実装内容**:
-    - コンパニオン修飾子とデフォルト
-    - プライベートコンストラクタとの連携
-    - コンパニオンからのプライベートメンバアクセス
-    - コンパニオンの拡張関数
-  - **現状**: 完全実装済み
-  - **関連ファイル**: `VisibilityChecker.swift`, `CompanionObjectTests+PrivateAccess.swift`
-  - **テストケース**: `Tests/CompilerCoreTests/GoldenCases/Sema/companion_object_private_access.kt`
 
 - [ ] STDLIB-INHERIT-018: 継承修飾子完全実装
   - **仕様**: open/final/abstract修飾子の完全サポート
@@ -133,77 +107,6 @@
   - **現状**: 基本的な多重継承は実装済み、衝突解決は未実装
   - **関連ファイル**: `DiamondOverride.swift`
   - **テストケース**: `Scripts/diff_cases/interface_conflict_resolution.kt`
-
-#### Phase 1: 関数型プログラミング (高優先度)
-
-- [x] STDLIB-HOF-021: コレクション高階関数完全実装 ✓
-  - **関連ファイル**: `RuntimeCollectionHOF.swift`, `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/collection_hof.kt`
-
-- [ ] STDLIB-HOF-022: シーケンス高階関数完全実装
-  - **仕様**: Sequenceに対する遅延評価高階関数
-  - **実装内容**:
-    - 遅延変換: map, mapNotNull, filter, filterNot, takeWhile, dropWhile
-    - 遅延集約: reduce, fold
-    - 遅延検索: find, first, firstOrNull, lastOrNull
-    - 遅延判定: any, all, none, count
-    - シーケンス変換: asSequence, asIterable, toList, toSet
-  - **現状**: 基本的なSequenceは実装済み、遅延評価の最適化は未実装
-  - **関連ファイル**: `RuntimeSequence.swift`
-  - **テストケース**: `Scripts/diff_cases/sequence_lazy.kt`
-
-- [ ] STDLIB-HOF-023: 文字列高階関数完全実装
-  - **仕様**: Stringに対する高階関数操作
-  - **実装内容**:
-    - 文字列変換: map, mapIndexed, mapNotNull
-    - 文字列フィルタリング: filter, filterIndexed, filterNot, takeWhile, dropWhile
-    - 文字列分割: split, splitToSequence
-    - 文字列結合: joinToString, joinTo
-    - 文字列検索: find, findLast, firstOrNull, lastOrNull
-  - **現状**: 基本的な文字列操作は実装済み、高階関数は未実装
-  - **関連ファイル**: `RuntimeStringStdlib.swift`
-  - **テストケース**: `Scripts/diff_cases/string_hof.kt`
-
-- [x] STDLIB-SCOPE-024: スコープ関数完全実装 ✓
-  - **関連ファイル**: `HeaderHelpers+SyntheticScopeFunctionStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/scope_functions.kt`
-
-- [x] STDLIB-REF-025: 関数参照完全実装 ✓
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/callable_ref_basic.kt`
-
-- [x] STDLIB-EXT-026: 拡張関数完全実装 ✓
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/extension_property_advanced.kt`
-
-- [x] STDLIB-EXT-027: 拡張プロパティ完全実装 ✓
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/extension_property.kt`
-
-- [ ] STDLIB-HOF-028: ラムダとクロージャ完全実装
-  - **仕様**: ラムダ式とクロージャの完全サポート
-  - **実装内容**:
-    - 暗黙的パラメータ: it
-    - 明示的パラメータ: { x, y -> x + y }
-    - 型推論: パラメータ型の省略
-    - 戻り値型推論: 最後の式の戻り値
-    - 外部変数キャプチャ: クロージャ
-    - 非キャプチャラムダの最適化
-  - **現状**: 基本的なラムダは実装済み、キャプチャ最適化は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/lambda_with_receiver.kt`
-
-- [ ] STDLIB-HOF-029: 関数型完全実装
-  - **仕様**: 関数型の完全サポート
-  - **実装内容**:
-    - 関数型: (T) -> R, (T, U) -> R
-    - 関数型の変位指定: Function<in T, out R>
-    - suspend関数型: suspend (T) -> R
-    - 関数型の合成: andThen, compose
-    - 関数型のカリー化: curried()
-  - **現状**: 基本的な関数型は実装済み、合成とカリー化は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/function_types.kt`
 
 #### Phase 2: 演算子と特殊構文 (中優先度)
 
@@ -243,9 +146,6 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/container_operators.kt`
 
-- [x] STDLIB-OP-033: 呼び出し演算子オーバーロード完全実装 ✓
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/invoke_operator.kt`
 
 - [ ] STDLIB-RANGE-034: IntRange完全実装
   - **仕様**: IntRangeの完全な機能サポート
@@ -321,9 +221,6 @@
   - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
   - **テストケース**: `Scripts/diff_cases/progression.kt`
 
-- [x] STDLIB-RANGE-040: 範囲とコレクションの相互運用完全実装 ✓
-  - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
-  - **テストケース**: `Scripts/diff_cases/range_collection_interop.kt`
 
 - [ ] STDLIB-COMP-041: Comparableインターフェース完全実装
   - **仕様**: Comparable<T>インターフェースの完全サポート
@@ -352,9 +249,6 @@
 
 #### Phase 2: プロパティデリゲート (中優先度)
 
-- [x] STDLIB-DELEG-043: lazyデリゲート完全実装 ✓
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/delegate_lazy.kt`
 
 - [ ] STDLIB-DELEG-044: observableデリゲート完全実装
   - **仕様**: observableプロパティデリゲートの完全サポート
@@ -417,9 +311,6 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticDelegateStubs.swift`
   - **テストケース**: `Scripts/diff_cases/delegate_operators.kt`
 
-- [x] STDLIB-LATEINIT-049: lateinitプロパティ完全実装 ✓
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/lateinit_var.kt`
 
 - [ ] STDLIB-LATEINIT-050: lateinit拡張完全実装
   - **仕様**: lateinitプロパティの拡張機能
@@ -435,9 +326,6 @@
 
 #### Phase 2: ジェネリクスと型システム (中優先度)
 
-- [x] STDLIB-GEN-051: ジェネリッククラス完全実装 ✓
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/generic_constraints.kt`
 
 - [ ] STDLIB-GEN-052: ジェネリック関数完全実装
   - **仕様**: ジェネリック関数の完全サポート

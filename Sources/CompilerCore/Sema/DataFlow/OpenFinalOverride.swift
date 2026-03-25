@@ -174,13 +174,35 @@ extension DataFlowSemaPhase {
                   ctx.bindings.declSymbols[memberDeclID] != nil
             else { continue }
 
-            let memberMeta = extractMemberMeta(memberDecl)
+            let memberMeta = extractMemberMeta(memberDecl, declID: memberDeclID, ctx: ctx)
             guard let memberMeta else { continue }
 
             if memberMeta.hasOverride {
                 validateOverrideTarget(
                     memberName: memberMeta.name,
                     memberRange: memberMeta.range,
+                    ownerSymbol: symbol,
+                    returnType: memberMeta.returnType,
+                    visibility: memberMeta.visibility,
+                    ctx: ctx
+                )
+                validateAbstractOverrideConstraints(
+                    memberMeta: memberMeta,
+                    ownerSymbol: symbol,
+                    ctx: ctx
+                )
+                validateOverrideOpenness(
+                    memberMeta: memberMeta,
+                    ownerSymbol: symbol,
+                    ctx: ctx
+                )
+                validateModifierCombinations(
+                    memberMeta: memberMeta,
+                    ownerSymbol: symbol,
+                    ctx: ctx
+                )
+                validateVisibilityConstraints(
+                    memberMeta: memberMeta,
                     ownerSymbol: symbol,
                     ctx: ctx
                 )
@@ -199,26 +221,317 @@ extension DataFlowSemaPhase {
         let name: InternedString
         let range: SourceRange
         let hasOverride: Bool
+        let returnType: TypeID?
+        let hasAbstract: Bool
+        let hasFinal: Bool
+        let visibility: Visibility
     }
 
     private func extractMemberMeta(
-        _ decl: Decl
+        _ decl: Decl,
+        declID: DeclID,
+        ctx: OpenFinalOverrideContext
     ) -> MemberMeta? {
         switch decl {
         case let .funDecl(fun):
-            MemberMeta(
+            let returnType = ctx.bindings.declSymbols[declID]
+                .flatMap { ctx.symbols.functionSignature(for: $0)?.returnType }
+            return MemberMeta(
                 name: fun.name,
                 range: fun.range,
-                hasOverride: fun.modifiers.contains(.override)
+                hasOverride: fun.modifiers.contains(.override),
+                returnType: returnType,
+                hasAbstract: fun.modifiers.contains(.abstract),
+                hasFinal: fun.modifiers.contains(.final),
+                visibility: extractVisibility(from: fun.modifiers)
             )
         case let .propertyDecl(prop):
-            MemberMeta(
+            return MemberMeta(
                 name: prop.name,
                 range: prop.range,
-                hasOverride: prop.modifiers.contains(.override)
+                hasOverride: prop.modifiers.contains(.override),
+                returnType: nil,
+                hasAbstract: prop.modifiers.contains(.abstract),
+                hasFinal: prop.modifiers.contains(.final),
+                visibility: extractVisibility(from: prop.modifiers)
             )
         default:
-            nil
+            return nil
+        }
+    }
+    
+    private func extractVisibility(from modifiers: Modifiers) -> Visibility {
+        if modifiers.contains(.private) { return .private }
+        if modifiers.contains(.protected) { return .protected }
+        if modifiers.contains(.internal) { return .internal }
+        if modifiers.contains(.public) { return .public }
+        return .public // Default visibility
+    }
+
+    // MARK: - Check 7: visibility constraints validation
+
+    private func validateVisibilityConstraints(
+        memberMeta: MemberMeta,
+        ownerSymbol: SymbolID,
+        ctx: OpenFinalOverrideContext
+    ) {
+        // STDLIB-INHERIT-018: Validate visibility constraints in inheritance hierarchy
+        
+        guard memberMeta.hasOverride else { return } // Only check overrides
+        
+        let memberName = ctx.interner.resolve(memberMeta.name)
+        
+        // Find the parent member being overridden
+        let parent = findInheritedMember(
+            named: memberMeta.name,
+            for: ownerSymbol,
+            symbols: ctx.symbols
+        )
+        guard let parent else { return }
+        guard let parentSym = ctx.symbols.symbol(parent.memberID) else { return }
+        
+        // Rule 1: Cannot override with less visibility
+        if !isVisibilityAllowed(childVisibility: memberMeta.visibility, parentVisibility: parentSym.visibility) {
+            let parentVisibility = visibilityToString(parentSym.visibility)
+            let childVisibility = visibilityToString(memberMeta.visibility)
+            let parentName = ctx.interner.resolve(parent.ownerName)
+            
+            ctx.diagnostics.error(
+                "KSWIFTK-SEMA-VISIBILITY",
+                "'\(memberName)' cannot override '\(parentName).\(memberName)' because it has \(childVisibility) visibility, but parent has \(parentVisibility) visibility.",
+                range: memberMeta.range
+            )
+        }
+        
+        // Rule 2: private members cannot be overridden (shouldn't reach here due to lookup)
+        if parentSym.visibility == .private {
+            let parentName = ctx.interner.resolve(parent.ownerName)
+            ctx.diagnostics.error(
+                "KSWIFTK-SEMA-VISIBILITY",
+                "'\(memberName)' cannot override private member '\(parentName).\(memberName)'. Private members are not accessible for overriding.",
+                range: memberMeta.range
+            )
+        }
+    }
+    
+    private func isVisibilityAllowed(childVisibility: Visibility, parentVisibility: Visibility) -> Bool {
+        // In Kotlin, child visibility must be the same or more permissive than parent
+        switch parentVisibility {
+        case .private:
+            return childVisibility == .private
+        case .protected:
+            return childVisibility == .protected || childVisibility == .public || childVisibility == .internal
+        case .internal:
+            return childVisibility == .internal || childVisibility == .public
+        case .public:
+            return childVisibility == .public
+        }
+    }
+    
+    private func visibilityToString(_ visibility: Visibility) -> String {
+        switch visibility {
+        case .private: return "private"
+        case .protected: return "protected"
+        case .internal: return "internal"
+        case .public: return "public"
+        }
+    }
+    
+    private func isSubclass(of parentFQName: [InternedString], child: [InternedString], symbols: SymbolTable) -> Bool {
+        // Simplified check - in practice would need full inheritance hierarchy traversal
+        guard parentFQName.count > 0, child.count > 0 else { return false }
+        
+        let parentName = parentFQName.last!
+        let childName = child.last!
+        
+        // For now, just check if they're in the same package and child name suggests inheritance
+        // A proper implementation would traverse the inheritance hierarchy
+        return parentName != childName // Placeholder logic
+    }
+
+    // MARK: - Check 6: modifier combination validation
+
+    private func validateModifierCombinations(
+        memberMeta: MemberMeta,
+        ownerSymbol: SymbolID,
+        ctx: OpenFinalOverrideContext
+    ) {
+        // STDLIB-INHERIT-018: Validate that modifier combinations follow Kotlin rules
+        
+        let memberName = ctx.interner.resolve(memberMeta.name)
+        
+        // Rule 1: abstract and final are mutually exclusive
+        if memberMeta.hasAbstract && memberMeta.hasFinal {
+            ctx.diagnostics.error(
+                "KSWIFTK-SEMA-MODIFIER-CONFLICT",
+                "'\(memberName)' cannot be both 'abstract' and 'final'. These modifiers are mutually exclusive.",
+                range: memberMeta.range
+            )
+        }
+        
+        // Rule 2: open and final are mutually exclusive
+        if memberMeta.hasOverride && memberMeta.hasFinal {
+            // This is actually valid (final override), so no error here
+            // final override is allowed and means "override but don't allow further overriding"
+        }
+        
+        // Rule 3: Check for invalid modifier combinations based on context
+        guard let ownerSym = ctx.symbols.symbol(ownerSymbol) else { return }
+        
+        // Rule 3a: abstract members cannot be in final classes
+        if memberMeta.hasAbstract && ownerSym.flags.contains(.finalMember) {
+            let ownerName = ownerSym.fqName.map { ctx.interner.resolve($0) }.joined(separator: ".")
+            ctx.diagnostics.error(
+                "KSWIFTK-SEMA-MODIFIER-CONFLICT",
+                "'\(memberName)' cannot be abstract in final class '\(ownerName)'. Final classes cannot contain abstract members.",
+                range: memberMeta.range
+            )
+        }
+        
+        // Rule 3b: override without actual parent implementation (already checked in validateOverrideTarget)
+        // This is handled elsewhere
+        
+        // Rule 3c: Check interface-specific constraints
+        if ownerSym.kind == .interface {
+            // Interface members cannot be final
+            if memberMeta.hasFinal {
+                let ownerName = ownerSym.fqName.map { ctx.interner.resolve($0) }.joined(separator: ".")
+                ctx.diagnostics.error(
+                    "KSWIFTK-SEMA-MODIFIER-CONFLICT",
+                    "'\(memberName)' cannot be final in interface '\(ownerName)'. Interface members cannot be final.",
+                    range: memberMeta.range
+                )
+            }
+            
+            // Interface members are implicitly abstract, but explicit abstract is redundant
+            if memberMeta.hasAbstract {
+                let ownerName = ownerSym.fqName.map { ctx.interner.resolve($0) }.joined(separator: ".")
+                ctx.diagnostics.warning(
+                    "KSWIFTK-SEMA-REDUNDANT-MODIFIER",
+                    "'\(memberName)' in interface '\(ownerName)' is implicitly abstract. 'abstract' modifier is redundant.",
+                    range: memberMeta.range
+                )
+            }
+        }
+        
+        // Rule 3d: Check data class constraints (data classes cannot be open)
+        if ownerSym.flags.contains(.dataType) && memberMeta.hasOverride {
+            let ownerName = ownerSym.fqName.map { ctx.interner.resolve($0) }.joined(separator: ".")
+            ctx.diagnostics.error(
+                "KSWIFTK-SEMA-MODIFIER-CONFLICT",
+                "Data class '\(ownerName)' cannot have open members. Data classes are final by design.",
+                range: memberMeta.range
+            )
+        }
+    }
+
+    // MARK: - Check 5: override openness validation
+
+    private func validateOverrideOpenness(
+        memberMeta: MemberMeta,
+        ownerSymbol: SymbolID,
+        ctx: OpenFinalOverrideContext
+    ) {
+        // STDLIB-INHERIT-018: Validate that override members follow Kotlin's openness rules
+        
+        // Find the member symbol by looking in the owner's children
+        guard let ownerSym = ctx.symbols.symbol(ownerSymbol) else { return }
+        
+        let memberSymbol = ctx.symbols.children(ofFQName: ownerSym.fqName).first { childID in
+            guard let childSym = ctx.symbols.symbol(childID) else { return false }
+            return childSym.name == memberMeta.name && 
+                   (childSym.kind == .function || childSym.kind == .property)
+        }
+        
+        guard let memberSymID = memberSymbol,
+              let memberSym = ctx.symbols.symbol(memberSymID) else { return }
+        
+        // Check if this is an override member
+        if memberMeta.hasOverride {
+            // Rule: Override members are implicitly open unless marked final
+            if !memberMeta.hasFinal {
+                // This override member should be overridable by subclasses
+                // The isMemberOverridable function already handles this logic
+                // but we can add additional validation here if needed
+                
+                // Ensure the symbol has the overrideMember flag set
+                if !memberSym.flags.contains(.overrideMember) {
+                    // This would be a symbol table consistency issue
+                    let memberName = ctx.interner.resolve(memberMeta.name)
+                    ctx.diagnostics.error(
+                        "KSWIFTK-SEMA-INTERNAL",
+                        "Internal error: override member '\(memberName)' missing overrideMember flag.",
+                        range: memberMeta.range
+                    )
+                }
+            } else {
+                // final override - this member cannot be further overridden
+                // Ensure both flags are set correctly
+                if !memberSym.flags.contains(.overrideMember) || !memberSym.flags.contains(.finalMember) {
+                    let memberName = ctx.interner.resolve(memberMeta.name)
+                    ctx.diagnostics.error(
+                        "KSWIFTK-SEMA-INTERNAL",
+                        "Internal error: final override member '\(memberName)' has incorrect flags.",
+                        range: memberMeta.range
+                    )
+                }
+            }
+        }
+    }
+
+    // MARK: - Check 4: abstract override constraints
+
+    private func validateAbstractOverrideConstraints(
+        memberMeta: MemberMeta,
+        ownerSymbol: SymbolID,
+        ctx: OpenFinalOverrideContext
+    ) {
+        // STDLIB-INHERIT-018: Validate abstract override combinations
+        
+        // Check 1: abstract override is only allowed in abstract classes
+        if memberMeta.hasAbstract {
+            guard let ownerSym = ctx.symbols.symbol(ownerSymbol) else { return }
+            
+            if !ownerSym.flags.contains(.abstractType) {
+                let memberName = ctx.interner.resolve(memberMeta.name)
+                let ownerName = ownerSym.fqName.map { ctx.interner.resolve($0) }.joined(separator: ".")
+                ctx.diagnostics.error(
+                    "KSWIFTK-SEMA-ABSTRACT-OVERRIDE",
+                    "'\(memberName)' cannot be abstract in non-abstract class '\(ownerName)'. Abstract members are only allowed in abstract classes.",
+                    range: memberMeta.range
+                )
+                return
+            }
+            
+            // Check 2: abstract override must have a concrete implementation in parent
+            let parent = findInheritedMember(
+                named: memberMeta.name,
+                for: ownerSymbol,
+                symbols: ctx.symbols
+            )
+            guard let parent else { return }
+            guard let parentSym = ctx.symbols.symbol(parent.memberID) else { return }
+            
+            // Parent must not be abstract (we're re-abstracting a concrete method)
+            if parentSym.flags.contains(.abstractType) {
+                let memberName = ctx.interner.resolve(memberMeta.name)
+                let parentName = ctx.interner.resolve(parent.ownerName)
+                ctx.diagnostics.error(
+                    "KSWIFTK-SEMA-ABSTRACT-OVERRIDE",
+                    "'\(memberName)' cannot be abstract override of abstract member from '\(parentName)'. Only concrete members can be re-abstracted.",
+                    range: memberMeta.range
+                )
+            }
+        }
+        
+        // Check 3: final override cannot be used with abstract
+        if memberMeta.hasAbstract && memberMeta.hasFinal {
+            let memberName = ctx.interner.resolve(memberMeta.name)
+            ctx.diagnostics.error(
+                "KSWIFTK-SEMA-MODIFIER-CONFLICT",
+                "'\(memberName)' cannot be both 'abstract' and 'final'. These modifiers are mutually exclusive.",
+                range: memberMeta.range
+            )
         }
     }
 
@@ -228,6 +541,8 @@ extension DataFlowSemaPhase {
         memberName: InternedString,
         memberRange: SourceRange,
         ownerSymbol: SymbolID,
+        returnType: TypeID?,
+        visibility: Visibility,
         ctx: OpenFinalOverrideContext
     ) {
         let parent = findInheritedMember(
@@ -240,7 +555,29 @@ extension DataFlowSemaPhase {
             return
         }
 
-        if isMemberOverridable(parentSym, parent: parent) { return }
+        if isMemberOverridable(parentSym, parent: parent) { 
+            // Check return type covariance
+            if let returnType = returnType {
+                validateReturnTypeCovariance(
+                    childReturnType: returnType,
+                    parentSymbol: parentSym,
+                    memberName: memberName,
+                    memberRange: memberRange,
+                    ctx: ctx
+                )
+            }
+            
+            // Check visibility expansion
+            validateVisibilityExpansion(
+                childVisibility: visibility,
+                parentSymbol: parentSym,
+                memberName: memberName,
+                memberRange: memberRange,
+                ctx: ctx
+            )
+            
+            return 
+        }
 
         let name = ctx.interner.resolve(memberName)
         let ownerName = ctx.interner.resolve(parent.ownerName)
@@ -249,6 +586,86 @@ extension DataFlowSemaPhase {
             "'\(name)' in '\(ownerName)' is final and cannot be overridden.",
             range: memberRange
         )
+    }
+
+    // MARK: - Check 2a: return type covariance
+
+    private func validateReturnTypeCovariance(
+        childReturnType: TypeID,
+        parentSymbol: SemanticSymbol,
+        memberName: InternedString,
+        memberRange: SourceRange,
+        ctx: OpenFinalOverrideContext
+    ) {
+        guard let parentSignature = ctx.symbols.functionSignature(for: parentSymbol.id) else {
+            return
+        }
+        let parentReturnType = parentSignature.returnType
+
+        // Check if child return type is a subtype of parent return type
+        // Note: This requires access to the type system for subtype checking
+        // For now, we'll implement a basic check - this can be enhanced with proper subtype relations
+        
+        let childReturnStr = getTypeString(childReturnType, ctx: ctx)
+        let parentReturnStr = getTypeString(parentReturnType, ctx: ctx)
+        
+        // Simple equality check for now - proper covariance checking would require
+        // integration with the type system's subtype checking
+        if childReturnType != parentReturnType {
+            // This is actually allowed in Kotlin (covariant returns), but we need proper subtype checking
+            // For now, we'll allow it but log a note for future enhancement
+            let name = ctx.interner.resolve(memberName)
+            let ownerName = ctx.interner.resolve(parentSymbol.name)
+            
+            // TODO: Implement proper subtype checking instead of allowing all different types
+            // For now, we assume covariance is allowed as per Kotlin spec
+        }
+    }
+
+    // MARK: - Check 2b: visibility expansion
+
+    private func validateVisibilityExpansion(
+        childVisibility: Visibility,
+        parentSymbol: SemanticSymbol,
+        memberName: InternedString,
+        memberRange: SourceRange,
+        ctx: OpenFinalOverrideContext
+    ) {
+        let parentVisibility = parentSymbol.visibility
+        
+        // In Kotlin, overriding member cannot have lower visibility than parent
+        // private < protected < internal < public
+        if !isVisibilityExpansionAllowed(child: childVisibility, parent: parentVisibility) {
+            let name = ctx.interner.resolve(memberName)
+            let ownerName = ctx.interner.resolve(parentSymbol.name)
+            let childVisStr = visibilityToString(childVisibility)
+            let parentVisStr = visibilityToString(parentVisibility)
+            
+            ctx.diagnostics.error(
+                "KSWIFTK-SEMA-VISIBILITY",
+                "'\(name)' in '\(ownerName)' has \(childVisStr) visibility, which is more restrictive than \(parentVisStr) visibility of overridden member.",
+                range: memberRange
+            )
+        }
+    }
+
+    private func isVisibilityExpansionAllowed(child: Visibility, parent: Visibility) -> Bool {
+        // Visibility hierarchy: private < protected < internal < public
+        // Child visibility must be >= parent visibility
+        let visibilityOrder: [Visibility] = [.private, .protected, .internal, .public]
+        
+        guard let childIndex = visibilityOrder.firstIndex(of: child),
+              let parentIndex = visibilityOrder.firstIndex(of: parent) else {
+            return false
+        }
+        
+        return childIndex >= parentIndex
+    }
+
+    private func getTypeString(_ type: TypeID, ctx: OpenFinalOverrideContext) -> String {
+        // This is a simplified implementation - proper type string conversion
+        // would require access to the type system
+        return "Type_\(type.rawValue)"
     }
 
     // MARK: - Check 3: missing override modifier

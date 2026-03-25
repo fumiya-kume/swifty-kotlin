@@ -7,12 +7,12 @@ import XCTest
 private func extractSuperCallFlags(
     from body: [KIRInstruction],
     interner: StringInterner
-) -> [(callee: String, isSuperCall: Bool)] {
-    body.compactMap { instruction -> (callee: String, isSuperCall: Bool)? in
-        guard case let .call(_, callee, _, _, _, _, isSuperCall) = instruction else {
+) -> [(callee: String, isSuperCall: Bool, qualifiedSuperType: SymbolID?)] {
+    body.compactMap { instruction -> (callee: String, isSuperCall: Bool, qualifiedSuperType: SymbolID?)? in
+        guard case let .call(_, callee, _, _, _, _, isSuperCall, qualifiedSuperType) = instruction else {
             return nil
         }
-        return (interner.resolve(callee), isSuperCall)
+        return (interner.resolve(callee), isSuperCall, qualifiedSuperType)
     }
 }
 
@@ -225,6 +225,31 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
             let dumpOutput = module.dump(interner: ctx.interner, symbols: ctx.sema?.symbols)
             XCTAssertFalse(dumpOutput.contains("super=1"),
                            "Regular call dump should not contain 'super=1', got:\n\(dumpOutput)")
+        }
+    }
+    
+    func testKIRDumpFormatIncludesQualifiedSuperTag() throws {
+        let source = """
+        interface Left {
+            fun default1(): String = "left"
+        }
+        interface Right {
+            fun default1(): String = "right"
+        }
+        class Child : Left, Right {
+            fun callLeft(): String = super<Left>.default1()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+
+            // The full dump should include 'qualifiedSuper=' for the super<Left>.default1() call
+            let dumpOutput = module.dump(interner: ctx.interner, symbols: ctx.sema?.symbols)
+            XCTAssertTrue(dumpOutput.contains("qualifiedSuper="),
+                          "Expected KIR dump to contain 'qualifiedSuper=' for qualified super call, got:\n\(dumpOutput)")
         }
     }
 }

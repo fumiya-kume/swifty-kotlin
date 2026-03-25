@@ -13,7 +13,7 @@ final class EnumNameAccessLoweringPass: LoweringPass {
             guard case let .function(function) = decl else { continue }
             for instruction in function.body {
                 switch instruction {
-                case let .call(_, callee, args, _, _, _, _):
+                case let .call(_, callee, args, _, _, _, _, _):
                     if callee == nameCallee, args.count == 1 { return true }
                     if callee == printlnCallee || callee == kkPrintlnAnyCallee, args.count == 1 { return true }
                 case let .virtualCall(_, callee, _, args, _, _, _, _):
@@ -53,7 +53,7 @@ final class EnumNameAccessLoweringPass: LoweringPass {
                     continue
                 }
                 let receiverAndResult: (KIRExprID?, KIRExprID?) = switch instruction {
-                case let .call(_, callee, arguments, result, _, _, _):
+                case let .call(_, callee, arguments, result, _, _, _, _):
                     if callee == nameCallee, arguments.count == 1 {
                         (arguments[0], result)
                     } else {
@@ -77,7 +77,7 @@ final class EnumNameAccessLoweringPass: LoweringPass {
                     {
                         return classType.classSymbol
                     }
-                    if case let .call(sym, _, args, _, _, _, _) = instruction,
+                    if case let .call(sym, _, args, _, _, _, _, _) = instruction,
                        let propSym = sym,
                        args.count == 1,
                        let propInfo = sema.symbols.symbol(propSym),
@@ -145,7 +145,7 @@ final class EnumNameAccessLoweringPass: LoweringPass {
         printlnCallee: InternedString,
         kkPrintlnAnyCallee: InternedString
     ) -> [KIRInstruction]? {
-        guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall) = instruction,
+        guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType) = instruction,
               callee == printlnCallee || callee == kkPrintlnAnyCallee,
               arguments.count == 1,
               let classSymbol = enumClassSymbol(
@@ -216,7 +216,7 @@ final class EnumNameAccessLoweringPass: LoweringPass {
     ) -> SymbolID? {
         for instruction in instructions.reversed() {
             switch instruction {
-            case let .call(symbol, _, _, result, _, _, _):
+            case let .call(symbol, _, _, result, _, _, _, _):
                 guard result == exprID else { continue }
                 if let symbol {
                     return enumClassAncestor(of: symbol, sema: sema)

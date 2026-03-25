@@ -42,7 +42,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
             module.arena.transformFunctions { function in
                 let body = function.body
                 for (index, instruction) in body.enumerated() {
-                    guard case let .call(_, callee, _, _, _, _, _) = instruction else {
+                    guard case let .call(_, callee, _, _, _, _, _, _) = instruction else {
                         continue
                     }
                     let nextIndex = index + 1
@@ -95,7 +95,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                     continue
                 }
 
-                if case let .call(_, _, callArgs, callResult, _, _, _) = instruction {
+                if case let .call(_, _, callArgs, callResult, _, _, _, _) = instruction {
                     let nextIndex = index + 1
                     if nextIndex < function.body.count,
                        case let .copy(_, to) = function.body[nextIndex],

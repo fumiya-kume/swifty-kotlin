@@ -810,6 +810,60 @@ public func kk_set_toList(_ setRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: set.elements))
 }
 
+@_cdecl("kk_set_first")
+public func kk_set_first(_ setRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let set = runtimeSetBox(from: setRaw),
+          let first = set.elements.first
+    else {
+        runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "Collection is empty."))
+        return 0
+    }
+    return first
+}
+
+@_cdecl("kk_set_firstOrNull")
+public func kk_set_firstOrNull(_ setRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw),
+          let first = set.elements.first
+    else {
+        return runtimeNullSentinelInt
+    }
+    return first
+}
+
+@_cdecl("kk_set_last")
+public func kk_set_last(_ setRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let set = runtimeSetBox(from: setRaw),
+          let last = set.elements.last
+    else {
+        runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "Collection is empty."))
+        return 0
+    }
+    return last
+}
+
+@_cdecl("kk_set_lastOrNull")
+public func kk_set_lastOrNull(_ setRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw),
+          let last = set.elements.last
+    else {
+        return runtimeNullSentinelInt
+    }
+    return last
+}
+
+@_cdecl("kk_set_singleOrNull")
+public func kk_set_singleOrNull(_ setRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw),
+          set.elements.count == 1
+    else {
+        return runtimeNullSentinelInt
+    }
+    return set.elements[0]
+}
+
 @_cdecl("kk_collection_toList")
 public func kk_collection_toList(_ collRaw: Int) -> Int {
     if let list = runtimeListBox(from: collRaw) {

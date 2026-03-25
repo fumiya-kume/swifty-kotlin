@@ -321,6 +321,7 @@ enum SequenceStepKind {
     case stringSource(strRaw: Int)
     case mapStep(fnPtr: Int, closureRaw: Int)
     case filterStep(fnPtr: Int, closureRaw: Int)
+    case filterNotStep(fnPtr: Int, closureRaw: Int)
     case takeStep(count: Int)
     case builder(elements: [Int])
     case generator(seed: Int, fnPtr: Int, closureRaw: Int)
@@ -330,6 +331,12 @@ enum SequenceStepKind {
     case takeWhileStep(fnPtr: Int, closureRaw: Int)
     case dropWhileStep(fnPtr: Int, closureRaw: Int)
     case onEachStep(fnPtr: Int, closureRaw: Int)
+    /// STDLIB-HOF-022: Additional lazy transformation steps
+    case mapNotNullStep(fnPtr: Int, closureRaw: Int)
+    case filterNotNullStep
+    case mapIndexedStep(fnPtr: Int, closureRaw: Int)
+    case withIndexStep
+    case flatMapStep(fnPtr: Int, closureRaw: Int)
     /// STDLIB-563: Lazy continuation-based builder.
     /// The coroutine runs the builder lambda on a background thread;
     /// each `yield()` suspends the producer until the consumer requests

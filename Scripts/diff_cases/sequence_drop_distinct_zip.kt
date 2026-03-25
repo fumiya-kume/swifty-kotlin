@@ -8,4 +8,3 @@ fun main() {
     val z = sequenceOf("a", "b", "c").zip(sequenceOf(1, 2, 3)).toList()
     println(z)
 }
-// SKIP-DIFF: sequence parity pending

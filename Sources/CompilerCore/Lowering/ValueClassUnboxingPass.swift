@@ -145,7 +145,7 @@ final class ValueClassUnboxingPass: LoweringPass {
 
         // Scan for kk_object_new calls that produce value class typed results
         for instruction in body {
-            if case let .call(_, callee, arguments, result, _, _, _) = instruction,
+            if case let .call(_, callee, arguments, result, _, _, _, _) = instruction,
                callee == kk_object_new,
                let result,
                isValueClassExpr(result, arena: arena, types: types, valueClassSymbols: valueClassSymbols)
@@ -166,7 +166,7 @@ final class ValueClassUnboxingPass: LoweringPass {
         // of a value class allocation - collect the constValue expr used for childExpr
         var typeRegisterConstExprs: Set<KIRExprID> = []
         for instruction in body {
-            if case let .call(_, callee, arguments, result, _, _, _) = instruction,
+            if case let .call(_, callee, arguments, result, _, _, _, _) = instruction,
                let result
             {
                 let calleeName = interner.resolve(callee)
@@ -197,7 +197,7 @@ final class ValueClassUnboxingPass: LoweringPass {
         for instruction in body {
             switch instruction {
             // Remove kk_object_new calls for value class allocations
-            case let .call(_, callee, _, callResult, _, _, _)
+            case let .call(_, callee, _, callResult, _, _, _, _)
                 where callee == kk_object_new
                     && callResult != nil
                     && allocExprs.contains(callResult!):
@@ -211,7 +211,7 @@ final class ValueClassUnboxingPass: LoweringPass {
                 continue
 
             // Remove kk_type_register_* calls for value class allocations
-            case let .call(_, callee, arguments, _, _, _, _)
+            case let .call(_, callee, arguments, _, _, _, _, _)
                 where {
                     let name = interner.resolve(callee)
                     guard name.hasPrefix("kk_type_register_") else { return false }
@@ -237,7 +237,7 @@ final class ValueClassUnboxingPass: LoweringPass {
 
             // Rewrite value class constructor calls:
             // call <init>(allocObj, value) -> result  =>  copy(value, result)
-            case let .call(symbol, callee, arguments, callResult, canThrow, thrownResult, isSuperCall):
+            case let .call(symbol, callee, arguments, callResult, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
                 if let symbol, valueClassCtors.contains(symbol),
                    let callResult
                 {

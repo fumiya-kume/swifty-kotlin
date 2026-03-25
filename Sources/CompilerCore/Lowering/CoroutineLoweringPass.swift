@@ -42,7 +42,7 @@ final class CoroutineLoweringPass: LoweringPass {
                 if function.isSuspend { return true }
                 for instruction in function.body {
                     switch instruction {
-                    case let .call(_, callee, _, _, _, _, _):
+                    case let .call(_, callee, _, _, _, _, _, _):
                         if callCallees.contains(callee) {
                             return true
                         }

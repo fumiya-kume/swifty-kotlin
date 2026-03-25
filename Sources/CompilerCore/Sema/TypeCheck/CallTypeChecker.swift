@@ -1527,7 +1527,18 @@ final class CallTypeChecker {
                 } else if !argTypes.isEmpty,
                           name == "sequenceOf"
                 {
-                    let elementType = sema.types.lub(argTypes)
+                    let hasNullableElement = argTypes.contains { inferredType in
+                        inferredType == sema.types.nullableNothingType
+                            || sema.types.makeNonNullable(inferredType) != inferredType
+                    }
+                    let concreteTypes = argTypes.compactMap { inferredType -> TypeID? in
+                        if inferredType == sema.types.nullableNothingType {
+                            return nil
+                        }
+                        return sema.types.makeNonNullable(inferredType)
+                    }
+                    let baseType = concreteTypes.isEmpty ? sema.types.anyType : sema.types.lub(concreteTypes)
+                    let elementType = hasNullableElement ? sema.types.makeNullable(baseType) : baseType
                     collectionType = makeSyntheticSequenceType(
                         symbols: sema.symbols,
                         types: sema.types,

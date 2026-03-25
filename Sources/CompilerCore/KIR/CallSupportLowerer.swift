@@ -256,7 +256,12 @@ final class CallSupportLowerer {
         guard parameterCount > 0 else {
             return NormalizedCallResult(arguments: providedArguments, defaultMask: 0)
         }
-        let preserveArrayVarargs = sema.symbols.externalLinkName(for: chosenCallee) == "kk_array_of"
+        let preserveArrayVarargs = {
+            guard let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee) else {
+                return false
+            }
+            return externalLinkName == "kk_array_of" || externalLinkName == "kk_sequence_of"
+        }()
 
         let isVararg = normalizeBoolFlags(signature.valueParameterIsVararg, count: parameterCount)
         let hasDefaultValues = normalizeBoolFlags(signature.valueParameterHasDefaultValues, count: parameterCount)

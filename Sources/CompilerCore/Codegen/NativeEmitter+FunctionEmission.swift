@@ -162,7 +162,7 @@ extension NativeEmitter {
                 return [result]
             case let .nullAssert(_, result):
                 return [result]
-            case let .call(_, _, _, result, _, thrownResult, _):
+            case let .call(_, _, _, result, _, thrownResult, _, _):
                 let directTargets = result.map { [$0] } ?? []
                 let thrownTargets = thrownResult.map { [$0] } ?? []
                 return directTargets + thrownTargets
@@ -736,10 +736,11 @@ extension NativeEmitter {
                     storeResult(result, operandValue)
                 }
 
-            case let .call(symbol, callee, arguments, result, usesThrownChannel, thrownResult, isSuperCall):
+            case let .call(symbol, callee, arguments, result, usesThrownChannel, thrownResult, isSuperCall, qualifiedSuperType):
                 // super calls always use direct dispatch – when virtual dispatch
                 // is introduced the isSuperCall flag will bypass vtable lookup.
-                _ = isSuperCall
+                // qualifiedSuperType provides additional context for super<Interface> calls
+                _ = (isSuperCall, qualifiedSuperType)
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
                 }

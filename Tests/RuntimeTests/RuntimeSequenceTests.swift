@@ -748,6 +748,337 @@ final class RuntimeSequenceTests: XCTestCase {
             "STDLIB-563: first() should not force evaluation of all 3 elements; got \(_lazyTestYieldCounter) yields")
     }
 
+    // MARK: - STDLIB-HOF-022: Additional Higher-Order Functions
+
+    func testSequenceFilterNot() {
+        let seq = makeSequence([1, 2, 3, 4, 5])
+        let filterFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value % 2 == 0 ? 1 : 0  // true for even numbers
+        }
+        let filtered = kk_sequence_filterNot(
+            seq,
+            unsafeBitCast(filterFn, to: Int.self),
+            0
+        )
+        XCTAssertEqual(sequenceElements(filtered), [1, 3, 5]) // Should keep odd numbers
+    }
+
+    func testSequenceFind() {
+        let seq = makeSequence([1, 2, 3, 4, 5])
+        let findFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value > 3 ? 1 : 0  // true for values > 3
+        }
+        var thrown = 0
+        let found = kk_sequence_find(
+            seq,
+            unsafeBitCast(findFn, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(found, 4) // First element > 3
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testSequenceFindNotFound() {
+        let seq = makeSequence([1, 2, 3])
+        let findFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value > 10 ? 1 : 0  // true for values > 10
+        }
+        var thrown = 0
+        let found = kk_sequence_find(
+            seq,
+            unsafeBitCast(findFn, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(found, runtimeNullSentinelInt)
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testSequenceAsIterable() {
+        let seq = makeSequence([1, 2, 3])
+        let iterable = kk_sequence_asIterable(seq)
+        // Should return the same handle
+        XCTAssertEqual(iterable, seq)
+    }
+
+    func testSequenceFilterNotLazy() {
+        // Test that filterNot is lazy by using a sequence builder
+        _lazyTestYieldCounter = 0
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 1)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 2)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 3)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        
+        let filterFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value == 2 ? 1 : 0  // true only for value 2
+        }
+        
+        let filtered = kk_sequence_filterNot(
+            seqHandle,
+            unsafeBitCast(filterFn, to: Int.self),
+            0
+        )
+        
+        // Take only first element to verify laziness
+        let taken = kk_sequence_take(filtered, 1)
+        let result = sequenceElements(taken)
+        XCTAssertEqual(result, [1]) // Should be [1, 3] but take(1) gives [1]
+        
+        // Should not have evaluated all elements due to laziness
+        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 2,
+            "filterNot should be lazy; got \(_lazyTestYieldCounter) yields")
+    }
+
+    // MARK: - STDLIB-HOF-022: Additional Lazy Higher-Order Functions Tests
+
+    func testSequenceMapNotNullLazy() {
+        // Test mapNotNull with lazy evaluation
+        _lazyTestYieldCounter = 0
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 1)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, runtimeNullSentinelInt) // null value
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 3)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        
+        let mapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value * 2
+        }
+        
+        let mapped = kk_sequence_mapNotNull(
+            seqHandle,
+            unsafeBitCast(mapFn, to: Int.self),
+            0
+        )
+        
+        // Take only first element to verify laziness
+        let taken = kk_sequence_take(mapped, 1)
+        let result = sequenceElements(taken)
+        XCTAssertEqual(result, [2]) // 1 * 2 = 2, null is filtered out
+        
+        // Should not have evaluated all elements due to laziness
+        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 2,
+            "mapNotNull should be lazy; got \(_lazyTestYieldCounter) yields")
+    }
+
+    func testSequenceFilterNotNullLazy() {
+        // Test filterNotNull with lazy evaluation
+        _lazyTestYieldCounter = 0
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 1)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, runtimeNullSentinelInt) // null value
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 3)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        
+        let filtered = kk_sequence_filterNotNull(seqHandle)
+        
+        // Take only first element to verify laziness
+        let taken = kk_sequence_take(filtered, 1)
+        let result = sequenceElements(taken)
+        XCTAssertEqual(result, [1]) // null is filtered out
+        
+        // Should not have evaluated all elements due to laziness
+        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 2,
+            "filterNotNull should be lazy; got \(_lazyTestYieldCounter) yields")
+    }
+
+    func testSequenceMapIndexedLazy() {
+        // Test mapIndexed with lazy evaluation
+        _lazyTestYieldCounter = 0
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 10)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 20)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        
+        let mapFn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
+            index + value
+        }
+        
+        let mapped = kk_sequence_mapIndexed(
+            seqHandle,
+            unsafeBitCast(mapFn, to: Int.self),
+            0
+        )
+        
+        // Take only first element to verify laziness
+        let taken = kk_sequence_take(mapped, 1)
+        let result = sequenceElements(taken)
+        XCTAssertEqual(result, [10]) // index 0 + value 10 = 10
+        
+        // Should not have evaluated all elements due to laziness
+        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 2,
+            "mapIndexed should be lazy; got \(_lazyTestYieldCounter) yields")
+    }
+
+    func testSequenceWithIndexLazy() {
+        // Test withIndex with lazy evaluation
+        _lazyTestYieldCounter = 0
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 10)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 20)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        
+        let withIndex = kk_sequence_withIndex(seqHandle)
+        
+        // Take only first element to verify laziness
+        let taken = kk_sequence_take(withIndex, 1)
+        let result = sequenceElements(taken)
+        XCTAssertEqual(result.count, 1)
+        // Should be a pair (0, 10)
+        let pair = result[0]
+        let first = kk_pair_first(pair)
+        let second = kk_pair_second(pair)
+        XCTAssertEqual(first, 0) // index
+        XCTAssertEqual(second, 10) // value
+        
+        // Should not have evaluated all elements due to laziness
+        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 2,
+            "withIndex should be lazy; got \(_lazyTestYieldCounter) yields")
+    }
+
+    func testSequenceFlatMapLazy() {
+        // Test flatMap with lazy evaluation
+        _lazyTestYieldCounter = 0
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 1)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 2)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        
+        let flatMapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            // Create a list [value, value * 10]
+            let arr = kk_array_new(2)
+            var thrown = 0
+            _ = kk_array_set(arr, 0, value, &thrown)
+            _ = kk_array_set(arr, 1, value * 10, &thrown)
+            return kk_list_of(arr, 2)
+        }
+        
+        let flatMapped = kk_sequence_flatMap(
+            seqHandle,
+            unsafeBitCast(flatMapFn, to: Int.self),
+            0
+        )
+        
+        // Take only first element to verify laziness
+        let taken = kk_sequence_take(flatMapped, 1)
+        let result = sequenceElements(taken)
+        XCTAssertEqual(result, [1]) // First element of [1, 10] from first input value 1
+        
+        // Should not have evaluated all elements due to laziness
+        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 2,
+            "flatMap should be lazy; got \(_lazyTestYieldCounter) yields")
+    }
+
+    func testSequenceMapNotNullCorrectness() {
+        // Test correctness of mapNotNull
+        let seq = makeSequence([1, runtimeNullSentinelInt, 3, runtimeNullSentinelInt, 5])
+        let mapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value * 2
+        }
+        let mapped = kk_sequence_mapNotNull(
+            seq,
+            unsafeBitCast(mapFn, to: Int.self),
+            0
+        )
+        let result = sequenceElements(mapped)
+        XCTAssertEqual(result, [2, 6, 10]) // Only non-null values doubled
+    }
+
+    func testSequenceFilterNotNullCorrectness() {
+        // Test correctness of filterNotNull
+        let seq = makeSequence([1, runtimeNullSentinelInt, 3, runtimeNullSentinelInt, 5])
+        let filtered = kk_sequence_filterNotNull(seq)
+        let result = sequenceElements(filtered)
+        XCTAssertEqual(result, [1, 3, 5]) // Only non-null values
+    }
+
+    func testSequenceMapIndexedCorrectness() {
+        // Test correctness of mapIndexed
+        let seq = makeSequence([10, 20, 30])
+        let mapFn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
+            index + value
+        }
+        let mapped = kk_sequence_mapIndexed(
+            seq,
+            unsafeBitCast(mapFn, to: Int.self),
+            0
+        )
+        let result = sequenceElements(mapped)
+        XCTAssertEqual(result, [10, 21, 32]) // [0+10, 1+20, 2+30]
+    }
+
+    func testSequenceWithIndexCorrectness() {
+        // Test correctness of withIndex
+        let seq = makeSequence([10, 20, 30])
+        let withIndex = kk_sequence_withIndex(seq)
+        let result = sequenceElements(withIndex)
+        XCTAssertEqual(result.count, 3)
+        // Check first pair (0, 10)
+        let first = kk_pair_first(result[0])
+        let second = kk_pair_second(result[0])
+        XCTAssertEqual(first, 0)
+        XCTAssertEqual(second, 10)
+        // Check second pair (1, 20)
+        let first2 = kk_pair_first(result[1])
+        let second2 = kk_pair_second(result[1])
+        XCTAssertEqual(first2, 1)
+        XCTAssertEqual(second2, 20)
+    }
+
+    func testSequenceFlatMapCorrectness() {
+        // Test correctness of flatMap
+        let seq = makeSequence([1, 2])
+        let flatMapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            // Create a list [value, value * 10]
+            let arr = kk_array_new(2)
+            var thrown = 0
+            _ = kk_array_set(arr, 0, value, &thrown)
+            _ = kk_array_set(arr, 1, value * 10, &thrown)
+            return kk_list_of(arr, 2)
+        }
+        let flatMapped = kk_sequence_flatMap(
+            seq,
+            unsafeBitCast(flatMapFn, to: Int.self),
+            0
+        )
+        let result = sequenceElements(flatMapped)
+        XCTAssertEqual(result, [1, 10, 2, 20]) // [1, 10] + [2, 20]
+    }
+
     // MARK: - Helpers
 
     private func sequenceElements(_ seqRaw: Int) -> [Int] {

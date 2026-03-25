@@ -267,7 +267,7 @@ extension CallLowerer {
             }
         }
 
-        // Primitive infix member functions: Int/Long/UInt/ULong.and|or|xor|shl|shr|ushr (EXPR-003, TYPE-005)
+        // Primitive arithmetic/infix member functions on numeric receivers.
         if args.count == 1 {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
@@ -279,6 +279,16 @@ extension CallLowerer {
                 let rhsType = sema.types.makeNonNullable(sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType)
                 let isIntegerRhs = rhsType == intType || rhsType == longType || rhsType == uintType || rhsType == ulongType
                 let primitiveCallee: InternedString? = switch interner.resolve(effectiveCalleeName) {
+                case "plus":
+                    interner.intern("kk_op_add")
+                case "minus":
+                    interner.intern("kk_op_sub")
+                case "times":
+                    interner.intern("kk_op_mul")
+                case "div":
+                    interner.intern("kk_op_div")
+                case "rem", "mod":
+                    interner.intern("kk_op_mod")
                 case "and":
                     isIntegerRhs ? interner.intern("kk_bitwise_and") : nil
                 case "or":
@@ -353,20 +363,9 @@ extension CallLowerer {
         default:
             nonNullAnyFallbackReceiverType == sema.types.anyType
         }
-        func anyFallbackTag(for type: TypeID) -> Int64 {
-            switch sema.types.kind(of: sema.types.makeNonNullable(type)) {
-            case .primitive(.boolean, _):
-                2
-            case .primitive(.string, _):
-                3
-            default:
-                1
-            }
-        }
-
         // Any.toString(): String — no-arg fallback via kk_any_to_string (STDLIB-306)
         if args.isEmpty, interner.resolve(effectiveCalleeName) == "toString", allowsAnyFallback {
-            let tag = anyFallbackTag(for: anyFallbackReceiverType)
+            let tag = anyFallbackTag(for: anyFallbackReceiverType, sema: sema)
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let callLabel = driver.ctx.makeLoopLabel()
             let endLabel = driver.ctx.makeLoopLabel()
@@ -401,7 +400,7 @@ extension CallLowerer {
             instructions.append(.copy(from: nullExpr, to: result))
             instructions.append(.jump(endLabel))
             instructions.append(.label(callLabel))
-            let receiverTag = anyFallbackTag(for: anyFallbackReceiverType)
+            let receiverTag = anyFallbackTag(for: anyFallbackReceiverType, sema: sema)
             let receiverTagID = arena.appendExpr(.intLiteral(receiverTag), type: intType)
             instructions.append(.constValue(result: receiverTagID, value: .intLiteral(receiverTag)))
             instructions.append(.call(
@@ -427,9 +426,9 @@ extension CallLowerer {
             instructions.append(.copy(from: nullExpr, to: result))
             instructions.append(.jump(endLabel))
             instructions.append(.label(callLabel))
-            let receiverTag = anyFallbackTag(for: anyFallbackReceiverType)
+            let receiverTag = anyFallbackTag(for: anyFallbackReceiverType, sema: sema)
             let argType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
-            let argTag = anyFallbackTag(for: argType)
+            let argTag = anyFallbackTag(for: argType, sema: sema)
             let receiverTagID = arena.appendExpr(.intLiteral(receiverTag), type: intType)
             instructions.append(.constValue(result: receiverTagID, value: .intLiteral(receiverTag)))
             let argTagID = arena.appendExpr(.intLiteral(argTag), type: intType)

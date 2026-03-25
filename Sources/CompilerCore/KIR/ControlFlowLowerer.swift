@@ -759,7 +759,7 @@ final class ControlFlowLowerer {
                 continue
             }
             switch instruction {
-            case let .call(symbol, callee, arguments, result, _, thrownResult, isSuperCall)
+            case let .call(symbol, callee, arguments, result, _, thrownResult, isSuperCall, qualifiedSuperType)
                 where thrownResult == nil:
                 instructions.append(.call(
                     symbol: symbol,
@@ -768,13 +768,14 @@ final class ControlFlowLowerer {
                     result: result,
                     canThrow: true,
                     thrownResult: exceptionSlot,
-                    isSuperCall: isSuperCall
+                    isSuperCall: isSuperCall,
+                    qualifiedSuperType: qualifiedSuperType
                 ))
                 let unknownTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
                 instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
                 instructions.append(.copy(from: unknownTypeToken, to: exceptionTypeSlot))
                 instructions.append(.jumpIfNotNull(value: exceptionSlot, target: thrownTarget))
-            case let .call(symbol, callee, arguments, result, canThrow, thrownResult?, isSuperCall):
+            case let .call(symbol, callee, arguments, result, canThrow, thrownResult?, isSuperCall, qualifiedSuperType):
                 instructions.append(.call(
                     symbol: symbol,
                     callee: callee,
@@ -782,7 +783,8 @@ final class ControlFlowLowerer {
                     result: result,
                     canThrow: canThrow,
                     thrownResult: thrownResult,
-                    isSuperCall: isSuperCall
+                    isSuperCall: isSuperCall,
+                    qualifiedSuperType: qualifiedSuperType
                 ))
                 if thrownResult != exceptionSlot {
                     instructions.append(.copy(from: thrownResult, to: exceptionSlot))

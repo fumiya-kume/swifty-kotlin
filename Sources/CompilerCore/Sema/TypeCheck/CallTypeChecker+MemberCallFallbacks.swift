@@ -562,6 +562,7 @@ extension CallTypeChecker {
             interner.intern("iterator"),
             interner.intern("map"),
             interner.intern("filter"),
+            interner.intern("filterNot"),
             interner.intern("mapNotNull"),
             interner.intern("filterNotNull"),
             interner.intern("forEach"),
@@ -599,6 +600,7 @@ extension CallTypeChecker {
             interner.intern("onEach"),
             interner.intern("onEachIndexed"),
             interner.intern("asSequence"),
+            interner.intern("asIterable"),
             interner.intern("toList"),
             interner.intern("toTypedArray"),
             interner.intern("take"),
@@ -665,7 +667,7 @@ extension CallTypeChecker {
             return isListReceiver
         }
         if collectionSpecificMembers.contains(memberName) {
-            return isListReceiver || isSequenceReceiver
+            return isListReceiver || isSetReceiver || isSequenceReceiver
         }
         if memberName == knownNames.getOrElse {
             return isListReceiver || isMapReceiver
@@ -692,7 +694,7 @@ extension CallTypeChecker {
         interner: StringInterner
     ) -> Bool {
         let collectionReturningMembers: Set = [
-            interner.intern("asSequence"), interner.intern("map"), interner.intern("filter"), interner.intern("mapNotNull"), interner.intern("filterNotNull"),
+            interner.intern("asSequence"), interner.intern("asIterable"), interner.intern("map"), interner.intern("filter"), interner.intern("filterNot"), interner.intern("mapNotNull"), interner.intern("filterNotNull"),
             interner.intern("flatMap"), interner.intern("sortedBy"), interner.intern("groupBy"), interner.intern("groupingBy"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associateByTo"), interner.intern("associateWithTo"), interner.intern("groupByTo"),
             interner.intern("associate"), interner.intern("zip"), interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("take"), interner.intern("drop"), interner.intern("reversed"), interner.intern("asReversed"),
             interner.intern("sorted"), interner.intern("distinct"), interner.intern("distinctBy"), interner.intern("flatten"), interner.intern("chunked"), interner.intern("windowed"), interner.intern("withIndex"), interner.intern("mapIndexed"),
@@ -735,6 +737,7 @@ extension CallTypeChecker {
         let knownNames = KnownCompilerNames(interner: interner)
         switch memberName {
         case knownNames.size, knownNames.isEmpty, interner.intern("iterator"), interner.intern("asSequence"),
+             interner.intern("asIterable"),
              interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("reversed"),
             interner.intern("asReversed"), interner.intern("sorted"),
              interner.intern("distinct"), interner.intern("flatten"), interner.intern("withIndex"),
@@ -748,7 +751,7 @@ extension CallTypeChecker {
             return argCount == 0
         case interner.intern("get"), interner.intern("getOrNull"), interner.intern("elementAtOrNull"),
              interner.intern("contains"), interner.intern("containsAll"), interner.intern("indexOf"), interner.intern("lastIndexOf"), interner.intern("indexOfFirst"), interner.intern("indexOfLast"), interner.intern("binarySearch"),
-             interner.intern("map"), interner.intern("filter"), interner.intern("mapNotNull"), interner.intern("forEach"), interner.intern("flatMap"),
+             interner.intern("map"), interner.intern("filter"), interner.intern("filterNot"), interner.intern("mapNotNull"), interner.intern("forEach"), interner.intern("flatMap"),
              interner.intern("any"), interner.intern("none"), interner.intern("all"),
              interner.intern("groupBy"), interner.intern("groupingBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("reduceOrNull"), interner.intern("runningReduce"), interner.intern("scanReduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
              interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("sumOf"), interner.intern("chunked"), interner.intern("onEach"), interner.intern("onEachIndexed"),
@@ -864,6 +867,15 @@ extension CallTypeChecker {
 
         if memberName == interner.intern("find") {
             return sema.types.makeNullable(receiverElementType)
+        }
+
+        if memberName == interner.intern("asIterable") {
+            return makeSyntheticSequenceType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: receiverElementType
+            )
         }
 
         if memberName == interner.intern("elementAt")
@@ -1050,6 +1062,7 @@ extension CallTypeChecker {
         let mapKeys = interner.intern("mapKeys")
         let boolOneParamMembers: Set = [
             interner.intern("filter"),
+            interner.intern("filterNot"),
             interner.intern("any"),
             interner.intern("none"),
             interner.intern("all"),
@@ -1068,6 +1081,7 @@ extension CallTypeChecker {
         let oneParamMembers: Set = [
             interner.intern("map"),
             interner.intern("filter"),
+            interner.intern("filterNot"),
             interner.intern("mapNotNull"),
             interner.intern("forEach"),
             interner.intern("flatMap"),

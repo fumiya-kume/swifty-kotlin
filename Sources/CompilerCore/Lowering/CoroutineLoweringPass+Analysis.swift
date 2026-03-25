@@ -433,7 +433,7 @@ extension CoroutineLoweringPass {
             Set([lhs, rhs])
         case let .binary(_, lhs, rhs, _):
             Set([lhs, rhs])
-        case let .call(_, _, arguments, _, _, _, _):
+        case let .call(_, _, arguments, _, _, _, _, _):
             Set(arguments)
         case let .virtualCall(_, _, receiver, arguments, _, _, _, _):
             Set([receiver] + arguments)
@@ -458,7 +458,7 @@ extension CoroutineLoweringPass {
             return Set([result])
         case let .binary(_, _, _, result):
             return Set([result])
-        case let .call(_, _, _, result, _, thrownResult, _):
+        case let .call(_, _, _, result, _, thrownResult, _, _):
             var ids = Set<KIRExprID>()
             if let result { ids.insert(result) }
             if let thrownResult { ids.insert(thrownResult) }
@@ -522,7 +522,7 @@ extension CoroutineLoweringPass {
 
     func extractCallInfo(_ instruction: KIRInstruction) -> CallInfo? {
         switch instruction {
-        case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
+        case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
             CallInfo(
                 symbol: symbol,
                 callee: callee,

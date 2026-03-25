@@ -220,9 +220,9 @@ extension ExprLowerer {
             // instructions that could throw.  If it does, wrap with throw-aware
             // routing; otherwise append directly to avoid unnecessary labels
             // and exception-slot overhead.
-            let hasThrowableCall = finallyInstructions.contains { instr in
+            let hasThrowableCall = finallyInstructions.contains { (instr: KIRInstruction) -> Bool in
                 switch instr {
-                case .call(_, _, _, _, _, _, _),
+                case .call(_, _, _, _, _, _, _, _),
                      .virtualCall(_, _, _, _, _, _, _, _),
                      .rethrow:
                     return true
@@ -413,11 +413,17 @@ extension ExprLowerer {
                     )
                     let exprType = sema.bindings.exprTypes[exprID]
                     if let exprType, exprType != stringType {
-                        let tag: Int64 = switch sema.types.kind(of: exprType) {
+                        let tag: Int64 = switch sema.types.kind(of: sema.types.makeNonNullable(exprType)) {
                         case .primitive(.boolean, _):
                             2
                         case .primitive(.string, _):
                             3
+                        case .primitive(.char, _):
+                            4
+                        case .primitive(.float, _):
+                            5
+                        case .primitive(.double, _):
+                            6
                         default:
                             1
                         }

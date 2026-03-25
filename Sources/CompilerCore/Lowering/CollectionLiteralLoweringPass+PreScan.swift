@@ -44,7 +44,7 @@ extension CollectionLiteralLoweringPass {
             switch instruction {
             case let .constValue(result, .symbolRef(symbol)):
                 exprSymbolMap[result.rawValue] = symbol
-            case let .call(symbol, callee, arguments, _, _, _, _):
+            case let .call(symbol, callee, arguments, _, _, _, _, _):
                 if symbol == nil, lookup.builderDSLNames.contains(callee), !arguments.isEmpty {
                     entries.append((argID: arguments[0].rawValue, callee: callee))
                 }
@@ -95,7 +95,7 @@ extension CollectionLiteralLoweringPass {
         var ulongValuedExprIDs: Set<Int32> = []
         for instruction in function.body {
             switch instruction {
-            case let .call(_, callee, _, result, _, _, _):
+            case let .call(_, callee, _, result, _, _, _, _):
                 if callee == lookup.kkBoxCharName, let result {
                     charValuedExprIDs.insert(result.rawValue)
                 }
@@ -126,7 +126,7 @@ extension CollectionLiteralLoweringPass {
 
         for instruction in function.body {
             switch instruction {
-            case let .call(_, callee, arguments, result, _, _, _):
+            case let .call(_, callee, arguments, result, _, _, _, _):
                 handleCallInstruction(
                     callee: callee, arguments: arguments, result: result,
                     lookup: lookup, listExprIDs: &listExprIDs,
@@ -551,7 +551,7 @@ extension CollectionLiteralLoweringPass {
         var referencedExprIDs: Set<Int32> = []
         for instruction in function.body {
             switch instruction {
-            case let .call(_, _, arguments, result, _, _, _):
+            case let .call(_, _, arguments, result, _, _, _, _):
                 for arg in arguments { referencedExprIDs.insert(arg.rawValue) }
                 if let result { referencedExprIDs.insert(result.rawValue) }
             case let .virtualCall(_, _, receiver, arguments, result, _, _, _):
@@ -600,7 +600,7 @@ extension CollectionLiteralLoweringPass {
         var referencedExprIDs: Set<Int32> = []
         for instruction in function.body {
             switch instruction {
-            case let .call(_, _, arguments, result, _, _, _):
+            case let .call(_, _, arguments, result, _, _, _, _):
                 for arg in arguments { referencedExprIDs.insert(arg.rawValue) }
                 if let result { referencedExprIDs.insert(result.rawValue) }
             case let .virtualCall(_, _, receiver, arguments, result, _, _, _):

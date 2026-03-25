@@ -695,7 +695,7 @@ extension CallTypeChecker {
         // Defer inference of lambda arguments for collection HOFs so that the
         // contextual function type (and thus implicit `it`) is available.
         let collectionHOFNames: Set = [
-            "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
+            "map", "filter", "filterNot", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
             "fold", "reduce", "reduceOrNull", "foldIndexed", "reduceIndexed", "scan", "runningFold", "runningReduce", "scanReduce", "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "associateByTo", "associateWithTo", "groupByTo", "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
@@ -779,7 +779,7 @@ extension CallTypeChecker {
 
             let resultType: TypeID
             switch calleeStr {
-            case "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
+            case "map", "filter", "filterNot", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
                  "count", "first", "last", "find", "associateBy", "associateWith", "associate",
                  "mapValues", "mapKeys", "takeWhile", "dropWhile", "onEach":
                 // any(), none(), count(), first(), last() can be called with no args
@@ -792,7 +792,7 @@ extension CallTypeChecker {
                     }
                 } else {
                     let lambdaReturnType: TypeID = switch calleeStr {
-                    case "filter", "any", "none", "all", "takeWhile", "dropWhile": sema.types.booleanType
+                    case "filter", "filterNot", "any", "none", "all", "takeWhile", "dropWhile": sema.types.booleanType
                     case "forEach", "onEach": sema.types.unitType
                     case "count": sema.types.booleanType
                     case "mapNotNull": sema.types.nullableAnyType
@@ -829,7 +829,7 @@ extension CallTypeChecker {
                                 resultType = sema.types.anyType
                             }
                         }
-                    case "filter":
+                    case "filter", "filterNot":
                         resultType = isSyntheticSequenceReceiver ? sema.types.anyType : receiverType
                     case "takeWhile", "dropWhile":
                         resultType = receiverType
@@ -1832,12 +1832,18 @@ extension CallTypeChecker {
             }
         }
 
-        // Primitive infix member functions: Int/Long/UInt/ULong.and|or|xor|shl|shr|ushr (EXPR-003, TYPE-005)
+        // Primitive arithmetic/infix member functions on numeric receivers
+        // (e.g. Int.times(Int), Long.plus(Long), UInt.shl(Int)).
         if args.count == 1 {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
             let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
+            let floatType = sema.types.make(.primitive(.float, .nonNull))
+            let doubleType = sema.types.make(.primitive(.double, .nonNull))
+            let ubyteType = sema.types.make(.primitive(.ubyte, .nonNull))
+            let ushortType = sema.types.make(.primitive(.ushort, .nonNull))
+            let charType = sema.types.charType
             let receiverForCheck = safeCall
                 ? sema.types.makeNonNullable(lookupReceiverType)
                 : lookupReceiverType
@@ -1845,6 +1851,81 @@ extension CallTypeChecker {
             let isPrimitiveReceiver = receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType
             let isIntegerRhs = rhsType == intType || rhsType == longType || rhsType == uintType || rhsType == ulongType
             switch interner.resolve(calleeName) {
+            case "plus", "minus", "times", "div", "rem", "mod":
+                let resultType: TypeID?
+                switch interner.resolve(calleeName) {
+                case "plus":
+                    if receiverForCheck == charType && rhsType == intType {
+                        resultType = charType
+                    } else if receiverForCheck == doubleType || rhsType == doubleType {
+                        resultType = doubleType
+                    } else if receiverForCheck == floatType || rhsType == floatType {
+                        resultType = floatType
+                    } else if receiverForCheck == longType || rhsType == longType {
+                        resultType = longType
+                    } else if receiverForCheck == ulongType || rhsType == ulongType {
+                        resultType = ulongType
+                    } else if receiverForCheck == uintType || rhsType == uintType {
+                        resultType = uintType
+                    } else if receiverForCheck == ushortType || rhsType == ushortType {
+                        resultType = ushortType
+                    } else if receiverForCheck == ubyteType || rhsType == ubyteType {
+                        resultType = ubyteType
+                    } else if receiverForCheck == intType || rhsType == intType || receiverForCheck == charType {
+                        resultType = intType
+                    } else {
+                        resultType = nil
+                    }
+                case "minus":
+                    if receiverForCheck == charType && rhsType == charType {
+                        resultType = intType
+                    } else if receiverForCheck == charType && rhsType == intType {
+                        resultType = charType
+                    } else if receiverForCheck == doubleType || rhsType == doubleType {
+                        resultType = doubleType
+                    } else if receiverForCheck == floatType || rhsType == floatType {
+                        resultType = floatType
+                    } else if receiverForCheck == longType || rhsType == longType {
+                        resultType = longType
+                    } else if receiverForCheck == ulongType || rhsType == ulongType {
+                        resultType = ulongType
+                    } else if receiverForCheck == uintType || rhsType == uintType {
+                        resultType = uintType
+                    } else if receiverForCheck == ushortType || rhsType == ushortType {
+                        resultType = ushortType
+                    } else if receiverForCheck == ubyteType || rhsType == ubyteType {
+                        resultType = ubyteType
+                    } else if receiverForCheck == intType {
+                        resultType = intType
+                    } else {
+                        resultType = nil
+                    }
+                default:
+                    if receiverForCheck == doubleType || rhsType == doubleType {
+                        resultType = doubleType
+                    } else if receiverForCheck == floatType || rhsType == floatType {
+                        resultType = floatType
+                    } else if receiverForCheck == longType || rhsType == longType {
+                        resultType = longType
+                    } else if receiverForCheck == ulongType || rhsType == ulongType {
+                        resultType = ulongType
+                    } else if receiverForCheck == uintType || rhsType == uintType {
+                        resultType = uintType
+                    } else if receiverForCheck == ushortType || rhsType == ushortType {
+                        resultType = ushortType
+                    } else if receiverForCheck == ubyteType || rhsType == ubyteType {
+                        resultType = ubyteType
+                    } else if receiverForCheck == intType {
+                        resultType = intType
+                    } else {
+                        resultType = nil
+                    }
+                }
+                if let resultType {
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
             case "and", "or", "xor":
                 if isPrimitiveReceiver,
                    isIntegerRhs
@@ -2069,18 +2150,46 @@ extension CallTypeChecker {
 
         var isSuperCall = false
         var supertypeSymbols: Set<SymbolID> = []
+        var qualifiedSuperType: SymbolID? = nil
         if !safeCall {
-            isSuperCall = ast.arena.expr(receiverID).map { if case .superRef = $0 { true } else { false } } ?? false
-            if isSuperCall, let currentReceiverType = ctx.implicitReceiverType,
-               let classSymbol = driver.helpers.nominalSymbol(of: currentReceiverType, types: sema.types)
-            {
-                var queue = sema.symbols.directSupertypes(for: classSymbol)
-                var visited: Set<SymbolID> = [classSymbol]
-                while !queue.isEmpty {
-                    let next = queue.removeFirst()
-                    if visited.insert(next).inserted {
-                        supertypeSymbols.insert(next)
-                        queue.append(contentsOf: sema.symbols.directSupertypes(for: next))
+            if let superExpr = ast.arena.expr(receiverID), case let .superRef(interfaceQualifier, _) = superExpr {
+                isSuperCall = true
+                if let currentReceiverType = ctx.implicitReceiverType,
+                   let classSymbol = driver.helpers.nominalSymbol(of: currentReceiverType, types: sema.types) {
+                    
+                    // Handle qualified super: super<Interface>
+                    if let qualifier = interfaceQualifier {
+                        let qualifierStr = ctx.interner.resolve(qualifier)
+                        let directSupertypes = sema.symbols.directSupertypes(for: classSymbol)
+                        
+                        // Find the specified interface in direct supertypes
+                        for superID in directSupertypes {
+                            guard let superSym = sema.symbols.symbol(superID) else { continue }
+                            if superSym.kind == .interface && ctx.interner.resolve(superSym.name) == qualifierStr {
+                                qualifiedSuperType = superID
+                                supertypeSymbols.insert(superID)
+                                break
+                            }
+                        }
+                        
+                        if qualifiedSuperType == nil {
+                            ctx.semaCtx.diagnostics.error(
+                                "KSWIFTK-SEMA-0054",
+                                "No type '\(qualifierStr)' found in direct supertypes for qualified 'super'.",
+                                range: ast.arena.exprRange(receiverID)
+                            )
+                        }
+                    } else {
+                        // Handle unqualified super: search all supertypes
+                        var queue = sema.symbols.directSupertypes(for: classSymbol)
+                        var visited: Set<SymbolID> = [classSymbol]
+                        while !queue.isEmpty {
+                            let next = queue.removeFirst()
+                            if visited.insert(next).inserted {
+                                supertypeSymbols.insert(next)
+                                queue.append(contentsOf: sema.symbols.directSupertypes(for: next))
+                            }
+                        }
                     }
                 }
             }
@@ -2405,11 +2514,13 @@ extension CallTypeChecker {
         } else {
             // Normal instance receiver: use standard member lookup with
             // companion fallback via collectMemberFunctionCandidates.
+            let allowedOwnerSymbols = isSuperCall && !supertypeSymbols.isEmpty ? 
+                (qualifiedSuperType != nil ? [qualifiedSuperType!] : supertypeSymbols) : nil
             let memberCandidates = driver.helpers.collectMemberFunctionCandidates(
                 named: calleeName,
                 receiverType: memberLookupType,
                 sema: sema,
-                allowedOwnerSymbols: isSuperCall && !supertypeSymbols.isEmpty ? supertypeSymbols : nil
+                allowedOwnerSymbols: allowedOwnerSymbols
             )
             if !memberCandidates.isEmpty {
                 // Check if the found candidates belong to a companion object so we
@@ -4469,7 +4580,21 @@ extension CallTypeChecker {
                 let elementTypes = args.map { argument in
                     driver.inferExpr(argument.expr, ctx: ctx, locals: &locals, expectedType: nil)
                 }
-                return elementTypes.isEmpty ? sema.types.anyType : sema.types.lub(elementTypes)
+                guard !elementTypes.isEmpty else {
+                    return sema.types.anyType
+                }
+                let hasNullableElement = elementTypes.contains { inferredType in
+                    inferredType == sema.types.nullableNothingType
+                        || sema.types.makeNonNullable(inferredType) != inferredType
+                }
+                let concreteTypes = elementTypes.compactMap { inferredType -> TypeID? in
+                    if inferredType == sema.types.nullableNothingType {
+                        return nil
+                    }
+                    return sema.types.makeNonNullable(inferredType)
+                }
+                let baseType = concreteTypes.isEmpty ? sema.types.anyType : sema.types.lub(concreteTypes)
+                return hasNullableElement ? sema.types.makeNullable(baseType) : baseType
             }
             let generateSequenceName = interner.intern("generateSequence")
             if name == generateSequenceName, let firstArg = args.first {

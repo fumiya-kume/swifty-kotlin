@@ -57,7 +57,7 @@ final class PropertyLoweringPass: LoweringPass {
             loweredBody.reserveCapacity(function.body.count)
 
             for instruction in function.body {
-                guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall) = instruction else {
+                guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType) = instruction else {
                     // Rewrite loadGlobal for getter-only computed properties
                     // into a getter call.  ExprLowerer emits loadGlobal for
                     // top-level property references; without this rewrite the

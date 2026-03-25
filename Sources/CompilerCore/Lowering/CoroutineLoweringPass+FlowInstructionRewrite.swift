@@ -134,7 +134,7 @@ extension CoroutineLoweringPass {
 
         for instruction in originalBody {
             switch instruction {
-            case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
+            case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
                 if callee == names.flow, arguments.count == 1, symbol == nil {
                     loweredBody.append(.call(
                         symbol: nil,
@@ -143,7 +143,8 @@ extension CoroutineLoweringPass {
                         result: result,
                         canThrow: false,
                         thrownResult: nil,
-                        isSuperCall: isSuperCall
+                        isSuperCall: isSuperCall,
+                        qualifiedSuperType: qualifiedSuperType
                     ))
                     continue
                 }

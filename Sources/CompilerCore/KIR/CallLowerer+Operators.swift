@@ -273,11 +273,7 @@ extension CallLowerer {
             if rhsExprType == stringType || rhsExprType == nullableStringType {
                 effectiveRHS = rhsID
             } else {
-                let tag: Int64 = switch sema.types.kind(of: rhsExprType ?? sema.types.anyType) {
-                case .primitive(.boolean, _): 2
-                case .primitive(.string, _): 3
-                default: 1
-                }
+                let tag = anyFallbackTag(for: rhsExprType ?? sema.types.anyType, sema: sema)
                 let tagExpr = arena.appendExpr(.intLiteral(tag), type: intType)
                 instructions.append(.constValue(result: tagExpr, value: .intLiteral(tag)))
                 let converted = arena.appendExpr(
@@ -299,11 +295,7 @@ extension CallLowerer {
             if lhsExprType == stringType || lhsExprType == nullableStringType {
                 effectiveLHS = lhsID
             } else {
-                let tag: Int64 = switch sema.types.kind(of: lhsExprType ?? sema.types.anyType) {
-                case .primitive(.boolean, _): 2
-                case .primitive(.string, _): 3
-                default: 1
-                }
+                let tag = anyFallbackTag(for: lhsExprType ?? sema.types.anyType, sema: sema)
                 let tagExpr = arena.appendExpr(.intLiteral(tag), type: intType)
                 instructions.append(.constValue(result: tagExpr, value: .intLiteral(tag)))
                 let converted = arena.appendExpr(
@@ -587,6 +579,7 @@ extension CallLowerer {
                 receiver: MemberCallReceiver(expr: receiverExpr, loweredID: receiverID),
                 result: result,
                 isSuperCall: sema.bindings.isSuperCallExpr(exprID),
+                qualifiedSuperType: nil,
                 sema: sema,
                 arena: arena,
                 interner: interner,
@@ -699,6 +692,7 @@ extension CallLowerer {
                 receiver: MemberCallReceiver(expr: receiverExpr, loweredID: receiverID),
                 result: callResult,
                 isSuperCall: sema.bindings.isSuperCallExpr(exprID),
+                qualifiedSuperType: nil,
                 sema: sema,
                 arena: arena,
                 interner: interner,

@@ -157,4 +157,3 @@ fun main() {
     mutableList.clear()
     println("afterClear.lastOrNull(): ${mutableList.lastOrNull()}")
 }
-// SKIP-DIFF: lastOrNull parity pending

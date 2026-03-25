@@ -20,7 +20,7 @@ final class OperatorLoweringPass: LoweringPass {
                 switch instruction {
                 case .binary, .unary, .nullAssert:
                     return true
-                case let .call(_, callee, _, _, _, _, _):
+                case let .call(_, callee, _, _, _, _, _, _):
                     if callee == printlnCallee || callee == kkPrintlnAnyCallee {
                         return true
                     }
@@ -72,7 +72,7 @@ final class OperatorLoweringPass: LoweringPass {
                     newBody.append(.call(symbol: nil, callee: callee, arguments: [operand], result: result, canThrow: false, thrownResult: nil))
                 case let .nullAssert(operand, result):
                     newBody.append(.call(symbol: nil, callee: ctx.interner.intern("kk_op_notnull"), arguments: [operand], result: result, canThrow: true, thrownResult: nil))
-                case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
+                case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
                     if callee == printlnCallee || callee == kkPrintlnAnyCallee,
                        arguments.count == 1,
                        tryLowerPrintlnCall(
@@ -257,7 +257,7 @@ final class OperatorLoweringPass: LoweringPass {
     ) -> TypeID? {
         for instruction in instructions.reversed() {
             switch instruction {
-            case let .call(_, callee, _, result, _, _, _):
+            case let .call(_, callee, _, result, _, _, _, _):
                 if result == exprID {
                     if callee == conversionCallees.intToFloat || callee == conversionCallees.intToFloatBits {
                         return types.make(.primitive(.float, .nonNull))
@@ -301,7 +301,7 @@ final class OperatorLoweringPass: LoweringPass {
     ) -> Bool {
         for instruction in instructions.reversed() {
             switch instruction {
-            case let .call(_, callee, _, result, _, _, _):
+            case let .call(_, callee, _, result, _, _, _, _):
                 if result == exprID {
                     return rangeCallees.contains(callee)
                 }

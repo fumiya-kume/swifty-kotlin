@@ -14,6 +14,16 @@ public func kk_any_to_string(_ value: Int, _ tag: Int32) -> UnsafeMutableRawPoin
     if tag == 2 {
         return runtimeMakeStringPointer(value != 0 ? "true" : "false")
     }
+    if tag == 4 {
+        let rendered = runtimeRenderTaggedChar(value)
+        return runtimeMakeStringPointer(rendered)
+    }
+    if tag == 5 {
+        return runtimeMakeStringPointer(String(runtimeTaggedFloatValue(value)))
+    }
+    if tag == 6 {
+        return runtimeMakeStringPointer(String(runtimeTaggedDoubleValue(value)))
+    }
     if tag == 3,
        let pointer = UnsafeMutableRawPointer(bitPattern: value),
        extractString(from: pointer) != nil
@@ -21,6 +31,42 @@ public func kk_any_to_string(_ value: Int, _ tag: Int32) -> UnsafeMutableRawPoin
         return pointer
     }
     return runtimeMakeStringPointer(runtimeElementToString(value))
+}
+
+private func runtimeRenderTaggedChar(_ value: Int) -> String {
+    if let ptr = UnsafeMutableRawPointer(bitPattern: value) {
+        let isObjectPointer = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if isObjectPointer, let charBox = tryCast(ptr, to: RuntimeCharBox.self) {
+            return UnicodeScalar(charBox.value).map(String.init) ?? "?"
+        }
+    }
+    return UnicodeScalar(value).map(String.init) ?? "?"
+}
+
+private func runtimeTaggedFloatValue(_ value: Int) -> Float {
+    if let ptr = UnsafeMutableRawPointer(bitPattern: value) {
+        let isObjectPointer = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if isObjectPointer, let floatBox = tryCast(ptr, to: RuntimeFloatBox.self) {
+            return floatBox.value
+        }
+    }
+    return kk_bits_to_float(value)
+}
+
+private func runtimeTaggedDoubleValue(_ value: Int) -> Double {
+    if let ptr = UnsafeMutableRawPointer(bitPattern: value) {
+        let isObjectPointer = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if isObjectPointer, let doubleBox = tryCast(ptr, to: RuntimeDoubleBox.self) {
+            return doubleBox.value
+        }
+    }
+    return kk_bits_to_double(value)
 }
 
 private func runtimeStringHashCode(_ value: String) -> Int {

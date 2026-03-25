@@ -27,7 +27,7 @@ final class FlowLoweringPass: LoweringPass {
             }
             for instruction in function.body {
                 switch instruction {
-                case let .call(_, callee, _, _, _, _, _):
+                case let .call(_, callee, _, _, _, _, _, _):
                     if calleeNames.contains(callee) {
                         return true
                     }
@@ -81,7 +81,7 @@ final class FlowLoweringPass: LoweringPass {
             }
             for instruction in function.body {
                 switch instruction {
-                case let .call(_, callee, arguments, _, _, _, _):
+                case let .call(_, callee, arguments, _, _, _, _, _):
                     guard callee == flowName, arguments.count == 1 else {
                         continue
                     }
@@ -144,7 +144,7 @@ final class FlowLoweringPass: LoweringPass {
                     }
                     loweredBody.append(instruction)
 
-                case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
+                case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
                     if callee == collectName,
                        arguments.count == 1,
                        let flowExpr = activeFlowExpr,

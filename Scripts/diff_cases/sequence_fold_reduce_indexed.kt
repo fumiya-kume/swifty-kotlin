@@ -17,4 +17,3 @@ fun main() {
         .foldIndexed("") { index, acc, element -> acc + "$index:$element " }
     println(words)  // "0:a 1:b 2:c "
 }
-// SKIP-DIFF: sequence HOF lowering parity pending

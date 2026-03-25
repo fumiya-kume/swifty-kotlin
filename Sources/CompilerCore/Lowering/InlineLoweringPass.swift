@@ -179,7 +179,7 @@ final class InlineLoweringPass: LoweringPass {
                 aliases.removeValue(forKey: defined)
             }
 
-            guard case let .call(symbol, callee, arguments, result, _, _, _) = instruction else {
+            guard case let .call(symbol, callee, arguments, result, _, _, _, _) = instruction else {
                 loweredBody.append(instruction)
                 continue
             }
@@ -458,7 +458,7 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
-            case let .call(symbol, callee, args, result, canThrow, thrownResult, isSuperCall):
+            case let .call(symbol, callee, args, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
                 // Attempt to inline a lambda argument passed to this inline function.
                 let resolvedLambdaParamSymbol: SymbolID? = if let symbol, lambdaParamSymbols.contains(symbol) {
                     symbol
@@ -814,7 +814,7 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
-            case let .call(symbol, callee, args, result, canThrow, thrownResult, isSuperCall):
+            case let .call(symbol, callee, args, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
                 let loweredResult = result.map { expr -> KIRExprID in
                     let cloned = cloneExpr(expr, in: module.arena)
                     localExprMap[expr] = cloned
@@ -987,7 +987,7 @@ final class InlineLoweringPass: LoweringPass {
                 result: result
             )
 
-        case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
+        case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
             .call(
                 symbol: symbol,
                 callee: callee,
@@ -995,7 +995,8 @@ final class InlineLoweringPass: LoweringPass {
                 result: result,
                 canThrow: canThrow,
                 thrownResult: thrownResult,
-                isSuperCall: isSuperCall
+                isSuperCall: isSuperCall,
+                qualifiedSuperType: qualifiedSuperType
             )
 
         case let .virtualCall(symbol, callee, receiver, arguments, result, canThrow, thrownResult, dispatch):
@@ -1077,7 +1078,7 @@ final class InlineLoweringPass: LoweringPass {
             result
         case let .binary(_, _, _, result):
             result
-        case let .call(_, _, _, result, _, _, _):
+        case let .call(_, _, _, result, _, _, _, _):
             result
         case let .virtualCall(_, _, _, _, result, _, _, _):
             result

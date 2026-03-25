@@ -147,7 +147,7 @@ final class TailrecLoweringPass: LoweringPass {
             }
 
             // --- Value-returning tail call: call(self, args) -> result, then returnValue(result) ---
-            if case let .call(symbol, _, arguments, callResult?, _, _, _) = instruction,
+            if case let .call(symbol, _, arguments, callResult?, _, _, _, _) = instruction,
                isSelfRecursiveCall(symbol: symbol, functionIdentity: functionIdentity),
                instructionIndex + 1 < body.count,
                isReturnOfResult(body[instructionIndex + 1], callResult: callResult)
@@ -178,7 +178,7 @@ final class TailrecLoweringPass: LoweringPass {
             }
 
             // --- Unit-returning tail call: call(self, args, nil), then returnUnit ---
-            if case let .call(symbol, _, arguments, nil, _, _, _) = instruction,
+            if case let .call(symbol, _, arguments, nil, _, _, _, _) = instruction,
                isSelfRecursiveCall(symbol: symbol, functionIdentity: functionIdentity),
                instructionIndex + 1 < body.count,
                isReturnUnitInstruction(body[instructionIndex + 1])

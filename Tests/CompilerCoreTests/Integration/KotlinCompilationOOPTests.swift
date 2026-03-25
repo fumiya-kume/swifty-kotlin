@@ -75,6 +75,49 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
+    func testCompile_class_sealedImplicitlyAbstract() throws {
+        try assertKotlinCompilesToKIR("""
+        sealed class Result {
+            abstract fun getValue(): String
+        }
+        class Success(val data: String) : Result() {
+            override fun getValue(): String = data
+        }
+        class Error(val message: String) : Result() {
+            override fun getValue(): String = message
+        }
+        fun main() {
+            val s = Success("test")
+            s.getValue()
+        }
+        """)
+    }
+
+    func testCompile_class_abstractInheritanceChain() throws {
+        try assertKotlinCompilesToKIR("""
+        abstract class Animal {
+            abstract fun speak(): String
+            abstract val species: String
+        }
+        abstract class Pet : Animal() {
+            abstract fun name(): String
+            abstract val owner: String
+            override fun speak(): String = "pet sound"
+        }
+        class Dog : Pet() {
+            override fun speak(): String = "woof"
+            override fun name(): String = "dog"
+            override val species: String = "canine"
+            override val owner: String = "human"
+        }
+        fun main() {
+            val d = Dog()
+            d.speak()
+            d.name()
+        }
+        """)
+    }
+
     func testCompile_class_secondaryConstructor() throws {
         try assertKotlinCompilesToKIR("""
         class Point(val x: Int, val y: Int) {

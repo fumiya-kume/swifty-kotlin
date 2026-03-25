@@ -39,6 +39,11 @@ public extension RuntimeABIExterns {
         kk_set_containsAll,
         kk_set_is_empty,
         kk_set_toList,
+        kk_set_first,
+        kk_set_firstOrNull,
+        kk_set_last,
+        kk_set_lastOrNull,
+        kk_set_singleOrNull,
         kk_set_sorted,
         kk_set_sortedDescending,
         kk_collection_toList,
@@ -527,6 +532,36 @@ public extension RuntimeABIExterns {
 
     static let kk_set_toList = ExternDecl(
         name: "kk_set_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_first = ExternDecl(
+        name: "kk_set_first",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_firstOrNull = ExternDecl(
+        name: "kk_set_firstOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_last = ExternDecl(
+        name: "kk_set_last",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_lastOrNull = ExternDecl(
+        name: "kk_set_lastOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_singleOrNull = ExternDecl(
+        name: "kk_set_singleOrNull",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )

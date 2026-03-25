@@ -250,15 +250,17 @@ public final class CodegenPhase: CompilerPhase {
             return "unary op=\(op) operand=\(operand.rawValue) result=\(result.rawValue)"
         case let .nullAssert(operand, result):
             return "nullAssert operand=\(operand.rawValue) result=\(result.rawValue)"
-        case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
+        case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
             let args = arguments.map { String($0.rawValue) }.joined(separator: ",")
             let symbolValue = symbol.map { String($0.rawValue) } ?? "_"
             let resultValue = result.map { String($0.rawValue) } ?? "_"
             let thrownResultValue = thrownResult.map { String($0.rawValue) } ?? "_"
+            let qualifiedSuperValue = qualifiedSuperType.map { String($0.rawValue) } ?? "_"
             let calleeName = base64Encode(interner.resolve(callee))
             return "call symbol=\(symbolValue) calleeB64=\(calleeName) args=[\(args)]"
                 + " result=\(resultValue) canThrow=\(canThrow ? 1 : 0)"
                 + " thrownResult=\(thrownResultValue) isSuperCall=\(isSuperCall ? 1 : 0)"
+                + " qualifiedSuperType=\(qualifiedSuperValue)"
         case let .virtualCall(symbol, callee, receiver, arguments, result, canThrow, thrownResult, dispatch):
             let args = arguments.map { String($0.rawValue) }.joined(separator: ",")
             let symbolValue = symbol.map { String($0.rawValue) } ?? "_"

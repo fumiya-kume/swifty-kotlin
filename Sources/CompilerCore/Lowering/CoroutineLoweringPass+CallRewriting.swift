@@ -164,7 +164,7 @@ extension CoroutineLoweringPass {
         loweredBody.reserveCapacity(function.body.count)
 
         for instruction in function.body {
-            guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall) = instruction else {
+            guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType) = instruction else {
                 loweredBody.append(instruction)
                 continue
             }
@@ -259,7 +259,7 @@ extension CoroutineLoweringPass {
                         symbolByExprRaw[to.rawValue] = symbol
                         propagated = true
                     }
-                case let .call(_, callee, arguments, result, _, _, _):
+                case let .call(_, callee, arguments, result, _, _, _, _):
                     guard callee == callableRefTagFunctionCallee,
                           let result,
                           let callableExpr = arguments.first,

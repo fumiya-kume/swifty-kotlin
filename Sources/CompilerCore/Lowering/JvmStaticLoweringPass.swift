@@ -239,7 +239,7 @@ final class JvmStaticLoweringPass: LoweringPass {
     ) -> [KIRInstruction] {
         body.map { instruction in
             switch instruction {
-            case let .call(symbol, callee: _, arguments, result, canThrow, thrownResult, isSuperCall):
+            case let .call(symbol, callee: _, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
                 guard let symbol, let wrapper = wrappersByOriginal[symbol] else {
                     return instruction
                 }
@@ -254,7 +254,8 @@ final class JvmStaticLoweringPass: LoweringPass {
                     result: result,
                     canThrow: canThrow,
                     thrownResult: thrownResult,
-                    isSuperCall: isSuperCall
+                    isSuperCall: isSuperCall,
+                    qualifiedSuperType: qualifiedSuperType
                 )
 
             case let .virtualCall(symbol, callee: _, receiver: _, arguments, result, canThrow, thrownResult, dispatch: _):

@@ -17,5 +17,13 @@ fun main() {
         toString()
     }
     println(result)
+    
+    // Test implicit it parameter with receiver
+    val numbers = listOf(1, 2, 3, 4, 5)
+    val doubled = numbers.map { it * 2 }
+    println("Doubled: $doubled")
+    
+    // Test non-capturing lambda optimization
+    val sum = numbers.reduce { acc, n -> acc + n }
+    println("Sum: $sum")
 }
-// SKIP-DIFF: lambda with receiver parity pending

@@ -96,7 +96,7 @@ public enum KIRInstruction: Equatable, Sendable {
     case binary(op: KIRBinaryOp, lhs: KIRExprID, rhs: KIRExprID, result: KIRExprID)
     case unary(op: KIRUnaryOp, operand: KIRExprID, result: KIRExprID)
     case nullAssert(operand: KIRExprID, result: KIRExprID)
-    case call(symbol: SymbolID?, callee: InternedString, arguments: [KIRExprID], result: KIRExprID?, canThrow: Bool, thrownResult: KIRExprID?, isSuperCall: Bool = false)
+    case call(symbol: SymbolID?, callee: InternedString, arguments: [KIRExprID], result: KIRExprID?, canThrow: Bool, thrownResult: KIRExprID?, isSuperCall: Bool = false, qualifiedSuperType: SymbolID? = nil)
     case virtualCall(symbol: SymbolID?, callee: InternedString, receiver: KIRExprID, arguments: [KIRExprID], result: KIRExprID?, canThrow: Bool, thrownResult: KIRExprID?, dispatch: KIRDispatchKind)
     case jumpIfNotNull(value: KIRExprID, target: Int32)
     case copy(from: KIRExprID, to: KIRExprID)
@@ -359,7 +359,7 @@ public final class KIRModule {
             return "unary \(op) r\(operand.rawValue) -> r\(result.rawValue)"
         case let .nullAssert(operand, result):
             return "nullAssert r\(operand.rawValue) -> r\(result.rawValue)"
-        case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
+        case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
             let calleeName = interner.resolve(callee)
             let args = arguments.map { "r\($0.rawValue)" }.joined(separator: ", ")
             let symbolLabel: String = if let symbol, let sym = symbols?.symbol(symbol) {
@@ -370,7 +370,8 @@ public final class KIRModule {
             let ret = result.map { "r\($0.rawValue)" } ?? "_"
             let thrownRet = thrownResult.map { "r\($0.rawValue)" } ?? "_"
             let superTag = isSuperCall ? " super=1" : ""
-            return "call \(calleeName) symbol=\(symbolLabel) args=[\(args)] ret=\(ret) thrown=\(canThrow) thrownResult=\(thrownRet)\(superTag)"
+            let qualifiedSuperTag = qualifiedSuperType.map { " qualifiedSuper=\($0.rawValue)" } ?? ""
+            return "call \(calleeName) symbol=\(symbolLabel) args=[\(args)] ret=\(ret) thrown=\(canThrow) thrownResult=\(thrownRet)\(superTag)\(qualifiedSuperTag)"
         case let .virtualCall(symbol, callee, receiver, arguments, result, canThrow, thrownResult, dispatch):
             let calleeName = interner.resolve(callee)
             let args = arguments.map { "r\($0.rawValue)" }.joined(separator: ", ")
