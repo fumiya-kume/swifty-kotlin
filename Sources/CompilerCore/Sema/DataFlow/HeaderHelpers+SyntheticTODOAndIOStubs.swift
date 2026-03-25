@@ -186,6 +186,12 @@ extension DataFlowSemaPhase {
             interner: interner,
             kotlinSequencesPkg: kotlinSequencesPkg
         )
+        registerSyntheticSequenceTerminalMembers(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinSequencesPkg: kotlinSequencesPkg
+        )
 
         // --- kotlin.system package functions (STDLIB-131/132) ---
         let kotlinSystemPkg = ensureSyntheticPackageHierarchy(
@@ -1694,6 +1700,62 @@ extension DataFlowSemaPhase {
             args: [.out(typeParamType)],
             nullability: .nonNull
         )))
+
+        // first(): T
+        registerSequenceMemberStub(
+            named: "first",
+            externalLinkName: "kk_sequence_first",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: typeParamType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // firstOrNull(): T?
+        registerSequenceMemberStub(
+            named: "firstOrNull",
+            externalLinkName: "kk_sequence_firstOrNull",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: types.makeNullable(typeParamType),
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // last(): T
+        registerSequenceMemberStub(
+            named: "last",
+            externalLinkName: "kk_sequence_last",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: typeParamType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // count(): Int
+        registerSequenceMemberStub(
+            named: "count",
+            externalLinkName: "kk_sequence_count",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: types.intType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
 
         // toSet(): Set<T>
         registerSequenceMemberStub(

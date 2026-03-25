@@ -323,9 +323,11 @@ extension CallTypeChecker {
         let isMutableListReceiver = isMutableListCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMutableMapReceiver = isMutableMapCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isListReceiver = isConcreteListLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
+        let isSequenceReceiver = isSequenceLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         guard isSupportedCollectionFallbackMember(
             calleeName,
             isListReceiver: isListReceiver,
+            isSequenceReceiver: isSequenceReceiver,
             isMapReceiver: isMapReceiver,
             isSetReceiver: isSetReceiver,
             isMutableListReceiver: isMutableListReceiver,
@@ -408,7 +410,6 @@ extension CallTypeChecker {
         // When the receiver is Sequence, sequence-returning operations (map,
         // filter, etc.) should return Sequence<E> so the KIR builder's
         // sequence HOF handler recognises chained calls (STDLIB-471).
-        let isSequenceReceiver = isSequenceLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         if isSequenceReceiver,
            isCollectionReturningMember(calleeName, isMapReceiver: false, isSetReceiver: false, interner: interner),
            resultType == sema.types.anyType
@@ -476,6 +477,7 @@ extension CallTypeChecker {
     func isSupportedCollectionFallbackMember(
         _ memberName: InternedString,
         isListReceiver: Bool,
+        isSequenceReceiver: Bool,
         isMapReceiver: Bool,
         isSetReceiver: Bool,
         isMutableListReceiver: Bool,
@@ -602,7 +604,7 @@ extension CallTypeChecker {
             return isListReceiver
         }
         if collectionSpecificMembers.contains(memberName) {
-            return isListReceiver
+            return isListReceiver || isSequenceReceiver
         }
         if memberName == knownNames.getOrElse {
             return isListReceiver || isMapReceiver

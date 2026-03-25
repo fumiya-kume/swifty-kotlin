@@ -3,6 +3,63 @@ import Foundation
 
 extension CollectionLiteralLoweringPass {
 
+    private func primitiveBoxCalleeName(
+        for type: TypeID,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> InternedString? {
+        switch types.kind(of: type) {
+        case .primitive(.int, _), .primitive(.uint, _), .primitive(.ubyte, _), .primitive(.ushort, _):
+            return interner.intern("kk_box_int")
+        case .primitive(.boolean, _):
+            return interner.intern("kk_box_bool")
+        case .primitive(.long, _), .primitive(.ulong, _):
+            return interner.intern("kk_box_long")
+        case .primitive(.float, _):
+            return interner.intern("kk_box_float")
+        case .primitive(.double, _):
+            return interner.intern("kk_box_double")
+        case .primitive(.char, _):
+            return interner.intern("kk_box_char")
+        default:
+            return nil
+        }
+    }
+
+    private func collectionFactoryElementType(
+        symbol: SymbolID?,
+        result: KIRExprID?,
+        module: KIRModule,
+        ctx: KIRContext
+    ) -> TypeID? {
+        if let symbol,
+           let returnType = ctx.sema?.symbols.functionSignature(for: symbol)?.returnType
+        {
+            return collectionElementType(from: returnType, ctx: ctx)
+        }
+        if let result,
+           let resultType = module.arena.exprType(result)
+        {
+            return collectionElementType(from: resultType, ctx: ctx)
+        }
+        return nil
+    }
+
+    private func collectionElementType(from type: TypeID, ctx: KIRContext) -> TypeID? {
+        guard let types = ctx.sema?.types else { return nil }
+        guard case let .classType(classType) = types.kind(of: type),
+              let firstArg = classType.args.first
+        else {
+            return nil
+        }
+        switch firstArg {
+        case let .invariant(elementType), let .out(elementType), let .in(elementType):
+            return elementType
+        case .star:
+            return types.nullableAnyType
+        }
+    }
+
     /// Returns true when the resolved symbol's FQN matches one of the known
     /// `kotlin.collections.*` factory FQNs.  When the symbol is nil (unresolved)
     /// we conservatively allow the rewrite – the name check already passed and
@@ -159,13 +216,45 @@ extension CollectionLiteralLoweringPass {
                             for (i, arg) in arguments.enumerated() {
                                 let idxExpr = module.arena.appendExpr(.intLiteral(Int64(i)), type: nil)
                                 loweredBody.append(.constValue(result: idxExpr, value: .intLiteral(Int64(i))))
+                                let storedArg: KIRExprID
+                                if let types = ctx.sema?.types,
+                                   let elementType = collectionFactoryElementType(
+                                       symbol: symbol,
+                                       result: result,
+                                       module: module,
+                                       ctx: ctx
+                                   ),
+                                   case .any = types.kind(of: elementType),
+                                   let argType = module.arena.exprType(arg),
+                                   let boxCallee = primitiveBoxCalleeName(
+                                       for: argType,
+                                       types: types,
+                                       interner: ctx.interner
+                                   )
+                                {
+                                    let boxedArg = module.arena.appendExpr(
+                                        .temporary(Int32(module.arena.expressions.count)),
+                                        type: elementType
+                                    )
+                                    loweredBody.append(.call(
+                                        symbol: nil,
+                                        callee: boxCallee,
+                                        arguments: [arg],
+                                        result: boxedArg,
+                                        canThrow: false,
+                                        thrownResult: nil
+                                    ))
+                                    storedArg = boxedArg
+                                } else {
+                                    storedArg = arg
+                                }
                                 let setResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)), type: nil
                                 )
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkArraySetName,
-                                    arguments: [arrayExpr, idxExpr, arg],
+                                    arguments: [arrayExpr, idxExpr, storedArg],
                                     result: setResult,
                                     canThrow: false,
                                     thrownResult: nil
