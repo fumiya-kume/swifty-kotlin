@@ -127,6 +127,20 @@ extension DataFlowSemaPhase {
             guard let sup = ctx.symbols.symbol(supertypeID) else {
                 continue
             }
+            
+            // STDLIB-DATA-014: Check if attempting to inherit from a data class
+            if sup.flags.contains(.dataType) {
+                let name = sup.fqName
+                    .map { ctx.interner.resolve($0) }
+                    .joined(separator: ".")
+                ctx.diagnostics.error(
+                    "KSWIFTK-SEMA-DATA-INHERIT",
+                    "Cannot inherit from data class '\(name)'. Data classes cannot be inherited from.",
+                    range: declRange
+                )
+                continue
+            }
+            
             if isSubclassable(sup) { continue }
             let name = sup.fqName
                 .map { ctx.interner.resolve($0) }

@@ -1134,7 +1134,15 @@ final class CallTypeChecker {
                 }
                 if let aliasSym = aliasSymbols.first {
                     // Expand the typealias to get the underlying class type
-                    let aliasTypeArgs = explicitTypeArgs.map { TypeArg.invariant($0) }
+                    let aliasTypeArgs: [TypeArg] = if !explicitTypeArgs.isEmpty {
+                        explicitTypeArgs.map { TypeArg.invariant($0) }
+                    } else if let expectedType,
+                              case let .classType(expectedClassType) = sema.types.kind(of: expectedType)
+                    {
+                        expectedClassType.args
+                    } else {
+                        []
+                    }
                     if let expanded = driver.helpers.expandTypeAlias(
                         aliasSym,
                         typeArgs: aliasTypeArgs,
@@ -1167,7 +1175,15 @@ final class CallTypeChecker {
                 }
                 if let aliasSym = aliasSymbols.first {
                     // Expand the typealias to get the underlying class type
-                    let aliasTypeArgs = explicitTypeArgs.map { TypeArg.invariant($0) }
+                    let aliasTypeArgs: [TypeArg] = if !explicitTypeArgs.isEmpty {
+                        explicitTypeArgs.map { TypeArg.invariant($0) }
+                    } else if let expectedType,
+                              case let .classType(expectedClassType) = sema.types.kind(of: expectedType)
+                    {
+                        expectedClassType.args
+                    } else {
+                        []
+                    }
                     if let expanded = driver.helpers.expandTypeAlias(
                         aliasSym,
                         typeArgs: aliasTypeArgs,

@@ -36,4 +36,3 @@ fun main() {
     println(original.toList())
     println(copy.toList())
 }
-// SKIP-DIFF: array copyOfRange parity pending

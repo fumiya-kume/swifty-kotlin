@@ -500,6 +500,76 @@ final class CoercionRuntimeTests: XCTestCase {
         XCTAssertEqual(kk_char_to_ulong(0x1F600), 0x1F600, "Unicode Char to ULong should be identity")
     }
 
+    // MARK: - Additional Conversion Tests (STDLIB-PRIM-002)
+
+    func testFloatToUIntConversion() {
+        XCTAssertEqual(kk_float_to_uint(kk_float_to_bits(3.14f)), 3, "Positive float should convert to uint")
+        XCTAssertEqual(kk_float_to_uint(kk_float_to_bits(-1.5f)), 0, "Negative float should convert to 0")
+        XCTAssertEqual(kk_float_to_uint(kk_float_to_bits(Float.nan)), 0, "NaN should convert to 0")
+        XCTAssertEqual(kk_float_to_uint(kk_float_to_bits(Float(UInt32.max))), Int(UInt32.max), "Max float should clamp to UInt32.max")
+    }
+
+    func testDoubleToUIntConversion() {
+        XCTAssertEqual(kk_double_to_uint(kk_double_to_bits(3.14)), 3, "Positive double should convert to uint")
+        XCTAssertEqual(kk_double_to_uint(kk_double_to_bits(-1.5)), 0, "Negative double should convert to 0")
+        XCTAssertEqual(kk_double_to_uint(kk_double_to_bits(Double.nan)), 0, "NaN should convert to 0")
+        XCTAssertEqual(kk_double_to_uint(kk_double_to_bits(Double(UInt32.max))), Int(UInt32.max), "Max double should clamp to UInt32.max")
+    }
+
+    func testFloatToULongConversion() {
+        XCTAssertEqual(kk_float_to_ulong(kk_float_to_bits(3.14f)), 3, "Positive float should convert to ulong")
+        XCTAssertEqual(kk_float_to_ulong(kk_float_to_bits(-1.5f)), 0, "Negative float should convert to 0")
+        XCTAssertEqual(kk_float_to_ulong(kk_float_to_bits(Float.nan)), 0, "NaN should convert to 0")
+    }
+
+    func testDoubleToULongConversion() {
+        XCTAssertEqual(kk_double_to_ulong(kk_double_to_bits(3.14)), 3, "Positive double should convert to ulong")
+        XCTAssertEqual(kk_double_to_ulong(kk_double_to_bits(-1.5)), 0, "Negative double should convert to 0")
+        XCTAssertEqual(kk_double_to_ulong(kk_double_to_bits(Double.nan)), 0, "NaN should convert to 0")
+    }
+
+    func testByteToUIntConversion() {
+        XCTAssertEqual(kk_byte_to_uint(100), 100, "Positive byte should convert to uint")
+        XCTAssertEqual(kk_byte_to_uint(-5), 251, "Negative byte should convert using two's complement")
+    }
+
+    func testShortToUIntConversion() {
+        XCTAssertEqual(kk_short_to_uint(1000), 1000, "Positive short should convert to uint")
+        XCTAssertEqual(kk_short_to_uint(-5), 65531, "Negative short should convert using two's complement")
+    }
+
+    func testByteToULongConversion() {
+        XCTAssertEqual(kk_byte_to_ulong(100), 100, "Positive byte should convert to ulong")
+        XCTAssertEqual(kk_byte_to_ulong(-5), 251, "Negative byte should convert using two's complement")
+    }
+
+    func testShortToULongConversion() {
+        XCTAssertEqual(kk_short_to_ulong(1000), 1000, "Positive short should convert to ulong")
+        XCTAssertEqual(kk_short_to_ulong(-5), 65531, "Negative short should convert using two's complement")
+    }
+
+    func testByteToCharConversion() {
+        XCTAssertEqual(kk_byte_to_char(65), 65, "Valid ASCII should convert to char")
+        XCTAssertEqual(kk_byte_to_char(-5), 0xFFFB, "Negative byte should truncate to 16 bits")
+    }
+
+    func testShortToCharConversion() {
+        XCTAssertEqual(kk_short_to_char(65), 65, "Valid ASCII should convert to char")
+        XCTAssertEqual(kk_short_to_char(0x1F600), 0xF600, "Value should truncate to low 16 bits")
+    }
+
+    func testFloatToCharConversion() {
+        XCTAssertEqual(kk_float_to_char(kk_float_to_bits(65.0f)), 65, "Valid float should convert to char")
+        XCTAssertEqual(kk_float_to_char(kk_float_to_bits(Float.nan)), 0, "NaN should convert to 0")
+        XCTAssertEqual(kk_float_to_char(kk_float_to_bits(-1.0f)), 0, "Negative float should convert to 0")
+    }
+
+    func testDoubleToCharConversion() {
+        XCTAssertEqual(kk_double_to_char(kk_double_to_bits(65.0)), 65, "Valid double should convert to char")
+        XCTAssertEqual(kk_double_to_char(kk_double_to_bits(Double.nan)), 0, "NaN should convert to 0")
+        XCTAssertEqual(kk_double_to_char(kk_double_to_bits(-1.0)), 0, "Negative double should convert to 0")
+    }
+
     // MARK: - Cross-Type Conversion Tests
 
     func testCrossTypeUByteConversions() {

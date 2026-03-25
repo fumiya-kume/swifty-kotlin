@@ -204,4 +204,3 @@ fun main() {
     println("last windows: $lastWindows")
     println("last window size: ${lastWindows.last().size}")
 }
-// SKIP-DIFF: nested List.toString() parity for windowed outputs is still unstable

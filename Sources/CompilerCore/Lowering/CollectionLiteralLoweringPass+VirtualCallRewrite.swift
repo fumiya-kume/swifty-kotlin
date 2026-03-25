@@ -2030,18 +2030,31 @@ extension CollectionLiteralLoweringPass {
         let isCharRange = charRangeExprIDs.contains(receiver.rawValue)
         let isULongRange = ulongRangeExprIDs.contains(receiver.rawValue)
 
+        // step — simple property access (STDLIB-RANGE-037)
+        if callee == lookup.stepName, arguments.isEmpty {
+            let stepName = isULongRange ? lookup.kkULongRangeStepName : lookup.kkRangeStepName
+            loweredBody.append(.call(
+                symbol: nil, callee: stepName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
+            return true
+        }
+
         // first / last / count — simple property access (STDLIB-092)
         if callee == lookup.firstName, arguments.isEmpty {
+            let firstName = isULongRange ? lookup.kkULongRangeFirstName : lookup.kkRangeFirstName
             loweredBody.append(.call(
-                symbol: nil, callee: lookup.kkRangeFirstName,
+                symbol: nil, callee: firstName,
                 arguments: [receiver], result: result,
                 canThrow: false, thrownResult: nil
             ))
             return true
         }
         if callee == lookup.lastName, arguments.isEmpty {
+            let lastName = isULongRange ? lookup.kkULongRangeLastName : lookup.kkRangeLastName
             loweredBody.append(.call(
-                symbol: nil, callee: lookup.kkRangeLastName,
+                symbol: nil, callee: lastName,
                 arguments: [receiver], result: result,
                 canThrow: false, thrownResult: nil
             ))
@@ -2057,8 +2070,9 @@ extension CollectionLiteralLoweringPass {
         }
         // STDLIB-637: isEmpty / sum
         if callee == lookup.isEmptyName, arguments.isEmpty {
+            let isEmptyName = isULongRange ? lookup.kkULongRangeIsEmptyName : lookup.kkRangeIsEmptyName
             loweredBody.append(.call(
-                symbol: nil, callee: lookup.kkRangeIsEmptyName,
+                symbol: nil, callee: isEmptyName,
                 arguments: [receiver], result: result,
                 canThrow: false, thrownResult: nil
             ))
@@ -2073,11 +2087,11 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // contains — delegate to kk_op_contains (STDLIB-090)
+        // contains — delegate to kk_op_contains (STDLIB-090) or kk_ulong_range_contains (STDLIB-RANGE-037)
         if callee == lookup.containsName, arguments.count == 1 {
-            let kkContainsName = lookup.kkOpContainsName
+            let containsName = isULongRange ? lookup.kkULongRangeContainsName : lookup.kkOpContainsName
             loweredBody.append(.call(
-                symbol: nil, callee: kkContainsName,
+                symbol: nil, callee: containsName,
                 arguments: [receiver, arguments[0]], result: result,
                 canThrow: false, thrownResult: nil
             ))
@@ -2100,6 +2114,16 @@ extension CollectionLiteralLoweringPass {
                 canThrow: false, thrownResult: nil
             ))
             if let result { listExprIDs.insert(result.rawValue) }
+            return true
+        }
+
+        // toULongArray — returns a ULongArray (STDLIB-RANGE-037)
+        if callee == lookup.toULongArrayName, arguments.isEmpty, isULongRange {
+            loweredBody.append(.call(
+                symbol: nil, callee: lookup.kkULongRangeToULongArrayName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
             return true
         }
 
@@ -2136,8 +2160,9 @@ extension CollectionLiteralLoweringPass {
 
         // reversed — returns a range (STDLIB-093)
         if callee == lookup.reversedName, arguments.isEmpty {
+            let reversedName = isULongRange ? lookup.kkULongRangeReversedName : lookup.kkRangeReversedName
             loweredBody.append(.call(
-                symbol: nil, callee: lookup.kkRangeReversedName,
+                symbol: nil, callee: reversedName,
                 arguments: [receiver], result: result,
                 canThrow: false, thrownResult: nil
             ))

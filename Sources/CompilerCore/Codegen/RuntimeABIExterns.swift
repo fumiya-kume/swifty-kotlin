@@ -2106,8 +2106,44 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    public static let kk_ulong_range_toList = ExternDecl(
-        name: "kk_ulong_range_toList",
+    public static let kk_ulong_range_contains = ExternDecl(
+        name: "kk_ulong_range_contains",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_ulong_range_first = ExternDecl(
+        name: "kk_ulong_range_first",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_ulong_range_last = ExternDecl(
+        name: "kk_ulong_range_last",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_ulong_range_step = ExternDecl(
+        name: "kk_ulong_range_step",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_ulong_range_isEmpty = ExternDecl(
+        name: "kk_ulong_range_isEmpty",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_ulong_range_reversed = ExternDecl(
+        name: "kk_ulong_range_reversed",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_ulong_range_toULongArray = ExternDecl(
+        name: "kk_ulong_range_toULongArray",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
@@ -2121,6 +2157,12 @@ public enum RuntimeABIExterns {
     public static let kk_range_map = ExternDecl(
         name: "kk_range_map",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_range_step = ExternDecl(
+        name: "kk_range_step",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -3081,8 +3123,16 @@ public enum RuntimeABIExterns {
             kk_range_sum,
             kk_range_toList,
             kk_ulong_range_toList,
+            kk_ulong_range_contains,
+            kk_ulong_range_first,
+            kk_ulong_range_last,
+            kk_ulong_range_step,
+            kk_ulong_range_isEmpty,
+            kk_ulong_range_reversed,
+            kk_ulong_range_toULongArray,
             kk_range_forEach,
             kk_range_map,
+            kk_range_step,
             kk_range_reversed,
             // CharRange (STDLIB-290)
             kk_char_range_toList,

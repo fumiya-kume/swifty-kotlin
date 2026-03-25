@@ -70,6 +70,13 @@ extension BuildASTPhase.ExpressionParser {
         case let .intLiteral(text):
             _ = consume()
             let value = parseSignedLiteral(text, range: token.range) ?? 0
+            // Hex/bin literals whose value exceeds Int32 range are auto-promoted to Long in Kotlin
+            let lower = text.lowercased()
+            if (lower.hasPrefix("0x") || lower.hasPrefix("0b"))
+                && (value > Int64(Int32.max) || value < Int64(Int32.min))
+            {
+                return astArena.appendExpr(.longLiteral(value, token.range))
+            }
             return astArena.appendExpr(.intLiteral(value, token.range))
         case let .longLiteral(text):
             _ = consume()

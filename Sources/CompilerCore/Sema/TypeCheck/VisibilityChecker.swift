@@ -16,6 +16,18 @@ struct VisibilityChecker {
                 return true
             }
             if let parent = symbols.parentSymbol(for: symbol.id) {
+                // Allow access from companion object to the containing class's private members
+                if let enclosingClass = enclosingClass,
+                   let companionOfOwner = symbols.companionObjectSymbol(for: parent),
+                   enclosingClass == companionOfOwner {
+                    return true
+                }
+                // Allow access from class to its companion's private members
+                if let enclosingClass = enclosingClass,
+                   let companionOfEnclosing = symbols.companionObjectSymbol(for: enclosingClass),
+                   parent == companionOfEnclosing {
+                    return true
+                }
                 return enclosingClass == parent || isEnclosedBy(enclosingClass, ancestor: parent)
             }
             guard let declSite = symbol.declSite else {

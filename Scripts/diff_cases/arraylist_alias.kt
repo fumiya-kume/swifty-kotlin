@@ -19,4 +19,3 @@ fun main() {
     val items: List<String> = ArrayList()
     println(items.size)
 }
-// SKIP-DIFF: ArrayList alias parity pending

@@ -19,4 +19,3 @@ fun main() {
     println(nums.size)
     println(nums[2])
 }
-// SKIP-DIFF: array copy parity pending

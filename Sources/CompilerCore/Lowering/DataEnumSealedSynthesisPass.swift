@@ -1295,6 +1295,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )))
         let stringType = sema.types.make(.primitive(.string, .nonNull))
         let intType = sema.types.make(.primitive(.int, .nonNull))
+        let builderType = sema.types.anyType
         let layout = sema.symbols.nominalLayout(for: owner.id)
         let fqName = owner.fqName + [name]
         let parameterName = interner.intern("$self")
@@ -1310,27 +1311,75 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
 
         var body: [KIRInstruction] = []
 
-        // Start with "ClassName("
-        let className = interner.resolve(owner.name)
-        let prefixStr = interner.intern("\(className)(")
-        let prefixExpr = module.arena.appendExpr(
-            .temporary(Int32(module.arena.expressions.count)),
-            type: stringType
-        )
-        body.append(.constValue(result: prefixExpr, value: .stringLiteral(prefixStr)))
-        let builderType = sema.types.anyType
-        let builderExpr = module.arena.appendExpr(
-            .temporary(Int32(module.arena.expressions.count)),
-            type: builderType
-        )
-        body.append(.call(
-            symbol: nil,
-            callee: interner.intern("kk_string_builder_new_from_string"),
-            arguments: [prefixExpr],
-            result: builderExpr,
-            canThrow: false,
-            thrownResult: nil
-        ))
+        // STDLIB-DATA-014: If data class inherits from another class, start with super.toString()
+        let supertypes = sema.symbols.directSupertypes(for: owner.id)
+        var builderExpr: KIRExprID
+        if let firstSuper = supertypes.first, let superSymbol = sema.symbols.symbol(firstSuper), superSymbol.kind == .class {
+            let receiverRef = module.arena.appendExpr(.symbolRef(parameterSymbol), type: receiverType)
+            body.append(.constValue(result: receiverRef, value: .symbolRef(parameterSymbol)))
+            
+            let superToStringResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: stringType
+            )
+            
+            // Find super.toString() method symbol
+            let toStringName = interner.intern("toString")
+            let superToStringFQName = superSymbol.fqName + [toStringName]
+            let superToStringSymbol = sema.symbols.lookupAll(fqName: superToStringFQName).first
+            
+            // Call super.toString() if it exists, otherwise use default
+            if let superToStringSymbol = superToStringSymbol {
+                body.append(.call(
+                    symbol: superToStringSymbol,
+                    callee: interner.intern("toString"),
+                    arguments: [receiverRef],
+                    result: superToStringResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            } else {
+                // Fallback: use simple class name representation
+                let className = interner.resolve(superSymbol.name)
+                let fallbackStr = interner.intern("\(className)")
+                body.append(.constValue(result: superToStringResult, value: .stringLiteral(fallbackStr)))
+            }
+            
+            // Create string builder from super.toString()
+            builderExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: builderType
+            )
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_string_builder_new_from_string"),
+                arguments: [superToStringResult],
+                result: builderExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+        } else {
+            // Start with "ClassName(" for data class with no inheritance
+            let className = interner.resolve(owner.name)
+            let prefixStr = interner.intern("\(className)(")
+            let prefixExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: stringType
+            )
+            body.append(.constValue(result: prefixExpr, value: .stringLiteral(prefixStr)))
+            builderExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: builderType
+            )
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_string_builder_new_from_string"),
+                arguments: [prefixExpr],
+                result: builderExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+        }
 
         for (index, property) in properties.enumerated() {
             let propName = interner.resolve(property.name)
@@ -1421,22 +1470,27 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             ))
         }
 
-        // Append closing ")"
-        let suffixStr = interner.intern(")")
-        let suffixExpr = module.arena.appendExpr(
-            .temporary(Int32(module.arena.expressions.count)),
-            type: stringType
-        )
-        body.append(.constValue(result: suffixExpr, value: .stringLiteral(suffixStr)))
+        // Append closing ")" only if not inheriting from another class
+        let shouldCloseParen = !(supertypes.first != nil && 
+            supertypes.first.map { sema.symbols.symbol($0)?.kind == .class } ?? false)
+        
+        if shouldCloseParen {
+            let suffixStr = interner.intern(")")
+            let suffixExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: stringType
+            )
+            body.append(.constValue(result: suffixExpr, value: .stringLiteral(suffixStr)))
 
-        body.append(.call(
-            symbol: nil,
-            callee: interner.intern("kk_string_builder_append_obj"),
-            arguments: [builderExpr, suffixExpr],
-            result: builderExpr,
-            canThrow: false,
-            thrownResult: nil
-        ))
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_string_builder_append_obj"),
+                arguments: [builderExpr, suffixExpr],
+                result: builderExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+        }
 
         let resultExpr = module.arena.appendExpr(
             .temporary(Int32(module.arena.expressions.count)),
@@ -1540,14 +1594,47 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             )
             body.append(.constValue(result: receiverRef, value: .symbolRef(receiverParam.symbol)))
             body.append(.constValue(result: otherRef, value: .symbolRef(paramSymbol)))
-            body.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_op_eq"),
-                arguments: [receiverRef, otherRef],
-                result: resultExpr,
-                canThrow: false,
-                thrownResult: nil
-            ))
+            
+            // STDLIB-DATA-014: If data class inherits from another class, call super.equals()
+            let supertypes = sema.symbols.directSupertypes(for: owner.id)
+            if let firstSuper = supertypes.first, let superSymbol = sema.symbols.symbol(firstSuper), superSymbol.kind == .class {
+                // Find super.equals() method symbol
+                let equalsName = interner.intern("equals")
+                let superEqualsFQName = superSymbol.fqName + [equalsName]
+                let superEqualsSymbol = sema.symbols.lookupAll(fqName: superEqualsFQName).first
+                
+                // Call super.equals(other) if it exists, otherwise use reference equality
+                if let superEqualsSymbol = superEqualsSymbol {
+                    body.append(.call(
+                        symbol: superEqualsSymbol,
+                        callee: interner.intern("equals"),
+                        arguments: [receiverRef, otherRef],
+                        result: resultExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                } else {
+                    // Fallback: use reference equality
+                    body.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_op_eq"),
+                        arguments: [receiverRef, otherRef],
+                        result: resultExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                }
+            } else {
+                // Use reference equality for data class with no properties and no inheritance
+                body.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_op_eq"),
+                    arguments: [receiverRef, otherRef],
+                    result: resultExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            }
             body.append(.returnValue(resultExpr))
         } else {
             let intType = sema.types.intType
@@ -1671,6 +1758,39 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 ))
 
                 body.append(.jumpIfEqual(lhs: cmpResult, rhs: falseExpr, target: returnFalseLabel))
+            }
+
+            // STDLIB-DATA-014: If data class inherits from another class, call super.equals() first
+            let supertypes = sema.symbols.directSupertypes(for: owner.id)
+            if let firstSuper = supertypes.first, let superSymbol = sema.symbols.symbol(firstSuper), superSymbol.kind == .class {
+                let receiverRef = module.arena.appendExpr(.symbolRef(receiverParam.symbol), type: receiverType)
+                let otherRef = module.arena.appendExpr(.symbolRef(paramSymbol), type: nullableAnyType)
+                let superEqualsResult = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: boolType
+                )
+                body.append(.constValue(result: receiverRef, value: .symbolRef(receiverParam.symbol)))
+                body.append(.constValue(result: otherRef, value: .symbolRef(paramSymbol)))
+                
+                // Find super.equals() method symbol
+                let equalsName = interner.intern("equals")
+                let superEqualsFQName = superSymbol.fqName + [equalsName]
+                let superEqualsSymbol = sema.symbols.lookupAll(fqName: superEqualsFQName).first
+                
+                // Call super.equals(other) if it exists
+                if let superEqualsSymbol = superEqualsSymbol {
+                    body.append(.call(
+                        symbol: superEqualsSymbol,
+                        callee: interner.intern("equals"),
+                        arguments: [receiverRef, otherRef],
+                        result: superEqualsResult,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    
+                    // If super.equals() returns false, return false immediately
+                    body.append(.jumpIfEqual(lhs: superEqualsResult, rhs: falseExpr, target: returnFalseLabel))
+                }
             }
 
             let trueResult = module.arena.appendExpr(

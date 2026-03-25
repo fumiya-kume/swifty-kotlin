@@ -518,6 +518,529 @@ extension DataFlowSemaPhase {
                 symbols: symbols,
                 interner: interner
             )
+
+            // MARK: - Primitive Type Conversion Functions (STDLIB-PRIM-002)
+
+            // Int conversion functions
+            registerSyntheticCoercionFunction(
+                named: "toByte",
+                externalLinkName: "kk_int_to_byte",
+                receiverType: types.intType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toShort",
+                externalLinkName: "kk_int_to_short",
+                receiverType: types.intType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toInt",
+                externalLinkName: "kk_int_to_int",
+                receiverType: types.intType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toLong",
+                externalLinkName: "kk_int_to_long",
+                receiverType: types.intType,
+                parameters: [],
+                returnType: types.longType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toFloat",
+                externalLinkName: "kk_int_to_float",
+                receiverType: types.intType,
+                parameters: [],
+                returnType: types.floatType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toDouble",
+                externalLinkName: "kk_int_to_double_bits",
+                receiverType: types.intType,
+                parameters: [],
+                returnType: types.doubleType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toChar",
+                externalLinkName: "kk_int_to_char",
+                receiverType: types.intType,
+                parameters: [],
+                returnType: types.charType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toUByte",
+                externalLinkName: "kk_int_to_ubyte",
+                receiverType: types.intType,
+                parameters: [],
+                returnType: types.ubyteType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toUShort",
+                externalLinkName: "kk_int_to_ushort",
+                receiverType: types.intType,
+                parameters: [],
+                returnType: types.ushortType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toUInt",
+                externalLinkName: "kk_int_to_uint",
+                receiverType: types.intType,
+                parameters: [],
+                returnType: types.uintType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toULong",
+                externalLinkName: "kk_int_to_ulong",
+                receiverType: types.intType,
+                parameters: [],
+                returnType: types.ulongType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            // Long conversion functions
+            registerSyntheticCoercionFunction(
+                named: "toByte",
+                externalLinkName: "kk_long_to_byte",
+                receiverType: types.longType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toShort",
+                externalLinkName: "kk_long_to_short",
+                receiverType: types.longType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toInt",
+                externalLinkName: "kk_long_to_int",
+                receiverType: types.longType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toFloat",
+                externalLinkName: "kk_long_to_float",
+                receiverType: types.longType,
+                parameters: [],
+                returnType: types.floatType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toDouble",
+                externalLinkName: "kk_long_to_double",
+                receiverType: types.longType,
+                parameters: [],
+                returnType: types.doubleType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toChar",
+                externalLinkName: "kk_long_to_char",
+                receiverType: types.longType,
+                parameters: [],
+                returnType: types.charType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toUByte",
+                externalLinkName: "kk_long_to_ubyte",
+                receiverType: types.longType,
+                parameters: [],
+                returnType: types.ubyteType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toUShort",
+                externalLinkName: "kk_long_to_ushort",
+                receiverType: types.longType,
+                parameters: [],
+                returnType: types.ushortType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toUInt",
+                externalLinkName: "kk_long_to_uint",
+                receiverType: types.longType,
+                parameters: [],
+                returnType: types.uintType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toULong",
+                externalLinkName: "kk_long_to_ulong",
+                receiverType: types.longType,
+                parameters: [],
+                returnType: types.ulongType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            // Float conversion functions
+            registerSyntheticCoercionFunction(
+                named: "toByte",
+                externalLinkName: "kk_float_to_int",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toShort",
+                externalLinkName: "kk_float_to_int",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toInt",
+                externalLinkName: "kk_float_to_int",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toLong",
+                externalLinkName: "kk_float_to_long",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: types.longType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toDouble",
+                externalLinkName: "kk_float_to_double_bits",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: types.doubleType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toChar",
+                externalLinkName: "kk_float_to_char",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: types.charType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toUInt",
+                externalLinkName: "kk_float_to_uint",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: types.uintType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toULong",
+                externalLinkName: "kk_float_to_ulong",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: types.ulongType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            // Double conversion functions
+            registerSyntheticCoercionFunction(
+                named: "toByte",
+                externalLinkName: "kk_double_to_int",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toShort",
+                externalLinkName: "kk_double_to_int",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toInt",
+                externalLinkName: "kk_double_to_int",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toLong",
+                externalLinkName: "kk_double_to_long",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: types.longType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toFloat",
+                externalLinkName: "kk_double_to_float",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: types.floatType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toChar",
+                externalLinkName: "kk_double_to_char",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: types.charType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toUInt",
+                externalLinkName: "kk_double_to_uint",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: types.uintType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toULong",
+                externalLinkName: "kk_double_to_ulong",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: types.ulongType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            // Char conversion functions
+            registerSyntheticCoercionFunction(
+                named: "toByte",
+                externalLinkName: "kk_char_to_int",
+                receiverType: types.charType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toShort",
+                externalLinkName: "kk_char_to_int",
+                receiverType: types.charType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toInt",
+                externalLinkName: "kk_char_to_int",
+                receiverType: types.charType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toLong",
+                externalLinkName: "kk_char_to_long",
+                receiverType: types.charType,
+                parameters: [],
+                returnType: types.longType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toUInt",
+                externalLinkName: "kk_char_to_uint",
+                receiverType: types.charType,
+                parameters: [],
+                returnType: types.uintType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "toULong",
+                externalLinkName: "kk_char_to_ulong",
+                receiverType: types.charType,
+                parameters: [],
+                returnType: types.ulongType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
         }
     }
 

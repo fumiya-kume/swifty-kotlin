@@ -254,6 +254,47 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(source).map(runtimeStringValue), ["c", "b", "a"])
     }
 
+    func testMutableListShuffleAndReverse() {
+        // Test shuffle
+        let source = makeList([1, 2, 3, 4, 5])
+        let originalElements = listElements(source)
+        
+        _ = kk_mutable_list_shuffle(source)
+        let shuffledElements = listElements(source)
+        
+        // Should have same elements but different order (most likely)
+        XCTAssertEqual(shuffledElements.count, originalElements.count)
+        XCTAssertEqual(Set(shuffledElements), Set(originalElements))
+        
+        // Test reverse
+        _ = kk_mutable_list_reverse(source)
+        let reversedElements = listElements(source)
+        
+        // Should be the reverse of shuffled
+        XCTAssertEqual(reversedElements, shuffledElements.reversed())
+        
+        // Test with empty list
+        let emptyList = makeList([])
+        _ = kk_mutable_list_shuffle(emptyList)
+        XCTAssertEqual(listElements(emptyList), [])
+        
+        _ = kk_mutable_list_reverse(emptyList)
+        XCTAssertEqual(listElements(emptyList), [])
+        
+        // Test with single element
+        let singleList = makeList([42])
+        _ = kk_mutable_list_shuffle(singleList)
+        XCTAssertEqual(listElements(singleList), [42])
+        
+        _ = kk_mutable_list_reverse(singleList)
+        XCTAssertEqual(listElements(singleList), [42])
+        
+        // Test with duplicate elements
+        let duplicateList = makeList([5, 2, 5, 2, 5])
+        _ = kk_mutable_list_reverse(duplicateList)
+        XCTAssertEqual(listElements(duplicateList), [5, 2, 5, 2, 5].reversed())
+    }
+
     func testAnyAllNoneShortCircuitAndNoArgOverloads() {
         let source = makeList([1, 2, 3, 4])
 

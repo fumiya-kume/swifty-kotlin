@@ -256,6 +256,7 @@ final class CallSupportLowerer {
         guard parameterCount > 0 else {
             return NormalizedCallResult(arguments: providedArguments, defaultMask: 0)
         }
+        let preserveArrayVarargs = sema.symbols.externalLinkName(for: chosenCallee) == "kk_array_of"
 
         let isVararg = normalizeBoolFlags(signature.valueParameterIsVararg, count: parameterCount)
         let hasDefaultValues = normalizeBoolFlags(signature.valueParameterHasDefaultValues, count: parameterCount)
@@ -297,6 +298,7 @@ final class CallSupportLowerer {
                         argIndices: argIndices,
                         providedArguments: providedArguments,
                         spreadFlags: spreadFlags,
+                        listifyResult: !preserveArrayVarargs,
                         arena: arena,
                         interner: interner,
                         intType: intType,
@@ -338,6 +340,7 @@ final class CallSupportLowerer {
         argIndices: [Int],
         providedArguments: [KIRExprID],
         spreadFlags: [Bool],
+        listifyResult: Bool = true,
         arena: KIRArena,
         interner: StringInterner,
         intType: TypeID,
@@ -407,7 +410,16 @@ final class CallSupportLowerer {
             ))
             // Convert the concatenated array to a list since vararg parameters
             // are typed as List<T>.
-            return emitArrayToList(concatResult, arena: arena, interner: interner, anyType: anyType, instructions: &instructions)
+            if listifyResult {
+                return emitArrayToList(
+                    concatResult,
+                    arena: arena,
+                    interner: interner,
+                    anyType: anyType,
+                    instructions: &instructions
+                )
+            }
+            return concatResult
         }
 
         let count = argIndices.count
@@ -433,7 +445,16 @@ final class CallSupportLowerer {
         }
         // Convert the packed array to a list since vararg parameters are typed
         // as List<T> and the callee uses kk_list_* operations.
-        return emitArrayToList(arrayID, arena: arena, interner: interner, anyType: anyType, instructions: &instructions)
+        if listifyResult {
+            return emitArrayToList(
+                arrayID,
+                arena: arena,
+                interner: interner,
+                anyType: anyType,
+                instructions: &instructions
+            )
+        }
+        return arrayID
     }
 
     private func emitArrayToList(

@@ -484,6 +484,13 @@ public enum DiagnosticRegistry {
             codeActions: [DiagnosticCodeAction(title: "Add 'override' keyword")]
         ),
         DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-DATA-INHERIT",
+            pass: "SEMA",
+            defaultSeverity: .error,
+            summary: "Cannot inherit from data class.",
+            codeActions: [DiagnosticCodeAction(title: "Remove inheritance from data class")]
+        ),
+        DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-REIFIED",
             pass: "SEMA",
             defaultSeverity: .error,

@@ -172,7 +172,7 @@ extension CollectionLiteralLoweringPass {
                     // Only rewrite calls whose symbol resolves to a known
                     // kotlin.collections.* factory to avoid accidentally
                     // lowering user-defined functions with the same name.
-                    if (lookup.listFactoryNames.contains(callee) || lookup.arrayOfFactoryNames.contains(callee)),
+                    if lookup.listFactoryNames.contains(callee),
                        isStdlibCollectionFactory(symbol: symbol, callee: callee, lookup: lookup, ctx: ctx) {
                         let count = arguments.count
                         if count == 0 && callee != lookup.mutableListOfName {
@@ -2021,9 +2021,10 @@ extension CollectionLiteralLoweringPass {
                             let transformResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
+                            let reversedName = ulongRangeExprIDs.contains(receiverID.rawValue) ? lookup.kkULongRangeReversedName : lookup.kkRangeReversedName
                             loweredBody.append(.call(
                                 symbol: nil,
-                                callee: lookup.kkRangeReversedName,
+                                callee: reversedName,
                                 arguments: [receiverID],
                                 result: transformResult,
                                 canThrow: false,

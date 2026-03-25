@@ -6,7 +6,11 @@ enum SyntheticCharMemberReturnKind {
     case boolean
     case string
     case int
+    case double
     case nullableInt
+    case nullableDouble
+    case charCategory
+    case charDirectionality
 
     func typeID(in types: TypeSystem) -> TypeID {
         switch self {
@@ -16,8 +20,18 @@ enum SyntheticCharMemberReturnKind {
             types.stringType
         case .int:
             types.intType
+        case .double:
+            types.doubleType
         case .nullableInt:
             types.make(.primitive(.int, .nullable))
+        case .nullableDouble:
+            types.make(.primitive(.double, .nullable))
+        case .charCategory:
+            // TODO: Define CharCategory enum type
+            types.intType // Temporarily use Int as placeholder
+        case .charDirectionality:
+            // TODO: Define CharDirectionality enum type
+            types.intType // Temporarily use Int as placeholder
         }
     }
 }
@@ -83,6 +97,43 @@ private let syntheticCharMemberSpecs: [SyntheticCharMemberSpec] = [
         name: "digitToIntOrNull",
         externalLinkName: "kk_char_digitToIntOrNull",
         returnKind: .nullableInt
+    ),
+    // New numeric conversion functions
+    SyntheticCharMemberSpec(
+        name: "toInt",
+        externalLinkName: "kk_char_toInt",
+        returnKind: .int
+    ),
+    SyntheticCharMemberSpec(
+        name: "toDouble",
+        externalLinkName: "kk_char_toDouble",
+        returnKind: .double
+    ),
+    SyntheticCharMemberSpec(
+        name: "toIntOrNull",
+        externalLinkName: "kk_char_toIntOrNull",
+        returnKind: .nullableInt
+    ),
+    SyntheticCharMemberSpec(
+        name: "toDoubleOrNull",
+        externalLinkName: "kk_char_toDoubleOrNull",
+        returnKind: .nullableDouble
+    ),
+    // Code point and Unicode properties
+    SyntheticCharMemberSpec(
+        name: "code",
+        externalLinkName: "kk_char_code",
+        returnKind: .int
+    ),
+    SyntheticCharMemberSpec(
+        name: "category",
+        externalLinkName: "kk_char_category",
+        returnKind: .charCategory
+    ),
+    SyntheticCharMemberSpec(
+        name: "directionality",
+        externalLinkName: "kk_char_directionality",
+        returnKind: .charDirectionality
     ),
 ]
 

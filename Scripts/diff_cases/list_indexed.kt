@@ -3,4 +3,3 @@ fun main() {
     values.forEachIndexed { index, value -> println(index * 100 + value) }
     println(values.mapIndexed { index, value -> index + value })
 }
-// SKIP-DIFF: List.toString() parity pending

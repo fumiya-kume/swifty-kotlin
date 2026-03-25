@@ -327,6 +327,7 @@ struct CollectionLiteralLookupTables {
     let kkRangeToListName: InternedString
     let kkRangeForEachName: InternedString
     let kkRangeMapName: InternedString
+    let kkRangeStepName: InternedString
     let kkRangeReversedName: InternedString
     let kkRangeIsEmptyName: InternedString
     let kkRangeSumName: InternedString
@@ -340,10 +341,16 @@ struct CollectionLiteralLookupTables {
     let kkCharRangeToListName: InternedString
     let kkCharRangeForEachName: InternedString
 
-    // ULongRange (STDLIB-524)
+    // ULongRange (STDLIB-524, STDLIB-RANGE-037)
     let kkULongRangeToListName: InternedString
+    let kkULongRangeContainsName: InternedString
+    let kkULongRangeFirstName: InternedString
+    let kkULongRangeLastName: InternedString
+    let kkULongRangeStepName: InternedString
+    let kkULongRangeIsEmptyName: InternedString
+    let kkULongRangeReversedName: InternedString
+    let kkULongRangeToULongArrayName: InternedString
 
-    // Member names
     let sizeName: InternedString
     let getName: InternedString
     let containsName: InternedString
@@ -354,6 +361,9 @@ struct CollectionLiteralLookupTables {
     let countName: InternedString
     let addName: InternedString
     let removeName: InternedString
+    let firstName: InternedString
+    let lastName: InternedString
+    let stepName: InternedString
 
     // ListIterator member names (STDLIB-538)
     let listIteratorMemberName: InternedString
@@ -461,6 +471,7 @@ struct CollectionLiteralLookupTables {
     // Sequence member names (STDLIB-003)
     let asSequenceName: InternedString
     let toListName: InternedString
+    let toULongArrayName: InternedString
     let toSetName: InternedString
     let toMapName: InternedString
     let takeName: InternedString
@@ -898,6 +909,7 @@ struct CollectionLiteralLookupTables {
         kkRangeToListName = interner.intern("kk_range_toList")
         kkRangeForEachName = interner.intern("kk_range_forEach")
         kkRangeMapName = interner.intern("kk_range_map")
+        kkRangeStepName = interner.intern("kk_range_step")
         kkRangeReversedName = interner.intern("kk_range_reversed")
         kkRangeIsEmptyName = interner.intern("kk_range_isEmpty")
         kkRangeSumName = interner.intern("kk_range_sum")
@@ -910,8 +922,15 @@ struct CollectionLiteralLookupTables {
         kkCharRangeToListName = interner.intern("kk_char_range_toList")
         kkCharRangeForEachName = interner.intern("kk_char_range_forEach")
 
-        // ULongRange (STDLIB-524)
+        // ULongRange (STDLIB-524, STDLIB-RANGE-037)
         kkULongRangeToListName = interner.intern("kk_ulong_range_toList")
+        kkULongRangeContainsName = interner.intern("kk_ulong_range_contains")
+        kkULongRangeFirstName = interner.intern("kk_ulong_range_first")
+        kkULongRangeLastName = interner.intern("kk_ulong_range_last")
+        kkULongRangeStepName = interner.intern("kk_ulong_range_step")
+        kkULongRangeIsEmptyName = interner.intern("kk_ulong_range_isEmpty")
+        kkULongRangeReversedName = interner.intern("kk_ulong_range_reversed")
+        kkULongRangeToULongArrayName = interner.intern("kk_ulong_range_toULongArray")
 
         sizeName = interner.intern("size")
         getName = interner.intern("get")
@@ -923,6 +942,9 @@ struct CollectionLiteralLookupTables {
         countName = interner.intern("count")
         addName = interner.intern("add")
         removeName = interner.intern("remove")
+        firstName = interner.intern("first")
+        lastName = interner.intern("last")
+        stepName = interner.intern("step")
 
         // ListIterator member names (STDLIB-538)
         listIteratorMemberName = interner.intern("listIterator")
@@ -1025,6 +1047,7 @@ struct CollectionLiteralLookupTables {
 
         asSequenceName = interner.intern("asSequence")
         toListName = interner.intern("toList")
+        toULongArrayName = interner.intern("toULongArray")
         toSetName = interner.intern("toSet")
         toMapName = interner.intern("toMap")
         takeName = interner.intern("take")

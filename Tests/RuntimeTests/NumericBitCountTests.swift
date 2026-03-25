@@ -159,6 +159,44 @@ final class NumericBitCountTests: XCTestCase {
         }
     }
 
+    func testBitManipulationPerformanceCharacteristics() {
+        // Test performance of all bit manipulation functions
+        let testValues: [Int] = Array(0..<1000)
+        let distances: [Int] = [0, 1, 7, 15, 31]
+        
+        measure {
+            for value in testValues {
+                for distance in distances {
+                    _ = kk_int_rotateLeft(value, distance)
+                    _ = kk_int_rotateRight(value, distance)
+                    _ = kk_int_highestOneBit(value)
+                    _ = kk_int_lowestOneBit(value)
+                    _ = kk_int_takeHighestOneBit(value)
+                    _ = kk_int_takeLowestOneBit(value)
+                }
+            }
+        }
+    }
+
+    func testLongBitManipulationPerformanceCharacteristics() {
+        // Test performance of Long bit manipulation functions
+        let testValues: [Int] = Array(0..<1000)
+        let distances: [Int] = [0, 1, 31, 63]
+        
+        measure {
+            for value in testValues {
+                for distance in distances {
+                    _ = kk_long_rotateLeft(value, distance)
+                    _ = kk_long_rotateRight(value, distance)
+                    _ = kk_long_highestOneBit(value)
+                    _ = kk_long_lowestOneBit(value)
+                    _ = kk_long_takeHighestOneBit(value)
+                    _ = kk_long_takeLowestOneBit(value)
+                }
+            }
+        }
+    }
+
     func testBitCountLargeValues() {
         // Test with values near Int boundaries
         let largeValues: [Int] = [
@@ -223,6 +261,104 @@ final class NumericBitCountTests: XCTestCase {
             }
 
             XCTAssertEqual(kk_int_countOneBits(value), manualOnes, "Manual count should match for \(value)")
+        }
+    }
+
+    func testOptimizedBitManipulationCorrectness() {
+        // Test that optimized implementations produce correct results
+        let testValues: [Int] = [
+            0, 1, -1, 42, 255, 256, 1024,
+            0x7FFF_FFFF, Int(Int32.min), -2, -128,
+            0x5555_5555, Int(Int32(bitPattern: 0xAAAA_AAAA)),
+            0x0101_0101, 0x00FF_00FF, 0x8000_0000, 0x0000_0001
+        ]
+        
+        for value in testValues {
+            // Test rotate functions
+            for distance in [0, 1, 7, 15, 31] {
+                let rotatedLeft = kk_int_rotateLeft(value, distance)
+                let rotatedRight = kk_int_rotateRight(value, distance)
+                
+                // Verify rotation is reversible
+                XCTAssertEqual(kk_int_rotateRight(rotatedLeft, distance) & 0xFFFFFFFF, value & 0xFFFFFFFF, 
+                    "Rotate left then right should return original for value=\(value), distance=\(distance)")
+                XCTAssertEqual(kk_int_rotateLeft(rotatedRight, distance) & 0xFFFFFFFF, value & 0xFFFFFFFF,
+                    "Rotate right then left should return original for value=\(value), distance=\(distance)")
+            }
+            
+            // Test highest/lowest one bit
+            let highest = kk_int_highestOneBit(value)
+            let lowest = kk_int_lowestOneBit(value)
+            
+            if value != 0 {
+                XCTAssertGreaterThan(highest, 0, "Highest one bit should be > 0 for non-zero value \(value)")
+                XCTAssertGreaterThan(lowest, 0, "Lowest one bit should be > 0 for non-zero value \(value)")
+                
+                // Verify highest is power of two
+                XCTAssertEqual(highest & (highest - 1), 0, "Highest one bit should be power of two for \(value)")
+                // Verify lowest is power of two
+                XCTAssertEqual(lowest & (lowest - 1), 0, "Lowest one bit should be power of two for \(value)")
+            } else {
+                XCTAssertEqual(highest, 0, "Highest one bit should be 0 for zero")
+                XCTAssertEqual(lowest, 0, "Lowest one bit should be 0 for zero")
+            }
+            
+            // Test take functions
+            let takeHighest = kk_int_takeHighestOneBit(value)
+            let takeLowest = kk_int_takeLowestOneBit(value)
+            
+            if value != 0 {
+                XCTAssertNotEqual(takeHighest, 0, "Take highest should be non-zero for non-zero value \(value)")
+                XCTAssertNotEqual(takeLowest, 0, "Take lowest should be non-zero for non-zero value \(value)")
+                
+                // Verify take functions preserve the corresponding bit
+                XCTAssertEqual(takeHighest & highest, highest, "Take highest should preserve highest bit for \(value)")
+                XCTAssertEqual(takeLowest & lowest, lowest, "Take lowest should preserve lowest bit for \(value)")
+            } else {
+                XCTAssertEqual(takeHighest, 0, "Take highest should be 0 for zero")
+                XCTAssertEqual(takeLowest, 0, "Take lowest should be 0 for zero")
+            }
+        }
+    }
+
+    func testOptimizedLongBitManipulationCorrectness() {
+        // Test that optimized Long implementations produce correct results
+        let testValues: [Int] = [
+            0, 1, -1, 42, 255, 256, 1024,
+            Int.max, Int.min, -2, -128,
+            Int(bitPattern: 0x5555_5555_5555_5555), Int(bitPattern: 0xAAAA_AAAA_AAAA_AAAA),
+            Int(bitPattern: 0x8000_0000_0000_0000), Int(bitPattern: 0x0000_0000_0000_0001)
+        ]
+        
+        for value in testValues {
+            // Test rotate functions
+            for distance in [0, 1, 31, 63] {
+                let rotatedLeft = kk_long_rotateLeft(value, distance)
+                let rotatedRight = kk_long_rotateRight(value, distance)
+                
+                // Verify rotation is reversible
+                XCTAssertEqual(kk_long_rotateRight(rotatedLeft, distance), value,
+                    "Long rotate left then right should return original for value=\(value), distance=\(distance)")
+                XCTAssertEqual(kk_long_rotateLeft(rotatedRight, distance), value,
+                    "Long rotate right then left should return original for value=\(value), distance=\(distance)")
+            }
+            
+            // Test highest/lowest one bit
+            let highest = kk_long_highestOneBit(value)
+            let lowest = kk_long_lowestOneBit(value)
+            
+            if value != 0 {
+                XCTAssertGreaterThan(highest, 0, "Long highest one bit should be > 0 for non-zero value \(value)")
+                XCTAssertGreaterThan(lowest, 0, "Long lowest one bit should be > 0 for non-zero value \(value)")
+                
+                // Verify highest is power of two
+                XCTAssertEqual(highest & (highest - 1), 0, "Long highest one bit should be power of two for \(value)")
+                // Verify lowest is power of two
+                XCTAssertEqual(lowest & (lowest - 1), 0, "Long lowest one bit should be power of two for \(value)")
+            } else {
+                XCTAssertEqual(highest, 0, "Long highest one bit should be 0 for zero")
+                XCTAssertEqual(lowest, 0, "Long lowest one bit should be 0 for zero")
+            }
         }
     }
 }

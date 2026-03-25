@@ -1848,6 +1848,12 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_mutable_list_sortDescending = ExternDecl(
+        name: "kk_mutable_list_sortDescending",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     static let kk_mutable_list_sortByDescending = ExternDecl(
         name: "kk_mutable_list_sortByDescending",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],

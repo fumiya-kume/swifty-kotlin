@@ -30,6 +30,15 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
             "isWhitespace": "kk_char_isWhitespace",
             "digitToInt": "kk_char_digitToInt",
             "digitToIntOrNull": "kk_char_digitToIntOrNull",
+            // New numeric conversion functions
+            "toInt": "kk_char_toInt",
+            "toDouble": "kk_char_toDouble",
+            "toIntOrNull": "kk_char_toIntOrNull",
+            "toDoubleOrNull": "kk_char_toDoubleOrNull",
+            // Code point and Unicode properties
+            "code": "kk_char_code",
+            "category": "kk_char_category",
+            "directionality": "kk_char_directionality",
         ]
 
         for (member, expectedLink) in expected {
@@ -64,6 +73,15 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
             ch.uppercase()
             ch.lowercase()
             ch.titlecase()
+            // New numeric conversion functions
+            ch.toInt()
+            ch.toDouble()
+            ch.toIntOrNull()
+            ch.toDoubleOrNull()
+            // Code point and Unicode properties
+            ch.code
+            ch.category
+            ch.directionality
         }
         """
 
@@ -84,6 +102,15 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
                 "uppercase": "kk_char_uppercase",
                 "lowercase": "kk_char_lowercase",
                 "titlecase": "kk_char_titlecase",
+                // New numeric conversion functions
+                "toInt": "kk_char_toInt",
+                "toDouble": "kk_char_toDouble",
+                "toIntOrNull": "kk_char_toIntOrNull",
+                "toDoubleOrNull": "kk_char_toDoubleOrNull",
+                // Code point and Unicode properties
+                "code": "kk_char_code",
+                "category": "kk_char_category",
+                "directionality": "kk_char_directionality",
             ]
 
             for (memberName, externalLinkName) in expectedLinks {
