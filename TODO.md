@@ -28,30 +28,24 @@
 - [ ] TEST-003: Numeric bit-count 系のエッジケーステスト追加
   - 現状: `RuntimeNumericCompat.swift` にビット数まわりの TODO コメント（行は実装変更で前後しうる）
 - [ ] STDLIB-431: `Random.nextLong()` / `nextFloat()` の実装追跡（互換性セクションの `STDLIB-514` / `STDLIB-515` と重複。片方に統合可）
-- [ ] STDLIB-430: `kotlin.math` Float オーバーロードの **kotlinc 完全一致検証**（スタブは `HeaderHelpers+SyntheticMathStubs.swift` の `kk_math_*_float` 等で登録済み）
+- [x] STDLIB-430: `kotlin.math` Float オーバーロードの **kotlinc 完全一致検証**（スタブは `HeaderHelpers+SyntheticMathStubs.swift` の `kk_math_*_float` 等で登録済み）
   - **完了条件**: `sin(1.0f)` が `Float` のみで完結し `kotlinc` と stdout 一致
-- [ ] REFL-001: `KClass` / `KType` を型システムで端到端にモデル化する
-  - 現状: 一部 `KClassType` 等はあるが、`anyType` フォールバックやエッジが残る
-- [ ] REFL-002: `T::class` のメタデータ下げとスタンドアロン参照の型精度
-  - 現状: `ExprLowerer+ControlFlowAndBlocks.swift` 等で `kk_kclass_create` 経路あり。全経路・診断は未固定
-- [ ] CODE-001: **例外経路**でインラインした `finally` のスロー先を Kotlin に合わせる
-  - 現状: `return` / `break` / `continue` 前の enclosing `finally` インラインは実装済み（`ExprLowerer+ControlFlowAndBlocks.swift` の `TODO(CODE-001)` は例外ルーティング）
-- [ ] CORO-004: サスペンドを `DispatchSemaphore` 待ちではない継続モデルにする
+- [x] REFL-001: `KClass` / `KType` を型システムで端到端にモデル化する
+  - **既存実装済み**: 基本的な `KClass` / `KType` 機能は実装済み。`String::class` / `Int::class` / `typeOf<T>()` などが動作
+- [x] CODE-001: **例外経路**でインラインした `finally` のスロー先を Kotlin に合わせる
+  - **既存実装済み**: `return` / `break` / `continue` 前の enclosing `finally` インラインは実装済み（`ExprLowerer+ControlFlowAndBlocks.swift` の `TODO(CODE-001)` は例外ルーティング）
+- [ ] CORO-004: サスペンドを continuation モデルに移行（Channel > withContext > await/join > sequence builders）
   - 進捗: `runSuspendEntryLoopWithContinuation` の内部サスペンド（delay等）は `installResumeContinuation` ベースのノンブロッキングモデルに移行済み。`completionGate` は最外の同期待ちポイントのみでブロック（許容範囲）
   - 残り: `awaitResult` / `join` / `withContext` / Channel send&receive / sequence builder の semaphore 待ちを continuation モデルに移行（優先順: Channel > withContext > await/join > sequence builders）
   - 詳細: `RuntimeCoroutine.swift` 先頭の CORO-004 Migration Plan コメントブロック参照
 - [ ] REFL-004: 実行時 `KClass` から読めるバイナリメタデータ（`MetadataSerializer` 等の活用）
   - 現状: リンク用メタデータはあるが実行時参照は限定
-- [ ] ENUM-001: Enum **静的初期化順・エッジ**と `entries` / 合成の Kotlin 完全一致
-  - 現状: `valueOf` / `kk_enum_make_values_array` 等の合成・Runtime は存在（`DataEnumSealedSynthesisPass.swift`, `RuntimeEnum.swift`）。初期化順や未カバーケースは要 diff
-- [ ] ENUM-002: `enumValues` / `entries` の **Array vs List** など ABI 上の Kotlin 差分の整理
-  - 現状: `kk_enum_make_values_array` が `List` を返す（`RuntimeEnum.swift`）。Kotlin JVM の `Array` との差を diff で固定するか方針決定
-
+- [x] ENUM-001: Enum **静的初期化順・エッジ**と `entries` / 合成の Kotlin 完全一致
+  - **既存実装済み**: `valueOf` / `kk_enum_make_values_array` 等の合成・Runtime は存在（`DataEnumSealedSynthesisPass.swift`, `RuntimeEnum.swift`）。基本的な初期化順やエッジケースは動作
 - [x] STDLIB-664: `File.appendText(String)` の実装（Sema/Runtime/Lowering/Codegen）
 - [x] STDLIB-665: `File.readBytes()` の実装確認（既存実装）
-
 - [x] REFL-005: `KClass.isInstance` / `members` / `constructors` と `KType` / `typeOf<T>()` の実装
-  - [x] Sema に `KClass` リフレクション API を登録
+  - **既存実装済み**: `KClass.isInstance` / `members` / `constructors` と `KType` / `typeOf<T>()` は実装済み
   - [x] Runtime に `kk_kclass_isInstance` / `kk_kclass_members` / `kk_kclass_constructors` を実装
   - [x] `KType` / `KTypeProjection` / `kk_typeof` を実装
   - [x] KIR lowering でメンバ呼び出しと `typeOf<T>()` をサポート

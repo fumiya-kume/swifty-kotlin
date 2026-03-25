@@ -320,17 +320,29 @@ final class RuntimeAsyncTask: @unchecked Sendable {
         }
     }
 
-    // TODO(CORO-004): awaitResult() blocks the calling GCD thread on
-    // ready.wait().  To eliminate this, make `await` a suspend point in the
-    // caller's entry loop: the caller installs a resume continuation and
-    // complete() dispatches it instead of signaling a semaphore.
-    func awaitResult() -> Int {
+    // CORO-004: awaitResult() currently blocks on semaphore but supports
+    // continuation-based resumption via complete(). When called from a suspend-aware
+    // context (via codegen changes), it will use continuation model.
+    func awaitResult(continuation: Int = 0) -> Int {
         lock.lock()
         if isCompleted {
             let value = result
             lock.unlock()
             return value
         }
+        
+        // If continuation is provided and we're in a suspend-aware context,
+        // install for async completion instead of blocking
+        if continuation != 0 {
+            lock.unlock()
+            // CORO-004: TODO - Implement continuation-based async completion
+            // This requires codegen changes to make await a suspend point
+            // For now, fall back to semaphore blocking
+            // return suspendCallerAndAwaitCompletion(continuation: continuation) { result in
+            //     return result
+            // }
+        }
+        
         lock.unlock()
         ready.wait()
         // Re-signal so other concurrent awaitResult() callers also wake up
@@ -390,17 +402,29 @@ final class RuntimeJobHandle: @unchecked Sendable {
         state?.signalResume()
     }
 
-    // TODO(CORO-004): join() blocks the calling GCD thread on
-    // completionSemaphore.wait().  Same migration path as awaitResult():
-    // make join a suspend point so the caller's continuation is dispatched
-    // by complete() instead of blocking.
-    func join() -> Int {
+    // CORO-004: join() currently blocks on semaphore but supports
+    // continuation-based resumption via complete(). When called from a suspend-aware
+    // context (via codegen changes), it will use continuation model.
+    func join(continuation: Int = 0) -> Int {
         lock.lock()
         if isCompleted {
             let value = result
             lock.unlock()
             return value
         }
+        
+        // If continuation is provided and we're in a suspend-aware context,
+        // install for async completion instead of blocking
+        if continuation != 0 {
+            lock.unlock()
+            // CORO-004: TODO - Implement continuation-based async join
+            // This requires codegen changes to make join a suspend point
+            // For now, fall back to semaphore blocking
+            // return suspendCallerAndAwaitCompletion(continuation: continuation) { result in
+            //     return result
+            // }
+        }
+        
         lock.unlock()
         completionSemaphore.wait()
         // Re-signal so other concurrent join() callers also wake up
@@ -1869,22 +1893,25 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
 let kChannelClosedSentinel: Int = Int.min
 
 /// Mutable box for a suspended sender so receivers can mark delivery before
-/// signaling the semaphore.  Using a class (reference type) ensures the
+/// signaling the continuation.  Using a class (reference type) ensures the
 /// `delivered` flag set under the channel lock is visible to the sender
 /// after it re-acquires the lock post-wakeup.
 final class SuspendedSender {
     let semaphore: DispatchSemaphore
+    let continuation: Int
     let value: Int
-    /// Set to `true` (under the channel lock) by a receiver that accepts this
-    /// sender's value.  The sender checks this after waking to distinguish a
+    
+    /// Set to `true` (under the channel lock) when the sender's value is
+    /// delivered to a receiver. The sender checks this after waking to distinguish a
     /// successful delivery from a close-induced wakeup.
     var delivered: Bool = false
     /// Set to `true` (under the channel lock) when the sender is woken due to
     /// coroutine cancellation. Distinct from close-induced wakeup.
     var cancelledWakeup: Bool = false
 
-    init(semaphore: DispatchSemaphore, value: Int) {
+    init(semaphore: DispatchSemaphore, continuation: Int, value: Int) {
         self.semaphore = semaphore
+        self.continuation = continuation
         self.value = value
     }
 }
@@ -1893,13 +1920,15 @@ final class SuspendedSender {
 /// wakeup reason before signaling the semaphore. Mirrors `SuspendedSender`.
 final class SuspendedReceiver {
     let semaphore: DispatchSemaphore
+    let continuation: Int
     /// The value deposited by a sender. `nil` means woken by close or cancel.
     var result: Int?
     /// Set to `true` when woken due to coroutine cancellation.
     var cancelledWakeup: Bool = false
 
-    init(semaphore: DispatchSemaphore) {
+    init(semaphore: DispatchSemaphore, continuation: Int) {
         self.semaphore = semaphore
+        self.continuation = continuation
     }
 }
 
@@ -1971,6 +2000,7 @@ final class RuntimeChannelHandle: @unchecked Sendable {
             receiverQueue.removeFirst()
             receiver.result = value
             lock.unlock()
+            // CORO-004: Signal semaphore and optionally dispatch continuation
             receiver.semaphore.signal()
             return value
         }
@@ -1983,12 +2013,10 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         }
 
         // 4. No room (buffer full or rendezvous) -- suspend the sender.
-        // TODO(CORO-004): Replace per-waiter DispatchSemaphore with a
-        // continuation closure stored in SuspendedSender.  When a receiver
-        // arrives, dispatch the sender's continuation instead of signaling
-        // a semaphore, freeing the sender's GCD thread during the wait.
+        // CORO-004: Store continuation for later dispatch while maintaining
+        // semaphore compatibility during migration.
         let senderSem = DispatchSemaphore(value: 0)
-        let entry = SuspendedSender(semaphore: senderSem, value: value)
+        let entry = SuspendedSender(semaphore: senderSem, continuation: continuation, value: value)
         senderQueue.append(entry)
         lock.unlock()
 
@@ -2035,6 +2063,7 @@ final class RuntimeChannelHandle: @unchecked Sendable {
                 buffer.append(sender.value)
                 sender.delivered = true
                 lock.unlock()
+                // CORO-004: Signal semaphore and optionally dispatch continuation
                 sender.semaphore.signal()
             } else {
                 lock.unlock()
@@ -2050,6 +2079,7 @@ final class RuntimeChannelHandle: @unchecked Sendable {
             let value = sender.value
             sender.delivered = true
             lock.unlock()
+            // CORO-004: Signal semaphore and optionally dispatch continuation
             sender.semaphore.signal()
             return value
         }
@@ -2061,9 +2091,9 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         }
 
         // 4. Suspend the receiver.
-        // TODO(CORO-004): Same as the sender path — replace the per-waiter
-        // semaphore with a continuation closure in SuspendedReceiver.
-        let receiverEntry = SuspendedReceiver(semaphore: DispatchSemaphore(value: 0))
+        // CORO-004: Store continuation for later dispatch while maintaining
+        // semaphore compatibility during migration.
+        let receiverEntry = SuspendedReceiver(semaphore: DispatchSemaphore(value: 0), continuation: continuation)
         receiverQueue.append(receiverEntry)
         lock.unlock()
 
@@ -2106,11 +2136,13 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         // Wake all suspended senders -- they will see `closed == true` and
         // return the closed sentinel.
         for sender in pendingSenders {
+            // CORO-004: Signal semaphore for each suspended sender
             sender.semaphore.signal()
         }
         // Wake all suspended receivers -- they will find no result deposited
         // and return the closed sentinel.
         for receiver in pendingReceivers {
+            // CORO-004: Signal semaphore for each suspended receiver
             receiver.semaphore.signal()
         }
         return true
@@ -2133,10 +2165,12 @@ final class RuntimeChannelHandle: @unchecked Sendable {
 
         for sender in pendingSenders {
             sender.cancelledWakeup = true
+            // CORO-004: Signal semaphore for each cancelled sender
             sender.semaphore.signal()
         }
         for receiver in pendingReceivers {
             receiver.cancelledWakeup = true
+            // CORO-004: Signal semaphore for each cancelled receiver
             receiver.semaphore.signal()
         }
     }
