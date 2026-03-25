@@ -28,7 +28,7 @@ final class FinallyExecutionOnControlFlowTests: XCTestCase {
             // The `return 42` path should call cleanup() *before* the returnValue
             // instruction. Find all cleanup calls and all returnValue instructions.
             let cleanupCallIndices = body.indices.filter { index in
-                guard case let .call(_, callee, _, _, _, _, _) = body[index] else { return false }
+                guard case let .call(_, callee, _, _, _, _, _, _) = body[index] else { return false }
                 return ctx.interner.resolve(callee) == "cleanup"
             }
             let returnValueIndices = body.indices.filter { index in
@@ -78,7 +78,7 @@ final class FinallyExecutionOnControlFlowTests: XCTestCase {
             let body = try findKIRFunctionBody(named: "doWork", in: module, interner: ctx.interner)
 
             let cleanupCallIndices = body.indices.filter { index in
-                guard case let .call(_, callee, _, _, _, _, _) = body[index] else { return false }
+                guard case let .call(_, callee, _, _, _, _, _, _) = body[index] else { return false }
                 return ctx.interner.resolve(callee) == "cleanup"
             }
             let returnUnitIndices = body.indices.filter { index in
@@ -134,7 +134,7 @@ final class FinallyExecutionOnControlFlowTests: XCTestCase {
 
             // cleanup() should appear in the lowered body before the break jump.
             let cleanupCallIndices = body.indices.filter { index in
-                guard case let .call(_, callee, _, _, _, _, _) = body[index] else { return false }
+                guard case let .call(_, callee, _, _, _, _, _, _) = body[index] else { return false }
                 return ctx.interner.resolve(callee) == "cleanup"
             }
 
@@ -206,7 +206,7 @@ final class FinallyExecutionOnControlFlowTests: XCTestCase {
             }
 
             let cleanupCallIndices = body.indices.filter { index in
-                guard case let .call(_, callee, _, _, _, _, _) = body[index] else { return false }
+                guard case let .call(_, callee, _, _, _, _, _, _) = body[index] else { return false }
                 return ctx.interner.resolve(callee) == "cleanup"
             }
 

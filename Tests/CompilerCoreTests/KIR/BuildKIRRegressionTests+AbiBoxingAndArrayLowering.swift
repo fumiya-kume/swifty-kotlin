@@ -64,12 +64,12 @@ extension BuildKIRRegressionTests {
             let module = try XCTUnwrap(ctx.kir)
             let combineFunction = try findKIRFunction(named: "combine", in: module, interner: ctx.interner)
             let plusCall = try XCTUnwrap(combineFunction.body.first { instruction in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee) == "plus"
             })
-            guard case let .call(_, _, arguments, _, _, _, _) = plusCall else {
+            guard case let .call(_, _, arguments, _, _, _, _, _) = plusCall else {
                 XCTFail("Expected combine to lower to a call to plus.")
                 return
             }
@@ -123,7 +123,7 @@ extension BuildKIRRegressionTests {
             let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
 
             let boxingThrowFlags = body.compactMap { instruction -> Bool? in
-                guard case let .call(_, callee, _, _, canThrow, _, _) = instruction else {
+                guard case let .call(_, callee, _, _, canThrow, _, _, _) = instruction else {
                     return nil
                 }
                 let name = ctx.interner.resolve(callee)

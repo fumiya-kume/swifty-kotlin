@@ -2168,7 +2168,7 @@ public enum RuntimeABIExterns {
 
     public static let kk_range_step = ExternDecl(
         name: "kk_range_step",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -2302,25 +2302,25 @@ public enum RuntimeABIExterns {
 
     public static let kk_int_progression_fromClosedRange = ExternDecl(
         name: "kk_int_progression_fromClosedRange",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     public static let kk_long_progression_fromClosedRange = ExternDecl(
         name: "kk_long_progression_fromClosedRange",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     public static let kk_uint_progression_fromClosedRange = ExternDecl(
         name: "kk_uint_progression_fromClosedRange",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     public static let kk_ulong_progression_fromClosedRange = ExternDecl(
         name: "kk_ulong_progression_fromClosedRange",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

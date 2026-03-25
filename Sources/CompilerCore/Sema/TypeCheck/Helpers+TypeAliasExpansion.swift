@@ -86,13 +86,6 @@ extension TypeCheckHelpers {
     ) -> TypeID {
         let typeParamSymbols = sema.symbols.typeAliasTypeParameters(for: aliasSymbol)
         if typeParamSymbols.isEmpty {
-            if !typeArgs.isEmpty {
-                diagnostics?.error(
-                    "KSWIFTK-SEMA-0062",
-                    "Type argument count mismatch: expected 0 but got \(typeArgs.count).",
-                    range: nil
-                )
-            }
             return typeID
         }
         if typeArgs.count != typeParamSymbols.count {

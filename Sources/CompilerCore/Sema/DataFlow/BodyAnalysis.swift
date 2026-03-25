@@ -362,15 +362,9 @@ extension DataFlowSemaPhase {
         diagnostics: DiagnosticEngine? = nil
     ) -> TypeID {
         let typeParamSymbols = symbols.typeAliasTypeParameters(for: aliasSymbol)
-        // If the alias is not generic, report any provided type arguments as a mismatch and return.
+        // Non-generic aliases may still carry fully-substituted underlying type arguments
+        // through expected-type propagation, so there is nothing left to substitute here.
         if typeParamSymbols.isEmpty {
-            if !typeArgs.isEmpty {
-                diagnostics?.error(
-                    "KSWIFTK-SEMA-0062",
-                    "Type argument count mismatch: expected 0 but got \(typeArgs.count).",
-                    range: nil
-                )
-            }
             return typeID
         }
         // Alias is generic. Emit a diagnostic whenever the argument count does not match,

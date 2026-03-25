@@ -55,7 +55,7 @@ final class JvmStaticLoweringTests: XCTestCase {
         XCTAssertFalse(hasCall(to: originalSymbol, in: callerFunction.body), "Caller should not keep direct companion-member call after lowering")
         XCTAssertTrue(hasCall(to: wrapperSymbol, in: callerFunction.body), "Caller should be rewritten to JvmStatic wrapper call")
         let rewrittenCallArgs = callerFunction.body.compactMap { instruction -> [KIRExprID]? in
-            guard case let .call(symbol, _, arguments, _, _, _, _) = instruction,
+            guard case let .call(symbol, _, arguments, _, _, _, _, _) = instruction,
                   symbol == wrapperSymbol
             else {
                 return nil
@@ -168,7 +168,16 @@ final class JvmStaticLoweringTests: XCTestCase {
             body: [
                 .constValue(result: callRecv, value: .symbolRef(companionSymbol)),
                 .constValue(result: callArg, value: .intLiteral(11)),
-                .call(symbol: originalSymbol, callee: createName, arguments: [callRecv, callArg], result: callResult, canThrow: false, thrownResult: nil),
+                .call(
+                    symbol: originalSymbol,
+                    callee: createName,
+                    arguments: [callRecv, callArg],
+                    result: callResult,
+                    canThrow: false,
+                    thrownResult: nil,
+                    isSuperCall: false,
+                    qualifiedSuperType: nil
+                ),
                 .returnValue(callResult),
             ],
             isSuspend: false,
@@ -236,30 +245,33 @@ final class JvmStaticLoweringTests: XCTestCase {
             return symbols.parentSymbol(for: symbol.id) == hostSymbol
         })?.id)
 
-        let wrapperFn = try XCTUnwrap(module.arena.declarations.compactMap { decl -> KIRFunction? in
+        let wrapperFunction: KIRFunction? = module.arena.declarations.compactMap { decl -> KIRFunction? in
             guard case let .function(function) = decl else {
                 return nil
             }
             return function.symbol == wrapperSymbol ? function : nil
-        }.first)
+        }.first
+        let wrapperFn = try XCTUnwrap(wrapperFunction)
         XCTAssertEqual(wrapperFn.params.count, 1)
         XCTAssertTrue(hasCall(to: originalSymbol, in: wrapperFn.body), "Wrapper should forward to original companion member")
 
-        let loweredCallUser = try XCTUnwrap(module.arena.declarations.compactMap { decl -> KIRFunction? in
+        let loweredCallUserFunction: KIRFunction? = module.arena.declarations.compactMap { decl -> KIRFunction? in
             guard case let .function(function) = decl else {
                 return nil
             }
             return function.symbol == callUserSymbol ? function : nil
-        }.first)
+        }.first
+        let loweredCallUser = try XCTUnwrap(loweredCallUserFunction)
         XCTAssertFalse(hasCall(to: originalSymbol, in: loweredCallUser.body))
         XCTAssertTrue(hasCall(to: wrapperSymbol, in: loweredCallUser.body))
 
-        let loweredVirtualUser = try XCTUnwrap(module.arena.declarations.compactMap { decl -> KIRFunction? in
+        let loweredVirtualUserFunction: KIRFunction? = module.arena.declarations.compactMap { decl -> KIRFunction? in
             guard case let .function(function) = decl else {
                 return nil
             }
             return function.symbol == virtualUserSymbol ? function : nil
-        }.first)
+        }.first
+        let loweredVirtualUser = try XCTUnwrap(loweredVirtualUserFunction)
 
         let hasOriginalVirtual = loweredVirtualUser.body.contains { instruction in
             guard case let .virtualCall(symbol, _, _, _, _, _, _, _) = instruction else {
@@ -273,7 +285,7 @@ final class JvmStaticLoweringTests: XCTestCase {
 
     private func hasCall(to symbol: SymbolID, in body: [KIRInstruction]) -> Bool {
         body.contains { instruction in
-            guard case let .call(calleeSymbol, _, _, _, _, _, _) = instruction else {
+            guard case let .call(calleeSymbol, _, _, _, _, _, _, _) = instruction else {
                 return false
             }
             return calleeSymbol == symbol

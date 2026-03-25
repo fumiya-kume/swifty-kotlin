@@ -861,7 +861,8 @@ final class RuntimeSequenceTests: XCTestCase {
         let mapped = kk_sequence_mapNotNull(
             seqHandle,
             unsafeBitCast(mapFn, to: Int.self),
-            0
+            0,
+            nil
         )
         
         // Take only first element to verify laziness
@@ -921,7 +922,8 @@ final class RuntimeSequenceTests: XCTestCase {
         let mapped = kk_sequence_mapIndexed(
             seqHandle,
             unsafeBitCast(mapFn, to: Int.self),
-            0
+            0,
+            nil
         )
         
         // Take only first element to verify laziness
@@ -1012,7 +1014,8 @@ final class RuntimeSequenceTests: XCTestCase {
         let mapped = kk_sequence_mapNotNull(
             seq,
             unsafeBitCast(mapFn, to: Int.self),
-            0
+            0,
+            nil
         )
         let result = sequenceElements(mapped)
         XCTAssertEqual(result, [2, 6, 10]) // Only non-null values doubled
@@ -1035,7 +1038,8 @@ final class RuntimeSequenceTests: XCTestCase {
         let mapped = kk_sequence_mapIndexed(
             seq,
             unsafeBitCast(mapFn, to: Int.self),
-            0
+            0,
+            nil
         )
         let result = sequenceElements(mapped)
         XCTAssertEqual(result, [10, 21, 32]) // [0+10, 1+20, 2+30]

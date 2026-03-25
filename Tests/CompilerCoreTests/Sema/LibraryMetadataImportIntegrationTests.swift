@@ -95,7 +95,7 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
                 )
 
                 let calls = mainFunction.body.compactMap { instruction -> String? in
-                    guard case let .call(_, callee, _, _, _, _, _) = instruction else {
+                    guard case let .call(_, callee, _, _, _, _, _, _) = instruction else {
                         return nil
                     }
                     return appCtx.interner.resolve(callee)

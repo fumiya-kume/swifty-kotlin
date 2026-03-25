@@ -78,7 +78,7 @@ final class ValueClassUnboxingTests: XCTestCase {
             guard case let .function(function) = decl else { continue }
             for instruction in function.body {
                 switch instruction {
-                case let .call(symbol, _, _, _, _, _, _):
+                case let .call(symbol, _, _, _, _, _, _, _):
                     if let symbol,
                        let sym = ctx.sema?.symbols.symbol(symbol),
                        sym.kind == .constructor,
@@ -125,7 +125,7 @@ final class ValueClassUnboxingTests: XCTestCase {
         for decl in module.arena.declarations {
             guard case let .function(function) = decl else { continue }
             for instruction in function.body {
-                if case let .call(_, callee, arguments, _, _, _, _) = instruction,
+                if case let .call(_, callee, arguments, _, _, _, _, _) = instruction,
                    callee == kk_array_get_inbounds,
                    arguments.count == 2
                 {
@@ -170,7 +170,7 @@ final class ValueClassUnboxingTests: XCTestCase {
         for decl in module.arena.declarations {
             guard case let .function(function) = decl else { continue }
             for instruction in function.body {
-                if case let .call(_, callee, _, result, _, _, _) = instruction,
+                if case let .call(_, callee, _, result, _, _, _, _) = instruction,
                    callee == kk_object_new,
                    let result,
                    let resultType = module.arena.exprType(result),
@@ -211,7 +211,7 @@ final class ValueClassUnboxingTests: XCTestCase {
         for decl in module.arena.declarations {
             guard case let .function(function) = decl else { continue }
             for instruction in function.body {
-                if case let .call(_, callee, _, _, _, _, _) = instruction,
+                if case let .call(_, callee, _, _, _, _, _, _) = instruction,
                    callee == kk_object_new
                 {
                     hasObjectNew = true

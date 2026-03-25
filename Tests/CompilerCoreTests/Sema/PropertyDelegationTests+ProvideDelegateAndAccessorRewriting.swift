@@ -114,7 +114,7 @@ extension DelegateStorageSymbolTableTests {
                     // method call (non-nil symbol) with 2 args.
                     let provideDelegateCalls = ctor.body.compactMap { instruction
                         -> (symbol: SymbolID?, args: [KIRExprID])? in
-                        guard case let .call(sym, callee, args, _, _, _, _) = instruction,
+                        guard case let .call(sym, callee, args, _, _, _, _, _) = instruction,
                               interner.resolve(callee) == "provideDelegate" else { return nil }
                         return (symbol: sym, args: args)
                     }
@@ -158,7 +158,7 @@ extension DelegateStorageSymbolTableTests {
             if let ctor = constructors.first {
                 let provideDelegateCalls = ctor.body.compactMap { instruction
                     -> (symbol: SymbolID?, args: [KIRExprID])? in
-                    guard case let .call(sym, callee, args, _, _, _, _) = instruction,
+                    guard case let .call(sym, callee, args, _, _, _, _, _) = instruction,
                           interner.resolve(callee) == "provideDelegate" else { return nil }
                     return (symbol: sym, args: args)
                 }

@@ -169,12 +169,12 @@ final class CallableRefTypeIdentityTests: XCTestCase {
 
             // Find the tagging call and verify its arguments.
             let tagCall = mainBody.first { instruction in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee) == "kk_callable_ref_tag_kfunction"
             }
-            guard case let .call(_, _, arguments, _, _, _, _) = tagCall else {
+            guard case let .call(_, _, arguments, _, _, _, _, _) = tagCall else {
                 XCTFail("Expected kk_callable_ref_tag_kfunction call in main body.")
                 return
             }
@@ -247,12 +247,12 @@ final class CallableRefTypeIdentityTests: XCTestCase {
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
 
             let tagCall = mainBody.first { instruction in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee) == "kk_callable_ref_tag_kfunction"
             }
-            guard case let .call(_, _, _, _, canThrow, _, _) = tagCall else {
+            guard case let .call(_, _, _, _, canThrow, _, _, _) = tagCall else {
                 XCTFail("Expected kk_callable_ref_tag_kfunction call.")
                 return
             }

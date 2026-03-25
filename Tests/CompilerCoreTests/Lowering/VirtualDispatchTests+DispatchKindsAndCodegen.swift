@@ -78,7 +78,7 @@ extension VirtualDispatchTests {
         let lowered = try findKIRFunction(named: "main", in: module, interner: interner)
         let callees = lowered.body.compactMap { instruction -> String? in
             switch instruction {
-            case let .call(_, callee, _, _, _, _, _):
+            case let .call(_, callee, _, _, _, _, _, _):
                 return interner.resolve(callee)
             default:
                 return nil

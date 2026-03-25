@@ -1075,6 +1075,52 @@ extension CallLowerer {
         }()
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
 
+        if args.isEmpty {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let isRangeLikeReceiver = sema.bindings.isRangeExpr(receiverExpr) || {
+                guard case let .classType(classType) = sema.types.kind(of: nonNullReceiverType),
+                      let symbol = sema.symbols.symbol(classType.classSymbol)
+                else {
+                    return false
+                }
+                let name = interner.resolve(symbol.name)
+                return name == "IntProgression"
+                    || name == "LongProgression"
+                    || name == "UIntProgression"
+                    || name == "ULongProgression"
+            }()
+            if isRangeLikeReceiver {
+                let runtimeGetter: InternedString? = switch interner.resolve(calleeName) {
+                case "first":
+                    interner.intern(sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType
+                        ? "kk_ulong_range_first"
+                        : "kk_range_first")
+                case "last":
+                    interner.intern(sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType
+                        ? "kk_ulong_range_last"
+                        : "kk_range_last")
+                case "step":
+                    interner.intern(sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType
+                        ? "kk_ulong_range_step"
+                        : "kk_range_step")
+                default:
+                    nil
+                }
+                if let runtimeGetter {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: runtimeGetter,
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
         if let storedObjectProperty = tryLowerObjectLiteralStoredPropertyRead(
             exprID,
             loweredReceiverID: loweredReceiverID,
@@ -1124,6 +1170,29 @@ extension CallLowerer {
             instructions: &instructions
         ) {
             return storedMemberProperty
+        }
+
+        if args.isEmpty,
+           calleeName == interner.intern("step")
+        {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let runtimeCallee: InternedString = if sema.bindings.isULongRangeExpr(receiverExpr)
+                || nonNullReceiverType == sema.types.ulongType
+            {
+                interner.intern("kk_ulong_range_step")
+            } else {
+                interner.intern("kk_range_step")
+            }
+            instructions.append(.call(
+                symbol: nil,
+                callee: runtimeCallee,
+                arguments: [loweredReceiverID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
         }
 
         // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
@@ -3547,6 +3616,22 @@ extension CallLowerer {
         interner: StringInterner,
         arguments: inout [KIRExprID]
     ) {
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+        let calleeText = interner.resolve(calleeName)
+        if sema.bindings.isRangeExpr(receiverExpr) {
+            let rangeMembers: Set<String> = [
+                "first", "last", "step", "contains", "isEmpty", "sum",
+                "toList", "forEach", "map", "mapIndexed", "mapNotNull",
+                "filter", "filterIndexed", "filterNot", "reduce", "reduceIndexed",
+                "fold", "foldIndexed", "find", "findLast", "firstOrNull",
+                "lastOrNull", "any", "all", "none", "chunked", "windowed",
+                "reversed",
+            ]
+            if rangeMembers.contains(calleeText) {
+                arguments.insert(loweredReceiverID, at: 0)
+                return
+            }
+        }
         if let chosenCallee,
            let signature = sema.symbols.functionSignature(for: chosenCallee),
            signature.receiverType != nil
@@ -3559,8 +3644,6 @@ extension CallLowerer {
         else {
             return
         }
-        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
-        let calleeText = interner.resolve(calleeName)
         if Self.unresolvedCollectionMemberNames.contains(calleeText) {
             arguments.insert(loweredReceiverID, at: 0)
             return
@@ -3775,6 +3858,14 @@ extension CallLowerer {
             interner.intern("kk_list_runningFoldIndexed"),
             interner.intern("kk_list_runningReduceIndexed"),
             interner.intern("kk_list_scanIndexed"),
+            interner.intern("kk_range_first_predicate"),
+            interner.intern("kk_range_last_predicate"),
+            interner.intern("kk_range_reduce"),
+            interner.intern("kk_range_reduceIndexed"),
+            interner.intern("kk_int_progression_fromClosedRange"),
+            interner.intern("kk_long_progression_fromClosedRange"),
+            interner.intern("kk_uint_progression_fromClosedRange"),
+            interner.intern("kk_ulong_progression_fromClosedRange"),
             interner.intern("kk_sequence_sortedBy"),
             interner.intern("kk_sequence_sumOf"),
             interner.intern("kk_sequence_associate"),
@@ -3863,11 +3954,47 @@ extension CallLowerer {
     ) -> InternedString {
         let fallbackName = interner.resolve(fallback)
         let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        let isProgressionReceiver: Bool = {
+            guard case let .classType(classType) = sema.types.kind(of: nonNullReceiverType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return false
+            }
+            let name = interner.resolve(symbol.name)
+            return name == "IntProgression"
+                || name == "LongProgression"
+                || name == "UIntProgression"
+                || name == "ULongProgression"
+        }()
+
+        if (sema.bindings.isRangeExpr(receiverExpr) || isProgressionReceiver),
+           fallbackName == "step",
+           argumentCount <= 1
+        {
+            if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                return interner.intern("kk_ulong_range_step")
+            }
+            return interner.intern("kk_range_step")
+        }
 
         if let chosenCallee {
             if let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
                !externalLinkName.isEmpty
             {
+                if argumentCount == 1,
+                   (externalLinkName == "kk_op_step"
+                    || externalLinkName == "kk_uint_step"
+                    || externalLinkName == "kk_ulong_step")
+                {
+                    if externalLinkName == "kk_ulong_step"
+                        || sema.bindings.isULongRangeExpr(receiverExpr)
+                        || nonNullReceiverType == sema.types.ulongType
+                    {
+                        return interner.intern("kk_ulong_range_step")
+                    }
+                    return interner.intern("kk_range_step")
+                }
                 // STDLIB-547: When the element-based binarySearch overload was
                 // recovered but the call actually has a HOF lambda argument,
                 // redirect to the comparison-based runtime function.
@@ -3966,6 +4093,106 @@ extension CallLowerer {
         interner: StringInterner
     ) -> InternedString? {
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        if sema.bindings.isRangeExpr(receiverExpr) {
+            switch memberName {
+            case "contains":
+                return interner.intern(sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType
+                    ? "kk_ulong_range_contains"
+                    : "kk_op_contains")
+            case "isEmpty":
+                return interner.intern(sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType
+                    ? "kk_ulong_range_isEmpty"
+                    : "kk_range_isEmpty")
+            case "sum":
+                return interner.intern("kk_range_sum")
+            case "toList":
+                if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                    return interner.intern("kk_ulong_range_toList")
+                }
+                if nonNullReceiverType == sema.types.uintType {
+                    return interner.intern("kk_uint_range_toList")
+                }
+                return interner.intern("kk_range_toList")
+            case "forEach":
+                return interner.intern("kk_range_forEach")
+            case "map":
+                return interner.intern("kk_range_map")
+            case "mapIndexed":
+                return interner.intern("kk_range_mapIndexed")
+            case "mapNotNull":
+                return interner.intern("kk_range_mapNotNull")
+            case "filter":
+                return interner.intern("kk_range_filter")
+            case "filterIndexed":
+                return interner.intern("kk_range_filterIndexed")
+            case "filterNot":
+                return interner.intern("kk_range_filterNot")
+            case "reduce":
+                return interner.intern("kk_range_reduce")
+            case "reduceIndexed":
+                return interner.intern("kk_range_reduceIndexed")
+            case "fold":
+                return interner.intern("kk_range_fold")
+            case "foldIndexed":
+                return interner.intern("kk_range_foldIndexed")
+            case "find":
+                return interner.intern("kk_range_find")
+            case "findLast":
+                return interner.intern("kk_range_findLast")
+            case "first":
+                if argumentCount > 1 {
+                    return interner.intern("kk_range_first_predicate")
+                }
+                return interner.intern(sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType
+                    ? "kk_ulong_range_first"
+                    : "kk_range_first")
+            case "firstOrNull":
+                return interner.intern("kk_range_firstOrNull_predicate")
+            case "last":
+                if argumentCount > 1 {
+                    return interner.intern("kk_range_last_predicate")
+                }
+                return interner.intern(sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType
+                    ? "kk_ulong_range_last"
+                    : "kk_range_last")
+            case "lastOrNull":
+                return interner.intern("kk_range_lastOrNull_predicate")
+            case "any":
+                return interner.intern("kk_range_any")
+            case "all":
+                return interner.intern("kk_range_all")
+            case "none":
+                return interner.intern("kk_range_none")
+            case "chunked":
+                return interner.intern("kk_range_chunked")
+            case "windowed":
+                return interner.intern("kk_range_windowed")
+            case "reversed":
+                if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                    return interner.intern("kk_ulong_range_reversed")
+                }
+                if nonNullReceiverType == sema.types.uintType {
+                    return interner.intern("kk_uint_range_reversed")
+                }
+                return interner.intern("kk_range_reversed")
+            case "step":
+                if argumentCount <= 1 {
+                    if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                        return interner.intern("kk_ulong_range_step")
+                    }
+                    return interner.intern("kk_range_step")
+                }
+                if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                    return interner.intern("kk_ulong_step")
+                }
+                if nonNullReceiverType == sema.types.uintType {
+                    return interner.intern("kk_uint_step")
+                }
+                return interner.intern("kk_op_step")
+            default:
+                break
+            }
+        }
         if memberName == "toString",
            argumentCount == 0,
            isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner)

@@ -408,7 +408,7 @@ final class VirtualDispatchTests: XCTestCase {
         // Check that boxing call was inserted before the virtualCall
         let callees = lowered.body.compactMap { instruction -> String? in
             switch instruction {
-            case let .call(_, callee, _, _, _, _, _):
+            case let .call(_, callee, _, _, _, _, _, _):
                 return interner.resolve(callee)
             case let .virtualCall(_, callee, _, _, _, _, _, _):
                 return "vc:" + interner.resolve(callee)

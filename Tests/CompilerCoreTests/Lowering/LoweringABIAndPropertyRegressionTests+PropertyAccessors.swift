@@ -57,7 +57,7 @@ extension LoweringABIAndPropertyRegressionTests {
 
         let expectedGetterSymbol = SymbolID(rawValue: -12000 - propertySym.rawValue)
         let callSymbols = lowered.body.compactMap { instruction -> SymbolID? in
-            guard case let .call(sym, _, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(sym, _, _, _, _, _, _, _) = instruction else { return nil }
             return sym
         }
         XCTAssertTrue(callSymbols.contains(expectedGetterSymbol),
@@ -120,7 +120,7 @@ extension LoweringABIAndPropertyRegressionTests {
 
         let expectedSetterSymbol = SymbolID(rawValue: -13000 - propertySym.rawValue)
         let callSymbols = lowered.body.compactMap { instruction -> SymbolID? in
-            guard case let .call(sym, _, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(sym, _, _, _, _, _, _, _) = instruction else { return nil }
             return sym
         }
         XCTAssertTrue(callSymbols.contains(expectedSetterSymbol),
@@ -228,7 +228,7 @@ extension LoweringABIAndPropertyRegressionTests {
 
         let expectedSetterSymbol = SymbolID(rawValue: -13000 - propertySym.rawValue)
         let callSymbols = lowered.body.compactMap { instruction -> SymbolID? in
-            guard case let .call(sym, _, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(sym, _, _, _, _, _, _, _) = instruction else { return nil }
             return sym
         }
         XCTAssertTrue(callSymbols.contains(expectedSetterSymbol),
@@ -307,7 +307,7 @@ extension LoweringABIAndPropertyRegressionTests {
 
         let expectedGetterSymbol = SymbolID(rawValue: -12000 - propertySym.rawValue)
         let callSymbols = lowered.body.compactMap { instruction -> SymbolID? in
-            guard case let .call(sym, _, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(sym, _, _, _, _, _, _, _) = instruction else { return nil }
             return sym
         }
         XCTAssertTrue(callSymbols.contains(expectedGetterSymbol),
@@ -631,7 +631,7 @@ extension LoweringABIAndPropertyRegressionTests {
         let reader = try XCTUnwrap(readerFn, "readComputed not found")
 
         let hasGetterCall = reader.body.contains { inst in
-            if case let .call(symbol, _, _, _, _, _, _) = inst {
+            if case let .call(symbol, _, _, _, _, _, _, _) = inst {
                 return symbol == getterSym
             }
             return false

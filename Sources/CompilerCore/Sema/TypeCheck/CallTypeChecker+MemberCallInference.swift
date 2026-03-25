@@ -2510,7 +2510,7 @@ extension CallTypeChecker {
             // Class-name receiver: only companion members are valid targets.
             // Skip collectMemberFunctionCandidates which would find instance
             // methods and shadow companion members of the same name.
-            if let ownerNominal = driver.helpers.nominalSymbol(of: memberLookupType, types: sema.types),
+            if let ownerNominal = classNameReceiverNominalSymbol,
                let companionSymbol = sema.symbols.companionObjectSymbol(for: ownerNominal),
                let companionSym = sema.symbols.symbol(companionSymbol)
             {

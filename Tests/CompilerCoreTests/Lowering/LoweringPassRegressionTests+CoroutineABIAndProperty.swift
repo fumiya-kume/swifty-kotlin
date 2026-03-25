@@ -80,7 +80,7 @@ extension LoweringPassRegressionTests {
         XCTAssertEqual(thunk.params.count, 1)
 
         let thunkCallees = thunk.body.compactMap { instruction -> String? in
-            guard case let .call(_, callee, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
         XCTAssertTrue(thunkCallees.contains("kk_coroutine_launcher_arg_get"))
@@ -91,7 +91,7 @@ extension LoweringPassRegressionTests {
             return
         }
         let mainCallees = loweredMain.body.compactMap { instruction -> String? in
-            guard case let .call(_, callee, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
         XCTAssertTrue(mainCallees.contains("kk_coroutine_continuation_new"))
@@ -170,7 +170,7 @@ extension LoweringPassRegressionTests {
             return
         }
         let mainCallees = loweredMain.body.compactMap { instruction -> String? in
-            guard case let .call(_, callee, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
         XCTAssertTrue(mainCallees.contains("kk_kxmini_run_blocking"))
@@ -262,7 +262,7 @@ extension LoweringPassRegressionTests {
         XCTAssertEqual(thunk.params.count, 1)
 
         let thunkCallees = thunk.body.compactMap { instruction -> String? in
-            guard case let .call(_, callee, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
         XCTAssertTrue(thunkCallees.contains("kk_coroutine_launcher_arg_get"))
@@ -274,7 +274,7 @@ extension LoweringPassRegressionTests {
             return
         }
         let mainCallees = loweredMain.body.compactMap { instruction -> String? in
-            guard case let .call(_, callee, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
         XCTAssertTrue(mainCallees.contains("kk_coroutine_continuation_new"))
@@ -358,7 +358,7 @@ extension LoweringPassRegressionTests {
             return
         }
         let mainCallees = loweredMain.body.compactMap { instruction -> String? in
-            guard case let .call(_, callee, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
         // Zero-arg path: should use kk_kxmini_run_blocking, NOT _with_cont
@@ -448,7 +448,7 @@ extension LoweringPassRegressionTests {
             return
         }
         let mainCallees = loweredMain.body.compactMap { instruction -> String? in
-            guard case let .call(_, callee, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
         XCTAssertTrue(mainCallees.contains("kk_kxmini_launch_with_cont"))

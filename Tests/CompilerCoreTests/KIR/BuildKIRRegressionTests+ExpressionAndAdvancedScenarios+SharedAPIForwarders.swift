@@ -292,7 +292,7 @@ extension BuildKIRRegressionTests {
             XCTFail("Expected member invoke call instruction")
             return
         }
-        guard case let .call(chosen, loweredCallee, _, _, _, _, _) = callInstruction else {
+        guard case let .call(chosen, loweredCallee, _, _, _, _, _, _) = callInstruction else {
             XCTFail("Expected .call instruction")
             return
         }
@@ -371,7 +371,7 @@ extension BuildKIRRegressionTests {
             XCTFail("Expected safe member invoke call instruction")
             return
         }
-        guard case let .call(chosen, loweredCallee, _, _, _, _, _) = callInstruction else {
+        guard case let .call(chosen, loweredCallee, _, _, _, _, _, _) = callInstruction else {
             XCTFail("Expected .call instruction")
             return
         }

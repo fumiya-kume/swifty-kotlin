@@ -485,11 +485,11 @@ public func kk_range_reduce(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
 
     // Check if range is empty
     if range.step > 0 && range.first > range.last {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: Empty range can't be reduced.")
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Empty collection can't be reduced.")
         return 0
     }
     if range.step < 0 && range.first < range.last {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: Empty range can't be reduced.")
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Empty collection can't be reduced.")
         return 0
     }
 
@@ -524,11 +524,11 @@ public func kk_range_reduceIndexed(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: 
 
     // Check if range is empty
     if range.step > 0 && range.first > range.last {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: Empty range can't be reduced.")
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Empty collection can't be reduced.")
         return 0
     }
     if range.step < 0 && range.first < range.last {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: Empty range can't be reduced.")
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Empty collection can't be reduced.")
         return 0
     }
 
@@ -1058,53 +1058,100 @@ public func kk_char_range_forEach(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: I
 
 // MARK: - Progression fromClosedRange (STDLIB-RANGE-039)
 
+private func runtimeSignedProgressionLast(start: Int, end: Int, step: Int) -> Int {
+    if step > 0 {
+        guard start <= end else { return end }
+        let distance = end &- start
+        return end &- (distance % step)
+    }
+    guard start >= end else { return end }
+    let magnitude = 0 &- step
+    let distance = start &- end
+    return end &+ (distance % magnitude)
+}
+
+private func runtimeUnsignedProgressionLast(start: Int, end: Int, step: Int) -> Int {
+    let startUnsigned = UInt(bitPattern: start)
+    let endUnsigned = UInt(bitPattern: end)
+    if step > 0 {
+        guard startUnsigned <= endUnsigned else { return end }
+        let magnitude = UInt(step)
+        let distance = endUnsigned &- startUnsigned
+        return Int(bitPattern: endUnsigned &- (distance % magnitude))
+    }
+    guard startUnsigned >= endUnsigned else { return end }
+    let magnitude = UInt((0 &- step))
+    let distance = startUnsigned &- endUnsigned
+    return Int(bitPattern: endUnsigned &+ (distance % magnitude))
+}
+
 @_cdecl("kk_int_progression_fromClosedRange")
-public func kk_int_progression_fromClosedRange(_ rangeStart: Int, _ rangeEnd: Int, _ step: Int) -> Int {
+public func kk_int_progression_fromClosedRange(_ receiverRaw: Int, _ rangeStart: Int, _ rangeEnd: Int, _ step: Int,
+                                               _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = receiverRaw
     // Validate step constraints
     guard step != 0 else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: step cannot be zero in IntProgression.fromClosedRange")
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Step must be non-zero.")
+        return 0
     }
     guard step != Int.min else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: step cannot be Int.min in IntProgression.fromClosedRange")
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Step must be greater than Int.MIN_VALUE to avoid overflow on negation.")
+        return 0
     }
-    return registerRuntimeObject(RuntimeRangeBox(first: rangeStart, last: rangeEnd, step: step))
+    let alignedLast = runtimeSignedProgressionLast(start: rangeStart, end: rangeEnd, step: step)
+    return registerRuntimeObject(RuntimeRangeBox(first: rangeStart, last: alignedLast, step: step))
 }
 
 @_cdecl("kk_long_progression_fromClosedRange")
-public func kk_long_progression_fromClosedRange(_ rangeStart: Int, _ rangeEnd: Int, _ step: Int) -> Int {
+public func kk_long_progression_fromClosedRange(_ receiverRaw: Int, _ rangeStart: Int, _ rangeEnd: Int, _ step: Int,
+                                                _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = receiverRaw
     // For LongProgression, we use the same RuntimeRangeBox but treat values as Long
     // Validate step constraints
     guard step != 0 else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: step cannot be zero in LongProgression.fromClosedRange")
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Step must be non-zero.")
+        return 0
     }
     guard step != Int.min else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: step cannot be Int.min in LongProgression.fromClosedRange")
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Step must be greater than Int.MIN_VALUE to avoid overflow on negation.")
+        return 0
     }
-    return registerRuntimeObject(RuntimeRangeBox(first: rangeStart, last: rangeEnd, step: step))
+    let alignedLast = runtimeSignedProgressionLast(start: rangeStart, end: rangeEnd, step: step)
+    return registerRuntimeObject(RuntimeRangeBox(first: rangeStart, last: alignedLast, step: step))
 }
 
 @_cdecl("kk_uint_progression_fromClosedRange")
-public func kk_uint_progression_fromClosedRange(_ rangeStart: Int, _ rangeEnd: Int, _ step: Int) -> Int {
+public func kk_uint_progression_fromClosedRange(_ receiverRaw: Int, _ rangeStart: Int, _ rangeEnd: Int, _ step: Int,
+                                                _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = receiverRaw
     // UIntProgression uses signed Int for step, UInt for range values
     guard step != 0 else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: step cannot be zero in UIntProgression.fromClosedRange")
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Step must be non-zero.")
+        return 0
     }
     guard step != Int.min else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: step cannot be Int.min in UIntProgression.fromClosedRange")
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Step must be greater than Int.MIN_VALUE to avoid overflow on negation.")
+        return 0
     }
-    return registerRuntimeObject(RuntimeRangeBox(first: rangeStart, last: rangeEnd, step: step))
+    let alignedLast = runtimeUnsignedProgressionLast(start: rangeStart, end: rangeEnd, step: step)
+    return registerRuntimeObject(RuntimeRangeBox(first: rangeStart, last: alignedLast, step: step))
 }
 
 @_cdecl("kk_ulong_progression_fromClosedRange")
-public func kk_ulong_progression_fromClosedRange(_ rangeStart: Int, _ rangeEnd: Int, _ step: Int) -> Int {
+public func kk_ulong_progression_fromClosedRange(_ receiverRaw: Int, _ rangeStart: Int, _ rangeEnd: Int, _ step: Int,
+                                                 _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = receiverRaw
     // ULongProgression uses signed Int for step, ULong for range values
     guard step != 0 else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: step cannot be zero in ULongProgression.fromClosedRange")
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Step must be non-zero.")
+        return 0
     }
     guard step != Int.min else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: step cannot be Int.min in ULongProgression.fromClosedRange")
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Step must be greater than Int.MIN_VALUE to avoid overflow on negation.")
+        return 0
     }
-    return registerRuntimeObject(RuntimeRangeBox(first: rangeStart, last: rangeEnd, step: step))
+    let alignedLast = runtimeUnsignedProgressionLast(start: rangeStart, end: rangeEnd, step: step)
+    return registerRuntimeObject(RuntimeRangeBox(first: rangeStart, last: alignedLast, step: step))
 }
 
 // MARK: - UIntProgression operations (STDLIB-RANGE-039)
@@ -1467,6 +1514,19 @@ private func runtimeRangeIteratorBox(from rawValue: Int) -> RuntimeRangeIterator
         return nil
     }
     return tryCast(pointer, to: RuntimeRangeIteratorBox.self)
+}
+
+private func runtimeIteratorBuilderBox(from rawValue: Int) -> RuntimeIteratorBuilderBox? {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: pointer))
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(pointer, to: RuntimeIteratorBuilderBox.self)
 }
 
 @_cdecl("kk_dispatch_error")

@@ -66,7 +66,7 @@ extension LoweringPassRegressionTests {
                     continue
                 }
                 for instruction in function.body {
-                    guard case let .call(_, callee, arguments, _, _, _, _) = instruction,
+                    guard case let .call(_, callee, arguments, _, _, _, _, _) = instruction,
                           ctx.interner.resolve(callee) == "kk_flow_collect"
                     else {
                         continue

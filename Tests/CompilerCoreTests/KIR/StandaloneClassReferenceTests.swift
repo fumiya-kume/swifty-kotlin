@@ -274,7 +274,7 @@ final class StandaloneClassReferenceTests: XCTestCase {
             let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             // Find the kk_kclass_create call and check its result type.
             for instruction in body {
-                guard case let .call(_, callee, _, result, _, _, _) = instruction else { continue }
+                guard case let .call(_, callee, _, result, _, _, _, _) = instruction else { continue }
                 if ctx.interner.resolve(callee) == "kk_kclass_create" {
                     guard let resultID = result,
                           let resultType = module.arena.exprType(resultID) else {

@@ -413,7 +413,7 @@ extension LoweringPassRegressionTests {
             "Expected invoke wrapper to load captures via kk_array_get_inbounds")
 
         let wrapperCalls = wrapper.body.compactMap { instruction -> (callee: String, canThrow: Bool)? in
-            guard case let .call(_, callee, _, _, canThrow, _, _) = instruction else {
+            guard case let .call(_, callee, _, _, canThrow, _, _, _) = instruction else {
                 return nil
             }
             return (callee: interner.resolve(callee), canThrow: canThrow)

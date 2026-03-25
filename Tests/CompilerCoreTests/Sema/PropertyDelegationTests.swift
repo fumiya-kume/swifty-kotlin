@@ -351,7 +351,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
             // Custom delegates prepend the delegate handle before thisRef and kProperty.
             if let getter = getterFunctions.first {
                 let getValueCalls = getter.body.compactMap { instruction -> [KIRExprID]? in
-                    guard case let .call(_, callee, args, _, _, _, _) = instruction,
+                    guard case let .call(_, callee, args, _, _, _, _, _) = instruction,
                           interner.resolve(callee) == "getValue" else { return nil }
                     return args
                 }
@@ -393,7 +393,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
             // Custom delegates prepend the delegate handle before thisRef, kProperty, and value.
             if let setter = setterFunctions.first {
                 let setValueCalls = setter.body.compactMap { instruction -> [KIRExprID]? in
-                    guard case let .call(_, callee, args, _, _, _, _) = instruction,
+                    guard case let .call(_, callee, args, _, _, _, _, _) = instruction,
                           interner.resolve(callee) == "setValue" else { return nil }
                     return args
                 }
@@ -489,7 +489,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
 
             if let getter = getterFunctions.first {
                 let getValueCallCount = getter.body.reduce(into: 0) { count, instruction in
-                    guard case let .call(_, callee, _, _, _, _, _) = instruction,
+                    guard case let .call(_, callee, _, _, _, _, _, _) = instruction,
                           interner.resolve(callee) == "getValue" else { return }
                     count += 1
                 }

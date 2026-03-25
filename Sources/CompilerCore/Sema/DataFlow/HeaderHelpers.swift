@@ -834,6 +834,7 @@ extension DataFlowSemaPhase {
         // shuffled(random: Random) can look up the kotlin.random.Random symbol.
         registerSyntheticRandomStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCollectionStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticRangeProgressionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
         registerSyntheticBuilderDSLStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparisonStubs(symbols: symbols, types: types, interner: interner)

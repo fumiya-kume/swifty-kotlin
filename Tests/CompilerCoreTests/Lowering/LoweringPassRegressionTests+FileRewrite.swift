@@ -62,7 +62,7 @@ extension LoweringPassRegressionTests {
         }
 
         let forEachLineCall = lowered.body.compactMap { instruction -> (arguments: [KIRExprID], canThrow: Bool)? in
-            guard case let .call(_, callee, arguments, _, canThrow, _, _) = instruction,
+            guard case let .call(_, callee, arguments, _, canThrow, _, _, _) = instruction,
                   interner.resolve(callee) == "kk_file_forEachLine"
             else {
                 return nil

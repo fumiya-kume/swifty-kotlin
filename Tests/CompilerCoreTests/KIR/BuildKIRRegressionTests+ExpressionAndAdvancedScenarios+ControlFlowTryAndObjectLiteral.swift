@@ -20,7 +20,7 @@ extension BuildKIRRegressionTests {
 
             // .select was removed; verify control flow guards side-effect branches
             let sideEffectCalls = body.filter { instruction in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return false }
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return false }
                 return ctx.interner.resolve(callee) == "sideEffect"
             }
             XCTAssertEqual(sideEffectCalls.count, 2, "Both branches should have sideEffect calls in IR")
@@ -67,7 +67,7 @@ extension BuildKIRRegressionTests {
 
             // .select was removed; verify control flow guards side-effect branches
             let effectCalls = body.filter { instruction in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return false }
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return false }
                 return ctx.interner.resolve(callee) == "effect"
             }
             XCTAssertEqual(effectCalls.count, 3, "All 3 branches should have effect calls in IR")
@@ -127,7 +127,7 @@ extension BuildKIRRegressionTests {
             let body = try findKIRFunctionBody(named: "demo", in: module, interner: ctx.interner)
 
             let matcherCalls = body.compactMap { instruction -> KIRInstruction? in
-                guard case let .call(_, callee, arguments, _, _, _, _) = instruction,
+                guard case let .call(_, callee, arguments, _, _, _, _, _) = instruction,
                       ctx.interner.resolve(callee) == "kk_catch_type_matches"
                 else {
                     return nil
@@ -145,14 +145,14 @@ extension BuildKIRRegressionTests {
 
             func thrownEdge(for calleeName: String) -> (callIndex: Int, thrownSlot: KIRExprID, typeSlot: KIRExprID, target: Int32)? {
                 guard let callIndex = body.firstIndex(where: { instruction in
-                    guard case let .call(_, callee, _, _, _, _, _) = instruction else {
+                    guard case let .call(_, callee, _, _, _, _, _, _) = instruction else {
                         return false
                     }
                     return ctx.interner.resolve(callee) == calleeName
                 }) else {
                     return nil
                 }
-                guard case let .call(_, _, _, _, _, thrownResult?, _) = body[callIndex] else {
+                guard case let .call(_, _, _, _, _, thrownResult?, _, _) = body[callIndex] else {
                     return nil
                 }
                 let tokenConstIndex = callIndex + 1
@@ -233,7 +233,7 @@ extension BuildKIRRegressionTests {
                 return false
             })
 
-            guard case let .call(_, _, catchArguments, _, _, _, _) = body[catchEdge.callIndex],
+            guard case let .call(_, _, catchArguments, _, _, _, _, _) = body[catchEdge.callIndex],
                   let firstCatchArgument = catchArguments.first
             else {
                 XCTFail("Expected catchCall argument in first catch body.")
@@ -272,14 +272,14 @@ extension BuildKIRRegressionTests {
             // Use >= to be resilient against future lowering changes that may also emit
             // kk_op_is for other reasons in the same function body.
             let opIsCalls = body.filter { instruction in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return false }
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return false }
                 return ctx.interner.resolve(callee) == "kk_op_is"
             }
             XCTAssertGreaterThanOrEqual(opIsCalls.count, 1, "Expected at least one kk_op_is call for runtime type check fallback on UNKNOWN token.")
 
             // Verify the kk_op_is call receives the exception slot and the type token
             let firstOpIsCall = try XCTUnwrap(opIsCalls.first)
-            if case let .call(_, _, arguments, _, _, _, _) = firstOpIsCall {
+            if case let .call(_, _, arguments, _, _, _, _, _) = firstOpIsCall {
                 XCTAssertEqual(arguments.count, 2, "kk_op_is should receive exception value and type token.")
             }
 
@@ -335,7 +335,7 @@ extension BuildKIRRegressionTests {
             // Verify that kk_op_is is called for each typed catch clause.
             // Use >= numberOfTypedClauses to be resilient against future lowering changes.
             let opIsCalls = body.filter { instruction in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return false }
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return false }
                 return ctx.interner.resolve(callee) == "kk_op_is"
             }
             XCTAssertGreaterThanOrEqual(opIsCalls.count, 2, "Expected at least one kk_op_is call per typed catch clause for runtime type check fallback.")
@@ -365,7 +365,7 @@ extension BuildKIRRegressionTests {
 
             // catch-all should not require runtime type checking
             let opIsCalls = body.filter { instruction in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return false }
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return false }
                 return ctx.interner.resolve(callee) == "kk_op_is"
             }
             XCTAssertEqual(opIsCalls.count, 0, "catch-all (Any) should not emit kk_op_is runtime type check.")
@@ -392,13 +392,13 @@ extension BuildKIRRegressionTests {
             ))
             let makeBody = try findKIRFunctionBody(named: "make", in: module, interner: ctx.interner)
             let objectFactoryCall = try XCTUnwrap(makeBody.first { instruction in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee).hasPrefix("kk_object_literal_")
             })
 
-            guard case let .call(factorySymbol, callee, arguments, result, _, _, _) = objectFactoryCall else {
+            guard case let .call(factorySymbol, callee, arguments, result, _, _, _, _) = objectFactoryCall else {
                 XCTFail("Expected object literal to lower to generated factory call.")
                 return
             }
@@ -424,7 +424,7 @@ extension BuildKIRRegressionTests {
                 return
             }
             let hasAllocationRuntimeCall = generatedFactory.body.contains { instruction in
-                guard case let .call(_, loweredCallee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, loweredCallee, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 let calleeName = ctx.interner.resolve(loweredCallee)

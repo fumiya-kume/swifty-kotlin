@@ -51,6 +51,17 @@ extension CallTypeChecker {
         let isUIntRange = receiverType == sema.types.uintType
         let isULongRange = sema.bindings.isULongRangeExpr(receiverID) || receiverType == sema.types.ulongType
 
+        if args.isEmpty,
+           memberName == "step",
+           let propertyResult = driver.helpers.lookupMemberProperty(
+               named: calleeName,
+               receiverType: sema.types.makeNonNullable(receiverType ?? sema.types.anyType),
+               sema: sema
+           )
+        {
+            sema.bindings.bindIdentifier(id, symbol: propertyResult.symbol)
+        }
+
         // Provide contextual function type for range HOF lambda inference.
         if let expectation = rangeMemberLambdaExpectation(
             memberName: memberName,
@@ -78,13 +89,13 @@ extension CallTypeChecker {
         if isRangeMemberReturningCollection(memberName) {
             sema.bindings.markCollectionExpr(id)
         }
-        if memberName == "reversed" {
+        if memberName == "reversed" || (memberName == "step" && args.count == 1) {
             sema.bindings.markRangeExpr(id)
-            // Propagate char range marker through reversed() (STDLIB-290)
+            // Propagate char range marker through range-preserving transforms.
             if sema.bindings.isCharRangeExpr(receiverID) {
                 sema.bindings.markCharRangeExpr(id)
             }
-            // Propagate ULong range marker through reversed() (STDLIB-524)
+            // Propagate ULong range marker through range-preserving transforms.
             if sema.bindings.isULongRangeExpr(receiverID) {
                 sema.bindings.markULongRangeExpr(id)
             }
@@ -92,6 +103,7 @@ extension CallTypeChecker {
 
         let resultType = rangeMemberResultType(
             memberName: memberName,
+            argCount: args.count,
             sema: sema,
             interner: interner,
             isCharRange: isCharRange,
@@ -113,7 +125,7 @@ extension CallTypeChecker {
             "find", "findLast", "firstOrNull", "lastOrNull",
             "any", "all", "none",
             "chunked", "windowed",
-            "reversed", "isEmpty", "sum",
+            "reversed", "step", "isEmpty", "sum",
         ]
         return rangeMembers.contains(memberName)
     }
@@ -122,6 +134,8 @@ extension CallTypeChecker {
         switch memberName {
         case "count", "toList", "reversed", "isEmpty", "sum":
             argCount == 0
+        case "step":
+            argCount == 0 || argCount == 1
         case "first", "last":
             argCount == 0 || argCount == 1
         case "contains", "forEach", "map", "mapIndexed", "mapNotNull",
@@ -168,6 +182,7 @@ extension CallTypeChecker {
 
     private func rangeMemberResultType(
         memberName: String,
+        argCount: Int,
         sema: SemaModule,
         interner: StringInterner,
         isCharRange: Bool = false,
@@ -213,6 +228,8 @@ extension CallTypeChecker {
             )
         case "reversed":
             return elementType
+        case "step":
+            return argCount == 0 ? sema.types.intType : elementType
         default:
             return sema.types.anyType
         }
@@ -259,9 +276,12 @@ extension CallTypeChecker {
         case "forEach":
             guard argCount == 1 else { return nil }
             expectation = (0, [elementType], sema.types.unitType)
-        case "map", "mapNotNull":
+        case "map":
             guard argCount == 1 else { return nil }
             expectation = (0, [elementType], sema.types.anyType)
+        case "mapNotNull":
+            guard argCount == 1 else { return nil }
+            expectation = (0, [elementType], sema.types.nullableAnyType)
         case "filter", "filterNot", "find", "findLast", "first", "firstOrNull", "last", "lastOrNull", "any", "all", "none":
             guard argCount == 1 else { return nil }
             expectation = (0, [elementType], sema.types.booleanType)

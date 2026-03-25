@@ -865,7 +865,7 @@ extension LoweringPassRegressionTests {
         XCTAssertEqual(equalsFn.params.count, 2, "equals should have receiver + other parameter")
 
         let xGetterCalls = equalsFn.body.compactMap { instruction -> KIRInstruction? in
-            guard case let .call(_, callee, _, _, _, _, _) = instruction,
+            guard case let .call(_, callee, _, _, _, _, _, _) = instruction,
                   interner.resolve(callee) == "x$get"
             else {
                 return nil

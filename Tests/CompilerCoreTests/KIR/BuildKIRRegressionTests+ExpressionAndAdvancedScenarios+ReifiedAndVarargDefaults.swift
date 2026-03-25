@@ -28,12 +28,12 @@ extension BuildKIRRegressionTests {
         XCTAssertEqual(pickFunction.params.last?.symbol, expectedTokenSymbol)
 
         guard let callInstruction = mainFunction.body.first(where: { instruction in
-            guard case let .call(symbol, _, _, _, _, _, _) = instruction else {
+            guard case let .call(symbol, _, _, _, _, _, _, _) = instruction else {
                 return false
             }
             return symbol == pickSymbol
         }),
-            case let .call(_, _, arguments, _, _, _, _) = callInstruction
+            case let .call(_, _, arguments, _, _, _, _, _) = callInstruction
         else {
             XCTFail("Expected main to call inline reified function.")
             return
@@ -64,7 +64,7 @@ extension BuildKIRRegressionTests {
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
             let callNames = body.compactMap { instruction -> String? in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return nil }
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return nil }
                 return ctx.interner.resolve(callee)
             }
             XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for vararg packing, got: \(callNames)")
@@ -88,7 +88,7 @@ extension BuildKIRRegressionTests {
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
             let callNames = body.compactMap { instruction -> String? in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return nil }
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return nil }
                 return ctx.interner.resolve(callee)
             }
             XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for vararg packing with default arg, got: \(callNames)")
@@ -111,7 +111,7 @@ extension BuildKIRRegressionTests {
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
             let callNames = body.compactMap { instruction -> String? in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return nil }
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return nil }
                 return ctx.interner.resolve(callee)
             }
             XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for empty vararg, got: \(callNames)")

@@ -20,12 +20,12 @@ extension BuildKIRRegressionTests {
             let module = try XCTUnwrap(ctx.kir)
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let consumeCall = try XCTUnwrap(mainBody.first { instruction in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee) == "consume"
             })
-            guard case let .call(_, _, arguments, _, _, _, _) = consumeCall else {
+            guard case let .call(_, _, arguments, _, _, _, _, _) = consumeCall else {
                 XCTFail("Expected call instruction for consume(instance).")
                 return
             }
@@ -53,13 +53,13 @@ extension BuildKIRRegressionTests {
             let module = try XCTUnwrap(ctx.kir)
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let lambdaCall = try XCTUnwrap(mainBody.first { instruction in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee).hasPrefix("kk_lambda_")
             })
 
-            guard case let .call(callSymbol, callee, arguments, _, _, _, _) = lambdaCall else {
+            guard case let .call(callSymbol, callee, arguments, _, _, _, _, _) = lambdaCall else {
                 XCTFail("Expected lowered lambda call in main.")
                 return
             }
@@ -158,13 +158,13 @@ extension BuildKIRRegressionTests {
             let module = try XCTUnwrap(ctx.kir)
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let lambdaCall = try XCTUnwrap(mainBody.first { instruction in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee).hasPrefix("kk_lambda_")
             })
 
-            guard case let .call(_, _, arguments, _, _, _, _) = lambdaCall else {
+            guard case let .call(_, _, arguments, _, _, _, _, _) = lambdaCall else {
                 XCTFail("Expected callable-value call to lowered lambda target.")
                 return
             }
@@ -221,13 +221,13 @@ extension BuildKIRRegressionTests {
 
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let incCall = try XCTUnwrap(mainBody.first { instruction in
-                guard case let .call(symbol, _, _, _, _, _, _) = instruction else {
+                guard case let .call(symbol, _, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return symbol == incSymbol
             })
 
-            guard case let .call(callSymbol, callee, arguments, _, _, _, _) = incCall else {
+            guard case let .call(callSymbol, callee, arguments, _, _, _, _, _) = incCall else {
                 XCTFail("Expected callable reference call to inc.")
                 return
             }
@@ -266,13 +266,13 @@ extension BuildKIRRegressionTests {
             // REFL-003: After callable ref tagging, look for the plus call
             // by either symbol match or callee name match.
             let plusCall = try XCTUnwrap(mainBody.first { instruction in
-                guard case let .call(symbol, callee, _, _, _, _, _) = instruction else {
+                guard case let .call(symbol, callee, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return symbol == plusSymbol || ctx.interner.resolve(callee) == "plus"
             })
 
-            guard case let .call(_, callee, arguments, _, _, _, _) = plusCall else {
+            guard case let .call(_, callee, arguments, _, _, _, _, _) = plusCall else {
                 XCTFail("Expected bound callable reference to lower to plus call.")
                 return
             }

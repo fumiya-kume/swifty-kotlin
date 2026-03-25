@@ -55,7 +55,7 @@ final class FinallyExceptionRouteTests: XCTestCase {
 
             // Find all cleanup() calls and check their throw routing
             let cleanupCalls = body.enumerated().compactMap { (index, instr) -> (index: Int, canThrow: Bool, hasThrownResult: Bool)? in
-                guard case let .call(_, callee, _, _, canThrow, thrownResult, _) = instr,
+                guard case let .call(_, callee, _, _, canThrow, thrownResult, _, _) = instr,
                       ctx.interner.resolve(callee) == "cleanup"
                 else { return nil }
                 return (index: index, canThrow: canThrow, hasThrownResult: thrownResult != nil)
@@ -131,7 +131,7 @@ final class FinallyExceptionRouteTests: XCTestCase {
 
             // Find all cleanup() calls
             let cleanupCalls = body.enumerated().compactMap { (index, instr) -> (index: Int, canThrow: Bool)? in
-                guard case let .call(_, callee, _, _, canThrow, _, _) = instr,
+                guard case let .call(_, callee, _, _, canThrow, _, _, _) = instr,
                       ctx.interner.resolve(callee) == "cleanup"
                 else { return nil }
                 return (index: index, canThrow: canThrow)
@@ -235,11 +235,11 @@ final class FinallyExceptionRouteTests: XCTestCase {
 
             // Both inner() and outer() should appear as calls
             let innerCalls = body.filter { instr in
-                guard case let .call(_, callee, _, _, _, _, _) = instr else { return false }
+                guard case let .call(_, callee, _, _, _, _, _, _) = instr else { return false }
                 return ctx.interner.resolve(callee) == "inner"
             }
             let outerCalls = body.filter { instr in
-                guard case let .call(_, callee, _, _, _, _, _) = instr else { return false }
+                guard case let .call(_, callee, _, _, _, _, _, _) = instr else { return false }
                 return ctx.interner.resolve(callee) == "outer"
             }
 
@@ -294,7 +294,7 @@ final class FinallyExceptionRouteTests: XCTestCase {
 
             // Find all cleanup() calls
             let cleanupCalls = body.enumerated().compactMap { (index, instr) -> (index: Int, canThrow: Bool)? in
-                guard case let .call(_, callee, _, _, canThrow, _, _) = instr,
+                guard case let .call(_, callee, _, _, canThrow, _, _, _) = instr,
                       ctx.interner.resolve(callee) == "cleanup"
                 else { return nil }
                 return (index: index, canThrow: canThrow)

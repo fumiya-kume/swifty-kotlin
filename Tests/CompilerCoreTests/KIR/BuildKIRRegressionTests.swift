@@ -162,7 +162,7 @@ final class BuildKIRRegressionTests: XCTestCase {
                 return op == .add
             })
             XCTAssertFalse(body.contains { instruction in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee) == "plus"
@@ -215,12 +215,12 @@ final class BuildKIRRegressionTests: XCTestCase {
 
             let body = try findKIRFunctionBody(named: "useOperator", in: module, interner: ctx.interner)
             let resolvedCall = try XCTUnwrap(body.first { instruction in
-                guard case let .call(symbol, _, _, _, _, _, _) = instruction else {
+                guard case let .call(symbol, _, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return symbol == chosenSymbol
             })
-            guard case let .call(callSymbol, callee, arguments, _, _, _, _) = resolvedCall else {
+            guard case let .call(callSymbol, callee, arguments, _, _, _, _, _) = resolvedCall else {
                 XCTFail("Expected chosen call instruction for useOperator.")
                 return
             }
@@ -235,7 +235,7 @@ final class BuildKIRRegressionTests: XCTestCase {
                 return op == .add
             })
             XCTAssertFalse(body.contains { instruction in
-                guard case let .call(_, callCallee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, callCallee, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callCallee).hasPrefix("kk_op_")
@@ -289,12 +289,12 @@ final class BuildKIRRegressionTests: XCTestCase {
 
             let body = try findKIRFunctionBody(named: "useMemberCall", in: module, interner: ctx.interner)
             let memberCall = try XCTUnwrap(body.first { instruction in
-                guard case let .call(symbol, _, _, _, _, _, _) = instruction else {
+                guard case let .call(symbol, _, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return symbol == chosenSymbol
             })
-            guard case let .call(callSymbol, callee, arguments, _, _, _, _) = memberCall else {
+            guard case let .call(callSymbol, callee, arguments, _, _, _, _, _) = memberCall else {
                 XCTFail("Expected chosen call instruction for useMemberCall.")
                 return
             }
@@ -350,12 +350,12 @@ final class BuildKIRRegressionTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "useUnary", in: module, interner: ctx.interner)
             let resolvedCall = try XCTUnwrap(body.first { instruction in
-                guard case let .call(symbol, _, _, _, _, _, _) = instruction else {
+                guard case let .call(symbol, _, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return symbol == chosenSymbol
             })
-            guard case let .call(callSymbol, callee, arguments, _, _, _, _) = resolvedCall else {
+            guard case let .call(callSymbol, callee, arguments, _, _, _, _, _) = resolvedCall else {
                 XCTFail("Expected chosen call instruction for useUnary.")
                 return
             }

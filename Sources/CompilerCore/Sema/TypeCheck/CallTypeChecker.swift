@@ -1271,54 +1271,14 @@ final class CallTypeChecker {
                     return symbol.kind == .typeAlias
                 }
                 if let aliasSym = aliasSymbols.first {
-                    // Expand the typealias to get the underlying class type
+                    let aliasTypeParameters = sema.symbols.typeAliasTypeParameters(for: aliasSym)
                     let aliasTypeArgs: [TypeArg] = if !explicitTypeArgs.isEmpty {
                         explicitTypeArgs.map { TypeArg.invariant($0) }
-                    } else if let expectedType,
+                    } else if !aliasTypeParameters.isEmpty,
+                              let expectedType,
                               case let .classType(expectedClassType) = sema.types.kind(of: expectedType)
                     {
-                        expectedClassType.args
-                    } else {
-                        []
-                    }
-                    if let expanded = driver.helpers.expandTypeAlias(
-                        aliasSym,
-                        typeArgs: aliasTypeArgs,
-                        sema: sema,
-                        visited: [],
-                        depth: 0,
-                        diagnostics: ctx.semaCtx.diagnostics
-                    ),
-                       case let .classType(classType) = sema.types.kind(of: expanded),
-                       let underlyingSymbol = ctx.cachedSymbol(classType.classSymbol)
-                    {
-                        let initName = interner.intern("<init>")
-                        let ctorFQName = underlyingSymbol.fqName + [initName]
-                        let ctorSymbols = sema.symbols.lookupAll(fqName: ctorFQName)
-                        if !ctorSymbols.isEmpty {
-                            let (vis, invis) = ctx.filterByVisibility(ctorSymbols)
-                            candidates = vis
-                            callInvisible.append(contentsOf: invis)
-                        }
-                    }
-                }
-            }
-            // --- Typealias constructor calls ---
-            // If the callee is a typealias (e.g. `typealias IntPair = Pair<Int, Int>`),
-            // expand it to the underlying class and resolve its constructor.
-            if candidates.isEmpty {
-                let aliasSymbols = ctx.cachedScopeLookup(calleeName).filter { candidate in
-                    guard let symbol = ctx.cachedSymbol(candidate) else { return false }
-                    return symbol.kind == .typeAlias
-                }
-                if let aliasSym = aliasSymbols.first {
-                    // Expand the typealias to get the underlying class type
-                    let aliasTypeArgs: [TypeArg] = if !explicitTypeArgs.isEmpty {
-                        explicitTypeArgs.map { TypeArg.invariant($0) }
-                    } else if let expectedType,
-                              case let .classType(expectedClassType) = sema.types.kind(of: expectedType)
-                    {
-                        expectedClassType.args
+                        Array(expectedClassType.args.prefix(aliasTypeParameters.count))
                     } else {
                         []
                     }
@@ -1445,6 +1405,19 @@ final class CallTypeChecker {
                 let resolvedName = interner.resolve(calleeName)
                 if KnownCompilerNames.stdlibCollectionFactoryNames.contains(resolvedName) {
                     sema.bindings.markCollectionExpr(id)
+                }
+            }
+            if let externalLinkName = sema.symbols.externalLinkName(for: chosen),
+               [
+                   "kk_int_progression_fromClosedRange",
+                   "kk_long_progression_fromClosedRange",
+                   "kk_uint_progression_fromClosedRange",
+                   "kk_ulong_progression_fromClosedRange",
+               ].contains(externalLinkName)
+            {
+                sema.bindings.markRangeExpr(id)
+                if externalLinkName == "kk_ulong_progression_fromClosedRange" {
+                    sema.bindings.markULongRangeExpr(id)
                 }
             }
             sema.bindings.bindExprType(id, type: returnType)

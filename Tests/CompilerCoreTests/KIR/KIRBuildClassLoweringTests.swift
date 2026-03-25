@@ -135,7 +135,7 @@ final class KIRBuildClassLoweringTests: XCTestCase {
             XCTAssertFalse(childConstructors.isEmpty)
             let hasInitDelegationCall = childConstructors.contains { function in
                 function.body.contains { instruction in
-                    guard case let .call(_, callee, _, _, _, _, _) = instruction else { return false }
+                    guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return false }
                     return ctx.interner.resolve(callee) == "<init>"
                 }
             }
@@ -203,7 +203,7 @@ final class KIRBuildClassLoweringTests: XCTestCase {
                 "Expected explicit abort fallback in delegation forwarder, got: \(callees)"
             )
             let abortCallArgumentCounts = forwardingBody.compactMap { instruction -> Int? in
-                guard case let .call(_, callee, arguments, _, _, _, _) = instruction,
+                guard case let .call(_, callee, arguments, _, _, _, _, _) = instruction,
                       ctx.interner.resolve(callee) == "kk_abort_unreachable"
                 else {
                     return nil
@@ -291,7 +291,7 @@ final class KIRBuildClassLoweringTests: XCTestCase {
         interner: StringInterner
     ) -> Bool {
         body.contains { instruction in
-            guard case let .call(_, callee, _, _, _, _, _) = instruction else {
+            guard case let .call(_, callee, _, _, _, _, _, _) = instruction else {
                 return false
             }
             return interner.resolve(callee) == calleeName
@@ -303,7 +303,7 @@ final class KIRBuildClassLoweringTests: XCTestCase {
         interner: StringInterner
     ) -> [SymbolID] {
         body.compactMap { instruction -> SymbolID? in
-            guard case let .call(symbol, callee, _, _, _, _, _) = instruction,
+            guard case let .call(symbol, callee, _, _, _, _, _, _) = instruction,
                   let symbol
             else {
                 return nil

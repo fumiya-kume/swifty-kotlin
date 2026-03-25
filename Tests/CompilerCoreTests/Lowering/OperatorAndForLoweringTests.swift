@@ -109,7 +109,7 @@ final class OperatorAndForLoweringTests: XCTestCase {
         let body = bodyInDecl(declID, module: module)
         XCTAssertGreaterThanOrEqual(body.count, 2)
 
-        guard case let .call(_, loweredCallee, _, loweredResult, _, _, _) = body[0] else {
+        guard case let .call(_, loweredCallee, _, loweredResult, _, _, _, _) = body[0] else {
             return XCTFail("Expected first lowered instruction to be a call")
         }
         XCTAssertEqual(interner.resolve(loweredCallee), "kk_println_char")

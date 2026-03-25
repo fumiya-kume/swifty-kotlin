@@ -259,7 +259,7 @@ final class LoweringPassRegressionTests: XCTestCase {
         }
 
         let rawSuspendCalls = loweredCaller.body.contains { instruction in
-            guard case let .call(_, callee, _, _, _, _, _) = instruction else {
+            guard case let .call(_, callee, _, _, _, _, _, _) = instruction else {
                 return false
             }
             return interner.resolve(callee) == "susp"
@@ -267,7 +267,7 @@ final class LoweringPassRegressionTests: XCTestCase {
         XCTAssertFalse(rawSuspendCalls)
 
         let rewrittenSuspendCalls = loweredCaller.body.compactMap { instruction -> (name: String, arity: Int, canThrow: Bool)? in
-            guard case let .call(_, callee, arguments, _, canThrow, _, _) = instruction else {
+            guard case let .call(_, callee, arguments, _, canThrow, _, _, _) = instruction else {
                 return nil
             }
             let name = interner.resolve(callee)

@@ -204,7 +204,7 @@ extension BuildKIRRegressionTests {
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
             let callNames = body.compactMap { instruction -> String? in
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return nil }
+                guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return nil }
                 return ctx.interner.resolve(callee)
             }
             XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for non-trailing vararg, got: \(callNames)")

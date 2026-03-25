@@ -130,7 +130,7 @@ final class TailrecLoweringTests: XCTestCase {
 
         // The self-recursive call should be gone.
         let hasSelfCall = lowered.body.contains { instruction in
-            if case let .call(sym, _, _, _, _, _, _) = instruction, sym == fnSymbol {
+            if case let .call(sym, _, _, _, _, _, _, _) = instruction, sym == fnSymbol {
                 return true
             }
             return false
@@ -323,7 +323,7 @@ final class TailrecLoweringTests: XCTestCase {
         // because the non-zero mask means some params use defaults and
         // we cannot inline their default expressions at this stage.
         let hasDefaultStubCall = lowered.body.contains { instruction in
-            if case let .call(sym, _, _, _, _, _, _) = instruction, sym == defaultStubSymbol {
+            if case let .call(sym, _, _, _, _, _, _, _) = instruction, sym == defaultStubSymbol {
                 return true
             }
             return false
@@ -404,7 +404,7 @@ final class TailrecLoweringTests: XCTestCase {
 
         // The $default stub call should be eliminated (mask=0 is safe).
         let hasDefaultStubCall = lowered.body.contains { instruction in
-            if case let .call(sym, _, _, _, _, _, _) = instruction, sym == defaultStubSymbol {
+            if case let .call(sym, _, _, _, _, _, _, _) = instruction, sym == defaultStubSymbol {
                 return true
             }
             return false
@@ -503,7 +503,7 @@ final class TailrecLoweringTests: XCTestCase {
         // The $default stub call should be PRESERVED because the mask is
         // non-zero (slow-path resolved mask=2).
         let hasDefaultStubCall = lowered.body.contains { instruction in
-            if case let .call(sym, _, _, _, _, _, _) = instruction, sym == defaultStubSymbol {
+            if case let .call(sym, _, _, _, _, _, _, _) = instruction, sym == defaultStubSymbol {
                 return true
             }
             return false
@@ -587,7 +587,7 @@ final class TailrecLoweringTests: XCTestCase {
 
         // The $default stub call should be eliminated (mask=0 via slow path).
         let hasDefaultStubCall = lowered.body.contains { instruction in
-            if case let .call(sym, _, _, _, _, _, _) = instruction, sym == defaultStubSymbol {
+            if case let .call(sym, _, _, _, _, _, _, _) = instruction, sym == defaultStubSymbol {
                 return true
             }
             return false
@@ -681,7 +681,7 @@ final class TailrecLoweringTests: XCTestCase {
             // Self-recursive calls to 'fact' should have been eliminated.
             let factName = ctx.interner.intern("fact")
             let hasSelfCall = factFunction.body.contains { instruction in
-                if case let .call(_, callee, _, _, _, _, _) = instruction {
+                if case let .call(_, callee, _, _, _, _, _, _) = instruction {
                     return callee == factName
                 }
                 return false

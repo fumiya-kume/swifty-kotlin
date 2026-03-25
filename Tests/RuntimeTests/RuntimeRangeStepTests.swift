@@ -152,29 +152,29 @@ final class RuntimeRangeStepTests: IsolatedRuntimeXCTestCase {
     // MARK: - Progression fromClosedRange tests (STDLIB-RANGE-039)
 
     func testIntProgressionFromClosedRange() {
-        let progression = kk_int_progression_fromClosedRange(1, 10, 2)
+        let progression = kk_int_progression_fromClosedRange(0, 1, 10, 2, nil)
         XCTAssertEqual(kk_range_first(progression), 1)
-        XCTAssertEqual(kk_range_last(progression), 10)
+        XCTAssertEqual(kk_range_last(progression), 9)
         XCTAssertEqual(kk_range_count(progression), 5) // 1,3,5,7,9
     }
 
     func testLongProgressionFromClosedRange() {
-        let progression = kk_long_progression_fromClosedRange(1, 10, 3)
+        let progression = kk_long_progression_fromClosedRange(0, 1, 10, 3, nil)
         XCTAssertEqual(kk_range_first(progression), 1)
         XCTAssertEqual(kk_range_last(progression), 10)
         XCTAssertEqual(kk_range_count(progression), 4) // 1,4,7,10
     }
 
     func testUIntProgressionFromClosedRange() {
-        let progression = kk_uint_progression_fromClosedRange(1, 10, 2)
+        let progression = kk_uint_progression_fromClosedRange(0, 1, 10, 2, nil)
         XCTAssertEqual(kk_range_first(progression), 1)
-        XCTAssertEqual(kk_range_last(progression), 10)
+        XCTAssertEqual(kk_range_last(progression), 9)
         let list = kk_uint_range_toList(progression)
         XCTAssertEqual(kk_list_size(list), 5)
     }
 
     func testULongProgressionFromClosedRange() {
-        let progression = kk_ulong_progression_fromClosedRange(1, 10, 3)
+        let progression = kk_ulong_progression_fromClosedRange(0, 1, 10, 3, nil)
         XCTAssertEqual(kk_range_first(progression), 1)
         XCTAssertEqual(kk_range_last(progression), 10)
         let list = kk_ulong_range_toList(progression)

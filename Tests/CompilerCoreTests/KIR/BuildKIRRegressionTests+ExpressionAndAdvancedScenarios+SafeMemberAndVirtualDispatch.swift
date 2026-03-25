@@ -290,7 +290,7 @@ extension BuildKIRRegressionTests {
                 XCTFail("Expected .call for \(testCase.input)")
                 continue
             }
-            guard case let .call(_, loweredCallee, arguments, _, _, _, _) = callInstruction else {
+            guard case let .call(_, loweredCallee, arguments, _, _, _, _, _) = callInstruction else {
                 XCTFail("Expected .call payload for \(testCase.input)")
                 continue
             }
@@ -364,13 +364,13 @@ extension BuildKIRRegressionTests {
         )
 
         guard let callInstruction = emit.instructions.first(where: { instruction in
-            guard case let .call(symbol, _, _, _, _, _, _) = instruction else { return false }
+            guard case let .call(symbol, _, _, _, _, _, _, _) = instruction else { return false }
             return symbol == callee
         }) else {
             XCTFail("Expected chosen callee call")
             return
         }
-        guard case let .call(_, loweredCallee, arguments, _, _, _, _) = callInstruction else {
+        guard case let .call(_, loweredCallee, arguments, _, _, _, _, _) = callInstruction else {
             XCTFail("Expected .call payload")
             return
         }
@@ -444,13 +444,13 @@ extension BuildKIRRegressionTests {
 
         let expectedStub = fixture.driver.callSupportLowerer.defaultStubSymbol(for: chosen)
         guard let stubCall = emit.instructions.first(where: { instruction in
-            guard case let .call(symbol, _, _, _, _, _, _) = instruction else { return false }
+            guard case let .call(symbol, _, _, _, _, _, _, _) = instruction else { return false }
             return symbol == expectedStub
         }) else {
             XCTFail("Expected default stub call")
             return
         }
-        guard case let .call(_, callee, arguments, _, _, _, _) = stubCall else {
+        guard case let .call(_, callee, arguments, _, _, _, _, _) = stubCall else {
             XCTFail("Expected .call payload")
             return
         }
@@ -634,7 +634,7 @@ extension BuildKIRRegressionTests {
         }
         XCTAssertFalse(hasVirtualCall)
         XCTAssertTrue(emit.instructions.contains { instruction in
-            guard case let .call(_, _, _, _, _, _, isSuperCall) = instruction else { return false }
+            guard case let .call(_, _, _, _, _, _, isSuperCall, _) = instruction else { return false }
             return isSuperCall
         })
     }

@@ -2885,9 +2885,11 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_int_progression_fromClosedRange",
             parameters: [
+                RuntimeABIParameter(name: "receiverRaw", type: .intptr),
                 RuntimeABIParameter(name: "rangeStart", type: .intptr),
                 RuntimeABIParameter(name: "rangeEnd", type: .intptr),
                 RuntimeABIParameter(name: "step", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Range"
@@ -2895,9 +2897,11 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_long_progression_fromClosedRange",
             parameters: [
+                RuntimeABIParameter(name: "receiverRaw", type: .intptr),
                 RuntimeABIParameter(name: "rangeStart", type: .intptr),
                 RuntimeABIParameter(name: "rangeEnd", type: .intptr),
                 RuntimeABIParameter(name: "step", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Range"
@@ -2905,9 +2909,11 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_uint_progression_fromClosedRange",
             parameters: [
+                RuntimeABIParameter(name: "receiverRaw", type: .intptr),
                 RuntimeABIParameter(name: "rangeStart", type: .intptr),
                 RuntimeABIParameter(name: "rangeEnd", type: .intptr),
                 RuntimeABIParameter(name: "step", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Range"
@@ -2915,9 +2921,11 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_ulong_progression_fromClosedRange",
             parameters: [
+                RuntimeABIParameter(name: "receiverRaw", type: .intptr),
                 RuntimeABIParameter(name: "rangeStart", type: .intptr),
                 RuntimeABIParameter(name: "rangeEnd", type: .intptr),
                 RuntimeABIParameter(name: "step", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Range"

@@ -21,6 +21,19 @@ extension CallTypeChecker {
         if sema.symbols.externalLinkName(for: chosen) == "kk_string_split" {
             sema.bindings.markCollectionExpr(id)
         }
+        if let externalLinkName = sema.symbols.externalLinkName(for: chosen),
+           [
+               "kk_int_progression_fromClosedRange",
+               "kk_long_progression_fromClosedRange",
+               "kk_uint_progression_fromClosedRange",
+               "kk_ulong_progression_fromClosedRange",
+           ].contains(externalLinkName)
+        {
+            sema.bindings.markRangeExpr(id)
+            if externalLinkName == "kk_ulong_progression_fromClosedRange" {
+                sema.bindings.markULongRangeExpr(id)
+            }
+        }
         if let signature = sema.symbols.functionSignature(for: chosen) {
             let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
             return sema.types.substituteTypeParameters(

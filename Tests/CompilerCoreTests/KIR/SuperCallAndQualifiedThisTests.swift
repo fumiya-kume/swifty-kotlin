@@ -36,6 +36,7 @@ private func extractSuperCallFlagsAcrossOverrides(
 ) -> [(callee: String, isSuperCall: Bool)] {
     findAllKIRFunctionBodies(named: name, in: module, interner: interner)
         .flatMap { extractSuperCallFlags(from: $0, interner: interner) }
+        .map { ($0.callee, $0.isSuperCall) }
 }
 
 final class SuperCallAndQualifiedThisTests: XCTestCase {

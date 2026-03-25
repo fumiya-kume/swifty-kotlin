@@ -129,7 +129,7 @@ extension LoweringPassRegressionTests {
         // symbol derived from the property (not the backing field).
         let expectedSetterSymbol = SymbolID(rawValue: -13000 - propertySym.rawValue)
         let callSymbols = lowered.body.compactMap { instruction -> SymbolID? in
-            guard case let .call(sym, _, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(sym, _, _, _, _, _, _, _) = instruction else { return nil }
             return sym
         }
         XCTAssertTrue(callSymbols.contains(expectedSetterSymbol),
@@ -228,7 +228,7 @@ extension LoweringPassRegressionTests {
         // using the synthetic getter symbol (-12_000 - propSym).
         let expectedGetterSymbol = SymbolID(rawValue: -12000 - propertySym.rawValue)
         let callSymbols = lowered.body.compactMap { instruction -> SymbolID? in
-            guard case let .call(sym, _, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(sym, _, _, _, _, _, _, _) = instruction else { return nil }
             return sym
         }
         XCTAssertTrue(callSymbols.contains(expectedGetterSymbol),

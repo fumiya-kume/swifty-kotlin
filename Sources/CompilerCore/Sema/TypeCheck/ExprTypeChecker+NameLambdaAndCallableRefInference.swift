@@ -68,7 +68,7 @@ extension ExprTypeChecker {
         let dslBlockedIDs = allCandidateIDs.filter { ctx.isCandidateBlockedByDslMarker($0) }
         let dslFilteredIDs = allCandidateIDs.filter { !ctx.isCandidateBlockedByDslMarker($0) }
         let (visibleIDs, _) = ctx.filterByVisibility(dslFilteredIDs)
-        let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
+        var candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
         if let propSymbol = candidates.first(where: { sym in
             guard sym.kind == .property else { return false }
             guard let parentID = sema.symbols.parentSymbol(for: sym.id),
@@ -191,8 +191,28 @@ extension ExprTypeChecker {
         // that share a DslMarker annotation with the current implicit receiver.
         let dslBlockedIDs = allCandidateIDs.filter { ctx.isCandidateBlockedByDslMarker($0) }
         let dslFilteredIDs = allCandidateIDs.filter { !ctx.isCandidateBlockedByDslMarker($0) }
-        let (visibleIDs, invisibleSyms) = ctx.filterByVisibility(dslFilteredIDs)
-        let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
+        let (visibleIDs, initialInvisibleSyms) = ctx.filterByVisibility(dslFilteredIDs)
+        var invisibleSyms = initialInvisibleSyms
+        var candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
+        if candidates.isEmpty {
+            let nominalFallbackIDs = sema.symbols.lookupByShortName(name).filter { symbolID in
+                guard let symbol = sema.symbols.symbol(symbolID) else {
+                    return false
+                }
+                switch symbol.kind {
+                case .object, .class, .interface, .enumClass, .annotationClass, .typeAlias:
+                    return true
+                default:
+                    return false
+                }
+            }
+            let (visibleFallbackIDs, invisibleFallbackSyms) = ctx.filterByVisibility(nominalFallbackIDs)
+            if !visibleFallbackIDs.isEmpty {
+                candidates = visibleFallbackIDs.compactMap { ctx.cachedSymbol($0) }
+            } else if invisibleSyms.isEmpty, !invisibleFallbackSyms.isEmpty {
+                invisibleSyms = invisibleFallbackSyms
+            }
+        }
         if let receiverType = ctx.implicitReceiverType {
             let memberType = resolveImplicitReceiverMember(
                 id: id,

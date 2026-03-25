@@ -981,7 +981,7 @@ final class CallLowerer {
             return zip(argumentTypes, signature.parameterTypes).allSatisfy { argumentType, parameterType in
                 sema.types.isSubtype(argumentType, parameterType)
             }
-        } ?? candidates.first
+        }
 
         guard let chosen = matched else {
             return nil
