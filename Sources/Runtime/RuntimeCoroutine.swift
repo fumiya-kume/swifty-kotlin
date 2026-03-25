@@ -47,9 +47,9 @@ private func pthreadSetValue<T: AnyObject>(_ key: pthread_key_t, _ value: T?) {
 }
 
 private final class RuntimeResumeContinuationBox: @unchecked Sendable {
-    let closure: () -> Void
+    let closure: @Sendable () -> Void
 
-    init(_ closure: @escaping () -> Void) {
+    init(_ closure: @escaping @Sendable () -> Void) {
         self.closure = closure
     }
 
@@ -112,7 +112,7 @@ private final class RuntimeResumeContinuationBox: @unchecked Sendable {
 // Priority order: Channel > withContext > awaitResult/join > sequence builders
 // (Channels are most likely to exhaust GCD thread pools under load.)
 
-final class RuntimeContinuationState {
+final class RuntimeContinuationState: @unchecked Sendable {
     var functionID: Int64
     var label: Int64
     var completion: Int64
@@ -190,7 +190,7 @@ final class RuntimeContinuationState {
     /// loop right before it would otherwise block.  If a resume signal has
     /// already been delivered (pending), the continuation is dispatched
     /// immediately.
-    func installResumeContinuation(_ continuation: @escaping () -> Void) {
+    func installResumeContinuation(_ continuation: @escaping @Sendable () -> Void) {
         let boxedContinuation = RuntimeResumeContinuationBox(continuation)
         stateLock.lock()
         if resumeSignalPending {
@@ -1903,7 +1903,7 @@ final class SuspendedSender {
     let continuation: Int
     let value: Int
     /// CORO-004: Resume closure for continuation-based implementation
-    var resumeClosure: (() -> Void)?
+    var resumeClosure: (@Sendable () -> Void)?
     
     /// Set to `true` (under the channel lock) when the sender's value is
     /// delivered to a receiver. The sender checks this after waking to distinguish a
@@ -1926,7 +1926,7 @@ final class SuspendedReceiver {
     let semaphore: DispatchSemaphore // CORO-004: Keep for backward compatibility during migration
     let continuation: Int
     /// CORO-004: Resume closure for continuation-based implementation
-    var resumeClosure: (() -> Void)?
+    var resumeClosure: (@Sendable () -> Void)?
     /// The value deposited by a sender. `nil` means woken by close or cancel.
     var result: Int?
     /// Set to `true` when woken due to coroutine cancellation.
