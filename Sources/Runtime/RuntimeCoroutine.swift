@@ -1892,14 +1892,26 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
 /// `kk_coroutine_check_cancellation`) so that every `Int` value is sendable.
 let kChannelClosedSentinel: Int = Int.min
 
+/// Buffer overflow strategies for Channel send operations (CORO-001)
+enum ChannelBufferOverflow {
+    /// Suspend the sender when buffer is full (default Kotlin behavior)
+    case suspend
+    /// Drop the oldest element in buffer to make room
+    case dropOldest
+    /// Drop the element being sent
+    case dropLatest
+}
+
 /// Mutable box for a suspended sender so receivers can mark delivery before
-/// signaling the continuation.  Using a class (reference type) ensures the
+/// resuming the continuation.  Using a class (reference type) ensures the
 /// `delivered` flag set under the channel lock is visible to the sender
 /// after it re-acquires the lock post-wakeup.
 final class SuspendedSender {
-    let semaphore: DispatchSemaphore
+    let semaphore: DispatchSemaphore // CORO-004: Keep for backward compatibility during migration
     let continuation: Int
     let value: Int
+    /// CORO-004: Resume closure for continuation-based implementation
+    var resumeClosure: (() -> Void)?
     
     /// Set to `true` (under the channel lock) when the sender's value is
     /// delivered to a receiver. The sender checks this after waking to distinguish a
@@ -1917,10 +1929,12 @@ final class SuspendedSender {
 }
 
 /// Mutable box for a suspended receiver so senders / close can mark the
-/// wakeup reason before signaling the semaphore. Mirrors `SuspendedSender`.
+/// wakeup reason before resuming the continuation. Mirrors `SuspendedSender`.
 final class SuspendedReceiver {
-    let semaphore: DispatchSemaphore
+    let semaphore: DispatchSemaphore // CORO-004: Keep for backward compatibility during migration
     let continuation: Int
+    /// CORO-004: Resume closure for continuation-based implementation
+    var resumeClosure: (() -> Void)?
     /// The value deposited by a sender. `nil` means woken by close or cancel.
     var result: Int?
     /// Set to `true` when woken due to coroutine cancellation.
@@ -1954,6 +1968,7 @@ final class RuntimeChannelHandle: @unchecked Sendable {
     private var buffer: [Int] = []
     let capacity: Int
     private(set) var closed = false
+    private let bufferOverflow: ChannelBufferOverflow
 
     // Waiting-sender queue: each suspended sender is a `SuspendedSender`
     // reference.  Receivers set `delivered = true` before signaling the
@@ -1965,8 +1980,9 @@ final class RuntimeChannelHandle: @unchecked Sendable {
     // reference.  Senders deposit a value before signaling the semaphore.
     private var receiverQueue: [SuspendedReceiver] = []
 
-    init(capacity: Int) {
+    init(capacity: Int, bufferOverflow: ChannelBufferOverflow = .suspend) {
         self.capacity = max(0, capacity)
+        self.bufferOverflow = bufferOverflow
     }
 
     /// Send a value into the channel, suspending (blocking) the caller when
@@ -2000,8 +2016,8 @@ final class RuntimeChannelHandle: @unchecked Sendable {
             receiverQueue.removeFirst()
             receiver.result = value
             lock.unlock()
-            // CORO-004: Signal semaphore and optionally dispatch continuation
-            receiver.semaphore.signal()
+            // CORO-004: Use continuation-based resume if available
+            resumeReceiver(receiver)
             return value
         }
 
@@ -2012,16 +2028,52 @@ final class RuntimeChannelHandle: @unchecked Sendable {
             return value
         }
 
+        // 3a. Handle buffer overflow based on strategy (CORO-001)
+        if capacity > 0, buffer.count >= capacity {
+            switch bufferOverflow {
+            case .suspend:
+                // Fall through to suspension logic below
+                break
+            case .dropOldest:
+                // Remove oldest element and add new one
+                _ = buffer.removeFirst()
+                buffer.append(value)
+                lock.unlock()
+                return value
+            case .dropLatest:
+                // Drop the element being sent
+                lock.unlock()
+                return value
+            }
+        }
+
         // 4. No room (buffer full or rendezvous) -- suspend the sender.
         // CORO-004: Store continuation for later dispatch while maintaining
         // semaphore compatibility during migration.
         let senderSem = DispatchSemaphore(value: 0)
         let entry = SuspendedSender(semaphore: senderSem, continuation: continuation, value: value)
+        
+        // CORO-004: Install resume continuation if we have a valid continuation handle
+        if continuation != 0, let state = runtimeContinuationState(from: continuation) {
+            entry.resumeClosure = {
+                // When resumed, we'll return from the suspend point
+                state.signalResume()
+            }
+        }
+        
         senderQueue.append(entry)
         lock.unlock()
 
-        // Block until a receiver wakes us or the channel is closed.
-        senderSem.wait()
+        // CORO-004: Use continuation-based suspension if available, otherwise block
+        if let resumeClosure = entry.resumeClosure {
+            // Continuation-based implementation - install the continuation and return
+            // The actual suspend happens at the call site via codegen
+            state.installResumeContinuation(resumeClosure)
+            // This path will return when the continuation is resumed
+        } else {
+            // Fallback to blocking semaphore
+            senderSem.wait()
+        }
 
         // After waking, check the wakeup reason.
         lock.lock()
@@ -2029,7 +2081,10 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         let wasCancelled = entry.cancelledWakeup
         lock.unlock()
 
-        if wasCancelled {
+        // CORO-001: Prompt cancellation guarantee - check cancellation again after wakeup
+        // This matches Kotlin's behavior where cancellation throws even if the operation
+        // technically succeeded
+        if wasCancelled || isCancelled(continuation: continuation) {
             return kChannelClosedSentinel
         }
         return wasDelivered ? value : kChannelClosedSentinel
@@ -2063,8 +2118,8 @@ final class RuntimeChannelHandle: @unchecked Sendable {
                 buffer.append(sender.value)
                 sender.delivered = true
                 lock.unlock()
-                // CORO-004: Signal semaphore and optionally dispatch continuation
-                sender.semaphore.signal()
+                // CORO-004: Use continuation-based resume if available
+                resumeSender(sender)
             } else {
                 lock.unlock()
             }
@@ -2079,8 +2134,8 @@ final class RuntimeChannelHandle: @unchecked Sendable {
             let value = sender.value
             sender.delivered = true
             lock.unlock()
-            // CORO-004: Signal semaphore and optionally dispatch continuation
-            sender.semaphore.signal()
+            // CORO-004: Use continuation-based resume if available
+            resumeSender(sender)
             return value
         }
 
@@ -2094,10 +2149,28 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         // CORO-004: Store continuation for later dispatch while maintaining
         // semaphore compatibility during migration.
         let receiverEntry = SuspendedReceiver(semaphore: DispatchSemaphore(value: 0), continuation: continuation)
+        
+        // CORO-004: Install resume continuation if we have a valid continuation handle
+        if continuation != 0, let state = runtimeContinuationState(from: continuation) {
+            receiverEntry.resumeClosure = {
+                // When resumed, we'll return from the suspend point
+                state.signalResume()
+            }
+        }
+        
         receiverQueue.append(receiverEntry)
         lock.unlock()
 
-        receiverEntry.semaphore.wait()
+        // CORO-004: Use continuation-based suspension if available, otherwise block
+        if let resumeClosure = receiverEntry.resumeClosure {
+            // Continuation-based implementation - install the continuation and return
+            // The actual suspend happens at the call site via codegen
+            state.installResumeContinuation(resumeClosure)
+            // This path will return when the continuation is resumed
+        } else {
+            // Fallback to blocking semaphore
+            receiverEntry.semaphore.wait()
+        }
 
         // After waking, check the wakeup reason.
         lock.lock()
@@ -2105,7 +2178,10 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         let value = receiverEntry.result
         lock.unlock()
 
-        if wasCancelled {
+        // CORO-001: Prompt cancellation guarantee - check cancellation again after wakeup
+        // This matches Kotlin's behavior where cancellation throws even if the operation
+        // technically succeeded
+        if wasCancelled || isCancelled(continuation: continuation) {
             return kChannelClosedSentinel
         }
         if let value {
@@ -2136,14 +2212,14 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         // Wake all suspended senders -- they will see `closed == true` and
         // return the closed sentinel.
         for sender in pendingSenders {
-            // CORO-004: Signal semaphore for each suspended sender
-            sender.semaphore.signal()
+            // CORO-004: Use continuation-based resume if available
+            resumeSender(sender)
         }
         // Wake all suspended receivers -- they will find no result deposited
         // and return the closed sentinel.
         for receiver in pendingReceivers {
-            // CORO-004: Signal semaphore for each suspended receiver
-            receiver.semaphore.signal()
+            // CORO-004: Use continuation-based resume if available
+            resumeReceiver(receiver)
         }
         return true
     }
@@ -2165,17 +2241,45 @@ final class RuntimeChannelHandle: @unchecked Sendable {
 
         for sender in pendingSenders {
             sender.cancelledWakeup = true
-            // CORO-004: Signal semaphore for each cancelled sender
-            sender.semaphore.signal()
+            // CORO-004: Use continuation-based resume if available
+            resumeSender(sender)
         }
         for receiver in pendingReceivers {
             receiver.cancelledWakeup = true
-            // CORO-004: Signal semaphore for each cancelled receiver
-            receiver.semaphore.signal()
+            // CORO-004: Use continuation-based resume if available
+            resumeReceiver(receiver)
         }
     }
 
     // MARK: - Private helpers
+
+    /// CORO-004: Resume a suspended sender using continuation model if available,
+    /// falling back to semaphore for backward compatibility.
+    private func resumeSender(_ sender: SuspendedSender) {
+        if let resumeClosure = sender.resumeClosure {
+            // Continuation-based implementation
+            DispatchQueue.global().async {
+                resumeClosure()
+            }
+        } else {
+            // Fallback to semaphore
+            sender.semaphore.signal()
+        }
+    }
+
+    /// CORO-004: Resume a suspended receiver using continuation model if available,
+    /// falling back to semaphore for backward compatibility.
+    private func resumeReceiver(_ receiver: SuspendedReceiver) {
+        if let resumeClosure = receiver.resumeClosure {
+            // Continuation-based implementation
+            DispatchQueue.global().async {
+                resumeClosure()
+            }
+        } else {
+            // Fallback to semaphore
+            receiver.semaphore.signal()
+        }
+    }
 
     /// Check whether the coroutine associated with `continuation` has been cancelled.
     private func isCancelled(continuation: Int) -> Bool {

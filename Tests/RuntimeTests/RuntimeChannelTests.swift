@@ -428,7 +428,164 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         _ = kk_channel_close(ch)
     }
 
-    // MARK: - cancelAllWaiters
+    // MARK: - CORO-001: Prompt Cancellation Guarantee Tests
+
+    /// Test that cancellation during suspension causes send to fail even if
+    /// the value was technically delivered (Kotlin's prompt cancellation guarantee)
+    func testSendWithCancellationDuringSuspensionFails() {
+        let ch = kk_channel_create(0) // rendezvous - will suspend
+
+        let sendDone = XCTestExpectation(description: "send completes")
+        nonisolated(unsafe) var sendResult = 0
+
+        // Create a job handle that we'll cancel while send is suspended
+        let job = RuntimeJobHandle()
+        let contState = RuntimeContinuationState(functionID: 999)
+        contState.jobHandle = job
+        job.continuationState = contState
+
+        let contPtr = Unmanaged.passRetained(contState).toOpaque()
+        let contInt = Int(bitPattern: contPtr)
+
+        // Send on background thread - will suspend waiting for receiver
+        DispatchQueue.global().async {
+            sendResult = kk_channel_send(ch, 42, contInt)
+            sendDone.fulfill()
+        }
+
+        // Give the sender time to suspend
+        Thread.sleep(forTimeInterval: 0.05)
+
+        // Cancel the job while sender is suspended
+        job.cancel()
+
+        // Now add a receiver - this should wake the sender but cancellation should still win
+        let receiveDone = XCTestExpectation(description: "receive completes")
+        DispatchQueue.global().async {
+            let received = kk_channel_receive(ch, 0)
+            // The value might be received or not depending on timing
+            receiveDone.fulfill()
+        }
+
+        wait(for: [sendDone, receiveDone], timeout: 2.0)
+        XCTAssertEqual(
+            kk_channel_is_closed_token(sendResult), 1,
+            "Send should return closed sentinel when cancelled during suspension"
+        )
+
+        // Clean up
+        Unmanaged<RuntimeContinuationState>.fromOpaque(contPtr).release()
+        _ = kk_channel_close(ch)
+    }
+
+    /// Test that cancellation during suspension causes receive to fail even if
+    /// a value was technically available (Kotlin's prompt cancellation guarantee)
+    func testReceiveWithCancellationDuringSuspensionFails() {
+        let ch = kk_channel_create(0) // rendezvous - will suspend
+
+        let receiveDone = XCTestExpectation(description: "receive completes")
+        nonisolated(unsafe) var receiveResult = 0
+
+        // Create a job handle that we'll cancel while receive is suspended
+        let job = RuntimeJobHandle()
+        let contState = RuntimeContinuationState(functionID: 999)
+        contState.jobHandle = job
+        job.continuationState = contState
+
+        let contPtr = Unmanaged.passRetained(contState).toOpaque()
+        let contInt = Int(bitPattern: contPtr)
+
+        // Receive on background thread - will suspend waiting for sender
+        DispatchQueue.global().async {
+            receiveResult = kk_channel_receive(ch, contInt)
+            receiveDone.fulfill()
+        }
+
+        // Give the receiver time to suspend
+        Thread.sleep(forTimeInterval: 0.05)
+
+        // Cancel the job while receiver is suspended
+        job.cancel()
+
+        // Now add a sender - this should wake the receiver but cancellation should still win
+        let sendDone = XCTestExpectation(description: "send completes")
+        DispatchQueue.global().async {
+            let sent = kk_channel_send(ch, 99, 0)
+            sendDone.fulfill()
+        }
+
+        wait(for: [receiveDone, sendDone], timeout: 2.0)
+        XCTAssertEqual(
+            kk_channel_is_closed_token(receiveResult), 1,
+            "Receive should return closed sentinel when cancelled during suspension"
+        )
+
+        // Clean up
+        Unmanaged<RuntimeContinuationState>.fromOpaque(contPtr).release()
+        _ = kk_channel_close(ch)
+    }
+
+    // MARK: - CORO-001: Buffer Overflow Strategy Tests
+
+    /// Test DROP_OLDEST buffer overflow strategy
+    func testBufferOverflowDropOldest() {
+        // Create a channel with DROP_OLDEST strategy
+        let ch = RuntimeChannelHandle(capacity: 2, bufferOverflow: .dropOldest)
+
+        // Fill the buffer
+        XCTAssertEqual(ch.send(1), 1)
+        XCTAssertEqual(ch.send(2), 2)
+
+        // Send one more - should drop oldest (1) and add new one (3)
+        XCTAssertEqual(ch.send(3), 3)
+
+        // Buffer should now contain [2, 3]
+        XCTAssertEqual(ch.receive(), 2)
+        XCTAssertEqual(ch.receive(), 3)
+    }
+
+    /// Test DROP_LATEST buffer overflow strategy
+    func testBufferOverflowDropLatest() {
+        // Create a channel with DROP_LATEST strategy
+        let ch = RuntimeChannelHandle(capacity: 2, bufferOverflow: .dropLatest)
+
+        // Fill the buffer
+        XCTAssertEqual(ch.send(1), 1)
+        XCTAssertEqual(ch.send(2), 2)
+
+        // Send one more - should be dropped, buffer remains [1, 2]
+        XCTAssertEqual(ch.send(3), 3) // returns the value but doesn't add it
+
+        // Buffer should still contain [1, 2]
+        XCTAssertEqual(ch.receive(), 1)
+        XCTAssertEqual(ch.receive(), 2)
+    }
+
+    /// Test SUSPEND buffer overflow strategy (default behavior)
+    func testBufferOverflowSuspendBlocks() {
+        let ch = RuntimeChannelHandle(capacity: 1, bufferOverflow: .suspend)
+
+        // Fill the buffer
+        XCTAssertEqual(ch.send(1), 1)
+
+        let sendDone = XCTestExpectation(description: "second send completes")
+        nonisolated(unsafe) var sendResult = 0
+
+        // Second send should suspend
+        DispatchQueue.global().async {
+            sendResult = ch.send(2)
+            sendDone.fulfill()
+        }
+
+        // Give sender time to suspend
+        Thread.sleep(forTimeInterval: 0.05)
+
+        // Receive to free up space
+        XCTAssertEqual(ch.receive(), 1)
+
+        wait(for: [sendDone], timeout: 2.0)
+        XCTAssertEqual(sendResult, 2)
+    }
 
     func testCancelAllWaitersWakesSuspendedSenders() {
         let ch = RuntimeChannelHandle(capacity: 0) // rendezvous
@@ -452,6 +609,56 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
             kk_channel_is_closed_token(sendResult), 1,
             "Cancelled sender should get the closed sentinel"
         )
+    }
+
+    // MARK: - CORO-004: Continuation Model Tests
+
+    /// Test that continuation-based suspension works correctly
+    func testContinuationBasedSend() {
+        // This test would require codegen support to fully test the continuation model
+        // For now, we test that the fallback to semaphore still works
+        let ch = kk_channel_create(0) // rendezvous
+
+        let sendDone = XCTestExpectation(description: "send completes")
+        nonisolated(unsafe) var sendResult = 0
+
+        DispatchQueue.global().async {
+            sendResult = kk_channel_send(ch, 42, 0) // no continuation - fallback to semaphore
+            sendDone.fulfill()
+        }
+
+        Thread.sleep(forTimeInterval: 0.05)
+
+        let received = kk_channel_receive(ch, 0)
+        XCTAssertEqual(received, 42)
+
+        wait(for: [sendDone], timeout: 2.0)
+        XCTAssertEqual(sendResult, 42)
+
+        _ = kk_channel_close(ch)
+    }
+
+    /// Test that the resume methods work correctly
+    func testResumeMethodsWork() {
+        let ch = RuntimeChannelHandle(capacity: 0)
+        
+        // Test that resume methods don't crash and handle nil resumeClosure gracefully
+        let sender = SuspendedSender(semaphore: DispatchSemaphore(value: 0), continuation: 0, value: 42)
+        let receiver = SuspendedReceiver(semaphore: DispatchSemaphore(value: 0), continuation: 0)
+        
+        // These should not crash and should fall back to semaphore
+        ch.resumeSender(sender)
+        ch.resumeReceiver(receiver)
+        
+        // Test with resume closure
+        let resumeExpectation = XCTestExpectation(description: "resume closure called")
+        let senderWithClosure = SuspendedSender(semaphore: DispatchSemaphore(value: 0), continuation: 0, value: 42)
+        senderWithClosure.resumeClosure = {
+            resumeExpectation.fulfill()
+        }
+        
+        ch.resumeSender(senderWithClosure)
+        wait(for: [resumeExpectation], timeout: 1.0)
     }
 
     func testCancelAllWaitersWakesSuspendedReceivers() {
