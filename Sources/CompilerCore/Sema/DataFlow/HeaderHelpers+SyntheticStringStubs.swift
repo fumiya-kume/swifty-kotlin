@@ -1552,6 +1552,19 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-534: String?.orEmpty() ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "orEmpty",
+            externalLinkName: "kk_string_orEmpty",
+            receiverType: nullableStringType,
+            parameters: [],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureKotlinTextPackage(

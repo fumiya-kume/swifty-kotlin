@@ -167,6 +167,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_measureTimedValue = ExternDecl(
+        name: "kk_measureTimedValue",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - TimedValue (STDLIB-660)
 
     public static let kk_timedvalue_new = ExternDecl(
