@@ -288,11 +288,7 @@ public func kk_mutable_map_getOrPut(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ c
             }
             var thrown = 0
             let result = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: closureRaw, outThrown: &thrown)
-            if thrown != 0 { 
-                // When lambda throws for existing null entry, return 0 (null) instead of propagating exception
-                outThrown?.pointee = thrown
-                return 0 
-            }
+            if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
             map.values[idx] = result
             return result
         }
@@ -593,7 +589,7 @@ public func kk_list_reduceOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int
         invalidContainerPanic(#function, "list")
     }
     guard !list.elements.isEmpty else {
-        return 0  // Return 0 to represent null for empty list
+        return runtimeNullSentinelInt
     }
     var acc = maybeUnbox(list.elements[0])
     for idx in 1 ..< list.elements.count {
