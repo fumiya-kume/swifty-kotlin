@@ -503,8 +503,8 @@ final class CoercionRuntimeTests: XCTestCase {
     // MARK: - Additional Conversion Tests (STDLIB-PRIM-002)
 
     func testFloatToUIntConversion() {
-        XCTAssertEqual(kk_float_to_uint(kk_float_to_bits(3.14f)), 3, "Positive float should convert to uint")
-        XCTAssertEqual(kk_float_to_uint(kk_float_to_bits(-1.5f)), 0, "Negative float should convert to 0")
+        XCTAssertEqual(kk_float_to_uint(kk_float_to_bits(Float(3.14))), 3, "Positive float should convert to uint")
+        XCTAssertEqual(kk_float_to_uint(kk_float_to_bits(Float(-1.5))), 0, "Negative float should convert to 0")
         XCTAssertEqual(kk_float_to_uint(kk_float_to_bits(Float.nan)), 0, "NaN should convert to 0")
         XCTAssertEqual(kk_float_to_uint(kk_float_to_bits(Float(UInt32.max))), Int(UInt32.max), "Max float should clamp to UInt32.max")
     }
@@ -517,8 +517,8 @@ final class CoercionRuntimeTests: XCTestCase {
     }
 
     func testFloatToULongConversion() {
-        XCTAssertEqual(kk_float_to_ulong(kk_float_to_bits(3.14f)), 3, "Positive float should convert to ulong")
-        XCTAssertEqual(kk_float_to_ulong(kk_float_to_bits(-1.5f)), 0, "Negative float should convert to 0")
+        XCTAssertEqual(kk_float_to_ulong(kk_float_to_bits(Float(3.14))), 3, "Positive float should convert to ulong")
+        XCTAssertEqual(kk_float_to_ulong(kk_float_to_bits(Float(-1.5))), 0, "Negative float should convert to 0")
         XCTAssertEqual(kk_float_to_ulong(kk_float_to_bits(Float.nan)), 0, "NaN should convert to 0")
     }
 
@@ -559,9 +559,9 @@ final class CoercionRuntimeTests: XCTestCase {
     }
 
     func testFloatToCharConversion() {
-        XCTAssertEqual(kk_float_to_char(kk_float_to_bits(65.0f)), 65, "Valid float should convert to char")
+        XCTAssertEqual(kk_float_to_char(kk_float_to_bits(Float(65.0))), 65, "Valid float should convert to char")
         XCTAssertEqual(kk_float_to_char(kk_float_to_bits(Float.nan)), 0, "NaN should convert to 0")
-        XCTAssertEqual(kk_float_to_char(kk_float_to_bits(-1.0f)), 0, "Negative float should convert to 0")
+        XCTAssertEqual(kk_float_to_char(kk_float_to_bits(Float(-1.0))), 0, "Negative float should convert to 0")
     }
 
     func testDoubleToCharConversion() {

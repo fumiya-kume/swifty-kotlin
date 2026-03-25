@@ -6,7 +6,7 @@ import Foundation
 private let binarySearchCompareFQSuffix = "binarySearch$compare"
 
 extension DataFlowSemaPhase {
-    /// Register `kotlin.Comparable<T>` interface stub with `operator fun compareTo(other: T): Int`.
+    /// Register `kotlin.Comparable<in T>` interface stub with `operator fun compareTo(other: T): Int`.
     func registerSyntheticComparableStub(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -42,7 +42,7 @@ extension DataFlowSemaPhase {
         // Store in TypeSystem for use in isSubtype
         types.comparableInterfaceSymbol = comparableSymbol
 
-        // Define type parameter T for Comparable<T>
+        // Define type parameter T for Comparable<in T>.
         let tParamName = interner.intern("T")
         let tParamFQName = comparableFQName + [tParamName]
         let tParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: tParamFQName) {
@@ -70,7 +70,7 @@ extension DataFlowSemaPhase {
         )
     }
 
-    /// Register `operator fun compareTo(other: T): Int` on the Comparable interface.
+    /// Register `operator fun compareTo(other: T): Int` on the Comparable interface with null-safe comparison support.
     private func registerComparableCompareToOperator(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -85,7 +85,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: compareToFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: comparableSymbol,
-            args: [.invariant(tParamType)],
+            args: [.in(tParamType)],
             nullability: .nonNull
         )))
         let compareToSymbol = symbols.define(
@@ -106,6 +106,112 @@ extension DataFlowSemaPhase {
                 classTypeParameterCount: 1
             ),
             for: compareToSymbol
+        )
+
+        // Register null-safe comparison extensions
+        registerNullSafeComparisonExtensions(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparableSymbol: comparableSymbol,
+            tParamType: tParamType
+        )
+    }
+
+    /// Register null-safe comparison extensions for Comparable types.
+    private func registerNullSafeComparisonExtensions(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparableSymbol: SymbolID,
+        tParamType: TypeID
+    ) {
+        let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
+        let extensionsPkg = kotlinPkg + [interner.intern("comparisons")]
+
+        // Ensure comparisons package exists
+        if symbols.lookup(fqName: extensionsPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("comparisons"),
+                fqName: extensionsPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        // Register null-safe compareTo for nullable types
+        registerNullSafeCompareTo(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            extensionsPkg: extensionsPkg,
+            comparableSymbol: comparableSymbol,
+            tParamType: tParamType
+        )
+    }
+
+    /// Register null-safe compareTo extension for nullable Comparable types.
+    private func registerNullSafeCompareTo(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        extensionsPkg: [InternedString],
+        comparableSymbol: SymbolID,
+        tParamType: TypeID
+    ) {
+        let functionName = interner.intern("compareToOrNull")
+        let functionFQName = extensionsPkg + [functionName]
+
+        guard symbols.lookup(fqName: functionFQName) == nil else { return }
+
+        let nullableTParamType = types.makeNullable(tParamType)
+        let nullableIntType = types.makeNullable(types.intType)
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+
+        // Define type parameter T for the extension function
+        let tParamName = interner.intern("T")
+        let tParamFQName = functionFQName + [tParamName]
+        let tParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: tParamName,
+            fqName: tParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let functionTParamType = types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol,
+            nullability: .nonNull
+        )))
+        let nullableFunctionTParamType = types.makeNullable(functionTParamType)
+
+        // Create upper bound: T : Comparable<T>
+        let comparableUpperBounds: [TypeID] = [types.make(.classType(ClassType(
+            classSymbol: comparableSymbol,
+            args: [.in(functionTParamType)],
+            nullability: .nonNull
+        )))]
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: nil,
+                parameterTypes: [nullableFunctionTParamType, nullableFunctionTParamType],
+                returnType: nullableIntType,
+                typeParameterSymbols: [tParamSymbol],
+                typeParameterUpperBoundsList: [comparableUpperBounds],
+                classTypeParameterCount: 0
+            ),
+            for: functionSymbol
         )
     }
 
@@ -181,7 +287,7 @@ extension DataFlowSemaPhase {
             args: [.out(listTypeParamType)],
             nullability: .nonNull
         )))
-        
+
         registerSyntheticListExtensionFunction(
             named: "orEmpty",
             externalLinkName: "kk_list_orEmpty",
@@ -4471,7 +4577,7 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
-        
+
         symbols.setPropertyType(types.make(.functionType(FunctionType(
             params: parameterTypes,
             returnType: returnType,
@@ -6714,7 +6820,7 @@ extension DataFlowSemaPhase {
         }
 
         // --- Array extension functions: contentEquals, contentHashCode ---
-        
+
         // contentEquals(other: Array<T>): Boolean
         let contentEqualsName = interner.intern("contentEquals")
         let contentEqualsFQName = arrayFQName + [contentEqualsName]
@@ -6751,7 +6857,7 @@ extension DataFlowSemaPhase {
             )
             symbols.setExternalLinkName("kk_array_contentEquals", for: contentEqualsSymbol)
         }
-        
+
         // contentHashCode(): Int
         let contentHashCodeName = interner.intern("contentHashCode")
         let contentHashCodeFQName = arrayFQName + [contentHashCodeName]

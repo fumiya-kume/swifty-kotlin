@@ -86,6 +86,19 @@ extension TypeSystem {
            let comparableSym = comparableInterfaceSymbol,
            rightClass.classSymbol == comparableSym,
            rightClass.args.count == 1,
+           case let .in(argType) = rightClass.args[0],
+           argType == subtype,
+           nullabilitySubtype(leftNullability, rightClass.nullability)
+        {
+            return true
+        }
+
+        // Support for invariant Comparable bounds (backward compatibility)
+        if case let .primitive(_, leftNullability) = lhs,
+           case let .classType(rightClass) = rhs,
+           let comparableSym = comparableInterfaceSymbol,
+           rightClass.classSymbol == comparableSym,
+           rightClass.args.count == 1,
            case let .invariant(argType) = rightClass.args[0],
            argType == subtype,
            nullabilitySubtype(leftNullability, rightClass.nullability)

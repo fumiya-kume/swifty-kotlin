@@ -6,18 +6,16 @@
 
 ### Phase 1 完了済みタスク (高優先度)
 - **プリミティブ型**: Boolean拡張関数 ✓
-- **配列操作**: 基本操作・高階関数 ✓
+- **配列操作**: 基本操作・高階関数・ソートと順序操作 ✓
 - **オブジェクト指向**: インターフェース・シールドクラス・データクラス・オブジェクト宣言・無名オブジェクト ✓
 - **関数型プログラミング**: コレクション高階関数・スコープ関数・関数参照・拡張関数・拡張プロパティ ✓
 - **プロパティデリゲート**: lazyデリゲート・lateinitプロパティ ✓
 - **ジェネリクス**: ジェネリッククラス制約 ✓
-- **演算子**: invoke演算子・範囲操作 ✓
+- **演算子**: invoke演算子・範囲操作・プリミティブ型完全演算子・ビット操作関数 ✓
+- **Char拡張関数**: 分類・変換・数値変換・Unicodeプロパティ ✓
+- **プリミティブ型変換**: 全ての型間相互変換・unsigned型変換 ✓
 
 ### Phase 2 未完了タスク (中優先度)
-- プリミティブ型変換関数
-- 配列ソートと順序操作
-- ビット操作関数
-- Char拡張関数
 - 抽象クラス制約
 - データクラス継承制約
 - コンパニオンオブジェクト
@@ -62,62 +60,11 @@
 
 #### Phase 1: 基本型と配列 (高優先度)
 
-- [ ] STDLIB-PRIM-001: プリミティブ型完全実装 (Int, Long, Double, Float, Boolean, Char)
-  - **仕様**: 全てのプリミティブ型に対する完全な演算子サポート
-  - **実装内容**:
-    - 算術演算子: +, -, *, /, % (Int, Long, Double, Float)
-    - 比較演算子: ==, !=, <, >, <=, >=
-    - ビット演算子: and, or, xor, inv, shl, shr, ushr (Int, Long)
-    - 論理演算子: and, or, not (Boolean)
-    - 文字操作: plus, get, rangeTo (Char)
-  - **現状**: 基本的な演算子は実装済み、変換関数は一部実装
-  - **関連ファイル**: `RuntimeNumericCompat.swift`, `RuntimeABISpec.swift`
-  - **テストケース**: ` Scripts/diff_cases/bitwise_operators.kt`
-
-- [ ] STDLIB-PRIM-002: プリミティブ型変換関数完全実装
-  - **仕様**: 全てのプリミティブ型間の相互変換関数
-  - **実装内容**:
-    - toByte(), toShort(), toInt(), toLong(), toFloat(), toDouble(), toChar()
-    - toUByte(), toUShort(), toUInt(), toULong()
-    - 変換時のオーバーフロー/アンダーフロー処理
-    - 無効変換時の例外処理
-  - **現状**: toInt()等は一部実装済み (STDLIB-151)、unsigned型変換は未実装
-  - **関連ファイル**: `RuntimeCoercion.swift`
-  - **テストケース**: `Scripts/diff_cases/numeric_conversions_reverse.kt`
-
-- [ ] STDLIB-ARR-005: 配列ソートと順序操作完全実装
-  - **仕様**: 配列のソートと順序関連操作
-  - **実装内容**:
-    - ソート: sort(), sortDescending(), sortBy(), sortByDescending()
-    - シャッフル: shuffle(), shuffled()
-    - 反転: reverse(), reversed(), asReversed()
-    - 順序: sorted(), sortedDescending(), sortedWith()
-  - **現状**: 基本的なソートは未実装
-  - **関連ファイル**: `RuntimeCollectionHelpers.swift`
-  - **テストケース**: `Scripts/diff_cases/mutable_list_sort.kt`
-
-- [ ] STDLIB-BIT-007: ビット操作関数完全実装
-  - **仕様**: Int/Longに対する全ビット操作関数
-  - **実装内容**:
-    - ビットカウント: countOneBits(), countLeadingZeros(), countTrailingZeros()
-    - ビット回転: rotateLeft(), rotateRight()
-    - ビット長度: highestOneBit(), lowestOneBit()
-    - 符号拡張: takeHighestOneBit(), takeLowestOneBit()
-  - **現状**: bitCount等は一部実装済み、rotate等は未実装
-  - **関連ファイル**: `RuntimeBitCount.swift`
-  - **テストケース**: `Scripts/diff_cases/bitcount_edge_cases.kt`
-
-
-- [ ] STDLIB-PRIM-009: Char拡張関数完全実装
-  - **仕様**: Char型に対する全拡張関数
-  - **実装内容**:
-    - 分類: isDigit(), isLetter(), isLetterOrDigit(), isUpperCase(), isLowerCase()
-    - 変換: toUpperCase(), toLowerCase(), toTitleCase()
-    - 数値変換: toInt(), toIntOrNull(), toDouble(), toDoubleOrNull()
-    - コードポイント: code, category, directionality
-  - **現状**: 基本的なChar操作は実装済み (STDLIB-080)、分類関数は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticCharStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/char_operations.kt`
+- [x] STDLIB-PRIM-001: プリミティブ型完全実装 (Int, Long, Double, Float, Boolean, Char) ✓
+- [x] STDLIB-PRIM-002: プリミティブ型変換関数完全実装 ✓
+- [x] STDLIB-ARR-005: 配列ソートと順序操作完全実装 ✓
+- [x] STDLIB-BIT-007: ビット操作関数完全実装 ✓
+- [x] STDLIB-PRIM-009: Char拡張関数完全実装 ✓
 
 #### Phase 1: オブジェクト指向機能 (高優先度)
 

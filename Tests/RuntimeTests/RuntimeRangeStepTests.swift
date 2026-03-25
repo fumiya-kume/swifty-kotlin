@@ -148,4 +148,104 @@ final class RuntimeRangeStepTests: IsolatedRuntimeXCTestCase {
         let list = kk_range_toList(range)
         XCTAssertEqual(kk_list_size(list), 0)
     }
+
+    // MARK: - Progression fromClosedRange tests (STDLIB-RANGE-039)
+
+    func testIntProgressionFromClosedRange() {
+        let progression = kk_int_progression_fromClosedRange(1, 10, 2)
+        XCTAssertEqual(kk_range_first(progression), 1)
+        XCTAssertEqual(kk_range_last(progression), 10)
+        XCTAssertEqual(kk_range_count(progression), 5) // 1,3,5,7,9
+    }
+
+    func testLongProgressionFromClosedRange() {
+        let progression = kk_long_progression_fromClosedRange(1, 10, 3)
+        XCTAssertEqual(kk_range_first(progression), 1)
+        XCTAssertEqual(kk_range_last(progression), 10)
+        XCTAssertEqual(kk_range_count(progression), 4) // 1,4,7,10
+    }
+
+    func testUIntProgressionFromClosedRange() {
+        let progression = kk_uint_progression_fromClosedRange(1, 10, 2)
+        XCTAssertEqual(kk_range_first(progression), 1)
+        XCTAssertEqual(kk_range_last(progression), 10)
+        let list = kk_uint_range_toList(progression)
+        XCTAssertEqual(kk_list_size(list), 5)
+    }
+
+    func testULongProgressionFromClosedRange() {
+        let progression = kk_ulong_progression_fromClosedRange(1, 10, 3)
+        XCTAssertEqual(kk_range_first(progression), 1)
+        XCTAssertEqual(kk_range_last(progression), 10)
+        let list = kk_ulong_range_toList(progression)
+        XCTAssertEqual(kk_list_size(list), 4)
+    }
+
+    // MARK: - UIntProgression tests (STDLIB-RANGE-039)
+
+    func testUIntRangeTo() {
+        let range = kk_uint_rangeTo(1, 10)
+        XCTAssertEqual(kk_range_first(range), 1)
+        XCTAssertEqual(kk_range_last(range), 10)
+        let list = kk_uint_range_toList(range)
+        XCTAssertEqual(kk_list_size(list), 10)
+    }
+
+    func testUIntDownTo() {
+        let range = kk_uint_downTo(10, 1)
+        XCTAssertEqual(kk_range_first(range), 10)
+        XCTAssertEqual(kk_range_last(range), 1)
+        XCTAssertEqual(kk_range_count(range), 10)
+    }
+
+    func testUIntStep() {
+        let range = kk_uint_rangeTo(1, 10)
+        let stepped = kk_uint_step(range, 3)
+        XCTAssertEqual(kk_range_first(stepped), 1)
+        XCTAssertEqual(kk_range_last(stepped), 10)
+        let list = kk_uint_range_toList(stepped)
+        XCTAssertEqual(kk_list_size(list), 4) // 1,4,7,10
+    }
+
+    func testUIntRangeReversed() {
+        let range = kk_uint_rangeTo(1, 5)
+        let reversed = kk_uint_range_reversed(range)
+        XCTAssertEqual(kk_range_first(reversed), 5)
+        XCTAssertEqual(kk_range_last(reversed), 1)
+        XCTAssertEqual(kk_range_count(reversed), 5)
+    }
+
+    // MARK: - ULongProgression tests (STDLIB-RANGE-039)
+
+    func testULongRangeTo() {
+        let range = kk_ulong_rangeTo(1, 10)
+        XCTAssertEqual(kk_range_first(range), 1)
+        XCTAssertEqual(kk_range_last(range), 10)
+        let list = kk_ulong_range_toList(range)
+        XCTAssertEqual(kk_list_size(list), 10)
+    }
+
+    func testULongDownTo() {
+        let range = kk_ulong_downTo(10, 1)
+        XCTAssertEqual(kk_range_first(range), 10)
+        XCTAssertEqual(kk_range_last(range), 1)
+        XCTAssertEqual(kk_range_count(range), 10)
+    }
+
+    func testULongStep() {
+        let range = kk_ulong_rangeTo(1, 10)
+        let stepped = kk_ulong_step(range, 3)
+        XCTAssertEqual(kk_range_first(stepped), 1)
+        XCTAssertEqual(kk_range_last(stepped), 10)
+        let list = kk_ulong_range_toList(stepped)
+        XCTAssertEqual(kk_list_size(list), 4) // 1,4,7,10
+    }
+
+    func testULongRangeReversed() {
+        let range = kk_ulong_rangeTo(1, 5)
+        let reversed = kk_ulong_range_reversed(range)
+        XCTAssertEqual(kk_range_first(reversed), 5)
+        XCTAssertEqual(kk_range_last(reversed), 1)
+        XCTAssertEqual(kk_range_count(reversed), 5)
+    }
 }

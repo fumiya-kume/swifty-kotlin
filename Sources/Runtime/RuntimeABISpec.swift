@@ -2772,6 +2772,127 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Range"
         ),
+        // Progression fromClosedRange (STDLIB-RANGE-039)
+        RuntimeABIFunctionSpec(
+            name: "kk_int_progression_fromClosedRange",
+            parameters: [
+                RuntimeABIParameter(name: "rangeStart", type: .intptr),
+                RuntimeABIParameter(name: "rangeEnd", type: .intptr),
+                RuntimeABIParameter(name: "step", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_long_progression_fromClosedRange",
+            parameters: [
+                RuntimeABIParameter(name: "rangeStart", type: .intptr),
+                RuntimeABIParameter(name: "rangeEnd", type: .intptr),
+                RuntimeABIParameter(name: "step", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uint_progression_fromClosedRange",
+            parameters: [
+                RuntimeABIParameter(name: "rangeStart", type: .intptr),
+                RuntimeABIParameter(name: "rangeEnd", type: .intptr),
+                RuntimeABIParameter(name: "step", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ulong_progression_fromClosedRange",
+            parameters: [
+                RuntimeABIParameter(name: "rangeStart", type: .intptr),
+                RuntimeABIParameter(name: "rangeEnd", type: .intptr),
+                RuntimeABIParameter(name: "step", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        // UIntProgression operations (STDLIB-RANGE-039)
+        RuntimeABIFunctionSpec(
+            name: "kk_uint_rangeTo",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uint_downTo",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uint_step",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+                RuntimeABIParameter(name: "stepValue", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uint_range_reversed",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uint_range_toList",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        // ULongProgression operations (STDLIB-RANGE-039)
+        RuntimeABIFunctionSpec(
+            name: "kk_ulong_rangeTo",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ulong_downTo",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ulong_step",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+                RuntimeABIParameter(name: "stepValue", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ulong_range_reversed",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
         // CharRange (STDLIB-290)
         RuntimeABIFunctionSpec(
             name: "kk_char_range_toList",
