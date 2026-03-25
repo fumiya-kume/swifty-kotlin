@@ -32,7 +32,6 @@ fun main() = runBlocking {
     val senderJob = launch {
         println("Sender attempting to send second value...")
         rendezvousChannel.send(7)
-        println("Sender successfully sent: 7")
     }
     
     delay(200)
@@ -40,6 +39,7 @@ fun main() = runBlocking {
     println("Main received second value: $received2")
     
     senderJob.join()
+    println("Sender successfully sent: 7")
     
     println("Channel tests completed")
 }

@@ -1845,72 +1845,27 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
         )
     }
 
-    // CORO-004: withContext now supports continuation-based async execution.
-    // When called from a suspend-aware context, it becomes a proper suspend point.
-    // The block dispatched on the target queue calls signalResume() on the caller's
-    // continuation state when done, and the caller's entry-loop continuation picks up
-    // the result without blocking a GCD thread.
+    // CORO-004: Continuation-based withContext is still in progress.
+    // For now keep the semaphore fallback, which matches the current runtime
+    // model and avoids relying on unfinished continuation result plumbing.
+    let semaphore = DispatchSemaphore(value: 0)
+    let resultBox = WithContextResultBox()
 
-    // Check if we have a valid continuation for suspend-aware execution
-    if continuation != 0, let contState = runtimeContinuationState(from: continuation) {
-        // Continuation-based implementation - make withContext a suspend point
-        let resumeClosure = {
-            // When the block completes on the target queue, resume the caller
-            contState.signalResume()
-        }
+    queue.async {
+        // Propagate the coroutine scope to the target thread.
+        let savedScope = RuntimeCoroutineScope.current
+        RuntimeCoroutineScope.current = parentScope
+        defer { RuntimeCoroutineScope.current = savedScope }
 
-        // Install the continuation for async completion
-        contState.installResumeContinuation(resumeClosure)
-
-        // Dispatch the block to the target queue
-        queue.async {
-            // Propagate the coroutine scope to the target thread.
-            let savedScope = RuntimeCoroutineScope.current
-            RuntimeCoroutineScope.current = parentScope
-            defer { RuntimeCoroutineScope.current = savedScope }
-
-            let result = runSuspendEntryLoopWithContinuation(
-                entryPointRaw: blockFnPtr,
-                continuation: continuation
-            )
-
-            // Store the result and resume the caller
-            // Note: The result needs to be stored somewhere accessible to the continuation
-            // For now, we'll use the continuation state's result storage
-            contState.setResult(result)
-            resumeClosure()
-        }
-
-        // The continuation will handle resumption with the result
-        // Return a placeholder that will be replaced by the continuation
-        return 0
-    } else {
-        // Fallback to semaphore blocking for non-suspend-aware contexts
-        let semaphore = DispatchSemaphore(value: 0)
-        // Use a Sendable box as a thread-safe container for the result.
-        // The DispatchSemaphore provides a happens-before relationship: the write
-        // inside `queue.async` is guaranteed to complete before `semaphore.signal()`,
-        // and `semaphore.wait()` ensures the read on the calling thread observes the
-        // written value. The box is @unchecked Sendable so the concurrency checker
-        // accepts the capture without complaint.
-        let resultBox = WithContextResultBox()
-
-        queue.async {
-            // Propagate the coroutine scope to the target thread.
-            let savedScope = RuntimeCoroutineScope.current
-            RuntimeCoroutineScope.current = parentScope
-            defer { RuntimeCoroutineScope.current = savedScope }
-
-            resultBox.value = runSuspendEntryLoopWithContinuation(
-                entryPointRaw: blockFnPtr,
-                continuation: continuation
-            )
-            semaphore.signal()
-        }
-
-        semaphore.wait()
-        return resultBox.value
+        resultBox.value = runSuspendEntryLoopWithContinuation(
+            entryPointRaw: blockFnPtr,
+            continuation: continuation
+        )
+        semaphore.signal()
     }
+
+    semaphore.wait()
+    return resultBox.value
 }
 
 // MARK: - Channel Runtime (CORO-001)
@@ -2091,7 +2046,11 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         let entry = SuspendedSender(semaphore: senderSem, continuation: continuation, value: value)
         
         // CORO-004: Install resume continuation if we have a valid continuation handle
-        if continuation != 0, let state = runtimeContinuationState(from: continuation) {
+        var state: RuntimeContinuationState?
+        if continuation != 0 {
+            state = runtimeContinuationState(from: continuation)
+        }
+        if let state = state {
             entry.resumeClosure = {
                 // When resumed, we'll return from the suspend point
                 state.signalResume()
@@ -2102,9 +2061,7 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         lock.unlock()
 
         // CORO-004: Use continuation-based suspension if available, otherwise block
-        if let resumeClosure = entry.resumeClosure,
-           let state = runtimeContinuationState(from: continuation)
-        {
+        if let resumeClosure = entry.resumeClosure, let state = state {
             // Continuation-based implementation - install the continuation and return
             // The actual suspend happens at the call site via codegen
             state.installResumeContinuation(resumeClosure)
@@ -2201,7 +2158,11 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         let receiverEntry = SuspendedReceiver(semaphore: DispatchSemaphore(value: 0), continuation: continuation)
         
         // CORO-004: Install resume continuation if we have a valid continuation handle
-        if continuation != 0, let state = runtimeContinuationState(from: continuation) {
+        var state: RuntimeContinuationState?
+        if continuation != 0 {
+            state = runtimeContinuationState(from: continuation)
+        }
+        if let state = state {
             receiverEntry.resumeClosure = {
                 // When resumed, we'll return from the suspend point
                 state.signalResume()
@@ -2212,9 +2173,7 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         lock.unlock()
 
         // CORO-004: Use continuation-based suspension if available, otherwise block
-        if let resumeClosure = receiverEntry.resumeClosure,
-           let state = runtimeContinuationState(from: continuation)
-        {
+        if let resumeClosure = receiverEntry.resumeClosure, let state = state {
             // Continuation-based implementation - install the continuation and return
             // The actual suspend happens at the call site via codegen
             state.installResumeContinuation(resumeClosure)
@@ -2663,14 +2622,12 @@ public func kk_with_timeout(_ timeoutMillis: Int, _ entryPointRaw: Int, _ contin
     }
 
     var result: Int = 0
-    var completed = false
     let deadline = DispatchTime.now() + .milliseconds(timeoutMillis)
 
     let workItem = DispatchWorkItem {
         result = runSuspendEntryLoopWithContinuation(
             entryPointRaw: entryPointRaw, continuation: continuation
         )
-        completed = true
     }
     DispatchQueue.global().async(execute: workItem)
     let waitResult = workItem.wait(timeout: deadline)
@@ -2856,7 +2813,7 @@ func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) 
     // task-scope map so that child launches dispatched on this thread can
     // discover their parent scope without TLS.
     let contState = runtimeContinuationState(from: continuation)
-    var currentTaskKey = RuntimeCoroutineScopeTaskKey.installFreshKey()
+    let currentTaskKey = RuntimeCoroutineScopeTaskKey.installFreshKey()
     RuntimeCoroutineScope.installScope(contState?.scope, forTask: currentTaskKey)
 
     let suspendedToken = Int(bitPattern: kk_coroutine_suspended())
