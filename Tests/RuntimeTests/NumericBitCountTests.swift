@@ -18,7 +18,7 @@ final class NumericBitCountTests: XCTestCase {
         // Test negative values (32-bit two's complement)
         XCTAssertEqual(kk_int_countOneBits(-1), 32, "-1 (0xFFFFFFFF) should have 32 bits set")
         XCTAssertEqual(kk_int_countOneBits(-2), 31, "-2 (0xFFFFFFFE) should have 31 bits set")
-        XCTAssertEqual(kk_int_countOneBits(Int32.min), 1, "Int32.min (0x80000000) should have 1 bit set")
+        XCTAssertEqual(kk_int_countOneBits(Int(Int32.min)), 1, "Int32.min (0x80000000) should have 1 bit set")
     }
 
     func testIntCountLeadingZeroBitsBasicValues() {
@@ -32,7 +32,7 @@ final class NumericBitCountTests: XCTestCase {
     func testIntCountLeadingZeroBitsNegativeValues() {
         // Test negative values (32-bit two's complement)
         XCTAssertEqual(kk_int_countLeadingZeroBits(-1), 0, "-1 (all bits set) should have 0 leading zeros")
-        XCTAssertEqual(kk_int_countLeadingZeroBits(Int32.min), 0, "Int32.min (MSB set) should have 0 leading zeros")
+        XCTAssertEqual(kk_int_countLeadingZeroBits(Int(Int32.min)), 0, "Int32.min (MSB set) should have 0 leading zeros")
     }
 
     func testIntCountTrailingZeroBitsBasicValues() {
@@ -48,33 +48,20 @@ final class NumericBitCountTests: XCTestCase {
         // Test negative values (32-bit two's complement)
         XCTAssertEqual(kk_int_countTrailingZeroBits(-1), 0, "-1 (all bits set) should have 0 trailing zeros")
         XCTAssertEqual(kk_int_countTrailingZeroBits(-2), 1, "-2 (all bits except LSB) should have 1 trailing zero")
-        XCTAssertEqual(kk_int_countTrailingZeroBits(Int32.min), 31, "Int32.min should have 31 trailing zeros")
+        XCTAssertEqual(kk_int_countTrailingZeroBits(Int(Int32.min)), 31, "Int32.min should have 31 trailing zeros")
     }
 
-    // MARK: - Long Bit Count Tests (64-bit semantics)
+    // MARK: - Host Int Truncation Behavior
 
-    func testLongCountOneBitsBasicValues() {
-        // Since Long uses same Int representation on 64-bit, test 64-bit behavior
+    func testHighBitsAreIgnoredForIntBitCounts() {
+        // kk_int_* helpers intentionally apply Kotlin Int (32-bit) semantics even on 64-bit hosts.
         XCTAssertEqual(kk_int_countOneBits(0), 0, "Zero should have 0 bits set")
         XCTAssertEqual(kk_int_countOneBits(1), 1, "1 should have 1 bit set")
-        XCTAssertEqual(kk_int_countOneBits(0xFFFFFFFFFFFFFFFF), 64, "All 64 bits set should return 64")
-    }
-
-    func testLongCountOneBitsNegativeValues() {
-        // Test 64-bit negative values
-        XCTAssertEqual(kk_int_countOneBits(-1), 64, "-1 (all 64 bits set) should have 64 bits set")
-        XCTAssertEqual(kk_int_countOneBits(-2), 63, "-2 should have 63 bits set")
-    }
-
-    func testLongCountLeadingZeroBitsBasicValues() {
-        // Test 64-bit leading zero behavior
-        XCTAssertEqual(kk_int_countLeadingZeroBits(0), 64, "Zero should have 64 leading zeros")
-        XCTAssertEqual(kk_int_countLeadingZeroBits(1), 63, "1 should have 63 leading zeros")
-    }
-
-    func testLongCountTrailingZeroBitsBasicValues() {
-        // Test 64-bit trailing zero behavior
-        XCTAssertEqual(kk_int_countTrailingZeroBits(0), 64, "Zero should have 64 trailing zeros")
+        XCTAssertEqual(kk_int_countOneBits(-1), 32, "All low 32 bits set should return 32")
+        XCTAssertEqual(kk_int_countOneBits(-2), 31, "Only low 32 bits should participate in the count")
+        XCTAssertEqual(kk_int_countLeadingZeroBits(0), 32, "Zero should have 32 leading zeros")
+        XCTAssertEqual(kk_int_countLeadingZeroBits(1), 31, "1 should have 31 leading zeros")
+        XCTAssertEqual(kk_int_countTrailingZeroBits(0), 32, "Zero should have 32 trailing zeros")
         XCTAssertEqual(kk_int_countTrailingZeroBits(1), 0, "1 should have 0 trailing zeros")
     }
 
@@ -83,7 +70,7 @@ final class NumericBitCountTests: XCTestCase {
     func testBitCountSpecialValues() {
         // Test values that might trigger optimizations
         let specialValues: [Int] = [
-            0, 1, -1, Int32.max, Int32.min,
+            0, 1, -1, Int(Int32.max), Int(Int32.min),
             Int.max, Int.min,
             0x55555555, 0xAAAAAAAA,  // Alternating patterns
             0xFF00FF00, 0x00FF00FF,  // Byte patterns
@@ -107,7 +94,7 @@ final class NumericBitCountTests: XCTestCase {
 
             // Verify relationship: leadingZeros + trailingZeros + ones_in_between = 32
             // This is more complex due to potential gaps, so we just verify basic consistency
-            if value != 0 {
+            if value != 0 && ones > 0 {
                 XCTAssertLessThan(leadingZeros + trailingZeros, 32, "Non-zero value should have some bits set")
             }
         }
@@ -211,8 +198,8 @@ final class NumericBitCountTests: XCTestCase {
             (0x80000000, 1, 0, 31),
             (0x7FFFFFFF, 31, 1, 0),
             (0xFFFFFFFF, 32, 0, 0),
-            (Int32.min, 1, 0, 31),
-            (Int32.max, 31, 1, 0)
+            (Int(Int32.min), 1, 0, 31),
+            (Int(Int32.max), 31, 1, 0)
         ]
 
         for (value, expectedOnes, expectedLeadingZeros, expectedTrailingZeros) in knownValues {

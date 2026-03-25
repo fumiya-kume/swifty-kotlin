@@ -41,8 +41,8 @@ final class RandomImplementationTests: XCTestCase {
     func testRandomNextLongSeededDeterminism() {
         // Test that seeded random produces deterministic results
         let seed = 12345
-        let random1 = createSeededRandom(seed)
-        let random2 = createSeededRandom(seed)
+        let random1 = createSeededRandom(seed: seed)
+        let random2 = createSeededRandom(seed: seed)
         
         let value1 = kk_random_nextLong(random1)
         let value2 = kk_random_nextLong(random2)
@@ -108,8 +108,8 @@ final class RandomImplementationTests: XCTestCase {
     func testRandomNextFloatSeededDeterminism() {
         // Test that seeded random produces deterministic Float results
         let seed = 12345
-        let random1 = createSeededRandom(seed)
-        let random2 = createSeededRandom(seed)
+        let random1 = createSeededRandom(seed: seed)
+        let random2 = createSeededRandom(seed: seed)
         
         let bits1 = kk_random_nextFloat(random1)
         let bits2 = kk_random_nextFloat(random2)
@@ -180,7 +180,7 @@ final class RandomImplementationTests: XCTestCase {
     func testRandomImplementationConsistency() {
         // Test that different random methods work together consistently
         let seed = 42
-        let random = createSeededRandom(seed)
+        let random = createSeededRandom(seed: seed)
         
         // Generate values using different methods
         let longValue = kk_random_nextLong(random)
@@ -202,7 +202,7 @@ final class RandomImplementationTests: XCTestCase {
     func testRandomDefaultVsSeeded() {
         // Test behavior differences between default and seeded random
         let defaultRandom = 0
-        let seededRandom = createSeededRandom(123)
+        let seededRandom = createSeededRandom(seed: 123)
         
         // Generate sequences
         var defaultValues: [Int] = []
@@ -263,7 +263,7 @@ final class RandomImplementationTests: XCTestCase {
         // about Random.nextLong() and nextFloat() consistency and behavior
         
         let seed = 999
-        let random = createSeededRandom(seed)
+        let random = createSeededRandom(seed: seed)
         
         // Test that nextLong produces full-range values
         let longValue = kk_random_nextLong(random)

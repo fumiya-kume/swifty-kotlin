@@ -33,6 +33,23 @@ private let throwingThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> I
 }
 
 final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
+    private final class DurationResultsBox: @unchecked Sendable {
+        private let lock = NSLock()
+        private var values: [Int] = []
+
+        func append(_ value: Int) {
+            lock.lock()
+            values.append(value)
+            lock.unlock()
+        }
+
+        func snapshot() -> [Int] {
+            lock.lock()
+            let snapshot = values
+            lock.unlock()
+            return snapshot
+        }
+    }
 
     // MARK: - Helper
 
@@ -578,25 +595,24 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
         let expectation = XCTestExpectation(description: "Parallel measurements complete")
         expectation.expectedFulfillmentCount = 4
         
-        var results: [Int] = []
-        let resultsQueue = DispatchQueue(label: "results")
+        let resultsBox = DurationResultsBox()
         
         for i in 0..<4 {
             DispatchQueue.global(qos: .userInitiated).async {
-                let fnPtr = unsafeBitCast(self.sleep50msThunk, to: Int.self)
+                let fnPtr = unsafeBitCast(sleep50msThunk, to: Int.self)
                 var thrown: Int = 0
                 let result = kk_measureTime(fnPtr, i, &thrown)
-                
-                resultsQueue.async {
-                    XCTAssertEqual(thrown, 0, "Thread \(i): No exception should be thrown")
-                    XCTAssertNotEqual(result, 0, "Thread \(i): Should return valid duration")
-                    results.append(result)
-                    expectation.fulfill()
-                }
+                let thrownValue = thrown
+
+                XCTAssertEqual(thrownValue, 0, "Thread \(i): No exception should be thrown")
+                XCTAssertNotEqual(result, 0, "Thread \(i): Should return valid duration")
+                resultsBox.append(result)
+                expectation.fulfill()
             }
         }
         
         wait(for: [expectation], timeout: 2.0)
+        let results = resultsBox.snapshot()
         XCTAssertEqual(results.count, 4, "All 4 parallel measurements should complete")
         
         // Verify all results are distinct handles

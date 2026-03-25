@@ -2217,7 +2217,7 @@ final class RuntimeChannelHandle: @unchecked Sendable {
 
     /// CORO-004: Resume a suspended sender using continuation model if available,
     /// falling back to semaphore for backward compatibility.
-    private func resumeSender(_ sender: SuspendedSender) {
+    func resumeSender(_ sender: SuspendedSender) {
         if let resumeClosure = sender.resumeClosure {
             // Continuation-based implementation
             DispatchQueue.global().async {
@@ -2231,7 +2231,7 @@ final class RuntimeChannelHandle: @unchecked Sendable {
 
     /// CORO-004: Resume a suspended receiver using continuation model if available,
     /// falling back to semaphore for backward compatibility.
-    private func resumeReceiver(_ receiver: SuspendedReceiver) {
+    func resumeReceiver(_ receiver: SuspendedReceiver) {
         if let resumeClosure = receiver.resumeClosure {
             // Continuation-based implementation
             DispatchQueue.global().async {
