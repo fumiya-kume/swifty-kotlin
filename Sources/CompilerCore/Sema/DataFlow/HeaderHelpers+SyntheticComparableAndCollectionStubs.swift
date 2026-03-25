@@ -165,6 +165,35 @@ extension DataFlowSemaPhase {
             collectionInterfaceSymbol: collectionInterfaceSymbol
         )
 
+        // --- STDLIB-533: List?.orEmpty() ---
+        let listTypeParamSymbols = types.nominalTypeParameterSymbols(for: listInterfaceSymbol)
+        let listTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: listTypeParamSymbols.first!,
+            nullability: .nonNull
+        )))
+        let nullableListType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nullable
+        )))
+        let nonNullListType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        
+        registerSyntheticListExtensionFunction(
+            named: "orEmpty",
+            externalLinkName: "kk_list_orEmpty",
+            receiverType: nullableListType,
+            parameters: [],
+            returnType: nonNullListType,
+            packageFQName: kotlinCollectionsPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
         // Now that List is registered, patch Pair.toList() and Triple.toList()
         // return types from the provisional Any? to the correct List<Any?>.
         patchPairTripleToListReturnTypes(
@@ -4313,6 +4342,93 @@ extension DataFlowSemaPhase {
             ),
             for: memberSymbol
         )
+    }
+
+    /// Helper function for registering List extension functions.
+    private func registerSyntheticListExtensionFunction(
+        named name: String,
+        externalLinkName: String,
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID, hasDefault: Bool, isVararg: Bool)],
+        returnType: TypeID,
+        flags: SymbolFlags = [.synthetic],
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.receiverType == receiverType
+                && existingSignature.parameterTypes == parameters.map(\.type)
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: flags
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var parameterTypes: [TypeID] = []
+        var parameterSymbols: [SymbolID] = []
+        var parameterDefaults: [Bool] = []
+        var parameterVarargs: [Bool] = []
+        parameterTypes.reserveCapacity(parameters.count)
+        parameterSymbols.reserveCapacity(parameters.count)
+        parameterDefaults.reserveCapacity(parameters.count)
+        parameterVarargs.reserveCapacity(parameters.count)
+
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            parameterTypes.append(parameter.type)
+            parameterSymbols.append(parameterSymbol)
+            parameterDefaults.append(parameter.hasDefault)
+            parameterVarargs.append(parameter.isVararg)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: parameterDefaults,
+                valueParameterIsVararg: parameterVarargs,
+                typeParameterSymbols: []
+            ),
+            for: functionSymbol
+        )
+        
+        symbols.setPropertyType(types.make(.functionType(FunctionType(
+            params: parameterTypes,
+            returnType: returnType,
+            isSuspend: false,
+            nullability: .nonNull
+        ))), for: functionSymbol)
     }
 
     private func registerSyntheticSetStub(
