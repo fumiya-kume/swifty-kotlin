@@ -941,62 +941,42 @@ public func kk_uint_to_ulong(_ value: Int) -> Int {
 
 @_cdecl("kk_int_to_ubyte")
 public func kk_int_to_ubyte(_ value: Int) -> Int {
-    // UByte range: 0-255
-    if value < 0 { return 0 }
-    if value > 255 { return 255 }
-    return value
+    Int(UInt8(truncatingIfNeeded: value))
 }
 
 @_cdecl("kk_int_to_ushort")
 public func kk_int_to_ushort(_ value: Int) -> Int {
-    // UShort range: 0-65535
-    if value < 0 { return 0 }
-    if value > 65535 { return 65535 }
-    return value
+    Int(UInt16(truncatingIfNeeded: value))
 }
 
 @_cdecl("kk_long_to_ubyte")
 public func kk_long_to_ubyte(_ value: Int) -> Int {
-    // UByte range: 0-255
-    if value < 0 { return 0 }
-    if value > 255 { return 255 }
-    return value
+    Int(UInt8(truncatingIfNeeded: value))
 }
 
 @_cdecl("kk_long_to_ushort")
 public func kk_long_to_ushort(_ value: Int) -> Int {
-    // UShort range: 0-65535
-    if value < 0 { return 0 }
-    if value > 65535 { return 65535 }
-    return value
+    Int(UInt16(truncatingIfNeeded: value))
 }
 
 @_cdecl("kk_uint_to_ubyte")
 public func kk_uint_to_ubyte(_ value: Int) -> Int {
-    // UByte range: 0-255
-    if value > 255 { return 255 }
-    return value
+    Int(UInt8(truncatingIfNeeded: value))
 }
 
 @_cdecl("kk_uint_to_ushort")
 public func kk_uint_to_ushort(_ value: Int) -> Int {
-    // UShort range: 0-65535
-    if value > 65535 { return 65535 }
-    return value
+    Int(UInt16(truncatingIfNeeded: value))
 }
 
 @_cdecl("kk_ulong_to_ubyte")
 public func kk_ulong_to_ubyte(_ value: Int) -> Int {
-    // UByte range: 0-255
-    if value > 255 { return 255 }
-    return value
+    Int(UInt8(truncatingIfNeeded: value))
 }
 
 @_cdecl("kk_ulong_to_ushort")
 public func kk_ulong_to_ushort(_ value: Int) -> Int {
-    // UShort range: 0-65535
-    if value > 65535 { return 65535 }
-    return value
+    Int(UInt16(truncatingIfNeeded: value))
 }
 
 @_cdecl("kk_ubyte_to_int")
@@ -1051,30 +1031,22 @@ public func kk_ushort_to_ulong(_ value: Int) -> Int {
 
 @_cdecl("kk_int_to_char")
 public func kk_int_to_char(_ value: Int) -> Int {
-    // Char range: 0-0x10FFFF (Unicode code points)
-    if value < 0 || value > 0x10FFFF { return 0 }
-    return value
+    Int(UInt16(truncatingIfNeeded: value))
 }
 
 @_cdecl("kk_long_to_char")
 public func kk_long_to_char(_ value: Int) -> Int {
-    // Char range: 0-0x10FFFF (Unicode code points)
-    if value < 0 || value > 0x10FFFF { return 0 }
-    return value
+    Int(UInt16(truncatingIfNeeded: value))
 }
 
 @_cdecl("kk_uint_to_char")
 public func kk_uint_to_char(_ value: Int) -> Int {
-    // Char range: 0-0x10FFFF (Unicode code points)
-    if value > 0x10FFFF { return 0 }
-    return value
+    Int(UInt16(truncatingIfNeeded: value))
 }
 
 @_cdecl("kk_ulong_to_char")
 public func kk_ulong_to_char(_ value: Int) -> Int {
-    // Char range: 0-0x10FFFF (Unicode code points)
-    if value > 0x10FFFF { return 0 }
-    return value
+    Int(UInt16(truncatingIfNeeded: value))
 }
 
 @_cdecl("kk_ubyte_to_char")

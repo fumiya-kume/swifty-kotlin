@@ -274,42 +274,42 @@ final class CoercionRuntimeTests: XCTestCase {
 
     func testIntToUByteConversion() {
         XCTAssertEqual(kk_int_to_ubyte(100), 100, "Valid value should remain unchanged")
-        XCTAssertEqual(kk_int_to_ubyte(-5), 0, "Negative value should be clamped to 0")
-        XCTAssertEqual(kk_int_to_ubyte(300), 255, "Value above 255 should be clamped to 255")
+        XCTAssertEqual(kk_int_to_ubyte(-5), 251, "Negative value should truncate to the low 8 bits")
+        XCTAssertEqual(kk_int_to_ubyte(300), 44, "Value above 255 should truncate to the low 8 bits")
         XCTAssertEqual(kk_int_to_ubyte(0), 0, "Minimum boundary should remain unchanged")
         XCTAssertEqual(kk_int_to_ubyte(255), 255, "Maximum boundary should remain unchanged")
     }
 
     func testIntToUShortConversion() {
         XCTAssertEqual(kk_int_to_ushort(1000), 1000, "Valid value should remain unchanged")
-        XCTAssertEqual(kk_int_to_ushort(-5), 0, "Negative value should be clamped to 0")
-        XCTAssertEqual(kk_int_to_ushort(70000), 65535, "Value above 65535 should be clamped to 65535")
+        XCTAssertEqual(kk_int_to_ushort(-5), 65531, "Negative value should truncate to the low 16 bits")
+        XCTAssertEqual(kk_int_to_ushort(70000), 4464, "Value above 65535 should truncate to the low 16 bits")
         XCTAssertEqual(kk_int_to_ushort(0), 0, "Minimum boundary should remain unchanged")
         XCTAssertEqual(kk_int_to_ushort(65535), 65535, "Maximum boundary should remain unchanged")
     }
 
     func testLongToUByteConversion() {
         XCTAssertEqual(kk_long_to_ubyte(100), 100, "Valid value should remain unchanged")
-        XCTAssertEqual(kk_long_to_ubyte(-5), 0, "Negative value should be clamped to 0")
-        XCTAssertEqual(kk_long_to_ubyte(300), 255, "Value above 255 should be clamped to 255")
+        XCTAssertEqual(kk_long_to_ubyte(-5), 251, "Negative value should truncate to the low 8 bits")
+        XCTAssertEqual(kk_long_to_ubyte(300), 44, "Value above 255 should truncate to the low 8 bits")
     }
 
     func testLongToUShortConversion() {
         XCTAssertEqual(kk_long_to_ushort(1000), 1000, "Valid value should remain unchanged")
-        XCTAssertEqual(kk_long_to_ushort(-5), 0, "Negative value should be clamped to 0")
-        XCTAssertEqual(kk_long_to_ushort(70000), 65535, "Value above 65535 should be clamped to 65535")
+        XCTAssertEqual(kk_long_to_ushort(-5), 65531, "Negative value should truncate to the low 16 bits")
+        XCTAssertEqual(kk_long_to_ushort(70000), 4464, "Value above 65535 should truncate to the low 16 bits")
     }
 
     func testUIntToUByteConversion() {
         XCTAssertEqual(kk_uint_to_ubyte(100), 100, "Valid value should remain unchanged")
-        XCTAssertEqual(kk_uint_to_ubyte(300), 255, "Value above 255 should be clamped to 255")
+        XCTAssertEqual(kk_uint_to_ubyte(300), 44, "Value above 255 should truncate to the low 8 bits")
         XCTAssertEqual(kk_uint_to_ubyte(0), 0, "Minimum boundary should remain unchanged")
         XCTAssertEqual(kk_uint_to_ubyte(255), 255, "Maximum boundary should remain unchanged")
     }
 
     func testUIntToUShortConversion() {
         XCTAssertEqual(kk_uint_to_ushort(1000), 1000, "Valid value should remain unchanged")
-        XCTAssertEqual(kk_uint_to_ushort(70000), 65535, "Value above 65535 should be clamped to 65535")
+        XCTAssertEqual(kk_uint_to_ushort(70000), 4464, "Value above 65535 should truncate to the low 16 bits")
         XCTAssertEqual(kk_uint_to_ushort(0), 0, "Minimum boundary should remain unchanged")
         XCTAssertEqual(kk_uint_to_ushort(65535), 65535, "Maximum boundary should remain unchanged")
     }
@@ -342,30 +342,30 @@ final class CoercionRuntimeTests: XCTestCase {
 
     func testIntToCharConversion() {
         XCTAssertEqual(kk_int_to_char(65), 65, "Valid ASCII value should remain unchanged")
-        XCTAssertEqual(kk_int_to_char(0x1F600), 0x1F600, "Valid Unicode value should remain unchanged")
-        XCTAssertEqual(kk_int_to_char(-5), 0, "Negative value should be clamped to 0")
-        XCTAssertEqual(kk_int_to_char(0x110000), 0, "Value above Unicode range should be clamped to 0")
+        XCTAssertEqual(kk_int_to_char(0x1F600), 0xF600, "Values should truncate to the low 16 bits")
+        XCTAssertEqual(kk_int_to_char(-5), 0xFFFB, "Negative value should truncate to the low 16 bits")
+        XCTAssertEqual(kk_int_to_char(0x110000), 0, "Value above 16 bits should truncate to 0")
         XCTAssertEqual(kk_int_to_char(0), 0, "Minimum boundary should remain unchanged")
-        XCTAssertEqual(kk_int_to_char(0x10FFFF), 0x10FFFF, "Maximum Unicode boundary should remain unchanged")
+        XCTAssertEqual(kk_int_to_char(0x10FFFF), 0xFFFF, "Maximum input should truncate to the low 16 bits")
     }
 
     func testLongToCharConversion() {
         XCTAssertEqual(kk_long_to_char(65), 65, "Valid ASCII value should remain unchanged")
-        XCTAssertEqual(kk_long_to_char(0x1F600), 0x1F600, "Valid Unicode value should remain unchanged")
-        XCTAssertEqual(kk_long_to_char(-5), 0, "Negative value should be clamped to 0")
-        XCTAssertEqual(kk_long_to_char(0x110000), 0, "Value above Unicode range should be clamped to 0")
+        XCTAssertEqual(kk_long_to_char(0x1F600), 0xF600, "Values should truncate to the low 16 bits")
+        XCTAssertEqual(kk_long_to_char(-5), 0xFFFB, "Negative value should truncate to the low 16 bits")
+        XCTAssertEqual(kk_long_to_char(0x110000), 0, "Value above 16 bits should truncate to 0")
     }
 
     func testUIntToCharConversion() {
         XCTAssertEqual(kk_uint_to_char(65), 65, "Valid ASCII value should remain unchanged")
-        XCTAssertEqual(kk_uint_to_char(0x1F600), 0x1F600, "Valid Unicode value should remain unchanged")
-        XCTAssertEqual(kk_uint_to_char(0x110000), 0, "Value above Unicode range should be clamped to 0")
+        XCTAssertEqual(kk_uint_to_char(0x1F600), 0xF600, "Values should truncate to the low 16 bits")
+        XCTAssertEqual(kk_uint_to_char(0x110000), 0, "Value above 16 bits should truncate to 0")
     }
 
     func testULongToCharConversion() {
         XCTAssertEqual(kk_ulong_to_char(65), 65, "Valid ASCII value should remain unchanged")
-        XCTAssertEqual(kk_ulong_to_char(0x1F600), 0x1F600, "Valid Unicode value should remain unchanged")
-        XCTAssertEqual(kk_ulong_to_char(0x110000), 0, "Value above Unicode range should be clamped to 0")
+        XCTAssertEqual(kk_ulong_to_char(0x1F600), 0xF600, "Values should truncate to the low 16 bits")
+        XCTAssertEqual(kk_ulong_to_char(0x110000), 0, "Value above 16 bits should truncate to 0")
     }
 
     func testUByteToCharConversion() {
@@ -375,7 +375,7 @@ final class CoercionRuntimeTests: XCTestCase {
 
     func testUShortToCharConversion() {
         XCTAssertEqual(kk_ushort_to_char(65), 65, "Valid ASCII value should remain unchanged")
-        XCTAssertEqual(kk_ushort_to_char(0x1F600), 0x1F600, "Valid Unicode value should remain unchanged")
+        XCTAssertEqual(kk_ushort_to_char(0x1F600), 0x1F600, "UShort to Char should preserve the stored value")
         XCTAssertEqual(kk_ushort_to_char(65535), 65535, "Maximum UShort should remain unchanged")
     }
 
@@ -444,11 +444,11 @@ final class CoercionRuntimeTests: XCTestCase {
         let asLong = kk_char_to_long(asChar)
         let asUInt = kk_char_to_uint(asChar)
         let asULong = kk_char_to_ulong(asChar)
-        
-        XCTAssertEqual(backToInt, original, "Char round-trip conversion should preserve value")
-        XCTAssertEqual(asLong, original, "Char to Long should preserve value")
-        XCTAssertEqual(asUInt, original, "Char to UInt should preserve value")
-        XCTAssertEqual(asULong, original, "Char to ULong should preserve value")
+
+        XCTAssertEqual(backToInt, 0xF600, "Char round-trip conversion should preserve the low 16 bits")
+        XCTAssertEqual(asLong, 0xF600, "Char to Long should preserve the low 16 bits")
+        XCTAssertEqual(asUInt, 0xF600, "Char to UInt should preserve the low 16 bits")
+        XCTAssertEqual(asULong, 0xF600, "Char to ULong should preserve the low 16 bits")
     }
 
 }

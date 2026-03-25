@@ -452,6 +452,8 @@ public func kk_list_flatMap(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ o
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if let subList = runtimeListBox(from: subListRaw) {
             result.append(contentsOf: subList.elements)
+        } else if let subArray = runtimeArrayBox(from: subListRaw) {
+            result.append(contentsOf: subArray.elements)
         }
     }
     return registerRuntimeObject(RuntimeListBox(elements: result))
