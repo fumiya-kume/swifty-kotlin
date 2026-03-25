@@ -188,6 +188,7 @@ extension DataFlowSemaPhase {
             receiverType: nullableListType,
             parameters: [],
             returnType: nonNullListType,
+            typeParameterSymbols: listTypeParamSymbols,
             packageFQName: kotlinCollectionsPkg,
             symbols: symbols,
             types: types,
@@ -4351,6 +4352,7 @@ extension DataFlowSemaPhase {
         receiverType: TypeID,
         parameters: [(name: String, type: TypeID, hasDefault: Bool, isVararg: Bool)],
         returnType: TypeID,
+        typeParameterSymbols: [SymbolID] = [],
         flags: SymbolFlags = [.synthetic],
         packageFQName: [InternedString],
         symbols: SymbolTable,
@@ -4364,7 +4366,7 @@ extension DataFlowSemaPhase {
                 return false
             }
             return existingSignature.receiverType == receiverType
-                && existingSignature.parameterTypes == parameters.map(\.type)
+                && existingSignature.parameterTypes == parameters.map { $0.type }
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
             return
@@ -4418,7 +4420,7 @@ extension DataFlowSemaPhase {
                 valueParameterSymbols: parameterSymbols,
                 valueParameterHasDefaultValues: parameterDefaults,
                 valueParameterIsVararg: parameterVarargs,
-                typeParameterSymbols: []
+                typeParameterSymbols: typeParameterSymbols
             ),
             for: functionSymbol
         )

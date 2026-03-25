@@ -212,14 +212,41 @@ extension CallTypeChecker {
             sema.bindings.bindExprType(id, type: resultType)
             return safeCall ? sema.types.makeNullable(resultType) : resultType
         }
-        if memberName == "indexOf", args.indices.contains(0) {
-            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.stringType)
+        let charType = sema.types.charType
+        func stringSearchNeedleExpectedType(for argID: ExprID) -> TypeID? {
+            if let boundType = sema.bindings.exprTypes[argID] {
+                let nonNullBoundType = sema.types.makeNonNullable(boundType)
+                if sema.types.isSubtype(nonNullBoundType, charType) {
+                    return charType
+                }
+                if sema.types.isSubtype(nonNullBoundType, sema.types.stringType) {
+                    return sema.types.stringType
+                }
+            }
+            guard let expr = ctx.ast.arena.expr(argID) else {
+                return nil
+            }
+            switch expr {
+            case .charLiteral:
+                return charType
+            case .stringLiteral:
+                return sema.types.stringType
+            default:
+                return nil
+            }
+        }
+        if memberName == "indexOf", args.indices.contains(0),
+           let expectedType = stringSearchNeedleExpectedType(for: args[0].expr)
+        {
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: expectedType)
         }
         if memberName == "indexOf", args.indices.contains(1) {
             _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
         }
-        if memberName == "lastIndexOf", args.indices.contains(0) {
-            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.stringType)
+        if memberName == "lastIndexOf", args.indices.contains(0),
+           let expectedType = stringSearchNeedleExpectedType(for: args[0].expr)
+        {
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: expectedType)
         }
         if args.indices.contains(0), let regexType {
             let expectedType = memberName == "replace" || memberName == "contains" || memberName == "matches" || memberName == "split"
@@ -230,7 +257,6 @@ extension CallTypeChecker {
             }
         }
         if memberName == "indexOfFirst" || memberName == "indexOfLast" {
-            let charType = sema.types.make(.primitive(.char, .nonNull))
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [charType],
                 returnType: sema.types.booleanType,

@@ -17,6 +17,12 @@ private func runtimeReflectionKClassBox(from raw: Int) -> RuntimeKClassBox? {
 
 private func runtimeReflectionStringRaw(_ value: String) -> Int {
     let utf8 = Array(value.utf8)
+    if utf8.isEmpty {
+        var emptyByte: UInt8 = 0
+        return withUnsafePointer(to: &emptyByte) { ptr in
+            Int(bitPattern: kk_string_from_utf8(ptr, 0))
+        }
+    }
     return utf8.withUnsafeBufferPointer { buffer in
         Int(bitPattern: kk_string_from_utf8(buffer.baseAddress!, Int32(buffer.count)))
     }
@@ -74,7 +80,7 @@ public func kk_kclass_get_superclass_name(_ kclassRaw: Int) -> Int {
 @_cdecl("kk_kclass_is_data_class")
 public func kk_kclass_is_data_class(_ kclassRaw: Int) -> Int {
     guard let kclass = runtimeReflectionKClassBox(from: kclassRaw) else {
-        return 0
+        return runtimeNullSentinelInt
     }
     return kclass.metadata?.isDataClass == true ? 1 : 0
 }
@@ -82,7 +88,7 @@ public func kk_kclass_is_data_class(_ kclassRaw: Int) -> Int {
 @_cdecl("kk_kclass_is_sealed_class")
 public func kk_kclass_is_sealed_class(_ kclassRaw: Int) -> Int {
     guard let kclass = runtimeReflectionKClassBox(from: kclassRaw) else {
-        return 0
+        return runtimeNullSentinelInt
     }
     return kclass.metadata?.isSealedClass == true ? 1 : 0
 }
@@ -90,7 +96,7 @@ public func kk_kclass_is_sealed_class(_ kclassRaw: Int) -> Int {
 @_cdecl("kk_kclass_is_value_class")
 public func kk_kclass_is_value_class(_ kclassRaw: Int) -> Int {
     guard let kclass = runtimeReflectionKClassBox(from: kclassRaw) else {
-        return 0
+        return runtimeNullSentinelInt
     }
     return kclass.metadata?.isValueClass == true ? 1 : 0
 }
@@ -98,7 +104,7 @@ public func kk_kclass_is_value_class(_ kclassRaw: Int) -> Int {
 @_cdecl("kk_kclass_get_field_count")
 public func kk_kclass_get_field_count(_ kclassRaw: Int) -> Int {
     guard let kclass = runtimeReflectionKClassBox(from: kclassRaw) else {
-        return 0
+        return runtimeNullSentinelInt
     }
     return kclass.metadata?.fieldCount ?? 0
 }

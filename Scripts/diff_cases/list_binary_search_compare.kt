@@ -61,7 +61,7 @@ fun main() {
     
     // Double list
     val doubleList = listOf(1.1, 2.2, 3.3, 4.4, 5.5)
-    val doubleSearch = doubleList.binarySearch { (it - 3.3).toInt() }
+    val doubleSearch = doubleList.binarySearch { it.compareTo(3.3) }
     println("double search 3.3: $doubleSearch")
     
     println("\n=== Complex comparison logic ===")
