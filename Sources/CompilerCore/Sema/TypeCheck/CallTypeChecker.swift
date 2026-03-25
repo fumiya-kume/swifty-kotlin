@@ -682,6 +682,19 @@ final class CallTypeChecker {
                 sema.bindings.markStdlibSpecialCallExpr(id, kind: .enumValueOf)
                 sema.bindings.bindExprType(id, type: enumType)
                 return enumType
+            case let .enumEntries(enumType, entriesType, stubSymbol):
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: stubSymbol,
+                        substitutedTypeArguments: [enumType],
+                        parameterMapping: [:]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(stubSymbol))
+                sema.bindings.markStdlibSpecialCallExpr(id, kind: .enumEntries)
+                sema.bindings.bindExprType(id, type: entriesType)
+                return entriesType
             }
         }
 

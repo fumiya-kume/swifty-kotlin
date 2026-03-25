@@ -697,7 +697,7 @@ final class LambdaLowerer {
             var body: [KIRInstruction] = [.beginBlock]
             var callArgExprs: [KIRExprID] = []
             // If the callable ref has a bound receiver, pass capture args first.
-            for captureArg in captureArguments {
+            for _ in captureArguments {
                 let captureRef = arena.appendExpr(
                     .symbolRef(closureParam.symbol),
                     type: closureParam.type

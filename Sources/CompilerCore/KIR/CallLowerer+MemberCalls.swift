@@ -306,8 +306,9 @@ extension CallLowerer {
            case let .functionType(fnType) = sema.types.kind(of: callableBinding.functionType),
            case let .localValue(localSym) = callableBinding.target,
            let receiverExprType = sema.bindings.exprType(for: receiverExpr) {
-            let maybeReceiverFnType = if fnType.receiver != nil {
-                (fnType, fnType.params.count == args.count)
+            let maybeReceiverFnType: (FunctionType, Bool)
+            if fnType.receiver != nil {
+                maybeReceiverFnType = (fnType, fnType.params.count == args.count)
             } else if !fnType.params.isEmpty && args.count == fnType.params.count - 1 {
                 let syntheticReceiverType = fnType.params[0]
                 let syntheticFunction = FunctionType(
@@ -317,9 +318,9 @@ extension CallLowerer {
                     isSuspend: fnType.isSuspend,
                     nullability: fnType.nullability
                 )
-                (syntheticFunction, true)
+                maybeReceiverFnType = (syntheticFunction, true)
             } else {
-                (FunctionType(
+                maybeReceiverFnType = (FunctionType(
                     params: fnType.params,
                     returnType: fnType.returnType,
                     isSuspend: fnType.isSuspend,
@@ -365,7 +366,7 @@ extension CallLowerer {
                         thrownResult: nil
                     ))
                 } else {
-                    var allArgs = [loweredReceiver] + loweredArgIDs
+                    let allArgs = [loweredReceiver] + loweredArgIDs
                     instructions.append(.call(
                         symbol: localSym,
                         callee: calleeName,
@@ -374,7 +375,6 @@ extension CallLowerer {
                         canThrow: false,
                         thrownResult: nil
                     ))
-                    _ = allArgs
                 }
                 return result
             }

@@ -639,9 +639,6 @@ extension CallTypeChecker {
             let calleeStr = interner.resolve(calleeName)
             let isFileReceiver = isFileType(receiverType, sema: sema, interner: interner)
             if isFileReceiver && (calleeStr == "forEachLine" || calleeStr == "useLines") {
-                let nonNullReceiverType = safeCall
-                    ? sema.types.makeNonNullable(receiverType)
-                    : receiverType
                 if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
                 }
