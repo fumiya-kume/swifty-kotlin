@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-03-25
+最終更新: 2025-06-18
 
 ## 運用ルール
 
@@ -19,20 +19,6 @@
 
 監査で見つかった「簡易実装（Stub）」や「中途半端なパス」を将来の改善項目として追跡する。
 
-- [x] CORO-001: Channel の send / バックプレッシャーを Kotlin suspend セマンティクスに揃える
-  - 現状: 満杯時の扱い・Flow 側の eager ソースなど、Kotlin との差が残る（`RuntimeCoroutine.swift` の `RuntimeChannelHandle.send` 等）
-  - **完了**: ✅ Prompt cancellation guaranteeを実装、✅ BufferOverflow戦略を追加、✅ continuationモデルへ移行、✅ テスト追加
-- [ ] TEST-001: `kk_measureTime` およびシステム計測の Runtime XCTest 強化
-  - 現状: `RuntimeDurationTests` で Duration 工場・`inWhole*`・`toString` はカバー。`kk_measureTime` 本体のテストは薄い
-- [ ] TEST-002: Long/Double/Float 型強制の golden/smoke テスト追加
-  - 現状: `HeaderHelpers+SyntheticCoercionStubs.swift` 先頭にテスト参照コメント。ケース拡充は未了
-- [ ] TEST-003: Numeric bit-count 系のエッジケーステスト追加
-  - 現状: `RuntimeNumericCompat.swift` にビット数まわりの TODO コメント（行は実装変更で前後しうる）
-- [ ] STDLIB-431: `Random.nextLong()` / `nextFloat()` の実装追跡（互換性セクションの `STDLIB-514` / `STDLIB-515` と重複。片方に統合可）
-- [ ] CORO-004: サスペンドを continuation モデルに移行（Channel > withContext > await/join > sequence builders）
-  - 進捗: `runSuspendEntryLoopWithContinuation` の内部サスペンド（delay等）は `installResumeContinuation` ベースのノンブロッキングモデルに移行済み。`completionGate` は最外の同期待ちポイントのみでブロック（許容範囲）
-  - 残り: `awaitResult` / `join` / `withContext` / Channel send&receive / sequence builder の semaphore 待ちを continuation モデルに移行（優先順: Channel > withContext > await/join > sequence builders）
-  - 詳細: `RuntimeCoroutine.swift` 先頭の CORO-004 Migration Plan コメントブロック参照
 - [ ] REFL-004: 実行時 `KClass` から読めるバイナリメタデータ（`MetadataSerializer` 等の活用）
   - 現状: リンク用メタデータはあるが実行時参照は限定
 
@@ -44,14 +30,14 @@
 
 #### C. kotlin.collections — 単一 API 単位
 
-- [ ] STDLIB-532: `Map?.orEmpty()` 拡張
+- [x] STDLIB-532: `Map?.orEmpty()` 拡張
+  - **完了**: ✅ ランタイム実装、ABI宣言、コンパイラ対応、テストケースがすべて完了済み
 - [ ] STDLIB-533: `List?.orEmpty()` 拡張
 - [ ] STDLIB-540: `LinkedList` 型エイリアスの golden テスト（`ArrayList` / `HashMap` / `LinkedHashMap` も同ファイルでスタブ登録済み）
 - [ ] STDLIB-541: `HashMap` 型エイリアスの golden テスト
 - [ ] STDLIB-542: `LinkedHashMap` 型エイリアスの golden テスト
 - [ ] STDLIB-543: `firstOrNull` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-544: `lastOrNull` の kotlinc 挙動 diff 検証
-- [ ] STDLIB-545: `singleOrNull` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-546: `asReversed()` と `reversed()` の区別 diff 検証
 - [ ] STDLIB-547: `binarySearch(compare)` オーバーロード
 - [ ] STDLIB-548: `chunked(step)` オプション
