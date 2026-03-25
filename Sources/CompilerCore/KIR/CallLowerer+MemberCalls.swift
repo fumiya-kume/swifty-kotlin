@@ -171,13 +171,16 @@ extension CallLowerer {
         receiverExpr: ExprID,
         calleeName: InternedString,
         args: [CallArgument],
-        ast: ASTModule,
-        sema: SemaModule,
-        arena: KIRArena,
-        interner: StringInterner,
-        propertyConstantInitializers: [SymbolID: KIRExprKind],
-        instructions: inout [KIRInstruction]
+        driver: KIRLoweringDriver,
+        shared: KIRLoweringSharedContext,
+        emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
+        let ast = shared.ast
+        let sema = shared.sema
+        let arena = shared.arena
+        let interner = shared.interner
+        let propertyConstantInitializers = shared.propertyConstantInitializers
+
         if let lateinitStatus = tryLowerLateinitIsInitialized(
             exprID,
             receiverExpr: receiverExpr,
@@ -188,7 +191,7 @@ extension CallLowerer {
             arena: arena,
             interner: interner,
             propertyConstantInitializers: propertyConstantInitializers,
-            instructions: &instructions
+            instructions: &instructions.instructions
         ) {
             return lateinitStatus
         }
@@ -204,7 +207,7 @@ extension CallLowerer {
             arena: arena,
             interner: interner,
             propertyConstantInitializers: propertyConstantInitializers,
-            instructions: &instructions
+            instructions: &instructions.instructions
         ) {
             return kPropertyResult
         }
@@ -226,7 +229,7 @@ extension CallLowerer {
                     sema: sema,
                     arena: arena,
                     interner: interner,
-                    instructions: &instructions
+                    instructions: &instructions.instructions
                 )
             }
             // REFL-005: KClass.isInstance(value), members, constructors
@@ -241,7 +244,7 @@ extension CallLowerer {
                     arena: arena,
                     interner: interner,
                     propertyConstantInitializers: propertyConstantInitializers,
-                    instructions: &instructions
+                    instructions: &instructions.instructions
                 )
             }
         }
@@ -262,7 +265,7 @@ extension CallLowerer {
                     arena: arena,
                     interner: interner,
                     propertyConstantInitializers: propertyConstantInitializers,
-                    instructions: &instructions
+                    instructions: &instructions.instructions
                 )
             }
         }
@@ -277,7 +280,7 @@ extension CallLowerer {
             arena: arena,
             interner: interner,
             propertyConstantInitializers: propertyConstantInitializers,
-            instructions: &instructions
+            instructions: &instructions.instructions
         ) {
             return takeResult
         }
@@ -292,7 +295,7 @@ extension CallLowerer {
             arena: arena,
             interner: interner,
             propertyConstantInitializers: propertyConstantInitializers,
-            instructions: &instructions
+            instructions: &instructions.instructions
         ) {
             return scopeResult
         }
@@ -336,19 +339,9 @@ extension CallLowerer {
             {
                 let effectiveFnType = maybeReceiverFnType.0
                 let boundType = sema.bindings.exprTypes[exprID] ?? effectiveFnType.returnType
-                let loweredReceiver = driver.lowerExpr(
-                    receiverExpr,
-                    ast: ast, sema: sema, arena: arena, interner: interner,
-                    propertyConstantInitializers: propertyConstantInitializers,
-                    instructions: &instructions
-                )
+                let loweredReceiver = driver.lowerExpr(receiverExpr, shared: shared, emit: &instructions)
                 let loweredArgIDs = args.map { argument in
-                    driver.lowerExpr(
-                        argument.expr,
-                        ast: ast, sema: sema, arena: arena, interner: interner,
-                        propertyConstantInitializers: propertyConstantInitializers,
-                        instructions: &instructions
-                    )
+                    driver.lowerExpr(argument.expr, shared: shared, emit: &instructions)
                 }
                 let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
                 if let localExprID = driver.ctx.localValue(for: localSym),
@@ -387,7 +380,7 @@ extension CallLowerer {
         }
         if let objProp = tryLowerObjectMemberPropertyRead(
             exprID, args: args, sema: sema, arena: arena, interner: interner,
-            instructions: &instructions
+            instructions: &instructions.instructions
         ) { return objProp }
         return lowerMemberLikeCallExpr(
             exprID,
@@ -401,7 +394,7 @@ extension CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             requireNonNullableReceiverForConstFold: false,
             prependReceiverForUnresolvedCollectionCall: true,
-            instructions: &instructions
+            instructions: &instructions.instructions
         )
     }
 
@@ -582,13 +575,12 @@ extension CallLowerer {
             }
         }
 
-        // Int/Long.coerceIn(range) safe-call: null guard + range decomposition (STDLIB-525)
+        // Int/Long/Double/Float.coerceIn(range) safe-call: null guard + range decomposition (STDLIB-525, STDLIB-CONV-006)
         // The generic lowerMemberLikeCallExpr path does not emit a null guard for
         // safe-call receivers, so we must handle coerceIn(range) here.
         if args.count == 1, interner.resolve(effectiveCalleeName) == "coerceIn" {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
-            if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema),
-               prefix == "kk_int" || prefix == "kk_long" {
+            if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
                 let argExprID = args[0].expr
                 if sema.bindings.isRangeExpr(argExprID) {
                     let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.nullableAnyType
@@ -1134,6 +1126,7 @@ extension CallLowerer {
         }
 
         // Int.countOneBits() / countLeadingZeroBits() / countTrailingZeroBits() (STDLIB-501)
+        // STDLIB-BIT-007: Additional bit manipulation functions
         // NOTE: This bit-count lowering logic is intentionally duplicated in
         // CallLowerer+SafeMemberCalls.swift for the safe-call (?.) path.
         // If you change the callee-name -> runtime-name mapping here, update
@@ -1141,7 +1134,8 @@ extension CallLowerer {
         // number of bit-operation intrinsics grows further.
         if args.isEmpty {
             let calleeStr = interner.resolve(calleeName)
-            if calleeStr == "countOneBits" || calleeStr == "countLeadingZeroBits" || calleeStr == "countTrailingZeroBits" {
+            if calleeStr == "countOneBits" || calleeStr == "countLeadingZeroBits" || calleeStr == "countTrailingZeroBits" ||
+               calleeStr == "highestOneBit" || calleeStr == "lowestOneBit" || calleeStr == "takeHighestOneBit" || calleeStr == "takeLowestOneBit" {
                 let intType = sema.types.intType
                 let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
                 let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
@@ -1151,12 +1145,116 @@ extension CallLowerer {
                     case "countOneBits": runtimeName = "kk_int_countOneBits"
                     case "countLeadingZeroBits": runtimeName = "kk_int_countLeadingZeroBits"
                     case "countTrailingZeroBits": runtimeName = "kk_int_countTrailingZeroBits"
-                    default: fatalError("unreachable: calleeStr already guarded to countOneBits|countLeadingZeroBits|countTrailingZeroBits")
+                    case "highestOneBit": runtimeName = "kk_int_highestOneBit"
+                    case "lowestOneBit": runtimeName = "kk_int_lowestOneBit"
+                    case "takeHighestOneBit": runtimeName = "kk_int_takeHighestOneBit"
+                    case "takeLowestOneBit": runtimeName = "kk_int_takeLowestOneBit"
+                    default: fatalError("unreachable: calleeStr already guarded to bit operation functions")
                     }
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeName),
                         arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
+        // Int.rotateLeft() / rotateRight() (STDLIB-BIT-007)
+        if args.count == 1 {
+            let calleeStr = interner.resolve(calleeName)
+            if calleeStr == "rotateLeft" || calleeStr == "rotateRight" {
+                let intType = sema.types.intType
+                let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+                if nonNullReceiverType == intType {
+                    let runtimeName: String
+                    switch calleeStr {
+                    case "rotateLeft": runtimeName = "kk_int_rotateLeft"
+                    case "rotateRight": runtimeName = "kk_int_rotateRight"
+                    default: fatalError("unreachable: calleeStr already guarded to rotate functions")
+                    }
+                    let loweredArgID = driver.lowerExpr(
+                        args[0].expr,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeName),
+                        arguments: [loweredReceiverID, loweredArgID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
+        // Long bit manipulation functions (STDLIB-BIT-007)
+        let longType = sema.types.longType
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+
+        if nonNullReceiverType == longType {
+            let calleeStr = interner.resolve(calleeName)
+
+            // Zero-argument functions
+            if args.isEmpty {
+                let runtimeName: String?
+                switch calleeStr {
+                case "highestOneBit": runtimeName = "kk_long_highestOneBit"
+                case "lowestOneBit": runtimeName = "kk_long_lowestOneBit"
+                case "takeHighestOneBit": runtimeName = "kk_long_takeHighestOneBit"
+                case "takeLowestOneBit": runtimeName = "kk_long_takeLowestOneBit"
+                default: runtimeName = nil
+                }
+
+                if let name = runtimeName {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(name),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+
+            // Single-argument functions (rotate)
+            if args.count == 1 {
+                let runtimeName: String?
+                switch calleeStr {
+                case "rotateLeft": runtimeName = "kk_long_rotateLeft"
+                case "rotateRight": runtimeName = "kk_long_rotateRight"
+                default: runtimeName = nil
+                }
+
+                if let name = runtimeName {
+                    let loweredArgID = driver.lowerExpr(
+                        args[0].expr,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(name),
+                        arguments: [loweredReceiverID, loweredArgID],
                         result: result,
                         canThrow: false,
                         thrownResult: nil
@@ -1269,16 +1367,14 @@ extension CallLowerer {
             }
         }
 
-        // Int/Long.coerceIn(range) — single ClosedRange argument (STDLIB-525)
-        // Decompose the range into first/last and delegate to kk_{int,long}_coerceIn.
-        // Only Int and Long are supported; Double/Float receivers must not enter
-        // this path because the shared emitCoerceInRange helper types the
-        // extracted bounds as the non-nullable receiver type (Int or Long) and
-        // kk_range_first/kk_range_last return the range's element type.
+        // Int/Long/Double/Float.coerceIn(range) — single ClosedRange argument (STDLIB-525, STDLIB-CONV-006)
+        // Decompose the range into first/last and delegate to kk_{int,long,double,float}_coerceIn.
+        // All numeric types are supported; the shared emitCoerceInRange helper types the
+        // extracted bounds as the non-nullable receiver type and kk_range_first/kk_range_last
+        // return the range's element type.
         if interner.resolve(calleeName) == "coerceIn", args.count == 1 {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
-            if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema),
-               prefix == "kk_int" || prefix == "kk_long" {
+            if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
                 let argExprID = args[0].expr
                 if sema.bindings.isRangeExpr(argExprID) {
                     emitCoerceInRange(
@@ -1303,6 +1399,24 @@ extension CallLowerer {
             if calleeStr == "coerceAtLeast" || calleeStr == "coerceAtMost" {
                 let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
                 if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
+                    // Check if this is range-based coercion (single range argument)
+                    if args.count == 1 {
+                        let argExprID = args[0].expr
+                        if sema.bindings.isRangeExpr(argExprID) {
+                            // Use range-based coercion functions
+                            let suffix = calleeStr == "coerceAtLeast" ? "_coerceAtLeast_range" : "_coerceAtMost_range"
+                            instructions.append(.call(
+                                symbol: nil,
+                                callee: interner.intern(prefix + suffix),
+                                arguments: [loweredReceiverID, loweredArgIDs[0]],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            return result
+                        }
+                    }
+                    // Fallback to single-value coercion
                     let suffix = calleeStr == "coerceAtLeast" ? "_coerceAtLeast" : "_coerceAtMost"
                     instructions.append(.call(
                         symbol: nil,

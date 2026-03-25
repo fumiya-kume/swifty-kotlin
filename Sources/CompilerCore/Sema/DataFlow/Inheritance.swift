@@ -337,6 +337,96 @@ extension DataFlowSemaPhase {
         }
     }
 
+    // STDLIB-CLASS-010: Validate abstract class constraints
+    func validateAbstractClassConstraints(
+        ast: ASTModule,
+        symbols: SymbolTable,
+        bindings: BindingTable,
+        types: TypeSystem,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
+    ) {
+        for file in ast.sortedFiles {
+            for declID in file.topLevelDecls {
+                validateAbstractClassConstraintsForDecl(
+                    declID: declID,
+                    file: file,
+                    ast: ast,
+                    symbols: symbols,
+                    bindings: bindings,
+                    types: types,
+                    diagnostics: diagnostics,
+                    interner: interner
+                )
+            }
+        }
+    }
+
+    private func validateAbstractClassConstraintsForDecl(
+        declID: DeclID,
+        file: ASTFile,
+        ast: ASTModule,
+        symbols: SymbolTable,
+        bindings: BindingTable,
+        types: TypeSystem,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
+    ) {
+        guard let symbol = bindings.declSymbols[declID],
+              let decl = ast.arena.decl(declID),
+              let symbolInfo = symbols.symbol(symbol),
+              symbolInfo.flags.contains(.abstractType),
+              symbolInfo.kind == .class
+        else {
+            return
+        }
+
+        // Recursively validate nested classes
+        switch decl {
+        case let .classDecl(classDecl):
+            for nestedDeclID in classDecl.nestedClasses {
+                validateAbstractClassConstraintsForDecl(
+                    declID: nestedDeclID,
+                    file: file,
+                    ast: ast,
+                    symbols: symbols,
+                    bindings: bindings,
+                    types: types,
+                    diagnostics: diagnostics,
+                    interner: interner
+                )
+            }
+        default:
+            return
+        }
+
+        // Check that abstract class has at least one abstract member
+        let children = symbols.children(ofFQName: symbolInfo.fqName)
+        var hasAbstractMember = false
+
+        for childID in children {
+            guard let childSym = symbols.symbol(childID) else { continue }
+            if (childSym.kind == .function || childSym.kind == .property) &&
+               childSym.flags.contains(.abstractType) {
+                hasAbstractMember = true
+                break
+            }
+        }
+
+        if !hasAbstractMember {
+            let className = symbolInfo.fqName.map { interner.resolve($0) }.joined(separator: ".")
+            let declRange: SourceRange? = switch decl {
+            case let .classDecl(cd): cd.range
+            default: nil
+            }
+            diagnostics.warning(
+                "KSWIFTK-SEMA-ABSTRACT",
+                "Abstract class '\(className)' has no abstract members. Consider removing the 'abstract' modifier.",
+                range: declRange
+            )
+        }
+    }
+
     /// CLASS-008: Validate class delegation (`: Interface by expr`).
     /// Ensures delegated supertypes are interfaces (not classes) and records them for abstract override exemption.
     func validateClassDelegation(

@@ -2,6 +2,40 @@
 
 最終更新: 2026-03-25
 
+## 実装サマリー
+
+### Phase 1 完了済みタスク (高優先度)
+- **プリミティブ型**: Boolean拡張関数 ✓
+- **配列操作**: 基本操作・高階関数 ✓
+- **オブジェクト指向**: インターフェース・シールドクラス・データクラス・オブジェクト宣言・無名オブジェクト ✓
+- **関数型プログラミング**: コレクション高階関数・スコープ関数・関数参照・拡張関数・拡張プロパティ ✓
+- **プロパティデリゲート**: lazyデリゲート・lateinitプロパティ ✓
+- **ジェネリクス**: ジェネリッククラス制約 ✓
+- **演算子**: invoke演算子・範囲操作 ✓
+
+### Phase 2 未完了タスク (中優先度)
+- プリミティブ型変換関数
+- 配列ソートと順序操作
+- ビット操作関数
+- Char拡張関数
+- 抽象クラス制約
+- データクラス継承制約
+- コンパニオンオブジェクト
+- 継承修飾子とオーバーライド
+- 多重継承と衝突解決
+- シーケンス高階関数
+- 文字列高階関数
+- ラムダとクロージャ
+- 関数型
+- 算術・比較・コンテナ演算子
+- UInt/ULong範囲
+- 範囲高階関数・進行
+- Comparable・Comparator
+- observable/vetoableデリゲート
+- カスタムデリゲート
+- lateinit拡張
+- ジェネリック関数・インターフェース・変位指定
+
 ## 運用ルール
 
 - `TODO.md` は未完了タスクを主に管理しつつ、直近で完了した大きめの項目は `[x]` で残してよい。
@@ -51,7 +85,7 @@
   - **関連ファイル**: `RuntimeCoercion.swift`
   - **テストケース**: `Scripts/diff_cases/numeric_conversions_reverse.kt`
 
-- [ ] STDLIB-ARR-003: 配列基本操作完全実装
+- [x] STDLIB-ARR-003: 配列基本操作完全実装
   - **仕様**: 全配列型の基本操作 (Array, ByteArray, IntArray等)
   - **実装内容**:
     - コンストラクタ: arrayOf(), emptyArray(), Array(size) { initializer }
@@ -62,7 +96,7 @@
   - **関連ファイル**: `RuntimeArrayBox`, `RuntimeObjectBox`
   - **テストケース**: `Scripts/diff_cases/array_constructor.kt`, `Scripts/diff_cases/array_copy.kt`
 
-- [ ] STDLIB-ARR-004: 配列高階関数完全実装
+- [x] STDLIB-ARR-004: 配列高階関数完全実装
   - **仕様**: 配列に対する全ての高階関数操作
   - **実装内容**:
     - 変換: map, mapIndexed, mapNotNull, flatMap
@@ -85,17 +119,6 @@
   - **関連ファイル**: `RuntimeCollectionHelpers.swift`
   - **テストケース**: `Scripts/diff_cases/mutable_list_sort.kt`
 
-- [ ] STDLIB-CONV-006: 数値強制関数完全実装
-  - **仕様**: 数値範囲の強制と検証関数
-  - **実装内容**:
-    - coerceIn(min, max): 範囲内に強制
-    - coerceAtLeast(min): 最小値以上に強制
-    - coerceAtMost(max): 最大値以下に強制
-    - coerceIn(range): Range内に強制
-  - **現状**: coerceIn()等は未実装
-  - **関連ファイル**: `RuntimeCoercion.swift`
-  - **テストケース**: `Scripts/diff_cases/coerce_in_range.kt`
-
 - [ ] STDLIB-BIT-007: ビット操作関数完全実装
   - **仕様**: Int/Longに対する全ビット操作関数
   - **実装内容**:
@@ -107,7 +130,7 @@
   - **関連ファイル**: `RuntimeBitCount.swift`
   - **テストケース**: `Scripts/diff_cases/bitcount_edge_cases.kt`
 
-- [ ] STDLIB-PRIM-008: Boolean拡張関数完全実装
+- [x] STDLIB-PRIM-008: Boolean拡張関数完全実装
   - **仕様**: Boolean型に対する拡張関数
   - **実装内容**:
     - 文字列変換: toString()
@@ -142,7 +165,7 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/abstract_class.kt`
 
-- [ ] STDLIB-CLASS-011: インターフェース完全実装
+- [x] STDLIB-CLASS-011: インターフェース完全実装
   - **仕様**: インターフェースの完全な機能サポート
   - **実装内容**:
     - デフォルト実装付きメソッド
@@ -151,9 +174,9 @@
     - コンパニオンオブジェクト
   - **現状**: 基本的なインターフェースは実装済み、デフォルト実装は未実装
   - **関連ファイル**: `DiamondOverride.swift`
-  - **テストケース**: `Scripts/diff_cases/interface_basic.kt`
+  - **テストケース**: `Scripts/diff_cases/interface_default_method.kt`
 
-- [ ] STDLIB-CLASS-012: シールドクラス/インターフェース完全実装
+- [x] STDLIB-CLASS-012: シールドクラス/インターフェース完全実装
   - **仕様**: シールド階層の完全なサポート
   - **実装内容**:
     - sealed修飾子の継承制約
@@ -164,7 +187,7 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/sealed_interface_when.kt`
 
-- [ ] STDLIB-DATA-013: データクラス生成関数完全実装
+- [x] STDLIB-DATA-013: データクラス生成関数完全実装
   - **仕様**: データクラスの自動生成関数
   - **実装内容**:
     - componentN()関数 (component1, component2, ...)
@@ -186,7 +209,7 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/data_class_inheritance.kt`
 
-- [ ] STDLIB-OBJ-015: オブジェクト宣言完全実装
+- [x] STDLIB-OBJ-015: オブジェクト宣言完全実装
   - **仕様**: シングルトンオブジェクトの完全サポート
   - **実装内容**:
     - オブジェクトの遅延初期化
@@ -208,7 +231,7 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/companion_object.kt`
 
-- [ ] STDLIB-OBJ-017: 無名オブジェクト完全実装
+- [x] STDLIB-OBJ-017: 無名オブジェクト完全実装
   - **仕様**: 無名オブジェクト（匿名クラス）の完全サポート
   - **実装内容**:
     - 無名オブジェクトの型推論
@@ -254,7 +277,7 @@
 
 #### Phase 1: 関数型プログラミング (高優先度)
 
-- [ ] STDLIB-HOF-021: コレクション高階関数完全実装
+- [x] STDLIB-HOF-021: コレクション高階関数完全実装
   - **仕様**: 全コレクション型に対する完全な高階関数サポート
   - **実装内容**:
     - 変換関数: map, mapIndexed, mapNotNull, flatMap, groupBy
@@ -305,7 +328,7 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticScopeFunctionStubs.swift`
   - **テストケース**: `Scripts/diff_cases/scope_functions.kt`
 
-- [ ] STDLIB-REF-025: 関数参照完全実装
+- [x] STDLIB-REF-025: 関数参照完全実装
   - **仕様**: 全ての関数参照形式のサポート
   - **実装内容**:
     - トップレベル関数参照: ::functionName
@@ -318,7 +341,7 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/callable_ref_basic.kt`
 
-- [ ] STDLIB-EXT-026: 拡張関数完全実装
+- [x] STDLIB-EXT-026: 拡張関数完全実装
   - **仕様**: 拡張関数の完全なサポート
   - **実装内容**:
     - 基本型拡張: Int, String, Boolean等への拡張
@@ -331,7 +354,7 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/extension_property_advanced.kt`
 
-- [ ] STDLIB-EXT-027: 拡張プロパティ完全実装
+- [x] STDLIB-EXT-027: 拡張プロパティ完全実装
   - **仕様**: 拡張プロパティの完全サポート
   - **実装内容**:
     - 読み取り専用拡張プロパティ: val extensionProp: Type
@@ -406,7 +429,7 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/container_operators.kt`
 
-- [ ] STDLIB-OP-033: 呼び出し演算子オーバーロード完全実装
+- [x] STDLIB-OP-033: 呼び出し演算子オーバーロード完全実装
   - **仕様**: invoke()演算子の完全サポート
   - **実装内容**:
     - 関数型オブジェクト: invoke()メソッド
@@ -492,7 +515,7 @@
   - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
   - **テストケース**: `Scripts/diff_cases/progression.kt`
 
-- [ ] STDLIB-RANGE-040: 範囲とコレクションの相互運用完全実装
+- [x] STDLIB-RANGE-040: 範囲とコレクションの相互運用完全実装
   - **仕様**: 範囲とコレクション間の完全な相互運用
   - **実装内容**:
     - 範囲からリスト: (1..10).toList()
@@ -531,7 +554,7 @@
 
 #### Phase 2: プロパティデリゲート (中優先度)
 
-- [ ] STDLIB-DELEG-043: lazyデリゲート完全実装
+- [x] STDLIB-DELEG-043: lazyデリゲート完全実装
   - **仕様**: lazyプロパティデリゲートの完全サポート
   - **実装内容**:
     - 遅延初期化: 初回アクセス時の初期化
@@ -604,7 +627,7 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticDelegateStubs.swift`
   - **テストケース**: `Scripts/diff_cases/delegate_operators.kt`
 
-- [ ] STDLIB-LATEINIT-049: lateinitプロパティ完全実装
+- [x] STDLIB-LATEINIT-049: lateinitプロパティ完全実装
   - **仕様**: lateinitプロパティの完全サポート
   - **実装内容**:
     - 後期初期化: 宣言後の初期化
@@ -630,7 +653,7 @@
 
 #### Phase 2: ジェネリクスと型システム (中優先度)
 
-- [ ] STDLIB-GEN-051: ジェネリッククラス完全実装
+- [x] STDLIB-GEN-051: ジェネリッククラス完全実装
   - **仕様**: ジェネリッククラスの完全サポート
   - **実装内容**:
     - 型パラメータ: class MyClass<T>

@@ -47,13 +47,30 @@ final class KotlinCompilationOOPTests: XCTestCase {
         try assertKotlinCompilesToKIR("""
         abstract class Shape {
             abstract fun area(): Double
+            abstract val name: String
         }
         class Circle(val radius: Double) : Shape() {
             override fun area(): Double = 3.14159 * radius * radius
+            override val name: String = "circle"
         }
         fun main() {
             val c = Circle(5.0)
             c.area()
+        }
+        """)
+    }
+
+    func testCompile_class_abstractProperty() throws {
+        try assertKotlinCompilesToKIR("""
+        abstract class Container {
+            abstract var items: List<String>
+        }
+        class Box : Container() {
+            override var items: List<String> = emptyList()
+        }
+        fun main() {
+            val box = Box()
+            box.items = listOf("item1", "item2")
         }
         """)
     }

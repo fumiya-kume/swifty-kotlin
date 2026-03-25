@@ -298,4 +298,103 @@ final class InterfaceDefaultMethodTests: XCTestCase {
         XCTAssertTrue(errors.isEmpty,
                       "Mixed abstract+default pipeline should succeed. Got: \(errors.map(\.message))")
     }
+
+    // MARK: - Interface Properties Tests
+
+    func testInterfaceAbstractProperty() throws {
+        let source = """
+        interface TestInterface {
+            val abstractProperty: String
+            var abstractVar: Int
+        }
+        class TestClass : TestInterface {
+            override val abstractProperty: String = "test"
+            override var abstractVar: Int = 42
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
+    }
+
+    func testInterfaceConcreteProperty() throws {
+        let source = """
+        interface TestInterface {
+            val concreteProperty: String = "default"
+            var concreteVar: Int = 42
+        }
+        class TestClass : TestInterface
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
+    }
+
+    func testInterfaceComputedProperty() throws {
+        let source = """
+        interface TestInterface {
+            val computedProperty: String
+                get() = "computed"
+            var computedVar: String
+                get() = "get"
+                set(value) { }
+        }
+        class TestClass : TestInterface
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
+    }
+
+    // MARK: - Super Call Tests
+
+    func testSuperQualifiedCall() throws {
+        let source = """
+        interface A {
+            fun method(): String = "A"
+        }
+        interface B : A {
+            override fun method(): String = "B"
+        }
+        interface C : A {
+            override fun method(): String = "C"
+        }
+        class TestClass : B, C {
+            override fun method(): String = super<B>.method() + " + " + super<C>.method()
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
+    }
+
+    // MARK: - Complex Interface Inheritance Tests
+
+    func testComplexInterfaceInheritance() throws {
+        let source = """
+        interface Base {
+            fun baseMethod(): String = "Base"
+            abstract fun abstractMethod(): String
+        }
+        interface Left : Base {
+            override fun baseMethod(): String = "Left"
+            fun leftMethod(): String = "Left"
+        }
+        interface Right : Base {
+            // Don't override baseMethod to avoid diamond conflict
+            fun rightMethod(): String = "Right"
+        }
+        class TestClass : Left, Right {
+            override fun abstractMethod(): String = "Implemented"
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
+    }
 }

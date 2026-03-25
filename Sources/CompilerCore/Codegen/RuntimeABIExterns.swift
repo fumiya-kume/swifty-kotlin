@@ -2315,6 +2315,82 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // MARK: - STDLIB-BIT-007: Additional bit manipulation functions
+
+    public static let kk_int_rotateLeft = ExternDecl(
+        name: "kk_int_rotateLeft",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_int_rotateRight = ExternDecl(
+        name: "kk_int_rotateRight",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_int_highestOneBit = ExternDecl(
+        name: "kk_int_highestOneBit",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_int_lowestOneBit = ExternDecl(
+        name: "kk_int_lowestOneBit",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_int_takeHighestOneBit = ExternDecl(
+        name: "kk_int_takeHighestOneBit",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_int_takeLowestOneBit = ExternDecl(
+        name: "kk_int_takeLowestOneBit",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // Long bit manipulation functions
+
+    public static let kk_long_rotateLeft = ExternDecl(
+        name: "kk_long_rotateLeft",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_rotateRight = ExternDecl(
+        name: "kk_long_rotateRight",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_highestOneBit = ExternDecl(
+        name: "kk_long_highestOneBit",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_lowestOneBit = ExternDecl(
+        name: "kk_long_lowestOneBit",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_takeHighestOneBit = ExternDecl(
+        name: "kk_long_takeHighestOneBit",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_takeLowestOneBit = ExternDecl(
+        name: "kk_long_takeLowestOneBit",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Any methods (STDLIB-306)
 
     public static let kk_any_to_string = ExternDecl(
@@ -3047,6 +3123,19 @@ public enum RuntimeABIExterns {
             kk_int_countOneBits,
             kk_int_countLeadingZeroBits,
             kk_int_countTrailingZeroBits,
+            // STDLIB-BIT-007: Additional bit manipulation functions
+            kk_int_rotateLeft,
+            kk_int_rotateRight,
+            kk_int_highestOneBit,
+            kk_int_lowestOneBit,
+            kk_int_takeHighestOneBit,
+            kk_int_takeLowestOneBit,
+            kk_long_rotateLeft,
+            kk_long_rotateRight,
+            kk_long_highestOneBit,
+            kk_long_lowestOneBit,
+            kk_long_takeHighestOneBit,
+            kk_long_takeLowestOneBit,
         ]
         all += mathExterns
         all += randomExterns

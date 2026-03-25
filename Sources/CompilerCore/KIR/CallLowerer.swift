@@ -28,10 +28,10 @@ final class CallLowerer {
         return nil
     }
 
-    /// Shared helper for coerceIn(range) lowering (STDLIB-525).
+    /// Shared helper for coerceIn(range) lowering (STDLIB-525, STDLIB-CONV-006).
     /// Decomposes a range argument into first/last bounds and emits a call to
-    /// kk_{int,long}_coerceIn. Used by both normal and safe-call member lowering
-    /// paths to avoid duplication.
+    /// kk_{int,long,double,float}_coerceIn. Used by both normal and safe-call member lowering
+    /// paths to avoid duplication. Supports all numeric types: Int, Long, Double, Float.
     func emitCoerceInRange(
         prefix: String,
         receiverType: TypeID,

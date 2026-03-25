@@ -307,6 +307,106 @@ final class CoercionRuntimeTests: XCTestCase {
         XCTAssertEqual(kk_uint_to_ubyte(255), 255, "Maximum boundary should remain unchanged")
     }
 
+    // MARK: - Range-based Coercion Tests (STDLIB-CONV-006)
+
+    func testIntCoerceInRangeRuntimeBehavior() {
+        // Create test range
+        let range = registerRuntimeObject(RuntimeRangeBox(first: 1, last: 10, step: 1))
+
+        // Test normal coercion
+        XCTAssertEqual(kk_int_coerceIn_range(5, range), 5, "Value within range should remain unchanged")
+        XCTAssertEqual(kk_int_coerceIn_range(0, range), 1, "Value below minimum should be clamped to minimum")
+        XCTAssertEqual(kk_int_coerceIn_range(15, range), 10, "Value above maximum should be clamped to maximum")
+
+        // Test boundary values
+        XCTAssertEqual(kk_int_coerceIn_range(1, range), 1, "Value at minimum should remain unchanged")
+        XCTAssertEqual(kk_int_coerceIn_range(10, range), 10, "Value at maximum should remain unchanged")
+    }
+
+    func testIntCoerceAtLeastRangeRuntimeBehavior() {
+        let range = registerRuntimeObject(RuntimeRangeBox(first: 3, last: 10, step: 1))
+
+        XCTAssertEqual(kk_int_coerceAtLeast_range(5, range), 5, "Value above minimum should remain unchanged")
+        XCTAssertEqual(kk_int_coerceAtLeast_range(1, range), 3, "Value below minimum should be clamped to minimum")
+        XCTAssertEqual(kk_int_coerceAtLeast_range(3, range), 3, "Value at minimum should remain unchanged")
+    }
+
+    func testIntCoerceAtMostRangeRuntimeBehavior() {
+        let range = registerRuntimeObject(RuntimeRangeBox(first: 1, last: 7, step: 1))
+
+        XCTAssertEqual(kk_int_coerceAtMost_range(5, range), 5, "Value below maximum should remain unchanged")
+        XCTAssertEqual(kk_int_coerceAtMost_range(10, range), 7, "Value above maximum should be clamped to maximum")
+        XCTAssertEqual(kk_int_coerceAtMost_range(7, range), 7, "Value at maximum should remain unchanged")
+    }
+
+    func testDoubleCoerceInRangeRuntimeBehavior() {
+        let range = registerRuntimeObject(RuntimeRangeBox(first: 1, last: 10, step: 1))
+
+        let valueBits = doubleToBits(5.5)
+        let belowBits = doubleToBits(0.5)
+        let aboveBits = doubleToBits(15.5)
+
+        let resultBits = kk_double_coerceIn_range(valueBits, range)
+        let result = bitsToDouble(resultBits)
+        XCTAssertEqual(result, 5.5, accuracy: 1e-10, "Double value within range should remain unchanged")
+
+        let clampedBelowBits = kk_double_coerceIn_range(belowBits, range)
+        let clampedBelow = bitsToDouble(clampedBelowBits)
+        XCTAssertEqual(clampedBelow, 1.0, accuracy: 1e-10, "Double value below minimum should be clamped to minimum")
+
+        let clampedAboveBits = kk_double_coerceIn_range(aboveBits, range)
+        let clampedAbove = bitsToDouble(clampedAboveBits)
+        XCTAssertEqual(clampedAbove, 10.0, accuracy: 1e-10, "Double value above maximum should be clamped to maximum")
+    }
+
+    func testFloatCoerceInRangeRuntimeBehavior() {
+        let range = registerRuntimeObject(RuntimeRangeBox(first: 1, last: 10, step: 1))
+
+        let valueBits = floatToBits(5.5)
+        let belowBits = floatToBits(0.5)
+        let aboveBits = floatToBits(15.5)
+
+        let resultBits = kk_float_coerceIn_range(valueBits, range)
+        let result = bitsToFloat(resultBits)
+        XCTAssertEqual(result, 5.5, accuracy: 1e-6, "Float value within range should remain unchanged")
+
+        let clampedBelowBits = kk_float_coerceIn_range(belowBits, range)
+        let clampedBelow = bitsToFloat(clampedBelowBits)
+        XCTAssertEqual(clampedBelow, 1.0, accuracy: 1e-6, "Float value below minimum should be clamped to minimum")
+
+        let clampedAboveBits = kk_float_coerceIn_range(aboveBits, range)
+        let clampedAbove = bitsToFloat(clampedAboveBits)
+        XCTAssertEqual(clampedAbove, 10.0, accuracy: 1e-6, "Float value above maximum should be clamped to maximum")
+    }
+
+    func testLongCoerceInRangeRuntimeBehavior() {
+        let range = registerRuntimeObject(RuntimeRangeBox(first: 1000000000, last: 10000000000, step: 1))
+
+        XCTAssertEqual(kk_long_coerceIn_range(5000000000, range), 5000000000, "Long value within range should remain unchanged")
+        XCTAssertEqual(kk_long_coerceIn_range(500000000, range), 1000000000, "Long value below minimum should be clamped")
+        XCTAssertEqual(kk_long_coerceIn_range(15000000000, range), 10000000000, "Long value above maximum should be clamped")
+    }
+
+    func testRangeCoercionConsistency() {
+        // Test that range-based coercion produces same results as min/max coercion
+        let range = registerRuntimeObject(RuntimeRangeBox(first: 2, last: 8, step: 1))
+
+        let testValues = [1, 3, 5, 10]
+        for value in testValues {
+            let rangeResult = kk_int_coerceIn_range(value, range)
+            let minMaxResult = kk_int_coerceIn(value, 2, 8)
+            XCTAssertEqual(rangeResult, minMaxResult, "Range-based coercion should match min/max coercion for value \(value)")
+
+            let rangeAtLeastResult = kk_int_coerceAtLeast_range(value, range)
+            let minAtLeastResult = kk_int_coerceAtLeast(value, 2)
+            XCTAssertEqual(rangeAtLeastResult, minAtLeastResult, "Range-based coerceAtLeast should match min coercion for value \(value)")
+
+            let rangeAtMostResult = kk_int_coerceAtMost_range(value, range)
+            let maxAtMostResult = kk_int_coerceAtMost(value, 8)
+            XCTAssertEqual(rangeAtMostResult, maxAtMostResult, "Range-based coerceAtMost should match max coercion for value \(value)")
+        }
+    }
+
     func testUIntToUShortConversion() {
         XCTAssertEqual(kk_uint_to_ushort(1000), 1000, "Valid value should remain unchanged")
         XCTAssertEqual(kk_uint_to_ushort(70000), 4464, "Value above 65535 should truncate to the low 16 bits")

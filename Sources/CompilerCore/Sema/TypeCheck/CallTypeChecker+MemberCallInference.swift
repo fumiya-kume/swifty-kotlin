@@ -1943,15 +1943,36 @@ extension CallTypeChecker {
         }
 
         // Int.countOneBits() / countLeadingZeroBits() / countTrailingZeroBits() → Int (STDLIB-501)
+        // STDLIB-BIT-007: Additional bit manipulation functions
         if args.isEmpty {
             let calleeStr = interner.resolve(calleeName)
-            if calleeStr == "countOneBits" || calleeStr == "countLeadingZeroBits" || calleeStr == "countTrailingZeroBits" {
+            if calleeStr == "countOneBits" || calleeStr == "countLeadingZeroBits" || calleeStr == "countTrailingZeroBits" ||
+               calleeStr == "highestOneBit" || calleeStr == "lowestOneBit" || calleeStr == "takeHighestOneBit" || calleeStr == "takeLowestOneBit" {
                 let intType = sema.types.intType
+                let longType = sema.types.longType
                 let receiverForCheck = safeCall
                     ? sema.types.makeNonNullable(lookupReceiverType)
                     : lookupReceiverType
-                if receiverForCheck == intType {
-                    let finalType = safeCall ? sema.types.makeNullable(intType) : intType
+                if receiverForCheck == intType || receiverForCheck == longType {
+                    let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
+        }
+
+        // Int.rotateLeft() / rotateRight() → Int (STDLIB-BIT-007)
+        // Long.rotateLeft() / rotateRight() → Long (STDLIB-BIT-007)
+        if args.count == 1 {
+            let calleeStr = interner.resolve(calleeName)
+            if calleeStr == "rotateLeft" || calleeStr == "rotateRight" {
+                let intType = sema.types.intType
+                let longType = sema.types.longType
+                let receiverForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if receiverForCheck == intType || receiverForCheck == longType {
+                    let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
                 }

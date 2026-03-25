@@ -330,6 +330,7 @@ extension DataFlowSemaPhase {
         }
 
         // Int.countOneBits() / countLeadingZeroBits() / countTrailingZeroBits() (STDLIB-501)
+        // STDLIB-BIT-007: Additional bit manipulation functions
         // Use if-let instead of guard-return so future registrations below are not skipped.
         if let kotlinPackageSymbol = symbols.lookup(fqName: kotlinPkg) {
             registerSyntheticCoercionFunction(
@@ -362,6 +363,156 @@ extension DataFlowSemaPhase {
                 receiverType: types.intType,
                 parameters: [],
                 returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            // STDLIB-BIT-007: Additional bit manipulation functions
+
+            // Zero-argument Int functions
+            registerSyntheticCoercionFunction(
+                named: "highestOneBit",
+                externalLinkName: "kk_int_highestOneBit",
+                receiverType: types.intType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "lowestOneBit",
+                externalLinkName: "kk_int_lowestOneBit",
+                receiverType: types.intType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "takeHighestOneBit",
+                externalLinkName: "kk_int_takeHighestOneBit",
+                receiverType: types.intType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "takeLowestOneBit",
+                externalLinkName: "kk_int_takeLowestOneBit",
+                receiverType: types.intType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            // Int rotation functions
+            registerSyntheticCoercionFunction(
+                named: "rotateLeft",
+                externalLinkName: "kk_int_rotateLeft",
+                receiverType: types.intType,
+                parameters: [("distance", types.intType)],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "rotateRight",
+                externalLinkName: "kk_int_rotateRight",
+                receiverType: types.intType,
+                parameters: [("distance", types.intType)],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            // Zero-argument Long functions
+            registerSyntheticCoercionFunction(
+                named: "highestOneBit",
+                externalLinkName: "kk_long_highestOneBit",
+                receiverType: types.longType,
+                parameters: [],
+                returnType: types.longType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "lowestOneBit",
+                externalLinkName: "kk_long_lowestOneBit",
+                receiverType: types.longType,
+                parameters: [],
+                returnType: types.longType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "takeHighestOneBit",
+                externalLinkName: "kk_long_takeHighestOneBit",
+                receiverType: types.longType,
+                parameters: [],
+                returnType: types.longType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "takeLowestOneBit",
+                externalLinkName: "kk_long_takeLowestOneBit",
+                receiverType: types.longType,
+                parameters: [],
+                returnType: types.longType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            // Long rotation functions
+            registerSyntheticCoercionFunction(
+                named: "rotateLeft",
+                externalLinkName: "kk_long_rotateLeft",
+                receiverType: types.longType,
+                parameters: [("distance", types.intType)],
+                returnType: types.longType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticCoercionFunction(
+                named: "rotateRight",
+                externalLinkName: "kk_long_rotateRight",
+                receiverType: types.longType,
+                parameters: [("distance", types.intType)],
+                returnType: types.longType,
                 packageFQName: kotlinPkg,
                 packageSymbol: kotlinPackageSymbol,
                 symbols: symbols,

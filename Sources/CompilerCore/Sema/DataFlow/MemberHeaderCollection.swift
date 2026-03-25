@@ -176,8 +176,46 @@ extension DataFlowSemaPhase {
                 diagnostics: diagnostics,
                 newFlags: propertyFlags
             )
+
+            // STDLIB-CLASS-010: Abstract properties cannot have initializers
+            if propertyDecl.modifiers.contains(.abstract) && propertyDecl.initializer != nil {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-ABSTRACT",
+                    "Abstract property '\(interner.resolve(propertyDecl.name))' cannot have an initializer.",
+                    range: propertyDecl.range
+                )
+            }
+
+            // STDLIB-CLASS-010: Abstract properties cannot have explicit backing fields
+            if propertyDecl.modifiers.contains(.abstract) && propertyDecl.explicitBackingField != nil {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-ABSTRACT",
+                    "Abstract property '\(interner.resolve(propertyDecl.name))' cannot have an explicit backing field.",
+                    range: propertyDecl.range
+                )
+            }
+
+            // STDLIB-CLASS-010: Abstract properties cannot have delegate expressions
+            if propertyDecl.modifiers.contains(.abstract) && propertyDecl.delegateExpression != nil {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-ABSTRACT",
+                    "Abstract property '\(interner.resolve(propertyDecl.name))' cannot have a delegate expression.",
+                    range: propertyDecl.range
+                )
+            }
+
             if propertyDecl.isVar {
                 propertyFlags.insert(.mutable)
+            }
+
+            // Kotlin: interface properties without getter/setter body are implicitly abstract.
+            // Properties with custom accessors (getter/setter) or initializer are concrete.
+            if symbols.symbol(ownerSymbol)?.kind == .interface {
+                let hasCustomAccessor = propertyDecl.getter != nil || propertyDecl.setter != nil
+                let hasInitializer = propertyDecl.initializer != nil
+                if !hasCustomAccessor && !hasInitializer {
+                    propertyFlags.insert(.abstractType)
+                }
             }
             let memberSymbol = symbols.define(
                 kind: .property,
@@ -197,6 +235,24 @@ extension DataFlowSemaPhase {
             bindings.bindDecl(declID, symbol: memberSymbol)
             symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
             scope.insert(memberSymbol)
+
+            // STDLIB-CLASS-010: Abstract properties cannot have getter/setter bodies
+            if propertyDecl.modifiers.contains(.abstract) {
+                if let getter = propertyDecl.getter, getter.body != .unit {
+                    diagnostics.error(
+                        "KSWIFTK-SEMA-ABSTRACT",
+                        "Abstract property '\(interner.resolve(propertyDecl.name))' cannot have a getter body.",
+                        range: getter.range
+                    )
+                }
+                if let setter = propertyDecl.setter, setter.body != .unit {
+                    diagnostics.error(
+                        "KSWIFTK-SEMA-ABSTRACT",
+                        "Abstract property '\(interner.resolve(propertyDecl.name))' cannot have a setter body.",
+                        range: setter.range
+                    )
+                }
+            }
 
             // Use class type parameters for resolving member property types
             let resolvedType = resolveTypeRef(
@@ -228,14 +284,18 @@ extension DataFlowSemaPhase {
             // Getter-only computed properties (`val x: Int get() = expr`) never
             // need a backing field because they have no storage — the getter
             // body is evaluated on every access.
+            // STDLIB-CLASS-010: Abstract properties cannot have backing fields.
+            let isAbstractProperty = propertyFlags.contains(.abstractType)
             let hasExplicitBackingField = propertyDecl.explicitBackingField != nil
             let isGetterOnlyComputed = propertyDecl.getter != nil
                 && propertyDecl.setter == nil
                 && propertyDecl.initializer == nil
                 && !hasExplicitBackingField
-            let needsBackingField = hasExplicitBackingField
+            let needsBackingField = !isAbstractProperty && (
+                hasExplicitBackingField
                 || (!isGetterOnlyComputed
                     && (propertyDecl.getter != nil || propertyDecl.setter != nil))
+            )
             if needsBackingField, propertyDecl.delegateExpression == nil {
                 let fieldName = interner.intern("$backing_\(interner.resolve(propertyDecl.name))")
                 let fieldFQName = ownerFQName + [fieldName]
@@ -273,7 +333,8 @@ extension DataFlowSemaPhase {
             // Create a delegate storage symbol for properties with `by` delegation.
             // This symbol tracks the delegate instance so that KIR lowering can
             // synthesise getValue/setValue accessor calls.
-            if propertyDecl.delegateExpression != nil {
+            // STDLIB-CLASS-010: Abstract properties cannot have delegate expressions
+            if propertyDecl.delegateExpression != nil && !propertyDecl.modifiers.contains(.abstract) {
                 let delegateStorageName = interner.intern("$delegate_\(interner.resolve(propertyDecl.name))")
                 let delegateStorageFQName = ownerFQName + [delegateStorageName]
                 let delegateStorageSymbol = symbols.define(

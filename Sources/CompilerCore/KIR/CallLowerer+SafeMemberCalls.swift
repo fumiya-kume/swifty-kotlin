@@ -147,12 +147,14 @@ extension CallLowerer {
         }
 
         // Int.countOneBits() / countLeadingZeroBits() / countTrailingZeroBits() (STDLIB-501)
+        // STDLIB-BIT-007: Additional bit manipulation functions
         // NOTE: This bit-count lowering logic is intentionally duplicated in
         // CallLowerer+MemberCalls.swift for the non-safe-call path.
         // Keep the callee-name -> runtime-name mapping in sync.
         if args.isEmpty {
             let calleeStr = interner.resolve(effectiveCalleeName)
-            if calleeStr == "countOneBits" || calleeStr == "countLeadingZeroBits" || calleeStr == "countTrailingZeroBits" {
+            if calleeStr == "countOneBits" || calleeStr == "countLeadingZeroBits" || calleeStr == "countTrailingZeroBits" ||
+               calleeStr == "highestOneBit" || calleeStr == "lowestOneBit" || calleeStr == "takeHighestOneBit" || calleeStr == "takeLowestOneBit" {
                 let intType = sema.types.intType
                 let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
                 let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
@@ -162,12 +164,100 @@ extension CallLowerer {
                     case "countOneBits": runtimeName = "kk_int_countOneBits"
                     case "countLeadingZeroBits": runtimeName = "kk_int_countLeadingZeroBits"
                     case "countTrailingZeroBits": runtimeName = "kk_int_countTrailingZeroBits"
-                    default: fatalError("unreachable: calleeStr already guarded to countOneBits|countLeadingZeroBits|countTrailingZeroBits")
+                    case "highestOneBit": runtimeName = "kk_int_highestOneBit"
+                    case "lowestOneBit": runtimeName = "kk_int_lowestOneBit"
+                    case "takeHighestOneBit": runtimeName = "kk_int_takeHighestOneBit"
+                    case "takeLowestOneBit": runtimeName = "kk_int_takeLowestOneBit"
+                    default: fatalError("unreachable: calleeStr already guarded to bit operation functions")
                     }
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeName),
                         arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
+        // Int.rotateLeft() / rotateRight() (STDLIB-BIT-007)
+        if args.count == 1 {
+            let calleeStr = interner.resolve(effectiveCalleeName)
+            if calleeStr == "rotateLeft" || calleeStr == "rotateRight" {
+                let intType = sema.types.intType
+                let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+                if nonNullReceiverType == intType {
+                    let runtimeName: String
+                    switch calleeStr {
+                    case "rotateLeft": runtimeName = "kk_int_rotateLeft"
+                    case "rotateRight": runtimeName = "kk_int_rotateRight"
+                    default: fatalError("unreachable: calleeStr already guarded to rotate functions")
+                    }
+                    let loweredArgID = driver.lowerExpr(args[0].expr, shared: shared, emit: &instructions)
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeName),
+                        arguments: [loweredReceiverID, loweredArgID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
+        // Long bit manipulation functions (STDLIB-BIT-007)
+        let longType = sema.types.longType
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+
+        if nonNullReceiverType == longType {
+            let calleeStr = interner.resolve(effectiveCalleeName)
+
+            // Zero-argument functions
+            if args.isEmpty {
+                let runtimeName: String?
+                switch calleeStr {
+                case "highestOneBit": runtimeName = "kk_long_highestOneBit"
+                case "lowestOneBit": runtimeName = "kk_long_lowestOneBit"
+                case "takeHighestOneBit": runtimeName = "kk_long_takeHighestOneBit"
+                case "takeLowestOneBit": runtimeName = "kk_long_takeLowestOneBit"
+                default: runtimeName = nil
+                }
+
+                if let name = runtimeName {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(name),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+
+            // Single-argument functions (rotate)
+            if args.count == 1 {
+                let runtimeName: String?
+                switch calleeStr {
+                case "rotateLeft": runtimeName = "kk_long_rotateLeft"
+                case "rotateRight": runtimeName = "kk_long_rotateRight"
+                default: runtimeName = nil
+                }
+
+                if let name = runtimeName {
+                    let loweredArgID = driver.lowerExpr(args[0].expr, shared: shared, emit: &instructions)
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(name),
+                        arguments: [loweredReceiverID, loweredArgID],
                         result: result,
                         canThrow: false,
                         thrownResult: nil
@@ -411,6 +501,24 @@ extension CallLowerer {
             if calleeStr == "coerceAtLeast" || calleeStr == "coerceAtMost" {
                 let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
                 if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
+                    // Check if this is range-based coercion (single range argument)
+                    if args.count == 1 {
+                        let argExprID = args[0].expr
+                        if sema.bindings.isRangeExpr(argExprID) {
+                            // Use range-based coercion functions
+                            let suffix = calleeStr == "coerceAtLeast" ? "_coerceAtLeast_range" : "_coerceAtMost_range"
+                            instructions.append(.call(
+                                symbol: nil,
+                                callee: interner.intern(prefix + suffix),
+                                arguments: [loweredReceiverID, loweredArgIDs[0]],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            return result
+                        }
+                    }
+                    // Fallback to single-value coercion
                     let suffix = calleeStr == "coerceAtLeast" ? "_coerceAtLeast" : "_coerceAtMost"
                     instructions.append(.call(
                         symbol: nil,

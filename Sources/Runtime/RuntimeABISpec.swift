@@ -3038,6 +3038,108 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Bitwise"
         ),
+        // STDLIB-BIT-007: Additional bit manipulation functions
+        RuntimeABIFunctionSpec(
+            name: "kk_int_rotateLeft",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "distance", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_int_rotateRight",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "distance", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_int_highestOneBit",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_int_lowestOneBit",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_int_takeHighestOneBit",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_int_takeLowestOneBit",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        // Long bit manipulation functions
+        RuntimeABIFunctionSpec(
+            name: "kk_long_rotateLeft",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "distance", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_long_rotateRight",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "distance", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_long_highestOneBit",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_long_lowestOneBit",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_long_takeHighestOneBit",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_long_takeLowestOneBit",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
         // Int/Long comparison operators
         RuntimeABIFunctionSpec(
             name: "kk_op_eq",

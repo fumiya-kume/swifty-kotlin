@@ -314,6 +314,12 @@ final class RuntimeBitCountTests: IsolatedRuntimeXCTestCase {
             let ones = kk_int_countOneBits(value)
             let leading = kk_int_countLeadingZeroBits(value)
             let trailing = kk_int_countTrailingZeroBits(value)
+            if value == 0 {
+                XCTAssertEqual(leading, 32)
+                XCTAssertEqual(trailing, 32)
+                XCTAssertEqual(ones, 0)
+                continue
+            }
             // The sum of leading zeros, trailing zeros, and one-bits
             // must be <= 32 (equals 32 only when ones form a contiguous block)
             XCTAssertLessThanOrEqual(
@@ -359,4 +365,5 @@ final class RuntimeBitCountTests: IsolatedRuntimeXCTestCase {
             XCTAssertEqual(kk_int_countTrailingZeroBits(value), n)
         }
     }
+
 }
