@@ -1038,6 +1038,68 @@ public func kk_sequence_last(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<In
     return result
 }
 
+@_cdecl("kk_sequence_lastOrNull")
+public func kk_sequence_lastOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    var found = false
+    var result = 0
+    var traversalState: SequenceTraversalState?
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let st = SequenceTraversalState()
+        traversalState = st
+        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown) { elem in
+            result = elem
+            found = true
+            return true
+        }
+    } else {
+        let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        if let last = elements.last {
+            result = last
+            found = true
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 { return runtimeNullSentinelInt }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return runtimeNullSentinelInt
+    }
+    return found ? result : runtimeNullSentinelInt
+}
+
+@_cdecl("kk_sequence_singleOrNull")
+public func kk_sequence_singleOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    var result = runtimeNullSentinelInt
+    var count = 0
+    var traversalState: SequenceTraversalState?
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let st = SequenceTraversalState()
+        traversalState = st
+        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown) { elem in
+            count += 1
+            if count == 1 {
+                result = elem
+                return true
+            }
+            result = runtimeNullSentinelInt
+            return false
+        }
+    } else {
+        let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        if elements.count == 1 {
+            result = elements[0]
+            count = 1
+        } else {
+            count = elements.count
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 { return runtimeNullSentinelInt }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return runtimeNullSentinelInt
+    }
+    return count == 1 ? result : runtimeNullSentinelInt
+}
+
 @_cdecl("kk_sequence_count")
 public func kk_sequence_count(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     var count = 0

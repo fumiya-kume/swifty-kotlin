@@ -1743,6 +1743,34 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // lastOrNull(): T?
+        registerSequenceMemberStub(
+            named: "lastOrNull",
+            externalLinkName: "kk_sequence_lastOrNull",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: types.makeNullable(typeParamType),
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // singleOrNull(): T?
+        registerSequenceMemberStub(
+            named: "singleOrNull",
+            externalLinkName: "kk_sequence_singleOrNull",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: types.makeNullable(typeParamType),
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // count(): Int
         registerSequenceMemberStub(
             named: "count",

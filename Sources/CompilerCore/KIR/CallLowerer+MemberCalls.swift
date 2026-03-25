@@ -2738,11 +2738,11 @@ extension CallLowerer {
                     let argType = sema.bindings.exprTypes[argExpr] ?? sema.types.anyType
                     let nonNullArgType = sema.types.makeNonNullable(argType)
                     let boxCallee: String? = switch sema.types.kind(of: nonNullArgType) {
-                    case .primitive(.int, _):
+                    case .primitive(.int, _), .primitive(.uint, _), .primitive(.ubyte, _), .primitive(.ushort, _):
                         "kk_box_int"
                     case .primitive(.boolean, _):
                         "kk_box_bool"
-                    case .primitive(.long, _):
+                    case .primitive(.long, _), .primitive(.ulong, _):
                         "kk_box_long"
                     case .primitive(.float, _):
                         "kk_box_float"

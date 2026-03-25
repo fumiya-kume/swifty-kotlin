@@ -43,6 +43,8 @@ public extension RuntimeABIExterns {
         kk_sequence_first,
         kk_sequence_firstOrNull,
         kk_sequence_last,
+        kk_sequence_lastOrNull,
+        kk_sequence_singleOrNull,
         kk_sequence_count,
         kk_sequence_scan,
         kk_sequence_runningFold,
@@ -314,6 +316,18 @@ public extension RuntimeABIExterns {
 
     static let kk_sequence_last = ExternDecl(
         name: "kk_sequence_last",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_lastOrNull = ExternDecl(
+        name: "kk_sequence_lastOrNull",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_singleOrNull = ExternDecl(
+        name: "kk_sequence_singleOrNull",
         parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )

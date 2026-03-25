@@ -1,24 +1,24 @@
 import kotlinx.coroutines.*
 
-fun main() {
+fun main() = runBlocking {
     // Test basic withContext functionality
-    println("Main thread: ${Thread.currentThread().name}")
+    println("Main start")
     
     // Test withContext switching to Default dispatcher
     withContext(Dispatchers.Default) {
-        println("Inside withContext Default: ${Thread.currentThread().name}")
+        println("Inside withContext Default")
         delay(100)
-        println("After delay in Default: ${Thread.currentThread().name}")
+        println("After delay in Default")
     }
     
-    println("Back to main: ${Thread.currentThread().name}")
+    println("Back to main")
     
     // Test withContext with result
     val result = withContext(Dispatchers.IO) {
-        println("Inside withContext IO: ${Thread.currentThread().name}")
+        println("Inside withContext IO")
         "Hello from IO context"
     }
     
     println("Result from IO context: $result")
-    println("Final thread: ${Thread.currentThread().name}")
+    println("Main end")
 }

@@ -1,4 +1,4 @@
-fun main() {
+fun routeWithFinally(): String {
     try {
         println("Before try block")
         try {
@@ -12,6 +12,10 @@ fun main() {
     } finally {
         println("Outer finally - should execute after try-catch")
     }
-    
+}
+
+fun main() {
+    val result = routeWithFinally()
+    println("Result: $result")
     println("After all blocks")
 }

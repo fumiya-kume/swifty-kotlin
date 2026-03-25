@@ -1748,7 +1748,13 @@ public func kk_list_indexOf(_ listRaw: Int, _ element: Int) -> Int {
        runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
        tryCast(ptr, to: RuntimeStringBox.self) != nil
     {
-        return kk_string_indexOf(listRaw, element)
+        if let elementPtr = UnsafeMutableRawPointer(bitPattern: element),
+           runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: elementPtr)) }),
+           tryCast(elementPtr, to: RuntimeStringBox.self) != nil
+        {
+            return kk_string_indexOf(listRaw, element)
+        }
+        return kk_list_indexOf(kk_string_toList(listRaw), element)
     }
     guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     for (index, elem) in list.elements.enumerated() where runtimeCompareValues(elem, element) == 0 {
@@ -1763,7 +1769,13 @@ public func kk_list_lastIndexOf(_ listRaw: Int, _ element: Int) -> Int {
        runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
        tryCast(ptr, to: RuntimeStringBox.self) != nil
     {
-        return kk_string_lastIndexOf(listRaw, element)
+        if let elementPtr = UnsafeMutableRawPointer(bitPattern: element),
+           runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: elementPtr)) }),
+           tryCast(elementPtr, to: RuntimeStringBox.self) != nil
+        {
+            return kk_string_lastIndexOf(listRaw, element)
+        }
+        return kk_list_lastIndexOf(kk_string_toList(listRaw), element)
     }
     guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     var lastIdx = -1

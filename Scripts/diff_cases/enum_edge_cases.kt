@@ -6,7 +6,15 @@ enum class ComplexEnum(val value: String) {
     }
     
     companion object {
-        fun fromString(s: String): ComplexEnum? = values.find { it.value == s }
+        fun fromString(s: String): ComplexEnum? = entries.find { it.value == s }
+    }
+}
+
+fun dumpEntries(label: String, values: List<ComplexEnum>) {
+    println(label)
+    println("size=${values.size}")
+    values.forEach { value ->
+        println("[${value.name}:${value.value}]")
     }
 }
 
@@ -17,21 +25,16 @@ fun main() {
         println("  ${enum.name} = ${enum.value}")
     }
     
-    // Test valueOf with invalid input
-    println("\nTesting valueOf with invalid input:")
-    try {
-        ComplexEnum.fromString("d")
-        println("Found: d") // This shouldn't print
-    } catch (e: IllegalArgumentException) {
-        println("Correctly caught exception: ${e.message}")
-    }
+    // Test nullable lookup with invalid input
+    println("\nTesting fromString with invalid input:")
+    println(ComplexEnum.fromString("d"))
     
     // Test entries order consistency
     println("\nTesting entries order:")
     val entries1 = ComplexEnum.entries.toList()
     val entries2 = ComplexEnum.entries.toList()
-    println("First call: $entries1")
-    println("Second call: $entries2")
+    dumpEntries("First call:", entries1)
+    dumpEntries("Second call:", entries2)
     
     // Test toString override
     val specialC = ComplexEnum.C

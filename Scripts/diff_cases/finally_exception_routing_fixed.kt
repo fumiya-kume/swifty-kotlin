@@ -1,10 +1,9 @@
-fun main() {
+fun routeWithFinallyFixed(): String {
     try {
         println("Before try block")
         try {
             println("Inside inner try")
-            // Just return without value to test finally execution order
-            return@label "inner return"
+            return "inner return"
         } finally {
             println("Inner finally - should execute before return")
         }
@@ -13,6 +12,10 @@ fun main() {
     } finally {
         println("Outer finally - should execute after try-catch")
     }
-    
+}
+
+fun main() {
+    val result = routeWithFinallyFixed()
+    println("Result: $result")
     println("After all blocks")
 }

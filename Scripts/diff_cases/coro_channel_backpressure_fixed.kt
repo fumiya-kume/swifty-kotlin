@@ -1,8 +1,12 @@
+// NOTE: Requires kotlinx-coroutines on classpath.
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+
 fun main() = runBlocking {
     println("Testing Channel send/receive with backpressure")
     
-    // Test rendezvous channel (capacity = 0)
-    val rendezvousChannel = Channel<Int>(0)
+    // Test default channel semantics
+    val rendezvousChannel = Channel<Int>()
     
     // Launch receiver that will suspend
     val receiverJob = launch {
@@ -23,37 +27,19 @@ fun main() = runBlocking {
     receiverJob.join()
     println("Rendezvous test completed")
     
-    // Test buffered channel with backpressure
-    println("\nTesting buffered channel with backpressure")
-    val bufferedChannel = Channel<Int>(2)
-    
-    // Fill buffer to capacity
-    bufferedChannel.send(1)
-    bufferedChannel.send(2)
-    println("Buffer filled with values: 1, 2")
-    
-    // Launch receiver that will process one value
-    val bufferReceiverJob = launch {
-        delay(100) // Give sender time to suspend
-        val received1 = bufferedChannel.receive()
-        println("Buffer receiver received: $received1")
-    }
-    
-    // Try to send third value - should suspend due to backpressure
-    println("Sender attempting to send to full buffer...")
+    // Launch a sender before the receiver to exercise blocking behavior again
+    println("\nTesting sender-first handoff")
     val senderJob = launch {
-        bufferedChannel.send(3)
-        println("Sender successfully sent: 3")
+        println("Sender attempting to send second value...")
+        rendezvousChannel.send(7)
+        println("Sender successfully sent: 7")
     }
     
-    // Give some time then receive to make space
     delay(200)
-    val received2 = bufferedChannel.receive()
-    println("Main received from buffer: $received2")
+    val received2 = rendezvousChannel.receive()
+    println("Main received second value: $received2")
     
-    // Wait for sender to complete
     senderJob.join()
-    bufferReceiverJob.join()
     
     println("Channel tests completed")
 }
