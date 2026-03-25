@@ -937,6 +937,182 @@ public func kk_uint_to_ulong(_ value: Int) -> Int {
     value
 }
 
+// MARK: - UByte and UShort Conversions (STDLIB-PRIM-002)
+
+@_cdecl("kk_int_to_ubyte")
+public func kk_int_to_ubyte(_ value: Int) -> Int {
+    // UByte range: 0-255
+    if value < 0 { return 0 }
+    if value > 255 { return 255 }
+    return value
+}
+
+@_cdecl("kk_int_to_ushort")
+public func kk_int_to_ushort(_ value: Int) -> Int {
+    // UShort range: 0-65535
+    if value < 0 { return 0 }
+    if value > 65535 { return 65535 }
+    return value
+}
+
+@_cdecl("kk_long_to_ubyte")
+public func kk_long_to_ubyte(_ value: Int) -> Int {
+    // UByte range: 0-255
+    if value < 0 { return 0 }
+    if value > 255 { return 255 }
+    return value
+}
+
+@_cdecl("kk_long_to_ushort")
+public func kk_long_to_ushort(_ value: Int) -> Int {
+    // UShort range: 0-65535
+    if value < 0 { return 0 }
+    if value > 65535 { return 65535 }
+    return value
+}
+
+@_cdecl("kk_uint_to_ubyte")
+public func kk_uint_to_ubyte(_ value: Int) -> Int {
+    // UByte range: 0-255
+    if value > 255 { return 255 }
+    return value
+}
+
+@_cdecl("kk_uint_to_ushort")
+public func kk_uint_to_ushort(_ value: Int) -> Int {
+    // UShort range: 0-65535
+    if value > 65535 { return 65535 }
+    return value
+}
+
+@_cdecl("kk_ulong_to_ubyte")
+public func kk_ulong_to_ubyte(_ value: Int) -> Int {
+    // UByte range: 0-255
+    if value > 255 { return 255 }
+    return value
+}
+
+@_cdecl("kk_ulong_to_ushort")
+public func kk_ulong_to_ushort(_ value: Int) -> Int {
+    // UShort range: 0-65535
+    if value > 65535 { return 65535 }
+    return value
+}
+
+@_cdecl("kk_ubyte_to_int")
+public func kk_ubyte_to_int(_ value: Int) -> Int {
+    // UByte is always in valid range for Int
+    return value
+}
+
+@_cdecl("kk_ushort_to_int")
+public func kk_ushort_to_int(_ value: Int) -> Int {
+    // UShort is always in valid range for Int
+    return value
+}
+
+@_cdecl("kk_ubyte_to_long")
+public func kk_ubyte_to_long(_ value: Int) -> Int {
+    // UByte is always in valid range for Long
+    return value
+}
+
+@_cdecl("kk_ushort_to_long")
+public func kk_ushort_to_long(_ value: Int) -> Int {
+    // UShort is always in valid range for Long
+    return value
+}
+
+@_cdecl("kk_ubyte_to_uint")
+public func kk_ubyte_to_uint(_ value: Int) -> Int {
+    // UByte is always in valid range for UInt
+    return value
+}
+
+@_cdecl("kk_ushort_to_uint")
+public func kk_ushort_to_uint(_ value: Int) -> Int {
+    // UShort is always in valid range for UInt
+    return value
+}
+
+@_cdecl("kk_ubyte_to_ulong")
+public func kk_ubyte_to_ulong(_ value: Int) -> Int {
+    // UByte is always in valid range for ULong
+    return value
+}
+
+@_cdecl("kk_ushort_to_ulong")
+public func kk_ushort_to_ulong(_ value: Int) -> Int {
+    // UShort is always in valid range for ULong
+    return value
+}
+
+// MARK: - Char Conversions (STDLIB-PRIM-002)
+
+@_cdecl("kk_int_to_char")
+public func kk_int_to_char(_ value: Int) -> Int {
+    // Char range: 0-0x10FFFF (Unicode code points)
+    if value < 0 || value > 0x10FFFF { return 0 }
+    return value
+}
+
+@_cdecl("kk_long_to_char")
+public func kk_long_to_char(_ value: Int) -> Int {
+    // Char range: 0-0x10FFFF (Unicode code points)
+    if value < 0 || value > 0x10FFFF { return 0 }
+    return value
+}
+
+@_cdecl("kk_uint_to_char")
+public func kk_uint_to_char(_ value: Int) -> Int {
+    // Char range: 0-0x10FFFF (Unicode code points)
+    if value > 0x10FFFF { return 0 }
+    return value
+}
+
+@_cdecl("kk_ulong_to_char")
+public func kk_ulong_to_char(_ value: Int) -> Int {
+    // Char range: 0-0x10FFFF (Unicode code points)
+    if value > 0x10FFFF { return 0 }
+    return value
+}
+
+@_cdecl("kk_ubyte_to_char")
+public func kk_ubyte_to_char(_ value: Int) -> Int {
+    // UByte is always in valid range for Char
+    return value
+}
+
+@_cdecl("kk_ushort_to_char")
+public func kk_ushort_to_char(_ value: Int) -> Int {
+    // UShort is always in valid range for Char
+    return value
+}
+
+@_cdecl("kk_char_to_int")
+public func kk_char_to_int(_ value: Int) -> Int {
+    // Char is stored as Int, so this is identity
+    return value
+}
+
+@_cdecl("kk_char_to_long")
+public func kk_char_to_long(_ value: Int) -> Int {
+    // Char is stored as Int, so this is identity
+    return value
+}
+
+@_cdecl("kk_char_to_uint")
+public func kk_char_to_uint(_ value: Int) -> Int {
+    // Char is stored as Int, so this is identity
+    return value
+}
+
+@_cdecl("kk_char_to_ulong")
+public func kk_char_to_ulong(_ value: Int) -> Int {
+    // Char is stored as Int, so this is identity
+    return value
+}
+
 private func runtimeMakeStringPointer(_ value: String) -> UnsafeMutableRawPointer {
     value.withCString { cString in
         cString.withMemoryRebound(to: UInt8.self, capacity: value.utf8.count) { pointer in
@@ -1061,4 +1237,111 @@ public func kk_op_fgt(_ lhs: Int, _ rhs: Int) -> Int {
 @_cdecl("kk_op_fge")
 public func kk_op_fge(_ lhs: Int, _ rhs: Int) -> Int {
     kk_bits_to_float(lhs) >= kk_bits_to_float(rhs) ? 1 : 0
+}
+
+// MARK: - Int/Long comparison ops
+
+@_cdecl("kk_op_eq")
+public func kk_op_eq(_ lhs: Int, _ rhs: Int) -> Int {
+    lhs == rhs ? 1 : 0
+}
+
+@_cdecl("kk_op_ne")
+public func kk_op_ne(_ lhs: Int, _ rhs: Int) -> Int {
+    lhs != rhs ? 1 : 0
+}
+
+@_cdecl("kk_op_lt")
+public func kk_op_lt(_ lhs: Int, _ rhs: Int) -> Int {
+    lhs < rhs ? 1 : 0
+}
+
+@_cdecl("kk_op_le")
+public func kk_op_le(_ lhs: Int, _ rhs: Int) -> Int {
+    lhs <= rhs ? 1 : 0
+}
+
+@_cdecl("kk_op_gt")
+public func kk_op_gt(_ lhs: Int, _ rhs: Int) -> Int {
+    lhs > rhs ? 1 : 0
+}
+
+@_cdecl("kk_op_ge")
+public func kk_op_ge(_ lhs: Int, _ rhs: Int) -> Int {
+    lhs >= rhs ? 1 : 0
+}
+
+// MARK: - Int/Long arithmetic ops (modulo)
+
+@_cdecl("kk_op_mod")
+public func kk_op_mod(_ lhs: Int, _ rhs: Int) -> Int {
+    if rhs == 0 { return 0 } // Handle division by zero
+    return lhs % rhs
+}
+
+@_cdecl("kk_op_lmod")
+public func kk_op_lmod(_ lhs: Int, _ rhs: Int) -> Int {
+    // Long uses same Int representation on 64-bit platforms
+    if rhs == 0 { return 0 } // Handle division by zero  
+    return lhs % rhs
+}
+
+// MARK: - Boolean logical ops
+
+@_cdecl("kk_logical_and")
+public func kk_logical_and(_ lhs: Int, _ rhs: Int) -> Int {
+    (lhs != 0 && rhs != 0) ? 1 : 0
+}
+
+@_cdecl("kk_logical_or")
+public func kk_logical_or(_ lhs: Int, _ rhs: Int) -> Int {
+    (lhs != 0 || rhs != 0) ? 1 : 0
+}
+
+// MARK: - Char operations
+
+@_cdecl("kk_char_plus")
+public func kk_char_plus(_ charValue: Int, _ stringRaw: Int) -> UnsafeMutableRawPointer {
+    let unboxedChar = kk_unbox_char(charValue)
+    let charString = String(Character(UnicodeScalar(unboxedChar) ?? UnicodeScalar(0xFFFD)))
+    
+    if let stringBox = tryCast(UnsafeMutableRawPointer(bitPattern: stringRaw), to: RuntimeStringBox.self) {
+        let combined = charString + stringBox.value
+        return runtimeMakeStringPointer(combined)
+    }
+    
+    return runtimeMakeStringPointer(charString)
+}
+
+@_cdecl("kk_char_get")
+public func kk_char_get(_ charValue: Int, _ index: Int) -> Int {
+    let unboxedChar = kk_unbox_char(charValue)
+    let charString = String(Character(UnicodeScalar(unboxedChar) ?? UnicodeScalar(0xFFFD)))
+    
+    if index >= 0 && index < charString.utf16.count {
+        let utf16Index = charString.utf16.index(charString.utf16.startIndex, offsetBy: index)
+        let utf16Char = charString.utf16[utf16Index]
+        return kk_box_char(Int32(utf16Char))
+    }
+    
+    return kk_box_char(Int32(0xFFFD)) // Replacement character for invalid index
+}
+
+@_cdecl("kk_char_rangeTo")
+public func kk_char_rangeTo(_ startValue: Int, _ endValue: Int) -> UnsafeMutableRawPointer {
+    let startChar = kk_unbox_char(startValue)
+    let endChar = kk_unbox_char(endValue)
+    
+    // Create a character range from start to end (inclusive)
+    let startScalar = UnicodeScalar(startChar) ?? UnicodeScalar(0)
+    let endScalar = UnicodeScalar(endChar) ?? UnicodeScalar(0)
+    
+    if startScalar <= endScalar {
+        let range = startScalar...endScalar
+        let rangeString = range.compactMap { UnicodeScalar($0) }.map { String($0) }.joined()
+        return runtimeMakeStringPointer(rangeString)
+    } else {
+        // Empty range for invalid bounds
+        return runtimeMakeStringPointer("")
+    }
 }

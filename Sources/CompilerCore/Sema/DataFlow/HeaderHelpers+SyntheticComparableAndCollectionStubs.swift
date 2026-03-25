@@ -6565,6 +6565,121 @@ extension DataFlowSemaPhase {
             symbols.setPropertyType(sizeReturnType, for: sizeSym)
         }
 
+        // --- STDLIB-410: emptyArray<T>() ---
+        let emptyArrayReturnType: TypeID
+        if let existingArraySymbol = symbols.lookup(fqName: arrayFQName) {
+            emptyArrayReturnType = types.make(.classType(ClassType(
+                classSymbol: existingArraySymbol,
+                args: [.out(types.nothingType)],
+                nullability: .nonNull
+            )))
+        } else {
+            assertionFailure("Array class not found in symbol table; array stubs must be registered before emptyArray")
+            emptyArrayReturnType = types.anyType
+        }
+        
+        let emptyArrayName = interner.intern("emptyArray")
+        let emptyArrayFQName = kotlinPkg + [emptyArrayName]
+        if symbols.lookup(fqName: emptyArrayFQName) == nil {
+            let emptyArraySymbol = symbols.define(
+                kind: .function,
+                name: emptyArrayName,
+                fqName: emptyArrayFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            // Add 1 phantom type parameter T for emptyArray<T>()
+            let emptyArrayTParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: interner.intern("T"),
+                fqName: emptyArrayFQName + [interner.intern("T")],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: emptyArrayReturnType,
+                    typeParameterSymbols: [emptyArrayTParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: emptyArraySymbol
+            )
+            symbols.setExternalLinkName("kk_empty_array", for: emptyArraySymbol)
+        }
+
+        // --- Array extension functions: contentEquals, contentHashCode ---
+        
+        // contentEquals(other: Array<T>): Boolean
+        let contentEqualsName = interner.intern("contentEquals")
+        let contentEqualsFQName = arrayFQName + [contentEqualsName]
+        if symbols.lookup(fqName: contentEqualsFQName) == nil {
+            let contentEqualsSymbol = symbols.define(
+                kind: .function,
+                name: contentEqualsName,
+                fqName: contentEqualsFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            let arrayTypeParam = types.make(.typeParam(TypeParamType(symbol: tParamSymbol, nullability: .nonNull)))
+            let receiverType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(arrayTypeParam)],
+                nullability: .nonNull
+            )))
+            let otherArrayType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(arrayTypeParam)],
+                nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [otherArrayType],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [],
+                    classTypeParameterCount: 0
+                ),
+                for: contentEqualsSymbol
+            )
+            symbols.setExternalLinkName("kk_array_contentEquals", for: contentEqualsSymbol)
+        }
+        
+        // contentHashCode(): Int
+        let contentHashCodeName = interner.intern("contentHashCode")
+        let contentHashCodeFQName = arrayFQName + [contentHashCodeName]
+        if symbols.lookup(fqName: contentHashCodeFQName) == nil {
+            let contentHashCodeSymbol = symbols.define(
+                kind: .function,
+                name: contentHashCodeName,
+                fqName: contentHashCodeFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            let arrayTypeParam = types.make(.typeParam(TypeParamType(symbol: tParamSymbol, nullability: .nonNull)))
+            let receiverType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(arrayTypeParam)],
+                nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [],
+                    returnType: types.intType,
+                    typeParameterSymbols: [],
+                    classTypeParameterCount: 0
+                ),
+                for: contentHashCodeSymbol
+            )
+            symbols.setExternalLinkName("kk_array_contentHashCode", for: contentHashCodeSymbol)
+        }
+
         // --- Primitive array types: IntArray, LongArray, etc. ---
         let primitiveArrayNames = [
             "IntArray",

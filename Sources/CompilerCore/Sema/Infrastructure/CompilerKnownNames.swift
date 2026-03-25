@@ -136,6 +136,7 @@ struct KnownCompilerNames {
     let vetoable: InternedString
     let notNull: InternedString
     let emptyListFn: InternedString
+    let emptyArrayFn: InternedString
     let emptySetFn: InternedString
     let emptyMapFn: InternedString
     let buildList: InternedString
@@ -274,6 +275,7 @@ struct KnownCompilerNames {
         vetoable = interner.intern("vetoable")
         notNull = interner.intern("notNull")
         emptyListFn = interner.intern("emptyList")
+        emptyArrayFn = interner.intern("emptyArray")
         emptySetFn = interner.intern("emptySet")
         emptyMapFn = interner.intern("emptyMap")
         buildList = interner.intern("buildList")
@@ -466,7 +468,7 @@ struct KnownCompilerNames {
     /// to avoid duplication.
     static let stdlibCollectionFactoryNames: Set<String> = [
         "listOf", "mutableListOf", "emptyList",
-        "arrayOf", "intArrayOf", "longArrayOf",
+        "arrayOf", "emptyArray", "intArrayOf", "longArrayOf",
         "shortArrayOf", "byteArrayOf",
         "doubleArrayOf", "floatArrayOf", "booleanArrayOf", "charArrayOf",
         "mapOf", "mutableMapOf", "emptyMap",

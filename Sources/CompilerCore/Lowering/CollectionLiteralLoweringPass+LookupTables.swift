@@ -8,6 +8,7 @@ struct CollectionLiteralLookupTables {
     let emptyListName: InternedString
     let listOfNotNullName: InternedString
     let arrayOfName: InternedString
+    let emptyArrayName: InternedString
     let intArrayOfName: InternedString
     let longArrayOfName: InternedString
     let doubleArrayOfName: InternedString
@@ -32,6 +33,7 @@ struct CollectionLiteralLookupTables {
     let kkListOfName: InternedString
     let kkListOfNotNullName: InternedString
     let kkEmptyListName: InternedString
+    let kkEmptyArrayName: InternedString
     let kkEmptySetName: InternedString
     let kkEmptyMapName: InternedString
     let kkListSizeName: InternedString
@@ -467,6 +469,7 @@ struct CollectionLiteralLookupTables {
     let iteratorBuilderFQName: [InternedString]
     // FQN arrays for stdlib collection factory functions (STDLIB-410)
     let emptyListFQName: [InternedString]
+    let emptyArrayFQName: [InternedString]
     let emptySetFQName: [InternedString]
     let emptyMapFQName: [InternedString]
     let listOfFQName: [InternedString]
@@ -590,6 +593,7 @@ struct CollectionLiteralLookupTables {
         emptyListName = interner.intern("emptyList")
         listOfNotNullName = interner.intern("listOfNotNull")
         arrayOfName = interner.intern("arrayOf")
+        emptyArrayName = interner.intern("emptyArray")
         intArrayOfName = interner.intern("intArrayOf")
         longArrayOfName = interner.intern("longArrayOf")
         doubleArrayOfName = interner.intern("doubleArrayOf")
@@ -612,6 +616,7 @@ struct CollectionLiteralLookupTables {
         kkListOfName = interner.intern("kk_list_of")
         kkListOfNotNullName = interner.intern("kk_list_of_not_null")
         kkEmptyListName = interner.intern("kk_emptyList")
+        kkEmptyArrayName = interner.intern("kk_empty_array")
         kkEmptySetName = interner.intern("kk_emptySet")
         kkEmptyMapName = interner.intern("kk_emptyMap")
         kkListSizeName = interner.intern("kk_list_size")
@@ -1028,6 +1033,7 @@ struct CollectionLiteralLookupTables {
         iteratorBuilderFQName = [interner.intern("kotlin"), interner.intern("sequences"), interner.intern("iterator")]
         let kotlinCollectionsPkg = [interner.intern("kotlin"), interner.intern("collections")]
         emptyListFQName = kotlinCollectionsPkg + [interner.intern("emptyList")]
+        emptyArrayFQName = [interner.intern("kotlin")] + [interner.intern("emptyArray")]
         emptySetFQName = kotlinCollectionsPkg + [interner.intern("emptySet")]
         emptyMapFQName = kotlinCollectionsPkg + [interner.intern("emptyMap")]
         listOfFQName = kotlinCollectionsPkg + [interner.intern("listOf")]
@@ -1134,7 +1140,7 @@ struct CollectionLiteralLookupTables {
         mutableListConstructorNames = [arrayListName]
         mutableSetConstructorNames = [hashSetName, linkedHashSetName]
         mutableMapConstructorNames = [hashMapName, linkedHashMapName]
-        arrayOfFactoryNames = [arrayOfName, intArrayOfName, longArrayOfName, doubleArrayOfName, floatArrayOfName, booleanArrayOfName, charArrayOfName]
+        arrayOfFactoryNames = [arrayOfName, emptyArrayName, intArrayOfName, longArrayOfName, doubleArrayOfName, floatArrayOfName, booleanArrayOfName, charArrayOfName]
         builderDSLNames = [buildStringName, buildListName, buildSetName, buildMapName]
 
         stringProducingCallees = [

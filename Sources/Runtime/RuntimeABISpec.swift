@@ -2962,14 +2962,6 @@ public enum RuntimeABISpec {
             section: "Bitwise"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_op_not",
-            parameters: [
-                RuntimeABIParameter(name: "a", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Bitwise"
-        ),
-        RuntimeABIFunctionSpec(
             name: "kk_op_inv",
             parameters: [
                 RuntimeABIParameter(name: "a", type: .intptr),
@@ -3045,6 +3037,141 @@ public enum RuntimeABISpec {
             ],
             returnType: .intptr,
             section: "Bitwise"
+        ),
+        // Int/Long comparison operators
+        RuntimeABIFunctionSpec(
+            name: "kk_op_eq",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_ne",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_lt",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_le",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_gt",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_ge",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        // Int/Long modulo operators
+        RuntimeABIFunctionSpec(
+            name: "kk_op_mod",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_lmod",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+    ]
+
+    /// Boolean logical operators
+    public static let booleanFunctions: [RuntimeABIFunctionSpec] = [
+        RuntimeABIFunctionSpec(
+            name: "kk_op_not",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boolean"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_logical_and",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boolean"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_logical_or",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boolean"
+        ),
+    ]
+
+    /// Char operations
+    public static let charFunctions: [RuntimeABIFunctionSpec] = [
+        RuntimeABIFunctionSpec(
+            name: "kk_char_plus",
+            parameters: [
+                RuntimeABIParameter(name: "charValue", type: .intptr),
+                RuntimeABIParameter(name: "stringRaw", type: .intptr),
+            ],
+            returnType: .opaquePointer,
+            section: "Char"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_get",
+            parameters: [
+                RuntimeABIParameter(name: "charValue", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Char"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_rangeTo",
+            parameters: [
+                RuntimeABIParameter(name: "startValue", type: .intptr),
+                RuntimeABIParameter(name: "endValue", type: .intptr),
+            ],
+            returnType: .opaquePointer,
+            section: "Char"
         ),
     ]
 
@@ -3725,6 +3852,8 @@ public enum RuntimeABISpec {
             + rangeFunctions
             + kPropertyStubFunctions + delegateFunctions
             + bitwiseFunctions
+            + booleanFunctions
+            + charFunctions
             + mathFunctions
             + randomFunctions
             + collectionFunctions

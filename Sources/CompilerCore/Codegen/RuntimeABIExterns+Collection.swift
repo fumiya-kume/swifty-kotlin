@@ -181,6 +181,9 @@ public extension RuntimeABIExterns {
         kk_array_of,
         kk_array_size,
         kk_array_is_empty,
+        kk_empty_array,
+        kk_array_contentEquals,
+        kk_array_contentHashCode,
         kk_array_toList,
         kk_array_toMutableList,
         kk_list_toTypedArray,
@@ -189,6 +192,25 @@ public extension RuntimeABIExterns {
         kk_array_forEach,
         kk_array_any,
         kk_array_none,
+        kk_array_mapIndexed,
+        kk_array_mapNotNull,
+        kk_array_flatMap,
+        kk_array_filterIndexed,
+        kk_array_filterNot,
+        kk_array_filterNotNull,
+        kk_array_reduce,
+        kk_array_reduceIndexed,
+        kk_array_reduceOrNull,
+        kk_array_fold,
+        kk_array_foldIndexed,
+        kk_array_find,
+        kk_array_findLast,
+        kk_array_first,
+        kk_array_firstOrNull,
+        kk_array_last,
+        kk_array_lastOrNull,
+        kk_array_all,
+        kk_array_count,
         kk_array_copyOf,
         kk_array_copyOfRange,
         kk_array_fill,
@@ -828,6 +850,24 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_empty_array = ExternDecl(
+        name: "kk_empty_array",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_contentEquals = ExternDecl(
+        name: "kk_array_contentEquals",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_contentHashCode = ExternDecl(
+        name: "kk_array_contentHashCode",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     /// Array conversion functions (STDLIB-087)
     static let kk_array_toList = ExternDecl(
         name: "kk_array_toList",
@@ -874,6 +914,120 @@ public extension RuntimeABIExterns {
 
     static let kk_array_none = ExternDecl(
         name: "kk_array_none",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_mapIndexed = ExternDecl(
+        name: "kk_array_mapIndexed",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_mapNotNull = ExternDecl(
+        name: "kk_array_mapNotNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_flatMap = ExternDecl(
+        name: "kk_array_flatMap",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_filterIndexed = ExternDecl(
+        name: "kk_array_filterIndexed",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_filterNot = ExternDecl(
+        name: "kk_array_filterNot",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_filterNotNull = ExternDecl(
+        name: "kk_array_filterNotNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_reduce = ExternDecl(
+        name: "kk_array_reduce",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_reduceIndexed = ExternDecl(
+        name: "kk_array_reduceIndexed",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_reduceOrNull = ExternDecl(
+        name: "kk_array_reduceOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_fold = ExternDecl(
+        name: "kk_array_fold",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_foldIndexed = ExternDecl(
+        name: "kk_array_foldIndexed",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_find = ExternDecl(
+        name: "kk_array_find",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_findLast = ExternDecl(
+        name: "kk_array_findLast",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_first = ExternDecl(
+        name: "kk_array_first",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_firstOrNull = ExternDecl(
+        name: "kk_array_firstOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_last = ExternDecl(
+        name: "kk_array_last",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_lastOrNull = ExternDecl(
+        name: "kk_array_lastOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_all = ExternDecl(
+        name: "kk_array_all",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_count = ExternDecl(
+        name: "kk_array_count",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )

@@ -106,6 +106,216 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "NumericConversion"
         ),
+        // UByte and UShort conversions (STDLIB-PRIM-002)
+        RuntimeABIFunctionSpec(
+            name: "kk_int_to_ubyte",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_int_to_ushort",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_long_to_ubyte",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_long_to_ushort",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uint_to_ubyte",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uint_to_ushort",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ulong_to_ubyte",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ulong_to_ushort",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ubyte_to_int",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ushort_to_int",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ubyte_to_long",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ushort_to_long",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ubyte_to_uint",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ushort_to_uint",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ubyte_to_ulong",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ushort_to_ulong",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        // Char conversions (STDLIB-PRIM-002)
+        RuntimeABIFunctionSpec(
+            name: "kk_int_to_char",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_long_to_char",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uint_to_char",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ulong_to_char",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ubyte_to_char",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ushort_to_char",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_to_int",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_to_long",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_to_uint",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_to_ulong",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_int_coerceIn",
             parameters: [

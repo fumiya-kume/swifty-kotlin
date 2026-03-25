@@ -270,6 +270,187 @@ final class CoercionRuntimeTests: XCTestCase {
         XCTAssertEqual(decodedFloat, testFloat, accuracy: 1e-7, "Float bit encoding/decoding should be lossless")
     }
 
+    // MARK: - UByte and UShort Conversion Tests (STDLIB-PRIM-002)
+
+    func testIntToUByteConversion() {
+        XCTAssertEqual(kk_int_to_ubyte(100), 100, "Valid value should remain unchanged")
+        XCTAssertEqual(kk_int_to_ubyte(-5), 0, "Negative value should be clamped to 0")
+        XCTAssertEqual(kk_int_to_ubyte(300), 255, "Value above 255 should be clamped to 255")
+        XCTAssertEqual(kk_int_to_ubyte(0), 0, "Minimum boundary should remain unchanged")
+        XCTAssertEqual(kk_int_to_ubyte(255), 255, "Maximum boundary should remain unchanged")
+    }
+
+    func testIntToUShortConversion() {
+        XCTAssertEqual(kk_int_to_ushort(1000), 1000, "Valid value should remain unchanged")
+        XCTAssertEqual(kk_int_to_ushort(-5), 0, "Negative value should be clamped to 0")
+        XCTAssertEqual(kk_int_to_ushort(70000), 65535, "Value above 65535 should be clamped to 65535")
+        XCTAssertEqual(kk_int_to_ushort(0), 0, "Minimum boundary should remain unchanged")
+        XCTAssertEqual(kk_int_to_ushort(65535), 65535, "Maximum boundary should remain unchanged")
+    }
+
+    func testLongToUByteConversion() {
+        XCTAssertEqual(kk_long_to_ubyte(100), 100, "Valid value should remain unchanged")
+        XCTAssertEqual(kk_long_to_ubyte(-5), 0, "Negative value should be clamped to 0")
+        XCTAssertEqual(kk_long_to_ubyte(300), 255, "Value above 255 should be clamped to 255")
+    }
+
+    func testLongToUShortConversion() {
+        XCTAssertEqual(kk_long_to_ushort(1000), 1000, "Valid value should remain unchanged")
+        XCTAssertEqual(kk_long_to_ushort(-5), 0, "Negative value should be clamped to 0")
+        XCTAssertEqual(kk_long_to_ushort(70000), 65535, "Value above 65535 should be clamped to 65535")
+    }
+
+    func testUIntToUByteConversion() {
+        XCTAssertEqual(kk_uint_to_ubyte(100), 100, "Valid value should remain unchanged")
+        XCTAssertEqual(kk_uint_to_ubyte(300), 255, "Value above 255 should be clamped to 255")
+        XCTAssertEqual(kk_uint_to_ubyte(0), 0, "Minimum boundary should remain unchanged")
+        XCTAssertEqual(kk_uint_to_ubyte(255), 255, "Maximum boundary should remain unchanged")
+    }
+
+    func testUIntToUShortConversion() {
+        XCTAssertEqual(kk_uint_to_ushort(1000), 1000, "Valid value should remain unchanged")
+        XCTAssertEqual(kk_uint_to_ushort(70000), 65535, "Value above 65535 should be clamped to 65535")
+        XCTAssertEqual(kk_uint_to_ushort(0), 0, "Minimum boundary should remain unchanged")
+        XCTAssertEqual(kk_uint_to_ushort(65535), 65535, "Maximum boundary should remain unchanged")
+    }
+
+    func testUByteToIntConversion() {
+        XCTAssertEqual(kk_ubyte_to_int(100), 100, "UByte to Int should be identity")
+        XCTAssertEqual(kk_ubyte_to_int(0), 0, "Zero should remain unchanged")
+        XCTAssertEqual(kk_ubyte_to_int(255), 255, "Maximum UByte should remain unchanged")
+    }
+
+    func testUShortToIntConversion() {
+        XCTAssertEqual(kk_ushort_to_int(1000), 1000, "UShort to Int should be identity")
+        XCTAssertEqual(kk_ushort_to_int(0), 0, "Zero should remain unchanged")
+        XCTAssertEqual(kk_ushort_to_int(65535), 65535, "Maximum UShort should remain unchanged")
+    }
+
+    func testUByteToLongConversion() {
+        XCTAssertEqual(kk_ubyte_to_long(100), 100, "UByte to Long should be identity")
+        XCTAssertEqual(kk_ubyte_to_long(0), 0, "Zero should remain unchanged")
+        XCTAssertEqual(kk_ubyte_to_long(255), 255, "Maximum UByte should remain unchanged")
+    }
+
+    func testUShortToLongConversion() {
+        XCTAssertEqual(kk_ushort_to_long(1000), 1000, "UShort to Long should be identity")
+        XCTAssertEqual(kk_ushort_to_long(0), 0, "Zero should remain unchanged")
+        XCTAssertEqual(kk_ushort_to_long(65535), 65535, "Maximum UShort should remain unchanged")
+    }
+
+    // MARK: - Char Conversion Tests (STDLIB-PRIM-002)
+
+    func testIntToCharConversion() {
+        XCTAssertEqual(kk_int_to_char(65), 65, "Valid ASCII value should remain unchanged")
+        XCTAssertEqual(kk_int_to_char(0x1F600), 0x1F600, "Valid Unicode value should remain unchanged")
+        XCTAssertEqual(kk_int_to_char(-5), 0, "Negative value should be clamped to 0")
+        XCTAssertEqual(kk_int_to_char(0x110000), 0, "Value above Unicode range should be clamped to 0")
+        XCTAssertEqual(kk_int_to_char(0), 0, "Minimum boundary should remain unchanged")
+        XCTAssertEqual(kk_int_to_char(0x10FFFF), 0x10FFFF, "Maximum Unicode boundary should remain unchanged")
+    }
+
+    func testLongToCharConversion() {
+        XCTAssertEqual(kk_long_to_char(65), 65, "Valid ASCII value should remain unchanged")
+        XCTAssertEqual(kk_long_to_char(0x1F600), 0x1F600, "Valid Unicode value should remain unchanged")
+        XCTAssertEqual(kk_long_to_char(-5), 0, "Negative value should be clamped to 0")
+        XCTAssertEqual(kk_long_to_char(0x110000), 0, "Value above Unicode range should be clamped to 0")
+    }
+
+    func testUIntToCharConversion() {
+        XCTAssertEqual(kk_uint_to_char(65), 65, "Valid ASCII value should remain unchanged")
+        XCTAssertEqual(kk_uint_to_char(0x1F600), 0x1F600, "Valid Unicode value should remain unchanged")
+        XCTAssertEqual(kk_uint_to_char(0x110000), 0, "Value above Unicode range should be clamped to 0")
+    }
+
+    func testULongToCharConversion() {
+        XCTAssertEqual(kk_ulong_to_char(65), 65, "Valid ASCII value should remain unchanged")
+        XCTAssertEqual(kk_ulong_to_char(0x1F600), 0x1F600, "Valid Unicode value should remain unchanged")
+        XCTAssertEqual(kk_ulong_to_char(0x110000), 0, "Value above Unicode range should be clamped to 0")
+    }
+
+    func testUByteToCharConversion() {
+        XCTAssertEqual(kk_ubyte_to_char(65), 65, "Valid ASCII value should remain unchanged")
+        XCTAssertEqual(kk_ubyte_to_char(255), 255, "Maximum UByte should remain unchanged")
+    }
+
+    func testUShortToCharConversion() {
+        XCTAssertEqual(kk_ushort_to_char(65), 65, "Valid ASCII value should remain unchanged")
+        XCTAssertEqual(kk_ushort_to_char(0x1F600), 0x1F600, "Valid Unicode value should remain unchanged")
+        XCTAssertEqual(kk_ushort_to_char(65535), 65535, "Maximum UShort should remain unchanged")
+    }
+
+    func testCharToIntConversion() {
+        XCTAssertEqual(kk_char_to_int(65), 65, "Char to Int should be identity")
+        XCTAssertEqual(kk_char_to_int(0x1F600), 0x1F600, "Unicode Char to Int should be identity")
+        XCTAssertEqual(kk_char_to_int(0), 0, "Zero should remain unchanged")
+    }
+
+    func testCharToLongConversion() {
+        XCTAssertEqual(kk_char_to_long(65), 65, "Char to Long should be identity")
+        XCTAssertEqual(kk_char_to_long(0x1F600), 0x1F600, "Unicode Char to Long should be identity")
+    }
+
+    func testCharToUIntConversion() {
+        XCTAssertEqual(kk_char_to_uint(65), 65, "Char to UInt should be identity")
+        XCTAssertEqual(kk_char_to_uint(0x1F600), 0x1F600, "Unicode Char to UInt should be identity")
+    }
+
+    func testCharToULongConversion() {
+        XCTAssertEqual(kk_char_to_ulong(65), 65, "Char to ULong should be identity")
+        XCTAssertEqual(kk_char_to_ulong(0x1F600), 0x1F600, "Unicode Char to ULong should be identity")
+    }
+
+    // MARK: - Cross-Type Conversion Tests
+
+    func testCrossTypeUByteConversions() {
+        // Test all UByte conversions work together
+        let original = 200
+        let asUByte = kk_int_to_ubyte(original)
+        let backToInt = kk_ubyte_to_int(asUByte)
+        let asLong = kk_ubyte_to_long(asUByte)
+        let asUInt = kk_ubyte_to_uint(asUByte)
+        let asULong = kk_ubyte_to_ulong(asUByte)
+        let asChar = kk_ubyte_to_char(asUByte)
+        
+        XCTAssertEqual(backToInt, original, "UByte round-trip conversion should preserve value")
+        XCTAssertEqual(asLong, original, "UByte to Long should preserve value")
+        XCTAssertEqual(asUInt, original, "UByte to UInt should preserve value")
+        XCTAssertEqual(asULong, original, "UByte to ULong should preserve value")
+        XCTAssertEqual(asChar, original, "UByte to Char should preserve value")
+    }
+
+    func testCrossTypeUShortConversions() {
+        // Test all UShort conversions work together
+        let original = 50000
+        let asUShort = kk_int_to_ushort(original)
+        let backToInt = kk_ushort_to_int(asUShort)
+        let asLong = kk_ushort_to_long(asUShort)
+        let asUInt = kk_ushort_to_uint(asUShort)
+        let asULong = kk_ushort_to_ulong(asUShort)
+        let asChar = kk_ushort_to_char(asUShort)
+        
+        XCTAssertEqual(backToInt, original, "UShort round-trip conversion should preserve value")
+        XCTAssertEqual(asLong, original, "UShort to Long should preserve value")
+        XCTAssertEqual(asUInt, original, "UShort to UInt should preserve value")
+        XCTAssertEqual(asULong, original, "UShort to ULong should preserve value")
+        XCTAssertEqual(asChar, original, "UShort to Char should preserve value")
+    }
+
+    func testCrossTypeCharConversions() {
+        // Test all Char conversions work together
+        let original = 0x1F600 // 😀 emoji
+        let asChar = kk_int_to_char(original)
+        let backToInt = kk_char_to_int(asChar)
+        let asLong = kk_char_to_long(asChar)
+        let asUInt = kk_char_to_uint(asChar)
+        let asULong = kk_char_to_ulong(asChar)
+        
+        XCTAssertEqual(backToInt, original, "Char round-trip conversion should preserve value")
+        XCTAssertEqual(asLong, original, "Char to Long should preserve value")
+        XCTAssertEqual(asUInt, original, "Char to UInt should preserve value")
+        XCTAssertEqual(asULong, original, "Char to ULong should preserve value")
+    }
+
     // MARK: - Error Handling Tests
 
     func testCoerceInEmptyRangePrecondition() {

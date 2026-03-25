@@ -15,6 +15,35 @@ public extension RuntimeABIExterns {
         kk_double_to_float,
         kk_long_to_byte,
         kk_long_to_short,
+        // UByte and UShort conversions (STDLIB-PRIM-002)
+        kk_int_to_ubyte,
+        kk_int_to_ushort,
+        kk_long_to_ubyte,
+        kk_long_to_ushort,
+        kk_uint_to_ubyte,
+        kk_uint_to_ushort,
+        kk_ulong_to_ubyte,
+        kk_ulong_to_ushort,
+        kk_ubyte_to_int,
+        kk_ushort_to_int,
+        kk_ubyte_to_long,
+        kk_ushort_to_long,
+        kk_ubyte_to_uint,
+        kk_ushort_to_uint,
+        kk_ubyte_to_ulong,
+        kk_ushort_to_ulong,
+        // Char conversions (STDLIB-PRIM-002)
+        kk_int_to_char,
+        kk_long_to_char,
+        kk_uint_to_char,
+        kk_ulong_to_char,
+        kk_ubyte_to_char,
+        kk_ushort_to_char,
+        kk_char_to_int,
+        kk_char_to_long,
+        kk_char_to_uint,
+        kk_char_to_ulong,
+        // Coercion functions
         kk_int_coerceIn,
         kk_int_coerceAtLeast,
         kk_int_coerceAtMost,
@@ -179,6 +208,166 @@ public extension RuntimeABIExterns {
     static let kk_float_coerceAtMost = ExternDecl(
         name: "kk_float_coerceAtMost",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // MARK: - UByte and UShort Conversions (STDLIB-PRIM-002)
+
+    static let kk_int_to_ubyte = ExternDecl(
+        name: "kk_int_to_ubyte",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_int_to_ushort = ExternDecl(
+        name: "kk_int_to_ushort",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_long_to_ubyte = ExternDecl(
+        name: "kk_long_to_ubyte",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_long_to_ushort = ExternDecl(
+        name: "kk_long_to_ushort",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_uint_to_ubyte = ExternDecl(
+        name: "kk_uint_to_ubyte",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_uint_to_ushort = ExternDecl(
+        name: "kk_uint_to_ushort",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_ulong_to_ubyte = ExternDecl(
+        name: "kk_ulong_to_ubyte",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_ulong_to_ushort = ExternDecl(
+        name: "kk_ulong_to_ushort",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_ubyte_to_int = ExternDecl(
+        name: "kk_ubyte_to_int",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_ushort_to_int = ExternDecl(
+        name: "kk_ushort_to_int",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_ubyte_to_long = ExternDecl(
+        name: "kk_ubyte_to_long",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_ushort_to_long = ExternDecl(
+        name: "kk_ushort_to_long",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_ubyte_to_uint = ExternDecl(
+        name: "kk_ubyte_to_uint",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_ushort_to_uint = ExternDecl(
+        name: "kk_ushort_to_uint",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_ubyte_to_ulong = ExternDecl(
+        name: "kk_ubyte_to_ulong",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_ushort_to_ulong = ExternDecl(
+        name: "kk_ushort_to_ulong",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // MARK: - Char Conversions (STDLIB-PRIM-002)
+
+    static let kk_int_to_char = ExternDecl(
+        name: "kk_int_to_char",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_long_to_char = ExternDecl(
+        name: "kk_long_to_char",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_uint_to_char = ExternDecl(
+        name: "kk_uint_to_char",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_ulong_to_char = ExternDecl(
+        name: "kk_ulong_to_char",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_ubyte_to_char = ExternDecl(
+        name: "kk_ubyte_to_char",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_ushort_to_char = ExternDecl(
+        name: "kk_ushort_to_char",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_char_to_int = ExternDecl(
+        name: "kk_char_to_int",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_char_to_long = ExternDecl(
+        name: "kk_char_to_long",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_char_to_uint = ExternDecl(
+        name: "kk_char_to_uint",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_char_to_ulong = ExternDecl(
+        name: "kk_char_to_ulong",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 }

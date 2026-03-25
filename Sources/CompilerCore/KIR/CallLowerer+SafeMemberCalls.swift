@@ -441,20 +441,32 @@ extension CallLowerer {
             let conversionCallee: InternedString? = switch (calleeStr, nonNullReceiverType, nonNullResultType) {
             case ("toInt", uintType, intType): interner.intern("kk_uint_to_int")
             case ("toInt", ulongType, intType): interner.intern("kk_ulong_to_int")
+            case ("toInt", ubyteType, intType): interner.intern("kk_ubyte_to_int")
+            case ("toInt", ushortType, intType): interner.intern("kk_ushort_to_int")
             case ("toInt", doubleType, intType): interner.intern("kk_double_to_int")
             case ("toInt", floatType, intType): interner.intern("kk_float_to_int")
             case ("toInt", longType, intType): interner.intern("kk_long_to_int")
+            case ("toInt", charType, intType): interner.intern("kk_char_to_int")
             case ("toInt", intType, intType): nil // identity
             case ("toUInt", intType, uintType): interner.intern("kk_int_to_uint")
             case ("toUInt", longType, uintType): interner.intern("kk_long_to_uint")
+            case ("toUInt", ubyteType, uintType): interner.intern("kk_ubyte_to_uint")
+            case ("toUInt", ushortType, uintType): interner.intern("kk_ushort_to_uint")
+            case ("toUInt", charType, uintType): interner.intern("kk_char_to_uint")
             case ("toUInt", uintType, uintType), ("toUInt", ulongType, uintType): nil // identity
             case ("toLong", intType, longType): interner.intern("kk_int_to_long")
             case ("toLong", uintType, longType): interner.intern("kk_uint_to_long")
+            case ("toLong", ubyteType, longType): interner.intern("kk_ubyte_to_long")
+            case ("toLong", ushortType, longType): interner.intern("kk_ushort_to_long")
             case ("toLong", doubleType, longType): interner.intern("kk_double_to_long")
             case ("toLong", floatType, longType): interner.intern("kk_float_to_long")
+            case ("toLong", charType, longType): interner.intern("kk_char_to_long")
             case ("toLong", longType, longType), ("toLong", ulongType, longType): nil // identity
             case ("toULong", intType, ulongType): interner.intern("kk_int_to_ulong")
             case ("toULong", longType, ulongType): interner.intern("kk_long_to_ulong")
+            case ("toULong", ubyteType, ulongType): interner.intern("kk_ubyte_to_ulong")
+            case ("toULong", ushortType, ulongType): interner.intern("kk_ushort_to_ulong")
+            case ("toULong", charType, ulongType): interner.intern("kk_char_to_ulong")
             case ("toULong", uintType, ulongType): interner.intern("kk_uint_to_ulong")
             case ("toULong", ulongType, ulongType): nil // identity
             case ("toFloat", intType, floatType): interner.intern("kk_int_to_float")
@@ -469,6 +481,23 @@ extension CallLowerer {
             case ("toByte", longType, intType): interner.intern("kk_long_to_byte")
             case ("toShort", intType, intType): interner.intern("kk_int_to_short")
             case ("toShort", longType, intType): interner.intern("kk_long_to_short")
+            case ("toUByte", intType, ubyteType): interner.intern("kk_int_to_ubyte")
+            case ("toUByte", longType, ubyteType): interner.intern("kk_long_to_ubyte")
+            case ("toUByte", uintType, ubyteType): interner.intern("kk_uint_to_ubyte")
+            case ("toUByte", ulongType, ubyteType): interner.intern("kk_ulong_to_ubyte")
+            case ("toUByte", ubyteType, ubyteType): nil // identity
+            case ("toUShort", intType, ushortType): interner.intern("kk_int_to_ushort")
+            case ("toUShort", longType, ushortType): interner.intern("kk_long_to_ushort")
+            case ("toUShort", uintType, ushortType): interner.intern("kk_uint_to_ushort")
+            case ("toUShort", ulongType, ushortType): interner.intern("kk_ulong_to_ushort")
+            case ("toUShort", ushortType, ushortType): nil // identity
+            case ("toChar", intType, charType): interner.intern("kk_int_to_char")
+            case ("toChar", longType, charType): interner.intern("kk_long_to_char")
+            case ("toChar", uintType, charType): interner.intern("kk_uint_to_char")
+            case ("toChar", ulongType, charType): interner.intern("kk_ulong_to_char")
+            case ("toChar", ubyteType, charType): interner.intern("kk_ubyte_to_char")
+            case ("toChar", ushortType, charType): interner.intern("kk_ushort_to_char")
+            case ("toChar", charType, charType): nil // identity
             default: nil
             }
             if let callee = conversionCallee {

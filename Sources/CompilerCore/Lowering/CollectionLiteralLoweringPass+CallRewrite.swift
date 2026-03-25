@@ -81,6 +81,7 @@ extension CollectionLiteralLoweringPass {
         let fqName = resolved.fqName
         // Match against known stdlib collection factory FQNs
         return fqName == lookup.emptyListFQName
+            || fqName == lookup.emptyArrayFQName
             || fqName == lookup.listOfFQName
             || fqName == lookup.mutableListOfFQName
             || fqName == lookup.listOfNotNullFQName
@@ -166,23 +167,46 @@ extension CollectionLiteralLoweringPass {
             for instruction in function.body {
                 switch instruction {
                 case let .call(symbol, callee, arguments, result, canThrow, thrownResult, _):
-                    // --- Rewrite listOf/mutableListOf/emptyList → kk_list_of / kk_emptyList ---
+                    // --- Rewrite listOf/mutableListOf/emptyList/emptyArray → kk_list_of / kk_emptyList / kk_empty_array ---
+                    // --- Rewrite arrayOf/intArrayOf/... → kk_array_of ---
                     // Only rewrite calls whose symbol resolves to a known
                     // kotlin.collections.* factory to avoid accidentally
                     // lowering user-defined functions with the same name.
-                    if lookup.listFactoryNames.contains(callee),
+                    if (lookup.listFactoryNames.contains(callee) || lookup.arrayOfFactoryNames.contains(callee)),
                        isStdlibCollectionFactory(symbol: symbol, callee: callee, lookup: lookup, ctx: ctx) {
                         let count = arguments.count
                         if count == 0 && callee != lookup.mutableListOfName {
-                            // emptyList() / listOf() → kk_emptyList()
-                            loweredBody.append(.call(
-                                symbol: nil,
-                                callee: lookup.kkEmptyListName,
-                                arguments: [],
-                                result: result,
-                                canThrow: false,
-                                thrownResult: nil
-                            ))
+                            if callee == lookup.emptyListName {
+                                // emptyList() → kk_emptyList()
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: lookup.kkEmptyListName,
+                                    arguments: [],
+                                    result: result,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                            } else if callee == lookup.emptyArrayName {
+                                // emptyArray() → kk_empty_array()
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: lookup.kkEmptyArrayName,
+                                    arguments: [],
+                                    result: result,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                            } else {
+                                // listOf() → kk_emptyList()
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: lookup.kkEmptyListName,
+                                    arguments: [],
+                                    result: result,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                            }
                         } else if count == 0 {
                             // mutableListOf() → fresh instance via kk_list_of(null, 0)
                             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)

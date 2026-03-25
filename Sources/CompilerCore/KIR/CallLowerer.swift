@@ -1028,15 +1028,33 @@ final class CallLowerer {
         let runtimeCallee: InternedString? = switch (calleeStr, receiverType, boundType) {
         case ("toInt", sema.types.uintType, sema.types.intType): interner.intern("kk_uint_to_int")
         case ("toInt", sema.types.ulongType, sema.types.intType): interner.intern("kk_ulong_to_int")
+        case ("toInt", sema.types.ubyteType, sema.types.intType): interner.intern("kk_ubyte_to_int")
+        case ("toInt", sema.types.ushortType, sema.types.intType): interner.intern("kk_ushort_to_int")
         case ("toInt", sema.types.doubleType, sema.types.intType): interner.intern("kk_double_to_int")
         case ("toInt", sema.types.floatType, sema.types.intType): interner.intern("kk_float_to_int")
-        case ("toInt", sema.types.charType, sema.types.intType): nil
+        case ("toInt", sema.types.charType, sema.types.intType): interner.intern("kk_char_to_int")
         case ("toInt", sema.types.intType, sema.types.intType), ("toInt", sema.types.longType, sema.types.intType): nil
         case ("toLong", sema.types.intType, sema.types.longType): interner.intern("kk_int_to_long")
         case ("toLong", sema.types.uintType, sema.types.longType): interner.intern("kk_uint_to_long")
+        case ("toLong", sema.types.ubyteType, sema.types.longType): interner.intern("kk_ubyte_to_long")
+        case ("toLong", sema.types.ushortType, sema.types.longType): interner.intern("kk_ushort_to_long")
         case ("toLong", sema.types.doubleType, sema.types.longType): interner.intern("kk_double_to_long")
         case ("toLong", sema.types.floatType, sema.types.longType): interner.intern("kk_float_to_long")
+        case ("toLong", sema.types.charType, sema.types.longType): interner.intern("kk_char_to_long")
         case ("toLong", sema.types.longType, sema.types.longType), ("toLong", sema.types.ulongType, sema.types.longType): nil
+        case ("toUInt", sema.types.intType, sema.types.uintType): interner.intern("kk_int_to_uint")
+        case ("toUInt", sema.types.longType, sema.types.uintType): interner.intern("kk_long_to_uint")
+        case ("toUInt", sema.types.ubyteType, sema.types.uintType): interner.intern("kk_ubyte_to_uint")
+        case ("toUInt", sema.types.ushortType, sema.types.uintType): interner.intern("kk_ushort_to_uint")
+        case ("toUInt", sema.types.charType, sema.types.uintType): interner.intern("kk_char_to_uint")
+        case ("toUInt", sema.types.uintType, sema.types.uintType), ("toUInt", sema.types.ulongType, sema.types.uintType): nil
+        case ("toULong", sema.types.intType, sema.types.ulongType): interner.intern("kk_int_to_ulong")
+        case ("toULong", sema.types.longType, sema.types.ulongType): interner.intern("kk_long_to_ulong")
+        case ("toULong", sema.types.ubyteType, sema.types.ulongType): interner.intern("kk_ubyte_to_ulong")
+        case ("toULong", sema.types.ushortType, sema.types.ulongType): interner.intern("kk_ushort_to_ulong")
+        case ("toULong", sema.types.charType, sema.types.ulongType): interner.intern("kk_char_to_ulong")
+        case ("toULong", sema.types.uintType, sema.types.ulongType): interner.intern("kk_uint_to_ulong")
+        case ("toULong", sema.types.ulongType, sema.types.ulongType): nil
         case ("toFloat", sema.types.intType, sema.types.floatType): interner.intern("kk_int_to_float")
         case ("toFloat", sema.types.longType, sema.types.floatType): interner.intern("kk_long_to_float")
         case ("toFloat", sema.types.doubleType, sema.types.floatType): interner.intern("kk_double_to_float")
@@ -1049,7 +1067,23 @@ final class CallLowerer {
         case ("toByte", sema.types.longType, sema.types.intType): interner.intern("kk_long_to_byte")
         case ("toShort", sema.types.intType, sema.types.intType): interner.intern("kk_int_to_short")
         case ("toShort", sema.types.longType, sema.types.intType): interner.intern("kk_long_to_short")
-        case ("toChar", sema.types.intType, sema.types.charType): nil
+        case ("toUByte", sema.types.intType, sema.types.ubyteType): interner.intern("kk_int_to_ubyte")
+        case ("toUByte", sema.types.longType, sema.types.ubyteType): interner.intern("kk_long_to_ubyte")
+        case ("toUByte", sema.types.uintType, sema.types.ubyteType): interner.intern("kk_uint_to_ubyte")
+        case ("toUByte", sema.types.ulongType, sema.types.ubyteType): interner.intern("kk_ulong_to_ubyte")
+        case ("toUByte", sema.types.ubyteType, sema.types.ubyteType): nil
+        case ("toUShort", sema.types.intType, sema.types.ushortType): interner.intern("kk_int_to_ushort")
+        case ("toUShort", sema.types.longType, sema.types.ushortType): interner.intern("kk_long_to_ushort")
+        case ("toUShort", sema.types.uintType, sema.types.ushortType): interner.intern("kk_uint_to_ushort")
+        case ("toUShort", sema.types.ulongType, sema.types.ushortType): interner.intern("kk_ulong_to_ushort")
+        case ("toUShort", sema.types.ushortType, sema.types.ushortType): nil
+        case ("toChar", sema.types.intType, sema.types.charType): interner.intern("kk_int_to_char")
+        case ("toChar", sema.types.longType, sema.types.charType): interner.intern("kk_long_to_char")
+        case ("toChar", sema.types.uintType, sema.types.charType): interner.intern("kk_uint_to_char")
+        case ("toChar", sema.types.ulongType, sema.types.charType): interner.intern("kk_ulong_to_char")
+        case ("toChar", sema.types.ubyteType, sema.types.charType): interner.intern("kk_ubyte_to_char")
+        case ("toChar", sema.types.ushortType, sema.types.charType): interner.intern("kk_ushort_to_char")
+        case ("toChar", sema.types.charType, sema.types.charType): nil
         default: nil
         }
 
