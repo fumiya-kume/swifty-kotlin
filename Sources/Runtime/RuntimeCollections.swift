@@ -209,9 +209,9 @@ private func listIteratorCanGoBack(_ iter: RuntimeListIteratorBox) -> Bool {
 @_cdecl("kk_list_iterator_hasPrevious")
 public func kk_list_iterator_hasPrevious(_ iterRaw: Int) -> Int {
     guard let iter = runtimeListIteratorBox(from: iterRaw) else {
-        return kk_box_bool(0)
+        return 0
     }
-    return kk_box_bool(listIteratorCanGoBack(iter) ? 1 : 0)
+    return listIteratorCanGoBack(iter) ? 1 : 0
 }
 
 @_cdecl("kk_list_iterator_previous")
@@ -222,6 +222,8 @@ public func kk_list_iterator_previous(_ iterRaw: Int) -> Int {
     guard listIteratorCanGoBack(iter) else {
         return 0
     }
+    // Always decrement index and return the element at the new position
+    // This matches the standard ListIterator behavior
     iter.index -= 1
     return iter.elements[iter.index]
 }

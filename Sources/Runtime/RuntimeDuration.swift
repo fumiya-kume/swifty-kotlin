@@ -277,6 +277,26 @@ public func kk_measureTime(_ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeM
     return registerRuntimeObject(box)
 }
 
+@_cdecl("kk_measureTimedValue")
+public func kk_measureTimedValue(_ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let start = DispatchTime.now().uptimeNanoseconds
+    var thrown = 0
+    let result = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: closureRaw, outThrown: &thrown)
+    let end = DispatchTime.now().uptimeNanoseconds
+    if thrown != 0 {
+        outThrown?.pointee = thrown
+        return 0
+    }
+    // Compute delta in UInt64 first (always non-negative), then clamp to Int64 range.
+    let delta = end &- start
+    let elapsedNs = delta <= UInt64(Int64.max) ? Int64(delta) : Int64.max
+    let durationBox = RuntimeDurationBox(nanoseconds: elapsedNs)
+    let durationHandle = registerRuntimeObject(durationBox)
+    let timedValueBox = RuntimeTimedValueBox(value: result, duration: durationHandle)
+    return registerRuntimeObject(timedValueBox)
+}
+
 // MARK: - TimedValue (STDLIB-660)
 
 /// Runtime representation of `kotlin.time.TimedValue<T>`.

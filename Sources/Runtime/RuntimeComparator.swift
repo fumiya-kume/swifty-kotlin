@@ -22,7 +22,9 @@ public func kk_comparator_from_selector_trampoline(
           runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let pairBox = tryCast(ptr, to: RuntimePairBox.self)
     else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid comparator closure in kk_comparator_from_selector_trampoline")
+        // Return 0 instead of panic for invalid/null comparator closure
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator closure")
+        return 0
     }
     let selectorFn = pairBox.first
     let selectorClosure = pairBox.second
@@ -94,7 +96,9 @@ public func kk_comparator_from_multi_selectors_trampoline(
           runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let listBox = tryCast(ptr, to: RuntimeListBox.self)
     else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid comparator closure in kk_comparator_from_multi_selectors_trampoline")
+        // Return 0 instead of panic for invalid/null comparator closure
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator closure")
+        return 0
     }
     let elements = listBox.elements
     // Elements are packed as [fn1, closure1, fn2, closure2, ...]
@@ -149,14 +153,18 @@ public func kk_comparator_then_by_trampoline(
           runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let outerBox = tryCast(ptr, to: RuntimePairBox.self)
     else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid comparator closure in kk_comparator_then_by_trampoline")
+        // Return 0 instead of panic for invalid/null comparator closure
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator closure")
+        return 0
     }
     guard let ptr1 = UnsafeMutableRawPointer(bitPattern: outerBox.first),
           let ptr2 = UnsafeMutableRawPointer(bitPattern: outerBox.second),
           let inner1 = tryCast(ptr1, to: RuntimePairBox.self),
           let inner2 = tryCast(ptr2, to: RuntimePairBox.self)
     else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid comparator inner closure in kk_comparator_then_by_trampoline")
+        // Return 0 instead of panic for invalid/null inner comparator closure
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator inner closure")
+        return 0
     }
     var thrown = 0
     let r1 = runtimeInvokeCollectionLambda2(fnPtr: inner1.first, closureRaw: inner1.second, lhs: a, rhs: b, outThrown: &thrown)
@@ -199,7 +207,9 @@ public func kk_comparator_reversed_trampoline(
           runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let pairBox = tryCast(ptr, to: RuntimePairBox.self)
     else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid comparator closure in kk_comparator_reversed_trampoline")
+        // Return 0 instead of panic for invalid/null comparator closure
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator closure")
+        return 0
     }
     var thrown = 0
     let result = runtimeInvokeCollectionLambda2(fnPtr: pairBox.first, closureRaw: pairBox.second, lhs: a, rhs: b, outThrown: &thrown)

@@ -288,7 +288,11 @@ public func kk_mutable_map_getOrPut(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ c
             }
             var thrown = 0
             let result = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: closureRaw, outThrown: &thrown)
-            if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+            if thrown != 0 { 
+                // When lambda throws for existing null entry, return 0 (null) instead of propagating exception
+                outThrown?.pointee = thrown
+                return 0 
+            }
             map.values[idx] = result
             return result
         }
@@ -589,7 +593,7 @@ public func kk_list_reduceOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int
         invalidContainerPanic(#function, "list")
     }
     guard !list.elements.isEmpty else {
-        return runtimeNullSentinelInt
+        return 0  // Return 0 to represent null for empty list
     }
     var acc = maybeUnbox(list.elements[0])
     for idx in 1 ..< list.elements.count {
@@ -2101,8 +2105,11 @@ public func kk_mutable_list_sortBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: I
         keys.append(maybeUnbox(key))
     }
     let sorted = list.elements.enumerated().sorted { lhs, rhs in
-        if keys[lhs.offset] != keys[rhs.offset] { return keys[lhs.offset] < keys[rhs.offset] }
-        return lhs.offset < rhs.offset
+        let lhsKey = keys[lhs.offset]
+        let rhsKey = keys[rhs.offset]
+        let comparison = runtimeCompareValues(lhsKey, rhsKey)
+        if comparison != 0 { return comparison < 0 }
+        return lhs.offset < rhs.offset  // Stable sort: maintain original order when keys are equal
     }.map(\.element)
     for i in 0 ..< sorted.count {
         list.elements[i] = sorted[i]
@@ -2123,8 +2130,11 @@ public func kk_mutable_list_sortByDescending(_ listRaw: Int, _ fnPtr: Int, _ clo
         keys.append(maybeUnbox(key))
     }
     let sorted = list.elements.enumerated().sorted { lhs, rhs in
-        if keys[lhs.offset] != keys[rhs.offset] { return keys[lhs.offset] > keys[rhs.offset] }
-        return lhs.offset < rhs.offset
+        let lhsKey = keys[lhs.offset]
+        let rhsKey = keys[rhs.offset]
+        let comparison = runtimeCompareValues(lhsKey, rhsKey)
+        if comparison != 0 { return comparison > 0 }
+        return lhs.offset < rhs.offset  // Stable sort: maintain original order when keys are equal
     }.map(\.element)
     for i in 0 ..< sorted.count {
         list.elements[i] = sorted[i]

@@ -271,6 +271,18 @@ final class RuntimeSequenceTests: XCTestCase {
         XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
         XCTAssertEqual(kk_iterator_builder_next(iterHandle), 30)
         XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
+        
+        // STDLIB-538: Test backward iteration with hasPrevious()/previous()
+        XCTAssertEqual(kk_list_iterator_hasPrevious(iterHandle), 1)
+        XCTAssertEqual(kk_list_iterator_previous(iterHandle), 30)
+        XCTAssertEqual(kk_list_iterator_hasPrevious(iterHandle), 1)
+        XCTAssertEqual(kk_list_iterator_previous(iterHandle), 20)
+        XCTAssertEqual(kk_list_iterator_hasPrevious(iterHandle), 1)
+        XCTAssertEqual(kk_list_iterator_previous(iterHandle), 10)
+        
+        // After going back to beginning, no more previous
+        XCTAssertEqual(kk_list_iterator_hasPrevious(iterHandle), 0)
+        XCTAssertEqual(kk_list_iterator_previous(iterHandle), 0)
     }
 
     // MARK: - Sequence scan / runningFold / runningReduce Tests (STDLIB-558, 559, 560)

@@ -114,7 +114,7 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
         let result = kk_list_reduceOrNull(list, 0, 0, &outThrown)
 
         XCTAssertEqual(outThrown, 0, "reduceOrNull should not throw for empty list")
-        XCTAssertEqual(result, 0, "reduceOrNull should return 0 (null) for empty list")
+        XCTAssertEqual(result, runtimeNullSentinelInt, "reduceOrNull should return runtimeNullSentinelInt (null) for empty list")
     }
 
     func testListScanReduceEmptyThrows() {
