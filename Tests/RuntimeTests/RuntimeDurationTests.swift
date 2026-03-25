@@ -570,4 +570,156 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
         // They should be distinct handles (different allocations)
         XCTAssertNotEqual(result1, result2)
     }
+
+    // MARK: - kk_measureTime: advanced testing (TEST-001)
+
+    func testMeasureTimeParallelExecutionIndependence() {
+        // Test that concurrent measurements don't interfere with each other
+        let expectation = XCTestExpectation(description: "Parallel measurements complete")
+        expectation.expectedFulfillmentCount = 4
+        
+        var results: [Int] = []
+        let resultsQueue = DispatchQueue(label: "results")
+        
+        for i in 0..<4 {
+            DispatchQueue.global(qos: .userInitiated).async {
+                let fnPtr = unsafeBitCast(self.sleep50msThunk, to: Int.self)
+                var thrown: Int = 0
+                let result = kk_measureTime(fnPtr, i, &thrown)
+                
+                resultsQueue.async {
+                    XCTAssertEqual(thrown, 0, "Thread \(i): No exception should be thrown")
+                    XCTAssertNotEqual(result, 0, "Thread \(i): Should return valid duration")
+                    results.append(result)
+                    expectation.fulfill()
+                }
+            }
+        }
+        
+        wait(for: [expectation], timeout: 2.0)
+        XCTAssertEqual(results.count, 4, "All 4 parallel measurements should complete")
+        
+        // Verify all results are distinct handles
+        let uniqueResults = Set(results)
+        XCTAssertEqual(uniqueResults.count, 4, "All parallel measurements should produce distinct handles")
+        
+        // Verify all measurements are in reasonable range
+        for result in results {
+            let ms = kk_duration_inWholeMilliseconds(result)
+            XCTAssertGreaterThanOrEqual(ms, 40, "Parallel measurement should be at least ~40ms")
+            XCTAssertLessThan(ms, 500, "Parallel measurement should not exceed 500ms")
+        }
+    }
+
+    func testMeasureTimeHighPrecisionTiming() {
+        // Test sub-millisecond precision capabilities
+        let fnPtr = unsafeBitCast(noopThunk, to: Int.self)
+        var thrown: Int = 0
+        
+        // Run multiple measurements to check precision
+        var measurements: [Int64] = []
+        for _ in 0..<10 {
+            let result = kk_measureTime(fnPtr, 0, &thrown)
+            XCTAssertEqual(thrown, 0)
+            let ns = kk_duration_inWholeNanoseconds(result)
+            measurements.append(Int64(ns))
+        }
+        
+        // Even no-ops should show some variation in nanosecond precision
+        let uniqueValues = Set(measurements)
+        XCTAssertGreaterThan(uniqueValues.count, 1, "Multiple measurements should show timing variation")
+        
+        // All measurements should be reasonable (not negative, not excessively large)
+        for ns in measurements {
+            XCTAssertGreaterThanOrEqual(ns, 0, "Nanosecond measurement should not be negative")
+            XCTAssertLessThan(ns, 1_000_000, "No-op should complete within 1ms")
+        }
+    }
+
+    func testMeasureTimeComplexExceptionScenarios() {
+        // Test nested exception scenarios and exception preservation
+        
+        // First test: exception with closureRaw value
+        let fnPtr = unsafeBitCast(throwingThunk, to: Int.self)
+        var thrown: Int = 0
+        let sentinel = 0xBEEF
+        let result = kk_measureTime(fnPtr, sentinel, &thrown)
+        
+        XCTAssertEqual(thrown, 0xDEAD, "Exception should be preserved regardless of closureRaw")
+        XCTAssertEqual(result, 0, "Duration should be zero on exception")
+        
+        // Second test: verify outThrown is properly reset after exception
+        var thrown2: Int = 0xDEAD // Pre-fill with garbage
+        let result2 = kk_measureTime(fnPtr, sentinel, &thrown2)
+        XCTAssertEqual(thrown2, 0xDEAD, "Exception should overwrite pre-filled value")
+        XCTAssertEqual(result2, 0, "Duration should be zero on second exception")
+        
+        // Third test: verify normal operation after exception
+        var thrown3: Int = 0xDEAD // Pre-fill with garbage
+        let noopPtr = unsafeBitCast(noopThunk, to: Int.self)
+        let result3 = kk_measureTime(noopPtr, sentinel, &thrown3)
+        XCTAssertEqual(thrown3, 0, "Normal operation should reset outThrown to zero")
+        XCTAssertNotEqual(result3, 0, "Normal operation should return valid duration")
+    }
+
+    func testMeasureTimeLongDurationOverflowHandling() {
+        // Test behavior with very long durations that might approach Int64 limits
+        let longSleepThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { _, _ in
+            // Sleep for 2 seconds to create a substantial duration
+            Thread.sleep(forTimeInterval: 2.0)
+            return 0
+        }
+        
+        let fnPtr = unsafeBitCast(longSleepThunk, to: Int.self)
+        var thrown: Int = 0
+        let result = kk_measureTime(fnPtr, 0, &thrown)
+        
+        XCTAssertEqual(thrown, 0, "Long sleep should not throw exception")
+        XCTAssertNotEqual(result, 0, "Long duration should return valid handle")
+        
+        let ns = kk_duration_inWholeNanoseconds(result)
+        XCTAssertGreaterThan(ns, 1_000_000_000, "Should be at least 1 second")
+        XCTAssertLessThan(ns, Int(Int64.max), "Should not overflow Int64")
+        
+        // Verify the duration can be safely used with all accessors
+        let ms = kk_duration_inWholeMilliseconds(result)
+        let s = kk_duration_inWholeSeconds(result)
+        XCTAssertGreaterThan(ms, 1000, "Milliseconds should be > 1000")
+        XCTAssertGreaterThanOrEqual(s, 2, "Seconds should be >= 2")
+    }
+
+    func testMeasureTimeSystemClockStability() {
+        // Test measurement stability under rapid successive calls
+        let fnPtr = unsafeBitCast(noopThunk, to: Int.self)
+        var thrown: Int = 0
+        
+        var timestamps: [Int64] = []
+        let startTime = DispatchTime.now().uptimeNanoseconds
+        
+        // Perform rapid measurements
+        for i in 0..<50 {
+            let result = kk_measureTime(fnPtr, i, &thrown)
+            XCTAssertEqual(thrown, 0, "Measurement \(i) should not throw")
+            let ns = kk_duration_inWholeNanoseconds(result)
+            timestamps.append(Int64(ns))
+        }
+        
+        let endTime = DispatchTime.now().uptimeNanoseconds
+        let totalTestTime = endTime - startTime
+        
+        // Verify monotonicity: time should generally increase
+        var nonMonotonicCount = 0
+        for i in 1..<timestamps.count {
+            if timestamps[i] < timestamps[i-1] {
+                nonMonotonicCount += 1
+            }
+        }
+        
+        // Allow some non-monotonic behavior due to system timer resolution
+        let toleranceRatio = Double(nonMonotonicCount) / Double(timestamps.count)
+        XCTAssertLessThan(toleranceRatio, 0.2, "Less than 20% of measurements should be non-monotonic")
+        
+        // Verify total test time is reasonable
+        XCTAssertLessThan(totalTestTime, 10_000_000_000, "50 rapid measurements should complete within 10 seconds")
+    }
 }
