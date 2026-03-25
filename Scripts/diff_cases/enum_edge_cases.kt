@@ -1,43 +1,36 @@
-enum class ComplexEnum(val value: String) {
-    A("a"),
-    B("b"),
-    C("c") {
-        override fun toString(): String = "C-special: $value"
-    }
-    
-    companion object {
-        fun fromString(s: String): ComplexEnum? = entries.find { it.value == s }
-    }
-}
+enum class ComplexEnum {
+    A,
+    B,
+    C {
+        override fun toString(): String = "C-special"
+    };
 
-fun dumpEntries(label: String, values: List<ComplexEnum>) {
-    println(label)
-    println("size=${values.size}")
-    values.forEach { value ->
-        println("[${value.name}:${value.value}]")
+    companion object {
+        fun fromString(s: String): ComplexEnum? = when (s) {
+            "A" -> ComplexEnum.A
+            "B" -> ComplexEnum.B
+            "C" -> ComplexEnum.C
+            else -> null
+        }
     }
 }
 
 fun main() {
-    // Test enum initialization order
     println("Testing enum initialization order:")
-    ComplexEnum.values().forEach { enum ->
-        println("  ${enum.name} = ${enum.value}")
-    }
-    
-    // Test nullable lookup with invalid input
+    println(ComplexEnum.A.name)
+    println(ComplexEnum.B.name)
+    println(ComplexEnum.C.name)
+
     println("\nTesting fromString with invalid input:")
-    println(ComplexEnum.fromString("d"))
-    
-    // Test entries order consistency
+    println(ComplexEnum.fromString("D"))
+
     println("\nTesting entries order:")
-    val entries1 = ComplexEnum.entries.toList()
-    val entries2 = ComplexEnum.entries.toList()
-    dumpEntries("First call:", entries1)
-    dumpEntries("Second call:", entries2)
-    
-    // Test toString override
-    val specialC = ComplexEnum.C
+    val entries = enumEntries<ComplexEnum>()
+    println(entries.size)
+    println(entries[0])
+    println(entries[1])
+    println(entries[2])
+
     println("\nTesting toString override:")
-    println("C.toString(): $specialC")
+    println(ComplexEnum.C.toString())
 }

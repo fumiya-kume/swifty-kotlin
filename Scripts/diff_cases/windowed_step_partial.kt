@@ -195,7 +195,7 @@ fun main() {
     println("\n=== Large collection performance ===")
     
     val large = (1..50).toList()
-    val largeWindows = large.windowed(5, 3, true) { window.size }
+    val largeWindows = large.windowed(5, 3, true) { it.size }
     println("large windows sizes: ${largeWindows.take(5)}")
     
     // Verify last window is partial when needed

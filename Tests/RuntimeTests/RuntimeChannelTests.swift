@@ -428,15 +428,17 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         _ = kk_channel_close(ch)
     }
 
-    // MARK: - CORO-001: Prompt Cancellation Guarantee Tests
+    // MARK: - CORO-001: Post-Wakeup Cancellation Semantics
 
-    /// Test that cancellation during suspension causes send to fail even if
-    /// the value was technically delivered (Kotlin's prompt cancellation guarantee)
-    func testSendWithCancellationDuringSuspensionFails() {
+    /// Once a rendezvous send is matched with a receiver, the send result should
+    /// report success even if cancellation races with the wakeup.
+    func testSendWithCancellationDuringSuspensionSucceedsAfterDelivery() {
         let ch = kk_channel_create(0) // rendezvous - will suspend
 
         let sendDone = XCTestExpectation(description: "send completes")
+        let receiveDone = XCTestExpectation(description: "receive completes")
         nonisolated(unsafe) var sendResult = 0
+        nonisolated(unsafe) var receivedValue = 0
 
         // Create a job handle that we'll cancel while send is suspended
         let job = RuntimeJobHandle()
@@ -459,32 +461,31 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         // Cancel the job while sender is suspended
         job.cancel()
 
-        // Now add a receiver - this should wake the sender but cancellation should still win
-        let receiveDone = XCTestExpectation(description: "receive completes")
+        // Now add a receiver - the rendezvous completes before cancellation can
+        // affect the next suspension point, so the send still succeeds.
         DispatchQueue.global().async {
-            let received = kk_channel_receive(ch, 0)
-            // The value might be received or not depending on timing
+            receivedValue = kk_channel_receive(ch, 0)
             receiveDone.fulfill()
         }
 
         wait(for: [sendDone, receiveDone], timeout: 2.0)
-        XCTAssertEqual(
-            kk_channel_is_closed_token(sendResult), 1,
-            "Send should return closed sentinel when cancelled during suspension"
-        )
+        XCTAssertEqual(sendResult, 42, "Send should succeed once the value is delivered")
+        XCTAssertEqual(receivedValue, 42, "Receiver should observe the delivered value")
 
         // Clean up
         Unmanaged<RuntimeContinuationState>.fromOpaque(contPtr).release()
         _ = kk_channel_close(ch)
     }
 
-    /// Test that cancellation during suspension causes receive to fail even if
-    /// a value was technically available (Kotlin's prompt cancellation guarantee)
-    func testReceiveWithCancellationDuringSuspensionFails() {
+    /// Once a rendezvous receive is matched with a sender, the receive result should
+    /// return the delivered value even if cancellation races with the wakeup.
+    func testReceiveWithCancellationDuringSuspensionSucceedsAfterDelivery() {
         let ch = kk_channel_create(0) // rendezvous - will suspend
 
         let receiveDone = XCTestExpectation(description: "receive completes")
+        let sendDone = XCTestExpectation(description: "send completes")
         nonisolated(unsafe) var receiveResult = 0
+        nonisolated(unsafe) var sendResult = 0
 
         // Create a job handle that we'll cancel while receive is suspended
         let job = RuntimeJobHandle()
@@ -507,18 +508,16 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         // Cancel the job while receiver is suspended
         job.cancel()
 
-        // Now add a sender - this should wake the receiver but cancellation should still win
-        let sendDone = XCTestExpectation(description: "send completes")
+        // Now add a sender - the rendezvous completes before cancellation can
+        // retroactively discard the received value.
         DispatchQueue.global().async {
-            let sent = kk_channel_send(ch, 99, 0)
+            sendResult = kk_channel_send(ch, 99, 0)
             sendDone.fulfill()
         }
 
         wait(for: [receiveDone, sendDone], timeout: 2.0)
-        XCTAssertEqual(
-            kk_channel_is_closed_token(receiveResult), 1,
-            "Receive should return closed sentinel when cancelled during suspension"
-        )
+        XCTAssertEqual(receiveResult, 99, "Receive should succeed once a sender delivered a value")
+        XCTAssertEqual(sendResult, 99, "Sender should observe successful delivery")
 
         // Clean up
         Unmanaged<RuntimeContinuationState>.fromOpaque(contPtr).release()

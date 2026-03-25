@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2025-06-18
+最終更新: 2026-03-25
 
 ## 運用ルール
 
@@ -30,8 +30,6 @@
 
 #### C. kotlin.collections — 単一 API 単位
 
-- [x] STDLIB-532: `Map?.orEmpty()` 拡張
-  - **完了**: ✅ ランタイム実装、ABI宣言、コンパイラ対応、テストケースがすべて完了済み
 - [ ] STDLIB-533: `List?.orEmpty()` 拡張
 - [ ] STDLIB-540: `LinkedList` 型エイリアスの golden テスト（`ArrayList` / `HashMap` / `LinkedHashMap` も同ファイルでスタブ登録済み）
 - [ ] STDLIB-541: `HashMap` 型エイリアスの golden テスト
@@ -48,10 +46,6 @@
 
 
 #### G. kotlin.time / kotlin.system
-
-- [ ] STDLIB-657: `exitProcess(Int)` の `Nothing` 終了セマンティクスと下げ（`RuntimeSystem.swift`）
-- [ ] STDLIB-660: `measureTimedValue { }` の stub / Lowering / Runtime（`RuntimeDuration.swift` の STDLIB-231 相当コメント参照）
-- [ ] STDLIB-661: `Duration.inWholeMicroseconds` の Sema / `kk_duration_*` / ABI
 
 #### H. kotlin.Result / kotlin.contracts
 

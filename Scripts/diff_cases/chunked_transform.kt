@@ -143,7 +143,7 @@ fun main() {
     
     // Large collection
     val large = (1..100).toList()
-    val largeChunked = large.chunked(10, 5) { chunk.size }
+    val largeChunked = large.chunked(10, 5) { it.size }
     println("large chunked sizes: ${largeChunked.take(5)}")
     
     // Verify chunk contents

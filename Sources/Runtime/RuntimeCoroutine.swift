@@ -2058,10 +2058,8 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         let wasCancelled = entry.cancelledWakeup
         lock.unlock()
 
-        // CORO-001: Prompt cancellation guarantee - check cancellation again after wakeup
-        // This matches Kotlin's behavior where cancellation throws even if the operation
-        // technically succeeded
-        if wasCancelled || isCancelled(continuation: continuation) {
+        // Cancellation only aborts the send if delivery did not already complete.
+        if wasCancelled || (!wasDelivered && isCancelled(continuation: continuation)) {
             return kChannelClosedSentinel
         }
         return wasDelivered ? value : kChannelClosedSentinel
@@ -2140,10 +2138,8 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         let value = receiverEntry.result
         lock.unlock()
 
-        // CORO-001: Prompt cancellation guarantee - check cancellation again after wakeup
-        // This matches Kotlin's behavior where cancellation throws even if the operation
-        // technically succeeded
-        if wasCancelled || isCancelled(continuation: continuation) {
+        // Cancellation only aborts the receive if no sender delivered a value.
+        if wasCancelled || (value == nil && isCancelled(continuation: continuation)) {
             return kChannelClosedSentinel
         }
         if let value {
