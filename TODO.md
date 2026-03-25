@@ -4,9 +4,9 @@
 
 ## 運用ルール
 
-- `TODO.md` は未完了タスクのみを管理する。完了タスクは Git 履歴を参照する。
+- `TODO.md` は未完了タスクを主に管理しつつ、直近で完了した大きめの項目は `[x]` で残してよい。
 - タスクIDはカテゴリ接頭辞 (`LEX/TYPE/EXPR/CTRL/DECL/CLASS/PROP/FUNC/GEN/NULL/CORO/STDLIB/ANNO/TOOL/MPP`) + 3桁連番を使用する。
-- 完了済みタスクを参照する場合は `既存実装済み` と記載する。
+- 完了済みタスクを参照する場合は `[x]` または `既存実装済み` のどちらかで明示する。
 - 共通完了条件（全タスク共通）:
   1. `Scripts/diff_kotlinc.sh` が exit 0 かつ stdout 完全一致
   2. golden テストが byte 一致

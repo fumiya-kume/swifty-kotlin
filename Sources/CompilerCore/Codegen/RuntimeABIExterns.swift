@@ -3062,6 +3062,7 @@ public enum RuntimeABIExterns {
         // Duration / measureTime / measureTimedValue (STDLIB-230/231/660)
         all += [
             kk_measureTime,
+            kk_measureTimedValue,
             kk_duration_inWholeMilliseconds,
             kk_duration_inWholeSeconds,
             kk_duration_inWholeMinutes,

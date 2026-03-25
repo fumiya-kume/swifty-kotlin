@@ -9,4 +9,12 @@ fun main() {
 
     words.sortByDescending { it.length }
     println(words)
+
+    val numbers = mutableListOf(9, 10, 1, 20, 2)
+    numbers.sortBy { it }
+    println(numbers)
+
+    numbers.sortByDescending { it }
+    println(numbers)
+
 }

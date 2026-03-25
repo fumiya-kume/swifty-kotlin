@@ -2127,7 +2127,7 @@ public func kk_mutable_list_sortBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: I
     let sorted = list.elements.enumerated().sorted { lhs, rhs in
         let lhsKey = keys[lhs.offset]
         let rhsKey = keys[rhs.offset]
-        let comparison = runtimeCompareValues(lhsKey, rhsKey)
+        let comparison = kk_compareValues(lhsKey, rhsKey, nil)
         if comparison != 0 { return comparison < 0 }
         return lhs.offset < rhs.offset  // Stable sort: maintain original order when keys are equal
     }.map(\.element)
@@ -2152,7 +2152,7 @@ public func kk_mutable_list_sortByDescending(_ listRaw: Int, _ fnPtr: Int, _ clo
     let sorted = list.elements.enumerated().sorted { lhs, rhs in
         let lhsKey = keys[lhs.offset]
         let rhsKey = keys[rhs.offset]
-        let comparison = runtimeCompareValues(lhsKey, rhsKey)
+        let comparison = kk_compareValues(lhsKey, rhsKey, nil)
         if comparison != 0 { return comparison > 0 }
         return lhs.offset < rhs.offset  // Stable sort: maintain original order when keys are equal
     }.map(\.element)
