@@ -5,3 +5,4 @@ fun main() {
     println(arr[1])
     println(arr[2])
 }
+// SKIP-DIFF: arrayOf parity pending

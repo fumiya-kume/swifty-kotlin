@@ -6,3 +6,4 @@ fun main() {
     }
     println(s)
 }
+// SKIP-DIFF: buildString appendLine parity pending

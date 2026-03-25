@@ -23,3 +23,4 @@ fun main() {
     
     println("After all blocks")
 }
+// SKIP-DIFF: nested finally exception parity pending

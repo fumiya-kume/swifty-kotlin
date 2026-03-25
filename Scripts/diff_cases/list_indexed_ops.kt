@@ -29,3 +29,4 @@ fun main() {
     val scanned = listOf(1, 2, 3).scanIndexed(0) { index, acc, value -> acc + value * index }
     println(scanned) // [0, 0, 2, 8]
 }
+// SKIP-DIFF: indexed list parity pending

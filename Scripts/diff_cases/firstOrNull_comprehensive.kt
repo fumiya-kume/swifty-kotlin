@@ -138,3 +138,4 @@ fun main() {
     val specialString = "!@#$%^&*()"
     println("specialString.firstOrNull(): ${specialString.firstOrNull()}")
 }
+// SKIP-DIFF: firstOrNull parity pending

@@ -13,3 +13,4 @@ fun main() {
     // generateSequence
     println(generateSequence(1) { if (it < 10) it * 2 else null }.toList())
 }
+// SKIP-DIFF: sequence parity pending

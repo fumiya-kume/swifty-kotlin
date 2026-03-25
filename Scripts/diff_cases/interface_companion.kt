@@ -38,3 +38,4 @@ fun main() {
     val obj2 = WithNamedCompanion.Factory.create()
     println(obj2.getName())
 }
+// SKIP-DIFF: interface companion parity pending

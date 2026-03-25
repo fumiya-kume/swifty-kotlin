@@ -1,4 +1,3 @@
-// SKIP-DIFF: nested List.toString() parity for windowed outputs is still unstable
 fun main() {
     // Comprehensive windowed(size, step, partialWindows) tests
     
@@ -205,3 +204,4 @@ fun main() {
     println("last windows: $lastWindows")
     println("last window size: ${lastWindows.last().size}")
 }
+// SKIP-DIFF: nested List.toString() parity for windowed outputs is still unstable

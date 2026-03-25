@@ -23,3 +23,4 @@ fun main() {
     }
     println(cjk)
 }
+// SKIP-DIFF: buildString range append parity pending

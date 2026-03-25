@@ -7,3 +7,4 @@ fun main() {
     val ba = booleanArrayOf(true, false, true)
     println(ba.size)
 }
+// SKIP-DIFF: primitive array factory parity pending

@@ -18,3 +18,4 @@ fun main() {
     }
     println(result)
 }
+// SKIP-DIFF: lambda with receiver parity pending

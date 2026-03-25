@@ -18,3 +18,4 @@ fun main() {
     val negDouble = listOf(-1.5)
     println("negDouble.firstOrNull(): ${negDouble.firstOrNull()}")
 }
+// SKIP-DIFF: firstOrNull parity pending

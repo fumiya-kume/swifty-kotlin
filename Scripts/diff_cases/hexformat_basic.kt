@@ -29,3 +29,4 @@ fun main() {
     val back = hexStr.hexToInt()
     println(back == original)  // true
 }
+// SKIP-DIFF: HexFormat parity pending

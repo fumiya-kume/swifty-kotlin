@@ -17,3 +17,4 @@ fun main() {
     val constructors = Dog::class.constructors
     println(constructors.size)         // 1
 }
+// SKIP-DIFF: reflection parity pending

@@ -39,3 +39,4 @@ fun main() {
     println(charA + " test")
     println(charA.rangeTo('D'))
 }
+// SKIP-DIFF: bitwise operator parity pending

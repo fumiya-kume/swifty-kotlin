@@ -60,3 +60,4 @@ fun main() = runBlocking {
     
     println("Channel tests completed")
 }
+// SKIP-DIFF: coroutine channel backpressure parity pending

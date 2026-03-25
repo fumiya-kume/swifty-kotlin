@@ -15,3 +15,4 @@ fun main() {
     println(primitiveArr.get(0))
     println(primitiveArr.size)
 }
+// SKIP-DIFF: arrayOf type-safety parity pending

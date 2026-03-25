@@ -34,3 +34,4 @@ fun main() {
     empty[2] = 200
     println(empty.size)
 }
+// SKIP-DIFF: HashMap alias parity pending

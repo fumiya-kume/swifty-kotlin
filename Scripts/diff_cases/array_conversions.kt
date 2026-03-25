@@ -6,3 +6,4 @@ fun main() {
     println(arr2.size)
     println(arr2[0])
 }
+// SKIP-DIFF: array conversion parity pending

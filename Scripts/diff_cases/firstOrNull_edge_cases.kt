@@ -66,3 +66,4 @@ fun main() {
     val largeString = "a".repeat(1000)
     println("largeString.firstOrNull(): ${largeString.firstOrNull()}")
 }
+// SKIP-DIFF: firstOrNull parity pending

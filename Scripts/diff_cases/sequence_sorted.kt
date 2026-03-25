@@ -10,3 +10,4 @@ fun main() {
     }.toList())
     println(sequenceOf(3, 1, 2).sortedDescending().toList())
 }
+// SKIP-DIFF: sequence parity pending

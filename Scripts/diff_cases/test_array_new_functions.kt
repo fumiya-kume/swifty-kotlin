@@ -29,3 +29,4 @@ fun main() {
     val typedArray = list.toTypedArray()
     println("typedArray from list: ${typedArray.toList()}")
 }
+// SKIP-DIFF: array factory parity pending

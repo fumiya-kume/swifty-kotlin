@@ -1,4 +1,3 @@
-// SKIP-DIFF: bit-manipulation runtime parity is still being stabilized; covered by RuntimeBitCountTests
 fun main() {
     // countOneBits
     println(0.countOneBits())
@@ -65,3 +64,4 @@ fun main() {
     println(Long.MAX_VALUE.rotateLeft(1))
     println(Long.MIN_VALUE.rotateLeft(1))
 }
+// SKIP-DIFF: bit-manipulation runtime parity is still being stabilized; covered by RuntimeBitCountTests
