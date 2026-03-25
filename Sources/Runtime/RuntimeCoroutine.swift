@@ -2045,42 +2045,12 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         let senderSem = DispatchSemaphore(value: 0)
         let entry = SuspendedSender(semaphore: senderSem, continuation: continuation, value: value)
         
-        // CORO-004: Install resume continuation if we have a valid continuation handle
-        var state: RuntimeContinuationState?
-        if continuation != 0 {
-            state = runtimeContinuationState(from: continuation)
-        }
-        if let state = state {
-            entry.resumeClosure = {
-                // When resumed, we'll return from the suspend point
-                state.signalResume()
-            }
-        }
-        
         senderQueue.append(entry)
         lock.unlock()
 
-        // CORO-004: Use continuation-based suspension if available, otherwise block
-        if let resumeClosure = entry.resumeClosure, let state = state {
-            // Continuation-based implementation - install the continuation and return
-            // The actual suspend happens at the call site via codegen
-            state.installResumeContinuation(resumeClosure)
-            // This path will return when the continuation is resumed
-            // Return immediately - the continuation will handle resumption
-            lock.lock()
-            let wasDelivered = entry.delivered
-            let wasCancelled = entry.cancelledWakeup
-            lock.unlock()
-
-            // Check cancellation after continuation-based wakeup
-            if wasCancelled || isCancelled(continuation: continuation) {
-                return kChannelClosedSentinel
-            }
-            return wasDelivered ? value : kChannelClosedSentinel
-        } else {
-            // Fallback to blocking semaphore
-            senderSem.wait()
-        }
+        // Channel send is not yet lowered as a true suspend point, so the
+        // runtime must block here until a receiver or close/cancellation wakes it.
+        senderSem.wait()
 
         // After waking, check the wakeup reason.
         lock.lock()
@@ -2157,46 +2127,12 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         // semaphore compatibility during migration.
         let receiverEntry = SuspendedReceiver(semaphore: DispatchSemaphore(value: 0), continuation: continuation)
         
-        // CORO-004: Install resume continuation if we have a valid continuation handle
-        var state: RuntimeContinuationState?
-        if continuation != 0 {
-            state = runtimeContinuationState(from: continuation)
-        }
-        if let state = state {
-            receiverEntry.resumeClosure = {
-                // When resumed, we'll return from the suspend point
-                state.signalResume()
-            }
-        }
-        
         receiverQueue.append(receiverEntry)
         lock.unlock()
 
-        // CORO-004: Use continuation-based suspension if available, otherwise block
-        if let resumeClosure = receiverEntry.resumeClosure, let state = state {
-            // Continuation-based implementation - install the continuation and return
-            // The actual suspend happens at the call site via codegen
-            state.installResumeContinuation(resumeClosure)
-            // This path will return when the continuation is resumed
-            // Return immediately - the continuation will handle resumption
-            lock.lock()
-            let wasCancelled = receiverEntry.cancelledWakeup
-            let value = receiverEntry.result
-            lock.unlock()
-
-            // Check cancellation after continuation-based wakeup
-            if wasCancelled || isCancelled(continuation: continuation) {
-                return kChannelClosedSentinel
-            }
-            if let value {
-                return value
-            }
-            // Woken by close() with no value -- channel is done.
-            return kChannelClosedSentinel
-        } else {
-            // Fallback to blocking semaphore
-            receiverEntry.semaphore.wait()
-        }
+        // Channel receive is not yet lowered as a true suspend point, so the
+        // runtime must block here until a sender, close, or cancellation wakes it.
+        receiverEntry.semaphore.wait()
 
         // After waking, check the wakeup reason.
         lock.lock()
