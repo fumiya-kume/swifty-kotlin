@@ -20,41 +20,9 @@
 監査で見つかった「簡易実装（Stub）」や「中途半端なパス」を将来の改善項目として追跡する。
 
 - [ ] REFL-004: 実行時 `KClass` から読めるバイナリメタデータ（`MetadataSerializer` 等の活用）
-  - 現状: リンク用メタデータはあるが実行時参照は限定
+  - 現状: 基本的なリフレクションAPIは実装済み（`RuntimeReflection.swift`）
 
 ---
 
 ### Kotlin Stdlib 互換性（独立タスク）
 
-各タスクは他タスクに依存せず、並列実施可能。1 タスク = 1 API または 1 検証項目。
-
-#### C. kotlin.collections — 単一 API 単位
-
-- [ ] STDLIB-533: `List?.orEmpty()` 拡張
-- [ ] STDLIB-540: `LinkedList` 型エイリアスの golden テスト（`ArrayList` / `HashMap` / `LinkedHashMap` も同ファイルでスタブ登録済み）
-- [ ] STDLIB-541: `HashMap` 型エイリアスの golden テスト
-- [ ] STDLIB-542: `LinkedHashMap` 型エイリアスの golden テスト
-- [ ] STDLIB-543: `firstOrNull` の kotlinc 挙動 diff 検証
-- [ ] STDLIB-544: `lastOrNull` の kotlinc 挙動 diff 検証
-- [ ] STDLIB-546: `asReversed()` と `reversed()` の区別 diff 検証
-- [ ] STDLIB-547: `binarySearch(compare)` オーバーロード
-- [ ] STDLIB-548: `chunked(step)` オプション
-- [ ] STDLIB-549: `windowed(step, partialWindows)` オプション
-- [ ] STDLIB-552: `flatten()` の kotlinc 互換 diff 検証
-
-#### F. kotlin.text / String — 単一 API 単位
-
-
-#### G. kotlin.time / kotlin.system
-
-#### H. kotlin.Result / kotlin.contracts
-
-- [ ] STDLIB-590: `Result.onFailure` の kotlinc 挙動 diff 検証
-
-#### I. kotlin.io.Closeable / その他
-
-- [ ] STDLIB-597: `RegexOption.MULTILINE` の互換性確認
-- [ ] STDLIB-598: `RegexOption.IGNORE_CASE` の互換性確認
-- [ ] STDLIB-599: `RegexOption.DOT_MATCHES_ALL` の互換性確認
-
-#### J. テスト・検証（各 1 タスク）
