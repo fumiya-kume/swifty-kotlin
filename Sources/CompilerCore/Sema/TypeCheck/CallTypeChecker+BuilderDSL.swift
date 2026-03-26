@@ -460,7 +460,7 @@ extension CallTypeChecker {
     private func isMatchingBuilderDSLFunctionName(_ name: String, kind: BuilderDSLKind) -> Bool {
         switch kind {
         case .buildString:
-            name == "append"
+            name == "append" || name == "appendLine" || name == "appendRange"
         case .buildList, .buildSet:
             name == "add"
         case .buildMap:

@@ -397,6 +397,35 @@ final class CallLowerer {
             )
         }
         let knownNames = KnownCompilerNames(interner: interner)
+        if sema.bindings.builderDSLKind(for: exprID) == .buildString {
+            let builderRuntimeCallee: String? = switch (interner.resolve(sourceCalleeName), loweredArgIDs.count) {
+            case ("append", 1):
+                "kk_string_builder_append"
+            case ("appendLine", 0):
+                "kk_string_builder_append_line_noarg"
+            case ("appendLine", 1):
+                "kk_string_builder_append_line"
+            case ("appendRange", 3):
+                "kk_string_builder_append_range"
+            default:
+                nil
+            }
+            if let builderRuntimeCallee {
+                let result = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: boundType ?? sema.types.anyType
+                )
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern(builderRuntimeCallee),
+                    arguments: loweredArgIDs,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
         if let loweredToList = tryLowerCollectionToListCall(
             sourceCalleeName: sourceCalleeName,
             args: args,

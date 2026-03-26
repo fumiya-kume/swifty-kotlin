@@ -4066,7 +4066,10 @@ extension CallTypeChecker {
             if ctx.isBuilderLambdaScope, let activeBuilderKind = ctx.builderKind {
                 let name = interner.resolve(calleeName)
                 let isBuilderMember: Bool = switch activeBuilderKind {
-                case .buildString: name == "append" && args.count == 1
+                case .buildString:
+                    (name == "append" && args.count == 1)
+                        || (name == "appendLine" && args.count <= 1)
+                        || (name == "appendRange" && args.count == 3)
                 case .buildList, .buildSet: name == "add" && args.count == 1
                 case .buildMap: name == "put" && args.count == 2
                 }
@@ -4074,6 +4077,7 @@ extension CallTypeChecker {
                     _ = args.map { argument in
                         driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
                     }
+                    sema.bindings.markBuilderDSLExpr(id, kind: activeBuilderKind)
                     sema.bindings.bindExprType(id, type: sema.types.unitType)
                     return sema.types.unitType
                 }

@@ -15,6 +15,7 @@ DIFF_PARALLEL="${DIFF_PARALLEL:-1}"
 DIFF_WORKERS="${DIFF_WORKERS:-}"
 LAST_ARTIFACT_DIR=""
 ARTIFACT_ROOT="${DIFF_ARTIFACT_ROOT:-$ROOT_DIR/.artifacts/diff_kotlinc}"
+FORCE_RUN_SKIPPED=0
 COMPILE_TIMEOUT="${DIFF_COMPILE_TIMEOUT:-30}"
 RUN_TIMEOUT="${DIFF_RUN_TIMEOUT:-10}"
 TIMEOUT_CMD="${TIMEOUT:-timeout}"
@@ -41,6 +42,8 @@ Options:
   --artifact-root <path>
                      Persist failing case artifacts under this directory
                      (default: \$DIFF_ARTIFACT_ROOT or .artifacts/diff_kotlinc)
+  --force-run-skipped
+                     Run cases marked with // SKIP-DIFF or // KSWIFTK_DIFF_IGNORE
   -h, --help         Show this help
 
 Examples:
@@ -136,6 +139,9 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       ARTIFACT_ROOT="$1"
+      ;;
+    --force-run-skipped)
+      FORCE_RUN_SKIPPED=1
       ;;
     -h|--help)
       usage
@@ -320,6 +326,7 @@ echo "=== diff_kotlinc Configuration ==="
 echo "Workers: $WORKER_COUNT"
 echo "Compile timeout: ${COMPILE_TIMEOUT}s"
 echo "Run timeout: ${RUN_TIMEOUT}s"
+echo "Force run skipped: $FORCE_RUN_SKIPPED"
 echo "Target: $TARGET"
 echo "=================================="
 
@@ -386,6 +393,12 @@ persist_artifacts() {
 
   cp "$case_path" "$destination/input.kt"
 
+  if [[ $cand_compile_exit -eq 0 ]]; then
+    "$TIMEOUT_CMD" "$COMPILE_TIMEOUT" "$KSWIFTC" --emit kir "$case_path" -o "$destination/candidate.kir" \
+      >"$destination/candidate_kir.stdout" \
+      2>"$destination/candidate_kir.stderr" || true
+  fi
+
   cat >"$destination/summary.txt" <<EOF
 case: $case_path
 result: $result_label
@@ -399,13 +412,14 @@ candidate_run_exit: $cand_run_exit
 kswiftc: $KSWIFTC
 kotlinc: $KOTLINC
 java: $JAVA_BIN
+force_run_skipped: $FORCE_RUN_SKIPPED
 EOF
 
   cat >"$destination/repro.sh" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$ROOT_DIR"
-bash Scripts/diff_kotlinc.sh --no-parallel --keep-temp "$case_path"
+bash Scripts/diff_kotlinc.sh --no-parallel --keep-temp --force-run-skipped "$case_path"
 EOF
   chmod +x "$destination/repro.sh"
 
@@ -418,6 +432,9 @@ EOF
 
 should_skip_case() {
   local kt_file="$1"
+  if [[ $FORCE_RUN_SKIPPED -eq 1 ]]; then
+    return 1
+  fi
   grep -Eq '^[[:space:]]*//[[:space:]]*(KSWIFTK_DIFF_IGNORE|SKIP-DIFF)\b' "$kt_file"
 }
 
