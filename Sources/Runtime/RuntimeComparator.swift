@@ -258,7 +258,7 @@ public func kk_comparator_reverse_order() -> Int {
 // MARK: - compareValues / compareValuesBy
 
 /// Internal helper for nullable value comparison. Nulls are less than non-nulls.
-private func runtimeCompareNullableValues(_ a: Int, _ b: Int) -> Int {
+func runtimeCompareNullableValues(_ a: Int, _ b: Int) -> Int {
     let aIsNull = (a == runtimeNullSentinelInt || a == 0)
     let bIsNull = (b == runtimeNullSentinelInt || b == 0)
     if aIsNull && bIsNull { return 0 }
@@ -272,7 +272,7 @@ private func runtimeCompareNullableValues(_ a: Int, _ b: Int) -> Int {
 @_cdecl("kk_compareValues")
 public func kk_compareValues(_ a: Int, _ b: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     _ = outThrown
-    return runtimeCompareNullableValues(a, b)
+    return kk_box_int(runtimeCompareNullableValues(a, b))
 }
 
 @inline(__always)
@@ -310,7 +310,7 @@ public func kk_compareValuesBy1(
         outThrown: &thrown
     )
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    return runtimeCompareNullableValues(keyA, keyB)
+    return kk_box_int(runtimeCompareNullableValues(keyA, keyB))
 }
 
 /// compareValuesBy(a: T, b: T, selector1, selector2): Int — 2-selector variant.
@@ -342,7 +342,7 @@ public func kk_compareValuesBy(
     )
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }
     let cmp1 = runtimeCompareNullableValues(keyA1, keyB1)
-    if cmp1 != 0 { return cmp1 }
+    if cmp1 != 0 { return kk_box_int(cmp1) }
 
     let keyA2 = runtimeInvokeCompareValuesSelector(
         fnPtr: sel2Fn,
@@ -358,7 +358,7 @@ public func kk_compareValuesBy(
         outThrown: &thrown
     )
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    return runtimeCompareNullableValues(keyA2, keyB2)
+    return kk_box_int(runtimeCompareNullableValues(keyA2, keyB2))
 }
 
 /// compareValuesBy(a: T, b: T, selector1, selector2, selector3): Int — 3-selector variant.
@@ -393,7 +393,7 @@ public func kk_compareValuesBy3(
     )
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }
     let cmp1 = runtimeCompareNullableValues(keyA1, keyB1)
-    if cmp1 != 0 { return cmp1 }
+    if cmp1 != 0 { return kk_box_int(cmp1) }
 
     let keyA2 = runtimeInvokeCompareValuesSelector(
         fnPtr: sel2Fn,
@@ -410,7 +410,7 @@ public func kk_compareValuesBy3(
     )
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }
     let cmp2 = runtimeCompareNullableValues(keyA2, keyB2)
-    if cmp2 != 0 { return cmp2 }
+    if cmp2 != 0 { return kk_box_int(cmp2) }
 
     let keyA3 = runtimeInvokeCompareValuesSelector(
         fnPtr: sel3Fn,
@@ -426,5 +426,5 @@ public func kk_compareValuesBy3(
         outThrown: &thrown
     )
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    return runtimeCompareNullableValues(keyA3, keyB3)
+    return kk_box_int(runtimeCompareNullableValues(keyA3, keyB3))
 }

@@ -16,4 +16,3 @@ fun main() {
     println(compareValuesBy(5, 5, { x: Int -> x }))
     println(compareValuesBy(30, 10, { x: Int -> x }))
 }
-// SKIP-DIFF: compareValues parity pending

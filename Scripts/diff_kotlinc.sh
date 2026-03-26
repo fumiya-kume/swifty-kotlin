@@ -16,9 +16,11 @@ DIFF_WORKERS="${DIFF_WORKERS:-}"
 LAST_ARTIFACT_DIR=""
 ARTIFACT_ROOT="${DIFF_ARTIFACT_ROOT:-$ROOT_DIR/.artifacts/diff_kotlinc}"
 FORCE_RUN_SKIPPED=0
+CLEAN_RUNTIME_CACHE=0
 COMPILE_TIMEOUT="${DIFF_COMPILE_TIMEOUT:-30}"
 RUN_TIMEOUT="${DIFF_RUN_TIMEOUT:-10}"
 TIMEOUT_CMD="${TIMEOUT:-timeout}"
+LLDB_BIN="${LLDB_BIN:-lldb}"
 
 usage() {
   cat <<USAGE
@@ -44,6 +46,8 @@ Options:
                      (default: \$DIFF_ARTIFACT_ROOT or .artifacts/diff_kotlinc)
   --force-run-skipped
                      Run cases marked with // SKIP-DIFF or // KSWIFTK_DIFF_IGNORE
+  --clean-runtime-cache
+                     Remove .runtime-build before running diff cases
   -h, --help         Show this help
 
 Examples:
@@ -143,6 +147,9 @@ while [[ $# -gt 0 ]]; do
     --force-run-skipped)
       FORCE_RUN_SKIPPED=1
       ;;
+    --clean-runtime-cache)
+      CLEAN_RUNTIME_CACHE=1
+      ;;
     -h|--help)
       usage
       exit 0
@@ -221,6 +228,10 @@ ensure_kotlinc_classpath() {
 if [[ -z "$TARGET" ]]; then
   usage
   exit 1
+fi
+
+if [[ $CLEAN_RUNTIME_CACHE -eq 1 ]]; then
+  rm -rf "$ROOT_DIR/.runtime-build"
 fi
 
 ensure_kotlinc_classpath
@@ -327,6 +338,7 @@ echo "Workers: $WORKER_COUNT"
 echo "Compile timeout: ${COMPILE_TIMEOUT}s"
 echo "Run timeout: ${RUN_TIMEOUT}s"
 echo "Force run skipped: $FORCE_RUN_SKIPPED"
+echo "Clean runtime cache: $CLEAN_RUNTIME_CACHE"
 echo "Target: $TARGET"
 echo "=================================="
 
@@ -369,6 +381,17 @@ safe_diff_to_file() {
   rm -f "$output"
 }
 
+save_runtime_backtrace() {
+  local candidate_bin="$1"
+  local output="$2"
+
+  if ! command -v "$LLDB_BIN" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  "$LLDB_BIN" -b -o run -o bt -- "$candidate_bin" >"$output" 2>&1 || true
+}
+
 persist_artifacts() {
   local case_path="$1"
   local tmp_dir="$2"
@@ -398,6 +421,9 @@ persist_artifacts() {
       >"$destination/candidate_kir.stdout" \
       2>"$destination/candidate_kir.stderr" || true
   fi
+  if [[ $cand_compile_exit -eq 0 && $cand_run_exit -ge 128 ]]; then
+    save_runtime_backtrace "$destination/candidate.out" "$destination/backtrace.txt"
+  fi
 
   cat >"$destination/summary.txt" <<EOF
 case: $case_path
@@ -413,6 +439,7 @@ kswiftc: $KSWIFTC
 kotlinc: $KOTLINC
 java: $JAVA_BIN
 force_run_skipped: $FORCE_RUN_SKIPPED
+clean_runtime_cache: $CLEAN_RUNTIME_CACHE
 EOF
 
   cat >"$destination/repro.sh" <<EOF

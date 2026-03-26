@@ -224,6 +224,15 @@ public final class KIRArena {
         return declarations[index]
     }
 
+    public func function(for symbol: SymbolID) -> KIRFunction? {
+        declarations.lazy.compactMap { decl -> KIRFunction? in
+            guard case let .function(function) = decl, function.symbol == symbol else {
+                return nil
+            }
+            return function
+        }.first
+    }
+
     public func expr(_ id: KIRExprID) -> KIRExprKind? {
         let index = Int(id.rawValue)
         guard index >= 0, index < expressions.count else {

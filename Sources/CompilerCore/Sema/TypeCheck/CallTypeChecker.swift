@@ -1562,6 +1562,14 @@ final class CallTypeChecker {
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
         }
+        if let calleeName,
+           interner.resolve(calleeName) == "compareValuesBy",
+           args.count >= 3
+        {
+            for index in 2..<args.count {
+                sema.bindings.markCollectionHOFLambdaExpr(args[index].expr)
+            }
+        }
         // Builder DSL member functions (STDLIB-002).
         // Inside builder lambdas, unqualified `append`/`add`/`put` resolve as
         // implicit-receiver member calls that return Unit.
