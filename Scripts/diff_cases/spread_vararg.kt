@@ -9,4 +9,3 @@ fun main() {
     val strs = arrayOf("x", "y")
     printAll(*strs)
 }
-// SKIP-DIFF: spread vararg parity pending

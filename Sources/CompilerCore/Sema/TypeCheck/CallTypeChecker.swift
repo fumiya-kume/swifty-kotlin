@@ -1309,35 +1309,51 @@ final class CallTypeChecker {
         } else {
             candidates = []
         }
-        let contextualArgExpectedTypes: [TypeID?] = if candidates.count == 1,
-                                                       let signature = sema.symbols.functionSignature(for: candidates[0])
-        {
-            args.enumerated().map { index, argument in
-                if index == 0, let coroutineLauncherExpectedLambdaType {
-                    return coroutineLauncherExpectedLambdaType
-                }
-                if index == 1, let withContextExpectedLambdaType {
-                    return withContextExpectedLambdaType
-                }
-                guard index < signature.parameterTypes.count else {
-                    return nil
+        let contextualArgExpectedTypes: [TypeID?] = args.enumerated().map { index, argument in
+            if index == 0, let coroutineLauncherExpectedLambdaType {
+                return coroutineLauncherExpectedLambdaType
+            }
+            if index == 1, let withContextExpectedLambdaType {
+                return withContextExpectedLambdaType
+            }
+
+            guard let argumentExpr = ast.arena.expr(argument.expr) else {
+                return nil
+            }
+            let isLambdaLike = switch argumentExpr {
+            case .lambdaLiteral, .callableRef:
+                true
+            default:
+                false
+            }
+            guard isLambdaLike else {
+                return nil
+            }
+
+            if candidates.count == 1,
+               let signature = sema.symbols.functionSignature(for: candidates[0]),
+               index < signature.parameterTypes.count
+            {
+                return signature.parameterTypes[index]
+            }
+
+            var matchingParameterTypes: [TypeID] = []
+            for candidate in candidates {
+                guard let signature = sema.symbols.functionSignature(for: candidate),
+                      index < signature.parameterTypes.count
+                else {
+                    continue
                 }
                 let parameterType = signature.parameterTypes[index]
-                if case .lambdaLiteral = ast.arena.expr(argument.expr) {
-                    return parameterType
+                if driver.helpers.samFunctionType(for: parameterType, sema: sema) != nil {
+                    matchingParameterTypes.append(parameterType)
                 }
+            }
+            guard let firstType = matchingParameterTypes.first else {
                 return nil
             }
-        } else {
-            args.indices.map { index in
-                if index == 0, let coroutineLauncherExpectedLambdaType {
-                    return coroutineLauncherExpectedLambdaType
-                }
-                if index == 1, let withContextExpectedLambdaType {
-                    return withContextExpectedLambdaType
-                }
-                return nil
-            }
+            let allSame = matchingParameterTypes.dropFirst().allSatisfy { $0 == firstType }
+            return allSame ? firstType : nil
         }
         let argTypes = args.enumerated().map { index, argument in
             if let contextualExpectedType = contextualArgExpectedTypes[index] {

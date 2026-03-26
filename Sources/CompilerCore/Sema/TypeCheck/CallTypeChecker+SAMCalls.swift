@@ -11,11 +11,14 @@ extension CallTypeChecker {
         expectedType: TypeID?,
         explicitTypeArgs: [TypeID]
     ) -> TypeID? {
-        guard let argExpr = args.only?.expr,
-              isSamConvertibleArgument(argExpr, ast: ctx.ast)
-        else {
+        let samArgIndices = args.enumerated().compactMap { index, argument in
+            isSamConvertibleArgument(argument.expr, ast: ctx.ast) ? index : nil
+        }
+        guard samArgIndices.count == 1 else {
             return nil
         }
+        let samArgIndex = samArgIndices[0]
+        let samArgExpr = args[samArgIndex].expr
 
         var visibleCandidates = ctx.filterByVisibility(
             ctx.cachedScopeLookup(calleeName).filter { candidate in
@@ -36,23 +39,36 @@ extension CallTypeChecker {
 
         // Path 1: callee is a function/constructor whose single parameter is a
         // fun interface type (e.g. `apply({ ... })` where apply takes Transformer).
-        if visibleCandidates.count == 1,
-           let signature = ctx.sema.symbols.functionSignature(for: visibleCandidates[0]),
-           signature.parameterTypes.count == 1,
-           driver.helpers.samFunctionType(for: signature.parameterTypes[0], sema: ctx.sema) != nil
+        let samCompatibleCandidates = visibleCandidates.filter { candidate in
+            guard let signature = ctx.sema.symbols.functionSignature(for: candidate),
+                  samArgIndex < signature.parameterTypes.count
+            else {
+                return false
+            }
+            return driver.helpers.samFunctionType(for: signature.parameterTypes[samArgIndex], sema: ctx.sema) != nil
+        }
+
+        if samCompatibleCandidates.count == 1,
+           let signature = ctx.sema.symbols.functionSignature(for: samCompatibleCandidates[0])
         {
-            let argType = driver.inferExpr(
-                argExpr,
-                ctx: ctx,
-                locals: &locals,
-                expectedType: signature.parameterTypes[0]
-            )
+            var argTypes: [CallArg] = []
+            argTypes.reserveCapacity(args.count)
+            for (index, argument) in args.enumerated() {
+                let parameterExpectedType = index < signature.parameterTypes.count ? signature.parameterTypes[index] : nil
+                let inferredType = driver.inferExpr(
+                    argument.expr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: parameterExpectedType
+                )
+                argTypes.append(CallArg(label: argument.label, isSpread: argument.isSpread, type: inferredType))
+            }
             let resolved = ctx.resolver.resolveCall(
-                candidates: visibleCandidates,
+                candidates: samCompatibleCandidates,
                 call: CallExpr(
                     range: range,
                     calleeName: calleeName,
-                    args: [CallArg(label: args[0].label, isSpread: args[0].isSpread, type: argType)],
+                    args: argTypes,
                     explicitTypeArgs: explicitTypeArgs
                 ),
                 expectedType: expectedType,
@@ -82,7 +98,7 @@ extension CallTypeChecker {
         if let samType = inferSamConstructorCallExpr(
             id,
             calleeName: calleeName,
-            argExpr: argExpr,
+            argExpr: samArgExpr,
             range: range,
             ctx: ctx,
             locals: &locals
@@ -152,11 +168,5 @@ extension CallTypeChecker {
         default:
             return false
         }
-    }
-}
-
-private extension Array {
-    var only: Element? {
-        count == 1 ? self[0] : nil
     }
 }

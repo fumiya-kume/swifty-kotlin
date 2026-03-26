@@ -256,15 +256,10 @@ final class CallSupportLowerer {
         guard parameterCount > 0 else {
             return NormalizedCallResult(arguments: providedArguments, defaultMask: 0)
         }
-        let preserveArrayVarargs = {
-            guard let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee) else {
-                return false
-            }
-            return externalLinkName == "kk_array_of" || externalLinkName == "kk_sequence_of"
-        }()
-
+        let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee)
         let isVararg = normalizeBoolFlags(signature.valueParameterIsVararg, count: parameterCount)
         let hasDefaultValues = normalizeBoolFlags(signature.valueParameterHasDefaultValues, count: parameterCount)
+        let preserveArrayVarargs = externalLinkName == "kk_array_of" || externalLinkName == "kk_sequence_of"
 
         var argIndicesByParameter: [Int: [Int]] = [:]
         for (argIndex, paramIndex) in callBinding.parameterMapping {
@@ -289,6 +284,57 @@ final class CallSupportLowerer {
             if !allMergedAreVararg {
                 return NormalizedCallResult(arguments: providedArguments, defaultMask: 0)
             }
+        }
+
+        if externalLinkName == "kk_array_of",
+           parameterCount == 1,
+           isVararg.first == true
+        {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let argIndices = argIndicesByParameter[0] ?? []
+            let packedArray: KIRExprID
+            if argIndices.isEmpty {
+                packedArray = emitArrayNew(
+                    count: 0,
+                    arena: arena,
+                    interner: interner,
+                    intType: intType,
+                    anyType: sema.types.anyType,
+                    instructions: &instructions
+                )
+            } else {
+                packedArray = packVarargArguments(
+                    argIndices: argIndices,
+                    providedArguments: providedArguments,
+                    spreadFlags: spreadFlags,
+                    listifyResult: false,
+                    arena: arena,
+                    interner: interner,
+                    intType: intType,
+                    anyType: sema.types.anyType,
+                    instructions: &instructions
+                )
+            }
+
+            let hasAnySpread = argIndices.contains { idx in
+                idx < spreadFlags.count && spreadFlags[idx]
+            }
+            let countExpr: KIRExprID
+            if hasAnySpread {
+                countExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_array_size"),
+                    arguments: [packedArray],
+                    result: countExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            } else {
+                countExpr = arena.appendExpr(.intLiteral(Int64(argIndices.count)), type: intType)
+                instructions.append(.constValue(result: countExpr, value: .intLiteral(Int64(argIndices.count))))
+            }
+            return NormalizedCallResult(arguments: [packedArray, countExpr], defaultMask: 0)
         }
 
         var normalized: [KIRExprID] = []
@@ -360,9 +406,17 @@ final class CallSupportLowerer {
         }
 
         if argIndices.count == 1, allSpread {
-            // Single spread argument can be forwarded as-is. Downstream runtime
-            // entrypoints already accept either Array or List vararg payloads.
-            return providedArguments[argIndices[0]]
+            let spreadValue = providedArguments[argIndices[0]]
+            if listifyResult {
+                return emitArrayToList(
+                    spreadValue,
+                    arena: arena,
+                    interner: interner,
+                    anyType: anyType,
+                    instructions: &instructions
+                )
+            }
+            return spreadValue
         }
 
         if hasAnySpread {

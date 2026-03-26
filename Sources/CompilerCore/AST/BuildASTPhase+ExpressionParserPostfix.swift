@@ -26,7 +26,7 @@ extension BuildASTPhase.ExpressionParser {
                 if let typeArgs = tryParseExplicitTypeArgs() {
                     if matches(.symbol(.lParen)) {
                         guard let open = consume() else { break }
-                        var args = parseCallArguments()
+                        var args = parseCallArguments(implicitLambdaLabel: calleeNameForImplicitLabel(expr))
                         let close = consumeIf(.symbol(.rParen))
                         var callEndRange = close?.range ?? open.range
                         // Trailing lambda without parentheses: foo<T> { ... }.
@@ -64,7 +64,7 @@ extension BuildASTPhase.ExpressionParser {
 
             if matches(.symbol(.lParen)) {
                 guard let open = consume() else { break }
-                var args = parseCallArguments()
+                var args = parseCallArguments(implicitLambdaLabel: calleeNameForImplicitLabel(expr))
                 let close = consumeIf(.symbol(.rParen))
                 var callEndRange = close?.range ?? open.range
                 // Trailing lambda after a parenthesized call: foo(...) { ... }.
@@ -150,7 +150,7 @@ extension BuildASTPhase.ExpressionParser {
             if matches(.symbol(.lParen)),
                let open = consume()
             {
-                args = parseCallArguments()
+                args = parseCallArguments(implicitLambdaLabel: memberName)
                 let close = consumeIf(.symbol(.rParen))
                 memberEndRange = close?.range ?? open.range
             }
@@ -205,11 +205,11 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.indexedAccess(receiver: receiver, indices: indices, range: range))
     }
 
-    func parseCallArguments() -> [CallArgument] {
+    func parseCallArguments(implicitLambdaLabel: InternedString? = nil) -> [CallArgument] {
         var args: [CallArgument] = []
         if !matches(.symbol(.rParen)) {
             while true {
-                if let argument = parseCallArgument() {
+                if let argument = parseCallArgument(implicitLambdaLabel: implicitLambdaLabel) {
                     args.append(argument)
                 }
                 if matches(.symbol(.comma)) {
@@ -222,7 +222,7 @@ extension BuildASTPhase.ExpressionParser {
         return args
     }
 
-    func parseCallArgument() -> CallArgument? {
+    func parseCallArgument(implicitLambdaLabel: InternedString? = nil) -> CallArgument? {
         var isSpread = false
         if matches(.symbol(.star)) {
             _ = consume()
@@ -240,7 +240,13 @@ extension BuildASTPhase.ExpressionParser {
             _ = consume()
         }
 
-        guard let expr = parseExpression(minPrecedence: 0) else {
+        let expr: ExprID?
+        if matches(.symbol(.lBrace)) {
+            expr = parseLambdaLiteral(label: implicitLambdaLabel, allowImplicitEmptyParams: true)
+        } else {
+            expr = parseExpression(minPrecedence: 0)
+        }
+        guard let expr else {
             return nil
         }
         return CallArgument(label: label, isSpread: isSpread, expr: expr)
