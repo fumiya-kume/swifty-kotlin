@@ -60,17 +60,6 @@
 
 #### Phase 1: オブジェクト指向機能 (高優先度)
 
-- [ ] STDLIB-INHERIT-019: オーバーライド完全実装
-  - **仕様**: メンバオーバーライドの完全サポート
-  - **実装内容**:
-    - override修飾子の強制
-    - オーバーライド時の可視性拡張
-    - オーバーライド時の戻り値型共変
-    - オーバーライド時の例外型共変
-  - **現状**: 基本的なoverrideは実装済み、共変性は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/override_variance.kt`
-
 - [ ] STDLIB-INHERIT-020: 多重継承と衝突解決完全実装
   - **仕様**: インターフェース多重継承の衝突解決
   - **実装内容**:

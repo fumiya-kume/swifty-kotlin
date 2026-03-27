@@ -11,6 +11,7 @@ struct OpenFinalOverrideContext {
     let ast: ASTModule
     let symbols: SymbolTable
     let bindings: BindingTable
+    let types: TypeSystem
     let diagnostics: DiagnosticEngine
     let interner: StringInterner
 }
@@ -20,6 +21,7 @@ extension DataFlowSemaPhase {
         ast: ASTModule,
         symbols: SymbolTable,
         bindings: BindingTable,
+        types: TypeSystem,
         diagnostics: DiagnosticEngine,
         interner: StringInterner
     ) {
@@ -27,6 +29,7 @@ extension DataFlowSemaPhase {
             ast: ast,
             symbols: symbols,
             bindings: bindings,
+            types: types,
             diagnostics: diagnostics,
             interner: interner
         )
@@ -602,20 +605,18 @@ extension DataFlowSemaPhase {
         }
         let parentReturnType = parentSignature.returnType
 
-        // Check if child return type is a subtype of parent return type
-        // Note: This requires access to the type system for subtype checking
-        // For now, we'll implement a basic check - this can be enhanced with proper subtype relations
+        guard ctx.types.isSubtype(childReturnType, parentReturnType) else {
+            let name = ctx.interner.resolve(memberName)
+            let ownerName = ctx.interner.resolve(parentSymbol.name)
+            let childType = ctx.types.renderType(childReturnType)
+            let parentType = ctx.types.renderType(parentReturnType)
 
-        // Simple equality check for now - proper covariance checking would require
-        // integration with the type system's subtype checking
-        if childReturnType != parentReturnType {
-            // This is actually allowed in Kotlin (covariant returns), but we need proper subtype checking
-            // For now, we conservatively allow it and defer stricter subtype checking.
-            // TODO: Implement proper subtype checking instead of allowing all different types
-            _ = memberName
-            _ = memberRange
-            _ = ctx
-            _ = parentSymbol
+            ctx.diagnostics.error(
+                "KSWIFTK-SEMA-OVERRIDE",
+                "'\(name)' in '\(ownerName)' has return type '\(childType)', which is not a subtype of overridden return type '\(parentType)'.",
+                range: memberRange
+            )
+            return
         }
     }
 
