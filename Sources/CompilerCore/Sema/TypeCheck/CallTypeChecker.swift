@@ -1309,6 +1309,19 @@ final class CallTypeChecker {
         } else {
             candidates = []
         }
+        var inferredNonLambdaArgTypes: [Int: TypeID] = [:]
+        for (index, argument) in args.enumerated() {
+            guard let argumentExpr = ast.arena.expr(argument.expr) else {
+                continue
+            }
+            switch argumentExpr {
+            case .lambdaLiteral, .callableRef:
+                continue
+            default:
+                inferredNonLambdaArgTypes[index] = driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
+            }
+        }
+
         let contextualArgExpectedTypes: [TypeID?] = args.enumerated().map { index, argument in
             if index == 0, let coroutineLauncherExpectedLambdaType {
                 return coroutineLauncherExpectedLambdaType
@@ -1330,15 +1343,33 @@ final class CallTypeChecker {
                 return nil
             }
 
-            if candidates.count == 1,
-               let signature = sema.symbols.functionSignature(for: candidates[0]),
+            let narrowedCandidates = candidates.filter { candidate in
+                guard let signature = sema.symbols.functionSignature(for: candidate),
+                      isCallableArityCompatible(signature: signature, argCount: args.count)
+                else {
+                    return false
+                }
+                for (otherIndex, inferredType) in inferredNonLambdaArgTypes {
+                    guard let parameterType = parameterTypeForArgument(at: otherIndex, in: signature) else {
+                        return false
+                    }
+                    if !sema.types.isSubtype(inferredType, parameterType) {
+                        return false
+                    }
+                }
+                return true
+            }
+            let expectedTypeCandidates = narrowedCandidates.isEmpty ? candidates : narrowedCandidates
+
+            if expectedTypeCandidates.count == 1,
+               let signature = sema.symbols.functionSignature(for: expectedTypeCandidates[0]),
                index < signature.parameterTypes.count
             {
                 return signature.parameterTypes[index]
             }
 
             var matchingParameterTypes: [TypeID] = []
-            for candidate in candidates {
+            for candidate in expectedTypeCandidates {
                 guard let signature = sema.symbols.functionSignature(for: candidate),
                       index < signature.parameterTypes.count
                 else {

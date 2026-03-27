@@ -93,6 +93,18 @@ extension CollectionLiteralLoweringPass {
             || fqName == lookup.mutableMapOfFQName
     }
 
+    private func isStdlibArrayFactoryCall(
+        symbol: SymbolID?,
+        callee: InternedString,
+        lookup: CollectionLiteralLookupTables,
+        ctx: KIRContext
+    ) -> Bool {
+        guard lookup.arrayOfFactoryNames.contains(callee) else {
+            return false
+        }
+        return isStdlibCollectionFactory(symbol: symbol, callee: callee, lookup: lookup, ctx: ctx)
+    }
+
     private func isJavaIOFileMember(
         symbol: SymbolID?,
         ctx: KIRContext,
@@ -988,7 +1000,7 @@ extension CollectionLiteralLoweringPass {
                     }
 
                     // --- Rewrite arrayOf → kk_array_of ---
-                    if lookup.arrayOfFactoryNames.contains(callee) {
+                    if isStdlibArrayFactoryCall(symbol: symbol, callee: callee, lookup: lookup, ctx: ctx) {
                         let count = arguments.count
                         let countExpr = module.arena.appendExpr(.intLiteral(Int64(count)), type: nil)
                         loweredBody.append(.constValue(result: countExpr, value: .intLiteral(Int64(count))))

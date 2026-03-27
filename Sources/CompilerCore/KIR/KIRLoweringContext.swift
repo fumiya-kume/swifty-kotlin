@@ -41,7 +41,7 @@ final class KIRLoweringContext {
     var syntheticLambdaSymbolsByExprID: [ExprID: SymbolID] = [:]
     var syntheticObjectLiteralSymbolsByExprID: [ExprID: (nominalSymbol: SymbolID, constructorSymbol: SymbolID, constructorName: InternedString)] = [:]
     var emittedObjectLiteralExprIDs: Set<ExprID> = []
-    var nextSyntheticLambdaSymbolRawValue: Int32 = 1
+    var nextSyntheticLambdaSymbolRawValue: Int32 = -60_000_000
 
     /// Companion object initializer functions registered during class lowering.
     /// These are called in order during module initialization.
@@ -346,12 +346,8 @@ final class KIRLoweringContext {
     // MARK: - Synthetic Symbol Management
 
     func initializeSyntheticLambdaSymbolAllocator(sema: SemaModule) {
-        let base = max(Int64(1), Int64(sema.symbols.count))
-        if base > Int64(Int32.max) {
-            nextSyntheticLambdaSymbolRawValue = Int32.max
-        } else {
-            nextSyntheticLambdaSymbolRawValue = Int32(base)
-        }
+        _ = sema
+        nextSyntheticLambdaSymbolRawValue = -60_000_000
     }
 
     func syntheticLambdaSymbol(for exprID: ExprID) -> SymbolID {
@@ -387,11 +383,11 @@ final class KIRLoweringContext {
 
     private func nextSyntheticLambdaSymbolRawID() -> Int32 {
         precondition(
-            nextSyntheticLambdaSymbolRawValue < Int32.max,
+            nextSyntheticLambdaSymbolRawValue > Int32.min + 1,
             "Exhausted synthetic symbol IDs for lambda lowering."
         )
         let allocated = nextSyntheticLambdaSymbolRawValue
-        nextSyntheticLambdaSymbolRawValue += 1
+        nextSyntheticLambdaSymbolRawValue -= 1
         return allocated
     }
 

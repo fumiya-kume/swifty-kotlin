@@ -412,7 +412,6 @@ extension ExprTypeChecker {
         let sema = ctx.sema
 
         let label: InternedString? = if case let .lambdaLiteral(_, _, lbl, _) = ast.arena.expr(id) { lbl } else { nil }
-
         // SAM conversion: when the expected type is a functional interface,
         // extract the SAM method's function type so the lambda's parameters
         // and return type can be inferred from it.
@@ -431,6 +430,9 @@ extension ExprTypeChecker {
 
         var lambdaLocals = locals
         let outerSymbols = Set(locals.values.map(\.symbol))
+        let inferredImplicitItType = params.isEmpty
+            ? inferItParameterType(ctx: ctx, id: id, sema: sema)
+            : nil
 
         // Implicit `it` parameter for no-arrow lambdas with single expected param.
         // Enhanced to support complex type inference contexts and generic types.
@@ -445,7 +447,7 @@ extension ExprTypeChecker {
                 [ctx.interner.intern("it")]
             }
             // Check for common HOF patterns (map, filter, etc.) through context
-            else if shouldInferItParameter(ctx: ctx, id: id, sema: sema) {
+            else if inferredImplicitItType != nil {
                 [ctx.interner.intern("it")]
             }
             else {
@@ -465,7 +467,7 @@ extension ExprTypeChecker {
             samFT.params
         } else if effectiveParams.count == 1 && effectiveParams.contains(ctx.interner.intern("it")) {
             // For implicit `it` parameter, try to infer type from context
-            inferItParameterType(ctx: ctx, id: id, sema: sema).map { [$0] } 
+            inferredImplicitItType.map { [$0] }
                 ?? Array(repeating: sema.types.anyType, count: effectiveParams.count)
         } else {
             Array(repeating: sema.types.anyType, count: effectiveParams.count)
@@ -1003,50 +1005,116 @@ extension ExprTypeChecker {
 
     // MARK: - Lambda Parameter Inference Helpers
 
-    /// Determines if a lambda should infer an implicit `it` parameter based on context
-    private func shouldInferItParameter(ctx: TypeInferenceContext, id: ExprID, sema: SemaModule) -> Bool {
-        // Check if this lambda is used in a common HOF context
-        if let parentCall = findParentCallContext(for: id, ctx: ctx, sema: sema) {
-            return isSingleParameterHOF(parentCall, sema: sema)
+    private enum ParentLambdaCallContext {
+        case topLevel(calleeName: InternedString, argIndex: Int)
+        case member(receiverType: TypeID?, calleeName: InternedString, argIndex: Int)
+    }
+
+    /// Finds the parent call context for a lambda expression by scanning the arena.
+    private func findParentCallContext(for lambdaId: ExprID, ctx: TypeInferenceContext, sema _: SemaModule) -> ParentLambdaCallContext? {
+        let ast = ctx.ast
+        for expr in ast.arena.exprs {
+            switch expr {
+            case let .call(callee, _, args, _):
+                guard let argIndex = args.firstIndex(where: { $0.expr == lambdaId }),
+                      let calleeExpr = ast.arena.expr(callee),
+                      case let .nameRef(calleeName, _) = calleeExpr
+                else {
+                    continue
+                }
+                return .topLevel(calleeName: calleeName, argIndex: argIndex)
+
+            case let .memberCall(receiver, calleeName, _, args, _):
+                guard let argIndex = args.firstIndex(where: { $0.expr == lambdaId }) else {
+                    continue
+                }
+                let receiverType = ctx.sema.bindings.exprTypes[receiver]
+                return .member(receiverType: receiverType, calleeName: calleeName, argIndex: argIndex)
+
+            case let .safeMemberCall(receiver, calleeName, _, args, _):
+                guard let argIndex = args.firstIndex(where: { $0.expr == lambdaId }) else {
+                    continue
+                }
+                let receiverType = ctx.sema.bindings.exprTypes[receiver]
+                return .member(receiverType: receiverType, calleeName: calleeName, argIndex: argIndex)
+
+            default:
+                continue
+            }
         }
-        
-        return false
-    }
-
-    /// Finds the parent call context for a lambda expression
-    private func findParentCallContext(for lambdaId: ExprID, ctx: TypeInferenceContext, sema: SemaModule) -> ExprID? {
-        // This would need to be implemented based on the AST structure
-        // For now, return nil as a placeholder
         return nil
-    }
-
-    /// Checks if a call context represents a single-parameter HOF
-    private func isSingleParameterHOF(_ callId: ExprID, sema: SemaModule) -> Bool {
-        // Check for common single-parameter HOFs: map, filter, forEach, etc.
-        // This would need to be implemented based on symbol lookup
-        return false
     }
 
     /// Infers the type for an implicit `it` parameter based on context
     private func inferItParameterType(ctx: TypeInferenceContext, id: ExprID, sema: SemaModule) -> TypeID? {
-        // Try to infer from parent call context
         if let parentCall = findParentCallContext(for: id, ctx: ctx, sema: sema) {
-            return inferTypeFromHOFContext(parentCall, sema: sema)
+            return inferTypeFromHOFContext(parentCall, ctx: ctx, sema: sema)
         }
-        
-        // Try to infer from assignment context
+
         if let assignmentType = inferFromAssignmentContext(id: id, ctx: ctx, sema: sema) {
             return assignmentType
         }
-        
+
         return nil
     }
 
     /// Infers lambda parameter type from HOF call context
-    private func inferTypeFromHOFContext(_ callId: ExprID, sema: SemaModule) -> TypeID? {
-        // This would analyze the HOF signature to determine the lambda parameter type
-        // For example, for `list.map { it }`, infer that `it` should be the element type of list
-        return nil
+    private func inferTypeFromHOFContext(
+        _ callContext: ParentLambdaCallContext,
+        ctx: TypeInferenceContext,
+        sema: SemaModule
+    ) -> TypeID? {
+        let candidateSymbols: [SymbolID]
+        let argIndex: Int
+
+        switch callContext {
+        case let .topLevel(calleeName, index):
+            argIndex = index
+            candidateSymbols = ctx.filterByVisibility(
+                ctx.cachedScopeLookup(calleeName).filter { candidate in
+                    guard let symbol = ctx.cachedSymbol(candidate) else { return false }
+                    return symbol.kind == .function || symbol.kind == .constructor
+                }
+            ).visible
+
+        case let .member(receiverType, calleeName, index):
+            guard let receiverType else {
+                return nil
+            }
+            argIndex = index
+            candidateSymbols = driver.helpers.collectMemberFunctionCandidates(
+                named: calleeName,
+                receiverType: receiverType,
+                sema: sema
+            )
+        }
+
+        var inferredParameterTypes: [TypeID] = []
+        for candidate in candidateSymbols {
+            guard let signature = sema.symbols.functionSignature(for: candidate),
+                  argIndex < signature.parameterTypes.count
+            else {
+                continue
+            }
+            let parameterType = signature.parameterTypes[argIndex]
+            if case let .functionType(functionType) = sema.types.kind(of: parameterType),
+               functionType.params.count == 1
+            {
+                inferredParameterTypes.append(functionType.params[0])
+                continue
+            }
+            if let samFunctionType = driver.helpers.samFunctionType(for: parameterType, sema: sema),
+               samFunctionType.params.count == 1
+            {
+                inferredParameterTypes.append(samFunctionType.params[0])
+            }
+        }
+
+        guard let firstType = inferredParameterTypes.first else {
+            return nil
+        }
+        let allSame = inferredParameterTypes.dropFirst().allSatisfy { $0 == firstType }
+        return allSame ? firstType : nil
     }
 
     /// Infers lambda parameter type from assignment context

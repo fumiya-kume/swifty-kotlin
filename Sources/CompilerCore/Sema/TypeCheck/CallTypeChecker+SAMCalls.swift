@@ -36,20 +36,27 @@ extension CallTypeChecker {
                 return symbol.kind == .function || symbol.kind == .constructor
             }
         }
-
         // Path 1: callee is a function/constructor whose single parameter is a
         // fun interface type (e.g. `apply({ ... })` where apply takes Transformer).
         let samCompatibleCandidates = visibleCandidates.filter { candidate in
             guard let signature = ctx.sema.symbols.functionSignature(for: candidate),
+                  isCallableArityCompatible(signature: signature, argCount: args.count),
                   samArgIndex < signature.parameterTypes.count
             else {
                 return false
             }
             return driver.helpers.samFunctionType(for: signature.parameterTypes[samArgIndex], sema: ctx.sema) != nil
         }
+        let narrowedSamCandidates = narrowSamCandidates(
+            samCompatibleCandidates,
+            args: args,
+            samArgIndex: samArgIndex,
+            ctx: ctx,
+            locals: &locals
+        )
 
-        if samCompatibleCandidates.count == 1,
-           let signature = ctx.sema.symbols.functionSignature(for: samCompatibleCandidates[0])
+        if narrowedSamCandidates.count == 1,
+           let signature = ctx.sema.symbols.functionSignature(for: narrowedSamCandidates[0])
         {
             var argTypes: [CallArg] = []
             argTypes.reserveCapacity(args.count)
@@ -64,7 +71,7 @@ extension CallTypeChecker {
                 argTypes.append(CallArg(label: argument.label, isSpread: argument.isSpread, type: inferredType))
             }
             let resolved = ctx.resolver.resolveCall(
-                candidates: samCompatibleCandidates,
+                candidates: narrowedSamCandidates,
                 call: CallExpr(
                     range: range,
                     calleeName: calleeName,
@@ -107,6 +114,82 @@ extension CallTypeChecker {
         }
 
         return nil
+    }
+
+    func narrowSamCandidates(
+        _ candidates: [SymbolID],
+        args: [CallArgument],
+        samArgIndex: Int,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> [SymbolID] {
+        guard candidates.count > 1 else {
+            return candidates
+        }
+
+        var inferredNonSamArgTypes: [Int: TypeID] = [:]
+        for (index, argument) in args.enumerated() where index != samArgIndex {
+            inferredNonSamArgTypes[index] = driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
+        }
+
+        let narrowed = candidates.filter { candidate in
+            guard let signature = ctx.sema.symbols.functionSignature(for: candidate),
+                  isCallableArityCompatible(signature: signature, argCount: args.count)
+            else {
+                return false
+            }
+            for (index, inferredType) in inferredNonSamArgTypes {
+                guard let parameterType = parameterTypeForArgument(
+                    at: index,
+                    in: signature
+                ) else {
+                    return false
+                }
+                if !ctx.sema.types.isSubtype(inferredType, parameterType) {
+                    return false
+                }
+            }
+            return true
+        }
+
+        return narrowed.isEmpty ? candidates : narrowed
+    }
+
+    func isCallableArityCompatible(signature: FunctionSignature, argCount: Int) -> Bool {
+        let hasVararg = signature.valueParameterIsVararg.contains(true)
+        let requiredCount = zip(signature.parameterTypes.indices, signature.valueParameterHasDefaultValues).reduce(0) { partial, entry in
+            let (index, hasDefault) = entry
+            if hasVararg, signature.valueParameterIsVararg[index] {
+                return partial
+            }
+            return partial + (hasDefault ? 0 : 1)
+        }
+        if argCount < requiredCount {
+            return false
+        }
+        if hasVararg {
+            return true
+        }
+        return argCount <= signature.parameterTypes.count
+    }
+
+    func parameterTypeForArgument(
+        at index: Int,
+        in signature: FunctionSignature
+    ) -> TypeID? {
+        guard index >= 0 else {
+            return nil
+        }
+        if index < signature.parameterTypes.count {
+            return signature.parameterTypes[index]
+        }
+        guard let varargIndex = signature.valueParameterIsVararg.firstIndex(of: true),
+              varargIndex < signature.parameterTypes.count,
+              index >= varargIndex
+        else {
+            return nil
+        }
+        return signature.parameterTypes[varargIndex]
     }
 
     /// Handles `Transformer { ... }` — calling a fun interface name with a

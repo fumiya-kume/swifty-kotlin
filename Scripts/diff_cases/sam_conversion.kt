@@ -6,4 +6,3 @@ fun main() {
     println(apply({ it.reversed() }, "world"))
     println(apply(Transformer { it + "!" }, "hi"))
 }
-// SKIP-DIFF: SAM conversion parity pending
