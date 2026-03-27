@@ -7,7 +7,7 @@ struct MemberCallReceiver {
 }
 
 extension CallLowerer {
-    private static let unresolvedCoroutineHandleMemberNames: Set<String> = ["await", "join", "cancel"]
+    static let unresolvedCoroutineHandleMemberNames: Set<String> = ["await", "join", "cancel"]
     private static let unresolvedChannelMemberNames: Set<String> = ["send", "receive", "close"]
 
     func anyFallbackTag(for type: TypeID, sema: SemaModule) -> Int64 {

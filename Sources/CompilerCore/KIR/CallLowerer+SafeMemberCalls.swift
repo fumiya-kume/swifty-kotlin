@@ -1,8 +1,6 @@
 import Foundation
 
 extension CallLowerer {
-    private static let coroutineHandleMemberNames: Set<String> = ["await", "join", "cancel"]
-
     // swiftlint:disable:next cyclomatic_complexity
     func lowerSafeMemberCallExpr(
         _ exprID: ExprID,
@@ -652,7 +650,7 @@ extension CallLowerer {
             finalArguments.insert(loweredReceiverID, at: 0)
         } else if chosen == nil {
             let calleeStr = interner.resolve(effectiveCalleeName)
-            if Self.coroutineHandleMemberNames.contains(calleeStr), isCoroutineReceiver, args.isEmpty {
+            if Self.unresolvedCoroutineHandleMemberNames.contains(calleeStr), isCoroutineReceiver, args.isEmpty {
                 finalArguments.insert(loweredReceiverID, at: 0)
             }
         }

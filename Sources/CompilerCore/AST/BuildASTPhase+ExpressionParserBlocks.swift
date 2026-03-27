@@ -127,43 +127,11 @@ extension BuildASTPhase.ExpressionParser {
     }
 
     private func canAcceptTrailingLambda(_ tokens: ArraySlice<Token>) -> Bool {
-        guard let first = tokens.first, let last = tokens.last else {
-            return false
-        }
-        if case let .keyword(keyword) = first.kind,
-           [.if, .for, .while, .do, .when, .try, .catch, .finally].contains(keyword)
-        {
-            return false
-        }
-        switch last.kind {
-        case .identifier, .backtickedIdentifier, .softKeyword, .keyword:
-            return true
-        case .symbol(.rParen), .symbol(.rBracket), .symbol(.greaterThan), .symbol(.bangBang):
-            return true
-        default:
-            return false
-        }
+        BuildASTPhase.canAcceptTrailingLambda(on: tokens)
     }
 
     func isBinaryOperatorTokenKind(_ kind: TokenKind) -> Bool {
-        switch kind {
-        case .symbol(.plus), .symbol(.minus), .symbol(.star), .symbol(.slash), .symbol(.percent),
-             .symbol(.ampAmp), .symbol(.barBar),
-             .symbol(.equalEqual), .symbol(.bangEqual),
-             .symbol(.lessThan), .symbol(.lessOrEqual), .symbol(.greaterThan), .symbol(.greaterOrEqual),
-             .symbol(.assign), .symbol(.plusAssign), .symbol(.minusAssign),
-             .symbol(.starAssign), .symbol(.slashAssign), .symbol(.percentAssign),
-             .symbol(.dotDot), .symbol(.dotDotLt),
-             .symbol(.questionQuestion), .symbol(.questionColon),
-             .symbol(.dot), .symbol(.questionDot),
-             .symbol(.doubleColon),
-             .symbol(.arrow), .symbol(.fatArrow),
-             .keyword(.as), .keyword(.is), .keyword(.in),
-             .keyword(.else), .keyword(.catch), .keyword(.finally):
-            true
-        default:
-            false
-        }
+        BuildASTPhase.isBinaryOperatorToken(kind)
     }
 
     func parseLocalDeclFromSlice(_ tokens: ArraySlice<Token>) -> ExprID? {
