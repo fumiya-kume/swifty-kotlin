@@ -73,18 +73,6 @@
 
 #### Phase 2: 演算子と特殊構文 (中優先度)
 
-- [ ] STDLIB-OP-030: 算術演算子オーバーロード完全実装
-  - **仕様**: カスタムクラスでの算術演算子オーバーロード
-  - **実装内容**:
-    - 単項演算子: unaryPlus(), unaryMinus(), not()
-    - 二項演算子: plus(), minus(), times(), div(), mod(), rem()
-    - 代入演算子: plusAssign(), minusAssign(), timesAssign(), divAssign(), modAssign()
-    - 演算子の優先順位と結合性
-    - 演算子オーバーロードの型チェック
-  - **現状**: 基本的な演算子は実装済み、カスタムオーバーロードは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/operator_overload.kt`
-
 - [ ] STDLIB-OP-031: 比較演算子オーバーロード完全実装
   - **仕様**: カスタムクラスでの比較演算子オーバーロード
   - **実装内容**:
