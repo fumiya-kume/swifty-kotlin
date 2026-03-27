@@ -438,6 +438,7 @@ final class LambdaLowerer {
         if !captureArgs.isEmpty,
            !needsClosureParam,
            !isSamConversion,
+           !(functionType?.isSuspend ?? false),
            let functionType
         {
             if let materialized = materializeEscapingCallableValue(
@@ -591,6 +592,13 @@ final class LambdaLowerer {
             canThrow: false,
             thrownResult: nil
         ))
+        driver.ctx.registerCallableValue(
+            materializedExpr,
+            symbol: adapterSymbol,
+            callee: adapterName,
+            captureArguments: [closureObj],
+            hasClosureParam: true
+        )
         return materializedExpr
     }
 
