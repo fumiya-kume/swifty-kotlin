@@ -481,8 +481,7 @@ extension BuildASTPhase.ExpressionParser {
 
         if !matches(.keyword(.while)),
            let whileIndex = findDoWhileConditionKeyword(startingAt: bodyStartIndex),
-           bodyStartIndex < whileIndex,
-           whileIndex >= index
+           bodyStartIndex < whileIndex
         {
             let bodyTokens = tokens[bodyStartIndex ..< whileIndex]
             if let reparsedBody = parseDoWhileBodyExpression(from: bodyTokens) {
@@ -522,7 +521,7 @@ extension BuildASTPhase.ExpressionParser {
         if let first = bodyTokens.first, first.kind == .symbol(.lBrace) {
             return BuildASTPhase.ExpressionParser(
                 tokens: bodyTokens, interner: interner, astArena: astArena
-            ).parse()
+            ).parseBlockExpression()
         }
         let sanitized = bodyTokens.filter { $0.kind != .symbol(.semicolon) }
         guard !sanitized.isEmpty else {
