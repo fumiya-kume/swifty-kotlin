@@ -169,12 +169,19 @@ extension BuildASTPhase.ExpressionParser {
             return nil
         }
 
+        let branchTokens = tokens[startIndex ..< endIndex]
         let parser = BuildASTPhase.ExpressionParser(
-            tokens: tokens[startIndex ..< endIndex],
+            tokens: branchTokens,
             interner: interner,
             astArena: astArena
         )
-        guard let body = parser.parse() else {
+        let body: ExprID?
+        if branchTokens.first?.kind == .symbol(.lBrace) {
+            body = parser.parseBlockExpression()
+        } else {
+            body = parser.parse()
+        }
+        guard let body else {
             return nil
         }
 

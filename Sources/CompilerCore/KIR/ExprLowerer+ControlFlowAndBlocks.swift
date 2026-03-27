@@ -903,6 +903,7 @@ extension ExprLowerer {
                 captureBindings.reserveCapacity(captureSymbols.count)
                 for (index, capturedSymbol) in captureSymbols.enumerated() {
                     let declaredType = driver.ctx.localDeclaredType(for: capturedSymbol)
+                        ?? driver.ctx.localValue(for: capturedSymbol).flatMap { arena.exprType($0) }
                         ?? driver.lambdaLowerer.typeForSymbolReference(capturedSymbol, sema: sema)
                     if let semanticSymbol = sema.symbols.symbol(capturedSymbol),
                        semanticSymbol.kind == .local,
@@ -1149,8 +1150,14 @@ extension ExprLowerer {
                     instructions: &instructions
                 )
                 if let symbol = sema.bindings.identifierSymbols[exprID] {
+                    let declaredType = arena.exprType(initializerID)
+                        ?? driver.lambdaLowerer.typeForSymbolReference(symbol, sema: sema)
+                    driver.ctx.setLocalDeclaredType(declaredType, for: symbol)
                     driver.ctx.setLocalValue(initializerID, for: symbol)
                 }
+            } else if let symbol = sema.bindings.identifierSymbols[exprID] {
+                let declaredType = driver.lambdaLowerer.typeForSymbolReference(symbol, sema: sema)
+                driver.ctx.setLocalDeclaredType(declaredType, for: symbol)
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
@@ -1545,7 +1552,12 @@ extension ExprLowerer {
                 rhsType: TypeID?
             ) -> KIRExprID {
                 let isStringCompound = op == .plusAssign
-                    && (lhsType == stringType || lhsType == nullableStringType)
+                    && (
+                        lhsType == stringType
+                            || lhsType == nullableStringType
+                            || rhsType == stringType
+                            || rhsType == nullableStringType
+                    )
                 if !isStringCompound {
                     let resultType = arena.exprType(lhs) ?? lhsType
                     let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
