@@ -221,6 +221,7 @@ extension DataFlowSemaPhase {
         let name: InternedString
         let range: SourceRange
         let hasOverride: Bool
+        let hasOpen: Bool
         let returnType: TypeID?
         let hasAbstract: Bool
         let hasFinal: Bool
@@ -240,6 +241,7 @@ extension DataFlowSemaPhase {
                 name: fun.name,
                 range: fun.range,
                 hasOverride: fun.modifiers.contains(.override),
+                hasOpen: fun.modifiers.contains(.open),
                 returnType: returnType,
                 hasAbstract: fun.modifiers.contains(.abstract),
                 hasFinal: fun.modifiers.contains(.final),
@@ -250,6 +252,7 @@ extension DataFlowSemaPhase {
                 name: prop.name,
                 range: prop.range,
                 hasOverride: prop.modifiers.contains(.override),
+                hasOpen: prop.modifiers.contains(.open),
                 returnType: nil,
                 hasAbstract: prop.modifiers.contains(.abstract),
                 hasFinal: prop.modifiers.contains(.final),
@@ -415,7 +418,7 @@ extension DataFlowSemaPhase {
         }
         
         // Rule 3d: Check data class constraints (data classes cannot be open)
-        if ownerSym.flags.contains(.dataType) && memberMeta.hasOverride {
+        if ownerSym.flags.contains(.dataType) && memberMeta.hasOpen {
             let ownerName = ownerSym.fqName.map { ctx.interner.resolve($0) }.joined(separator: ".")
             ctx.diagnostics.error(
                 "KSWIFTK-SEMA-MODIFIER-CONFLICT",

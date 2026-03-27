@@ -75,7 +75,7 @@
   - **テストケース**: `Scripts/diff_cases/abstract_class.kt`
 
 
-- [ ] STDLIB-INHERIT-018: 継承修飾子完全実装
+- [x] STDLIB-INHERIT-018: 継承修飾子完全実装
   - **仕様**: open/final/abstract修飾子の完全サポート
   - **実装内容**:
     - openクラスとopenメンバ
