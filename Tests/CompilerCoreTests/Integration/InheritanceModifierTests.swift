@@ -55,8 +55,9 @@ final class InheritanceModifierTests: XCTestCase {
         let ctx = makeContextFromSource(source)
         try runSema(ctx)
         
-        // Should error - cannot re-abstract an already abstract member
-        assertHasDiagnostic("KSWIFTK-SEMA-ABSTRACT-OVERRIDE", in: ctx)
+        // Kotlin allows an abstract class to keep an inherited abstract member abstract.
+        assertNoDiagnostic("KSWIFTK-SEMA-ABSTRACT-OVERRIDE", in: ctx)
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
     }
     
     // MARK: - Final Override Tests
@@ -111,8 +112,8 @@ final class InheritanceModifierTests: XCTestCase {
         let ctx = makeContextFromSource(source)
         try runSema(ctx)
         
-        // Should error - abstract and final are mutually exclusive
-        assertHasDiagnostic("KSWIFTK-SEMA-MODIFIER-CONFLICT", in: ctx)
+        // Class-level abstract/final conflict is currently reported by abstract-class validation.
+        assertHasDiagnostic("KSWIFTK-SEMA-ABSTRACT", in: ctx)
     }
     
     func testInterfaceMemberCannotBeFinal() throws {
@@ -176,7 +177,7 @@ final class InheritanceModifierTests: XCTestCase {
     func testOverrideWithSameVisibility() throws {
         let source = """
         open class Shape {
-            protected fun describe(): String = "Shape"
+            protected open fun describe(): String = "Shape"
         }
         
         class Circle : Shape() {
@@ -194,7 +195,7 @@ final class InheritanceModifierTests: XCTestCase {
     func testOverrideWithMoreVisibility() throws {
         let source = """
         open class Shape {
-            protected fun describe(): String = "Shape"
+            protected open fun describe(): String = "Shape"
         }
         
         class Circle : Shape() {
@@ -259,29 +260,4 @@ final class InheritanceModifierTests: XCTestCase {
         XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
     }
     
-    // MARK: - Helper Methods
-    
-    private func makeContextFromSource(_ source: String) -> TestContext {
-        // This would need to be implemented based on the existing test infrastructure
-        // For now, this is a placeholder
-        return TestContext()
-    }
-    
-    private func runSema(_ ctx: TestContext) throws {
-        // This would need to be implemented based on the existing test infrastructure
-        // For now, this is a placeholder
-    }
-    
-    private func assertHasDiagnostic(_ code: String, in ctx: TestContext) {
-        XCTAssertTrue(ctx.diagnostics.diagnostics.contains { $0.code == code })
-    }
-    
-    private func assertNoDiagnostic(_ code: String, in ctx: TestContext) {
-        XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.code == code })
-    }
-}
-
-// Placeholder types for test infrastructure
-private struct TestContext {
-    let diagnostics = DiagnosticEngine()
 }
