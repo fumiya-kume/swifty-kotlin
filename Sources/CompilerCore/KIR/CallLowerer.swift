@@ -397,6 +397,36 @@ final class CallLowerer {
             )
         }
         let knownNames = KnownCompilerNames(interner: interner)
+        if sourceCalleeName == interner.intern("generateSequence"),
+           loweredArgIDs.count == 2,
+           let seedFunctionType = sema.bindings.exprTypes[args[0].expr],
+           case let .functionType(functionType) = sema.types.kind(of: sema.types.makeNonNullable(seedFunctionType)),
+           functionType.params.isEmpty,
+           let seedCallableInfo = driver.ctx.callableValueInfo(for: loweredArgIDs[0])
+        {
+            let seedResult = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: sema.types.makeNonNullable(functionType.returnType)
+            )
+            instructions.append(.call(
+                symbol: seedCallableInfo.symbol,
+                callee: seedCallableInfo.callee,
+                arguments: seedCallableInfo.captureArguments,
+                result: seedResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+            instructions.append(.call(
+                symbol: chosen,
+                callee: interner.intern("kk_sequence_generate"),
+                arguments: [seedResult, loweredArgIDs[1]],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
         if sema.bindings.builderDSLKind(for: exprID) == .buildString {
             let builderRuntimeCallee: String? = switch (interner.resolve(sourceCalleeName), loweredArgIDs.count) {
             case ("append", 1):
@@ -966,7 +996,29 @@ final class CallLowerer {
 
         let legacyNames: Set = ["kk_require_lazy", "kk_check_lazy", "kk_precondition_assert_lazy", "kk_sequence_generate"]
         if legacyNames.contains(externalLinkName), loweredArguments.count == 2 {
-            var finalArgs = [loweredArguments[0], loweredArguments[1]]
+            var seedArgument = loweredArguments[0]
+            if externalLinkName == "kk_sequence_generate",
+               let seedCallableInfo = driver.ctx.callableValueInfo(for: loweredArguments[0]),
+               let seedFunctionType = sema.bindings.exprTypes[originalArgs[0].expr],
+               case let .functionType(functionType) = sema.types.kind(of: sema.types.makeNonNullable(seedFunctionType)),
+               functionType.params.isEmpty
+            {
+                let seedResult = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: sema.types.makeNonNullable(functionType.returnType)
+                )
+                instructions.append(.call(
+                    symbol: seedCallableInfo.symbol,
+                    callee: seedCallableInfo.callee,
+                    arguments: seedCallableInfo.captureArguments,
+                    result: seedResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                seedArgument = seedResult
+            }
+
+            var finalArgs = [seedArgument, loweredArguments[1]]
             if sema.bindings.isCollectionHOFLambdaExpr(originalArgs[1].expr),
                let callableInfo = driver.ctx.callableValueInfo(for: loweredArguments[1]),
                let closureRaw = callableInfo.captureArguments.first

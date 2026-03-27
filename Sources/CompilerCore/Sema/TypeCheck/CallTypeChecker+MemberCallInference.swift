@@ -5072,7 +5072,13 @@ extension CallTypeChecker {
             }
             let generateSequenceName = interner.intern("generateSequence")
             if name == generateSequenceName, let firstArg = args.first {
-                return driver.inferExpr(firstArg.expr, ctx: ctx, locals: &locals, expectedType: nil)
+                let firstArgType = driver.inferExpr(firstArg.expr, ctx: ctx, locals: &locals, expectedType: nil)
+                if case let .functionType(functionType) = sema.types.kind(of: sema.types.makeNonNullable(firstArgType)),
+                   functionType.params.isEmpty
+                {
+                    return sema.types.makeNonNullable(functionType.returnType)
+                }
+                return firstArgType
             }
             return directElementType
         default:

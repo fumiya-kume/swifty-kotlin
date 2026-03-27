@@ -256,14 +256,6 @@ final class CallTypeChecker {
             let withReceiverType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             // Second arg is the lambda with receiver
             var receiverCtx = ctx.with(implicitReceiverType: withReceiverType)
-            let nonNullWithReceiverType = sema.types.makeNonNullable(withReceiverType)
-            if case let .classType(classType) = sema.types.kind(of: nonNullWithReceiverType),
-               let receiverSymbol = sema.symbols.symbol(classType.classSymbol),
-               knownNames.isStringBuilderSymbol(receiverSymbol)
-            {
-                receiverCtx.isBuilderLambdaScope = true
-                receiverCtx.builderKind = .buildString
-            }
             let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                 receiver: withReceiverType,
                 params: [],
@@ -471,7 +463,14 @@ final class CallTypeChecker {
            interner.resolve(calleeName) == "generateSequence",
            args.count == 2
         {
-            let seedType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: nil)
+            let rawSeedType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: nil)
+            let seedType: TypeID = if case let .functionType(functionType) = sema.types.kind(of: sema.types.makeNonNullable(rawSeedType)),
+                                      functionType.params.isEmpty
+            {
+                sema.types.makeNonNullable(functionType.returnType)
+            } else {
+                rawSeedType
+            }
             let nextExpectedType = sema.types.make(.functionType(FunctionType(
                 params: [seedType],
                 returnType: sema.types.makeNullable(seedType),
@@ -1943,7 +1942,14 @@ final class CallTypeChecker {
                         )
                     }
                 } else if name == "generateSequence", args.count == 2 {
-                    let seedType = argTypes.first ?? sema.types.anyType
+                    let rawSeedType = argTypes.first ?? sema.types.anyType
+                    let seedType: TypeID = if case let .functionType(functionType) = sema.types.kind(of: sema.types.makeNonNullable(rawSeedType)),
+                                              functionType.params.isEmpty
+                    {
+                        sema.types.makeNonNullable(functionType.returnType)
+                    } else {
+                        rawSeedType
+                    }
                     let nextExpectedType = sema.types.make(.functionType(FunctionType(
                         params: [seedType],
                         returnType: sema.types.makeNullable(seedType),

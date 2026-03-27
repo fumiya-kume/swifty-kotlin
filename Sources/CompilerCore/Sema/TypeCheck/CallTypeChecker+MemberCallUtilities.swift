@@ -9,6 +9,7 @@ extension CallTypeChecker {
         if let externalLinkName = sema.symbols.externalLinkName(for: candidate) {
             switch externalLinkName {
             case "kk_list_contains", "kk_list_containsAll", "kk_list_indexOf", "kk_list_lastIndexOf",
+                 "kk_list_getOrElse",
                  "kk_list_binarySearch",
                  "kk_list_filterIndexed", "kk_list_reduceIndexedOrNull",
                  "kk_list_runningFoldIndexed", "kk_list_runningReduceIndexed", "kk_list_scanIndexed",
@@ -38,6 +39,7 @@ extension CallTypeChecker {
              (knownNames.kotlinCollectionsListFQName, interner.intern("containsAll")),
              (knownNames.kotlinCollectionsListFQName, interner.intern("indexOf")),
              (knownNames.kotlinCollectionsListFQName, interner.intern("lastIndexOf")),
+             (knownNames.kotlinCollectionsListFQName, interner.intern("getOrElse")),
              (knownNames.kotlinCollectionsListFQName, interner.intern("binarySearch")),
              (knownNames.kotlinCollectionsListFQName, interner.intern("filterIndexed")),
              (knownNames.kotlinCollectionsListFQName, interner.intern("reduceIndexedOrNull")),
