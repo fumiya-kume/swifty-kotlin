@@ -1,4 +1,3 @@
-// SKIP-DIFF  -- mutable capture requires Ref boxing (not yet implemented)
 fun main() {
     // Mutable capture via forEach
     var total = 0

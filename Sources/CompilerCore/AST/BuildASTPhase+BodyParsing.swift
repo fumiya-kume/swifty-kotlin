@@ -140,6 +140,8 @@ extension BuildASTPhase {
                 shouldMergeWithPrevious = isDotContinuation
                     || previousEndsWithContinuation
                     || currentStartsWithContinuation
+                    || startsWithTrailingLambdaGroup(filtered)
+                        && canAcceptTrailingLambda(on: previousFiltered)
                     || hasUnclosedStatementDelimiter(previousFiltered)
             } else {
                 shouldMergeWithPrevious = false
@@ -192,6 +194,30 @@ extension BuildASTPhase {
         return parenDepth > 0 || bracketDepth > 0 || braceDepth > 0
     }
 
+    private func startsWithTrailingLambdaGroup(_ tokens: [Token]) -> Bool {
+        tokens.first?.kind == .symbol(.lBrace)
+    }
+
+    private func canAcceptTrailingLambda(on tokens: [Token]) -> Bool {
+        guard let last = tokens.last else {
+            return false
+        }
+        if let first = tokens.first,
+           case let .keyword(keyword) = first.kind,
+           [.if, .for, .while, .do, .when, .try, .catch, .finally].contains(keyword)
+        {
+            return false
+        }
+        switch last.kind {
+        case .identifier, .backtickedIdentifier, .softKeyword, .keyword:
+            return true
+        case .symbol(.rParen), .symbol(.rBracket), .symbol(.greaterThan), .symbol(.bangBang):
+            return true
+        default:
+            return false
+        }
+    }
+
     /// Parse a single (possibly merged) statement token group, trying local
     /// fun-decl, local-decl, local-assign, then generic expression.
     private func parseStatementGroup(
@@ -233,7 +259,8 @@ extension BuildASTPhase {
                 if hasNewline, !current.isEmpty {
                     let lastIsContinuation = current.last.map { isBinaryOperatorToken($0.kind) } ?? false
                     let nextIsContinuation = isBinaryOperatorToken(token.kind)
-                    if !lastIsContinuation, !nextIsContinuation {
+                    let nextIsTrailingLambda = token.kind == .symbol(.lBrace) && canAcceptTrailingLambda(on: current)
+                    if !lastIsContinuation, !nextIsContinuation, !nextIsTrailingLambda {
                         groups.append(current)
                         current = []
                     }

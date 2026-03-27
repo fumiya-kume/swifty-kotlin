@@ -24,30 +24,34 @@ public func kk_function_curried<P1, P2, R>(
 
 /// Function.invoke implementation for all arities
 @_silgen_name("kk_function_invoke")
-public func kk_function_invoke<T, R>(
-    _ f: @escaping (T) -> R,
-    _ arg: T
-) -> R
+public func kk_function_invoke(
+    _ functionRaw: Int,
+    _ arg: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int
 
 @_silgen_name("kk_function_invoke_0")
-public func kk_function_invoke_0<R>(
-    _ f: @escaping () -> R
-) -> R
+public func kk_function_invoke_0(
+    _ functionRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int
 
 @_silgen_name("kk_function_invoke_2")
-public func kk_function_invoke_2<P1, P2, R>(
-    _ f: @escaping (P1, P2) -> R,
-    _ arg1: P1,
-    _ arg2: P2
-) -> R
+public func kk_function_invoke_2(
+    _ functionRaw: Int,
+    _ arg1: Int,
+    _ arg2: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int
 
 @_silgen_name("kk_function_invoke_3")
-public func kk_function_invoke_3<P1, P2, P3, R>(
-    _ f: @escaping (P1, P2, P3) -> R,
-    _ arg1: P1,
-    _ arg2: P2,
-    _ arg3: P3
-) -> R
+public func kk_function_invoke_3(
+    _ functionRaw: Int,
+    _ arg1: Int,
+    _ arg2: Int,
+    _ arg3: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int
 
 // MARK: - Suspend function type operations
 
@@ -67,19 +71,25 @@ public func kk_suspend_function_invoke_0<R>(
 
 /// Function type creation helpers
 @_silgen_name("kk_function_create_0")
-public func kk_function_create_0<R>(
-    _ body: @escaping () -> R
-) -> () -> R
+public func kk_function_create_0(
+    _ bodyRaw: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int
 
 @_silgen_name("kk_function_create_1")
-public func kk_function_create_1<T, R>(
-    _ body: @escaping (T) -> R
-) -> (T) -> R
+public func kk_function_create_1(
+    _ bodyRaw: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int
 
 @_silgen_name("kk_function_create_2")
-public func kk_function_create_2<P1, P2, R>(
-    _ body: @escaping (P1, P2) -> R
-) -> (P1, P2) -> R
+public func kk_function_create_2(
+    _ bodyRaw: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int
 
 // MARK: - Function type reflection
 

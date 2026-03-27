@@ -19,6 +19,8 @@ extension BuildASTPhase.ExpressionParser {
     func tryParseExplicitTypeArgs() -> [TypeRefID]? {
         guard matches(.symbol(.lessThan)) else { return nil }
         let savedIndex = index
+        var options = TypeRefParserCore.Options.expressionInline
+        options.allowFunctionType = true
         _ = consume()
         var refs: [TypeRefID] = []
         while true {
@@ -40,11 +42,17 @@ extension BuildASTPhase.ExpressionParser {
                     return nil
                 }
             }
-            guard let typeRef = parseInlineTypeRef() else {
+            guard let parsed = TypeRefParserCore.parseTypeRefPrefix(
+                tokens[index...],
+                interner: interner,
+                astArena: astArena,
+                options: options
+            ) else {
                 index = savedIndex
                 return nil
             }
-            refs.append(typeRef)
+            index += parsed.consumed
+            refs.append(parsed.ref)
         }
     }
 

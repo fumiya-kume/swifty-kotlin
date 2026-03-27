@@ -45,6 +45,12 @@ public protocol KKContinuation {
 typealias KKSuspendEntryPoint = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
 typealias KKThunkEntryPoint = @convention(c) (UnsafeMutablePointer<Int>?) -> Int
 typealias KKClosureThunkEntryPoint = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
+typealias KKFunctionEntryPoint1 = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
+typealias KKFunctionEntryPoint2 = @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int
+typealias KKFunctionEntryPoint3 = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
+typealias KKClosureFunctionEntryPoint1 = @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int
+typealias KKClosureFunctionEntryPoint2 = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
+typealias KKClosureFunctionEntryPoint3 = @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 typealias KKDelegateObserverEntryPoint = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 
 final class RuntimeStringBox {
@@ -172,6 +178,18 @@ struct RuntimeCallableRefMetadata {
     let nameRaw: Int
     let arity: Int
     let kind: RuntimeCallableRefKind
+}
+
+final class RuntimeFunctionValueBox {
+    let fnPtr: Int
+    let closureRaw: Int
+    let arity: Int
+
+    init(fnPtr: Int, closureRaw: Int, arity: Int) {
+        self.fnPtr = fnPtr
+        self.closureRaw = closureRaw
+        self.arity = arity
+    }
 }
 
 // MARK: - Collection Types (STDLIB-001)

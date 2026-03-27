@@ -73,6 +73,7 @@ final class LocalDeclTypeChecker {
             visibility: .private,
             flags: isMutable ? [.mutable] : []
         )
+        sema.symbols.setPropertyType(localType, for: localSymbol)
         locals[name] = (localType, localSymbol, isMutable, initializer != nil)
         sema.bindings.bindIdentifier(id, symbol: localSymbol)
         // Propagate collection marks through local variable declarations

@@ -1,4 +1,3 @@
-// SKIP-DIFF  -- several cases require callable val / Ref boxing (not yet implemented)
 // CLSR-001: Comprehensive closure capture Kotlin compatibility test
 fun main() {
     // === 1. Immutable (val) capture ===

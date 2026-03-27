@@ -602,10 +602,8 @@ extension ExprLowerer {
                    let loadedValue = loadMutableCaptureCellValue(
                        symbol: symbol,
                        resultType: {
-                           if let boundType, boundType != sema.types.anyType {
-                               return boundType
-                           }
-                           return driver.lambdaLowerer.typeForSymbolReference(symbol, sema: sema)
+                           driver.ctx.localDeclaredType(for: symbol)
+                               ?? driver.lambdaLowerer.typeForSymbolReference(symbol, sema: sema)
                        }(),
                        sema: sema,
                        arena: arena,
@@ -901,9 +899,11 @@ extension ExprLowerer {
                     }
                 }
 
-                var captureBindings: [(capturedSymbol: SymbolID, param: KIRParameter, valueExpr: KIRExprID)] = []
+                var captureBindings: [(capturedSymbol: SymbolID, param: KIRParameter, valueExpr: KIRExprID, declaredType: TypeID)] = []
                 captureBindings.reserveCapacity(captureSymbols.count)
                 for (index, capturedSymbol) in captureSymbols.enumerated() {
+                    let declaredType = driver.ctx.localDeclaredType(for: capturedSymbol)
+                        ?? driver.lambdaLowerer.typeForSymbolReference(capturedSymbol, sema: sema)
                     if let semanticSymbol = sema.symbols.symbol(capturedSymbol),
                        semanticSymbol.kind == .local,
                        semanticSymbol.flags.contains(.mutable)
@@ -934,7 +934,8 @@ extension ExprLowerer {
                     captureBindings.append((
                         capturedSymbol: capturedSymbol,
                         param: captureParam,
-                        valueExpr: captureValue
+                        valueExpr: captureValue,
+                        declaredType: declaredType
                     ))
                 }
 
@@ -966,6 +967,7 @@ extension ExprLowerer {
                     } else {
                         driver.ctx.setLocalValue(captureExpr, for: capture.capturedSymbol)
                     }
+                    driver.ctx.setLocalDeclaredType(capture.declaredType, for: capture.capturedSymbol)
                     if capture.capturedSymbol == savedReceiverSymbol {
                         driver.ctx.setImplicitReceiver(symbol: capture.param.symbol, exprID: captureExpr)
                     }
@@ -1533,6 +1535,73 @@ extension ExprLowerer {
             case .divAssign: .divide
             case .modAssign: .modulo
             }
+            let stringType = sema.types.stringType
+            let nullableStringType = sema.types.make(.primitive(.string, .nullable))
+
+            func appendCompoundResult(
+                lhs: KIRExprID,
+                lhsType: TypeID,
+                rhs: KIRExprID,
+                rhsType: TypeID?
+            ) -> KIRExprID {
+                let isStringCompound = op == .plusAssign
+                    && (lhsType == stringType || lhsType == nullableStringType)
+                if !isStringCompound {
+                    let resultType = arena.exprType(lhs) ?? lhsType
+                    let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+                    instructions.append(.binary(op: kirOp, lhs: lhs, rhs: rhs, result: resultID))
+                    return resultID
+                }
+
+                let effectiveRHS: KIRExprID
+                if rhsType == stringType || rhsType == nullableStringType {
+                    effectiveRHS = rhs
+                } else {
+                    let tag = driver.callLowerer.anyFallbackTag(for: rhsType ?? sema.types.anyType, sema: sema)
+                    let tagExpr = arena.appendExpr(.intLiteral(tag), type: sema.types.intType)
+                    instructions.append(.constValue(result: tagExpr, value: .intLiteral(tag)))
+                    let converted = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: stringType)
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_any_to_string"),
+                        arguments: [rhs, tagExpr],
+                        result: converted,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    effectiveRHS = converted
+                }
+
+                let effectiveLHS: KIRExprID
+                if lhsType == stringType || lhsType == nullableStringType {
+                    effectiveLHS = lhs
+                } else {
+                    let tag = driver.callLowerer.anyFallbackTag(for: lhsType, sema: sema)
+                    let tagExpr = arena.appendExpr(.intLiteral(tag), type: sema.types.intType)
+                    instructions.append(.constValue(result: tagExpr, value: .intLiteral(tag)))
+                    let converted = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: stringType)
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_any_to_string"),
+                        arguments: [lhs, tagExpr],
+                        result: converted,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    effectiveLHS = converted
+                }
+
+                let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: stringType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_concat"),
+                    arguments: [effectiveLHS, effectiveRHS],
+                    result: resultID,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return resultID
+            }
             if let symbol = sema.bindings.identifierSymbols[exprID] {
                 // Top-level or object-member property compound assignment
                 // needs a copy to global storage. Top-level properties have
@@ -1547,17 +1616,19 @@ extension ExprLowerer {
                     instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
                     let loadedValue = arena.appendExpr(.symbolRef(symbol), type: propType)
                     instructions.append(.loadGlobal(result: loadedValue, symbol: symbol))
-                    let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: propType)
-                    instructions.append(.binary(op: kirOp, lhs: loadedValue, rhs: rhsID, result: resultID))
+                    let resultID = appendCompoundResult(
+                        lhs: loadedValue,
+                        lhsType: propType,
+                        rhs: rhsID,
+                        rhsType: arena.exprType(rhsID)
+                    )
                     instructions.append(.copy(from: resultID, to: globalRef))
                 } else if driver.ctx.isMutableCaptureBoxed(symbol),
                           let loadedValue = loadMutableCaptureCellValue(
                               symbol: symbol,
                               resultType: {
-                                  if let boundType, boundType != sema.types.anyType {
-                                      return boundType
-                                  }
-                                  return driver.lambdaLowerer.typeForSymbolReference(symbol, sema: sema)
+                                  driver.ctx.localDeclaredType(for: symbol)
+                                      ?? driver.lambdaLowerer.typeForSymbolReference(symbol, sema: sema)
                               }(),
                               sema: sema,
                               arena: arena,
@@ -1565,9 +1636,14 @@ extension ExprLowerer {
                               instructions: &instructions
                           )
                 {
-                    let resultType = arena.exprType(loadedValue) ?? sema.types.intType
-                    let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-                    instructions.append(.binary(op: kirOp, lhs: loadedValue, rhs: rhsID, result: resultID))
+                    let symbolType = driver.ctx.localDeclaredType(for: symbol)
+                        ?? driver.lambdaLowerer.typeForSymbolReference(symbol, sema: sema)
+                    let resultID = appendCompoundResult(
+                        lhs: loadedValue,
+                        lhsType: symbolType,
+                        rhs: rhsID,
+                        rhsType: arena.exprType(rhsID)
+                    )
                     _ = storeMutableCaptureCellValue(
                         resultID,
                         for: symbol,
@@ -1580,18 +1656,28 @@ extension ExprLowerer {
                     if let storageID = driver.ctx.localValue(for: symbol) {
                         // Compute lhs op rhs and update storage in place so the value
                         // persists across loop iterations.
-                        let resultType = arena.exprType(storageID) ?? sema.types.intType
-                        let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-                        instructions.append(.binary(op: kirOp, lhs: storageID, rhs: rhsID, result: resultID))
+                        let symbolType = driver.ctx.localDeclaredType(for: symbol)
+                            ?? driver.lambdaLowerer.typeForSymbolReference(symbol, sema: sema)
+                        let resultID = appendCompoundResult(
+                            lhs: storageID,
+                            lhsType: symbolType,
+                            rhs: rhsID,
+                            rhsType: arena.exprType(rhsID)
+                        )
                         instructions.append(.copy(from: resultID, to: storageID))
                     } else {
                         // No existing local value — create a symbol reference as lhs
                         // so compound assignment still computes lhs op rhs.
-                        let lhsID = arena.appendExpr(.symbolRef(symbol), type: boundType ?? sema.types.anyType)
+                        let symbolType = driver.ctx.localDeclaredType(for: symbol)
+                            ?? driver.lambdaLowerer.typeForSymbolReference(symbol, sema: sema)
+                        let lhsID = arena.appendExpr(.symbolRef(symbol), type: symbolType)
                         instructions.append(.constValue(result: lhsID, value: .symbolRef(symbol)))
-                        let resultType = arena.exprType(lhsID) ?? sema.types.intType
-                        let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-                        instructions.append(.binary(op: kirOp, lhs: lhsID, rhs: rhsID, result: resultID))
+                        let resultID = appendCompoundResult(
+                            lhs: lhsID,
+                            lhsType: symbolType,
+                            rhs: rhsID,
+                            rhsType: arena.exprType(rhsID)
+                        )
                         driver.ctx.setLocalValue(resultID, for: symbol)
                     }
                 }

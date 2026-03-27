@@ -170,9 +170,10 @@ final class LambdaLowerer {
             )
         }
 
-        var captureBindings: [(capturedSymbol: SymbolID, param: KIRParameter, valueExpr: KIRExprID)] = []
+        var captureBindings: [(capturedSymbol: SymbolID, param: KIRParameter, valueExpr: KIRExprID, declaredType: TypeID)] = []
         captureBindings.reserveCapacity(captureSymbols.count)
         for (index, symbol) in captureSymbols.enumerated() {
+            let declaredType = driver.ctx.localDeclaredType(for: symbol) ?? typeForSymbolReference(symbol, sema: sema)
             guard let captureValueExpr = captureValueExpr(
                 for: symbol,
                 sema: sema,
@@ -191,7 +192,8 @@ final class LambdaLowerer {
             captureBindings.append((
                 capturedSymbol: symbol,
                 param: captureParam,
-                valueExpr: captureValueExpr
+                valueExpr: captureValueExpr,
+                declaredType: declaredType
             ))
         }
 
@@ -262,8 +264,10 @@ final class LambdaLowerer {
                semanticSymbol.flags.contains(.mutable)
             {
                 driver.ctx.setMutableCaptureCell(captureExpr, for: capture.capturedSymbol)
+                driver.ctx.setLocalDeclaredType(capture.declaredType, for: capture.capturedSymbol)
             } else {
                 driver.ctx.setLocalValue(captureExpr, for: capture.capturedSymbol)
+                driver.ctx.setLocalDeclaredType(capture.declaredType, for: capture.capturedSymbol)
             }
             if capture.capturedSymbol == savedReceiverSymbol {
                 driver.ctx.setImplicitReceiver(symbol: capture.param.symbol, exprID: captureExpr)
@@ -302,8 +306,10 @@ final class LambdaLowerer {
                semanticSymbol.flags.contains(.mutable)
             {
                 driver.ctx.setMutableCaptureCell(closureExpr, for: closureCapture.capturedSymbol)
+                driver.ctx.setLocalDeclaredType(closureCapture.declaredType, for: closureCapture.capturedSymbol)
             } else {
                 driver.ctx.setLocalValue(closureExpr, for: closureCapture.capturedSymbol)
+                driver.ctx.setLocalDeclaredType(closureCapture.declaredType, for: closureCapture.capturedSymbol)
             }
             if closureCapture.capturedSymbol == savedReceiverSymbol {
                 driver.ctx.setImplicitReceiver(symbol: closureParam.symbol, exprID: closureExpr)
@@ -334,8 +340,10 @@ final class LambdaLowerer {
                    semanticSymbol.flags.contains(.mutable)
                 {
                     driver.ctx.setMutableCaptureCell(loadedExpr, for: capture.capturedSymbol)
+                    driver.ctx.setLocalDeclaredType(capture.declaredType, for: capture.capturedSymbol)
                 } else {
                     driver.ctx.setLocalValue(loadedExpr, for: capture.capturedSymbol)
+                    driver.ctx.setLocalDeclaredType(capture.declaredType, for: capture.capturedSymbol)
                 }
                 if capture.capturedSymbol == savedReceiverSymbol {
                     driver.ctx.setImplicitReceiver(symbol: capture.param.symbol, exprID: loadedExpr)
@@ -427,7 +435,163 @@ final class LambdaLowerer {
         if !captureArgs.isEmpty {
             arena.registerLambdaCaptureArgs(lambdaSymbol, captureArgs: captureArgs)
         }
+        if !captureArgs.isEmpty,
+           !needsClosureParam,
+           !isSamConversion,
+           let functionType
+        {
+            if let materialized = materializeEscapingCallableValue(
+                exprID: exprID,
+                lambdaSymbol: lambdaSymbol,
+                lambdaReturnType: lambdaReturnType,
+                functionType: functionType,
+                captureArguments: captureArgs,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            ) {
+                return materialized
+            }
+        }
         return lambdaValueExpr
+    }
+
+    private func materializeEscapingCallableValue(
+        exprID: ExprID,
+        lambdaSymbol: SymbolID,
+        lambdaReturnType: TypeID,
+        functionType: FunctionType,
+        captureArguments: [KIRExprID],
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        let createCallee: InternedString
+        switch functionType.params.count {
+        case 0:
+            createCallee = interner.intern("kk_function_create_0")
+        case 1:
+            createCallee = interner.intern("kk_function_create_1")
+        case 2:
+            createCallee = interner.intern("kk_function_create_2")
+        default:
+            return nil
+        }
+
+        let adapterSymbol = driver.ctx.allocateSyntheticGeneratedSymbol()
+        let adapterName = interner.intern("kk_function_value_adapter_\(exprID.rawValue)_\(adapterSymbol.rawValue)")
+        let closureParam = KIRParameter(
+            symbol: driver.ctx.allocateSyntheticGeneratedSymbol(),
+            type: sema.types.intType
+        )
+        let valueParams: [KIRParameter] = functionType.params.enumerated().map { index, type in
+            KIRParameter(
+                symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 100 + index),
+                type: type
+            )
+        }
+
+        var body: [KIRInstruction] = [.beginBlock]
+        let closureExpr = arena.appendExpr(.symbolRef(closureParam.symbol), type: closureParam.type)
+        body.append(.constValue(result: closureExpr, value: .symbolRef(closureParam.symbol)))
+
+        let arrayGet = interner.intern("kk_array_get_inbounds")
+        var callArguments: [KIRExprID] = []
+        for (captureIndex, captureExpr) in captureArguments.enumerated() {
+            let captureType = arena.exprType(captureExpr) ?? sema.types.anyType
+            let offsetExpr = arena.appendExpr(.intLiteral(Int64(captureIndex + 2)), type: sema.types.intType)
+            body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(captureIndex + 2))))
+            let loadedExpr = arena.appendExpr(.temporary(Int32(clamping: arena.expressions.count)), type: captureType)
+            body.append(.call(
+                symbol: nil,
+                callee: arrayGet,
+                arguments: [closureExpr, offsetExpr],
+                result: loadedExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            callArguments.append(loadedExpr)
+        }
+
+        for param in valueParams {
+            let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
+            body.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
+            callArguments.append(paramExpr)
+        }
+
+        let callResult = arena.appendExpr(.temporary(Int32(clamping: arena.expressions.count)), type: lambdaReturnType)
+        body.append(.call(
+            symbol: lambdaSymbol,
+            callee: syntheticLambdaName(for: exprID, interner: interner),
+            arguments: callArguments,
+            result: callResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        switch sema.types.kind(of: lambdaReturnType) {
+        case .unit, .nothing(.nonNull), .nothing(.nullable):
+            body.append(.returnUnit)
+        default:
+            body.append(.returnValue(callResult))
+        }
+        body.append(.endBlock)
+
+        let adapterDecl = arena.appendDecl(
+            .function(
+                KIRFunction(
+                    symbol: adapterSymbol,
+                    name: adapterName,
+                    params: [closureParam] + valueParams,
+                    returnType: lambdaReturnType,
+                    body: body,
+                    isSuspend: functionType.isSuspend,
+                    isInline: false
+                )
+            )
+        )
+        driver.ctx.appendGeneratedCallableDecl(adapterDecl)
+
+        let slotCountExpr = arena.appendExpr(.intLiteral(Int64(2 + captureArguments.count)), type: sema.types.intType)
+        instructions.append(.constValue(result: slotCountExpr, value: .intLiteral(Int64(2 + captureArguments.count))))
+        let classIDExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+        instructions.append(.constValue(result: classIDExpr, value: .intLiteral(0)))
+        let closureObj = arena.appendExpr(.temporary(Int32(clamping: arena.expressions.count)), type: sema.types.intType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_object_new"),
+            arguments: [slotCountExpr, classIDExpr],
+            result: closureObj,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        for (captureIndex, captureExpr) in captureArguments.enumerated() {
+            let offsetExpr = arena.appendExpr(.intLiteral(Int64(captureIndex + 2)), type: sema.types.intType)
+            instructions.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(captureIndex + 2))))
+            let setResult = arena.appendExpr(.temporary(Int32(clamping: arena.expressions.count)), type: sema.types.anyType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_set"),
+                arguments: [closureObj, offsetExpr, captureExpr],
+                result: setResult,
+                canThrow: true,
+                thrownResult: nil
+            ))
+        }
+
+        let adapterExpr = arena.appendExpr(.symbolRef(adapterSymbol), type: sema.types.intType)
+        instructions.append(.constValue(result: adapterExpr, value: .symbolRef(adapterSymbol)))
+        let materializedExpr = arena.appendExpr(.temporary(Int32(clamping: arena.expressions.count)), type: sema.types.make(.functionType(functionType)))
+        instructions.append(.call(
+            symbol: nil,
+            callee: createCallee,
+            arguments: [adapterExpr, closureObj],
+            result: materializedExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return materializedExpr
     }
 
     private func lowerSamWrapperValue(
@@ -436,7 +600,7 @@ final class LambdaLowerer {
         lambdaSymbol: SymbolID,
         lambdaName: InternedString,
         lambdaReturnType: TypeID,
-        captureBindings: [(capturedSymbol: SymbolID, param: KIRParameter, valueExpr: KIRExprID)],
+        captureBindings: [(capturedSymbol: SymbolID, param: KIRParameter, valueExpr: KIRExprID, declaredType: TypeID)],
         samMethodParamTypes: [TypeID],
         sema: SemaModule,
         arena: KIRArena,

@@ -4489,6 +4489,8 @@ extension CallLowerer {
                 return interner.intern("kk_mutable_list_sortByDescending")
             case "sortDescending":
                 return interner.intern("kk_mutable_list_sortDescending")
+            case "add" where argumentCount == 1:
+                return interner.intern("kk_mutable_list_add")
             case "addAll":
                 return interner.intern("kk_mutable_list_addAll")
             case "removeAll":

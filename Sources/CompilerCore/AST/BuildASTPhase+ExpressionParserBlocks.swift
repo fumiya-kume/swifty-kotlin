@@ -101,7 +101,9 @@ extension BuildASTPhase.ExpressionParser {
                         || lastKind == .symbol(.lParen)
                         || lastKind == .symbol(.comma)
                     let nextIsContinuation = isBinaryOperatorTokenKind(token.kind)
-                    if !lastIsContinuation, !nextIsContinuation {
+                    let nextIsTrailingLambda = token.kind == .symbol(.lBrace)
+                        && canAcceptTrailingLambda(tokens[groupStart ... lastTokenIndex])
+                    if !lastIsContinuation, !nextIsContinuation, !nextIsTrailingLambda {
                         ranges.append((groupStart, lastTokenIndex + 1))
                         groupStart = idx
                     }
@@ -122,6 +124,25 @@ extension BuildASTPhase.ExpressionParser {
             ranges.append((groupStart, lastTokenIndex + 1))
         }
         return ranges
+    }
+
+    private func canAcceptTrailingLambda(_ tokens: ArraySlice<Token>) -> Bool {
+        guard let first = tokens.first, let last = tokens.last else {
+            return false
+        }
+        if case let .keyword(keyword) = first.kind,
+           [.if, .for, .while, .do, .when, .try, .catch, .finally].contains(keyword)
+        {
+            return false
+        }
+        switch last.kind {
+        case .identifier, .backtickedIdentifier, .softKeyword, .keyword:
+            return true
+        case .symbol(.rParen), .symbol(.rBracket), .symbol(.greaterThan), .symbol(.bangBang):
+            return true
+        default:
+            return false
+        }
     }
 
     func isBinaryOperatorTokenKind(_ kind: TokenKind) -> Bool {
