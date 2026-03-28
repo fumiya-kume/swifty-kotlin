@@ -282,17 +282,29 @@
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/launch_basic.kt`
 
-- [ ] STDLIB-CORO-074: Flow操作完全実装
-  - **仕様**: Flowの高度な操作
+- [ ] STDLIB-CORO-073: Flow基本実装
+  - **仕様**: Flowの基本的な機能
   - **実装内容**:
-    - 変換操作: map, mapNotNull, transform
-    - フィルタリング: filter, filterNot, take, drop
-    - 集約操作: reduce, fold, scan
-    - 結合操作: zip, combine, flatMapConcat
-    - バッファリング: buffer, conflate, flowOn
-  - **現状**: 基本的なFlowは実装済み、高度な操作は未実装
+    - flowビルダー: flow { emit(value) }
+    - コレクター: collect { value -> }
+    - 中間操作: map, filter, transform
+    - 端末操作: collect, toList, first, single
+    - Flowの遅延評価: コールドストリーム
+  - **現状**: 基本的なflowは実装済み、高度な操作は未実装
   - **関連ファイル**: `RuntimeCoroutine.swift`
-  - **テストケース**: `Scripts/diff_cases/flow_operations.kt`
+  - **テストケース**: `Scripts/diff_cases/flow_basic.kt`
+
+- [ ] STDLIB-CORO-075: Channel基本実装
+  - **仕様**: Channelの基本的な機能
+  - **実装内容**:
+    - チャネル作成: Channel<T>(), produce {}
+    - 送受信: send(), receive()
+    - クローズ: close(), isClosedForSend, isClosedForReceive
+    - イテレーション: for (value in channel)
+    - バッファリング: バッファサイズ指定
+  - **現状**: 基本的なchannelは実装済み、バッファリングは未実装
+  - **関連ファイル**: `RuntimeCoroutine.swift`
+  - **テストケース**: `Scripts/diff_cases/channel_basic.kt`
 
 - [ ] STDLIB-CORO-076: Channel高度機能完全実装
   - **仕様**: Channelの高度な機能
