@@ -551,18 +551,6 @@
   - **関連ファイル**: `RuntimePath.swift`
   - **テストケース**: `Scripts/diff_cases/path_basic.kt`
 
-- [ ] STDLIB-IO-090: Filesユーティリティ完全実装
-  - **仕様**: Filesクラスのユーティリティメソッド
-  - **実装内容**:
-    - ファイル操作: createFile(), delete(), copy(), move()
-    - ディレクトリ操作: createDirectory(), createDirectories()
-    - ファイル属性: size(), lastModifiedTime(), isRegularFile()
-    - ファイル検索: walk(), list(), newDirectoryStream()
-    - 一時ファイル: createTempFile(), createTempDirectory()
-  - **現状**: 基本的なFilesは実装済み、検索は未実装
-  - **関連ファイル**: `RuntimeFileIO.swift`
-  - **テストケース**: `Scripts/diff_cases/files_utility.kt`
-
 - [ ] STDLIB-IO-091: BufferedReader/Writer完全実装
   - **仕様**: バッファ付きリーダー/ライターの完全サポート
   - **実装内容**:
