@@ -144,18 +144,6 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/type_erasure.kt`
 
-- [ ] STDLIB-GEN-059: ジェネリック型推論完全実装
-  - **仕様**: ジェネリック型の自動推論
-  - **実装内容**:
-    - 関数呼び出しでの型推論: myFunction("hello")
-    - 変数宣言での型推論: val list = listOf(1, 2, 3)
-    - 複雑な型推論: mapOf("key" to "value")
-    - 型推論の失敗時のエラー
-    - 明示的型指定との組み合わせ
-  - **現状**: 基本的な型推論は実装済み、複雑なケースは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/type_inference.kt`
-
 #### Phase 2: リフレクション (中優先度)
 
 - [ ] STDLIB-REFLECT-061: KClassメンバアクセス完全実装
@@ -694,9 +682,9 @@
   - 関数型プログラミング: 9タスク (STDLIB-HOF-021 ~ STDLIB-HOF-029)
   - 演算子と特殊構文: 10タスク (STDLIB-OP-030 ~ STDLIB-COMP-042)
 
-- **Phase 2 (中優先度)**: 38タスク
+- **Phase 2 (中優先度)**: 37タスク
   - プロパティデリゲート: 8タスク (STDLIB-DELEG-043 ~ STDLIB-LATEINIT-050)
-  - ジェネリクスと型システム: 9タスク (STDLIB-GEN-051 ~ STDLIB-GEN-059)
+  - ジェネリクスと型システム: 8タスク (STDLIB-GEN-051 ~ STDLIB-GEN-058)
   - リフレクション: 8タスク (STDLIB-REFLECT-060 ~ STDLIB-REFLECT-067)
   - 範囲操作: 13タスク (STDLIB-RANGE-034 ~ STDLIB-RANGE-040)
 
