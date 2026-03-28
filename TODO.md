@@ -486,18 +486,6 @@
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/flow_operations.kt`
 
-- [ ] STDLIB-CORO-075: Channel基本実装
-  - **仕様**: Channelの基本的な機能
-  - **実装内容**:
-    - チャネル作成: Channel<T>(), produce {}
-    - 送受信: send(), receive()
-    - クローズ: close(), isClosedForSend, isClosedForReceive
-    - イテレーション: for (value in channel)
-    - バッファリング: バッファサイズ指定
-  - **現状**: 基本的なchannelは実装済み、バッファリングは未実装
-  - **関連ファイル**: `RuntimeCoroutine.swift`
-  - **テストケース**: `Scripts/diff_cases/channel_basic.kt`
-
 - [ ] STDLIB-CORO-076: Channel高度機能完全実装
   - **仕様**: Channelの高度な機能
   - **実装内容**:
