@@ -583,17 +583,17 @@
 
 #### Phase 3: 数学関数 (低優先度)
 
-- [ ] STDLIB-MATH-109: 基本数学関数完全実装
-  - **仕様**: 基本数学関数の完全サポート
+- [ ] STDLIB-MATH-110: 高度数学関数完全実装
+  - **仕様**: 高度な数学関数の完全サポート
   - **実装内容**:
-    - 三角関数: sin(), cos(), tan(), asin(), acos(), atan()
-    - 双曲線関数: sinh(), cosh(), tanh()
-    - 指数対数: exp(), log(), log10(), log2()
-    - 累乗根: pow(), sqrt(), cbrt()
-    - 絶対値と符号: abs(), sign()
-  - **現状**: 基本的な数学関数は実装済み、三角関数は未実装
+    - 逆三角関数: atan2(), hypot()
+    - 丸め関数: round(), ceil(), floor()
+    - 最大・最小: max(), maxOf(), min(), minOf()
+    - クランプ: clamp(), coerceIn()
+    - 線形補間: lerp()
+  - **現状**: 基本的な数学関数は実装済み、高度な関数は未実装
   - **関連ファイル**: `RuntimeMath.swift`
-  - **テストケース**: `Scripts/diff_cases/math_basic.kt`
+  - **テストケース**: `Scripts/diff_cases/math_advanced.kt`
 
 - [ ] STDLIB-MATH-111: IEEE丸め完全実装
   - **仕様**: IEEE 754丸めモードの完全サポート
