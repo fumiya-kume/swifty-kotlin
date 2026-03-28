@@ -862,6 +862,7 @@ extension DataFlowSemaPhase {
         registerSyntheticAtomicStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticUuidStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticURIStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticLoggingStubs(symbols: symbols, types: types, interner: interner)
     }
 
     func registerSyntheticContractStubs(
