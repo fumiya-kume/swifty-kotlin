@@ -228,18 +228,6 @@
 #### Phase 2: ジェネリクスと型システム (中優先度)
 
 
-- [ ] STDLIB-GEN-052: ジェネリック関数完全実装
-  - **仕様**: ジェネリック関数の完全サポート
-  - **実装内容**:
-    - 型パラメータ: fun <T> myFunction(value: T)
-    - 複数型パラメータ: fun <T, U> myFunction(value: T, other: U)
-    - 型制約: fun <T : Comparable<T>> sort(list: List<T>)
-    - 型推論: myFunction("hello")でのT推論
-    - 明示的型指定: myFunction<String>("hello")
-  - **現状**: 基本的なジェネリック関数は実装済み、制約は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/generic_functions.kt`
-
 - [ ] STDLIB-GEN-053: ジェネリックインターフェース完全実装
   - **仕様**: ジェネリックインターフェースの完全サポート
   - **実装内容**:
