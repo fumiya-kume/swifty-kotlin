@@ -1093,18 +1093,6 @@
 
 #### Phase 4: セキュリティと暗号化 (低優先度)
 
-- [ ] STDLIB-SEC-143: メッセージダイジェスト完全実装
-  - **仕様**: メッセージダイジェスト（ハッシュ）の完全サポート
-  - **実装内容**:
-    - MD5: MD5ハッシュアルゴリズム
-    - SHA-1: SHA-1ハッシュアルゴリズム
-    - SHA-256: SHA-256ハッシュアルゴリズム
-    - SHA-512: SHA-512ハッシュアルゴリズム
-    - HMAC: HMAC-based Message Authentication Code
-  - **現状**: メッセージダイジェストは未実装
-  - **関連ファイル**: `RuntimeSecurity.swift`
-  - **テストケース**: `Scripts/diff_cases/message_digest.kt`
-
 - [ ] STDLIB-SEC-144: 対称暗号完全実装
   - **仕様**: 対称暗号アルゴリズムの完全サポート
   - **実装内容**:
