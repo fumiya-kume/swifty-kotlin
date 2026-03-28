@@ -405,6 +405,42 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_normalization_form_nfc = ExternDecl(
+        name: "kk_normalization_form_nfc",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_normalization_form_nfd = ExternDecl(
+        name: "kk_normalization_form_nfd",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_normalization_form_nfkc = ExternDecl(
+        name: "kk_normalization_form_nfkc",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_normalization_form_nfkd = ExternDecl(
+        name: "kk_normalization_form_nfkd",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_normalize = ExternDecl(
+        name: "kk_string_normalize",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_isNormalized = ExternDecl(
+        name: "kk_string_isNormalized",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_uppercase_locale = ExternDecl(
         name: "kk_string_uppercase_locale",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -416,6 +452,7 @@ public enum RuntimeABIExterns {
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
+
 
     public static let kk_string_trimIndent = ExternDecl(
         name: "kk_string_trimIndent",
@@ -3145,6 +3182,12 @@ public enum RuntimeABIExterns {
             kk_string_lowercase_locale,
             kk_string_uppercase_locale,
             kk_string_compareTo_locale,
+            kk_normalization_form_nfc,
+            kk_normalization_form_nfd,
+            kk_normalization_form_nfkc,
+            kk_normalization_form_nfkd,
+            kk_string_normalize,
+            kk_string_isNormalized,
             kk_string_trimIndent,
             kk_string_trimMargin_default,
             kk_string_trimMargin,

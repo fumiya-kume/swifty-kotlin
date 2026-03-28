@@ -76,6 +76,21 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         XCTAssertTrue(uppercaseLinks.contains("kk_string_uppercase_locale"))
     }
 
+    func testStringNormalizationStubsHaveCorrectExternalLinks() throws {
+        let (sema, interner) = try makeSema()
+
+        XCTAssertEqual(
+            externalLink(for: "normalize", sema: sema, interner: interner),
+            "kk_string_normalize",
+            "String.normalize should link to kk_string_normalize"
+        )
+        XCTAssertEqual(
+            externalLink(for: "isNormalized", sema: sema, interner: interner),
+            "kk_string_isNormalized",
+            "String.isNormalized should link to kk_string_isNormalized"
+        )
+    }
+
     func testNewNullableConversionStubsHaveCorrectExternalLinks() throws {
         let (sema, interner) = try makeSema()
 
@@ -219,4 +234,41 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testStringNormalizationMembersResolveInCallExpressions() throws {
+        let source = """
+        fun normalizeText(s: String): String {
+            val normalized = s.normalize(NormalizationForms.NFC)
+            let stable = normalized.isNormalized(NormalizationForms.NFC)
+            return if (stable) normalized else s
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let expectedLinks: [String: String] = [
+                "normalize": "kk_string_normalize",
+                "isNormalized": "kk_string_isNormalized",
+            ]
+
+            for (memberName, externalLinkName) in expectedLinks {
+                let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName
+                }, "Expected member call to \(memberName) in AST")
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected call binding for \(memberName)"
+                )
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    externalLinkName,
+                    "Expected \(memberName) to resolve to \(externalLinkName)"
+                )
+            }
+        }
+    }
 }

@@ -145,6 +145,65 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        let normalizationFormSymbol = ensureClassSymbol(
+            named: "NormalizationForm",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let normalizationFormType = types.make(.classType(ClassType(
+            classSymbol: normalizationFormSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(normalizationFormType, for: normalizationFormSymbol)
+
+        let normalizationFormsSymbol = ensureSyntheticObjectSymbol(
+            named: "NormalizationForms",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let normalizationFormsType = types.make(.classType(ClassType(
+            classSymbol: normalizationFormsSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(normalizationFormsType, for: normalizationFormsSymbol)
+
+        for formName in ["NFC", "NFD", "NFKC", "NFKD"] {
+            registerSyntheticObjectProperty(
+                ownerSymbol: normalizationFormsSymbol,
+                ownerType: normalizationFormsType,
+                name: formName,
+                propertyType: normalizationFormType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        registerSyntheticStringExtensionFunction(
+            named: "normalize",
+            externalLinkName: "kk_string_normalize",
+            receiverType: stringType,
+            parameters: [
+                ("form", normalizationFormType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "isNormalized",
+            externalLinkName: "kk_string_isNormalized",
+            receiverType: stringType,
+            parameters: [
+                ("form", normalizationFormType, false, false),
+            ],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "split",
             externalLinkName: "kk_string_split",

@@ -3695,6 +3695,26 @@ extension CallLowerer {
             ))
             return result
         }
+        if let parentInfo = sema.symbols.symbol(parent),
+           interner.resolve(parentInfo.name) == "NormalizationForms"
+        {
+            let runtimeCallee = interner.intern("kk_normalization_form_\(interner.resolve(info.name).lowercased())")
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: sema.bindings.exprTypes[exprID]
+                    ?? sema.symbols.propertyType(for: valueSym)
+                    ?? sema.types.anyType
+            )
+            instructions.append(.call(
+                symbol: nil,
+                callee: runtimeCallee,
+                arguments: [],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
         let propType = sema.bindings.exprTypes[exprID]
             ?? sema.symbols.propertyType(for: valueSym)
             ?? sema.types.anyType

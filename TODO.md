@@ -878,17 +878,17 @@
   - **関連ファイル**: `RuntimeStringStdlib.swift`
   - **テストケース**: `Scripts/diff_cases/string_encoding.kt`
 
-- [ ] STDLIB-STR-126: 文字列正規化完全実装
-  - **仕様**: Unicode正規化の完全サポート
+- [ ] STDLIB-STR-125: 文字列エンコーディング完全実装
+  - **仕様**: 文字列エンコーディングの完全サポート
   - **実装内容**:
-    - 正規化形式: NFC, NFD, NFKC, NFKD
-    - 正規化関数: normalize(), isNormalized()
-    - 文字等価性: 正規化による文字比較
-    - 合成文字: 分解と結合の処理
-    - 互換文字: 互換性のある文字の処理
-  - **現状**: 文字列正規化は未実装
+    - エンコーディング指定: UTF-8, UTF-16, ISO-8859-1
+    - バイト変換: toByteArray(), fromByteArray()
+    - 文字セット: Charsetクラスのサポート
+    - エンコーディング検出: バイト配列からのエンコーディング推測
+    - エンコーディング変換: 異なるエンコーディング間の変換
+  - **現状**: 基本的なエンコーディングは実装済み、詳細は未実装
   - **関連ファイル**: `RuntimeStringStdlib.swift`
-  - **テストケース**: `Scripts/diff_cases/string_normalization.kt`
+  - **テストケース**: `Scripts/diff_cases/string_encoding.kt`
 
 #### Phase 4: 数値処理と精度 (低優先度)
 

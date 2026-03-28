@@ -3417,6 +3417,36 @@ extension CallTypeChecker {
                         return finalType
                     }
                 }
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                    let calleeStr = interner.resolve(calleeName)
+                    let resultType: TypeID? = switch calleeStr {
+                    case "normalize":
+                        sema.types.stringType
+                    case "isNormalized":
+                        sema.types.booleanType
+                    default:
+                        nil
+                    }
+                    if let resultType {
+                        if let boundType = tryBindSyntheticStringMemberFallback(
+                            id,
+                            calleeName: calleeName,
+                            receiverType: receiverTypeForCheck,
+                            args: args,
+                            argTypes: argTypes,
+                            range: range,
+                            ctx: ctx,
+                            expectedType: expectedType,
+                            explicitTypeArgs: explicitTypeArgs,
+                            safeCall: safeCall
+                        ) {
+                            return boundType
+                        }
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
+                }
             }
             // STDLIB-581: String.toByteArray(charset: Charset)
             if args.count == 1 {

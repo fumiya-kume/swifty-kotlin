@@ -37,6 +37,16 @@ final class KotlinCompilationStringCollectionTests: XCTestCase {
         """)
     }
 
+    func testCompile_string_normalize() throws {
+        try assertKotlinCompilesToKIR("""
+        fun main() {
+            val s = "e\\u0301"
+            val normalized = s.normalize(NormalizationForms.NFC)
+            val stable = normalized.isNormalized(NormalizationForms.NFC)
+        }
+        """)
+    }
+
     // MARK: - String nullable conversions
 
     func testCompile_string_toIntOrNull_validInput() throws {

@@ -76,6 +76,55 @@ public func kk_string_compareTo_locale(_ lhsRaw: Int, _ rhsRaw: Int, _ localeRaw
     }
 }
 
+private enum NormalizationFormTag: Int {
+    case nfc = 0
+    case nfd = 1
+    case nfkc = 2
+    case nfkd = 3
+}
+
+@_cdecl("kk_normalization_form_nfc")
+public func kk_normalization_form_nfc() -> Int { NormalizationFormTag.nfc.rawValue }
+
+@_cdecl("kk_normalization_form_nfd")
+public func kk_normalization_form_nfd() -> Int { NormalizationFormTag.nfd.rawValue }
+
+@_cdecl("kk_normalization_form_nfkc")
+public func kk_normalization_form_nfkc() -> Int { NormalizationFormTag.nfkc.rawValue }
+
+@_cdecl("kk_normalization_form_nfkd")
+public func kk_normalization_form_nfkd() -> Int { NormalizationFormTag.nfkd.rawValue }
+
+private func runtimeNormalizedString(_ source: String, formTagRaw: Int) -> String {
+    guard let form = NormalizationFormTag(rawValue: formTagRaw) else {
+        return source
+    }
+    switch form {
+    case .nfc:
+        return source.precomposedStringWithCanonicalMapping
+    case .nfd:
+        return source.decomposedStringWithCanonicalMapping
+    case .nfkc:
+        return source.precomposedStringWithCompatibilityMapping
+    case .nfkd:
+        return source.decomposedStringWithCompatibilityMapping
+    }
+}
+
+@_cdecl("kk_string_normalize")
+public func kk_string_normalize(_ strRaw: Int, _ formTagRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    return runtimeMakeStringRaw(runtimeNormalizedString(source, formTagRaw: formTagRaw))
+}
+
+@_cdecl("kk_string_isNormalized")
+public func kk_string_isNormalized(_ strRaw: Int, _ formTagRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let normalized = runtimeNormalizedString(source, formTagRaw: formTagRaw)
+    return normalized.unicodeScalars.elementsEqual(source.unicodeScalars) ? 1 : 0
+}
+
+
 @_cdecl("kk_string_split")
 public func kk_string_split(_ strRaw: Int, _ delimRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
