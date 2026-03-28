@@ -208,18 +208,6 @@
   - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
   - **テストケース**: `Scripts/diff_cases/range_hof.kt`
 
-- [ ] STDLIB-COMP-041: Comparableインターフェース完全実装
-  - **仕様**: Comparable<T>インターフェースの完全サポート
-  - **実装内容**:
-    - compareTo()メソッドの実装
-    - 自然順序でのソート
-    - 比較演算子の自動生成
-    - null安全な比較
-    - Comparableの型制約
-  - **現状**: 基本的なComparableは実装済み、型制約は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/comparable_interface.kt`
-
 - [ ] STDLIB-COMP-042: Comparator完全実装
   - **仕様**: Comparator<T>の完全サポート
   - **実装内容**:
