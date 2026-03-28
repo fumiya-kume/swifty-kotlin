@@ -820,18 +820,6 @@
   - **関連ファイル**: `RuntimeRandom.swift`
   - **テストケース**: `Scripts/diff_cases/secure_random.kt`
 
-- [ ] STDLIB-UUID-102: UUID基本実装
-  - **仕様**: UUIDクラスの基本的な機能
-  - **実装内容**:
-    - UUID生成: randomUUID(), nameUUIDFromBytes()
-    - UUID解析: fromString()
-    - UUID表現: toString(), mostSignificantBits, leastSignificantBits
-    - UUID比較: equals(), compareTo()
-    - UUIDバージョン: version(), variant()
-  - **現状**: 基本的なUUIDは実装済み、詳細は未実装
-  - **関連ファイル**: `RuntimeUuid.swift`
-  - **テストケース**: `Scripts/diff_cases/uuid_basic.kt`
-
 - [ ] STDLIB-UUID-103: UUID高度機能完全実装
   - **仕様**: UUIDクラスの高度な機能
   - **実装内容**:
