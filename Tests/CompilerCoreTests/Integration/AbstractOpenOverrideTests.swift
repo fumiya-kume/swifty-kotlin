@@ -124,27 +124,4 @@ final class AbstractOpenOverrideTests: XCTestCase {
         assertHasDiagnostic("KSWIFTK-SEMA-FINAL", in: ctx)
     }
     
-    // MARK: - Helper Methods
-    
-    private func makeContextFromSource(_ source: String) -> TestContext {
-        // This would need to be implemented based on the existing test infrastructure
-        return TestContext()
-    }
-    
-    private func runSema(_ ctx: TestContext) throws {
-        // This would need to be implemented based on the existing test infrastructure
-    }
-    
-    private func assertHasDiagnostic(_ code: String, in ctx: TestContext) {
-        XCTAssertTrue(ctx.diagnostics.diagnostics.contains { $0.code == code })
-    }
-    
-    private func assertNoDiagnostic(_ code: String, in ctx: TestContext) {
-        XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.code == code })
-    }
-}
-
-// Placeholder types for test infrastructure
-private struct TestContext {
-    let diagnostics = DiagnosticEngine()
 }

@@ -491,6 +491,12 @@ public enum DiagnosticRegistry {
             codeActions: [DiagnosticCodeAction(title: "Remove inheritance from data class")]
         ),
         DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-DATA-CTOR",
+            pass: "SEMA",
+            defaultSeverity: .error,
+            summary: "Primary constructor of data class must only have property ('val' / 'var') parameters."
+        ),
+        DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-REIFIED",
             pass: "SEMA",
             defaultSeverity: .error,

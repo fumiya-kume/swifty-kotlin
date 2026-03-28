@@ -65,6 +65,12 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // DATA-CTOR: Validate that data class primary constructor params are all val/var.
+        if case let .classDecl(classDecl) = decl,
+           classDecl.modifiers.contains(.data) {
+            validateDataClassConstructorParams(classDecl: classDecl, ctx: ctx)
+        }
+
         validateMemberOverrides(
             info.memberFunctions,
             symbol: symbol,
@@ -75,6 +81,23 @@ extension DataFlowSemaPhase {
             symbol: symbol,
             ctx: ctx
         )
+    }
+
+    // MARK: - DATA-CTOR: data class primary constructor parameter validation
+
+    private func validateDataClassConstructorParams(
+        classDecl: ClassDecl,
+        ctx: OpenFinalOverrideContext
+    ) {
+        for param in classDecl.primaryConstructorParams {
+            guard !param.isProperty else { continue }
+            // This parameter lacks val/var; emit error.
+            ctx.diagnostics.error(
+                "KSWIFTK-SEMA-DATA-CTOR",
+                "Primary constructor of data class must only have property ('val' / 'var') parameters.",
+                range: classDecl.range
+            )
+        }
     }
 
     // MARK: - Declaration info extraction
@@ -106,10 +129,10 @@ extension DataFlowSemaPhase {
             )
         case let .interfaceDecl(iface):
             OFODeclInfo(
-                memberFunctions: [],
-                memberProperties: [],
+                memberFunctions: iface.memberFunctions,
+                memberProperties: iface.memberProperties,
                 nestedClasses: iface.nestedClasses,
-                declRange: nil
+                declRange: iface.range
             )
         default:
             nil
@@ -177,6 +200,12 @@ extension DataFlowSemaPhase {
             let memberMeta = extractMemberMeta(memberDecl, declID: memberDeclID, ctx: ctx)
             guard let memberMeta else { continue }
 
+            validateModifierCombinations(
+                memberMeta: memberMeta,
+                ownerSymbol: symbol,
+                ctx: ctx
+            )
+
             if memberMeta.hasOverride {
                 validateOverrideTarget(
                     memberName: memberMeta.name,
@@ -192,11 +221,6 @@ extension DataFlowSemaPhase {
                     ctx: ctx
                 )
                 validateOverrideOpenness(
-                    memberMeta: memberMeta,
-                    ownerSymbol: symbol,
-                    ctx: ctx
-                )
-                validateModifierCombinations(
                     memberMeta: memberMeta,
                     ownerSymbol: symbol,
                     ctx: ctx
@@ -221,6 +245,7 @@ extension DataFlowSemaPhase {
         let name: InternedString
         let range: SourceRange
         let hasOverride: Bool
+        let hasOpen: Bool
         let returnType: TypeID?
         let hasAbstract: Bool
         let hasFinal: Bool
@@ -240,6 +265,7 @@ extension DataFlowSemaPhase {
                 name: fun.name,
                 range: fun.range,
                 hasOverride: fun.modifiers.contains(.override),
+                hasOpen: fun.modifiers.contains(.open),
                 returnType: returnType,
                 hasAbstract: fun.modifiers.contains(.abstract),
                 hasFinal: fun.modifiers.contains(.final),
@@ -250,6 +276,7 @@ extension DataFlowSemaPhase {
                 name: prop.name,
                 range: prop.range,
                 hasOverride: prop.modifiers.contains(.override),
+                hasOpen: prop.modifiers.contains(.open),
                 returnType: nil,
                 hasAbstract: prop.modifiers.contains(.abstract),
                 hasFinal: prop.modifiers.contains(.final),
@@ -414,8 +441,8 @@ extension DataFlowSemaPhase {
             }
         }
         
-        // Rule 3d: Check data class constraints (data classes cannot be open)
-        if ownerSym.flags.contains(.dataType) && memberMeta.hasOverride {
+        // Rule 3d: Data classes cannot declare open members.
+        if ownerSym.flags.contains(.dataType) && memberMeta.hasOpen {
             let ownerName = ownerSym.fqName.map { ctx.interner.resolve($0) }.joined(separator: ".")
             ctx.diagnostics.error(
                 "KSWIFTK-SEMA-MODIFIER-CONFLICT",
@@ -503,22 +530,18 @@ extension DataFlowSemaPhase {
                 return
             }
             
-            // Check 2: abstract override must have a concrete implementation in parent
+            // Check 2: abstract override must reference an inherited declaration.
             let parent = findInheritedMember(
                 named: memberMeta.name,
                 for: ownerSymbol,
                 symbols: ctx.symbols
             )
-            guard let parent else { return }
-            guard let parentSym = ctx.symbols.symbol(parent.memberID) else { return }
-            
-            // Parent must not be abstract (we're re-abstracting a concrete method)
-            if parentSym.flags.contains(.abstractType) {
+            if parent == nil {
                 let memberName = ctx.interner.resolve(memberMeta.name)
-                let parentName = ctx.interner.resolve(parent.ownerName)
+                let ownerName = ownerSym.fqName.map { ctx.interner.resolve($0) }.joined(separator: ".")
                 ctx.diagnostics.error(
                     "KSWIFTK-SEMA-ABSTRACT-OVERRIDE",
-                    "'\(memberName)' cannot be abstract override of abstract member from '\(parentName)'. Only concrete members can be re-abstracted.",
+                    "'\(memberName)' in '\(ownerName)' is marked 'abstract override' but no inherited member was found to override.",
                     range: memberMeta.range
                 )
             }
@@ -605,20 +628,17 @@ extension DataFlowSemaPhase {
         // Check if child return type is a subtype of parent return type
         // Note: This requires access to the type system for subtype checking
         // For now, we'll implement a basic check - this can be enhanced with proper subtype relations
-        
-        let childReturnStr = getTypeString(childReturnType, ctx: ctx)
-        let parentReturnStr = getTypeString(parentReturnType, ctx: ctx)
-        
+
         // Simple equality check for now - proper covariance checking would require
         // integration with the type system's subtype checking
         if childReturnType != parentReturnType {
             // This is actually allowed in Kotlin (covariant returns), but we need proper subtype checking
-            // For now, we'll allow it but log a note for future enhancement
-            let name = ctx.interner.resolve(memberName)
-            let ownerName = ctx.interner.resolve(parentSymbol.name)
-            
+            // For now, we conservatively allow it and defer stricter subtype checking.
             // TODO: Implement proper subtype checking instead of allowing all different types
-            // For now, we assume covariance is allowed as per Kotlin spec
+            _ = memberName
+            _ = memberRange
+            _ = ctx
+            _ = parentSymbol
         }
     }
 
@@ -660,12 +680,6 @@ extension DataFlowSemaPhase {
         }
         
         return childIndex >= parentIndex
-    }
-
-    private func getTypeString(_ type: TypeID, ctx: OpenFinalOverrideContext) -> String {
-        // This is a simplified implementation - proper type string conversion
-        // would require access to the type system
-        return "Type_\(type.rawValue)"
     }
 
     // MARK: - Check 3: missing override modifier

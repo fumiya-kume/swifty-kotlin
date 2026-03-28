@@ -3131,6 +3131,18 @@ extension CallLowerer {
             argumentExprs: args.map(\.expr),
             sema: sema
         ) ?? sema.bindings.callBindings[exprID]
+        if qualifiedSuperType == nil,
+           isSuperCall,
+           case let .superRef(interfaceQualifier?, _) = ast.arena.expr(receiverExpr),
+           let chosenCallee = callBinding?.chosenCallee,
+           chosenCallee != .invalid,
+           let ownerSymbol = sema.symbols.parentSymbol(for: chosenCallee),
+           let ownerInfo = sema.symbols.symbol(ownerSymbol),
+           ownerInfo.kind == .interface,
+           interner.resolve(ownerInfo.name) == interner.resolve(interfaceQualifier)
+        {
+            qualifiedSuperType = ownerSymbol
+        }
         let chosen: SymbolID? = if let chosenCallee = callBinding?.chosenCallee, chosenCallee != .invalid {
             chosenCallee
         } else {

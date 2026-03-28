@@ -51,9 +51,6 @@
 
 監査で見つかった「簡易実装（Stub）」や「中途半端なパス」を将来の改善項目として追跡する。
 
-- [ ] REFL-004: 実行時 `KClass` から読めるバイナリメタデータ（`MetadataSerializer` 等の活用）
-  - 現状: 基本的なリフレクションAPIは実装済み（`RuntimeReflection.swift`）
-
 ---
 
 ### Kotlin Stdlib 互換性（独立タスク）
@@ -62,29 +59,6 @@
 
 
 #### Phase 1: オブジェクト指向機能 (高優先度)
-
-- [ ] STDLIB-CLASS-010: 抽象クラス完全実装
-  - **仕様**: 抽象クラスの完全なサポートと制約
-  - **実装内容**:
-    - abstractメンバの定義と強制
-    - 抽象クラスのインスタンス化禁止
-    - 抽象プロパティと抽象関数
-    - 抽象クラスの継承チェーン
-  - **現状**: 基本的な抽象クラスは実装済み、制約チェックは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/abstract_class.kt`
-
-
-- [ ] STDLIB-INHERIT-018: 継承修飾子完全実装
-  - **仕様**: open/final/abstract修飾子の完全サポート
-  - **実装内容**:
-    - openクラスとopenメンバ
-    - final修飾子の明示的指定
-    - abstract overrideの組み合わせ
-    - 継承階層の可視性制御
-  - **現状**: 基本的な継承は実装済み、修飾子制約は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/abstract_open_override.kt`
 
 - [ ] STDLIB-INHERIT-019: オーバーライド完全実装
   - **仕様**: メンバオーバーライドの完全サポート
@@ -97,79 +71,7 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/override_variance.kt`
 
-- [ ] STDLIB-INHERIT-020: 多重継承と衝突解決完全実装
-  - **仕様**: インターフェース多重継承の衝突解決
-  - **実装内容**:
-    - デフォルト実装の衝突検出
-    - super<>による明示的呼び出し
-    - ダイヤモンド継承問題の解決
-    - 最優先実装の選択ルール
-  - **現状**: 基本的な多重継承は実装済み、衝突解決は未実装
-  - **関連ファイル**: `DiamondOverride.swift`
-  - **テストケース**: `Scripts/diff_cases/interface_conflict_resolution.kt`
-
 #### Phase 2: 演算子と特殊構文 (中優先度)
-
-- [ ] STDLIB-OP-030: 算術演算子オーバーロード完全実装
-  - **仕様**: カスタムクラスでの算術演算子オーバーロード
-  - **実装内容**:
-    - 単項演算子: unaryPlus(), unaryMinus(), not()
-    - 二項演算子: plus(), minus(), times(), div(), mod(), rem()
-    - 代入演算子: plusAssign(), minusAssign(), timesAssign(), divAssign(), modAssign()
-    - 演算子の優先順位と結合性
-    - 演算子オーバーロードの型チェック
-  - **現状**: 基本的な演算子は実装済み、カスタムオーバーロードは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/operator_overload.kt`
-
-- [ ] STDLIB-OP-031: 比較演算子オーバーロード完全実装
-  - **仕様**: カスタムクラスでの比較演算子オーバーロード
-  - **実装内容**:
-    - 等値演算子: equals(), hashCode()
-    - 順序演算子: compareTo(), lessThan(), greaterThan(), lessThanOrEqual(), greaterThanOrEqual()
-    - 構造的比較: contentEquals(), contentHashCode()
-    - 比較演算子の連鎖
-    - null安全な比較
-  - **現状**: compareToは実装済み、詳細な比較ロジックは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticComparisonStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/compare_values.kt`
-
-- [ ] STDLIB-OP-032: コンテナ演算子オーバーロード完全実装
-  - **仕様**: コンテナクラスでの演算子オーバーロード
-  - **実装内容**:
-    - インデックス演算子: get(), set()
-    - 含有演算子: contains(), iterator()
-    - 範囲演算子: rangeTo()
-    - in演算子: contains()の省略形
-    - スプレッド演算子: spread()
-  - **現状**: 基本的なコンテナ演算子は実装済み、カスタム実装は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/container_operators.kt`
-
-
-- [ ] STDLIB-RANGE-034: IntRange完全実装
-  - **仕様**: IntRangeの完全な機能サポート
-  - **実装内容**:
-    - コンストラクタ: IntRange(start, end), start..end
-    - プロパティ: start, end, first, last, step
-    - 包含判定: contains(), isEmpty()
-    - 反復: iterator(), reversed()
-    - 変換: toList(), toIntArray()
-  - **現状**: 基本的なIntRangeは実装済み、高度な機能は未実装
-  - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
-  - **テストケース**: `Scripts/diff_cases/range_basic.kt`
-
-- [ ] STDLIB-RANGE-035: LongRange完全実装
-  - **仕様**: LongRangeの完全な機能サポート
-  - **実装内容**:
-    - コンストラクタ: LongRange(start, end), startL..endL
-    - プロパティ: start, end, first, last, step
-    - 包含判定: contains(), isEmpty()
-    - 反復: iterator(), reversed()
-    - 変換: toList(), toLongArray()
-  - **現状**: 基本的なLongRangeは実装済み、IntRangeとの相互運用は未実装
-  - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
-  - **テストケース**: `Scripts/diff_cases/long_range.kt`
 
 - [ ] STDLIB-RANGE-036: UIntRange完全実装
   - **仕様**: UIntRangeの完全な機能サポート

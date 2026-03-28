@@ -374,6 +374,7 @@ extension CallTypeChecker {
         let interner = ctx.interner
 
         guard !isClassNameReceiver,
+              !isArrayLikeReceiver(receiverID: receiverID, sema: sema, interner: interner),
               isCollectionLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         else {
             return nil
@@ -1634,7 +1635,7 @@ extension CallTypeChecker {
             sema.bindings.markCollectionExpr(id)
         }
 
-        let resultType = arrayMemberResultType(memberName: memberName, elementType: receiverElementType, sema: sema)
+        let resultType = arrayMemberResultType(memberName: memberName, elementType: receiverElementType, sema: sema, interner: interner)
         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
@@ -1668,20 +1669,38 @@ extension CallTypeChecker {
         ["toList", "toMutableList", "map", "filter", "copyOf", "copyOfRange"].contains(memberName)
     }
 
-    private func arrayMemberResultType(memberName: String, elementType: TypeID, sema: SemaModule) -> TypeID {
+    private func arrayMemberResultType(memberName: String, elementType: TypeID, sema: SemaModule, interner: StringInterner) -> TypeID {
         switch memberName {
         case "size":
-            sema.types.intType
+            return sema.types.intType
         case "isEmpty", "contains", "any", "none":
-            sema.types.booleanType
+            return sema.types.booleanType
         case "forEach", "fill":
-            sema.types.unitType
+            return sema.types.unitType
         case "concatToString":
-            sema.types.stringType
+            return sema.types.stringType
         case "get":
-            elementType
+            return elementType
+        case "toList":
+            if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                return sema.types.make(.classType(ClassType(
+                    classSymbol: listSymbol,
+                    args: [.invariant(elementType)],
+                    nullability: .nonNull
+                )))
+            }
+            return sema.types.anyType
+        case "toMutableList":
+            if let mutableListSymbol = sema.symbols.lookupByShortName(interner.intern("MutableList")).first {
+                return sema.types.make(.classType(ClassType(
+                    classSymbol: mutableListSymbol,
+                    args: [.invariant(elementType)],
+                    nullability: .nonNull
+                )))
+            }
+            return sema.types.anyType
         default:
-            sema.types.anyType
+            return sema.types.anyType
         }
     }
 
@@ -1717,7 +1736,9 @@ extension CallTypeChecker {
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID {
-        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        let receiverType = sema.bindings.exprTypes[receiverID]
+            ?? sema.bindings.identifierSymbol(for: receiverID).flatMap { sema.symbols.propertyType(for: $0) }
+            ?? sema.types.anyType
         let nonNull = sema.types.makeNonNullable(receiverType)
         guard case let .classType(classType) = sema.types.kind(of: nonNull),
               let symbol = sema.symbols.symbol(classType.classSymbol)
