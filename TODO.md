@@ -237,18 +237,6 @@
   - **テストケース**: `Scripts/diff_cases/delegate_operators.kt`
 
 
-- [ ] STDLIB-LATEINIT-050: lateinit拡張完全実装
-  - **仕様**: lateinitプロパティの拡張機能
-  - **実装内容**:
-    - lateinit拡張プロパティ: 外部からのlateinitアクセス
-    - lateinit拡張関数: 外部からのlateinit操作
-    - lateinitとリフレクションの組み合わせ
-    - lateinitとデリゲートの組み合わせ
-    - lateinitの可視性制御
-  - **現状**: lateinit拡張は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/lateinit_extensions.kt`
-
 #### Phase 2: ジェネリクスと型システム (中優先度)
 
 
