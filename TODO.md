@@ -708,17 +708,29 @@
 
 #### Phase 4: 高度文字列処理 (低優先度)
 
-- [ ] STDLIB-STR-124: 文字列フォーマット完全実装
-  - **仕様**: 文字列フォーマットの完全サポート
+- [ ] STDLIB-STR-123: StringBuilder完全実装
+  - **仕様**: StringBuilderの完全サポート
   - **実装内容**:
-    - テンプレート文字列: "$variable", "${expression}"
-    - format(): String.format()スタイル
-    - 文字列補間: 複雑な式の補間
-    - ロケール対応: ロケール依存のフォーマット
-    - 数値フォーマット: 小数点、桁区切り、指数表記
-  - **現状**: 基本的なフォーマットは実装済み (STDLIB-085)、高度なフォーマットは未実装
+    - 基本操作: append(), insert(), delete(), replace()
+    - 文字操作: setCharAt(), charAt()
+    - 逆転: reverse()
+    - 容量管理: capacity(), ensureCapacity(), trimToSize()
+    - 変換: toString(), length()
+  - **現状**: 基本的なStringBuilderは実装済み (STDLIB-083)、高度な操作は未実装
   - **関連ファイル**: `RuntimeStringStdlib.swift`
-  - **テストケース**: `Scripts/diff_cases/string_format.kt`
+  - **テストケース**: `Scripts/diff_cases/string_builder.kt`
+
+- [ ] STDLIB-STR-125: 文字列エンコーディング完全実装
+  - **仕様**: 文字列エンコーディングの完全サポート
+  - **実装内容**:
+    - エンコーディング指定: UTF-8, UTF-16, ISO-8859-1
+    - バイト変換: toByteArray(), fromByteArray()
+    - 文字セット: Charsetクラスのサポート
+    - エンコーディング検出: バイト配列からのエンコーディング推測
+    - エンコーディング変換: 異なるエンコーディング間の変換
+  - **現状**: 基本的なエンコーディングは実装済み、詳細は未実装
+  - **関連ファイル**: `RuntimeStringStdlib.swift`
+  - **テストケース**: `Scripts/diff_cases/string_encoding.kt`
 
 - [ ] STDLIB-STR-126: 文字列正規化完全実装
   - **仕様**: Unicode正規化の完全サポート
