@@ -199,18 +199,6 @@
 #### Phase 2: プロパティデリゲート (中優先度)
 
 
-- [ ] STDLIB-DELEG-046: カスタムデリゲート基本完全実装
-  - **仕様**: カスタムプロパティデリゲートの基本機能
-  - **実装内容**:
-    - getValue()メソッド: 値の取得
-    - setValue()メソッド: 値の設定
-    - ReadOnlyProperty: 読み取り専用デリゲート
-    - ReadWriteProperty: 読み書きデリゲート
-    - デリゲートの型推論
-  - **現状**: 基本的なデリゲート機構は実装済み、詳細は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticDelegateStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/delegate_custom_basic.kt`
-
 - [ ] STDLIB-DELEG-047: provideDelegate完全実装
   - **仕様**: provideDelegate演算子の完全サポート
   - **実装内容**:
