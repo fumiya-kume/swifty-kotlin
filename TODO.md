@@ -756,18 +756,6 @@
   - **関連ファイル**: `RuntimeStringStdlib.swift`
   - **テストケース**: `Scripts/diff_cases/string_format.kt`
 
-- [ ] STDLIB-STR-125: 文字列エンコーディング完全実装
-  - **仕様**: 文字列エンコーディングの完全サポート
-  - **実装内容**:
-    - エンコーディング指定: UTF-8, UTF-16, ISO-8859-1
-    - バイト変換: toByteArray(), fromByteArray()
-    - 文字セット: Charsetクラスのサポート
-    - エンコーディング検出: バイト配列からのエンコーディング推測
-    - エンコーディング変換: 異なるエンコーディング間の変換
-  - **現状**: 基本的なエンコーディングは実装済み、詳細は未実装
-  - **関連ファイル**: `RuntimeStringStdlib.swift`
-  - **テストケース**: `Scripts/diff_cases/string_encoding.kt`
-
 - [ ] STDLIB-STR-126: 文字列正規化完全実装
   - **仕様**: Unicode正規化の完全サポート
   - **実装内容**:
