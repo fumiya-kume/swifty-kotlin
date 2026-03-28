@@ -90,19 +90,6 @@
 
 
 
-- [ ] STDLIB-DELEG-048: デリゲート演算子完全実装
-  - **仕様**: 全てのデリゲート演算子の完全サポート
-  - **実装内容**:
-    - getValue(): 値取得演算子
-    - setValue(): 値設定演算子
-    - provideDelegate(): デリゲート提供演算子
-    - 演算子の優先順位
-    - 演算子のオーバーロード解決
-    - デリゲート演算子の型チェック
-  - **現状**: 基本的なデリゲート演算子は実装済み、provideDelegateは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticDelegateStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/delegate_operators.kt`
-
 
 #### Phase 2: ジェネリクスと型システム (中優先度)
 
