@@ -456,19 +456,6 @@
   - **関連ファイル**: `RuntimeRegex.swift`
   - **テストケース**: `Scripts/diff_cases/match_result.kt`
 
-- [ ] STDLIB-REGEX-096: 正規表現オプション完全実装
-  - **仕様**: 正規表現オプションの完全サポート
-  - **実装内容**:
-    - IGNORE_CASE: 大文字小文字無視
-    - MULTILINE: 複数行モード
-    - DOT_MATCHES_ALL: ドットが全文字にマッチ
-    - UNIX_LINES: Unix行終端子
-    - LITERAL: リテラルモード
-    - COMMENTS: コメント許可
-  - **現状**: 基本的なオプションは実装済み、全オプションは未実装
-  - **関連ファイル**: `RuntimeRegex.swift`
-  - **テストケース**: `Scripts/diff_cases/regex_options.kt`
-
 - [ ] STDLIB-REGEX-097: 名前付きグループ完全実装
   - **仕様**: 名前付きキャプチャグループの完全サポート
   - **実装内容**:
