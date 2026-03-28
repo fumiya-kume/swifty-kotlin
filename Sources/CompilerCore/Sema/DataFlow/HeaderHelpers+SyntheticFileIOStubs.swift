@@ -390,6 +390,7 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(classLoaderType, for: classLoaderSymbol)
 
+
         let inputStreamSymbol = ensureClassSymbol(
             named: "InputStream",
             in: javaIOPkg,
@@ -417,6 +418,7 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(outputStreamType, for: outputStreamSymbol)
 
         let nullableInputStreamType = types.makeNullable(inputStreamType)
+
 
         registerFileMemberFunction(
             named: "inputStream",

@@ -607,7 +607,7 @@
     - 一時ファイル: createTempFile(), createTempDirectory()
   - **現状**: 基本的なFilesは実装済み、検索は未実装
   - **関連ファイル**: `RuntimeFileIO.swift`
-  - **テストケース**: `Scripts/diff_cases/files_utility.kt`
+  - **テストケース**: `Scripts/diff_cases/files_utility.kt`, `Scripts/diff_cases/buffered_io.kt`
 
 - [ ] STDLIB-IO-093: リソースアクセス完全実装
 #### Phase 3: 正規表現 (低優先度)
