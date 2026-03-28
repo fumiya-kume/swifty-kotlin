@@ -545,17 +545,17 @@
 
 #### Phase 3: エラー処理 (低優先度)
 
-- [ ] STDLIB-EXCEPT-104: 例外基本実装
-  - **仕様**: 例外処理の基本的な機能
+- [ ] STDLIB-EXCEPT-105: 例外高度機能完全実装
+  - **仕様**: 例外処理の高度な機能
   - **実装内容**:
-    - try-catch: try { /* code */ } catch (e: Exception) { /* handle */ }
-    - try-catch-finally: try-catch-finallyブロック
-    - 例外階層: Throwable, Exception, RuntimeException
-    - 例外メッセージ: message, cause
-    - 例外スタックトレース: stackTrace
-  - **現状**: 基本的なtry-catchは実装済み、詳細は未実装
+    - 例外再スロー: throw, rethrow
+    - 例外チェーン: initCause(), getCause()
+    - 例外抑制: addSuppressed(), getSuppressed()
+    - try-with-resources: use()関数
+    - 例外フィルタリング: catchの条件付き
+  - **現状**: 基本的な例外は実装済み、抑制は未実装
   - **関連ファイル**: `RuntimeThrowableBox`
-  - **テストケース**: `Scripts/diff_cases/exception_basic.kt`
+  - **テストケース**: `Scripts/diff_cases/exception_advanced.kt`
 
 - [ ] STDLIB-RESULT-106: Result基本実装
   - **仕様**: Result<T>クラスの基本的な機能
