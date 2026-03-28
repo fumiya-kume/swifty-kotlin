@@ -203,17 +203,29 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/variance_generics.kt`
 
-- [ ] STDLIB-GEN-056: スープロジェクション完全実装
-  - **仕様**: スープロジェクション（*）の完全サポート
+- [ ] STDLIB-GEN-055: 型制約完全実装
+  - **仕様**: 型パラメータの制約
   - **実装内容**:
-    - スープロジェクション: List<*>
-    - 読み取り専用アクセス: get()のみ許可
-    - 型安全なキャスト: as?演算子
-    - スープロジェクションとジェネリック関数
-    - スープロジェクションの型消去
-  - **現状**: 基本的なスープロジェクションは実装済み、詳細は未実装
+    - 上限制約: <T : Comparable<T>>
+    - 複数制約: <T : Comparable<T>, Serializable>
+    - where句: fun <T> process(value: T) where T : Comparable<T>
+    - 制約の解決とチェック
+    - 制約違反のエラーメッセージ
+  - **現状**: 基本的な制約は実装済み、where句は未実装
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/star_projection.kt`
+  - **テストケース**: `Scripts/diff_cases/type_constraints.kt`
+
+- [ ] STDLIB-GEN-057: reified型パラメータ完全実装
+  - **仕様**: reified型パラメータの完全サポート
+  - **実装内容**:
+    - reified修飾子: inline fun <reified T> myFunction()
+    - 実行時型チェック: value is T
+    - 実行時型キャスト: value as T
+    - reifiedとジェネリック制約の組み合わせ
+    - reifiedとinline関数の制約
+  - **現状**: reifiedは未実装
+  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
+  - **テストケース**: `Scripts/diff_cases/reified_generics.kt`
 
 - [ ] STDLIB-GEN-057: reified型パラメータ完全実装
   - **仕様**: reified型パラメータの完全サポート
