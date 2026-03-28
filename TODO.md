@@ -795,19 +795,6 @@
   - **関連ファイル**: `RuntimeRandom.swift`
   - **テストケース**: `Scripts/diff_cases/random_basic.kt`
 
-- [ ] STDLIB-RANDOM-100: Random高度機能完全実装
-  - **仕様**: Randomクラスの高度な機能
-  - **実装内容**:
-    - シード指定: Random(seed)
-    - ガウス分布: nextGaussian()
-    - 指数分布: nextExponential()
-    - 一様分布: nextUniform()
-    - 乱数列: ints(), longs(), doubles()
-    - ストリームAPI: random().ints()
-  - **現状**: 基本的なRandomは実装済み、高度な分布は未実装
-  - **関連ファイル**: `RuntimeRandom.swift`
-  - **テストケース**: `Scripts/diff_cases/random_extended.kt`
-
 - [ ] STDLIB-RANDOM-101: SecureRandom完全実装
   - **仕様**: 暗号学的乱数生成器の完全サポート
   - **実装内容**:
