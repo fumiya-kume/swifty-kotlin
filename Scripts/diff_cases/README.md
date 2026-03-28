@@ -53,7 +53,10 @@ Cases:
 - `sequence_lazy.kt`: `Sequence<T>` lazy evaluation chain（`asSequence` → `map` → `filter` → `toList`）の parity
 - `stdlib_collection_hof.kt`: collection HOF（map/filter/flatMap/fold/reduce/any/all/none/groupBy/sortedBy/find/count/first/last）と capture lambda の parity
 - `stdlib_string_ops.kt`: String stdlib parity（`trim/split/replace/startsWith/endsWith/contains/toInt/toDouble/format/substring/lowercase/uppercase/toIntOrNull/toDoubleOrNull/indexOf/lastIndexOf/padStart/padEnd/repeat/reversed/toList/toCharArray/drop/take/dropLast/takeLast`）
+- `parallel_processing.kt`: `Dispatchers.Default` 上での並列 `async` / `awaitAll` を使った並列処理 parity
 - `flow_cold.kt`: `Flow<T>` cold stream chain（`flow { emit(...) }.map { ... }.collect { ... }`）の parity（kotlinx classpath 必須）
 - `deprecated_error.kt`: `@Deprecated(level = DeprecationLevel.ERROR)` 呼び出しの compile-error parity
+- `property_based_test.kt`: seeded samples, shrinking, statistics report を持つ property-based style parity
+- `test_framework_basic.kt`: `kotlin.test` の `@Test` / `@Before` / `@After` と `assertEquals` / `assertTrue` / `assertNull` の基本 parity
 
 The set intentionally includes both successful programs and compile-error cases.
