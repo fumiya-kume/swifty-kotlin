@@ -636,17 +636,17 @@
 
 #### Phase 3: アノテーションとメタプログラミング (低優先度)
 
-- [ ] STDLIB-ANNO-114: アノテーション保持完全実装
-  - **仕様**: アノテーション保持ポリシーの完全サポート
+- [ ] STDLIB-ANNO-113: アノテーション基本実装
+  - **仕様**: アノテーションの基本的な機能
   - **実装内容**:
-    - SOURCE: ソースレベルでのみ保持
-    - CLASS: クラスファイルに保持、実行時は破棄
-    - RUNTIME: 実行時まで保持
-    - 保持ポリシーの継承
-    - アノテーションの継承: @Inherited
-  - **現状**: 基本的なアノテーションは実装済み、保持ポリシーは未実装
+    - アノテーション宣言: @interface MyAnnotation
+    - アノテーション使用: @MyAnnotation class MyClass
+    - アノテーションプロパティ: val value: String, val count: Int
+    - デフォルト値: val value: String = "default"
+    - アノテーションターゲット: @Target
+  - **現状**: 基本的なアノテーションは実装済み、詳細は未実装
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/annotation_retention.kt`
+  - **テストケース**: `Scripts/diff_cases/annotation_basic.kt`
 
 - [ ] STDLIB-METAPROG-116: メタプログラミング基本実装
   - **仕様**: メタプログラミングの基本的な機能
