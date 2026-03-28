@@ -456,17 +456,17 @@
 
 #### Phase 3: 正規表現 (低優先度)
 
-- [ ] STDLIB-REGEX-095: MatchResult完全実装
-  - **仕様**: MatchResultの完全サポート
+- [ ] STDLIB-REGEX-094: Regex基本実装
+  - **仕様**: Regexクラスの基本的な機能
   - **実装内容**:
-    - マッチ情報: value, range, groups
-    - グループアクセス: groupValues, groupValues[], get()
-    - デストラクチャリング: component1(), component2()
-    - マッチ反復: next(), hasPrevious()
-    - マッチ変換: map(), transform()
-  - **現状**: 基本的なMatchResultは実装済み、詳細は未実装
+    - 正規表現作成: Regex(pattern), Regex.fromLiteral()
+    - パターンマッチ: matches(), containsMatchIn()
+    - マッチ検索: find(), findAll()
+    - 文字列置換: replace(), replaceFirst()
+    - 文字列分割: split()
+  - **現状**: 基本的なRegexは実装済み (STDLIB-100/101/103)、高度な機能は未実装
   - **関連ファイル**: `RuntimeRegex.swift`
-  - **テストケース**: `Scripts/diff_cases/match_result.kt`
+  - **テストケース**: `Scripts/diff_cases/regex_basic.kt`
 
 - [ ] STDLIB-REGEX-096: 正規表現オプション完全実装
   - **仕様**: 正規表現オプションの完全サポート
