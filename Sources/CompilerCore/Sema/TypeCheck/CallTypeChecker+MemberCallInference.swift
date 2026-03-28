@@ -3382,6 +3382,42 @@ extension CallTypeChecker {
                     }
                 }
             }
+            if args.count == 1 {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                let arg0Type = sema.types.makeNonNullable(argTypes[0])
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
+                   isJavaUtilLocaleType(arg0Type, sema: sema, interner: interner)
+                {
+                    let calleeStr = interner.resolve(calleeName)
+                    let resultType: TypeID? = switch calleeStr {
+                    case "lowercase", "uppercase":
+                        sema.types.stringType
+                    default:
+                        nil
+                    }
+                    if let resultType {
+                        if let boundType = tryBindSyntheticStringMemberFallback(
+                            id,
+                            calleeName: calleeName,
+                            receiverType: receiverTypeForCheck,
+                            args: args,
+                            argTypes: argTypes,
+                            range: range,
+                            ctx: ctx,
+                            expectedType: expectedType,
+                            explicitTypeArgs: explicitTypeArgs,
+                            safeCall: safeCall
+                        ) {
+                            return boundType
+                        }
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
+                }
+            }
             // STDLIB-581: String.toByteArray(charset: Charset)
             if args.count == 1 {
                 let receiverTypeForCheck = safeCall
@@ -3930,6 +3966,36 @@ extension CallTypeChecker {
                    sema.types.isSubtype(newType, sema.types.stringType)
                 {
                     let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
+            if args.count == 2 {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                let arg0Type = sema.types.makeNonNullable(argTypes[0])
+                let arg1Type = sema.types.makeNonNullable(argTypes[1])
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
+                   sema.types.isSubtype(arg0Type, sema.types.stringType),
+                   isJavaUtilLocaleType(arg1Type, sema: sema, interner: interner),
+                   interner.resolve(calleeName) == "compareTo"
+                {
+                    if let boundType = tryBindSyntheticStringMemberFallback(
+                        id,
+                        calleeName: calleeName,
+                        receiverType: receiverTypeForCheck,
+                        args: args,
+                        argTypes: argTypes,
+                        range: range,
+                        ctx: ctx,
+                        expectedType: expectedType,
+                        explicitTypeArgs: explicitTypeArgs,
+                        safeCall: safeCall
+                    ) {
+                        return boundType
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(sema.types.intType) : sema.types.intType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
                 }

@@ -35,6 +35,47 @@ public func kk_string_uppercase(_ strRaw: Int) -> Int {
     return runtimeMakeStringRaw(source.uppercased())
 }
 
+private func runtimeLocaleIdentifier(from localeRaw: Int) -> String {
+    runtimeStringFromRawOrPanic(localeRaw, caller: #function)
+        .replacingOccurrences(of: "_", with: "-")
+}
+
+private func runtimeFoundationLocale(from localeRaw: Int) -> Locale {
+    Locale(identifier: runtimeLocaleIdentifier(from: localeRaw))
+}
+
+@_cdecl("kk_locale_new")
+public func kk_locale_new(_ identifierRaw: Int) -> Int {
+    runtimeMakeStringRaw(runtimeLocaleIdentifier(from: identifierRaw))
+}
+
+@_cdecl("kk_string_lowercase_locale")
+public func kk_string_lowercase_locale(_ strRaw: Int, _ localeRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    return runtimeMakeStringRaw(source.lowercased(with: runtimeFoundationLocale(from: localeRaw)))
+}
+
+@_cdecl("kk_string_uppercase_locale")
+public func kk_string_uppercase_locale(_ strRaw: Int, _ localeRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    return runtimeMakeStringRaw(source.uppercased(with: runtimeFoundationLocale(from: localeRaw)))
+}
+
+@_cdecl("kk_string_compareTo_locale")
+public func kk_string_compareTo_locale(_ lhsRaw: Int, _ rhsRaw: Int, _ localeRaw: Int) -> Int {
+    let lhs = runtimeStringFromRawOrPanic(lhsRaw, caller: #function)
+    let rhs = runtimeStringFromRawOrPanic(rhsRaw, caller: #function)
+    let locale = runtimeFoundationLocale(from: localeRaw)
+    switch lhs.compare(rhs, options: [], range: nil, locale: locale) {
+    case .orderedAscending:
+        return -1
+    case .orderedDescending:
+        return 1
+    case .orderedSame:
+        return 0
+    }
+}
+
 @_cdecl("kk_string_split")
 public func kk_string_split(_ strRaw: Int, _ delimRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)

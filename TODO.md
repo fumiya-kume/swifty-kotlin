@@ -891,18 +891,6 @@
   - **関連ファイル**: `RuntimeStringStdlib.swift`
   - **テストケース**: `Scripts/diff_cases/string_normalization.kt`
 
-- [ ] STDLIB-STR-127: 文字列ロケール完全実装
-  - **仕様**: ロケール依存の文字列操作
-  - **実装内容**:
-    - 大文字小文字変換: toUpperCase(Locale), toLowerCase(Locale)
-    - 文字列比較: compare(Locale)
-    - 照合順序: Collatorのサポート
-    - ロケール情報: Localeクラスのサポート
-    - ロケール依存のフォーマット: 数値、日時、通貨
-  - **現状**: ロケール依存操作は未実装
-  - **関連ファイル**: `RuntimeStringStdlib.swift`
-  - **テストケース**: `Scripts/diff_cases/string_locale.kt`
-
 #### Phase 4: 数値処理と精度 (低優先度)
 
 - [ ] STDLIB-NUM-128: BigDecimal完全実装

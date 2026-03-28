@@ -60,6 +60,20 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             "kk_string_uppercase",
             "String.uppercase should link to kk_string_uppercase"
         )
+
+        let lowercaseFQ = ["kotlin", "text", "lowercase"].map { interner.intern($0) }
+        let lowercaseLinks = Set(
+            sema.symbols.lookupAll(fqName: lowercaseFQ).compactMap { sema.symbols.externalLinkName(for: $0) }
+        )
+        XCTAssertTrue(lowercaseLinks.contains("kk_string_lowercase"))
+        XCTAssertTrue(lowercaseLinks.contains("kk_string_lowercase_locale"))
+
+        let uppercaseFQ = ["kotlin", "text", "uppercase"].map { interner.intern($0) }
+        let uppercaseLinks = Set(
+            sema.symbols.lookupAll(fqName: uppercaseFQ).compactMap { sema.symbols.externalLinkName(for: $0) }
+        )
+        XCTAssertTrue(uppercaseLinks.contains("kk_string_uppercase"))
+        XCTAssertTrue(uppercaseLinks.contains("kk_string_uppercase_locale"))
     }
 
     func testNewNullableConversionStubsHaveCorrectExternalLinks() throws {
@@ -204,4 +218,5 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             }
         }
     }
+
 }

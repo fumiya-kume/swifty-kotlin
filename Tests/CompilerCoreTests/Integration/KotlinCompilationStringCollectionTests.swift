@@ -25,6 +25,18 @@ final class KotlinCompilationStringCollectionTests: XCTestCase {
         """)
     }
 
+    func testCompile_string_localeAwareOperations() throws {
+        try assertKotlinCompilesToKIR("""
+        import java.util.Locale
+
+        fun main() {
+            val lower = "I".lowercase(Locale("tr"))
+            val upper = "i".uppercase(Locale("tr"))
+            val cmp = lower.compareTo(upper, Locale("en_US"))
+        }
+        """)
+    }
+
     // MARK: - String nullable conversions
 
     func testCompile_string_toIntOrNull_validInput() throws {

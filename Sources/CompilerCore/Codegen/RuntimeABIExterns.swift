@@ -393,6 +393,30 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_locale_new = ExternDecl(
+        name: "kk_locale_new",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_lowercase_locale = ExternDecl(
+        name: "kk_string_lowercase_locale",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_uppercase_locale = ExternDecl(
+        name: "kk_string_uppercase_locale",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_compareTo_locale = ExternDecl(
+        name: "kk_string_compareTo_locale",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_trimIndent = ExternDecl(
         name: "kk_string_trimIndent",
         parameterTypes: ["intptr_t"],
@@ -3019,6 +3043,10 @@ public enum RuntimeABIExterns {
             kk_string_trim,
             kk_string_lowercase,
             kk_string_uppercase,
+            kk_locale_new,
+            kk_string_lowercase_locale,
+            kk_string_uppercase_locale,
+            kk_string_compareTo_locale,
             kk_string_trimIndent,
             kk_string_trimMargin_default,
             kk_string_trimMargin,
