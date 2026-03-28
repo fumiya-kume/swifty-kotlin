@@ -394,17 +394,17 @@
 
 #### Phase 3: I/Oとファイルシステム (低優先度)
 
-- [ ] STDLIB-IO-087: File基本実装
-  - **仕様**: Fileクラスの基本的なファイル操作
+- [ ] STDLIB-IO-088: File読み書き完全実装
+  - **仕様**: ファイルの読み書き操作
   - **実装内容**:
-    - ファイル作成: File(path), File(parent, child)
-    - ファイル操作: createNewFile(), delete(), exists()
-    - ファイル情報: length(), lastModified(), isFile, isDirectory
-    - ファイルパス: absolutePath, canonicalPath, parent
-    - ファイル属性: canRead(), canWrite(), canExecute()
-  - **現状**: 基本的なファイル操作は一部実装済み (STDLIB-320)、詳細は未実装
+    - テキスト読み込み: readText(), readLines()
+    - テキスト書き込み: writeText(), appendText()
+    - バイナリ読み込み: readBytes()
+    - バイナリ書き込み: writeBytes()
+    - バッファリング: bufferedReader(), bufferedWriter()
+  - **現状**: 基本的な読み書きは実装済み、バイナリ操作は未実装
   - **関連ファイル**: `RuntimeFileIO.swift`
-  - **テストケース**: `Scripts/diff_cases/file_basic.kt`
+  - **テストケース**: `Scripts/diff_cases/file_read_write.kt`
 
 - [ ] STDLIB-IO-089: Path完全実装
   - **仕様**: Pathクラスの完全サポート
