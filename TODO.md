@@ -720,18 +720,6 @@
 
 #### Phase 3: 正規表現 (低優先度)
 
-- [ ] STDLIB-REGEX-094: Regex基本実装
-  - **仕様**: Regexクラスの基本的な機能
-  - **実装内容**:
-    - 正規表現作成: Regex(pattern), Regex.fromLiteral()
-    - パターンマッチ: matches(), containsMatchIn()
-    - マッチ検索: find(), findAll()
-    - 文字列置換: replace(), replaceFirst()
-    - 文字列分割: split()
-  - **現状**: 基本的なRegexは実装済み (STDLIB-100/101/103)、高度な機能は未実装
-  - **関連ファイル**: `RuntimeRegex.swift`
-  - **テストケース**: `Scripts/diff_cases/regex_basic.kt`
-
 - [ ] STDLIB-REGEX-095: MatchResult完全実装
   - **仕様**: MatchResultの完全サポート
   - **実装内容**:

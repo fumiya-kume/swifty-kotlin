@@ -92,11 +92,13 @@ final class ABIMismatchTests: XCTestCase {
         // kk_match_result_value, kk_match_result_groupValues,
         // kk_regex_replace_lambda, kk_regex_matchEntire,
         // kk_regex_create_with_option, kk_regex_create_with_options,
-        // kk_regex_containsMatchIn,
-        // kk_string_chunked, kk_string_windowed,
-        // kk_string_commonPrefixWith, kk_string_commonSuffixWith,
-        // kk_string_zipWithNext
-        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 21)
+        // kk_regex_containsMatchIn, kk_match_result_groups,
+        // kk_match_group_collection_get, kk_match_group_value,
+        // kk_match_group_range, kk_string_chunked,
+        // kk_string_windowed_default, kk_string_windowed,
+        // kk_string_windowed_partial, kk_string_commonPrefixWith,
+        // kk_string_commonSuffixWith, kk_string_zipWithNext
+        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 31)
     }
 
     func testPrintAndPrintlnFunctionCount() {
