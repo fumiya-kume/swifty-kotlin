@@ -300,18 +300,6 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/type_erasure.kt`
 
-- [ ] STDLIB-GEN-059: ジェネリック型推論完全実装
-  - **仕様**: ジェネリック型の自動推論
-  - **実装内容**:
-    - 関数呼び出しでの型推論: myFunction("hello")
-    - 変数宣言での型推論: val list = listOf(1, 2, 3)
-    - 複雑な型推論: mapOf("key" to "value")
-    - 型推論の失敗時のエラー
-    - 明示的型指定との組み合わせ
-  - **現状**: 基本的な型推論は実装済み、複雑なケースは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/type_inference.kt`
-
 #### Phase 2: リフレクション (中優先度)
 
 - [ ] STDLIB-REFLECT-060: KClass基本機能完全実装
