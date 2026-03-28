@@ -374,6 +374,7 @@ extension CallTypeChecker {
         let interner = ctx.interner
 
         guard !isClassNameReceiver,
+              !isArrayLikeReceiver(receiverID: receiverID, sema: sema, interner: interner),
               isCollectionLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         else {
             return nil
@@ -1717,7 +1718,9 @@ extension CallTypeChecker {
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID {
-        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        let receiverType = sema.bindings.exprTypes[receiverID]
+            ?? sema.bindings.identifierSymbol(for: receiverID).flatMap { sema.symbols.propertyType(for: $0) }
+            ?? sema.types.anyType
         let nonNull = sema.types.makeNonNullable(receiverType)
         guard case let .classType(classType) = sema.types.kind(of: nonNull),
               let symbol = sema.symbols.symbol(classType.classSymbol)

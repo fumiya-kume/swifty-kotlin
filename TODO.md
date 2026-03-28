@@ -73,19 +73,6 @@
 
 #### Phase 2: 演算子と特殊構文 (中優先度)
 
-- [ ] STDLIB-OP-032: コンテナ演算子オーバーロード完全実装
-  - **仕様**: コンテナクラスでの演算子オーバーロード
-  - **実装内容**:
-    - インデックス演算子: get(), set()
-    - 含有演算子: contains(), iterator()
-    - 範囲演算子: rangeTo()
-    - in演算子: contains()の省略形
-    - スプレッド演算子: spread()
-  - **現状**: 基本的なコンテナ演算子は実装済み、カスタム実装は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/container_operators.kt`
-
-
 - [ ] STDLIB-RANGE-034: IntRange完全実装
   - **仕様**: IntRangeの完全な機能サポート
   - **実装内容**:
