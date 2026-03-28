@@ -47,7 +47,7 @@ public func kk_op_rangeTo(_ lhs: Int, _ rhs: Int) -> Int {
 @_cdecl("kk_op_rangeUntil")
 public func kk_op_rangeUntil(_ lhs: Int, _ rhs: Int) -> Int {
     if rhs <= lhs {
-        return registerRuntimeObject(RuntimeRangeBox(first: lhs, last: lhs, step: 0))
+        return registerRuntimeObject(RuntimeRangeBox(first: lhs, last: rhs &- 1, step: 0))
     }
     return registerRuntimeObject(RuntimeRangeBox(first: lhs, last: rhs &- 1, step: 1))
 }
@@ -57,7 +57,7 @@ public func kk_op_ulong_rangeUntil(_ lhs: Int, _ rhs: Int) -> Int {
     let lhsUnsigned = UInt(bitPattern: lhs)
     let rhsUnsigned = UInt(bitPattern: rhs)
     if rhsUnsigned <= lhsUnsigned {
-        return registerRuntimeObject(RuntimeRangeBox(first: lhs, last: lhs, step: 0))
+        return registerRuntimeObject(RuntimeRangeBox(first: lhs, last: rhs &- 1, step: 0))
     }
     return registerRuntimeObject(RuntimeRangeBox(first: lhs, last: rhs &- 1, step: 1))
 }
