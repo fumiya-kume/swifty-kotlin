@@ -438,18 +438,6 @@
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/coroutine_scope.kt`
 
-- [ ] STDLIB-CORO-070: Job完全実装
-  - **仕様**: Jobインターフェースの完全サポート
-  - **実装内容**:
-    - ジョブの状態: New, Active, Completing, Completed, Cancelling, Cancelled, Failed
-    - キャンセル: cancel(), cancel(CauseException)
-    - ジョブの階層: parent-child関係
-    - ジョブの完了: complete(), completeExceptionally()
-    - ジョブの待機: join(), awaitCompletion()
-  - **現状**: 基本的なJobは実装済み、状態管理は未実装
-  - **関連ファイル**: `RuntimeCoroutine.swift`
-  - **テストケース**: `Scripts/diff_cases/job_basic.kt`
-
 - [ ] STDLIB-CORO-071: async/await完全実装
   - **仕様**: async/awaitの完全サポート
   - **実装内容**:
