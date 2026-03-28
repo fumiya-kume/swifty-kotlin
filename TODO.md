@@ -791,17 +791,17 @@
 
 #### Phase 4: 高度コレクションとデータ構造 (低優先度)
 
-- [ ] STDLIB-COL-117: Map完全実装
-  - **仕様**: Mapインターフェースの完全サポート
+- [ ] STDLIB-COL-118: Set完全実装
+  - **仕様**: Setインターフェースの完全サポート
   - **実装内容**:
-    - 基本操作: get(), put(), remove(), containsKey(), containsValue()
-    - ビュー: keys, values, entries
-    - 変換: mapValues(), mapKeys(), filter(), filterKeys(), filterValues()
-    - 集約: count(), isEmpty(), isNotEmpty()
-    - 変更可能: MutableMapのputAll(), clear()
-  - **現状**: 基本的なMapは実装済み、高度な操作は未実装
-  - **関連ファイル**: `RuntimeMap.swift`
-  - **テストケース**: `Scripts/diff_cases/map_basic.kt`
+    - 基本操作: add(), remove(), contains(), size()
+    - 集合演算: union(), intersect(), subtract()
+    - フィルタリング: filter(), filterNot()
+    - 変換: map(), mapNotNull(), flatMap()
+    - 変更可能: MutableSetのaddAll(), removeAll(), retainAll()
+  - **現状**: 基本的なSetは実装済み、集合演算は未実装
+  - **関連ファイル**: `RuntimeSet.swift`
+  - **テストケース**: `Scripts/diff_cases/set_basic.kt`
 
 - [ ] STDLIB-COL-119: List完全実装
   - **仕様**: Listインターフェースの完全サポート
