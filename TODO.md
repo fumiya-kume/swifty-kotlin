@@ -73,18 +73,6 @@
 
 #### Phase 2: 演算子と特殊構文 (中優先度)
 
-- [ ] STDLIB-OP-031: 比較演算子オーバーロード完全実装
-  - **仕様**: カスタムクラスでの比較演算子オーバーロード
-  - **実装内容**:
-    - 等値演算子: equals(), hashCode()
-    - 順序演算子: compareTo(), lessThan(), greaterThan(), lessThanOrEqual(), greaterThanOrEqual()
-    - 構造的比較: contentEquals(), contentHashCode()
-    - 比較演算子の連鎖
-    - null安全な比較
-  - **現状**: compareToは実装済み、詳細な比較ロジックは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticComparisonStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/compare_values.kt`
-
 - [ ] STDLIB-OP-032: コンテナ演算子オーバーロード完全実装
   - **仕様**: コンテナクラスでの演算子オーバーロード
   - **実装内容**:
