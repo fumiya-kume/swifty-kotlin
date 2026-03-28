@@ -13,6 +13,15 @@ final class TestFrameworkSyntheticStubTests: XCTestCase {
         return try XCTUnwrap(result)
     }
 
+    private func lookupTestSymbols(
+        sema: SemaModule,
+        interner: StringInterner,
+        name: String
+    ) -> [SymbolID] {
+        let fq = ["kotlin", "test", name].map { interner.intern($0) }
+        return sema.symbols.lookupAll(fqName: fq)
+    }
+
     private func externalLinks(
         for member: String,
         sema: SemaModule,
@@ -21,6 +30,16 @@ final class TestFrameworkSyntheticStubTests: XCTestCase {
         let fq = ["kotlin", "test", member].map { interner.intern($0) }
         let symbols = sema.symbols.lookupAll(fqName: fq)
         return symbols.compactMap { sema.symbols.externalLinkName(for: $0) }
+    }
+
+    func testSyntheticAnnotationsAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        for annotationName in ["Test", "Before", "After"] {
+            let symbols = lookupTestSymbols(sema: sema, interner: interner, name: annotationName)
+            let symbol = try XCTUnwrap(symbols.first, "Expected kotlin.test.\(annotationName)")
+            XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .annotationClass)
+        }
     }
 
     func testTestAnnotationsAreRegisteredAsAnnotationClasses() throws {
@@ -115,25 +134,6 @@ final class TestFrameworkSyntheticStubTests: XCTestCase {
                     expectedLinkName
                 )
             }
-        }
-    }
-
-    private func lookupTestSymbols(
-        sema: SemaModule,
-        interner: StringInterner,
-        name: String
-    ) -> [SymbolID] {
-        let fq = ["kotlin", "test", name].map { interner.intern($0) }
-        return sema.symbols.lookupAll(fqName: fq)
-    }
-
-    func testSyntheticAnnotationsAreRegistered() throws {
-        let (sema, interner) = try makeSema()
-
-        for annotationName in ["Test", "Before", "After"] {
-            let symbols = lookupTestSymbols(sema: sema, interner: interner, name: annotationName)
-            let symbol = try XCTUnwrap(symbols.first, "Expected kotlin.test.\(annotationName)")
-            XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .annotationClass)
         }
     }
 
