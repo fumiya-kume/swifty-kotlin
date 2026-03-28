@@ -70,6 +70,16 @@
   - **現状**: 基本的なoverrideは実装済み、共変性は未実装
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/override_variance.kt`
+- [ ] STDLIB-INHERIT-020: 多重継承と衝突解決完全実装
+  - **仕様**: インターフェース多重継承の衝突解決
+  - **実装内容**:
+    - デフォルト実装の衝突検出
+    - super<>による明示的呼び出し
+    - ダイヤモンド継承問題の解決
+    - 最優先実装の選択ルール
+  - **現状**: 基本的な多重継承は実装済み、衝突解決は未実装
+  - **関連ファイル**: `DiamondOverride.swift`
+  - **テストケース**: `Scripts/diff_cases/interface_conflict_resolution.kt`
 
 #### Phase 2: 演算子と特殊構文 (中優先度)
 
