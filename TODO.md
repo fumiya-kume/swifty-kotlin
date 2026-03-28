@@ -205,17 +205,6 @@
 #### Phase 2: ジェネリクスと型システム (中優先度)
 
 
-- [ ] STDLIB-GEN-053: ジェネリックインターフェース完全実装
-  - **仕様**: ジェネリックインターフェースの完全サポート
-  - **実装内容**:
-    - 型パラメータ: interface MyInterface<T>
-    - 複数型パラメータ: interface MyInterface<T, U>
-    - 型制約: interface MyInterface<T : Comparable<T>>
-    - ジェネリックメソッド: interface MyInterface<T> { fun process(value: T) }
-    - ジェネリックプロパティ: interface MyInterface<T> { val value: T }
-  - **現状**: 基本的なジェネリックインターフェースは実装済み、制約は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/generic_interfaces.kt`
 
 - [ ] STDLIB-GEN-055: 型制約完全実装
   - **仕様**: 型パラメータの制約
