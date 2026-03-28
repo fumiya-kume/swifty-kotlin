@@ -891,18 +891,6 @@
   - **関連ファイル**: `RuntimeBigInteger.swift`
   - **テストケース**: `Scripts/diff_cases/big_integer.kt`
 
-- [ ] STDLIB-NUM-130: 浮動小数点精度完全実装
-  - **仕様**: 浮動小数点数の精度制御
-  - **実装内容**:
-    - 精度情報: ulp(), nextUp(), nextDown()
-    - 特殊値: POSITIVE_INFINITY, NEGATIVE_INFINITY, NaN
-    - 比較: isNaN(), isInfinite()
-    - ビット表現: toBits(), fromBits()
-    - 丸め: IEEE 754丸めの完全サポート
-  - **現状**: 基本的な浮動小数点は実装済み、精度制御は未実装
-  - **関連ファイル**: `RuntimeNumericCompat.swift`
-  - **テストケース**: `Scripts/diff_cases/float_precision.kt`
-
 - [ ] STDLIB-NUM-131: 数値フォーマット完全実装
   - **仕様**: 数値のフォーマットと解析
   - **実装内容**:
