@@ -4533,6 +4533,9 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(name: "kk_cache_put", parameters: [RuntimeABIParameter(name: "cacheRaw", type: .intptr), RuntimeABIParameter(name: "keyRaw", type: .intptr), RuntimeABIParameter(name: "valueRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_cache_get", parameters: [RuntimeABIParameter(name: "cacheRaw", type: .intptr), RuntimeABIParameter(name: "keyRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_cache_size", parameters: [RuntimeABIParameter(name: "cacheRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_locale_new", parameters: [RuntimeABIParameter(name: "identifierRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_dateformat_ofPattern", parameters: [RuntimeABIParameter(name: "patternRaw", type: .intptr), RuntimeABIParameter(name: "localeRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_dateformat_format", parameters: [RuntimeABIParameter(name: "formatRaw", type: .intptr), RuntimeABIParameter(name: "epochMillis", type: .intptr)], returnType: .intptr, section: "FileIO"),
     ]
 
     // MARK: - Duration / measureTime (STDLIB-230/231)

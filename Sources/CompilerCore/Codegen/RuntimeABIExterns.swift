@@ -3413,6 +3413,9 @@ public enum RuntimeABIExterns {
     public static let kk_cache_put = ExternDecl(name: "kk_cache_put", parameterTypes: [intptr, intptr, intptr], returnType: intptr)
     public static let kk_cache_get = ExternDecl(name: "kk_cache_get", parameterTypes: [intptr, intptr], returnType: intptr)
     public static let kk_cache_size = ExternDecl(name: "kk_cache_size", parameterTypes: [intptr], returnType: intptr)
+    public static let kk_locale_new = ExternDecl(name: "kk_locale_new", parameterTypes: [intptr], returnType: intptr)
+    public static let kk_dateformat_ofPattern = ExternDecl(name: "kk_dateformat_ofPattern", parameterTypes: [intptr, intptr], returnType: intptr)
+    public static let kk_dateformat_format = ExternDecl(name: "kk_dateformat_format", parameterTypes: [intptr, intptr], returnType: intptr)
 
     public static let fileIOExterns: [ExternDecl] = [
         kk_file_new,
@@ -3488,6 +3491,9 @@ public enum RuntimeABIExterns {
         kk_cache_put,
         kk_cache_get,
         kk_cache_size,
+        kk_locale_new,
+        kk_dateformat_ofPattern,
+        kk_dateformat_format,
     ]
 
     public static let regexExterns: [ExternDecl] = [
