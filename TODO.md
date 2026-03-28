@@ -828,17 +828,17 @@
   - **関連ファイル**: `RuntimeSet.swift`
   - **テストケース**: `Scripts/diff_cases/set_basic.kt`
 
-- [ ] STDLIB-COL-120: コレクションファクトリ完全実装
-  - **仕様**: コレクションファクトリ関数の完全サポート
+- [ ] STDLIB-COL-121: コレクションビルダー完全実装
+  - **仕様**: コレクションビルダーの完全サポート
   - **実装内容**:
-    - Listファクトリ: listOf(), listOfNotNull(), emptyList()
-    - Setファクトリ: setOf(), emptySet(), mutableSetOf()
-    - Mapファクトリ: mapOf(), emptyMap(), mutableMapOf()
-    - 連続値: (1..10).toList(), ('a'..'z').toList()
-    - 配列変換: arrayOf().toList(), list.toTypedArray()
-  - **現状**: 基本的なファクトリは実装済み、高度なファクトリは未実装
+    - buildList(): Listビルダー
+    - buildSet(): Setビルダー
+    - buildMap(): Mapビルダー
+    - ビルダー操作: add(), addAll(), put(), putAll()
+    - ビルダースコープ: this参照とreturn値
+  - **現状**: buildMapは一部実装済み、他は未実装
   - **関連ファイル**: `HeaderHelpers+SyntheticCollectionStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/collection_factories.kt`
+  - **テストケース**: `Scripts/diff_cases/collection_builders.kt`
 
 - [ ] STDLIB-COL-121: コレクションビルダー完全実装
   - **仕様**: コレクションビルダーの完全サポート
