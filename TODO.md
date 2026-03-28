@@ -252,17 +252,17 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/star_projection.kt`
 
-- [ ] STDLIB-GEN-058: ジェネリック型消去完全実装
-  - **仕様**: ジェネリック型の実行時型消去
+- [ ] STDLIB-GEN-057: reified型パラメータ完全実装
+  - **仕様**: reified型パラメータの完全サポート
   - **実装内容**:
-    - 型消去のルール: List<String> -> List
-    - 配列での型保持: Array<String>
-    - 型消去とキャストの安全性
-    - ジェネリック型のinstanceofチェック
-    - 型消去とリフレクションの関係
-  - **現状**: 基本的な型消去は実装済み、詳細なルールは未実装
+    - reified修飾子: inline fun <reified T> myFunction()
+    - 実行時型チェック: value is T
+    - 実行時型キャスト: value as T
+    - reifiedとジェネリック制約の組み合わせ
+    - reifiedとinline関数の制約
+  - **現状**: reifiedは未実装
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/type_erasure.kt`
+  - **テストケース**: `Scripts/diff_cases/reified_generics.kt`
 
 - [ ] STDLIB-GEN-059: ジェネリック型推論完全実装
   - **仕様**: ジェネリック型の自動推論
