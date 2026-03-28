@@ -329,17 +329,29 @@
 
 #### Phase 3: コルーチンと並行処理 (低優先度)
 
-- [ ] STDLIB-CORO-069: CoroutineScope完全実装
-  - **仕様**: CoroutineScopeの完全サポート
+- [ ] STDLIB-CORO-068: suspend関数基本実装
+  - **仕様**: suspend関数の基本的なサポート
   - **実装内容**:
-    - スコープの階層: CoroutineScopeの親子関係
-    - キャンセル伝播: 親スコープのキャンセル
-    - ジョブ管理: scope.coroutineContext[Job]
-    - 構造化並行性: structured concurrency
-    - スコープのライフサイクル管理
-  - **現状**: 基本的なスコープは実装済み、階層管理は未実装
+    - suspend修飾子: suspend fun myFunction()
+    - コルーチンコンテキスト: CoroutineContext
+    - 継続渡し: Continuation<T>
+    - suspendラムダ: suspend { value -> }
+    - suspendプロパティ: suspend val property
+  - **現状**: async/awaitは一部実装済み、suspend関数は未実装
   - **関連ファイル**: `RuntimeCoroutine.swift`
-  - **テストケース**: `Scripts/diff_cases/coroutine_scope.kt`
+  - **テストケース**: `Scripts/diff_cases/suspend_functions.kt`
+
+- [ ] STDLIB-CORO-070: Job完全実装
+  - **仕様**: Jobインターフェースの完全サポート
+  - **実装内容**:
+    - ジョブの状態: New, Active, Completing, Completed, Cancelling, Cancelled, Failed
+    - キャンセル: cancel(), cancel(CauseException)
+    - ジョブの階層: parent-child関係
+    - ジョブの完了: complete(), completeExceptionally()
+    - ジョブの待機: join(), awaitCompletion()
+  - **現状**: 基本的なJobは実装済み、状態管理は未実装
+  - **関連ファイル**: `RuntimeCoroutine.swift`
+  - **テストケース**: `Scripts/diff_cases/job_basic.kt`
 
 - [ ] STDLIB-CORO-071: async/await完全実装
   - **仕様**: async/awaitの完全サポート
