@@ -314,18 +314,6 @@
 
 #### Phase 2: リフレクション (中優先度)
 
-- [ ] STDLIB-REFLECT-060: KClass基本機能完全実装
-  - **仕様**: KClassの基本的なリフレクション機能
-  - **実装内容**:
-    - クラス名: simpleName, qualifiedName
-    - クラス階層: supertypes, isInstance
-    - 型パラメータ: typeParameters, generics
-    - 可視性: visibility, isAbstract, isFinal
-    - コンストラクタ: constructors
-  - **現状**: 基本的なKClassは実装済み (REFL-004参照)、詳細は未実装
-  - **関連ファイル**: `RuntimeReflection.swift`
-  - **テストケース**: `Scripts/diff_cases/kclass_basic.kt`
-
 - [ ] STDLIB-REFLECT-061: KClassメンバアクセス完全実装
   - **仕様**: KClassからのメンバアクセス機能
   - **実装内容**:
