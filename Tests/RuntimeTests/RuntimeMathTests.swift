@@ -214,6 +214,14 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(floatFromBits(kk_math_hypot_float(floatToBits(3.0), floatToBits(4.0))), 5.0, accuracy: 1e-6)
     }
 
+    func testPiConstant() {
+        XCTAssertEqual(doubleFromBits(kk_math_PI()), Double.pi, accuracy: 1e-12)
+    }
+
+    func testEConstant() {
+        XCTAssertEqual(doubleFromBits(kk_math_E()), Double(M_E), accuracy: 1e-12)
+    }
+
     // MARK: - roundToInt / roundToLong (STDLIB-510..511)
 
     func testFloatRoundToInt() {

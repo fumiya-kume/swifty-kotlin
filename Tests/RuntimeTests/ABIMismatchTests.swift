@@ -149,21 +149,15 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testMathFunctionCount() {
-        // 23 existing + 11 Float trig/math + 4 roundToInt/roundToLong + 6 ulp/nextUp/nextDown = 44
-        // 23 original Double functions (abs_int, abs, sqrt, pow, ceil, floor, round,
-        //   sin, cos, tan, asin, acos, atan, atan2,
-        //   exp, ln, log2, log10, log, sign, hypot, PI, E)
-        // + 11 Float overloads (sin_float..floor_float)
-        // + 4 roundToInt/roundToLong (float/double)
-        // + 6 ulp/nextUp/nextDown (float/double)
-        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 44)
-        XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 5)
-        // kk_math_abs_int, kk_math_abs, kk_math_sqrt, kk_math_pow,
-        // kk_math_ceil, kk_math_floor, kk_math_round,
-        // kk_math_exp, kk_math_ln, kk_math_log2, kk_math_log10, kk_math_log,
-        // kk_math_sign, kk_math_hypot, kk_math_PI, kk_math_E
-        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 16)
-        XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 9)
+        // Current math ABI surface:
+        // - 23 Double/int/basic entries through PI/E
+        // - 19 Float overloads
+        // - 4 roundToInt/roundToLong helpers
+        // - 6 ulp/nextUp/nextDown helpers
+        // - 3 coercion helpers
+        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 55)
+        // Random ABI currently includes default, seeded, and bounded long/float helpers.
+        XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 15)
     }
 
     func testTotalFunctionCount() {
