@@ -682,18 +682,6 @@
   - **関連ファイル**: `RuntimeMap.swift`
   - **テストケース**: `Scripts/diff_cases/map_basic.kt`
 
-- [ ] STDLIB-COL-118: Set完全実装
-  - **仕様**: Setインターフェースの完全サポート
-  - **実装内容**:
-    - 基本操作: add(), remove(), contains(), size()
-    - 集合演算: union(), intersect(), subtract()
-    - フィルタリング: filter(), filterNot()
-    - 変換: map(), mapNotNull(), flatMap()
-    - 変更可能: MutableSetのaddAll(), removeAll(), retainAll()
-  - **現状**: 基本的なSetは実装済み、集合演算は未実装
-  - **関連ファイル**: `RuntimeSet.swift`
-  - **テストケース**: `Scripts/diff_cases/set_basic.kt`
-
 - [ ] STDLIB-COL-119: List完全実装
   - **仕様**: Listインターフェースの完全サポート
   - **実装内容**:
