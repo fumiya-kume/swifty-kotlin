@@ -474,18 +474,6 @@
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/with_context.kt`
 
-- [ ] STDLIB-CORO-078: coroutineScope完全実装
-  - **仕様**: coroutineScopeビルダーの完全サポート
-  - **実装内容**:
-    - 構造化並行性: 子コルーチンの完了待機
-    - 例外伝播: 子の例外を親に伝播
-    - キャンセル伝播: 親のキャンセルを子に伝播
-    - coroutineScopeのスコープ管理
-    - supervisorScope: 例外伝播の抑制
-  - **現状**: 基本的なcoroutineScopeは実装済み、例外伝播は未実装
-  - **関連ファイル**: `RuntimeCoroutine.swift`
-  - **テストケース**: `Scripts/diff_cases/coroutine_scope_timeout.kt`
-
 - [ ] STDLIB-CORO-079: Mutex完全実装
   - **仕様**: Mutexの完全サポート
   - **実装内容**:
