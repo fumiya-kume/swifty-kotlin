@@ -295,6 +295,16 @@ private func runtimeBufferedReaderBox(from raw: Int) -> RuntimeBufferedReaderBox
     return tryCast(ptr, to: RuntimeBufferedReaderBox.self)
 }
 
+private func runtimeInputStreamBox(from raw: Int) -> RuntimeInputStreamBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeInputStreamBox.self)
+}
+
+private func runtimeOutputStreamBox(from raw: Int) -> RuntimeOutputStreamBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeOutputStreamBox.self)
+}
+
 @_cdecl("kk_file_bufferedReader")
 public func kk_file_bufferedReader(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -336,5 +346,143 @@ public func kk_buffered_reader_close(_ readerRaw: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_reader_close received invalid BufferedReader handle")
     }
     reader.close()
+    return 0
+}
+
+@_cdecl("kk_file_inputStream")
+public func kk_file_inputStream(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_inputStream received invalid File handle")
+    }
+    do {
+        let data = try Data(contentsOf: URL(fileURLWithPath: file.path))
+        return registerRuntimeObject(RuntimeInputStreamBox(data: data))
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return 0
+    }
+}
+
+@_cdecl("kk_file_outputStream")
+public func kk_file_outputStream(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_outputStream received invalid File handle")
+    }
+    let url = URL(fileURLWithPath: file.path)
+    if !FileManager.default.fileExists(atPath: file.path) {
+        FileManager.default.createFile(atPath: file.path, contents: Data())
+    }
+    do {
+        let handle = try FileHandle(forWritingTo: url)
+        handle.truncateFile(atOffset: 0)
+        return registerRuntimeObject(RuntimeOutputStreamBox(fileHandle: handle))
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return 0
+    }
+}
+
+@_cdecl("kk_input_stream_read")
+public func kk_input_stream_read(_ streamRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_read received invalid InputStream handle")
+    }
+    return stream.readByte()
+}
+
+@_cdecl("kk_input_stream_available")
+public func kk_input_stream_available(_ streamRaw: Int) -> Int {
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_available received invalid InputStream handle")
+    }
+    return stream.available()
+}
+
+@_cdecl("kk_input_stream_skip")
+public func kk_input_stream_skip(_ streamRaw: Int, _ countRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_skip received invalid InputStream handle")
+    }
+    return stream.skip(countRaw)
+}
+
+@_cdecl("kk_input_stream_read_bytes")
+public func kk_input_stream_read_bytes(_ streamRaw: Int, _ bytesRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_read_bytes received invalid InputStream handle")
+    }
+    guard let list = runtimeListBox(from: bytesRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int> buffer")
+        return -1
+    }
+    return stream.read(into: list)
+}
+
+@_cdecl("kk_input_stream_close")
+public func kk_input_stream_close(_ streamRaw: Int) -> Int {
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_close received invalid InputStream handle")
+    }
+    stream.close()
+    return 0
+}
+
+@_cdecl("kk_output_stream_write_byte")
+public func kk_output_stream_write_byte(_ streamRaw: Int, _ valueRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let stream = runtimeOutputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_output_stream_write_byte received invalid OutputStream handle")
+    }
+    do {
+        try stream.writeByte(valueRaw)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
+@_cdecl("kk_output_stream_write_bytes")
+public func kk_output_stream_write_bytes(_ streamRaw: Int, _ bytesRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let stream = runtimeOutputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_output_stream_write_bytes received invalid OutputStream handle")
+    }
+    guard let list = runtimeListBox(from: bytesRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int> buffer")
+        return 0
+    }
+    do {
+        try stream.writeBytes(list.elements)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
+@_cdecl("kk_output_stream_flush")
+public func kk_output_stream_flush(_ streamRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let stream = runtimeOutputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_output_stream_flush received invalid OutputStream handle")
+    }
+    do {
+        try stream.flush()
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
+@_cdecl("kk_output_stream_close")
+public func kk_output_stream_close(_ streamRaw: Int) -> Int {
+    guard let stream = runtimeOutputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_output_stream_close received invalid OutputStream handle")
+    }
+    stream.close()
     return 0
 }

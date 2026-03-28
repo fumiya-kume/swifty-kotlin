@@ -965,3 +965,86 @@ final class RuntimeBufferedReaderBox {
         return nil
     }
 }
+
+// MARK: - InputStream / OutputStream (STDLIB-IO-092)
+
+final class RuntimeInputStreamBox {
+    private let data: Data
+    private var offset: Int
+    private var closed: Bool
+
+    init(data: Data) {
+        self.data = data
+        self.offset = 0
+        self.closed = false
+    }
+
+    func readByte() -> Int {
+        guard !closed else { return -1 }
+        guard offset < data.count else { return -1 }
+        defer { offset += 1 }
+        return Int(data[offset])
+    }
+
+    func available() -> Int {
+        guard !closed else { return 0 }
+        return max(0, data.count - offset)
+    }
+
+    func skip(_ count: Int) -> Int {
+        guard !closed else { return 0 }
+        let bounded = max(0, min(count, available()))
+        offset += bounded
+        return bounded
+    }
+
+    func read(into list: RuntimeListBox) -> Int {
+        guard !closed else { return -1 }
+        let writableCount = min(list.elements.count, available())
+        guard writableCount > 0 else { return -1 }
+        var newElements = list.elements
+        for index in 0 ..< writableCount {
+            newElements[index] = Int(Int8(bitPattern: data[offset + index]))
+        }
+        list.elements = newElements
+        offset += writableCount
+        return writableCount
+    }
+
+    func close() {
+        closed = true
+    }
+}
+
+final class RuntimeOutputStreamBox {
+    private let fileHandle: FileHandle
+    private var closed: Bool
+
+    init(fileHandle: FileHandle) {
+        self.fileHandle = fileHandle
+        self.closed = false
+    }
+
+    func writeByte(_ value: Int) throws {
+        guard !closed else { return }
+        let byte = UInt8(truncatingIfNeeded: value)
+        try fileHandle.write(contentsOf: Data([byte]))
+    }
+
+    func writeBytes(_ values: [Int]) throws {
+        guard !closed else { return }
+        let bytes = values.map { UInt8(truncatingIfNeeded: $0) }
+        try fileHandle.write(contentsOf: Data(bytes))
+    }
+
+    func flush() throws {
+        guard !closed else { return }
+        try fileHandle.synchronize()
+    }
+
+    func close() {
+        guard !closed else { return }
+        try? fileHandle.close()
+        closed = true
+    }
+}

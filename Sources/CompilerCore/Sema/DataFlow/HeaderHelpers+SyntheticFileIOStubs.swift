@@ -365,6 +365,155 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // MARK: - InputStream / OutputStream (STDLIB-IO-092)
+
+        let inputStreamSymbol = ensureClassSymbol(
+            named: "InputStream",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let outputStreamSymbol = ensureClassSymbol(
+            named: "OutputStream",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: inputStreamSymbol)
+            symbols.setParentSymbol(javaIOPkgSymbol, for: outputStreamSymbol)
+        }
+
+        let inputStreamType = types.make(.classType(ClassType(
+            classSymbol: inputStreamSymbol, args: [], nullability: .nonNull
+        )))
+        let outputStreamType = types.make(.classType(ClassType(
+            classSymbol: outputStreamSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(inputStreamType, for: inputStreamSymbol)
+        symbols.setPropertyType(outputStreamType, for: outputStreamSymbol)
+
+        registerFileMemberFunction(
+            named: "inputStream",
+            externalLinkName: "kk_file_inputStream",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: inputStreamType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "outputStream",
+            externalLinkName: "kk_file_outputStream",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: outputStreamType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "read",
+            externalLinkName: "kk_input_stream_read",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "available",
+            externalLinkName: "kk_input_stream_available",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "skip",
+            externalLinkName: "kk_input_stream_skip",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [("count", intType)],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "read",
+            externalLinkName: "kk_input_stream_read_bytes",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [("buffer", listOfIntType)],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "close",
+            externalLinkName: "kk_input_stream_close",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "write",
+            externalLinkName: "kk_output_stream_write_byte",
+            ownerSymbol: outputStreamSymbol,
+            ownerType: outputStreamType,
+            parameters: [("value", intType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "write",
+            externalLinkName: "kk_output_stream_write_bytes",
+            ownerSymbol: outputStreamSymbol,
+            ownerType: outputStreamType,
+            parameters: [("buffer", listOfIntType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "flush",
+            externalLinkName: "kk_output_stream_flush",
+            ownerSymbol: outputStreamSymbol,
+            ownerType: outputStreamType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "close",
+            externalLinkName: "kk_output_stream_close",
+            ownerSymbol: outputStreamSymbol,
+            ownerType: outputStreamType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Private Helpers
