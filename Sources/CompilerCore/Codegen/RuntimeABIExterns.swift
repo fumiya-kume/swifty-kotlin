@@ -3335,6 +3335,10 @@ public enum RuntimeABIExterns {
     public static let kk_logger_severe = ExternDecl(name: "kk_logger_severe", parameterTypes: [intptr, intptr], returnType: intptr)
     public static let kk_message_digest_getInstance = ExternDecl(name: "kk_message_digest_getInstance", parameterTypes: [intptr, nullableIntptrPtr], returnType: intptr)
     public static let kk_message_digest_digest = ExternDecl(name: "kk_message_digest_digest", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_cache_new = ExternDecl(name: "kk_cache_new", parameterTypes: [intptr], returnType: intptr)
+    public static let kk_cache_put = ExternDecl(name: "kk_cache_put", parameterTypes: [intptr, intptr, intptr], returnType: intptr)
+    public static let kk_cache_get = ExternDecl(name: "kk_cache_get", parameterTypes: [intptr, intptr], returnType: intptr)
+    public static let kk_cache_size = ExternDecl(name: "kk_cache_size", parameterTypes: [intptr], returnType: intptr)
 
     public static let fileIOExterns: [ExternDecl] = [
         kk_file_new,
@@ -3399,6 +3403,10 @@ public enum RuntimeABIExterns {
         kk_logger_severe,
         kk_message_digest_getInstance,
         kk_message_digest_digest,
+        kk_cache_new,
+        kk_cache_put,
+        kk_cache_get,
+        kk_cache_size,
     ]
 
     public static let regexExterns: [ExternDecl] = [

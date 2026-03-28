@@ -1258,18 +1258,6 @@
   - **関連ファイル**: `RuntimeParallel.swift`
   - **テストケース**: `Scripts/diff_cases/parallel_processing.kt`
 
-- [ ] STDLIB-PERF-156: キャッシュ機構完全実装
-  - **仕様**: キャッシュ機構の完全サポート
-  - **実装内容**:
-    - LRUキャッシュ: Least Recently Usedキャッシュ
-    - キャッシュサイズ: 最大サイズとエビクション
-    - キャッシュポリシー: TTL、サイズベースのポリシー
-    - キャッシュ統計: ヒット率、ミス率の統計
-    - スレッドセーフ: マルチスレッド対応のキャッシュ
-  - **現状**: キャッシュ機構は未実装
-  - **関連ファイル**: `RuntimeCache.swift`
-  - **テストケース**: `Scripts/diff_cases/cache_mechanism.kt`
-
 #### Phase 4: テストと検証 (低優先度)
 
 - [x] STDLIB-TEST-157: テストフレームワーク基本実装
