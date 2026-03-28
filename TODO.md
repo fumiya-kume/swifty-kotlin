@@ -608,18 +608,6 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/annotation_retention.kt`
 
-- [ ] STDLIB-ANNO-115: アノテーションターゲット完全実装
-  - **仕様**: アノテーションターゲットの完全サポート
-  - **実装内容**:
-    - ターゲット種類: CLASS, FUNCTION, PROPERTY, FIELD
-    - ターゲット種類: CONSTRUCTOR, PARAMETER, TYPE, EXPRESSION
-    - ターゲット種類: FILE, TYPEALIAS, TYPE_PARAMETER
-    - 複合ターゲット: @Target([ElementType.CLASS, ElementType.FUNCTION])
-    - ターゲットの継承と制約
-  - **現状**: 基本的なアノテーションは実装済み、ターゲットは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/annotation_target.kt`
-
 - [ ] STDLIB-METAPROG-116: メタプログラミング基本実装
   - **仕様**: メタプログラミングの基本的な機能
   - **実装内容**:
