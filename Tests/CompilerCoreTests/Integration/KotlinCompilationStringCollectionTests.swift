@@ -84,6 +84,17 @@ final class KotlinCompilationStringCollectionTests: XCTestCase {
         """)
     }
 
+    func testCompile_string_toBigInteger() throws {
+        try assertKotlinCompilesToKIR("""
+        import java.math.BigInteger
+
+        fun main() {
+            val result: BigInteger = "12345678901234567890".toBigInteger()
+            val text = result.toString()
+        }
+        """)
+    }
+
     // MARK: - String search
 
     func testCompile_string_indexOf() throws {
