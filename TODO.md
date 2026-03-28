@@ -672,7 +672,7 @@
 - [x] STDLIB-050: コレクション変換 → STDLIB-HOF-021に統合
 - [x] STDLIB-052: シーケンス操作 → STDLIB-HOF-022に統合
 - [x] STDLIB-061: スコープ関数 → STDLIB-SCOPE-024に統合
-- [x] STDLIB-062: I/O操作 → STDLIB-IO-087に統合
+- [x] STDLIB-062: I/O操作 → STDLIB-IO-088に統合
 - [x] STDLIB-063: println/readLine → STDLIB-IO-088に統合
 - [x] STDLIB-071: buildMap → STDLIB-DELEG-043に統合
 - [x] STDLIB-080: Char操作 → STDLIB-PRIM-009に統合
@@ -703,7 +703,7 @@
 - **Phase 3 (低優先度)**: 38タスク
   - コルーチンと並行処理: 13タスク (STDLIB-CORO-068 ~ STDLIB-CORO-080)
   - 時間と期間: 6タスク (STDLIB-TIME-081 ~ STDLIB-TIME-086)
-  - I/Oとファイルシステム: 7タスク (STDLIB-IO-087 ~ STDLIB-IO-093)
+  - I/Oとファイルシステム: 6タスク (STDLIB-IO-088 ~ STDLIB-IO-093)
   - 正規表現: 5タスク (STDLIB-REGEX-094 ~ STDLIB-REGEX-098)
   - 乱数とUUID: 5タスク (STDLIB-RANDOM-099 ~ STDLIB-UUID-103)
   - エラー処理: 5タスク (STDLIB-EXCEPT-104 ~ STDLIB-RUNCATCH-108)
