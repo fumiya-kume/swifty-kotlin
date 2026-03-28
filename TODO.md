@@ -85,6 +85,56 @@
   - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
   - **テストケース**: `Scripts/diff_cases/uint_range.kt`
 
+- [ ] STDLIB-RANGE-037: ULongRange完全実装
+  - **仕様**: ULongRangeの完全な機能サポート
+  - **実装内容**:
+    - コンストラクタ: ULongRange(start, end), startUL..endUL
+    - プロパティ: start, end, first, last, step
+    - 包含判定: contains(), isEmpty()
+    - 反復: iterator(), reversed()
+    - 変換: toList(), toULongArray()
+  - **現状**: ULongRangeは未実装
+  - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
+  - **テストケース**: `Scripts/diff_cases/ulong_range.kt`
+
+- [ ] STDLIB-RANGE-039: 範囲進行完全実装
+  - **仕様**: 範囲進行（Progression）の完全サポート
+  - **実装内容**:
+    - IntProgression: IntProgression.fromClosedRange()
+    - LongProgression: LongProgression.fromClosedRange()
+    - UIntProgression: UIntProgression.fromClosedRange()
+    - ULongProgression: ULongProgression.fromClosedRange()
+    - stepプロパティと進行制御
+    - 逆進行: reversed()
+  - **現状**: 基本的な進行は実装済み、unsigned進行は未実装
+  - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
+  - **テストケース**: `Scripts/diff_cases/progression.kt`
+
+
+- [ ] STDLIB-COMP-041: Comparableインターフェース完全実装
+  - **仕様**: Comparable<T>インターフェースの完全サポート
+  - **実装内容**:
+    - compareTo()メソッドの実装
+    - 自然順序でのソート
+    - 比較演算子の自動生成
+    - null安全な比較
+    - Comparableの型制約
+  - **現状**: 基本的なComparableは実装済み、型制約は未実装
+  - **関連ファイル**: `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift`
+  - **テストケース**: `Scripts/diff_cases/comparable_interface.kt`
+
+- [ ] STDLIB-COMP-042: Comparator完全実装
+  - **仕様**: Comparator<T>の完全サポート
+  - **実装内容**:
+    - compare()メソッドの実装
+    - compareBy(), compareByDescending()
+    - thenBy(), thenDescending()
+    - nullsFirst(), nullsLast()
+    - naturalOrder(), reverseOrder()
+    - Comparatorの合成
+  - **現状**: 基本的なComparatorは実装済み、合成は未実装
+  - **関連ファイル**: `HeaderHelpers+SyntheticComparatorStubs.swift`
+  - **テストケース**: `Scripts/diff_cases/comparator_basic.kt`
 
 #### Phase 2: プロパティデリゲート (中優先度)
 
