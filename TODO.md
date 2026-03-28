@@ -300,18 +300,6 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/star_projection.kt`
 
-- [ ] STDLIB-GEN-057: reified型パラメータ完全実装
-  - **仕様**: reified型パラメータの完全サポート
-  - **実装内容**:
-    - reified修飾子: inline fun <reified T> myFunction()
-    - 実行時型チェック: value is T
-    - 実行時型キャスト: value as T
-    - reifiedとジェネリック制約の組み合わせ
-    - reifiedとinline関数の制約
-  - **現状**: reifiedは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/reified_generics.kt`
-
 - [ ] STDLIB-GEN-058: ジェネリック型消去完全実装
   - **仕様**: ジェネリック型の実行時型消去
   - **実装内容**:
