@@ -1,49 +1,49 @@
 // Symmetric crypto extern declarations (STDLIB-SEC-144).
 
 public extension RuntimeABIExterns {
-    static let kk_secretkeyspec_new = ExternDecl(
+    public static let kk_secretkeyspec_new = ExternDecl(
         name: "kk_secretkeyspec_new",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
-        returnType: "intptr_t"
+        parameterTypes: [intptr, intptr],
+        returnType: intptr
     )
 
-    static let kk_ivparameterspec_new = ExternDecl(
+    public static let kk_ivparameterspec_new = ExternDecl(
         name: "kk_ivparameterspec_new",
-        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
-        returnType: "intptr_t"
+        parameterTypes: [intptr],
+        returnType: intptr
     )
 
-    static let kk_cipher_getInstance = ExternDecl(
+    public static let kk_cipher_getInstance = ExternDecl(
         name: "kk_cipher_getInstance",
-        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
-        returnType: "intptr_t"
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
     )
 
-    static let kk_cipher_init = ExternDecl(
+    public static let kk_cipher_init = ExternDecl(
         name: "kk_cipher_init",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
-        returnType: "intptr_t"
+        parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
     )
 
-    static let kk_cipher_init_with_iv = ExternDecl(
+    public static let kk_cipher_init_with_iv = ExternDecl(
         name: "kk_cipher_init_with_iv",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
-        returnType: "intptr_t"
+        parameterTypes: [intptr, intptr, intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
     )
 
-    static let kk_cipher_doFinal = ExternDecl(
+    public static let kk_cipher_doFinal = ExternDecl(
         name: "kk_cipher_doFinal",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
-        returnType: "intptr_t"
+        parameterTypes: [intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
     )
 
-    static let kk_cipher_doFinal_noarg = ExternDecl(
+    public static let kk_cipher_doFinal_noarg = ExternDecl(
         name: "kk_cipher_doFinal_noarg",
-        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
-        returnType: "intptr_t"
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
     )
 
-    static let securityExterns: [ExternDecl] = [
+    public static let securityExterns: [ExternDecl] = [
         kk_secretkeyspec_new,
         kk_ivparameterspec_new,
         kk_cipher_getInstance,

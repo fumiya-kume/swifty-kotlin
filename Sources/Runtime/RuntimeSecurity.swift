@@ -6,83 +6,6 @@ final class RuntimeMessageDigestBox {
     let algorithm: String
 
     init(algorithm: String) {
-        self.algorithm = algorithm
-    }
-}
-
-private func runtimeMessageDigestBox(from raw: Int) -> RuntimeMessageDigestBox? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
-    return tryCast(ptr, to: RuntimeMessageDigestBox.self)
-}
-
-private func securityString(from raw: Int, caller: StaticString) -> String {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw),
-          let value = extractString(from: ptr)
-    else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(caller) received invalid string handle")
-    }
-    return value
-}
-
-private func bytesFromListRaw(_ raw: Int) -> [UInt8]? {
-    guard let list = runtimeListBox(from: raw) else { return nil }
-    return list.elements.map { UInt8(truncatingIfNeeded: $0) }
-}
-
-@_cdecl("kk_message_digest_getInstance")
-public func kk_message_digest_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = 0
-    let algorithm = securityString(from: algorithmRaw, caller: #function).uppercased()
-    let supported = ["MD5", "SHA-1", "SHA-256", "SHA-512"]
-    guard supported.contains(algorithm) else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchAlgorithmException: \(algorithm)")
-        return 0
-    }
-    return registerRuntimeObject(RuntimeMessageDigestBox(algorithm: algorithm))
-}
-
-@_cdecl("kk_message_digest_digest")
-public func kk_message_digest_digest(_ digestRaw: Int, _ dataRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = 0
-    guard let digest = runtimeMessageDigestBox(from: digestRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_message_digest_digest received invalid MessageDigest handle")
-    }
-    guard let bytes = bytesFromListRaw(dataRaw) else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>")
-        return registerRuntimeObject(RuntimeListBox(elements: []))
-    }
-    let output: [UInt8]
-    switch digest.algorithm {
-    case "MD5":
-        output = Array(Insecure.MD5.hash(data: Data(bytes)))
-    case "SHA-1":
-        output = Array(Insecure.SHA1.hash(data: Data(bytes)))
-    case "SHA-256":
-        output = Array(SHA256.hash(data: Data(bytes)))
-    case "SHA-512":
-        output = Array(SHA512.hash(data: Data(bytes)))
-    default:
-        output = []
-    }
-    return registerRuntimeObject(RuntimeListBox(elements: output.map { Int(Int8(bitPattern: $0)) }))
-}
-#else
-// MARK: - Platform stubs: CryptoKit not available on Linux
-
-@_cdecl("kk_message_digest_getInstance")
-public func kk_message_digest_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: MessageDigest not available on this platform")
-    return 0
-}
-
-@_cdecl("kk_message_digest_digest")
-public func kk_message_digest_digest(_ digestRaw: Int, _ dataRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: MessageDigest not available on this platform")
-    return 0
-}
-#endif
-
-#if canImport(CommonCrypto)
 import CommonCrypto
 import Foundation
 
@@ -229,6 +152,12 @@ final class RuntimeSecretKeySpecBox {
     }
 }
 
+private func runtimeMessageDigestBox(from raw: Int) -> RuntimeMessageDigestBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeMessageDigestBox.self)
+}
+
+private func securityString(from raw: Int, caller: StaticString) -> String {
 final class RuntimeIvParameterSpecBox {
     let ivBytes: [UInt8]
 
@@ -288,6 +217,63 @@ private func runtimeSecurityString(from raw: Int, caller: StaticString) -> Strin
     return value
 }
 
+private func bytesFromListRaw(_ raw: Int) -> [UInt8]? {
+    guard let list = runtimeListBox(from: raw) else { return nil }
+    return list.elements.map { UInt8(truncatingIfNeeded: $0) }
+}
+
+@_cdecl("kk_message_digest_getInstance")
+public func kk_message_digest_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let algorithm = securityString(from: algorithmRaw, caller: #function).uppercased()
+    let supported = ["MD5", "SHA-1", "SHA-256", "SHA-512"]
+    guard supported.contains(algorithm) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchAlgorithmException: \(algorithm)")
+        return 0
+    }
+    return registerRuntimeObject(RuntimeMessageDigestBox(algorithm: algorithm))
+}
+
+@_cdecl("kk_message_digest_digest")
+public func kk_message_digest_digest(_ digestRaw: Int, _ dataRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let digest = runtimeMessageDigestBox(from: digestRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_message_digest_digest received invalid MessageDigest handle")
+    }
+    guard let bytes = bytesFromListRaw(dataRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>")
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let output: [UInt8]
+    switch digest.algorithm {
+    case "MD5":
+        output = Array(Insecure.MD5.hash(data: Data(bytes)))
+    case "SHA-1":
+        output = Array(Insecure.SHA1.hash(data: Data(bytes)))
+    case "SHA-256":
+        output = Array(SHA256.hash(data: Data(bytes)))
+    case "SHA-512":
+        output = Array(SHA512.hash(data: Data(bytes)))
+    default:
+        output = []
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: output.map { Int(Int8(bitPattern: $0)) }))
+}
+#else
+// MARK: - Platform stubs: CryptoKit not available on Linux
+
+@_cdecl("kk_message_digest_getInstance")
+public func kk_message_digest_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: MessageDigest not available on this platform")
+    return 0
+}
+
+@_cdecl("kk_message_digest_digest")
+public func kk_message_digest_digest(_ digestRaw: Int, _ dataRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: MessageDigest not available on this platform")
+    return 0
+}
+#endif
 private func runtimeSecurityBytes(from raw: Int, caller: StaticString) -> [UInt8]? {
     guard let box = runtimeArrayBox(from: raw) else {
         return nil
@@ -518,26 +504,21 @@ private func runtimeCipherTransform(
 }
 
 @_cdecl("kk_secretkeyspec_new")
-public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = 0
+public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int) -> Int {
     let algorithm = runtimeSecurityString(from: algorithmRaw, caller: #function)
     guard let parsedAlgorithm = RuntimeCipherAlgorithm(transformationComponent: algorithm) else {
-        runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "NoSuchAlgorithmException: \(algorithm)"))
-        return 0
+        return runtimeAllocateThrowable(message: "NoSuchAlgorithmException: \(algorithm)")
     }
     guard let keyBytes = runtimeSecurityBytes(from: keyRaw, caller: #function) else {
-        runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>"))
-        return 0
+        return runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>")
     }
     return registerRuntimeObject(RuntimeSecretKeySpecBox(keyBytes: keyBytes, algorithm: parsedAlgorithm))
 }
 
 @_cdecl("kk_ivparameterspec_new")
-public func kk_ivparameterspec_new(_ ivRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = 0
+public func kk_ivparameterspec_new(_ ivRaw: Int) -> Int {
     guard let ivBytes = runtimeSecurityBytes(from: ivRaw, caller: #function) else {
-        runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>"))
-        return 0
+        return runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>")
     }
     return registerRuntimeObject(RuntimeIvParameterSpecBox(ivBytes: ivBytes))
 }
@@ -662,68 +643,3 @@ public func kk_cipher_doFinal_noarg(
     }
     return runtimeMakeByteArrayRaw(output)
 }
-#else
-// MARK: - Platform stubs: CommonCrypto not available on Linux
-
-private let kCryptoUnavailable = "UnsupportedOperationException: symmetric crypto not available on this platform"
-
-@_cdecl("kk_secretkeyspec_new")
-public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = runtimeAllocateThrowable(message: kCryptoUnavailable)
-    return 0
-}
-
-@_cdecl("kk_ivparameterspec_new")
-public func kk_ivparameterspec_new(_ ivRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = runtimeAllocateThrowable(message: kCryptoUnavailable)
-    return 0
-}
-
-@_cdecl("kk_cipher_getInstance")
-public func kk_cipher_getInstance(_ transformationRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = runtimeAllocateThrowable(message: kCryptoUnavailable)
-    return 0
-}
-
-@_cdecl("kk_cipher_init")
-public func kk_cipher_init(
-    _ cipherRaw: Int,
-    _ opmodeRaw: Int,
-    _ keyRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    outThrown?.pointee = runtimeAllocateThrowable(message: kCryptoUnavailable)
-    return 0
-}
-
-@_cdecl("kk_cipher_init_with_iv")
-public func kk_cipher_init_with_iv(
-    _ cipherRaw: Int,
-    _ opmodeRaw: Int,
-    _ keyRaw: Int,
-    _ ivRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    outThrown?.pointee = runtimeAllocateThrowable(message: kCryptoUnavailable)
-    return 0
-}
-
-@_cdecl("kk_cipher_doFinal")
-public func kk_cipher_doFinal(
-    _ cipherRaw: Int,
-    _ dataRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    outThrown?.pointee = runtimeAllocateThrowable(message: kCryptoUnavailable)
-    return 0
-}
-
-@_cdecl("kk_cipher_doFinal_noarg")
-public func kk_cipher_doFinal_noarg(
-    _ cipherRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    outThrown?.pointee = runtimeAllocateThrowable(message: kCryptoUnavailable)
-    return 0
-}
-#endif
