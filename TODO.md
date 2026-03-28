@@ -569,17 +569,17 @@
   - **関連ファイル**: `RuntimeResult.swift`
   - **テストケース**: `Scripts/diff_cases/result_basic.kt`
 
-- [ ] STDLIB-RESULT-107: Result高度機能完全実装
-  - **仕様**: Result<T>クラスの高度な機能
+- [ ] STDLIB-RUNCATCH-108: runCatching完全実装
+  - **仕様**: runCatching関数の完全サポート
   - **実装内容**:
-    - 例外処理: getOrElse(), recover(), recoverCatching()
-    - 副作用: onSuccess(), onFailure()
-    - 結合: zip(), combine()
-    - 反復: asSequence(), iterator()
-    - デストラクチャリング: component1(), component2()
-  - **現状**: 基本的なResultは実装済み、高度な機能は未実装
+    - 基本runCatching: runCatching { /* code */ }
+    - 例外マッピング: runCatching { /* code */ }.mapCatching()
+    - 例外回復: runCatching { /* code */ }.recoverCatching()
+    - 副作用: runCatching { /* code */ }.onFailure { /* handle */ }
+    - 入れ子runCatching: 入れ子例外処理
+  - **現状**: 基本的なrunCatchingは実装済み、高度な機能は未実装
   - **関連ファイル**: `RuntimeResult.swift`
-  - **テストケース**: `Scripts/diff_cases/result_advanced.kt`
+  - **テストケース**: `Scripts/diff_cases/runcatching_advanced.kt`
 
 #### Phase 3: 数学関数 (低優先度)
 
