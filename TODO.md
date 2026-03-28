@@ -318,17 +318,17 @@
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/async_await.kt`
 
-- [ ] STDLIB-CORO-072: launch完全実装
-  - **仕様**: launchビルダーの完全サポート
+- [ ] STDLIB-CORO-073: Flow基本実装
+  - **仕様**: Flowの基本的な機能
   - **実装内容**:
-    - launchビルダー: launch { /* code */ }
-    - fire-and-forget: 戻り値なしの実行
-    - launchの例外処理: CoroutineExceptionHandler
-    - launchのディスパッチャ指定: launch(Dispatchers.IO)
-    - launchのキャンセル: Jobによるキャンセル
-  - **現状**: 基本的なlaunchは実装済み、例外処理は未実装
+    - flowビルダー: flow { emit(value) }
+    - コレクター: collect { value -> }
+    - 中間操作: map, filter, transform
+    - 端末操作: collect, toList, first, single
+    - Flowの遅延評価: コールドストリーム
+  - **現状**: 基本的なflowは実装済み、高度な操作は未実装
   - **関連ファイル**: `RuntimeCoroutine.swift`
-  - **テストケース**: `Scripts/diff_cases/launch_basic.kt`
+  - **テストケース**: `Scripts/diff_cases/flow_basic.kt`
 
 - [ ] STDLIB-CORO-074: Flow操作完全実装
   - **仕様**: Flowの高度な操作
