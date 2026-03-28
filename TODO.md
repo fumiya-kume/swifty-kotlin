@@ -621,17 +621,17 @@
   - **関連ファイル**: `RuntimeMath.swift`
   - **テストケース**: `Scripts/diff_cases/math_basic.kt`
 
-- [ ] STDLIB-MATH-111: IEEE丸め完全実装
-  - **仕様**: IEEE 754丸めモードの完全サポート
+- [ ] STDLIB-MATH-110: 高度数学関数完全実装
+  - **仕様**: 高度な数学関数の完全サポート
   - **実装内容**:
-    - 丸めモード: ROUND_UP, ROUND_DOWN, ROUND_CEILING, ROUND_FLOOR
-    - 丸めモード: ROUND_HALF_UP, ROUND_HALF_DOWN, ROUND_HALF_EVEN
-    - 丸めモード: ROUND_UNNECESSARY
-    - 精度制御: MathContextの指定
-    - 丸めモードのスレッドセーフティ
-  - **現状**: 基本的な丸めは実装済み、IEEE丸めは未実装
+    - 逆三角関数: atan2(), hypot()
+    - 丸め関数: round(), ceil(), floor()
+    - 最大・最小: max(), maxOf(), min(), minOf()
+    - クランプ: clamp(), coerceIn()
+    - 線形補間: lerp()
+  - **現状**: 基本的な数学関数は実装済み、高度な関数は未実装
   - **関連ファイル**: `RuntimeMath.swift`
-  - **テストケース**: `Scripts/diff_cases/math_rounding_ieee.kt`
+  - **テストケース**: `Scripts/diff_cases/math_advanced.kt`
 
 #### Phase 3: アノテーションとメタプログラミング (低優先度)
 
