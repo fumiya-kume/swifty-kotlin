@@ -368,6 +368,28 @@ extension DataFlowSemaPhase {
 
         // MARK: - InputStream / OutputStream (STDLIB-IO-092)
 
+        // MARK: - Resource access (STDLIB-IO-093)
+
+        let javaLangPkg = ensurePackage(
+            path: ["java", "lang"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaLangPkgSymbol = symbols.lookup(fqName: javaLangPkg)
+        let classLoaderSymbol = ensureClassSymbol(
+            named: "ClassLoader",
+            in: javaLangPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaLangPkgSymbol {
+            symbols.setParentSymbol(javaLangPkgSymbol, for: classLoaderSymbol)
+        }
+        let classLoaderType = types.make(.classType(ClassType(
+            classSymbol: classLoaderSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(classLoaderType, for: classLoaderSymbol)
+
         let inputStreamSymbol = ensureClassSymbol(
             named: "InputStream",
             in: javaIOPkg,
@@ -393,6 +415,8 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(inputStreamType, for: inputStreamSymbol)
         symbols.setPropertyType(outputStreamType, for: outputStreamSymbol)
+
+        let nullableInputStreamType = types.makeNullable(inputStreamType)
 
         registerFileMemberFunction(
             named: "inputStream",
@@ -511,6 +535,86 @@ extension DataFlowSemaPhase {
             ownerType: outputStreamType,
             parameters: [],
             returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // ClassLoader resource access functions (STDLIB-IO-093)
+
+        registerFileMemberFunction(
+            named: "getResource",
+            externalLinkName: "kk_classloader_getResource",
+            ownerSymbol: classLoaderSymbol,
+            ownerType: classLoaderType,
+            parameters: [("name", types.stringType)],
+            returnType: nullableStringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "getResourceAsStream",
+            externalLinkName: "kk_classloader_getResourceAsStream",
+            ownerSymbol: classLoaderSymbol,
+            ownerType: classLoaderType,
+            parameters: [("name", types.stringType)],
+            returnType: nullableInputStreamType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "read",
+            externalLinkName: "kk_resource_stream_read",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [],
+            returnType: types.intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "close",
+            externalLinkName: "kk_resource_stream_close",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerTopLevelResourceFunction(
+            packageFQName: javaLangPkg,
+            name: "getSystemClassLoader",
+            parameters: [],
+            returnType: classLoaderType,
+            externalLinkName: "kk_classloader_getSystemClassLoader",
+            symbols: symbols,
+            interner: interner
+        )
+
+        let kotlinIOPkg = ensurePackage(
+            path: ["kotlin", "io"],
+            symbols: symbols,
+            interner: interner
+        )
+        registerTopLevelResourceFunction(
+            packageFQName: kotlinIOPkg,
+            name: "resourceExists",
+            parameters: [("name", types.stringType)],
+            returnType: types.booleanType,
+            externalLinkName: "kk_resource_exists",
+            symbols: symbols,
+            interner: interner
+        )
+        registerTopLevelResourceFunction(
+            packageFQName: kotlinIOPkg,
+            name: "readResourceAsText",
+            parameters: [("name", types.stringType)],
+            returnType: types.stringType,
+            externalLinkName: "kk_readResourceAsText",
             symbols: symbols,
             interner: interner
         )
@@ -711,6 +815,61 @@ extension DataFlowSemaPhase {
             )
         }
         return javaIOPkg
+    }
+
+    private func registerTopLevelResourceFunction(
+        packageFQName: [InternedString],
+        name: String,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        guard symbols.lookupAll(fqName: functionFQName).isEmpty else {
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let pkgSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(pkgSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var parameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            parameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
     }
 
     private func registerFileMemberProperty(

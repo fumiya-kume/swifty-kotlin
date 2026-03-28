@@ -4117,6 +4117,63 @@ public enum RuntimeABISpec {
             section: "FileIO"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_classloader_getSystemClassLoader",
+            parameters: [],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_classloader_getResource",
+            parameters: [
+                RuntimeABIParameter(name: "loaderRaw", type: .intptr),
+                RuntimeABIParameter(name: "nameRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_classloader_getResourceAsStream",
+            parameters: [
+                RuntimeABIParameter(name: "loaderRaw", type: .intptr),
+                RuntimeABIParameter(name: "nameRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_resource_exists",
+            parameters: [
+                RuntimeABIParameter(name: "nameRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_readResourceAsText",
+            parameters: [
+                RuntimeABIParameter(name: "nameRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_resource_stream_read",
+            parameters: [
+                RuntimeABIParameter(name: "streamRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_resource_stream_close",
+            parameters: [
+                RuntimeABIParameter(name: "streamRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_file_useLines",
             parameters: [
                 RuntimeABIParameter(name: "fileRaw", type: .intptr),

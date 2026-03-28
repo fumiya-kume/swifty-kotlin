@@ -538,17 +538,6 @@
   - **テストケース**: `Scripts/diff_cases/files_utility.kt`
 
 - [ ] STDLIB-IO-093: リソースアクセス完全実装
-  - **仕様**: リソースファイルへのアクセス
-  - **実装内容**:
-    - クラスパスリソース: ClassLoader.getResource()
-    - リソースストリーム: getResourceAsStream()
-    - リソースURL: getResource()
-    - リソース読み込み: readResourceAsText()
-    - リソース存在確認: resourceExists()
-  - **現状**: リソースアクセスは未実装
-  - **関連ファイル**: `RuntimeFileIO.swift`
-  - **テストケース**: `Scripts/diff_cases/resource_access.kt`
-
 #### Phase 3: 正規表現 (低優先度)
 
 - [ ] STDLIB-REGEX-094: Regex基本実装

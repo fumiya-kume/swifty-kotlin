@@ -7,9 +7,48 @@ final class RuntimeFileBox {
     init(_ path: String) { self.path = path }
 }
 
+final class RuntimeClassLoaderBox {}
+
+final class RuntimeResourceInputStreamBox {
+    private let data: Data
+    private var offset: Int = 0
+    private var closed = false
+
+    init(data: Data) {
+        self.data = data
+    }
+
+    func readByte() -> Int {
+        guard !closed, offset < data.count else { return -1 }
+        defer { offset += 1 }
+        return Int(data[offset])
+    }
+
+    func close() {
+        closed = true
+    }
+}
+
 private func runtimeFileBox(from raw: Int) -> RuntimeFileBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
     return tryCast(ptr, to: RuntimeFileBox.self)
+}
+
+private func runtimeResourceInputStreamBox(from raw: Int) -> RuntimeResourceInputStreamBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeResourceInputStreamBox.self)
+}
+
+private func resourceRootDirectory() -> URL {
+    if let env = ProcessInfo.processInfo.environment["KSWIFTK_RESOURCE_ROOT"], !env.isEmpty {
+        return URL(fileURLWithPath: env, isDirectory: true)
+    }
+    return URL(fileURLWithPath: FileManager.default.currentDirectoryPath, isDirectory: true)
+}
+
+private func existingResourceURL(named name: String) -> URL? {
+    let url = resourceRootDirectory().appendingPathComponent(name)
+    return FileManager.default.fileExists(atPath: url.path) ? url : nil
 }
 
 /// Split file content into lines, matching Kotlin behaviour:
@@ -55,6 +94,87 @@ public func kk_file_readText(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<I
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
         return fileMakeStringRaw("")
     }
+}
+
+@_cdecl("kk_classloader_getSystemClassLoader")
+public func kk_classloader_getSystemClassLoader() -> Int {
+    registerRuntimeObject(RuntimeClassLoaderBox())
+}
+
+@_cdecl("kk_classloader_getResource")
+public func kk_classloader_getResource(_ loaderRaw: Int, _ nameRaw: Int) -> Int {
+    guard UnsafeMutableRawPointer(bitPattern: loaderRaw).flatMap({ tryCast($0, to: RuntimeClassLoaderBox.self) }) != nil else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_classloader_getResource received invalid ClassLoader handle")
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: nameRaw),
+          let name = extractString(from: ptr),
+          let url = existingResourceURL(named: name)
+    else {
+        return runtimeNullSentinelInt
+    }
+    return fileMakeStringRaw(url.path)
+}
+
+@_cdecl("kk_classloader_getResourceAsStream")
+public func kk_classloader_getResourceAsStream(_ loaderRaw: Int, _ nameRaw: Int) -> Int {
+    guard UnsafeMutableRawPointer(bitPattern: loaderRaw).flatMap({ tryCast($0, to: RuntimeClassLoaderBox.self) }) != nil else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_classloader_getResourceAsStream received invalid ClassLoader handle")
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: nameRaw),
+          let name = extractString(from: ptr),
+          let url = existingResourceURL(named: name),
+          let data = try? Data(contentsOf: url)
+    else {
+        return runtimeNullSentinelInt
+    }
+    return registerRuntimeObject(RuntimeResourceInputStreamBox(data: data))
+}
+
+@_cdecl("kk_resource_exists")
+public func kk_resource_exists(_ nameRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: nameRaw),
+          let name = extractString(from: ptr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_resource_exists received invalid name")
+    }
+    return kk_box_bool(existingResourceURL(named: name) != nil ? 1 : 0)
+}
+
+@_cdecl("kk_readResourceAsText")
+public func kk_readResourceAsText(_ nameRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: nameRaw),
+          let name = extractString(from: ptr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_readResourceAsText received invalid name")
+    }
+    guard let url = existingResourceURL(named: name) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: Resource not found: \(name)")
+        return fileMakeStringRaw("")
+    }
+    do {
+        return fileMakeStringRaw(try String(contentsOf: url, encoding: .utf8))
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return fileMakeStringRaw("")
+    }
+}
+
+@_cdecl("kk_resource_stream_read")
+public func kk_resource_stream_read(_ streamRaw: Int) -> Int {
+    guard let stream = runtimeResourceInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_resource_stream_read received invalid InputStream handle")
+    }
+    return stream.readByte()
+}
+
+@_cdecl("kk_resource_stream_close")
+public func kk_resource_stream_close(_ streamRaw: Int) -> Int {
+    guard let stream = runtimeResourceInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_resource_stream_close received invalid InputStream handle")
+    }
+    stream.close()
+    return 0
 }
 
 @_cdecl("kk_file_writeText")

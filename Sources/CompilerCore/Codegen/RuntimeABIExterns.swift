@@ -3017,6 +3017,48 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+    public static let kk_classloader_getSystemClassLoader = ExternDecl(
+        name: "kk_classloader_getSystemClassLoader",
+        parameterTypes: [],
+        returnType: intptr
+    )
+
+    public static let kk_classloader_getResource = ExternDecl(
+        name: "kk_classloader_getResource",
+        parameterTypes: [intptr, intptr],
+        returnType: intptr
+    )
+
+    public static let kk_classloader_getResourceAsStream = ExternDecl(
+        name: "kk_classloader_getResourceAsStream",
+        parameterTypes: [intptr, intptr],
+        returnType: intptr
+    )
+
+    public static let kk_resource_exists = ExternDecl(
+        name: "kk_resource_exists",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_readResourceAsText = ExternDecl(
+        name: "kk_readResourceAsText",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_resource_stream_read = ExternDecl(
+        name: "kk_resource_stream_read",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_resource_stream_close = ExternDecl(
+        name: "kk_resource_stream_close",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
     public static let kk_file_useLines = ExternDecl(
         name: "kk_file_useLines",
         parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr],
@@ -3066,6 +3108,13 @@ public enum RuntimeABIExterns {
         kk_output_stream_write_bytes,
         kk_output_stream_flush,
         kk_output_stream_close,
+        kk_classloader_getSystemClassLoader,
+        kk_classloader_getResource,
+        kk_classloader_getResourceAsStream,
+        kk_resource_exists,
+        kk_readResourceAsText,
+        kk_resource_stream_read,
+        kk_resource_stream_close,
         kk_file_useLines,
         kk_uri_new,
         kk_uri_toString,
