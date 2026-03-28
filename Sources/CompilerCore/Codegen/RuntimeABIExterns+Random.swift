@@ -17,6 +17,10 @@ public extension RuntimeABIExterns {
         kk_random_nextDouble_until,
         kk_random_nextDouble_range,
         kk_random_nextBoolean,
+        kk_secure_random_get_instance,
+        kk_secure_random_set_seed,
+        kk_secure_random_generate_seed,
+        kk_secure_random_next_bytes,
     ]
 
     static let kk_random_create_seeded = ExternDecl(
@@ -106,6 +110,30 @@ public extension RuntimeABIExterns {
     static let kk_random_nextBoolean = ExternDecl(
         name: "kk_random_nextBoolean",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_secure_random_get_instance = ExternDecl(
+        name: "kk_secure_random_get_instance",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    static let kk_secure_random_set_seed = ExternDecl(
+        name: "kk_secure_random_set_seed",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_secure_random_generate_seed = ExternDecl(
+        name: "kk_secure_random_generate_seed",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_secure_random_next_bytes = ExternDecl(
+        name: "kk_secure_random_next_bytes",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 }

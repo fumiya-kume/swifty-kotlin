@@ -234,6 +234,68 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // SecureRandom basic support
+        let secureRandomSymbol = ensureClassSymbol(
+            named: "SecureRandom",
+            in: kotlinRandomPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let secureRandomType = types.make(.classType(ClassType(
+            classSymbol: secureRandomSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let secureCompanionFQName = ensureRandomCompanionSymbol(
+            ownerSymbol: secureRandomSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomCompanionMethod(
+            named: "getInstance",
+            externalLinkName: "kk_secure_random_get_instance",
+            returnType: secureRandomType,
+            parameters: [],
+            companionFQName: secureCompanionFQName,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: secureRandomSymbol,
+            ownerType: secureRandomType,
+            name: "setSeed",
+            externalLinkName: "kk_secure_random_set_seed",
+            returnType: secureRandomType,
+            parameters: [(name: "seed", type: intType)],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: secureRandomSymbol,
+            ownerType: secureRandomType,
+            name: "generateSeed",
+            externalLinkName: "kk_secure_random_generate_seed",
+            returnType: byteArrayType,
+            parameters: [(name: "size", type: intType)],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: secureRandomSymbol,
+            ownerType: secureRandomType,
+            name: "nextBytes",
+            externalLinkName: "kk_secure_random_next_bytes",
+            returnType: byteArrayType,
+            parameters: [(name: "array", type: byteArrayType)],
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureObjectSymbol(
@@ -254,6 +316,97 @@ extension DataFlowSemaPhase {
             declSite: nil,
             visibility: .public,
             flags: [.synthetic]
+        )
+    }
+
+    private func ensureRandomCompanionSymbol(
+        ownerSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> [InternedString] {
+        if let existingCompanion = symbols.companionObjectSymbol(for: ownerSymbol),
+           let companionInfo = symbols.symbol(existingCompanion)
+        {
+            return companionInfo.fqName
+        }
+
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return []
+        }
+        let companionName = interner.intern("Companion")
+        let companionFQName = ownerInfo.fqName + [companionName]
+        let companionSymbol = symbols.define(
+            kind: .object,
+            name: companionName,
+            fqName: companionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .static]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: companionSymbol)
+        symbols.setCompanionObjectSymbol(companionSymbol, for: ownerSymbol)
+        return companionFQName
+    }
+
+    private func registerSyntheticRandomCompanionMethod(
+        named name: String,
+        externalLinkName: String,
+        returnType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        companionFQName: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let memberName = interner.intern(name)
+        let memberFQName = companionFQName + [memberName]
+        guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.parameterTypes == parameters.map(\.type) &&
+                existingSignature.returnType == returnType
+        }) == nil else {
+            return
+        }
+
+        guard let companionSymbol = symbols.lookup(fqName: companionFQName) else {
+            return
+        }
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .static]
+        )
+        symbols.setParentSymbol(companionSymbol, for: memberSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: memberFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: memberSymbol
         )
     }
 
