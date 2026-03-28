@@ -480,18 +480,6 @@
   - **関連ファイル**: `RuntimeFileIO.swift`
   - **テストケース**: `Scripts/diff_cases/buffered_io.kt`
 
-- [ ] STDLIB-IO-092: InputStream/OutputStream完全実装
-  - **仕様**: ストリーム入出力の完全サポート
-  - **実装内容**:
-    - InputStream: read(), available(), close(), skip()
-    - OutputStream: write(), flush(), close()
-    - バイト配列操作: read(byteArray), write(byteArray)
-    - マークとリセット: mark(), reset()
-    - ストリームのチェーン: SequenceInputStream
-  - **現状**: 基本的なストリームは実装済み、詳細は未実装
-  - **関連ファイル**: `RuntimeFileIO.swift`
-  - **テストケース**: `Scripts/diff_cases/stream_basic.kt`
-
 - [ ] STDLIB-IO-093: リソースアクセス完全実装
   - **仕様**: リソースファイルへのアクセス
   - **実装内容**:

@@ -2927,6 +2927,72 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+    public static let kk_file_inputStream = ExternDecl(
+        name: "kk_file_inputStream",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_file_outputStream = ExternDecl(
+        name: "kk_file_outputStream",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_input_stream_read = ExternDecl(
+        name: "kk_input_stream_read",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_input_stream_available = ExternDecl(
+        name: "kk_input_stream_available",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_input_stream_skip = ExternDecl(
+        name: "kk_input_stream_skip",
+        parameterTypes: [intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_input_stream_read_bytes = ExternDecl(
+        name: "kk_input_stream_read_bytes",
+        parameterTypes: [intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_input_stream_close = ExternDecl(
+        name: "kk_input_stream_close",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_output_stream_write_byte = ExternDecl(
+        name: "kk_output_stream_write_byte",
+        parameterTypes: [intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_output_stream_write_bytes = ExternDecl(
+        name: "kk_output_stream_write_bytes",
+        parameterTypes: [intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_output_stream_flush = ExternDecl(
+        name: "kk_output_stream_flush",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_output_stream_close = ExternDecl(
+        name: "kk_output_stream_close",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
     public static let kk_file_useLines = ExternDecl(
         name: "kk_file_useLines",
         parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr],
@@ -2954,6 +3020,17 @@ public enum RuntimeABIExterns {
         kk_buffered_reader_readLine,
         kk_buffered_reader_readLines,
         kk_buffered_reader_close,
+        kk_file_inputStream,
+        kk_file_outputStream,
+        kk_input_stream_read,
+        kk_input_stream_available,
+        kk_input_stream_skip,
+        kk_input_stream_read_bytes,
+        kk_input_stream_close,
+        kk_output_stream_write_byte,
+        kk_output_stream_write_bytes,
+        kk_output_stream_flush,
+        kk_output_stream_close,
         kk_file_useLines,
     ]
 
