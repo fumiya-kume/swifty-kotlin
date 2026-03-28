@@ -456,17 +456,30 @@
   - **関連ファイル**: `RuntimeRegex.swift`
   - **テストケース**: `Scripts/diff_cases/match_result.kt`
 
-- [ ] STDLIB-REGEX-097: 名前付きグループ完全実装
-  - **仕様**: 名前付きキャプチャグループの完全サポート
+- [ ] STDLIB-REGEX-096: 正規表現オプション完全実装
+  - **仕様**: 正規表現オプションの完全サポート
   - **実装内容**:
-    - 名前付きグループ: (?<name>pattern)
-    - グループ名取得: groupNames
-    - 名前付きアクセス: groups["name"]
-    - 入れ子グループ: 入れ子名前付きグループ
-    - グループのデストラクチャリング
-  - **現状**: 基本的なグループは実装済み、名前付きは未実装
+    - IGNORE_CASE: 大文字小文字無視
+    - MULTILINE: 複数行モード
+    - DOT_MATCHES_ALL: ドットが全文字にマッチ
+    - UNIX_LINES: Unix行終端子
+    - LITERAL: リテラルモード
+    - COMMENTS: コメント許可
+  - **現状**: 基本的なオプションは実装済み、全オプションは未実装
   - **関連ファイル**: `RuntimeRegex.swift`
-  - **テストケース**: `Scripts/diff_cases/regex_named_groups.kt`
+  - **テストケース**: `Scripts/diff_cases/regex_options.kt`
+
+- [ ] STDLIB-REGEX-098: アンカーと境界完全実装
+  - **仕様**: 正規表現アンカーと境界の完全サポート
+  - **実装内容**:
+    - 行アンカー: ^, $
+    - 単語境界: \b, \B
+    - 文字境界: \G
+    - 入力境界: \A, \z, \Z
+    - 前瞻/後瞻: (?=...), (?!...), (?<=...), (?<!...)
+  - **現状**: 基本的なアンカーは実装済み、境界は未実装
+  - **関連ファイル**: `RuntimeRegex.swift`
+  - **テストケース**: `Scripts/diff_cases/regex_anchors.kt`
 
 #### Phase 3: 乱数とUUID (低優先度)
 
