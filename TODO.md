@@ -187,17 +187,6 @@
 #### Phase 2: プロパティデリゲート (中優先度)
 
 
-- [ ] STDLIB-DELEG-047: provideDelegate完全実装
-  - **仕様**: provideDelegate演算子の完全サポート
-  - **実装内容**:
-    - provideDelegate()メソッド: デリゲートインスタンスの提供
-    - デリゲートの最適化: 状態共有
-    - provideDelegateの型推論
-    - 複数プロパティでのデリゲート共有
-    - provideDelegateと他のデリゲート演算子
-  - **現状**: provideDelegateは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticDelegateStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/delegate_provide.kt`
 
 - [ ] STDLIB-DELEG-048: デリゲート演算子完全実装
   - **仕様**: 全てのデリゲート演算子の完全サポート
