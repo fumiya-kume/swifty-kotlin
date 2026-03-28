@@ -765,6 +765,18 @@
   - **関連ファイル**: `RuntimeMath.swift`
   - **テストケース**: `Scripts/diff_cases/math_advanced.kt`
 
+- [ ] STDLIB-MATH-112: 数学定数完全実装
+  - **仕様**: 数学定数の完全サポート
+  - **実装内容**:
+    - 円周率: PI, Math.PI
+    - 自然対数の底: E, Math.E
+    - その他定数: TAU, SQRT2, SQRT1_2
+    - 浮動小数点定数: POSITIVE_INFINITY, NEGATIVE_INFINITY, NaN
+    - 定数の精度と型安全性
+  - **現状**: 基本的な定数は実装済み、詳細は未実装
+  - **関連ファイル**: `RuntimeMath.swift`
+  - **テストケース**: `Scripts/diff_cases/math_constants.kt`
+
 #### Phase 3: アノテーションとメタプログラミング (低優先度)
 
 - [ ] STDLIB-ANNO-113: アノテーション基本実装
