@@ -276,18 +276,6 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/generic_interfaces.kt`
 
-- [ ] STDLIB-GEN-054: 変位指定完全実装
-  - **仕様**: 型パラメータの変位指定（共変性と反変性）
-  - **実装内容**:
-    - 共変性（out）: interface Producer<out T>
-    - 反変性（in）: interface Consumer<in T>
-    - 不変性: interface Container<T>
-    - 変位指定の型チェック
-    - 変位指定と継承の関係
-  - **現状**: 基本的な変位指定は実装済み、詳細なチェックは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/variance_generics.kt`
-
 - [ ] STDLIB-GEN-055: 型制約完全実装
   - **仕様**: 型パラメータの制約
   - **実装内容**:
