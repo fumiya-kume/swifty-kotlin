@@ -373,8 +373,12 @@ extension CallTypeChecker {
         let sema = ctx.sema
         let interner = ctx.interner
 
+        let memberName = interner.resolve(calleeName)
+        let isArrayReceiver = isArrayLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
+        // Allow arrays to fall through to collection fallback only when
+        // tryArrayMemberFallback does not handle the member (isSupportedArrayMember returns false).
         guard !isClassNameReceiver,
-              !isArrayLikeReceiver(receiverID: receiverID, sema: sema, interner: interner),
+              !(isArrayReceiver && isSupportedArrayMember(memberName)),
               isCollectionLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         else {
             return nil
