@@ -353,17 +353,17 @@
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/job_basic.kt`
 
-- [ ] STDLIB-CORO-071: async/await完全実装
-  - **仕様**: async/awaitの完全サポート
+- [ ] STDLIB-CORO-070: Job完全実装
+  - **仕様**: Jobインターフェースの完全サポート
   - **実装内容**:
-    - asyncビルダー: async { return value }
-    - await式: val result = asyncFunction()
-    - asyncの例外処理: try-catch in async
-    - awaitのキャンセル: awaitのキャンセル対応
-    - asyncのディスパッチャ指定: async(Dispatchers.Default)
-  - **現状**: async/awaitは一部実装済み、例外処理は未実装
+    - ジョブの状態: New, Active, Completing, Completed, Cancelling, Cancelled, Failed
+    - キャンセル: cancel(), cancel(CauseException)
+    - ジョブの階層: parent-child関係
+    - ジョブの完了: complete(), completeExceptionally()
+    - ジョブの待機: join(), awaitCompletion()
+  - **現状**: 基本的なJobは実装済み、状態管理は未実装
   - **関連ファイル**: `RuntimeCoroutine.swift`
-  - **テストケース**: `Scripts/diff_cases/async_await.kt`
+  - **テストケース**: `Scripts/diff_cases/job_basic.kt`
 
 - [ ] STDLIB-CORO-073: Flow基本実装
   - **仕様**: Flowの基本的な機能
