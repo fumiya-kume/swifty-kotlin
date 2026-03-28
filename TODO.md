@@ -560,18 +560,6 @@
 
 #### Phase 3: 時間と期間 (低優先度)
 
-- [ ] STDLIB-TIME-081: Duration基本実装
-  - **仕様**: Durationの基本的な機能
-  - **実装内容**:
-    - Duration作成: 1.seconds, 1.minutes, 1.hours
-    - Duration演算: +, -, *, / 演算子
-    - Duration比較: ==, <, >, <=, >=
-    - Durationプロパティ: inWholeSeconds, inWholeMinutes
-    - Durationフォーマット: toString()
-  - **現状**: 基本的なDurationは実装済み、高度な操作は未実装
-  - **関連ファイル**: `RuntimeDuration.swift`
-  - **テストケース**: `Scripts/diff_cases/duration_basic.kt`
-
 - [ ] STDLIB-TIME-082: Duration高度操作完全実装
   - **仕様**: Durationの高度な操作
   - **実装内容**:
