@@ -708,18 +708,6 @@
 
 #### Phase 4: 高度文字列処理 (低優先度)
 
-- [ ] STDLIB-STR-123: StringBuilder完全実装
-  - **仕様**: StringBuilderの完全サポート
-  - **実装内容**:
-    - 基本操作: append(), insert(), delete(), replace()
-    - 文字操作: setCharAt(), charAt()
-    - 逆転: reverse()
-    - 容量管理: capacity(), ensureCapacity(), trimToSize()
-    - 変換: toString(), length()
-  - **現状**: 基本的なStringBuilderは実装済み (STDLIB-083)、高度な操作は未実装
-  - **関連ファイル**: `RuntimeStringStdlib.swift`
-  - **テストケース**: `Scripts/diff_cases/string_builder.kt`
-
 - [ ] STDLIB-STR-124: 文字列フォーマット完全実装
   - **仕様**: 文字列フォーマットの完全サポート
   - **実装内容**:
