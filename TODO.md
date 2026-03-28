@@ -83,17 +83,18 @@
 
 #### Phase 2: 演算子と特殊構文 (中優先度)
 
-- [ ] STDLIB-RANGE-036: UIntRange完全実装
-  - **仕様**: UIntRangeの完全な機能サポート
+- [ ] STDLIB-RANGE-038: 範囲操作高階関数完全実装
+  - **仕様**: 範囲に対する高階関数操作
   - **実装内容**:
-    - コンストラクタ: UIntRange(start, end), startU..endU
-    - プロパティ: start, end, first, last, step
-    - 包含判定: contains(), isEmpty()
-    - 反復: iterator(), reversed()
-    - 変換: toList(), toUIntArray()
-  - **現状**: UIntRangeは未実装
+    - 変換: map, mapIndexed, mapNotNull
+    - フィルタリング: filter, filterIndexed, filterNot
+    - 集約: reduce, reduceIndexed, fold, foldIndexed
+    - 検索: find, findLast, first, firstOrNull, last, lastOrNull
+    - 判定: any, all, none, count
+    - 分割: chunked, windowed
+  - **現状**: 基本的な範囲操作は実装済み、高階関数は未実装
   - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
-  - **テストケース**: `Scripts/diff_cases/uint_range.kt`
+  - **テストケース**: `Scripts/diff_cases/range_hof.kt`
 
 - [ ] STDLIB-RANGE-037: ULongRange完全実装
   - **仕様**: ULongRangeの完全な機能サポート
