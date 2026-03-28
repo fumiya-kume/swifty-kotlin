@@ -1208,18 +1208,6 @@
   - **関連ファイル**: `RuntimeI18N.swift`
   - **テストケース**: `Scripts/diff_cases/locale_basic.kt`
 
-- [ ] STDLIB-I18N-151: ResourceBundle完全実装
-  - **仕様**: ResourceBundleの完全サポート
-  - **実装内容**:
-    - バンドル読み込み: ResourceBundle.getBundle()
-    - プロパティアクセス: getString(), getObject()
-    - 親バンドル: 階層的なリソースバンドル
-    - Locale対応: ロケール依存のリソース選択
-    - キー列挙: getKeys()メソッド
-  - **現状**: ResourceBundleは未実装
-  - **関連ファイル**: `RuntimeI18N.swift`
-  - **テストケース**: `Scripts/diff_cases/resource_bundle.kt`
-
 - [ ] STDLIB-I18N-152: 数値フォーマット完全実装
   - **仕様**: 数値のロケール依存フォーマット
   - **実装内容**:
