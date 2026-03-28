@@ -550,18 +550,6 @@
   - **関連ファイル**: `RuntimeFileIO.swift`
   - **テストケース**: `Scripts/diff_cases/file_basic.kt`
 
-- [ ] STDLIB-IO-088: File読み書き完全実装
-  - **仕様**: ファイルの読み書き操作
-  - **実装内容**:
-    - テキスト読み込み: readText(), readLines()
-    - テキスト書き込み: writeText(), appendText()
-    - バイナリ読み込み: readBytes()
-    - バイナリ書き込み: writeBytes()
-    - バッファリング: bufferedReader(), bufferedWriter()
-  - **現状**: 基本的な読み書きは実装済み、バイナリ操作は未実装
-  - **関連ファイル**: `RuntimeFileIO.swift`
-  - **テストケース**: `Scripts/diff_cases/file_read_write.kt`
-
 - [ ] STDLIB-IO-089: Path完全実装
   - **仕様**: Pathクラスの完全サポート
   - **実装内容**:
