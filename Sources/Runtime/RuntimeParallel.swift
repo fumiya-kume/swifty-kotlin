@@ -8,6 +8,7 @@ private final class UnsafeSendableBox<T>: @unchecked Sendable {
     init(_ value: T) { self.value = value }
 }
 
+
 private extension NSLock {
     @inline(__always)
     func withLock<T>(_ body: () throws -> T) rethrows -> T {
