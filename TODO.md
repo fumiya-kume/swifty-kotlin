@@ -462,18 +462,6 @@
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/launch_basic.kt`
 
-- [ ] STDLIB-CORO-073: Flow基本実装
-  - **仕様**: Flowの基本的な機能
-  - **実装内容**:
-    - flowビルダー: flow { emit(value) }
-    - コレクター: collect { value -> }
-    - 中間操作: map, filter, transform
-    - 端末操作: collect, toList, first, single
-    - Flowの遅延評価: コールドストリーム
-  - **現状**: 基本的なflowは実装済み、高度な操作は未実装
-  - **関連ファイル**: `RuntimeCoroutine.swift`
-  - **テストケース**: `Scripts/diff_cases/flow_basic.kt`
-
 - [ ] STDLIB-CORO-074: Flow操作完全実装
   - **仕様**: Flowの高度な操作
   - **実装内容**:
