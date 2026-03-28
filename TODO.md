@@ -1155,6 +1155,9 @@
   - **関連ファイル**: `RuntimeLogging.swift`
   - **テストケース**: `Scripts/diff_cases/logging_basic.kt`
 
+- [ ] STDLIB-LOG-148: ロギング高度機能完全実装
+  - **仕様**: ロギングフレームワークの高度な機能
+
 - [ ] STDLIB-LOG-149: アサーション完全実装
   - **仕様**: アサーション機能の完全サポート
   - **実装内容**:
