@@ -414,18 +414,6 @@
 
 #### Phase 3: コルーチンと並行処理 (低優先度)
 
-- [ ] STDLIB-CORO-068: suspend関数基本実装
-  - **仕様**: suspend関数の基本的なサポート
-  - **実装内容**:
-    - suspend修飾子: suspend fun myFunction()
-    - コルーチンコンテキスト: CoroutineContext
-    - 継続渡し: Continuation<T>
-    - suspendラムダ: suspend { value -> }
-    - suspendプロパティ: suspend val property
-  - **現状**: async/awaitは一部実装済み、suspend関数は未実装
-  - **関連ファイル**: `RuntimeCoroutine.swift`
-  - **テストケース**: `Scripts/diff_cases/suspend_functions.kt`
-
 - [ ] STDLIB-CORO-069: CoroutineScope完全実装
   - **仕様**: CoroutineScopeの完全サポート
   - **実装内容**:
