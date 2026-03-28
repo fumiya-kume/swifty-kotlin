@@ -5,16 +5,6 @@ import Foundation
 final class CallLoweringCoordinator {
     unowned let driver: KIRLoweringDriver
     
-    // 専門ローワー群（Phase 2で実装）
-    private var memberCallLowerer: MemberCallLowerer?
-    private var safeMemberCallLowerer: SafeMemberCallLowerer?
-    private var operatorLowerer: OperatorLowerer?
-    private var indexedAccessLowerer: IndexedAccessLowerer?
-    private var stdlibFunctionLowerer: StdlibFunctionLowerer?
-    private var primitiveOperationLowerer: PrimitiveOperationLowerer?
-    private var anyTypeLowerer: AnyTypeLowerer?
-    private var coroutineLowerer: CoroutineLowerer?
-    
     init(driver: KIRLoweringDriver) {
         self.driver = driver
     }
@@ -190,7 +180,7 @@ struct CallLoweringContext {
     let propertyConstantInitializers: [SymbolID: KIRExprKind]
     
     // インストラクションの可変参照
-    private(set) var instructions: [KIRInstruction]
+    var instructions: [KIRInstruction]
     
     init(
         driver: KIRLoweringDriver,
@@ -231,9 +221,20 @@ struct CallLoweringContext {
         )
     }
     
-    /// エミットコンテキストを取得
+    /// エミットコンテキストを取得（読み取り専用）
     func emitContext() -> KIRLoweringEmitContext {
         return KIRLoweringEmitContext(instructions)
+    }
+
+    /// サブ式をローワーリングし、生成されたインストラクションをこのコンテキストにマージする
+    mutating func lowerSubExpr(
+        _ exprID: ExprID,
+        driver: KIRLoweringDriver
+    ) -> KIRExprID {
+        var emitCtx = KIRLoweringEmitContext()
+        let result = driver.lowerExpr(exprID, shared: sharedContext, emit: &emitCtx)
+        append(contentsOf: emitCtx.instructions)
+        return result
     }
 }
 

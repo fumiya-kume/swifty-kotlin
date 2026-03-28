@@ -25,16 +25,8 @@ final class OperatorLowerer {
         let boundType = sema.bindings.exprTypes[exprID]
         
         // オペランドのローワーリング
-        let lhsID = coordinator.driver.lowerExpr(
-            lhs,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
-        let rhsID = coordinator.driver.lowerExpr(
-            rhs,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let lhsID = context.lowerSubExpr(lhs, driver: coordinator.driver)
+        let rhsID = context.lowerSubExpr(rhs, driver: coordinator.driver)
         
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
         
@@ -54,6 +46,7 @@ final class OperatorLowerer {
             return handleCompareToDesugaring(
                 op: op,
                 lhsID: lhsID,
+                lhsExpr: lhs,
                 rhsID: rhsID,
                 callBinding: callBinding,
                 isCompareToDesugaring: isCompareToDesugaring,
@@ -143,6 +136,7 @@ final class OperatorLowerer {
     private func handleCompareToDesugaring(
         op: BinaryOp,
         lhsID: KIRExprID,
+        lhsExpr: ExprID,
         rhsID: KIRExprID,
         callBinding: CallBinding,
         isCompareToDesugaring: Bool,
@@ -165,7 +159,7 @@ final class OperatorLowerer {
         if isCompareToDesugaring,
            shouldLowerComparableTypeParamViaRuntime(
                chosenCallee: callBinding.chosenCallee,
-               receiverExpr: /* lhs from context */,
+               receiverExpr: lhsExpr,
                sema: sema
            ) {
             context.append(.call(
@@ -203,8 +197,9 @@ final class OperatorLowerer {
         finalArguments.insert(lhsID, at: 0)
         
         // Reified型パラメータの処理
-        if !signature.reifiedTypeParameterIndices.isEmpty {
-            for index in signature.reifiedTypeParameterIndices.sorted() {
+        let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee)
+        if !(signature?.reifiedTypeParameterIndices.isEmpty ?? true) {
+            for index in (signature?.reifiedTypeParameterIndices.sorted() ?? []) {
                 let concreteType = index < callBinding.substitutedTypeArguments.count
                     ? callBinding.substitutedTypeArguments[index]
                     : sema.types.anyType
@@ -520,20 +515,8 @@ final class OperatorLowerer {
         let arena = context.arena
         let interner = context.interner
         
-        let kirOp: KIRBinaryOp = switch op {
-        case .add: .add
-        case .subtract: .subtract
-        case .multiply: .multiply
-        case .divide: .divide
-        case .modulo: .modulo
-        case .equal: .equal
-        case .notEqual: .notEqual
-        case .lessThan: .lessThan
-        case .lessOrEqual: .lessOrEqual
-        case .greaterThan: .greaterThan
-        case .greaterOrEqual: .greaterOrEqual
-        case .logicalAnd: .logicalAnd
-        case .logicalOr: .logicalOr
+        // 特殊な演算子の処理（ランタイム関数呼び出しが必要なもの）
+        switch op {
         case .elvis:
             context.append(.call(
                 symbol: nil,
@@ -555,12 +538,9 @@ final class OperatorLowerer {
             ))
             return result
         case .rangeUntil:
-            let rangeUntilCallee = sema.bindings.isULongRangeExpr(/* exprID from context */)
-                ? interner.intern("kk_op_ulong_rangeUntil")
-                : interner.intern("kk_op_rangeUntil")
             context.append(.call(
                 symbol: nil,
-                callee: rangeUntilCallee,
+                callee: interner.intern("kk_op_rangeUntil"),
                 arguments: [lhsID, rhsID],
                 result: result,
                 canThrow: false,
@@ -589,8 +569,28 @@ final class OperatorLowerer {
             return result
         case .bitwiseAnd, .bitwiseOr, .bitwiseXor, .shl, .shr, .ushr:
             preconditionFailure("Bitwise/shift binary operators must be lowered through member-call special handling")
+        default:
+            break
         }
-        
+
+        let kirOp: KIRBinaryOp = switch op {
+        case .add: .add
+        case .subtract: .subtract
+        case .multiply: .multiply
+        case .divide: .divide
+        case .modulo: .modulo
+        case .equal: .equal
+        case .notEqual: .notEqual
+        case .lessThan: .lessThan
+        case .lessOrEqual: .lessOrEqual
+        case .greaterThan: .greaterThan
+        case .greaterOrEqual: .greaterOrEqual
+        case .logicalAnd: .logicalAnd
+        case .logicalOr: .logicalOr
+        default:
+            preconditionFailure("Unexpected operator in KIRBinaryOp switch: \(op)")
+        }
+
         context.append(.binary(op: kirOp, lhs: lhsID, rhs: rhsID, result: result))
         return result
     }
@@ -650,7 +650,7 @@ final class OperatorLowerer {
             return false
         }
         
-        return knownNames.isSequenceSymbol(symbol) || knownNames.isCollectionSymbol(symbol)
+        return knownNames.isSequenceSymbol(symbol) || knownNames.isCollectionLikeSymbol(symbol)
     }
     
     /// 具体的なListライク型か判定
@@ -662,6 +662,6 @@ final class OperatorLowerer {
             return false
         }
         
-        return knownNames.isListSymbol(symbol) || knownNames.isMutableListSymbol(symbol)
+        return knownNames.isConcreteListLikeSymbol(symbol) || knownNames.isMutableListSymbol(symbol)
     }
 }

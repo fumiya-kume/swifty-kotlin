@@ -30,9 +30,8 @@ final class SafeMemberCallLowerer {
         // nullableレシーバーの場合はフォールディングしない（nullチェックが必要なため）
         if args.isEmpty,
            let callBinding = sema.bindings.callBindings[exprID],
-           let chosen = callBinding.chosenCallee,
-           let constant = propertyConstantInitializers[chosen],
-           let symInfo = sema.symbols.symbol(chosen),
+           let constant = propertyConstantInitializers[callBinding.chosenCallee],
+           let symInfo = sema.symbols.symbol(callBinding.chosenCallee),
            symInfo.flags.contains(.constValue) {
             
             let receiverType = sema.bindings.exprTypes[receiverExpr]
@@ -242,7 +241,7 @@ final class SafeMemberCallLowerer {
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
             let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
             
-            let receiverType = sema.bindings.exprTypes[/* receiverExpr from context */] ?? sema.types.anyType
+            let receiverType = arena.exprType(loweredReceiverID) ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             
             if nonNullReceiverType == intType || nonNullReceiverType == longType || 
@@ -322,7 +321,7 @@ final class SafeMemberCallLowerer {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             
-            let receiverType = sema.bindings.exprTypes[/* receiverExpr */] ?? sema.types.anyType
+            let receiverType = arena.exprType(loweredReceiverID) ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             
             if nonNullReceiverType == intType || nonNullReceiverType == longType {
@@ -387,7 +386,7 @@ final class SafeMemberCallLowerer {
         
         // Any.toString()
         if args.isEmpty, calleeStr == "toString" {
-            let receiverType = sema.bindings.exprTypes[/* receiverExpr */] ?? sema.types.anyType
+            let receiverType = arena.exprType(loweredReceiverID) ?? sema.types.anyType
             if allowsAnyFallback(receiverType, sema: sema) {
                 let tag = CallLoweringHelpers.anyFallbackTag(for: receiverType, sema: sema)
                 let intType = sema.types.make(.primitive(.int, .nonNull))
@@ -421,7 +420,7 @@ final class SafeMemberCallLowerer {
         
         // Any.hashCode()
         if args.isEmpty, calleeStr == "hashCode" {
-            let receiverType = sema.bindings.exprTypes[/* receiverExpr */] ?? sema.types.anyType
+            let receiverType = arena.exprType(loweredReceiverID) ?? sema.types.anyType
             if allowsAnyFallback(receiverType, sema: sema) {
                 let tag = CallLoweringHelpers.anyFallbackTag(for: receiverType, sema: sema)
                 let intType = sema.types.make(.primitive(.int, .nonNull))
@@ -455,13 +454,13 @@ final class SafeMemberCallLowerer {
         
         // Any.equals()
         if args.count == 1, calleeStr == "equals" {
-            let receiverType = sema.bindings.exprTypes[/* receiverExpr */] ?? sema.types.anyType
+            let receiverType = arena.exprType(loweredReceiverID) ?? sema.types.anyType
             if allowsAnyFallback(receiverType, sema: sema) {
                 let receiverTag = CallLoweringHelpers.anyFallbackTag(for: receiverType, sema: sema)
-                let argType = sema.bindings.exprTypes[/* args[0].expr */] ?? sema.types.anyType
+                let argType = arena.exprType(args[0]) ?? sema.types.anyType
                 let argTag = CallLoweringHelpers.anyFallbackTag(for: argType, sema: sema)
                 let intType = sema.types.make(.primitive(.int, .nonNull))
-                
+
                 let callLabel = coordinator.driver.ctx.makeLoopLabel()
                 let endLabel = coordinator.driver.ctx.makeLoopLabel()
                 let nullExpr = arena.appendExpr(.null, type: boundType ?? sema.types.nullableAnyType)
@@ -505,13 +504,14 @@ final class SafeMemberCallLowerer {
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID? {
         let sema = shared.sema
+        let arena = shared.arena
         let interner = shared.interner
         let calleeStr = interner.resolve(effectiveCalleeName)
         
         // coerceIn の処理
         if calleeStr == "coerceIn" {
             if args.count == 2 {
-                let receiverType = sema.bindings.exprTypes[/* receiverExpr */] ?? sema.types.anyType
+                let receiverType = arena.exprType(loweredReceiverID) ?? sema.types.anyType
                 if let prefix = CallLoweringHelpers.numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
                     return emitSafeCallWithNullCheck(
                         loweredReceiverID: loweredReceiverID,
@@ -523,38 +523,35 @@ final class SafeMemberCallLowerer {
                     )
                 }
             } else if args.count == 1 {
-                let receiverType = sema.bindings.exprTypes[/* receiverExpr */] ?? sema.types.anyType
+                let receiverType = arena.exprType(loweredReceiverID) ?? sema.types.anyType
                 if let prefix = CallLoweringHelpers.numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema),
                    prefix == "kk_int" || prefix == "kk_long" {
-                    
-                    // rangeベースの強制
-                    let argExprID = /* args[0].expr from context */
-                    if sema.bindings.isRangeExpr(argExprID) {
-                        let callLabel = coordinator.driver.ctx.makeLoopLabel()
-                        let endLabel = coordinator.driver.ctx.makeLoopLabel()
-                        let nullExpr = shared.arena.appendExpr(.null, type: sema.types.nullableAnyType)
-                        
-                        instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: callLabel))
-                        instructions.append(.constValue(result: nullExpr, value: .null))
-                        instructions.append(.copy(from: nullExpr, to: result))
-                        instructions.append(.jump(endLabel))
-                        
-                        instructions.append(.label(callLabel))
-                        CallLoweringHelpers.emitCoerceInRange(
-                            prefix: prefix,
-                            receiverType: receiverType,
-                            loweredReceiverID: loweredReceiverID,
-                            loweredRangeArgID: args[0],
-                            result: result,
-                            sema: sema,
-                            arena: shared.arena,
-                            interner: interner,
-                            instructions: &instructions.instructions
-                        )
-                        instructions.append(.label(endLabel))
-                        
-                        return result
-                    }
+
+                    // rangeベースの強制（単一引数の coerceIn はRange引数を期待する）
+                    let callLabel = coordinator.driver.ctx.makeLoopLabel()
+                    let endLabel = coordinator.driver.ctx.makeLoopLabel()
+                    let nullExpr = shared.arena.appendExpr(.null, type: sema.types.nullableAnyType)
+
+                    instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: callLabel))
+                    instructions.append(.constValue(result: nullExpr, value: .null))
+                    instructions.append(.copy(from: nullExpr, to: result))
+                    instructions.append(.jump(endLabel))
+
+                    instructions.append(.label(callLabel))
+                    CallLoweringHelpers.emitCoerceInRange(
+                        prefix: prefix,
+                        receiverType: receiverType,
+                        loweredReceiverID: loweredReceiverID,
+                        loweredRangeArgID: args[0],
+                        result: result,
+                        sema: sema,
+                        arena: shared.arena,
+                        interner: interner,
+                        instructions: &instructions.instructions
+                    )
+                    instructions.append(.label(endLabel))
+
+                    return result
                 }
             }
         }
@@ -562,7 +559,7 @@ final class SafeMemberCallLowerer {
         // coerceAtLeast/coerceAtMost の処理
         if args.count == 1 {
             if calleeStr == "coerceAtLeast" || calleeStr == "coerceAtMost" {
-                let receiverType = sema.bindings.exprTypes[/* receiverExpr */] ?? sema.types.anyType
+                let receiverType = arena.exprType(loweredReceiverID) ?? sema.types.anyType
                 if let prefix = CallLoweringHelpers.numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
                     let suffix = calleeStr == "coerceAtLeast" ? "_coerceAtLeast" : "_coerceAtMost"
                     return emitSafeCallWithNullCheck(
@@ -796,16 +793,16 @@ final class SafeMemberCallLowerer {
     
     /// デフォルトマスク引数を追加
     private func appendDefaultMaskArgument(
-        defaultMask: Int,
+        defaultMask: Int64,
         sema: SemaModule,
         arena: KIRArena,
         instructions: inout KIRLoweringEmitContext,
         arguments: inout [KIRExprID]
     ) {
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        
-        let maskExpr = arena.appendExpr(.intLiteral(Int64(defaultMask)), type: intType)
-        instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(defaultMask))))
+
+        let maskExpr = arena.appendExpr(.intLiteral(defaultMask), type: intType)
+        instructions.append(.constValue(result: maskExpr, value: .intLiteral(defaultMask)))
         arguments.append(maskExpr)
     }
     
@@ -824,7 +821,7 @@ final class SafeMemberCallLowerer {
         let interner = shared.interner
         let intType = sema.types.intType
         
-        let receiverType = sema.bindings.exprTypes[/* receiverExpr */] ?? sema.types.anyType
+        let receiverType = arena.exprType(loweredReceiverID) ?? sema.types.anyType
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
         
         if nonNullReceiverType == intType {
@@ -869,7 +866,7 @@ final class SafeMemberCallLowerer {
         let intType = sema.types.intType
         let longType = sema.types.longType
         
-        let receiverType = sema.bindings.exprTypes[/* receiverExpr */] ?? sema.types.anyType
+        let receiverType = arena.exprType(loweredReceiverID) ?? sema.types.anyType
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
         
         if nonNullReceiverType == intType {
@@ -907,15 +904,16 @@ final class SafeMemberCallLowerer {
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID? {
         let sema = shared.sema
+        let arena = shared.arena
         let interner = shared.interner
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let longType = sema.types.make(.primitive(.long, .nonNull))
         let uintType = sema.types.make(.primitive(.uint, .nonNull))
         let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
-        
-        let receiverType = sema.bindings.exprTypes[/* receiverExpr */] ?? sema.types.anyType
+
+        let receiverType = arena.exprType(loweredReceiverID) ?? sema.types.anyType
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
-        let argType = sema.bindings.exprTypes[/* args[0].expr */] ?? sema.types.anyType
+        let argType = arena.exprType(argumentID) ?? sema.types.anyType
         let nonNullArgType = sema.types.makeNonNullable(argType)
         
         if nonNullReceiverType == intType || nonNullReceiverType == longType || 
@@ -989,7 +987,7 @@ final class SafeMemberCallLowerer {
         let floatType = sema.types.make(.primitive(.float, .nonNull))
         let doubleType = sema.types.make(.primitive(.double, .nonNull))
         
-        let receiverType = sema.bindings.exprTypes[/* receiverExpr */] ?? sema.types.anyType
+        let receiverType = arena.exprType(loweredReceiverID) ?? sema.types.anyType
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
         let resultType = boundType ?? sema.types.anyType
         let nonNullResultType = sema.types.makeNonNullable(resultType)

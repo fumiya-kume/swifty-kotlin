@@ -71,12 +71,8 @@ final class AnyTypeLowerer {
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let stringType = sema.types.make(.primitive(.string, .nonNull))
         
-        let receiverID = coordinator.driver.lowerExpr(
-            receiverExpr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
-        
+        let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
+
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: stringType)
         let tagID = arena.appendExpr(.intLiteral(tag), type: intType)
         context.append(.constValue(result: tagID, value: .intLiteral(tag)))
@@ -110,17 +106,13 @@ final class AnyTypeLowerer {
         
         let tag = CallLoweringHelpers.anyFallbackTag(for: receiverType, sema: sema)
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        
-        let receiverID = coordinator.driver.lowerExpr(
-            receiverExpr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
-        
+
+        let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
+
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
         let tagID = arena.appendExpr(.intLiteral(tag), type: intType)
         context.append(.constValue(result: tagID, value: .intLiteral(tag)))
-        
+
         context.append(.call(
             symbol: nil,
             callee: interner.intern("kk_any_hashCode"),
@@ -156,17 +148,13 @@ final class AnyTypeLowerer {
         let argTag = CallLoweringHelpers.anyFallbackTag(for: argType, sema: sema)
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let booleanType = sema.types.make(.primitive(.boolean, .nonNull))
-        
-        let receiverID = coordinator.driver.lowerExpr(
-            receiverExpr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
-        
+
+        let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
+
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: booleanType)
         let receiverTagID = arena.appendExpr(.intLiteral(receiverTag), type: intType)
         context.append(.constValue(result: receiverTagID, value: .intLiteral(receiverTag)))
-        
+
         let argTagID = arena.appendExpr(.intLiteral(argTag), type: intType)
         context.append(.constValue(result: argTagID, value: .intLiteral(argTag)))
         
@@ -202,29 +190,25 @@ final class AnyTypeLowerer {
         
         let tag = CallLoweringHelpers.anyFallbackTag(for: receiverType, sema: sema)
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        
-        let receiverID = coordinator.driver.lowerExpr(
-            receiverExpr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
-        
+
+        let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
+
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
-        
+
         // nullチェックと分岐
         let callLabel = coordinator.driver.ctx.makeLoopLabel()
         let endLabel = coordinator.driver.ctx.makeLoopLabel()
         let nullExpr = arena.appendExpr(.null, type: boundType)
-        
+
         context.append(.jumpIfNotNull(value: receiverID, target: callLabel))
         context.append(.constValue(result: nullExpr, value: .null))
         context.append(.copy(from: nullExpr, to: result))
         context.append(.jump(endLabel))
-        
+
         context.append(.label(callLabel))
         let tagID = arena.appendExpr(.intLiteral(tag), type: intType)
         context.append(.constValue(result: tagID, value: .intLiteral(tag)))
-        
+
         context.append(.call(
             symbol: nil,
             callee: interner.intern("kk_any_to_string"),
@@ -234,10 +218,10 @@ final class AnyTypeLowerer {
             thrownResult: nil
         ))
         context.append(.label(endLabel))
-        
+
         return result
     }
-    
+
     /// セーフコール用のAny.hashCode() のローワーリング
     func lowerSafeAnyHashCode(
         receiverExpr: ExprID,
@@ -256,29 +240,25 @@ final class AnyTypeLowerer {
         
         let tag = CallLoweringHelpers.anyFallbackTag(for: receiverType, sema: sema)
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        
-        let receiverID = coordinator.driver.lowerExpr(
-            receiverExpr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
-        
+
+        let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
+
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
-        
+
         // nullチェックと分岐
         let callLabel = coordinator.driver.ctx.makeLoopLabel()
         let endLabel = coordinator.driver.ctx.makeLoopLabel()
         let nullExpr = arena.appendExpr(.null, type: boundType)
-        
+
         context.append(.jumpIfNotNull(value: receiverID, target: callLabel))
         context.append(.constValue(result: nullExpr, value: .null))
         context.append(.copy(from: nullExpr, to: result))
         context.append(.jump(endLabel))
-        
+
         context.append(.label(callLabel))
         let tagID = arena.appendExpr(.intLiteral(tag), type: intType)
         context.append(.constValue(result: tagID, value: .intLiteral(tag)))
-        
+
         context.append(.call(
             symbol: nil,
             callee: interner.intern("kk_any_hashCode"),
@@ -288,10 +268,10 @@ final class AnyTypeLowerer {
             thrownResult: nil
         ))
         context.append(.label(endLabel))
-        
+
         return result
     }
-    
+
     /// セーフコール用のAny.equals() のローワーリング
     func lowerSafeAnyEquals(
         receiverExpr: ExprID,
@@ -317,31 +297,27 @@ final class AnyTypeLowerer {
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let booleanType = sema.types.make(.primitive(.boolean, .nonNull))
         
-        let receiverID = coordinator.driver.lowerExpr(
-            receiverExpr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
-        
+        let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
+
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
-        
+
         // nullチェックと分岐
         let callLabel = coordinator.driver.ctx.makeLoopLabel()
         let endLabel = coordinator.driver.ctx.makeLoopLabel()
         let nullExpr = arena.appendExpr(.null, type: boundType)
-        
+
         context.append(.jumpIfNotNull(value: receiverID, target: callLabel))
         context.append(.constValue(result: nullExpr, value: .null))
         context.append(.copy(from: nullExpr, to: result))
         context.append(.jump(endLabel))
-        
+
         context.append(.label(callLabel))
         let receiverTagID = arena.appendExpr(.intLiteral(receiverTag), type: intType)
         context.append(.constValue(result: receiverTagID, value: .intLiteral(receiverTag)))
-        
+
         let argTagID = arena.appendExpr(.intLiteral(argTag), type: intType)
         context.append(.constValue(result: argTagID, value: .intLiteral(argTag)))
-        
+
         context.append(.call(
             symbol: nil,
             callee: interner.intern("kk_any_equals"),
@@ -351,10 +327,10 @@ final class AnyTypeLowerer {
             thrownResult: nil
         ))
         context.append(.label(endLabel))
-        
+
         return result
     }
-    
+
     // MARK: - ヘルパー関数
     
     /// Anyフォールバックが許可される型か判定

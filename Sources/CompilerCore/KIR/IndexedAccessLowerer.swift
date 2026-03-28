@@ -22,14 +22,13 @@ final class IndexedAccessLowerer {
         let arena = context.arena
         let interner = context.interner
         let boundType = sema.bindings.exprTypes[exprID]
-        
+
+        // 結果の仮割り当て（各ヘルパーが独自の最終結果を生成して返す）
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+
         // レシーバーのローワーリング
-        let receiverID = coordinator.driver.lowerExpr(
-            receiverExpr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
-        
+        let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
+
         // コールバインディングの回復
         let callBinding = recoverMemberCallBinding(
             exprID: exprID,
@@ -97,25 +96,13 @@ final class IndexedAccessLowerer {
         let interner = context.interner
         
         // レシーバーと値のローワーリング
-        let receiverID = coordinator.driver.lowerExpr(
-            receiverExpr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
         
         assert(!indices.isEmpty, "indices must not be empty for indexed assign")
         
-        let indexID = coordinator.driver.lowerExpr(
-            indices[0],
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let indexID = context.lowerSubExpr(indices[0], driver: coordinator.driver)
         
-        let valueID = coordinator.driver.lowerExpr(
-            valueExpr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let valueID = context.lowerSubExpr(valueExpr, driver: coordinator.driver)
         
         // メンバーコールとしてのset()処理
         if let callBinding = sema.bindings.callBindings[exprID] {
@@ -158,25 +145,13 @@ final class IndexedAccessLowerer {
         //   3) kk_array_set(a, i, t')
         
         // レシーバー、インデックス、値のローワーリング
-        let receiverID = coordinator.driver.lowerExpr(
-            receiverExpr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
         
         assert(!indices.isEmpty, "indices must not be empty for indexed compound assign")
         
-        let indexID = coordinator.driver.lowerExpr(
-            indices[0],
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let indexID = context.lowerSubExpr(indices[0], driver: coordinator.driver)
         
-        let valueID = coordinator.driver.lowerExpr(
-            valueExpr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let valueID = context.lowerSubExpr(valueExpr, driver: coordinator.driver)
         
         // ステップ1: 現在の値を取得
         let getResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
@@ -242,11 +217,7 @@ final class IndexedAccessLowerer {
         let arena = context.arena
         let interner = context.interner
         
-        let indexID = coordinator.driver.lowerExpr(
-            indexExpr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let indexID = context.lowerSubExpr(indexExpr, driver: coordinator.driver)
         
         let thrownExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
         context.append(.constValue(result: thrownExpr, value: .intLiteral(0)))
@@ -280,11 +251,7 @@ final class IndexedAccessLowerer {
         let boundType = sema.bindings.exprTypes[exprID]
         
         let loweredIndices = indices.map { indexExpr in
-            coordinator.driver.lowerExpr(
-                indexExpr,
-                shared: context.sharedContext,
-                emit: context.emitContext()
-            )
+            context.lowerSubExpr(indexExpr, driver: coordinator.driver)
         }
         
         let finalResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
@@ -327,15 +294,11 @@ final class IndexedAccessLowerer {
         let sema = context.sema
         let arena = context.arena
         let interner = context.interner
-        let boundType = sema.bindings.exprTypes[/* exprID from context */] ?? sema.types.anyType
+        let boundType = sema.types.anyType
         
         assert(!indices.isEmpty, "indices must not be empty for indexed access")
         
-        let indexID = coordinator.driver.lowerExpr(
-            indices[0],
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let indexID = context.lowerSubExpr(indices[0], driver: coordinator.driver)
         
         let finalResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
         context.append(.call(
@@ -371,11 +334,7 @@ final class IndexedAccessLowerer {
             if i == 0 {
                 loweredIndices.append(indexID)
             } else {
-                let loweredIndex = coordinator.driver.lowerExpr(
-                    indexExpr,
-                    shared: context.sharedContext,
-                    emit: context.emitContext()
-                )
+                let loweredIndex = context.lowerSubExpr(indexExpr, driver: coordinator.driver)
                 loweredIndices.append(loweredIndex)
             }
         }
@@ -422,7 +381,8 @@ final class IndexedAccessLowerer {
     ) -> KIRExprID {
         let sema = context.sema
         let arena = context.arena
-        
+        let interner = context.interner
+
         context.append(.call(
             symbol: nil,
             callee: interner.intern("kk_array_set"),
@@ -492,24 +452,23 @@ final class IndexedAccessLowerer {
         
         // デフォルトマスクの処理
         if normalized.defaultMask != 0,
-           let chosen = chosenCallee,
-           sema.symbols.externalLinkName(for: chosen)?.isEmpty ?? true {
-            
+           sema.symbols.externalLinkName(for: chosenCallee)?.isEmpty ?? true {
+
             appendReifiedTypeTokens(
-                chosenCallee: chosen,
+                chosenCallee: chosenCallee,
                 callBinding: callBinding,
                 context: &context,
                 arguments: &finalArguments
             )
-            
+
             appendDefaultMaskArgument(
                 defaultMask: normalized.defaultMask,
                 context: &context,
                 arguments: &finalArguments
             )
-            
+
             let stubName = interner.intern(interner.resolve(calleeName) + "$default")
-            let stubSym = coordinator.driver.callSupportLowerer.defaultStubSymbol(for: chosen)
+            let stubSym = coordinator.driver.callSupportLowerer.defaultStubSymbol(for: chosenCallee)
             
             context.append(.call(
                 symbol: stubSym,
@@ -570,16 +529,16 @@ final class IndexedAccessLowerer {
     
     /// デフォルトマスク引数を追加
     private func appendDefaultMaskArgument(
-        defaultMask: Int,
+        defaultMask: Int64,
         context: inout CallLoweringContext,
         arguments: inout [KIRExprID]
     ) {
         let sema = context.sema
         let arena = context.arena
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        
-        let maskExpr = arena.appendExpr(.intLiteral(Int64(defaultMask)), type: intType)
-        context.append(.constValue(result: maskExpr, value: .intLiteral(Int64(defaultMask))))
+
+        let maskExpr = arena.appendExpr(.intLiteral(defaultMask), type: intType)
+        context.append(.constValue(result: maskExpr, value: .intLiteral(defaultMask)))
         arguments.append(maskExpr)
     }
 }

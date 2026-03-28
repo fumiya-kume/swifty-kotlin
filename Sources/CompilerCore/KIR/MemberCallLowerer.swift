@@ -27,9 +27,8 @@ final class MemberCallLowerer {
         // const val メンバープロパティのフォールディング (P5-109)
         if args.isEmpty,
            let callBinding = sema.bindings.callBindings[exprID],
-           let chosen = callBinding.chosenCallee,
-           let constant = context.propertyConstantInitializers[chosen],
-           let symInfo = sema.symbols.symbol(chosen),
+           let constant = context.propertyConstantInitializers[callBinding.chosenCallee],
+           let symInfo = sema.symbols.symbol(callBinding.chosenCallee),
            symInfo.flags.contains(.constValue) {
             
             let receiverType = sema.bindings.exprTypes[receiverExpr]
@@ -41,14 +40,10 @@ final class MemberCallLowerer {
         }
         
         // レシーバーのローワーリング
-        let loweredReceiverID = coordinator.driver.lowerExpr(
-            receiverExpr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let loweredReceiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
         
         // コルーチンハンドルの特殊処理
-        if isCoroutineHandleCall(exprID: exprID, calleeName: calleeName, sema: sema, interner: interner) {
+        if isCoroutineHandleCall(receiverExpr: receiverExpr, calleeName: calleeName, sema: sema, interner: interner) {
             return handleCoroutineHandleCall(
                 exprID: exprID,
                 receiverID: loweredReceiverID,
@@ -57,9 +52,9 @@ final class MemberCallLowerer {
                 context: &context
             )
         }
-        
+
         // チャネル操作の特殊処理
-        if isChannelCall(exprID: exprID, calleeName: calleeName, sema: sema, interner: interner) {
+        if isChannelCall(receiverExpr: receiverExpr, calleeName: calleeName, sema: sema, interner: interner) {
             return handleChannelCall(
                 exprID: exprID,
                 receiverID: loweredReceiverID,
@@ -105,11 +100,7 @@ final class MemberCallLowerer {
         
         if let runtimeName {
             let loweredArgs = args.map { arg in
-                coordinator.driver.lowerExpr(
-                    arg.expr,
-                    shared: context.sharedContext,
-                    emit: context.emitContext()
-                )
+                context.lowerSubExpr(arg.expr, driver: coordinator.driver)
             }
             
             context.append(.call(
@@ -157,11 +148,7 @@ final class MemberCallLowerer {
         
         if let runtimeName {
             let loweredArgs = args.map { arg in
-                coordinator.driver.lowerExpr(
-                    arg.expr,
-                    shared: context.sharedContext,
-                    emit: context.emitContext()
-                )
+                context.lowerSubExpr(arg.expr, driver: coordinator.driver)
             }
             
             context.append(.call(
@@ -200,11 +187,7 @@ final class MemberCallLowerer {
         
         // 引数のローワーリング
         let loweredArgIDs = args.map { arg in
-            coordinator.driver.lowerExpr(
-                arg.expr,
-                shared: context.sharedContext,
-                emit: context.emitContext()
-            )
+            context.lowerSubExpr(arg.expr, driver: coordinator.driver)
         }
         
         // コールバインディングの取得
@@ -342,32 +325,24 @@ final class MemberCallLowerer {
     
     /// コルーチンハンドルのコールか判定
     private func isCoroutineHandleCall(
-        exprID: ExprID,
+        receiverExpr: ExprID,
         calleeName: InternedString,
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
-        guard let callBinding = sema.bindings.callBindings[exprID],
-              let receiverType = sema.bindings.exprTypes[callBinding.receiverExpr] else {
-            return false
-        }
-        
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         return isCoroutineHandleReceiverType(receiverType, sema: sema, interner: interner) &&
                Self.unresolvedCoroutineHandleMemberNames.contains(interner.resolve(calleeName))
     }
-    
+
     /// チャネルのコールか判定
     private func isChannelCall(
-        exprID: ExprID,
+        receiverExpr: ExprID,
         calleeName: InternedString,
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
-        guard let callBinding = sema.bindings.callBindings[exprID],
-              let receiverType = sema.bindings.exprTypes[callBinding.receiverExpr] else {
-            return false
-        }
-        
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         return isChannelReceiverType(receiverType, sema: sema, interner: interner) &&
                Self.unresolvedChannelMemberNames.contains(interner.resolve(calleeName))
     }
@@ -497,7 +472,7 @@ final class MemberCallLowerer {
         )
     }
     
-    /// 実装シンボルを検索
+    /// 実装シンボルを検索（シグネチャ対応）
     private func findImplementationSymbol(
         methodSymbol: SymbolID,
         ownerSymbol: SymbolID,
@@ -508,7 +483,10 @@ final class MemberCallLowerer {
               let ownerSym = sema.symbols.symbol(ownerSymbol) else {
             return methodSymbol
         }
-        
+
+        let interfaceSignature = sema.symbols.functionSignature(for: methodSymbol)
+        let interfaceParamCount = interfaceSignature?.parameterTypes.count ?? -1
+
         let overrideFQName = ownerSym.fqName + [methodSym.name]
         for candidate in sema.symbols.lookupAll(fqName: overrideFQName) {
             guard let candidateSym = sema.symbols.symbol(candidate),
@@ -516,9 +494,15 @@ final class MemberCallLowerer {
                   sema.symbols.parentSymbol(for: candidate) == ownerSymbol else {
                 continue
             }
+            // シグネチャが利用可能な場合はパラメータ数でフィルタリング
+            if let candidateSignature = sema.symbols.functionSignature(for: candidate) {
+                guard candidateSignature.parameterTypes.count == interfaceParamCount else {
+                    continue
+                }
+            }
             return candidate
         }
-        
+
         return methodSymbol
     }
     
@@ -567,24 +551,23 @@ final class MemberCallLowerer {
         
         // デフォルトマスクの処理
         if normalized.defaultMask != 0,
-           let chosen = chosenCallee,
-           sema.symbols.externalLinkName(for: chosen)?.isEmpty ?? true {
-            
+           sema.symbols.externalLinkName(for: chosenCallee)?.isEmpty ?? true {
+
             appendReifiedTypeTokens(
-                chosenCallee: chosen,
+                chosenCallee: chosenCallee,
                 callBinding: callBinding,
                 context: &context,
                 arguments: &finalArguments
             )
-            
+
             appendDefaultMaskArgument(
                 defaultMask: normalized.defaultMask,
                 context: &context,
                 arguments: &finalArguments
             )
-            
+
             let stubName = interner.intern(interner.resolve(calleeName) + "$default")
-            let stubSym = coordinator.driver.callSupportLowerer.defaultStubSymbol(for: chosen)
+            let stubSym = coordinator.driver.callSupportLowerer.defaultStubSymbol(for: chosenCallee)
             
             context.append(.call(
                 symbol: stubSym,
@@ -645,28 +628,22 @@ final class MemberCallLowerer {
     
     /// デフォルトマスク引数を追加
     private func appendDefaultMaskArgument(
-        defaultMask: Int,
+        defaultMask: Int64,
         context: inout CallLoweringContext,
         arguments: inout [KIRExprID]
     ) {
         let sema = context.sema
         let arena = context.arena
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        
-        let maskExpr = arena.appendExpr(.intLiteral(Int64(defaultMask)), type: intType)
-        context.append(.constValue(result: maskExpr, value: .intLiteral(Int64(defaultMask))))
+
+        let maskExpr = arena.appendExpr(.intLiteral(defaultMask), type: intType)
+        context.append(.constValue(result: maskExpr, value: .intLiteral(defaultMask)))
         arguments.append(maskExpr)
     }
     
     // MARK: - 定数
     
     static let unresolvedCoroutineHandleMemberNames: Set<String> = ["await", "join", "cancel"]
-    private static let unresolvedChannelMemberNames: Set<String> = ["send", "receive", "close"]
+    static let unresolvedChannelMemberNames: Set<String> = ["send", "receive", "close"]
 }
 
-// MARK: - レシーバー構造体
-
-struct MemberCallReceiver {
-    let expr: ExprID
-    let loweredID: KIRExprID
-}

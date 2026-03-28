@@ -107,30 +107,29 @@ final class StdlibFunctionLowerer {
         
         guard args.isEmpty,
               let callBinding = sema.bindings.callBindings[exprID],
-              let chosen = callBinding.chosenCallee,
-              let symbol = sema.symbols.symbol(chosen),
+              let symbol = sema.symbols.symbol(callBinding.chosenCallee),
               symbol.kind == .function,
-              let signature = sema.symbols.functionSignature(for: chosen),
+              let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
               signature.reifiedTypeParameterIndices.count == 1 else {
             return nil
         }
         
         // Reified型パラメータからEnumシンボルを取得
-        let enumTypeParam = signature.reifiedTypeParameterIndices[0]
+        let enumTypeParam = signature.reifiedTypeParameterIndices.first ?? 0
         let concreteEnumType = enumTypeParam < callBinding.substitutedTypeArguments.count ?
             callBinding.substitutedTypeArguments[enumTypeParam] : sema.types.anyType
         
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(concreteEnumType)),
               let enumSymbol = sema.symbols.symbol(classType.classSymbol),
-              enumSymbol.kind == .enum else {
+              enumSymbol.kind == SymbolKind.enumClass else {
             return nil
         }
-        
+
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
-        let enumTypeID = RuntimeTypeCheckToken.stableNominalTypeID(symbol: enumSymbol, sema: sema, interner: interner)
+        let enumTypeID = RuntimeTypeCheckToken.stableNominalTypeID(symbol: classType.classSymbol, sema: sema, interner: interner)
         let enumTypeIDExpr = arena.appendExpr(.intLiteral(enumTypeID), type: sema.types.intType)
         context.append(.constValue(result: enumTypeIDExpr, value: .intLiteral(enumTypeID)))
-        
+
         context.append(.call(
             symbol: nil,
             callee: interner.intern("kk_enum_values"),
@@ -156,30 +155,29 @@ final class StdlibFunctionLowerer {
         
         guard args.isEmpty,
               let callBinding = sema.bindings.callBindings[exprID],
-              let chosen = callBinding.chosenCallee,
-              let symbol = sema.symbols.symbol(chosen),
+              let symbol = sema.symbols.symbol(callBinding.chosenCallee),
               symbol.kind == .function,
-              let signature = sema.symbols.functionSignature(for: chosen),
+              let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
               signature.reifiedTypeParameterIndices.count == 1 else {
             return nil
         }
         
         // Reified型パラメータからEnumシンボルを取得
-        let enumTypeParam = signature.reifiedTypeParameterIndices[0]
+        let enumTypeParam = signature.reifiedTypeParameterIndices.first ?? 0
         let concreteEnumType = enumTypeParam < callBinding.substitutedTypeArguments.count ?
             callBinding.substitutedTypeArguments[enumTypeParam] : sema.types.anyType
         
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(concreteEnumType)),
               let enumSymbol = sema.symbols.symbol(classType.classSymbol),
-              enumSymbol.kind == .enum else {
+              enumSymbol.kind == SymbolKind.enumClass else {
             return nil
         }
-        
+
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
-        let enumTypeID = RuntimeTypeCheckToken.stableNominalTypeID(symbol: enumSymbol, sema: sema, interner: interner)
+        let enumTypeID = RuntimeTypeCheckToken.stableNominalTypeID(symbol: classType.classSymbol, sema: sema, interner: interner)
         let enumTypeIDExpr = arena.appendExpr(.intLiteral(enumTypeID), type: sema.types.intType)
         context.append(.constValue(result: enumTypeIDExpr, value: .intLiteral(enumTypeID)))
-        
+
         context.append(.call(
             symbol: nil,
             callee: interner.intern("kk_enum_entries"),
@@ -205,34 +203,29 @@ final class StdlibFunctionLowerer {
         
         guard args.count == 1,
               let callBinding = sema.bindings.callBindings[exprID],
-              let chosen = callBinding.chosenCallee,
-              let symbol = sema.symbols.symbol(chosen),
+              let symbol = sema.symbols.symbol(callBinding.chosenCallee),
               symbol.kind == .function,
-              let signature = sema.symbols.functionSignature(for: chosen),
+              let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
               signature.reifiedTypeParameterIndices.count == 1 else {
             return nil
         }
         
         // Reified型パラメータからEnumシンボルを取得
-        let enumTypeParam = signature.reifiedTypeParameterIndices[0]
+        let enumTypeParam = signature.reifiedTypeParameterIndices.first ?? 0
         let concreteEnumType = enumTypeParam < callBinding.substitutedTypeArguments.count ?
             callBinding.substitutedTypeArguments[enumTypeParam] : sema.types.anyType
         
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(concreteEnumType)),
               let enumSymbol = sema.symbols.symbol(classType.classSymbol),
-              enumSymbol.kind == .enum else {
+              enumSymbol.kind == SymbolKind.enumClass else {
             return nil
         }
-        
+
         // 文字列引数のローワーリング
-        let stringArgID = coordinator.driver.lowerExpr(
-            args[0].expr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
-        
+        let stringArgID = context.lowerSubExpr(args[0].expr, driver: coordinator.driver)
+
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
-        let enumTypeID = RuntimeTypeCheckToken.stableNominalTypeID(symbol: enumSymbol, sema: sema, interner: interner)
+        let enumTypeID = RuntimeTypeCheckToken.stableNominalTypeID(symbol: classType.classSymbol, sema: sema, interner: interner)
         let enumTypeIDExpr = arena.appendExpr(.intLiteral(enumTypeID), type: sema.types.intType)
         context.append(.constValue(result: enumTypeIDExpr, value: .intLiteral(enumTypeID)))
         
@@ -277,17 +270,17 @@ final class StdlibFunctionLowerer {
         let arena = context.arena
         let interner = context.interner
         let boundType = sema.bindings.exprTypes[exprID]
-        
+
         guard let callBinding = sema.bindings.callBindings[exprID],
-              let chosen = callBinding.chosenCallee,
-              let symbol = sema.symbols.symbol(chosen) else {
+              let symbol = sema.symbols.symbol(callBinding.chosenCallee) else {
             return nil
         }
-        
+
         let calleeName = interner.resolve(symbol.name)
-        
+
         // maxOf/minOf 関数の処理
         if (calleeName == "maxOf" || calleeName == "minOf") && args.count >= 2 {
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
             return handleMaxMinFunctions(
                 calleeName: calleeName,
                 args: args,
@@ -295,10 +288,10 @@ final class StdlibFunctionLowerer {
                 context: &context
             )
         }
-        
+
         return nil
     }
-    
+
     /// maxOf/minOf 関数を処理
     private func handleMaxMinFunctions(
         calleeName: String,
@@ -312,11 +305,7 @@ final class StdlibFunctionLowerer {
         
         let runtimeName = calleeName == "maxOf" ? "kk_max_of" : "kk_min_of"
         let loweredArgs = args.map { arg in
-            coordinator.driver.lowerExpr(
-                arg.expr,
-                shared: context.sharedContext,
-                emit: context.emitContext()
-            )
+            context.lowerSubExpr(arg.expr, driver: coordinator.driver)
         }
         
         context.append(.call(
@@ -362,23 +351,14 @@ final class StdlibFunctionLowerer {
         
         guard args.count == 2,
               let callBinding = sema.bindings.callBindings[exprID],
-              let chosen = callBinding.chosenCallee,
-              let symbol = sema.symbols.symbol(chosen),
+              let symbol = sema.symbols.symbol(callBinding.chosenCallee),
               interner.resolve(symbol.name) == "repeat" else {
             return nil
         }
         
-        let timesArgID = coordinator.driver.lowerExpr(
-            args[0].expr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let timesArgID = context.lowerSubExpr(args[0].expr, driver: coordinator.driver)
         
-        let actionArgID = coordinator.driver.lowerExpr(
-            args[1].expr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let actionArgID = context.lowerSubExpr(args[1].expr, driver: coordinator.driver)
         
         let result = arena.appendExpr(.unit, type: sema.types.unitType)
         context.append(.constValue(result: result, value: .unit))
@@ -419,18 +399,13 @@ final class StdlibFunctionLowerer {
         let boundType = sema.bindings.exprTypes[exprID]
         
         guard let callBinding = sema.bindings.callBindings[exprID],
-              let chosen = callBinding.chosenCallee,
-              let symbol = sema.symbols.symbol(chosen),
+              let symbol = sema.symbols.symbol(callBinding.chosenCallee),
               interner.resolve(symbol.name) == "arrayOf" else {
             return nil
         }
         
         let loweredArgs = args.map { arg in
-            coordinator.driver.lowerExpr(
-                arg.expr,
-                shared: context.sharedContext,
-                emit: context.emitContext()
-            )
+            context.lowerSubExpr(arg.expr, driver: coordinator.driver)
         }
         
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
@@ -499,17 +474,12 @@ final class StdlibFunctionLowerer {
         
         guard args.count == 1,
               let callBinding = sema.bindings.callBindings[exprID],
-              let chosen = callBinding.chosenCallee,
-              let symbol = sema.symbols.symbol(chosen),
+              let symbol = sema.symbols.symbol(callBinding.chosenCallee),
               interner.resolve(symbol.name) == "measureTimeMillis" else {
             return nil
         }
         
-        let actionArgID = coordinator.driver.lowerExpr(
-            args[0].expr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let actionArgID = context.lowerSubExpr(args[0].expr, driver: coordinator.driver)
         
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         
@@ -538,17 +508,12 @@ final class StdlibFunctionLowerer {
         
         guard args.count == 1,
               let callBinding = sema.bindings.callBindings[exprID],
-              let chosen = callBinding.chosenCallee,
-              let symbol = sema.symbols.symbol(chosen),
+              let symbol = sema.symbols.symbol(callBinding.chosenCallee),
               interner.resolve(symbol.name) == "measureNanoTime" else {
             return nil
         }
         
-        let actionArgID = coordinator.driver.lowerExpr(
-            args[0].expr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let actionArgID = context.lowerSubExpr(args[0].expr, driver: coordinator.driver)
         
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         
@@ -577,17 +542,12 @@ final class StdlibFunctionLowerer {
         
         guard args.count == 1,
               let callBinding = sema.bindings.callBindings[exprID],
-              let chosen = callBinding.chosenCallee,
-              let symbol = sema.symbols.symbol(chosen),
+              let symbol = sema.symbols.symbol(callBinding.chosenCallee),
               interner.resolve(symbol.name) == "measureTime" else {
             return nil
         }
         
-        let actionArgID = coordinator.driver.lowerExpr(
-            args[0].expr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let actionArgID = context.lowerSubExpr(args[0].expr, driver: coordinator.driver)
         
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         
@@ -616,17 +576,12 @@ final class StdlibFunctionLowerer {
         
         guard args.count == 1,
               let callBinding = sema.bindings.callBindings[exprID],
-              let chosen = callBinding.chosenCallee,
-              let symbol = sema.symbols.symbol(chosen),
+              let symbol = sema.symbols.symbol(callBinding.chosenCallee),
               interner.resolve(symbol.name) == "measureTimedValue" else {
             return nil
         }
         
-        let actionArgID = coordinator.driver.lowerExpr(
-            args[0].expr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let actionArgID = context.lowerSubExpr(args[0].expr, driver: coordinator.driver)
         
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         
@@ -656,10 +611,9 @@ final class StdlibFunctionLowerer {
         let boundType = sema.bindings.exprTypes[exprID]
         
         guard let callBinding = sema.bindings.callBindings[exprID],
-              let chosen = callBinding.chosenCallee,
-              let symbol = sema.symbols.symbol(chosen),
+              let symbol = sema.symbols.symbol(callBinding.chosenCallee),
               interner.resolve(symbol.name) == "typeOf",
-              let signature = sema.symbols.functionSignature(for: chosen),
+              let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
               signature.reifiedTypeParameterIndices.count == 1 else {
             return nil
         }
@@ -667,7 +621,7 @@ final class StdlibFunctionLowerer {
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         
         // Reified型パラメータから型情報を取得
-        let typeParamIndex = signature.reifiedTypeParameterIndices[0]
+        let typeParamIndex = signature.reifiedTypeParameterIndices.first ?? 0
         let concreteType = typeParamIndex < callBinding.substitutedTypeArguments.count ?
             callBinding.substitutedTypeArguments[typeParamIndex] : sema.types.anyType
         
@@ -693,7 +647,7 @@ final class StdlibFunctionLowerer {
         context.append(.constValue(result: typeTokenExpr, value: .intLiteral(typeToken)))
         
         // KTypeオブジェクトの生成
-        let kTypeResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.kTypeType)
+        let kTypeResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
         context.append(.call(
             symbol: nil,
             callee: interner.intern("kk_typeof"),
@@ -721,29 +675,20 @@ final class StdlibFunctionLowerer {
         
         guard args.count == 2,
               let callBinding = sema.bindings.callBindings[exprID],
-              let chosen = callBinding.chosenCallee,
-              let symbol = sema.symbols.symbol(chosen),
+              let symbol = sema.symbols.symbol(callBinding.chosenCallee),
               interner.resolve(symbol.name) == "generateSequence" else {
             return nil
         }
         
-        let seedFunctionType = sema.bindings.exprTypes[args[0].expr]
+        let seedFunctionType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
         guard case let .functionType(functionType) = sema.types.kind(of: sema.types.makeNonNullable(seedFunctionType)),
               functionType.params.isEmpty else {
             return nil
         }
         
-        let seedArgID = coordinator.driver.lowerExpr(
-            args[0].expr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let seedArgID = context.lowerSubExpr(args[0].expr, driver: coordinator.driver)
         
-        let nextArgID = coordinator.driver.lowerExpr(
-            args[1].expr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let nextArgID = context.lowerSubExpr(args[1].expr, driver: coordinator.driver)
         
         guard let seedCallableInfo = coordinator.driver.ctx.callableValueInfo(for: seedArgID) else {
             return nil
@@ -765,7 +710,7 @@ final class StdlibFunctionLowerer {
         
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         context.append(.call(
-            symbol: chosen,
+            symbol: callBinding.chosenCallee,
             callee: interner.intern("kk_sequence_generate"),
             arguments: [seedResult, nextArgID],
             result: result,
@@ -817,11 +762,7 @@ final class StdlibFunctionLowerer {
             return nil
         }
         
-        let loweredReceiverID = coordinator.driver.lowerExpr(
-            args[0].expr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let loweredReceiverID = context.lowerSubExpr(args[0].expr, driver: coordinator.driver)
         
         // 暗黙的レシーバーの設定
         let receiverSymbol = coordinator.driver.ctx.allocateSyntheticGeneratedSymbol()
@@ -834,11 +775,7 @@ final class StdlibFunctionLowerer {
         coordinator.driver.ctx.setLocalValue(receiverSymExpr, for: receiverSymbol)
         coordinator.driver.ctx.setImplicitReceiver(symbol: receiverSymbol, exprID: receiverSymExpr)
         
-        let loweredLambdaID = coordinator.driver.lowerExpr(
-            args[1].expr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let loweredLambdaID = context.lowerSubExpr(args[1].expr, driver: coordinator.driver)
         
         coordinator.driver.ctx.restoreImplicitReceiver(symbol: savedReceiverSymbol, exprID: savedReceiverExprID)
         
@@ -878,11 +815,7 @@ final class StdlibFunctionLowerer {
             return nil
         }
         
-        let loweredLambdaID = coordinator.driver.lowerExpr(
-            args[0].expr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let loweredLambdaID = context.lowerSubExpr(args[0].expr, driver: coordinator.driver)
         
         let result = arena.appendExpr(
             .temporary(Int32(arena.expressions.count)),

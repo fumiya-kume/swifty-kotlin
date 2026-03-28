@@ -101,11 +101,7 @@ final class PrimitiveOperationLowerer {
             }
             
             if !runtimeName.isEmpty {
-                let receiverID = coordinator.driver.lowerExpr(
-                    receiverExpr,
-                    shared: context.sharedContext,
-                    emit: context.emitContext()
-                )
+                let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
                 
                 context.append(.call(
                     symbol: nil,
@@ -151,11 +147,7 @@ final class PrimitiveOperationLowerer {
         }
         
         if let name = runtimeName {
-            let receiverID = coordinator.driver.lowerExpr(
-                receiverExpr,
-                shared: context.sharedContext,
-                emit: context.emitContext()
-            )
+            let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
             
             context.append(.call(
                 symbol: nil,
@@ -189,11 +181,7 @@ final class PrimitiveOperationLowerer {
         let longType = sema.types.longType
         
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nonNullReceiverType)
-        let receiverID = coordinator.driver.lowerExpr(
-            receiverExpr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
         
         if nonNullReceiverType == intType {
             let runtimeName = calleeStr == "rotateLeft" ? "kk_int_rotateLeft" : "kk_int_rotateRight"
@@ -282,11 +270,7 @@ final class PrimitiveOperationLowerer {
             }
             
             if let primitiveCallee {
-                let receiverID = coordinator.driver.lowerExpr(
-                    receiverExpr,
-                    shared: context.sharedContext,
-                    emit: context.emitContext()
-                )
+                let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
                 
                 let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nonNullReceiverType)
                 context.append(.call(
@@ -397,11 +381,7 @@ final class PrimitiveOperationLowerer {
         }
         
         if let callee = conversionCallee {
-            let receiverID = coordinator.driver.lowerExpr(
-                receiverExpr,
-                shared: context.sharedContext,
-                emit: context.emitContext()
-            )
+            let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
             
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nonNullResultType)
             context.append(.call(
@@ -436,11 +416,7 @@ final class PrimitiveOperationLowerer {
             if args.count == 2 {
                 let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
                 if let prefix = CallLoweringHelpers.numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
-                    let receiverID = coordinator.driver.lowerExpr(
-                        receiverExpr,
-                        shared: context.sharedContext,
-                        emit: context.emitContext()
-                    )
+                    let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
                     
                     let result = context.arena.appendExpr(.temporary(Int32(context.arena.expressions.count)), type: receiverType)
                     context.append(.call(
@@ -471,11 +447,7 @@ final class PrimitiveOperationLowerer {
                 let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
                 if let prefix = CallLoweringHelpers.numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
                     let suffix = calleeStr == "coerceAtLeast" ? "_coerceAtLeast" : "_coerceAtMost"
-                    let receiverID = coordinator.driver.lowerExpr(
-                        receiverExpr,
-                        shared: context.sharedContext,
-                        emit: context.emitContext()
-                    )
+                    let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
                     
                     let result = context.arena.appendExpr(.temporary(Int32(context.arena.expressions.count)), type: receiverType)
                     context.append(.call(

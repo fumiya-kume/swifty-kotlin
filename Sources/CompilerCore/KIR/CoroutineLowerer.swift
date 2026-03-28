@@ -53,22 +53,21 @@ final class CoroutineLowerer {
     ) -> KIRExprID? {
         let sema = context.sema
         let interner = context.interner
-        let calleeStr = interner.resolve(calleeName)
         let knownNames = KnownCompilerNames(interner: interner)
-        
+
         // runBlocking, launch, async の処理
-        if calleeStr == knownNames.runBlocking || 
-           calleeStr == knownNames.launch || 
-           calleeStr == knownNames.async {
+        if calleeName == knownNames.runBlocking ||
+           calleeName == knownNames.launch ||
+           calleeName == knownNames.async {
             return lowerCoroutineLauncherCall(
                 calleeName: calleeName,
                 args: args,
                 context: &context
             )
         }
-        
+
         // withContext の処理
-        if calleeStr == knownNames.withContext && args.count >= 2 {
+        if calleeName == knownNames.withContext && args.count >= 2 {
             return lowerWithContextCall(
                 calleeName: calleeName,
                 args: args,
@@ -91,7 +90,7 @@ final class CoroutineLowerer {
         let sema = context.sema
         let arena = context.arena
         let interner = context.interner
-        let boundType = sema.bindings.exprTypes[/* exprID from context */] ?? sema.types.anyType
+        let boundType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         
         let calleeStr = interner.resolve(calleeName)
         let runtimeName: String? = switch calleeStr {
@@ -102,11 +101,7 @@ final class CoroutineLowerer {
         }
         
         if let runtimeName {
-            let receiverID = coordinator.driver.lowerExpr(
-                receiverExpr,
-                shared: context.sharedContext,
-                emit: context.emitContext()
-            )
+            let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
             
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
             context.append(.call(
@@ -135,7 +130,7 @@ final class CoroutineLowerer {
         let sema = context.sema
         let arena = context.arena
         let interner = context.interner
-        let boundType = sema.bindings.exprTypes[/* exprID from context */] ?? sema.types.anyType
+        let boundType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         
         let calleeStr = interner.resolve(calleeName)
         let runtimeName: String? = switch calleeStr {
@@ -146,11 +141,7 @@ final class CoroutineLowerer {
         }
         
         if let runtimeName {
-            let receiverID = coordinator.driver.lowerExpr(
-                receiverExpr,
-                shared: context.sharedContext,
-                emit: context.emitContext()
-            )
+            let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
             
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
             context.append(.call(
@@ -192,7 +183,7 @@ final class CoroutineLowerer {
             finalArgs.insert(contentsOf: callableInfo.captureArguments, at: 1)
         }
         
-        let runtimeName: String = switch calleeStr {
+        let runtimeName: String = switch calleeName {
         case knownNames.runBlocking: "kk_run_blocking"
         case knownNames.launch: "kk_launch"
         case knownNames.async: "kk_async"
@@ -283,8 +274,7 @@ final class CoroutineLowerer {
         let boundType = sema.bindings.exprTypes[exprID]
         
         guard let callBinding = sema.bindings.callBindings[exprID],
-              let chosen = callBinding.chosenCallee,
-              let symbol = sema.symbols.symbol(chosen),
+              let symbol = sema.symbols.symbol(callBinding.chosenCallee),
               interner.resolve(symbol.name) == "coroutine" else {
             return nil
         }
@@ -294,23 +284,15 @@ final class CoroutineLowerer {
             return nil
         }
         
-        let contextArgID = coordinator.driver.lowerExpr(
-            args[0].expr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let contextArgID = context.lowerSubExpr(args[0].expr, driver: coordinator.driver)
         
-        let blockArgID = coordinator.driver.lowerExpr(
-            args[1].expr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let blockArgID = context.lowerSubExpr(args[1].expr, driver: coordinator.driver)
         
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         
         // coroutineビルダーの実装
         context.append(.call(
-            symbol: chosen,
+            symbol: callBinding.chosenCallee,
             callee: interner.intern("kk_coroutine_builder"),
             arguments: [contextArgID, blockArgID],
             result: result,
@@ -336,26 +318,17 @@ final class CoroutineLowerer {
         let boundType = sema.bindings.exprTypes[exprID]
         
         guard let callBinding = sema.bindings.callBindings[exprID],
-              let chosen = callBinding.chosenCallee,
-              let signature = sema.symbols.functionSignature(for: chosen),
+              let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
               signature.isSuspend else {
             return nil
         }
         
         // サスペンド関数の引数をローワーリング
         let loweredArgIDs = args.map { arg in
-            coordinator.driver.lowerExpr(
-                arg.expr,
-                shared: context.sharedContext,
-                emit: context.emitContext()
-            )
+            context.lowerSubExpr(arg.expr, driver: coordinator.driver)
         }
         
-        let loweredCalleeID = coordinator.driver.lowerExpr(
-            calleeExpr,
-            shared: context.sharedContext,
-            emit: context.emitContext()
-        )
+        let loweredCalleeID = context.lowerSubExpr(calleeExpr, driver: coordinator.driver)
         
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         
@@ -372,7 +345,7 @@ final class CoroutineLowerer {
         let normalizedResult = coordinator.driver.callSupportLowerer.normalizedCallArguments(
             providedArguments: loweredArgIDs,
             callBinding: callBinding,
-            chosenCallee: chosen,
+            chosenCallee: callBinding.chosenCallee,
             spreadFlags: args.map(\.isSpread),
             ast: context.ast,
             sema: sema,
@@ -383,10 +356,10 @@ final class CoroutineLowerer {
         )
         
         if normalizedResult.defaultMask != 0,
-           sema.symbols.externalLinkName(for: chosen)?.isEmpty ?? true {
+           sema.symbols.externalLinkName(for: callBinding.chosenCallee)?.isEmpty ?? true {
             
             appendReifiedTypeTokens(
-                chosenCallee: chosen,
+                chosenCallee: callBinding.chosenCallee,
                 callBinding: callBinding,
                 context: &context,
                 arguments: &finalArguments
@@ -398,8 +371,9 @@ final class CoroutineLowerer {
                 arguments: &finalArguments
             )
             
-            let stubName = interner.intern(interner.resolve(sema.symbols.symbol(chosen)?.name ?? "unknown") + "$default")
-            let stubSym = coordinator.driver.callSupportLowerer.defaultStubSymbol(for: chosen)
+            let calleeBaseName = sema.symbols.symbol(callBinding.chosenCallee).map { interner.resolve($0.name) } ?? "unknown"
+            let stubName = interner.intern(calleeBaseName + "$default")
+            let stubSym = coordinator.driver.callSupportLowerer.defaultStubSymbol(for: callBinding.chosenCallee)
             
             context.append(.call(
                 symbol: stubSym,
@@ -410,17 +384,17 @@ final class CoroutineLowerer {
                 thrownResult: nil
             ))
         } else {
-            let loweredCalleeName: InternedString = if let externalLinkName = sema.symbols.externalLinkName(for: chosen),
+            let loweredCalleeName: InternedString = if let externalLinkName = sema.symbols.externalLinkName(for: callBinding.chosenCallee),
                                                            !externalLinkName.isEmpty {
                 interner.intern(externalLinkName)
-            } else if let symbol = sema.symbols.symbol(chosen) {
+            } else if let symbol = sema.symbols.symbol(callBinding.chosenCallee) {
                 symbol.name
             } else {
                 interner.intern("suspend_call")
             }
             
             context.append(.call(
-                symbol: chosen,
+                symbol: callBinding.chosenCallee,
                 callee: loweredCalleeName,
                 arguments: finalArguments,
                 result: result,
@@ -441,15 +415,11 @@ final class CoroutineLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
-        guard let callBinding = sema.bindings.callBindings[/* exprID from context */],
-              let receiverType = sema.bindings.exprTypes[callBinding.receiverExpr] else {
-            return false
-        }
-        
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         return isCoroutineHandleReceiverType(receiverType, sema: sema, interner: interner) &&
                MemberCallLowerer.unresolvedCoroutineHandleMemberNames.contains(interner.resolve(calleeName))
     }
-    
+
     /// チャネルのコールか判定
     private func isChannelCall(
         receiverExpr: ExprID,
@@ -457,11 +427,7 @@ final class CoroutineLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
-        guard let callBinding = sema.bindings.callBindings[/* exprID from context */],
-              let receiverType = sema.bindings.exprTypes[callBinding.receiverExpr] else {
-            return false
-        }
-        
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         return isChannelReceiverType(receiverType, sema: sema, interner: interner) &&
                MemberCallLowerer.unresolvedChannelMemberNames.contains(interner.resolve(calleeName))
     }
@@ -524,16 +490,16 @@ final class CoroutineLowerer {
     
     /// デフォルトマスク引数を追加
     private func appendDefaultMaskArgument(
-        defaultMask: Int,
+        defaultMask: Int64,
         context: inout CallLoweringContext,
         arguments: inout [KIRExprID]
     ) {
         let sema = context.sema
         let arena = context.arena
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        
-        let maskExpr = arena.appendExpr(.intLiteral(Int64(defaultMask)), type: intType)
-        context.append(.constValue(result: maskExpr, value: .intLiteral(Int64(defaultMask))))
+
+        let maskExpr = arena.appendExpr(.intLiteral(defaultMask), type: intType)
+        context.append(.constValue(result: maskExpr, value: .intLiteral(defaultMask)))
         arguments.append(maskExpr)
     }
 }
