@@ -1415,6 +1415,23 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_toBigDecimal",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_bignum_toString",
+            parameters: [
+                RuntimeABIParameter(name: "numRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         // STDLIB-HOF-023: Advanced String Higher-Order Functions
         RuntimeABIFunctionSpec(
             name: "kk_string_mapIndexed",
