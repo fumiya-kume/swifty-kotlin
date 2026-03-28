@@ -948,6 +948,31 @@
 
 #### Phase 5: 実験的機能と高度API (低優先度)
 
+- [x] STDLIB-EXP-160: コンテキストレシーバ完全実装
+  - **仕様**: コンテキストレシーバの完全サポート
+  - **実装内容**:
+    - コンテキストレシーバ宣言: context(Context) fun function()
+    - コンテキストパラメータ: -Xcontext-parametersコンパイラ引数
+    - 明示的コンテキスト引数: -Xexplicit-context-arguments
+    - コンテキストの解決とバインディング
+    - 入れ込みコンテキストとコンテキスト継承
+  - **現状**: コンテキストレシーバは未実装
+  - **関連ファイル**: `HeaderHelpers+SyntheticContextReceivers.swift`
+  - **テストケース**: `Scripts/diff_cases/context_receivers.kt`
+
+- [x] STDLIB-EXP-161: バリュークラス完全実装
+  - **仕様**: バリュークラスの完全サポート
+  - **実装内容**:
+    - @JvmInlineアノテーション: inline classの宣言
+    - 単一フィールド: 1つのプライマリコンストラクタプロパティ
+    - ボクシング暴露: -Xjvm-expose-boxedでのJava公開
+    - ジェネリックインラインクラス: -Xinline-classes
+    - マルチフィールドバリュークラス: -Xvalue-classes
+  - **現状**: インラインクラスは未実装
+  - **関連ファイル**: `HeaderHelpers+SyntheticInlineClasses.swift`
+  - **テストケース**: `Scripts/diff_cases/value_classes.kt`
+
+
 - [ ] STDLIB-EXP-162: 高度型推論完全実装
   - **仕様**: 高度な型推論アルゴリズムの完全サポート
   - **実装内容**:
