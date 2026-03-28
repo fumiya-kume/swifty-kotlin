@@ -508,17 +508,18 @@
 
 #### Phase 3: 乱数とUUID (低優先度)
 
-- [ ] STDLIB-RANDOM-099: Random基本実装
-  - **仕様**: Randomクラスの基本的な乱数生成
+- [ ] STDLIB-RANDOM-100: Random高度機能完全実装
+  - **仕様**: Randomクラスの高度な機能
   - **実装内容**:
-    - 整数乱数: nextInt(), nextInt(bound)
-    - 長整数乱数: nextLong(), nextLong(bound)
-    - 浮動小数点乱数: nextDouble(), nextFloat()
-    - 真偽値乱数: nextBoolean()
-    - バイト列乱数: nextBytes()
-  - **現状**: 基本的なRandomは実装済み、境界付きは未実装
+    - シード指定: Random(seed)
+    - ガウス分布: nextGaussian()
+    - 指数分布: nextExponential()
+    - 一様分布: nextUniform()
+    - 乱数列: ints(), longs(), doubles()
+    - ストリームAPI: random().ints()
+  - **現状**: 基本的なRandomは実装済み、高度な分布は未実装
   - **関連ファイル**: `RuntimeRandom.swift`
-  - **テストケース**: `Scripts/diff_cases/random_basic.kt`
+  - **テストケース**: `Scripts/diff_cases/random_extended.kt`
 
 - [ ] STDLIB-RANDOM-100: Random高度機能完全実装
   - **仕様**: Randomクラスの高度な機能
