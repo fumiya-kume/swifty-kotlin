@@ -468,18 +468,6 @@
   - **関連ファイル**: `RuntimeRegex.swift`
   - **テストケース**: `Scripts/diff_cases/regex_named_groups.kt`
 
-- [ ] STDLIB-REGEX-098: アンカーと境界完全実装
-  - **仕様**: 正規表現アンカーと境界の完全サポート
-  - **実装内容**:
-    - 行アンカー: ^, $
-    - 単語境界: \b, \B
-    - 文字境界: \G
-    - 入力境界: \A, \z, \Z
-    - 前瞻/後瞻: (?=...), (?!...), (?<=...), (?<!...)
-  - **現状**: 基本的なアンカーは実装済み、境界は未実装
-  - **関連ファイル**: `RuntimeRegex.swift`
-  - **テストケース**: `Scripts/diff_cases/regex_anchors.kt`
-
 #### Phase 3: 乱数とUUID (低優先度)
 
 - [ ] STDLIB-RANDOM-099: Random基本実装
