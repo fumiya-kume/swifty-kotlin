@@ -321,6 +321,22 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
+    func testCompile_generics_interface() throws {
+        try assertKotlinCompilesToKIR("""
+        interface Box<T> {
+            val value: T
+            fun get(): T = value
+        }
+        class IntBox : Box<Int> {
+            override val value: Int = 42
+        }
+        fun main() {
+            val box: Box<Int> = IntBox()
+            box.get()
+        }
+        """)
+    }
+
     func testCompile_generics_upperBound() throws {
         try assertKotlinCompilesToKIR("""
         fun <T : Comparable<T>> maxOf(a: T, b: T): T {
