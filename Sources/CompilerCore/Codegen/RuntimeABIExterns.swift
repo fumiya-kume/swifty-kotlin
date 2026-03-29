@@ -2316,6 +2316,50 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // REFL-006: Annotation reflection
+
+    public static let kk_kclass_register_annotation = ExternDecl(
+        name: "kk_kclass_register_annotation",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_get_annotations = ExternDecl(
+        name: "kk_kclass_get_annotations",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_find_annotation = ExternDecl(
+        name: "kk_kclass_find_annotation",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_has_annotation = ExternDecl(
+        name: "kk_kclass_has_annotation",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_annotation_class_name = ExternDecl(
+        name: "kk_annotation_class_name",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_annotation_simple_class_name = ExternDecl(
+        name: "kk_annotation_simple_class_name",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_annotation_get_arguments = ExternDecl(
+        name: "kk_annotation_get_arguments",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // REFL-005: KType and typeOf<T>()
 
     public static let kk_ktype_create = ExternDecl(
@@ -4099,6 +4143,14 @@ public enum RuntimeABIExterns {
             kk_kclass_isInstance,
             kk_kclass_members,
             kk_kclass_constructors,
+            // REFL-006: Annotation reflection
+            kk_kclass_register_annotation,
+            kk_kclass_get_annotations,
+            kk_kclass_find_annotation,
+            kk_kclass_has_annotation,
+            kk_annotation_class_name,
+            kk_annotation_simple_class_name,
+            kk_annotation_get_arguments,
             kk_ktype_create,
             kk_ktype_classifier,
             kk_ktype_arguments,

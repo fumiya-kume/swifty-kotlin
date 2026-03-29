@@ -58,6 +58,11 @@ private final class RuntimeResumeContinuationBox: @unchecked Sendable {
     }
 }
 
+private final class RuntimeCoroutineExceptionHandlerBox: @unchecked Sendable {
+    let handler: (Error) -> Void
+    init(_ handler: @escaping (Error) -> Void) { self.handler = handler }
+}
+
 // MARK: - CORO-004 Migration Plan: DispatchSemaphore -> Continuation Model
 //
 // The suspend-entry loop (`runSuspendEntryLoopWithContinuation`) has already
