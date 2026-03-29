@@ -9,9 +9,11 @@ fun main() {
     val norm = unnorm.normalize()
     println(norm.toString())
 
-    // fileName property (Path wrapping last component)
+    // fileName property (Path? wrapping last component, null for root paths)
     val fn = child.fileName
-    println(fn.toString())
+    if (fn != null) {
+        println(fn.toString())
+    }
 
     // root property
     val root = child.root

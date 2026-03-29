@@ -2,7 +2,7 @@
 ///
 /// Covers:
 /// - `Path(pathString: String)` constructor
-/// - `name: String`, `parent: Path?`, `fileName: Path`, `root: Path?`, `nameCount: Int` properties
+/// - `name: String`, `parent: Path?`, `fileName: Path?`, `root: Path?`, `nameCount: Int` properties
 /// - `toString(): String`
 /// - `resolve(other: String): Path`, `resolve(other: Path): Path`
 /// - `relativize(other: Path): Path`, `normalize(): Path`
@@ -267,13 +267,13 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // MARK: - Path.fileName property (Path wrapping last component)
+        // MARK: - Path.fileName property (Path? wrapping last component, null for root paths)
 
         registerPathMemberProperty(
             named: "fileName",
             externalLinkName: "kk_path_fileName",
             ownerSymbol: pathSymbol,
-            returnType: pathType,
+            returnType: nullablePathType,
             symbols: symbols,
             interner: interner
         )

@@ -1836,389 +1836,422 @@ symbol s1834 kind=function fq=java.io.File.bufferedReader vis=public flags=synth
 symbol s1835 kind=function fq=java.io.BufferedReader.readLine vis=public flags=synthetic sig=recv=Class#1833 params=[] ret=String? suspend=0 defaults=[] vararg=[]
 symbol s1836 kind=function fq=java.io.BufferedReader.readLines vis=public flags=synthetic sig=recv=Class#1833 params=[] ret=Class#96<out String> suspend=0 defaults=[] vararg=[]
 symbol s1837 kind=function fq=java.io.BufferedReader.close vis=public flags=synthetic sig=recv=Class#1833 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s1838 kind=class fq=kotlin.collections.IndexedValue vis=public flags=synthetic|dataType
-symbol s1839 kind=typeParameter fq=kotlin.collections.IndexedValue.T vis=private flags=_
-symbol s1840 kind=function fq=kotlin.collections.IndexedValue.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#1838<out T#1839> params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1841 kind=function fq=kotlin.collections.IndexedValue.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#1838<out T#1839> params=[] ret=T#1839 suspend=0 defaults=[] vararg=[]
-symbol s1842 kind=property fq=kotlin.collections.IndexedValue.index vis=public flags=synthetic type=Int
-symbol s1843 kind=property fq=kotlin.collections.IndexedValue.value vis=public flags=synthetic type=T#1839
-symbol s1844 kind=function fq=kotlin.collections.List.withIndex vis=public flags=synthetic sig=recv=Class#96<out T#97> params=[] ret=Class#78<out Class#1838<out T#97>> suspend=0 defaults=[] vararg=[]
-symbol s1845 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[(Int, T#97) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s1846 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
-symbol s1847 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[(Int, T#97) -> T#1846] ret=Class#96<out T#1846> suspend=0 defaults=[] vararg=[]
-symbol s1848 kind=function fq=kotlin.collections.List.filterIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[(Int, T#97) -> Boolean] ret=Class#96<out T#97> suspend=0 defaults=[] vararg=[]
-symbol s1849 kind=typeParameter fq=kotlin.collections.List.foldIndexed.R vis=private flags=_
-symbol s1850 kind=function fq=kotlin.collections.List.foldIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[T#1849,(Int, T#1849, T#97) -> T#1849] ret=T#1849 suspend=0 defaults=[] vararg=[]
-symbol s1851 kind=typeParameter fq=kotlin.collections.List.reduceIndexed.S vis=private flags=_
-symbol s1852 kind=function fq=kotlin.collections.List.reduceIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[(Int, T#1851, T#97) -> T#1851] ret=T#1851 suspend=0 defaults=[] vararg=[]
-symbol s1853 kind=typeParameter fq=kotlin.collections.List.reduceIndexedOrNull.S vis=private flags=_
-symbol s1854 kind=function fq=kotlin.collections.List.reduceIndexedOrNull vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[(Int, T#1853, T#97) -> T#1853] ret=T#1853? suspend=0 defaults=[] vararg=[]
-symbol s1855 kind=typeParameter fq=kotlin.collections.List.runningFoldIndexed.R vis=private flags=_
-symbol s1856 kind=function fq=kotlin.collections.List.runningFoldIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[T#1855,(Int, T#1855, T#97) -> T#1855] ret=Class#96<out T#1855> suspend=0 defaults=[] vararg=[]
-symbol s1857 kind=typeParameter fq=kotlin.collections.List.runningReduceIndexed.S vis=private flags=_
-symbol s1858 kind=function fq=kotlin.collections.List.runningReduceIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[(Int, T#1857, T#97) -> T#1857] ret=Class#96<out T#1857> suspend=0 defaults=[] vararg=[]
-symbol s1859 kind=typeParameter fq=kotlin.collections.List.scanIndexed.R vis=private flags=_
-symbol s1860 kind=function fq=kotlin.collections.List.scanIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[T#1859,(Int, T#1859, T#97) -> T#1859] ret=Class#96<out T#1859> suspend=0 defaults=[] vararg=[]
-symbol s1861 kind=function fq=kotlin.collections.List.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[] ret=T#97 suspend=0 defaults=[] vararg=[]
-symbol s1862 kind=function fq=kotlin.collections.List.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[] ret=T#97 suspend=0 defaults=[] vararg=[]
-symbol s1863 kind=function fq=kotlin.collections.List.component3 vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[] ret=T#97 suspend=0 defaults=[] vararg=[]
-symbol s1864 kind=function fq=kotlin.collections.List.component4 vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[] ret=T#97 suspend=0 defaults=[] vararg=[]
-symbol s1865 kind=function fq=kotlin.collections.List.component5 vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[] ret=T#97 suspend=0 defaults=[] vararg=[]
-symbol s1866 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s1867 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
-symbol s1868 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
-symbol s1869 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s1870 kind=valueParameter fq=kotlin.ranges.coerceIn.range vis=private flags=synthetic
-symbol s1871 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s1872 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
-symbol s1873 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s1874 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
-symbol s1875 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Long params=[Long,Long] ret=Long suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s1876 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Long params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
-symbol s1877 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Long params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
-symbol s1878 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Long params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
-symbol s1879 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Double params=[Double,Double] ret=Double suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s1880 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Double params=[Double] ret=Double suspend=0 defaults=[0] vararg=[0]
-symbol s1881 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Double params=[Double] ret=Double suspend=0 defaults=[0] vararg=[0]
-symbol s1882 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Float params=[Float,Float] ret=Float suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s1883 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Float params=[Float] ret=Float suspend=0 defaults=[0] vararg=[0]
-symbol s1884 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Float params=[Float] ret=Float suspend=0 defaults=[0] vararg=[0]
-symbol s1885 kind=function fq=kotlin.math.roundToInt vis=public flags=synthetic sig=recv=Float params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1886 kind=function fq=kotlin.math.roundToInt vis=public flags=synthetic sig=recv=Double params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1887 kind=function fq=kotlin.math.roundToLong vis=public flags=synthetic sig=recv=Float params=[] ret=Long suspend=0 defaults=[] vararg=[]
-symbol s1888 kind=function fq=kotlin.math.roundToLong vis=public flags=synthetic sig=recv=Double params=[] ret=Long suspend=0 defaults=[] vararg=[]
-symbol s1889 kind=function fq=kotlin.math.ulp vis=public flags=synthetic sig=recv=Double params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s1890 kind=function fq=kotlin.math.nextUp vis=public flags=synthetic sig=recv=Double params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s1891 kind=function fq=kotlin.math.nextDown vis=public flags=synthetic sig=recv=Double params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s1892 kind=function fq=kotlin.math.ulp vis=public flags=synthetic sig=recv=Float params=[] ret=Float suspend=0 defaults=[] vararg=[]
-symbol s1893 kind=function fq=kotlin.math.nextUp vis=public flags=synthetic sig=recv=Float params=[] ret=Float suspend=0 defaults=[] vararg=[]
-symbol s1894 kind=function fq=kotlin.math.nextDown vis=public flags=synthetic sig=recv=Float params=[] ret=Float suspend=0 defaults=[] vararg=[]
-symbol s1895 kind=function fq=kotlin.countOneBits vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1896 kind=function fq=kotlin.countLeadingZeroBits vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1897 kind=function fq=kotlin.countTrailingZeroBits vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1898 kind=function fq=kotlin.highestOneBit vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1899 kind=function fq=kotlin.lowestOneBit vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1900 kind=function fq=kotlin.takeHighestOneBit vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1901 kind=function fq=kotlin.takeLowestOneBit vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1902 kind=function fq=kotlin.rotateLeft vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s1903 kind=valueParameter fq=kotlin.rotateLeft.distance vis=private flags=synthetic
-symbol s1904 kind=function fq=kotlin.rotateRight vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s1905 kind=valueParameter fq=kotlin.rotateRight.distance vis=private flags=synthetic
-symbol s1906 kind=function fq=kotlin.highestOneBit vis=public flags=synthetic sig=recv=Long params=[] ret=Long suspend=0 defaults=[] vararg=[]
-symbol s1907 kind=function fq=kotlin.lowestOneBit vis=public flags=synthetic sig=recv=Long params=[] ret=Long suspend=0 defaults=[] vararg=[]
-symbol s1908 kind=function fq=kotlin.takeHighestOneBit vis=public flags=synthetic sig=recv=Long params=[] ret=Long suspend=0 defaults=[] vararg=[]
-symbol s1909 kind=function fq=kotlin.takeLowestOneBit vis=public flags=synthetic sig=recv=Long params=[] ret=Long suspend=0 defaults=[] vararg=[]
-symbol s1910 kind=function fq=kotlin.rotateLeft vis=public flags=synthetic sig=recv=Long params=[Int] ret=Long suspend=0 defaults=[0] vararg=[0]
-symbol s1911 kind=function fq=kotlin.rotateRight vis=public flags=synthetic sig=recv=Long params=[Int] ret=Long suspend=0 defaults=[0] vararg=[0]
-symbol s1912 kind=function fq=kotlin.toByte vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1913 kind=function fq=kotlin.toShort vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1914 kind=function fq=kotlin.toInt vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1915 kind=function fq=kotlin.toLong vis=public flags=synthetic sig=recv=Int params=[] ret=Long suspend=0 defaults=[] vararg=[]
-symbol s1916 kind=function fq=kotlin.toFloat vis=public flags=synthetic sig=recv=Int params=[] ret=Float suspend=0 defaults=[] vararg=[]
-symbol s1917 kind=function fq=kotlin.toDouble vis=public flags=synthetic sig=recv=Int params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s1918 kind=function fq=kotlin.toChar vis=public flags=synthetic sig=recv=Int params=[] ret=Char suspend=0 defaults=[] vararg=[]
-symbol s1919 kind=function fq=kotlin.toUByte vis=public flags=synthetic sig=recv=Int params=[] ret=UByte suspend=0 defaults=[] vararg=[]
-symbol s1920 kind=function fq=kotlin.toUShort vis=public flags=synthetic sig=recv=Int params=[] ret=UShort suspend=0 defaults=[] vararg=[]
-symbol s1921 kind=function fq=kotlin.toUInt vis=public flags=synthetic sig=recv=Int params=[] ret=UInt suspend=0 defaults=[] vararg=[]
-symbol s1922 kind=function fq=kotlin.toULong vis=public flags=synthetic sig=recv=Int params=[] ret=ULong suspend=0 defaults=[] vararg=[]
-symbol s1923 kind=function fq=kotlin.toByte vis=public flags=synthetic sig=recv=Long params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1924 kind=function fq=kotlin.toShort vis=public flags=synthetic sig=recv=Long params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1925 kind=function fq=kotlin.toInt vis=public flags=synthetic sig=recv=Long params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1926 kind=function fq=kotlin.toFloat vis=public flags=synthetic sig=recv=Long params=[] ret=Float suspend=0 defaults=[] vararg=[]
-symbol s1927 kind=function fq=kotlin.toDouble vis=public flags=synthetic sig=recv=Long params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s1928 kind=function fq=kotlin.toChar vis=public flags=synthetic sig=recv=Long params=[] ret=Char suspend=0 defaults=[] vararg=[]
-symbol s1929 kind=function fq=kotlin.toUByte vis=public flags=synthetic sig=recv=Long params=[] ret=UByte suspend=0 defaults=[] vararg=[]
-symbol s1930 kind=function fq=kotlin.toUShort vis=public flags=synthetic sig=recv=Long params=[] ret=UShort suspend=0 defaults=[] vararg=[]
-symbol s1931 kind=function fq=kotlin.toUInt vis=public flags=synthetic sig=recv=Long params=[] ret=UInt suspend=0 defaults=[] vararg=[]
-symbol s1932 kind=function fq=kotlin.toULong vis=public flags=synthetic sig=recv=Long params=[] ret=ULong suspend=0 defaults=[] vararg=[]
-symbol s1933 kind=function fq=kotlin.toByte vis=public flags=synthetic sig=recv=Float params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1934 kind=function fq=kotlin.toShort vis=public flags=synthetic sig=recv=Float params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1935 kind=function fq=kotlin.toInt vis=public flags=synthetic sig=recv=Float params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1936 kind=function fq=kotlin.toLong vis=public flags=synthetic sig=recv=Float params=[] ret=Long suspend=0 defaults=[] vararg=[]
-symbol s1937 kind=function fq=kotlin.toDouble vis=public flags=synthetic sig=recv=Float params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s1938 kind=function fq=kotlin.toChar vis=public flags=synthetic sig=recv=Float params=[] ret=Char suspend=0 defaults=[] vararg=[]
-symbol s1939 kind=function fq=kotlin.toUInt vis=public flags=synthetic sig=recv=Float params=[] ret=UInt suspend=0 defaults=[] vararg=[]
-symbol s1940 kind=function fq=kotlin.toULong vis=public flags=synthetic sig=recv=Float params=[] ret=ULong suspend=0 defaults=[] vararg=[]
-symbol s1941 kind=function fq=kotlin.toByte vis=public flags=synthetic sig=recv=Double params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1942 kind=function fq=kotlin.toShort vis=public flags=synthetic sig=recv=Double params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1943 kind=function fq=kotlin.toInt vis=public flags=synthetic sig=recv=Double params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1944 kind=function fq=kotlin.toLong vis=public flags=synthetic sig=recv=Double params=[] ret=Long suspend=0 defaults=[] vararg=[]
-symbol s1945 kind=function fq=kotlin.toFloat vis=public flags=synthetic sig=recv=Double params=[] ret=Float suspend=0 defaults=[] vararg=[]
-symbol s1946 kind=function fq=kotlin.toChar vis=public flags=synthetic sig=recv=Double params=[] ret=Char suspend=0 defaults=[] vararg=[]
-symbol s1947 kind=function fq=kotlin.toUInt vis=public flags=synthetic sig=recv=Double params=[] ret=UInt suspend=0 defaults=[] vararg=[]
-symbol s1948 kind=function fq=kotlin.toULong vis=public flags=synthetic sig=recv=Double params=[] ret=ULong suspend=0 defaults=[] vararg=[]
-symbol s1949 kind=function fq=kotlin.toByte vis=public flags=synthetic sig=recv=Char params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1950 kind=function fq=kotlin.toShort vis=public flags=synthetic sig=recv=Char params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1951 kind=function fq=kotlin.toInt vis=public flags=synthetic sig=recv=Char params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1952 kind=function fq=kotlin.toLong vis=public flags=synthetic sig=recv=Char params=[] ret=Long suspend=0 defaults=[] vararg=[]
-symbol s1953 kind=function fq=kotlin.toUInt vis=public flags=synthetic sig=recv=Char params=[] ret=UInt suspend=0 defaults=[] vararg=[]
-symbol s1954 kind=function fq=kotlin.toULong vis=public flags=synthetic sig=recv=Char params=[] ret=ULong suspend=0 defaults=[] vararg=[]
-symbol s1955 kind=class fq=kotlin.Enum vis=public flags=synthetic
-symbol s1956 kind=typeParameter fq=kotlin.Enum.T vis=private flags=_
-symbol s1957 kind=property fq=kotlin.Enum.name vis=public flags=synthetic type=String
-symbol s1958 kind=property fq=kotlin.Enum.ordinal vis=public flags=synthetic type=Int
-symbol s1959 kind=typeParameter fq=kotlin.collections.EnumEntries.T vis=private flags=_
-symbol s1960 kind=interface fq=kotlin.collections.EnumEntries vis=public flags=synthetic
-symbol s1961 kind=typeParameter fq=kotlin.enumValues.T vis=private flags=reifiedTypeParameter
-symbol s1962 kind=function fq=kotlin.enumValues vis=public flags=inlineFunction|synthetic sig=recv=_ params=[] ret=Class#302<T#1961> suspend=0 defaults=[] vararg=[]
-symbol s1963 kind=typeParameter fq=kotlin.enumValueOf.T vis=private flags=reifiedTypeParameter
-symbol s1964 kind=valueParameter fq=kotlin.enumValueOf.name vis=private flags=synthetic
-symbol s1965 kind=function fq=kotlin.enumValueOf vis=public flags=inlineFunction|synthetic sig=recv=_ params=[String] ret=T#1963 suspend=0 defaults=[0] vararg=[0]
-symbol s1966 kind=typeParameter fq=kotlin.enumEntries.T vis=private flags=reifiedTypeParameter
-symbol s1967 kind=function fq=kotlin.enumEntries vis=public flags=inlineFunction|synthetic sig=recv=_ params=[] ret=Class#1960<T#1966> suspend=0 defaults=[] vararg=[]
-symbol s1968 kind=interface fq=kotlin.io.Closeable vis=public flags=synthetic
-symbol s1969 kind=function fq=kotlin.io.Closeable.close vis=public flags=synthetic sig=recv=Class#1968 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s1970 kind=typeAlias fq=kotlin.AutoCloseable vis=public flags=synthetic
-symbol s1971 kind=interface fq=java.io.Closeable vis=public flags=synthetic
-symbol s1972 kind=typeParameter fq=kotlin.io.use.T vis=private flags=_
-symbol s1973 kind=typeParameter fq=kotlin.io.use.R vis=private flags=_
-symbol s1974 kind=valueParameter fq=kotlin.io.use.block vis=private flags=synthetic
-symbol s1975 kind=function fq=kotlin.io.use vis=public flags=inlineFunction|synthetic sig=recv=T#1972 params=[(T#1972) -> T#1973] ret=T#1973 suspend=0 defaults=[0] vararg=[0]
-symbol s1976 kind=package fq=kotlin.concurrent vis=public flags=synthetic
-symbol s1977 kind=class fq=kotlin.concurrent.AtomicInt vis=public flags=synthetic type=Class#1977
-symbol s1978 kind=constructor fq=kotlin.concurrent.AtomicInt.<init> vis=public flags=synthetic sig=recv=_ params=[Int] ret=Class#1977 suspend=0 defaults=[0] vararg=[0]
-symbol s1979 kind=valueParameter fq=kotlin.concurrent.AtomicInt.<init>.initial vis=private flags=synthetic
-symbol s1980 kind=property fq=kotlin.concurrent.AtomicInt.value vis=public flags=synthetic type=Int
-symbol s1981 kind=function fq=kotlin.concurrent.AtomicInt.load vis=public flags=synthetic sig=recv=Class#1977 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1982 kind=function fq=kotlin.concurrent.AtomicInt.store vis=public flags=synthetic sig=recv=Class#1977 params=[Int] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s1983 kind=valueParameter fq=kotlin.concurrent.AtomicInt.store.value vis=private flags=synthetic
-symbol s1984 kind=function fq=kotlin.concurrent.AtomicInt.exchange vis=public flags=synthetic sig=recv=Class#1977 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s1985 kind=valueParameter fq=kotlin.concurrent.AtomicInt.exchange.new vis=private flags=synthetic
-symbol s1986 kind=function fq=kotlin.concurrent.AtomicInt.compareAndSet vis=public flags=synthetic sig=recv=Class#1977 params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s1987 kind=valueParameter fq=kotlin.concurrent.AtomicInt.compareAndSet.expect vis=private flags=synthetic
-symbol s1988 kind=valueParameter fq=kotlin.concurrent.AtomicInt.compareAndSet.update vis=private flags=synthetic
-symbol s1989 kind=function fq=kotlin.concurrent.AtomicInt.compareAndExchange vis=public flags=synthetic sig=recv=Class#1977 params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s1990 kind=valueParameter fq=kotlin.concurrent.AtomicInt.compareAndExchange.expect vis=private flags=synthetic
-symbol s1991 kind=valueParameter fq=kotlin.concurrent.AtomicInt.compareAndExchange.update vis=private flags=synthetic
-symbol s1992 kind=function fq=kotlin.concurrent.AtomicInt.fetchAndAdd vis=public flags=synthetic sig=recv=Class#1977 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s1993 kind=valueParameter fq=kotlin.concurrent.AtomicInt.fetchAndAdd.delta vis=private flags=synthetic
-symbol s1994 kind=function fq=kotlin.concurrent.AtomicInt.addAndFetch vis=public flags=synthetic sig=recv=Class#1977 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s1995 kind=valueParameter fq=kotlin.concurrent.AtomicInt.addAndFetch.delta vis=private flags=synthetic
-symbol s1996 kind=function fq=kotlin.concurrent.AtomicInt.fetchAndIncrement vis=public flags=synthetic sig=recv=Class#1977 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1997 kind=function fq=kotlin.concurrent.AtomicInt.incrementAndFetch vis=public flags=synthetic sig=recv=Class#1977 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1998 kind=function fq=kotlin.concurrent.AtomicInt.decrementAndFetch vis=public flags=synthetic sig=recv=Class#1977 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s1999 kind=class fq=kotlin.concurrent.AtomicLong vis=public flags=synthetic type=Class#1999
-symbol s2000 kind=constructor fq=kotlin.concurrent.AtomicLong.<init> vis=public flags=synthetic sig=recv=_ params=[Long] ret=Class#1999 suspend=0 defaults=[0] vararg=[0]
-symbol s2001 kind=valueParameter fq=kotlin.concurrent.AtomicLong.<init>.initial vis=private flags=synthetic
-symbol s2002 kind=property fq=kotlin.concurrent.AtomicLong.value vis=public flags=synthetic type=Long
-symbol s2003 kind=function fq=kotlin.concurrent.AtomicLong.load vis=public flags=synthetic sig=recv=Class#1999 params=[] ret=Long suspend=0 defaults=[] vararg=[]
-symbol s2004 kind=function fq=kotlin.concurrent.AtomicLong.store vis=public flags=synthetic sig=recv=Class#1999 params=[Long] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s2005 kind=valueParameter fq=kotlin.concurrent.AtomicLong.store.value vis=private flags=synthetic
-symbol s2006 kind=function fq=kotlin.concurrent.AtomicLong.exchange vis=public flags=synthetic sig=recv=Class#1999 params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
-symbol s2007 kind=valueParameter fq=kotlin.concurrent.AtomicLong.exchange.new vis=private flags=synthetic
-symbol s2008 kind=function fq=kotlin.concurrent.AtomicLong.compareAndSet vis=public flags=synthetic sig=recv=Class#1999 params=[Long,Long] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s2009 kind=valueParameter fq=kotlin.concurrent.AtomicLong.compareAndSet.expect vis=private flags=synthetic
-symbol s2010 kind=valueParameter fq=kotlin.concurrent.AtomicLong.compareAndSet.update vis=private flags=synthetic
-symbol s2011 kind=function fq=kotlin.concurrent.AtomicLong.compareAndExchange vis=public flags=synthetic sig=recv=Class#1999 params=[Long,Long] ret=Long suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s2012 kind=valueParameter fq=kotlin.concurrent.AtomicLong.compareAndExchange.expect vis=private flags=synthetic
-symbol s2013 kind=valueParameter fq=kotlin.concurrent.AtomicLong.compareAndExchange.update vis=private flags=synthetic
-symbol s2014 kind=function fq=kotlin.concurrent.AtomicLong.fetchAndAdd vis=public flags=synthetic sig=recv=Class#1999 params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
-symbol s2015 kind=valueParameter fq=kotlin.concurrent.AtomicLong.fetchAndAdd.delta vis=private flags=synthetic
-symbol s2016 kind=function fq=kotlin.concurrent.AtomicLong.addAndFetch vis=public flags=synthetic sig=recv=Class#1999 params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
-symbol s2017 kind=valueParameter fq=kotlin.concurrent.AtomicLong.addAndFetch.delta vis=private flags=synthetic
-symbol s2018 kind=function fq=kotlin.concurrent.AtomicLong.fetchAndIncrement vis=public flags=synthetic sig=recv=Class#1999 params=[] ret=Long suspend=0 defaults=[] vararg=[]
-symbol s2019 kind=function fq=kotlin.concurrent.AtomicLong.incrementAndFetch vis=public flags=synthetic sig=recv=Class#1999 params=[] ret=Long suspend=0 defaults=[] vararg=[]
-symbol s2020 kind=function fq=kotlin.concurrent.AtomicLong.decrementAndFetch vis=public flags=synthetic sig=recv=Class#1999 params=[] ret=Long suspend=0 defaults=[] vararg=[]
-symbol s2021 kind=class fq=kotlin.concurrent.AtomicReference vis=public flags=synthetic type=Class#2021
-symbol s2022 kind=constructor fq=kotlin.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Class#2021 suspend=0 defaults=[0] vararg=[0]
-symbol s2023 kind=valueParameter fq=kotlin.concurrent.AtomicReference.<init>.initial vis=private flags=synthetic
-symbol s2024 kind=property fq=kotlin.concurrent.AtomicReference.value vis=public flags=synthetic type=Any?
-symbol s2025 kind=function fq=kotlin.concurrent.AtomicReference.load vis=public flags=synthetic sig=recv=Class#2021 params=[] ret=Any? suspend=0 defaults=[] vararg=[]
-symbol s2026 kind=function fq=kotlin.concurrent.AtomicReference.store vis=public flags=synthetic sig=recv=Class#2021 params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s2027 kind=valueParameter fq=kotlin.concurrent.AtomicReference.store.value vis=private flags=synthetic
-symbol s2028 kind=function fq=kotlin.concurrent.AtomicReference.exchange vis=public flags=synthetic sig=recv=Class#2021 params=[Any?] ret=Any? suspend=0 defaults=[0] vararg=[0]
-symbol s2029 kind=valueParameter fq=kotlin.concurrent.AtomicReference.exchange.new vis=private flags=synthetic
-symbol s2030 kind=function fq=kotlin.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#2021 params=[Any?,Any?] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s2031 kind=valueParameter fq=kotlin.concurrent.AtomicReference.compareAndSet.expect vis=private flags=synthetic
-symbol s2032 kind=valueParameter fq=kotlin.concurrent.AtomicReference.compareAndSet.update vis=private flags=synthetic
-symbol s2033 kind=function fq=kotlin.concurrent.AtomicReference.compareAndExchange vis=public flags=synthetic sig=recv=Class#2021 params=[Any?,Any?] ret=Any? suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s2034 kind=valueParameter fq=kotlin.concurrent.AtomicReference.compareAndExchange.expect vis=private flags=synthetic
-symbol s2035 kind=valueParameter fq=kotlin.concurrent.AtomicReference.compareAndExchange.update vis=private flags=synthetic
-symbol s2036 kind=package fq=kotlin.uuid vis=public flags=synthetic
-symbol s2037 kind=class fq=kotlin.uuid.Uuid vis=public flags=synthetic
-symbol s2038 kind=object fq=kotlin.uuid.Uuid.Companion vis=public flags=synthetic|static
-symbol s2039 kind=function fq=kotlin.uuid.Uuid.Companion.random vis=public flags=synthetic sig=recv=_ params=[] ret=Class#2037 suspend=0 defaults=[] vararg=[]
-symbol s2040 kind=function fq=kotlin.uuid.Uuid.Companion.parse vis=public flags=synthetic sig=recv=_ params=[String] ret=Class#2037 suspend=0 defaults=[0] vararg=[0]
-symbol s2041 kind=valueParameter fq=kotlin.uuid.Uuid.Companion.parse.uuidString vis=private flags=synthetic
-symbol s2042 kind=function fq=kotlin.uuid.Uuid.toString vis=public flags=synthetic sig=recv=Class#2037 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s2043 kind=function fq=kotlin.uuid.Uuid.toHexString vis=public flags=synthetic sig=recv=Class#2037 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s2044 kind=function fq=kotlin.uuid.Uuid.toLongs vis=public flags=synthetic sig=recv=Class#2037 params=[] ret=Class#49<Long, Long> suspend=0 defaults=[] vararg=[]
-symbol s2045 kind=function fq=kotlin.uuid.Uuid.toByteArray vis=public flags=synthetic sig=recv=Class#2037 params=[] ret=Class#323 suspend=0 defaults=[] vararg=[]
-symbol s2046 kind=class fq=golden.sema.User vis=public flags=_
-symbol s2047 kind=constructor fq=golden.sema.User.<init> vis=private flags=_ sig=recv=Class#2046 params=[String,Int] ret=Class#2046 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s2048 kind=valueParameter fq=golden.sema.User.<init>.$2047.name vis=private flags=_
-symbol s2049 kind=valueParameter fq=golden.sema.User.<init>.$2047.age vis=private flags=_
-symbol s2050 kind=function fq=golden.sema.User.getInfo vis=public flags=_ sig=recv=Class#2046 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s2051 kind=property fq=golden.sema.User.name vis=public flags=_ type=String
-symbol s2052 kind=property fq=golden.sema.User.age vis=public flags=_ type=Int
-symbol s2053 kind=object fq=golden.sema.User.Companion vis=public flags=_
-symbol s2054 kind=function fq=golden.sema.User.Companion.createAdult vis=public flags=_ sig=recv=Class#2053 params=[String] ret=Class#2046 suspend=0 defaults=[0] vararg=[0]
-symbol s2055 kind=valueParameter fq=golden.sema.User.Companion.createAdult.$2054.name vis=private flags=_
-symbol s2056 kind=function fq=golden.sema.User.Companion.createChild vis=public flags=_ sig=recv=Class#2053 params=[String] ret=Class#2046 suspend=0 defaults=[0] vararg=[0]
-symbol s2057 kind=valueParameter fq=golden.sema.User.Companion.createChild.$2056.name vis=private flags=_
-symbol s2058 kind=function fq=golden.sema.User.Companion.fromNameAndAge vis=public flags=_ sig=recv=Class#2053 params=[String,Int] ret=Class#2046 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s2059 kind=valueParameter fq=golden.sema.User.Companion.fromNameAndAge.$2058.name vis=private flags=_
-symbol s2060 kind=valueParameter fq=golden.sema.User.Companion.fromNameAndAge.$2058.age vis=private flags=_
-symbol s2061 kind=class fq=golden.sema.Database vis=public flags=_
-symbol s2062 kind=constructor fq=golden.sema.Database.<init> vis=public flags=_ sig=recv=Class#2061 params=[] ret=Class#2061 suspend=0 defaults=[] vararg=[]
-symbol s2063 kind=property fq=golden.sema.Database.connection vis=private flags=_ type=String
-symbol s2064 kind=property fq=golden.sema.Database.maxConnections vis=private flags=_ type=Int
-symbol s2065 kind=object fq=golden.sema.Database.Companion vis=public flags=_
-symbol s2066 kind=function fq=golden.sema.Database.Companion.getConnection vis=public flags=_ sig=recv=Class#2065 params=[Class#2061] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s2067 kind=valueParameter fq=golden.sema.Database.Companion.getConnection.$2066.db vis=private flags=_
-symbol s2068 kind=function fq=golden.sema.Database.Companion.getMaxConnections vis=public flags=_ sig=recv=Class#2065 params=[Class#2061] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s2069 kind=valueParameter fq=golden.sema.Database.Companion.getMaxConnections.$2068.db vis=private flags=_
-symbol s2070 kind=class fq=golden.sema.Calculator vis=public flags=_
-symbol s2071 kind=constructor fq=golden.sema.Calculator.<init> vis=public flags=_ sig=recv=Class#2070 params=[] ret=Class#2070 suspend=0 defaults=[] vararg=[]
-symbol s2072 kind=function fq=golden.sema.Calculator.validateInput vis=private flags=_ sig=recv=Class#2070 params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s2073 kind=valueParameter fq=golden.sema.Calculator.validateInput.$2072.x vis=private flags=_
-symbol s2074 kind=function fq=golden.sema.Calculator.square vis=private flags=_ sig=recv=Class#2070 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s2075 kind=valueParameter fq=golden.sema.Calculator.square.$2074.x vis=private flags=_
-symbol s2076 kind=object fq=golden.sema.Calculator.Companion vis=public flags=_
-symbol s2077 kind=function fq=golden.sema.Calculator.Companion.safeSquare vis=public flags=_ sig=recv=Class#2076 params=[Class#2070,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s2078 kind=valueParameter fq=golden.sema.Calculator.Companion.safeSquare.$2077.calculator vis=private flags=_
-symbol s2079 kind=valueParameter fq=golden.sema.Calculator.Companion.safeSquare.$2077.x vis=private flags=_
-symbol s2080 kind=class fq=golden.sema.Logger vis=public flags=_
-symbol s2081 kind=constructor fq=golden.sema.Logger.<init> vis=public flags=_ sig=recv=Class#2080 params=[] ret=Class#2080 suspend=0 defaults=[] vararg=[]
-symbol s2082 kind=function fq=golden.sema.Logger.log vis=public flags=_ sig=recv=Class#2080 params=[String] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s2083 kind=valueParameter fq=golden.sema.Logger.log.$2082.message vis=private flags=_
-symbol s2084 kind=function fq=golden.sema.Logger.getTag vis=public flags=_ sig=recv=Class#2080 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s2085 kind=object fq=golden.sema.Logger.Companion vis=public flags=_
-symbol s2086 kind=function fq=golden.sema.Logger.Companion.format vis=private flags=_ sig=recv=Class#2085 params=[String] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s2087 kind=valueParameter fq=golden.sema.Logger.Companion.format.$2086.message vis=private flags=_
-symbol s2088 kind=property fq=golden.sema.Logger.Companion.tag vis=private flags=_ type=String
-symbol s2089 kind=property fq=golden.sema.Logger.Companion.level vis=private flags=_ type=String
-symbol s2090 kind=class fq=golden.sema.Product vis=public flags=dataType
-symbol s2091 kind=constructor fq=golden.sema.Product.<init> vis=private flags=_ sig=recv=Class#2090 params=[String,String,Double] ret=Class#2090 suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s2092 kind=valueParameter fq=golden.sema.Product.<init>.$2091.id vis=private flags=_
-symbol s2093 kind=valueParameter fq=golden.sema.Product.<init>.$2091.name vis=private flags=_
-symbol s2094 kind=valueParameter fq=golden.sema.Product.<init>.$2091.price vis=private flags=_
-symbol s2095 kind=function fq=golden.sema.Product.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#2090 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s2096 kind=function fq=golden.sema.Product.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#2090 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s2097 kind=function fq=golden.sema.Product.component3 vis=public flags=synthetic|operatorFunction sig=recv=Class#2090 params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s2098 kind=function fq=golden.sema.Product.copy vis=public flags=synthetic sig=recv=Class#2090 params=[String,String,Double] ret=Class#2090 suspend=0 defaults=[1,1,1] vararg=[0,0,0]
-symbol s2099 kind=valueParameter fq=golden.sema.Product.copy.$2098.id vis=private flags=_
-symbol s2100 kind=valueParameter fq=golden.sema.Product.copy.$2098.name vis=private flags=_
-symbol s2101 kind=valueParameter fq=golden.sema.Product.copy.$2098.price vis=private flags=_
-symbol s2102 kind=function fq=golden.sema.Product.hashCode vis=public flags=synthetic sig=recv=Class#2090 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s2103 kind=function fq=golden.sema.Product.getDescription vis=public flags=_ sig=recv=Class#2090 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s2104 kind=property fq=golden.sema.Product.id vis=public flags=_ type=String
-symbol s2105 kind=property fq=golden.sema.Product.name vis=public flags=_ type=String
-symbol s2106 kind=property fq=golden.sema.Product.price vis=public flags=_ type=Double
-symbol s2107 kind=function fq=golden.sema.Product.toString vis=public flags=synthetic sig=recv=Class#2090 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s2108 kind=function fq=golden.sema.Product.equals vis=public flags=synthetic sig=recv=Class#2090 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s2109 kind=valueParameter fq=golden.sema.Product.equals.other vis=private flags=synthetic
-symbol s2110 kind=object fq=golden.sema.Product.Companion vis=public flags=_
-symbol s2111 kind=function fq=golden.sema.Product.Companion.createBasicProduct vis=public flags=_ sig=recv=Class#2110 params=[String] ret=Class#2090 suspend=0 defaults=[0] vararg=[0]
-symbol s2112 kind=valueParameter fq=golden.sema.Product.Companion.createBasicProduct.$2111.name vis=private flags=_
-symbol s2113 kind=function fq=golden.sema.Product.Companion.createPremiumProduct vis=public flags=_ sig=recv=Class#2110 params=[String,Double] ret=Class#2090 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s2114 kind=valueParameter fq=golden.sema.Product.Companion.createPremiumProduct.$2113.name vis=private flags=_
-symbol s2115 kind=valueParameter fq=golden.sema.Product.Companion.createPremiumProduct.$2113.price vis=private flags=_
-symbol s2116 kind=function fq=golden.sema.Product.Companion.fromCatalog vis=public flags=_ sig=recv=Class#2110 params=[String,String,Double] ret=Class#2090 suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s2117 kind=valueParameter fq=golden.sema.Product.Companion.fromCatalog.$2116.id vis=private flags=_
-symbol s2118 kind=valueParameter fq=golden.sema.Product.Companion.fromCatalog.$2116.name vis=private flags=_
-symbol s2119 kind=valueParameter fq=golden.sema.Product.Companion.fromCatalog.$2116.price vis=private flags=_
-symbol s2120 kind=class fq=golden.sema.EmailAddress vis=public flags=_
-symbol s2121 kind=constructor fq=golden.sema.EmailAddress.<init> vis=private flags=_ sig=recv=Class#2120 params=[String] ret=Class#2120 suspend=0 defaults=[0] vararg=[0]
-symbol s2122 kind=valueParameter fq=golden.sema.EmailAddress.<init>.$2121.address vis=private flags=_
-symbol s2123 kind=function fq=golden.sema.EmailAddress.toString vis=public flags=_ sig=recv=Class#2120 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s2124 kind=property fq=golden.sema.EmailAddress.address vis=public flags=_ type=String
-symbol s2125 kind=object fq=golden.sema.EmailAddress.Companion vis=public flags=_
-symbol s2126 kind=function fq=golden.sema.EmailAddress.Companion.create vis=public flags=_ sig=recv=Class#2125 params=[String] ret=Class#2120? suspend=0 defaults=[0] vararg=[0]
-symbol s2127 kind=valueParameter fq=golden.sema.EmailAddress.Companion.create.$2126.address vis=private flags=_
-symbol s2128 kind=function fq=golden.sema.EmailAddress.Companion.isValidEmail vis=private flags=_ sig=recv=Class#2125 params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s2129 kind=valueParameter fq=golden.sema.EmailAddress.Companion.isValidEmail.$2128.address vis=private flags=_
-symbol s2130 kind=class fq=golden.sema.OuterClass vis=public flags=_
-symbol s2131 kind=constructor fq=golden.sema.OuterClass.<init> vis=public flags=_ sig=recv=Class#2130 params=[] ret=Class#2130 suspend=0 defaults=[] vararg=[]
-symbol s2132 kind=function fq=golden.sema.OuterClass.getCompanionSecretFromOuter vis=public flags=_ sig=recv=Class#2130 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s2133 kind=property fq=golden.sema.OuterClass.outerSecret vis=private flags=_ type=String
-symbol s2134 kind=object fq=golden.sema.OuterClass.Companion vis=public flags=_
-symbol s2135 kind=function fq=golden.sema.OuterClass.Companion.getOuterSecret vis=public flags=_ sig=recv=Class#2134 params=[Class#2130] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s2136 kind=valueParameter fq=golden.sema.OuterClass.Companion.getOuterSecret.$2135.outer vis=private flags=_
-symbol s2137 kind=function fq=golden.sema.OuterClass.Companion.getCompanionSecret vis=public flags=_ sig=recv=Class#2134 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s2138 kind=property fq=golden.sema.OuterClass.Companion.companionSecret vis=private flags=_ type=String
-symbol s2139 kind=class fq=golden.sema.NetworkClient vis=public flags=_
-symbol s2140 kind=constructor fq=golden.sema.NetworkClient.<init> vis=public flags=_ sig=recv=Class#2139 params=[] ret=Class#2139 suspend=0 defaults=[] vararg=[]
-symbol s2141 kind=object fq=golden.sema.NetworkClient.Companion vis=public flags=_
-symbol s2142 kind=function fq=golden.sema.createDefault vis=public flags=_ sig=recv=<error> params=[] ret=Class#2139 suspend=0 defaults=[] vararg=[]
-symbol s2143 kind=function fq=golden.sema.createWithTimeout vis=public flags=_ sig=recv=<error> params=[Int] ret=Class#2139 suspend=0 defaults=[0] vararg=[0]
-symbol s2144 kind=valueParameter fq=golden.sema.createWithTimeout.$2143.timeout vis=private flags=_
-symbol s2145 kind=class fq=golden.sema.FileManager vis=public flags=_
-symbol s2146 kind=constructor fq=golden.sema.FileManager.<init> vis=public flags=_ sig=recv=Class#2145 params=[] ret=Class#2145 suspend=0 defaults=[] vararg=[]
-symbol s2147 kind=object fq=golden.sema.FileManager.Factory vis=public flags=_
-symbol s2148 kind=function fq=golden.sema.createFile vis=public flags=_ sig=recv=<error> params=[] ret=Class#2145 suspend=0 defaults=[] vararg=[]
-symbol s2149 kind=function fq=golden.sema.createReadOnly vis=public flags=_ sig=recv=<error> params=[] ret=Class#2145 suspend=0 defaults=[] vararg=[]
-symbol s2150 kind=property fq=golden.sema.defaultTimeout vis=public flags=_ type=Int
-symbol s2151 kind=function fq=golden.sema.defaultTimeout.$get vis=public flags=synthetic sig=recv=<error> params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s2152 kind=property fq=golden.sema.maxFiles vis=public flags=_ type=Int
-symbol s2153 kind=function fq=golden.sema.maxFiles.$get vis=public flags=synthetic sig=recv=<error> params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s2154 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s2155 kind=local fq=__local_111.adult vis=private flags=_ type=Class#2046
-symbol s2156 kind=local fq=__local_115.child vis=private flags=_ type=Class#2046
-symbol s2157 kind=local fq=__local_120.custom vis=private flags=_ type=Class#2046
-symbol s2158 kind=local fq=__local_135.db vis=private flags=_ type=Class#2061
-symbol s2159 kind=local fq=__local_148.calc vis=private flags=_ type=Class#2070
-symbol s2160 kind=local fq=__local_164.logger vis=private flags=_ type=Class#2080
-symbol s2161 kind=local fq=__local_177.basic vis=private flags=_ type=Class#2090
-symbol s2162 kind=local fq=__local_182.premium vis=private flags=_ type=Class#2090
-symbol s2163 kind=local fq=__local_188.catalog vis=private flags=_ type=Class#2090
-symbol s2164 kind=local fq=__local_204.validEmail vis=private flags=_ type=Class#2120?
-symbol s2165 kind=local fq=__local_208.invalidEmail vis=private flags=_ type=Class#2120?
-symbol s2166 kind=local fq=__local_219.outer vis=private flags=_ type=Class#2130
-symbol s2167 kind=local fq=__local_235.client1 vis=private flags=_ type=<error>
-symbol s2168 kind=local fq=__local_239.client2 vis=private flags=_ type=<error>
-symbol s2169 kind=local fq=__local_247.file1 vis=private flags=_ type=<error>
-symbol s2170 kind=local fq=__local_250.file2 vis=private flags=_ type=<error>
+symbol s1838 kind=package fq=kotlin.io.path vis=public flags=synthetic
+symbol s1839 kind=class fq=kotlin.io.path.Path vis=public flags=synthetic type=Class#1839
+symbol s1840 kind=constructor fq=kotlin.io.path.Path.<init> vis=public flags=synthetic sig=recv=_ params=[String] ret=Class#1839 suspend=0 defaults=[0] vararg=[0]
+symbol s1841 kind=valueParameter fq=kotlin.io.path.Path.<init>.pathString vis=private flags=synthetic
+symbol s1842 kind=property fq=kotlin.io.path.Path.name vis=public flags=synthetic type=String
+symbol s1843 kind=property fq=kotlin.io.path.Path.parent vis=public flags=synthetic type=Class#1839?
+symbol s1844 kind=function fq=kotlin.io.path.Path.toString vis=public flags=synthetic sig=recv=Class#1839 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s1845 kind=function fq=kotlin.io.path.Path.resolve vis=public flags=synthetic sig=recv=Class#1839 params=[String] ret=Class#1839 suspend=0 defaults=[0] vararg=[0]
+symbol s1846 kind=valueParameter fq=kotlin.io.path.Path.resolve.other vis=private flags=synthetic
+symbol s1847 kind=function fq=kotlin.io.path.Path.resolve vis=public flags=synthetic sig=recv=Class#1839 params=[Class#1839] ret=Class#1839 suspend=0 defaults=[0] vararg=[0]
+symbol s1848 kind=function fq=kotlin.io.path.Path.exists vis=public flags=synthetic sig=recv=Class#1839 params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s1849 kind=function fq=kotlin.io.path.Path.isDirectory vis=public flags=synthetic sig=recv=Class#1839 params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s1850 kind=function fq=kotlin.io.path.Path.isRegularFile vis=public flags=synthetic sig=recv=Class#1839 params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s1851 kind=function fq=kotlin.io.path.Path.readText vis=public flags=synthetic sig=recv=Class#1839 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s1852 kind=function fq=kotlin.io.path.Path.writeText vis=public flags=synthetic sig=recv=Class#1839 params=[String] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s1853 kind=valueParameter fq=kotlin.io.path.Path.writeText.text vis=private flags=synthetic
+symbol s1854 kind=function fq=kotlin.io.path.Path.readLines vis=public flags=synthetic sig=recv=Class#1839 params=[] ret=Class#96<out String> suspend=0 defaults=[] vararg=[]
+symbol s1855 kind=function fq=kotlin.io.path.Path.createDirectories vis=public flags=synthetic sig=recv=Class#1839 params=[] ret=Class#1839 suspend=0 defaults=[] vararg=[]
+symbol s1856 kind=function fq=kotlin.io.path.Path.deleteIfExists vis=public flags=synthetic sig=recv=Class#1839 params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s1857 kind=function fq=kotlin.io.path.Path.listDirectoryEntries vis=public flags=synthetic sig=recv=Class#1839 params=[] ret=Class#96<out Class#1839> suspend=0 defaults=[] vararg=[]
+symbol s1858 kind=function fq=kotlin.io.path.Path.normalize vis=public flags=synthetic sig=recv=Class#1839 params=[] ret=Class#1839 suspend=0 defaults=[] vararg=[]
+symbol s1859 kind=function fq=kotlin.io.path.Path.relativize vis=public flags=synthetic sig=recv=Class#1839 params=[Class#1839] ret=Class#1839 suspend=0 defaults=[0] vararg=[0]
+symbol s1860 kind=valueParameter fq=kotlin.io.path.Path.relativize.other vis=private flags=synthetic
+symbol s1861 kind=property fq=kotlin.io.path.Path.fileName vis=public flags=synthetic type=Class#1839?
+symbol s1862 kind=property fq=kotlin.io.path.Path.root vis=public flags=synthetic type=Class#1839?
+symbol s1863 kind=property fq=kotlin.io.path.Path.nameCount vis=public flags=synthetic type=Int
+symbol s1864 kind=function fq=kotlin.io.path.Path.startsWith vis=public flags=synthetic sig=recv=Class#1839 params=[Class#1839] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s1865 kind=valueParameter fq=kotlin.io.path.Path.startsWith.other vis=private flags=synthetic
+symbol s1866 kind=function fq=kotlin.io.path.Path.startsWith vis=public flags=synthetic sig=recv=Class#1839 params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s1867 kind=function fq=kotlin.io.path.Path.endsWith vis=public flags=synthetic sig=recv=Class#1839 params=[Class#1839] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s1868 kind=valueParameter fq=kotlin.io.path.Path.endsWith.other vis=private flags=synthetic
+symbol s1869 kind=function fq=kotlin.io.path.Path.endsWith vis=public flags=synthetic sig=recv=Class#1839 params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s1870 kind=function fq=kotlin.io.path.Path.toFile vis=public flags=synthetic sig=recv=Class#1839 params=[] ret=Class#1208 suspend=0 defaults=[] vararg=[]
+symbol s1871 kind=class fq=kotlin.collections.IndexedValue vis=public flags=synthetic|dataType
+symbol s1872 kind=typeParameter fq=kotlin.collections.IndexedValue.T vis=private flags=_
+symbol s1873 kind=function fq=kotlin.collections.IndexedValue.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#1871<out T#1872> params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1874 kind=function fq=kotlin.collections.IndexedValue.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#1871<out T#1872> params=[] ret=T#1872 suspend=0 defaults=[] vararg=[]
+symbol s1875 kind=property fq=kotlin.collections.IndexedValue.index vis=public flags=synthetic type=Int
+symbol s1876 kind=property fq=kotlin.collections.IndexedValue.value vis=public flags=synthetic type=T#1872
+symbol s1877 kind=function fq=kotlin.collections.List.withIndex vis=public flags=synthetic sig=recv=Class#96<out T#97> params=[] ret=Class#78<out Class#1871<out T#97>> suspend=0 defaults=[] vararg=[]
+symbol s1878 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[(Int, T#97) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s1879 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
+symbol s1880 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[(Int, T#97) -> T#1879] ret=Class#96<out T#1879> suspend=0 defaults=[] vararg=[]
+symbol s1881 kind=function fq=kotlin.collections.List.filterIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[(Int, T#97) -> Boolean] ret=Class#96<out T#97> suspend=0 defaults=[] vararg=[]
+symbol s1882 kind=typeParameter fq=kotlin.collections.List.foldIndexed.R vis=private flags=_
+symbol s1883 kind=function fq=kotlin.collections.List.foldIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[T#1882,(Int, T#1882, T#97) -> T#1882] ret=T#1882 suspend=0 defaults=[] vararg=[]
+symbol s1884 kind=typeParameter fq=kotlin.collections.List.reduceIndexed.S vis=private flags=_
+symbol s1885 kind=function fq=kotlin.collections.List.reduceIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[(Int, T#1884, T#97) -> T#1884] ret=T#1884 suspend=0 defaults=[] vararg=[]
+symbol s1886 kind=typeParameter fq=kotlin.collections.List.reduceIndexedOrNull.S vis=private flags=_
+symbol s1887 kind=function fq=kotlin.collections.List.reduceIndexedOrNull vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[(Int, T#1886, T#97) -> T#1886] ret=T#1886? suspend=0 defaults=[] vararg=[]
+symbol s1888 kind=typeParameter fq=kotlin.collections.List.runningFoldIndexed.R vis=private flags=_
+symbol s1889 kind=function fq=kotlin.collections.List.runningFoldIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[T#1888,(Int, T#1888, T#97) -> T#1888] ret=Class#96<out T#1888> suspend=0 defaults=[] vararg=[]
+symbol s1890 kind=typeParameter fq=kotlin.collections.List.runningReduceIndexed.S vis=private flags=_
+symbol s1891 kind=function fq=kotlin.collections.List.runningReduceIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[(Int, T#1890, T#97) -> T#1890] ret=Class#96<out T#1890> suspend=0 defaults=[] vararg=[]
+symbol s1892 kind=typeParameter fq=kotlin.collections.List.scanIndexed.R vis=private flags=_
+symbol s1893 kind=function fq=kotlin.collections.List.scanIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#96<out T#97> params=[T#1892,(Int, T#1892, T#97) -> T#1892] ret=Class#96<out T#1892> suspend=0 defaults=[] vararg=[]
+symbol s1894 kind=function fq=kotlin.collections.List.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[] ret=T#97 suspend=0 defaults=[] vararg=[]
+symbol s1895 kind=function fq=kotlin.collections.List.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[] ret=T#97 suspend=0 defaults=[] vararg=[]
+symbol s1896 kind=function fq=kotlin.collections.List.component3 vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[] ret=T#97 suspend=0 defaults=[] vararg=[]
+symbol s1897 kind=function fq=kotlin.collections.List.component4 vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[] ret=T#97 suspend=0 defaults=[] vararg=[]
+symbol s1898 kind=function fq=kotlin.collections.List.component5 vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[] ret=T#97 suspend=0 defaults=[] vararg=[]
+symbol s1899 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s1900 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s1901 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s1902 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s1903 kind=valueParameter fq=kotlin.ranges.coerceIn.range vis=private flags=synthetic
+symbol s1904 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s1905 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s1906 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s1907 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s1908 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Long params=[Long,Long] ret=Long suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s1909 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Long params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s1910 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Long params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s1911 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Long params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s1912 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Double params=[Double,Double] ret=Double suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s1913 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Double params=[Double] ret=Double suspend=0 defaults=[0] vararg=[0]
+symbol s1914 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Double params=[Double] ret=Double suspend=0 defaults=[0] vararg=[0]
+symbol s1915 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Float params=[Float,Float] ret=Float suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s1916 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Float params=[Float] ret=Float suspend=0 defaults=[0] vararg=[0]
+symbol s1917 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Float params=[Float] ret=Float suspend=0 defaults=[0] vararg=[0]
+symbol s1918 kind=function fq=kotlin.math.roundToInt vis=public flags=synthetic sig=recv=Float params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1919 kind=function fq=kotlin.math.roundToInt vis=public flags=synthetic sig=recv=Double params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1920 kind=function fq=kotlin.math.roundToLong vis=public flags=synthetic sig=recv=Float params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1921 kind=function fq=kotlin.math.roundToLong vis=public flags=synthetic sig=recv=Double params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1922 kind=function fq=kotlin.math.ulp vis=public flags=synthetic sig=recv=Double params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s1923 kind=function fq=kotlin.math.nextUp vis=public flags=synthetic sig=recv=Double params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s1924 kind=function fq=kotlin.math.nextDown vis=public flags=synthetic sig=recv=Double params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s1925 kind=function fq=kotlin.math.ulp vis=public flags=synthetic sig=recv=Float params=[] ret=Float suspend=0 defaults=[] vararg=[]
+symbol s1926 kind=function fq=kotlin.math.nextUp vis=public flags=synthetic sig=recv=Float params=[] ret=Float suspend=0 defaults=[] vararg=[]
+symbol s1927 kind=function fq=kotlin.math.nextDown vis=public flags=synthetic sig=recv=Float params=[] ret=Float suspend=0 defaults=[] vararg=[]
+symbol s1928 kind=function fq=kotlin.countOneBits vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1929 kind=function fq=kotlin.countLeadingZeroBits vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1930 kind=function fq=kotlin.countTrailingZeroBits vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1931 kind=function fq=kotlin.highestOneBit vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1932 kind=function fq=kotlin.lowestOneBit vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1933 kind=function fq=kotlin.takeHighestOneBit vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1934 kind=function fq=kotlin.takeLowestOneBit vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1935 kind=function fq=kotlin.rotateLeft vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s1936 kind=valueParameter fq=kotlin.rotateLeft.distance vis=private flags=synthetic
+symbol s1937 kind=function fq=kotlin.rotateRight vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s1938 kind=valueParameter fq=kotlin.rotateRight.distance vis=private flags=synthetic
+symbol s1939 kind=function fq=kotlin.highestOneBit vis=public flags=synthetic sig=recv=Long params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1940 kind=function fq=kotlin.lowestOneBit vis=public flags=synthetic sig=recv=Long params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1941 kind=function fq=kotlin.takeHighestOneBit vis=public flags=synthetic sig=recv=Long params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1942 kind=function fq=kotlin.takeLowestOneBit vis=public flags=synthetic sig=recv=Long params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1943 kind=function fq=kotlin.rotateLeft vis=public flags=synthetic sig=recv=Long params=[Int] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s1944 kind=function fq=kotlin.rotateRight vis=public flags=synthetic sig=recv=Long params=[Int] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s1945 kind=function fq=kotlin.toByte vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1946 kind=function fq=kotlin.toShort vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1947 kind=function fq=kotlin.toInt vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1948 kind=function fq=kotlin.toLong vis=public flags=synthetic sig=recv=Int params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1949 kind=function fq=kotlin.toFloat vis=public flags=synthetic sig=recv=Int params=[] ret=Float suspend=0 defaults=[] vararg=[]
+symbol s1950 kind=function fq=kotlin.toDouble vis=public flags=synthetic sig=recv=Int params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s1951 kind=function fq=kotlin.toChar vis=public flags=synthetic sig=recv=Int params=[] ret=Char suspend=0 defaults=[] vararg=[]
+symbol s1952 kind=function fq=kotlin.toUByte vis=public flags=synthetic sig=recv=Int params=[] ret=UByte suspend=0 defaults=[] vararg=[]
+symbol s1953 kind=function fq=kotlin.toUShort vis=public flags=synthetic sig=recv=Int params=[] ret=UShort suspend=0 defaults=[] vararg=[]
+symbol s1954 kind=function fq=kotlin.toUInt vis=public flags=synthetic sig=recv=Int params=[] ret=UInt suspend=0 defaults=[] vararg=[]
+symbol s1955 kind=function fq=kotlin.toULong vis=public flags=synthetic sig=recv=Int params=[] ret=ULong suspend=0 defaults=[] vararg=[]
+symbol s1956 kind=function fq=kotlin.toByte vis=public flags=synthetic sig=recv=Long params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1957 kind=function fq=kotlin.toShort vis=public flags=synthetic sig=recv=Long params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1958 kind=function fq=kotlin.toInt vis=public flags=synthetic sig=recv=Long params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1959 kind=function fq=kotlin.toFloat vis=public flags=synthetic sig=recv=Long params=[] ret=Float suspend=0 defaults=[] vararg=[]
+symbol s1960 kind=function fq=kotlin.toDouble vis=public flags=synthetic sig=recv=Long params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s1961 kind=function fq=kotlin.toChar vis=public flags=synthetic sig=recv=Long params=[] ret=Char suspend=0 defaults=[] vararg=[]
+symbol s1962 kind=function fq=kotlin.toUByte vis=public flags=synthetic sig=recv=Long params=[] ret=UByte suspend=0 defaults=[] vararg=[]
+symbol s1963 kind=function fq=kotlin.toUShort vis=public flags=synthetic sig=recv=Long params=[] ret=UShort suspend=0 defaults=[] vararg=[]
+symbol s1964 kind=function fq=kotlin.toUInt vis=public flags=synthetic sig=recv=Long params=[] ret=UInt suspend=0 defaults=[] vararg=[]
+symbol s1965 kind=function fq=kotlin.toULong vis=public flags=synthetic sig=recv=Long params=[] ret=ULong suspend=0 defaults=[] vararg=[]
+symbol s1966 kind=function fq=kotlin.toByte vis=public flags=synthetic sig=recv=Float params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1967 kind=function fq=kotlin.toShort vis=public flags=synthetic sig=recv=Float params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1968 kind=function fq=kotlin.toInt vis=public flags=synthetic sig=recv=Float params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1969 kind=function fq=kotlin.toLong vis=public flags=synthetic sig=recv=Float params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1970 kind=function fq=kotlin.toDouble vis=public flags=synthetic sig=recv=Float params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s1971 kind=function fq=kotlin.toChar vis=public flags=synthetic sig=recv=Float params=[] ret=Char suspend=0 defaults=[] vararg=[]
+symbol s1972 kind=function fq=kotlin.toUInt vis=public flags=synthetic sig=recv=Float params=[] ret=UInt suspend=0 defaults=[] vararg=[]
+symbol s1973 kind=function fq=kotlin.toULong vis=public flags=synthetic sig=recv=Float params=[] ret=ULong suspend=0 defaults=[] vararg=[]
+symbol s1974 kind=function fq=kotlin.toByte vis=public flags=synthetic sig=recv=Double params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1975 kind=function fq=kotlin.toShort vis=public flags=synthetic sig=recv=Double params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1976 kind=function fq=kotlin.toInt vis=public flags=synthetic sig=recv=Double params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1977 kind=function fq=kotlin.toLong vis=public flags=synthetic sig=recv=Double params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1978 kind=function fq=kotlin.toFloat vis=public flags=synthetic sig=recv=Double params=[] ret=Float suspend=0 defaults=[] vararg=[]
+symbol s1979 kind=function fq=kotlin.toChar vis=public flags=synthetic sig=recv=Double params=[] ret=Char suspend=0 defaults=[] vararg=[]
+symbol s1980 kind=function fq=kotlin.toUInt vis=public flags=synthetic sig=recv=Double params=[] ret=UInt suspend=0 defaults=[] vararg=[]
+symbol s1981 kind=function fq=kotlin.toULong vis=public flags=synthetic sig=recv=Double params=[] ret=ULong suspend=0 defaults=[] vararg=[]
+symbol s1982 kind=function fq=kotlin.toByte vis=public flags=synthetic sig=recv=Char params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1983 kind=function fq=kotlin.toShort vis=public flags=synthetic sig=recv=Char params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1984 kind=function fq=kotlin.toInt vis=public flags=synthetic sig=recv=Char params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1985 kind=function fq=kotlin.toLong vis=public flags=synthetic sig=recv=Char params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1986 kind=function fq=kotlin.toUInt vis=public flags=synthetic sig=recv=Char params=[] ret=UInt suspend=0 defaults=[] vararg=[]
+symbol s1987 kind=function fq=kotlin.toULong vis=public flags=synthetic sig=recv=Char params=[] ret=ULong suspend=0 defaults=[] vararg=[]
+symbol s1988 kind=class fq=kotlin.Enum vis=public flags=synthetic
+symbol s1989 kind=typeParameter fq=kotlin.Enum.T vis=private flags=_
+symbol s1990 kind=property fq=kotlin.Enum.name vis=public flags=synthetic type=String
+symbol s1991 kind=property fq=kotlin.Enum.ordinal vis=public flags=synthetic type=Int
+symbol s1992 kind=typeParameter fq=kotlin.collections.EnumEntries.T vis=private flags=_
+symbol s1993 kind=interface fq=kotlin.collections.EnumEntries vis=public flags=synthetic
+symbol s1994 kind=typeParameter fq=kotlin.enumValues.T vis=private flags=reifiedTypeParameter
+symbol s1995 kind=function fq=kotlin.enumValues vis=public flags=inlineFunction|synthetic sig=recv=_ params=[] ret=Class#302<T#1994> suspend=0 defaults=[] vararg=[]
+symbol s1996 kind=typeParameter fq=kotlin.enumValueOf.T vis=private flags=reifiedTypeParameter
+symbol s1997 kind=valueParameter fq=kotlin.enumValueOf.name vis=private flags=synthetic
+symbol s1998 kind=function fq=kotlin.enumValueOf vis=public flags=inlineFunction|synthetic sig=recv=_ params=[String] ret=T#1996 suspend=0 defaults=[0] vararg=[0]
+symbol s1999 kind=typeParameter fq=kotlin.enumEntries.T vis=private flags=reifiedTypeParameter
+symbol s2000 kind=function fq=kotlin.enumEntries vis=public flags=inlineFunction|synthetic sig=recv=_ params=[] ret=Class#1993<T#1999> suspend=0 defaults=[] vararg=[]
+symbol s2001 kind=interface fq=kotlin.io.Closeable vis=public flags=synthetic
+symbol s2002 kind=function fq=kotlin.io.Closeable.close vis=public flags=synthetic sig=recv=Class#2001 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s2003 kind=typeAlias fq=kotlin.AutoCloseable vis=public flags=synthetic
+symbol s2004 kind=interface fq=java.io.Closeable vis=public flags=synthetic
+symbol s2005 kind=typeParameter fq=kotlin.io.use.T vis=private flags=_
+symbol s2006 kind=typeParameter fq=kotlin.io.use.R vis=private flags=_
+symbol s2007 kind=valueParameter fq=kotlin.io.use.block vis=private flags=synthetic
+symbol s2008 kind=function fq=kotlin.io.use vis=public flags=inlineFunction|synthetic sig=recv=T#2005 params=[(T#2005) -> T#2006] ret=T#2006 suspend=0 defaults=[0] vararg=[0]
+symbol s2009 kind=package fq=kotlin.concurrent vis=public flags=synthetic
+symbol s2010 kind=class fq=kotlin.concurrent.AtomicInt vis=public flags=synthetic type=Class#2010
+symbol s2011 kind=constructor fq=kotlin.concurrent.AtomicInt.<init> vis=public flags=synthetic sig=recv=_ params=[Int] ret=Class#2010 suspend=0 defaults=[0] vararg=[0]
+symbol s2012 kind=valueParameter fq=kotlin.concurrent.AtomicInt.<init>.initial vis=private flags=synthetic
+symbol s2013 kind=property fq=kotlin.concurrent.AtomicInt.value vis=public flags=synthetic type=Int
+symbol s2014 kind=function fq=kotlin.concurrent.AtomicInt.load vis=public flags=synthetic sig=recv=Class#2010 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s2015 kind=function fq=kotlin.concurrent.AtomicInt.store vis=public flags=synthetic sig=recv=Class#2010 params=[Int] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s2016 kind=valueParameter fq=kotlin.concurrent.AtomicInt.store.value vis=private flags=synthetic
+symbol s2017 kind=function fq=kotlin.concurrent.AtomicInt.exchange vis=public flags=synthetic sig=recv=Class#2010 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s2018 kind=valueParameter fq=kotlin.concurrent.AtomicInt.exchange.new vis=private flags=synthetic
+symbol s2019 kind=function fq=kotlin.concurrent.AtomicInt.compareAndSet vis=public flags=synthetic sig=recv=Class#2010 params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2020 kind=valueParameter fq=kotlin.concurrent.AtomicInt.compareAndSet.expect vis=private flags=synthetic
+symbol s2021 kind=valueParameter fq=kotlin.concurrent.AtomicInt.compareAndSet.update vis=private flags=synthetic
+symbol s2022 kind=function fq=kotlin.concurrent.AtomicInt.compareAndExchange vis=public flags=synthetic sig=recv=Class#2010 params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2023 kind=valueParameter fq=kotlin.concurrent.AtomicInt.compareAndExchange.expect vis=private flags=synthetic
+symbol s2024 kind=valueParameter fq=kotlin.concurrent.AtomicInt.compareAndExchange.update vis=private flags=synthetic
+symbol s2025 kind=function fq=kotlin.concurrent.AtomicInt.fetchAndAdd vis=public flags=synthetic sig=recv=Class#2010 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s2026 kind=valueParameter fq=kotlin.concurrent.AtomicInt.fetchAndAdd.delta vis=private flags=synthetic
+symbol s2027 kind=function fq=kotlin.concurrent.AtomicInt.addAndFetch vis=public flags=synthetic sig=recv=Class#2010 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s2028 kind=valueParameter fq=kotlin.concurrent.AtomicInt.addAndFetch.delta vis=private flags=synthetic
+symbol s2029 kind=function fq=kotlin.concurrent.AtomicInt.fetchAndIncrement vis=public flags=synthetic sig=recv=Class#2010 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s2030 kind=function fq=kotlin.concurrent.AtomicInt.incrementAndFetch vis=public flags=synthetic sig=recv=Class#2010 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s2031 kind=function fq=kotlin.concurrent.AtomicInt.decrementAndFetch vis=public flags=synthetic sig=recv=Class#2010 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s2032 kind=class fq=kotlin.concurrent.AtomicLong vis=public flags=synthetic type=Class#2032
+symbol s2033 kind=constructor fq=kotlin.concurrent.AtomicLong.<init> vis=public flags=synthetic sig=recv=_ params=[Long] ret=Class#2032 suspend=0 defaults=[0] vararg=[0]
+symbol s2034 kind=valueParameter fq=kotlin.concurrent.AtomicLong.<init>.initial vis=private flags=synthetic
+symbol s2035 kind=property fq=kotlin.concurrent.AtomicLong.value vis=public flags=synthetic type=Long
+symbol s2036 kind=function fq=kotlin.concurrent.AtomicLong.load vis=public flags=synthetic sig=recv=Class#2032 params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s2037 kind=function fq=kotlin.concurrent.AtomicLong.store vis=public flags=synthetic sig=recv=Class#2032 params=[Long] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s2038 kind=valueParameter fq=kotlin.concurrent.AtomicLong.store.value vis=private flags=synthetic
+symbol s2039 kind=function fq=kotlin.concurrent.AtomicLong.exchange vis=public flags=synthetic sig=recv=Class#2032 params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s2040 kind=valueParameter fq=kotlin.concurrent.AtomicLong.exchange.new vis=private flags=synthetic
+symbol s2041 kind=function fq=kotlin.concurrent.AtomicLong.compareAndSet vis=public flags=synthetic sig=recv=Class#2032 params=[Long,Long] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2042 kind=valueParameter fq=kotlin.concurrent.AtomicLong.compareAndSet.expect vis=private flags=synthetic
+symbol s2043 kind=valueParameter fq=kotlin.concurrent.AtomicLong.compareAndSet.update vis=private flags=synthetic
+symbol s2044 kind=function fq=kotlin.concurrent.AtomicLong.compareAndExchange vis=public flags=synthetic sig=recv=Class#2032 params=[Long,Long] ret=Long suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2045 kind=valueParameter fq=kotlin.concurrent.AtomicLong.compareAndExchange.expect vis=private flags=synthetic
+symbol s2046 kind=valueParameter fq=kotlin.concurrent.AtomicLong.compareAndExchange.update vis=private flags=synthetic
+symbol s2047 kind=function fq=kotlin.concurrent.AtomicLong.fetchAndAdd vis=public flags=synthetic sig=recv=Class#2032 params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s2048 kind=valueParameter fq=kotlin.concurrent.AtomicLong.fetchAndAdd.delta vis=private flags=synthetic
+symbol s2049 kind=function fq=kotlin.concurrent.AtomicLong.addAndFetch vis=public flags=synthetic sig=recv=Class#2032 params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s2050 kind=valueParameter fq=kotlin.concurrent.AtomicLong.addAndFetch.delta vis=private flags=synthetic
+symbol s2051 kind=function fq=kotlin.concurrent.AtomicLong.fetchAndIncrement vis=public flags=synthetic sig=recv=Class#2032 params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s2052 kind=function fq=kotlin.concurrent.AtomicLong.incrementAndFetch vis=public flags=synthetic sig=recv=Class#2032 params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s2053 kind=function fq=kotlin.concurrent.AtomicLong.decrementAndFetch vis=public flags=synthetic sig=recv=Class#2032 params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s2054 kind=class fq=kotlin.concurrent.AtomicReference vis=public flags=synthetic type=Class#2054
+symbol s2055 kind=constructor fq=kotlin.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Class#2054 suspend=0 defaults=[0] vararg=[0]
+symbol s2056 kind=valueParameter fq=kotlin.concurrent.AtomicReference.<init>.initial vis=private flags=synthetic
+symbol s2057 kind=property fq=kotlin.concurrent.AtomicReference.value vis=public flags=synthetic type=Any?
+symbol s2058 kind=function fq=kotlin.concurrent.AtomicReference.load vis=public flags=synthetic sig=recv=Class#2054 params=[] ret=Any? suspend=0 defaults=[] vararg=[]
+symbol s2059 kind=function fq=kotlin.concurrent.AtomicReference.store vis=public flags=synthetic sig=recv=Class#2054 params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s2060 kind=valueParameter fq=kotlin.concurrent.AtomicReference.store.value vis=private flags=synthetic
+symbol s2061 kind=function fq=kotlin.concurrent.AtomicReference.exchange vis=public flags=synthetic sig=recv=Class#2054 params=[Any?] ret=Any? suspend=0 defaults=[0] vararg=[0]
+symbol s2062 kind=valueParameter fq=kotlin.concurrent.AtomicReference.exchange.new vis=private flags=synthetic
+symbol s2063 kind=function fq=kotlin.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#2054 params=[Any?,Any?] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2064 kind=valueParameter fq=kotlin.concurrent.AtomicReference.compareAndSet.expect vis=private flags=synthetic
+symbol s2065 kind=valueParameter fq=kotlin.concurrent.AtomicReference.compareAndSet.update vis=private flags=synthetic
+symbol s2066 kind=function fq=kotlin.concurrent.AtomicReference.compareAndExchange vis=public flags=synthetic sig=recv=Class#2054 params=[Any?,Any?] ret=Any? suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2067 kind=valueParameter fq=kotlin.concurrent.AtomicReference.compareAndExchange.expect vis=private flags=synthetic
+symbol s2068 kind=valueParameter fq=kotlin.concurrent.AtomicReference.compareAndExchange.update vis=private flags=synthetic
+symbol s2069 kind=package fq=kotlin.uuid vis=public flags=synthetic
+symbol s2070 kind=class fq=kotlin.uuid.Uuid vis=public flags=synthetic
+symbol s2071 kind=object fq=kotlin.uuid.Uuid.Companion vis=public flags=synthetic|static
+symbol s2072 kind=function fq=kotlin.uuid.Uuid.Companion.random vis=public flags=synthetic sig=recv=_ params=[] ret=Class#2070 suspend=0 defaults=[] vararg=[]
+symbol s2073 kind=function fq=kotlin.uuid.Uuid.Companion.parse vis=public flags=synthetic sig=recv=_ params=[String] ret=Class#2070 suspend=0 defaults=[0] vararg=[0]
+symbol s2074 kind=valueParameter fq=kotlin.uuid.Uuid.Companion.parse.uuidString vis=private flags=synthetic
+symbol s2075 kind=function fq=kotlin.uuid.Uuid.toString vis=public flags=synthetic sig=recv=Class#2070 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s2076 kind=function fq=kotlin.uuid.Uuid.toHexString vis=public flags=synthetic sig=recv=Class#2070 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s2077 kind=function fq=kotlin.uuid.Uuid.toLongs vis=public flags=synthetic sig=recv=Class#2070 params=[] ret=Class#49<Long, Long> suspend=0 defaults=[] vararg=[]
+symbol s2078 kind=function fq=kotlin.uuid.Uuid.toByteArray vis=public flags=synthetic sig=recv=Class#2070 params=[] ret=Class#323 suspend=0 defaults=[] vararg=[]
+symbol s2079 kind=class fq=golden.sema.User vis=public flags=_
+symbol s2080 kind=constructor fq=golden.sema.User.<init> vis=private flags=_ sig=recv=Class#2079 params=[String,Int] ret=Class#2079 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2081 kind=valueParameter fq=golden.sema.User.<init>.$2080.name vis=private flags=_
+symbol s2082 kind=valueParameter fq=golden.sema.User.<init>.$2080.age vis=private flags=_
+symbol s2083 kind=function fq=golden.sema.User.getInfo vis=public flags=_ sig=recv=Class#2079 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s2084 kind=property fq=golden.sema.User.name vis=public flags=_ type=String
+symbol s2085 kind=property fq=golden.sema.User.age vis=public flags=_ type=Int
+symbol s2086 kind=object fq=golden.sema.User.Companion vis=public flags=_
+symbol s2087 kind=function fq=golden.sema.User.Companion.createAdult vis=public flags=_ sig=recv=Class#2086 params=[String] ret=Class#2079 suspend=0 defaults=[0] vararg=[0]
+symbol s2088 kind=valueParameter fq=golden.sema.User.Companion.createAdult.$2087.name vis=private flags=_
+symbol s2089 kind=function fq=golden.sema.User.Companion.createChild vis=public flags=_ sig=recv=Class#2086 params=[String] ret=Class#2079 suspend=0 defaults=[0] vararg=[0]
+symbol s2090 kind=valueParameter fq=golden.sema.User.Companion.createChild.$2089.name vis=private flags=_
+symbol s2091 kind=function fq=golden.sema.User.Companion.fromNameAndAge vis=public flags=_ sig=recv=Class#2086 params=[String,Int] ret=Class#2079 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2092 kind=valueParameter fq=golden.sema.User.Companion.fromNameAndAge.$2091.name vis=private flags=_
+symbol s2093 kind=valueParameter fq=golden.sema.User.Companion.fromNameAndAge.$2091.age vis=private flags=_
+symbol s2094 kind=class fq=golden.sema.Database vis=public flags=_
+symbol s2095 kind=constructor fq=golden.sema.Database.<init> vis=public flags=_ sig=recv=Class#2094 params=[] ret=Class#2094 suspend=0 defaults=[] vararg=[]
+symbol s2096 kind=property fq=golden.sema.Database.connection vis=private flags=_ type=String
+symbol s2097 kind=property fq=golden.sema.Database.maxConnections vis=private flags=_ type=Int
+symbol s2098 kind=object fq=golden.sema.Database.Companion vis=public flags=_
+symbol s2099 kind=function fq=golden.sema.Database.Companion.getConnection vis=public flags=_ sig=recv=Class#2098 params=[Class#2094] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s2100 kind=valueParameter fq=golden.sema.Database.Companion.getConnection.$2099.db vis=private flags=_
+symbol s2101 kind=function fq=golden.sema.Database.Companion.getMaxConnections vis=public flags=_ sig=recv=Class#2098 params=[Class#2094] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s2102 kind=valueParameter fq=golden.sema.Database.Companion.getMaxConnections.$2101.db vis=private flags=_
+symbol s2103 kind=class fq=golden.sema.Calculator vis=public flags=_
+symbol s2104 kind=constructor fq=golden.sema.Calculator.<init> vis=public flags=_ sig=recv=Class#2103 params=[] ret=Class#2103 suspend=0 defaults=[] vararg=[]
+symbol s2105 kind=function fq=golden.sema.Calculator.validateInput vis=private flags=_ sig=recv=Class#2103 params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s2106 kind=valueParameter fq=golden.sema.Calculator.validateInput.$2105.x vis=private flags=_
+symbol s2107 kind=function fq=golden.sema.Calculator.square vis=private flags=_ sig=recv=Class#2103 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s2108 kind=valueParameter fq=golden.sema.Calculator.square.$2107.x vis=private flags=_
+symbol s2109 kind=object fq=golden.sema.Calculator.Companion vis=public flags=_
+symbol s2110 kind=function fq=golden.sema.Calculator.Companion.safeSquare vis=public flags=_ sig=recv=Class#2109 params=[Class#2103,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2111 kind=valueParameter fq=golden.sema.Calculator.Companion.safeSquare.$2110.calculator vis=private flags=_
+symbol s2112 kind=valueParameter fq=golden.sema.Calculator.Companion.safeSquare.$2110.x vis=private flags=_
+symbol s2113 kind=class fq=golden.sema.Logger vis=public flags=_
+symbol s2114 kind=constructor fq=golden.sema.Logger.<init> vis=public flags=_ sig=recv=Class#2113 params=[] ret=Class#2113 suspend=0 defaults=[] vararg=[]
+symbol s2115 kind=function fq=golden.sema.Logger.log vis=public flags=_ sig=recv=Class#2113 params=[String] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s2116 kind=valueParameter fq=golden.sema.Logger.log.$2115.message vis=private flags=_
+symbol s2117 kind=function fq=golden.sema.Logger.getTag vis=public flags=_ sig=recv=Class#2113 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s2118 kind=object fq=golden.sema.Logger.Companion vis=public flags=_
+symbol s2119 kind=function fq=golden.sema.Logger.Companion.format vis=private flags=_ sig=recv=Class#2118 params=[String] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s2120 kind=valueParameter fq=golden.sema.Logger.Companion.format.$2119.message vis=private flags=_
+symbol s2121 kind=property fq=golden.sema.Logger.Companion.tag vis=private flags=_ type=String
+symbol s2122 kind=property fq=golden.sema.Logger.Companion.level vis=private flags=_ type=String
+symbol s2123 kind=class fq=golden.sema.Product vis=public flags=dataType
+symbol s2124 kind=constructor fq=golden.sema.Product.<init> vis=private flags=_ sig=recv=Class#2123 params=[String,String,Double] ret=Class#2123 suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s2125 kind=valueParameter fq=golden.sema.Product.<init>.$2124.id vis=private flags=_
+symbol s2126 kind=valueParameter fq=golden.sema.Product.<init>.$2124.name vis=private flags=_
+symbol s2127 kind=valueParameter fq=golden.sema.Product.<init>.$2124.price vis=private flags=_
+symbol s2128 kind=function fq=golden.sema.Product.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#2123 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s2129 kind=function fq=golden.sema.Product.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#2123 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s2130 kind=function fq=golden.sema.Product.component3 vis=public flags=synthetic|operatorFunction sig=recv=Class#2123 params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s2131 kind=function fq=golden.sema.Product.copy vis=public flags=synthetic sig=recv=Class#2123 params=[String,String,Double] ret=Class#2123 suspend=0 defaults=[1,1,1] vararg=[0,0,0]
+symbol s2132 kind=valueParameter fq=golden.sema.Product.copy.$2131.id vis=private flags=_
+symbol s2133 kind=valueParameter fq=golden.sema.Product.copy.$2131.name vis=private flags=_
+symbol s2134 kind=valueParameter fq=golden.sema.Product.copy.$2131.price vis=private flags=_
+symbol s2135 kind=function fq=golden.sema.Product.hashCode vis=public flags=synthetic sig=recv=Class#2123 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s2136 kind=function fq=golden.sema.Product.getDescription vis=public flags=_ sig=recv=Class#2123 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s2137 kind=property fq=golden.sema.Product.id vis=public flags=_ type=String
+symbol s2138 kind=property fq=golden.sema.Product.name vis=public flags=_ type=String
+symbol s2139 kind=property fq=golden.sema.Product.price vis=public flags=_ type=Double
+symbol s2140 kind=function fq=golden.sema.Product.toString vis=public flags=synthetic sig=recv=Class#2123 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s2141 kind=function fq=golden.sema.Product.equals vis=public flags=synthetic sig=recv=Class#2123 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s2142 kind=valueParameter fq=golden.sema.Product.equals.other vis=private flags=synthetic
+symbol s2143 kind=object fq=golden.sema.Product.Companion vis=public flags=_
+symbol s2144 kind=function fq=golden.sema.Product.Companion.createBasicProduct vis=public flags=_ sig=recv=Class#2143 params=[String] ret=Class#2123 suspend=0 defaults=[0] vararg=[0]
+symbol s2145 kind=valueParameter fq=golden.sema.Product.Companion.createBasicProduct.$2144.name vis=private flags=_
+symbol s2146 kind=function fq=golden.sema.Product.Companion.createPremiumProduct vis=public flags=_ sig=recv=Class#2143 params=[String,Double] ret=Class#2123 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2147 kind=valueParameter fq=golden.sema.Product.Companion.createPremiumProduct.$2146.name vis=private flags=_
+symbol s2148 kind=valueParameter fq=golden.sema.Product.Companion.createPremiumProduct.$2146.price vis=private flags=_
+symbol s2149 kind=function fq=golden.sema.Product.Companion.fromCatalog vis=public flags=_ sig=recv=Class#2143 params=[String,String,Double] ret=Class#2123 suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s2150 kind=valueParameter fq=golden.sema.Product.Companion.fromCatalog.$2149.id vis=private flags=_
+symbol s2151 kind=valueParameter fq=golden.sema.Product.Companion.fromCatalog.$2149.name vis=private flags=_
+symbol s2152 kind=valueParameter fq=golden.sema.Product.Companion.fromCatalog.$2149.price vis=private flags=_
+symbol s2153 kind=class fq=golden.sema.EmailAddress vis=public flags=_
+symbol s2154 kind=constructor fq=golden.sema.EmailAddress.<init> vis=private flags=_ sig=recv=Class#2153 params=[String] ret=Class#2153 suspend=0 defaults=[0] vararg=[0]
+symbol s2155 kind=valueParameter fq=golden.sema.EmailAddress.<init>.$2154.address vis=private flags=_
+symbol s2156 kind=function fq=golden.sema.EmailAddress.toString vis=public flags=_ sig=recv=Class#2153 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s2157 kind=property fq=golden.sema.EmailAddress.address vis=public flags=_ type=String
+symbol s2158 kind=object fq=golden.sema.EmailAddress.Companion vis=public flags=_
+symbol s2159 kind=function fq=golden.sema.EmailAddress.Companion.create vis=public flags=_ sig=recv=Class#2158 params=[String] ret=Class#2153? suspend=0 defaults=[0] vararg=[0]
+symbol s2160 kind=valueParameter fq=golden.sema.EmailAddress.Companion.create.$2159.address vis=private flags=_
+symbol s2161 kind=function fq=golden.sema.EmailAddress.Companion.isValidEmail vis=private flags=_ sig=recv=Class#2158 params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s2162 kind=valueParameter fq=golden.sema.EmailAddress.Companion.isValidEmail.$2161.address vis=private flags=_
+symbol s2163 kind=class fq=golden.sema.OuterClass vis=public flags=_
+symbol s2164 kind=constructor fq=golden.sema.OuterClass.<init> vis=public flags=_ sig=recv=Class#2163 params=[] ret=Class#2163 suspend=0 defaults=[] vararg=[]
+symbol s2165 kind=function fq=golden.sema.OuterClass.getCompanionSecretFromOuter vis=public flags=_ sig=recv=Class#2163 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s2166 kind=property fq=golden.sema.OuterClass.outerSecret vis=private flags=_ type=String
+symbol s2167 kind=object fq=golden.sema.OuterClass.Companion vis=public flags=_
+symbol s2168 kind=function fq=golden.sema.OuterClass.Companion.getOuterSecret vis=public flags=_ sig=recv=Class#2167 params=[Class#2163] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s2169 kind=valueParameter fq=golden.sema.OuterClass.Companion.getOuterSecret.$2168.outer vis=private flags=_
+symbol s2170 kind=function fq=golden.sema.OuterClass.Companion.getCompanionSecret vis=public flags=_ sig=recv=Class#2167 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s2171 kind=property fq=golden.sema.OuterClass.Companion.companionSecret vis=private flags=_ type=String
+symbol s2172 kind=class fq=golden.sema.NetworkClient vis=public flags=_
+symbol s2173 kind=constructor fq=golden.sema.NetworkClient.<init> vis=public flags=_ sig=recv=Class#2172 params=[] ret=Class#2172 suspend=0 defaults=[] vararg=[]
+symbol s2174 kind=object fq=golden.sema.NetworkClient.Companion vis=public flags=_
+symbol s2175 kind=function fq=golden.sema.createDefault vis=public flags=_ sig=recv=<error> params=[] ret=Class#2172 suspend=0 defaults=[] vararg=[]
+symbol s2176 kind=function fq=golden.sema.createWithTimeout vis=public flags=_ sig=recv=<error> params=[Int] ret=Class#2172 suspend=0 defaults=[0] vararg=[0]
+symbol s2177 kind=valueParameter fq=golden.sema.createWithTimeout.$2176.timeout vis=private flags=_
+symbol s2178 kind=class fq=golden.sema.FileManager vis=public flags=_
+symbol s2179 kind=constructor fq=golden.sema.FileManager.<init> vis=public flags=_ sig=recv=Class#2178 params=[] ret=Class#2178 suspend=0 defaults=[] vararg=[]
+symbol s2180 kind=object fq=golden.sema.FileManager.Factory vis=public flags=_
+symbol s2181 kind=function fq=golden.sema.createFile vis=public flags=_ sig=recv=<error> params=[] ret=Class#2178 suspend=0 defaults=[] vararg=[]
+symbol s2182 kind=function fq=golden.sema.createReadOnly vis=public flags=_ sig=recv=<error> params=[] ret=Class#2178 suspend=0 defaults=[] vararg=[]
+symbol s2183 kind=property fq=golden.sema.defaultTimeout vis=public flags=_ type=Int
+symbol s2184 kind=function fq=golden.sema.defaultTimeout.$get vis=public flags=synthetic sig=recv=<error> params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s2185 kind=property fq=golden.sema.maxFiles vis=public flags=_ type=Int
+symbol s2186 kind=function fq=golden.sema.maxFiles.$get vis=public flags=synthetic sig=recv=<error> params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s2187 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s2188 kind=local fq=__local_111.adult vis=private flags=_ type=Class#2079
+symbol s2189 kind=local fq=__local_115.child vis=private flags=_ type=Class#2079
+symbol s2190 kind=local fq=__local_120.custom vis=private flags=_ type=Class#2079
+symbol s2191 kind=local fq=__local_135.db vis=private flags=_ type=Class#2094
+symbol s2192 kind=local fq=__local_148.calc vis=private flags=_ type=Class#2103
+symbol s2193 kind=local fq=__local_164.logger vis=private flags=_ type=Class#2113
+symbol s2194 kind=local fq=__local_177.basic vis=private flags=_ type=Class#2123
+symbol s2195 kind=local fq=__local_182.premium vis=private flags=_ type=Class#2123
+symbol s2196 kind=local fq=__local_188.catalog vis=private flags=_ type=Class#2123
+symbol s2197 kind=local fq=__local_204.validEmail vis=private flags=_ type=Class#2153?
+symbol s2198 kind=local fq=__local_208.invalidEmail vis=private flags=_ type=Class#2153?
+symbol s2199 kind=local fq=__local_219.outer vis=private flags=_ type=Class#2163
+symbol s2200 kind=local fq=__local_235.client1 vis=private flags=_ type=<error>
+symbol s2201 kind=local fq=__local_239.client2 vis=private flags=_ type=<error>
+symbol s2202 kind=local fq=__local_247.file1 vis=private flags=_ type=<error>
+symbol s2203 kind=local fq=__local_250.file2 vis=private flags=_ type=<error>
 file f0 package=golden.sema
-  decl d7 class User sym=s2046
-  decl d13 class Database sym=s2061
-  decl d18 class Calculator sym=s2070
-  decl d25 class Logger sym=s2080
-  decl d34 class Product sym=s2090
-  decl d40 class EmailAddress sym=s2120
-  decl d47 class OuterClass sym=s2130
-  decl d49 class NetworkClient sym=s2139
-  decl d50 fun createDefault suspend=0 inline=0 sym=s2142
-  decl d51 fun createWithTimeout suspend=0 inline=0 sym=s2143
-  decl d53 class FileManager sym=s2145
-  decl d54 fun createFile suspend=0 inline=0 sym=s2148
-  decl d55 fun createReadOnly suspend=0 inline=0 sym=s2149
-  decl d56 property defaultTimeout var=0 sym=s2150
-  decl d57 property maxFiles var=0 sym=s2152
-  decl d58 fun main suspend=0 inline=0 sym=s2154
+  decl d7 class User sym=s2079
+  decl d13 class Database sym=s2094
+  decl d18 class Calculator sym=s2103
+  decl d25 class Logger sym=s2113
+  decl d34 class Product sym=s2123
+  decl d40 class EmailAddress sym=s2153
+  decl d47 class OuterClass sym=s2163
+  decl d49 class NetworkClient sym=s2172
+  decl d50 fun createDefault suspend=0 inline=0 sym=s2175
+  decl d51 fun createWithTimeout suspend=0 inline=0 sym=s2176
+  decl d53 class FileManager sym=s2178
+  decl d54 fun createFile suspend=0 inline=0 sym=s2181
+  decl d55 fun createReadOnly suspend=0 inline=0 sym=s2182
+  decl d56 property defaultTimeout var=0 sym=s2183
+  decl d57 property maxFiles var=0 sym=s2185
+  decl d58 fun main suspend=0 inline=0 sym=s2187
 expr e0 name(User) type=_
-expr e1 name(name) type=String ref=s2055
+expr e1 name(name) type=String ref=s2088
 expr e2 int(18) type=Int
-expr e3 call callee=e0 args=[_:e1,_:e2] type=Class#2046 call=s2047 map=[0->0,1->1] targs=[]
+expr e3 call callee=e0 args=[_:e1,_:e2] type=Class#2079 call=s2080 map=[0->0,1->1] targs=[]
 expr e4 name(User) type=_
-expr e5 name(name) type=String ref=s2057
+expr e5 name(name) type=String ref=s2090
 expr e6 int(0) type=Int
-expr e7 call callee=e4 args=[_:e5,_:e6] type=Class#2046 call=s2047 map=[0->0,1->1] targs=[]
+expr e7 call callee=e4 args=[_:e5,_:e6] type=Class#2079 call=s2080 map=[0->0,1->1] targs=[]
 expr e8 name(User) type=_
-expr e9 name(name) type=String ref=s2059
-expr e10 name(age) type=Int ref=s2060
-expr e11 call callee=e8 args=[_:e9,_:e10] type=Class#2046 call=s2047 map=[0->0,1->1] targs=[]
-expr e12 name(name) type=String ref=s2051
-expr e13 name(age) type=Int ref=s2052
+expr e9 name(name) type=String ref=s2092
+expr e10 name(age) type=Int ref=s2093
+expr e11 call callee=e8 args=[_:e9,_:e10] type=Class#2079 call=s2080 map=[0->0,1->1] targs=[]
+expr e12 name(name) type=String ref=s2084
+expr e13 name(age) type=Int ref=s2085
 expr e14 stringTemplate[expr(e12),lit( (),expr(e13),lit())] type=String
 expr e15 string(jdbc:default) type=String
 expr e16 int(10) type=Int
-expr e17 name(db) type=Class#2061 ref=s2067
-expr e18 memberCall recv=e17 callee=connection args=[] type=String ref=s2063
-expr e19 name(db) type=Class#2061 ref=s2069
-expr e20 memberCall recv=e19 callee=maxConnections args=[] type=Int ref=s2064
-expr e21 name(x) type=Int ref=s2073
+expr e17 name(db) type=Class#2094 ref=s2100
+expr e18 memberCall recv=e17 callee=connection args=[] type=String ref=s2096
+expr e19 name(db) type=Class#2094 ref=s2102
+expr e20 memberCall recv=e19 callee=maxConnections args=[] type=Int ref=s2097
+expr e21 name(x) type=Int ref=s2106
 expr e22 int(0) type=Int
 expr e23 binary(greaterThan) lhs=e21 rhs=e22 type=Boolean
-expr e24 name(x) type=Int ref=s2075
-expr e25 name(x) type=Int ref=s2075
+expr e24 name(x) type=Int ref=s2108
+expr e25 name(x) type=Int ref=s2108
 expr e26 binary(multiply) lhs=e24 rhs=e25 type=Int
-expr e27 name(calculator) type=Class#2070 ref=s2078
-expr e28 name(x) type=Int ref=s2079
-expr e29 memberCall recv=e27 callee=validateInput args=[_:e28] type=Boolean call=s2072 map=[0->0] targs=[]
-expr e30 name(calculator) type=Class#2070 ref=s2078
-expr e31 name(x) type=Int ref=s2079
-expr e32 memberCall recv=e30 callee=square args=[_:e31] type=Int call=s2074 map=[0->0] targs=[]
+expr e27 name(calculator) type=Class#2103 ref=s2111
+expr e28 name(x) type=Int ref=s2112
+expr e29 memberCall recv=e27 callee=validateInput args=[_:e28] type=Boolean call=s2105 map=[0->0] targs=[]
+expr e30 name(calculator) type=Class#2103 ref=s2111
+expr e31 name(x) type=Int ref=s2112
+expr e32 memberCall recv=e30 callee=square args=[_:e31] type=Int call=s2107 map=[0->0] targs=[]
 expr e33 return value=e32 type=Nothing
 expr e34 blockExpr stmts=[] trailing=e33 type=Nothing
 expr e35 if cond=e29 then=e34 else=_ type=Unit
@@ -2226,219 +2259,219 @@ expr e36 int(0) type=Int
 expr e37 return value=e36 type=Nothing
 expr e38 string(AppLogger) type=String
 expr e39 string(INFO) type=String
-expr e40 name(level) type=String ref=s2089
-expr e41 name(message) type=String ref=s2087
+expr e40 name(level) type=String ref=s2122
+expr e41 name(message) type=String ref=s2120
 expr e42 stringTemplate[lit([),expr(e40),lit(] ),expr(e41)] type=String
-expr e43 name(Companion) type=Class#2085 ref=s2085
-expr e44 name(message) type=String ref=s2083
-expr e45 memberCall recv=e43 callee=format args=[_:e44] type=String call=s2086 map=[0->0] targs=[]
+expr e43 name(Companion) type=Class#2118 ref=s2118
+expr e44 name(message) type=String ref=s2116
+expr e45 memberCall recv=e43 callee=format args=[_:e44] type=String call=s2119 map=[0->0] targs=[]
 expr e46 return value=e45 type=Nothing
-expr e47 name(Companion) type=Class#2085 ref=s2085
-expr e48 memberCall recv=e47 callee=tag args=[] type=String ref=s2088
+expr e47 name(Companion) type=Class#2118 ref=s2118
+expr e48 memberCall recv=e47 callee=tag args=[] type=String ref=s2121
 expr e49 return value=e48 type=Nothing
 expr e50 name(Product) type=_
-expr e51 name(name) type=String ref=s2112
+expr e51 name(name) type=String ref=s2145
 expr e52 stringTemplate[lit(basic-),expr(e51)] type=String
-expr e53 name(name) type=String ref=s2112
+expr e53 name(name) type=String ref=s2145
 expr e54 double(0.0) type=Double
-expr e55 call callee=e50 args=[_:e52,_:e53,_:e54] type=Class#2090 call=s2091 map=[0->0,1->1,2->2] targs=[]
+expr e55 call callee=e50 args=[_:e52,_:e53,_:e54] type=Class#2123 call=s2124 map=[0->0,1->1,2->2] targs=[]
 expr e56 name(Product) type=_
-expr e57 name(name) type=String ref=s2114
+expr e57 name(name) type=String ref=s2147
 expr e58 stringTemplate[lit(premium-),expr(e57)] type=String
-expr e59 name(name) type=String ref=s2114
-expr e60 name(price) type=Double ref=s2115
-expr e61 call callee=e56 args=[_:e58,_:e59,_:e60] type=Class#2090 call=s2091 map=[0->0,1->1,2->2] targs=[]
+expr e59 name(name) type=String ref=s2147
+expr e60 name(price) type=Double ref=s2148
+expr e61 call callee=e56 args=[_:e58,_:e59,_:e60] type=Class#2123 call=s2124 map=[0->0,1->1,2->2] targs=[]
 expr e62 name(Product) type=_
-expr e63 name(id) type=String ref=s2117
-expr e64 name(name) type=String ref=s2118
-expr e65 name(price) type=Double ref=s2119
-expr e66 call callee=e62 args=[_:e63,_:e64,_:e65] type=Class#2090 call=s2091 map=[0->0,1->1,2->2] targs=[]
-expr e67 name(name) type=String ref=s2105
-expr e68 name(price) type=Double ref=s2106
-expr e69 name(id) type=String ref=s2104
+expr e63 name(id) type=String ref=s2150
+expr e64 name(name) type=String ref=s2151
+expr e65 name(price) type=Double ref=s2152
+expr e66 call callee=e62 args=[_:e63,_:e64,_:e65] type=Class#2123 call=s2124 map=[0->0,1->1,2->2] targs=[]
+expr e67 name(name) type=String ref=s2138
+expr e68 name(price) type=Double ref=s2139
+expr e69 name(id) type=String ref=s2137
 expr e70 stringTemplate[expr(e67),lit( (),expr(e68),lit() - ID: ),expr(e69)] type=String
 expr e71 name(isValidEmail) type=_
-expr e72 name(address) type=String ref=s2127
-expr e73 call callee=e71 args=[_:e72] type=Boolean call=s2128 map=[0->0] targs=[]
+expr e72 name(address) type=String ref=s2160
+expr e73 call callee=e71 args=[_:e72] type=Boolean call=s2161 map=[0->0] targs=[]
 expr e74 name(EmailAddress) type=_
-expr e75 name(address) type=String ref=s2127
-expr e76 call callee=e74 args=[_:e75] type=Class#2120 call=s2121 map=[0->0] targs=[]
+expr e75 name(address) type=String ref=s2160
+expr e76 call callee=e74 args=[_:e75] type=Class#2153 call=s2154 map=[0->0] targs=[]
 expr e77 return value=e76 type=Nothing
 expr e78 blockExpr stmts=[] trailing=e77 type=Nothing
 expr e79 if cond=e73 then=e78 else=_ type=Unit
 expr e80 name(null) type=Nothing?
 expr e81 return value=e80 type=Nothing
-expr e82 name(address) type=String ref=s2129
+expr e82 name(address) type=String ref=s2162
 expr e83 string(@) type=String
 expr e84 memberCall recv=e82 callee=contains args=[_:e83] type=Boolean call=s491 map=[0->0] targs=[]
-expr e85 name(address) type=String ref=s2129
+expr e85 name(address) type=String ref=s2162
 expr e86 string(.) type=String
 expr e87 memberCall recv=e85 callee=contains args=[_:e86] type=Boolean call=s491 map=[0->0] targs=[]
 expr e88 binary(logicalAnd) lhs=e84 rhs=e87 type=Boolean
 expr e89 return value=e88 type=Nothing
-expr e90 name(address) type=String ref=s2124
+expr e90 name(address) type=String ref=s2157
 expr e91 string(outer) type=String
 expr e92 string(companion) type=String
-expr e93 name(outer) type=Class#2130 ref=s2136
-expr e94 memberCall recv=e93 callee=outerSecret args=[] type=String ref=s2133
-expr e95 name(companionSecret) type=String ref=s2138
-expr e96 name(Companion) type=Class#2134 ref=s2134
-expr e97 memberCall recv=e96 callee=companionSecret args=[] type=String ref=s2138
+expr e93 name(outer) type=Class#2163 ref=s2169
+expr e94 memberCall recv=e93 callee=outerSecret args=[] type=String ref=s2166
+expr e95 name(companionSecret) type=String ref=s2171
+expr e96 name(Companion) type=Class#2167 ref=s2167
+expr e97 memberCall recv=e96 callee=companionSecret args=[] type=String ref=s2171
 expr e98 name(NetworkClient) type=_
-expr e99 call callee=e98 args=[] type=Class#2139 call=s2140 map=[] targs=[]
+expr e99 call callee=e98 args=[] type=Class#2172 call=s2173 map=[] targs=[]
 expr e100 name(NetworkClient) type=_
-expr e101 call callee=e100 args=[] type=Class#2139 call=s2140 map=[] targs=[]
+expr e101 call callee=e100 args=[] type=Class#2172 call=s2173 map=[] targs=[]
 expr e102 name(FileManager) type=_
-expr e103 call callee=e102 args=[] type=Class#2145 call=s2146 map=[] targs=[]
+expr e103 call callee=e102 args=[] type=Class#2178 call=s2179 map=[] targs=[]
 expr e104 name(FileManager) type=_
-expr e105 call callee=e104 args=[] type=Class#2145 call=s2146 map=[] targs=[]
+expr e105 call callee=e104 args=[] type=Class#2178 call=s2179 map=[] targs=[]
 expr e106 int(30000) type=Int
 expr e107 int(1000) type=Int
-expr e108 name(User) type=Class#2053 ref=s2046
+expr e108 name(User) type=Class#2086 ref=s2079
 expr e109 string(Alice) type=String
-expr e110 memberCall recv=e108 callee=createAdult args=[_:e109] type=Class#2046 call=s2054 map=[0->0] targs=[]
-expr e111 localDecl adult mutable=0 type=_ init=e110 type=Unit ref=s2155
-expr e112 name(User) type=Class#2053 ref=s2046
+expr e110 memberCall recv=e108 callee=createAdult args=[_:e109] type=Class#2079 call=s2087 map=[0->0] targs=[]
+expr e111 localDecl adult mutable=0 type=_ init=e110 type=Unit ref=s2188
+expr e112 name(User) type=Class#2086 ref=s2079
 expr e113 string(Bob) type=String
-expr e114 memberCall recv=e112 callee=createChild args=[_:e113] type=Class#2046 call=s2056 map=[0->0] targs=[]
-expr e115 localDecl child mutable=0 type=_ init=e114 type=Unit ref=s2156
-expr e116 name(User) type=Class#2053 ref=s2046
+expr e114 memberCall recv=e112 callee=createChild args=[_:e113] type=Class#2079 call=s2089 map=[0->0] targs=[]
+expr e115 localDecl child mutable=0 type=_ init=e114 type=Unit ref=s2189
+expr e116 name(User) type=Class#2086 ref=s2079
 expr e117 string(Charlie) type=String
 expr e118 int(25) type=Int
-expr e119 memberCall recv=e116 callee=fromNameAndAge args=[_:e117,_:e118] type=Class#2046 call=s2058 map=[0->0,1->1] targs=[]
-expr e120 localDecl custom mutable=0 type=_ init=e119 type=Unit ref=s2157
+expr e119 memberCall recv=e116 callee=fromNameAndAge args=[_:e117,_:e118] type=Class#2079 call=s2091 map=[0->0,1->1] targs=[]
+expr e120 localDecl custom mutable=0 type=_ init=e119 type=Unit ref=s2190
 expr e121 name(println) type=_
-expr e122 name(adult) type=Class#2046 ref=s2155
-expr e123 memberCall recv=e122 callee=getInfo args=[] type=String call=s2050 map=[] targs=[]
+expr e122 name(adult) type=Class#2079 ref=s2188
+expr e123 memberCall recv=e122 callee=getInfo args=[] type=String call=s2083 map=[] targs=[]
 expr e124 call callee=e121 args=[_:e123] type=Unit call=s1132 map=[0->0] targs=[]
 expr e125 name(println) type=_
-expr e126 name(child) type=Class#2046 ref=s2156
-expr e127 memberCall recv=e126 callee=getInfo args=[] type=String call=s2050 map=[] targs=[]
+expr e126 name(child) type=Class#2079 ref=s2189
+expr e127 memberCall recv=e126 callee=getInfo args=[] type=String call=s2083 map=[] targs=[]
 expr e128 call callee=e125 args=[_:e127] type=Unit call=s1132 map=[0->0] targs=[]
 expr e129 name(println) type=_
-expr e130 name(custom) type=Class#2046 ref=s2157
-expr e131 memberCall recv=e130 callee=getInfo args=[] type=String call=s2050 map=[] targs=[]
+expr e130 name(custom) type=Class#2079 ref=s2190
+expr e131 memberCall recv=e130 callee=getInfo args=[] type=String call=s2083 map=[] targs=[]
 expr e132 call callee=e129 args=[_:e131] type=Unit call=s1132 map=[0->0] targs=[]
 expr e133 name(Database) type=_
-expr e134 call callee=e133 args=[] type=Class#2061 call=s2062 map=[] targs=[]
-expr e135 localDecl db mutable=0 type=_ init=e134 type=Unit ref=s2158
+expr e134 call callee=e133 args=[] type=Class#2094 call=s2095 map=[] targs=[]
+expr e135 localDecl db mutable=0 type=_ init=e134 type=Unit ref=s2191
 expr e136 name(println) type=_
-expr e137 name(Database) type=Class#2065 ref=s2061
-expr e138 name(db) type=Class#2061 ref=s2158
-expr e139 memberCall recv=e137 callee=getConnection args=[_:e138] type=String call=s2066 map=[0->0] targs=[]
+expr e137 name(Database) type=Class#2098 ref=s2094
+expr e138 name(db) type=Class#2094 ref=s2191
+expr e139 memberCall recv=e137 callee=getConnection args=[_:e138] type=String call=s2099 map=[0->0] targs=[]
 expr e140 call callee=e136 args=[_:e139] type=Unit call=s1132 map=[0->0] targs=[]
 expr e141 name(println) type=_
-expr e142 name(Database) type=Class#2065 ref=s2061
-expr e143 name(db) type=Class#2061 ref=s2158
-expr e144 memberCall recv=e142 callee=getMaxConnections args=[_:e143] type=Int call=s2068 map=[0->0] targs=[]
+expr e142 name(Database) type=Class#2098 ref=s2094
+expr e143 name(db) type=Class#2094 ref=s2191
+expr e144 memberCall recv=e142 callee=getMaxConnections args=[_:e143] type=Int call=s2101 map=[0->0] targs=[]
 expr e145 call callee=e141 args=[_:e144] type=Unit call=s1132 map=[0->0] targs=[]
 expr e146 name(Calculator) type=_
-expr e147 call callee=e146 args=[] type=Class#2070 call=s2071 map=[] targs=[]
-expr e148 localDecl calc mutable=0 type=_ init=e147 type=Unit ref=s2159
+expr e147 call callee=e146 args=[] type=Class#2103 call=s2104 map=[] targs=[]
+expr e148 localDecl calc mutable=0 type=_ init=e147 type=Unit ref=s2192
 expr e149 name(println) type=_
-expr e150 name(Calculator) type=Class#2076 ref=s2070
-expr e151 name(calc) type=Class#2070 ref=s2159
+expr e150 name(Calculator) type=Class#2109 ref=s2103
+expr e151 name(calc) type=Class#2103 ref=s2192
 expr e152 int(5) type=Int
-expr e153 memberCall recv=e150 callee=safeSquare args=[_:e151,_:e152] type=Int call=s2077 map=[0->0,1->1] targs=[]
+expr e153 memberCall recv=e150 callee=safeSquare args=[_:e151,_:e152] type=Int call=s2110 map=[0->0,1->1] targs=[]
 expr e154 call callee=e149 args=[_:e153] type=Unit call=s1132 map=[0->0] targs=[]
 expr e155 name(println) type=_
-expr e156 name(Calculator) type=Class#2076 ref=s2070
-expr e157 name(calc) type=Class#2070 ref=s2159
+expr e156 name(Calculator) type=Class#2109 ref=s2103
+expr e157 name(calc) type=Class#2103 ref=s2192
 expr e158 int(1) type=Int
 expr e159 unary(unaryMinus) operand=e158 type=Int
-expr e160 memberCall recv=e156 callee=safeSquare args=[_:e157,_:e159] type=Int call=s2077 map=[0->0,1->1] targs=[]
+expr e160 memberCall recv=e156 callee=safeSquare args=[_:e157,_:e159] type=Int call=s2110 map=[0->0,1->1] targs=[]
 expr e161 call callee=e155 args=[_:e160] type=Unit call=s1132 map=[0->0] targs=[]
 expr e162 name(Logger) type=_
-expr e163 call callee=e162 args=[] type=Class#2080 call=s2081 map=[] targs=[]
-expr e164 localDecl logger mutable=0 type=_ init=e163 type=Unit ref=s2160
+expr e163 call callee=e162 args=[] type=Class#2113 call=s2114 map=[] targs=[]
+expr e164 localDecl logger mutable=0 type=_ init=e163 type=Unit ref=s2193
 expr e165 name(println) type=_
-expr e166 name(logger) type=Class#2080 ref=s2160
+expr e166 name(logger) type=Class#2113 ref=s2193
 expr e167 string(Test message) type=String
-expr e168 memberCall recv=e166 callee=log args=[_:e167] type=String call=s2082 map=[0->0] targs=[]
+expr e168 memberCall recv=e166 callee=log args=[_:e167] type=String call=s2115 map=[0->0] targs=[]
 expr e169 call callee=e165 args=[_:e168] type=Unit call=s1132 map=[0->0] targs=[]
 expr e170 name(println) type=_
-expr e171 name(logger) type=Class#2080 ref=s2160
-expr e172 memberCall recv=e171 callee=getTag args=[] type=String call=s2084 map=[] targs=[]
+expr e171 name(logger) type=Class#2113 ref=s2193
+expr e172 memberCall recv=e171 callee=getTag args=[] type=String call=s2117 map=[] targs=[]
 expr e173 call callee=e170 args=[_:e172] type=Unit call=s1132 map=[0->0] targs=[]
-expr e174 name(Product) type=Class#2110 ref=s2090
+expr e174 name(Product) type=Class#2143 ref=s2123
 expr e175 string(Widget) type=String
-expr e176 memberCall recv=e174 callee=createBasicProduct args=[_:e175] type=Class#2090 call=s2111 map=[0->0] targs=[]
-expr e177 localDecl basic mutable=0 type=_ init=e176 type=Unit ref=s2161
-expr e178 name(Product) type=Class#2110 ref=s2090
+expr e176 memberCall recv=e174 callee=createBasicProduct args=[_:e175] type=Class#2123 call=s2144 map=[0->0] targs=[]
+expr e177 localDecl basic mutable=0 type=_ init=e176 type=Unit ref=s2194
+expr e178 name(Product) type=Class#2143 ref=s2123
 expr e179 string(Gadget) type=String
 expr e180 double(99.99) type=Double
-expr e181 memberCall recv=e178 callee=createPremiumProduct args=[_:e179,_:e180] type=Class#2090 call=s2113 map=[0->0,1->1] targs=[]
-expr e182 localDecl premium mutable=0 type=_ init=e181 type=Unit ref=s2162
-expr e183 name(Product) type=Class#2110 ref=s2090
+expr e181 memberCall recv=e178 callee=createPremiumProduct args=[_:e179,_:e180] type=Class#2123 call=s2146 map=[0->0,1->1] targs=[]
+expr e182 localDecl premium mutable=0 type=_ init=e181 type=Unit ref=s2195
+expr e183 name(Product) type=Class#2143 ref=s2123
 expr e184 string(P123) type=String
 expr e185 string(Thingamajig) type=String
 expr e186 double(49.95) type=Double
-expr e187 memberCall recv=e183 callee=fromCatalog args=[_:e184,_:e185,_:e186] type=Class#2090 call=s2116 map=[0->0,1->1,2->2] targs=[]
-expr e188 localDecl catalog mutable=0 type=_ init=e187 type=Unit ref=s2163
+expr e187 memberCall recv=e183 callee=fromCatalog args=[_:e184,_:e185,_:e186] type=Class#2123 call=s2149 map=[0->0,1->1,2->2] targs=[]
+expr e188 localDecl catalog mutable=0 type=_ init=e187 type=Unit ref=s2196
 expr e189 name(println) type=_
-expr e190 name(basic) type=Class#2090 ref=s2161
-expr e191 memberCall recv=e190 callee=getDescription args=[] type=String call=s2103 map=[] targs=[]
+expr e190 name(basic) type=Class#2123 ref=s2194
+expr e191 memberCall recv=e190 callee=getDescription args=[] type=String call=s2136 map=[] targs=[]
 expr e192 call callee=e189 args=[_:e191] type=Unit call=s1132 map=[0->0] targs=[]
 expr e193 name(println) type=_
-expr e194 name(premium) type=Class#2090 ref=s2162
-expr e195 memberCall recv=e194 callee=getDescription args=[] type=String call=s2103 map=[] targs=[]
+expr e194 name(premium) type=Class#2123 ref=s2195
+expr e195 memberCall recv=e194 callee=getDescription args=[] type=String call=s2136 map=[] targs=[]
 expr e196 call callee=e193 args=[_:e195] type=Unit call=s1132 map=[0->0] targs=[]
 expr e197 name(println) type=_
-expr e198 name(catalog) type=Class#2090 ref=s2163
-expr e199 memberCall recv=e198 callee=getDescription args=[] type=String call=s2103 map=[] targs=[]
+expr e198 name(catalog) type=Class#2123 ref=s2196
+expr e199 memberCall recv=e198 callee=getDescription args=[] type=String call=s2136 map=[] targs=[]
 expr e200 call callee=e197 args=[_:e199] type=Unit call=s1132 map=[0->0] targs=[]
-expr e201 name(EmailAddress) type=Class#2125 ref=s2120
+expr e201 name(EmailAddress) type=Class#2158 ref=s2153
 expr e202 string(test@example.com) type=String
-expr e203 memberCall recv=e201 callee=create args=[_:e202] type=Class#2120? call=s2126 map=[0->0] targs=[]
-expr e204 localDecl validEmail mutable=0 type=_ init=e203 type=Unit ref=s2164
-expr e205 name(EmailAddress) type=Class#2125 ref=s2120
+expr e203 memberCall recv=e201 callee=create args=[_:e202] type=Class#2153? call=s2159 map=[0->0] targs=[]
+expr e204 localDecl validEmail mutable=0 type=_ init=e203 type=Unit ref=s2197
+expr e205 name(EmailAddress) type=Class#2158 ref=s2153
 expr e206 string(invalid-email) type=String
-expr e207 memberCall recv=e205 callee=create args=[_:e206] type=Class#2120? call=s2126 map=[0->0] targs=[]
-expr e208 localDecl invalidEmail mutable=0 type=_ init=e207 type=Unit ref=s2165
+expr e207 memberCall recv=e205 callee=create args=[_:e206] type=Class#2153? call=s2159 map=[0->0] targs=[]
+expr e208 localDecl invalidEmail mutable=0 type=_ init=e207 type=Unit ref=s2198
 expr e209 name(println) type=_
-expr e210 name(validEmail) type=Class#2120? ref=s2164
-expr e211 safeMemberCall recv=e210 callee=toString args=[] type=String? call=s2123 map=[] targs=[]
+expr e210 name(validEmail) type=Class#2153? ref=s2197
+expr e211 safeMemberCall recv=e210 callee=toString args=[] type=String? call=s2156 map=[] targs=[]
 expr e212 call callee=e209 args=[_:e211] type=Unit call=s1132 map=[0->0] targs=[]
 expr e213 name(println) type=_
-expr e214 name(invalidEmail) type=Class#2120? ref=s2165
-expr e215 safeMemberCall recv=e214 callee=toString args=[] type=String? call=s2123 map=[] targs=[]
+expr e214 name(invalidEmail) type=Class#2153? ref=s2198
+expr e215 safeMemberCall recv=e214 callee=toString args=[] type=String? call=s2156 map=[] targs=[]
 expr e216 call callee=e213 args=[_:e215] type=Unit call=s1132 map=[0->0] targs=[]
 expr e217 name(OuterClass) type=_
-expr e218 call callee=e217 args=[] type=Class#2130 call=s2131 map=[] targs=[]
-expr e219 localDecl outer mutable=0 type=_ init=e218 type=Unit ref=s2166
+expr e218 call callee=e217 args=[] type=Class#2163 call=s2164 map=[] targs=[]
+expr e219 localDecl outer mutable=0 type=_ init=e218 type=Unit ref=s2199
 expr e220 name(println) type=_
-expr e221 name(OuterClass) type=Class#2134 ref=s2130
-expr e222 name(outer) type=Class#2130 ref=s2166
-expr e223 memberCall recv=e221 callee=getOuterSecret args=[_:e222] type=String call=s2135 map=[0->0] targs=[]
+expr e221 name(OuterClass) type=Class#2167 ref=s2163
+expr e222 name(outer) type=Class#2163 ref=s2199
+expr e223 memberCall recv=e221 callee=getOuterSecret args=[_:e222] type=String call=s2168 map=[0->0] targs=[]
 expr e224 call callee=e220 args=[_:e223] type=Unit call=s1132 map=[0->0] targs=[]
 expr e225 name(println) type=_
-expr e226 name(OuterClass) type=Class#2134 ref=s2130
-expr e227 memberCall recv=e226 callee=getCompanionSecret args=[] type=String call=s2137 map=[] targs=[]
+expr e226 name(OuterClass) type=Class#2167 ref=s2163
+expr e227 memberCall recv=e226 callee=getCompanionSecret args=[] type=String call=s2170 map=[] targs=[]
 expr e228 call callee=e225 args=[_:e227] type=Unit call=s1132 map=[0->0] targs=[]
 expr e229 name(println) type=_
-expr e230 name(outer) type=Class#2130 ref=s2166
-expr e231 memberCall recv=e230 callee=getCompanionSecretFromOuter args=[] type=String call=s2132 map=[] targs=[]
+expr e230 name(outer) type=Class#2163 ref=s2199
+expr e231 memberCall recv=e230 callee=getCompanionSecretFromOuter args=[] type=String call=s2165 map=[] targs=[]
 expr e232 call callee=e229 args=[_:e231] type=Unit call=s1132 map=[0->0] targs=[]
-expr e233 name(NetworkClient) type=Class#2139 ref=s2139
+expr e233 name(NetworkClient) type=Class#2172 ref=s2172
 expr e234 memberCall recv=e233 callee=createDefault args=[] type=<error>
-expr e235 localDecl client1 mutable=0 type=_ init=e234 type=Unit ref=s2167
-expr e236 name(NetworkClient) type=Class#2139 ref=s2139
+expr e235 localDecl client1 mutable=0 type=_ init=e234 type=Unit ref=s2200
+expr e236 name(NetworkClient) type=Class#2172 ref=s2172
 expr e237 int(5000) type=Int
 expr e238 memberCall recv=e236 callee=createWithTimeout args=[_:e237] type=<error>
-expr e239 localDecl client2 mutable=0 type=_ init=e238 type=Unit ref=s2168
+expr e239 localDecl client2 mutable=0 type=_ init=e238 type=Unit ref=s2201
 expr e240 name(println) type=_
-expr e241 name(NetworkClient) type=Class#2139 ref=s2139
+expr e241 name(NetworkClient) type=Class#2172 ref=s2172
 expr e242 memberCall recv=e241 callee=defaultTimeout args=[] type=<error>
 expr e243 stringTemplate[lit(Default timeout: ),expr(e242)] type=String
 expr e244 call callee=e240 args=[_:e243] type=Unit call=s1132 map=[0->0] targs=[]
-expr e245 name(FileManager) type=Class#2145 ref=s2145
+expr e245 name(FileManager) type=Class#2178 ref=s2178
 expr e246 memberCall recv=e245 callee=createFile args=[] type=<error>
-expr e247 localDecl file1 mutable=0 type=_ init=e246 type=Unit ref=s2169
-expr e248 name(FileManager) type=Class#2145 ref=s2145
+expr e247 localDecl file1 mutable=0 type=_ init=e246 type=Unit ref=s2202
+expr e248 name(FileManager) type=Class#2178 ref=s2178
 expr e249 memberCall recv=e248 callee=createReadOnly args=[] type=<error>
-expr e250 localDecl file2 mutable=0 type=_ init=e249 type=Unit ref=s2170
+expr e250 localDecl file2 mutable=0 type=_ init=e249 type=Unit ref=s2203
 expr e251 name(println) type=_
-expr e252 name(FileManager) type=Class#2145 ref=s2145
+expr e252 name(FileManager) type=Class#2178 ref=s2178
 expr e253 memberCall recv=e252 callee=maxFiles args=[] type=<error>
 expr e254 stringTemplate[lit(Max files: ),expr(e253)] type=String
 expr e255 call callee=e251 args=[_:e254] type=Unit call=s1132 map=[0->0] targs=[]
