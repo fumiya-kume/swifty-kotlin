@@ -515,3 +515,18 @@ public func kk_match_group_range(_ groupRaw: Int) -> Int {
     }
     return registerRuntimeObject(RuntimeRangeBox(first: group.rangeStart, last: group.rangeEnd, step: 1))
 }
+
+// MARK: - STDLIB-REGEX-097: Regex.groupNames
+
+/// Regex.groupNames: Set<String>
+/// Returns the set of named capture group names defined in the regex pattern.
+@_cdecl("kk_regex_group_names")
+public func kk_regex_group_names(_ regexRaw: Int) -> Int {
+    guard let regexBox = regexBoxFromRaw(regexRaw) else {
+        return registerRuntimeObject(RuntimeSetBox(elements: []))
+    }
+    let names = extractNamedGroupNames(from: regexBox.pattern)
+    let nameRaws = names.map(regexMakeStringRaw)
+    let setBox = RuntimeSetBox(elements: nameRaws)
+    return registerRuntimeObject(setBox)
+}

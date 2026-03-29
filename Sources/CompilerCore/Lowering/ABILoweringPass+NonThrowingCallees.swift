@@ -598,6 +598,8 @@ extension ABILoweringPass {
             interner.intern("kk_match_group_collection_get"),
             interner.intern("kk_match_group_value"),
             interner.intern("kk_match_group_range"),
+            // STDLIB-REGEX-097: Regex.groupNames
+            interner.intern("kk_regex_group_names"),
             // Reverse numeric conversions (STDLIB-151)
             interner.intern("kk_double_to_int"),
             interner.intern("kk_float_to_int"),

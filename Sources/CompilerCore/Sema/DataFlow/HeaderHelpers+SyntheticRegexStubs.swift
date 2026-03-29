@@ -82,6 +82,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-REGEX-097: Regex.groupNames: Set<String> ---
+        let setStringType = makeSetType(
+            symbols: symbols, types: types, interner: interner,
+            elementType: stringType
+        ) ?? listStringType
+        registerRegexMemberProperty(
+            named: "groupNames",
+            externalLinkName: "kk_regex_group_names",
+            ownerSymbol: regexSymbol,
+            returnType: setStringType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-101: MatchResult.value / MatchResult.groupValues ---
         registerRegexMemberProperty(
             named: "value",

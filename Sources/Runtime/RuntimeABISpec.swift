@@ -3917,6 +3917,15 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Regex"
         ),
+        // STDLIB-REGEX-097: Regex.groupNames
+        RuntimeABIFunctionSpec(
+            name: "kk_regex_group_names",
+            parameters: [
+                RuntimeABIParameter(name: "regexRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_string_chunked",
             parameters: [

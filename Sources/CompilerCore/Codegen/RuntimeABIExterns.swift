@@ -2990,6 +2990,13 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-REGEX-097: Regex.groupNames
+    public static let kk_regex_group_names = ExternDecl(
+        name: "kk_regex_group_names",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - File I/O (STDLIB-320/321/322/323)
 
     // IMPORTANT: The raw parameter type strings here (e.g. "intptr_t",
@@ -3343,6 +3350,7 @@ public enum RuntimeABIExterns {
         kk_match_group_collection_get,
         kk_match_group_value,
         kk_match_group_range,
+        kk_regex_group_names,
     ]
 
     // MARK: - All Functions (canonical list)

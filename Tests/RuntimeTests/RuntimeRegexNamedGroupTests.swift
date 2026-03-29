@@ -49,4 +49,29 @@ final class RuntimeRegexNamedGroupTests: XCTestCase {
         let missing = kk_match_group_collection_get(groupsRaw, makeRuntimeString("missing"))
         XCTAssertEqual(missing, runtimeNullSentinelInt)
     }
+
+    func testGroupNamesReturnsAllNamedGroups() {
+        let regexRaw = kk_regex_create(makeRuntimeString("(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})"))
+        let setRaw = kk_regex_group_names(regexRaw)
+
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: setRaw),
+              let setBox = tryCast(ptr, to: RuntimeSetBox.self) else {
+            XCTFail("Expected RuntimeSetBox")
+            return
+        }
+        let names = Set(setBox.elements.map { runtimeString($0) })
+        XCTAssertEqual(names, ["year", "month", "day"])
+    }
+
+    func testGroupNamesEmptyForUnnamedPattern() {
+        let regexRaw = kk_regex_create(makeRuntimeString("(\\d+)-(\\d+)"))
+        let setRaw = kk_regex_group_names(regexRaw)
+
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: setRaw),
+              let setBox = tryCast(ptr, to: RuntimeSetBox.self) else {
+            XCTFail("Expected RuntimeSetBox")
+            return
+        }
+        XCTAssertTrue(setBox.elements.isEmpty)
+    }
 }
