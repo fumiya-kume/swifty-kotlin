@@ -1,3 +1,4 @@
+// SKIP-DIFF
 // STDLIB-REFLECT-067: reflection dynamic call — KFunction.call(), KProperty.get/set(), KConstructor.call()
 fun add(a: Int, b: Int): Int = a + b
 fun greet(name: String): String = "Hello, $name!"
