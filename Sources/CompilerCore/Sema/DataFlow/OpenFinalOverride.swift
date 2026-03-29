@@ -875,6 +875,7 @@ extension DataFlowSemaPhase {
             guard visited.insert(current).inserted else { continue }
             guard let sym = symbols.symbol(current) else { continue }
 
+            var foundAtThisLevel = false
             for childID in symbols.children(ofFQName: sym.fqName) {
                 guard let child = symbols.symbol(childID) else { continue }
                 let isMatch = child.kind == .function || child.kind == .property
@@ -884,10 +885,17 @@ extension DataFlowSemaPhase {
                         ownerName: sym.name,
                         ownerIsInterface: sym.kind == .interface
                     ))
+                    foundAtThisLevel = true
                 }
             }
 
-            queue.append(contentsOf: symbols.directSupertypes(for: current))
+            // If this class defines the member, do not traverse its ancestors:
+            // ancestor definitions are earlier overrides of the same logical member,
+            // not separate overloads.  Continuing upward would inflate the count
+            // and cause the guard at the call-site to skip the covariance check.
+            if !foundAtThisLevel {
+                queue.append(contentsOf: symbols.directSupertypes(for: current))
+            }
         }
         return results
     }
