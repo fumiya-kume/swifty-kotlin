@@ -3033,6 +3033,17 @@ public enum RuntimeABIExterns {
     public static let kk_uri_normalize = ExternDecl(name: "kk_uri_normalize", parameterTypes: [intptr], returnType: intptr)
     public static let kk_uri_resolve = ExternDecl(name: "kk_uri_resolve", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
     public static let kk_uri_relativize = ExternDecl(name: "kk_uri_relativize", parameterTypes: [intptr, intptr], returnType: intptr)
+    public static let kk_logger_getLogger = ExternDecl(name: "kk_logger_getLogger", parameterTypes: [intptr], returnType: intptr)
+    public static let kk_logging_level_info = ExternDecl(name: "kk_logging_level_info", parameterTypes: [], returnType: intptr)
+    public static let kk_logging_level_warning = ExternDecl(name: "kk_logging_level_warning", parameterTypes: [], returnType: intptr)
+    public static let kk_logging_level_severe = ExternDecl(name: "kk_logging_level_severe", parameterTypes: [], returnType: intptr)
+    public static let kk_console_handler_new = ExternDecl(name: "kk_console_handler_new", parameterTypes: [], returnType: intptr)
+    public static let kk_file_handler_new = ExternDecl(name: "kk_file_handler_new", parameterTypes: [intptr], returnType: intptr)
+    public static let kk_logger_addHandler = ExternDecl(name: "kk_logger_addHandler", parameterTypes: [intptr, intptr], returnType: intptr)
+    public static let kk_logger_log = ExternDecl(name: "kk_logger_log", parameterTypes: [intptr, intptr, intptr], returnType: intptr)
+    public static let kk_logger_info = ExternDecl(name: "kk_logger_info", parameterTypes: [intptr, intptr], returnType: intptr)
+    public static let kk_logger_warning = ExternDecl(name: "kk_logger_warning", parameterTypes: [intptr, intptr], returnType: intptr)
+    public static let kk_logger_severe = ExternDecl(name: "kk_logger_severe", parameterTypes: [intptr, intptr], returnType: intptr)
 
     public static let fileIOExterns: [ExternDecl] = [
         kk_file_new,
@@ -3077,6 +3088,17 @@ public enum RuntimeABIExterns {
         kk_uri_normalize,
         kk_uri_resolve,
         kk_uri_relativize,
+        kk_logger_getLogger,
+        kk_logging_level_info,
+        kk_logging_level_warning,
+        kk_logging_level_severe,
+        kk_console_handler_new,
+        kk_file_handler_new,
+        kk_logger_addHandler,
+        kk_logger_log,
+        kk_logger_info,
+        kk_logger_warning,
+        kk_logger_severe,
     ]
 
     public static let regexExterns: [ExternDecl] = [

@@ -1118,17 +1118,17 @@
   - **関連ファイル**: `RuntimeLogging.swift`
   - **テストケース**: `Scripts/diff_cases/logging_basic.kt`
 
-- [ ] STDLIB-LOG-148: ロギング高度機能完全実装
-  - **仕様**: ロギングフレームワークの高度な機能
+- [ ] STDLIB-LOG-149: アサーション完全実装
+  - **仕様**: アサーション機能の完全サポート
   - **実装内容**:
-    - ハンドラ: ConsoleHandler, FileHandler
-    - フォーマッタ: SimpleFormatter, XMLFormatter
-    - フィルタ: ログメッセージのフィルタリング
-    - ログ設定: プロパティファイルでの設定
-    - パフォーマンス: 非同期ログ出力
-  - **現状**: ロギングは未実装
-  - **関連ファイル**: `RuntimeLogging.swift`
-  - **テストケース**: `Scripts/diff_cases/logging_advanced.kt`
+    - assert()関数: 条件の検証
+    - アサーション有効/無効: 実行時の制御
+    - エラーメッセージ: アサーション失敗時のメッセージ
+    - アサーション例外: AssertionErrorのスロー
+    - デバッグ支援: 開発時のデバッグ支援
+  - **現状**: アサーションは未実装
+  - **関連ファイル**: `RuntimeDebug.swift`
+  - **テストケース**: `Scripts/diff_cases/assertions.kt`
 
 #### Phase 4: 国際化とローカライゼーション (低優先度)
 
