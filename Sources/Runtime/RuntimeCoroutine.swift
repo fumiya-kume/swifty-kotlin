@@ -2611,6 +2611,16 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         }
         return job.cancellationSnapshot()
     }
+
+    /// Thread-safe snapshot of the closed flag.
+    ///
+    /// Acquires the channel lock before reading `closed` to avoid data races
+    /// with concurrent `send()`, `receive()`, and `close()` calls.
+    func isClosedSnapshot() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return closed
+    }
 }
 
 @_cdecl("kk_channel_create")
