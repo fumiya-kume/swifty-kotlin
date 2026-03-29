@@ -689,7 +689,7 @@
   - **関連ファイル**: `RuntimeRandom.swift`
   - **テストケース**: `Scripts/diff_cases/random_extended.kt`
 
-- [ ] STDLIB-RANDOM-101: SecureRandom完全実装
+- [x] STDLIB-RANDOM-101: SecureRandom完全実装
   - **仕様**: 暗号学的乱数生成器の完全サポート
   - **実装内容**:
     - SecureRandomインスタンス: SecureRandom.getInstance()
@@ -697,7 +697,7 @@
     - アルゴリズム指定: SecureRandom.getInstance("SHA1PRNG")
     - シード設定: setSeed()
     - スレッドセーフティ: マルチスレッド対応
-  - **現状**: 暗号学的乱数は未実装
+  - **現状**: 実装済み (SecureRandomBox + kk_secure_random_* ABI)
   - **関連ファイル**: `RuntimeRandom.swift`
   - **テストケース**: `Scripts/diff_cases/secure_random.kt`
 
