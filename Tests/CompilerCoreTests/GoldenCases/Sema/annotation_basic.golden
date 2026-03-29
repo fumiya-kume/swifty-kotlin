@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=_root_ vis=public flags=_
+symbol s0 kind=package fq=golden.sema vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -2256,22 +2256,22 @@ symbol s2254 kind=annotationClass fq=kotlin.jvm.JvmField vis=public flags=synthe
 symbol s2255 kind=annotationClass fq=kotlin.jvm.JvmOverloads vis=public flags=synthetic
 symbol s2256 kind=annotationClass fq=kotlin.jvm.JvmName vis=public flags=synthetic
 symbol s2257 kind=annotationClass fq=kotlin.Suppress vis=public flags=synthetic
-symbol s2258 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s2259 kind=local fq=__local_2.d1 vis=private flags=_ type=Class#1154
-symbol s2260 kind=local fq=__local_9.d2 vis=private flags=_ type=Class#1154
-file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s2258
-expr e0 long(5) type=Long
-expr e1 memberCall recv=e0 callee=seconds args=[] type=Class#1154 call=s1196 map=[] targs=[]
-expr e2 localDecl d1 mutable=0 type=_ init=e1 type=Unit ref=s2259
-expr e3 name(println) type=_
-expr e4 name(d1) type=Class#1154 ref=s2259
-expr e5 memberCall recv=e4 callee=inWholeSeconds args=[] type=Long ref=s1157
-expr e6 call callee=e3 args=[_:e5] type=Unit call=s1238 map=[0->0] targs=[]
-expr e7 long(2500) type=Long
-expr e8 memberCall recv=e7 callee=milliseconds args=[] type=Class#1154 call=s1198 map=[] targs=[]
-expr e9 localDecl d2 mutable=0 type=_ init=e8 type=Unit ref=s2260
-expr e10 name(println) type=_
-expr e11 name(d2) type=Class#1154 ref=s2260
-expr e12 memberCall recv=e11 callee=inWholeMilliseconds args=[] type=Long ref=s1156
-expr e13 call callee=e10 args=[_:e12] type=Unit call=s1238 map=[0->0] targs=[]
+symbol s2258 kind=annotationClass fq=golden.sema.MyLabel vis=public flags=_
+symbol s2259 kind=constructor fq=golden.sema.MyLabel.<init> vis=public flags=_ sig=recv=Class#2258 params=[String] ret=Class#2258 suspend=0 defaults=[1] vararg=[0]
+symbol s2260 kind=valueParameter fq=golden.sema.MyLabel.<init>.$2259.name vis=private flags=_
+symbol s2261 kind=property fq=golden.sema.MyLabel.name vis=public flags=_ type=String
+symbol s2262 kind=class fq=golden.sema.Foo vis=public flags=_
+symbol s2263 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#2262 params=[] ret=Class#2262 suspend=0 defaults=[] vararg=[]
+symbol s2264 kind=class fq=golden.sema.Bar vis=public flags=_
+symbol s2265 kind=constructor fq=golden.sema.Bar.<init> vis=public flags=_ sig=recv=Class#2264 params=[] ret=Class#2264 suspend=0 defaults=[] vararg=[]
+symbol s2266 kind=annotationClass fq=golden.sema.Marker vis=public flags=_
+symbol s2267 kind=constructor fq=golden.sema.Marker.<init> vis=public flags=_ sig=recv=Class#2266 params=[] ret=Class#2266 suspend=0 defaults=[] vararg=[]
+symbol s2268 kind=class fq=golden.sema.Baz vis=public flags=_
+symbol s2269 kind=constructor fq=golden.sema.Baz.<init> vis=public flags=_ sig=recv=Class#2268 params=[] ret=Class#2268 suspend=0 defaults=[] vararg=[]
+file f0 package=golden.sema
+  decl d1 class MyLabel sym=s2258
+  decl d2 class Foo sym=s2262
+  decl d3 class Bar sym=s2264
+  decl d4 class Marker sym=s2266
+  decl d5 class Baz sym=s2268
+expr e0 string(default) type=_
