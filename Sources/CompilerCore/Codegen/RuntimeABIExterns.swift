@@ -2326,6 +2326,13 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-REFLECT-066: KType.toString()
+    public static let kk_ktype_to_string = ExternDecl(
+        name: "kk_ktype_to_string",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_typeof = ExternDecl(
         name: "kk_typeof",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
@@ -4046,6 +4053,7 @@ public enum RuntimeABIExterns {
             kk_ktype_classifier,
             kk_ktype_arguments,
             kk_ktype_isMarkedNullable,
+            kk_ktype_to_string,
             kk_ktypeprojection_create,
             kk_ktypeprojection_type,
             kk_ktypeprojection_variance,

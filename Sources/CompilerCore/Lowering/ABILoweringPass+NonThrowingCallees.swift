@@ -759,6 +759,25 @@ extension ABILoweringPass {
             interner.intern("kk_callable_ref_name"),
             interner.intern("kk_pair_new"),
             interner.intern("kk_triple_new"),
+            // STDLIB-REFLECT-066: KType / KClass reflection — all are pure metadata
+            // lookups that cannot throw.
+            interner.intern("kk_typeof"),
+            interner.intern("kk_ktype_create"),
+            interner.intern("kk_ktype_classifier"),
+            interner.intern("kk_ktype_arguments"),
+            interner.intern("kk_ktype_isMarkedNullable"),
+            interner.intern("kk_ktype_to_string"),
+            interner.intern("kk_ktypeprojection_create"),
+            interner.intern("kk_ktypeprojection_type"),
+            interner.intern("kk_ktypeprojection_variance"),
+            interner.intern("kk_kclass_create"),
+            interner.intern("kk_kclass_simple_name"),
+            interner.intern("kk_kclass_qualified_name"),
+            interner.intern("kk_kclass_supertype_name"),
+            interner.intern("kk_kclass_is_data"),
+            interner.intern("kk_kclass_is_sealed"),
+            interner.intern("kk_kclass_is_value"),
+            interner.intern("kk_kclass_members_count"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }
