@@ -894,6 +894,20 @@ extension CallLowerer {
             || symbol.fqName == knownNames.kotlinCollectionsMutableListFQName
     }
 
+    private func isMutableSetLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isMutableSetSymbol(symbol)
+    }
+
     private func isMapLikeType(
         _ receiverType: TypeID,
         sema: SemaModule,
@@ -4782,6 +4796,19 @@ extension CallLowerer {
                 return interner.intern("kk_list_runningReduceIndexed")
             case "scanIndexed":
                 return interner.intern("kk_list_scanIndexed")
+            default:
+                break
+            }
+        }
+
+        if isMutableSetLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+            switch memberName {
+            case "addAll":
+                return interner.intern("kk_mutable_set_addAll")
+            case "removeAll":
+                return interner.intern("kk_mutable_set_removeAll")
+            case "retainAll":
+                return interner.intern("kk_mutable_set_retainAll")
             default:
                 break
             }

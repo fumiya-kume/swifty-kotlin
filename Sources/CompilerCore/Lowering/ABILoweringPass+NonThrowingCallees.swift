@@ -483,6 +483,8 @@ extension ABILoweringPass {
             interner.intern("kk_system_nanoTime"),
             interner.intern("kk_mutable_set_clear"),
             interner.intern("kk_mutable_set_addAll"),
+            interner.intern("kk_mutable_set_removeAll"),
+            interner.intern("kk_mutable_set_retainAll"),
             interner.intern("kk_mutable_list_shuffle"),
             interner.intern("kk_mutable_list_reverse"),
             interner.intern("kk_mutable_list_addAll"),
