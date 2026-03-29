@@ -409,7 +409,7 @@
     - 可変長引数の処理
     - 例外処理とエラーハンドリング
   - **現状**: 実装完了 — kk_kfunction_call_{0,1,2,3,vararg}, kk_kproperty_{get,set}, kk_kconstructor_call_{0,1,vararg}
-  - **関連ファイル**: `RuntimeReflection.swift`
+  - **関連ファイル**: `RuntimeReflection.swift`, `RuntimeABIExterns+KFunction.swift`
   - **テストケース**: `Scripts/diff_cases/reflection_dynamic_call.kt`
 
 #### Phase 3: コルーチンと並行処理 (低優先度)

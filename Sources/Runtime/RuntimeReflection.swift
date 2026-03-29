@@ -130,15 +130,26 @@ public func kk_kclass_get_arity(_ kclassRaw: Int) -> Int {
 // MARK: - KFunction Dynamic Call (STDLIB-REFLECT-067)
 
 private func runtimeKFunctionBox(from raw: Int) -> RuntimeKFunctionBox? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
-    let isObj = runtimeStorage.withLock { state in
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
-    guard isObj else { return nil }
+    guard isObjectPointer else {
+        return nil
+    }
     return tryCast(ptr, to: RuntimeKFunctionBox.self)
 }
 
-/// Creates a KFunction runtime box with full reflection metadata.
+/// Creates and registers a KFunction box.
+/// - Parameters:
+///   - nameRaw: Opaque pointer to the KKString for the function name.
+///   - arity: Number of parameters (excluding receiver for member functions).
+///   - returnTypeRaw: Opaque pointer to the KKString for the return type (0 if unknown).
+///   - isSuspend: 1 if the function is a suspend function, 0 otherwise.
+///   - fnPtr: C function pointer integer for direct dispatch (0 if unavailable).
+///   - closureRaw: Closure environment pointer (0 for top-level functions).
 @_cdecl("kk_kfunction_create")
 public func kk_kfunction_create(
     _ nameRaw: Int,
@@ -159,7 +170,6 @@ public func kk_kfunction_create(
     return registerRuntimeObject(box)
 }
 
-/// Returns the name of the KFunction as a KKString raw pointer.
 @_cdecl("kk_kfunction_get_name")
 public func kk_kfunction_get_name(_ kfunctionRaw: Int) -> Int {
     guard let box = runtimeKFunctionBox(from: kfunctionRaw) else {
@@ -168,25 +178,22 @@ public func kk_kfunction_get_name(_ kfunctionRaw: Int) -> Int {
     return box.nameRaw
 }
 
-/// Returns the arity (number of value parameters) of the KFunction.
 @_cdecl("kk_kfunction_get_arity")
 public func kk_kfunction_get_arity(_ kfunctionRaw: Int) -> Int {
     guard let box = runtimeKFunctionBox(from: kfunctionRaw) else {
-        return 0
+        return runtimeNullSentinelInt
     }
     return box.arity
 }
 
-/// Returns the return type descriptor as a KKString raw pointer, or null sentinel if unknown.
 @_cdecl("kk_kfunction_get_return_type")
 public func kk_kfunction_get_return_type(_ kfunctionRaw: Int) -> Int {
     guard let box = runtimeKFunctionBox(from: kfunctionRaw) else {
         return runtimeNullSentinelInt
     }
-    return box.returnTypeRaw != 0 ? box.returnTypeRaw : runtimeNullSentinelInt
+    return box.returnTypeRaw
 }
 
-/// Returns 1 if the KFunction is declared suspend, 0 otherwise.
 @_cdecl("kk_kfunction_is_suspend")
 public func kk_kfunction_is_suspend(_ kfunctionRaw: Int) -> Int {
     guard let box = runtimeKFunctionBox(from: kfunctionRaw) else {
@@ -195,47 +202,48 @@ public func kk_kfunction_is_suspend(_ kfunctionRaw: Int) -> Int {
     return box.isSuspend ? 1 : 0
 }
 
-/// Returns the value-parameter list as a runtime List of descriptor strings.
+/// Returns an empty list (parameter reflection not yet implemented).
 @_cdecl("kk_kfunction_get_parameters")
 public func kk_kfunction_get_parameters(_ kfunctionRaw: Int) -> Int {
-    guard let box = runtimeKFunctionBox(from: kfunctionRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+    guard runtimeKFunctionBox(from: kfunctionRaw) != nil else {
+        return runtimeNullSentinelInt
     }
-    let placeholders = Array(repeating: 0, count: max(0, box.arity))
-    return registerRuntimeObject(RuntimeListBox(elements: placeholders))
+    return registerRuntimeObject(RuntimeListBox(elements: []))
 }
 
-/// Invokes the KFunction with zero arguments.
+// MARK: KFunction.call() — arity 0
+
 @_cdecl("kk_kfunction_call_0")
 public func kk_kfunction_call_0(
     _ kfunctionRaw: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let box = runtimeKFunctionBox(from: kfunctionRaw) else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "KFunction call: invalid handle")
-        return 0
-    }
-    guard box.fnPtr != 0 else {
         outThrown?.pointee = runtimeAllocateThrowable(
-            message: "KFunction '\(extractString(from: UnsafeMutableRawPointer(bitPattern: box.nameRaw)) ?? "<unknown>")' is not directly callable"
-        )
-        return 0
+            message: "IllegalArgumentException: Invalid KFunction handle.")
+        return runtimeNullSentinelInt
     }
     guard box.arity == 0 else {
         outThrown?.pointee = runtimeAllocateThrowable(
-            message: "KFunction call arity mismatch: expected \(box.arity), got 0"
-        )
-        return 0
+            message: "IllegalArgumentException: KFunction expects \(box.arity) argument(s) but call() was invoked with 0.")
+        return runtimeNullSentinelInt
+    }
+    guard box.fnPtr != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "UnsupportedOperationException: KFunction has no callable function pointer.")
+        return runtimeNullSentinelInt
     }
     if box.closureRaw != 0 {
         let fn = unsafeBitCast(box.fnPtr, to: KKClosureThunkEntryPoint.self)
         return fn(box.closureRaw, outThrown)
+    } else {
+        let fn = unsafeBitCast(box.fnPtr, to: KKThunkEntryPoint.self)
+        return fn(outThrown)
     }
-    let fn = unsafeBitCast(box.fnPtr, to: KKThunkEntryPoint.self)
-    return fn(outThrown)
 }
 
-/// Invokes the KFunction with one argument.
+// MARK: KFunction.call() — arity 1
+
 @_cdecl("kk_kfunction_call_1")
 public func kk_kfunction_call_1(
     _ kfunctionRaw: Int,
@@ -243,30 +251,31 @@ public func kk_kfunction_call_1(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let box = runtimeKFunctionBox(from: kfunctionRaw) else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "KFunction call: invalid handle")
-        return 0
-    }
-    guard box.fnPtr != 0 else {
         outThrown?.pointee = runtimeAllocateThrowable(
-            message: "KFunction '\(extractString(from: UnsafeMutableRawPointer(bitPattern: box.nameRaw)) ?? "<unknown>")' is not directly callable"
-        )
-        return 0
+            message: "IllegalArgumentException: Invalid KFunction handle.")
+        return runtimeNullSentinelInt
     }
     guard box.arity == 1 else {
         outThrown?.pointee = runtimeAllocateThrowable(
-            message: "KFunction call arity mismatch: expected \(box.arity), got 1"
-        )
-        return 0
+            message: "IllegalArgumentException: KFunction expects \(box.arity) argument(s) but call() was invoked with 1.")
+        return runtimeNullSentinelInt
+    }
+    guard box.fnPtr != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "UnsupportedOperationException: KFunction has no callable function pointer.")
+        return runtimeNullSentinelInt
     }
     if box.closureRaw != 0 {
         let fn = unsafeBitCast(box.fnPtr, to: KKClosureFunctionEntryPoint1.self)
         return fn(box.closureRaw, arg, outThrown)
+    } else {
+        let fn = unsafeBitCast(box.fnPtr, to: KKFunctionEntryPoint1.self)
+        return fn(arg, outThrown)
     }
-    let fn = unsafeBitCast(box.fnPtr, to: KKFunctionEntryPoint1.self)
-    return fn(arg, outThrown)
 }
 
-/// Invokes the KFunction with two arguments.
+// MARK: KFunction.call() — arity 2
+
 @_cdecl("kk_kfunction_call_2")
 public func kk_kfunction_call_2(
     _ kfunctionRaw: Int,
@@ -275,30 +284,31 @@ public func kk_kfunction_call_2(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let box = runtimeKFunctionBox(from: kfunctionRaw) else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "KFunction call: invalid handle")
-        return 0
-    }
-    guard box.fnPtr != 0 else {
         outThrown?.pointee = runtimeAllocateThrowable(
-            message: "KFunction '\(extractString(from: UnsafeMutableRawPointer(bitPattern: box.nameRaw)) ?? "<unknown>")' is not directly callable"
-        )
-        return 0
+            message: "IllegalArgumentException: Invalid KFunction handle.")
+        return runtimeNullSentinelInt
     }
     guard box.arity == 2 else {
         outThrown?.pointee = runtimeAllocateThrowable(
-            message: "KFunction call arity mismatch: expected \(box.arity), got 2"
-        )
-        return 0
+            message: "IllegalArgumentException: KFunction expects \(box.arity) argument(s) but call() was invoked with 2.")
+        return runtimeNullSentinelInt
+    }
+    guard box.fnPtr != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "UnsupportedOperationException: KFunction has no callable function pointer.")
+        return runtimeNullSentinelInt
     }
     if box.closureRaw != 0 {
         let fn = unsafeBitCast(box.fnPtr, to: KKClosureFunctionEntryPoint2.self)
         return fn(box.closureRaw, arg1, arg2, outThrown)
+    } else {
+        let fn = unsafeBitCast(box.fnPtr, to: KKFunctionEntryPoint2.self)
+        return fn(arg1, arg2, outThrown)
     }
-    let fn = unsafeBitCast(box.fnPtr, to: KKFunctionEntryPoint2.self)
-    return fn(arg1, arg2, outThrown)
 }
 
-/// Invokes the KFunction with three arguments (STDLIB-REFLECT-067).
+// MARK: KFunction.call() — arity 3
+
 @_cdecl("kk_kfunction_call_3")
 public func kk_kfunction_call_3(
     _ kfunctionRaw: Int,
@@ -308,31 +318,32 @@ public func kk_kfunction_call_3(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let box = runtimeKFunctionBox(from: kfunctionRaw) else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "KFunction call: invalid handle")
-        return 0
-    }
-    guard box.fnPtr != 0 else {
         outThrown?.pointee = runtimeAllocateThrowable(
-            message: "KFunction '\(extractString(from: UnsafeMutableRawPointer(bitPattern: box.nameRaw)) ?? "<unknown>")' is not directly callable"
-        )
-        return 0
+            message: "IllegalArgumentException: Invalid KFunction handle.")
+        return runtimeNullSentinelInt
     }
     guard box.arity == 3 else {
         outThrown?.pointee = runtimeAllocateThrowable(
-            message: "KFunction call arity mismatch: expected \(box.arity), got 3"
-        )
-        return 0
+            message: "IllegalArgumentException: KFunction expects \(box.arity) argument(s) but call() was invoked with 3.")
+        return runtimeNullSentinelInt
+    }
+    guard box.fnPtr != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "UnsupportedOperationException: KFunction has no callable function pointer.")
+        return runtimeNullSentinelInt
     }
     if box.closureRaw != 0 {
         let fn = unsafeBitCast(box.fnPtr, to: KKClosureFunctionEntryPoint3.self)
         return fn(box.closureRaw, arg1, arg2, arg3, outThrown)
+    } else {
+        let fn = unsafeBitCast(box.fnPtr, to: KKFunctionEntryPoint3.self)
+        return fn(arg1, arg2, arg3, outThrown)
     }
-    let fn = unsafeBitCast(box.fnPtr, to: KKFunctionEntryPoint3.self)
-    return fn(arg1, arg2, arg3, outThrown)
 }
 
-/// Invokes the KFunction with a vararg list (STDLIB-REFLECT-067).
-/// Unpacks the runtime List into individual arguments and dispatches based on arity.
+// MARK: KFunction.call() — vararg (list-based)
+
+/// Dispatches to the appropriate arity overload by unpacking a runtime List.
 @_cdecl("kk_kfunction_call_vararg")
 public func kk_kfunction_call_vararg(
     _ kfunctionRaw: Int,
@@ -340,66 +351,36 @@ public func kk_kfunction_call_vararg(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let box = runtimeKFunctionBox(from: kfunctionRaw) else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "KFunction call: invalid handle")
-        return 0
-    }
-    guard box.fnPtr != 0 else {
         outThrown?.pointee = runtimeAllocateThrowable(
-            message: "KFunction '\(extractString(from: UnsafeMutableRawPointer(bitPattern: box.nameRaw)) ?? "<unknown>")' is not directly callable"
-        )
-        return 0
+            message: "IllegalArgumentException: Invalid KFunction handle.")
+        return runtimeNullSentinelInt
     }
+    // Unpack the argument list.
     var args: [Int] = []
-    if argsListRaw != 0 && argsListRaw != runtimeNullSentinelInt,
-       let ptr = UnsafeMutableRawPointer(bitPattern: argsListRaw) {
-        let isObj = runtimeStorage.withLock { state in
-            state.objectPointers.contains(UInt(bitPattern: ptr))
-        }
-        if isObj, let listBox = tryCast(ptr, to: RuntimeListBox.self) {
-            args = listBox.elements
-        }
+    if argsListRaw != 0, argsListRaw != runtimeNullSentinelInt,
+       let listPtr = UnsafeMutableRawPointer(bitPattern: argsListRaw),
+       let listBox = tryCast(listPtr, to: RuntimeListBox.self)
+    {
+        args = listBox.elements
     }
-    let actualArity = args.count
-    guard box.arity == actualArity else {
+    guard args.count == box.arity else {
         outThrown?.pointee = runtimeAllocateThrowable(
-            message: "KFunction call arity mismatch: expected \(box.arity), got \(actualArity)"
-        )
-        return 0
+            message: "IllegalArgumentException: KFunction expects \(box.arity) argument(s) but call() was invoked with \(args.count).")
+        return runtimeNullSentinelInt
     }
-    switch actualArity {
+    switch args.count {
     case 0:
-        if box.closureRaw != 0 {
-            let fn = unsafeBitCast(box.fnPtr, to: KKClosureThunkEntryPoint.self)
-            return fn(box.closureRaw, outThrown)
-        }
-        let fn = unsafeBitCast(box.fnPtr, to: KKThunkEntryPoint.self)
-        return fn(outThrown)
+        return kk_kfunction_call_0(kfunctionRaw, outThrown)
     case 1:
-        if box.closureRaw != 0 {
-            let fn = unsafeBitCast(box.fnPtr, to: KKClosureFunctionEntryPoint1.self)
-            return fn(box.closureRaw, args[0], outThrown)
-        }
-        let fn = unsafeBitCast(box.fnPtr, to: KKFunctionEntryPoint1.self)
-        return fn(args[0], outThrown)
+        return kk_kfunction_call_1(kfunctionRaw, args[0], outThrown)
     case 2:
-        if box.closureRaw != 0 {
-            let fn = unsafeBitCast(box.fnPtr, to: KKClosureFunctionEntryPoint2.self)
-            return fn(box.closureRaw, args[0], args[1], outThrown)
-        }
-        let fn = unsafeBitCast(box.fnPtr, to: KKFunctionEntryPoint2.self)
-        return fn(args[0], args[1], outThrown)
+        return kk_kfunction_call_2(kfunctionRaw, args[0], args[1], outThrown)
     case 3:
-        if box.closureRaw != 0 {
-            let fn = unsafeBitCast(box.fnPtr, to: KKClosureFunctionEntryPoint3.self)
-            return fn(box.closureRaw, args[0], args[1], args[2], outThrown)
-        }
-        let fn = unsafeBitCast(box.fnPtr, to: KKFunctionEntryPoint3.self)
-        return fn(args[0], args[1], args[2], outThrown)
+        return kk_kfunction_call_3(kfunctionRaw, args[0], args[1], args[2], outThrown)
     default:
         outThrown?.pointee = runtimeAllocateThrowable(
-            message: "KFunction.call(): arity \(actualArity) is not supported for dynamic dispatch"
-        )
-        return 0
+            message: "UnsupportedOperationException: KFunction.call() supports at most 3 arguments via vararg dispatch; got \(args.count).")
+        return runtimeNullSentinelInt
     }
 }
 
@@ -437,4 +418,93 @@ public func kk_ktype_to_string(_ ktypeRaw: Int) -> Int {
         return runtimeReflectionStringRaw("kotlin.Any")
     }
     return runtimeReflectionStringRaw(runtimeKTypeToString(box))
+}
+
+// MARK: - KProperty Dynamic Access (STDLIB-REFLECT-067)
+
+private func runtimeKPropertyStubBox(from raw: Int) -> RuntimeKPropertyStub? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeKPropertyStub.self)
+}
+
+/// Invokes the getter function pointer stored in a KProperty stub.
+/// The stub is created by `kk_kproperty_stub_create`; this function is
+/// called when Kotlin code invokes `prop.get()` via dynamic dispatch.
+///
+/// - Parameter handle: Opaque pointer to a `RuntimeKPropertyStub`.
+/// - Parameter outThrown: Optional out-pointer for thrown exception.
+/// - Returns: The property value, or `runtimeNullSentinelInt` on failure.
+@_cdecl("kk_kproperty_get")
+public func kk_kproperty_get(
+    _ handle: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeKPropertyStubBox(from: handle) != nil else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: Invalid KProperty handle.")
+        return runtimeNullSentinelInt
+    }
+    // RuntimeKPropertyStub carries only name/type metadata; actual value access
+    // is delegated through the callable-ref mechanism at the call site.
+    // Return the sentinel to indicate "no direct value" — the compiler lowers
+    // KProperty.get() to the appropriate accessor call before reaching here.
+    outThrown?.pointee = runtimeAllocateThrowable(
+        message: "UnsupportedOperationException: KProperty.get() requires a bound receiver; use a property reference with receiver.")
+    return runtimeNullSentinelInt
+}
+
+/// Invokes the setter function pointer stored in a KProperty stub.
+@_cdecl("kk_kproperty_set")
+public func kk_kproperty_set(
+    _ handle: Int,
+    _ value: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeKPropertyStubBox(from: handle) != nil else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: Invalid KProperty handle.")
+        return runtimeNullSentinelInt
+    }
+    outThrown?.pointee = runtimeAllocateThrowable(
+        message: "UnsupportedOperationException: KProperty.set() requires a bound receiver; use a mutable property reference with receiver.")
+    return runtimeNullSentinelInt
+}
+
+// MARK: - KConstructor Dynamic Call (STDLIB-REFLECT-067)
+
+/// KConstructor.call() with 0 arguments — delegates to kk_kfunction_call_0.
+@_cdecl("kk_kconstructor_call_0")
+public func kk_kconstructor_call_0(
+    _ kfunctionRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_kfunction_call_0(kfunctionRaw, outThrown)
+}
+
+/// KConstructor.call() with 1 argument — delegates to kk_kfunction_call_1.
+@_cdecl("kk_kconstructor_call_1")
+public func kk_kconstructor_call_1(
+    _ kfunctionRaw: Int,
+    _ arg: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_kfunction_call_1(kfunctionRaw, arg, outThrown)
+}
+
+/// KConstructor.call() with a vararg list — delegates to kk_kfunction_call_vararg.
+@_cdecl("kk_kconstructor_call_vararg")
+public func kk_kconstructor_call_vararg(
+    _ kfunctionRaw: Int,
+    _ argsListRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_kfunction_call_vararg(kfunctionRaw, argsListRaw, outThrown)
 }
