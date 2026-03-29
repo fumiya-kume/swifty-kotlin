@@ -1904,3 +1904,310 @@ public func kk_message_digest_digest(_ digestRaw: Int, _ dataRaw: Int, _ outThro
     return 0
 }
 #endif
+
+// MARK: - Digital Signatures / Certificates (STDLIB-SEC-146)
+
+final class RuntimeCertificateFactoryBox {
+    let typeName: String
+
+    init(typeName: String) {
+        self.typeName = typeName
+    }
+}
+
+final class RuntimeX509CertificateBox {
+    let certificate: SecCertificate
+    let encodedBytes: [UInt8]
+
+    init(certificate: SecCertificate, encodedBytes: [UInt8]) {
+        self.certificate = certificate
+        self.encodedBytes = encodedBytes
+    }
+}
+
+final class RuntimeCertPathBox {
+    let certificatesRaw: [Int]
+
+    init(certificatesRaw: [Int]) {
+        self.certificatesRaw = certificatesRaw
+    }
+}
+
+final class RuntimeTrustAnchorBox {
+    let certificateRaw: Int
+
+    init(certificateRaw: Int) {
+        self.certificateRaw = certificateRaw
+    }
+}
+
+final class RuntimePKIXParametersBox {
+    var trustAnchorsRaw: [Int]
+
+    init(trustAnchorsRaw: [Int]) {
+        self.trustAnchorsRaw = trustAnchorsRaw
+    }
+}
+
+final class RuntimeCertPathValidatorBox {
+    let algorithm: String
+
+    init(algorithm: String) {
+        self.algorithm = algorithm
+    }
+}
+
+private func runtimeCertificateFactoryBox(from raw: Int) -> RuntimeCertificateFactoryBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeCertificateFactoryBox.self)
+}
+
+private func runtimeX509CertificateBox(from raw: Int) -> RuntimeX509CertificateBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeX509CertificateBox.self)
+}
+
+private func runtimeCertPathBox(from raw: Int) -> RuntimeCertPathBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeCertPathBox.self)
+}
+
+private func runtimeTrustAnchorBox(from raw: Int) -> RuntimeTrustAnchorBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeTrustAnchorBox.self)
+}
+
+private func runtimePKIXParametersBox(from raw: Int) -> RuntimePKIXParametersBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimePKIXParametersBox.self)
+}
+
+private func runtimeCertPathValidatorBox(from raw: Int) -> RuntimeCertPathValidatorBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeCertPathValidatorBox.self)
+}
+
+private func runtimeSecurityBytesAsData(from raw: Int, caller: StaticString) -> Data? {
+    guard let bytes = runtimeSecurityBytes(from: raw, caller: caller) else {
+        return nil
+    }
+    let data = Data(bytes)
+    guard let text = String(data: data, encoding: .utf8) else {
+        return data
+    }
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard trimmed.contains("-----BEGIN") else {
+        return data
+    }
+    let base64 = trimmed
+        .split(separator: "\n")
+        .filter { !$0.hasPrefix("-----BEGIN") && !$0.hasPrefix("-----END") }
+        .joined()
+    return Data(base64Encoded: base64)
+}
+
+private func runtimeSecurityCertificate(from data: Data) -> SecCertificate? {
+    SecCertificateCreateWithData(nil, data as CFData)
+}
+
+private func runtimeSecurityCertPathCertificates(from raw: Int, caller: StaticString) -> [Int]? {
+    guard let list = runtimeListBox(from: raw) else {
+        return nil
+    }
+    var certificates: [Int] = []
+    for elementRaw in list.elements {
+        guard let cert = runtimeX509CertificateBox(from: elementRaw) else {
+            return nil
+        }
+        _ = cert
+        certificates.append(elementRaw)
+    }
+    return certificates
+}
+
+@_cdecl("kk_certificatefactory_getInstance")
+public func kk_certificatefactory_getInstance(_ typeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let typeName = runtimeSecurityString(from: typeRaw, caller: #function)
+    guard typeName.uppercased() == "X.509" || typeName.uppercased() == "X509" else {
+        runtimeSetThrown(outThrown, message: "NoSuchAlgorithmException: \(typeName)")
+        return 0
+    }
+    return registerRuntimeObject(RuntimeCertificateFactoryBox(typeName: typeName))
+}
+
+@_cdecl("kk_certificatefactory_generateCertificate")
+public func kk_certificatefactory_generateCertificate(
+    _ factoryRaw: Int,
+    _ dataRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let factory = runtimeCertificateFactoryBox(from: factoryRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_certificatefactory_generateCertificate received invalid CertificateFactory handle \(factoryRaw)")
+    }
+    guard factory.typeName.uppercased() == "X.509" || factory.typeName.uppercased() == "X509" else {
+        runtimeSetThrown(outThrown, message: "CertificateException: unsupported certificate factory \(factory.typeName)")
+        return 0
+    }
+    guard let data = runtimeSecurityBytesAsData(from: dataRaw, caller: #function) else {
+        runtimeSetThrown(outThrown, message: "CertificateException: expected ByteArray/List<Int>")
+        return 0
+    }
+    guard let certificate = runtimeSecurityCertificate(from: data) else {
+        runtimeSetThrown(outThrown, message: "CertificateException: invalid certificate data")
+        return 0
+    }
+    return registerRuntimeObject(RuntimeX509CertificateBox(certificate: certificate, encodedBytes: Array(data)))
+}
+
+@_cdecl("kk_x509certificate_getPublicKey")
+public func kk_x509certificate_getPublicKey(_ certificateRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let certificate = runtimeX509CertificateBox(from: certificateRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_x509certificate_getPublicKey received invalid X509Certificate handle \(certificateRaw)")
+    }
+    guard let publicKey = SecCertificateCopyKey(certificate.certificate) else {
+        runtimeSetThrown(outThrown, message: "CertificateException: unable to extract public key")
+        return 0
+    }
+    return registerRuntimeObject(RuntimePublicKeyBox(secKey: publicKey, algorithm: .rsa))
+}
+
+@_cdecl("kk_x509certificate_getEncoded")
+public func kk_x509certificate_getEncoded(_ certificateRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let certificate = runtimeX509CertificateBox(from: certificateRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_x509certificate_getEncoded received invalid X509Certificate handle \(certificateRaw)")
+    }
+    return runtimeMakeByteArrayRaw(certificate.encodedBytes)
+}
+
+@_cdecl("kk_certpath_new")
+public func kk_certpath_new(_ certificatesRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let certificateRaws = runtimeSecurityCertPathCertificates(from: certificatesRaw, caller: #function) else {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected List<X509Certificate>")
+        return 0
+    }
+    return registerRuntimeObject(RuntimeCertPathBox(certificatesRaw: certificateRaws))
+}
+
+@_cdecl("kk_certpathvalidator_getInstance")
+public func kk_certpathvalidator_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let algorithmName = runtimeSecurityString(from: algorithmRaw, caller: #function)
+    guard algorithmName.uppercased() == "PKIX" else {
+        runtimeSetThrown(outThrown, message: "NoSuchAlgorithmException: \(algorithmName)")
+        return 0
+    }
+    return registerRuntimeObject(RuntimeCertPathValidatorBox(algorithm: algorithmName))
+}
+
+@_cdecl("kk_trustanchor_new")
+public func kk_trustanchor_new(_ certificateRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard runtimeX509CertificateBox(from: certificateRaw) != nil else {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected X509Certificate")
+        return 0
+    }
+    return registerRuntimeObject(RuntimeTrustAnchorBox(certificateRaw: certificateRaw))
+}
+
+@_cdecl("kk_pkixparameters_new")
+public func kk_pkixparameters_new(_ trustAnchorsRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let trustAnchorList = runtimeListBox(from: trustAnchorsRaw) else {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected List<TrustAnchor>")
+        return 0
+    }
+    var anchors: [Int] = []
+    for anchorRaw in trustAnchorList.elements {
+        guard runtimeTrustAnchorBox(from: anchorRaw) != nil else {
+            runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected TrustAnchor")
+            return 0
+        }
+        anchors.append(anchorRaw)
+    }
+    return registerRuntimeObject(RuntimePKIXParametersBox(trustAnchorsRaw: anchors))
+}
+
+@_cdecl("kk_pkixparameters_setTrustAnchors")
+public func kk_pkixparameters_setTrustAnchors(
+    _ parametersRaw: Int,
+    _ trustAnchorsRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let parameters = runtimePKIXParametersBox(from: parametersRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_pkixparameters_setTrustAnchors received invalid PKIXParameters handle \(parametersRaw)")
+    }
+    guard let trustAnchorList = runtimeListBox(from: trustAnchorsRaw) else {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected List<TrustAnchor>")
+        return 0
+    }
+    var anchors: [Int] = []
+    for anchorRaw in trustAnchorList.elements {
+        guard runtimeTrustAnchorBox(from: anchorRaw) != nil else {
+            runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected TrustAnchor")
+            return 0
+        }
+        anchors.append(anchorRaw)
+    }
+    parameters.trustAnchorsRaw = anchors
+    return 0
+}
+
+@_cdecl("kk_certpathvalidator_validate")
+public func kk_certpathvalidator_validate(
+    _ validatorRaw: Int,
+    _ certPathRaw: Int,
+    _ parametersRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let validator = runtimeCertPathValidatorBox(from: validatorRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_certpathvalidator_validate received invalid CertPathValidator handle \(validatorRaw)")
+    }
+    guard validator.algorithm.uppercased() == "PKIX" else {
+        runtimeSetThrown(outThrown, message: "NoSuchAlgorithmException: \(validator.algorithm)")
+        return 0
+    }
+    guard let certPath = runtimeCertPathBox(from: certPathRaw),
+          let parameters = runtimePKIXParametersBox(from: parametersRaw) else {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected CertPath and PKIXParameters")
+        return 0
+    }
+
+    let certs: [SecCertificate] = certPath.certificatesRaw.compactMap { raw in
+        runtimeX509CertificateBox(from: raw)?.certificate
+    }
+    guard certs.count == certPath.certificatesRaw.count else {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected X509Certificate path")
+        return 0
+    }
+    let anchors: [SecCertificate] = parameters.trustAnchorsRaw.compactMap { raw in
+        guard let certRaw = runtimeTrustAnchorBox(from: raw)?.certificateRaw else {
+            return nil
+        }
+        return runtimeX509CertificateBox(from: certRaw)?.certificate
+    }
+    guard anchors.count == parameters.trustAnchorsRaw.count else {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected TrustAnchor certificate")
+        return 0
+    }
+
+    let policy = SecPolicyCreateBasicX509()
+    var trust: SecTrust?
+    let trustCreateStatus = SecTrustCreateWithCertificates(certs as CFArray, policy, &trust)
+    guard trustCreateStatus == errSecSuccess, let trust else {
+        runtimeSetThrown(outThrown, message: "CertificateException: failed to create trust evaluation context")
+        return 0
+    }
+    if !anchors.isEmpty {
+        SecTrustSetAnchorCertificates(trust, anchors as CFArray)
+        SecTrustSetAnchorCertificatesOnly(trust, true)
+    }
+    let ok = SecTrustEvaluateWithError(trust, nil)
+    return kk_box_bool(ok ? 1 : 0)
+}
