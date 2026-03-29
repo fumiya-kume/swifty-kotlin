@@ -761,15 +761,13 @@ extension ABILoweringPass {
             interner.intern("kk_ktypeprojection_type"),
             interner.intern("kk_ktypeprojection_variance"),
             interner.intern("kk_kclass_create"),
-            interner.intern("kk_kclass_get_simple_name"),
-            interner.intern("kk_kclass_get_qualified_name"),
-            interner.intern("kk_kclass_get_superclass_name"),
-            interner.intern("kk_kclass_is_data_class"),
-            interner.intern("kk_kclass_is_sealed_class"),
-            interner.intern("kk_kclass_is_value_class"),
-            interner.intern("kk_kclass_get_field_count"),
-            interner.intern("kk_kclass_get_instance_size_words"),
-            interner.intern("kk_kclass_get_arity"),
+            interner.intern("kk_kclass_simple_name"),
+            interner.intern("kk_kclass_qualified_name"),
+            interner.intern("kk_kclass_supertype_name"),
+            interner.intern("kk_kclass_is_data"),
+            interner.intern("kk_kclass_is_sealed"),
+            interner.intern("kk_kclass_is_value"),
+            interner.intern("kk_kclass_members_count"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }
