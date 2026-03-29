@@ -121,13 +121,13 @@ public extension RuntimeABIExterns {
 
     static let kk_atomic_int_getAndUpdate = ExternDecl(
         name: "kk_atomic_int_getAndUpdate",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     static let kk_atomic_int_updateAndGet = ExternDecl(
         name: "kk_atomic_int_updateAndGet",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
@@ -201,13 +201,13 @@ public extension RuntimeABIExterns {
 
     static let kk_atomic_long_getAndUpdate = ExternDecl(
         name: "kk_atomic_long_getAndUpdate",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     static let kk_atomic_long_updateAndGet = ExternDecl(
         name: "kk_atomic_long_updateAndGet",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
