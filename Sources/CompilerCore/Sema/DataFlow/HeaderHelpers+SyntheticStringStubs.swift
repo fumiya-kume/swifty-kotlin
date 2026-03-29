@@ -76,6 +76,134 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        let javaUtilPkg = ensurePackage(
+            path: ["java", "util"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaUtilPkgSymbol = symbols.lookup(fqName: javaUtilPkg)
+        let localeSymbol = ensureClassSymbol(
+            named: "Locale",
+            in: javaUtilPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaUtilPkgSymbol {
+            symbols.setParentSymbol(javaUtilPkgSymbol, for: localeSymbol)
+        }
+        let localeType = types.make(.classType(ClassType(
+            classSymbol: localeSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(localeType, for: localeSymbol)
+
+        registerSyntheticLocaleConstructor(
+            ownerSymbol: localeSymbol,
+            ownerType: localeType,
+            parameters: [("identifier", stringType)],
+            externalLinkName: "kk_locale_new",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "lowercase",
+            externalLinkName: "kk_string_lowercase_locale",
+            receiverType: stringType,
+            parameters: [
+                ("locale", localeType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "uppercase",
+            externalLinkName: "kk_string_uppercase_locale",
+            receiverType: stringType,
+            parameters: [
+                ("locale", localeType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "compareTo",
+            externalLinkName: "kk_string_compareTo_locale",
+            receiverType: stringType,
+            parameters: [
+                ("other", stringType, false, false),
+                ("locale", localeType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        let normalizationFormSymbol = ensureClassSymbol(
+            named: "NormalizationForm",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let normalizationFormType = types.make(.classType(ClassType(
+            classSymbol: normalizationFormSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(normalizationFormType, for: normalizationFormSymbol)
+
+        let normalizationFormsSymbol = ensureSyntheticObjectSymbol(
+            named: "NormalizationForms",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let normalizationFormsType = types.make(.classType(ClassType(
+            classSymbol: normalizationFormsSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(normalizationFormsType, for: normalizationFormsSymbol)
+
+        for formName in ["NFC", "NFD", "NFKC", "NFKD"] {
+            registerSyntheticObjectProperty(
+                ownerSymbol: normalizationFormsSymbol,
+                ownerType: normalizationFormsType,
+                name: formName,
+                propertyType: normalizationFormType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        registerSyntheticStringExtensionFunction(
+            named: "normalize",
+            externalLinkName: "kk_string_normalize",
+            receiverType: stringType,
+            parameters: [
+                ("form", normalizationFormType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "isNormalized",
+            externalLinkName: "kk_string_isNormalized",
+            receiverType: stringType,
+            parameters: [
+                ("form", normalizationFormType, false, false),
+            ],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "split",
             externalLinkName: "kk_string_split",
@@ -1433,6 +1561,47 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        let javaMathPkg = ensurePackage(
+            path: ["java", "math"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaMathPkgSymbol = symbols.lookup(fqName: javaMathPkg)
+        let bigDecimalSymbol = ensureClassSymbol(
+            named: "BigDecimal",
+            in: javaMathPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaMathPkgSymbol {
+            symbols.setParentSymbol(javaMathPkgSymbol, for: bigDecimalSymbol)
+        }
+        let bigDecimalType = types.make(.classType(ClassType(
+            classSymbol: bigDecimalSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(bigDecimalType, for: bigDecimalSymbol)
+
+        registerSyntheticStringExtensionFunction(
+            named: "toBigDecimal",
+            externalLinkName: "kk_string_toBigDecimal",
+            receiverType: stringType,
+            parameters: [],
+            returnType: bigDecimalType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticBigNumberMemberFunction(
+            ownerSymbol: bigDecimalSymbol,
+            ownerType: bigDecimalType,
+            name: "toString",
+            returnType: stringType,
+            externalLinkName: "kk_bignum_toString",
+            symbols: symbols,
+            interner: interner
+        )
+
         // STDLIB-574: ByteArray.decodeToString()
         let byteArrayType = makeNominalType(
             symbols: symbols,
@@ -2077,5 +2246,109 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setPropertyType(propertyType, for: propertySymbol)
+    }
+
+    private func registerSyntheticBigNumberMemberFunction(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        name: String,
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let memberName = interner.intern(name)
+        let memberFQName = ownerInfo.fqName + [memberName]
+        guard symbols.lookupAll(fqName: memberFQName).isEmpty else {
+            return
+        }
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: [],
+                returnType: returnType,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: []
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerSyntheticLocaleConstructor(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let initName = interner.intern("<init>")
+        let ctorFQName = ownerInfo.fqName + [initName]
+        let hasMatchingConstructor = symbols.lookupAll(fqName: ctorFQName).contains { symbolID in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.kind == .constructor,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.parameterTypes == parameters.map(\.type)
+        }
+        guard !hasMatchingConstructor else {
+            return
+        }
+
+        let ctorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: ctorFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: ctorSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: ctorFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(ctorSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameters.map(\.type),
+                returnType: ownerType,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: ctorSymbol
+        )
     }
 }

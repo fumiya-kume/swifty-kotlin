@@ -369,6 +369,33 @@ final class LinkPhaseIntegrationTests: XCTestCase {
         }
     }
 
+    func testExecutableStringFormatSupportsScientificNotation() throws {
+        let source = """
+        fun main() {
+            println("%.2e".format(1234.5))
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputPath = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "StringFormatScientific",
+                emit: .executable,
+                outputPath: outputPath
+            )
+
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            assertLinkSucceeds(ctx)
+
+            let result = try CommandRunner.run(executable: outputPath, arguments: [])
+            XCTAssertEqual(result.stdout.trimmingCharacters(in: .whitespacesAndNewlines), "1.23e+03")
+        }
+    }
+
     func testLinkPhaseReportsDiagnosticForUnsupportedTargetArchitecture() throws {
         let tempObjectURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".o")
         try Data().write(to: tempObjectURL)

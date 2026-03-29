@@ -60,6 +60,35 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             "kk_string_uppercase",
             "String.uppercase should link to kk_string_uppercase"
         )
+
+        let lowercaseFQ = ["kotlin", "text", "lowercase"].map { interner.intern($0) }
+        let lowercaseLinks = Set(
+            sema.symbols.lookupAll(fqName: lowercaseFQ).compactMap { sema.symbols.externalLinkName(for: $0) }
+        )
+        XCTAssertTrue(lowercaseLinks.contains("kk_string_lowercase"))
+        XCTAssertTrue(lowercaseLinks.contains("kk_string_lowercase_locale"))
+
+        let uppercaseFQ = ["kotlin", "text", "uppercase"].map { interner.intern($0) }
+        let uppercaseLinks = Set(
+            sema.symbols.lookupAll(fqName: uppercaseFQ).compactMap { sema.symbols.externalLinkName(for: $0) }
+        )
+        XCTAssertTrue(uppercaseLinks.contains("kk_string_uppercase"))
+        XCTAssertTrue(uppercaseLinks.contains("kk_string_uppercase_locale"))
+    }
+
+    func testStringNormalizationStubsHaveCorrectExternalLinks() throws {
+        let (sema, interner) = try makeSema()
+
+        XCTAssertEqual(
+            externalLink(for: "normalize", sema: sema, interner: interner),
+            "kk_string_normalize",
+            "String.normalize should link to kk_string_normalize"
+        )
+        XCTAssertEqual(
+            externalLink(for: "isNormalized", sema: sema, interner: interner),
+            "kk_string_isNormalized",
+            "String.isNormalized should link to kk_string_isNormalized"
+        )
     }
 
     func testNewNullableConversionStubsHaveCorrectExternalLinks() throws {
@@ -74,6 +103,11 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             externalLink(for: "toDoubleOrNull", sema: sema, interner: interner),
             "kk_string_toDoubleOrNull",
             "String.toDoubleOrNull should link to kk_string_toDoubleOrNull"
+        )
+        XCTAssertEqual(
+            externalLink(for: "toBigDecimal", sema: sema, interner: interner),
+            "kk_string_toBigDecimal",
+            "String.toBigDecimal should link to kk_string_toBigDecimal"
         )
     }
 
@@ -185,6 +219,44 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                 "uppercase": "kk_string_uppercase",
                 "repeat": "kk_string_repeat",
                 "reversed": "kk_string_reversed",
+            ]
+
+            for (memberName, externalLinkName) in expectedLinks {
+                let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName
+                }, "Expected member call to \(memberName) in AST")
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected call binding for \(memberName)"
+                )
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    externalLinkName,
+                    "Expected \(memberName) to resolve to \(externalLinkName)"
+                )
+            }
+        }
+    }
+
+    func testStringNormalizationMembersResolveInCallExpressions() throws {
+        let source = """
+        fun normalizeText(s: String): String {
+            val normalized = s.normalize(NormalizationForms.NFC)
+            let stable = normalized.isNormalized(NormalizationForms.NFC)
+            return if (stable) normalized else s
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let expectedLinks: [String: String] = [
+                "normalize": "kk_string_normalize",
+                "isNormalized": "kk_string_isNormalized",
             ]
 
             for (memberName, externalLinkName) in expectedLinks {

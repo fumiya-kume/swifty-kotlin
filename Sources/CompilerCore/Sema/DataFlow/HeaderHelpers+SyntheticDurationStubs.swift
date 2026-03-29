@@ -31,6 +31,7 @@ extension DataFlowSemaPhase {
 
         let intType = types.intType
         let longType = types.longType
+        let boolType = types.make(.primitive(.boolean, .nonNull))
 
         // --- STDLIB-582/583/584: Duration.inWhole* properties ---
         registerDurationMemberProperty(
@@ -83,6 +84,113 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_duration_inWholeHours",
             ownerSymbol: durationSymbol,
             returnType: longType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TIME-082: Duration advanced properties ---
+        registerDurationMemberProperty(
+            named: "absoluteValue",
+            externalLinkName: "kk_duration_absoluteValue",
+            ownerSymbol: durationSymbol,
+            returnType: durationType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberProperty(
+            named: "isNegative",
+            externalLinkName: "kk_duration_isNegative",
+            ownerSymbol: durationSymbol,
+            returnType: boolType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberProperty(
+            named: "isPositive",
+            externalLinkName: "kk_duration_isPositive",
+            ownerSymbol: durationSymbol,
+            returnType: boolType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberProperty(
+            named: "isInfinite",
+            externalLinkName: "kk_duration_isInfinite",
+            ownerSymbol: durationSymbol,
+            returnType: boolType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberProperty(
+            named: "isFinite",
+            externalLinkName: "kk_duration_isFinite",
+            ownerSymbol: durationSymbol,
+            returnType: boolType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TIME-082: Duration member methods ---
+        registerDurationMemberMethod(
+            named: "plus",
+            externalLinkName: "kk_duration_plus",
+            ownerSymbol: durationSymbol,
+            parameterTypes: [durationType],
+            returnType: durationType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberMethod(
+            named: "minus",
+            externalLinkName: "kk_duration_minus",
+            ownerSymbol: durationSymbol,
+            parameterTypes: [durationType],
+            returnType: durationType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberMethod(
+            named: "times",
+            externalLinkName: "kk_duration_times_int",
+            ownerSymbol: durationSymbol,
+            parameterTypes: [intType],
+            returnType: durationType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberMethod(
+            named: "div",
+            externalLinkName: "kk_duration_div_int",
+            ownerSymbol: durationSymbol,
+            parameterTypes: [intType],
+            returnType: durationType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberMethod(
+            named: "compareTo",
+            externalLinkName: "kk_duration_compareTo",
+            ownerSymbol: durationSymbol,
+            parameterTypes: [durationType],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberMethod(
+            named: "unaryMinus",
+            externalLinkName: "kk_duration_unary_minus",
+            ownerSymbol: durationSymbol,
+            parameterTypes: [],
+            returnType: durationType,
             symbols: symbols,
             interner: interner
         )
@@ -316,6 +424,79 @@ extension DataFlowSemaPhase {
             )
         }
         return kotlinTimeFQ
+    }
+
+    // MARK: - Duration member method registration (STDLIB-TIME-082)
+
+    private func registerDurationMemberMethod(
+        named name: String,
+        externalLinkName: String,
+        ownerSymbol: SymbolID,
+        parameterTypes: [TypeID],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
+        let functionName = interner.intern(name)
+        let functionFQName = ownerInfo.fqName + [functionName]
+
+        // Check for existing registration with matching parameter types
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard symbols.symbol(symbolID)?.kind == .function,
+                  let sig = symbols.functionSignature(for: symbolID) else { return false }
+            return sig.parameterTypes == parameterTypes
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        // Build parameter symbols
+        var paramSymbols: [SymbolID] = []
+        var paramDefaults: [Bool] = []
+        var paramVarargs: [Bool] = []
+        for (idx, paramType) in parameterTypes.enumerated() {
+            let paramName = interner.intern("p\(idx)")
+            let paramFQName = functionFQName + [paramName]
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: paramName,
+                fqName: paramFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: paramSymbol)
+            symbols.setPropertyType(paramType, for: paramSymbol)
+            paramSymbols.append(paramSymbol)
+            paramDefaults.append(false)
+            paramVarargs.append(false)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: nil,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: paramSymbols,
+                valueParameterHasDefaultValues: paramDefaults,
+                valueParameterIsVararg: paramVarargs,
+                typeParameterSymbols: []
+            ),
+            for: functionSymbol
+        )
     }
 
     private func registerDurationMemberProperty(

@@ -138,6 +138,28 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        registerUuidInstanceMethod(
+            named: "version",
+            externalLinkName: "kk_uuid_version",
+            returnType: types.intType,
+            parameters: [],
+            ownerSymbol: uuidSymbol,
+            ownerType: uuidType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerUuidInstanceMethod(
+            named: "variant",
+            externalLinkName: "kk_uuid_variant",
+            returnType: types.intType,
+            parameters: [],
+            ownerSymbol: uuidSymbol,
+            ownerType: uuidType,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Uuid Helpers

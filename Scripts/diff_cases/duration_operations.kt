@@ -16,4 +16,29 @@ fun main() {
     val d3 = 500.milliseconds
     println(d3.inWholeMilliseconds)
     println(d3.inWholeSeconds)
+
+    // STDLIB-TIME-082: advanced properties
+    val neg = (-30).seconds
+    println(neg.isNegative)
+    println(neg.absoluteValue.inWholeSeconds)
+    val pos = 10.seconds
+    println(pos.isPositive)
+    println(pos.isFinite)
+    println(pos.isInfinite)
+
+    // STDLIB-TIME-082: math operations
+    val a = 30.seconds
+    val b = 20.seconds
+    val sum = a.plus(b)
+    println(sum.inWholeSeconds)
+    val diff = a.minus(b)
+    println(diff.inWholeSeconds)
+    val scaled = a.times(3)
+    println(scaled.inWholeSeconds)
+    val divided = a.div(2)
+    println(divided.inWholeSeconds)
+    val negated = a.unaryMinus()
+    println(negated.isNegative)
+    val cmp = a.compareTo(b)
+    println(cmp > 0)
 }

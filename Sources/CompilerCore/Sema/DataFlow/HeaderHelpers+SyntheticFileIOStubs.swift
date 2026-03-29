@@ -365,6 +365,430 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // BufferedReader.read() -> Int  (STDLIB-IO-091)
+        registerFileMemberFunction(
+            named: "read",
+            externalLinkName: "kk_buffered_reader_read",
+            ownerSymbol: bufferedReaderSymbol,
+            ownerType: bufferedReaderType,
+            parameters: [],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedReader.ready() -> Boolean  (STDLIB-IO-091)
+        registerFileMemberFunction(
+            named: "ready",
+            externalLinkName: "kk_buffered_reader_ready",
+            ownerSymbol: bufferedReaderSymbol,
+            ownerType: bufferedReaderType,
+            parameters: [],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - BufferedWriter (STDLIB-IO-091)
+
+        let bufferedWriterSymbol = ensureClassSymbol(
+            named: "BufferedWriter",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: bufferedWriterSymbol)
+        }
+        let bufferedWriterType = types.make(.classType(ClassType(
+            classSymbol: bufferedWriterSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(bufferedWriterType, for: bufferedWriterSymbol)
+
+        // File.bufferedWriter() -> BufferedWriter
+        registerFileMemberFunction(
+            named: "bufferedWriter",
+            externalLinkName: "kk_file_bufferedWriter",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: bufferedWriterType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedWriter.write(text: String) -> Unit
+        registerFileMemberFunction(
+            named: "write",
+            externalLinkName: "kk_buffered_writer_write",
+            ownerSymbol: bufferedWriterSymbol,
+            ownerType: bufferedWriterType,
+            parameters: [("text", types.stringType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedWriter.newLine() -> Unit
+        registerFileMemberFunction(
+            named: "newLine",
+            externalLinkName: "kk_buffered_writer_new_line",
+            ownerSymbol: bufferedWriterSymbol,
+            ownerType: bufferedWriterType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedWriter.flush() -> Unit
+        registerFileMemberFunction(
+            named: "flush",
+            externalLinkName: "kk_buffered_writer_flush",
+            ownerSymbol: bufferedWriterSymbol,
+            ownerType: bufferedWriterType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedWriter.close() -> Unit
+        registerFileMemberFunction(
+            named: "close",
+            externalLinkName: "kk_buffered_writer_close",
+            ownerSymbol: bufferedWriterSymbol,
+            ownerType: bufferedWriterType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - InputStream / OutputStream (STDLIB-IO-092)
+
+        // MARK: - Resource access (STDLIB-IO-093)
+
+        let javaLangPkg = ensurePackage(
+            path: ["java", "lang"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaLangPkgSymbol = symbols.lookup(fqName: javaLangPkg)
+        let classLoaderSymbol = ensureClassSymbol(
+            named: "ClassLoader",
+            in: javaLangPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaLangPkgSymbol {
+            symbols.setParentSymbol(javaLangPkgSymbol, for: classLoaderSymbol)
+        }
+        let classLoaderType = types.make(.classType(ClassType(
+            classSymbol: classLoaderSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(classLoaderType, for: classLoaderSymbol)
+
+
+        let inputStreamSymbol = ensureClassSymbol(
+            named: "InputStream",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let outputStreamSymbol = ensureClassSymbol(
+            named: "OutputStream",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: inputStreamSymbol)
+            symbols.setParentSymbol(javaIOPkgSymbol, for: outputStreamSymbol)
+        }
+
+        let inputStreamType = types.make(.classType(ClassType(
+            classSymbol: inputStreamSymbol, args: [], nullability: .nonNull
+        )))
+        let outputStreamType = types.make(.classType(ClassType(
+            classSymbol: outputStreamSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(inputStreamType, for: inputStreamSymbol)
+        symbols.setPropertyType(outputStreamType, for: outputStreamSymbol)
+
+        let nullableInputStreamType = types.makeNullable(inputStreamType)
+
+
+        registerFileMemberFunction(
+            named: "inputStream",
+            externalLinkName: "kk_file_inputStream",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: inputStreamType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "outputStream",
+            externalLinkName: "kk_file_outputStream",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: outputStreamType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "read",
+            externalLinkName: "kk_input_stream_read",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "available",
+            externalLinkName: "kk_input_stream_available",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "skip",
+            externalLinkName: "kk_input_stream_skip",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [("count", intType)],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "read",
+            externalLinkName: "kk_input_stream_read_bytes",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [("buffer", listOfIntType)],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "mark",
+            externalLinkName: "kk_input_stream_mark",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [("readLimit", intType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "reset",
+            externalLinkName: "kk_input_stream_reset",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "markSupported",
+            externalLinkName: "kk_input_stream_mark_supported",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "close",
+            externalLinkName: "kk_input_stream_close",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - SequenceInputStream (STDLIB-IO-092)
+
+        let sequenceInputStreamSymbol = ensureClassSymbol(
+            named: "SequenceInputStream",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: sequenceInputStreamSymbol)
+        }
+        let sequenceInputStreamType = types.make(.classType(ClassType(
+            classSymbol: sequenceInputStreamSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(sequenceInputStreamType, for: sequenceInputStreamSymbol)
+
+        registerFileConstructor(
+            ownerSymbol: sequenceInputStreamSymbol,
+            ownerType: sequenceInputStreamType,
+            parameters: [("first", inputStreamType), ("second", inputStreamType)],
+            externalLinkName: "kk_sequence_input_stream_new",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "read",
+            externalLinkName: "kk_sequence_input_stream_read",
+            ownerSymbol: sequenceInputStreamSymbol,
+            ownerType: sequenceInputStreamType,
+            parameters: [],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "available",
+            externalLinkName: "kk_sequence_input_stream_available",
+            ownerSymbol: sequenceInputStreamSymbol,
+            ownerType: sequenceInputStreamType,
+            parameters: [],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "close",
+            externalLinkName: "kk_sequence_input_stream_close",
+            ownerSymbol: sequenceInputStreamSymbol,
+            ownerType: sequenceInputStreamType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "write",
+            externalLinkName: "kk_output_stream_write_byte",
+            ownerSymbol: outputStreamSymbol,
+            ownerType: outputStreamType,
+            parameters: [("value", intType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "write",
+            externalLinkName: "kk_output_stream_write_bytes",
+            ownerSymbol: outputStreamSymbol,
+            ownerType: outputStreamType,
+            parameters: [("buffer", listOfIntType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "flush",
+            externalLinkName: "kk_output_stream_flush",
+            ownerSymbol: outputStreamSymbol,
+            ownerType: outputStreamType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "close",
+            externalLinkName: "kk_output_stream_close",
+            ownerSymbol: outputStreamSymbol,
+            ownerType: outputStreamType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // ClassLoader resource access functions (STDLIB-IO-093)
+
+        registerFileMemberFunction(
+            named: "getResource",
+            externalLinkName: "kk_classloader_getResource",
+            ownerSymbol: classLoaderSymbol,
+            ownerType: classLoaderType,
+            parameters: [("name", types.stringType)],
+            returnType: nullableStringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "getResourceAsStream",
+            externalLinkName: "kk_classloader_getResourceAsStream",
+            ownerSymbol: classLoaderSymbol,
+            ownerType: classLoaderType,
+            parameters: [("name", types.stringType)],
+            returnType: nullableInputStreamType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerTopLevelResourceFunction(
+            packageFQName: javaLangPkg,
+            name: "getSystemClassLoader",
+            parameters: [],
+            returnType: classLoaderType,
+            externalLinkName: "kk_classloader_getSystemClassLoader",
+            symbols: symbols,
+            interner: interner
+        )
+
+        let kotlinIOPkg = ensurePackage(
+            path: ["kotlin", "io"],
+            symbols: symbols,
+            interner: interner
+        )
+        registerTopLevelResourceFunction(
+            packageFQName: kotlinIOPkg,
+            name: "resourceExists",
+            parameters: [("name", types.stringType)],
+            returnType: types.booleanType,
+            externalLinkName: "kk_resource_exists",
+            symbols: symbols,
+            interner: interner
+        )
+        registerTopLevelResourceFunction(
+            packageFQName: kotlinIOPkg,
+            name: "readResourceAsText",
+            parameters: [("name", types.stringType)],
+            returnType: types.stringType,
+            externalLinkName: "kk_readResourceAsText",
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Private Helpers
@@ -562,6 +986,61 @@ extension DataFlowSemaPhase {
             )
         }
         return javaIOPkg
+    }
+
+    private func registerTopLevelResourceFunction(
+        packageFQName: [InternedString],
+        name: String,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        guard symbols.lookupAll(fqName: functionFQName).isEmpty else {
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let pkgSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(pkgSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var parameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            parameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
     }
 
     private func registerFileMemberProperty(

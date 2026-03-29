@@ -209,7 +209,46 @@ final class InheritanceModifierTests: XCTestCase {
         assertNoDiagnostic("KSWIFTK-SEMA-VISIBILITY", in: ctx)
         XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
     }
-    
+
+    func testOverrideWithCovariantReturnType() throws {
+        let source = """
+        open class Animal
+        class Dog : Animal()
+
+        open class Factory {
+            open fun create(): Animal = Animal()
+        }
+
+        class DogFactory : Factory() {
+            override fun create(): Dog = Dog()
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-OVERRIDE", in: ctx)
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
+    }
+
+    func testOverrideWithIncompatibleReturnType() throws {
+        let source = """
+        open class Animal
+        open class Plant
+
+        open class Factory {
+            open fun create(): Animal = Animal()
+        }
+
+        class PlantFactory : Factory() {
+            override fun create(): Plant = Plant()
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-OVERRIDE", in: ctx)
+    }
+
     // MARK: - Complex Inheritance Scenarios
     
     func testComplexInheritanceHierarchy() throws {

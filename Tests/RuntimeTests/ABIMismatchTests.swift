@@ -80,9 +80,13 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 15)
     }
 
+    func testTestFrameworkFunctionCount() {
+        XCTAssertEqual(RuntimeABISpec.testFunctions.count, 6)
+    }
+
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 103)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 152)
     }
 
     func testRegexFunctionCount() {
@@ -92,13 +96,15 @@ final class ABIMismatchTests: XCTestCase {
         // kk_match_result_value, kk_match_result_groupValues,
         // kk_regex_replace_lambda, kk_regex_matchEntire,
         // kk_regex_create_with_option, kk_regex_create_with_options,
-        // kk_regex_containsMatchIn, kk_match_result_groups,
-        // kk_match_group_collection_get, kk_match_group_value,
-        // kk_match_group_range, kk_string_chunked,
-        // kk_string_windowed_default, kk_string_windowed,
-        // kk_string_windowed_partial, kk_string_commonPrefixWith,
-        // kk_string_commonSuffixWith, kk_string_zipWithNext
-        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 31)
+        // kk_regex_containsMatchIn,
+        // kk_match_result_groups, kk_match_group_collection_get,
+        // kk_match_group_value, kk_match_group_range,
+        // kk_string_chunked, kk_string_windowed,
+        // kk_string_commonPrefixWith, kk_string_commonSuffixWith,
+        // kk_string_zipWithNext
+        // STDLIB-REGEX-095: kk_match_result_range, kk_match_result_component1,
+        // kk_match_result_component2, kk_match_result_next, kk_match_group_collection_get_at
+        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 36)
     }
 
     func testPrintAndPrintlnFunctionCount() {
@@ -149,27 +155,22 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testMathFunctionCount() {
-        // 23 existing + 11 Float trig/math + 4 roundToInt/roundToLong + 6 ulp/nextUp/nextDown = 44
-        // 23 original Double functions (abs_int, abs, sqrt, pow, ceil, floor, round,
-        //   sin, cos, tan, asin, acos, atan, atan2,
-        //   exp, ln, log2, log10, log, sign, hypot, PI, E)
-        // + 11 Float overloads (sin_float..floor_float)
-        // + 4 roundToInt/roundToLong (float/double)
-        // + 6 ulp/nextUp/nextDown (float/double)
-        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 44)
-        XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 5)
-        // kk_math_abs_int, kk_math_abs, kk_math_sqrt, kk_math_pow,
-        // kk_math_ceil, kk_math_floor, kk_math_round,
-        // kk_math_exp, kk_math_ln, kk_math_log2, kk_math_log10, kk_math_log,
-        // kk_math_sign, kk_math_hypot, kk_math_PI, kk_math_E
-        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 16)
-        XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 9)
+        // Current math ABI surface:
+        // - 23 Double/int/basic entries through PI/E
+        // - 19 Float overloads
+        // - 4 roundToInt/roundToLong helpers
+        // - 6 ulp/nextUp/nextDown helpers
+        // - 3 coercion helpers
+        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 55)
+        // Random ABI currently includes default, seeded, and bounded long/float helpers.
+        XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 15)
     }
 
     func testTotalFunctionCount() {
         let sections = [
             RuntimeABISpec.memoryFunctions,
             RuntimeABISpec.exceptionFunctions,
+            RuntimeABISpec.testFunctions,
             RuntimeABISpec.stringFunctions,
             RuntimeABISpec.consolePrintFunctions,
             RuntimeABISpec.ioFunctions,
@@ -184,15 +185,19 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.kPropertyStubFunctions,
             RuntimeABISpec.delegateFunctions,
             RuntimeABISpec.bitwiseFunctions,
+            RuntimeABISpec.booleanFunctions,
+            RuntimeABISpec.charFunctions,
             RuntimeABISpec.mathFunctions,
             RuntimeABISpec.randomFunctions,
             RuntimeABISpec.collectionFunctions,
             RuntimeABISpec.sequenceFunctions,
             RuntimeABISpec.regexFunctions,
+            RuntimeABISpec.hexFormatFunctions,
             RuntimeABISpec.comparatorFunctions,
             RuntimeABISpec.resultFunctions,
             RuntimeABISpec.stringBuilderFunctions,
             RuntimeABISpec.fileIOFunctions,
+            RuntimeABISpec.uuidFunctions,
             RuntimeABISpec.durationFunctions,
             RuntimeABISpec.atomicFunctions,
         ]

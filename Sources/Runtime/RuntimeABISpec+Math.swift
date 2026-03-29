@@ -420,6 +420,123 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Math"
         ),
+        // STDLIB-111: IEEE 754 rounding modes — generic mode-dispatch entry points
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_mode",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "mode", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_mode_float",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "mode", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        // STDLIB-111: IEEE 754 rounding modes — Double convenience entry points
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_up",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_down",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_ceiling",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_floor",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_half_up",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_half_down",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_half_even",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_unnecessary",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        // STDLIB-111: IEEE 754 rounding modes — Float convenience entry points
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_up_float",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_down_float",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_ceiling_float",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_floor_float",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_half_up_float",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_half_down_float",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_half_even_float",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_unnecessary_float",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
         // STDLIB-514: abs(Long), truncate
         RuntimeABIFunctionSpec(
             name: "kk_math_abs_long",

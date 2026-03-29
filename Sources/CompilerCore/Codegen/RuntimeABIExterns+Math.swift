@@ -63,6 +63,25 @@ public extension RuntimeABIExterns {
         kk_math_abs_long,
         kk_math_truncate,
         kk_math_truncate_float,
+        // STDLIB-111: IEEE 754 rounding modes
+        kk_math_round_mode,
+        kk_math_round_mode_float,
+        kk_math_round_up,
+        kk_math_round_down,
+        kk_math_round_ceiling,
+        kk_math_round_floor,
+        kk_math_round_half_up,
+        kk_math_round_half_down,
+        kk_math_round_half_even,
+        kk_math_round_unnecessary,
+        kk_math_round_up_float,
+        kk_math_round_down_float,
+        kk_math_round_ceiling_float,
+        kk_math_round_floor_float,
+        kk_math_round_half_up_float,
+        kk_math_round_half_down_float,
+        kk_math_round_half_even_float,
+        kk_math_round_unnecessary_float,
     ]
 
     static let kk_math_abs_int = ExternDecl(
@@ -252,4 +271,28 @@ public extension RuntimeABIExterns {
     static let kk_math_abs_long = ExternDecl(name: "kk_math_abs_long", parameterTypes: ["intptr_t"], returnType: "intptr_t")
     static let kk_math_truncate = ExternDecl(name: "kk_math_truncate", parameterTypes: ["intptr_t"], returnType: "intptr_t")
     static let kk_math_truncate_float = ExternDecl(name: "kk_math_truncate_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+
+    // STDLIB-111: IEEE 754 rounding modes — generic mode-dispatch
+    static let kk_math_round_mode = ExternDecl(name: "kk_math_round_mode", parameterTypes: ["intptr_t", "intptr_t"], returnType: "intptr_t")
+    static let kk_math_round_mode_float = ExternDecl(name: "kk_math_round_mode_float", parameterTypes: ["intptr_t", "intptr_t"], returnType: "intptr_t")
+
+    // STDLIB-111: IEEE 754 rounding modes — Double convenience entry points
+    static let kk_math_round_up = ExternDecl(name: "kk_math_round_up", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_round_down = ExternDecl(name: "kk_math_round_down", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_round_ceiling = ExternDecl(name: "kk_math_round_ceiling", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_round_floor = ExternDecl(name: "kk_math_round_floor", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_round_half_up = ExternDecl(name: "kk_math_round_half_up", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_round_half_down = ExternDecl(name: "kk_math_round_half_down", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_round_half_even = ExternDecl(name: "kk_math_round_half_even", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_round_unnecessary = ExternDecl(name: "kk_math_round_unnecessary", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+
+    // STDLIB-111: IEEE 754 rounding modes — Float convenience entry points
+    static let kk_math_round_up_float = ExternDecl(name: "kk_math_round_up_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_round_down_float = ExternDecl(name: "kk_math_round_down_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_round_ceiling_float = ExternDecl(name: "kk_math_round_ceiling_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_round_floor_float = ExternDecl(name: "kk_math_round_floor_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_round_half_up_float = ExternDecl(name: "kk_math_round_half_up_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_round_half_down_float = ExternDecl(name: "kk_math_round_half_down_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_round_half_even_float = ExternDecl(name: "kk_math_round_half_even_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_round_unnecessary_float = ExternDecl(name: "kk_math_round_unnecessary_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
 }

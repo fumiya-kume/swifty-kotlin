@@ -90,6 +90,7 @@ extension CallTypeChecker {
                 nullability: .nonNull
             )))
             if nonNullReceiverType == matchResultType {
+                let nullableMatchResultType = sema.types.makeNullable(matchResultType)
                 let resultType: TypeID? = switch (memberName, args.count) {
                 case ("value", 0):
                     sema.types.stringType
@@ -107,6 +108,11 @@ extension CallTypeChecker {
                     } else {
                         sema.types.anyType
                     }
+                // STDLIB-REGEX-095: MatchResult complete implementation
+                case ("component1", 0), ("component2", 0):
+                    sema.types.stringType
+                case ("next", 0):
+                    nullableMatchResultType
                 default:
                     nil
                 }
@@ -387,6 +393,7 @@ extension CallTypeChecker {
         let isMapReceiver = isMapLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isSetReceiver = isSetLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMutableListReceiver = isMutableListCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
+        let isMutableSetReceiver = isMutableSetCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMutableMapReceiver = isMutableMapCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isListReceiver = isConcreteListLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isSequenceReceiver = isSequenceLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
@@ -397,6 +404,7 @@ extension CallTypeChecker {
             isMapReceiver: isMapReceiver,
             isSetReceiver: isSetReceiver,
             isMutableListReceiver: isMutableListReceiver,
+            isMutableSetReceiver: isMutableSetReceiver,
             isMutableMapReceiver: isMutableMapReceiver,
             interner: interner
         ),
@@ -406,6 +414,7 @@ extension CallTypeChecker {
             isMapReceiver: isMapReceiver,
             isSetReceiver: isSetReceiver,
             isMutableMapReceiver: isMutableMapReceiver,
+            isMutableSetReceiver: isMutableSetReceiver,
             isMutableListReceiver: isMutableListReceiver,
             interner: interner
         )
@@ -547,6 +556,7 @@ extension CallTypeChecker {
         isMapReceiver: Bool,
         isSetReceiver: Bool,
         isMutableListReceiver: Bool,
+        isMutableSetReceiver: Bool = false,
         isMutableMapReceiver: Bool,
         interner: StringInterner
     ) -> Bool {
@@ -658,6 +668,8 @@ extension CallTypeChecker {
             interner.intern("sort"),
             interner.intern("sortBy"),
             interner.intern("sortByDescending"),
+        ]
+        let mutableCollectionMembers: Set = [
             interner.intern("addAll"),
             interner.intern("removeAll"),
             interner.intern("retainAll"),
@@ -667,6 +679,8 @@ extension CallTypeChecker {
             interner.intern("containsValue"),
             interner.intern("mapValues"),
             interner.intern("mapKeys"),
+            interner.intern("filterKeys"),
+            interner.intern("filterValues"),
             knownNames.getValue,
             knownNames.getOrDefault,
             interner.intern("plus"),
@@ -689,6 +703,9 @@ extension CallTypeChecker {
         }
         if mutableListOnlyMembers.contains(memberName) {
             return isMutableListReceiver
+        }
+        if mutableCollectionMembers.contains(memberName) {
+            return isMutableListReceiver || isMutableSetReceiver
         }
         if memberName == knownNames.getOrPut || memberName == knownNames.putAll {
             return isMutableMapReceiver
@@ -726,6 +743,8 @@ extension CallTypeChecker {
         ]
         if memberName == interner.intern("mapValues") ||
             memberName == interner.intern("mapKeys") ||
+            memberName == interner.intern("filterKeys") ||
+            memberName == interner.intern("filterValues") ||
             memberName == interner.intern("plus") ||
             memberName == interner.intern("minus")
         {
@@ -743,6 +762,7 @@ extension CallTypeChecker {
         isMapReceiver: Bool,
         isSetReceiver: Bool,
         isMutableMapReceiver: Bool,
+        isMutableSetReceiver: Bool = false,
         isMutableListReceiver: Bool,
         interner: StringInterner
     ) -> Bool {
@@ -782,7 +802,8 @@ extension CallTypeChecker {
             return argCount == 2
         case interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
             return isSetReceiver && argCount == 1
-        case interner.intern("containsKey"), interner.intern("mapValues"), interner.intern("mapKeys"):
+        case interner.intern("containsKey"), interner.intern("mapValues"), interner.intern("mapKeys"),
+             interner.intern("filterKeys"), interner.intern("filterValues"):
             return isMapReceiver && argCount == 1
         case knownNames.getValue:
             return isMapReceiver && argCount == 1
@@ -793,7 +814,7 @@ extension CallTypeChecker {
         case knownNames.getOrPut:
             return isMutableMapReceiver && argCount == 2
         case interner.intern("addAll"), interner.intern("removeAll"), interner.intern("retainAll"):
-            return isMutableListReceiver && argCount == 1
+            return (isMutableListReceiver || isMutableSetReceiver) && argCount == 1
         case knownNames.putAll:
             return isMutableMapReceiver && argCount == 1
         case interner.intern("plus"), interner.intern("minus"):
@@ -912,8 +933,11 @@ extension CallTypeChecker {
             return receiverElementType
         }
 
-        if memberName == interner.intern("plus") || memberName == interner.intern("minus") {
-            // plus/minus return the same Map type as the receiver.
+        if memberName == interner.intern("plus") || memberName == interner.intern("minus")
+            || memberName == interner.intern("filter") || memberName == interner.intern("filterKeys")
+            || memberName == interner.intern("filterValues")
+        {
+            // plus/minus/filter/filterKeys/filterValues return the same Map type as the receiver.
             // receiverElementType for maps is Map.Entry<K,V>, so reconstruct Map<K,V>.
             if case let .classType(entryType) = sema.types.kind(of: receiverElementType),
                entryType.args.count >= 2
@@ -1136,9 +1160,13 @@ extension CallTypeChecker {
             interner.intern("maxOf"),
             interner.intern("minOf"),
         ]
+        let filterKeys = interner.intern("filterKeys")
+        let filterValues = interner.intern("filterValues")
         let mapOnlyMembers: Set = [
             mapValues,
             mapKeys,
+            filterKeys,
+            filterValues,
             knownNames.getOrDefault,
             knownNames.getOrElse,
         ]
@@ -1537,6 +1565,21 @@ extension CallTypeChecker {
             symbol.name == knownNames.mutableList
                 || symbol.fqName == knownNames.kotlinCollectionsMutableListFQName
         ) && classType.args.count == 1
+    }
+
+    private func isMutableSetCollectionReceiver(
+        receiverID: ExprID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isMutableSetSymbol(symbol) && classType.args.count == 1
     }
 
     private func isMutableMapCollectionReceiver(

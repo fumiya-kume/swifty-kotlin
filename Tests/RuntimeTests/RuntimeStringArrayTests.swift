@@ -527,6 +527,12 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(runtimeStringValue(formatted), "%,d")
     }
 
+    func testStringFormatSupportsScientificNotationForDouble() {
+        let args = makeRuntimeArray([kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: 1234.5.bitPattern)))])
+        let formatted = kk_string_format(rawFromRuntimeString("%.2e"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "1.23e+03")
+    }
+
     // MARK: - kk_throwable_new
 
     func testThrowableNewCreatesThrowable() {

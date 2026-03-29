@@ -73,6 +73,28 @@ final class SeededRandomBox {
     }
 }
 
+// MARK: - SecureRandom (STDLIB-101)
+
+final class SecureRandomBox {
+    private var seeded: SeededRandomBox?
+
+    func setSeed(_ seed: Int) {
+        seeded = SeededRandomBox(seed: seed)
+    }
+
+    private func nextBits() -> UInt64 {
+        if let seeded {
+            return seeded.nextBits()
+        }
+        var rng = SystemRandomNumberGenerator()
+        return rng.next()
+    }
+
+    func nextByte() -> Int {
+        Int(Int8(truncatingIfNeeded: nextBits()))
+    }
+}
+
 /// Extract a SeededRandomBox from a raw receiver value.
 /// Returns `nil` when the receiver is 0 (= Random.Default / companion object).
 private func seededBox(from raw: Int) -> SeededRandomBox? {
@@ -88,6 +110,19 @@ private func seededBox(from raw: Int) -> SeededRandomBox? {
     return Unmanaged<SeededRandomBox>.fromOpaque(ptr).takeUnretainedValue()
 }
 
+private func secureRandomBox(from raw: Int) -> SecureRandomBox? {
+    guard raw != 0, let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return Unmanaged<SecureRandomBox>.fromOpaque(ptr).takeUnretainedValue()
+}
+
 // MARK: - Constructor
 
 @_cdecl("kk_random_create_seeded")
@@ -98,6 +133,54 @@ public func kk_random_create_seeded(_ seed: Int) -> Int {
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
+}
+
+// MARK: - SecureRandom Constructor / Factory
+
+@_cdecl("kk_secure_random_get_instance")
+public func kk_secure_random_get_instance() -> Int {
+    let box = SecureRandomBox()
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+    return Int(bitPattern: ptr)
+}
+
+@_cdecl("kk_secure_random_set_seed")
+public func kk_secure_random_set_seed(_ receiver: Int, _ seed: Int) -> Int {
+    guard let box = secureRandomBox(from: receiver) else {
+        return receiver
+    }
+    box.setSeed(seed)
+    return receiver
+}
+
+@_cdecl("kk_secure_random_generate_seed")
+public func kk_secure_random_generate_seed(_ receiver: Int, _ size: Int) -> Int {
+    guard let box = secureRandomBox(from: receiver), size > 0 else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    var bytes: [Int] = []
+    bytes.reserveCapacity(size)
+    for _ in 0 ..< size {
+        bytes.append(box.nextByte())
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: bytes))
+}
+
+@_cdecl("kk_secure_random_next_bytes")
+public func kk_secure_random_next_bytes(_ receiver: Int, _ arrayRaw: Int) -> Int {
+    guard let box = secureRandomBox(from: receiver),
+          let list = runtimeListBox(from: arrayRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    var filled: [Int] = []
+    filled.reserveCapacity(list.elements.count)
+    for _ in list.elements {
+        filled.append(box.nextByte())
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: filled))
 }
 
 // MARK: - Random (STDLIB-165, STDLIB-514, STDLIB-515, STDLIB-516, STDLIB-653, STDLIB-654, STDLIB-655)

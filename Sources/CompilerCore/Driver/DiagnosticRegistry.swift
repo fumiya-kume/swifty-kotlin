@@ -88,6 +88,7 @@ public enum DiagnosticRegistry {
     private static let suppressionAliases: [String: [String]] = [
         "UNCHECKED_CAST": ["KSWIFTK-SEMA-UNCHECKED-CAST"],
         "DEPRECATION": ["KSWIFTK-SEMA-DEPRECATED"],
+        "UNCHECKED_IS": ["KSWIFTK-SEMA-ERASED-TYPE"],
     ]
 
     // MARK: - Lexer pass (LEX)
@@ -333,6 +334,12 @@ public enum DiagnosticRegistry {
             pass: "SEMA",
             defaultSeverity: .warning,
             summary: "Unchecked cast to a generic type."
+        ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-ERASED-TYPE",
+            pass: "SEMA",
+            defaultSeverity: .warning,
+            summary: "Cannot check for instance of erased generic type; type arguments are not available at runtime."
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-DEPRECATED",

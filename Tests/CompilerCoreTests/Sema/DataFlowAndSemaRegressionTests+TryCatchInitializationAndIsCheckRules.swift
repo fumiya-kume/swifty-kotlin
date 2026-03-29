@@ -373,7 +373,7 @@ extension DataFlowAndSemaRegressionTests {
         try withTemporaryFile(contents: source) { path in
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
-            assertHasDiagnostic("KSWIFTK-SEMA-0080", in: ctx)
+            assertHasDiagnostic("KSWIFTK-SEMA-ERASED-TYPE", in: ctx)
         }
     }
 
@@ -385,7 +385,7 @@ extension DataFlowAndSemaRegressionTests {
         try withTemporaryFile(contents: source) { path in
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
-            assertNoDiagnostic("KSWIFTK-SEMA-0080", in: ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-ERASED-TYPE", in: ctx)
         }
     }
 

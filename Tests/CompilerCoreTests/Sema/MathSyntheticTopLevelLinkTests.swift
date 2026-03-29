@@ -147,4 +147,52 @@ final class MathSyntheticTopLevelLinkTests: XCTestCase {
             }
         }
     }
+
+    func testFloatingPrecisionHelpersResolveViaDefaultImport() throws {
+        let source = """
+        fun sample(x: Double, y: Float) {
+            val a = ulp(x)
+            val b = nextUp(x)
+            val c = nextDown(x)
+            val d = ulp(y)
+            val e = nextUp(y)
+            val f = nextDown(y)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let expectedLinks = [
+                "kk_double_ulp",
+                "kk_double_nextUp",
+                "kk_double_nextDown",
+                "kk_float_ulp",
+                "kk_float_nextUp",
+                "kk_float_nextDown",
+            ]
+
+            var resolvedLinks: [String] = []
+            for exprIndex in ast.arena.exprs.indices {
+                let exprID = ExprID(rawValue: Int32(exprIndex))
+                guard let expr = ast.arena.expr(exprID),
+                      case let .call(calleeExpr, _, _, _) = expr,
+                      case let .nameRef(calleeName, _) = ast.arena.expr(calleeExpr)
+                else { continue }
+                let name = ctx.interner.resolve(calleeName)
+                guard ["ulp", "nextUp", "nextDown"].contains(name),
+                      let chosenCallee = sema.bindings.callBinding(for: exprID)?.chosenCallee,
+                      let link = sema.symbols.externalLinkName(for: chosenCallee)
+                else { continue }
+                resolvedLinks.append(link)
+            }
+
+            for expected in expectedLinks {
+                XCTAssertTrue(resolvedLinks.contains(expected), "Expected \(expected) to be resolved")
+            }
+        }
+    }
 }

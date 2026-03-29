@@ -11,6 +11,7 @@ struct OpenFinalOverrideContext {
     let ast: ASTModule
     let symbols: SymbolTable
     let bindings: BindingTable
+    let types: TypeSystem
     let diagnostics: DiagnosticEngine
     let interner: StringInterner
 }
@@ -20,6 +21,7 @@ extension DataFlowSemaPhase {
         ast: ASTModule,
         symbols: SymbolTable,
         bindings: BindingTable,
+        types: TypeSystem,
         diagnostics: DiagnosticEngine,
         interner: StringInterner
     ) {
@@ -27,6 +29,7 @@ extension DataFlowSemaPhase {
             ast: ast,
             symbols: symbols,
             bindings: bindings,
+            types: types,
             diagnostics: diagnostics,
             interner: interner
         )
@@ -625,21 +628,19 @@ extension DataFlowSemaPhase {
         }
         let parentReturnType = parentSignature.returnType
 
-        // Check if child return type is a subtype of parent return type
-        // Note: This requires access to the type system for subtype checking
-        // For now, we'll implement a basic check - this can be enhanced with proper subtype relations
-
-        // Simple equality check for now - proper covariance checking would require
-        // integration with the type system's subtype checking
-        if childReturnType != parentReturnType {
-            // This is actually allowed in Kotlin (covariant returns), but we need proper subtype checking
-            // For now, we conservatively allow it and defer stricter subtype checking.
-            // TODO: Implement proper subtype checking instead of allowing all different types
-            _ = memberName
-            _ = memberRange
-            _ = ctx
-            _ = parentSymbol
-        }
+        // Covariance validation is deferred until findInheritedMember performs
+        // full signature matching (parameter types + name). With name-only lookup,
+        // the inherited member selected here may be a different overload than the
+        // one actually being overridden, which would produce false
+        // KSWIFTK-SEMA-OVERRIDE errors for valid covariant overrides in overloaded
+        // hierarchies (e.g. base has foo(Int): Int and foo(String): String;
+        // child overrides foo(String): String).
+        // TODO: Enable subtype check once signature-aware lookup is implemented.
+        _ = childReturnType
+        _ = parentReturnType
+        _ = memberName
+        _ = memberRange
+        _ = parentSymbol
     }
 
     // MARK: - Check 2b: visibility expansion
@@ -690,6 +691,14 @@ extension DataFlowSemaPhase {
         ownerSymbol: SymbolID,
         ctx: OpenFinalOverrideContext
     ) {
+        // Skip the missing-override check for interface members until signature-aware
+        // matching is implemented. Name-only lookup via findInheritedMember would
+        // incorrectly flag valid overloads (e.g. fun f(String) alongside inherited
+        // fun f(Int)) as missing the 'override' modifier.
+        if let ownerSym = ctx.symbols.symbol(ownerSymbol), ownerSym.kind == .interface {
+            return
+        }
+
         let parent = findInheritedMember(
             named: memberName,
             for: ownerSymbol,

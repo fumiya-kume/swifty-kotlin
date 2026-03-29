@@ -8,6 +8,8 @@ public extension RuntimeABIExterns {
         kk_uuid_toHexString,
         kk_uuid_toLongs,
         kk_uuid_toByteArray,
+        kk_uuid_version,
+        kk_uuid_variant,
     ]
 
     static let kk_uuid_random = ExternDecl(
@@ -42,6 +44,18 @@ public extension RuntimeABIExterns {
 
     static let kk_uuid_toByteArray = ExternDecl(
         name: "kk_uuid_toByteArray",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_uuid_version = ExternDecl(
+        name: "kk_uuid_version",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_uuid_variant = ExternDecl(
+        name: "kk_uuid_variant",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )

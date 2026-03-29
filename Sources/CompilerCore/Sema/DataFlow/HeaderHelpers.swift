@@ -845,6 +845,12 @@ extension DataFlowSemaPhase {
         registerSyntheticStdlibLoopStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticScopeFunctionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExceptionStubs(symbols: symbols, types: types, interner: interner, kotlinPkg: kotlinPkg)
+        registerSyntheticTestFrameworkStubs(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinPkg: kotlinPkg
+        )
         registerSyntheticCoroutineStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticContractStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticPreconditionStubs(symbols: symbols, types: types, interner: interner)
@@ -861,6 +867,11 @@ extension DataFlowSemaPhase {
         registerSyntheticCloseableStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticAtomicStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticUuidStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticURIStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticLoggingStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticSecurityStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticCacheStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticMetaprogStubs(symbols: symbols, types: types, interner: interner)
     }
 
     func registerSyntheticContractStubs(

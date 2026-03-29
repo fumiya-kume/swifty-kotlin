@@ -206,6 +206,44 @@ public func kk_map_filter(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
     return registerRuntimeObject(RuntimeMapBox(keys: filteredKeys, values: filteredValues))
 }
 
+@_cdecl("kk_map_filterKeys")
+public func kk_map_filterKeys(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else { invalidContainerPanic(#function, "map") }
+    var filteredKeys: [Int] = []
+    var filteredValues: [Int] = []
+    filteredKeys.reserveCapacity(min(map.keys.count, map.values.count))
+    filteredValues.reserveCapacity(min(map.keys.count, map.values.count))
+    for (key, value) in zip(map.keys, map.values) {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: key, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if maybeUnbox(result) != 0 {
+            filteredKeys.append(key)
+            filteredValues.append(value)
+        }
+    }
+    return registerRuntimeObject(RuntimeMapBox(keys: filteredKeys, values: filteredValues))
+}
+
+@_cdecl("kk_map_filterValues")
+public func kk_map_filterValues(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else { invalidContainerPanic(#function, "map") }
+    var filteredKeys: [Int] = []
+    var filteredValues: [Int] = []
+    filteredKeys.reserveCapacity(min(map.keys.count, map.values.count))
+    filteredValues.reserveCapacity(min(map.keys.count, map.values.count))
+    for (key, value) in zip(map.keys, map.values) {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: value, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if maybeUnbox(result) != 0 {
+            filteredKeys.append(key)
+            filteredValues.append(value)
+        }
+    }
+    return registerRuntimeObject(RuntimeMapBox(keys: filteredKeys, values: filteredValues))
+}
+
 @_cdecl("kk_map_count")
 public func kk_map_count(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else { invalidContainerPanic(#function, "map") }

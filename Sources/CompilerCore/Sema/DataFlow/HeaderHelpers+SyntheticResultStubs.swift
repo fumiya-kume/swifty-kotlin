@@ -343,6 +343,58 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-RESULT-107: Result advanced operations ---
+
+        // recoverCatching(transform: (Throwable) -> T): Result<T>
+        // Like recover but catches exceptions thrown by the transform lambda.
+        let recoverCatchingTransformType = types.make(.functionType(FunctionType(
+            receiver: nil,
+            params: [throwableType],
+            returnType: tType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerResultMemberFunction(
+            named: "recoverCatching",
+            externalLinkName: "kk_result_recoverCatching",
+            ownerSymbol: resultSymbol,
+            ownerType: resultType,
+            parameters: [("transform", recoverCatchingTransformType, false, false)],
+            returnType: resultType,
+            typeParameterSymbols: [tSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // component1(): T? — destructuring support (success value)
+        registerResultMemberFunction(
+            named: "component1",
+            externalLinkName: "kk_result_component1",
+            ownerSymbol: resultSymbol,
+            ownerType: resultType,
+            parameters: [],
+            returnType: nullableTType,
+            typeParameterSymbols: [tSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // component2(): Throwable? — destructuring support (exception)
+        registerResultMemberFunction(
+            named: "component2",
+            externalLinkName: "kk_result_component2",
+            ownerSymbol: resultSymbol,
+            ownerType: resultType,
+            parameters: [],
+            returnType: nullableThrowableType,
+            typeParameterSymbols: [tSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Result Helpers

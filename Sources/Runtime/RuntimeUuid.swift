@@ -46,6 +46,26 @@ final class RuntimeUuidBox {
         }
         return bytes
     }
+
+    var version: Int {
+        let msb = UInt64(bitPattern: mostSignificantBits)
+        return Int((msb >> 12) & 0xF)
+    }
+
+    var variant: Int {
+        let lsb = UInt64(bitPattern: leastSignificantBits)
+        let topBits = (lsb >> 62) & 0x3
+        switch topBits {
+        case 0b00:
+            return 0 // NCS backward compatibility
+        case 0b10:
+            return 2 // RFC 4122 / IETF
+        case 0b11:
+            return 6 // Microsoft compatibility bucket
+        default:
+            return 7 // future reserved bucket
+        }
+    }
 }
 
 /// Extract a RuntimeUuidBox from a raw receiver value.
@@ -206,4 +226,22 @@ public func kk_uuid_toByteArray(_ receiver: Int) -> Int {
         arrayBox.elements[i] = Int(bytes[i])
     }
     return registerRuntimeObject(arrayBox)
+}
+
+// MARK: - Uuid.version() / variant()
+
+@_cdecl("kk_uuid_version")
+public func kk_uuid_version(_ receiver: Int) -> Int {
+    guard let box = runtimeUuidBox(from: receiver) else {
+        return 0
+    }
+    return box.version
+}
+
+@_cdecl("kk_uuid_variant")
+public func kk_uuid_variant(_ receiver: Int) -> Int {
+    guard let box = runtimeUuidBox(from: receiver) else {
+        return 0
+    }
+    return box.variant
 }

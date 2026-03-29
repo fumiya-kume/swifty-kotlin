@@ -35,6 +35,96 @@ public func kk_string_uppercase(_ strRaw: Int) -> Int {
     return runtimeMakeStringRaw(source.uppercased())
 }
 
+private func runtimeLocaleIdentifier(from localeRaw: Int) -> String {
+    runtimeStringFromRawOrPanic(localeRaw, caller: #function)
+        .replacingOccurrences(of: "_", with: "-")
+}
+
+private func runtimeFoundationLocale(from localeRaw: Int) -> Locale {
+    Locale(identifier: runtimeLocaleIdentifier(from: localeRaw))
+}
+
+@_cdecl("kk_locale_new")
+public func kk_locale_new(_ identifierRaw: Int) -> Int {
+    runtimeMakeStringRaw(runtimeLocaleIdentifier(from: identifierRaw))
+}
+
+@_cdecl("kk_string_lowercase_locale")
+public func kk_string_lowercase_locale(_ strRaw: Int, _ localeRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    return runtimeMakeStringRaw(source.lowercased(with: runtimeFoundationLocale(from: localeRaw)))
+}
+
+@_cdecl("kk_string_uppercase_locale")
+public func kk_string_uppercase_locale(_ strRaw: Int, _ localeRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    return runtimeMakeStringRaw(source.uppercased(with: runtimeFoundationLocale(from: localeRaw)))
+}
+
+@_cdecl("kk_string_compareTo_locale")
+public func kk_string_compareTo_locale(_ lhsRaw: Int, _ rhsRaw: Int, _ localeRaw: Int) -> Int {
+    let lhs = runtimeStringFromRawOrPanic(lhsRaw, caller: #function)
+    let rhs = runtimeStringFromRawOrPanic(rhsRaw, caller: #function)
+    let locale = runtimeFoundationLocale(from: localeRaw)
+    switch lhs.compare(rhs, options: [], range: nil, locale: locale) {
+    case .orderedAscending:
+        return -1
+    case .orderedDescending:
+        return 1
+    case .orderedSame:
+        return 0
+    }
+}
+
+private enum NormalizationFormTag: Int {
+    case nfc = 0
+    case nfd = 1
+    case nfkc = 2
+    case nfkd = 3
+}
+
+@_cdecl("kk_normalization_form_nfc")
+public func kk_normalization_form_nfc() -> Int { NormalizationFormTag.nfc.rawValue }
+
+@_cdecl("kk_normalization_form_nfd")
+public func kk_normalization_form_nfd() -> Int { NormalizationFormTag.nfd.rawValue }
+
+@_cdecl("kk_normalization_form_nfkc")
+public func kk_normalization_form_nfkc() -> Int { NormalizationFormTag.nfkc.rawValue }
+
+@_cdecl("kk_normalization_form_nfkd")
+public func kk_normalization_form_nfkd() -> Int { NormalizationFormTag.nfkd.rawValue }
+
+private func runtimeNormalizedString(_ source: String, formTagRaw: Int) -> String {
+    guard let form = NormalizationFormTag(rawValue: formTagRaw) else {
+        return source
+    }
+    switch form {
+    case .nfc:
+        return source.precomposedStringWithCanonicalMapping
+    case .nfd:
+        return source.decomposedStringWithCanonicalMapping
+    case .nfkc:
+        return source.precomposedStringWithCompatibilityMapping
+    case .nfkd:
+        return source.decomposedStringWithCompatibilityMapping
+    }
+}
+
+@_cdecl("kk_string_normalize")
+public func kk_string_normalize(_ strRaw: Int, _ formTagRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    return runtimeMakeStringRaw(runtimeNormalizedString(source, formTagRaw: formTagRaw))
+}
+
+@_cdecl("kk_string_isNormalized")
+public func kk_string_isNormalized(_ strRaw: Int, _ formTagRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let normalized = runtimeNormalizedString(source, formTagRaw: formTagRaw)
+    return normalized.unicodeScalars.elementsEqual(source.unicodeScalars) ? 1 : 0
+}
+
+
 @_cdecl("kk_string_split")
 public func kk_string_split(_ strRaw: Int, _ delimRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)

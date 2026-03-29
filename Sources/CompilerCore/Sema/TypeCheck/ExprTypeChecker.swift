@@ -271,8 +271,8 @@ final class ExprTypeChecker {
                 }
                 if hasNonStarArg {
                     ctx.semaCtx.diagnostics.warning(
-                        "KSWIFTK-SEMA-0080",
-                        "Cannot check for instance of erased type. Use '*' for type arguments in 'is' checks, e.g. 'is List<*>'.",
+                        "KSWIFTK-SEMA-ERASED-TYPE",
+                        "Cannot check for instance of erased type: type arguments are not available at runtime. Use star-projection, e.g. 'is List<*>'.",
                         range: range
                     )
                 }

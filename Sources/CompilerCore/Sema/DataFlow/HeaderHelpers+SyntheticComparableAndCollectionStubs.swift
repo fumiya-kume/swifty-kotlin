@@ -4935,6 +4935,22 @@ extension DataFlowSemaPhase {
             typeParamSymbol: typeParamSymbol,
             typeParamType: typeParamType
         )
+        registerMutableSetRemoveAllMember(
+            symbols: symbols, types: types, interner: interner,
+            mutableSetFQName: mutableSetFQName,
+            mutableSetInterfaceSymbol: mutableSetInterfaceSymbol,
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
+            typeParamSymbol: typeParamSymbol,
+            typeParamType: typeParamType
+        )
+        registerMutableSetRetainAllMember(
+            symbols: symbols, types: types, interner: interner,
+            mutableSetFQName: mutableSetFQName,
+            mutableSetInterfaceSymbol: mutableSetInterfaceSymbol,
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
+            typeParamSymbol: typeParamSymbol,
+            typeParamType: typeParamType
+        )
 
         // STDLIB-651: Set.toMutableSet() → kk_set_to_mutable_set
         // Register on Set (not MutableSet) since Set.toMutableSet() returns MutableSet
@@ -5107,6 +5123,96 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(mutableSetInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_mutable_set_addAll", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [collectionType],
+                returnType: types.booleanType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerMutableSetRemoveAllMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableSetFQName: [InternedString],
+        mutableSetInterfaceSymbol: SymbolID,
+        collectionInterfaceSymbol: SymbolID,
+        typeParamSymbol: SymbolID,
+        typeParamType: TypeID
+    ) {
+        let memberName = interner.intern("removeAll")
+        let memberFQName = mutableSetFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableSetInterfaceSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let collectionType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(mutableSetInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_mutable_set_removeAll", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [collectionType],
+                returnType: types.booleanType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerMutableSetRetainAllMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableSetFQName: [InternedString],
+        mutableSetInterfaceSymbol: SymbolID,
+        collectionInterfaceSymbol: SymbolID,
+        typeParamSymbol: SymbolID,
+        typeParamType: TypeID
+    ) {
+        let memberName = interner.intern("retainAll")
+        let memberFQName = mutableSetFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableSetInterfaceSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let collectionType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(mutableSetInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_mutable_set_retainAll", for: memberSymbol)
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: receiverType,
@@ -5535,10 +5641,38 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
+        let filterKeyLambdaType = types.make(.functionType(FunctionType(
+            params: [keyType],
+            returnType: types.booleanType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let filterValueLambdaType = types.make(.functionType(FunctionType(
+            params: [valueType],
+            returnType: types.booleanType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         registerMember(
             name: "filter",
             externalLinkName: "kk_map_filter",
             parameterTypes: [filterLambdaType],
+            returnType: receiverType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+        registerMember(
+            name: "filterKeys",
+            externalLinkName: "kk_map_filterKeys",
+            parameterTypes: [filterKeyLambdaType],
+            returnType: receiverType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+        registerMember(
+            name: "filterValues",
+            externalLinkName: "kk_map_filterValues",
+            parameterTypes: [filterValueLambdaType],
             returnType: receiverType,
             typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
             flags: [.synthetic, .inlineFunction]

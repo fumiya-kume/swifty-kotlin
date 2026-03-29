@@ -82,6 +82,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-REGEX-097: Regex.groupNames: Set<String> ---
+        let setStringType = makeSetType(
+            symbols: symbols, types: types, interner: interner,
+            elementType: stringType
+        ) ?? listStringType
+        registerRegexMemberProperty(
+            named: "groupNames",
+            externalLinkName: "kk_regex_group_names",
+            ownerSymbol: regexSymbol,
+            returnType: setStringType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-101: MatchResult.value / MatchResult.groupValues ---
         registerRegexMemberProperty(
             named: "value",
@@ -139,6 +153,64 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_match_group_range",
             ownerSymbol: matchGroupSymbol,
             returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-REGEX-095: MatchResult.range ---
+        registerRegexMemberProperty(
+            named: "range",
+            externalLinkName: "kk_match_result_range",
+            ownerSymbol: matchResultSymbol,
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-REGEX-095: MatchResult.component1() ---
+        registerRegexMemberFunction(
+            named: "component1",
+            externalLinkName: "kk_match_result_component1",
+            ownerSymbol: matchResultSymbol,
+            ownerType: matchResultType,
+            parameters: [],
+            returnType: stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-REGEX-095: MatchResult.component2() ---
+        registerRegexMemberFunction(
+            named: "component2",
+            externalLinkName: "kk_match_result_component2",
+            ownerSymbol: matchResultSymbol,
+            ownerType: matchResultType,
+            parameters: [],
+            returnType: stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-REGEX-095: MatchResult.next() ---
+        registerRegexMemberFunction(
+            named: "next",
+            externalLinkName: "kk_match_result_next",
+            ownerSymbol: matchResultSymbol,
+            ownerType: matchResultType,
+            parameters: [],
+            returnType: nullableMatchResultType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-REGEX-095: MatchGroupCollection.get(index: Int) ---
+        registerRegexMemberFunction(
+            named: "get",
+            externalLinkName: "kk_match_group_collection_get_at",
+            ownerSymbol: matchGroupCollectionSymbol,
+            ownerType: matchGroupCollectionType,
+            parameters: [("index", intType, false, false)],
+            returnType: nullableMatchGroupType,
             symbols: symbols,
             interner: interner
         )

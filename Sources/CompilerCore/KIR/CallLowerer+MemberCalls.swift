@@ -103,7 +103,7 @@ extension CallLowerer {
         "runningReduce", "runningReduceIndexed",
         "groupBy", "groupingBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
         "eachCount",
-        "withIndex", "forEachIndexed", "mapIndexed", "filterIndexed", "mapValues", "mapKeys",
+        "withIndex", "forEachIndexed", "mapIndexed", "filterIndexed", "mapValues", "mapKeys", "filterKeys", "filterValues",
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull",
         "putAll", "addAll",
         "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
@@ -892,6 +892,20 @@ extension CallLowerer {
         }
         return symbol.name == knownNames.mutableList
             || symbol.fqName == knownNames.kotlinCollectionsMutableListFQName
+    }
+
+    private func isMutableSetLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isMutableSetSymbol(symbol)
     }
 
     private func isMapLikeType(
@@ -3201,7 +3215,7 @@ extension CallLowerer {
             "runningFold", "runningFoldIndexed", "runningReduce", "runningReduceIndexed", "groupBy", "groupingBy",
             "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate",
-            "forEachIndexed", "mapIndexed", "filterIndexed", "sumOf", "mapValues", "mapKeys",
+            "forEachIndexed", "mapIndexed", "filterIndexed", "sumOf", "mapValues", "mapKeys", "filterKeys", "filterValues",
             "getOrElse", "getOrPut",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
@@ -3679,6 +3693,26 @@ extension CallLowerer {
            parentInfo.name == knownNames.charsets
         {
             let runtimeCallee = interner.intern("kk_charset_\(interner.resolve(info.name).lowercased())")
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: sema.bindings.exprTypes[exprID]
+                    ?? sema.symbols.propertyType(for: valueSym)
+                    ?? sema.types.anyType
+            )
+            instructions.append(.call(
+                symbol: nil,
+                callee: runtimeCallee,
+                arguments: [],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
+        if let parentInfo = sema.symbols.symbol(parent),
+           interner.resolve(parentInfo.name) == "NormalizationForms"
+        {
+            let runtimeCallee = interner.intern("kk_normalization_form_\(interner.resolve(info.name).lowercased())")
             let result = arena.appendExpr(
                 .temporary(Int32(arena.expressions.count)),
                 type: sema.bindings.exprTypes[exprID]
@@ -4255,7 +4289,8 @@ extension CallLowerer {
         }
         var callArguments = finalArguments
         if loweredCallee == interner.intern("kk_system_currentTimeMillis")
-            || loweredCallee == interner.intern("kk_system_nanoTime") {
+            || loweredCallee == interner.intern("kk_system_nanoTime")
+            || loweredCallee == interner.intern("kk_system_process_start_nanos") {
             callArguments = []
         }
         // Result HOF functions accept an outThrown parameter but we don't need
@@ -4270,6 +4305,10 @@ extension CallLowerer {
             interner.intern("kk_result_map"),
             interner.intern("kk_result_fold"),
             interner.intern("kk_result_recover"),
+            interner.intern("kk_result_recoverCatching"),
+            interner.intern("kk_result_mapCatching"),
+            interner.intern("kk_result_flatMap"),
+            interner.intern("kk_result_flatMapCatching"),
         ]
         if resultHOFCallees.contains(loweredCallee) {
             let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
@@ -4766,6 +4805,19 @@ extension CallLowerer {
             }
         }
 
+        if isMutableSetLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+            switch memberName {
+            case "addAll":
+                return interner.intern("kk_mutable_set_addAll")
+            case "removeAll":
+                return interner.intern("kk_mutable_set_removeAll")
+            case "retainAll":
+                return interner.intern("kk_mutable_set_retainAll")
+            default:
+                break
+            }
+        }
+
         if isMutableListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
             switch memberName {
             case "sort":
@@ -5153,6 +5205,10 @@ extension CallLowerer {
             return interner.intern("kk_map_plus")
         case "minus":
             return interner.intern("kk_map_minus")
+        case "filterKeys":
+            return interner.intern("kk_map_filterKeys")
+        case "filterValues":
+            return interner.intern("kk_map_filterValues")
         case "getOrPut":
             guard knownNames.isMutableMapSymbol(symbol) else {
                 return nil
