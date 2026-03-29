@@ -822,11 +822,15 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
-                    // --- Rewrite File(path) → kk_file_new(path) (STDLIB-565) ---
+                    // --- Rewrite File(path) → kk_file_new(path) (STDLIB-565)
+                    //     Rewrite File(parent, child) → kk_file_new_parent_child(parent, child) (STDLIB-IO-087) ---
                     if callee == lookup.fileConstructorName {
+                        let fileCallee = arguments.count == 2
+                            ? lookup.kkFileNewParentChildName
+                            : lookup.kkFileNewName
                         loweredBody.append(.call(
                             symbol: nil,
-                            callee: lookup.kkFileNewName,
+                            callee: fileCallee,
                             arguments: arguments,
                             result: result,
                             canThrow: false,
@@ -950,6 +954,25 @@ extension CollectionLiteralLoweringPass {
                             kkCallee = lookup.kkFileReadBytesName
                         case lookup.appendTextName:
                             kkCallee = lookup.kkFileAppendTextName
+                        // STDLIB-IO-087: Additional File operations
+                        case lookup.absolutePathName:
+                            kkCallee = lookup.kkFileAbsolutePathName
+                        case lookup.canonicalPathName:
+                            kkCallee = lookup.kkFileCanonicalPathName
+                        case lookup.parentName:
+                            kkCallee = lookup.kkFileParentName
+                        case lookup.lengthName:
+                            kkCallee = lookup.kkFileLengthName
+                        case lookup.lastModifiedName:
+                            kkCallee = lookup.kkFileLastModifiedName
+                        case lookup.createNewFileName:
+                            kkCallee = lookup.kkFileCreateNewFileName
+                        case lookup.canReadName:
+                            kkCallee = lookup.kkFileCanReadName
+                        case lookup.canWriteName:
+                            kkCallee = lookup.kkFileCanWriteName
+                        case lookup.canExecuteName:
+                            kkCallee = lookup.kkFileCanExecuteName
                         default:
                             kkCallee = nil
                         }

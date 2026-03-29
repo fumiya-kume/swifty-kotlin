@@ -1394,11 +1394,11 @@ final class CallTypeChecker {
                     expectedType: contextualExpectedType
                 )
             }
-            // Reuse the type already inferred during the non-lambda pre-pass
-            // (inferredNonLambdaArgTypes) to avoid running inferExpr twice for
-            // the same expression, which would cause duplicate diagnostics.
-            if let alreadyInferred = inferredNonLambdaArgTypes[index] {
-                return alreadyInferred
+            // Reuse the type already inferred in inferredNonLambdaArgTypes to avoid
+            // re-evaluating non-lambda arguments a second time, which would emit
+            // duplicate diagnostics (e.g. "Unresolved reference") for each argument.
+            if let cached = inferredNonLambdaArgTypes[index] {
+                return cached
             }
             return driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
         }
