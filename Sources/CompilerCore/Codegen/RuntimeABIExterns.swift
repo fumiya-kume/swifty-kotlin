@@ -3598,7 +3598,11 @@ public enum RuntimeABIExterns {
         kk_cache_put,
         kk_cache_get,
         kk_cache_size,
-        kk_locale_new,
+    ]
+
+    // MARK: - I18N (STDLIB-I18N-153)
+
+    public static let i18nExterns: [ExternDecl] = [
         kk_dateformat_ofPattern,
         kk_dateformat_format,
     ]
@@ -4114,6 +4118,7 @@ public enum RuntimeABIExterns {
         all += resultExterns
         all += stringBuilderExterns
         all += fileIOExterns
+        all += i18nExterns
         all += uuidExterns
         // Duration / measureTime / measureTimedValue (STDLIB-230/231/660)
         all += [

@@ -7,16 +7,21 @@ extension DataFlowSemaPhase {
         let javaTextPkg = ensurePackage(path: ["java", "text"], symbols: symbols, interner: interner)
         let javaTextPkgSymbol = symbols.lookup(fqName: javaTextPkg)
         let dateFormatSymbol = ensureClassSymbol(named: "DateFormat", in: javaTextPkg, symbols: symbols, interner: interner)
-        let localeSymbol = ensureClassSymbol(named: "Locale", in: ensurePackage(path: ["java", "util"], symbols: symbols, interner: interner), symbols: symbols, interner: interner)
+        // NOTE: ensureClassSymbol/ensurePackage are idempotent, but the Locale symbol must already
+        // exist in the symbol table (registered by registerSyntheticLocaleConstructorStubs).
+        // The call order in HeaderHelpers.swift guarantees this; do not reorder those calls.
+        _ = ensureClassSymbol(named: "Locale", in: ensurePackage(path: ["java", "util"], symbols: symbols, interner: interner), symbols: symbols, interner: interner)
         if let javaTextPkgSymbol { symbols.setParentSymbol(javaTextPkgSymbol, for: dateFormatSymbol) }
         let dateFormatType = types.make(.classType(ClassType(classSymbol: dateFormatSymbol, args: [], nullability: .nonNull)))
-        let localeType = types.make(.classType(ClassType(classSymbol: localeSymbol, args: [], nullability: .nonNull)))
         symbols.setPropertyType(dateFormatType, for: dateFormatSymbol)
 
+        // The second parameter (locale identifier) is passed as a String handle, not a Locale
+        // object. The runtime function kk_dateformat_ofPattern calls dateFormatString(from:) which
+        // expects a string pointer. Passing a Locale object handle here would cause a fatal error.
         registerDateFormatTopLevel(
             packageFQName: javaTextPkg,
             name: "ofPattern",
-            parameterTypes: [types.stringType, localeType],
+            parameterTypes: [types.stringType, types.stringType],
             returnType: dateFormatType,
             externalLinkName: "kk_dateformat_ofPattern",
             symbols: symbols,

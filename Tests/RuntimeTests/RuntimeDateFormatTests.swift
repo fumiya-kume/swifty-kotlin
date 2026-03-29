@@ -11,8 +11,18 @@ final class RuntimeDateFormatTests: IsolatedRuntimeXCTestCase {
         }
     }
 
-    private func stringValue(_ raw: Int) -> String {
-        extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? ""
+    private func stringValue(
+        _ raw: Int,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) -> String {
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: raw),
+              let value = extractString(from: ptr)
+        else {
+            XCTFail("Invalid runtime string handle: \(raw)", file: file, line: line)
+            return ""
+        }
+        return value
     }
 
     func testDateFormatFormatsEpochMillis() {
