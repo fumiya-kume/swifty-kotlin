@@ -338,7 +338,7 @@
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/kclass_basic.kt`
 
-- [ ] STDLIB-REFLECT-062: KProperty完全実装
+- [x] STDLIB-REFLECT-062: KProperty完全実装
   - **仕様**: KPropertyインターフェースの完全サポート
   - **実装内容**:
     - プロパティ名: name
@@ -346,8 +346,8 @@
     - 可視性: visibility, isLateinit, isConst
     - ゲッター/セッター: getter, setter
     - プロパティ値の取得/設定: get(), set()
-  - **現状**: 基本的なKPropertyは実装済み、詳細は未実装
-  - **関連ファイル**: `RuntimeReflection.swift`
+  - **現状**: 実装完了
+  - **関連ファイル**: `Sources/Runtime/RuntimeDelegates.swift`, `Sources/Runtime/RuntimeABISpec+KPropertyStub.swift`, `Sources/CompilerCore/Codegen/RuntimeABIExterns+KPropertyStub.swift`, `Sources/CompilerCore/KIR/CallLowerer+MemberCalls.swift`
   - **テストケース**: `Scripts/diff_cases/kproperty_basic.kt`
 
 - [ ] STDLIB-REFLECT-063: KFunction完全実装

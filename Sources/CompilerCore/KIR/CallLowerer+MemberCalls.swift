@@ -162,7 +162,12 @@ extension CallLowerer {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
         let calleeStr = interner.resolve(calleeName)
-        guard calleeStr == "name" else { return nil }
+        // STDLIB-REFLECT-062: map known KProperty members to runtime calls
+        let knownKPropertyMembers: Set<String> = [
+            "name", "returnType", "visibility", "isLateinit", "isConst",
+            "getter", "setter", "get", "set",
+        ]
+        guard knownKPropertyMembers.contains(calleeStr) else { return nil }
         let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         guard isKPropertyReceiverType(receiverType, sema: sema, interner: interner) else { return nil }
 
@@ -172,6 +177,41 @@ extension CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
+
+        // Determine the runtime callee name and argument list for this member.
+        let runtimeCallee: String
+        var callArgs: [KIRExprID] = [receiverID]
+        switch calleeStr {
+        case "name":
+            runtimeCallee = "kk_kproperty_stub_name"
+        case "returnType":
+            runtimeCallee = "kk_kproperty_stub_return_type"
+        case "visibility":
+            runtimeCallee = "kk_kproperty_stub_visibility"
+        case "isLateinit":
+            runtimeCallee = "kk_kproperty_stub_is_lateinit"
+        case "isConst":
+            runtimeCallee = "kk_kproperty_stub_is_const"
+        case "getter":
+            runtimeCallee = "kk_kproperty_stub_getter"
+        case "setter":
+            runtimeCallee = "kk_kproperty_stub_setter"
+        case "get":
+            runtimeCallee = "kk_kproperty_stub_get_value"
+        case "set":
+            runtimeCallee = "kk_kproperty_stub_set_value"
+            if let valueArg = args.first {
+                let valueID = driver.exprLowerer.lowerExpr(
+                    valueArg.expr, ast: ast, sema: sema, arena: arena, interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+                callArgs.append(valueID)
+            }
+        default:
+            return nil
+        }
+
         let resultType = sema.bindings.exprTypes[exprID]
             ?? sema.types.make(.primitive(.string, .nonNull))
         let result = arena.appendExpr(
@@ -180,8 +220,8 @@ extension CallLowerer {
         )
         instructions.append(.call(
             symbol: nil,
-            callee: interner.intern("kk_kproperty_stub_name"),
-            arguments: [receiverID],
+            callee: interner.intern(runtimeCallee),
+            arguments: callArgs,
             result: result,
             canThrow: false,
             thrownResult: nil

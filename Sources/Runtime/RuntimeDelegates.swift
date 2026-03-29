@@ -23,7 +23,7 @@ final class RuntimeCustomDelegateBox {
     }
 }
 
-// MARK: - KProperty Stub (PROP-007)
+// MARK: - KProperty Stub (PROP-007, STDLIB-REFLECT-062)
 
 /// Minimal KProperty<*> stub carrying property name and return type.
 /// Used as the `property` argument for `provideDelegate`, `getValue`, and `setValue`.
@@ -37,6 +37,32 @@ final class RuntimeKPropertyStub {
     init(name: Int, returnType: Int, getterFnPtr: Int = 0, setterFnPtr: Int = 0, receiverPtr: Int = 0) {
         self.name = name
         self.returnType = returnType
+    // STDLIB-REFLECT-062: extended KProperty fields
+    let visibility: Int // intptr_t to a KKString (e.g. "PUBLIC", "INTERNAL", etc.)
+    let isLateinit: Bool
+    let isConst: Bool
+    /// Optional getter function pointer; 0 means not set.
+    var getterFnPtr: Int
+    /// Optional setter function pointer; 0 means not set.
+    var setterFnPtr: Int
+    /// The receiver object for get()/set() calls; 0 means top-level.
+    var receiverPtr: Int
+
+    init(
+        name: Int,
+        returnType: Int,
+        visibility: Int = 0,
+        isLateinit: Bool = false,
+        isConst: Bool = false,
+        getterFnPtr: Int = 0,
+        setterFnPtr: Int = 0,
+        receiverPtr: Int = 0
+    ) {
+        self.name = name
+        self.returnType = returnType
+        self.visibility = visibility
+        self.isLateinit = isLateinit
+        self.isConst = isConst
         self.getterFnPtr = getterFnPtr
         self.setterFnPtr = setterFnPtr
         self.receiverPtr = receiverPtr
@@ -86,6 +112,29 @@ public func kk_kproperty_stub_create(_ nameStr: Int, _ returnTypeStr: Int) -> In
     return Int(bitPattern: opaque)
 }
 
+// STDLIB-REFLECT-062: extended create with full KProperty metadata
+@_cdecl("kk_kproperty_stub_create_full")
+public func kk_kproperty_stub_create_full(
+    _ nameStr: Int,
+    _ returnTypeStr: Int,
+    _ visibilityStr: Int,
+    _ isLateinit: Int,
+    _ isConst: Int
+) -> Int {
+    let stub = RuntimeKPropertyStub(
+        name: nameStr,
+        returnType: returnTypeStr,
+        visibility: visibilityStr,
+        isLateinit: isLateinit != 0,
+        isConst: isConst != 0
+    )
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(stub).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
+
 @_cdecl("kk_kproperty_stub_name")
 public func kk_kproperty_stub_name(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
@@ -106,6 +155,135 @@ public func kk_kproperty_stub_return_type(_ handle: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid KProperty handle in kk_kproperty_stub_return_type")
     }
     return stub.returnType
+}
+
+// STDLIB-REFLECT-062: visibility accessor
+@_cdecl("kk_kproperty_stub_visibility")
+public func kk_kproperty_stub_visibility(_ handle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
+    else {
+        return runtimeNullSentinelInt
+    }
+    if stub.visibility == 0 {
+        return kk_kproperty_stub_make_string("PUBLIC")
+    }
+    return stub.visibility
+}
+
+// STDLIB-REFLECT-062: isLateinit accessor
+@_cdecl("kk_kproperty_stub_is_lateinit")
+public func kk_kproperty_stub_is_lateinit(_ handle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
+    else {
+        return 0
+    }
+    return stub.isLateinit ? 1 : 0
+}
+
+// STDLIB-REFLECT-062: isConst accessor
+@_cdecl("kk_kproperty_stub_is_const")
+public func kk_kproperty_stub_is_const(_ handle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
+    else {
+        return 0
+    }
+    return stub.isConst ? 1 : 0
+}
+
+// STDLIB-REFLECT-062: attach getter function pointer to a KProperty stub
+@_cdecl("kk_kproperty_stub_set_getter")
+public func kk_kproperty_stub_set_getter(_ handle: Int, _ fnPtr: Int, _ receiver: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
+    else {
+        return 0
+    }
+    stub.getterFnPtr = fnPtr
+    stub.receiverPtr = receiver
+    return handle
+}
+
+// STDLIB-REFLECT-062: attach setter function pointer to a KProperty stub
+@_cdecl("kk_kproperty_stub_set_setter")
+public func kk_kproperty_stub_set_setter(_ handle: Int, _ fnPtr: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
+    else {
+        return 0
+    }
+    stub.setterFnPtr = fnPtr
+    return handle
+}
+
+// STDLIB-REFLECT-062: return stored getter function pointer
+@_cdecl("kk_kproperty_stub_getter")
+public func kk_kproperty_stub_getter(_ handle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
+    else {
+        return 0
+    }
+    return stub.getterFnPtr
+}
+
+// STDLIB-REFLECT-062: return stored setter function pointer
+@_cdecl("kk_kproperty_stub_setter")
+public func kk_kproperty_stub_setter(_ handle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
+    else {
+        return 0
+    }
+    return stub.setterFnPtr
+}
+
+// STDLIB-REFLECT-062: invoke the getter via stored function pointer
+@_cdecl("kk_kproperty_stub_get_value")
+public func kk_kproperty_stub_get_value(_ handle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let stub = tryCast(ptr, to: RuntimeKPropertyStub.self),
+          stub.getterFnPtr != 0
+    else {
+        return runtimeNullSentinelInt
+    }
+    typealias GetterFn = @convention(c) (Int) -> Int
+    let fn = unsafeBitCast(stub.getterFnPtr, to: GetterFn.self)
+    return fn(stub.receiverPtr)
+}
+
+// STDLIB-REFLECT-062: invoke the setter via stored function pointer
+@_cdecl("kk_kproperty_stub_set_value")
+public func kk_kproperty_stub_set_value(_ handle: Int, _ value: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let stub = tryCast(ptr, to: RuntimeKPropertyStub.self),
+          stub.setterFnPtr != 0
+    else {
+        return 0
+    }
+    typealias SetterFn = @convention(c) (Int, Int) -> Int
+    let fn = unsafeBitCast(stub.setterFnPtr, to: SetterFn.self)
+    return fn(stub.receiverPtr, value)
+}
+
+/// Build a KKString from a Swift String literal (used for default enum-like values).
+private func kk_kproperty_stub_make_string(_ s: String) -> Int {
+    let utf8 = Array(s.utf8)
+    guard !utf8.isEmpty else { return runtimeNullSentinelInt }
+    return utf8.withUnsafeBufferPointer { buffer in
+        Int(bitPattern: kk_string_from_utf8(buffer.baseAddress!, Int32(buffer.count)))
+    }
 }
 
 // MARK: - Lazy Delegate (P5-80)
