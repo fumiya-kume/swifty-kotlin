@@ -326,17 +326,17 @@
 
 #### Phase 2: リフレクション (中優先度)
 
-- [ ] STDLIB-REFLECT-061: KClassメンバアクセス完全実装
-  - **仕様**: KClassからのメンバアクセス機能
+- [ ] STDLIB-REFLECT-060: KClass基本機能完全実装
+  - **仕様**: KClassの基本的なリフレクション機能
   - **実装内容**:
-    - プロパティ: properties, memberProperties
-    - 関数: functions, memberFunctions
-    - 拡張プロパティ: declaredMemberProperties
-    - 拡張関数: declaredMemberFunctions
-    - メンバのフィルタリングと検索
-  - **現状**: 基本的なリフレクションは実装済み、メンバアクセスは未実装
+    - クラス名: simpleName, qualifiedName
+    - クラス階層: supertypes, isInstance
+    - 型パラメータ: typeParameters, generics
+    - 可視性: visibility, isAbstract, isFinal
+    - コンストラクタ: constructors
+  - **現状**: 基本的なKClassは実装済み (REFL-004参照)、詳細は未実装
   - **関連ファイル**: `RuntimeReflection.swift`
-  - **テストケース**: `Scripts/diff_cases/kclass_members.kt`
+  - **テストケース**: `Scripts/diff_cases/kclass_basic.kt`
 
 - [ ] STDLIB-REFLECT-062: KProperty完全実装
   - **仕様**: KPropertyインターフェースの完全サポート
@@ -400,7 +400,7 @@
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/type_reflection.kt`
 
-- [ ] STDLIB-REFLECT-067: リフレクション動的呼び出し完全実装
+- [x] STDLIB-REFLECT-067: リフレクション動的呼び出し完全実装
   - **仕様**: リフレクションによる動的メンバ呼び出し
   - **実装内容**:
     - 関数呼び出し: KFunction.call()
@@ -408,7 +408,7 @@
     - コンストラクタ呼び出し: KConstructor.call()
     - 可変長引数の処理
     - 例外処理とエラーハンドリング
-  - **現状**: 基本的なリフレクションは実装済み、動的呼び出しは未実装
+  - **現状**: 実装完了 — kk_kfunction_call_{0,1,2,3,vararg}, kk_kproperty_{get,set}, kk_kconstructor_call_{0,1,vararg}
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/reflection_dynamic_call.kt`
 

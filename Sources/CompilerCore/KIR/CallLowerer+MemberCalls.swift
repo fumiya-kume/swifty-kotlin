@@ -4289,7 +4289,8 @@ extension CallLowerer {
         }
         var callArguments = finalArguments
         if loweredCallee == interner.intern("kk_system_currentTimeMillis")
-            || loweredCallee == interner.intern("kk_system_nanoTime") {
+            || loweredCallee == interner.intern("kk_system_nanoTime")
+            || loweredCallee == interner.intern("kk_system_process_start_nanos") {
             callArguments = []
         }
         // Result HOF functions accept an outThrown parameter but we don't need
@@ -4305,6 +4306,9 @@ extension CallLowerer {
             interner.intern("kk_result_fold"),
             interner.intern("kk_result_recover"),
             interner.intern("kk_result_recoverCatching"),
+            interner.intern("kk_result_mapCatching"),
+            interner.intern("kk_result_flatMap"),
+            interner.intern("kk_result_flatMapCatching"),
         ]
         if resultHOFCallees.contains(loweredCallee) {
             let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
