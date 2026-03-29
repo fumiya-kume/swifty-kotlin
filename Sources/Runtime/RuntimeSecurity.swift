@@ -494,6 +494,21 @@ private func runtimeSecurityErrorMessage(_ prefix: String, error: Unmanaged<CFEr
     return "\(prefix): \(description)"
 }
 
+private func runtimeCipherAlgorithmFromSecKey(_ secKey: SecKey) -> RuntimeCipherAlgorithm {
+    guard let attributes = SecKeyCopyAttributes(secKey) as? [String: Any],
+          let keyType = attributes[kSecAttrKeyType as String] as? String
+    else {
+        return .rsa
+    }
+    if keyType == (kSecAttrKeyTypeECSECPrimeRandom as String) || keyType == (kSecAttrKeyTypeEC as String) {
+        return .ec
+    } else if keyType == (kSecAttrKeyTypeDSA as String) {
+        return .dsa
+    } else {
+        return .rsa
+    }
+}
+
 private func runtimeCipherParseTransformation(_ transformation: String) -> (RuntimeCipherAlgorithm, RuntimeCipherMode, RuntimeCipherPadding)? {
     let parts = transformation
         .split(separator: "/")
@@ -1453,7 +1468,8 @@ public func kk_x509certificate_getPublicKey(_ certificateRaw: Int, _ outThrown: 
         runtimeSetThrown(outThrown, message: "CertificateException: unable to extract public key")
         return 0
     }
-    return registerRuntimeObject(RuntimePublicKeyBox(secKey: publicKey, algorithm: .rsa))
+    let algorithm = runtimeCipherAlgorithmFromSecKey(publicKey)
+    return registerRuntimeObject(RuntimePublicKeyBox(secKey: publicKey, algorithm: algorithm))
 }
 
 @_cdecl("kk_x509certificate_getEncoded")
