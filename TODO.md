@@ -1193,7 +1193,7 @@
   - **関連ファイル**: `RuntimeMemory.swift`
   - **テストケース**: `Scripts/diff_cases/memory_management.kt`
 
-- [x] STDLIB-PERF-155: 並列処理完全実装
+- [ ] STDLIB-PERF-155: 並列処理完全実装
   - **仕様**: 並列処理の最適化
   - **実装内容**:
     - 並列ストリーム: parallelStream()のサポート
