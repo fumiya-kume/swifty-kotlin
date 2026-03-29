@@ -4270,6 +4270,7 @@ extension CallLowerer {
             interner.intern("kk_result_map"),
             interner.intern("kk_result_fold"),
             interner.intern("kk_result_recover"),
+            interner.intern("kk_result_recoverCatching"),
         ]
         if resultHOFCallees.contains(loweredCallee) {
             let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)

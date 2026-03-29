@@ -254,3 +254,59 @@ public func kk_result_recover(
     }
     return registerRuntimeObject(RuntimeResultBox(isSuccess: true, value: recovered, exception: 0))
 }
+
+// MARK: - STDLIB-RESULT-107: Result advanced operations
+
+/// kk_result_recoverCatching(resultRaw, fnPtr, closureRaw, outThrown) -> Int (Result box)
+/// Like recover(), but the transform lambda itself may throw; if it does, the thrown
+/// exception is captured and returned as a new failure Result rather than propagated.
+@_cdecl("kk_result_recoverCatching")
+public func kk_result_recoverCatching(
+    _ resultRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = resultBoxFromRaw(resultRaw) else {
+        return resultRaw
+    }
+    if box.isSuccess {
+        // Success — return as-is
+        return resultRaw
+    }
+    // Failure — apply the transform, catching any exception thrown by it
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var thrown = 0
+    let recovered = lambda(closureRaw, box.exception, &thrown)
+    if thrown != 0 {
+        // Transform itself threw — wrap as new failure Result
+        let failBox = RuntimeResultBox(isSuccess: false, value: 0, exception: thrown)
+        return registerRuntimeObject(failBox)
+    }
+    return registerRuntimeObject(RuntimeResultBox(isSuccess: true, value: recovered, exception: 0))
+}
+
+/// kk_result_component1(resultRaw) -> Int
+/// Destructuring component1(): returns the success value or null-sentinel for failure.
+/// Kotlin destructuring: val (value, exception) = result
+@_cdecl("kk_result_component1")
+public func kk_result_component1(_ resultRaw: Int) -> Int {
+    guard let box = resultBoxFromRaw(resultRaw), box.isSuccess else {
+        return runtimeNullSentinelInt
+    }
+    return box.value
+}
+
+/// kk_result_component2(resultRaw) -> Int
+/// Destructuring component2(): returns the exception or null-sentinel for success.
+@_cdecl("kk_result_component2")
+public func kk_result_component2(_ resultRaw: Int) -> Int {
+    guard let box = resultBoxFromRaw(resultRaw) else {
+        return runtimeNullSentinelInt
+    }
+    if box.isSuccess {
+        return runtimeNullSentinelInt
+    }
+    return box.exception
+}

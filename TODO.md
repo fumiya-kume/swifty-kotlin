@@ -678,7 +678,7 @@
   - **関連ファイル**: `RuntimeThrowableBox`
   - **テストケース**: `Scripts/diff_cases/exception_advanced.kt`
 
-- [ ] STDLIB-RUNCATCH-108: runCatching完全実装
+- [x] STDLIB-RUNCATCH-108: runCatching完全実装
   - **仕様**: runCatching関数の完全サポート
   - **実装内容**:
     - 基本runCatching: runCatching { /* code */ }
@@ -686,9 +686,9 @@
     - 例外回復: runCatching { /* code */ }.recoverCatching()
     - 副作用: runCatching { /* code */ }.onFailure { /* handle */ }
     - 入れ子runCatching: 入れ子例外処理
-  - **現状**: 基本的なrunCatchingは実装済み、高度な機能は未実装
+  - **現状**: recoverCatching, component1/2, onSuccess/onFailure, recover 実装済み (STDLIB-RESULT-107)
   - **関連ファイル**: `RuntimeResult.swift`
-  - **テストケース**: `Scripts/diff_cases/runcatching_advanced.kt`
+  - **テストケース**: `Scripts/diff_cases/result_advanced.kt`
 
 #### Phase 3: 数学関数 (低優先度)
 
