@@ -13,11 +13,11 @@ fun main() = runBlocking {
     println(mutex.tryLock())  // true
     mutex.unlock()
 
-    // withLock: acquire lock, run block, then auto-release
+    // withLock equivalent: acquire lock, run block, then release
     var counter = 0
-    mutex.withLock {
-        counter++
-    }
+    mutex.lock()
+    counter++
+    mutex.unlock()
     println(counter)          // 1
     println(mutex.isLocked)   // false
 
