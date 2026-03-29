@@ -1609,6 +1609,10 @@ public func kk_certpathvalidator_validate(
 #else
 // MARK: - Platform stubs: CommonCrypto/Security not available on Linux
 
+private func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, message: String) {
+    outThrown?.pointee = runtimeAllocateThrowable(message: message)
+}
+
 @_cdecl("kk_secretkeyspec_new")
 public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int) -> Int {
     return runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform")
