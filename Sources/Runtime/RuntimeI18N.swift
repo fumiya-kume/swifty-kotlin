@@ -16,9 +16,3 @@ private func i18nString(from raw: Int, caller: StaticString) -> String {
     }
     return value
 }
-
-@_cdecl("kk_locale_new")
-public func kk_locale_new(_ identifierRaw: Int) -> Int {
-    let identifier = i18nString(from: identifierRaw, caller: #function).replacingOccurrences(of: "_", with: "-")
-    return registerRuntimeObject(RuntimeLocaleBox(locale: Locale(identifier: identifier)))
-}
