@@ -2514,6 +2514,41 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         return true
     }
 
+    /// Non-blocking receive: returns a buffered value immediately, or `nil`
+    /// when the buffer is empty (regardless of closed state).  Does NOT
+    /// suspend the caller or pair with a waiting sender.
+    ///
+    /// This is used by `kk_channel_pipeline_drain` to avoid blocking the
+    /// thread when the source channel is empty but not yet closed.
+    func tryReceive() -> Int? {
+        lock.lock()
+        if !buffer.isEmpty {
+            let value = buffer.removeFirst()
+            // Wake a waiting sender to fill the slot we just freed.
+            if let sender = senderQueue.first {
+                senderQueue.removeFirst()
+                buffer.append(sender.value)
+                sender.delivered = true
+                lock.unlock()
+                resumeSender(sender)
+            } else {
+                lock.unlock()
+            }
+            return value
+        }
+        // No buffered value; try to pair with a suspended sender directly.
+        if let sender = senderQueue.first {
+            senderQueue.removeFirst()
+            let value = sender.value
+            sender.delivered = true
+            lock.unlock()
+            resumeSender(sender)
+            return value
+        }
+        lock.unlock()
+        return nil
+    }
+
     /// Cancel all suspended senders and receivers.  This is called when a
     /// coroutine is cancelled while it has an outstanding channel operation.
     ///
@@ -2801,13 +2836,18 @@ final class RuntimeBroadcastChannelHandle: @unchecked Sendable {
     }
 
     /// Create a new subscriber channel and register it.  Returns the channel handle.
+    /// If the broadcast channel is already closed, the returned channel is immediately
+    /// closed so that downstream receivers will not block forever.
     func subscribe() -> RuntimeChannelHandle {
         let ch = RuntimeChannelHandle(capacity: subscriberCapacity)
         lock.lock()
         if !closed {
             subscribers.append(ch)
+            lock.unlock()
+        } else {
+            lock.unlock()
+            _ = ch.close()
         }
-        lock.unlock()
         return ch
     }
 
@@ -2930,7 +2970,9 @@ public func kk_channel_pipeline_drain(_ sourceHandle: Int, _ destHandle: Int) ->
     let dst = Unmanaged<RuntimeChannelHandle>.fromOpaque(dstPtr).takeUnretainedValue()
     var count = 0
     while true {
-        let v = src.receive()
+        // Use non-blocking tryReceive to avoid blocking when the source channel
+        // is empty but not yet closed (fixes indefinite thread stall).
+        guard let v = src.tryReceive() else { break }
         if v == kChannelClosedSentinel { break }
         let sent = dst.send(v)
         if sent == kChannelClosedSentinel { break }
