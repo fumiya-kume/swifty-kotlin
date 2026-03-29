@@ -10,7 +10,9 @@ data class PropertyStats(
 
 private fun seededSamples(seed: Int, count: Int): List<Int> {
     val random = Random(seed)
-    return List(count) { random.nextInt(-32, 33) }
+    val result = mutableListOf<Int>()
+    repeat(count) { result.add(random.nextInt(-32, 33)) }
+    return result
 }
 
 private fun shrinkTowardZero(value: Int): Int? {
