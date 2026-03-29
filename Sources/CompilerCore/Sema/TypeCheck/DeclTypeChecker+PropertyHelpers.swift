@@ -141,9 +141,10 @@ extension DeclTypeChecker {
                         }
                     if let actualGetValueSymbol {
                         sema.symbols.setDelegateGetValueSymbol(actualGetValueSymbol, for: symbol)
-                        if result == nil,
-                           let actualGetValueSig = sema.symbols.functionSignature(for: actualGetValueSymbol)
-                        {
+                        // When provideDelegate is present, the property type must be inferred from
+                        // the actual delegate's getValue, not the original expression's getValue.
+                        // Always override result here (Kotlin spec: provideDelegate wins).
+                        if let actualGetValueSig = sema.symbols.functionSignature(for: actualGetValueSymbol) {
                             result = actualGetValueSig.returnType
                         }
                     }

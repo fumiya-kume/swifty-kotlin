@@ -20,5 +20,8 @@ var name: String by DelegateFactory()
 
 fun main() {
     name = "  Alice  "
-    println(name)  // Alice
+    // Expected output:
+    // Creating delegate for name
+    // Alice
+    println(name)
 }
