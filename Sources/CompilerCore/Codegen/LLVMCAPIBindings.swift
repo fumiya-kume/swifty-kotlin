@@ -597,6 +597,13 @@ final class LLVMCAPIBindings {
         name.withCString { getNamedGlobalFn?(module, $0) }
     }
 
+    /// Sets the initializer for an LLVM global variable.
+    /// - Parameters:
+    ///   - global: The LLVM global variable reference.
+    ///   - value: The initializer value. This must be an LLVM constant value
+    ///     accepted by `LLVMSetInitializer` (for example `LLVMConstInt` or
+    ///     `LLVMConstPointerNull`). Passing a non-constant value can trigger
+    ///     LLVM assertions at runtime.
     func setInitializer(_ global: LLVMValueRef?, value: LLVMValueRef?) {
         setInitializerFn?(global, value)
     }
