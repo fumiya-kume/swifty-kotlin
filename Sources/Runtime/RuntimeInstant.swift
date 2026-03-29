@@ -28,6 +28,14 @@ private func runtimeInstantBox(from raw: Int) -> RuntimeInstantBox? {
     return tryCast(ptr, to: RuntimeInstantBox.self)
 }
 
+private func saturatingAdd(_ a: Int64, _ b: Int64) -> Int64 {
+    let (result, overflow) = a.addingReportingOverflow(b)
+    if overflow {
+        return b < 0 ? Int64.min : Int64.max
+    }
+    return result
+}
+
 // MARK: - Instant construction
 
 @_cdecl("kk_instant_now")
@@ -134,7 +142,8 @@ public func kk_instant_until(_ fromRaw: Int, _ toRaw: Int) -> Int {
     }
     let secDiff = toBox.epochSeconds - fromBox.epochSeconds
     let nanoDiff = Int64(toBox.nanoOfSecond) - Int64(fromBox.nanoOfSecond)
-    let totalNs = secDiff * 1_000_000_000 + nanoDiff
+    let secNs = saturatingMultiply(secDiff, 1_000_000_000)
+    let totalNs = saturatingAdd(secNs, nanoDiff)
     let durationBox = RuntimeDurationBox(nanoseconds: totalNs)
     return registerRuntimeObject(durationBox)
 }
