@@ -500,6 +500,10 @@ struct KnownCompilerNames {
         symbol.name == mutableList || symbolMatches(symbol, fqName: kotlinCollectionsMutableListFQName)
     }
 
+    func isMutableSetSymbol(_ symbol: SemanticSymbol) -> Bool {
+        symbol.name == mutableSet || symbolMatches(symbol, fqName: kotlinCollectionsMutableSetFQName)
+    }
+
     func isArrayDequeSymbol(_ symbol: SemanticSymbol) -> Bool {
         symbol.name == arrayDeque || symbolMatches(symbol, fqName: kotlinCollectionsArrayDequeFQName)
     }

@@ -387,6 +387,7 @@ extension CallTypeChecker {
         let isMapReceiver = isMapLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isSetReceiver = isSetLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMutableListReceiver = isMutableListCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
+        let isMutableSetReceiver = isMutableSetCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMutableMapReceiver = isMutableMapCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isListReceiver = isConcreteListLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isSequenceReceiver = isSequenceLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
@@ -397,6 +398,7 @@ extension CallTypeChecker {
             isMapReceiver: isMapReceiver,
             isSetReceiver: isSetReceiver,
             isMutableListReceiver: isMutableListReceiver,
+            isMutableSetReceiver: isMutableSetReceiver,
             isMutableMapReceiver: isMutableMapReceiver,
             interner: interner
         ),
@@ -406,6 +408,7 @@ extension CallTypeChecker {
             isMapReceiver: isMapReceiver,
             isSetReceiver: isSetReceiver,
             isMutableMapReceiver: isMutableMapReceiver,
+            isMutableSetReceiver: isMutableSetReceiver,
             isMutableListReceiver: isMutableListReceiver,
             interner: interner
         )
@@ -547,6 +550,7 @@ extension CallTypeChecker {
         isMapReceiver: Bool,
         isSetReceiver: Bool,
         isMutableListReceiver: Bool,
+        isMutableSetReceiver: Bool = false,
         isMutableMapReceiver: Bool,
         interner: StringInterner
     ) -> Bool {
@@ -658,6 +662,8 @@ extension CallTypeChecker {
             interner.intern("sort"),
             interner.intern("sortBy"),
             interner.intern("sortByDescending"),
+        ]
+        let mutableCollectionMembers: Set = [
             interner.intern("addAll"),
             interner.intern("removeAll"),
             interner.intern("retainAll"),
@@ -689,6 +695,9 @@ extension CallTypeChecker {
         }
         if mutableListOnlyMembers.contains(memberName) {
             return isMutableListReceiver
+        }
+        if mutableCollectionMembers.contains(memberName) {
+            return isMutableListReceiver || isMutableSetReceiver
         }
         if memberName == knownNames.getOrPut || memberName == knownNames.putAll {
             return isMutableMapReceiver
@@ -743,6 +752,7 @@ extension CallTypeChecker {
         isMapReceiver: Bool,
         isSetReceiver: Bool,
         isMutableMapReceiver: Bool,
+        isMutableSetReceiver: Bool = false,
         isMutableListReceiver: Bool,
         interner: StringInterner
     ) -> Bool {
@@ -793,7 +803,7 @@ extension CallTypeChecker {
         case knownNames.getOrPut:
             return isMutableMapReceiver && argCount == 2
         case interner.intern("addAll"), interner.intern("removeAll"), interner.intern("retainAll"):
-            return isMutableListReceiver && argCount == 1
+            return (isMutableListReceiver || isMutableSetReceiver) && argCount == 1
         case knownNames.putAll:
             return isMutableMapReceiver && argCount == 1
         case interner.intern("plus"), interner.intern("minus"):
@@ -1537,6 +1547,21 @@ extension CallTypeChecker {
             symbol.name == knownNames.mutableList
                 || symbol.fqName == knownNames.kotlinCollectionsMutableListFQName
         ) && classType.args.count == 1
+    }
+
+    private func isMutableSetCollectionReceiver(
+        receiverID: ExprID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isMutableSetSymbol(symbol) && classType.args.count == 1
     }
 
     private func isMutableMapCollectionReceiver(

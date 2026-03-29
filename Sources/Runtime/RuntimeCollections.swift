@@ -996,6 +996,46 @@ public func kk_mutable_set_addAll(_ setRaw: Int, _ collectionRaw: Int) -> Int {
     return kk_box_bool(modified ? 1 : 0)
 }
 
+@_cdecl("kk_mutable_set_removeAll")
+public func kk_mutable_set_removeAll(_ setRaw: Int, _ collectionRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        return kk_box_bool(0)
+    }
+    let collectionElements: [Int]
+    if let collection = runtimeListBox(from: collectionRaw) {
+        collectionElements = collection.elements
+    } else if let collection = runtimeSetBox(from: collectionRaw) {
+        collectionElements = collection.elements
+    } else {
+        return kk_box_bool(0)
+    }
+    let originalCount = set.elements.count
+    set.elements.removeAll { elem in
+        collectionElements.contains(where: { runtimeValuesEqual($0, elem) })
+    }
+    return kk_box_bool(set.elements.count != originalCount ? 1 : 0)
+}
+
+@_cdecl("kk_mutable_set_retainAll")
+public func kk_mutable_set_retainAll(_ setRaw: Int, _ collectionRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        return kk_box_bool(0)
+    }
+    let collectionElements: [Int]
+    if let collection = runtimeListBox(from: collectionRaw) {
+        collectionElements = collection.elements
+    } else if let collection = runtimeSetBox(from: collectionRaw) {
+        collectionElements = collection.elements
+    } else {
+        return kk_box_bool(0)
+    }
+    let originalCount = set.elements.count
+    set.elements.removeAll { elem in
+        !collectionElements.contains(where: { runtimeValuesEqual($0, elem) })
+    }
+    return kk_box_bool(set.elements.count != originalCount ? 1 : 0)
+}
+
 // MARK: - Map Functions (STDLIB-001)
 
 @_cdecl("kk_map_of")
