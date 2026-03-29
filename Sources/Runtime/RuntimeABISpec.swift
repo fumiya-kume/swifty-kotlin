@@ -1487,15 +1487,6 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_string_toBigInteger",
-            parameters: [
-                RuntimeABIParameter(name: "strRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
             name: "kk_bignum_toString",
             parameters: [
                 RuntimeABIParameter(name: "numRaw", type: .intptr),
@@ -2811,6 +2802,67 @@ public enum RuntimeABISpec {
             name: "kk_kclass_constructors",
             parameters: [
                 RuntimeABIParameter(name: "kclassRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        // STDLIB-REFLECT-065: Annotation reflection
+        RuntimeABIFunctionSpec(
+            name: "kk_kclass_register_annotation",
+            parameters: [
+                RuntimeABIParameter(name: "typeToken", type: .intptr),
+                RuntimeABIParameter(name: "fqNameRaw", type: .intptr),
+                RuntimeABIParameter(name: "argsListRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kclass_get_annotations",
+            parameters: [
+                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kclass_find_annotation",
+            parameters: [
+                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
+                RuntimeABIParameter(name: "fqNameRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kclass_has_annotation",
+            parameters: [
+                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
+                RuntimeABIParameter(name: "fqNameRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_annotation_class_name",
+            parameters: [
+                RuntimeABIParameter(name: "annRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_annotation_simple_class_name",
+            parameters: [
+                RuntimeABIParameter(name: "annRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_annotation_get_arguments",
+            parameters: [
+                RuntimeABIParameter(name: "annRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "TypeCheck"

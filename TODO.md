@@ -376,7 +376,7 @@
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/kconstructor_basic.kt`
 
-- [ ] STDLIB-REFLECT-065: アノテーションリフレクション完全実装
+- [x] STDLIB-REFLECT-065: アノテーションリフレクション完全実装
   - **仕様**: アノテーションのリフレクションアクセス
   - **実装内容**:
     - アノテーション取得: annotations
@@ -384,7 +384,7 @@
     - アノテーションプロパティ: annotationClass
     - アノテーション値の取得
     - 実行時アノテーション: @Retention(RUNTIME)
-  - **現状**: 基本的なアノテーションは実装済み、リフレクションは未実装
+  - **現状**: 実装完了
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/annotation_reflection.kt`
 

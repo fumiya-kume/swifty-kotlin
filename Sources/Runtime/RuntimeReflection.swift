@@ -142,6 +142,17 @@ private func runtimeKFunctionBox(from raw: Int) -> RuntimeKFunctionBox? {
     return tryCast(ptr, to: RuntimeKFunctionBox.self)
 }
 
+// MARK: - Annotation Reflection (STDLIB-REFLECT-065)
+
+private func runtimeAnnotationBox(from raw: Int) -> RuntimeAnnotationBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    let isObj = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObj else { return nil }
+    return tryCast(ptr, to: RuntimeAnnotationBox.self)
+}
+
 /// Creates and registers a KFunction box.
 /// - Parameters:
 ///   - nameRaw: Opaque pointer to the KKString for the function name.
@@ -392,40 +403,114 @@ public func kk_kfunction_call_vararg(
     }
 }
 
-// MARK: - STDLIB-REFLECT-066: KType toString
+/// Registers an annotation on a type identified by `typeToken`.
+/// Called during module initialisation for each declaration annotated with
+/// a `@Retention(RUNTIME)` annotation (or any annotation whose retention is RUNTIME).
+///
+/// Parameters:
+/// - typeToken: type-token of the annotated declaration
+/// - fqNameRaw: KKString raw pointer for the annotation's fully-qualified class name
+/// - argsListRaw: runtime List of KKString raw pointers containing serialised argument values (0 = no args)
+@_cdecl("kk_kclass_register_annotation")
+public func kk_kclass_register_annotation(
+    _ typeToken: Int,
+    _ fqNameRaw: Int,
+    _ argsListRaw: Int
+) -> Int {
+    guard let fqNameStr = extractString(from: UnsafeMutableRawPointer(bitPattern: fqNameRaw)) else {
+        return 0
+    }
 
-/// Internal helper to render a KTypeBox as a human-readable string.
-func runtimeKTypeToString(_ box: RuntimeKTypeBox) -> String {
-    var baseName = "kotlin.Any"
-    if box.classifierRaw != 0,
-       box.classifierRaw != runtimeNullSentinelInt,
-       let classifierPtr = UnsafeMutableRawPointer(bitPattern: box.classifierRaw),
-       runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: classifierPtr)) }),
-       let kclassBox = tryCast(classifierPtr, to: RuntimeKClassBox.self)
+    var argStrings: [String] = []
+    if argsListRaw != 0, argsListRaw != runtimeNullSentinelInt,
+       let ptr = UnsafeMutableRawPointer(bitPattern: argsListRaw)
     {
-        let qualName = kclassBox.reflectionQualifiedName
-        if !qualName.isEmpty {
-            baseName = qualName
-        } else {
-            let simpleName = kclassBox.reflectionSimpleName
-            if !simpleName.isEmpty {
-                baseName = simpleName
+        let isObj = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if isObj, let listBox = tryCast(ptr, to: RuntimeListBox.self) {
+            for elemRaw in listBox.elements {
+                if let s = extractString(from: UnsafeMutableRawPointer(bitPattern: elemRaw)) {
+                    argStrings.append(s)
+                }
             }
         }
     }
-    return box.isMarkedNullable ? baseName + "?" : baseName
+
+    let ann = RuntimeAnnotationBox(annotationFQName: fqNameStr, arguments: argStrings)
+    runtimeAnnotationRegistry.register(typeToken: typeToken, annotation: ann)
+    return 0
 }
 
-/// Returns a human-readable string for a KType, e.g. "kotlin.String" or "kotlin.String?".
-@_cdecl("kk_ktype_to_string")
-public func kk_ktype_to_string(_ ktypeRaw: Int) -> Int {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: ktypeRaw),
-          runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
-          let box = tryCast(ptr, to: RuntimeKTypeBox.self)
-    else {
-        return runtimeReflectionStringRaw("kotlin.Any")
+/// Returns the annotations attached to the type represented by `kclassRaw` as a
+/// runtime `List<Annotation>` (each element is a RuntimeAnnotationBox raw handle).
+@_cdecl("kk_kclass_get_annotations")
+public func kk_kclass_get_annotations(_ kclassRaw: Int) -> Int {
+    guard let kclass = runtimeReflectionKClassBox(from: kclassRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
     }
-    return runtimeReflectionStringRaw(runtimeKTypeToString(box))
+    let annBoxes = runtimeAnnotationRegistry.annotations(for: kclass.typeToken)
+    let rawHandles = annBoxes.map { registerRuntimeObject($0) }
+    return registerRuntimeObject(RuntimeListBox(elements: rawHandles))
+}
+
+/// Returns the fully-qualified annotation class name of an annotation box as a KKString,
+/// or the null sentinel if the handle is invalid.
+/// This is the runtime backing for `.annotationClass.qualifiedName`.
+@_cdecl("kk_annotation_class_name")
+public func kk_annotation_class_name(_ annRaw: Int) -> Int {
+    guard let box = runtimeAnnotationBox(from: annRaw) else {
+        return runtimeNullSentinelInt
+    }
+    return runtimeReflectionStringRaw(box.annotationFQName)
+}
+
+/// Returns the simple (unqualified) annotation class name of an annotation box as a KKString,
+/// or the null sentinel if the handle is invalid.
+@_cdecl("kk_annotation_simple_class_name")
+public func kk_annotation_simple_class_name(_ annRaw: Int) -> Int {
+    guard let box = runtimeAnnotationBox(from: annRaw) else {
+        return runtimeNullSentinelInt
+    }
+    let simple = box.annotationFQName.split(separator: ".").last.map(String.init) ?? box.annotationFQName
+    return runtimeReflectionStringRaw(simple)
+}
+
+/// Returns the serialised argument values of an annotation box as a runtime
+/// `List<String>` (each element is a KKString raw pointer).
+@_cdecl("kk_annotation_get_arguments")
+public func kk_annotation_get_arguments(_ annRaw: Int) -> Int {
+    guard let box = runtimeAnnotationBox(from: annRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let rawHandles = box.arguments.map { runtimeReflectionStringRaw($0) }
+    return registerRuntimeObject(RuntimeListBox(elements: rawHandles))
+}
+
+/// Searches the annotations of the type represented by `kclassRaw` for one whose
+/// fully-qualified class name equals `fqNameRaw`.
+/// Returns the raw handle of the first matching annotation box, or the null sentinel
+/// if no matching annotation is found.
+/// This is the runtime backing for `KClass<T>.findAnnotation<A>()`.
+@_cdecl("kk_kclass_find_annotation")
+public func kk_kclass_find_annotation(_ kclassRaw: Int, _ fqNameRaw: Int) -> Int {
+    guard let kclass = runtimeReflectionKClassBox(from: kclassRaw),
+          let targetName = extractString(from: UnsafeMutableRawPointer(bitPattern: fqNameRaw))
+    else {
+        return runtimeNullSentinelInt
+    }
+    let annBoxes = runtimeAnnotationRegistry.annotations(for: kclass.typeToken)
+    guard let found = annBoxes.first(where: { $0.annotationFQName == targetName }) else {
+        return runtimeNullSentinelInt
+    }
+    return registerRuntimeObject(found)
+}
+
+/// Returns 1 if the type represented by `kclassRaw` has at least one annotation
+/// whose fully-qualified class name equals `fqNameRaw`, 0 otherwise.
+@_cdecl("kk_kclass_has_annotation")
+public func kk_kclass_has_annotation(_ kclassRaw: Int, _ fqNameRaw: Int) -> Int {
+    kk_kclass_find_annotation(kclassRaw, fqNameRaw) != runtimeNullSentinelInt ? 1 : 0
 }
 
 // MARK: - KProperty Dynamic Access (STDLIB-REFLECT-067)

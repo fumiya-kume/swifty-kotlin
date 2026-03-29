@@ -947,13 +947,7 @@ public enum RuntimeABIExterns {
 
     public static let kk_string_toBigDecimal = ExternDecl(
         name: "kk_string_toBigDecimal",
-        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
-        returnType: "intptr_t"
-    )
-
-    public static let kk_string_toBigInteger = ExternDecl(
-        name: "kk_string_toBigInteger",
-        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        parameterTypes: ["intptr_t", "intptr_t*"],
         returnType: "intptr_t"
     )
 
@@ -2373,6 +2367,50 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-REFLECT-065: Annotation reflection
+
+    public static let kk_kclass_register_annotation = ExternDecl(
+        name: "kk_kclass_register_annotation",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_get_annotations = ExternDecl(
+        name: "kk_kclass_get_annotations",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_find_annotation = ExternDecl(
+        name: "kk_kclass_find_annotation",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_has_annotation = ExternDecl(
+        name: "kk_kclass_has_annotation",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_annotation_class_name = ExternDecl(
+        name: "kk_annotation_class_name",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_annotation_simple_class_name = ExternDecl(
+        name: "kk_annotation_simple_class_name",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_annotation_get_arguments = ExternDecl(
+        name: "kk_annotation_get_arguments",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // REFL-005: KType and typeOf<T>()
 
     public static let kk_ktype_create = ExternDecl(
@@ -3562,52 +3600,8 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
-    // mark / reset / markSupported (STDLIB-IO-092)
-    public static let kk_input_stream_mark = ExternDecl(
-        name: "kk_input_stream_mark",
-        parameterTypes: [intptr, intptr],
-        returnType: intptr
-    )
-
-    public static let kk_input_stream_reset = ExternDecl(
-        name: "kk_input_stream_reset",
-        parameterTypes: [intptr, nullableIntptrPtr],
-        returnType: intptr
-    )
-
-    public static let kk_input_stream_mark_supported = ExternDecl(
-        name: "kk_input_stream_mark_supported",
-        parameterTypes: [intptr],
-        returnType: intptr
-    )
-
     public static let kk_input_stream_close = ExternDecl(
         name: "kk_input_stream_close",
-        parameterTypes: [intptr],
-        returnType: intptr
-    )
-
-    // SequenceInputStream (STDLIB-IO-092)
-    public static let kk_sequence_input_stream_new = ExternDecl(
-        name: "kk_sequence_input_stream_new",
-        parameterTypes: [intptr, intptr],
-        returnType: intptr
-    )
-
-    public static let kk_sequence_input_stream_read = ExternDecl(
-        name: "kk_sequence_input_stream_read",
-        parameterTypes: [intptr, nullableIntptrPtr],
-        returnType: intptr
-    )
-
-    public static let kk_sequence_input_stream_available = ExternDecl(
-        name: "kk_sequence_input_stream_available",
-        parameterTypes: [intptr],
-        returnType: intptr
-    )
-
-    public static let kk_sequence_input_stream_close = ExternDecl(
-        name: "kk_sequence_input_stream_close",
         parameterTypes: [intptr],
         returnType: intptr
     )
@@ -3747,14 +3741,7 @@ public enum RuntimeABIExterns {
         kk_input_stream_available,
         kk_input_stream_skip,
         kk_input_stream_read_bytes,
-        kk_input_stream_mark,
-        kk_input_stream_reset,
-        kk_input_stream_mark_supported,
         kk_input_stream_close,
-        kk_sequence_input_stream_new,
-        kk_sequence_input_stream_read,
-        kk_sequence_input_stream_available,
-        kk_sequence_input_stream_close,
         kk_output_stream_write_byte,
         kk_output_stream_write_bytes,
         kk_output_stream_flush,
@@ -3888,7 +3875,6 @@ public enum RuntimeABIExterns {
             kk_string_trimMargin,
             kk_string_format,
             kk_string_toBigDecimal,
-            kk_string_toBigInteger,
             kk_bignum_toString,
             kk_string_isNullOrEmpty,
             kk_string_isNullOrBlank,
@@ -4402,6 +4388,17 @@ public enum RuntimeABIExterns {
         all += securityExterns
         all += parallelExterns
         all += bigIntegerExterns
+        all += kFunctionExterns
+        // STDLIB-REFLECT-065: Annotation reflection
+        all += [
+            kk_kclass_register_annotation,
+            kk_kclass_get_annotations,
+            kk_kclass_find_annotation,
+            kk_kclass_has_annotation,
+            kk_annotation_class_name,
+            kk_annotation_simple_class_name,
+            kk_annotation_get_arguments,
+        ]
         return all
     }()
 
