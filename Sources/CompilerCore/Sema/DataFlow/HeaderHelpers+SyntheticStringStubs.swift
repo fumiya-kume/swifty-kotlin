@@ -1655,6 +1655,33 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // STDLIB-STR-125: String(ByteArray, Charset) constructor
+        // Allows decoding a byte array with an explicit charset: String(bytes, Charsets.UTF_8)
+        let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
+        let stringClassSymbol = ensureClassSymbol(
+            named: "String",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        registerStringConstructorFromBytes(
+            ownerSymbol: stringClassSymbol,
+            ownerType: stringType,
+            parameters: [("bytes", listIntType), ("charset", charsetType)],
+            externalLinkName: "kk_bytearray_decodeToString_charset",
+            symbols: symbols,
+            interner: interner
+        )
+        // String(ByteArray) — default UTF-8 decoding
+        registerStringConstructorFromBytes(
+            ownerSymbol: stringClassSymbol,
+            ownerType: stringType,
+            parameters: [("bytes", listIntType)],
+            externalLinkName: "kk_bytearray_decodeToString",
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-316: String.chunked / String.windowed ---
 
         registerSyntheticStringExtensionFunction(
@@ -2285,6 +2312,70 @@ extension DataFlowSemaPhase {
                 valueParameterIsVararg: []
             ),
             for: functionSymbol
+        )
+    }
+
+    private func registerStringConstructorFromBytes(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let initName = interner.intern("<init>")
+        let ctorFQName = ownerInfo.fqName + [initName]
+        let hasMatchingConstructor = symbols.lookupAll(fqName: ctorFQName).contains { symbolID in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.kind == .constructor,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.parameterTypes == parameters.map(\.type)
+        }
+        guard !hasMatchingConstructor else {
+            return
+        }
+
+        let ctorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: ctorFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: ctorSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: ctorFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(ctorSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameters.map(\.type),
+                returnType: ownerType,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: ctorSymbol
         )
     }
 
