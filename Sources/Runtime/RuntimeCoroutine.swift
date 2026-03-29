@@ -315,6 +315,13 @@ final class RuntimeAsyncTask: @unchecked Sendable {
         return isCompleted
     }
 
+    /// Thread-safe snapshot of the cancellation flag.
+    func isCancelledSnapshot() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return isCancelled
+    }
+
     func complete(with result: Int) {
         lock.lock()
         guard !isCompleted else {
@@ -502,6 +509,13 @@ final class RuntimeJobHandle: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         return isCancelled
+    }
+
+    /// Thread-safe snapshot of the completion flag.
+    func completedSnapshot() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return isCompleted
     }
 }
 
@@ -3024,9 +3038,9 @@ public func kk_job_is_active(_ jobHandle: Int) -> Int {
     let obj = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
     if let job = obj as? RuntimeJobHandle {
         // isActive = not completed AND not cancelled
-        return (!job.isCompleted && !job.isCancelled) ? 1 : 0
+        return (!job.completedSnapshot() && !job.cancellationSnapshot()) ? 1 : 0
     } else if let task = obj as? RuntimeAsyncTask {
-        return (!task.isCompletedSnapshot() && !task.isCancelled) ? 1 : 0
+        return (!task.isCompletedSnapshot() && !task.isCancelledSnapshot()) ? 1 : 0
     }
     return 0
 }
@@ -3040,7 +3054,7 @@ public func kk_job_is_completed(_ jobHandle: Int) -> Int {
     }
     let obj = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
     if let job = obj as? RuntimeJobHandle {
-        return job.isCompleted ? 1 : 0
+        return job.completedSnapshot() ? 1 : 0
     } else if let task = obj as? RuntimeAsyncTask {
         return task.isCompletedSnapshot() ? 1 : 0
     }
@@ -3056,9 +3070,9 @@ public func kk_job_is_cancelled(_ jobHandle: Int) -> Int {
     }
     let obj = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
     if let job = obj as? RuntimeJobHandle {
-        return job.isCancelled ? 1 : 0
+        return job.cancellationSnapshot() ? 1 : 0
     } else if let task = obj as? RuntimeAsyncTask {
-        return task.isCancelled ? 1 : 0
+        return task.isCancelledSnapshot() ? 1 : 0
     }
     return 0
 }
