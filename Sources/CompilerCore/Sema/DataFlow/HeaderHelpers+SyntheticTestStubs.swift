@@ -18,17 +18,6 @@ extension DataFlowSemaPhase {
         registerSyntheticAnnotationClass(
             named: "Test",
             packageFQName: testPkg,
-        interner: StringInterner
-    ) {
-        let kotlinTestPkg = ensureSyntheticPackageHierarchy(
-            fqName: [interner.intern("kotlin"), interner.intern("test")],
-            symbols: symbols
-        )
-        let packageSymbol = symbols.lookup(fqName: kotlinTestPkg) ?? .invalid
-
-        registerSyntheticAnnotationClass(
-            named: "Test",
-            packageFQName: kotlinTestPkg,
             packageSymbol: packageSymbol,
             symbols: symbols,
             interner: interner
@@ -36,7 +25,6 @@ extension DataFlowSemaPhase {
         registerSyntheticAnnotationClass(
             named: "Before",
             packageFQName: testPkg,
-            packageFQName: kotlinTestPkg,
             packageSymbol: packageSymbol,
             symbols: symbols,
             interner: interner
@@ -44,7 +32,6 @@ extension DataFlowSemaPhase {
         registerSyntheticAnnotationClass(
             named: "After",
             packageFQName: testPkg,
-            packageFQName: kotlinTestPkg,
             packageSymbol: packageSymbol,
             symbols: symbols,
             interner: interner
@@ -55,7 +42,6 @@ extension DataFlowSemaPhase {
         registerSyntheticTopLevelFunction(
             named: "assertEquals",
             packageFQName: testPkg,
-            packageFQName: kotlinTestPkg,
             parameters: [
                 (name: "expected", type: anyNullable),
                 (name: "actual", type: anyNullable),
@@ -68,7 +54,6 @@ extension DataFlowSemaPhase {
         registerSyntheticTopLevelFunction(
             named: "assertEquals",
             packageFQName: testPkg,
-            packageFQName: kotlinTestPkg,
             parameters: [
                 (name: "expected", type: anyNullable),
                 (name: "actual", type: anyNullable),
@@ -83,7 +68,6 @@ extension DataFlowSemaPhase {
         registerSyntheticTopLevelFunction(
             named: "assertTrue",
             packageFQName: testPkg,
-            packageFQName: kotlinTestPkg,
             parameters: [
                 (name: "actual", type: types.booleanType),
             ],
@@ -95,7 +79,6 @@ extension DataFlowSemaPhase {
         registerSyntheticTopLevelFunction(
             named: "assertTrue",
             packageFQName: testPkg,
-            packageFQName: kotlinTestPkg,
             parameters: [
                 (name: "actual", type: types.booleanType),
                 (name: "message", type: anyNullable),
@@ -109,7 +92,6 @@ extension DataFlowSemaPhase {
         registerSyntheticTopLevelFunction(
             named: "assertNull",
             packageFQName: testPkg,
-            packageFQName: kotlinTestPkg,
             parameters: [
                 (name: "actual", type: anyNullable),
             ],
@@ -121,7 +103,6 @@ extension DataFlowSemaPhase {
         registerSyntheticTopLevelFunction(
             named: "assertNull",
             packageFQName: testPkg,
-            packageFQName: kotlinTestPkg,
             parameters: [
                 (name: "actual", type: anyNullable),
                 (name: "message", type: anyNullable),
@@ -155,21 +136,6 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic]
             )
         }
-        if let existing = symbols.lookup(fqName: classFQName) {
-            if packageSymbol != .invalid {
-                symbols.setParentSymbol(packageSymbol, for: existing)
-            }
-            return
-        }
-
-        let classSymbol = symbols.define(
-            kind: .annotationClass,
-            name: className,
-            fqName: classFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic]
-        )
         if packageSymbol != .invalid {
             symbols.setParentSymbol(packageSymbol, for: classSymbol)
         }

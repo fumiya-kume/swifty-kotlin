@@ -854,7 +854,6 @@ extension DataFlowSemaPhase {
         registerSyntheticCoroutineStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticContractStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticPreconditionStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticTestFrameworkStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticRegexStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticHexFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticResultStubs(symbols: symbols, types: types, interner: interner)

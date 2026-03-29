@@ -449,43 +449,6 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // MARK: - Test Framework (STDLIB-TEST-157)
-
-    public static let kk_test_assertEquals = ExternDecl(
-        name: "kk_test_assertEquals",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
-        returnType: "intptr_t"
-    )
-
-    public static let kk_test_assertEquals_message = ExternDecl(
-        name: "kk_test_assertEquals_message",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
-        returnType: "intptr_t"
-    )
-
-    public static let kk_test_assertTrue = ExternDecl(
-        name: "kk_test_assertTrue",
-        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
-        returnType: "intptr_t"
-    )
-
-    public static let kk_test_assertTrue_message = ExternDecl(
-        name: "kk_test_assertTrue_message",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
-        returnType: "intptr_t"
-    )
-
-    public static let kk_test_assertNull = ExternDecl(
-        name: "kk_test_assertNull",
-        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
-        returnType: "intptr_t"
-    )
-
-    public static let kk_test_assertNull_message = ExternDecl(
-        name: "kk_test_assertNull_message",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
-        returnType: "intptr_t"
-    )
 
     // MARK: - String
 
@@ -3499,13 +3462,6 @@ public enum RuntimeABIExterns {
             kk_throwable_message,
             kk_throwable_cause,
             kk_throwable_stackTraceToString,
-            // Test Framework
-            kk_test_assertEquals,
-            kk_test_assertEquals_message,
-            kk_test_assertTrue,
-            kk_test_assertTrue_message,
-            kk_test_assertNull,
-            kk_test_assertNull_message,
             // String
             kk_string_from_utf8,
             kk_string_concat,
