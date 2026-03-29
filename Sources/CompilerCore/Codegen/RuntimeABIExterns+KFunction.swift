@@ -77,6 +77,22 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    /// Invokes the KFunction with three arguments.
+    /// Signature: kk_kfunction_call_3(handle, arg1, arg2, arg3, outThrown*) -> intptr_t
+    static let kk_kfunction_call_3 = ExternDecl(
+        name: "kk_kfunction_call_3",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t*"],
+        returnType: "intptr_t"
+    )
+
+    /// Invokes the KFunction with a vararg list.
+    /// Signature: kk_kfunction_call_vararg(handle, argsListRaw, outThrown*) -> intptr_t
+    static let kk_kfunction_call_vararg = ExternDecl(
+        name: "kk_kfunction_call_vararg",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t*"],
+        returnType: "intptr_t"
+    )
+
     /// Combined array for use in `allExterns` concatenation.
     static let kFunctionExterns: [ExternDecl] = [
         kk_kfunction_create,
@@ -88,5 +104,7 @@ public extension RuntimeABIExterns {
         kk_kfunction_call_0,
         kk_kfunction_call_1,
         kk_kfunction_call_2,
+        kk_kfunction_call_3,
+        kk_kfunction_call_vararg,
     ]
 }

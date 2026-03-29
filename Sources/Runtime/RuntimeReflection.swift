@@ -223,7 +223,7 @@ public func kk_kfunction_call_0(
     }
     guard box.arity == 0 else {
         outThrown?.pointee = runtimeAllocateThrowable(
-            message: "KFunction call arity mismatch: expected 0, got \(box.arity)"
+            message: "KFunction call arity mismatch: expected \(box.arity), got 0"
         )
         return 0
     }
@@ -254,7 +254,7 @@ public func kk_kfunction_call_1(
     }
     guard box.arity == 1 else {
         outThrown?.pointee = runtimeAllocateThrowable(
-            message: "KFunction call arity mismatch: expected 1, got \(box.arity)"
+            message: "KFunction call arity mismatch: expected \(box.arity), got 1"
         )
         return 0
     }
@@ -286,7 +286,7 @@ public func kk_kfunction_call_2(
     }
     guard box.arity == 2 else {
         outThrown?.pointee = runtimeAllocateThrowable(
-            message: "KFunction call arity mismatch: expected 2, got \(box.arity)"
+            message: "KFunction call arity mismatch: expected \(box.arity), got 2"
         )
         return 0
     }
@@ -319,7 +319,7 @@ public func kk_kfunction_call_3(
     }
     guard box.arity == 3 else {
         outThrown?.pointee = runtimeAllocateThrowable(
-            message: "KFunction call arity mismatch: expected 3, got \(box.arity)"
+            message: "KFunction call arity mismatch: expected \(box.arity), got 3"
         )
         return 0
     }

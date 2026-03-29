@@ -4005,6 +4005,17 @@ public enum RuntimeABIExterns {
             kk_duration_unary_minus,
             kk_duration_compareTo,
         ]
+        // Instant (STDLIB-TIME-083)
+        all += [
+            kk_instant_now,
+            kk_instant_from_epoch_millis,
+            kk_instant_epoch_seconds,
+            kk_instant_nano_of_second,
+            kk_instant_plus_duration,
+            kk_instant_minus_duration,
+            kk_instant_compare,
+            kk_instant_until,
+        ]
         all += atomicExterns
         all += kFunctionExterns
         return all
