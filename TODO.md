@@ -338,6 +338,9 @@
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/kclass_basic.kt`
 
+- [ ] STDLIB-REFLECT-061: KClassメンバアクセス完全実装
+  - **仕様**: KClassからのメンバアクセス機能
+
 - [ ] STDLIB-REFLECT-062: KProperty完全実装
   - **仕様**: KPropertyインターフェースの完全サポート
   - **実装内容**:
