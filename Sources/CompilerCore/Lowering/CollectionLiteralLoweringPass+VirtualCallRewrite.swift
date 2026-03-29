@@ -164,9 +164,13 @@ extension CollectionLiteralLoweringPass {
         case lookup.useLinesName:
             kkCallee = lookup.kkFileUseLinesName
         case lookup.bufferedReaderName:
-            kkCallee = lookup.kkFileBufferedReaderName
+            // Only rewrite argument-less bufferedReader(); the runtime function
+            // kk_file_bufferedReader does not accept charset/bufferSize args.
+            kkCallee = arguments.isEmpty ? lookup.kkFileBufferedReaderName : nil
         case lookup.bufferedWriterName:
-            kkCallee = lookup.kkFileBufferedWriterName
+            // Only rewrite argument-less bufferedWriter(); the runtime function
+            // kk_file_bufferedWriter does not accept charset/bufferSize args.
+            kkCallee = arguments.isEmpty ? lookup.kkFileBufferedWriterName : nil
         case lookup.walkName:
             kkCallee = lookup.kkFileWalkName
         case lookup.listFilesName:
