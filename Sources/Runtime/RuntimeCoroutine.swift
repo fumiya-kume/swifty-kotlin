@@ -515,6 +515,14 @@ final class RuntimeCoroutineScope: @unchecked Sendable {
         self.isSupervisor = isSupervisor
     }
 
+    /// Sets the parent scope link. Used by kk_coroutine_scope_cancel_propagate to
+    /// wire child scopes into the parent's cancellation hierarchy at runtime.
+    func setParent(_ newParent: RuntimeCoroutineScope) {
+        lock.lock()
+        parent = newParent
+        lock.unlock()
+    }
+
     func registerChild(_ handle: Int) {
         // Take an additional retain so the scope keeps the child alive
         // even if user code calls takeRetainedValue (e.g. kk_kxmini_async_await)
@@ -2408,6 +2416,63 @@ public func kk_coroutine_scope_wait(_ scopeHandle: Int) -> Int {
     }
     Unmanaged<RuntimeCoroutineScope>.fromOpaque(ptr).release()
     return firstFailure
+}
+
+/// Returns 1 if the scope is active (not cancelled), 0 if cancelled.
+/// This is the ABI backing for `scope.isActive` in Kotlin.
+@_cdecl("kk_coroutine_scope_is_active")
+public func kk_coroutine_scope_is_active(_ scopeHandle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: scopeHandle) else {
+        return 0
+    }
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(ptr).takeUnretainedValue()
+    return scope.isCancelled ? 0 : 1
+}
+
+/// Returns 1 if the scope has been cancelled, 0 otherwise.
+/// This is the ABI backing for checking `scope.coroutineContext[Job]?.isCancelled`.
+@_cdecl("kk_coroutine_scope_is_cancelled")
+public func kk_coroutine_scope_is_cancelled(_ scopeHandle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: scopeHandle) else {
+        return 1 // invalid handle → treat as cancelled
+    }
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(ptr).takeUnretainedValue()
+    return scope.isCancelled ? 1 : 0
+}
+
+/// Returns the parent scope handle, or 0 if there is no parent.
+/// Supports scope hierarchy traversal: child scope → parent scope.
+@_cdecl("kk_coroutine_scope_get_parent")
+public func kk_coroutine_scope_get_parent(_ scopeHandle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: scopeHandle) else {
+        return 0
+    }
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(ptr).takeUnretainedValue()
+    guard let parent = scope.parent else {
+        return 0
+    }
+    // Return an unretained pointer — the parent is kept alive by the scope hierarchy
+    // (the child holds a strong reference to its parent via the `parent` property).
+    return Int(bitPattern: Unmanaged.passUnretained(parent).toOpaque())
+}
+
+/// Propagates cancellation from a parent scope handle to a child scope handle.
+/// Call this to link a newly created child scope into the parent's cancellation chain.
+/// Returns 0 on success, -1 if either handle is invalid.
+@_cdecl("kk_coroutine_scope_cancel_propagate")
+public func kk_coroutine_scope_cancel_propagate(_ parentHandle: Int, _ childHandle: Int) -> Int {
+    guard let parentPtr = UnsafeMutableRawPointer(bitPattern: parentHandle),
+          let childPtr = UnsafeMutableRawPointer(bitPattern: childHandle) else {
+        return -1
+    }
+    let parent = Unmanaged<RuntimeCoroutineScope>.fromOpaque(parentPtr).takeUnretainedValue()
+    let child = Unmanaged<RuntimeCoroutineScope>.fromOpaque(childPtr).takeUnretainedValue()
+    // Set the parent link so cancel() on the parent propagates to the child via registerChild.
+    child.setParent(parent)
+    if parent.isCancelled {
+        child.cancel()
+    }
+    return 0
 }
 
 /// Registers a child job/deferred handle with the given scope.

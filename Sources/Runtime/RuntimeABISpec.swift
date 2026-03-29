@@ -2150,6 +2150,40 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Coroutine"
         ),
+        // CoroutineScope hierarchy / lifecycle (STDLIB-CORO-069)
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_scope_is_active",
+            parameters: [
+                RuntimeABIParameter(name: "scopeHandle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_scope_is_cancelled",
+            parameters: [
+                RuntimeABIParameter(name: "scopeHandle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_scope_get_parent",
+            parameters: [
+                RuntimeABIParameter(name: "scopeHandle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_scope_cancel_propagate",
+            parameters: [
+                RuntimeABIParameter(name: "parentHandle", type: .intptr),
+                RuntimeABIParameter(name: "childHandle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
         // Cancellation (CORO-002)
         RuntimeABIFunctionSpec(
             name: "kk_coroutine_check_cancellation",

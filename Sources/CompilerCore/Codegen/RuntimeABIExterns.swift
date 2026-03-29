@@ -1516,6 +1516,68 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // CoroutineContext elements (STDLIB-CORO-077)
+
+    public static let kk_coroutine_name_create = ExternDecl(
+        name: "kk_coroutine_name_create",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_coroutine_name_get = ExternDecl(
+        name: "kk_coroutine_name_get",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_exception_handler_create = ExternDecl(
+        name: "kk_exception_handler_create",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_exception_handler_invoke = ExternDecl(
+        name: "kk_exception_handler_invoke",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "void"
+    )
+
+    public static let kk_context_plus = ExternDecl(
+        name: "kk_context_plus",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_context_get_dispatcher = ExternDecl(
+        name: "kk_context_get_dispatcher",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_context_get_name = ExternDecl(
+        name: "kk_context_get_name",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_context_get_exception_handler = ExternDecl(
+        name: "kk_context_get_exception_handler",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_context_release = ExternDecl(
+        name: "kk_context_release",
+        parameterTypes: ["intptr_t"],
+        returnType: "void"
+    )
+
+    public static let kk_with_context_full = ExternDecl(
+        name: "kk_with_context_full",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // Channel (CORO-001)
 
     public static let kk_channel_create = ExternDecl(
