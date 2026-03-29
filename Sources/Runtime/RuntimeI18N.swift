@@ -16,7 +16,7 @@ final class RuntimeResourceBundleBox {
     }
 }
 
-private func runtimeLocaleBox(from raw: Int) -> RuntimeLocaleBox? {
+func runtimeLocaleBox(from raw: Int) -> RuntimeLocaleBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
     return tryCast(ptr, to: RuntimeLocaleBox.self)
 }
