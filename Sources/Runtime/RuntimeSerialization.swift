@@ -227,10 +227,10 @@ public func kk_json_encodeToString(_ jsonRaw: Int, _ valueRaw: Int) -> Int {
             return jsonMakeStringRaw("\"\"")
         } else if jsonifiable is NSNull {
             return jsonMakeStringRaw("null")
-        } else if let num = jsonifiable as? NSNumber {
-            return jsonMakeStringRaw("\(num)")
         } else if let boolVal = jsonifiable as? Bool {
             return jsonMakeStringRaw(boolVal ? "true" : "false")
+        } else if let num = jsonifiable as? NSNumber {
+            return jsonMakeStringRaw("\(num)")
         } else {
             return jsonMakeStringRaw("\(jsonifiable)")
         }
