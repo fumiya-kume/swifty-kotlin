@@ -191,7 +191,7 @@
 
 
 
-- [ ] STDLIB-GEN-054: 変位指定完全実装
+- [x] STDLIB-GEN-054: 変位指定完全実装
   - **仕様**: 型パラメータの変位指定（共変性と反変性）
   - **実装内容**:
     - 共変性（out）: interface Producer<out T>
@@ -199,7 +199,7 @@
     - 不変性: interface Container<T>
     - 変位指定の型チェック
     - 変位指定と継承の関係
-  - **現状**: 基本的な変位指定は実装済み、詳細なチェックは未実装
+  - **現状**: 実装完了。VarianceCheck.swift、Subtyping.swift、TypeModels.swiftで実装済み
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/variance_generics.kt`
 
