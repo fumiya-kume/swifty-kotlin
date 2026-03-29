@@ -717,8 +717,8 @@ public func kk_kclass_properties(_ kclassRaw: Int) -> Int {
     guard let box = runtimeKClassBox(from: kclassRaw) else {
         return registerRuntimeObject(RuntimeListBox(elements: []))
     }
-    // Use memberCount as an approximation for total properties including inherited.
-    let count = box.metadata?.memberCount ?? 0
+    // Use fieldCount for total properties (fields represent properties in the metadata).
+    let count = box.metadata?.fieldCount ?? 0
     let placeholders = (0..<max(count, 0)).map { _ in 0 }
     return registerRuntimeObject(RuntimeListBox(elements: placeholders))
 }
@@ -757,9 +757,11 @@ public func kk_kclass_functions(_ kclassRaw: Int) -> Int {
     guard let box = runtimeKClassBox(from: kclassRaw) else {
         return registerRuntimeObject(RuntimeListBox(elements: []))
     }
-    // memberCount includes both properties and functions; use it as an upper bound.
-    let count = box.metadata?.memberCount ?? 0
-    let placeholders = (0..<max(count, 0)).map { _ in 0 }
+    // Derive function count as memberCount minus fieldCount (properties are fields).
+    let memberCount = box.metadata?.memberCount ?? 0
+    let fieldCount = box.metadata?.fieldCount ?? 0
+    let count = max(0, memberCount - fieldCount)
+    let placeholders = (0..<count).map { _ in 0 }
     return registerRuntimeObject(RuntimeListBox(elements: placeholders))
 }
 
