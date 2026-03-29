@@ -296,6 +296,7 @@ struct BigIntValue: Equatable {
         }
         return result
     }
+
 }
 
 // MARK: - Helper
@@ -454,7 +455,12 @@ public func kk_biginteger_abs(_ selfRaw: Int) -> Int {
 // MARK: - pow()
 
 @_cdecl("kk_biginteger_pow")
-public func kk_biginteger_pow(_ selfRaw: Int, _ exponent: Int) -> Int {
+public func kk_biginteger_pow(_ selfRaw: Int, _ exponent: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    if exponent < 0 {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArithmeticException: Negative exponent")
+        return 0
+    }
     guard let selfBox = runtimeBigIntegerBox(from: selfRaw) else {
         return kk_biginteger_valueOf(0)
     }

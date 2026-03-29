@@ -41,11 +41,13 @@ extension DataFlowSemaPhase {
         let stringType = types.stringType
 
         // --- BigInteger(String) constructor ---
+        // kk_biginteger_fromString accepts outThrown to signal NumberFormatException.
         registerBigIntegerConstructor(
             ownerSymbol: bigIntegerSymbol,
             ownerType: bigIntegerType,
             parameters: [("value", stringType)],
             externalLinkName: "kk_biginteger_fromString",
+            canThrow: true,
             symbols: symbols,
             interner: interner
         )
@@ -107,11 +109,13 @@ extension DataFlowSemaPhase {
         )
 
         // divide(other: BigInteger) -> BigInteger
+        // kk_biginteger_divide accepts outThrown to signal ArithmeticException (/ by zero).
         registerBigIntegerInstanceMethod(
             named: "divide",
             externalLinkName: "kk_biginteger_divide",
             returnType: bigIntegerType,
             parameters: [("other", bigIntegerType)],
+            canThrow: true,
             ownerSymbol: bigIntegerSymbol,
             ownerType: bigIntegerType,
             symbols: symbols,
@@ -143,11 +147,13 @@ extension DataFlowSemaPhase {
         )
 
         // pow(exponent: Int) -> BigInteger
+        // kk_biginteger_pow accepts outThrown to signal ArithmeticException for negative exponents.
         registerBigIntegerInstanceMethod(
             named: "pow",
             externalLinkName: "kk_biginteger_pow",
             returnType: bigIntegerType,
             parameters: [("exponent", intType)],
+            canThrow: true,
             ownerSymbol: bigIntegerSymbol,
             ownerType: bigIntegerType,
             symbols: symbols,
@@ -290,6 +296,7 @@ extension DataFlowSemaPhase {
         ownerType: TypeID,
         parameters: [(name: String, type: TypeID)],
         externalLinkName: String,
+        canThrow: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -311,13 +318,15 @@ extension DataFlowSemaPhase {
             return
         }
 
+        var flags: SymbolFlags = [.synthetic]
+        if canThrow { flags.formUnion([.throwingFunction]) }
         let ctorSymbol = symbols.define(
             kind: .constructor,
             name: initName,
             fqName: ctorFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
         symbols.setExternalLinkName(externalLinkName, for: ctorSymbol)
@@ -355,6 +364,7 @@ extension DataFlowSemaPhase {
         externalLinkName: String,
         returnType: TypeID,
         parameters: [(name: String, type: TypeID)],
+        canThrow: Bool = false,
         ownerSymbol: SymbolID,
         ownerType: TypeID,
         symbols: SymbolTable,
@@ -374,13 +384,15 @@ extension DataFlowSemaPhase {
         }) == nil else {
             return
         }
+        var flags: SymbolFlags = [.synthetic]
+        if canThrow { flags.formUnion([.throwingFunction]) }
         let memberSymbol = symbols.define(
             kind: .function,
             name: memberName,
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
         symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
