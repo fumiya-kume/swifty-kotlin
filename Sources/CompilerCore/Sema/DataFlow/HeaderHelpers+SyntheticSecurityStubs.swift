@@ -269,7 +269,10 @@ extension DataFlowSemaPhase {
             visibility: .public,
             flags: [.synthetic, .constValue]
         )
-        symbols.setParentSymbol(ownerSymbol, for: symbol)
+        // Parent must be the companion object symbol, not the class symbol,
+        // so that property resolution finds constants under Cipher.Companion.
+        let parentSymbol = symbols.lookup(fqName: ownerFQName) ?? ownerSymbol
+        symbols.setParentSymbol(parentSymbol, for: symbol)
         symbols.setPropertyType(intType, for: symbol)
         symbols.setConstValueExprKind(.intLiteral(Int64(value)), for: symbol)
     }

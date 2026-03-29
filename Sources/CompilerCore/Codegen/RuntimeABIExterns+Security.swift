@@ -3,13 +3,13 @@
 public extension RuntimeABIExterns {
     static let kk_secretkeyspec_new = ExternDecl(
         name: "kk_secretkeyspec_new",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     static let kk_ivparameterspec_new = ExternDecl(
         name: "kk_ivparameterspec_new",
-        parameterTypes: ["intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

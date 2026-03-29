@@ -518,21 +518,26 @@ private func runtimeCipherTransform(
 }
 
 @_cdecl("kk_secretkeyspec_new")
-public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int) -> Int {
+public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
     let algorithm = runtimeSecurityString(from: algorithmRaw, caller: #function)
     guard let parsedAlgorithm = RuntimeCipherAlgorithm(transformationComponent: algorithm) else {
-        return runtimeAllocateThrowable(message: "NoSuchAlgorithmException: \(algorithm)")
+        runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "NoSuchAlgorithmException: \(algorithm)"))
+        return 0
     }
     guard let keyBytes = runtimeSecurityBytes(from: keyRaw, caller: #function) else {
-        return runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>")
+        runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>"))
+        return 0
     }
     return registerRuntimeObject(RuntimeSecretKeySpecBox(keyBytes: keyBytes, algorithm: parsedAlgorithm))
 }
 
 @_cdecl("kk_ivparameterspec_new")
-public func kk_ivparameterspec_new(_ ivRaw: Int) -> Int {
+public func kk_ivparameterspec_new(_ ivRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
     guard let ivBytes = runtimeSecurityBytes(from: ivRaw, caller: #function) else {
-        return runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>")
+        runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>"))
+        return 0
     }
     return registerRuntimeObject(RuntimeIvParameterSpecBox(ivBytes: ivBytes))
 }
@@ -663,13 +668,15 @@ public func kk_cipher_doFinal_noarg(
 private let kCryptoUnavailable = "UnsupportedOperationException: symmetric crypto not available on this platform"
 
 @_cdecl("kk_secretkeyspec_new")
-public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int) -> Int {
-    return runtimeAllocateThrowable(message: kCryptoUnavailable)
+public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = runtimeAllocateThrowable(message: kCryptoUnavailable)
+    return 0
 }
 
 @_cdecl("kk_ivparameterspec_new")
-public func kk_ivparameterspec_new(_ ivRaw: Int) -> Int {
-    return runtimeAllocateThrowable(message: kCryptoUnavailable)
+public func kk_ivparameterspec_new(_ ivRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = runtimeAllocateThrowable(message: kCryptoUnavailable)
+    return 0
 }
 
 @_cdecl("kk_cipher_getInstance")
