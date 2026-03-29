@@ -1,4 +1,6 @@
 // STDLIB-REFLECT-066: KType reflection — typeOf<T>(), isMarkedNullable, classifier, arguments
+import kotlin.reflect.typeOf
+
 fun main() {
     // typeOf<T>() returns a KType for a non-nullable type
     val stringType = typeOf<String>()
