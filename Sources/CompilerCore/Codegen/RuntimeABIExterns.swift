@@ -1236,6 +1236,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_system_process_start_nanos = ExternDecl(
+        name: "kk_system_process_start_nanos",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
     public static let kk_system_measureTimeMillis = ExternDecl(
         name: "kk_system_measureTimeMillis",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
@@ -3167,6 +3173,7 @@ public enum RuntimeABIExterns {
             kk_system_exitProcess,
             kk_system_currentTimeMillis,
             kk_system_nanoTime,
+            kk_system_process_start_nanos,
             kk_system_measureTimeMillis,
             kk_system_measureNanoTime,
             // GC
@@ -3469,6 +3476,7 @@ public enum RuntimeABIExterns {
             kk_timedvalue_toString,
         ]
         all += atomicExterns
+        all += kFunctionExterns
         return all
     }()
 

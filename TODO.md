@@ -498,7 +498,7 @@
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/type_reflection.kt`
 
-- [ ] STDLIB-REFLECT-067: リフレクション動的呼び出し完全実装
+- [x] STDLIB-REFLECT-067: リフレクション動的呼び出し完全実装
   - **仕様**: リフレクションによる動的メンバ呼び出し
   - **実装内容**:
     - 関数呼び出し: KFunction.call()
@@ -506,7 +506,7 @@
     - コンストラクタ呼び出し: KConstructor.call()
     - 可変長引数の処理
     - 例外処理とエラーハンドリング
-  - **現状**: 基本的なリフレクションは実装済み、動的呼び出しは未実装
+  - **現状**: 実装完了 — kk_kfunction_call_{0,1,2,3,vararg}, kk_kproperty_{get,set}, kk_kconstructor_call_{0,1,vararg}
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/reflection_dynamic_call.kt`
 
@@ -980,7 +980,7 @@
   - **関連ファイル**: `RuntimeThrowableBox`
   - **テストケース**: `Scripts/diff_cases/exception_advanced.kt`
 
-- [ ] STDLIB-RESULT-106: Result基本実装
+- [x] STDLIB-RESULT-106: Result基本実装
   - **仕様**: Result<T>クラスの基本的な機能
   - **実装内容**:
     - Result作成: Result.success(value), Result.failure(exception)
@@ -988,7 +988,7 @@
     - 値取得: getOrThrow(), getOrElse()
     - マッピング: map(), mapCatching()
     - フラットマッピング: flatMap(), flatMapCatching()
-  - **現状**: 基本的なResultは実装済み (STDLIB-280/281/282/283)、詳細は未実装
+  - **現状**: 完了 — mapCatching/flatMap/flatMapCatching/Result.success/Result.failure を実装 (STDLIB-RESULT-106)
   - **関連ファイル**: `RuntimeResult.swift`
   - **テストケース**: `Scripts/diff_cases/result_basic.kt`
 
@@ -1214,7 +1214,7 @@
   - **関連ファイル**: `RuntimeList.swift`
   - **テストケース**: `Scripts/diff_cases/list_basic.kt`
 
-- [ ] STDLIB-COL-120: コレクションファクトリ完全実装
+- [x] STDLIB-COL-120: コレクションファクトリ完全実装
   - **仕様**: コレクションファクトリ関数の完全サポート
   - **実装内容**:
     - Listファクトリ: listOf(), listOfNotNull(), emptyList()
@@ -1222,8 +1222,8 @@
     - Mapファクトリ: mapOf(), emptyMap(), mutableMapOf()
     - 連続値: (1..10).toList(), ('a'..'z').toList()
     - 配列変換: arrayOf().toList(), list.toTypedArray()
-  - **現状**: 基本的なファクトリは実装済み、高度なファクトリは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticCollectionStubs.swift`
+  - **現状**: 全ファクトリ関数の実装完了
+  - **関連ファイル**: `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift`, `CollectionLiteralLoweringPass+CallRewrite.swift`, `RuntimeCollections.swift`, `RuntimeRangeAndDispatch.swift`
   - **テストケース**: `Scripts/diff_cases/collection_factories.kt`
 
 - [ ] STDLIB-COL-121: コレクションビルダー完全実装
