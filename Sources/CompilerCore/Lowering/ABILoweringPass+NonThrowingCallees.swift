@@ -197,6 +197,11 @@ extension ABILoweringPass {
             interner.intern("kk_random_nextDouble"),
             interner.intern("kk_random_nextBoolean"),
             interner.intern("kk_random_nextBytes"),
+            // STDLIB-RANDOM-101: SecureRandom
+            interner.intern("kk_secure_random_get_instance"),
+            interner.intern("kk_secure_random_set_seed"),
+            interner.intern("kk_secure_random_generate_seed"),
+            interner.intern("kk_secure_random_next_bytes"),
             interner.intern("kk_op_is"),
             interner.intern("kk_op_safe_cast"),
             interner.intern("kk_op_contains"),
