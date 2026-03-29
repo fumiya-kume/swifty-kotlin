@@ -366,6 +366,106 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // BufferedReader.read() -> Int  (STDLIB-IO-091)
+        registerFileMemberFunction(
+            named: "read",
+            externalLinkName: "kk_buffered_reader_read",
+            ownerSymbol: bufferedReaderSymbol,
+            ownerType: bufferedReaderType,
+            parameters: [],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedReader.ready() -> Boolean  (STDLIB-IO-091)
+        registerFileMemberFunction(
+            named: "ready",
+            externalLinkName: "kk_buffered_reader_ready",
+            ownerSymbol: bufferedReaderSymbol,
+            ownerType: bufferedReaderType,
+            parameters: [],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - BufferedWriter (STDLIB-IO-091)
+
+        let bufferedWriterSymbol = ensureClassSymbol(
+            named: "BufferedWriter",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: bufferedWriterSymbol)
+        }
+        let bufferedWriterType = types.make(.classType(ClassType(
+            classSymbol: bufferedWriterSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(bufferedWriterType, for: bufferedWriterSymbol)
+
+        // File.bufferedWriter() -> BufferedWriter
+        registerFileMemberFunction(
+            named: "bufferedWriter",
+            externalLinkName: "kk_file_bufferedWriter",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: bufferedWriterType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedWriter.write(text: String) -> Unit
+        registerFileMemberFunction(
+            named: "write",
+            externalLinkName: "kk_buffered_writer_write",
+            ownerSymbol: bufferedWriterSymbol,
+            ownerType: bufferedWriterType,
+            parameters: [("text", types.stringType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedWriter.newLine() -> Unit
+        registerFileMemberFunction(
+            named: "newLine",
+            externalLinkName: "kk_buffered_writer_new_line",
+            ownerSymbol: bufferedWriterSymbol,
+            ownerType: bufferedWriterType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedWriter.flush() -> Unit
+        registerFileMemberFunction(
+            named: "flush",
+            externalLinkName: "kk_buffered_writer_flush",
+            ownerSymbol: bufferedWriterSymbol,
+            ownerType: bufferedWriterType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedWriter.close() -> Unit
+        registerFileMemberFunction(
+            named: "close",
+            externalLinkName: "kk_buffered_writer_close",
+            ownerSymbol: bufferedWriterSymbol,
+            ownerType: bufferedWriterType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - InputStream / OutputStream (STDLIB-IO-092)
 
         // MARK: - Resource access (STDLIB-IO-093)
@@ -389,6 +489,7 @@ extension DataFlowSemaPhase {
             classSymbol: classLoaderSymbol, args: [], nullability: .nonNull
         )))
         symbols.setPropertyType(classLoaderType, for: classLoaderSymbol)
+
 
         let inputStreamSymbol = ensureClassSymbol(
             named: "InputStream",
@@ -417,6 +518,7 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(outputStreamType, for: outputStreamSymbol)
 
         let nullableInputStreamType = types.makeNullable(inputStreamType)
+
 
         registerFileMemberFunction(
             named: "inputStream",
@@ -485,10 +587,101 @@ extension DataFlowSemaPhase {
         )
 
         registerFileMemberFunction(
+            named: "mark",
+            externalLinkName: "kk_input_stream_mark",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [("readLimit", intType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "reset",
+            externalLinkName: "kk_input_stream_reset",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "markSupported",
+            externalLinkName: "kk_input_stream_mark_supported",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
             named: "close",
             externalLinkName: "kk_input_stream_close",
             ownerSymbol: inputStreamSymbol,
             ownerType: inputStreamType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - SequenceInputStream (STDLIB-IO-092)
+
+        let sequenceInputStreamSymbol = ensureClassSymbol(
+            named: "SequenceInputStream",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: sequenceInputStreamSymbol)
+        }
+        let sequenceInputStreamType = types.make(.classType(ClassType(
+            classSymbol: sequenceInputStreamSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(sequenceInputStreamType, for: sequenceInputStreamSymbol)
+
+        registerFileConstructor(
+            ownerSymbol: sequenceInputStreamSymbol,
+            ownerType: sequenceInputStreamType,
+            parameters: [("first", inputStreamType), ("second", inputStreamType)],
+            externalLinkName: "kk_sequence_input_stream_new",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "read",
+            externalLinkName: "kk_sequence_input_stream_read",
+            ownerSymbol: sequenceInputStreamSymbol,
+            ownerType: sequenceInputStreamType,
+            parameters: [],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "available",
+            externalLinkName: "kk_sequence_input_stream_available",
+            ownerSymbol: sequenceInputStreamSymbol,
+            ownerType: sequenceInputStreamType,
+            parameters: [],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "close",
+            externalLinkName: "kk_sequence_input_stream_close",
+            ownerSymbol: sequenceInputStreamSymbol,
+            ownerType: sequenceInputStreamType,
             parameters: [],
             returnType: types.unitType,
             symbols: symbols,
@@ -559,28 +752,6 @@ extension DataFlowSemaPhase {
             ownerType: classLoaderType,
             parameters: [("name", types.stringType)],
             returnType: nullableInputStreamType,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerFileMemberFunction(
-            named: "read",
-            externalLinkName: "kk_resource_stream_read",
-            ownerSymbol: inputStreamSymbol,
-            ownerType: inputStreamType,
-            parameters: [],
-            returnType: types.intType,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerFileMemberFunction(
-            named: "close",
-            externalLinkName: "kk_resource_stream_close",
-            ownerSymbol: inputStreamSymbol,
-            ownerType: inputStreamType,
-            parameters: [],
-            returnType: types.unitType,
             symbols: symbols,
             interner: interner
         )

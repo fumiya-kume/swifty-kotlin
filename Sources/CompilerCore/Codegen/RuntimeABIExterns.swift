@@ -393,6 +393,56 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // MARK: - Instant (STDLIB-TIME-083)
+
+    public static let kk_instant_now = ExternDecl(
+        name: "kk_instant_now",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_instant_from_epoch_millis = ExternDecl(
+        name: "kk_instant_from_epoch_millis",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_instant_epoch_seconds = ExternDecl(
+        name: "kk_instant_epoch_seconds",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_instant_nano_of_second = ExternDecl(
+        name: "kk_instant_nano_of_second",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_instant_plus_duration = ExternDecl(
+        name: "kk_instant_plus_duration",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_instant_minus_duration = ExternDecl(
+        name: "kk_instant_minus_duration",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_instant_compare = ExternDecl(
+        name: "kk_instant_compare",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_instant_until = ExternDecl(
+        name: "kk_instant_until",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_throwable_message = ExternDecl(
         name: "kk_throwable_message",
         parameterTypes: ["intptr_t"],
@@ -1411,6 +1461,12 @@ public enum RuntimeABIExterns {
 
     public static let kk_system_nanoTime = ExternDecl(
         name: "kk_system_nanoTime",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_system_process_start_nanos = ExternDecl(
+        name: "kk_system_process_start_nanos",
         parameterTypes: [],
         returnType: "intptr_t"
     )
@@ -3058,13 +3114,43 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-REGEX-095: MatchResult complete implementation
+    public static let kk_match_result_range = ExternDecl(
+        name: "kk_match_result_range",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_match_result_component1 = ExternDecl(
+        name: "kk_match_result_component1",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_match_result_component2 = ExternDecl(
+        name: "kk_match_result_component2",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_match_result_next = ExternDecl(
+        name: "kk_match_result_next",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_match_group_collection_get_at = ExternDecl(
+        name: "kk_match_group_collection_get_at",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // STDLIB-REGEX-097: Regex.groupNames
     public static let kk_regex_group_names = ExternDecl(
         name: "kk_regex_group_names",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
-
     // MARK: - File I/O (STDLIB-320/321/322/323)
 
     // IMPORTANT: The raw parameter type strings here (e.g. "intptr_t",
@@ -3198,6 +3284,50 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+    // STDLIB-IO-091: BufferedReader.read() / ready()
+    public static let kk_buffered_reader_read = ExternDecl(
+        name: "kk_buffered_reader_read",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_reader_ready = ExternDecl(
+        name: "kk_buffered_reader_ready",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    // STDLIB-IO-091: BufferedWriter
+    public static let kk_file_bufferedWriter = ExternDecl(
+        name: "kk_file_bufferedWriter",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_writer_write = ExternDecl(
+        name: "kk_buffered_writer_write",
+        parameterTypes: [intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_writer_new_line = ExternDecl(
+        name: "kk_buffered_writer_new_line",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_writer_flush = ExternDecl(
+        name: "kk_buffered_writer_flush",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_writer_close = ExternDecl(
+        name: "kk_buffered_writer_close",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
     public static let kk_file_inputStream = ExternDecl(
         name: "kk_file_inputStream",
         parameterTypes: [intptr, nullableIntptrPtr],
@@ -3234,8 +3364,52 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+    // mark / reset / markSupported (STDLIB-IO-092)
+    public static let kk_input_stream_mark = ExternDecl(
+        name: "kk_input_stream_mark",
+        parameterTypes: [intptr, intptr],
+        returnType: intptr
+    )
+
+    public static let kk_input_stream_reset = ExternDecl(
+        name: "kk_input_stream_reset",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_input_stream_mark_supported = ExternDecl(
+        name: "kk_input_stream_mark_supported",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
     public static let kk_input_stream_close = ExternDecl(
         name: "kk_input_stream_close",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    // SequenceInputStream (STDLIB-IO-092)
+    public static let kk_sequence_input_stream_new = ExternDecl(
+        name: "kk_sequence_input_stream_new",
+        parameterTypes: [intptr, intptr],
+        returnType: intptr
+    )
+
+    public static let kk_sequence_input_stream_read = ExternDecl(
+        name: "kk_sequence_input_stream_read",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_sequence_input_stream_available = ExternDecl(
+        name: "kk_sequence_input_stream_available",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_sequence_input_stream_close = ExternDecl(
+        name: "kk_sequence_input_stream_close",
         parameterTypes: [intptr],
         returnType: intptr
     )
@@ -3306,6 +3480,7 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+
     public static let kk_file_useLines = ExternDecl(
         name: "kk_file_useLines",
         parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr],
@@ -3335,6 +3510,10 @@ public enum RuntimeABIExterns {
     public static let kk_logger_severe = ExternDecl(name: "kk_logger_severe", parameterTypes: [intptr, intptr], returnType: intptr)
     public static let kk_message_digest_getInstance = ExternDecl(name: "kk_message_digest_getInstance", parameterTypes: [intptr, nullableIntptrPtr], returnType: intptr)
     public static let kk_message_digest_digest = ExternDecl(name: "kk_message_digest_digest", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_cache_new = ExternDecl(name: "kk_cache_new", parameterTypes: [intptr], returnType: intptr)
+    public static let kk_cache_put = ExternDecl(name: "kk_cache_put", parameterTypes: [intptr, intptr, intptr], returnType: intptr)
+    public static let kk_cache_get = ExternDecl(name: "kk_cache_get", parameterTypes: [intptr, intptr], returnType: intptr)
+    public static let kk_cache_size = ExternDecl(name: "kk_cache_size", parameterTypes: [intptr], returnType: intptr)
 
     public static let fileIOExterns: [ExternDecl] = [
         kk_file_new,
@@ -3357,13 +3536,27 @@ public enum RuntimeABIExterns {
         kk_buffered_reader_readLine,
         kk_buffered_reader_readLines,
         kk_buffered_reader_close,
+        kk_buffered_reader_read,
+        kk_buffered_reader_ready,
+        kk_file_bufferedWriter,
+        kk_buffered_writer_write,
+        kk_buffered_writer_new_line,
+        kk_buffered_writer_flush,
+        kk_buffered_writer_close,
         kk_file_inputStream,
         kk_file_outputStream,
         kk_input_stream_read,
         kk_input_stream_available,
         kk_input_stream_skip,
         kk_input_stream_read_bytes,
+        kk_input_stream_mark,
+        kk_input_stream_reset,
+        kk_input_stream_mark_supported,
         kk_input_stream_close,
+        kk_sequence_input_stream_new,
+        kk_sequence_input_stream_read,
+        kk_sequence_input_stream_available,
+        kk_sequence_input_stream_close,
         kk_output_stream_write_byte,
         kk_output_stream_write_bytes,
         kk_output_stream_flush,
@@ -3399,6 +3592,10 @@ public enum RuntimeABIExterns {
         kk_logger_severe,
         kk_message_digest_getInstance,
         kk_message_digest_digest,
+        kk_cache_new,
+        kk_cache_put,
+        kk_cache_get,
+        kk_cache_size,
     ]
 
     public static let regexExterns: [ExternDecl] = [
@@ -3422,6 +3619,12 @@ public enum RuntimeABIExterns {
         kk_match_group_collection_get,
         kk_match_group_value,
         kk_match_group_range,
+        // STDLIB-REGEX-095: MatchResult complete implementation
+        kk_match_result_range,
+        kk_match_result_component1,
+        kk_match_result_component2,
+        kk_match_result_next,
+        kk_match_group_collection_get_at,
         kk_regex_group_names,
     ]
 
@@ -3631,6 +3834,7 @@ public enum RuntimeABIExterns {
             kk_system_exitProcess,
             kk_system_currentTimeMillis,
             kk_system_nanoTime,
+            kk_system_process_start_nanos,
             kk_system_measureTimeMillis,
             kk_system_measureNanoTime,
             // GC
@@ -3948,7 +4152,19 @@ public enum RuntimeABIExterns {
             kk_duration_unary_minus,
             kk_duration_compareTo,
         ]
+        // Instant (STDLIB-TIME-083)
+        all += [
+            kk_instant_now,
+            kk_instant_from_epoch_millis,
+            kk_instant_epoch_seconds,
+            kk_instant_nano_of_second,
+            kk_instant_plus_duration,
+            kk_instant_minus_duration,
+            kk_instant_compare,
+            kk_instant_until,
+        ]
         all += atomicExterns
+        all += kFunctionExterns
         all += securityExterns
         return all
     }()

@@ -326,17 +326,17 @@
 
 #### Phase 2: リフレクション (中優先度)
 
-- [ ] STDLIB-REFLECT-061: KClassメンバアクセス完全実装
-  - **仕様**: KClassからのメンバアクセス機能
+- [ ] STDLIB-REFLECT-060: KClass基本機能完全実装
+  - **仕様**: KClassの基本的なリフレクション機能
   - **実装内容**:
-    - プロパティ: properties, memberProperties
-    - 関数: functions, memberFunctions
-    - 拡張プロパティ: declaredMemberProperties
-    - 拡張関数: declaredMemberFunctions
-    - メンバのフィルタリングと検索
-  - **現状**: 基本的なリフレクションは実装済み、メンバアクセスは未実装
+    - クラス名: simpleName, qualifiedName
+    - クラス階層: supertypes, isInstance
+    - 型パラメータ: typeParameters, generics
+    - 可視性: visibility, isAbstract, isFinal
+    - コンストラクタ: constructors
+  - **現状**: 基本的なKClassは実装済み (REFL-004参照)、詳細は未実装
   - **関連ファイル**: `RuntimeReflection.swift`
-  - **テストケース**: `Scripts/diff_cases/kclass_members.kt`
+  - **テストケース**: `Scripts/diff_cases/kclass_basic.kt`
 
 - [ ] STDLIB-REFLECT-062: KProperty完全実装
   - **仕様**: KPropertyインターフェースの完全サポート
@@ -400,7 +400,7 @@
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/type_reflection.kt`
 
-- [ ] STDLIB-REFLECT-067: リフレクション動的呼び出し完全実装
+- [x] STDLIB-REFLECT-067: リフレクション動的呼び出し完全実装
   - **仕様**: リフレクションによる動的メンバ呼び出し
   - **実装内容**:
     - 関数呼び出し: KFunction.call()
@@ -408,7 +408,7 @@
     - コンストラクタ呼び出し: KConstructor.call()
     - 可変長引数の処理
     - 例外処理とエラーハンドリング
-  - **現状**: 基本的なリフレクションは実装済み、動的呼び出しは未実装
+  - **現状**: 実装完了 — kk_kfunction_call_{0,1,2,3,vararg}, kk_kproperty_{get,set}, kk_kconstructor_call_{0,1,vararg}
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/reflection_dynamic_call.kt`
 
@@ -585,7 +585,7 @@
 
 #### Phase 3: I/Oとファイルシステム (低優先度)
 
-- [ ] STDLIB-IO-088: File読み書き完全実装
+- [x] STDLIB-IO-088: File読み書き完全実装 (STDLIB-IO-091: BufferedReader/Writer完全実装を含む)
   - **仕様**: ファイルの読み書き操作
   - **実装内容**:
     - テキスト読み込み: readText(), readLines()
@@ -593,9 +593,9 @@
     - バイナリ読み込み: readBytes()
     - バイナリ書き込み: writeBytes()
     - バッファリング: bufferedReader(), bufferedWriter()
-  - **現状**: 基本的な読み書きは実装済み、バイナリ操作は未実装
+  - **現状**: 実装済み (BufferedReader: readLine/readLines/read/ready/close, BufferedWriter: write/newLine/flush/close)
   - **関連ファイル**: `RuntimeFileIO.swift`
-  - **テストケース**: `Scripts/diff_cases/file_read_write.kt`
+  - **テストケース**: `Scripts/diff_cases/file_read_write.kt`, `Scripts/diff_cases/buffered_io.kt`
 
 - [ ] STDLIB-IO-089: Path完全実装
   - **仕様**: Pathクラスの完全サポート
@@ -619,7 +619,7 @@
     - 一時ファイル: createTempFile(), createTempDirectory()
   - **現状**: 基本的なFilesは実装済み、検索は未実装
   - **関連ファイル**: `RuntimeFileIO.swift`
-  - **テストケース**: `Scripts/diff_cases/files_utility.kt`
+  - **テストケース**: `Scripts/diff_cases/files_utility.kt`, `Scripts/diff_cases/buffered_io.kt`
 
 - [ ] STDLIB-IO-093: リソースアクセス完全実装
 #### Phase 3: 正規表現 (低優先度)
@@ -635,6 +635,18 @@
   - **現状**: 基本的なRegexは実装済み (STDLIB-100/101/103)、高度な機能は未実装
   - **関連ファイル**: `RuntimeRegex.swift`
   - **テストケース**: `Scripts/diff_cases/regex_basic.kt`
+
+- [x] STDLIB-REGEX-095: MatchResult完全実装
+  - **仕様**: MatchResultの完全サポート
+  - **実装内容**:
+    - マッチ情報: value, range, groups
+    - グループアクセス: groupValues, groupValues[], get()
+    - デストラクチャリング: component1(), component2()
+    - マッチ反復: next(), hasPrevious()
+    - マッチ変換: map(), transform()
+  - **現状**: 基本的なMatchResultは実装済み、詳細は未実装
+  - **関連ファイル**: `RuntimeRegex.swift`
+  - **テストケース**: `Scripts/diff_cases/match_result.kt`
 
 - [ ] STDLIB-REGEX-096: 正規表現オプション完全実装
   - **仕様**: 正規表現オプションの完全サポート
@@ -803,7 +815,31 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/annotation_basic.kt`
 
-- [ ] STDLIB-METAPROG-116: メタプログラミング基本実装
+- [ ] STDLIB-ANNO-114: アノテーション保持完全実装
+  - **仕様**: アノテーション保持ポリシーの完全サポート
+  - **実装内容**:
+    - SOURCE: ソースレベルでのみ保持
+    - CLASS: クラスファイルに保持、実行時は破棄
+    - RUNTIME: 実行時まで保持
+    - 保持ポリシーの継承
+    - アノテーションの継承: @Inherited
+  - **現状**: 基本的なアノテーションは実装済み、保持ポリシーは未実装
+  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
+  - **テストケース**: `Scripts/diff_cases/annotation_retention.kt`
+
+- [ ] STDLIB-ANNO-115: アノテーションターゲット完全実装
+  - **仕様**: アノテーションターゲットの完全サポート
+  - **実装内容**:
+    - ターゲット種類: CLASS, FUNCTION, PROPERTY, FIELD
+    - ターゲット種類: CONSTRUCTOR, PARAMETER, TYPE, EXPRESSION
+    - ターゲット種類: FILE, TYPEALIAS, TYPE_PARAMETER
+    - 複合ターゲット: @Target([ElementType.CLASS, ElementType.FUNCTION])
+    - ターゲットの継承と制約
+  - **現状**: 基本的なアノテーションは実装済み、ターゲットは未実装
+  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
+  - **テストケース**: `Scripts/diff_cases/annotation_target.kt`
+
+- [x] STDLIB-METAPROG-116: メタプログラミング基本実装
   - **仕様**: メタプログラミングの基本的な機能
   - **実装内容**:
     - アノテーション処理: AnnotationProcessor
@@ -812,7 +848,7 @@
     - 型情報: コンパイル時型情報
     - エラー報告: コンパイル時エラー生成
   - **現状**: メタプログラミングは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
+  - **関連ファイル**: `HeaderHelpers+SyntheticMetaprogStubs.swift`
   - **テストケース**: `Scripts/diff_cases/metaprogramming_basic.kt`
 
 #### 既存STDLIBタスクの整理
@@ -1271,18 +1307,6 @@
   - **関連ファイル**: `RuntimeParallel.swift`
   - **テストケース**: `Scripts/diff_cases/parallel_processing.kt`
 
-- [ ] STDLIB-PERF-156: キャッシュ機構完全実装
-  - **仕様**: キャッシュ機構の完全サポート
-  - **実装内容**:
-    - LRUキャッシュ: Least Recently Usedキャッシュ
-    - キャッシュサイズ: 最大サイズとエビクション
-    - キャッシュポリシー: TTL、サイズベースのポリシー
-    - キャッシュ統計: ヒット率、ミス率の統計
-    - スレッドセーフ: マルチスレッド対応のキャッシュ
-  - **現状**: キャッシュ機構は未実装
-  - **関連ファイル**: `RuntimeCache.swift`
-  - **テストケース**: `Scripts/diff_cases/cache_mechanism.kt`
-
 #### Phase 4: テストと検証 (低優先度)
 
 - [x] STDLIB-TEST-157: テストフレームワーク基本実装
@@ -1297,7 +1321,7 @@
   - **関連ファイル**: `RuntimeTest.swift`
   - **テストケース**: `Scripts/diff_cases/test_framework_basic.kt`
 
-- [ ] STDLIB-TEST-158: モックオブジェクト完全実装
+- [x] STDLIB-TEST-158: モックオブジェクト完全実装
   - **仕様**: モックオブジェクトの完全サポート
   - **実装内容**:
     - モック作成: インターフェースのモック生成

@@ -929,6 +929,57 @@ final class RuntimeBufferedReaderBox {
         return remaining
     }
 
+    /// Reads a single character, returning its Unicode scalar value, or -1 on EOF.
+    func read() -> Int {
+        guard !closed else { return -1 }
+
+        while true {
+            if !pendingData.isEmpty {
+                let byte = pendingData.removeFirst()
+                // Fast path: ASCII byte
+                if byte & 0x80 == 0 {
+                    return Int(byte)
+                }
+                // Multi-byte UTF-8: put back and decode
+                var codePoint: UInt32 = 0
+                let totalBytes: Int
+                if byte & 0xE0 == 0xC0 {
+                    totalBytes = 2
+                    codePoint = UInt32(byte & 0x1F)
+                } else if byte & 0xF0 == 0xE0 {
+                    totalBytes = 3
+                    codePoint = UInt32(byte & 0x0F)
+                } else if byte & 0xF8 == 0xF0 {
+                    totalBytes = 4
+                    codePoint = UInt32(byte & 0x07)
+                } else {
+                    // Continuation byte or invalid — return as-is
+                    return Int(byte)
+                }
+                // Ensure we have enough continuation bytes
+                while pendingData.count < totalBytes - 1 {
+                    if reachedEOF { return Int(byte) }
+                    if !readNextChunk() { reachedEOF = true }
+                }
+                if pendingData.count < totalBytes - 1 { return Int(byte) }
+                for _ in 1 ..< totalBytes {
+                    let cont = pendingData.removeFirst()
+                    codePoint = (codePoint << 6) | UInt32(cont & 0x3F)
+                }
+                return Int(codePoint)
+            }
+
+            if reachedEOF { return -1 }
+            if !readNextChunk() { reachedEOF = true }
+        }
+    }
+
+    /// Returns true if data is available to be read without blocking (buffered bytes exist or not EOF).
+    func ready() -> Bool {
+        guard !closed else { return false }
+        return !pendingData.isEmpty || !reachedEOF
+    }
+
     func close() {
         guard !closed else { return }
         try? fileHandle?.close()
@@ -980,11 +1031,15 @@ final class RuntimeInputStreamBox {
     private let data: Data
     private var offset: Int
     private var closed: Bool
+    private var markOffset: Int
+    private var markLimit: Int
 
     init(data: Data) {
         self.data = data
         self.offset = 0
         self.closed = false
+        self.markOffset = 0
+        self.markLimit = 0
     }
 
     func readByte() -> Int {
@@ -1019,7 +1074,56 @@ final class RuntimeInputStreamBox {
         return writableCount
     }
 
+    func mark(readLimit: Int) {
+        // FileInputStream does not support mark/reset; this is a no-op.
+    }
+
+    func markSupported() -> Bool { false }
+
+    /// Attempts a reset.  Returns `false` when mark/reset is not supported
+    /// (matching JVM FileInputStream behaviour — callers must raise IOException).
+    func reset() -> Bool { false }
+
     func close() {
+        closed = true
+    }
+}
+
+/// Runtime box for `java.io.SequenceInputStream` — chains two InputStreams.
+final class RuntimeSequenceInputStreamBox {
+    private var first: RuntimeInputStreamBox?
+    private var second: RuntimeInputStreamBox?
+    private var closed: Bool
+
+    init(first: RuntimeInputStreamBox, second: RuntimeInputStreamBox) {
+        self.first = first
+        self.second = second
+        self.closed = false
+    }
+
+    func readByte() -> Int {
+        guard !closed else { return -1 }
+        if let s1 = first {
+            let b = s1.readByte()
+            if b != -1 { return b }
+            // first stream exhausted — move to second
+            s1.close()
+            first = nil
+        }
+        return second?.readByte() ?? -1
+    }
+
+    func available() -> Int {
+        guard !closed else { return 0 }
+        return first?.available() ?? 0
+    }
+
+    func close() {
+        guard !closed else { return }
+        first?.close()
+        second?.close()
+        first = nil
+        second = nil
         closed = true
     }
 }
@@ -1054,5 +1158,62 @@ final class RuntimeOutputStreamBox {
         guard !closed else { return }
         try? fileHandle.close()
         closed = true
+    }
+}
+
+// MARK: - BufferedWriter (STDLIB-IO-091)
+
+/// Runtime box for `java.io.BufferedWriter` returned by `File.bufferedWriter()`.
+/// Wraps a streaming file writer, supporting `write()`, `newLine()`, `flush()`, and `close()`.
+final class RuntimeBufferedWriterBox {
+    private let fileHandle: FileHandle
+    private var buffer: Data
+    private let bufferSize: Int
+    private var closed: Bool
+
+    init(fileHandle: FileHandle, bufferSize: Int = 8192) {
+        self.fileHandle = fileHandle
+        self.buffer = Data()
+        self.bufferSize = max(1, bufferSize)
+        self.closed = false
+    }
+
+    /// Writes a string to the buffer, flushing when full.
+    func write(_ text: String) throws {
+        guard !closed else { return }
+        guard let data = text.data(using: .utf8) else { return }
+        buffer.append(data)
+        if buffer.count >= bufferSize {
+            try flushBuffer()
+        }
+    }
+
+    /// Writes a system line separator.
+    func newLine() throws {
+        try write("\n")
+    }
+
+    /// Flushes buffered data to the file.
+    func flush() throws {
+        guard !closed else { return }
+        try flushBuffer()
+        try fileHandle.synchronize()
+    }
+
+    func close() {
+        guard !closed else { return }
+        try? flushBuffer()
+        try? fileHandle.close()
+        closed = true
+    }
+
+    deinit {
+        close()
+    }
+
+    private func flushBuffer() throws {
+        guard !buffer.isEmpty else { return }
+        try fileHandle.write(contentsOf: buffer)
+        buffer.removeAll(keepingCapacity: true)
     }
 }

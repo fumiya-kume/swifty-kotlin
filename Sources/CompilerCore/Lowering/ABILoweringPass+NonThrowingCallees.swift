@@ -215,6 +215,15 @@ extension ABILoweringPass {
             interner.intern("kk_math_round_half_down_float"),
             interner.intern("kk_math_round_half_even_float"),
             interner.intern("kk_math_round_unnecessary_float"),
+            // STDLIB-MATH-109: Hyperbolic functions and cbrt
+            interner.intern("kk_math_sinh"),
+            interner.intern("kk_math_cosh"),
+            interner.intern("kk_math_tanh"),
+            interner.intern("kk_math_cbrt"),
+            interner.intern("kk_math_sinh_float"),
+            interner.intern("kk_math_cosh_float"),
+            interner.intern("kk_math_tanh_float"),
+            interner.intern("kk_math_cbrt_float"),
             interner.intern("kk_random_create_seeded"),
             interner.intern("kk_random_nextInt"),
             interner.intern("kk_random_nextLong"),
@@ -481,6 +490,7 @@ extension ABILoweringPass {
             interner.intern("kk_system_exitProcess"),
             interner.intern("kk_system_currentTimeMillis"),
             interner.intern("kk_system_nanoTime"),
+            interner.intern("kk_system_process_start_nanos"),
             interner.intern("kk_mutable_set_clear"),
             interner.intern("kk_mutable_set_addAll"),
             interner.intern("kk_mutable_set_removeAll"),
@@ -624,6 +634,12 @@ extension ABILoweringPass {
             interner.intern("kk_match_group_collection_get"),
             interner.intern("kk_match_group_value"),
             interner.intern("kk_match_group_range"),
+            // STDLIB-REGEX-095: MatchResult complete implementation
+            interner.intern("kk_match_result_range"),
+            interner.intern("kk_match_result_component1"),
+            interner.intern("kk_match_result_component2"),
+            interner.intern("kk_match_result_next"),
+            interner.intern("kk_match_group_collection_get_at"),
             // STDLIB-REGEX-097: Regex.groupNames
             interner.intern("kk_regex_group_names"),
             // Reverse numeric conversions (STDLIB-151)

@@ -469,6 +469,105 @@ public func kk_buffered_reader_close(_ readerRaw: Int) -> Int {
     return 0
 }
 
+@_cdecl("kk_buffered_reader_read")
+public func kk_buffered_reader_read(_ readerRaw: Int) -> Int {
+    guard let reader = runtimeBufferedReaderBox(from: readerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_reader_read received invalid BufferedReader handle")
+    }
+    return reader.read()
+}
+
+@_cdecl("kk_buffered_reader_ready")
+public func kk_buffered_reader_ready(_ readerRaw: Int) -> Int {
+    guard let reader = runtimeBufferedReaderBox(from: readerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_reader_ready received invalid BufferedReader handle")
+    }
+    return kk_box_bool(reader.ready() ? 1 : 0)
+}
+
+// MARK: - STDLIB-IO-091: BufferedWriter
+
+private func runtimeBufferedWriterBox(from raw: Int) -> RuntimeBufferedWriterBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeBufferedWriterBox.self)
+}
+
+@_cdecl("kk_file_bufferedWriter")
+public func kk_file_bufferedWriter(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_bufferedWriter received invalid File handle")
+    }
+    let url = URL(fileURLWithPath: file.path)
+    if !FileManager.default.fileExists(atPath: file.path) {
+        FileManager.default.createFile(atPath: file.path, contents: Data())
+    }
+    do {
+        let handle = try FileHandle(forWritingTo: url)
+        handle.truncateFile(atOffset: 0)
+        return registerRuntimeObject(RuntimeBufferedWriterBox(fileHandle: handle))
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return 0
+    }
+}
+
+@_cdecl("kk_buffered_writer_write")
+public func kk_buffered_writer_write(_ writerRaw: Int, _ textRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let writer = runtimeBufferedWriterBox(from: writerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_writer_write received invalid BufferedWriter handle")
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: textRaw),
+          let text = extractString(from: ptr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_writer_write received invalid text")
+    }
+    do {
+        try writer.write(text)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
+@_cdecl("kk_buffered_writer_new_line")
+public func kk_buffered_writer_new_line(_ writerRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let writer = runtimeBufferedWriterBox(from: writerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_writer_new_line received invalid BufferedWriter handle")
+    }
+    do {
+        try writer.newLine()
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
+@_cdecl("kk_buffered_writer_flush")
+public func kk_buffered_writer_flush(_ writerRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let writer = runtimeBufferedWriterBox(from: writerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_writer_flush received invalid BufferedWriter handle")
+    }
+    do {
+        try writer.flush()
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
+@_cdecl("kk_buffered_writer_close")
+public func kk_buffered_writer_close(_ writerRaw: Int) -> Int {
+    guard let writer = runtimeBufferedWriterBox(from: writerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_writer_close received invalid BufferedWriter handle")
+    }
+    writer.close()
+    return 0
+}
+
 @_cdecl("kk_file_inputStream")
 public func kk_file_inputStream(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -543,10 +642,83 @@ public func kk_input_stream_read_bytes(_ streamRaw: Int, _ bytesRaw: Int, _ outT
     return stream.read(into: list)
 }
 
+@_cdecl("kk_input_stream_mark")
+public func kk_input_stream_mark(_ streamRaw: Int, _ readLimitRaw: Int) -> Int {
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_mark received invalid InputStream handle")
+    }
+    stream.mark(readLimit: readLimitRaw)
+    return 0
+}
+
+@_cdecl("kk_input_stream_reset")
+public func kk_input_stream_reset(_ streamRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_reset received invalid InputStream handle")
+    }
+    if !stream.reset() {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: mark/reset not supported")
+    }
+    return 0
+}
+
+@_cdecl("kk_input_stream_mark_supported")
+public func kk_input_stream_mark_supported(_ streamRaw: Int) -> Int {
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_mark_supported received invalid InputStream handle")
+    }
+    return kk_box_bool(stream.markSupported() ? 1 : 0)
+}
+
 @_cdecl("kk_input_stream_close")
 public func kk_input_stream_close(_ streamRaw: Int) -> Int {
     guard let stream = runtimeInputStreamBox(from: streamRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_close received invalid InputStream handle")
+    }
+    stream.close()
+    return 0
+}
+
+// MARK: - SequenceInputStream (STDLIB-IO-092)
+
+private func runtimeSequenceInputStreamBox(from raw: Int) -> RuntimeSequenceInputStreamBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeSequenceInputStreamBox.self)
+}
+
+@_cdecl("kk_sequence_input_stream_new")
+public func kk_sequence_input_stream_new(_ firstRaw: Int, _ secondRaw: Int) -> Int {
+    guard let first = runtimeInputStreamBox(from: firstRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_input_stream_new: invalid first InputStream handle")
+    }
+    guard let second = runtimeInputStreamBox(from: secondRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_input_stream_new: invalid second InputStream handle")
+    }
+    return registerRuntimeObject(RuntimeSequenceInputStreamBox(first: first, second: second))
+}
+
+@_cdecl("kk_sequence_input_stream_read")
+public func kk_sequence_input_stream_read(_ streamRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let stream = runtimeSequenceInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_input_stream_read received invalid SequenceInputStream handle")
+    }
+    return stream.readByte()
+}
+
+@_cdecl("kk_sequence_input_stream_available")
+public func kk_sequence_input_stream_available(_ streamRaw: Int) -> Int {
+    guard let stream = runtimeSequenceInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_input_stream_available received invalid SequenceInputStream handle")
+    }
+    return stream.available()
+}
+
+@_cdecl("kk_sequence_input_stream_close")
+public func kk_sequence_input_stream_close(_ streamRaw: Int) -> Int {
+    guard let stream = runtimeSequenceInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_input_stream_close received invalid SequenceInputStream handle")
     }
     stream.close()
     return 0
