@@ -1069,6 +1069,12 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print(sbBox.value)
         return
     }
+    // STDLIB-REFLECT-066: KType toString
+    if let ktypeBox = tryCast(raw, to: RuntimeKTypeBox.self) {
+        let str = runtimeKTypeToString(ktypeBox)
+        Swift.print(str)
+        return
+    }
     Swift.print("<object \(raw)>")
 }
 
@@ -1233,6 +1239,10 @@ func runtimeRenderAnyForPrint(_ value: Int) -> String {
     }
     if let sbBox = tryCast(raw, to: RuntimeStringBuilderBox.self) {
         return sbBox.value
+    }
+    // STDLIB-REFLECT-066: KType rendering
+    if let ktypeBox = tryCast(raw, to: RuntimeKTypeBox.self) {
+        return runtimeKTypeToString(ktypeBox)
     }
     return "<object \(raw)>"
 }

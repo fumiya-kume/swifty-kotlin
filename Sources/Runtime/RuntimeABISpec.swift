@@ -2898,6 +2898,15 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "TypeCheck"
         ),
+        // STDLIB-REFLECT-066: KType.toString()
+        RuntimeABIFunctionSpec(
+            name: "kk_ktype_to_string",
+            parameters: [
+                RuntimeABIParameter(name: "ktypeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_ktypeprojection_create",
             parameters: [

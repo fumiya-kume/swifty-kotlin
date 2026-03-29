@@ -777,6 +777,34 @@ final class CallTypeChecker {
             return resultType
         }
 
+        // --- STDLIB-REFLECT-066: typeOf<T>() — inline reified reflection ---
+        if let calleeName,
+           args.isEmpty,
+           interner.resolve(calleeName) == "typeOf",
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
+        {
+            // Resolve the KType return type from the stub.
+            let candidates = ctx.filterByVisibility(ctx.cachedScopeLookup(calleeName)).visible
+            if let stubSymbol = candidates.first(where: { candidate in
+                guard let signature = sema.symbols.functionSignature(for: candidate) else { return false }
+                return signature.reifiedTypeParameterIndices.contains(0)
+            }), let signature = sema.symbols.functionSignature(for: stubSymbol) {
+                let typeArg = explicitTypeArgs.first ?? sema.types.anyType
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: stubSymbol,
+                        substitutedTypeArguments: [typeArg],
+                        parameterMapping: [:]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(stubSymbol))
+                sema.bindings.markStdlibSpecialCallExpr(id, kind: .typeOf)
+                sema.bindings.bindExprType(id, type: signature.returnType)
+                return signature.returnType
+            }
+        }
+
         // --- Stdlib enumValues<T>() / enumValueOf<T>(name) (STDLIB-171) ---
         if let calleeName,
            let enumSpecialKind = enumStdlibSpecialCallKind(

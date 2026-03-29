@@ -387,7 +387,7 @@
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/annotation_reflection.kt`
 
-- [ ] STDLIB-REFLECT-066: 型リフレクション完全実装
+- [x] STDLIB-REFLECT-066: 型リフレクション完全実装
   - **仕様**: 型情報のリフレクションアクセス
   - **実装内容**:
     - KType: 型情報の表現
@@ -396,8 +396,8 @@
     - null可能性: isMarkedNullable
     - ジェネリック型の分解
     - 配列型の要素型取得
-  - **現状**: 基本的な型チェックは実装済み、リフレクションは未実装
-  - **関連ファイル**: `RuntimeReflection.swift`
+  - **現状**: 完了 — typeOf<T>(), KType.isMarkedNullable/classifier/arguments/toString() 実装済み
+  - **関連ファイル**: `RuntimeReflection.swift`, `HeaderHelpers+SyntheticPropertyDelegateStubs.swift`
   - **テストケース**: `Scripts/diff_cases/type_reflection.kt`
 
 - [x] STDLIB-REFLECT-067: リフレクション動的呼び出し完全実装
