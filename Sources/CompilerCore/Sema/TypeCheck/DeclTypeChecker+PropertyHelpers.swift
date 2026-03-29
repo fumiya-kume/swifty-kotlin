@@ -120,17 +120,26 @@ extension DeclTypeChecker {
                 // provideDelegate. Re-resolve getValue/setValue against the actual delegate type.
                 if let sig = sema.symbols.functionSignature(for: provideDelegateSymbol) {
                     let actualDelegateType = sig.returnType
-                    let actualGetValueCandidates = driver.helpers
+                    let allGetValueCandidates = driver.helpers
                         .collectMemberFunctionCandidates(
                             named: getValueName,
                             receiverType: actualDelegateType,
                             sema: sema
-                        ).filter { candidateID in
+                        )
+                    // Accept operator functions first; fall back to any non-synthetic override
+                    // (Kotlin allows omitting 'operator' on overrides of operator functions).
+                    let actualGetValueCandidates = allGetValueCandidates.filter { candidateID in
+                        guard let sym = sema.symbols.symbol(candidateID)
+                        else { return false }
+                        return sym.flags.contains(.operatorFunction)
+                    }
+                    let actualGetValueSymbol = actualGetValueCandidates.first
+                        ?? allGetValueCandidates.first { candidateID in
                             guard let sym = sema.symbols.symbol(candidateID)
                             else { return false }
-                            return sym.flags.contains(.operatorFunction)
+                            return !sym.flags.contains(.synthetic)
                         }
-                    if let actualGetValueSymbol = actualGetValueCandidates.first {
+                    if let actualGetValueSymbol {
                         sema.symbols.setDelegateGetValueSymbol(actualGetValueSymbol, for: symbol)
                         if result == nil,
                            let actualGetValueSig = sema.symbols.functionSignature(for: actualGetValueSymbol)
@@ -141,16 +150,23 @@ extension DeclTypeChecker {
 
                     if property.isVar {
                         let setValueName = interner.intern("setValue")
-                        let actualSetValueCandidates = driver.helpers.collectMemberFunctionCandidates(
+                        let allSetValueCandidates = driver.helpers.collectMemberFunctionCandidates(
                             named: setValueName,
                             receiverType: actualDelegateType,
                             sema: sema
-                        ).filter { candidateID in
+                        )
+                        let actualSetValueCandidates = allSetValueCandidates.filter { candidateID in
                             guard let sym = sema.symbols.symbol(candidateID)
                             else { return false }
                             return sym.flags.contains(.operatorFunction)
                         }
-                        if let actualSetValueSymbol = actualSetValueCandidates.first {
+                        let actualSetValueSymbol = actualSetValueCandidates.first
+                            ?? allSetValueCandidates.first { candidateID in
+                                guard let sym = sema.symbols.symbol(candidateID)
+                                else { return false }
+                                return !sym.flags.contains(.synthetic)
+                            }
+                        if let actualSetValueSymbol {
                             sema.symbols.setDelegateSetValueSymbol(actualSetValueSymbol, for: symbol)
                         }
                     }
