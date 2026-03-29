@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s0 kind=package fq=_root_ vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -2093,18 +2093,144 @@ symbol s2091 kind=function fq=java.net.URI.toString vis=public flags=synthetic s
 symbol s2092 kind=function fq=java.net.URI.normalize vis=public flags=synthetic sig=recv=Class#2083 params=[] ret=Class#2083 suspend=0 defaults=[] vararg=[]
 symbol s2093 kind=function fq=java.net.URI.resolve vis=public flags=synthetic sig=recv=Class#2083 params=[String] ret=Class#2083 suspend=0 defaults=[] vararg=[]
 symbol s2094 kind=function fq=java.net.URI.relativize vis=public flags=synthetic sig=recv=Class#2083 params=[Class#2083] ret=Class#2083 suspend=0 defaults=[] vararg=[]
-symbol s2095 kind=class fq=golden.sema.Foo vis=public flags=expectDeclaration
-symbol s2096 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#2095 params=[] ret=Class#2095 suspend=0 defaults=[] vararg=[]
-symbol s2097 kind=class fq=golden.sema.Foo vis=public flags=actualDeclaration
-symbol s2098 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#2097 params=[] ret=Class#2097 suspend=0 defaults=[] vararg=[]
-symbol s2099 kind=class fq=golden.sema.Bar vis=public flags=expectDeclaration
-symbol s2100 kind=typeParameter fq=golden.sema.Bar.$class2099.T vis=private flags=_
-symbol s2101 kind=constructor fq=golden.sema.Bar.<init> vis=public flags=_ sig=recv=Class#2099<T#2100> params=[] ret=Class#2099<T#2100> suspend=0 defaults=[] vararg=[]
-symbol s2102 kind=class fq=golden.sema.Bar vis=public flags=actualDeclaration
-symbol s2103 kind=typeParameter fq=golden.sema.Bar.$class2102.T vis=private flags=_
-symbol s2104 kind=constructor fq=golden.sema.Bar.<init> vis=public flags=_ sig=recv=Class#2102<T#2103> params=[] ret=Class#2102<T#2103> suspend=0 defaults=[] vararg=[]
-file f0 package=golden.sema
-  decl d0 class Foo sym=s2095
-  decl d1 class Foo sym=s2097
-  decl d2 class Bar sym=s2099
-  decl d3 class Bar sym=s2102
+symbol s2095 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s2096 kind=local fq=__for_51.i vis=private flags=_
+symbol s2097 kind=local fq=__local_54.largeSeq vis=private flags=_ type=Class#96<out Class#105<out Int>>
+symbol s2098 kind=local fq=__local_58.flattenedSeq vis=private flags=_ type=<error>
+symbol s2099 kind=local fq=__local_89.nestedSeq vis=private flags=_ type=Class#96<out Class#96<out Int>>
+symbol s2100 kind=local fq=__local_108.mixedSeq vis=private flags=_ type=Class#96<out Any?>
+symbol s2101 kind=local fq=__local_122.singleSeq vis=private flags=_ type=Class#96<out Class#105<out Int>>
+file f0 package=_
+  decl d0 fun main suspend=0 inline=0 sym=s2095
+expr e0 name(println) type=_
+expr e1 string(=== Sequence flatten edge cases ===) type=String
+expr e2 call callee=e0 args=[_:e1] type=Unit call=s1152 map=[0->0] targs=[]
+expr e3 name(println) type=_
+expr e4 name(emptySequence) type=_
+expr e5 call callee=e4 args=[] type=Class#96<out Class#105<Int>> call=s1178 map=[] targs=[Class#105<Int>]
+expr e6 memberCall recv=e5 callee=flatten args=[] type=Any call=s1212 map=[] targs=[Class#105<Int>]
+expr e7 memberCall recv=e6 callee=toList args=[] type=<error>
+expr e8 call callee=e3 args=[_:e7] type=Unit call=s1152 map=[0->0] targs=[]
+expr e9 name(println) type=_
+expr e10 name(sequenceOf) type=_
+expr e11 call callee=e10 args=[] type=Class#96<out Class#105<Int>> call=s1175 map=[] targs=[Class#105<Int>]
+expr e12 memberCall recv=e11 callee=flatten args=[] type=Any call=s1212 map=[] targs=[Class#105<Int>]
+expr e13 memberCall recv=e12 callee=toList args=[] type=<error>
+expr e14 call callee=e9 args=[_:e13] type=Unit call=s1152 map=[0->0] targs=[]
+expr e15 name(println) type=_
+expr e16 name(sequenceOf) type=_
+expr e17 name(listOf) type=_
+expr e18 call callee=e17 args=[] type=Any
+expr e19 name(listOf) type=_
+expr e20 int(1) type=Int
+expr e21 call callee=e19 args=[_:e20] type=Class#105<out Int>
+expr e22 name(listOf) type=_
+expr e23 call callee=e22 args=[] type=Any
+expr e24 call callee=e16 args=[_:e18,_:e21,_:e23] type=Class#96<out Any?> call=s1175 map=[0->0,1->0,2->0] targs=[Any?]
+expr e25 memberCall recv=e24 callee=flatten args=[] type=Any call=s1212 map=[] targs=[Any?]
+expr e26 memberCall recv=e25 callee=toList args=[] type=<error>
+expr e27 call callee=e15 args=[_:e26] type=Unit call=s1152 map=[0->0] targs=[]
+expr e28 name(println) type=_
+expr e29 string(
+=== Large sequence data ===) type=String
+expr e30 call callee=e28 args=[_:e29] type=Unit call=s1152 map=[0->0] targs=[]
+expr e31 name(sequence) type=_
+expr e32 int(1) type=_
+expr e33 int(10) type=_
+expr e34 binary(rangeTo) lhs=e32 rhs=e33 type=_
+expr e35 name(yield) type=_
+expr e36 name(listOf) type=_
+expr e37 name(i) type=_
+expr e38 call callee=e36 args=[_:e37] type=_
+expr e39 call callee=e35 args=[_:e38] type=_
+expr e40 blockExpr stmts=[] trailing=e39 type=_
+expr e41 for var=i iterable=e34 body=e40 type=_
+expr e42 int(1) type=Int
+expr e43 int(10) type=Int
+expr e44 binary(rangeTo) lhs=e42 rhs=e43 type=Int
+expr e45 name(yield) type=_
+expr e46 name(listOf) type=_
+expr e47 name(i) type=Int ref=s2096
+expr e48 call callee=e46 args=[_:e47] type=Class#105<out Int>
+expr e49 call callee=e45 args=[_:e48] type=Unit call=s1162 map=[0->0] targs=[]
+expr e50 blockExpr stmts=[] trailing=e49 type=Unit
+expr e51 for var=i iterable=e44 body=e50 type=Unit ref=s2096
+expr e52 lambda params=[] body=e51 label=sequence type=suspend Class#1160<Any>.() -> Unit
+expr e53 call callee=e31 args=[_:e52] type=Class#96<out Class#105<out Int>> call=s1166 map=[0->0] targs=[]
+expr e54 localDecl largeSeq mutable=0 type=_ init=e53 type=Unit ref=s2097
+expr e55 name(largeSeq) type=Class#96<out Class#105<out Int>> ref=s2097
+expr e56 memberCall recv=e55 callee=flatten args=[] type=Any call=s1212 map=[] targs=[Class#105<out Int>]
+expr e57 memberCall recv=e56 callee=toList args=[] type=<error>
+expr e58 localDecl flattenedSeq mutable=0 type=_ init=e57 type=Unit ref=s2098
+expr e59 name(println) type=_
+expr e60 name(flattenedSeq) type=<error> ref=s2098
+expr e61 memberCall recv=e60 callee=size args=[] type=<error>
+expr e62 call callee=e59 args=[_:e61] type=Unit call=s1152 map=[0->0] targs=[]
+expr e63 name(println) type=_
+expr e64 name(flattenedSeq) type=<error> ref=s2098
+expr e65 int(5) type=Int
+expr e66 memberCall recv=e64 callee=take args=[_:e65] type=String call=s560 map=[0->0] targs=[]
+expr e67 call callee=e63 args=[_:e66] type=Unit call=s1152 map=[0->0] targs=[]
+expr e68 name(println) type=_
+expr e69 name(flattenedSeq) type=<error> ref=s2098
+expr e70 name(flattenedSeq) type=<error> ref=s2098
+expr e71 memberCall recv=e70 callee=size args=[] type=<error>
+expr e72 int(5) type=Int
+expr e73 binary(subtract) lhs=e71 rhs=e72 type=Int
+expr e74 memberCall recv=e69 callee=drop args=[_:e73] type=String call=s558 map=[0->0] targs=[]
+expr e75 call callee=e68 args=[_:e74] type=Unit call=s1152 map=[0->0] targs=[]
+expr e76 name(println) type=_
+expr e77 string(
+=== Nested sequences ===) type=String
+expr e78 call callee=e76 args=[_:e77] type=Unit call=s1152 map=[0->0] targs=[]
+expr e79 name(sequenceOf) type=_
+expr e80 name(sequenceOf) type=_
+expr e81 int(1) type=Int
+expr e82 int(2) type=Int
+expr e83 call callee=e80 args=[_:e81,_:e82] type=Class#96<out Int> call=s1175 map=[0->0,1->0] targs=[Int]
+expr e84 name(sequenceOf) type=_
+expr e85 int(3) type=Int
+expr e86 int(4) type=Int
+expr e87 call callee=e84 args=[_:e85,_:e86] type=Class#96<out Int> call=s1175 map=[0->0,1->0] targs=[Int]
+expr e88 call callee=e79 args=[_:e83,_:e87] type=Class#96<out Class#96<out Int>> call=s1175 map=[0->0,1->0] targs=[Class#96<out Int>]
+expr e89 localDecl nestedSeq mutable=0 type=_ init=e88 type=Unit ref=s2099
+expr e90 name(println) type=_
+expr e91 name(nestedSeq) type=Class#96<out Class#96<out Int>> ref=s2099
+expr e92 memberCall recv=e91 callee=flatten args=[] type=Any call=s1212 map=[] targs=[Class#96<out Int>]
+expr e93 memberCall recv=e92 callee=toList args=[] type=<error>
+expr e94 call callee=e90 args=[_:e93] type=Unit call=s1152 map=[0->0] targs=[]
+expr e95 name(println) type=_
+expr e96 string(
+=== Mixed collection types ===) type=String
+expr e97 call callee=e95 args=[_:e96] type=Unit call=s1152 map=[0->0] targs=[]
+expr e98 name(sequenceOf) type=_
+expr e99 name(listOf) type=_
+expr e100 int(1) type=Int
+expr e101 int(2) type=Int
+expr e102 call callee=e99 args=[_:e100,_:e101] type=Class#105<out Int>
+expr e103 name(sequenceOf) type=_
+expr e104 int(3) type=Int
+expr e105 int(4) type=Int
+expr e106 call callee=e103 args=[_:e104,_:e105] type=Class#96<out Int> call=s1175 map=[0->0,1->0] targs=[Int]
+expr e107 call callee=e98 args=[_:e102,_:e106] type=Class#96<out Any?> call=s1175 map=[0->0,1->0] targs=[Any?]
+expr e108 localDecl mixedSeq mutable=0 type=_ init=e107 type=Unit ref=s2100
+expr e109 name(println) type=_
+expr e110 name(mixedSeq) type=Class#96<out Any?> ref=s2100
+expr e111 memberCall recv=e110 callee=flatten args=[] type=Any call=s1212 map=[] targs=[Any?]
+expr e112 memberCall recv=e111 callee=toList args=[] type=<error>
+expr e113 call callee=e109 args=[_:e112] type=Unit call=s1152 map=[0->0] targs=[]
+expr e114 name(println) type=_
+expr e115 string(
+=== Sequence with special cases ===) type=String
+expr e116 call callee=e114 args=[_:e115] type=Unit call=s1152 map=[0->0] targs=[]
+expr e117 name(sequenceOf) type=_
+expr e118 name(listOf) type=_
+expr e119 int(42) type=Int
+expr e120 call callee=e118 args=[_:e119] type=Class#105<out Int>
+expr e121 call callee=e117 args=[_:e120] type=Class#96<out Class#105<out Int>> call=s1175 map=[0->0] targs=[Class#105<out Int>]
+expr e122 localDecl singleSeq mutable=0 type=_ init=e121 type=Unit ref=s2101
+expr e123 name(println) type=_
+expr e124 name(singleSeq) type=Class#96<out Class#105<out Int>> ref=s2101
+expr e125 memberCall recv=e124 callee=flatten args=[] type=Any call=s1212 map=[] targs=[Class#105<out Int>]
+expr e126 memberCall recv=e125 callee=toList args=[] type=<error>
+expr e127 call callee=e123 args=[_:e126] type=Unit call=s1152 map=[0->0] targs=[]
