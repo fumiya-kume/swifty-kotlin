@@ -1664,6 +1664,10 @@ public func kk_certpathvalidator_validate(
 #else
 // MARK: - Platform stubs: CommonCrypto/Security not available on Linux
 
+private func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, message: String) {
+    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: message))
+}
+
 @_cdecl("kk_message_digest_getInstance")
 public func kk_message_digest_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: MessageDigest not available on this platform")
