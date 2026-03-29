@@ -4705,6 +4705,30 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(name: "kk_cache_size", parameters: [RuntimeABIParameter(name: "cacheRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
     ]
 
+    // MARK: - I18N (STDLIB-I18N-153)
+
+    public static let i18nFunctions: [RuntimeABIFunctionSpec] = [
+        // STDLIB-I18N-153: DateFormat
+        RuntimeABIFunctionSpec(
+            name: "kk_dateformat_ofPattern",
+            parameters: [
+                RuntimeABIParameter(name: "patternRaw", type: .intptr),
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_dateformat_format",
+            parameters: [
+                RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "epochMillis", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+    ]
+
     // MARK: - Duration / measureTime (STDLIB-230/231)
 
     public static let durationFunctions: [RuntimeABIFunctionSpec] = [
@@ -4917,6 +4941,7 @@ public enum RuntimeABISpec {
             + resultFunctions
             + stringBuilderFunctions
             + fileIOFunctions
+            + i18nFunctions
             + uuidFunctions
             + durationFunctions
             + atomicFunctions

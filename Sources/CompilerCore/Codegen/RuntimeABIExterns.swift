@@ -3527,6 +3527,8 @@ public enum RuntimeABIExterns {
     public static let kk_cache_put = ExternDecl(name: "kk_cache_put", parameterTypes: [intptr, intptr, intptr], returnType: intptr)
     public static let kk_cache_get = ExternDecl(name: "kk_cache_get", parameterTypes: [intptr, intptr], returnType: intptr)
     public static let kk_cache_size = ExternDecl(name: "kk_cache_size", parameterTypes: [intptr], returnType: intptr)
+    public static let kk_dateformat_ofPattern = ExternDecl(name: "kk_dateformat_ofPattern", parameterTypes: [intptr, intptr], returnType: intptr)
+    public static let kk_dateformat_format = ExternDecl(name: "kk_dateformat_format", parameterTypes: [intptr, intptr], returnType: intptr)
 
     // STDLIB-IO-087: Additional File operations
     public static let kk_file_new_parent_child = ExternDecl(
@@ -3681,6 +3683,13 @@ public enum RuntimeABIExterns {
         kk_cache_put,
         kk_cache_get,
         kk_cache_size,
+    ]
+
+    // MARK: - I18N (STDLIB-I18N-153)
+
+    public static let i18nExterns: [ExternDecl] = [
+        kk_dateformat_ofPattern,
+        kk_dateformat_format,
     ]
 
     public static let regexExterns: [ExternDecl] = [
@@ -4196,6 +4205,7 @@ public enum RuntimeABIExterns {
         all += resultExterns
         all += stringBuilderExterns
         all += fileIOExterns
+        all += i18nExterns
         all += uuidExterns
         // Duration / measureTime / measureTimedValue (STDLIB-230/231/660)
         all += [
