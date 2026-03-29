@@ -970,6 +970,50 @@ final class RuntimeKConstructorBox {
     }
 }
 
+// MARK: - Annotation Reflection (STDLIB-REFLECT-065)
+
+/// Runtime representation of an annotation instance.
+/// Wraps the annotation class name and its argument values for runtime reflection.
+final class RuntimeAnnotationBox {
+    /// Fully-qualified name of the annotation class (e.g. "kotlin.Deprecated").
+    let annotationFQName: String
+    /// Argument values stored as positional strings.
+    let arguments: [String]
+
+    init(annotationFQName: String, arguments: [String] = []) {
+        self.annotationFQName = annotationFQName
+        self.arguments = arguments
+    }
+}
+
+/// Runtime registry that maps type tokens to their attached annotations.
+/// Populated during module initialisation via `kk_kclass_register_annotation`.
+final class RuntimeAnnotationRegistry: @unchecked Sendable {
+    private let lock = NSLock()
+    /// typeToken -> list of annotation boxes registered for that type.
+    private var entries: [Int: [RuntimeAnnotationBox]] = [:]
+
+    func register(typeToken: Int, annotation: RuntimeAnnotationBox) {
+        lock.lock()
+        defer { lock.unlock() }
+        entries[typeToken, default: []].append(annotation)
+    }
+
+    func annotations(for typeToken: Int) -> [RuntimeAnnotationBox] {
+        lock.lock()
+        defer { lock.unlock() }
+        return entries[typeToken] ?? []
+    }
+
+    func reset() {
+        lock.lock()
+        defer { lock.unlock() }
+        entries.removeAll()
+    }
+}
+
+let runtimeAnnotationRegistry = RuntimeAnnotationRegistry()
+
 // MARK: - BufferedReader (STDLIB-567)
 
 /// Runtime box for `java.io.BufferedReader` returned by `File.bufferedReader()`.
