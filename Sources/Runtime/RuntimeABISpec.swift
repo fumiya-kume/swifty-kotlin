@@ -5321,6 +5321,7 @@ public enum RuntimeABISpec {
             + bigIntegerFunctions
             + broadcastChannelFunctions
             + serializationFunctions
+            + parallelFunctions
 
     public static func generateCHeader() -> String {
         var lines: [String] = []

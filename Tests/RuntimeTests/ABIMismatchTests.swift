@@ -211,6 +211,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.securityFunctions,
             RuntimeABISpec.parallelFunctions,
             RuntimeABISpec.serializationFunctions,
+            RuntimeABISpec.parallelFunctions,
         ]
         let expected = sections.reduce(0) { partial, section in
             partial + section.count
