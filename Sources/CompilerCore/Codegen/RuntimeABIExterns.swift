@@ -3414,8 +3414,70 @@ public enum RuntimeABIExterns {
     public static let kk_cache_get = ExternDecl(name: "kk_cache_get", parameterTypes: [intptr, intptr], returnType: intptr)
     public static let kk_cache_size = ExternDecl(name: "kk_cache_size", parameterTypes: [intptr], returnType: intptr)
 
+    // STDLIB-IO-087: Additional File operations
+    public static let kk_file_new_parent_child = ExternDecl(
+        name: "kk_file_new_parent_child",
+        parameterTypes: [intptr, intptr],
+        returnType: intptr
+    )
+
+    public static let kk_file_absolutePath = ExternDecl(
+        name: "kk_file_absolutePath",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_file_canonicalPath = ExternDecl(
+        name: "kk_file_canonicalPath",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_file_parent = ExternDecl(
+        name: "kk_file_parent",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_file_length = ExternDecl(
+        name: "kk_file_length",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_file_lastModified = ExternDecl(
+        name: "kk_file_lastModified",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_file_createNewFile = ExternDecl(
+        name: "kk_file_createNewFile",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_file_canRead = ExternDecl(
+        name: "kk_file_canRead",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_file_canWrite = ExternDecl(
+        name: "kk_file_canWrite",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_file_canExecute = ExternDecl(
+        name: "kk_file_canExecute",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
     public static let fileIOExterns: [ExternDecl] = [
         kk_file_new,
+        kk_file_new_parent_child,
         kk_file_readText,
         kk_file_writeText,
         kk_file_appendText,
@@ -3427,6 +3489,15 @@ public enum RuntimeABIExterns {
         kk_file_isDirectory,
         kk_file_name,
         kk_file_path,
+        kk_file_absolutePath,
+        kk_file_canonicalPath,
+        kk_file_parent,
+        kk_file_length,
+        kk_file_lastModified,
+        kk_file_createNewFile,
+        kk_file_canRead,
+        kk_file_canWrite,
+        kk_file_canExecute,
         kk_file_delete,
         kk_file_mkdirs,
         kk_file_listFiles,

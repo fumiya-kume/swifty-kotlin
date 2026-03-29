@@ -618,6 +618,26 @@ struct CollectionLiteralLookupTables {
     let kkFileWalkName: InternedString
     let readBytesName: InternedString
     let kkFileReadBytesName: InternedString
+    // STDLIB-IO-087: Additional File operations
+    let absolutePathName: InternedString
+    let kkFileAbsolutePathName: InternedString
+    let canonicalPathName: InternedString
+    let kkFileCanonicalPathName: InternedString
+    let parentName: InternedString
+    let kkFileParentName: InternedString
+    // Note: lengthName is shared with StringBuilder section (defined above)
+    let kkFileLengthName: InternedString
+    let lastModifiedName: InternedString
+    let kkFileLastModifiedName: InternedString
+    let createNewFileName: InternedString
+    let kkFileCreateNewFileName: InternedString
+    let canReadName: InternedString
+    let kkFileCanReadName: InternedString
+    let canWriteName: InternedString
+    let kkFileCanWriteName: InternedString
+    let canExecuteName: InternedString
+    let kkFileCanExecuteName: InternedString
+    let kkFileNewParentChildName: InternedString
 
     // Common lookup sets
     let listFactoryNames: Set<InternedString>
@@ -1220,6 +1240,26 @@ struct CollectionLiteralLookupTables {
         kkFileWalkName = interner.intern("kk_file_walk")
         readBytesName = interner.intern("readBytes")
         kkFileReadBytesName = interner.intern("kk_file_readBytes")
+        // STDLIB-IO-087: Additional File operations
+        absolutePathName = interner.intern("absolutePath")
+        kkFileAbsolutePathName = interner.intern("kk_file_absolutePath")
+        canonicalPathName = interner.intern("canonicalPath")
+        kkFileCanonicalPathName = interner.intern("kk_file_canonicalPath")
+        parentName = interner.intern("parent")
+        kkFileParentName = interner.intern("kk_file_parent")
+        // lengthName already initialized in StringBuilder section above
+        kkFileLengthName = interner.intern("kk_file_length")
+        lastModifiedName = interner.intern("lastModified")
+        kkFileLastModifiedName = interner.intern("kk_file_lastModified")
+        createNewFileName = interner.intern("createNewFile")
+        kkFileCreateNewFileName = interner.intern("kk_file_createNewFile")
+        canReadName = interner.intern("canRead")
+        kkFileCanReadName = interner.intern("kk_file_canRead")
+        canWriteName = interner.intern("canWrite")
+        kkFileCanWriteName = interner.intern("kk_file_canWrite")
+        canExecuteName = interner.intern("canExecute")
+        kkFileCanExecuteName = interner.intern("kk_file_canExecute")
+        kkFileNewParentChildName = interner.intern("kk_file_new_parent_child")
 
         listFactoryNames = [listOfName, mutableListOfName, emptyListName, listOfNotNullName]
         setFactoryNames = [setOfName, mutableSetOfName, emptySetName]

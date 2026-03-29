@@ -81,6 +81,23 @@ public func kk_file_new(_ pathRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeFileBox(path))
 }
 
+/// File(parent: String, child: String) constructor (STDLIB-IO-087)
+@_cdecl("kk_file_new_parent_child")
+public func kk_file_new_parent_child(_ parentRaw: Int, _ childRaw: Int) -> Int {
+    guard let parentPtr = UnsafeMutableRawPointer(bitPattern: parentRaw),
+          let parent = extractString(from: parentPtr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_new_parent_child received invalid parent")
+    }
+    guard let childPtr = UnsafeMutableRawPointer(bitPattern: childRaw),
+          let child = extractString(from: childPtr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_new_parent_child received invalid child")
+    }
+    let path = (parent as NSString).appendingPathComponent(child)
+    return registerRuntimeObject(RuntimeFileBox(path))
+}
+
 @_cdecl("kk_file_readText")
 public func kk_file_readText(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -306,6 +323,100 @@ public func kk_file_path(_ fileRaw: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_path received invalid File handle")
     }
     return fileMakeStringRaw(file.path)
+}
+
+// MARK: - STDLIB-IO-087: Additional File properties and operations
+
+@_cdecl("kk_file_absolutePath")
+public func kk_file_absolutePath(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_absolutePath received invalid File handle")
+    }
+    let url = URL(fileURLWithPath: file.path)
+    return fileMakeStringRaw(url.path)
+}
+
+@_cdecl("kk_file_canonicalPath")
+public func kk_file_canonicalPath(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_canonicalPath received invalid File handle")
+    }
+    let resolved = (file.path as NSString).standardizingPath
+    return fileMakeStringRaw(resolved)
+}
+
+@_cdecl("kk_file_parent")
+public func kk_file_parent(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_parent received invalid File handle")
+    }
+    let parent = (file.path as NSString).deletingLastPathComponent
+    // Return null sentinel if the path has no parent (e.g., root "/")
+    if parent.isEmpty || parent == file.path {
+        return runtimeNullSentinelInt
+    }
+    return fileMakeStringRaw(parent)
+}
+
+@_cdecl("kk_file_length")
+public func kk_file_length(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_length received invalid File handle")
+    }
+    guard let attrs = try? FileManager.default.attributesOfItem(atPath: file.path),
+          let size = attrs[.size] as? Int else {
+        return 0
+    }
+    return size
+}
+
+@_cdecl("kk_file_lastModified")
+public func kk_file_lastModified(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_lastModified received invalid File handle")
+    }
+    guard let attrs = try? FileManager.default.attributesOfItem(atPath: file.path),
+          let modDate = attrs[.modificationDate] as? Date else {
+        return 0
+    }
+    // Kotlin returns milliseconds since epoch (Long)
+    return Int(modDate.timeIntervalSince1970 * 1000)
+}
+
+@_cdecl("kk_file_createNewFile")
+public func kk_file_createNewFile(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_createNewFile received invalid File handle")
+    }
+    if FileManager.default.fileExists(atPath: file.path) {
+        return kk_box_bool(0) // false: file already exists
+    }
+    let created = FileManager.default.createFile(atPath: file.path, contents: nil)
+    return kk_box_bool(created ? 1 : 0)
+}
+
+@_cdecl("kk_file_canRead")
+public func kk_file_canRead(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_canRead received invalid File handle")
+    }
+    return kk_box_bool(FileManager.default.isReadableFile(atPath: file.path) ? 1 : 0)
+}
+
+@_cdecl("kk_file_canWrite")
+public func kk_file_canWrite(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_canWrite received invalid File handle")
+    }
+    return kk_box_bool(FileManager.default.isWritableFile(atPath: file.path) ? 1 : 0)
+}
+
+@_cdecl("kk_file_canExecute")
+public func kk_file_canExecute(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_canExecute received invalid File handle")
+    }
+    return kk_box_bool(FileManager.default.isExecutableFile(atPath: file.path) ? 1 : 0)
 }
 
 // MARK: - STDLIB-322: File line-by-line operations

@@ -81,6 +81,17 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - File(parent, child) constructor (STDLIB-IO-087)
+
+        registerFileConstructor(
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("parent", types.stringType), ("child", types.stringType)],
+            externalLinkName: "kk_file_new_parent_child",
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - File properties (STDLIB-321)
 
         registerFileMemberProperty(
@@ -97,6 +108,36 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_file_path",
             ownerSymbol: fileSymbol,
             returnType: types.stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - Additional File properties (STDLIB-IO-087)
+
+        registerFileMemberProperty(
+            named: "absolutePath",
+            externalLinkName: "kk_file_absolutePath",
+            ownerSymbol: fileSymbol,
+            returnType: types.stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberProperty(
+            named: "canonicalPath",
+            externalLinkName: "kk_file_canonicalPath",
+            ownerSymbol: fileSymbol,
+            returnType: types.stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        let nullableStringType = types.makeNullable(types.stringType)
+        registerFileMemberProperty(
+            named: "parent",
+            externalLinkName: "kk_file_parent",
+            ownerSymbol: fileSymbol,
+            returnType: nullableStringType,
             symbols: symbols,
             interner: interner
         )
@@ -128,6 +169,74 @@ extension DataFlowSemaPhase {
         registerFileMemberFunction(
             named: "isDirectory",
             externalLinkName: "kk_file_isDirectory",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - Additional File query/operation methods (STDLIB-IO-087)
+
+        registerFileMemberFunction(
+            named: "createNewFile",
+            externalLinkName: "kk_file_createNewFile",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "length",
+            externalLinkName: "kk_file_length",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: types.longType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "lastModified",
+            externalLinkName: "kk_file_lastModified",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: types.longType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "canRead",
+            externalLinkName: "kk_file_canRead",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "canWrite",
+            externalLinkName: "kk_file_canWrite",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "canExecute",
+            externalLinkName: "kk_file_canExecute",
             ownerSymbol: fileSymbol,
             ownerType: fileType,
             parameters: [],
@@ -315,8 +424,6 @@ extension DataFlowSemaPhase {
             classSymbol: bufferedReaderSymbol, args: [], nullability: .nonNull
         )))
         symbols.setPropertyType(bufferedReaderType, for: bufferedReaderSymbol)
-
-        let nullableStringType = types.makeNullable(types.stringType)
 
         // File.bufferedReader() -> BufferedReader
         registerFileMemberFunction(
