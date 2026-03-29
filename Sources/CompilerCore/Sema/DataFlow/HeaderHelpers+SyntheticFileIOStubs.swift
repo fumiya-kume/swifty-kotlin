@@ -656,28 +656,6 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        registerFileMemberFunction(
-            named: "read",
-            externalLinkName: "kk_resource_stream_read",
-            ownerSymbol: inputStreamSymbol,
-            ownerType: inputStreamType,
-            parameters: [],
-            returnType: types.intType,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerFileMemberFunction(
-            named: "close",
-            externalLinkName: "kk_resource_stream_close",
-            ownerSymbol: inputStreamSymbol,
-            ownerType: inputStreamType,
-            parameters: [],
-            returnType: types.unitType,
-            symbols: symbols,
-            interner: interner
-        )
-
         registerTopLevelResourceFunction(
             packageFQName: javaLangPkg,
             name: "getSystemClassLoader",

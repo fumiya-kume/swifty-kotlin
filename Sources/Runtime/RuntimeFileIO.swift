@@ -558,7 +558,9 @@ public func kk_input_stream_reset(_ streamRaw: Int, _ outThrown: UnsafeMutablePo
     guard let stream = runtimeInputStreamBox(from: streamRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_reset received invalid InputStream handle")
     }
-    stream.reset()
+    if !stream.reset() {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: mark/reset not supported")
+    }
     return 0
 }
 

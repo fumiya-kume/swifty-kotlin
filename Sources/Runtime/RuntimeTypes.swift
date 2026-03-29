@@ -1016,17 +1016,14 @@ final class RuntimeInputStreamBox {
     }
 
     func mark(readLimit: Int) {
-        guard !closed else { return }
-        markOffset = offset
-        markLimit = readLimit
+        // FileInputStream does not support mark/reset; this is a no-op.
     }
 
-    func markSupported() -> Bool { true }
+    func markSupported() -> Bool { false }
 
-    func reset() {
-        guard !closed else { return }
-        offset = markOffset
-    }
+    /// Attempts a reset.  Returns `false` when mark/reset is not supported
+    /// (matching JVM FileInputStream behaviour — callers must raise IOException).
+    func reset() -> Bool { false }
 
     func close() {
         closed = true
