@@ -154,7 +154,7 @@ extension CallTypeChecker {
     }
 
     private func isRangeMemberReturningCollection(_ memberName: String) -> Bool {
-        ["toList", "toIntArray", "map", "mapIndexed", "mapNotNull", "filter", "filterIndexed", "filterNot", "chunked", "windowed"].contains(memberName)
+        ["toList", "map", "mapIndexed", "mapNotNull", "filter", "filterIndexed", "filterNot", "chunked", "windowed"].contains(memberName)
     }
 
     /// Returns the element type for a range expression based on its range-kind markers.
