@@ -4264,6 +4264,67 @@ extension CallLowerer {
             instructions.append(.constValue(result: continuationExpr, value: .intLiteral(0)))
             finalArguments.append(continuationExpr)
         }
+        // kk_mutex_withLock(handle, actionFnPtr, actionEnvPtr): split the lambda
+        // argument at index 1 into a function pointer and environment pointer,
+        // following the standard closure-conversion ABI used by collection HOFs.
+        if loweredCallee == interner.intern("kk_mutex_withLock"),
+           finalArguments.count == 2
+        {
+            let lambdaID = finalArguments[1]
+            if let callableInfo = driver.ctx.callableValueInfo(for: lambdaID) {
+                let fnPtrExpr = arena.appendExpr(
+                    .symbolRef(callableInfo.symbol),
+                    type: sema.types.anyType
+                )
+                instructions.append(.constValue(result: fnPtrExpr, value: .symbolRef(callableInfo.symbol)))
+                let envPtrExpr: KIRExprID
+                if callableInfo.captureArguments.count >= 2 {
+                    // Multi-capture: pack captures into a closure object.
+                    let intType = sema.types.intType
+                    let anyType = sema.types.anyType
+                    let kkObjectNew = interner.intern("kk_object_new")
+                    let kkArraySet = interner.intern("kk_array_set")
+                    let slotCount = Int64(2 + callableInfo.captureArguments.count)
+                    let slotCountExpr = arena.appendExpr(.intLiteral(slotCount), type: intType)
+                    instructions.append(.constValue(result: slotCountExpr, value: .intLiteral(slotCount)))
+                    let classIDExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                    instructions.append(.constValue(result: classIDExpr, value: .intLiteral(0)))
+                    let closureObjExpr = arena.appendExpr(
+                        .temporary(Int32(clamping: arena.expressions.count)), type: anyType)
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: kkObjectNew,
+                        arguments: [slotCountExpr, classIDExpr],
+                        result: closureObjExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    for (captureIndex, captureArg) in callableInfo.captureArguments.enumerated() {
+                        let fieldOffset = Int64(captureIndex + 2)
+                        let offsetExpr = arena.appendExpr(.intLiteral(fieldOffset), type: intType)
+                        instructions.append(.constValue(result: offsetExpr, value: .intLiteral(fieldOffset)))
+                        let unusedResult = arena.appendExpr(
+                            .temporary(Int32(clamping: arena.expressions.count)), type: anyType)
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: kkArraySet,
+                            arguments: [closureObjExpr, offsetExpr, captureArg],
+                            result: unusedResult,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                    }
+                    envPtrExpr = closureObjExpr
+                } else if let closureRaw = callableInfo.captureArguments.first {
+                    envPtrExpr = closureRaw
+                } else {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    envPtrExpr = zeroExpr
+                }
+                finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
+            }
+        }
         if let inst = tryEmitVirtualDispatch(
             chosenCallee: chosenCallee, calleeName: loweredCallee,
             receiverExpr: receiver.expr, loweredReceiverID: receiver.loweredID,

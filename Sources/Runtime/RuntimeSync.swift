@@ -11,6 +11,7 @@ final class RuntimeMutexHandle: @unchecked Sendable {
     private let lock = NSLock()
     private var isHeld = false
     private var waiters: [Int] = []
+    private var blockingWaiters: [DispatchSemaphore] = []
 
     var isLocked: Bool {
         lock.lock()
@@ -28,6 +29,21 @@ final class RuntimeMutexHandle: @unchecked Sendable {
         }
         isHeld = true
         return true
+    }
+
+    /// Acquire the mutex, blocking the calling thread until it is available.
+    /// Used by `kk_mutex_withLock` which runs on a regular (non-coroutine) thread.
+    func lockBlocking() {
+        lock.lock()
+        if !isHeld {
+            isHeld = true
+            lock.unlock()
+            return
+        }
+        let sema = DispatchSemaphore(value: 0)
+        blockingWaiters.append(sema)
+        lock.unlock()
+        sema.wait()
     }
 
     /// Acquire the lock synchronously (non-suspend path).
@@ -54,6 +70,14 @@ final class RuntimeMutexHandle: @unchecked Sendable {
         guard isHeld else {
             lock.unlock()
             fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: Mutex.unlock() called on an unlocked mutex")
+        }
+        // Prefer blocking (thread-based) waiters before coroutine waiters.
+        if !blockingWaiters.isEmpty {
+            let sema = blockingWaiters.removeFirst()
+            // Keep isHeld = true — ownership transfers to the blocking waiter.
+            lock.unlock()
+            sema.signal()
+            return
         }
         while let continuation = waiters.first {
             waiters.removeFirst()
@@ -273,10 +297,9 @@ public func kk_mutex_withLock(_ handle: Int, _ actionFnPtr: Int, _ actionEnvPtr:
     }
     let mutex = Unmanaged<RuntimeMutexHandle>.fromOpaque(ptr).takeUnretainedValue()
 
-    // Acquire the lock (blocking spin-wait).
-    while !mutex.tryLock() {
-        Thread.sleep(forTimeInterval: 0.000_001)
-    }
+    // Acquire the mutex, blocking the calling thread until it is available.
+    mutex.lockBlocking()
+    defer { mutex.unlock() }
 
     // Invoke the action closure: fn(envPtr) -> intptr_t.
     var result: Int = 0
@@ -288,6 +311,5 @@ public func kk_mutex_withLock(_ handle: Int, _ actionFnPtr: Int, _ actionEnvPtr:
         result = fn(actionEnvPtr)
     }
 
-    mutex.unlock()
     return result
 }
