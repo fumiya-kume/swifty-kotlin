@@ -1284,7 +1284,7 @@
   - **関連ファイル**: `RuntimeTest.swift`
   - **テストケース**: `Scripts/diff_cases/test_framework_basic.kt`
 
-- [ ] STDLIB-TEST-158: モックオブジェクト完全実装
+- [x] STDLIB-TEST-158: モックオブジェクト完全実装
   - **仕様**: モックオブジェクトの完全サポート
   - **実装内容**:
     - モック作成: インターフェースのモック生成
