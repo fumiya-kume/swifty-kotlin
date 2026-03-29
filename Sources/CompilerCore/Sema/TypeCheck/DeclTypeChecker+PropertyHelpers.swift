@@ -115,6 +115,46 @@ extension DeclTypeChecker {
             sema.symbols.setHasProvideDelegate(for: symbol)
             if let provideDelegateSymbol = provideDelegateCandidates.first {
                 sema.symbols.setDelegateProvideDelegateSymbol(provideDelegateSymbol, for: symbol)
+
+                // When provideDelegate is present, the actual delegate is the return type of
+                // provideDelegate. Re-resolve getValue/setValue against the actual delegate type.
+                if let sig = sema.symbols.functionSignature(for: provideDelegateSymbol) {
+                    let actualDelegateType = sig.returnType
+                    let actualGetValueCandidates = driver.helpers
+                        .collectMemberFunctionCandidates(
+                            named: getValueName,
+                            receiverType: actualDelegateType,
+                            sema: sema
+                        ).filter { candidateID in
+                            guard let sym = sema.symbols.symbol(candidateID)
+                            else { return false }
+                            return sym.flags.contains(.operatorFunction)
+                        }
+                    if let actualGetValueSymbol = actualGetValueCandidates.first {
+                        sema.symbols.setDelegateGetValueSymbol(actualGetValueSymbol, for: symbol)
+                        if result == nil,
+                           let actualGetValueSig = sema.symbols.functionSignature(for: actualGetValueSymbol)
+                        {
+                            result = actualGetValueSig.returnType
+                        }
+                    }
+
+                    if property.isVar {
+                        let setValueName = interner.intern("setValue")
+                        let actualSetValueCandidates = driver.helpers.collectMemberFunctionCandidates(
+                            named: setValueName,
+                            receiverType: actualDelegateType,
+                            sema: sema
+                        ).filter { candidateID in
+                            guard let sym = sema.symbols.symbol(candidateID)
+                            else { return false }
+                            return sym.flags.contains(.operatorFunction)
+                        }
+                        if let actualSetValueSymbol = actualSetValueCandidates.first {
+                            sema.symbols.setDelegateSetValueSymbol(actualSetValueSymbol, for: symbol)
+                        }
+                    }
+                }
             }
         }
 
