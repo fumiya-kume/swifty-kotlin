@@ -3413,7 +3413,6 @@ public enum RuntimeABIExterns {
     public static let kk_cache_put = ExternDecl(name: "kk_cache_put", parameterTypes: [intptr, intptr, intptr], returnType: intptr)
     public static let kk_cache_get = ExternDecl(name: "kk_cache_get", parameterTypes: [intptr, intptr], returnType: intptr)
     public static let kk_cache_size = ExternDecl(name: "kk_cache_size", parameterTypes: [intptr], returnType: intptr)
-    public static let kk_locale_new = ExternDecl(name: "kk_locale_new", parameterTypes: [intptr], returnType: intptr)
     public static let kk_resource_bundle_getBundle = ExternDecl(name: "kk_resource_bundle_getBundle", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
     public static let kk_resource_bundle_getString = ExternDecl(name: "kk_resource_bundle_getString", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
     public static let kk_resource_bundle_getKeys = ExternDecl(name: "kk_resource_bundle_getKeys", parameterTypes: [intptr], returnType: intptr)
