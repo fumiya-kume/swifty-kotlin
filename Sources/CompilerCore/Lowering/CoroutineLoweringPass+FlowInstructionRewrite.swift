@@ -221,7 +221,7 @@ extension CoroutineLoweringPass {
                     continue
                 }
 
-                if callee == names.toList,
+                if callee == names.toList, symbol == nil,
                    !arguments.isEmpty,
                    flowExprIDs.contains(arguments[0].rawValue)
                 {
@@ -239,7 +239,7 @@ extension CoroutineLoweringPass {
                     continue
                 }
 
-                if callee == names.first,
+                if callee == names.first, symbol == nil,
                    !arguments.isEmpty,
                    flowExprIDs.contains(arguments[0].rawValue)
                 {
