@@ -23,7 +23,7 @@ final class KotlinCompilationDigitalSignatureTests: XCTestCase {
             signer.update(message)
             val sha256Signature = signer.sign()
 
-            val verifier = Signature.getInstance("SHA1withRSA")
+            val verifier = Signature.getInstance("SHA256withRSA")
             verifier.initVerify(keyPair.publicKey)
             verifier.update(message)
             val verified = verifier.verify(sha256Signature)
