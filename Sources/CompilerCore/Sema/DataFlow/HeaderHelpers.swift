@@ -845,6 +845,12 @@ extension DataFlowSemaPhase {
         registerSyntheticStdlibLoopStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticScopeFunctionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExceptionStubs(symbols: symbols, types: types, interner: interner, kotlinPkg: kotlinPkg)
+        registerSyntheticTestFrameworkStubs(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinPkg: kotlinPkg
+        )
         registerSyntheticCoroutineStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticContractStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticPreconditionStubs(symbols: symbols, types: types, interner: interner)

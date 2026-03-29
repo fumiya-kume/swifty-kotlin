@@ -80,6 +80,10 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 15)
     }
 
+    func testTestFrameworkFunctionCount() {
+        XCTAssertEqual(RuntimeABISpec.testFunctions.count, 6)
+    }
+
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
         XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 103)
@@ -164,6 +168,7 @@ final class ABIMismatchTests: XCTestCase {
         let sections = [
             RuntimeABISpec.memoryFunctions,
             RuntimeABISpec.exceptionFunctions,
+            RuntimeABISpec.testFunctions,
             RuntimeABISpec.stringFunctions,
             RuntimeABISpec.consolePrintFunctions,
             RuntimeABISpec.ioFunctions,

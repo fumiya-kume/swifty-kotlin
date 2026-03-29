@@ -19,6 +19,12 @@ extension ABIMismatchTests {
         let syntheticLinkNames: [String] = [
             "kk_todo_noarg",
             "kk_todo",
+            "kk_test_assertEquals",
+            "kk_test_assertEquals_message",
+            "kk_test_assertTrue",
+            "kk_test_assertTrue_message",
+            "kk_test_assertNull",
+            "kk_test_assertNull_message",
             "kk_println_newline",
             "kk_println_any",
             "kk_print_any",
