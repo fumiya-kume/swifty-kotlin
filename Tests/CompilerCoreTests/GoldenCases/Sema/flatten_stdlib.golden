@@ -2063,15 +2063,106 @@ symbol s2061 kind=function fq=kotlin.uuid.Uuid.toString vis=public flags=synthet
 symbol s2062 kind=function fq=kotlin.uuid.Uuid.toHexString vis=public flags=synthetic sig=recv=Class#2056 params=[] ret=String suspend=0 defaults=[] vararg=[]
 symbol s2063 kind=function fq=kotlin.uuid.Uuid.toLongs vis=public flags=synthetic sig=recv=Class#2056 params=[] ret=Class#49<Long, Long> suspend=0 defaults=[] vararg=[]
 symbol s2064 kind=function fq=kotlin.uuid.Uuid.toByteArray vis=public flags=synthetic sig=recv=Class#2056 params=[] ret=Class#323 suspend=0 defaults=[] vararg=[]
-symbol s2065 kind=function fq=testDigitConversion vis=public flags=_ sig=recv=_ params=[Char] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s2066 kind=valueParameter fq=testDigitConversion.$2065.c vis=private flags=_
-symbol s2067 kind=local fq=__local_2.d vis=private flags=_ type=Int
-symbol s2068 kind=local fq=__local_5.n vis=private flags=_ type=Int?
+symbol s2065 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s2066 kind=local fq=__local_87.large vis=private flags=_ type=Class#96<out Any>
 file f0 package=_
-  decl d0 fun testDigitConversion suspend=0 inline=0 sym=s2065
-expr e0 name(c) type=Char ref=s2066
-expr e1 memberCall recv=e0 callee=digitToInt args=[] type=Int call=s703 map=[] targs=[]
-expr e2 localDecl d mutable=0 type=_ init=e1 type=Unit ref=s2067
-expr e3 name(c) type=Char ref=s2066
-expr e4 memberCall recv=e3 callee=digitToIntOrNull args=[] type=Int? call=s704 map=[] targs=[]
-expr e5 localDecl n mutable=0 type=_ init=e4 type=Unit ref=s2068
+  decl d0 fun main suspend=0 inline=0 sym=s2065
+expr e0 name(println) type=_
+expr e1 name(listOf) type=_
+expr e2 name(listOf) type=_
+expr e3 int(1) type=Int
+expr e4 int(2) type=Int
+expr e5 call callee=e2 args=[_:e3,_:e4] type=Class#96<out Int>
+expr e6 name(listOf) type=_
+expr e7 int(3) type=Int
+expr e8 int(4) type=Int
+expr e9 call callee=e6 args=[_:e7,_:e8] type=Class#96<out Int>
+expr e10 call callee=e1 args=[_:e5,_:e9] type=Class#96<out Class#96<out Int>>
+expr e11 memberCall recv=e10 callee=flatten args=[] type=Class#96<out Class#96<out Int>> call=s116 map=[] targs=[Class#96<out Int>]
+expr e12 call callee=e0 args=[_:e11] type=Unit call=s1151 map=[0->0] targs=[]
+expr e13 name(println) type=_
+expr e14 name(emptyList) type=_
+expr e15 call callee=e14 args=[] type=Class#96<out Nothing> call=s1241 map=[] targs=[Class#96<Int>]
+expr e16 memberCall recv=e15 callee=flatten args=[] type=Class#96<out Nothing> call=s116 map=[] targs=[Nothing]
+expr e17 call callee=e13 args=[_:e16] type=Unit call=s1151 map=[0->0] targs=[]
+expr e18 name(println) type=_
+expr e19 name(listOf) type=_
+expr e20 name(listOf) type=_
+expr e21 call callee=e20 args=[] type=Any
+expr e22 call callee=e19 args=[_:e21] type=Class#96<out Any>
+expr e23 memberCall recv=e22 callee=flatten args=[] type=Class#96<out Any> call=s116 map=[] targs=[Any]
+expr e24 call callee=e18 args=[_:e23] type=Unit call=s1151 map=[0->0] targs=[]
+expr e25 name(println) type=_
+expr e26 name(listOf) type=_
+expr e27 name(listOf) type=_
+expr e28 call callee=e27 args=[] type=Any
+expr e29 name(listOf) type=_
+expr e30 call callee=e29 args=[] type=Any
+expr e31 call callee=e26 args=[_:e28,_:e30] type=Class#96<out Any>
+expr e32 memberCall recv=e31 callee=flatten args=[] type=Class#96<out Any> call=s116 map=[] targs=[Any]
+expr e33 call callee=e25 args=[_:e32] type=Unit call=s1151 map=[0->0] targs=[]
+expr e34 name(println) type=_
+expr e35 name(listOf) type=_
+expr e36 name(listOf) type=_
+expr e37 call callee=e36 args=[] type=Any
+expr e38 name(listOf) type=_
+expr e39 int(1) type=Int
+expr e40 call callee=e38 args=[_:e39] type=Class#96<out Int>
+expr e41 name(listOf) type=_
+expr e42 call callee=e41 args=[] type=Any
+expr e43 call callee=e35 args=[_:e37,_:e40,_:e42] type=Class#96<out Any?>
+expr e44 memberCall recv=e43 callee=flatten args=[] type=Class#96<out Any?> call=s116 map=[] targs=[Any?]
+expr e45 call callee=e34 args=[_:e44] type=Unit call=s1151 map=[0->0] targs=[]
+expr e46 name(println) type=_
+expr e47 name(listOf) type=_
+expr e48 name(listOf) type=_
+expr e49 int(42) type=Int
+expr e50 call callee=e48 args=[_:e49] type=Class#96<out Int>
+expr e51 call callee=e47 args=[_:e50] type=Class#96<out Class#96<out Int>>
+expr e52 memberCall recv=e51 callee=flatten args=[] type=Class#96<out Class#96<out Int>> call=s116 map=[] targs=[Class#96<out Int>]
+expr e53 call callee=e46 args=[_:e52] type=Unit call=s1151 map=[0->0] targs=[]
+expr e54 name(println) type=_
+expr e55 name(listOf) type=_
+expr e56 name(listOf) type=_
+expr e57 string(a) type=String
+expr e58 string(b) type=String
+expr e59 call callee=e56 args=[_:e57,_:e58] type=Class#96<out String>
+expr e60 name(listOf) type=_
+expr e61 string(c) type=String
+expr e62 call callee=e60 args=[_:e61] type=Class#96<out String>
+expr e63 call callee=e55 args=[_:e59,_:e62] type=Class#96<out Class#96<out String>>
+expr e64 memberCall recv=e63 callee=flatten args=[] type=Class#96<out Class#96<out String>> call=s116 map=[] targs=[Class#96<out String>]
+expr e65 call callee=e54 args=[_:e64] type=Unit call=s1151 map=[0->0] targs=[]
+expr e66 name(println) type=_
+expr e67 name(listOf) type=_
+expr e68 name(listOf) type=_
+expr e69 call callee=e68 args=[] type=Any
+expr e70 name(listOf) type=_
+expr e71 string(x) type=String
+expr e72 call callee=e70 args=[_:e71] type=Class#96<out String>
+expr e73 call callee=e67 args=[_:e69,_:e72] type=Class#96<out Any?>
+expr e74 memberCall recv=e73 callee=flatten args=[] type=Class#96<out Any?> call=s116 map=[] targs=[Any?]
+expr e75 call callee=e66 args=[_:e74] type=Unit call=s1151 map=[0->0] targs=[]
+expr e76 int(1) type=Int
+expr e77 int(10) type=Int
+expr e78 binary(rangeTo) lhs=e76 rhs=e77 type=Int
+expr e79 name(listOf) type=_
+expr e80 name(it) type=_
+expr e81 call callee=e79 args=[_:e80] type=_
+expr e82 name(listOf) type=_
+expr e83 name(it) type=Int ref=s-1021760
+expr e84 call callee=e82 args=[_:e83] type=Class#96<out Int>
+expr e85 lambda params=[] body=e84 label=map type=(Int) -> Any
+expr e86 memberCall recv=e78 callee=map args=[_:e85] type=Class#96<out Any>
+expr e87 localDecl large mutable=0 type=_ init=e86 type=Unit ref=s2066
+expr e88 name(println) type=_
+expr e89 name(large) type=Class#96<out Any> ref=s2066
+expr e90 memberCall recv=e89 callee=flatten args=[] type=Class#96<out Any> call=s116 map=[] targs=[Any]
+expr e91 memberCall recv=e90 callee=size args=[] type=Int ref=s93
+expr e92 call callee=e88 args=[_:e91] type=Unit call=s1151 map=[0->0] targs=[]
+expr e93 name(println) type=_
+expr e94 name(large) type=Class#96<out Any> ref=s2066
+expr e95 memberCall recv=e94 callee=flatten args=[] type=Class#96<out Any> call=s116 map=[] targs=[Any]
+expr e96 int(3) type=Int
+expr e97 memberCall recv=e95 callee=take args=[_:e96] type=Class#96<out Any> call=s107 map=[0->0] targs=[Any]
+expr e98 call callee=e93 args=[_:e97] type=Unit call=s1151 map=[0->0] targs=[]
