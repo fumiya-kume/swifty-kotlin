@@ -16,6 +16,7 @@ extension DataFlowSemaPhase {
         let unitType = types.unitType
         let anyType = types.anyType
         let byteArrayType = makeSecurityByteArrayType(symbols: symbols, types: types, interner: interner)
+        let securityByteArrayType = byteArrayType
         let securityPkg = ensurePackage(path: ["java", "security"], symbols: symbols, interner: interner)
         let securityPkgSymbol = symbols.lookup(fqName: securityPkg)
         let certPkg = ensurePackage(path: ["java", "security", "cert"], symbols: symbols, interner: interner)
@@ -39,7 +40,7 @@ extension DataFlowSemaPhase {
             ownerSymbol: secretKeySpecSymbol,
             ownerType: secretKeySpecType,
             parameters: [
-                ("key", byteArrayType),
+                ("key", securityByteArrayType),
                 ("algorithm", stringType),
             ],
             canThrow: true,
@@ -65,7 +66,7 @@ extension DataFlowSemaPhase {
             ownerSymbol: ivParameterSpecSymbol,
             ownerType: ivParameterSpecType,
             parameters: [
-                ("iv", byteArrayType),
+                ("iv", securityByteArrayType),
             ],
             symbols: symbols,
             interner: interner
@@ -180,8 +181,8 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_cipher_doFinal",
             ownerSymbol: cipherSymbol,
             ownerType: cipherType,
-            parameters: [("data", byteArrayType)],
-            returnType: byteArrayType,
+            parameters: [("data", securityByteArrayType)],
+            returnType: securityByteArrayType,
             symbols: symbols,
             interner: interner
         )
@@ -192,7 +193,7 @@ extension DataFlowSemaPhase {
             ownerSymbol: cipherSymbol,
             ownerType: cipherType,
             parameters: [],
-            returnType: byteArrayType,
+            returnType: securityByteArrayType,
             symbols: symbols,
             interner: interner
         )

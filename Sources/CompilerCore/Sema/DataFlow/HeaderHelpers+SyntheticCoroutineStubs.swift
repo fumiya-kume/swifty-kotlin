@@ -2588,4 +2588,76 @@ extension DataFlowSemaPhase {
         }
         return fqName
     }
+
+    /// Register an additional `withContext` overload that accepts a `CoroutineContext` parameter.
+    /// The standard helper skips registration when a function with the same FQName already exists,
+    /// so this method directly defines the symbol to allow multiple overloads.
+    private func registerSyntheticWithContextOverload(
+        contextType: TypeID,
+        externalLinkName: String,
+        packageFQName: [InternedString],
+        types: TypeSystem,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("withContext")
+        let functionFQName = packageFQName + [functionName]
+        let blockType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: types.anyType,
+            isSuspend: true,
+            nullability: .nonNull
+        )))
+        let parameters: [(name: String, type: TypeID)] = [
+            (name: "context", type: contextType),
+            (name: "block", type: blockType),
+        ]
+        // Check if an overload with identical parameter types already exists to avoid duplicates.
+        let existingSymbols = symbols.lookupAll(fqName: functionFQName)
+        let alreadyRegistered = existingSymbols.contains { id in
+            guard let sym = symbols.symbol(id), sym.kind == .function,
+                  let sig = symbols.functionSignature(for: id) else { return false }
+            return sig.parameterTypes == parameters.map(\.type)
+        }
+        guard !alreadyRegistered else { return }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let paramNameID = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: paramNameID,
+                fqName: functionFQName + [paramNameID],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameters.map(\.type),
+                returnType: types.anyType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
+    }
 }
