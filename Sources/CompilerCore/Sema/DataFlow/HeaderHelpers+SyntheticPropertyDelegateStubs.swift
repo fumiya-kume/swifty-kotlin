@@ -328,4 +328,37 @@ extension DataFlowSemaPhase {
             )
         }
     }
+
+    /// Updates the `parameters` property type of `KFunction` to `List<Any?>` once the
+    /// collection stubs have been registered.  Called from `registerSyntheticDelegateStubs`
+    /// after `registerSyntheticCollectionStubs` (STDLIB-REFLECT-063).
+    func patchKFunctionParametersType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        // Locate kotlin.collections.List
+        let listFQName: [InternedString] = [
+            interner.intern("kotlin"), interner.intern("collections"), interner.intern("List"),
+        ]
+        guard let listSymbol = symbols.lookup(fqName: listFQName),
+              let kFunctionSymbol = types.kFunctionInterfaceSymbol
+        else {
+            return
+        }
+        // Build List<Any?> type for parameters.
+        let nullableAny = types.makeNullable(types.anyType)
+        let listOfAnyNullable = types.make(.classType(ClassType(
+            classSymbol: listSymbol,
+            args: [.out(nullableAny)],
+            nullability: .nonNull
+        )))
+
+        // Update KFunction.parameters property type.
+        guard let kFunctionInfo = symbols.symbol(kFunctionSymbol) else { return }
+        let paramsPropFQ = kFunctionInfo.fqName + [interner.intern("parameters")]
+        if let paramsPropSymbol = symbols.lookup(fqName: paramsPropFQ) {
+            symbols.setPropertyType(listOfAnyNullable, for: paramsPropSymbol)
+        }
+    }
 }

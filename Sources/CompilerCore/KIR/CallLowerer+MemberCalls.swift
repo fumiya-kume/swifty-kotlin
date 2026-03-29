@@ -128,6 +128,132 @@ extension CallLowerer {
         "to", // FUNC-002
     ]
 
+    // MARK: - KFunction member access lowering (STDLIB-REFLECT-063)
+
+    /// Checks whether the receiver type is `kotlin.reflect.KFunction<*>`.
+    private func isKFunctionReceiverType(
+        _ receiverType: TypeID,
+        sema: SemaModule
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let kFuncSym = sema.types.kFunctionInterfaceSymbol,
+              classType.classSymbol == kFuncSym
+        else {
+            return false
+        }
+        return true
+    }
+
+    /// Lowers KFunction member access (name, isSuspend, parameters, call).
+    /// Returns the lowered expression ID or nil if not a KFunction member access.
+    private func tryLowerKFunctionMemberAccess(
+        _ exprID: ExprID,
+        receiverExpr: ExprID,
+        calleeName: InternedString,
+        args: [CallArgument],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        let calleeStr = interner.resolve(calleeName)
+        guard calleeStr == "name" || calleeStr == "isSuspend" || calleeStr == "parameters"
+                || calleeStr == "call"
+        else { return nil }
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+        guard isKFunctionReceiverType(receiverType, sema: sema) else { return nil }
+
+        // Lower the receiver expression.
+        let receiverID = driver.exprLowerer.lowerExpr(
+            receiverExpr, ast: ast, sema: sema, arena: arena, interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+
+        switch calleeStr {
+        case "name":
+            let resultType = sema.types.stringType
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_callable_ref_name"),
+                arguments: [receiverID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+
+        case "isSuspend":
+            let resultType = sema.types.booleanType
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_callable_ref_is_suspend"),
+                arguments: [receiverID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+
+        case "parameters":
+            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_callable_ref_parameters"),
+                arguments: [receiverID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+
+        case "call":
+            // Lower all arguments.
+            let loweredArgs = args.map { arg in
+                driver.exprLowerer.lowerExpr(
+                    arg.expr, ast: ast, sema: sema, arena: arena, interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
+            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            // Dispatch to the appropriate arity-specific callable ref call helper.
+            // Note: thrownResult is tracked separately in the KIR instruction; codegen appends
+            // the outThrown alloca automatically — do NOT include it in callArguments.
+            let callCallee: String
+            var callArguments: [KIRExprID] = [receiverID]
+            let thrownResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.nullableAnyType)
+            switch loweredArgs.count {
+            case 0:
+                callCallee = "kk_callable_ref_call_0"
+            case 1:
+                callCallee = "kk_callable_ref_call_1"
+                callArguments.append(contentsOf: loweredArgs)
+            default:
+                callCallee = "kk_callable_ref_call_2"
+                callArguments.append(contentsOf: loweredArgs.prefix(2))
+            }
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern(callCallee),
+                arguments: callArguments,
+                result: result,
+                canThrow: true,
+                thrownResult: thrownResult
+            ))
+            return result
+
+        default:
+            return nil
+        }
+    }
+
     // MARK: - KProperty member access lowering (PROP-007)
 
     /// Checks if the receiver type is a `kotlin.reflect.KProperty` (or related reflect interface)
@@ -218,6 +344,22 @@ extension CallLowerer {
             instructions: &instructions.instructions
         ) {
             return lateinitStatus
+        }
+
+        // ── KFunction<R>.name/isSuspend/parameters/call → kk_callable_ref_* ────
+        if let kFunctionResult = tryLowerKFunctionMemberAccess(
+            exprID,
+            receiverExpr: receiverExpr,
+            calleeName: calleeName,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions.instructions
+        ) {
+            return kFunctionResult
         }
 
         // ── KProperty<*>.name → kk_kproperty_stub_name(receiver) ────────

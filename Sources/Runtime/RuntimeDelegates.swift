@@ -95,6 +95,76 @@ public func kk_callable_ref_name(_ tagged: Int) -> Int {
     }
 }
 
+// STDLIB-REFLECT-063: KFunction reflection helpers for callable refs.
+
+@_cdecl("kk_callable_ref_arity")
+public func kk_callable_ref_arity(_ tagged: Int) -> Int {
+    runtimeStorage.withLock { state in
+        state.callableRefMetadataByValue[tagged]?.arity ?? 0
+    }
+}
+
+@_cdecl("kk_callable_ref_is_suspend")
+public func kk_callable_ref_is_suspend(_ tagged: Int) -> Int {
+    // Top-level callable refs created via :: are never suspend functions.
+    return 0
+}
+
+@_cdecl("kk_callable_ref_parameters")
+public func kk_callable_ref_parameters(_ tagged: Int) -> Int {
+    let arity = runtimeStorage.withLock { state in
+        state.callableRefMetadataByValue[tagged]?.arity ?? 0
+    }
+    // Return a runtime List of placeholder ints (one element per parameter).
+    let placeholders = Array(repeating: 0, count: max(0, arity))
+    return registerRuntimeObject(RuntimeListBox(elements: placeholders))
+}
+
+/// Invokes a callable ref (tagged function pointer) with zero arguments (STDLIB-REFLECT-063).
+@_cdecl("kk_callable_ref_call_0")
+public func kk_callable_ref_call_0(
+    _ tagged: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard tagged != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "KFunction call: null function reference")
+        return 0
+    }
+    let fn = unsafeBitCast(tagged, to: KKThunkEntryPoint.self)
+    return fn(outThrown)
+}
+
+/// Invokes a callable ref (tagged function pointer) with one argument (STDLIB-REFLECT-063).
+@_cdecl("kk_callable_ref_call_1")
+public func kk_callable_ref_call_1(
+    _ tagged: Int,
+    _ arg: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard tagged != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "KFunction call: null function reference")
+        return 0
+    }
+    let fn = unsafeBitCast(tagged, to: KKFunctionEntryPoint1.self)
+    return fn(arg, outThrown)
+}
+
+/// Invokes a callable ref (tagged function pointer) with two arguments (STDLIB-REFLECT-063).
+@_cdecl("kk_callable_ref_call_2")
+public func kk_callable_ref_call_2(
+    _ tagged: Int,
+    _ arg1: Int,
+    _ arg2: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard tagged != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "KFunction call: null function reference")
+        return 0
+    }
+    let fn = unsafeBitCast(tagged, to: KKFunctionEntryPoint2.self)
+    return fn(arg1, arg2, outThrown)
+}
+
 @_cdecl("kk_kproperty_stub_create")
 public func kk_kproperty_stub_create(_ nameStr: Int, _ returnTypeStr: Int) -> Int {
     let stub = RuntimeKPropertyStub(name: nameStr, returnType: returnTypeStr)

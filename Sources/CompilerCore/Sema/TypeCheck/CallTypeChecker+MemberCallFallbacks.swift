@@ -1852,4 +1852,70 @@ extension CallTypeChecker {
         }
         return knownNames.isArrayLikeName(symbol.name)
     }
+
+    // MARK: - KFunction member call fallback (STDLIB-REFLECT-063)
+
+    /// Checks whether the receiver type is `kotlin.reflect.KFunction<*>`.
+    private func isKFunctionReceiverType(
+        _ receiverType: TypeID,
+        sema: SemaModule
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let kFuncSym = sema.types.kFunctionInterfaceSymbol,
+              classType.classSymbol == kFuncSym
+        else {
+            return false
+        }
+        return true
+    }
+
+    /// Returns the return-type argument of a `KFunction<R>` type, or `anyType` when not available.
+    private func kFunctionReturnType(
+        _ receiverType: TypeID,
+        sema: SemaModule
+    ) -> TypeID {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              classType.args.count == 1
+        else {
+            return sema.types.anyType
+        }
+        switch classType.args[0] {
+        case let .out(t), let .invariant(t): return t
+        default: return sema.types.anyType
+        }
+    }
+
+    /// Handles member calls on `KFunction<R>` receivers:
+    /// - `call(vararg args)` → returns R (the KFunction type argument)
+    func tryKFunctionMemberFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        isClassNameReceiver: Bool,
+        safeCall: Bool,
+        receiverID: ExprID,
+        args: [CallArgument],
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        guard !isClassNameReceiver else { return nil }
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        guard isKFunctionReceiverType(receiverType, sema: sema) else { return nil }
+        let memberName = interner.resolve(calleeName)
+
+        switch memberName {
+        case "call":
+            // Infer argument types (accept any).
+            for arg in args {
+                _ = driver.inferExpr(arg.expr, ctx: ctx, locals: &locals, expectedType: nil)
+            }
+            let returnType = kFunctionReturnType(receiverType, sema: sema)
+            let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        default:
+            return nil
+        }
+    }
 }

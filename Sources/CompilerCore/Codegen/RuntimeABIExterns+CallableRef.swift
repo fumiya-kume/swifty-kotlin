@@ -32,10 +32,64 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    /// Returns the arity (number of value parameters) of the callable ref (STDLIB-REFLECT-063).
+    /// Signature: kk_callable_ref_arity(tagged) -> intptr_t
+    static let kk_callable_ref_arity = ExternDecl(
+        name: "kk_callable_ref_arity",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// Returns 1 if the callable ref is a suspend function, 0 otherwise (STDLIB-REFLECT-063).
+    /// Signature: kk_callable_ref_is_suspend(tagged) -> intptr_t
+    static let kk_callable_ref_is_suspend = ExternDecl(
+        name: "kk_callable_ref_is_suspend",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// Returns the value-parameter list as a runtime List (STDLIB-REFLECT-063).
+    /// Signature: kk_callable_ref_parameters(tagged) -> list_handle
+    static let kk_callable_ref_parameters = ExternDecl(
+        name: "kk_callable_ref_parameters",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// Invokes a callable ref with zero arguments (STDLIB-REFLECT-063).
+    /// Signature: kk_callable_ref_call_0(tagged, outThrown) -> result
+    static let kk_callable_ref_call_0 = ExternDecl(
+        name: "kk_callable_ref_call_0",
+        parameterTypes: ["intptr_t", "intptr_t*"],
+        returnType: "intptr_t"
+    )
+
+    /// Invokes a callable ref with one argument (STDLIB-REFLECT-063).
+    /// Signature: kk_callable_ref_call_1(tagged, arg, outThrown) -> result
+    static let kk_callable_ref_call_1 = ExternDecl(
+        name: "kk_callable_ref_call_1",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t*"],
+        returnType: "intptr_t"
+    )
+
+    /// Invokes a callable ref with two arguments (STDLIB-REFLECT-063).
+    /// Signature: kk_callable_ref_call_2(tagged, arg1, arg2, outThrown) -> result
+    static let kk_callable_ref_call_2 = ExternDecl(
+        name: "kk_callable_ref_call_2",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t*"],
+        returnType: "intptr_t"
+    )
+
     /// Combined array for use in `allExterns` concatenation.
     static let callableRefExterns: [ExternDecl] = [
         kk_callable_ref_tag_kfunction,
         kk_callable_ref_tag_kproperty,
         kk_callable_ref_name,
+        kk_callable_ref_arity,
+        kk_callable_ref_is_suspend,
+        kk_callable_ref_parameters,
+        kk_callable_ref_call_0,
+        kk_callable_ref_call_1,
+        kk_callable_ref_call_2,
     ]
 }
