@@ -1618,6 +1618,10 @@ public enum RuntimeABIExterns {
     /// Async builder with dispatcher specification — async(dispatcher) { body }.
     public static let kk_kxmini_async_with_dispatcher = ExternDecl(
         name: "kk_kxmini_async_with_dispatcher",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // Dispatcher-aware launch (STDLIB-CORO-072)
 
     public static let kk_kxmini_launch_with_dispatcher = ExternDecl(

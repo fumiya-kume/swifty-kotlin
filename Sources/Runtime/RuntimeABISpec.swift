@@ -2050,6 +2050,10 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "handle", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
         // Dispatcher-aware launch (STDLIB-CORO-072)
         RuntimeABIFunctionSpec(
             name: "kk_kxmini_launch_with_dispatcher",
@@ -2075,6 +2079,11 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "dispatcherTag", type: .intptr),
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
                 RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_kxmini_launch_with_dispatcher_and_cont",
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
