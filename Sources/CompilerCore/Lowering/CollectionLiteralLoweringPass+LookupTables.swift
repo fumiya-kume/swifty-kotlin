@@ -60,6 +60,9 @@ struct CollectionLiteralLookupTables {
     let kkSetFilterName: InternedString
     let kkSetForEachName: InternedString
     let kkSetToListName: InternedString
+    let kkSetFilterNotName: InternedString
+    let kkSetMapNotNullName: InternedString
+    let kkSetFlatMapName: InternedString
 
     let kkStringSplitName: InternedString
     let kkStringChunkedName: InternedString
@@ -705,6 +708,9 @@ struct CollectionLiteralLookupTables {
         kkSetFilterName = interner.intern("kk_set_filter")
         kkSetForEachName = interner.intern("kk_set_forEach")
         kkSetToListName = interner.intern("kk_set_toList")
+        kkSetFilterNotName = interner.intern("kk_set_filterNot")
+        kkSetMapNotNullName = interner.intern("kk_set_mapNotNull")
+        kkSetFlatMapName = interner.intern("kk_set_flatMap")
         kkStringSplitName = interner.intern("kk_string_split")
         kkStringChunkedName = interner.intern("kk_string_chunked")
         kkStringWindowedName = interner.intern("kk_string_windowed")

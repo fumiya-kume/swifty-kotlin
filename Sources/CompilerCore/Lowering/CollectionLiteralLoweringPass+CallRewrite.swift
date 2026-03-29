@@ -2672,6 +2672,9 @@ extension CollectionLiteralLoweringPass {
                             if setExprIDs.contains(receiverID.rawValue),
                                callee == lookup.mapName || callee == lookup.filterName
                                || callee == lookup.forEachName
+                               || callee == lookup.filterNotName
+                               || callee == lookup.mapNotNullName
+                               || callee == lookup.flatMapName
                             {
                                 let closureRawID: KIRExprID
                                 if arguments.count == 3 {
@@ -2685,9 +2688,14 @@ extension CollectionLiteralLoweringPass {
                                 case lookup.mapName: lookup.kkSetMapName
                                 case lookup.filterName: lookup.kkSetFilterName
                                 case lookup.forEachName: lookup.kkSetForEachName
+                                case lookup.filterNotName: lookup.kkSetFilterNotName
+                                case lookup.mapNotNullName: lookup.kkSetMapNotNullName
+                                case lookup.flatMapName: lookup.kkSetFlatMapName
                                 default: callee
                                 }
                                 let needsListTag = callee == lookup.mapName || callee == lookup.filterName
+                                    || callee == lookup.filterNotName || callee == lookup.mapNotNullName
+                                    || callee == lookup.flatMapName
                                 let hofResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)), type: nil
                                 )
