@@ -307,6 +307,51 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-REGEX-094: Regex.matches(input: String) -> Boolean ---
+        registerRegexMemberFunction(
+            named: "matches",
+            externalLinkName: "kk_regex_matches",
+            ownerSymbol: regexSymbol,
+            ownerType: regexType,
+            parameters: [("input", stringType, false, false)],
+            returnType: boolType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-REGEX-094: String.replaceFirst(regex: Regex, replacement: String) -> String ---
+        // Registered as a kotlin.text package-level extension function with String receiver.
+        registerRegexStringExtensionFunction(
+            named: "replaceFirst",
+            externalLinkName: "kk_string_replaceFirst_regex",
+            packageFQName: kotlinTextPkg,
+            receiverType: stringType,
+            parameters: [
+                ("regex", regexType, false, false),
+                ("replacement", stringType, false, false),
+            ],
+            returnType: stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-REGEX-094: Regex.Companion.fromLiteral(literal: String): Regex ---
+        let regexCompanionFQName = ensureRegexCompanionSymbol(
+            ownerSymbol: regexSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerRegexCompanionMethod(
+            named: "fromLiteral",
+            externalLinkName: "kk_regex_from_literal",
+            companionFQName: regexCompanionFQName,
+            parameters: [("literal", stringType)],
+            returnType: regexType,
+            types: types,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Helpers
@@ -619,5 +664,181 @@ extension DataFlowSemaPhase {
             args: [.out(elementType)],
             nullability: .nonNull
         )))
+    }
+
+    // MARK: - STDLIB-REGEX-094: Package-level String extension helpers
+
+    /// Registers a package-level extension function on String (e.g. `kotlin.text.replaceFirst`).
+    private func registerRegexStringExtensionFunction(
+        named name: String,
+        externalLinkName: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID, hasDefault: Bool, isVararg: Bool)],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else { return false }
+            return existingSignature.receiverType == receiverType
+                && existingSignature.parameterTypes == parameters.map(\.type)
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var parameterTypes: [TypeID] = []
+        var parameterSymbols: [SymbolID] = []
+        var parameterDefaults: [Bool] = []
+        var parameterVarargs: [Bool] = []
+
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            parameterTypes.append(parameter.type)
+            parameterSymbols.append(parameterSymbol)
+            parameterDefaults.append(parameter.hasDefault)
+            parameterVarargs.append(parameter.isVararg)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: parameterDefaults,
+                valueParameterIsVararg: parameterVarargs
+            ),
+            for: functionSymbol
+        )
+    }
+
+    // MARK: - STDLIB-REGEX-094: Regex.Companion helpers
+
+    /// Ensures a Companion object symbol exists for the Regex class and returns its FQ name.
+    private func ensureRegexCompanionSymbol(
+        ownerSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> [InternedString] {
+        if let existingCompanion = symbols.companionObjectSymbol(for: ownerSymbol),
+           let companionInfo = symbols.symbol(existingCompanion)
+        {
+            return companionInfo.fqName
+        }
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return [] }
+        let companionName = interner.intern("Companion")
+        let companionFQName = ownerInfo.fqName + [companionName]
+        let companionSymbol = symbols.define(
+            kind: .object,
+            name: companionName,
+            fqName: companionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .static]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: companionSymbol)
+        symbols.setCompanionObjectSymbol(companionSymbol, for: ownerSymbol)
+        return companionFQName
+    }
+
+    /// Registers a static method on the Regex Companion object.
+    /// Sets the Companion object type as `receiverType` on the function signature so that
+    /// `CallTypeChecker+MemberCallInference.swift` can resolve `Regex.fromLiteral(...)`
+    /// via the companion candidates path (which requires `signature.receiverType != nil`).
+    private func registerRegexCompanionMethod(
+        named name: String,
+        externalLinkName: String,
+        companionFQName: [InternedString],
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        types: TypeSystem,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let memberName = interner.intern(name)
+        let memberFQName = companionFQName + [memberName]
+
+        guard let companionSymbol = symbols.lookup(fqName: companionFQName) else { return }
+
+        // Build the Companion object's own type. This is used as the `receiverType`
+        // in the FunctionSignature so that the companion resolution path in
+        // CallTypeChecker (which guards `signature.receiverType != nil`) accepts it.
+        let companionType = types.make(.classType(ClassType(
+            classSymbol: companionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else { return false }
+            return existingSignature.parameterTypes == parameters.map(\.type)
+                && existingSignature.returnType == returnType
+        }) == nil else { return }
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(companionSymbol, for: memberSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: memberFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: companionType,
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: memberSymbol
+        )
     }
 }

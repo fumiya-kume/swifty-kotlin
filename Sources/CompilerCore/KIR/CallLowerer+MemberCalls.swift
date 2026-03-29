@@ -2433,10 +2433,16 @@ extension CallLowerer {
         }
 
         // String stdlib: replaceFirst(oldValue, newValue) (STDLIB-188)
+        // Skip when first arg is a Regex — handled by the STDLIB-REGEX-094 block below.
         if args.count == 2, interner.resolve(calleeName) == "replaceFirst" {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
-            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+            let firstArgIsRegex = isRegexLikeType(
+                sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType,
+                sema: sema,
+                interner: interner
+            )
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType), !firstArgIsRegex {
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern("kk_string_replaceFirst"),
@@ -2483,6 +2489,28 @@ extension CallLowerer {
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern(runtimeCallee),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // String stdlib: replaceFirst(regex, replacement) (STDLIB-REGEX-094)
+        if args.count == 2, interner.resolve(calleeName) == "replaceFirst" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
+               isRegexLikeType(
+                   sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType,
+                   sema: sema,
+                   interner: interner
+               ) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_replaceFirst_regex"),
                     arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
                     result: result,
                     canThrow: false,

@@ -4343,6 +4343,38 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Regex"
         ),
+        // STDLIB-REGEX-094: Regex.matches(input)
+        RuntimeABIFunctionSpec(
+            name: "kk_regex_matches",
+            parameters: [
+                RuntimeABIParameter(name: "regexRaw", type: .intptr),
+                RuntimeABIParameter(name: "inputRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        // STDLIB-REGEX-094: Regex.fromLiteral
+        // First param is the Companion object receiver (ignored at runtime).
+        RuntimeABIFunctionSpec(
+            name: "kk_regex_from_literal",
+            parameters: [
+                RuntimeABIParameter(name: "companionRef", type: .intptr),
+                RuntimeABIParameter(name: "literalRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        // STDLIB-REGEX-094: String.replaceFirst(Regex, replacement)
+        RuntimeABIFunctionSpec(
+            name: "kk_string_replaceFirst_regex",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+                RuntimeABIParameter(name: "regex", type: .intptr),
+                RuntimeABIParameter(name: "replacement", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
         // STDLIB-REGEX-097: Regex.groupNames
         RuntimeABIFunctionSpec(
             name: "kk_regex_group_names",
