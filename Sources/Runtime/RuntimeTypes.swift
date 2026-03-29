@@ -876,6 +876,68 @@ final class RuntimeKFunctionBox {
     }
 }
 
+// MARK: - kotlin.reflect.KConstructor (STDLIB-REFLECT-064)
+
+/// Visibility level for Kotlin declarations, matching kotlin.reflect.KVisibility ordinals.
+/// public=0, protected=1, internal=2, private=3
+enum RuntimeKVisibility: Int {
+    case `public` = 0
+    case `protected` = 1
+    case `internal` = 2
+    case `private` = 3
+}
+
+/// Runtime box for a single constructor parameter descriptor.
+/// Corresponds to `kotlin.reflect.KParameter`.
+final class RuntimeKParameterBox {
+    /// Parameter index (0-based).
+    let index: Int
+    /// Parameter name as a raw runtime string handle, or 0 if unnamed.
+    let nameRaw: Int
+    /// Whether this parameter has a default value.
+    let hasDefault: Bool
+
+    init(index: Int, nameRaw: Int, hasDefault: Bool) {
+        self.index = index
+        self.nameRaw = nameRaw
+        self.hasDefault = hasDefault
+    }
+}
+
+/// Runtime box for `kotlin.reflect.KConstructor<T>`.
+/// Represents a constructor of a Kotlin class, providing access to parameters,
+/// visibility, call() invocation, and primary/secondary distinction.
+final class RuntimeKConstructorBox {
+    /// Owning KClass raw handle.
+    let kclassRaw: Int
+    /// Constructor function pointer used by call() dispatch. Zero when not callable.
+    let fnPtr: Int
+    /// Number of value parameters (excluding dispatch receiver).
+    let parameterCount: Int
+    /// Visibility of this constructor.
+    let visibility: RuntimeKVisibility
+    /// Whether this is the primary constructor.
+    let isPrimary: Bool
+    /// Parameter descriptor raw handles (RuntimeKParameterBox).
+    let parameterRaws: [Int]
+
+    init(
+        kclassRaw: Int,
+        fnPtr: Int,
+        parameterCount: Int,
+        visibility: RuntimeKVisibility = .public,
+        isPrimary: Bool = true,
+        parameterRaws: [Int] = []
+    ) {
+        self.kclassRaw = kclassRaw
+        self.fnPtr = fnPtr
+        self.parameterCount = parameterCount
+        self.visibility = visibility
+        self.isPrimary = isPrimary
+        self.parameterRaws = parameterRaws
+    }
+}
+
 // MARK: - BufferedReader (STDLIB-567)
 
 /// Runtime box for `java.io.BufferedReader` returned by `File.bufferedReader()`.

@@ -127,6 +127,196 @@ public func kk_kclass_get_arity(_ kclassRaw: Int) -> Int {
     return 0
 }
 
+// MARK: - KConstructor Reflection (STDLIB-REFLECT-064)
+
+private func runtimeKConstructorBox(from raw: Int) -> RuntimeKConstructorBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    let isObj = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObj else { return nil }
+    return tryCast(ptr, to: RuntimeKConstructorBox.self)
+}
+
+private func runtimeKParameterBox(from raw: Int) -> RuntimeKParameterBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    let isObj = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObj else { return nil }
+    return tryCast(ptr, to: RuntimeKParameterBox.self)
+}
+
+/// Creates a KConstructor runtime box.
+/// - Parameters:
+///   - kclassRaw: intptr_t handle to the owning KClass box
+///   - fnPtr: raw C function pointer for call() dispatch (0 = not directly callable)
+///   - parameterCount: number of value parameters
+///   - visibilityOrdinal: 0=public, 1=protected, 2=internal, 3=private
+///   - isPrimary: 1 if this is the primary constructor, 0 for secondary
+@_cdecl("kk_kconstructor_create")
+public func kk_kconstructor_create(
+    _ kclassRaw: Int,
+    _ fnPtr: Int,
+    _ parameterCount: Int,
+    _ visibilityOrdinal: Int,
+    _ isPrimary: Int
+) -> Int {
+    let visibility = RuntimeKVisibility(rawValue: visibilityOrdinal) ?? .public
+    let box = RuntimeKConstructorBox(
+        kclassRaw: kclassRaw,
+        fnPtr: fnPtr,
+        parameterCount: parameterCount,
+        visibility: visibility,
+        isPrimary: isPrimary != 0
+    )
+    return registerRuntimeObject(box)
+}
+
+/// Returns the value-parameter list of a KConstructor as a runtime List of KParameter boxes.
+@_cdecl("kk_kconstructor_get_parameters")
+public func kk_kconstructor_get_parameters(_ kconstructor: Int) -> Int {
+    guard let box = runtimeKConstructorBox(from: kconstructor) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    if !box.parameterRaws.isEmpty {
+        return registerRuntimeObject(RuntimeListBox(elements: box.parameterRaws))
+    }
+    // Return placeholders for the parameter count when no descriptors are registered.
+    let placeholders = Array(repeating: 0, count: max(0, box.parameterCount))
+    return registerRuntimeObject(RuntimeListBox(elements: placeholders))
+}
+
+/// Returns the value-parameter list (alias for parameters, excluding instance/extension receivers).
+@_cdecl("kk_kconstructor_get_value_parameters")
+public func kk_kconstructor_get_value_parameters(_ kconstructor: Int) -> Int {
+    return kk_kconstructor_get_parameters(kconstructor)
+}
+
+/// Returns the visibility ordinal of the KConstructor (0=public, 1=protected, 2=internal, 3=private).
+@_cdecl("kk_kconstructor_get_visibility")
+public func kk_kconstructor_get_visibility(_ kconstructor: Int) -> Int {
+    guard let box = runtimeKConstructorBox(from: kconstructor) else {
+        return RuntimeKVisibility.public.rawValue
+    }
+    return box.visibility.rawValue
+}
+
+/// Returns 1 if this is the primary constructor, 0 if it is a secondary constructor.
+@_cdecl("kk_kconstructor_is_primary")
+public func kk_kconstructor_is_primary(_ kconstructor: Int) -> Int {
+    guard let box = runtimeKConstructorBox(from: kconstructor) else {
+        return 0
+    }
+    return box.isPrimary ? 1 : 0
+}
+
+/// Invokes the KConstructor with zero arguments and returns the new instance.
+@_cdecl("kk_kconstructor_call_0")
+public func kk_kconstructor_call_0(
+    _ kconstructor: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let box = runtimeKConstructorBox(from: kconstructor) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "KConstructor call: invalid handle")
+        return 0
+    }
+    guard box.fnPtr != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "KConstructor is not directly callable")
+        return 0
+    }
+    guard box.parameterCount == 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "KConstructor call arity mismatch: expected 0, got \(box.parameterCount)")
+        return 0
+    }
+    let fn = unsafeBitCast(box.fnPtr, to: KKThunkEntryPoint.self)
+    return fn(outThrown)
+}
+
+/// Invokes the KConstructor with one argument and returns the new instance.
+@_cdecl("kk_kconstructor_call_1")
+public func kk_kconstructor_call_1(
+    _ kconstructor: Int,
+    _ arg: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let box = runtimeKConstructorBox(from: kconstructor) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "KConstructor call: invalid handle")
+        return 0
+    }
+    guard box.fnPtr != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "KConstructor is not directly callable")
+        return 0
+    }
+    guard box.parameterCount == 1 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "KConstructor call arity mismatch: expected 1, got \(box.parameterCount)")
+        return 0
+    }
+    let fn = unsafeBitCast(box.fnPtr, to: KKFunctionEntryPoint1.self)
+    return fn(arg, outThrown)
+}
+
+/// Invokes the KConstructor with two arguments and returns the new instance.
+@_cdecl("kk_kconstructor_call_2")
+public func kk_kconstructor_call_2(
+    _ kconstructor: Int,
+    _ arg1: Int,
+    _ arg2: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let box = runtimeKConstructorBox(from: kconstructor) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "KConstructor call: invalid handle")
+        return 0
+    }
+    guard box.fnPtr != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "KConstructor is not directly callable")
+        return 0
+    }
+    guard box.parameterCount == 2 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "KConstructor call arity mismatch: expected 2, got \(box.parameterCount)")
+        return 0
+    }
+    let fn = unsafeBitCast(box.fnPtr, to: KKFunctionEntryPoint2.self)
+    return fn(arg1, arg2, outThrown)
+}
+
+/// Creates a KParameter descriptor box.
+/// - Parameters:
+///   - index: 0-based parameter index
+///   - nameRaw: intptr_t to a KKString for the parameter name (0 = unnamed)
+///   - hasDefault: 1 if the parameter has a default value, 0 otherwise
+@_cdecl("kk_kparameter_create")
+public func kk_kparameter_create(_ index: Int, _ nameRaw: Int, _ hasDefault: Int) -> Int {
+    let box = RuntimeKParameterBox(index: index, nameRaw: nameRaw, hasDefault: hasDefault != 0)
+    return registerRuntimeObject(box)
+}
+
+/// Returns the index of a KParameter (0-based).
+@_cdecl("kk_kparameter_get_index")
+public func kk_kparameter_get_index(_ kparameterRaw: Int) -> Int {
+    guard let box = runtimeKParameterBox(from: kparameterRaw) else { return 0 }
+    return box.index
+}
+
+/// Returns the name of a KParameter as a KKString raw pointer, or null sentinel if unnamed.
+@_cdecl("kk_kparameter_get_name")
+public func kk_kparameter_get_name(_ kparameterRaw: Int) -> Int {
+    guard let box = runtimeKParameterBox(from: kparameterRaw) else {
+        return runtimeNullSentinelInt
+    }
+    return box.nameRaw != 0 ? box.nameRaw : runtimeNullSentinelInt
+}
+
+/// Returns 1 if the KParameter has a default value, 0 otherwise.
+@_cdecl("kk_kparameter_has_default")
+public func kk_kparameter_has_default(_ kparameterRaw: Int) -> Int {
+    guard let box = runtimeKParameterBox(from: kparameterRaw) else { return 0 }
+    return box.hasDefault ? 1 : 0
+}
+
 // MARK: - KFunction Dynamic Call (STDLIB-REFLECT-067)
 
 private func runtimeKFunctionBox(from raw: Int) -> RuntimeKFunctionBox? {
@@ -401,40 +591,4 @@ public func kk_kfunction_call_vararg(
         )
         return 0
     }
-}
-
-// MARK: - STDLIB-REFLECT-066: KType toString
-
-/// Internal helper to render a KTypeBox as a human-readable string.
-func runtimeKTypeToString(_ box: RuntimeKTypeBox) -> String {
-    var baseName = "kotlin.Any"
-    if box.classifierRaw != 0,
-       box.classifierRaw != runtimeNullSentinelInt,
-       let classifierPtr = UnsafeMutableRawPointer(bitPattern: box.classifierRaw),
-       runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: classifierPtr)) }),
-       let kclassBox = tryCast(classifierPtr, to: RuntimeKClassBox.self)
-    {
-        let qualName = kclassBox.reflectionQualifiedName
-        if !qualName.isEmpty {
-            baseName = qualName
-        } else {
-            let simpleName = kclassBox.reflectionSimpleName
-            if !simpleName.isEmpty {
-                baseName = simpleName
-            }
-        }
-    }
-    return box.isMarkedNullable ? baseName + "?" : baseName
-}
-
-/// Returns a human-readable string for a KType, e.g. "kotlin.String" or "kotlin.String?".
-@_cdecl("kk_ktype_to_string")
-public func kk_ktype_to_string(_ ktypeRaw: Int) -> Int {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: ktypeRaw),
-          runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
-          let box = tryCast(ptr, to: RuntimeKTypeBox.self)
-    else {
-        return runtimeReflectionStringRaw("kotlin.Any")
-    }
-    return runtimeReflectionStringRaw(runtimeKTypeToString(box))
 }

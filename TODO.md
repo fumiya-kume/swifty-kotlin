@@ -363,7 +363,7 @@
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/kfunction_basic.kt`
 
-- [ ] STDLIB-REFLECT-064: KConstructor完全実装
+- [x] STDLIB-REFLECT-064: KConstructor完全実装
   - **仕様**: KConstructorインターフェースの完全サポート
   - **実装内容**:
     - コンストラクタパラメータ: parameters, valueParameters
@@ -371,8 +371,8 @@
     - インスタンス生成: call()
     - プライマリコンストラクタ: isPrimary
     - セカンダリコンストラクタ
-  - **現状**: 基本的なKConstructorは実装済み、呼び出しは未実装
-  - **関連ファイル**: `RuntimeReflection.swift`
+  - **現状**: RuntimeKConstructorBox, RuntimeKParameterBox, RuntimeKVisibility, kk_kconstructor_*/kk_kparameter_* ABI 実装済み
+  - **関連ファイル**: `RuntimeReflection.swift`, `RuntimeTypes.swift`, `RuntimeABIExterns+KConstructor.swift`
   - **テストケース**: `Scripts/diff_cases/kconstructor_basic.kt`
 
 - [ ] STDLIB-REFLECT-065: アノテーションリフレクション完全実装

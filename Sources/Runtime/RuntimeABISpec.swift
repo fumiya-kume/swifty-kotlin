@@ -3112,6 +3112,115 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "TypeCheck"
         ),
+        // STDLIB-REFLECT-064: KConstructor full implementation
+        RuntimeABIFunctionSpec(
+            name: "kk_kconstructor_create",
+            parameters: [
+                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "parameterCount", type: .intptr),
+                RuntimeABIParameter(name: "visibilityOrdinal", type: .intptr),
+                RuntimeABIParameter(name: "isPrimary", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kconstructor_get_parameters",
+            parameters: [
+                RuntimeABIParameter(name: "kconstructor", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kconstructor_get_value_parameters",
+            parameters: [
+                RuntimeABIParameter(name: "kconstructor", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kconstructor_get_visibility",
+            parameters: [
+                RuntimeABIParameter(name: "kconstructor", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kconstructor_is_primary",
+            parameters: [
+                RuntimeABIParameter(name: "kconstructor", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kconstructor_call_0",
+            parameters: [
+                RuntimeABIParameter(name: "kconstructor", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kconstructor_call_1",
+            parameters: [
+                RuntimeABIParameter(name: "kconstructor", type: .intptr),
+                RuntimeABIParameter(name: "arg", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kconstructor_call_2",
+            parameters: [
+                RuntimeABIParameter(name: "kconstructor", type: .intptr),
+                RuntimeABIParameter(name: "arg1", type: .intptr),
+                RuntimeABIParameter(name: "arg2", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kparameter_create",
+            parameters: [
+                RuntimeABIParameter(name: "index", type: .intptr),
+                RuntimeABIParameter(name: "nameRaw", type: .intptr),
+                RuntimeABIParameter(name: "hasDefault", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kparameter_get_index",
+            parameters: [
+                RuntimeABIParameter(name: "kparameterRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kparameter_get_name",
+            parameters: [
+                RuntimeABIParameter(name: "kparameterRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kparameter_has_default",
+            parameters: [
+                RuntimeABIParameter(name: "kparameterRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
     ]
 
     /// Range/Progression (P5-68)
