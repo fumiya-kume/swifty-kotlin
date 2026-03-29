@@ -66,7 +66,7 @@ public extension RuntimeABIExterns {
 
     static let kk_biginteger_pow = ExternDecl(
         name: "kk_biginteger_pow",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

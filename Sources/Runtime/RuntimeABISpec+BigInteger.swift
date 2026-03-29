@@ -78,6 +78,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "self", type: .intptr),
                 RuntimeABIParameter(name: "exponent", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "BigInteger"
