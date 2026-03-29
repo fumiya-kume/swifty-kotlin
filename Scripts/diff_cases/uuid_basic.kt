@@ -49,3 +49,4 @@ fun main() {
 
     println("OK")
 }
+// SKIP-DIFF: uses non-standard APIs (version(), variant(), mostSignificantBits, leastSignificantBits, nameUUIDFromBytes) not in kotlin.uuid.Uuid
