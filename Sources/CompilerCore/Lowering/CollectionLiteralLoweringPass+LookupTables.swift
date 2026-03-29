@@ -603,6 +603,12 @@ struct CollectionLiteralLookupTables {
     let kkFileUseLinesName: InternedString
     let bufferedReaderName: InternedString
     let kkFileBufferedReaderName: InternedString
+    let bufferedWriterName: InternedString
+    let kkFileBufferedWriterName: InternedString
+    let kkBufferedWriterWriteName: InternedString
+    let kkBufferedWriterNewLineName: InternedString
+    let kkBufferedWriterFlushName: InternedString
+    let kkBufferedWriterCloseName: InternedString
     let kkFileDeleteName: InternedString
     let mkdirsName: InternedString
     let kkFileMkdirsName: InternedString
@@ -1199,6 +1205,12 @@ struct CollectionLiteralLookupTables {
         kkFileUseLinesName = interner.intern("kk_file_useLines")
         bufferedReaderName = interner.intern("bufferedReader")
         kkFileBufferedReaderName = interner.intern("kk_file_bufferedReader")
+        bufferedWriterName = interner.intern("bufferedWriter")
+        kkFileBufferedWriterName = interner.intern("kk_file_bufferedWriter")
+        kkBufferedWriterWriteName = interner.intern("kk_buffered_writer_write")
+        kkBufferedWriterNewLineName = interner.intern("kk_buffered_writer_new_line")
+        kkBufferedWriterFlushName = interner.intern("kk_buffered_writer_flush")
+        kkBufferedWriterCloseName = interner.intern("kk_buffered_writer_close")
         kkFileDeleteName = interner.intern("kk_file_delete")
         mkdirsName = interner.intern("mkdirs")
         kkFileMkdirsName = interner.intern("kk_file_mkdirs")

@@ -165,6 +165,8 @@ extension CollectionLiteralLoweringPass {
             kkCallee = lookup.kkFileUseLinesName
         case lookup.bufferedReaderName:
             kkCallee = lookup.kkFileBufferedReaderName
+        case lookup.bufferedWriterName:
+            kkCallee = lookup.kkFileBufferedWriterName
         case lookup.walkName:
             kkCallee = lookup.kkFileWalkName
         case lookup.listFilesName:

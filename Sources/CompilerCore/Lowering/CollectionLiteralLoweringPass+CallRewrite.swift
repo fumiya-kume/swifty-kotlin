@@ -935,6 +935,9 @@ extension CollectionLiteralLoweringPass {
                             // Only rewrite argument-less bufferedReader(); the runtime
                             // function kk_file_bufferedReader does not accept charset/bufferSize.
                             kkCallee = arguments.count == 1 ? lookup.kkFileBufferedReaderName : nil
+                        case lookup.bufferedWriterName:
+                            // Only rewrite argument-less bufferedWriter()
+                            kkCallee = arguments.count == 1 ? lookup.kkFileBufferedWriterName : nil
                         case lookup.walkName:
                             kkCallee = lookup.kkFileWalkName
                         case lookup.listFilesName:
@@ -973,8 +976,10 @@ extension CollectionLiteralLoweringPass {
                             {
                                 listExprIDs.insert(result.rawValue)
                             }
-                            // Track bufferedReader() result as a file-like expr for chained member calls
-                            if let result, callee == lookup.bufferedReaderName {
+                            // Track bufferedReader()/bufferedWriter() results as file-like exprs for chained member calls
+                            if let result,
+                               callee == lookup.bufferedReaderName || callee == lookup.bufferedWriterName
+                            {
                                 fileExprIDs.insert(result.rawValue)
                             }
                             continue

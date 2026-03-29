@@ -3198,6 +3198,50 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+    // STDLIB-IO-091: BufferedReader.read() / ready()
+    public static let kk_buffered_reader_read = ExternDecl(
+        name: "kk_buffered_reader_read",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_reader_ready = ExternDecl(
+        name: "kk_buffered_reader_ready",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    // STDLIB-IO-091: BufferedWriter
+    public static let kk_file_bufferedWriter = ExternDecl(
+        name: "kk_file_bufferedWriter",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_writer_write = ExternDecl(
+        name: "kk_buffered_writer_write",
+        parameterTypes: [intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_writer_new_line = ExternDecl(
+        name: "kk_buffered_writer_new_line",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_writer_flush = ExternDecl(
+        name: "kk_buffered_writer_flush",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_writer_close = ExternDecl(
+        name: "kk_buffered_writer_close",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
     public static let kk_file_inputStream = ExternDecl(
         name: "kk_file_inputStream",
         parameterTypes: [intptr, nullableIntptrPtr],
@@ -3357,6 +3401,13 @@ public enum RuntimeABIExterns {
         kk_buffered_reader_readLine,
         kk_buffered_reader_readLines,
         kk_buffered_reader_close,
+        kk_buffered_reader_read,
+        kk_buffered_reader_ready,
+        kk_file_bufferedWriter,
+        kk_buffered_writer_write,
+        kk_buffered_writer_new_line,
+        kk_buffered_writer_flush,
+        kk_buffered_writer_close,
         kk_file_inputStream,
         kk_file_outputStream,
         kk_input_stream_read,

@@ -469,6 +469,105 @@ public func kk_buffered_reader_close(_ readerRaw: Int) -> Int {
     return 0
 }
 
+@_cdecl("kk_buffered_reader_read")
+public func kk_buffered_reader_read(_ readerRaw: Int) -> Int {
+    guard let reader = runtimeBufferedReaderBox(from: readerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_reader_read received invalid BufferedReader handle")
+    }
+    return reader.read()
+}
+
+@_cdecl("kk_buffered_reader_ready")
+public func kk_buffered_reader_ready(_ readerRaw: Int) -> Int {
+    guard let reader = runtimeBufferedReaderBox(from: readerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_reader_ready received invalid BufferedReader handle")
+    }
+    return kk_box_bool(reader.ready() ? 1 : 0)
+}
+
+// MARK: - STDLIB-IO-091: BufferedWriter
+
+private func runtimeBufferedWriterBox(from raw: Int) -> RuntimeBufferedWriterBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeBufferedWriterBox.self)
+}
+
+@_cdecl("kk_file_bufferedWriter")
+public func kk_file_bufferedWriter(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_bufferedWriter received invalid File handle")
+    }
+    let url = URL(fileURLWithPath: file.path)
+    if !FileManager.default.fileExists(atPath: file.path) {
+        FileManager.default.createFile(atPath: file.path, contents: Data())
+    }
+    do {
+        let handle = try FileHandle(forWritingTo: url)
+        handle.truncateFile(atOffset: 0)
+        return registerRuntimeObject(RuntimeBufferedWriterBox(fileHandle: handle))
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return 0
+    }
+}
+
+@_cdecl("kk_buffered_writer_write")
+public func kk_buffered_writer_write(_ writerRaw: Int, _ textRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let writer = runtimeBufferedWriterBox(from: writerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_writer_write received invalid BufferedWriter handle")
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: textRaw),
+          let text = extractString(from: ptr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_writer_write received invalid text")
+    }
+    do {
+        try writer.write(text)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
+@_cdecl("kk_buffered_writer_new_line")
+public func kk_buffered_writer_new_line(_ writerRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let writer = runtimeBufferedWriterBox(from: writerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_writer_new_line received invalid BufferedWriter handle")
+    }
+    do {
+        try writer.newLine()
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
+@_cdecl("kk_buffered_writer_flush")
+public func kk_buffered_writer_flush(_ writerRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let writer = runtimeBufferedWriterBox(from: writerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_writer_flush received invalid BufferedWriter handle")
+    }
+    do {
+        try writer.flush()
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
+@_cdecl("kk_buffered_writer_close")
+public func kk_buffered_writer_close(_ writerRaw: Int) -> Int {
+    guard let writer = runtimeBufferedWriterBox(from: writerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_writer_close received invalid BufferedWriter handle")
+    }
+    writer.close()
+    return 0
+}
+
 @_cdecl("kk_file_inputStream")
 public func kk_file_inputStream(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0

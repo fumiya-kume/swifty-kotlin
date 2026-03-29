@@ -366,6 +366,106 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // BufferedReader.read() -> Int  (STDLIB-IO-091)
+        registerFileMemberFunction(
+            named: "read",
+            externalLinkName: "kk_buffered_reader_read",
+            ownerSymbol: bufferedReaderSymbol,
+            ownerType: bufferedReaderType,
+            parameters: [],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedReader.ready() -> Boolean  (STDLIB-IO-091)
+        registerFileMemberFunction(
+            named: "ready",
+            externalLinkName: "kk_buffered_reader_ready",
+            ownerSymbol: bufferedReaderSymbol,
+            ownerType: bufferedReaderType,
+            parameters: [],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - BufferedWriter (STDLIB-IO-091)
+
+        let bufferedWriterSymbol = ensureClassSymbol(
+            named: "BufferedWriter",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: bufferedWriterSymbol)
+        }
+        let bufferedWriterType = types.make(.classType(ClassType(
+            classSymbol: bufferedWriterSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(bufferedWriterType, for: bufferedWriterSymbol)
+
+        // File.bufferedWriter() -> BufferedWriter
+        registerFileMemberFunction(
+            named: "bufferedWriter",
+            externalLinkName: "kk_file_bufferedWriter",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: bufferedWriterType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedWriter.write(text: String) -> Unit
+        registerFileMemberFunction(
+            named: "write",
+            externalLinkName: "kk_buffered_writer_write",
+            ownerSymbol: bufferedWriterSymbol,
+            ownerType: bufferedWriterType,
+            parameters: [("text", types.stringType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedWriter.newLine() -> Unit
+        registerFileMemberFunction(
+            named: "newLine",
+            externalLinkName: "kk_buffered_writer_new_line",
+            ownerSymbol: bufferedWriterSymbol,
+            ownerType: bufferedWriterType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedWriter.flush() -> Unit
+        registerFileMemberFunction(
+            named: "flush",
+            externalLinkName: "kk_buffered_writer_flush",
+            ownerSymbol: bufferedWriterSymbol,
+            ownerType: bufferedWriterType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedWriter.close() -> Unit
+        registerFileMemberFunction(
+            named: "close",
+            externalLinkName: "kk_buffered_writer_close",
+            ownerSymbol: bufferedWriterSymbol,
+            ownerType: bufferedWriterType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - InputStream / OutputStream (STDLIB-IO-092)
 
         // MARK: - Resource access (STDLIB-IO-093)

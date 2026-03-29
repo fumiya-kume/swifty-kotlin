@@ -2104,6 +2104,264 @@ file f0 package=golden.sema
   decl d3 fun useSam suspend=0 inline=0 sym=s2099
 expr e0 name(action) type=Class#2095 ref=s2098
 expr e1 memberCall recv=e0 callee=run args=[] type=Unit call=s2096 map=[] targs=[]
+symbol s1857 kind=function fq=java.io.BufferedReader.read vis=public flags=synthetic sig=recv=Class#1852 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1858 kind=function fq=java.io.BufferedReader.ready vis=public flags=synthetic sig=recv=Class#1852 params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s1859 kind=class fq=java.io.BufferedWriter vis=public flags=synthetic type=Class#1859
+symbol s1860 kind=function fq=java.io.File.bufferedWriter vis=public flags=synthetic sig=recv=Class#1227 params=[] ret=Class#1859 suspend=0 defaults=[] vararg=[]
+symbol s1861 kind=function fq=java.io.BufferedWriter.write vis=public flags=synthetic sig=recv=Class#1859 params=[String] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s1862 kind=valueParameter fq=java.io.BufferedWriter.write.text vis=private flags=synthetic
+symbol s1863 kind=function fq=java.io.BufferedWriter.newLine vis=public flags=synthetic sig=recv=Class#1859 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s1864 kind=function fq=java.io.BufferedWriter.flush vis=public flags=synthetic sig=recv=Class#1859 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s1865 kind=function fq=java.io.BufferedWriter.close vis=public flags=synthetic sig=recv=Class#1859 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s1866 kind=class fq=java.io.InputStream vis=public flags=synthetic type=Class#1866
+symbol s1867 kind=class fq=java.io.OutputStream vis=public flags=synthetic type=Class#1867
+symbol s1868 kind=function fq=java.io.File.inputStream vis=public flags=synthetic sig=recv=Class#1227 params=[] ret=Class#1866 suspend=0 defaults=[] vararg=[]
+symbol s1869 kind=function fq=java.io.File.outputStream vis=public flags=synthetic sig=recv=Class#1227 params=[] ret=Class#1867 suspend=0 defaults=[] vararg=[]
+symbol s1870 kind=function fq=java.io.InputStream.read vis=public flags=synthetic sig=recv=Class#1866 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1871 kind=function fq=java.io.InputStream.available vis=public flags=synthetic sig=recv=Class#1866 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1872 kind=function fq=java.io.InputStream.skip vis=public flags=synthetic sig=recv=Class#1866 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s1873 kind=valueParameter fq=java.io.InputStream.skip.count vis=private flags=synthetic
+symbol s1874 kind=function fq=java.io.InputStream.read vis=public flags=synthetic sig=recv=Class#1866 params=[Class#105<out Int>] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s1875 kind=valueParameter fq=java.io.InputStream.read.buffer vis=private flags=synthetic
+symbol s1876 kind=function fq=java.io.InputStream.close vis=public flags=synthetic sig=recv=Class#1866 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s1877 kind=function fq=java.io.OutputStream.write vis=public flags=synthetic sig=recv=Class#1867 params=[Int] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s1878 kind=valueParameter fq=java.io.OutputStream.write.value vis=private flags=synthetic
+symbol s1879 kind=function fq=java.io.OutputStream.write vis=public flags=synthetic sig=recv=Class#1867 params=[Class#105<out Int>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s1880 kind=valueParameter fq=java.io.OutputStream.write.buffer vis=private flags=synthetic
+symbol s1881 kind=function fq=java.io.OutputStream.flush vis=public flags=synthetic sig=recv=Class#1867 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s1882 kind=function fq=java.io.OutputStream.close vis=public flags=synthetic sig=recv=Class#1867 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s1883 kind=class fq=kotlin.collections.IndexedValue vis=public flags=synthetic|dataType
+symbol s1884 kind=typeParameter fq=kotlin.collections.IndexedValue.T vis=private flags=_
+symbol s1885 kind=function fq=kotlin.collections.IndexedValue.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#1883<out T#1884> params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1886 kind=function fq=kotlin.collections.IndexedValue.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#1883<out T#1884> params=[] ret=T#1884 suspend=0 defaults=[] vararg=[]
+symbol s1887 kind=property fq=kotlin.collections.IndexedValue.index vis=public flags=synthetic type=Int
+symbol s1888 kind=property fq=kotlin.collections.IndexedValue.value vis=public flags=synthetic type=T#1884
+symbol s1889 kind=function fq=kotlin.collections.List.withIndex vis=public flags=synthetic sig=recv=Class#105<out T#106> params=[] ret=Class#87<out Class#1883<out T#106>> suspend=0 defaults=[] vararg=[]
+symbol s1890 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#105<out T#106> params=[(Int, T#106) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s1891 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
+symbol s1892 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#105<out T#106> params=[(Int, T#106) -> T#1891] ret=Class#105<out T#1891> suspend=0 defaults=[] vararg=[]
+symbol s1893 kind=function fq=kotlin.collections.List.filterIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#105<out T#106> params=[(Int, T#106) -> Boolean] ret=Class#105<out T#106> suspend=0 defaults=[] vararg=[]
+symbol s1894 kind=typeParameter fq=kotlin.collections.List.foldIndexed.R vis=private flags=_
+symbol s1895 kind=function fq=kotlin.collections.List.foldIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#105<out T#106> params=[T#1894,(Int, T#1894, T#106) -> T#1894] ret=T#1894 suspend=0 defaults=[] vararg=[]
+symbol s1896 kind=typeParameter fq=kotlin.collections.List.reduceIndexed.S vis=private flags=_
+symbol s1897 kind=function fq=kotlin.collections.List.reduceIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#105<out T#106> params=[(Int, T#1896, T#106) -> T#1896] ret=T#1896 suspend=0 defaults=[] vararg=[]
+symbol s1898 kind=typeParameter fq=kotlin.collections.List.reduceIndexedOrNull.S vis=private flags=_
+symbol s1899 kind=function fq=kotlin.collections.List.reduceIndexedOrNull vis=public flags=inlineFunction|synthetic sig=recv=Class#105<out T#106> params=[(Int, T#1898, T#106) -> T#1898] ret=T#1898? suspend=0 defaults=[] vararg=[]
+symbol s1900 kind=typeParameter fq=kotlin.collections.List.runningFoldIndexed.R vis=private flags=_
+symbol s1901 kind=function fq=kotlin.collections.List.runningFoldIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#105<out T#106> params=[T#1900,(Int, T#1900, T#106) -> T#1900] ret=Class#105<out T#1900> suspend=0 defaults=[] vararg=[]
+symbol s1902 kind=typeParameter fq=kotlin.collections.List.runningReduceIndexed.S vis=private flags=_
+symbol s1903 kind=function fq=kotlin.collections.List.runningReduceIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#105<out T#106> params=[(Int, T#1902, T#106) -> T#1902] ret=Class#105<out T#1902> suspend=0 defaults=[] vararg=[]
+symbol s1904 kind=typeParameter fq=kotlin.collections.List.scanIndexed.R vis=private flags=_
+symbol s1905 kind=function fq=kotlin.collections.List.scanIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#105<out T#106> params=[T#1904,(Int, T#1904, T#106) -> T#1904] ret=Class#105<out T#1904> suspend=0 defaults=[] vararg=[]
+symbol s1906 kind=function fq=kotlin.collections.List.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#105<out T#106> params=[] ret=T#106 suspend=0 defaults=[] vararg=[]
+symbol s1907 kind=function fq=kotlin.collections.List.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#105<out T#106> params=[] ret=T#106 suspend=0 defaults=[] vararg=[]
+symbol s1908 kind=function fq=kotlin.collections.List.component3 vis=public flags=synthetic|operatorFunction sig=recv=Class#105<out T#106> params=[] ret=T#106 suspend=0 defaults=[] vararg=[]
+symbol s1909 kind=function fq=kotlin.collections.List.component4 vis=public flags=synthetic|operatorFunction sig=recv=Class#105<out T#106> params=[] ret=T#106 suspend=0 defaults=[] vararg=[]
+symbol s1910 kind=function fq=kotlin.collections.List.component5 vis=public flags=synthetic|operatorFunction sig=recv=Class#105<out T#106> params=[] ret=T#106 suspend=0 defaults=[] vararg=[]
+symbol s1911 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s1912 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s1913 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s1914 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s1915 kind=valueParameter fq=kotlin.ranges.coerceIn.range vis=private flags=synthetic
+symbol s1916 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s1917 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s1918 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s1919 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s1920 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Long params=[Long,Long] ret=Long suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s1921 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Long params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s1922 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Long params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s1923 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Long params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s1924 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Double params=[Double,Double] ret=Double suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s1925 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Double params=[Double] ret=Double suspend=0 defaults=[0] vararg=[0]
+symbol s1926 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Double params=[Double] ret=Double suspend=0 defaults=[0] vararg=[0]
+symbol s1927 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Float params=[Float,Float] ret=Float suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s1928 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Float params=[Float] ret=Float suspend=0 defaults=[0] vararg=[0]
+symbol s1929 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Float params=[Float] ret=Float suspend=0 defaults=[0] vararg=[0]
+symbol s1930 kind=function fq=kotlin.math.roundToInt vis=public flags=synthetic sig=recv=Float params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1931 kind=function fq=kotlin.math.roundToInt vis=public flags=synthetic sig=recv=Double params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1932 kind=function fq=kotlin.math.roundToLong vis=public flags=synthetic sig=recv=Float params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1933 kind=function fq=kotlin.math.roundToLong vis=public flags=synthetic sig=recv=Double params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1934 kind=function fq=kotlin.math.ulp vis=public flags=synthetic sig=recv=Double params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s1935 kind=function fq=kotlin.math.nextUp vis=public flags=synthetic sig=recv=Double params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s1936 kind=function fq=kotlin.math.nextDown vis=public flags=synthetic sig=recv=Double params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s1937 kind=function fq=kotlin.math.ulp vis=public flags=synthetic sig=recv=Float params=[] ret=Float suspend=0 defaults=[] vararg=[]
+symbol s1938 kind=function fq=kotlin.math.nextUp vis=public flags=synthetic sig=recv=Float params=[] ret=Float suspend=0 defaults=[] vararg=[]
+symbol s1939 kind=function fq=kotlin.math.nextDown vis=public flags=synthetic sig=recv=Float params=[] ret=Float suspend=0 defaults=[] vararg=[]
+symbol s1940 kind=function fq=kotlin.countOneBits vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1941 kind=function fq=kotlin.countLeadingZeroBits vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1942 kind=function fq=kotlin.countTrailingZeroBits vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1943 kind=function fq=kotlin.highestOneBit vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1944 kind=function fq=kotlin.lowestOneBit vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1945 kind=function fq=kotlin.takeHighestOneBit vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1946 kind=function fq=kotlin.takeLowestOneBit vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1947 kind=function fq=kotlin.rotateLeft vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s1948 kind=valueParameter fq=kotlin.rotateLeft.distance vis=private flags=synthetic
+symbol s1949 kind=function fq=kotlin.rotateRight vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s1950 kind=valueParameter fq=kotlin.rotateRight.distance vis=private flags=synthetic
+symbol s1951 kind=function fq=kotlin.highestOneBit vis=public flags=synthetic sig=recv=Long params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1952 kind=function fq=kotlin.lowestOneBit vis=public flags=synthetic sig=recv=Long params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1953 kind=function fq=kotlin.takeHighestOneBit vis=public flags=synthetic sig=recv=Long params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1954 kind=function fq=kotlin.takeLowestOneBit vis=public flags=synthetic sig=recv=Long params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1955 kind=function fq=kotlin.rotateLeft vis=public flags=synthetic sig=recv=Long params=[Int] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s1956 kind=function fq=kotlin.rotateRight vis=public flags=synthetic sig=recv=Long params=[Int] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s1957 kind=function fq=kotlin.toByte vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1958 kind=function fq=kotlin.toShort vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1959 kind=function fq=kotlin.toInt vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1960 kind=function fq=kotlin.toLong vis=public flags=synthetic sig=recv=Int params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1961 kind=function fq=kotlin.toFloat vis=public flags=synthetic sig=recv=Int params=[] ret=Float suspend=0 defaults=[] vararg=[]
+symbol s1962 kind=function fq=kotlin.toDouble vis=public flags=synthetic sig=recv=Int params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s1963 kind=function fq=kotlin.toChar vis=public flags=synthetic sig=recv=Int params=[] ret=Char suspend=0 defaults=[] vararg=[]
+symbol s1964 kind=function fq=kotlin.toUByte vis=public flags=synthetic sig=recv=Int params=[] ret=UByte suspend=0 defaults=[] vararg=[]
+symbol s1965 kind=function fq=kotlin.toUShort vis=public flags=synthetic sig=recv=Int params=[] ret=UShort suspend=0 defaults=[] vararg=[]
+symbol s1966 kind=function fq=kotlin.toUInt vis=public flags=synthetic sig=recv=Int params=[] ret=UInt suspend=0 defaults=[] vararg=[]
+symbol s1967 kind=function fq=kotlin.toULong vis=public flags=synthetic sig=recv=Int params=[] ret=ULong suspend=0 defaults=[] vararg=[]
+symbol s1968 kind=function fq=kotlin.toByte vis=public flags=synthetic sig=recv=Long params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1969 kind=function fq=kotlin.toShort vis=public flags=synthetic sig=recv=Long params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1970 kind=function fq=kotlin.toInt vis=public flags=synthetic sig=recv=Long params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1971 kind=function fq=kotlin.toFloat vis=public flags=synthetic sig=recv=Long params=[] ret=Float suspend=0 defaults=[] vararg=[]
+symbol s1972 kind=function fq=kotlin.toDouble vis=public flags=synthetic sig=recv=Long params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s1973 kind=function fq=kotlin.toChar vis=public flags=synthetic sig=recv=Long params=[] ret=Char suspend=0 defaults=[] vararg=[]
+symbol s1974 kind=function fq=kotlin.toUByte vis=public flags=synthetic sig=recv=Long params=[] ret=UByte suspend=0 defaults=[] vararg=[]
+symbol s1975 kind=function fq=kotlin.toUShort vis=public flags=synthetic sig=recv=Long params=[] ret=UShort suspend=0 defaults=[] vararg=[]
+symbol s1976 kind=function fq=kotlin.toUInt vis=public flags=synthetic sig=recv=Long params=[] ret=UInt suspend=0 defaults=[] vararg=[]
+symbol s1977 kind=function fq=kotlin.toULong vis=public flags=synthetic sig=recv=Long params=[] ret=ULong suspend=0 defaults=[] vararg=[]
+symbol s1978 kind=function fq=kotlin.toByte vis=public flags=synthetic sig=recv=Float params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1979 kind=function fq=kotlin.toShort vis=public flags=synthetic sig=recv=Float params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1980 kind=function fq=kotlin.toInt vis=public flags=synthetic sig=recv=Float params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1981 kind=function fq=kotlin.toLong vis=public flags=synthetic sig=recv=Float params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1982 kind=function fq=kotlin.toDouble vis=public flags=synthetic sig=recv=Float params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s1983 kind=function fq=kotlin.toChar vis=public flags=synthetic sig=recv=Float params=[] ret=Char suspend=0 defaults=[] vararg=[]
+symbol s1984 kind=function fq=kotlin.toUInt vis=public flags=synthetic sig=recv=Float params=[] ret=UInt suspend=0 defaults=[] vararg=[]
+symbol s1985 kind=function fq=kotlin.toULong vis=public flags=synthetic sig=recv=Float params=[] ret=ULong suspend=0 defaults=[] vararg=[]
+symbol s1986 kind=function fq=kotlin.toByte vis=public flags=synthetic sig=recv=Double params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1987 kind=function fq=kotlin.toShort vis=public flags=synthetic sig=recv=Double params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1988 kind=function fq=kotlin.toInt vis=public flags=synthetic sig=recv=Double params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1989 kind=function fq=kotlin.toLong vis=public flags=synthetic sig=recv=Double params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1990 kind=function fq=kotlin.toFloat vis=public flags=synthetic sig=recv=Double params=[] ret=Float suspend=0 defaults=[] vararg=[]
+symbol s1991 kind=function fq=kotlin.toChar vis=public flags=synthetic sig=recv=Double params=[] ret=Char suspend=0 defaults=[] vararg=[]
+symbol s1992 kind=function fq=kotlin.toUInt vis=public flags=synthetic sig=recv=Double params=[] ret=UInt suspend=0 defaults=[] vararg=[]
+symbol s1993 kind=function fq=kotlin.toULong vis=public flags=synthetic sig=recv=Double params=[] ret=ULong suspend=0 defaults=[] vararg=[]
+symbol s1994 kind=function fq=kotlin.toByte vis=public flags=synthetic sig=recv=Char params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1995 kind=function fq=kotlin.toShort vis=public flags=synthetic sig=recv=Char params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1996 kind=function fq=kotlin.toInt vis=public flags=synthetic sig=recv=Char params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s1997 kind=function fq=kotlin.toLong vis=public flags=synthetic sig=recv=Char params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s1998 kind=function fq=kotlin.toUInt vis=public flags=synthetic sig=recv=Char params=[] ret=UInt suspend=0 defaults=[] vararg=[]
+symbol s1999 kind=function fq=kotlin.toULong vis=public flags=synthetic sig=recv=Char params=[] ret=ULong suspend=0 defaults=[] vararg=[]
+symbol s2000 kind=class fq=kotlin.Enum vis=public flags=synthetic
+symbol s2001 kind=typeParameter fq=kotlin.Enum.T vis=private flags=_
+symbol s2002 kind=property fq=kotlin.Enum.name vis=public flags=synthetic type=String
+symbol s2003 kind=property fq=kotlin.Enum.ordinal vis=public flags=synthetic type=Int
+symbol s2004 kind=typeParameter fq=kotlin.collections.EnumEntries.T vis=private flags=_
+symbol s2005 kind=interface fq=kotlin.collections.EnumEntries vis=public flags=synthetic
+symbol s2006 kind=typeParameter fq=kotlin.enumValues.T vis=private flags=reifiedTypeParameter
+symbol s2007 kind=function fq=kotlin.enumValues vis=public flags=inlineFunction|synthetic sig=recv=_ params=[] ret=Class#311<T#2006> suspend=0 defaults=[] vararg=[]
+symbol s2008 kind=typeParameter fq=kotlin.enumValueOf.T vis=private flags=reifiedTypeParameter
+symbol s2009 kind=valueParameter fq=kotlin.enumValueOf.name vis=private flags=synthetic
+symbol s2010 kind=function fq=kotlin.enumValueOf vis=public flags=inlineFunction|synthetic sig=recv=_ params=[String] ret=T#2008 suspend=0 defaults=[0] vararg=[0]
+symbol s2011 kind=typeParameter fq=kotlin.enumEntries.T vis=private flags=reifiedTypeParameter
+symbol s2012 kind=function fq=kotlin.enumEntries vis=public flags=inlineFunction|synthetic sig=recv=_ params=[] ret=Class#2005<T#2011> suspend=0 defaults=[] vararg=[]
+symbol s2013 kind=interface fq=kotlin.io.Closeable vis=public flags=synthetic
+symbol s2014 kind=function fq=kotlin.io.Closeable.close vis=public flags=synthetic sig=recv=Class#2013 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s2015 kind=typeAlias fq=kotlin.AutoCloseable vis=public flags=synthetic
+symbol s2016 kind=interface fq=java.io.Closeable vis=public flags=synthetic
+symbol s2017 kind=typeParameter fq=kotlin.io.use.T vis=private flags=_
+symbol s2018 kind=typeParameter fq=kotlin.io.use.R vis=private flags=_
+symbol s2019 kind=valueParameter fq=kotlin.io.use.block vis=private flags=synthetic
+symbol s2020 kind=function fq=kotlin.io.use vis=public flags=inlineFunction|synthetic sig=recv=T#2017 params=[(T#2017) -> T#2018] ret=T#2018 suspend=0 defaults=[0] vararg=[0]
+symbol s2021 kind=package fq=kotlin.concurrent vis=public flags=synthetic
+symbol s2022 kind=class fq=kotlin.concurrent.AtomicInt vis=public flags=synthetic type=Class#2022
+symbol s2023 kind=constructor fq=kotlin.concurrent.AtomicInt.<init> vis=public flags=synthetic sig=recv=_ params=[Int] ret=Class#2022 suspend=0 defaults=[0] vararg=[0]
+symbol s2024 kind=valueParameter fq=kotlin.concurrent.AtomicInt.<init>.initial vis=private flags=synthetic
+symbol s2025 kind=property fq=kotlin.concurrent.AtomicInt.value vis=public flags=synthetic type=Int
+symbol s2026 kind=function fq=kotlin.concurrent.AtomicInt.load vis=public flags=synthetic sig=recv=Class#2022 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s2027 kind=function fq=kotlin.concurrent.AtomicInt.store vis=public flags=synthetic sig=recv=Class#2022 params=[Int] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s2028 kind=valueParameter fq=kotlin.concurrent.AtomicInt.store.value vis=private flags=synthetic
+symbol s2029 kind=function fq=kotlin.concurrent.AtomicInt.exchange vis=public flags=synthetic sig=recv=Class#2022 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s2030 kind=valueParameter fq=kotlin.concurrent.AtomicInt.exchange.new vis=private flags=synthetic
+symbol s2031 kind=function fq=kotlin.concurrent.AtomicInt.compareAndSet vis=public flags=synthetic sig=recv=Class#2022 params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2032 kind=valueParameter fq=kotlin.concurrent.AtomicInt.compareAndSet.expect vis=private flags=synthetic
+symbol s2033 kind=valueParameter fq=kotlin.concurrent.AtomicInt.compareAndSet.update vis=private flags=synthetic
+symbol s2034 kind=function fq=kotlin.concurrent.AtomicInt.compareAndExchange vis=public flags=synthetic sig=recv=Class#2022 params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2035 kind=valueParameter fq=kotlin.concurrent.AtomicInt.compareAndExchange.expect vis=private flags=synthetic
+symbol s2036 kind=valueParameter fq=kotlin.concurrent.AtomicInt.compareAndExchange.update vis=private flags=synthetic
+symbol s2037 kind=function fq=kotlin.concurrent.AtomicInt.fetchAndAdd vis=public flags=synthetic sig=recv=Class#2022 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s2038 kind=valueParameter fq=kotlin.concurrent.AtomicInt.fetchAndAdd.delta vis=private flags=synthetic
+symbol s2039 kind=function fq=kotlin.concurrent.AtomicInt.addAndFetch vis=public flags=synthetic sig=recv=Class#2022 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s2040 kind=valueParameter fq=kotlin.concurrent.AtomicInt.addAndFetch.delta vis=private flags=synthetic
+symbol s2041 kind=function fq=kotlin.concurrent.AtomicInt.fetchAndIncrement vis=public flags=synthetic sig=recv=Class#2022 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s2042 kind=function fq=kotlin.concurrent.AtomicInt.incrementAndFetch vis=public flags=synthetic sig=recv=Class#2022 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s2043 kind=function fq=kotlin.concurrent.AtomicInt.decrementAndFetch vis=public flags=synthetic sig=recv=Class#2022 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s2044 kind=class fq=kotlin.concurrent.AtomicLong vis=public flags=synthetic type=Class#2044
+symbol s2045 kind=constructor fq=kotlin.concurrent.AtomicLong.<init> vis=public flags=synthetic sig=recv=_ params=[Long] ret=Class#2044 suspend=0 defaults=[0] vararg=[0]
+symbol s2046 kind=valueParameter fq=kotlin.concurrent.AtomicLong.<init>.initial vis=private flags=synthetic
+symbol s2047 kind=property fq=kotlin.concurrent.AtomicLong.value vis=public flags=synthetic type=Long
+symbol s2048 kind=function fq=kotlin.concurrent.AtomicLong.load vis=public flags=synthetic sig=recv=Class#2044 params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s2049 kind=function fq=kotlin.concurrent.AtomicLong.store vis=public flags=synthetic sig=recv=Class#2044 params=[Long] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s2050 kind=valueParameter fq=kotlin.concurrent.AtomicLong.store.value vis=private flags=synthetic
+symbol s2051 kind=function fq=kotlin.concurrent.AtomicLong.exchange vis=public flags=synthetic sig=recv=Class#2044 params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s2052 kind=valueParameter fq=kotlin.concurrent.AtomicLong.exchange.new vis=private flags=synthetic
+symbol s2053 kind=function fq=kotlin.concurrent.AtomicLong.compareAndSet vis=public flags=synthetic sig=recv=Class#2044 params=[Long,Long] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2054 kind=valueParameter fq=kotlin.concurrent.AtomicLong.compareAndSet.expect vis=private flags=synthetic
+symbol s2055 kind=valueParameter fq=kotlin.concurrent.AtomicLong.compareAndSet.update vis=private flags=synthetic
+symbol s2056 kind=function fq=kotlin.concurrent.AtomicLong.compareAndExchange vis=public flags=synthetic sig=recv=Class#2044 params=[Long,Long] ret=Long suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2057 kind=valueParameter fq=kotlin.concurrent.AtomicLong.compareAndExchange.expect vis=private flags=synthetic
+symbol s2058 kind=valueParameter fq=kotlin.concurrent.AtomicLong.compareAndExchange.update vis=private flags=synthetic
+symbol s2059 kind=function fq=kotlin.concurrent.AtomicLong.fetchAndAdd vis=public flags=synthetic sig=recv=Class#2044 params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s2060 kind=valueParameter fq=kotlin.concurrent.AtomicLong.fetchAndAdd.delta vis=private flags=synthetic
+symbol s2061 kind=function fq=kotlin.concurrent.AtomicLong.addAndFetch vis=public flags=synthetic sig=recv=Class#2044 params=[Long] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s2062 kind=valueParameter fq=kotlin.concurrent.AtomicLong.addAndFetch.delta vis=private flags=synthetic
+symbol s2063 kind=function fq=kotlin.concurrent.AtomicLong.fetchAndIncrement vis=public flags=synthetic sig=recv=Class#2044 params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s2064 kind=function fq=kotlin.concurrent.AtomicLong.incrementAndFetch vis=public flags=synthetic sig=recv=Class#2044 params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s2065 kind=function fq=kotlin.concurrent.AtomicLong.decrementAndFetch vis=public flags=synthetic sig=recv=Class#2044 params=[] ret=Long suspend=0 defaults=[] vararg=[]
+symbol s2066 kind=class fq=kotlin.concurrent.AtomicReference vis=public flags=synthetic type=Class#2066
+symbol s2067 kind=constructor fq=kotlin.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Class#2066 suspend=0 defaults=[0] vararg=[0]
+symbol s2068 kind=valueParameter fq=kotlin.concurrent.AtomicReference.<init>.initial vis=private flags=synthetic
+symbol s2069 kind=property fq=kotlin.concurrent.AtomicReference.value vis=public flags=synthetic type=Any?
+symbol s2070 kind=function fq=kotlin.concurrent.AtomicReference.load vis=public flags=synthetic sig=recv=Class#2066 params=[] ret=Any? suspend=0 defaults=[] vararg=[]
+symbol s2071 kind=function fq=kotlin.concurrent.AtomicReference.store vis=public flags=synthetic sig=recv=Class#2066 params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s2072 kind=valueParameter fq=kotlin.concurrent.AtomicReference.store.value vis=private flags=synthetic
+symbol s2073 kind=function fq=kotlin.concurrent.AtomicReference.exchange vis=public flags=synthetic sig=recv=Class#2066 params=[Any?] ret=Any? suspend=0 defaults=[0] vararg=[0]
+symbol s2074 kind=valueParameter fq=kotlin.concurrent.AtomicReference.exchange.new vis=private flags=synthetic
+symbol s2075 kind=function fq=kotlin.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#2066 params=[Any?,Any?] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2076 kind=valueParameter fq=kotlin.concurrent.AtomicReference.compareAndSet.expect vis=private flags=synthetic
+symbol s2077 kind=valueParameter fq=kotlin.concurrent.AtomicReference.compareAndSet.update vis=private flags=synthetic
+symbol s2078 kind=function fq=kotlin.concurrent.AtomicReference.compareAndExchange vis=public flags=synthetic sig=recv=Class#2066 params=[Any?,Any?] ret=Any? suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2079 kind=valueParameter fq=kotlin.concurrent.AtomicReference.compareAndExchange.expect vis=private flags=synthetic
+symbol s2080 kind=valueParameter fq=kotlin.concurrent.AtomicReference.compareAndExchange.update vis=private flags=synthetic
+symbol s2081 kind=package fq=kotlin.uuid vis=public flags=synthetic
+symbol s2082 kind=class fq=kotlin.uuid.Uuid vis=public flags=synthetic
+symbol s2083 kind=object fq=kotlin.uuid.Uuid.Companion vis=public flags=synthetic|static
+symbol s2084 kind=function fq=kotlin.uuid.Uuid.Companion.random vis=public flags=synthetic sig=recv=_ params=[] ret=Class#2082 suspend=0 defaults=[] vararg=[]
+symbol s2085 kind=function fq=kotlin.uuid.Uuid.Companion.parse vis=public flags=synthetic sig=recv=_ params=[String] ret=Class#2082 suspend=0 defaults=[0] vararg=[0]
+symbol s2086 kind=valueParameter fq=kotlin.uuid.Uuid.Companion.parse.uuidString vis=private flags=synthetic
+symbol s2087 kind=function fq=kotlin.uuid.Uuid.toString vis=public flags=synthetic sig=recv=Class#2082 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s2088 kind=function fq=kotlin.uuid.Uuid.toHexString vis=public flags=synthetic sig=recv=Class#2082 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s2089 kind=function fq=kotlin.uuid.Uuid.toLongs vis=public flags=synthetic sig=recv=Class#2082 params=[] ret=Class#58<Long, Long> suspend=0 defaults=[] vararg=[]
+symbol s2090 kind=function fq=kotlin.uuid.Uuid.toByteArray vis=public flags=synthetic sig=recv=Class#2082 params=[] ret=Class#332 suspend=0 defaults=[] vararg=[]
+symbol s2091 kind=package fq=java.net vis=public flags=synthetic
+symbol s2092 kind=class fq=java.net.URI vis=public flags=synthetic type=Class#2092
+symbol s2093 kind=constructor fq=java.net.URI.<init> vis=public flags=synthetic sig=recv=_ params=[String] ret=Class#2092 suspend=0 defaults=[0] vararg=[0]
+symbol s2094 kind=valueParameter fq=java.net.URI.<init>.spec vis=private flags=synthetic
+symbol s2095 kind=property fq=java.net.URI.scheme vis=public flags=synthetic type=String?
+symbol s2096 kind=property fq=java.net.URI.authority vis=public flags=synthetic type=String?
+symbol s2097 kind=property fq=java.net.URI.path vis=public flags=synthetic type=String
+symbol s2098 kind=property fq=java.net.URI.query vis=public flags=synthetic type=String?
+symbol s2099 kind=property fq=java.net.URI.fragment vis=public flags=synthetic type=String?
+symbol s2100 kind=function fq=java.net.URI.toString vis=public flags=synthetic sig=recv=Class#2092 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s2101 kind=function fq=java.net.URI.normalize vis=public flags=synthetic sig=recv=Class#2092 params=[] ret=Class#2092 suspend=0 defaults=[] vararg=[]
+symbol s2102 kind=function fq=java.net.URI.resolve vis=public flags=synthetic sig=recv=Class#2092 params=[String] ret=Class#2092 suspend=0 defaults=[] vararg=[]
+symbol s2103 kind=function fq=java.net.URI.relativize vis=public flags=synthetic sig=recv=Class#2092 params=[Class#2092] ret=Class#2092 suspend=0 defaults=[] vararg=[]
+symbol s2104 kind=interface fq=golden.sema.Action vis=public flags=funInterface
+symbol s2105 kind=function fq=golden.sema.Action.run vis=public flags=abstractType sig=recv=Class#2104 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s2106 kind=function fq=golden.sema.execute vis=public flags=_ sig=recv=_ params=[Class#2104] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s2107 kind=valueParameter fq=golden.sema.execute.$2106.action vis=private flags=_
+symbol s2108 kind=function fq=golden.sema.useSam vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+file f0 package=golden.sema
+  decl d1 interface Action sym=s2104
+  decl d2 fun execute suspend=0 inline=0 sym=s2106
+  decl d3 fun useSam suspend=0 inline=0 sym=s2108
+expr e0 name(action) type=Class#2104 ref=s2107
+expr e1 memberCall recv=e0 callee=run args=[] type=Unit call=s2105 map=[] targs=[]
 expr e2 name(execute) type=_
 expr e3 name(println) type=_
 expr e4 string(hello) type=_
@@ -2113,3 +2371,5 @@ expr e7 string(hello) type=String
 expr e8 call callee=e6 args=[_:e7] type=Unit call=s1152 map=[0->0] targs=[]
 expr e9 lambda params=[] body=e8 label=execute type=Class#2095
 expr e10 call callee=e2 args=[_:e9] type=Unit call=s2097 map=[0->0] targs=[]
+expr e9 lambda params=[] body=e8 label=execute type=Class#2104
+expr e10 call callee=e2 args=[_:e9] type=Unit call=s2106 map=[0->0] targs=[]
