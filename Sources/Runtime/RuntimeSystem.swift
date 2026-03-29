@@ -24,9 +24,9 @@ public func kk_system_currentTimeMillis() -> Int {
 /// Runtime support for monotonic nanosecond clock (STDLIB-550, STDLIB-TIME-085).
 /// Returns monotonic uptime in nanoseconds (not wall-clock).
 ///
-/// Monotonic guarantee: backed by `DispatchTime.now().uptimeNanoseconds`
-/// which uses `mach_absolute_time` on macOS – guaranteed never to go
-/// backwards and unaffected by NTP or manual clock changes.
+/// Guaranteed to be non-decreasing across successive calls on the same thread.
+/// Backed by `DispatchTime.now().uptimeNanoseconds`, which uses
+/// `mach_absolute_time` on Apple platforms and is monotonic.
 ///
 /// Precision: nanosecond.  Resolution: hardware-dependent, typically
 /// ≤100 ns on Apple Silicon / ≤1 µs on Intel Macs.
@@ -37,6 +37,8 @@ public func kk_system_nanoTime() -> Int {
     // values will not exceed Int.max under any realistic scenario, so clamping
     // is effectively a no-op. On hypothetical 32-bit targets this would saturate
     // at ~2.1 seconds, but the compiler only targets 64-bit macOS (LP64).
+    // DispatchTime.now().uptimeNanoseconds is based on mach_absolute_time() which
+    // is a monotonic clock — it never goes backwards.
     Int(clamping: DispatchTime.now().uptimeNanoseconds)
 }
 
@@ -47,9 +49,7 @@ public func kk_system_nanoTime() -> Int {
 /// `let` initialisers are thread-safe and execute exactly once (dispatch_once
 /// semantics), this value is immutable after first access and safe to read
 /// from any thread.
-private let processStartNanosValue: Int = {
-    Int(clamping: DispatchTime.now().uptimeNanoseconds)
-}()
+private let processStartNanosValue: Int = Int(clamping: DispatchTime.now().uptimeNanoseconds)
 
 /// Returns the monotonic nanosecond timestamp captured at process start.
 ///
