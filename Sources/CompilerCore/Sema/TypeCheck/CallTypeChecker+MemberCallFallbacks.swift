@@ -667,6 +667,8 @@ extension CallTypeChecker {
             interner.intern("containsValue"),
             interner.intern("mapValues"),
             interner.intern("mapKeys"),
+            interner.intern("filterKeys"),
+            interner.intern("filterValues"),
             knownNames.getValue,
             knownNames.getOrDefault,
             interner.intern("plus"),
@@ -726,6 +728,8 @@ extension CallTypeChecker {
         ]
         if memberName == interner.intern("mapValues") ||
             memberName == interner.intern("mapKeys") ||
+            memberName == interner.intern("filterKeys") ||
+            memberName == interner.intern("filterValues") ||
             memberName == interner.intern("plus") ||
             memberName == interner.intern("minus")
         {
@@ -782,7 +786,8 @@ extension CallTypeChecker {
             return argCount == 2
         case interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
             return isSetReceiver && argCount == 1
-        case interner.intern("containsKey"), interner.intern("mapValues"), interner.intern("mapKeys"):
+        case interner.intern("containsKey"), interner.intern("mapValues"), interner.intern("mapKeys"),
+             interner.intern("filterKeys"), interner.intern("filterValues"):
             return isMapReceiver && argCount == 1
         case knownNames.getValue:
             return isMapReceiver && argCount == 1
@@ -912,8 +917,11 @@ extension CallTypeChecker {
             return receiverElementType
         }
 
-        if memberName == interner.intern("plus") || memberName == interner.intern("minus") {
-            // plus/minus return the same Map type as the receiver.
+        if memberName == interner.intern("plus") || memberName == interner.intern("minus")
+            || memberName == interner.intern("filter") || memberName == interner.intern("filterKeys")
+            || memberName == interner.intern("filterValues")
+        {
+            // plus/minus/filter/filterKeys/filterValues return the same Map type as the receiver.
             // receiverElementType for maps is Map.Entry<K,V>, so reconstruct Map<K,V>.
             if case let .classType(entryType) = sema.types.kind(of: receiverElementType),
                entryType.args.count >= 2
@@ -1136,9 +1144,13 @@ extension CallTypeChecker {
             interner.intern("maxOf"),
             interner.intern("minOf"),
         ]
+        let filterKeys = interner.intern("filterKeys")
+        let filterValues = interner.intern("filterValues")
         let mapOnlyMembers: Set = [
             mapValues,
             mapKeys,
+            filterKeys,
+            filterValues,
             knownNames.getOrDefault,
             knownNames.getOrElse,
         ]

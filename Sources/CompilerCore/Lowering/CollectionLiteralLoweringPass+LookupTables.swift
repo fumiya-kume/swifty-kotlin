@@ -272,6 +272,8 @@ struct CollectionLiteralLookupTables {
     let kkMapForEachName: InternedString
     let kkMapMapName: InternedString
     let kkMapFilterName: InternedString
+    let kkMapFilterKeysName: InternedString
+    let kkMapFilterValuesName: InternedString
     let kkMapMapValuesName: InternedString
     let kkMapMapKeysName: InternedString
     let kkMapCountName: InternedString
@@ -422,6 +424,8 @@ struct CollectionLiteralLookupTables {
     let groupByToName: InternedString
     let mapValuesName: InternedString
     let mapKeysName: InternedString
+    let filterKeysName: InternedString
+    let filterValuesName: InternedString
     let zipName: InternedString
     let zipWithNextName: InternedString
     let unzipName: InternedString
@@ -879,6 +883,8 @@ struct CollectionLiteralLookupTables {
         kkMapForEachName = interner.intern("kk_map_forEach")
         kkMapMapName = interner.intern("kk_map_map")
         kkMapFilterName = interner.intern("kk_map_filter")
+        kkMapFilterKeysName = interner.intern("kk_map_filterKeys")
+        kkMapFilterValuesName = interner.intern("kk_map_filterValues")
         kkMapMapValuesName = interner.intern("kk_map_mapValues")
         kkMapMapKeysName = interner.intern("kk_map_mapKeys")
         kkMapCountName = interner.intern("kk_map_count")
@@ -1023,6 +1029,8 @@ struct CollectionLiteralLookupTables {
         groupByToName = interner.intern("groupByTo")
         mapValuesName = interner.intern("mapValues")
         mapKeysName = interner.intern("mapKeys")
+        filterKeysName = interner.intern("filterKeys")
+        filterValuesName = interner.intern("filterValues")
         zipName = interner.intern("zip")
         zipWithNextName = interner.intern("zipWithNext")
         unzipName = interner.intern("unzip")

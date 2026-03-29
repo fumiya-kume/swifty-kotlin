@@ -103,7 +103,7 @@ extension CallLowerer {
         "runningReduce", "runningReduceIndexed",
         "groupBy", "groupingBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
         "eachCount",
-        "withIndex", "forEachIndexed", "mapIndexed", "filterIndexed", "mapValues", "mapKeys",
+        "withIndex", "forEachIndexed", "mapIndexed", "filterIndexed", "mapValues", "mapKeys", "filterKeys", "filterValues",
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull",
         "putAll", "addAll",
         "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
@@ -3201,7 +3201,7 @@ extension CallLowerer {
             "runningFold", "runningFoldIndexed", "runningReduce", "runningReduceIndexed", "groupBy", "groupingBy",
             "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate",
-            "forEachIndexed", "mapIndexed", "filterIndexed", "sumOf", "mapValues", "mapKeys",
+            "forEachIndexed", "mapIndexed", "filterIndexed", "sumOf", "mapValues", "mapKeys", "filterKeys", "filterValues",
             "getOrElse", "getOrPut",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
@@ -5174,6 +5174,10 @@ extension CallLowerer {
             return interner.intern("kk_map_plus")
         case "minus":
             return interner.intern("kk_map_minus")
+        case "filterKeys":
+            return interner.intern("kk_map_filterKeys")
+        case "filterValues":
+            return interner.intern("kk_map_filterValues")
         case "getOrPut":
             guard knownNames.isMutableMapSymbol(symbol) else {
                 return nil

@@ -913,6 +913,7 @@ extension CollectionLiteralLoweringPass {
     ) -> Bool {
         guard callee == lookup.mapName || callee == lookup.filterName || callee == lookup.forEachName
             || callee == lookup.mapValuesName || callee == lookup.mapKeysName || callee == lookup.toListName
+            || callee == lookup.filterKeysName || callee == lookup.filterValuesName
         else {
             return false
         }
@@ -944,6 +945,8 @@ extension CollectionLiteralLoweringPass {
         let kkName: InternedString = switch callee {
         case lookup.mapName: lookup.kkMapMapName
         case lookup.filterName: lookup.kkMapFilterName
+        case lookup.filterKeysName: lookup.kkMapFilterKeysName
+        case lookup.filterValuesName: lookup.kkMapFilterValuesName
         case lookup.forEachName: lookup.kkMapForEachName
         case lookup.mapValuesName: lookup.kkMapMapValuesName
         case lookup.mapKeysName: lookup.kkMapMapKeysName
@@ -969,7 +972,7 @@ extension CollectionLiteralLoweringPass {
             mapExprIDs.insert(result.rawValue)
             mapExprIDs.insert(hofResult.rawValue)
         }
-        if callee == lookup.filterName, let result {
+        if callee == lookup.filterName || callee == lookup.filterKeysName || callee == lookup.filterValuesName, let result {
             mapExprIDs.insert(result.rawValue)
             mapExprIDs.insert(hofResult.rawValue)
         }

@@ -5535,10 +5535,38 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
+        let filterKeyLambdaType = types.make(.functionType(FunctionType(
+            params: [keyType],
+            returnType: types.booleanType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let filterValueLambdaType = types.make(.functionType(FunctionType(
+            params: [valueType],
+            returnType: types.booleanType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         registerMember(
             name: "filter",
             externalLinkName: "kk_map_filter",
             parameterTypes: [filterLambdaType],
+            returnType: receiverType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+        registerMember(
+            name: "filterKeys",
+            externalLinkName: "kk_map_filterKeys",
+            parameterTypes: [filterKeyLambdaType],
+            returnType: receiverType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+        registerMember(
+            name: "filterValues",
+            externalLinkName: "kk_map_filterValues",
+            parameterTypes: [filterValueLambdaType],
             returnType: receiverType,
             typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
             flags: [.synthetic, .inlineFunction]
