@@ -1059,7 +1059,7 @@ final class RuntimeSequenceInputStreamBox {
 
     func available() -> Int {
         guard !closed else { return 0 }
-        return (first?.available() ?? 0) + (second?.available() ?? 0)
+        return first?.available() ?? 0
     }
 
     func close() {
