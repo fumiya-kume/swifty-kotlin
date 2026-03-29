@@ -863,7 +863,6 @@ final class RuntimeKFunctionBox {
     let arity: Int
     let returnTypeRaw: Int
     let isSuspend: Bool
-    let fnPtr: Int
     /// C function pointer for the underlying implementation (0 if unknown).
     let fnPtr: Int
     /// Closure environment pointer (0 for top-level functions).
