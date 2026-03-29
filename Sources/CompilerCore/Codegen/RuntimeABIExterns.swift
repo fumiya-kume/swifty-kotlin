@@ -1618,6 +1618,30 @@ public enum RuntimeABIExterns {
     /// Async builder with dispatcher specification — async(dispatcher) { body }.
     public static let kk_kxmini_async_with_dispatcher = ExternDecl(
         name: "kk_kxmini_async_with_dispatcher",
+    // Dispatcher-aware launch (STDLIB-CORO-072)
+
+    public static let kk_kxmini_launch_with_dispatcher = ExternDecl(
+        name: "kk_kxmini_launch_with_dispatcher",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kxmini_launch_with_dispatcher_and_cont = ExternDecl(
+        name: "kk_kxmini_launch_with_dispatcher_and_cont",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // CoroutineExceptionHandler (STDLIB-CORO-072)
+
+    public static let kk_exception_handler_new = ExternDecl(
+        name: "kk_exception_handler_new",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kxmini_launch_with_exception_handler = ExternDecl(
+        name: "kk_kxmini_launch_with_exception_handler",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
@@ -3667,6 +3691,12 @@ public enum RuntimeABIExterns {
             kk_kxmini_async_await_throwing,
             kk_async_task_cancel,
             kk_kxmini_async_with_dispatcher,
+            // Dispatcher-aware launch (STDLIB-CORO-072)
+            kk_kxmini_launch_with_dispatcher,
+            kk_kxmini_launch_with_dispatcher_and_cont,
+            // CoroutineExceptionHandler (STDLIB-CORO-072)
+            kk_exception_handler_new,
+            kk_kxmini_launch_with_exception_handler,
             // Flow (CORO-003)
             kk_flow_create,
             kk_flow_emit,

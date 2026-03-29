@@ -1149,11 +1149,27 @@ final class CallTypeChecker {
 
         let coroutineLauncherName = calleeName.map { interner.resolve($0) }
         let coroutineLauncherExpectedLambdaType: TypeID?
+        // STDLIB-CORO-072: Support launch(dispatcher) { } by checking both first and
+        // second argument for a trailing lambda. When the first argument is a dispatcher
+        // (non-lambda) and the second is a lambda, treat it as the block argument.
+        let coroutineLauncherLambdaArgIndex: Int? = {
+            guard let name = coroutineLauncherName,
+                  ["runBlocking", "launch", "async", "coroutineScope"].contains(name)
+            else { return nil }
+            if let firstArgExpr = args.first.flatMap({ ast.arena.expr($0.expr) }),
+               case .lambdaLiteral = firstArgExpr {
+                return 0
+            }
+            if args.count >= 2,
+               let secondArgExpr = ast.arena.expr(args[1].expr),
+               case .lambdaLiteral = secondArgExpr {
+                return 1
+            }
+            return nil
+        }()
         if let coroutineLauncherName,
-           ["runBlocking", "launch", "async", "coroutineScope"].contains(coroutineLauncherName),
-           let firstArg = args.first,
-           let firstArgExpr = ast.arena.expr(firstArg.expr),
-           case .lambdaLiteral = firstArgExpr
+           let lambdaIndex = coroutineLauncherLambdaArgIndex,
+           lambdaIndex < args.count
         {
             let lambdaReturnType: TypeID = switch coroutineLauncherName {
             case "launch":
@@ -1322,7 +1338,11 @@ final class CallTypeChecker {
         }
 
         let contextualArgExpectedTypes: [TypeID?] = args.enumerated().map { index, argument in
-            if index == 0, let coroutineLauncherExpectedLambdaType {
+            // STDLIB-CORO-072: Apply expected lambda type to the correct index
+            // (0 for standard launch/runBlocking, 1 for launch(dispatcher) { })
+            if let launcherIndex = coroutineLauncherLambdaArgIndex,
+               index == launcherIndex,
+               let coroutineLauncherExpectedLambdaType {
                 return coroutineLauncherExpectedLambdaType
             }
             if index == 1, let withContextExpectedLambdaType {
