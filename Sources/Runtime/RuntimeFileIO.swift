@@ -642,10 +642,83 @@ public func kk_input_stream_read_bytes(_ streamRaw: Int, _ bytesRaw: Int, _ outT
     return stream.read(into: list)
 }
 
+@_cdecl("kk_input_stream_mark")
+public func kk_input_stream_mark(_ streamRaw: Int, _ readLimitRaw: Int) -> Int {
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_mark received invalid InputStream handle")
+    }
+    stream.mark(readLimit: readLimitRaw)
+    return 0
+}
+
+@_cdecl("kk_input_stream_reset")
+public func kk_input_stream_reset(_ streamRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_reset received invalid InputStream handle")
+    }
+    if !stream.reset() {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: mark/reset not supported")
+    }
+    return 0
+}
+
+@_cdecl("kk_input_stream_mark_supported")
+public func kk_input_stream_mark_supported(_ streamRaw: Int) -> Int {
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_mark_supported received invalid InputStream handle")
+    }
+    return kk_box_bool(stream.markSupported() ? 1 : 0)
+}
+
 @_cdecl("kk_input_stream_close")
 public func kk_input_stream_close(_ streamRaw: Int) -> Int {
     guard let stream = runtimeInputStreamBox(from: streamRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_close received invalid InputStream handle")
+    }
+    stream.close()
+    return 0
+}
+
+// MARK: - SequenceInputStream (STDLIB-IO-092)
+
+private func runtimeSequenceInputStreamBox(from raw: Int) -> RuntimeSequenceInputStreamBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeSequenceInputStreamBox.self)
+}
+
+@_cdecl("kk_sequence_input_stream_new")
+public func kk_sequence_input_stream_new(_ firstRaw: Int, _ secondRaw: Int) -> Int {
+    guard let first = runtimeInputStreamBox(from: firstRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_input_stream_new: invalid first InputStream handle")
+    }
+    guard let second = runtimeInputStreamBox(from: secondRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_input_stream_new: invalid second InputStream handle")
+    }
+    return registerRuntimeObject(RuntimeSequenceInputStreamBox(first: first, second: second))
+}
+
+@_cdecl("kk_sequence_input_stream_read")
+public func kk_sequence_input_stream_read(_ streamRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let stream = runtimeSequenceInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_input_stream_read received invalid SequenceInputStream handle")
+    }
+    return stream.readByte()
+}
+
+@_cdecl("kk_sequence_input_stream_available")
+public func kk_sequence_input_stream_available(_ streamRaw: Int) -> Int {
+    guard let stream = runtimeSequenceInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_input_stream_available received invalid SequenceInputStream handle")
+    }
+    return stream.available()
+}
+
+@_cdecl("kk_sequence_input_stream_close")
+public func kk_sequence_input_stream_close(_ streamRaw: Int) -> Int {
+    guard let stream = runtimeSequenceInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_input_stream_close received invalid SequenceInputStream handle")
     }
     stream.close()
     return 0
