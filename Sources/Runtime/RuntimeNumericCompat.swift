@@ -669,10 +669,12 @@ public func kk_float_isFinite(_ value: Int) -> Int {
 }
 
 /// Double.toBits(): Long — returns IEEE 754 bit representation as Long.
-/// Reuses kk_double_to_bits which already performs this conversion.
+/// Canonicalizes NaN to the standard quiet NaN bit pattern per Kotlin semantics.
 @_cdecl("kk_double_toBits")
 public func kk_double_toBits(_ value: Int) -> Int {
-    kk_double_to_bits(kk_bits_to_double(value))
+    let d = kk_bits_to_double(value)
+    if d.isNaN { return Int(bitPattern: UInt(0x7FF8_0000_0000_0000 as UInt64)) }
+    return kk_double_to_bits(d)
 }
 
 /// Double.toRawBits(): Long — same as toBits() for finite values; differs for NaN.
@@ -691,9 +693,12 @@ public func kk_double_fromBits(_ bits: Int) -> Int {
 }
 
 /// Float.toBits(): Int — returns IEEE 754 bit representation as Int.
+/// Canonicalizes NaN to the standard quiet NaN bit pattern per Kotlin semantics.
 @_cdecl("kk_float_toBits")
 public func kk_float_toBits(_ value: Int) -> Int {
-    kk_float_to_bits(kk_bits_to_float(value))
+    let f = kk_bits_to_float(value)
+    if f.isNaN { return Int(bitPattern: UInt(0x7FC0_0000 as UInt32)) }
+    return kk_float_to_bits(f)
 }
 
 /// Float.toRawBits(): Int — actual bit pattern without canonicalizing NaN.

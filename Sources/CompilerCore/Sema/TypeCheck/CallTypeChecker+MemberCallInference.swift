@@ -5272,9 +5272,9 @@ extension CallTypeChecker {
     ) -> (TypeID, String)? {
         let types = sema.types
         switch (typeName, memberName) {
-        case ("Double", "fromBits"), ("Double", "fromRawBits"):
+        case ("Double", "fromBits"):
             return (types.doubleType, "kk_double_fromBits")
-        case ("Float", "fromBits"), ("Float", "fromRawBits"):
+        case ("Float", "fromBits"):
             return (types.floatType, "kk_float_fromBits")
         default:
             return nil
