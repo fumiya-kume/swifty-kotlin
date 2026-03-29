@@ -552,17 +552,6 @@
   - **関連ファイル**: `RuntimeDuration.swift`
   - **テストケース**: `Scripts/diff_cases/duration_operations.kt`
 
-- [ ] STDLIB-TIME-083: Instant完全実装
-  - **仕様**: Instantの完全サポート
-  - **実装内容**:
-    - Instant作成: Instant.now(), Instant.fromEpochMilliseconds()
-    - Instant演算: +, - Durationとの演算
-    - Instant比較: ==, <, >, <=, >=
-    - Instantプロパティ: epochSeconds, nanoOfSecond
-    - Instant間の期間: until(), elapsed()
-  - **現状**: Instantは未実装
-  - **関連ファイル**: `RuntimeDuration.swift`
-  - **テストケース**: `Scripts/diff_cases/instant_basic.kt`
 
 - [ ] STDLIB-TIME-085: システム時刻完全実装
   - **仕様**: システム時刻アクセスの完全サポート

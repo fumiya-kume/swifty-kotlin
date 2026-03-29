@@ -17,7 +17,7 @@ private func runtimeDurationBox(from raw: Int) -> RuntimeDurationBox? {
 
 /// Clamp-safe multiplication: returns `Int64.max` / `Int64.min` on overflow
 /// instead of trapping, matching Kotlin's Duration saturation semantics.
-private func saturatingMultiply(_ a: Int64, _ b: Int64) -> Int64 {
+func saturatingMultiply(_ a: Int64, _ b: Int64) -> Int64 {
     let (result, overflow) = a.multipliedReportingOverflow(by: b)
     if overflow {
         // If signs differ the overflow is negative, otherwise positive
