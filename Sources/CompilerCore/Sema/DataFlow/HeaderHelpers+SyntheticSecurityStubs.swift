@@ -196,6 +196,27 @@ extension DataFlowSemaPhase {
         registerDigestMember(ownerSymbol: digestSymbol, ownerType: digestType, name: "digest", parameterTypes: [digestByteArrayType], returnType: digestByteArrayType, externalLinkName: "kk_message_digest_digest", symbols: symbols, interner: interner)
     }
 
+    private func registerDigestTopLevel(packageFQName: [InternedString], name: String, parameterTypes: [TypeID], returnType: TypeID, externalLinkName: String, symbols: SymbolTable, interner: StringInterner) {
+        let fn = interner.intern(name)
+        let fq = packageFQName + [fn]
+        guard symbols.lookupAll(fqName: fq).isEmpty else { return }
+        let sym = symbols.define(kind: .function, name: fn, fqName: fq, declSite: nil, visibility: .public, flags: [.synthetic])
+        if let pkg = symbols.lookup(fqName: packageFQName) { symbols.setParentSymbol(pkg, for: sym) }
+        symbols.setExternalLinkName(externalLinkName, for: sym)
+        symbols.setFunctionSignature(FunctionSignature(parameterTypes: parameterTypes, returnType: returnType, valueParameterSymbols: [], valueParameterHasDefaultValues: [], valueParameterIsVararg: []), for: sym)
+    }
+
+    private func registerDigestMember(ownerSymbol: SymbolID, ownerType: TypeID, name: String, parameterTypes: [TypeID], returnType: TypeID, externalLinkName: String, symbols: SymbolTable, interner: StringInterner) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
+        let fn = interner.intern(name)
+        let fq = ownerInfo.fqName + [fn]
+        guard symbols.lookupAll(fqName: fq).isEmpty else { return }
+        let sym = symbols.define(kind: .function, name: fn, fqName: fq, declSite: nil, visibility: .public, flags: [.synthetic])
+        symbols.setParentSymbol(ownerSymbol, for: sym)
+        symbols.setExternalLinkName(externalLinkName, for: sym)
+        symbols.setFunctionSignature(FunctionSignature(receiverType: ownerType, parameterTypes: parameterTypes, returnType: returnType, valueParameterSymbols: [], valueParameterHasDefaultValues: [], valueParameterIsVararg: []), for: sym)
+    }
+
     private func ensureCipherCompanionSymbol(
         ownerSymbol: SymbolID,
         symbols: SymbolTable,
