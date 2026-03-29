@@ -704,3 +704,21 @@ public func kk_regex_group_names(_ regexRaw: Int) -> Int {
     let setBox = RuntimeSetBox(elements: nameRaws)
     return registerRuntimeObject(setBox)
 }
+
+// MARK: - STDLIB-REGEX-098: Regex.matches(input)
+
+/// Regex.matches(input): Boolean
+/// Returns true if the entire input string is matched by this regex.
+@_cdecl("kk_regex_matches")
+public func kk_regex_matches(_ regexRaw: Int, _ inputRaw: Int) -> Int {
+    let rawInput = regexStringFromRaw(inputRaw) ?? ""
+    guard let regexBox = regexBoxFromRaw(regexRaw) else { return kk_box_bool(0) }
+    let input = regexBox.normalizeIfNeeded(rawInput)
+    let range = NSRange(input.startIndex..., in: input)
+    guard let result = regexBox.regex.firstMatch(in: input, options: [], range: range) else {
+        return kk_box_bool(0)
+    }
+    let matchRange = Range(result.range, in: input)!
+    let isFullMatch = matchRange.lowerBound == input.startIndex && matchRange.upperBound == input.endIndex
+    return kk_box_bool(isFullMatch ? 1 : 0)
+}

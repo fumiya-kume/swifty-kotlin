@@ -104,7 +104,7 @@ final class ABIMismatchTests: XCTestCase {
         // kk_string_zipWithNext
         // STDLIB-REGEX-095: kk_match_result_range, kk_match_result_component1,
         // kk_match_result_component2, kk_match_result_next, kk_match_group_collection_get_at
-        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 36)
+        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 38)
     }
 
     func testPrintAndPrintlnFunctionCount() {
