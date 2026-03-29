@@ -18,15 +18,21 @@ final class RuntimeInstantBox {
 
     init(epochSeconds: Int64, nanoOfSecond rawNano: Int32) {
         // Normalise nanoOfSecond into [0, 999_999_999].
-        // A negative rawNano can appear when the fractional part of
-        // timeIntervalSince1970 rounds toward –∞.
-        if rawNano < 0 {
-            self.epochSeconds = epochSeconds - 1
-            self.nanoOfSecond = rawNano + 1_000_000_000
+        // Use division/modulo to handle multi-second overflow or borrow:
+        //   - rawNano >= 1_000_000_000: carry full seconds into epochSeconds
+        //   - rawNano < 0: borrow full seconds from epochSeconds
+        // Work in Int64 to avoid overflow during intermediate calculations.
+        let nano64 = Int64(rawNano)
+        let carry: Int64
+        if nano64 >= 0 {
+            carry = nano64 / 1_000_000_000
         } else {
-            self.epochSeconds = epochSeconds
-            self.nanoOfSecond = rawNano
+            // Floor division for negative values: borrow enough full seconds
+            // so the remainder lands in [0, 999_999_999].
+            carry = (nano64 - 999_999_999) / 1_000_000_000
         }
+        self.epochSeconds = epochSeconds + carry
+        self.nanoOfSecond = Int32(nano64 - carry * 1_000_000_000)
     }
 }
 

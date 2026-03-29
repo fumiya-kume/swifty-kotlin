@@ -1394,6 +1394,11 @@ final class CallTypeChecker {
                     expectedType: contextualExpectedType
                 )
             }
+            // Reuse the type already inferred during the prolog pass for
+            // non-lambda arguments to avoid emitting duplicate diagnostics.
+            if let cached = inferredNonLambdaArgTypes[index] {
+                return cached
+            }
             return driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
         }
         if !candidates.isEmpty {
