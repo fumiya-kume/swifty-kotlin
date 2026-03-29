@@ -36,7 +36,7 @@ fun main() {
     println(log2Val)
 
     // Power and roots (Double)
-    val powVal: Double = pow(2.0, 3.0)
+    val powVal: Double = 2.0.pow(3.0)
     println(powVal)
     val sqrtVal: Double = sqrt(4.0)
     println(sqrtVal)

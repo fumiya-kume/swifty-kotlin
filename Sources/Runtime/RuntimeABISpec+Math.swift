@@ -426,11 +426,6 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
                 RuntimeABIParameter(name: "mode", type: .intptr),
-        // STDLIB-MATH-109: Hyperbolic functions and cbrt
-        RuntimeABIFunctionSpec(
-            name: "kk_math_sinh",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
             ],
             returnType: .intptr,
             section: "Math"
@@ -440,9 +435,6 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
                 RuntimeABIParameter(name: "mode", type: .intptr),
-            name: "kk_math_cosh",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
             ],
             returnType: .intptr,
             section: "Math"
@@ -451,51 +443,30 @@ public extension RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_math_round_up",
             parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
-        RuntimeABIFunctionSpec(
-            name: "kk_math_tanh",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
-            ],
             returnType: .intptr,
             section: "Math"
         ),
         RuntimeABIFunctionSpec(
             name: "kk_math_round_down",
             parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
-            name: "kk_math_cbrt",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
-            ],
             returnType: .intptr,
             section: "Math"
         ),
         RuntimeABIFunctionSpec(
             name: "kk_math_round_ceiling",
             parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
-            name: "kk_math_sinh_float",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
-            ],
             returnType: .intptr,
             section: "Math"
         ),
         RuntimeABIFunctionSpec(
             name: "kk_math_round_floor",
             parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
-            name: "kk_math_cosh_float",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
-            ],
             returnType: .intptr,
             section: "Math"
         ),
         RuntimeABIFunctionSpec(
             name: "kk_math_round_half_up",
             parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
-            name: "kk_math_tanh_float",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
-            ],
             returnType: .intptr,
             section: "Math"
         ),
@@ -563,10 +534,6 @@ public extension RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_math_round_unnecessary_float",
             parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
-            name: "kk_math_cbrt_float",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
-            ],
             returnType: .intptr,
             section: "Math"
         ),
