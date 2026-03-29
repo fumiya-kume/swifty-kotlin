@@ -173,6 +173,7 @@ extension CollectionLiteralLoweringPass {
             var iteratorBuilderExprIDs: Set<Int32> = []
             var indexingIterableExprIDs: Set<Int32> = []
             var indexingIterableIteratorExprIDs: Set<Int32> = []
+            var ulongRangeIteratorExprIDs: Set<Int32> = []
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count + 32)
 
@@ -1068,6 +1069,23 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
+                    // --- Rewrite kk_range_iterator on ULong range → kk_ulong_range_iterator (STDLIB-RANGE-037) ---
+                    if callee == lookup.kkRangeIteratorName, arguments.count == 1 {
+                        let argID = arguments[0]
+                        if ulongRangeExprIDs.contains(argID.rawValue) {
+                            if let result { ulongRangeIteratorExprIDs.insert(result.rawValue) }
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkULongRangeIteratorName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
+                    }
+
                     // --- Rewrite kk_range_iterator on list → kk_list_iterator ---
                     if callee == lookup.kkRangeIteratorName, arguments.count == 1 {
                         let argID = arguments[0]
@@ -1131,6 +1149,22 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    // --- Rewrite kk_range_hasNext on ULong range iterator → kk_ulong_range_hasNext (STDLIB-RANGE-037) ---
+                    if callee == lookup.kkRangeHasNextName, arguments.count == 1 {
+                        let argID = arguments[0]
+                        if ulongRangeIteratorExprIDs.contains(argID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkULongRangeHasNextName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
+                    }
+
                     // --- Rewrite kk_range_hasNext on list iterator → kk_list_iterator_hasNext ---
                     if callee == lookup.kkRangeHasNextName, arguments.count == 1 {
                         let argID = arguments[0]
@@ -1185,6 +1219,22 @@ extension CollectionLiteralLoweringPass {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkIndexingIterableHasNextName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
+                    }
+
+                    // --- Rewrite kk_range_next on ULong range iterator → kk_ulong_range_next (STDLIB-RANGE-037) ---
+                    if callee == lookup.kkRangeNextName, arguments.count == 1 {
+                        let argID = arguments[0]
+                        if ulongRangeIteratorExprIDs.contains(argID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkULongRangeNextName,
                                 arguments: arguments,
                                 result: result,
                                 canThrow: false,
@@ -1385,9 +1435,12 @@ extension CollectionLiteralLoweringPass {
                                 continue
                             }
                             if rangeExprIDs.contains(receiverID.rawValue) {
+                                let countCallee = ulongRangeExprIDs.contains(receiverID.rawValue)
+                                    ? lookup.kkULongRangeCountName
+                                    : lookup.kkRangeCountName
                                 loweredBody.append(.call(
                                     symbol: nil,
-                                    callee: lookup.kkRangeCountName,
+                                    callee: countCallee,
                                     arguments: [receiverID],
                                     result: result,
                                     canThrow: false,
@@ -2606,12 +2659,18 @@ extension CollectionLiteralLoweringPass {
                                     closureRawID = zeroExpr
                                 }
                                 let isCharRange = charRangeExprIDs.contains(receiverID.rawValue)
+                                let isULongRange = ulongRangeExprIDs.contains(receiverID.rawValue)
                                 let kkName: InternedString
                                 if callee == lookup.mapName {
-                                    kkName = lookup.kkRangeMapName
+                                    // STDLIB-RANGE-037: use ULong-specific map for unsigned ranges
+                                    kkName = isULongRange ? lookup.kkULongRangeMapName : lookup.kkRangeMapName
                                 } else {
-                                    // forEach: use char range variant if applicable (STDLIB-290)
-                                    kkName = isCharRange ? lookup.kkCharRangeForEachName : lookup.kkRangeForEachName
+                                    // forEach: use ULong, char, or default range variant
+                                    if isULongRange {
+                                        kkName = lookup.kkULongRangeForEachName
+                                    } else {
+                                        kkName = isCharRange ? lookup.kkCharRangeForEachName : lookup.kkRangeForEachName
+                                    }
                                 }
                                 let hofResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)), type: nil
@@ -4224,6 +4283,9 @@ extension CollectionLiteralLoweringPass {
                     }
                     if indexingIterableIteratorExprIDs.contains(from.rawValue) {
                         indexingIterableIteratorExprIDs.insert(to.rawValue)
+                    }
+                    if ulongRangeIteratorExprIDs.contains(from.rawValue) {
+                        ulongRangeIteratorExprIDs.insert(to.rawValue)
                     }
                     loweredBody.append(instruction)
 

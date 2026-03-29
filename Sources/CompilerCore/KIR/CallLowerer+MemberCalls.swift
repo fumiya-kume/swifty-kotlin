@@ -4117,7 +4117,7 @@ extension CallLowerer {
         let calleeText = interner.resolve(calleeName)
         if sema.bindings.isRangeExpr(receiverExpr) {
             let rangeMembers: Set<String> = [
-                "first", "last", "step", "contains", "isEmpty", "sum",
+                "first", "last", "step", "contains", "isEmpty", "sum", "count",
                 "toList", "forEach", "map", "mapIndexed", "mapNotNull",
                 "filter", "filterIndexed", "filterNot", "reduce", "reduceIndexed",
                 "fold", "foldIndexed", "find", "findLast", "firstOrNull",
@@ -4716,6 +4716,10 @@ extension CallLowerer {
                     : "kk_range_isEmpty")
             case "sum":
                 return interner.intern("kk_range_sum")
+            case "count":
+                return interner.intern(sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType
+                    ? "kk_ulong_range_count"
+                    : "kk_range_count")
             case "toList":
                 if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
                     return interner.intern("kk_ulong_range_toList")
@@ -4725,9 +4729,13 @@ extension CallLowerer {
                 }
                 return interner.intern("kk_range_toList")
             case "forEach":
-                return interner.intern("kk_range_forEach")
+                return interner.intern(sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType
+                    ? "kk_ulong_range_forEach"
+                    : "kk_range_forEach")
             case "map":
-                return interner.intern("kk_range_map")
+                return interner.intern(sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType
+                    ? "kk_ulong_range_map"
+                    : "kk_range_map")
             case "mapIndexed":
                 return interner.intern("kk_range_mapIndexed")
             case "mapNotNull":
