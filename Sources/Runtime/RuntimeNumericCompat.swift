@@ -636,6 +636,210 @@ public func kk_float_nextDown(_ value: Int) -> Int {
     kk_float_to_bits(kk_bits_to_float(value).nextDown)
 }
 
+// MARK: - STDLIB-111: IEEE 754 rounding modes
+//
+// Kotlin exposes rounding mode as an Int constant matching java.math.RoundingMode ordinals:
+//   0 = UP, 1 = DOWN, 2 = CEILING, 3 = FLOOR
+//   4 = HALF_UP, 5 = HALF_DOWN, 6 = HALF_EVEN, 7 = UNNECESSARY
+//
+// Each function takes a Double or Float (bit-pattern transported via Int) and a mode Int,
+// and returns the rounded value in the same bit-pattern form.
+//
+// Architecture assumption: Int == Int64 on all supported 64-bit targets.
+
+// Helper: apply a rounding mode to a Double value.
+// mode values match java.math.RoundingMode ordinals.
+private func applyRoundingMode(_ value: Double, mode: Int) -> Double {
+    switch mode {
+    case 0: // ROUND_UP — round towards non-zero (away from zero)
+        return value >= 0 ? ceil(value) : floor(value)
+    case 1: // ROUND_DOWN — round towards zero (truncate)
+        return trunc(value)
+    case 2: // ROUND_CEILING — round towards positive infinity
+        return ceil(value)
+    case 3: // ROUND_FLOOR — round towards negative infinity
+        return floor(value)
+    case 4: // ROUND_HALF_UP — ties round away from zero
+        if value >= 0 {
+            return floor(value + 0.5)
+        } else {
+            return ceil(value - 0.5)
+        }
+    case 5: // ROUND_HALF_DOWN — ties round towards zero
+        if value >= 0 {
+            let frac = value - floor(value)
+            return frac > 0.5 ? ceil(value) : floor(value)
+        } else {
+            let frac = ceil(value) - value
+            return frac > 0.5 ? floor(value) : ceil(value)
+        }
+    case 6: // ROUND_HALF_EVEN — ties round to nearest even (banker's rounding)
+        return value.rounded(.toNearestOrEven)
+    case 7: // ROUND_UNNECESSARY — value must already be integral; return as-is
+        return value
+    default:
+        return value.rounded()
+    }
+}
+
+// Helper: apply a rounding mode to a Float value.
+private func applyRoundingModeFloat(_ value: Float, mode: Int) -> Float {
+    switch mode {
+    case 0: // ROUND_UP
+        return value >= 0 ? ceilf(value) : floorf(value)
+    case 1: // ROUND_DOWN
+        return truncf(value)
+    case 2: // ROUND_CEILING
+        return ceilf(value)
+    case 3: // ROUND_FLOOR
+        return floorf(value)
+    case 4: // ROUND_HALF_UP
+        if value >= 0 {
+            return floorf(value + 0.5)
+        } else {
+            return ceilf(value - 0.5)
+        }
+    case 5: // ROUND_HALF_DOWN
+        if value >= 0 {
+            let frac = value - floorf(value)
+            return frac > 0.5 ? ceilf(value) : floorf(value)
+        } else {
+            let frac = ceilf(value) - value
+            return frac > 0.5 ? floorf(value) : ceilf(value)
+        }
+    case 6: // ROUND_HALF_EVEN
+        return value.rounded(.toNearestOrEven)
+    case 7: // ROUND_UNNECESSARY
+        return value
+    default:
+        return value.rounded()
+    }
+}
+
+// Double rounding with explicit mode.
+@_cdecl("kk_math_round_mode")
+public func kk_math_round_mode(_ value: Int, _ mode: Int) -> Int {
+    kk_double_to_bits(applyRoundingMode(kk_bits_to_double(value), mode: mode))
+}
+
+// Float rounding with explicit mode.
+@_cdecl("kk_math_round_mode_float")
+public func kk_math_round_mode_float(_ value: Int, _ mode: Int) -> Int {
+    kk_float_to_bits(applyRoundingModeFloat(kk_bits_to_float(value), mode: mode))
+}
+
+// Convenience single-mode entry points (Double) for ROUND_UP/DOWN/CEILING/FLOOR/HALF_UP/HALF_EVEN.
+// These avoid the mode dispatch overhead in hot paths and keep ABI simple.
+
+@_cdecl("kk_math_round_up")
+public func kk_math_round_up(_ value: Int) -> Int {
+    let d = kk_bits_to_double(value)
+    return kk_double_to_bits(d >= 0 ? ceil(d) : floor(d))
+}
+
+@_cdecl("kk_math_round_down")
+public func kk_math_round_down(_ value: Int) -> Int {
+    kk_double_to_bits(trunc(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_round_ceiling")
+public func kk_math_round_ceiling(_ value: Int) -> Int {
+    kk_double_to_bits(ceil(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_round_floor")
+public func kk_math_round_floor(_ value: Int) -> Int {
+    kk_double_to_bits(floor(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_round_half_up")
+public func kk_math_round_half_up(_ value: Int) -> Int {
+    let d = kk_bits_to_double(value)
+    if d >= 0 {
+        return kk_double_to_bits(floor(d + 0.5))
+    } else {
+        return kk_double_to_bits(ceil(d - 0.5))
+    }
+}
+
+@_cdecl("kk_math_round_half_down")
+public func kk_math_round_half_down(_ value: Int) -> Int {
+    let d = kk_bits_to_double(value)
+    if d >= 0 {
+        let frac = d - floor(d)
+        return kk_double_to_bits(frac > 0.5 ? ceil(d) : floor(d))
+    } else {
+        let frac = ceil(d) - d
+        return kk_double_to_bits(frac > 0.5 ? floor(d) : ceil(d))
+    }
+}
+
+@_cdecl("kk_math_round_half_even")
+public func kk_math_round_half_even(_ value: Int) -> Int {
+    kk_double_to_bits(kk_bits_to_double(value).rounded(.toNearestOrEven))
+}
+
+@_cdecl("kk_math_round_unnecessary")
+public func kk_math_round_unnecessary(_ value: Int) -> Int {
+    // Value must already be an integer; return unchanged.
+    value
+}
+
+// Float variants of the above.
+
+@_cdecl("kk_math_round_up_float")
+public func kk_math_round_up_float(_ value: Int) -> Int {
+    let f = kk_bits_to_float(value)
+    return kk_float_to_bits(f >= 0 ? ceilf(f) : floorf(f))
+}
+
+@_cdecl("kk_math_round_down_float")
+public func kk_math_round_down_float(_ value: Int) -> Int {
+    kk_float_to_bits(truncf(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_round_ceiling_float")
+public func kk_math_round_ceiling_float(_ value: Int) -> Int {
+    kk_float_to_bits(ceilf(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_round_floor_float")
+public func kk_math_round_floor_float(_ value: Int) -> Int {
+    kk_float_to_bits(floorf(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_round_half_up_float")
+public func kk_math_round_half_up_float(_ value: Int) -> Int {
+    let f = kk_bits_to_float(value)
+    if f >= 0 {
+        return kk_float_to_bits(floorf(f + 0.5))
+    } else {
+        return kk_float_to_bits(ceilf(f - 0.5))
+    }
+}
+
+@_cdecl("kk_math_round_half_down_float")
+public func kk_math_round_half_down_float(_ value: Int) -> Int {
+    let f = kk_bits_to_float(value)
+    if f >= 0 {
+        let frac = f - floorf(f)
+        return kk_float_to_bits(frac > 0.5 ? ceilf(f) : floorf(f))
+    } else {
+        let frac = ceilf(f) - f
+        return kk_float_to_bits(frac > 0.5 ? floorf(f) : ceilf(f))
+    }
+}
+
+@_cdecl("kk_math_round_half_even_float")
+public func kk_math_round_half_even_float(_ value: Int) -> Int {
+    kk_float_to_bits(kk_bits_to_float(value).rounded(.toNearestOrEven))
+}
+
+@_cdecl("kk_math_round_unnecessary_float")
+public func kk_math_round_unnecessary_float(_ value: Int) -> Int {
+    value
+}
+
 // MARK: - STDLIB-514: abs(Long), truncate, IEEErem, withSign, nextTowards
 
 @_cdecl("kk_math_abs_long")
