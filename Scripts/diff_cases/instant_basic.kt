@@ -11,10 +11,14 @@ fun main() {
     println(epochSec)   // 0
     println(epochNano)  // 0
 
-    // Instant arithmetic: plus/minus Duration
+    // Instant arithmetic: plus/minus Duration (deterministic with epoch base)
     val d = 5.seconds
-    val later = now + d
-    val earlier = now - d
+    val later = epoch + d
+    val earlier = epoch - d
+    println(later.epochSeconds)   // 5
+    println(later.nanoOfSecond)   // 0
+    println(earlier.epochSeconds) // -5
+    println(earlier.nanoOfSecond) // 0
 
     // comparisons
     println(epoch < now)    // true
