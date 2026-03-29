@@ -3174,19 +3174,22 @@ extension CollectionLiteralLoweringPass {
                                 let trampolineName: InternedString
                                 let closureExpr: KIRExprID
                                 if case .unknown = source {
-                                    // Direct lambda comparator — pass as fnPtr with closureRaw=0
-                                    trampolineName = comparatorExpr.rawValue >= 0
-                                        ? lookup.kkComparatorFromSelectorTrampolineName
-                                        : lookup.kkComparatorFromSelectorTrampolineName
-                                    let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
-                                    loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                    // Direct lambda comparator — pass as fnPtr with closureRaw
+                                    let closureRawID: KIRExprID
+                                    if arguments.count == 3 {
+                                        closureRawID = arguments[2]
+                                    } else {
+                                        let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                        loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                        closureRawID = zeroExpr
+                                    }
                                     let hofResult = module.arena.appendExpr(
                                         .temporary(Int32(module.arena.expressions.count)), type: nil
                                     )
                                     loweredBody.append(.call(
                                         symbol: nil,
                                         callee: kkName,
-                                        arguments: [receiverID, comparatorExpr, zeroExpr],
+                                        arguments: [receiverID, comparatorExpr, closureRawID],
                                         result: hofResult,
                                         canThrow: canThrow,
                                         thrownResult: thrownResult
