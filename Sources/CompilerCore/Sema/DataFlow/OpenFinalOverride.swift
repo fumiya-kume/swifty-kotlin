@@ -646,12 +646,15 @@ extension DataFlowSemaPhase {
             return
         }
 
-        // Skip covariance check when the parent return type involves type parameters
+        // Skip covariance check when the parent or child return type involves type parameters
         // (including type parameters nested inside generic type arguments, e.g. List<T>).
         // Type parameter substitution (e.g. T -> String for Producer<String>) is not
         // performed here; such cases require full generic instantiation which is out of
         // scope for this lightweight check.
         if typeContainsAnyTypeParam(parentReturnType, types: ctx.types) {
+            return
+        }
+        if typeContainsAnyTypeParam(childReturnType, types: ctx.types) {
             return
         }
 
@@ -837,6 +840,8 @@ extension DataFlowSemaPhase {
             return typeContainsAnyTypeParam(ft.returnType, types: types)
         case let .intersection(parts):
             return parts.contains { typeContainsAnyTypeParam($0, types: types) }
+        case let .kClassType(kct):
+            return typeContainsAnyTypeParam(kct.argument, types: types)
         default:
             return false
         }
