@@ -74,6 +74,11 @@ extension ABIMismatchTests {
             "kk_cipher_init_with_iv",
             "kk_cipher_doFinal",
             "kk_cipher_doFinal_noarg",
+            // JSON Serialization (STDLIB-SER-132)
+            "kk_json_default",
+            "kk_json_encodeToString",
+            "kk_json_decodeFromString",
+            "kk_json_encodeMapToString",
         ]
 
         for linkName in syntheticLinkNames {
