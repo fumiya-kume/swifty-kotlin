@@ -288,6 +288,18 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/type_constraints.kt`
 
+- [x] STDLIB-GEN-056: スタープロジェクション完全実装
+  - **仕様**: スタープロジェクション（*）の完全サポート
+  - **実装内容**:
+    - スタープロジェクション: List<*>
+    - 読み取り専用アクセス: get()のみ許可
+    - 型安全なキャスト: as?演算子
+    - スタープロジェクションとジェネリック関数
+    - スタープロジェクションの型消去
+  - **現状**: 実装完了
+  - **関連ファイル**: `Sources/CompilerCore/Sema/TypeSystem/TypeModels.swift`, `Sources/CompilerCore/Sema/TypeSystem/Subtyping.swift`
+  - **テストケース**: `Scripts/diff_cases/star_projection.kt`, `Tests/CompilerCoreTests/GoldenCases/Sema/star_projection.kt`
+
 - [ ] STDLIB-GEN-057: reified型パラメータ完全実装
   - **仕様**: reified型パラメータの完全サポート
   - **実装内容**:
