@@ -815,7 +815,31 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/annotation_basic.kt`
 
-- [ ] STDLIB-METAPROG-116: メタプログラミング基本実装
+- [ ] STDLIB-ANNO-114: アノテーション保持完全実装
+  - **仕様**: アノテーション保持ポリシーの完全サポート
+  - **実装内容**:
+    - SOURCE: ソースレベルでのみ保持
+    - CLASS: クラスファイルに保持、実行時は破棄
+    - RUNTIME: 実行時まで保持
+    - 保持ポリシーの継承
+    - アノテーションの継承: @Inherited
+  - **現状**: 基本的なアノテーションは実装済み、保持ポリシーは未実装
+  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
+  - **テストケース**: `Scripts/diff_cases/annotation_retention.kt`
+
+- [ ] STDLIB-ANNO-115: アノテーションターゲット完全実装
+  - **仕様**: アノテーションターゲットの完全サポート
+  - **実装内容**:
+    - ターゲット種類: CLASS, FUNCTION, PROPERTY, FIELD
+    - ターゲット種類: CONSTRUCTOR, PARAMETER, TYPE, EXPRESSION
+    - ターゲット種類: FILE, TYPEALIAS, TYPE_PARAMETER
+    - 複合ターゲット: @Target([ElementType.CLASS, ElementType.FUNCTION])
+    - ターゲットの継承と制約
+  - **現状**: 基本的なアノテーションは実装済み、ターゲットは未実装
+  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
+  - **テストケース**: `Scripts/diff_cases/annotation_target.kt`
+
+- [x] STDLIB-METAPROG-116: メタプログラミング基本実装
   - **仕様**: メタプログラミングの基本的な機能
   - **実装内容**:
     - アノテーション処理: AnnotationProcessor
@@ -824,7 +848,7 @@
     - 型情報: コンパイル時型情報
     - エラー報告: コンパイル時エラー生成
   - **現状**: メタプログラミングは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
+  - **関連ファイル**: `HeaderHelpers+SyntheticMetaprogStubs.swift`
   - **テストケース**: `Scripts/diff_cases/metaprogramming_basic.kt`
 
 #### 既存STDLIBタスクの整理
