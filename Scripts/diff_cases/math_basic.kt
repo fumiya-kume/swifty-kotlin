@@ -1,0 +1,57 @@
+import kotlin.math.*
+
+fun main() {
+    // Trigonometric functions (Double)
+    val sinVal: Double = sin(0.0)
+    println(sinVal)
+    val cosVal: Double = cos(0.0)
+    println(cosVal)
+    val tanVal: Double = tan(0.0)
+    println(tanVal)
+
+    // Inverse trigonometric (Double)
+    val asinVal: Double = asin(0.0)
+    println(asinVal)
+    val acosVal: Double = acos(1.0)
+    println(acosVal)
+    val atanVal: Double = atan(0.0)
+    println(atanVal)
+
+    // Hyperbolic functions (Double)
+    val sinhVal: Double = sinh(0.0)
+    println(sinhVal)
+    val coshVal: Double = cosh(0.0)
+    println(coshVal)
+    val tanhVal: Double = tanh(0.0)
+    println(tanhVal)
+
+    // Exponential and logarithm (Double)
+    val expVal: Double = exp(0.0)
+    println(expVal)
+    val lnVal: Double = ln(1.0)
+    println(lnVal)
+    val log10Val: Double = log10(1.0)
+    println(log10Val)
+    val log2Val: Double = log2(1.0)
+    println(log2Val)
+
+    // Power and roots (Double)
+    val powVal: Double = pow(2.0, 3.0)
+    println(powVal)
+    val sqrtVal: Double = sqrt(4.0)
+    println(sqrtVal)
+    val cbrtVal: Double = cbrt(8.0)
+    println(cbrtVal)
+
+    // Absolute value and sign (Double)
+    val absVal: Double = abs(-3.0)
+    println(absVal)
+    val signPos: Double = sign(5.0)
+    println(signPos)
+    val signNeg: Double = sign(-5.0)
+    println(signNeg)
+
+    // abs (Int)
+    val absInt: Int = abs(-7)
+    println(absInt)
+}
