@@ -937,28 +937,13 @@
   - **関連ファイル**: `RuntimeSet.swift`
   - **テストケース**: `Scripts/diff_cases/set_basic.kt`
 
-- [ ] STDLIB-COL-121: コレクションビルダー完全実装
+- [x] STDLIB-COL-121: コレクションビルダー完全実装
   - **仕様**: コレクションビルダーの完全サポート
   - **実装内容**:
-    - buildList(): Listビルダー
-    - buildSet(): Setビルダー
-    - buildMap(): Mapビルダー
-    - ビルダー操作: add(), addAll(), put(), putAll()
-    - ビルダースコープ: this参照とreturn値
-  - **現状**: buildMapは一部実装済み、他は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticCollectionStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/collection_builders.kt`
-
-- [ ] STDLIB-COL-121: コレクションビルダー完全実装
-  - **仕様**: コレクションビルダーの完全サポート
-  - **実装内容**:
-    - buildList(): Listビルダー
-    - buildSet(): Setビルダー
-    - buildMap(): Mapビルダー
-    - ビルダー操作: add(), addAll(), put(), putAll()
-    - ビルダースコープ: this参照とreturn値
-  - **現状**: buildMapは一部実装済み、他は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticCollectionStubs.swift`
+    - buildList(): Listビルダー (add, addAll)
+    - buildSet(): Setビルダー (add, addAll)
+    - buildMap(): Mapビルダー (put)
+    - ビルダー操作: add(), addAll(), put()
   - **テストケース**: `Scripts/diff_cases/collection_builders.kt`
 
 #### Phase 4: 高度文字列処理 (低優先度)

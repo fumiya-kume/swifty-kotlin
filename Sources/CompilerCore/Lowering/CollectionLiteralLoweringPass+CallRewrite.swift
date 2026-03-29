@@ -770,8 +770,12 @@ extension CollectionLiteralLoweringPass {
                             rewrittenCallee = lookup.kkStringBuilderAppendRangeName
                         } else if builderCallee == lookup.buildListName, callee == lookup.addName, arguments.count == 1 {
                             rewrittenCallee = lookup.kkBuilderListAddName
+                        } else if builderCallee == lookup.buildListName, callee == lookup.addAllName, arguments.count == 1 {
+                            rewrittenCallee = lookup.kkBuilderListAddAllName
                         } else if builderCallee == lookup.buildSetName, callee == lookup.addName, arguments.count == 1 {
                             rewrittenCallee = lookup.kkBuilderSetAddName
+                        } else if builderCallee == lookup.buildSetName, callee == lookup.addAllName, arguments.count == 1 {
+                            rewrittenCallee = lookup.kkBuilderSetAddAllName
                         } else if builderCallee == lookup.buildMapName, callee == lookup.putName, arguments.count == 2 {
                             rewrittenCallee = lookup.kkBuilderMapPutName
                         }
