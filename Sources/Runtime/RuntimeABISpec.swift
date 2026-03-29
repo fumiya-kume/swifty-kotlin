@@ -3917,6 +3917,48 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Regex"
         ),
+        // STDLIB-REGEX-095: MatchResult complete implementation
+        RuntimeABIFunctionSpec(
+            name: "kk_match_result_range",
+            parameters: [
+                RuntimeABIParameter(name: "matchRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_match_result_component1",
+            parameters: [
+                RuntimeABIParameter(name: "matchRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_match_result_component2",
+            parameters: [
+                RuntimeABIParameter(name: "matchRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_match_result_next",
+            parameters: [
+                RuntimeABIParameter(name: "matchRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_match_group_collection_get_at",
+            parameters: [
+                RuntimeABIParameter(name: "collectionRaw", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
         // STDLIB-REGEX-097: Regex.groupNames
         RuntimeABIFunctionSpec(
             name: "kk_regex_group_names",

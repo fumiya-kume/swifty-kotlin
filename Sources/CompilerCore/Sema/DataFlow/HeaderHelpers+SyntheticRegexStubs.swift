@@ -157,6 +157,64 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-REGEX-095: MatchResult.range ---
+        registerRegexMemberProperty(
+            named: "range",
+            externalLinkName: "kk_match_result_range",
+            ownerSymbol: matchResultSymbol,
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-REGEX-095: MatchResult.component1() ---
+        registerRegexMemberFunction(
+            named: "component1",
+            externalLinkName: "kk_match_result_component1",
+            ownerSymbol: matchResultSymbol,
+            ownerType: matchResultType,
+            parameters: [],
+            returnType: stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-REGEX-095: MatchResult.component2() ---
+        registerRegexMemberFunction(
+            named: "component2",
+            externalLinkName: "kk_match_result_component2",
+            ownerSymbol: matchResultSymbol,
+            ownerType: matchResultType,
+            parameters: [],
+            returnType: stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-REGEX-095: MatchResult.next() ---
+        registerRegexMemberFunction(
+            named: "next",
+            externalLinkName: "kk_match_result_next",
+            ownerSymbol: matchResultSymbol,
+            ownerType: matchResultType,
+            parameters: [],
+            returnType: nullableMatchResultType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-REGEX-095: MatchGroupCollection.get(index: Int) ---
+        registerRegexMemberFunction(
+            named: "get",
+            externalLinkName: "kk_match_group_collection_get_at",
+            ownerSymbol: matchGroupCollectionSymbol,
+            ownerType: matchGroupCollectionType,
+            parameters: [("index", intType, false, false)],
+            returnType: nullableMatchGroupType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-350: Regex.matchEntire ---
         registerRegexMemberFunction(
             named: "matchEntire",

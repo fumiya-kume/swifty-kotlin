@@ -3058,13 +3058,43 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-REGEX-095: MatchResult complete implementation
+    public static let kk_match_result_range = ExternDecl(
+        name: "kk_match_result_range",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_match_result_component1 = ExternDecl(
+        name: "kk_match_result_component1",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_match_result_component2 = ExternDecl(
+        name: "kk_match_result_component2",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_match_result_next = ExternDecl(
+        name: "kk_match_result_next",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_match_group_collection_get_at = ExternDecl(
+        name: "kk_match_group_collection_get_at",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // STDLIB-REGEX-097: Regex.groupNames
     public static let kk_regex_group_names = ExternDecl(
         name: "kk_regex_group_names",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
-
     // MARK: - File I/O (STDLIB-320/321/322/323)
 
     // IMPORTANT: The raw parameter type strings here (e.g. "intptr_t",
@@ -3422,6 +3452,12 @@ public enum RuntimeABIExterns {
         kk_match_group_collection_get,
         kk_match_group_value,
         kk_match_group_range,
+        // STDLIB-REGEX-095: MatchResult complete implementation
+        kk_match_result_range,
+        kk_match_result_component1,
+        kk_match_result_component2,
+        kk_match_result_next,
+        kk_match_group_collection_get_at,
         kk_regex_group_names,
     ]
 

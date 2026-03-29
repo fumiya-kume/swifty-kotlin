@@ -39,12 +39,29 @@ final class RuntimeMatchResultBox {
     let groups: [RuntimeMatchGroupBox?]
     /// Named capture group name -> group index mapping.
     let namedGroups: [String: Int]
+    /// The original input string (for next() iteration).
+    let inputString: String?
+    /// The end position in the input string where this match ended (UTF-16 offset, for next() iteration).
+    let matchEndOffset: Int
+    /// The regex box used to produce this match (for next() iteration).
+    weak var regexBox: RuntimeRegexBox?
 
-    init(value: String, groupValues: [String], groups: [RuntimeMatchGroupBox?] = [], namedGroups: [String: Int] = [:]) {
+    init(
+        value: String,
+        groupValues: [String],
+        groups: [RuntimeMatchGroupBox?] = [],
+        namedGroups: [String: Int] = [:],
+        inputString: String? = nil,
+        matchEndOffset: Int = 0,
+        regexBox: RuntimeRegexBox? = nil
+    ) {
         self.value = value
         self.groupValues = groupValues
         self.groups = groups
         self.namedGroups = namedGroups
+        self.inputString = inputString
+        self.matchEndOffset = matchEndOffset
+        self.regexBox = regexBox
     }
 }
 
@@ -161,7 +178,24 @@ private func makeMatchResult(from result: NSTextCheckingResult, in str: String, 
         }
     }
 
-    return RuntimeMatchResultBox(value: value, groupValues: groupValues, groups: groups, namedGroups: namedGroups)
+    // Compute UTF-16 offset of the match end position for next() iteration
+    let matchEnd: Int
+    if let range = Range(result.range, in: str) {
+        let utf16End = range.upperBound.samePosition(in: str.utf16) ?? str.utf16.endIndex
+        matchEnd = str.utf16.distance(from: str.utf16.startIndex, to: utf16End)
+    } else {
+        matchEnd = 0
+    }
+
+    return RuntimeMatchResultBox(
+        value: value,
+        groupValues: groupValues,
+        groups: groups,
+        namedGroups: namedGroups,
+        inputString: str,
+        matchEndOffset: matchEnd,
+        regexBox: regexBox
+    )
 }
 
 // MARK: - STDLIB-100: Regex constructor, matches, contains
@@ -514,6 +548,146 @@ public func kk_match_group_range(_ groupRaw: Int) -> Int {
         return registerRuntimeObject(RuntimeRangeBox(first: 0, last: -1, step: 1))
     }
     return registerRuntimeObject(RuntimeRangeBox(first: group.rangeStart, last: group.rangeEnd, step: 1))
+}
+
+// MARK: - STDLIB-REGEX-095: MatchResult complete implementation
+
+/// MatchResult.range: IntRange — the range of the entire match.
+@_cdecl("kk_match_result_range")
+public func kk_match_result_range(_ matchRaw: Int) -> Int {
+    guard let matchResult = matchResultBoxFromRaw(matchRaw),
+          let group0 = matchResult.groups.first,
+          let g = group0 else {
+        return registerRuntimeObject(RuntimeRangeBox(first: 0, last: -1, step: 1))
+    }
+    return registerRuntimeObject(RuntimeRangeBox(first: g.rangeStart, last: g.rangeEnd, step: 1))
+}
+
+/// MatchResult.component1() — the entire match value (destructuring).
+@_cdecl("kk_match_result_component1")
+public func kk_match_result_component1(_ matchRaw: Int) -> Int {
+    guard let matchResult = matchResultBoxFromRaw(matchRaw) else { return regexMakeStringRaw("") }
+    return regexMakeStringRaw(matchResult.value)
+}
+
+/// MatchResult.component2() — the first capture group value (destructuring).
+@_cdecl("kk_match_result_component2")
+public func kk_match_result_component2(_ matchRaw: Int) -> Int {
+    guard let matchResult = matchResultBoxFromRaw(matchRaw) else { return regexMakeStringRaw("") }
+    let firstGroup = matchResult.groupValues.count > 1 ? matchResult.groupValues[1] : ""
+    return regexMakeStringRaw(firstGroup)
+}
+
+/// MatchResult.next() — returns the next MatchResult in the input, or null.
+@_cdecl("kk_match_result_next")
+public func kk_match_result_next(_ matchRaw: Int) -> Int {
+    guard let matchResult = matchResultBoxFromRaw(matchRaw),
+          let inputString = matchResult.inputString,
+          let regexBox = matchResult.regexBox else {
+        return runtimeNullSentinelInt
+    }
+    let startOffset = matchResult.matchEndOffset
+    let isZeroLengthMatch = matchResult.value.isEmpty
+    let effectiveOffset = isZeroLengthMatch ? startOffset + 1 : startOffset
+    // Convert UTF-16 offset to String.Index
+    guard let utf16StartIdx = inputString.utf16.index(
+        inputString.utf16.startIndex,
+        offsetBy: effectiveOffset,
+        limitedBy: inputString.utf16.endIndex
+    ) else {
+        return runtimeNullSentinelInt
+    }
+    guard let startIdx = utf16StartIdx.samePosition(in: inputString),
+          startIdx < inputString.endIndex else {
+        return runtimeNullSentinelInt
+    }
+    let searchStr = String(inputString[startIdx...])
+    let nsRange = NSRange(searchStr.startIndex..., in: searchStr)
+    guard let result = regexBox.regex.firstMatch(in: searchStr, options: [], range: nsRange) else {
+        return runtimeNullSentinelInt
+    }
+    let nextMatchResult = makeMatchResultWithOffset(
+        from: result,
+        in: searchStr,
+        inputOffset: effectiveOffset,
+        regexBox: regexBox,
+        fullInput: inputString
+    )
+    return registerRuntimeObject(nextMatchResult)
+}
+
+/// MatchGroupCollection[index]: MatchGroup? — integer index access.
+@_cdecl("kk_match_group_collection_get_at")
+public func kk_match_group_collection_get_at(_ collectionRaw: Int, _ index: Int) -> Int {
+    guard let collection = matchGroupCollectionBoxFromRaw(collectionRaw) else {
+        return runtimeNullSentinelInt
+    }
+    guard index >= 0, index < collection.groups.count else {
+        return runtimeNullSentinelInt
+    }
+    guard let group = collection.groups[index] else {
+        return runtimeNullSentinelInt
+    }
+    return registerRuntimeObject(group)
+}
+
+// MARK: - Private helper for next() with offset-adjusted ranges
+
+private func makeMatchResultWithOffset(
+    from result: NSTextCheckingResult,
+    in str: String,
+    inputOffset: Int,
+    regexBox: RuntimeRegexBox?,
+    fullInput: String
+) -> RuntimeMatchResultBox {
+    let matchRange = Range(result.range, in: str)!
+    let value = String(str[matchRange])
+
+    var groupValues: [String] = []
+    var groups: [RuntimeMatchGroupBox?] = []
+    for i in 0 ..< result.numberOfRanges {
+        let groupRange = result.range(at: i)
+        if groupRange.location != NSNotFound, let range = Range(groupRange, in: str) {
+            let groupValue = String(str[range])
+            groupValues.append(groupValue)
+            let utf16Start = range.lowerBound.samePosition(in: str.utf16) ?? str.utf16.startIndex
+            let localStart = str.utf16.distance(from: str.utf16.startIndex, to: utf16Start)
+            let startIndex = inputOffset + localStart
+            let endIndex = startIndex + str[range].utf16.count - 1
+            groups.append(RuntimeMatchGroupBox(value: groupValue, rangeStart: startIndex, rangeEnd: endIndex))
+        } else {
+            groupValues.append("")
+            groups.append(nil)
+        }
+    }
+
+    var namedGroups: [String: Int] = [:]
+    if let regexBox = regexBox {
+        let names = extractNamedGroupNames(from: regexBox.pattern)
+        for name in names {
+            let namedRange = result.range(withName: name)
+            guard namedRange.location != NSNotFound else { continue }
+            for groupIndex in 1 ..< result.numberOfRanges where result.range(at: groupIndex) == namedRange {
+                namedGroups[name] = groupIndex
+                break
+            }
+        }
+    }
+
+    // Compute match end offset in full input's UTF-16
+    let utf16End = matchRange.upperBound.samePosition(in: str.utf16) ?? str.utf16.endIndex
+    let localEnd = str.utf16.distance(from: str.utf16.startIndex, to: utf16End)
+    let matchEnd = inputOffset + localEnd
+
+    return RuntimeMatchResultBox(
+        value: value,
+        groupValues: groupValues,
+        groups: groups,
+        namedGroups: namedGroups,
+        inputString: fullInput,
+        matchEndOffset: matchEnd,
+        regexBox: regexBox
+    )
 }
 
 // MARK: - STDLIB-REGEX-097: Regex.groupNames

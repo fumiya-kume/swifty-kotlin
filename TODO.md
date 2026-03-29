@@ -636,6 +636,18 @@
   - **関連ファイル**: `RuntimeRegex.swift`
   - **テストケース**: `Scripts/diff_cases/regex_basic.kt`
 
+- [x] STDLIB-REGEX-095: MatchResult完全実装
+  - **仕様**: MatchResultの完全サポート
+  - **実装内容**:
+    - マッチ情報: value, range, groups
+    - グループアクセス: groupValues, groupValues[], get()
+    - デストラクチャリング: component1(), component2()
+    - マッチ反復: next(), hasPrevious()
+    - マッチ変換: map(), transform()
+  - **現状**: 基本的なMatchResultは実装済み、詳細は未実装
+  - **関連ファイル**: `RuntimeRegex.swift`
+  - **テストケース**: `Scripts/diff_cases/match_result.kt`
+
 - [ ] STDLIB-REGEX-096: 正規表現オプション完全実装
   - **仕様**: 正規表現オプションの完全サポート
   - **実装内容**:

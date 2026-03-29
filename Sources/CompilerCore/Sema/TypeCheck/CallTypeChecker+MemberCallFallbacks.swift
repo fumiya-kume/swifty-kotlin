@@ -90,6 +90,7 @@ extension CallTypeChecker {
                 nullability: .nonNull
             )))
             if nonNullReceiverType == matchResultType {
+                let nullableMatchResultType = sema.types.makeNullable(matchResultType)
                 let resultType: TypeID? = switch (memberName, args.count) {
                 case ("value", 0):
                     sema.types.stringType
@@ -107,6 +108,11 @@ extension CallTypeChecker {
                     } else {
                         sema.types.anyType
                     }
+                // STDLIB-REGEX-095: MatchResult complete implementation
+                case ("component1", 0), ("component2", 0):
+                    sema.types.stringType
+                case ("next", 0):
+                    nullableMatchResultType
                 default:
                     nil
                 }
