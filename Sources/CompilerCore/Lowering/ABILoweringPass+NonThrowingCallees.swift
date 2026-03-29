@@ -290,6 +290,8 @@ extension ABILoweringPass {
             interner.intern("kk_flow_collect"),
             interner.intern("kk_flow_retain"),
             interner.intern("kk_flow_release"),
+            interner.intern("kk_flow_to_list"),
+            interner.intern("kk_flow_first"),
             interner.intern("kk_coroutine_launcher_arg_set"),
             interner.intern("kk_coroutine_launcher_arg_get"),
             interner.intern("kk_kxmini_run_blocking_with_cont"),

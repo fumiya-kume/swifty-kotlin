@@ -221,6 +221,42 @@ extension CoroutineLoweringPass {
                     continue
                 }
 
+                if callee == names.toList,
+                   !arguments.isEmpty,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    let consume = prepareFlowHandleForConsume(arguments[0])
+                    loweredBody.append(.call(
+                        symbol: nil,
+                        callee: names.kkFlowToList,
+                        arguments: [consume.callArg, appendIntConstantInBody(0)],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil,
+                        isSuperCall: isSuperCall
+                    ))
+                    if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
+                    continue
+                }
+
+                if callee == names.first,
+                   !arguments.isEmpty,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    let consume = prepareFlowHandleForConsume(arguments[0])
+                    loweredBody.append(.call(
+                        symbol: nil,
+                        callee: names.kkFlowFirst,
+                        arguments: [consume.callArg, appendIntConstantInBody(0)],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil,
+                        isSuperCall: isSuperCall
+                    ))
+                    if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
+                    continue
+                }
+
                 if callee == names.kkFlowCollect,
                    arguments.count == 2,
                    flowExprIDs.contains(arguments[0].rawValue)
@@ -290,6 +326,38 @@ extension CoroutineLoweringPass {
                         arguments: [receiver, arguments[0], appendIntConstantInBody(0)],
                         result: result, canThrow: canThrow, thrownResult: thrownResult
                     )
+                    continue
+                }
+
+                if callee == names.toList, arguments.isEmpty,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    let consume = prepareFlowHandleForConsume(receiver)
+                    loweredBody.append(.call(
+                        symbol: nil,
+                        callee: names.kkFlowToList,
+                        arguments: [consume.callArg, appendIntConstantInBody(0)],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
+                    continue
+                }
+
+                if callee == names.first, arguments.isEmpty,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    let consume = prepareFlowHandleForConsume(receiver)
+                    loweredBody.append(.call(
+                        symbol: nil,
+                        callee: names.kkFlowFirst,
+                        arguments: [consume.callArg, appendIntConstantInBody(0)],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                     continue
                 }
 

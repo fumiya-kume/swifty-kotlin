@@ -16,11 +16,15 @@ struct FlowLoweringNames {
     let map: InternedString
     let filter: InternedString
     let take: InternedString
+    let toList: InternedString
+    let first: InternedString
     let kkFlowCreate: InternedString
     let kkFlowEmit: InternedString
     let kkFlowCollect: InternedString
     let kkFlowRetain: InternedString
     let kkFlowRelease: InternedString
+    let kkFlowToList: InternedString
+    let kkFlowFirst: InternedString
 }
 
 extension CoroutineLoweringPass {
@@ -34,12 +38,16 @@ extension CoroutineLoweringPass {
         let mapName = ctx.interner.intern("map")
         let filterName = ctx.interner.intern("filter")
         let takeName = ctx.interner.intern("take")
+        let toListName = ctx.interner.intern("toList")
+        let firstName = ctx.interner.intern("first")
 
         let kkFlowCreateName = ctx.interner.intern("kk_flow_create")
         let kkFlowEmitName = ctx.interner.intern("kk_flow_emit")
         let kkFlowCollectName = ctx.interner.intern("kk_flow_collect")
         let kkFlowRetainName = ctx.interner.intern("kk_flow_retain")
         let kkFlowReleaseName = ctx.interner.intern("kk_flow_release")
+        let kkFlowToListName = ctx.interner.intern("kk_flow_to_list")
+        let kkFlowFirstName = ctx.interner.intern("kk_flow_first")
 
         func transformFunction(_ function: KIRFunction) -> KIRFunction {
             var updated: KIRFunction = function
@@ -192,9 +200,11 @@ extension CoroutineLoweringPass {
                 case let .call(_, callee, _, _, _, _, _, _):
                     callee == flowName || callee == emitName || callee == collectName ||
                         callee == mapName || callee == filterName || callee == takeName ||
+                        callee == toListName || callee == firstName ||
                         callee == kkFlowCreateName || callee == kkFlowEmitName || callee == kkFlowCollectName
                 case let .virtualCall(_, callee, _, _, _, _, _, _):
-                    callee == mapName || callee == filterName || callee == takeName || callee == collectName
+                    callee == mapName || callee == filterName || callee == takeName || callee == collectName ||
+                        callee == toListName || callee == firstName
                 default:
                     false
                 }
@@ -226,6 +236,10 @@ extension CoroutineLoweringPass {
                         markConsume(arguments[0])
                         continue
                     }
+                    if (callee == toListName || callee == firstName), !arguments.isEmpty {
+                        markConsume(arguments[0])
+                        continue
+                    }
                     if isFlowTransformEmitCall(callee, arguments), arguments.count == 3 {
                         markConsume(arguments[0])
                     }
@@ -233,6 +247,9 @@ extension CoroutineLoweringPass {
                     if callee == mapName || callee == filterName || callee == takeName || callee == collectName,
                        arguments.count == 1
                     {
+                        markConsume(receiver)
+                    }
+                    if (callee == toListName || callee == firstName), arguments.isEmpty {
                         markConsume(receiver)
                     }
                 default:
@@ -248,11 +265,15 @@ extension CoroutineLoweringPass {
                 map: mapName,
                 filter: filterName,
                 take: takeName,
+                toList: toListName,
+                first: firstName,
                 kkFlowCreate: kkFlowCreateName,
                 kkFlowEmit: kkFlowEmitName,
                 kkFlowCollect: kkFlowCollectName,
                 kkFlowRetain: kkFlowRetainName,
-                kkFlowRelease: kkFlowReleaseName
+                kkFlowRelease: kkFlowReleaseName,
+                kkFlowToList: kkFlowToListName,
+                kkFlowFirst: kkFlowFirstName
             )
             let loweredBody = rewriteFlowInstructions(
                 originalBody: function.body,

@@ -22,12 +22,41 @@ extension CallTypeChecker {
         locals: inout LocalBindings
     ) -> TypeID? {
         let memberName = ctx.interner.resolve(calleeName)
-        let flowMembers: Set = ["map", "filter", "take", "collect"]
+        let flowMembers: Set = ["map", "filter", "take", "collect", "toList", "first"]
         guard flowMembers.contains(memberName) else {
             return nil
         }
 
         switch memberName {
+        case "toList":
+            // Flow.toList() — collects all emitted values into a List
+            guard args.isEmpty else {
+                return nil
+            }
+            let listSymbol = sema.symbols.lookupByShortName(ctx.interner.intern("List")).first
+            let resultType: TypeID = if let listSymbol {
+                sema.types.make(.classType(ClassType(
+                    classSymbol: listSymbol,
+                    args: [.invariant(receiverElementType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                sema.types.anyType
+            }
+            let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+
+        case "first":
+            // Flow.first() — returns the first emitted value
+            guard args.isEmpty else {
+                return nil
+            }
+            let firstType = receiverElementType
+            let finalType = safeCall ? sema.types.makeNullable(firstType) : firstType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+
         case "take":
             guard args.count == 1 else {
                 return nil

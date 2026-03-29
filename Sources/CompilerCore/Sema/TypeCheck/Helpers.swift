@@ -247,6 +247,12 @@ struct TypeCheckHelpers {
         case interner.intern("map"), interner.intern("filter"), interner.intern("take"):
             guard argumentCount == 1 || argumentCount == 2 else { return nil }
             return sema.types.nullableAnyType
+        case interner.intern("toList"):
+            guard argumentCount == 0 || argumentCount == 1 else { return nil }
+            return sema.types.anyType
+        case interner.intern("first"):
+            guard argumentCount == 0 || argumentCount == 1 else { return nil }
+            return sema.types.anyType
         default:
             return nil
         }

@@ -20,6 +20,8 @@ final class FlowLoweringPass: LoweringPass {
             ctx.interner.intern("filter"),
             ctx.interner.intern("take"),
             ctx.interner.intern("collect"),
+            ctx.interner.intern("toList"),
+            ctx.interner.intern("first"),
         ]
         for decl in module.arena.declarations {
             guard case let .function(function) = decl else {
@@ -52,10 +54,14 @@ final class FlowLoweringPass: LoweringPass {
         let filterName = interner.intern("filter")
         let takeName = interner.intern("take")
         let collectName = interner.intern("collect")
+        let toListName = interner.intern("toList")
+        let firstName = interner.intern("first")
 
         let kkFlowCreateName = interner.intern("kk_flow_create")
         let kkFlowEmitName = interner.intern("kk_flow_emit")
         let kkFlowCollectName = interner.intern("kk_flow_collect")
+        let kkFlowToListName = interner.intern("kk_flow_to_list")
+        let kkFlowFirstName = interner.intern("kk_flow_first")
 
         let intType = ctx.sema?.types.intType
 
@@ -263,6 +269,36 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
+                    if callee == toListName,
+                       arguments.count == 1,
+                       flowExprIDs.contains(arguments[0].rawValue)
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowToListName,
+                            arguments: [arguments[0], appendIntConstant(0)],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
+                    if callee == firstName,
+                       arguments.count == 1,
+                       flowExprIDs.contains(arguments[0].rawValue)
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowFirstName,
+                            arguments: [arguments[0], appendIntConstant(0)],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
                     if callee == kkFlowCreateName,
                        let result
                     {
@@ -375,6 +411,36 @@ final class FlowLoweringPass: LoweringPass {
                             thrownResult: nil
                         ))
                         activeFlowExpr = receiver
+                        continue
+                    }
+
+                    if callee == toListName,
+                       arguments.isEmpty,
+                       flowExprIDs.contains(receiver.rawValue)
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowToListName,
+                            arguments: [receiver, appendIntConstant(0)],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
+                    if callee == firstName,
+                       arguments.isEmpty,
+                       flowExprIDs.contains(receiver.rawValue)
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowFirstName,
+                            arguments: [receiver, appendIntConstant(0)],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
                         continue
                     }
 
