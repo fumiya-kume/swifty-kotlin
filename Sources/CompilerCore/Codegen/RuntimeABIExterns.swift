@@ -932,7 +932,13 @@ public enum RuntimeABIExterns {
 
     public static let kk_string_toBigDecimal = ExternDecl(
         name: "kk_string_toBigDecimal",
-        parameterTypes: ["intptr_t", "intptr_t*"],
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_toBigInteger = ExternDecl(
+        name: "kk_string_toBigInteger",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
@@ -3855,6 +3861,7 @@ public enum RuntimeABIExterns {
             kk_string_trimMargin,
             kk_string_format,
             kk_string_toBigDecimal,
+            kk_string_toBigInteger,
             kk_bignum_toString,
             kk_string_isNullOrEmpty,
             kk_string_isNullOrBlank,

@@ -1006,6 +1006,18 @@
 
 #### Phase 4: 数値処理と精度 (低優先度)
 
+- [ ] STDLIB-NUM-128: BigDecimal完全実装
+  - **仕様**: BigDecimalの完全サポート
+  - **実装内容**:
+    - 精度計算: 任意精度の小数点演算
+    - 丸めモード: 全てのIEEE 754丸めモード
+    - スケール操作: scale(), setScale(), precision()
+    - 数学演算: add(), subtract(), multiply(), divide()
+    - 比較: compareTo(), equals(), hashCode()
+  - **現状**: BigDecimalは未実装
+  - **関連ファイル**: `RuntimeBigDecimal.swift`
+  - **テストケース**: `Scripts/diff_cases/big_decimal.kt`
+
 - [ ] STDLIB-NUM-129: BigInteger完全実装
   - **仕様**: BigIntegerの完全サポート
   - **実装内容**:
@@ -1014,7 +1026,7 @@
     - ビット演算: and(), or(), xor(), not(), shiftLeft(), shiftRight()
     - 数学関数: gcd(), abs(), modInverse(), modPow()
     - 変換: toInt(), toLong(), toByteArray()
-  - **現状**: BigIntegerは未実装
+  - **現状**: 基本的なString.toBigInteger()は実装済み、演算は未実装
   - **関連ファイル**: `RuntimeBigInteger.swift`
   - **テストケース**: `Scripts/diff_cases/big_integer.kt`
 
