@@ -326,17 +326,17 @@
 
 #### Phase 2: リフレクション (中優先度)
 
-- [ ] STDLIB-REFLECT-061: KClassメンバアクセス完全実装
-  - **仕様**: KClassからのメンバアクセス機能
+- [ ] STDLIB-REFLECT-060: KClass基本機能完全実装
+  - **仕様**: KClassの基本的なリフレクション機能
   - **実装内容**:
-    - プロパティ: properties, memberProperties
-    - 関数: functions, memberFunctions
-    - 拡張プロパティ: declaredMemberProperties
-    - 拡張関数: declaredMemberFunctions
-    - メンバのフィルタリングと検索
-  - **現状**: 基本的なリフレクションは実装済み、メンバアクセスは未実装
+    - クラス名: simpleName, qualifiedName
+    - クラス階層: supertypes, isInstance
+    - 型パラメータ: typeParameters, generics
+    - 可視性: visibility, isAbstract, isFinal
+    - コンストラクタ: constructors
+  - **現状**: 基本的なKClassは実装済み (REFL-004参照)、詳細は未実装
   - **関連ファイル**: `RuntimeReflection.swift`
-  - **テストケース**: `Scripts/diff_cases/kclass_members.kt`
+  - **テストケース**: `Scripts/diff_cases/kclass_basic.kt`
 
 - [ ] STDLIB-REFLECT-062: KProperty完全実装
   - **仕様**: KPropertyインターフェースの完全サポート
@@ -400,7 +400,7 @@
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/type_reflection.kt`
 
-- [ ] STDLIB-REFLECT-067: リフレクション動的呼び出し完全実装
+- [x] STDLIB-REFLECT-067: リフレクション動的呼び出し完全実装
   - **仕様**: リフレクションによる動的メンバ呼び出し
   - **実装内容**:
     - 関数呼び出し: KFunction.call()
@@ -408,7 +408,7 @@
     - コンストラクタ呼び出し: KConstructor.call()
     - 可変長引数の処理
     - 例外処理とエラーハンドリング
-  - **現状**: 基本的なリフレクションは実装済み、動的呼び出しは未実装
+  - **現状**: 実装完了 — kk_kfunction_call_{0,1,2,3,vararg}, kk_kproperty_{get,set}, kk_kconstructor_call_{0,1,vararg}
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/reflection_dynamic_call.kt`
 
@@ -619,7 +619,7 @@
     - 一時ファイル: createTempFile(), createTempDirectory()
   - **現状**: 基本的なFilesは実装済み、検索は未実装
   - **関連ファイル**: `RuntimeFileIO.swift`
-  - **テストケース**: `Scripts/diff_cases/files_utility.kt`
+  - **テストケース**: `Scripts/diff_cases/files_utility.kt`, `Scripts/diff_cases/buffered_io.kt`
 
 - [ ] STDLIB-IO-093: リソースアクセス完全実装
 #### Phase 3: 正規表現 (低優先度)
@@ -815,7 +815,31 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/annotation_basic.kt`
 
-- [ ] STDLIB-METAPROG-116: メタプログラミング基本実装
+- [ ] STDLIB-ANNO-114: アノテーション保持完全実装
+  - **仕様**: アノテーション保持ポリシーの完全サポート
+  - **実装内容**:
+    - SOURCE: ソースレベルでのみ保持
+    - CLASS: クラスファイルに保持、実行時は破棄
+    - RUNTIME: 実行時まで保持
+    - 保持ポリシーの継承
+    - アノテーションの継承: @Inherited
+  - **現状**: 基本的なアノテーションは実装済み、保持ポリシーは未実装
+  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
+  - **テストケース**: `Scripts/diff_cases/annotation_retention.kt`
+
+- [ ] STDLIB-ANNO-115: アノテーションターゲット完全実装
+  - **仕様**: アノテーションターゲットの完全サポート
+  - **実装内容**:
+    - ターゲット種類: CLASS, FUNCTION, PROPERTY, FIELD
+    - ターゲット種類: CONSTRUCTOR, PARAMETER, TYPE, EXPRESSION
+    - ターゲット種類: FILE, TYPEALIAS, TYPE_PARAMETER
+    - 複合ターゲット: @Target([ElementType.CLASS, ElementType.FUNCTION])
+    - ターゲットの継承と制約
+  - **現状**: 基本的なアノテーションは実装済み、ターゲットは未実装
+  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
+  - **テストケース**: `Scripts/diff_cases/annotation_target.kt`
+
+- [x] STDLIB-METAPROG-116: メタプログラミング基本実装
   - **仕様**: メタプログラミングの基本的な機能
   - **実装内容**:
     - アノテーション処理: AnnotationProcessor
@@ -824,7 +848,7 @@
     - 型情報: コンパイル時型情報
     - エラー報告: コンパイル時エラー生成
   - **現状**: メタプログラミングは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
+  - **関連ファイル**: `HeaderHelpers+SyntheticMetaprogStubs.swift`
   - **テストケース**: `Scripts/diff_cases/metaprogramming_basic.kt`
 
 #### 既存STDLIBタスクの整理
@@ -1272,7 +1296,7 @@
   - **関連ファイル**: `RuntimeTest.swift`
   - **テストケース**: `Scripts/diff_cases/test_framework_basic.kt`
 
-- [ ] STDLIB-TEST-158: モックオブジェクト完全実装
+- [x] STDLIB-TEST-158: モックオブジェクト完全実装
   - **仕様**: モックオブジェクトの完全サポート
   - **実装内容**:
     - モック作成: インターフェースのモック生成

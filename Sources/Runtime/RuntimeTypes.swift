@@ -1031,11 +1031,15 @@ final class RuntimeInputStreamBox {
     private let data: Data
     private var offset: Int
     private var closed: Bool
+    private var markOffset: Int
+    private var markLimit: Int
 
     init(data: Data) {
         self.data = data
         self.offset = 0
         self.closed = false
+        self.markOffset = 0
+        self.markLimit = 0
     }
 
     func readByte() -> Int {
@@ -1070,7 +1074,56 @@ final class RuntimeInputStreamBox {
         return writableCount
     }
 
+    func mark(readLimit: Int) {
+        // FileInputStream does not support mark/reset; this is a no-op.
+    }
+
+    func markSupported() -> Bool { false }
+
+    /// Attempts a reset.  Returns `false` when mark/reset is not supported
+    /// (matching JVM FileInputStream behaviour — callers must raise IOException).
+    func reset() -> Bool { false }
+
     func close() {
+        closed = true
+    }
+}
+
+/// Runtime box for `java.io.SequenceInputStream` — chains two InputStreams.
+final class RuntimeSequenceInputStreamBox {
+    private var first: RuntimeInputStreamBox?
+    private var second: RuntimeInputStreamBox?
+    private var closed: Bool
+
+    init(first: RuntimeInputStreamBox, second: RuntimeInputStreamBox) {
+        self.first = first
+        self.second = second
+        self.closed = false
+    }
+
+    func readByte() -> Int {
+        guard !closed else { return -1 }
+        if let s1 = first {
+            let b = s1.readByte()
+            if b != -1 { return b }
+            // first stream exhausted — move to second
+            s1.close()
+            first = nil
+        }
+        return second?.readByte() ?? -1
+    }
+
+    func available() -> Int {
+        guard !closed else { return 0 }
+        return first?.available() ?? 0
+    }
+
+    func close() {
+        guard !closed else { return }
+        first?.close()
+        second?.close()
+        first = nil
+        second = nil
         closed = true
     }
 }

@@ -873,6 +873,7 @@ extension DataFlowSemaPhase {
         registerSyntheticCacheStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticLocaleConstructorStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticDateFormatStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticMetaprogStubs(symbols: symbols, types: types, interner: interner)
     }
 
     func registerSyntheticContractStubs(
