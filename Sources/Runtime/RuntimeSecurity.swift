@@ -1,15 +1,7 @@
-#if canImport(CryptoKit)
-import Foundation
-import CryptoKit
-
-final class RuntimeMessageDigestBox {
-    let algorithm: String
-
-    init(algorithm: String) {
 #if canImport(CommonCrypto)
 import CommonCrypto
+import CryptoKit
 import Foundation
-import Security
 import Security
 
 // MARK: - Symmetric Crypto Runtime Support (STDLIB-SEC-144)
@@ -313,12 +305,19 @@ final class RuntimeSecretKeySpecBox {
     }
 }
 
+final class RuntimeMessageDigestBox {
+    let algorithm: String
+
+    init(algorithm: String) {
+        self.algorithm = algorithm
+    }
+}
+
 private func runtimeMessageDigestBox(from raw: Int) -> RuntimeMessageDigestBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
     return tryCast(ptr, to: RuntimeMessageDigestBox.self)
 }
 
-private func securityString(from raw: Int, caller: StaticString) -> String {
 final class RuntimePublicKeyBox {
     let secKey: SecKey
     let algorithm: RuntimeCipherAlgorithm
@@ -486,7 +485,7 @@ private func bytesFromListRaw(_ raw: Int) -> [UInt8]? {
 @_cdecl("kk_message_digest_getInstance")
 public func kk_message_digest_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    let algorithm = securityString(from: algorithmRaw, caller: #function).uppercased()
+    let algorithm = runtimeSecurityString(from: algorithmRaw, caller: #function).uppercased()
     let supported = ["MD5", "SHA-1", "SHA-256", "SHA-512"]
     guard supported.contains(algorithm) else {
         outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchAlgorithmException: \(algorithm)")
@@ -520,21 +519,6 @@ public func kk_message_digest_digest(_ digestRaw: Int, _ dataRaw: Int, _ outThro
     }
     return registerRuntimeObject(RuntimeListBox(elements: output.map { Int(Int8(bitPattern: $0)) }))
 }
-#else
-// MARK: - Platform stubs: CryptoKit not available on Linux
-
-@_cdecl("kk_message_digest_getInstance")
-public func kk_message_digest_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: MessageDigest not available on this platform")
-    return 0
-}
-
-@_cdecl("kk_message_digest_digest")
-public func kk_message_digest_digest(_ digestRaw: Int, _ dataRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: MessageDigest not available on this platform")
-    return 0
-}
-#endif
 private func runtimeSecurityBytes(from raw: Int, caller: StaticString) -> [UInt8]? {
     guard let box = runtimeArrayBox(from: raw) else {
         return nil
@@ -1679,6 +1663,18 @@ public func kk_certpathvalidator_validate(
 }
 #else
 // MARK: - Platform stubs: CommonCrypto/Security not available on Linux
+
+@_cdecl("kk_message_digest_getInstance")
+public func kk_message_digest_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: MessageDigest not available on this platform")
+    return 0
+}
+
+@_cdecl("kk_message_digest_digest")
+public func kk_message_digest_digest(_ digestRaw: Int, _ dataRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: MessageDigest not available on this platform")
+    return 0
+}
 
 @_cdecl("kk_secretkeyspec_new")
 public func kk_secretkeyspec_new(
