@@ -222,6 +222,68 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(doubleFromBits(kk_math_E()), Double(M_E), accuracy: 1e-12)
     }
 
+    // MARK: - STDLIB-MATH-112: numeric constants
+
+    func testDoublePositiveInfinity() {
+        XCTAssertTrue(doubleFromBits(kk_double_positive_infinity()).isInfinite)
+        XCTAssertGreaterThan(doubleFromBits(kk_double_positive_infinity()), 0)
+    }
+
+    func testDoubleNegativeInfinity() {
+        XCTAssertTrue(doubleFromBits(kk_double_negative_infinity()).isInfinite)
+        XCTAssertLessThan(doubleFromBits(kk_double_negative_infinity()), 0)
+    }
+
+    func testDoubleNaN() {
+        XCTAssertTrue(doubleFromBits(kk_double_nan()).isNaN)
+    }
+
+    func testDoubleMaxValue() {
+        XCTAssertEqual(doubleFromBits(kk_double_max_value()), Double.greatestFiniteMagnitude)
+    }
+
+    func testDoubleMinValue() {
+        XCTAssertEqual(doubleFromBits(kk_double_min_value()), Double.leastNonzeroMagnitude)
+    }
+
+    func testFloatPositiveInfinity() {
+        XCTAssertTrue(floatFromBits(kk_float_positive_infinity()).isInfinite)
+        XCTAssertGreaterThan(floatFromBits(kk_float_positive_infinity()), 0)
+    }
+
+    func testFloatNegativeInfinity() {
+        XCTAssertTrue(floatFromBits(kk_float_negative_infinity()).isInfinite)
+        XCTAssertLessThan(floatFromBits(kk_float_negative_infinity()), 0)
+    }
+
+    func testFloatNaN() {
+        XCTAssertTrue(floatFromBits(kk_float_nan()).isNaN)
+    }
+
+    func testFloatMaxValue() {
+        XCTAssertEqual(floatFromBits(kk_float_max_value()), Float.greatestFiniteMagnitude)
+    }
+
+    func testFloatMinValue() {
+        XCTAssertEqual(floatFromBits(kk_float_min_value()), Float.leastNonzeroMagnitude)
+    }
+
+    func testIntMaxValue() {
+        XCTAssertEqual(kk_int_max_value(), Int(Int32.max))
+    }
+
+    func testIntMinValue() {
+        XCTAssertEqual(kk_int_min_value(), Int(Int32.min))
+    }
+
+    func testLongMaxValue() {
+        XCTAssertEqual(kk_long_max_value(), Int(Int64.max))
+    }
+
+    func testLongMinValue() {
+        XCTAssertEqual(kk_long_min_value(), Int(truncatingIfNeeded: Int64.min))
+    }
+
     // MARK: - roundToInt / roundToLong (STDLIB-510..511)
 
     func testFloatRoundToInt() {
