@@ -152,6 +152,85 @@ public func kk_string_builder_appendRange_obj(_ sbRaw: Int, _ csqRaw: Int, _ sta
     return sbRaw
 }
 
+// MARK: - STDLIB-STR-123: Additional StringBuilder methods
+
+@_cdecl("kk_string_builder_replace_obj")
+public func kk_string_builder_replace_obj(_ sbRaw: Int, _ start: Int, _ end: Int, _ strRaw: Int) -> Int {
+    guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
+    let len = sb.value.utf8.count
+    let clampedEnd = min(end, len)
+    guard start >= 0, start <= len, clampedEnd >= start else {
+        fatalError("StringIndexOutOfBoundsException: start=\(start), end=\(end), length=\(len)")
+    }
+    let replacement: String
+    if let ptr = UnsafeMutableRawPointer(bitPattern: strRaw),
+       let s = extractString(from: ptr) {
+        replacement = s
+    } else {
+        replacement = runtimeElementToString(strRaw)
+    }
+    let startIdx = sb.value.utf8.index(sb.value.utf8.startIndex, offsetBy: start)
+    let endIdx = sb.value.utf8.index(sb.value.utf8.startIndex, offsetBy: clampedEnd)
+    let sIdx = String.Index(startIdx, within: sb.value) ?? sb.value.endIndex
+    let eIdx = String.Index(endIdx, within: sb.value) ?? sb.value.endIndex
+    sb.value.replaceSubrange(sIdx..<eIdx, with: replacement)
+    return sbRaw
+}
+
+@_cdecl("kk_string_builder_setCharAt")
+public func kk_string_builder_setCharAt(_ sbRaw: Int, _ index: Int, _ charValue: Int) -> Int {
+    guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
+    let utf8Count = sb.value.utf8.count
+    guard index >= 0, index < utf8Count else {
+        fatalError("StringIndexOutOfBoundsException: index=\(index), length=\(utf8Count)")
+    }
+    let utf8Index = sb.value.utf8.index(sb.value.utf8.startIndex, offsetBy: index)
+    guard let charIdx = String.Index(utf8Index, within: sb.value) else {
+        fatalError("StringIndexOutOfBoundsException: index=\(index), length=\(utf8Count)")
+    }
+    // charValue is a boxed Char (unicode scalar value)
+    let unboxed = kk_unbox_char(charValue)
+    guard let scalar = Unicode.Scalar(unboxed) else { return sbRaw }
+    sb.value.replaceSubrange(charIdx...charIdx, with: String(scalar))
+    return sbRaw
+}
+
+@_cdecl("kk_string_builder_charAt")
+public func kk_string_builder_charAt(_ sbRaw: Int, _ index: Int) -> Int {
+    // Identical semantics to kk_string_builder_get — charAt(index) is an alias in Kotlin
+    guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return 0 }
+    let utf8Count = sb.value.utf8.count
+    guard index >= 0, index < utf8Count else {
+        fatalError("StringIndexOutOfBoundsException: index=\(index), length=\(utf8Count)")
+    }
+    let utf8Index = sb.value.utf8.index(sb.value.utf8.startIndex, offsetBy: index)
+    guard let charIdx = String.Index(utf8Index, within: sb.value) else {
+        fatalError("StringIndexOutOfBoundsException: index=\(index), length=\(utf8Count)")
+    }
+    let charVal = Int(sb.value[charIdx].unicodeScalars.first?.value ?? 0)
+    return kk_box_char(charVal)
+}
+
+@_cdecl("kk_string_builder_capacity")
+public func kk_string_builder_capacity(_ sbRaw: Int) -> Int {
+    // Swift Strings have no separate capacity concept; return length + 16 as a
+    // reasonable default (mirrors the JVM default initial capacity of 16).
+    guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return 16 }
+    return sb.value.utf8.count + 16
+}
+
+@_cdecl("kk_string_builder_ensureCapacity")
+public func kk_string_builder_ensureCapacity(_ sbRaw: Int, _ minimumCapacity: Int) -> Int {
+    // Swift Strings handle memory automatically; this is a no-op at runtime.
+    return sbRaw
+}
+
+@_cdecl("kk_string_builder_trimToSize")
+public func kk_string_builder_trimToSize(_ sbRaw: Int) -> Int {
+    // Swift Strings handle memory automatically; this is a no-op at runtime.
+    return sbRaw
+}
+
 @_cdecl("kk_string_builder_get")
 public func kk_string_builder_get(_ sbRaw: Int, _ index: Int) -> Int {
     guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return 0 }
