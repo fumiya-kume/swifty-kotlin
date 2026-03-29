@@ -1178,7 +1178,7 @@
   - **関連ファイル**: `RuntimeSecurity.swift`
   - **テストケース**: `Scripts/diff_cases/symmetric_crypto.kt`
 
-- [ ] STDLIB-SEC-145: 非対称暗号完全実装
+- [x] STDLIB-SEC-145: 非対称暗号完全実装
   - **仕様**: 非対称暗号アルゴリズムの完全サポート
   - **実装内容**:
     - RSA: RSA暗号化/復号
@@ -1190,7 +1190,7 @@
   - **関連ファイル**: `RuntimeSecurity.swift`
   - **テストケース**: `Scripts/diff_cases/asymmetric_crypto.kt`
 
-- [ ] STDLIB-SEC-146: デジタル署名完全実装
+- [x] STDLIB-SEC-146: デジタル署名完全実装
   - **仕様**: デジタル署名の完全サポート
   - **実装内容**:
     - 署名生成: データへのデジタル署名
@@ -1198,7 +1198,7 @@
     - 署名アルゴリズム: SHA1withRSA, SHA256withRSA
     - 証明書: X.509証明書の処理
     - 証明書チェーン: 証明書パスの検証
-  - **現状**: デジタル署名は未実装
+  - **現状**: 実装済み
   - **関連ファイル**: `RuntimeSecurity.swift`
   - **テストケース**: `Scripts/diff_cases/digital_signature.kt`
 
