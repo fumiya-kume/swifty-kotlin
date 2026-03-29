@@ -861,10 +861,18 @@ final class RuntimeKCallableBox {
 final class RuntimeKFunctionBox {
     let nameRaw: Int
     let arity: Int
+    let returnTypeRaw: Int
+    let isSuspend: Bool
+    let fnPtr: Int
+    let closureRaw: Int
 
-    init(nameRaw: Int, arity: Int) {
+    init(nameRaw: Int, arity: Int, returnTypeRaw: Int = 0, isSuspend: Bool = false, fnPtr: Int = 0, closureRaw: Int = 0) {
         self.nameRaw = nameRaw
         self.arity = arity
+        self.returnTypeRaw = returnTypeRaw
+        self.isSuspend = isSuspend
+        self.fnPtr = fnPtr
+        self.closureRaw = closureRaw
     }
 }
 
