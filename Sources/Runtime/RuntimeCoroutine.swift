@@ -137,6 +137,10 @@ final class RuntimeContinuationState: @unchecked Sendable {
     /// and consumed by kk_kxmini_launch_with_exception_handler to reliably
     /// distinguish exception returns from normal (possibly non-zero) return values.
     var thrownException: Int = 0
+    /// STDLIB-CORO-077: Optional CoroutineName for this coroutine (debug/tracing).
+    var coroutineName: String?
+    /// STDLIB-CORO-077: Optional CoroutineExceptionHandler for this coroutine.
+    var exceptionHandler: RuntimeCoroutineExceptionHandlerBox?
     private let stateLock = NSLock()
     private var delayTimers: [ObjectIdentifier: DispatchSourceTimer]
 
@@ -5096,6 +5100,237 @@ func runtimeJoinChild(_ handle: Int) -> Int {
         return task.awaitResult()
     }
     return 0
+}
+
+// MARK: - CoroutineContext Elements (STDLIB-CORO-077)
+//
+// Kotlin's CoroutineContext is a type-safe map of context elements. Each element
+// has a Key and a value. Contexts can be composed with the + operator.
+// Supported elements:
+//   - CoroutineName:              human-readable coroutine name for debugging
+//   - CoroutineExceptionHandler:  handler invoked when uncaught exceptions occur
+//
+// ABI layout (opaque Int handles, ref-counted Swift objects):
+//   kk_coroutine_name_create(nameRaw)            -> CoroutineName context handle
+//   kk_coroutine_name_get(handle)                -> name Int (RuntimeStringBox pointer)
+//   kk_exception_handler_create(fnPtr)           -> CoroutineExceptionHandler context handle
+//   kk_exception_handler_invoke(handle, ctx, ex) -> invoke the handler
+//   kk_context_plus(lhs, rhs)                   -> composed CoroutineContext handle
+//   kk_context_get_dispatcher(handle)           -> dispatcher tag Int (or Default)
+//   kk_context_get_name(handle)                 -> name Int (or 0)
+//   kk_context_get_exception_handler(handle)    -> handler context handle (or 0)
+//   kk_context_release(handle)                  -> release the handle
+//   kk_with_context_full(ctx, blockFnPtr, cont)  -> Int
+
+/// Box for a `CoroutineExceptionHandler` context element.
+/// The handler is a raw function pointer (C ABI: `(Int, Int) -> Void`).
+final class RuntimeCoroutineExceptionHandlerBox: @unchecked Sendable {
+    let fnPtr: Int
+    init(_ fnPtr: Int) { self.fnPtr = fnPtr }
+
+    func invoke(context: Int, exception: Int) {
+        typealias HandlerFn = @convention(c) (Int, Int) -> Void
+        if let raw = UnsafeMutableRawPointer(bitPattern: fnPtr) {
+            let fn = unsafeBitCast(raw, to: HandlerFn.self)
+            fn(context, exception)
+        }
+    }
+}
+
+/// Composed CoroutineContext: holds optional dispatcher tag, name, and exception handler.
+private final class RuntimeCoroutineContextBox: @unchecked Sendable {
+    let dispatcherTag: Int?       // nil means "inherit"
+    let name: String?
+    let exceptionHandler: RuntimeCoroutineExceptionHandlerBox?
+
+    init(
+        dispatcherTag: Int? = nil,
+        name: String? = nil,
+        exceptionHandler: RuntimeCoroutineExceptionHandlerBox? = nil
+    ) {
+        self.dispatcherTag = dispatcherTag
+        self.name = name
+        self.exceptionHandler = exceptionHandler
+    }
+
+    /// Merge `other` on top of `self` (rightmost wins per Kotlin semantics).
+    func plus(_ other: RuntimeCoroutineContextBox) -> RuntimeCoroutineContextBox {
+        RuntimeCoroutineContextBox(
+            dispatcherTag: other.dispatcherTag ?? dispatcherTag,
+            name: other.name ?? name,
+            exceptionHandler: other.exceptionHandler ?? exceptionHandler
+        )
+    }
+}
+
+/// Retain-counted storage for live RuntimeCoroutineContextBox handles.
+private let contextBoxStorageLock = NSLock()
+nonisolated(unsafe) private var contextBoxPointers: Set<UInt> = []
+
+private func retainContextBox(_ box: RuntimeCoroutineContextBox) -> Int {
+    let raw = Unmanaged.passRetained(box).toOpaque()
+    let handle = Int(bitPattern: raw)
+    contextBoxStorageLock.lock()
+    contextBoxPointers.insert(UInt(bitPattern: raw))
+    contextBoxStorageLock.unlock()
+    return handle
+}
+
+private func releaseContextBox(_ handle: Int) {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else { return }
+    contextBoxStorageLock.lock()
+    let removed = contextBoxPointers.remove(UInt(bitPattern: ptr))
+    contextBoxStorageLock.unlock()
+    if removed != nil {
+        Unmanaged<RuntimeCoroutineContextBox>.fromOpaque(ptr).release()
+    }
+}
+
+private func contextBoxFromHandle(_ handle: Int) -> RuntimeCoroutineContextBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else { return nil }
+    contextBoxStorageLock.lock()
+    let known = contextBoxPointers.contains(UInt(bitPattern: ptr))
+    contextBoxStorageLock.unlock()
+    guard known else { return nil }
+    return Unmanaged<RuntimeCoroutineContextBox>.fromOpaque(ptr).takeUnretainedValue()
+}
+
+/// Create a RuntimeStringBox handle for a Swift String (registered in objectPointers).
+private func runtimeStringPointer(from string: String) -> Int {
+    let box = RuntimeStringBox(string)
+    let raw = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: raw))
+    }
+    return Int(bitPattern: raw)
+}
+
+// MARK: CoroutineName ABI
+
+/// Create a CoroutineName context element from a KSwiftK string handle.
+/// Returns an opaque context handle (retain-counted CoroutineContextBox).
+@_cdecl("kk_coroutine_name_create")
+public func kk_coroutine_name_create(_ nameRaw: Int) -> Int {
+    let name: String
+    if let ptr = UnsafeMutableRawPointer(bitPattern: nameRaw) {
+        let isKnown = runtimeStorage.withLock { $0.objectPointers.contains(UInt(bitPattern: ptr)) }
+        if isKnown,
+           let stringBox = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue() as? RuntimeStringBox {
+            name = stringBox.value
+        } else {
+            name = "<unnamed>"
+        }
+    } else {
+        name = "<unnamed>"
+    }
+    let box = RuntimeCoroutineContextBox(name: name)
+    return retainContextBox(box)
+}
+
+/// Returns a string handle (RuntimeStringBox pointer) for the CoroutineName stored in
+/// `handle`. Returns 0 if the handle is invalid or has no name.
+@_cdecl("kk_coroutine_name_get")
+public func kk_coroutine_name_get(_ handle: Int) -> Int {
+    guard let box = contextBoxFromHandle(handle), let name = box.name else { return 0 }
+    return runtimeStringPointer(from: name)
+}
+
+// MARK: CoroutineExceptionHandler ABI
+
+/// Create a CoroutineExceptionHandler context element wrapping a handler function pointer.
+/// The handler must have C ABI signature: `(context: Int, exception: Int) -> Void`.
+@_cdecl("kk_exception_handler_create")
+public func kk_exception_handler_create(_ fnPtr: Int) -> Int {
+    let handler = RuntimeCoroutineExceptionHandlerBox(fnPtr)
+    let box = RuntimeCoroutineContextBox(exceptionHandler: handler)
+    return retainContextBox(box)
+}
+
+/// Invoke the CoroutineExceptionHandler stored in `handle`.
+/// No-ops if the handle is invalid or has no handler.
+@_cdecl("kk_exception_handler_invoke")
+public func kk_exception_handler_invoke(_ handle: Int, _ context: Int, _ exception: Int) {
+    contextBoxFromHandle(handle)?.exceptionHandler?.invoke(context: context, exception: exception)
+}
+
+// MARK: Context Composition ABI
+
+/// Compose two CoroutineContext handles with the `+` operator.
+/// Either side may be a bare dispatcher tag (from kk_dispatcher_*) or a context handle.
+/// Returns a new composed context handle that must be released with kk_context_release.
+@_cdecl("kk_context_plus")
+public func kk_context_plus(_ lhs: Int, _ rhs: Int) -> Int {
+    let lhsBox: RuntimeCoroutineContextBox
+    if let box = contextBoxFromHandle(lhs) {
+        lhsBox = box
+    } else {
+        lhsBox = RuntimeCoroutineContextBox(dispatcherTag: lhs)
+    }
+
+    let rhsBox: RuntimeCoroutineContextBox
+    if let box = contextBoxFromHandle(rhs) {
+        rhsBox = box
+    } else {
+        rhsBox = RuntimeCoroutineContextBox(dispatcherTag: rhs)
+    }
+
+    return retainContextBox(lhsBox.plus(rhsBox))
+}
+
+/// Extract the dispatcher tag from a context handle.
+/// Falls back to Dispatchers.Default if the context has no dispatcher.
+/// If `handle` is itself a bare dispatcher tag, it is returned as-is.
+@_cdecl("kk_context_get_dispatcher")
+public func kk_context_get_dispatcher(_ handle: Int) -> Int {
+    if let box = contextBoxFromHandle(handle) {
+        return box.dispatcherTag ?? RuntimeDispatcherTag.defaultDispatcher
+    }
+    return handle
+}
+
+/// Extract the CoroutineName string handle from a context handle. Returns 0 if absent.
+@_cdecl("kk_context_get_name")
+public func kk_context_get_name(_ handle: Int) -> Int {
+    guard let box = contextBoxFromHandle(handle), let name = box.name else { return 0 }
+    return runtimeStringPointer(from: name)
+}
+
+/// Extract the CoroutineExceptionHandler as a context handle from `handle`.
+/// Returns 0 if absent.
+@_cdecl("kk_context_get_exception_handler")
+public func kk_context_get_exception_handler(_ handle: Int) -> Int {
+    guard let box = contextBoxFromHandle(handle),
+          let handler = box.exceptionHandler
+    else { return 0 }
+    return retainContextBox(RuntimeCoroutineContextBox(exceptionHandler: handler))
+}
+
+/// Release a context handle. After this call the handle must not be used.
+@_cdecl("kk_context_release")
+public func kk_context_release(_ handle: Int) {
+    releaseContextBox(handle)
+}
+
+// MARK: withContext(full context) ABI
+
+/// Variant of kk_with_context that accepts a full CoroutineContext handle
+/// (potentially composed from dispatcher + CoroutineName + ExceptionHandler).
+/// Propagates context elements into the continuation state before dispatching.
+@_cdecl("kk_with_context_full")
+public func kk_with_context_full(_ contextHandle: Int, _ blockFnPtr: Int, _ continuation: Int) -> Int {
+    let dispatcherTag = kk_context_get_dispatcher(contextHandle)
+
+    if let contState = runtimeContinuationState(from: continuation),
+       let box = contextBoxFromHandle(contextHandle) {
+        if let name = box.name {
+            contState.coroutineName = name
+        }
+        if let handler = box.exceptionHandler {
+            contState.exceptionHandler = handler
+        }
+    }
+
+    return kk_with_context(dispatcherTag, blockFnPtr, continuation)
 }
 
 // MARK: - Cancellation ABI (CORO-002 / spec.md J17)

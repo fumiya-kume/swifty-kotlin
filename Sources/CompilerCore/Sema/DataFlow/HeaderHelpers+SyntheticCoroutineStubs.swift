@@ -258,6 +258,27 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic]
             )
         }
+        // STDLIB-CORO-077: CoroutineName, CoroutineExceptionHandler, CoroutineContext symbols
+        let coroutineNameSymbol = ensureClassSymbol(
+            named: "CoroutineName",
+            in: coroutinesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let coroutineExceptionHandlerSymbol = ensureInterfaceSymbol(
+            named: "CoroutineExceptionHandler",
+            in: coroutinesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let coroutineContextSymbol = ensureInterfaceSymbol(
+            named: "CoroutineContext",
+            in: coroutinesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+
         let jobType = types.make(.classType(ClassType(
             classSymbol: jobSymbol,
             args: [],
@@ -401,6 +422,22 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         let coroutineSuspendedType = types.nullableAnyType
+        // STDLIB-CORO-077: CoroutineName, CoroutineExceptionHandler, CoroutineContext types
+        let coroutineNameType = types.make(.classType(ClassType(
+            classSymbol: coroutineNameSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let coroutineExceptionHandlerType = types.make(.classType(ClassType(
+            classSymbol: coroutineExceptionHandlerSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let coroutineContextType = types.make(.classType(ClassType(
+            classSymbol: coroutineContextSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
 
         symbols.setPropertyType(jobType, for: jobSymbol)
         symbols.setPropertyType(deferredType, for: deferredSymbol)
@@ -416,6 +453,9 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(continuationType, for: continuationSymbol)
         symbols.setPropertyType(continuationInterceptorType, for: continuationInterceptorSymbol)
         symbols.setPropertyType(rootCancellationType, for: rootCancellationSymbol)
+        symbols.setPropertyType(coroutineNameType, for: coroutineNameSymbol)
+        symbols.setPropertyType(coroutineExceptionHandlerType, for: coroutineExceptionHandlerSymbol)
+        symbols.setPropertyType(coroutineContextType, for: coroutineContextSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: cancellationSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: rootCancellationSymbol)
         symbols.setDirectSupertypes([continuationInterceptorSymbol], for: dispatcherSymbol)
@@ -1368,6 +1408,16 @@ extension DataFlowSemaPhase {
             channelSymbol: channelSymbol,
             symbols: symbols,
             types: types,
+            interner: interner
+        )
+
+        // STDLIB-CORO-077: CoroutineName(name: String) constructor
+        registerSyntheticCoroutineConstructor(
+            ownerSymbol: coroutineNameSymbol,
+            ownerType: coroutineNameType,
+            externalLinkName: "kk_coroutine_name_create",
+            parameters: [(name: "name", type: types.stringType)],
+            symbols: symbols,
             interner: interner
         )
 
