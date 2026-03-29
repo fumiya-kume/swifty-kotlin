@@ -262,8 +262,20 @@ extension DataFlowSemaPhase {
     ) -> MemberMeta? {
         switch decl {
         case let .funDecl(fun):
-            let returnType = ctx.bindings.declSymbols[declID]
-                .flatMap { ctx.symbols.functionSignature(for: $0)?.returnType }
+            // Only read the return type from the function signature when there
+            // is an explicit return type annotation in the source. Expression-body
+            // functions without an explicit annotation store `anyType` as a
+            // placeholder at header-collection time (before type checking runs).
+            // Using that placeholder would produce false KSWIFTK-SEMA-OVERRIDE-RETURN
+            // diagnostics because `Any` is not a subtype of the parent's specific
+            // return type (e.g. Unit, String). Covariance of such functions is
+            // deferred until explicit annotations are present.
+            let returnType: TypeID? = if fun.returnType != nil {
+                ctx.bindings.declSymbols[declID]
+                    .flatMap { ctx.symbols.functionSignature(for: $0)?.returnType }
+            } else {
+                nil
+            }
             return MemberMeta(
                 name: fun.name,
                 range: fun.range,
