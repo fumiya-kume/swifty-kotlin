@@ -4727,6 +4727,11 @@ extension CallLowerer {
                     return interner.intern("kk_uint_range_sum")
                 }
                 return interner.intern("kk_range_sum")
+            case "count":
+                if nonNullReceiverType == sema.types.uintType {
+                    return interner.intern("kk_uint_range_count")
+                }
+                return interner.intern("kk_range_count")
             case "toList":
                 if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
                     return interner.intern("kk_ulong_range_toList")
