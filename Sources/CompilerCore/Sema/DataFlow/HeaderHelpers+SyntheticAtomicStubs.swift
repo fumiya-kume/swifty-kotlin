@@ -73,6 +73,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerAtomicGetAndUpdateMethods(
+            ownerSymbol: atomicIntSymbol,
+            ownerType: atomicIntType,
+            valueType: intType,
+            prefix: "kk_atomic_int",
+            symbols: symbols,
+            interner: interner,
+            types: types
+        )
+
         // -- AtomicLong --
         let atomicLongSymbol = ensureClassSymbol(
             named: "AtomicLong",
@@ -125,6 +135,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerAtomicGetAndUpdateMethods(
+            ownerSymbol: atomicLongSymbol,
+            ownerType: atomicLongType,
+            valueType: longType,
+            prefix: "kk_atomic_long",
+            symbols: symbols,
+            interner: interner,
+            types: types
+        )
+
         // -- AtomicReference<T> --
         let atomicRefSymbol = ensureClassSymbol(
             named: "AtomicReference",
@@ -167,6 +187,69 @@ extension DataFlowSemaPhase {
             prefix: "kk_atomic_ref",
             symbols: symbols,
             interner: interner
+        )
+
+        registerAtomicGetAndUpdateMethods(
+            ownerSymbol: atomicRefSymbol,
+            ownerType: atomicRefType,
+            valueType: anyNullableType,
+            prefix: "kk_atomic_ref",
+            symbols: symbols,
+            interner: interner,
+            types: types
+        )
+
+        // -- AtomicBoolean --
+        let atomicBoolSymbol = ensureClassSymbol(
+            named: "AtomicBoolean",
+            in: concurrentPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let atomicBoolType = types.make(.classType(ClassType(
+            classSymbol: atomicBoolSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(atomicBoolType, for: atomicBoolSymbol)
+
+        registerAtomicConstructor(
+            ownerSymbol: atomicBoolSymbol,
+            ownerType: atomicBoolType,
+            externalLinkName: "kk_atomic_bool_create",
+            paramType: boolType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicValueProperty(
+            ownerSymbol: atomicBoolSymbol,
+            ownerType: atomicBoolType,
+            valueType: boolType,
+            getterLinkName: "kk_atomic_bool_load",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicCoreMethods(
+            ownerSymbol: atomicBoolSymbol,
+            ownerType: atomicBoolType,
+            valueType: boolType,
+            boolType: boolType,
+            unitType: unitType,
+            prefix: "kk_atomic_bool",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicGetAndUpdateMethods(
+            ownerSymbol: atomicBoolSymbol,
+            ownerType: atomicBoolType,
+            valueType: boolType,
+            prefix: "kk_atomic_bool",
+            symbols: symbols,
+            interner: interner,
+            types: types
         )
     }
 
@@ -354,6 +437,37 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "decrementAndFetch", externalLinkName: "\(prefix)_decrementAndFetch",
             returnType: valueType, parameters: [],
+            symbols: symbols, interner: interner
+        )
+    }
+
+    private func registerAtomicGetAndUpdateMethods(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        valueType: TypeID,
+        prefix: String,
+        symbols: SymbolTable,
+        interner: StringInterner,
+        types: TypeSystem
+    ) {
+        let transformType = types.make(.functionType(FunctionType(
+            params: [valueType],
+            returnType: valueType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        // getAndUpdate(transform: (T) -> T) -> T
+        registerAtomicMember(
+            ownerSymbol: ownerSymbol, ownerType: ownerType,
+            name: "getAndUpdate", externalLinkName: "\(prefix)_getAndUpdate",
+            returnType: valueType, parameters: [(name: "transform", type: transformType)],
+            symbols: symbols, interner: interner
+        )
+        // updateAndGet(transform: (T) -> T) -> T
+        registerAtomicMember(
+            ownerSymbol: ownerSymbol, ownerType: ownerType,
+            name: "updateAndGet", externalLinkName: "\(prefix)_updateAndGet",
+            returnType: valueType, parameters: [(name: "transform", type: transformType)],
             symbols: symbols, interner: interner
         )
     }

@@ -44,6 +44,11 @@ public extension RuntimeABIExterns {
         kk_atomic_bool_exchange,
         kk_atomic_bool_compareAndSet,
         kk_atomic_bool_compareAndExchange,
+        kk_atomic_bool_getAndUpdate,
+        kk_atomic_bool_updateAndGet,
+        // AtomicReference getAndUpdate / updateAndGet
+        kk_atomic_ref_getAndUpdate,
+        kk_atomic_ref_updateAndGet,
     ]
 
     // MARK: - AtomicInt
@@ -278,6 +283,32 @@ public extension RuntimeABIExterns {
 
     static let kk_atomic_bool_compareAndExchange = ExternDecl(
         name: "kk_atomic_bool_compareAndExchange",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_bool_getAndUpdate = ExternDecl(
+        name: "kk_atomic_bool_getAndUpdate",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_bool_updateAndGet = ExternDecl(
+        name: "kk_atomic_bool_updateAndGet",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // MARK: - AtomicReference getAndUpdate / updateAndGet
+
+    static let kk_atomic_ref_getAndUpdate = ExternDecl(
+        name: "kk_atomic_ref_getAndUpdate",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_ref_updateAndGet = ExternDecl(
+        name: "kk_atomic_ref_updateAndGet",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
