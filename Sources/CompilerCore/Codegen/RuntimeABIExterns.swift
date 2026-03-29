@@ -3159,8 +3159,52 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+    // mark / reset / markSupported (STDLIB-IO-092)
+    public static let kk_input_stream_mark = ExternDecl(
+        name: "kk_input_stream_mark",
+        parameterTypes: [intptr, intptr],
+        returnType: intptr
+    )
+
+    public static let kk_input_stream_reset = ExternDecl(
+        name: "kk_input_stream_reset",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_input_stream_mark_supported = ExternDecl(
+        name: "kk_input_stream_mark_supported",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
     public static let kk_input_stream_close = ExternDecl(
         name: "kk_input_stream_close",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    // SequenceInputStream (STDLIB-IO-092)
+    public static let kk_sequence_input_stream_new = ExternDecl(
+        name: "kk_sequence_input_stream_new",
+        parameterTypes: [intptr, intptr],
+        returnType: intptr
+    )
+
+    public static let kk_sequence_input_stream_read = ExternDecl(
+        name: "kk_sequence_input_stream_read",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_sequence_input_stream_available = ExternDecl(
+        name: "kk_sequence_input_stream_available",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_sequence_input_stream_close = ExternDecl(
+        name: "kk_sequence_input_stream_close",
         parameterTypes: [intptr],
         returnType: intptr
     )
@@ -3287,7 +3331,14 @@ public enum RuntimeABIExterns {
         kk_input_stream_available,
         kk_input_stream_skip,
         kk_input_stream_read_bytes,
+        kk_input_stream_mark,
+        kk_input_stream_reset,
+        kk_input_stream_mark_supported,
         kk_input_stream_close,
+        kk_sequence_input_stream_new,
+        kk_sequence_input_stream_read,
+        kk_sequence_input_stream_available,
+        kk_sequence_input_stream_close,
         kk_output_stream_write_byte,
         kk_output_stream_write_bytes,
         kk_output_stream_flush,
