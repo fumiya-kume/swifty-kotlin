@@ -63,6 +63,17 @@ final class KotlinCompilationStringCollectionTests: XCTestCase {
         """)
     }
 
+    func testCompile_string_toBigDecimal() throws {
+        try assertKotlinCompilesToKIR("""
+        import java.math.BigDecimal
+
+        fun main() {
+            val result: BigDecimal = "3.14e2".toBigDecimal()
+            val text = result.toString()
+        }
+        """)
+    }
+
     // MARK: - String search
 
     func testCompile_string_indexOf() throws {

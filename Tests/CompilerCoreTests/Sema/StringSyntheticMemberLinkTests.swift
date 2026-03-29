@@ -89,6 +89,11 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             "kk_string_toDoubleOrNull",
             "String.toDoubleOrNull should link to kk_string_toDoubleOrNull"
         )
+        XCTAssertEqual(
+            externalLink(for: "toBigDecimal", sema: sema, interner: interner),
+            "kk_string_toBigDecimal",
+            "String.toBigDecimal should link to kk_string_toBigDecimal"
+        )
     }
 
     func testNewSubstringAndSearchStubsHaveCorrectExternalLinks() throws {

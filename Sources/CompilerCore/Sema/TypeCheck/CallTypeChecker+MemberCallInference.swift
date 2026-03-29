@@ -3265,6 +3265,13 @@ extension CallTypeChecker {
                         sema.types.make(.primitive(.double, .nonNull))
                     case "toDoubleOrNull":
                         sema.types.make(.primitive(.double, .nullable))
+                    case "toBigDecimal":
+                        makeSyntheticNominalType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            fqName: [interner.intern("java"), interner.intern("math"), interner.intern("BigDecimal")]
+                        )
                     case "reversed", "trimStart", "trimEnd":
                         sema.types.stringType
                     case "prependIndent", "replaceIndent":
