@@ -497,16 +497,28 @@
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/with_context.kt`
 
-- [ ] STDLIB-CORO-079: Mutex完全実装
+- [ ] STDLIB-CORO-078: coroutineScope完全実装
+  - **仕様**: coroutineScopeビルダーの完全サポート
+  - **実装内容**:
+    - 構造化並行性: 子コルーチンの完了待機
+    - 例外伝播: 子の例外を親に伝播
+    - キャンセル伝播: 親のキャンセルを子に伝播
+    - coroutineScopeのスコープ管理
+    - supervisorScope: 例外伝播の抑制
+  - **現状**: 基本的なcoroutineScopeは実装済み、例外伝播は未実装
+  - **関連ファイル**: `RuntimeCoroutine.swift`
+  - **テストケース**: `Scripts/diff_cases/coroutine_scope_timeout.kt`
+
+- [x] STDLIB-CORO-079: Mutex完全実装
   - **仕様**: Mutexの完全サポート
   - **実装内容**:
     - ロック取得: withLock { /* critical section */ }
     - tryLock: 非ブロックロック取得
     - ロック解放: unlock(), withLockの自動解放
-    - フェアネス: ロック取得の公平性
-    - 再入可能: reentrant mutexのサポート
-  - **現状**: synchronizedは一部実装済み (STDLIB-325)、Mutexは未実装
-  - **関連ファイル**: `RuntimeCoroutine.swift`
+    - フェアネス: ロック取得の公平性 (FIFO waiter queue)
+    - 再入可能: reentrant mutexのサポート (非再入可能、標準仕様準拠)
+  - **現状**: 完全実装済み
+  - **関連ファイル**: `Sources/Runtime/RuntimeSync.swift`
   - **テストケース**: `Scripts/diff_cases/mutex_basic.kt`
 
 - [ ] STDLIB-CORO-080: Atomic操作完全実装
