@@ -2136,6 +2136,16 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // toIntArray — returns an IntArray (STDLIB-RANGE-034)
+        if callee == lookup.toIntArrayName, arguments.isEmpty, !isCharRange, !isULongRange {
+            loweredBody.append(.call(
+                symbol: nil, callee: lookup.kkRangeToIntArrayName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
+            return true
+        }
+
         // forEach — HOF (STDLIB-091 / STDLIB-290)
         if callee == lookup.forEachName, arguments.count == 1 {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)

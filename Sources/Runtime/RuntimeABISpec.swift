@@ -3173,6 +3173,14 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Range"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_range_toIntArray",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
         // Progression fromClosedRange (STDLIB-RANGE-039)
         RuntimeABIFunctionSpec(
             name: "kk_int_progression_fromClosedRange",

@@ -2709,6 +2709,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_range_toIntArray = ExternDecl(
+        name: "kk_range_toIntArray",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Progression fromClosedRange (STDLIB-RANGE-039)
 
     public static let kk_int_progression_fromClosedRange = ExternDecl(
@@ -4219,6 +4225,7 @@ public enum RuntimeABIExterns {
             kk_range_chunked,
             kk_range_windowed,
             kk_range_reversed,
+            kk_range_toIntArray,
             // Progression fromClosedRange (STDLIB-RANGE-039)
             kk_int_progression_fromClosedRange,
             kk_long_progression_fromClosedRange,
