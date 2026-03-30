@@ -282,6 +282,13 @@ public func kk_path_relativize(_ pathRaw: Int, _ otherRaw: Int) -> Int {
     guard let other = runtimePathBox(from: otherRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_relativize received invalid other Path handle")
     }
+    // In Kotlin/Java, relativize() throws IllegalArgumentException when one path
+    // is absolute and the other is relative (mixed absolute/relative paths).
+    let pathIsAbsolute = path.pathString.hasPrefix("/")
+    let otherIsAbsolute = other.pathString.hasPrefix("/")
+    guard pathIsAbsolute == otherIsAbsolute else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: IllegalArgumentException: 'other' is different type of Path")
+    }
     // Split into components, stripping leading slash for absolute paths
     let baseComponents = path.pathString.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
     let otherComponents = other.pathString.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
