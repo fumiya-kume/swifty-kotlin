@@ -227,7 +227,11 @@ public func kk_json_encodeToString(_ jsonRaw: Int, _ valueRaw: Int) -> Int {
         if let str = jsonifiable as? String {
             // Produce JSON-encoded string with quotes
             do {
-                let data = try JSONSerialization.data(withJSONObject: [str], options: [])
+                var strOptions: JSONSerialization.WritingOptions = []
+                if #available(macOS 10.15, *) {
+                    strOptions.insert(.withoutEscapingSlashes)
+                }
+                let data = try JSONSerialization.data(withJSONObject: [str], options: strOptions)
                 // data is ["value"], strip brackets and unwrap
                 if var str = String(data: data, encoding: .utf8) {
                     str = String(str.dropFirst().dropLast())
