@@ -51,6 +51,23 @@ final class PropertyLoweringPass: LoweringPass {
             return result
         }()
 
+        let externalTopLevelCallee: (SymbolID) -> InternedString? = { symbol in
+            guard let sema = ctx.sema else { return nil }
+            guard sema.symbols.propertyType(for: symbol) != nil,
+                  let linkName = sema.symbols.externalLinkName(for: symbol),
+                  !linkName.isEmpty
+            else {
+                return nil
+            }
+            let parentKind = sema.symbols.parentSymbol(for: symbol).flatMap {
+                sema.symbols.symbol($0)?.kind
+            }
+            guard parentKind == nil || parentKind == .package || parentKind == .object else {
+                return nil
+            }
+            return interner.intern(linkName)
+        }
+
         module.arena.transformFunctions { function in
             var updated = function
             var loweredBody: [KIRInstruction] = []
@@ -80,6 +97,22 @@ final class PropertyLoweringPass: LoweringPass {
                             continue
                         }
                     }
+
+                    if case let .loadGlobal(lgResult, sym) = instruction,
+                       let externalCallee = externalTopLevelCallee(sym)
+                    {
+                        loweredBody.append(
+                            .call(
+                                symbol: nil,
+                                callee: externalCallee,
+                                arguments: [],
+                                result: lgResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            )
+                        )
+                        continue
+                    }
                     // Rewrite constValue(.symbolRef(propSym)) for getter-only
                     // computed properties into a getter call so that each
                     // access invokes the getter body rather than loading a
@@ -104,6 +137,23 @@ final class PropertyLoweringPass: LoweringPass {
                             )
                             continue
                         }
+                    }
+
+                    if case let .constValue(cvResult, value) = instruction,
+                       case let .symbolRef(sym) = value,
+                       let externalCallee = externalTopLevelCallee(sym)
+                    {
+                        loweredBody.append(
+                            .call(
+                                symbol: nil,
+                                callee: externalCallee,
+                                arguments: [],
+                                result: cvResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            )
+                        )
+                        continue
                     }
                     // Rewrite backing field copy instructions to direct
                     // setter accessor calls when the target is a backing
