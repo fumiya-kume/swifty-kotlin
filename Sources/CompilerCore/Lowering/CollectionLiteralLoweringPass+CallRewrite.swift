@@ -2490,6 +2490,7 @@ extension CollectionLiteralLoweringPass {
                                 let kkName: InternedString = switch callee {
                                 case lookup.mapName: lookup.kkListMapName
                                 case lookup.filterName: lookup.kkListFilterName
+                                case lookup.filterNotName: lookup.kkListFilterNotName
                                 case lookup.mapNotNullName: lookup.kkListMapNotNullName
                                 case lookup.forEachName: lookup.kkListForEachName
                                 case lookup.onEachName: lookup.kkListOnEachName
@@ -2503,6 +2504,7 @@ extension CollectionLiteralLoweringPass {
                                     || callee == lookup.mapNotNullName
                                     || callee == lookup.flatMapName
                                     || callee == lookup.filterName
+                                    || callee == lookup.filterNotName
                                     || callee == lookup.onEachName
                                 let hofResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)), type: nil

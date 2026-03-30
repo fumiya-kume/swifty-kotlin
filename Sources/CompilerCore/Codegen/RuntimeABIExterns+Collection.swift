@@ -55,6 +55,7 @@ public extension RuntimeABIExterns {
         kk_set_to_string,
         kk_list_map,
         kk_list_filter,
+        kk_list_filterNot,
         kk_list_mapNotNull,
         kk_list_forEach,
         kk_list_flatMap,
@@ -1153,6 +1154,12 @@ public extension RuntimeABIExterns {
 
     static let kk_list_filter = ExternDecl(
         name: "kk_list_filter",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_filterNot = ExternDecl(
+        name: "kk_list_filterNot",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )

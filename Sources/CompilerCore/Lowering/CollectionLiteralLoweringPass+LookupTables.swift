@@ -83,6 +83,7 @@ struct CollectionLiteralLookupTables {
     // Higher-order collection function ABI names (FUNC-003)
     let kkListMapName: InternedString
     let kkListFilterName: InternedString
+    let kkListFilterNotName: InternedString
     let kkListMapNotNullName: InternedString
     let kkListFilterNotNullName: InternedString
     let kkListForEachName: InternedString
@@ -729,6 +730,7 @@ struct CollectionLiteralLookupTables {
 
         kkListMapName = interner.intern("kk_list_map")
         kkListFilterName = interner.intern("kk_list_filter")
+        kkListFilterNotName = interner.intern("kk_list_filterNot")
         kkListMapNotNullName = interner.intern("kk_list_mapNotNull")
         kkListFilterNotNullName = interner.intern("kk_list_filterNotNull")
         kkListForEachName = interner.intern("kk_list_forEach")
