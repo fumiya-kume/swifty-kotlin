@@ -196,7 +196,6 @@ extension CallLowerer {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
         let calleeStr = interner.resolve(calleeName)
-        guard calleeStr == "name" else { return nil }
         let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         guard isKPropertyReceiverType(receiverType, sema: sema, interner: interner) else { return nil }
 
