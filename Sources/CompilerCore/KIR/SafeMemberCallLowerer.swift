@@ -758,11 +758,16 @@ final class SafeMemberCallLowerer {
             false
         case .primitive:
             true
+        case .typeParam:
+            // All type parameters have an implicit upper bound of Any? in Kotlin,
+            // so Any methods (toString, hashCode, equals) are always available on
+            // type parameter receivers (STDLIB-GEN-055).
+            true
         default:
             nonNullType == sema.types.anyType
         }
     }
-    
+
     /// Reified型トークンを追加
     private func appendReifiedTypeTokens(
         chosenCallee: SymbolID,

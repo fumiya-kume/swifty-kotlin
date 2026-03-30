@@ -447,15 +447,31 @@ final class ExprTypeChecker {
         case let .thisRef(label, range):
             return inferThisRefExpr(id, label: label, range: range, ctx: ctx, locals: locals)
 
-        case let .inExpr(lhsID, rhsID, _):
-            _ = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)
-            _ = driver.inferExpr(rhsID, ctx: ctx, locals: &locals)
+        case let .inExpr(lhsID, rhsID, range):
+            let lhsType = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)
+            let rhsType = driver.inferExpr(rhsID, ctx: ctx, locals: &locals)
+            // Resolve operator fun contains on the RHS (container) type for custom classes (STDLIB-OP-032)
+            inferContainsCallBinding(
+                exprID: id,
+                elementType: lhsType,
+                containerType: rhsType,
+                range: range,
+                ctx: ctx
+            )
             sema.bindings.bindExprType(id, type: boolType)
             return boolType
 
-        case let .notInExpr(lhsID, rhsID, _):
-            _ = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)
-            _ = driver.inferExpr(rhsID, ctx: ctx, locals: &locals)
+        case let .notInExpr(lhsID, rhsID, range):
+            let lhsType = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)
+            let rhsType = driver.inferExpr(rhsID, ctx: ctx, locals: &locals)
+            // Resolve operator fun contains on the RHS (container) type for custom classes (STDLIB-OP-032)
+            inferContainsCallBinding(
+                exprID: id,
+                elementType: lhsType,
+                containerType: rhsType,
+                range: range,
+                ctx: ctx
+            )
             sema.bindings.bindExprType(id, type: boolType)
             return boolType
 
@@ -465,6 +481,70 @@ final class ExprTypeChecker {
         case let .forDestructuringExpr(names, iterableExpr, bodyExpr, range):
             return driver.controlFlowChecker.inferForDestructuringExpr(id, names: names, iterableExpr: iterableExpr, bodyExpr: bodyExpr, range: range, ctx: ctx, locals: &locals)
         }
+    }
+
+    // MARK: - Container Operator Helpers (STDLIB-OP-032)
+
+    /// Resolves operator fun contains on the container type and records a CallBinding
+    /// so KIR lowering can dispatch to the user-defined contains() instead of the
+    /// generic kk_op_contains runtime stub.
+    private func inferContainsCallBinding(
+        exprID: ExprID,
+        elementType: TypeID,
+        containerType: TypeID,
+        range: SourceRange,
+        ctx: TypeInferenceContext
+    ) {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let containsName = interner.intern("contains")
+
+        // Skip primitive and range types — they are handled by kk_op_contains at runtime.
+        let nonNullContainerType = sema.types.makeNonNullable(containerType)
+        guard case .classType = sema.types.kind(of: nonNullContainerType) else { return }
+
+        let candidates = driver.helpers.collectMemberFunctionCandidates(
+            named: containsName,
+            receiverType: nonNullContainerType,
+            sema: sema
+        ).filter { candidate in
+            guard let symbol = sema.symbols.symbol(candidate),
+                  symbol.flags.contains(.operatorFunction),
+                  let signature = sema.symbols.functionSignature(for: candidate),
+                  signature.parameterTypes.count == 1
+            else {
+                return false
+            }
+            return true
+        }
+
+        guard !candidates.isEmpty else { return }
+
+        let callArgs = [CallArg(type: elementType)]
+        let resolved = ctx.resolver.resolveCall(
+            candidates: candidates,
+            call: CallExpr(
+                range: range,
+                calleeName: containsName,
+                args: callArgs
+            ),
+            expectedType: nil,
+            implicitReceiverType: nonNullContainerType,
+            ctx: ctx.semaCtx
+        )
+
+        guard let chosen = resolved.chosenCallee else { return }
+
+        sema.bindings.bindCall(
+            exprID,
+            binding: CallBinding(
+                chosenCallee: chosen,
+                substitutedTypeArguments: resolved.substitutedTypeArguments
+                    .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                    .map(\.value),
+                parameterMapping: resolved.parameterMapping
+            )
+        )
     }
 
     private func inferUnaryOperatorExpr(

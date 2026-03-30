@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=_root_ vis=public flags=_
+symbol s0 kind=package fq=golden.sema vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -2292,58 +2292,113 @@ symbol s2290 kind=annotationClass fq=kotlin.jvm.JvmField vis=public flags=synthe
 symbol s2291 kind=annotationClass fq=kotlin.jvm.JvmOverloads vis=public flags=synthetic
 symbol s2292 kind=annotationClass fq=kotlin.jvm.JvmName vis=public flags=synthetic
 symbol s2293 kind=annotationClass fq=kotlin.Suppress vis=public flags=synthetic
-symbol s2294 kind=function fq=charPlusInt vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s2295 kind=function fq=charMinusInt vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s2296 kind=function fq=charMinusChar vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s2297 kind=function fq=charComparison vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s2298 kind=local fq=__local_1.c vis=private flags=_ type=Char
-symbol s2299 kind=local fq=__local_5.next vis=private flags=_ type=Char
-symbol s2300 kind=local fq=__local_10.c vis=private flags=_ type=Char
-symbol s2301 kind=local fq=__local_14.prev vis=private flags=_ type=Char
-symbol s2302 kind=local fq=__local_21.diff vis=private flags=_ type=Int
-symbol s2303 kind=local fq=__local_28.lt vis=private flags=_ type=Boolean
-symbol s2304 kind=local fq=__local_32.eq vis=private flags=_ type=Boolean
-file f0 package=_
-  decl d0 fun charPlusInt suspend=0 inline=0 sym=s2294
-  decl d1 fun charMinusInt suspend=0 inline=0 sym=s2295
-  decl d2 fun charMinusChar suspend=0 inline=0 sym=s2296
-  decl d3 fun charComparison suspend=0 inline=0 sym=s2297
-expr e0 char(97) type=Char
-expr e1 localDecl c mutable=0 type=t0 init=e0 type=Unit ref=s2298
-expr e2 name(c) type=Char ref=s2298
-expr e3 int(1) type=Int
-expr e4 binary(add) lhs=e2 rhs=e3 type=Char
-expr e5 localDecl next mutable=0 type=_ init=e4 type=Unit ref=s2299
-expr e6 name(println) type=_
-expr e7 name(next) type=Char ref=s2299
-expr e8 call callee=e6 args=[_:e7] type=Unit call=s1255 map=[0->0] targs=[]
-expr e9 char(122) type=Char
-expr e10 localDecl c mutable=0 type=t1 init=e9 type=Unit ref=s2300
-expr e11 name(c) type=Char ref=s2300
-expr e12 int(1) type=Int
-expr e13 binary(subtract) lhs=e11 rhs=e12 type=Char
-expr e14 localDecl prev mutable=0 type=_ init=e13 type=Unit ref=s2301
-expr e15 name(println) type=_
-expr e16 name(prev) type=Char ref=s2301
-expr e17 call callee=e15 args=[_:e16] type=Unit call=s1255 map=[0->0] targs=[]
-expr e18 char(122) type=Char
-expr e19 char(97) type=Char
-expr e20 binary(subtract) lhs=e18 rhs=e19 type=Int
-expr e21 localDecl diff mutable=0 type=_ init=e20 type=Unit ref=s2302
-expr e22 name(println) type=_
-expr e23 name(diff) type=Int ref=s2302
-expr e24 call callee=e22 args=[_:e23] type=Unit call=s1255 map=[0->0] targs=[]
-expr e25 char(97) type=Char
-expr e26 char(122) type=Char
-expr e27 binary(lessThan) lhs=e25 rhs=e26 type=Boolean
-expr e28 localDecl lt mutable=0 type=_ init=e27 type=Unit ref=s2303
-expr e29 char(97) type=Char
-expr e30 char(97) type=Char
-expr e31 binary(equal) lhs=e29 rhs=e30 type=Boolean
-expr e32 localDecl eq mutable=0 type=_ init=e31 type=Unit ref=s2304
-expr e33 name(println) type=_
-expr e34 name(lt) type=Boolean ref=s2303
-expr e35 call callee=e33 args=[_:e34] type=Unit call=s1255 map=[0->0] targs=[]
-expr e36 name(println) type=_
-expr e37 name(eq) type=Boolean ref=s2304
-expr e38 call callee=e36 args=[_:e37] type=Unit call=s1255 map=[0->0] targs=[]
+symbol s2294 kind=function fq=golden.sema.clamp vis=public flags=_ sig=recv=_ params=[T#2295,T#2295,T#2295] ret=T#2295 suspend=0 defaults=[0,0,0] vararg=[0,0,0] bounds=[Class#144<T#2295>]
+symbol s2295 kind=typeParameter fq=golden.sema.clamp.$2294.T vis=private flags=_
+symbol s2296 kind=valueParameter fq=golden.sema.clamp.$2294.value vis=private flags=_
+symbol s2297 kind=valueParameter fq=golden.sema.clamp.$2294.min vis=private flags=_
+symbol s2298 kind=valueParameter fq=golden.sema.clamp.$2294.max vis=private flags=_
+symbol s2299 kind=function fq=golden.sema.maxItem vis=public flags=_ sig=recv=_ params=[T#2300,T#2300] ret=T#2300 suspend=0 defaults=[0,0] vararg=[0,0] bounds=[Class#144<T#2300>]
+symbol s2300 kind=typeParameter fq=golden.sema.maxItem.$2299.T vis=private flags=_
+symbol s2301 kind=valueParameter fq=golden.sema.maxItem.$2299.a vis=private flags=_
+symbol s2302 kind=valueParameter fq=golden.sema.maxItem.$2299.b vis=private flags=_
+symbol s2303 kind=function fq=golden.sema.processItem vis=public flags=_ sig=recv=_ params=[T#2304] ret=String suspend=0 defaults=[0] vararg=[0] bounds=[Class#144<T#2304>&Any]
+symbol s2304 kind=typeParameter fq=golden.sema.processItem.$2303.T vis=private flags=_
+symbol s2305 kind=valueParameter fq=golden.sema.processItem.$2303.v vis=private flags=_
+symbol s2306 kind=class fq=golden.sema.BoundedBox vis=public flags=_
+symbol s2307 kind=typeParameter fq=golden.sema.BoundedBox.$class2306.T vis=private flags=_
+symbol s2308 kind=constructor fq=golden.sema.BoundedBox.<init> vis=public flags=_ sig=recv=Class#2306<T#2307> params=[T#2307] ret=Class#2306<T#2307> suspend=0 defaults=[0] vararg=[0]
+symbol s2309 kind=valueParameter fq=golden.sema.BoundedBox.<init>.$2308.value vis=private flags=_
+symbol s2310 kind=function fq=golden.sema.BoundedBox.isLessThan vis=public flags=_ sig=recv=Class#2306<T#2307> params=[T#2307] ret=Boolean suspend=0 defaults=[0] vararg=[0] bounds=[Class#144<T#2307>]
+symbol s2311 kind=valueParameter fq=golden.sema.BoundedBox.isLessThan.$2310.other vis=private flags=_
+symbol s2312 kind=function fq=golden.sema.BoundedBox.isGreaterThan vis=public flags=_ sig=recv=Class#2306<T#2307> params=[T#2307] ret=Boolean suspend=0 defaults=[0] vararg=[0] bounds=[Class#144<T#2307>]
+symbol s2313 kind=valueParameter fq=golden.sema.BoundedBox.isGreaterThan.$2312.other vis=private flags=_
+symbol s2314 kind=function fq=golden.sema.BoundedBox.describe vis=public flags=_ sig=recv=Class#2306<T#2307> params=[] ret=String suspend=0 defaults=[] vararg=[] bounds=[Class#144<T#2307>]
+symbol s2315 kind=property fq=golden.sema.BoundedBox.value vis=public flags=_ type=T#2307
+symbol s2316 kind=function fq=golden.sema.useConstraints vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s2317 kind=local fq=__local_31.c1 vis=private flags=_ type=Int
+symbol s2318 kind=local fq=__local_37.c2 vis=private flags=_ type=String
+symbol s2319 kind=local fq=__local_42.m1 vis=private flags=_ type=Int
+symbol s2320 kind=local fq=__local_47.m2 vis=private flags=_ type=String
+symbol s2321 kind=local fq=__local_51.p1 vis=private flags=_ type=String
+symbol s2322 kind=local fq=__local_55.p2 vis=private flags=_ type=String
+symbol s2323 kind=local fq=__local_59.box vis=private flags=_ type=Class#2306<Int>
+symbol s2324 kind=local fq=__local_63.lt vis=private flags=_ type=Boolean
+symbol s2325 kind=local fq=__local_67.gt vis=private flags=_ type=Boolean
+symbol s2326 kind=local fq=__local_70.desc vis=private flags=_ type=String
+file f0 package=golden.sema
+  decl d0 fun clamp suspend=0 inline=0 sym=s2294
+  decl d1 fun maxItem suspend=0 inline=0 sym=s2299
+  decl d2 fun processItem suspend=0 inline=0 sym=s2303
+  decl d7 class BoundedBox sym=s2306
+  decl d8 fun useConstraints suspend=0 inline=0 sym=s2316
+expr e0 name(value) type=T#2295 ref=s2296
+expr e1 name(min) type=T#2295 ref=s2297
+expr e2 binary(lessThan) lhs=e0 rhs=e1 type=Boolean call=s146 map=[0->0] targs=[T#2295]
+expr e3 name(min) type=T#2295 ref=s2297
+expr e4 name(value) type=T#2295 ref=s2296
+expr e5 name(max) type=T#2295 ref=s2298
+expr e6 binary(greaterThan) lhs=e4 rhs=e5 type=Boolean call=s146 map=[0->0] targs=[T#2295]
+expr e7 name(max) type=T#2295 ref=s2298
+expr e8 name(value) type=T#2295 ref=s2296
+expr e9 when subject=_ branches=[e2->e3,e6->e7] else=e8 type=T#2295
+expr e10 name(a) type=T#2300 ref=s2301
+expr e11 name(b) type=T#2300 ref=s2302
+expr e12 binary(greaterThan) lhs=e10 rhs=e11 type=Boolean call=s146 map=[0->0] targs=[T#2300]
+expr e13 name(a) type=T#2300 ref=s2301
+expr e14 name(b) type=T#2300 ref=s2302
+expr e15 if cond=e12 then=e13 else=e14 type=T#2300
+expr e16 name(v) type=T#2304 ref=s2305
+expr e17 memberCall recv=e16 callee=toString args=[] type=String
+expr e18 name(value) type=T#2307 ref=s2315
+expr e19 name(other) type=T#2307 ref=s2311
+expr e20 binary(lessThan) lhs=e18 rhs=e19 type=Boolean call=s146 map=[0->0] targs=[T#2307]
+expr e21 name(value) type=T#2307 ref=s2315
+expr e22 name(other) type=T#2307 ref=s2313
+expr e23 binary(greaterThan) lhs=e21 rhs=e22 type=Boolean call=s146 map=[0->0] targs=[T#2307]
+expr e24 name(value) type=T#2307 ref=s2315
+expr e25 memberCall recv=e24 callee=toString args=[] type=String
+expr e26 name(clamp) type=_
+expr e27 int(5) type=Int
+expr e28 int(1) type=Int
+expr e29 int(10) type=Int
+expr e30 call callee=e26 args=[_:e27,_:e28,_:e29] type=Int call=s2294 map=[0->0,1->1,2->2] targs=[Int]
+expr e31 localDecl c1 mutable=0 type=_ init=e30 type=Unit ref=s2317
+expr e32 name(clamp) type=_
+expr e33 string(b) type=String
+expr e34 string(a) type=String
+expr e35 string(c) type=String
+expr e36 call callee=e32 args=[_:e33,_:e34,_:e35] type=String call=s2294 map=[0->0,1->1,2->2] targs=[String]
+expr e37 localDecl c2 mutable=0 type=_ init=e36 type=Unit ref=s2318
+expr e38 name(maxItem) type=_
+expr e39 int(3) type=Int
+expr e40 int(7) type=Int
+expr e41 call callee=e38 args=[_:e39,_:e40] type=Int call=s2299 map=[0->0,1->1] targs=[Int]
+expr e42 localDecl m1 mutable=0 type=_ init=e41 type=Unit ref=s2319
+expr e43 name(maxItem) type=_
+expr e44 string(apple) type=String
+expr e45 string(banana) type=String
+expr e46 call callee=e43 args=[_:e44,_:e45] type=String call=s2299 map=[0->0,1->1] targs=[String]
+expr e47 localDecl m2 mutable=0 type=_ init=e46 type=Unit ref=s2320
+expr e48 name(processItem) type=_
+expr e49 int(42) type=Int
+expr e50 call callee=e48 args=[_:e49] type=String call=s2303 map=[0->0] targs=[Int]
+expr e51 localDecl p1 mutable=0 type=_ init=e50 type=Unit ref=s2321
+expr e52 name(processItem) type=_
+expr e53 string(hello) type=String
+expr e54 call callee=e52 args=[_:e53] type=String call=s2303 map=[0->0] targs=[String]
+expr e55 localDecl p2 mutable=0 type=_ init=e54 type=Unit ref=s2322
+expr e56 name(BoundedBox) type=_
+expr e57 int(5) type=Int
+expr e58 call callee=e56 args=[_:e57] type=Class#2306<Int> call=s2308 map=[0->0] targs=[Int]
+expr e59 localDecl box mutable=0 type=_ init=e58 type=Unit ref=s2323
+expr e60 name(box) type=Class#2306<Int> ref=s2323
+expr e61 int(10) type=Int
+expr e62 memberCall recv=e60 callee=isLessThan args=[_:e61] type=Boolean call=s2310 map=[0->0] targs=[Int]
+expr e63 localDecl lt mutable=0 type=_ init=e62 type=Unit ref=s2324
+expr e64 name(box) type=Class#2306<Int> ref=s2323
+expr e65 int(3) type=Int
+expr e66 memberCall recv=e64 callee=isGreaterThan args=[_:e65] type=Boolean call=s2312 map=[0->0] targs=[Int]
+expr e67 localDecl gt mutable=0 type=_ init=e66 type=Unit ref=s2325
+expr e68 name(box) type=Class#2306<Int> ref=s2323
+expr e69 memberCall recv=e68 callee=describe args=[] type=String call=s2314 map=[] targs=[Int]
+expr e70 localDecl desc mutable=0 type=_ init=e69 type=Unit ref=s2326
