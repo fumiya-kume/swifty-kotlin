@@ -150,6 +150,12 @@ final class CoroutineLowerer {
             default:
                 boundType
             }
+            let operationCanThrow: Bool = switch calleeStr {
+            case "isClosedForReceive", "isClosedForSend":
+                false
+            default:
+                true
+            }
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
             let operationCanThrow: Bool = switch calleeStr {
             case "isClosedForReceive", "isClosedForSend":
