@@ -222,7 +222,7 @@ extension CoroutineLoweringPass {
                 }
 
                 if callee == names.toList, symbol == nil,
-                   !arguments.isEmpty,
+                   arguments.count == 1,
                    flowExprIDs.contains(arguments[0].rawValue)
                 {
                     let consume = prepareFlowHandleForConsume(arguments[0])
@@ -240,7 +240,7 @@ extension CoroutineLoweringPass {
                 }
 
                 if callee == names.first, symbol == nil,
-                   !arguments.isEmpty,
+                   arguments.count == 1,
                    flowExprIDs.contains(arguments[0].rawValue)
                 {
                     let consume = prepareFlowHandleForConsume(arguments[0])
