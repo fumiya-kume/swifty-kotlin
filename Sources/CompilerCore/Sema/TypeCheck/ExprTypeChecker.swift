@@ -140,10 +140,21 @@ final class ExprTypeChecker {
         case let .localAssign(name, value, range):
             return driver.localDeclChecker.inferLocalAssignExpr(id, name: name, value: value, range: range, ctx: ctx, locals: &locals)
 
-        case let .memberAssign(receiverExpr, _, valueExpr, _):
+        case let .memberAssign(receiverExpr, calleeName, valueExpr, _):
             // Type-check the receiver and value, bind as unit-typed expression.
-            _ = driver.inferExpr(receiverExpr, ctx: ctx, locals: &locals, expectedType: nil)
+            let receiverType = driver.inferExpr(receiverExpr, ctx: ctx, locals: &locals, expectedType: nil)
             _ = driver.inferExpr(valueExpr, ctx: ctx, locals: &locals, expectedType: nil)
+            // Bind the property symbol so KIR lowering can emit a direct field
+            // store (kk_array_set) rather than falling back to a setter call.
+            // This is required when the receiver is an explicit `this` reference.
+            let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+            if let propResult = driver.helpers.lookupMemberProperty(
+                named: calleeName,
+                receiverType: nonNullReceiver,
+                sema: sema
+            ) {
+                sema.bindings.bindIdentifier(id, symbol: propResult.symbol)
+            }
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
 

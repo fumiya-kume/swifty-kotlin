@@ -81,7 +81,7 @@ extension BuildASTPhase {
         return LocalStatementCore.parseLocalAssignment(
             from: statementTokens,
             context: context,
-            options: .declaration
+            options: .blockExpression
         )
     }
 

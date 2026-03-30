@@ -115,6 +115,65 @@ extension DeclTypeChecker {
             sema.symbols.setHasProvideDelegate(for: symbol)
             if let provideDelegateSymbol = provideDelegateCandidates.first {
                 sema.symbols.setDelegateProvideDelegateSymbol(provideDelegateSymbol, for: symbol)
+
+                // When provideDelegate is present, the actual delegate is the return type of
+                // provideDelegate. Re-resolve getValue/setValue against the actual delegate type.
+                if let sig = sema.symbols.functionSignature(for: provideDelegateSymbol) {
+                    let actualDelegateType = sig.returnType
+                    let allGetValueCandidates = driver.helpers
+                        .collectMemberFunctionCandidates(
+                            named: getValueName,
+                            receiverType: actualDelegateType,
+                            sema: sema
+                        )
+                    // Accept operator functions first; fall back to any non-synthetic override
+                    // (Kotlin allows omitting 'operator' on overrides of operator functions).
+                    let actualGetValueCandidates = allGetValueCandidates.filter { candidateID in
+                        guard let sym = sema.symbols.symbol(candidateID)
+                        else { return false }
+                        return sym.flags.contains(.operatorFunction)
+                    }
+                    let actualGetValueSymbol = actualGetValueCandidates.first
+                        ?? allGetValueCandidates.first { candidateID in
+                            guard let sym = sema.symbols.symbol(candidateID)
+                            else { return false }
+                            return !sym.flags.contains(.synthetic)
+                        }
+                    if let actualGetValueSymbol {
+                        sema.symbols.setDelegateGetValueSymbol(actualGetValueSymbol, for: symbol)
+                        // When provideDelegate is present, the property type must be inferred from
+                        // the actual delegate's getValue, not the original expression's getValue.
+                        // Only override result if no explicit type annotation was provided (mirrors
+                        // the getValue resolution pattern above at lines 71-74).
+                        if result == nil,
+                           let actualGetValueSig = sema.symbols.functionSignature(for: actualGetValueSymbol) {
+                            result = actualGetValueSig.returnType
+                        }
+                    }
+
+                    if property.isVar {
+                        let setValueName = interner.intern("setValue")
+                        let allSetValueCandidates = driver.helpers.collectMemberFunctionCandidates(
+                            named: setValueName,
+                            receiverType: actualDelegateType,
+                            sema: sema
+                        )
+                        let actualSetValueCandidates = allSetValueCandidates.filter { candidateID in
+                            guard let sym = sema.symbols.symbol(candidateID)
+                            else { return false }
+                            return sym.flags.contains(.operatorFunction)
+                        }
+                        let actualSetValueSymbol = actualSetValueCandidates.first
+                            ?? allSetValueCandidates.first { candidateID in
+                                guard let sym = sema.symbols.symbol(candidateID)
+                                else { return false }
+                                return !sym.flags.contains(.synthetic)
+                            }
+                        if let actualSetValueSymbol {
+                            sema.symbols.setDelegateSetValueSymbol(actualSetValueSymbol, for: symbol)
+                        }
+                    }
+                }
             }
         }
 

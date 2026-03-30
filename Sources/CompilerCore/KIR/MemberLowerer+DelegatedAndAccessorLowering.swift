@@ -71,7 +71,7 @@ extension MemberLowerer {
         case .notNull:
             interner.intern("kk_notNull_get_value")
         case .custom:
-            interner.intern("getValue")
+            interner.intern("kk_custom_delegate_get_value")
         }
         let setValueName: InternedString = switch delegateKind {
         case .lazy:
@@ -83,7 +83,7 @@ extension MemberLowerer {
         case .notNull:
             interner.intern("kk_notNull_set_value")
         case .custom:
-            interner.intern("setValue")
+            interner.intern("kk_custom_delegate_set_value")
         }
 
         var body: KIRLoweringEmitContext = [.beginBlock]
