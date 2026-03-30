@@ -115,46 +115,6 @@ final class TestFrameworkSyntheticStubTests: XCTestCase {
                     expectedLinkName
                 )
             }
-    private func lookupTestSymbols(
-        sema: SemaModule,
-        interner: StringInterner,
-        name: String
-    ) -> [SymbolID] {
-        let fq = ["kotlin", "test", name].map { interner.intern($0) }
-        return sema.symbols.lookupAll(fqName: fq)
-    }
-
-    func testSyntheticAnnotationsAreRegistered() throws {
-        let (sema, interner) = try makeSema()
-
-        for annotationName in ["Test", "Before", "After"] {
-            let symbols = lookupTestSymbols(sema: sema, interner: interner, name: annotationName)
-            let symbol = try XCTUnwrap(symbols.first, "Expected kotlin.test.\(annotationName)")
-            XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .annotationClass)
-        }
-    }
-
-    func testSyntheticAssertionStubsHaveExpectedLinks() throws {
-        let (sema, interner) = try makeSema()
-
-        let expectedLinks: [(name: String, arity: Int, link: String)] = [
-            ("assertEquals", 2, "kk_test_assertEquals"),
-            ("assertEquals", 3, "kk_test_assertEquals_message"),
-            ("assertTrue", 1, "kk_test_assertTrue"),
-            ("assertTrue", 2, "kk_test_assertTrue_message"),
-            ("assertNull", 1, "kk_test_assertNull"),
-            ("assertNull", 2, "kk_test_assertNull_message"),
-        ]
-
-        for entry in expectedLinks {
-            let symbols = lookupTestSymbols(sema: sema, interner: interner, name: entry.name)
-            let matching = symbols.first { symbolID in
-                guard let sig = sema.symbols.functionSignature(for: symbolID) else { return false }
-                return sig.parameterTypes.count == entry.arity
-                    && sig.returnType == sema.types.unitType
-            }
-            let symbol = try XCTUnwrap(matching, "Expected kotlin.test.\(entry.name) with arity \(entry.arity)")
-            XCTAssertEqual(sema.symbols.externalLinkName(for: symbol), entry.link)
         }
     }
 
