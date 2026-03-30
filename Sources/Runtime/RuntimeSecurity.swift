@@ -1072,9 +1072,11 @@ public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int) -> Int {
 }
 
 @_cdecl("kk_ivparameterspec_new")
-public func kk_ivparameterspec_new(_ ivRaw: Int) -> Int {
+public func kk_ivparameterspec_new(_ ivRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
     guard let ivBytes = runtimeSecurityBytes(from: ivRaw, caller: #function) else {
-        return runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>")
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected ByteArray/List<Int>")
+        return 0
     }
     return registerRuntimeObject(RuntimeIvParameterSpecBox(ivBytes: ivBytes))
 }
@@ -1683,8 +1685,9 @@ public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int) -> Int {
 }
 
 @_cdecl("kk_ivparameterspec_new")
-public func kk_ivparameterspec_new(_ ivRaw: Int) -> Int {
-    return runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform")
+public func kk_ivparameterspec_new(_ ivRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeSetThrown(outThrown, message: "UnsupportedOperationException: crypto not available on this platform")
+    return 0
 }
 
 @_cdecl("kk_keypairgenerator_getInstance")

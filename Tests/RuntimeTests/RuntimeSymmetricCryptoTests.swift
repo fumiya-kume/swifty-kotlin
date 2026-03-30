@@ -32,7 +32,7 @@ final class RuntimeSymmetricCryptoTests: IsolatedRuntimeXCTestCase {
         let cipher = kk_cipher_getInstance(runtimeString(transformation), nil)
         let keySpec = kk_secretkeyspec_new(runtimeBytes(key), runtimeString(keyAlgorithmName(from: transformation)))
         if let iv {
-            let ivSpec = kk_ivparameterspec_new(runtimeBytes(iv))
+            let ivSpec = kk_ivparameterspec_new(runtimeBytes(iv), nil)
             _ = kk_cipher_init_with_iv(cipher, 1, keySpec, ivSpec, nil)
         } else {
             _ = kk_cipher_init(cipher, 1, keySpec, nil)
@@ -42,7 +42,7 @@ final class RuntimeSymmetricCryptoTests: IsolatedRuntimeXCTestCase {
         let decryptCipher = kk_cipher_getInstance(runtimeString(transformation), nil)
         let decryptKeySpec = kk_secretkeyspec_new(runtimeBytes(key), runtimeString(keyAlgorithmName(from: transformation)))
         if let iv {
-            let ivSpec = kk_ivparameterspec_new(runtimeBytes(iv))
+            let ivSpec = kk_ivparameterspec_new(runtimeBytes(iv), nil)
             _ = kk_cipher_init_with_iv(decryptCipher, 2, decryptKeySpec, ivSpec, nil)
         } else {
             _ = kk_cipher_init(decryptCipher, 2, decryptKeySpec, nil)
@@ -86,7 +86,7 @@ final class RuntimeSymmetricCryptoTests: IsolatedRuntimeXCTestCase {
         let iv = Array(16..<32).map { UInt8($0) }
         let cipher = kk_cipher_getInstance(runtimeString(transformation), nil)
         let keySpec = kk_secretkeyspec_new(runtimeBytes(key), runtimeString("AES"))
-        let ivSpec = kk_ivparameterspec_new(runtimeBytes(iv))
+        let ivSpec = kk_ivparameterspec_new(runtimeBytes(iv), nil)
         _ = kk_cipher_init_with_iv(cipher, 1, keySpec, ivSpec, nil)
 
         let encryptedEmpty = kk_cipher_doFinal_noarg(cipher, nil)
@@ -94,7 +94,7 @@ final class RuntimeSymmetricCryptoTests: IsolatedRuntimeXCTestCase {
 
         let decryptCipher = kk_cipher_getInstance(runtimeString(transformation), nil)
         let decryptKeySpec = kk_secretkeyspec_new(runtimeBytes(key), runtimeString("AES"))
-        let decryptIvSpec = kk_ivparameterspec_new(runtimeBytes(iv))
+        let decryptIvSpec = kk_ivparameterspec_new(runtimeBytes(iv), nil)
         _ = kk_cipher_init_with_iv(decryptCipher, 2, decryptKeySpec, decryptIvSpec, nil)
         let decrypted = kk_cipher_doFinal(decryptCipher, encryptedEmpty, nil)
         XCTAssertEqual(byteArray(from: decrypted), [])

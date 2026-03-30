@@ -15,6 +15,7 @@ public extension RuntimeABISpec {
             name: "kk_ivparameterspec_new",
             parameters: [
                 RuntimeABIParameter(name: "ivRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Security"
