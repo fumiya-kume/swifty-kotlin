@@ -259,6 +259,23 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(arrayMapped), [0, 1, 2])
     }
 
+    func testCollectionFilterNotNullPreservesZeroAfterMapNotNull() {
+        let source = makeList([0, 1, 2])
+        let mapped = kk_list_mapNotNull(source, unsafeBitCast(identityMapValue, to: Int.self), 0, nil)
+        let filtered = kk_list_filterNotNull(mapped)
+        XCTAssertEqual(listElements(filtered), [0, 1, 2])
+
+        let setSource = kk_set_of(makeArray([0, 1, 2]), 3)
+        let setMapped = kk_set_mapNotNull(setSource, unsafeBitCast(identityMapValue, to: Int.self), 0, nil)
+        let setFiltered = kk_list_filterNotNull(setMapped)
+        XCTAssertEqual(Set(listElements(setFiltered)), Set([0, 1, 2]))
+
+        let arraySource = makeArray([0, 1, 2])
+        let arrayMapped = kk_array_mapNotNull(arraySource, unsafeBitCast(identityMapValue, to: Int.self), 0, nil)
+        let arrayFiltered = kk_list_filterNotNull(arrayMapped)
+        XCTAssertEqual(listElements(arrayFiltered), [0, 1, 2])
+    }
+
     func testSortedByWithStringKeyHandlesNonIntegerComparison() {
         let source = makeList([makeRuntimeStringRaw("b"), makeRuntimeStringRaw("a"), makeRuntimeStringRaw("c")])
 

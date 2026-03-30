@@ -198,7 +198,7 @@ func maybeUnbox(_ value: Int) -> Int {
 }
 
 func runtimeNormalizeNullableCollectionValue(_ raw: Int) -> Int? {
-    if raw == runtimeNullSentinelInt || raw == 0 {
+    if raw == runtimeNullSentinelInt {
         return nil
     }
     return maybeUnbox(raw)

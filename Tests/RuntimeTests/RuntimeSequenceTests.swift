@@ -1071,6 +1071,21 @@ final class RuntimeSequenceTests: XCTestCase {
         XCTAssertEqual(sequenceElements(mapped), [0, 1, 2])
     }
 
+    func testSequenceFilterNotNullPreservesZeroAfterMapNotNull() {
+        let seq = makeSequence([0, 1, 2])
+        let mapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value
+        }
+        let mapped = kk_sequence_mapNotNull(
+            seq,
+            unsafeBitCast(mapFn, to: Int.self),
+            0,
+            nil
+        )
+        let filtered = kk_sequence_filterNotNull(mapped)
+        XCTAssertEqual(sequenceElements(filtered), [0, 1, 2])
+    }
+
     func testSequenceFilterNotNullCorrectness() {
         // Test correctness of filterNotNull
         let seq = makeSequence([1, runtimeNullSentinelInt, 3, runtimeNullSentinelInt, 5])
