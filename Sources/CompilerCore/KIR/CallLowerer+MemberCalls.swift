@@ -4707,15 +4707,31 @@ extension CallLowerer {
         if sema.bindings.isRangeExpr(receiverExpr) {
             switch memberName {
             case "contains":
-                return interner.intern(sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType
-                    ? "kk_ulong_range_contains"
-                    : "kk_op_contains")
+                if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                    return interner.intern("kk_ulong_range_contains")
+                }
+                if nonNullReceiverType == sema.types.uintType {
+                    return interner.intern("kk_uint_range_contains")
+                }
+                return interner.intern("kk_op_contains")
             case "isEmpty":
-                return interner.intern(sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType
-                    ? "kk_ulong_range_isEmpty"
-                    : "kk_range_isEmpty")
+                if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                    return interner.intern("kk_ulong_range_isEmpty")
+                }
+                if nonNullReceiverType == sema.types.uintType {
+                    return interner.intern("kk_uint_range_isEmpty")
+                }
+                return interner.intern("kk_range_isEmpty")
             case "sum":
+                if nonNullReceiverType == sema.types.uintType {
+                    return interner.intern("kk_uint_range_sum")
+                }
                 return interner.intern("kk_range_sum")
+            case "count":
+                if nonNullReceiverType == sema.types.uintType {
+                    return interner.intern("kk_uint_range_count")
+                }
+                return interner.intern("kk_range_count")
             case "toList":
                 if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
                     return interner.intern("kk_ulong_range_toList")
@@ -4724,9 +4740,17 @@ extension CallLowerer {
                     return interner.intern("kk_uint_range_toList")
                 }
                 return interner.intern("kk_range_toList")
+            case "toUIntArray":
+                return interner.intern("kk_uint_range_toUIntArray")
             case "forEach":
+                if nonNullReceiverType == sema.types.uintType {
+                    return interner.intern("kk_uint_range_forEach")
+                }
                 return interner.intern("kk_range_forEach")
             case "map":
+                if nonNullReceiverType == sema.types.uintType {
+                    return interner.intern("kk_uint_range_map")
+                }
                 return interner.intern("kk_range_map")
             case "mapIndexed":
                 return interner.intern("kk_range_mapIndexed")
@@ -4754,18 +4778,26 @@ extension CallLowerer {
                 if argumentCount > 1 {
                     return interner.intern("kk_range_first_predicate")
                 }
-                return interner.intern(sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType
-                    ? "kk_ulong_range_first"
-                    : "kk_range_first")
+                if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                    return interner.intern("kk_ulong_range_first")
+                }
+                if nonNullReceiverType == sema.types.uintType {
+                    return interner.intern("kk_uint_range_first")
+                }
+                return interner.intern("kk_range_first")
             case "firstOrNull":
                 return interner.intern("kk_range_firstOrNull_predicate")
             case "last":
                 if argumentCount > 1 {
                     return interner.intern("kk_range_last_predicate")
                 }
-                return interner.intern(sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType
-                    ? "kk_ulong_range_last"
-                    : "kk_range_last")
+                if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                    return interner.intern("kk_ulong_range_last")
+                }
+                if nonNullReceiverType == sema.types.uintType {
+                    return interner.intern("kk_uint_range_last")
+                }
+                return interner.intern("kk_range_last")
             case "lastOrNull":
                 return interner.intern("kk_range_lastOrNull_predicate")
             case "any":
@@ -4790,6 +4822,9 @@ extension CallLowerer {
                 if argumentCount <= 1 {
                     if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
                         return interner.intern("kk_ulong_range_step")
+                    }
+                    if nonNullReceiverType == sema.types.uintType {
+                        return interner.intern("kk_uint_range_step")
                     }
                     return interner.intern("kk_range_step")
                 }
