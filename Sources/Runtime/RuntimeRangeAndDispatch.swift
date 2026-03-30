@@ -15,7 +15,7 @@ final class RuntimeRangeBox {
 private final class RuntimeRangeIteratorBox {
     var current: Int
     let last: Int
-    let step: Int
+    var step: Int
 
     init(current: Int, last: Int, step: Int) {
         self.current = current
@@ -1525,7 +1525,19 @@ public func kk_ulong_range_next(_ iterRaw: Int) -> Int {
         return 0
     }
     let current = iterator.current
-    iterator.current = iterator.current &+ iterator.step
+    let uCurrent = UInt(bitPattern: current)
+    if iterator.step > 0 {
+        let uStep = UInt(bitPattern: iterator.step)
+        let (next, overflow) = uCurrent.addingReportingOverflow(uStep)
+        // On overflow (e.g. current == UInt64.max) mark iteration done by zeroing step
+        iterator.current = overflow ? iterator.last : Int(bitPattern: next)
+        if overflow { iterator.step = 0 }
+    } else if iterator.step < 0 {
+        let uStep = UInt(iterator.step.magnitude)
+        let (next, overflow) = uCurrent.subtractingReportingOverflow(uStep)
+        iterator.current = overflow ? iterator.last : Int(bitPattern: next)
+        if overflow { iterator.step = 0 }
+    }
     return current
 }
 
