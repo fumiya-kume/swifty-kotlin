@@ -278,6 +278,16 @@ extension DataFlowSemaPhase {
         // --- STDLIB-480: Regex.containsMatchIn(input) ---
         let boolType = types.make(.primitive(.boolean, .nonNull))
         registerRegexMemberFunction(
+            named: "matches",
+            externalLinkName: "kk_regex_matches",
+            ownerSymbol: regexSymbol,
+            ownerType: regexType,
+            parameters: [("input", stringType, false, false)],
+            returnType: boolType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerRegexMemberFunction(
             named: "containsMatchIn",
             externalLinkName: "kk_regex_containsMatchIn",
             ownerSymbol: regexSymbol,

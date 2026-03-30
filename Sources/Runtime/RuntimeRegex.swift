@@ -368,6 +368,11 @@ public func kk_regex_matchEntire(_ regexRaw: Int, _ strRaw: Int) -> Int {
     return registerRuntimeObject(matchResult)
 }
 
+@_cdecl("kk_regex_matches")
+public func kk_regex_matches(_ regexRaw: Int, _ strRaw: Int) -> Int {
+    return kk_string_matches_regex(strRaw, regexRaw)
+}
+
 // MARK: - STDLIB-480: Regex(pattern, option) / Regex.containsMatchIn
 
 // Named constants for Kotlin `RegexOption` enum ordinals.
