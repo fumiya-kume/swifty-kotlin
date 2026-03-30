@@ -69,6 +69,10 @@ while IFS=$'\t' read -r test_case status artifact_dir; do
       else
         failed_cases+=("- \`${test_case}\`")
       fi
+      if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+        # Workflow commands must be a single line on stdout for GitHub Actions.
+        printf '::error file=%s,title=kotlinc diff::diff regression failed for this case\n' "$test_case"
+      fi
       ;;
     SKIP)
       skipped=$((skipped + 1))
