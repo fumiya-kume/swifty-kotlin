@@ -322,6 +322,14 @@ final class RuntimeAsyncTask: @unchecked Sendable {
         return isCancelled
     }
 
+    /// Thread-safe snapshot of the active state (not completed AND not cancelled).
+    /// Reads both flags under a single lock acquisition to avoid TOCTOU races.
+    func isActiveSnapshot() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return !isCompleted && !isCancelled
+    }
+
     func complete(with result: Int) {
         lock.lock()
         guard !isCompleted else {
@@ -516,6 +524,14 @@ final class RuntimeJobHandle: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         return isCompleted
+    }
+
+    /// Thread-safe snapshot of the active state (not completed AND not cancelled).
+    /// Reads both flags under a single lock acquisition to avoid TOCTOU races.
+    func isActiveSnapshot() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return !isCompleted && !isCancelled
     }
 }
 
@@ -3037,10 +3053,10 @@ public func kk_job_is_active(_ jobHandle: Int) -> Int {
     }
     let obj = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
     if let job = obj as? RuntimeJobHandle {
-        // isActive = not completed AND not cancelled
-        return (!job.completedSnapshot() && !job.cancellationSnapshot()) ? 1 : 0
+        // isActive = not completed AND not cancelled, read atomically under one lock
+        return job.isActiveSnapshot() ? 1 : 0
     } else if let task = obj as? RuntimeAsyncTask {
-        return (!task.isCompletedSnapshot() && !task.isCancelledSnapshot()) ? 1 : 0
+        return task.isActiveSnapshot() ? 1 : 0
     }
     return 0
 }
