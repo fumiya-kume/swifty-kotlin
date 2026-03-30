@@ -67,6 +67,14 @@ extension ABIMismatchTests {
             "kk_atomic_ref_exchange",
             "kk_atomic_ref_compareAndSet",
             "kk_atomic_ref_compareAndExchange",
+            // Symmetric crypto (javax.crypto)
+            "kk_secretkeyspec_new",
+            "kk_ivparameterspec_new",
+            "kk_cipher_getInstance",
+            "kk_cipher_init",
+            "kk_cipher_init_with_iv",
+            "kk_cipher_doFinal",
+            "kk_cipher_doFinal_noarg",
         ]
 
         for linkName in syntheticLinkNames {
