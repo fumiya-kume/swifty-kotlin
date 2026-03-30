@@ -318,6 +318,8 @@ extension ABILoweringPass {
             interner.intern("kk_flow_collect"),
             interner.intern("kk_flow_retain"),
             interner.intern("kk_flow_release"),
+            interner.intern("kk_flow_to_list"),
+            interner.intern("kk_flow_first"),
             interner.intern("kk_coroutine_launcher_arg_set"),
             interner.intern("kk_coroutine_launcher_arg_get"),
             interner.intern("kk_kxmini_run_blocking_with_cont"),
@@ -842,6 +844,10 @@ extension ABILoweringPass {
             interner.intern("kk_json_encodeToString"),
             interner.intern("kk_json_encodeMapToString"),
             interner.intern("kk_json_default"),
+            // Job State Queries (STDLIB-CORO-070)
+            interner.intern("kk_job_is_active"),
+            interner.intern("kk_job_is_completed"),
+            interner.intern("kk_job_is_cancelled"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }

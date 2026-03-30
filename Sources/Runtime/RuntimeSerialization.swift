@@ -21,12 +21,13 @@ final class RuntimeJsonBox {
 
 /// Make a runtime string Int from a Swift String.
 private func jsonMakeStringRaw(_ value: String) -> Int {
-    if value.isEmpty {
-        return value.withCString { ptr in
+    let utf8 = Array(value.utf8)
+    if utf8.isEmpty {
+        var emptyByte: UInt8 = 0
+        return withUnsafePointer(to: &emptyByte) { ptr in
             Int(bitPattern: kk_string_from_utf8(ptr, 0))
         }
     }
-    let utf8 = Array(value.utf8)
     return utf8.withUnsafeBufferPointer { buf in
         Int(bitPattern: kk_string_from_utf8(buf.baseAddress!, Int32(buf.count)))
     }
