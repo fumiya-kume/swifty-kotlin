@@ -1060,7 +1060,7 @@ private func runtimeKeyPairGeneratorInitialize(
 }
 
 @_cdecl("kk_secretkeyspec_new")
-public func kk_secretkeyspec_new(_ keyRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?, _ algorithmRaw: Int) -> Int {
+public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     let algorithm = runtimeSecurityString(from: algorithmRaw, caller: #function)
     guard let parsedAlgorithm = RuntimeCipherAlgorithm(transformationComponent: algorithm) else {
@@ -1683,7 +1683,7 @@ private func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, message: 
 }
 
 @_cdecl("kk_secretkeyspec_new")
-public func kk_secretkeyspec_new(_ keyRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?, _ algorithmRaw: Int) -> Int {
+public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     runtimeSetThrown(outThrown, message: "UnsupportedOperationException: crypto not available on this platform")
     return 0
 }
