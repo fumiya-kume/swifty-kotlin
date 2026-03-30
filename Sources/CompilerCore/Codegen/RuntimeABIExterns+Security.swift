@@ -136,7 +136,7 @@ public extension RuntimeABIExterns {
 
     static let kk_secretkeyspec_new = ExternDecl(
         name: "kk_secretkeyspec_new",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable", "intptr_t"],
         returnType: "intptr_t"
     )
 

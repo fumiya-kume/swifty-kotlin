@@ -268,7 +268,8 @@ extension DataFlowSemaPhase {
             visibility: .public,
             flags: [.synthetic, .constValue]
         )
-        symbols.setParentSymbol(ownerSymbol, for: symbol)
+        let parentSymbol = symbols.lookup(fqName: ownerFQName) ?? ownerSymbol
+        symbols.setParentSymbol(parentSymbol, for: symbol)
         symbols.setPropertyType(intType, for: symbol)
         symbols.setConstValueExprKind(.intLiteral(Int64(value)), for: symbol)
     }
