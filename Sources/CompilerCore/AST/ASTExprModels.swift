@@ -85,6 +85,17 @@ public enum CompoundAssignOp: Equatable {
     case timesAssign
     case divAssign
     case modAssign
+
+    /// The Kotlin operator function name for the augmented-assignment convention.
+    public var kotlinFunctionName: String {
+        switch self {
+        case .plusAssign: "plusAssign"
+        case .minusAssign: "minusAssign"
+        case .timesAssign: "timesAssign"
+        case .divAssign: "divAssign"
+        case .modAssign: "remAssign"
+        }
+    }
 }
 
 public struct WhenBranch: Equatable {
