@@ -13,6 +13,8 @@ KEEP_TEMP=0
 REPORT_PATH=""
 DIFF_PARALLEL="${DIFF_PARALLEL:-1}"
 DIFF_WORKERS="${DIFF_WORKERS:-}"
+# Set to 0 in CI to omit "PASS <file>" lines (keeps FAIL/SKIP/CASE and summary).
+DIFF_LOG_PASS="${DIFF_LOG_PASS:-1}"
 LAST_ARTIFACT_DIR=""
 ARTIFACT_ROOT="${DIFF_ARTIFACT_ROOT:-$ROOT_DIR/.artifacts/diff_kotlinc}"
 FORCE_RUN_SKIPPED=0
@@ -49,6 +51,9 @@ Options:
   --clean-runtime-cache
                      Remove .runtime-build before running diff cases
   -h, --help         Show this help
+
+Environment:
+  DIFF_LOG_PASS      If 0 or false, omit PASS lines (FAIL/SKIP/CASE unchanged; default: 1)
 
 Examples:
   bash Scripts/diff_kotlinc.sh Scripts/diff_cases
@@ -657,7 +662,9 @@ run_case() {
   fi
 
   if [[ $ok -eq 1 ]]; then
-    echo "PASS $kt_file"
+    if [[ "$DIFF_LOG_PASS" != "0" && "$DIFF_LOG_PASS" != "false" ]]; then
+      echo "PASS $kt_file"
+    fi
   else
     echo "FAIL $kt_file"
     echo "  ref compile stderr:"

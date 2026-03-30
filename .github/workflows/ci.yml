@@ -21,29 +21,43 @@ jobs:
         run: npm install -g jscpd@4.0.8
       - name: Run jscpd
         run: jscpd --threshold 5 --min-lines 15 --format swift Sources/
+      - name: jscpd reproduce hint on failure
+        if: failure()
+        run: |
+          {
+            echo '## jscpd reproduce'
+            echo '```bash'
+            echo 'npm install -g jscpd@4.0.8'
+            echo 'jscpd --threshold 5 --min-lines 15 --format swift Sources/'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   smoke-tests:
     name: Smoke Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Swift
-        uses: swift-actions/setup-swift@v2
+      - name: Setup Swift and LLVM
+        uses: ./.github/actions/setup-swift-llvm
         with:
           swift-version: "6.2"
-      - name: Install LLVM
-        run: sudo apt-get update && sudo apt-get install -y llvm-dev
-      - name: Configure LLVM paths
-        run: |
-          LLVM_PREFIX="$(llvm-config --prefix)"
-          echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
-          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
       - name: Show toolchain versions
         run: swift --version
       - name: Build with strict concurrency (warnings)
         run: swift build -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
       - name: Run smoke tests
+        env:
+          SWIFT_TEST_PARALLEL: "0"
         run: bash Scripts/swift_test.sh --filter SmokeTests -Xswiftc -swift-version -Xswiftc 6
+      - name: Smoke test reproduce hint
+        if: always()
+        run: |
+          {
+            echo '## Smoke test reproduce'
+            echo '```bash'
+            echo 'SWIFT_TEST_PARALLEL=0 bash Scripts/swift_test.sh --filter SmokeTests -Xswiftc -swift-version -Xswiftc 6'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   diff-regression:
     name: kotlinc Diff Regression
@@ -54,17 +68,10 @@ jobs:
       KOTLINX_COROUTINES_VERSION: "1.10.2"
     steps:
       - uses: actions/checkout@v4
-      - name: Install Swift
-        uses: swift-actions/setup-swift@v2
+      - name: Setup Swift and LLVM
+        uses: ./.github/actions/setup-swift-llvm
         with:
           swift-version: "6.2"
-      - name: Install LLVM
-        run: sudo apt-get update && sudo apt-get install -y llvm-dev
-      - name: Configure LLVM paths
-        run: |
-          LLVM_PREFIX="$(llvm-config --prefix)"
-          echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
-          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
       - name: Install Kotlin and Java
         run: |
           sudo apt-get install -y default-jdk unzip
@@ -94,9 +101,11 @@ jobs:
         continue-on-error: true
         env:
           DIFF_REPORT: ${{ runner.temp }}/diff_kotlinc_report.tsv
+          DIFF_ARTIFACT_ROOT: ${{ runner.temp }}/diff_kotlinc_artifacts
           DIFF_PARALLEL: "0"
           DIFF_COMPILE_TIMEOUT: "120"
           DIFF_RUN_TIMEOUT: "30"
+          DIFF_LOG_PASS: "0"
         run: bash Scripts/diff_kotlinc.sh --report "$DIFF_REPORT" Scripts/diff_cases
       - name: Summarize kotlinc diff artifacts
         if: always()
@@ -108,3 +117,13 @@ jobs:
         run: |
           echo "kotlinc diff regression cases failed." >&2
           exit 1
+      - name: Upload kotlinc diff failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kotlinc-diff-regression-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/diff_kotlinc_report.tsv
+            ${{ runner.temp }}/diff_kotlinc_artifacts
+          if-no-files-found: ignore
+          retention-days: 14
