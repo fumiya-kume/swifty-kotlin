@@ -698,11 +698,12 @@ private func makeMatchResultWithOffset(
 public func kk_regex_matches(_ regexRaw: Int, _ inputRaw: Int) -> Int {
     let rawInput = regexStringFromRaw(inputRaw) ?? ""
     guard let regexBox = regexBoxFromRaw(regexRaw) else { return kk_box_bool(0) }
-    let input = regexBox.normalizeIfNeeded(rawInput)
-    let range = NSRange(input.startIndex..., in: input)
-    let match = regexBox.regex.firstMatch(in: input, options: [.anchored], range: range)
-    let fullMatch = match != nil && match!.range.length == range.length
-    return kk_box_bool(fullMatch ? 1 : 0)
+    let str = regexBox.normalizeIfNeeded(rawInput)
+    let options = regexBox.regex.options.subtracting(.anchorsMatchLines)
+    let anchoredPattern = "\\A(?:\(regexBox.regex.pattern))\\z"
+    guard let anchoredRegex = try? NSRegularExpression(pattern: anchoredPattern, options: options) else { return kk_box_bool(0) }
+    let range = NSRange(str.startIndex..., in: str)
+    return anchoredRegex.firstMatch(in: str, options: [], range: range) != nil ? kk_box_bool(1) : kk_box_bool(0)
 }
 
 /// Regex.Companion.fromLiteral(literal: String) -> Regex
@@ -720,7 +721,7 @@ public func kk_regex_from_literal(_ companionRef: Int, _ literalRaw: Int) -> Int
             fatalError("Failed to create fallback NSRegularExpression")
         }
     }
-    return registerRuntimeObject(RuntimeRegexBox(regex: regex, pattern: literal))
+    return registerRuntimeObject(RuntimeRegexBox(regex: regex, pattern: escapedPattern))
 }
 
 /// String.replaceFirst(regex: Regex, replacement: String) -> String

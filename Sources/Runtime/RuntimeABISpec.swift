@@ -268,67 +268,7 @@ public enum RuntimeABISpec {
         ),
     ]
 
-    public static let testFunctions: [RuntimeABIFunctionSpec] = [
-        RuntimeABIFunctionSpec(
-            name: "kk_test_assertEquals",
-            parameters: [
-                RuntimeABIParameter(name: "expected", type: .intptr),
-                RuntimeABIParameter(name: "actual", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Test Framework"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_test_assertEquals_message",
-            parameters: [
-                RuntimeABIParameter(name: "expected", type: .intptr),
-                RuntimeABIParameter(name: "actual", type: .intptr),
-                RuntimeABIParameter(name: "message", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Test Framework"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_test_assertTrue",
-            parameters: [
-                RuntimeABIParameter(name: "condition", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Test Framework"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_test_assertTrue_message",
-            parameters: [
-                RuntimeABIParameter(name: "condition", type: .intptr),
-                RuntimeABIParameter(name: "message", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Test Framework"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_test_assertNull",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Test Framework"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_test_assertNull_message",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
-                RuntimeABIParameter(name: "message", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Test Framework"
-        ),
-    ]
+    public static let testFunctions: [RuntimeABIFunctionSpec] = []
 
     public static let stringFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
@@ -431,48 +371,6 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "lhsRaw", type: .intptr),
                 RuntimeABIParameter(name: "rhsRaw", type: .intptr),
                 RuntimeABIParameter(name: "localeRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_normalization_form_nfc",
-            parameters: [],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_normalization_form_nfd",
-            parameters: [],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_normalization_form_nfkc",
-            parameters: [],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_normalization_form_nfkd",
-            parameters: [],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_string_normalize",
-            parameters: [
-                RuntimeABIParameter(name: "strRaw", type: .intptr),
-                RuntimeABIParameter(name: "formTagRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_string_isNormalized",
-            parameters: [
-                RuntimeABIParameter(name: "strRaw", type: .intptr),
-                RuntimeABIParameter(name: "formTagRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
@@ -1788,12 +1686,6 @@ public enum RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: "kk_system_nanoTime",
-            parameters: [],
-            returnType: .intptr,
-            section: "System"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_system_process_start_nanos",
             parameters: [],
             returnType: .intptr,
             section: "System"
@@ -4301,48 +4193,6 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Regex"
         ),
-        // STDLIB-REGEX-095: MatchResult complete implementation
-        RuntimeABIFunctionSpec(
-            name: "kk_match_result_range",
-            parameters: [
-                RuntimeABIParameter(name: "matchRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Regex"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_match_result_component1",
-            parameters: [
-                RuntimeABIParameter(name: "matchRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Regex"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_match_result_component2",
-            parameters: [
-                RuntimeABIParameter(name: "matchRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Regex"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_match_result_next",
-            parameters: [
-                RuntimeABIParameter(name: "matchRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Regex"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_match_group_collection_get_at",
-            parameters: [
-                RuntimeABIParameter(name: "collectionRaw", type: .intptr),
-                RuntimeABIParameter(name: "index", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Regex"
-        ),
         // STDLIB-REGEX-094: Regex.matches(input)
         RuntimeABIFunctionSpec(
             name: "kk_regex_matches",
@@ -4784,70 +4634,8 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
-        // mark / reset / markSupported (STDLIB-IO-092)
-        RuntimeABIFunctionSpec(
-            name: "kk_input_stream_mark",
-            parameters: [
-                RuntimeABIParameter(name: "streamRaw", type: .intptr),
-                RuntimeABIParameter(name: "readLimitRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "FileIO"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_input_stream_reset",
-            parameters: [
-                RuntimeABIParameter(name: "streamRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "FileIO"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_input_stream_mark_supported",
-            parameters: [
-                RuntimeABIParameter(name: "streamRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "FileIO"
-        ),
         RuntimeABIFunctionSpec(
             name: "kk_input_stream_close",
-            parameters: [
-                RuntimeABIParameter(name: "streamRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "FileIO"
-        ),
-        // SequenceInputStream (STDLIB-IO-092)
-        RuntimeABIFunctionSpec(
-            name: "kk_sequence_input_stream_new",
-            parameters: [
-                RuntimeABIParameter(name: "firstRaw", type: .intptr),
-                RuntimeABIParameter(name: "secondRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "FileIO"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_sequence_input_stream_read",
-            parameters: [
-                RuntimeABIParameter(name: "streamRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "FileIO"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_sequence_input_stream_available",
-            parameters: [
-                RuntimeABIParameter(name: "streamRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "FileIO"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_sequence_input_stream_close",
             parameters: [
                 RuntimeABIParameter(name: "streamRaw", type: .intptr),
             ],
@@ -5343,7 +5131,7 @@ public enum RuntimeABISpec {
             + operatorFunctions
             + primitiveNumericConversionFunctions
             + rangeFunctions
-            + kPropertyStubFunctions + delegateFunctions
+            + kPropertyStubFunctions + kFunctionFunctions + callableRefFunctions + delegateFunctions
             + bitwiseFunctions
             + booleanFunctions
             + charFunctions
