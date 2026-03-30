@@ -2360,43 +2360,31 @@ symbol s2358 kind=annotationClass fq=kotlin.jvm.JvmField vis=public flags=synthe
 symbol s2359 kind=annotationClass fq=kotlin.jvm.JvmOverloads vis=public flags=synthetic
 symbol s2360 kind=annotationClass fq=kotlin.jvm.JvmName vis=public flags=synthetic
 symbol s2361 kind=annotationClass fq=kotlin.Suppress vis=public flags=synthetic
-symbol s2362 kind=function fq=rangeFirst vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s2363 kind=function fq=rangeLast vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s2364 kind=function fq=rangeCount vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s2365 kind=function fq=rangeContains vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s2366 kind=valueParameter fq=rangeContains.$2365.x vis=private flags=_
-symbol s2367 kind=function fq=rangeToList vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s2368 kind=function fq=rangeReversed vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s2362 kind=function fq=useRandomNextBits vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s2363 kind=local fq=__local_3.r vis=private flags=_ type=Class#33
+symbol s2364 kind=local fq=__local_7.a vis=private flags=_ type=<error>
+symbol s2365 kind=local fq=__local_11.b vis=private flags=_ type=<error>
+symbol s2366 kind=local fq=__local_15.c vis=private flags=_ type=<error>
+symbol s2367 kind=local fq=__local_19.d vis=private flags=_ type=<error>
 file f0 package=_
-  decl d0 fun rangeFirst suspend=0 inline=0 sym=s2362
-  decl d1 fun rangeLast suspend=0 inline=0 sym=s2363
-  decl d2 fun rangeCount suspend=0 inline=0 sym=s2364
-  decl d3 fun rangeContains suspend=0 inline=0 sym=s2365
-  decl d4 fun rangeToList suspend=0 inline=0 sym=s2367
-  decl d5 fun rangeReversed suspend=0 inline=0 sym=s2368
-expr e0 int(1) type=Int
-expr e1 int(5) type=Int
-expr e2 binary(rangeTo) lhs=e0 rhs=e1 type=Int
-expr e3 memberCall recv=e2 callee=first args=[] type=Int
-expr e4 int(1) type=Int
-expr e5 int(5) type=Int
-expr e6 binary(rangeTo) lhs=e4 rhs=e5 type=Int
-expr e7 memberCall recv=e6 callee=last args=[] type=Int
-expr e8 int(1) type=Int
-expr e9 int(5) type=Int
-expr e10 binary(rangeTo) lhs=e8 rhs=e9 type=Int
-expr e11 memberCall recv=e10 callee=count args=[] type=Int
-expr e12 int(1) type=Int
-expr e13 int(10) type=Int
-expr e14 binary(rangeTo) lhs=e12 rhs=e13 type=Int
-expr e15 name(x) type=_
-expr e16 memberCall recv=e14 callee=contains args=[_:e15] type=Boolean
+  decl d0 fun useRandomNextBits suspend=0 inline=0 sym=s2362
+expr e0 name(Random) type=_
+expr e1 int(42) type=Int
+expr e2 call callee=e0 args=[_:e1] type=Class#33 call=s34 map=[0->0] targs=[]
+expr e3 localDecl r mutable=0 type=_ init=e2 type=Unit ref=s2363
+expr e4 name(r) type=Class#33 ref=s2363
+expr e5 int(8) type=Int
+expr e6 memberCall recv=e4 callee=nextBits args=[_:e5] type=<error>
+expr e7 localDecl a mutable=0 type=_ init=e6 type=Unit ref=s2364
+expr e8 name(r) type=Class#33 ref=s2363
+expr e9 int(16) type=Int
+expr e10 memberCall recv=e8 callee=nextBits args=[_:e9] type=<error>
+expr e11 localDecl b mutable=0 type=_ init=e10 type=Unit ref=s2365
+expr e12 name(r) type=Class#33 ref=s2363
+expr e13 int(32) type=Int
+expr e14 memberCall recv=e12 callee=nextBits args=[_:e13] type=<error>
+expr e15 localDecl c mutable=0 type=_ init=e14 type=Unit ref=s2366
+expr e16 name(Random) type=Class#33 ref=s33
 expr e17 int(1) type=Int
-expr e18 int(5) type=Int
-expr e19 binary(rangeTo) lhs=e17 rhs=e18 type=Int
-expr e20 memberCall recv=e19 callee=toList args=[] type=Class#115<out Int>
-expr e21 int(1) type=Int
-expr e22 int(5) type=Int
-expr e23 binary(rangeTo) lhs=e21 rhs=e22 type=Int
-expr e24 memberCall recv=e23 callee=reversed args=[] type=Int
-expr e25 memberCall recv=e24 callee=toList args=[] type=Class#115<out Int>
+expr e18 memberCall recv=e16 callee=nextBits args=[_:e17] type=<error>
+expr e19 localDecl d mutable=0 type=_ init=e18 type=Unit ref=s2367
