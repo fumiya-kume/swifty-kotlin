@@ -1573,13 +1573,24 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let bigIntegerSymbol = ensureClassSymbol(
+            named: "BigInteger",
+            in: javaMathPkg,
+            symbols: symbols,
+            interner: interner
+        )
         if let javaMathPkgSymbol {
             symbols.setParentSymbol(javaMathPkgSymbol, for: bigDecimalSymbol)
+            symbols.setParentSymbol(javaMathPkgSymbol, for: bigIntegerSymbol)
         }
         let bigDecimalType = types.make(.classType(ClassType(
             classSymbol: bigDecimalSymbol, args: [], nullability: .nonNull
         )))
         symbols.setPropertyType(bigDecimalType, for: bigDecimalSymbol)
+        let bigIntegerType = types.make(.classType(ClassType(
+            classSymbol: bigIntegerSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(bigIntegerType, for: bigIntegerSymbol)
 
         registerSyntheticStringExtensionFunction(
             named: "toBigDecimal",
@@ -1592,9 +1603,30 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerSyntheticStringExtensionFunction(
+            named: "toBigInteger",
+            externalLinkName: "kk_string_toBigInteger",
+            receiverType: stringType,
+            parameters: [],
+            returnType: bigIntegerType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticBigNumberMemberFunction(
             ownerSymbol: bigDecimalSymbol,
             ownerType: bigDecimalType,
+            name: "toString",
+            returnType: stringType,
+            externalLinkName: "kk_bignum_toString",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticBigNumberMemberFunction(
+            ownerSymbol: bigIntegerSymbol,
+            ownerType: bigIntegerType,
             name: "toString",
             returnType: stringType,
             externalLinkName: "kk_bignum_toString",

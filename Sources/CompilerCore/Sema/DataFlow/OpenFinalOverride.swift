@@ -262,8 +262,20 @@ extension DataFlowSemaPhase {
     ) -> MemberMeta? {
         switch decl {
         case let .funDecl(fun):
-            let returnType = ctx.bindings.declSymbols[declID]
-                .flatMap { ctx.symbols.functionSignature(for: $0)?.returnType }
+            // Only read the return type from the function signature when there
+            // is an explicit return type annotation in the source. Expression-body
+            // functions without an explicit annotation store `anyType` as a
+            // placeholder at header-collection time (before type checking runs).
+            // Using that placeholder would produce false KSWIFTK-SEMA-OVERRIDE-RETURN
+            // diagnostics because `Any` is not a subtype of the parent's specific
+            // return type (e.g. Unit, String). Covariance of such functions is
+            // deferred until explicit annotations are present.
+            let returnType: TypeID? = if fun.returnType != nil {
+                ctx.bindings.declSymbols[declID]
+                    .flatMap { ctx.symbols.functionSignature(for: $0)?.returnType }
+            } else {
+                nil
+            }
             return MemberMeta(
                 name: fun.name,
                 range: fun.range,
@@ -581,7 +593,7 @@ extension DataFlowSemaPhase {
             return
         }
 
-        if isMemberOverridable(parentSym, parent: parent) { 
+        if isMemberOverridable(parentSym, parent: parent) {
             // Check return type covariance
             if let returnType = returnType {
                 validateReturnTypeCovariance(
@@ -589,6 +601,7 @@ extension DataFlowSemaPhase {
                     parentSymbol: parentSym,
                     memberName: memberName,
                     memberRange: memberRange,
+                    ownerSymbol: ownerSymbol,
                     ctx: ctx
                 )
             }
@@ -621,6 +634,7 @@ extension DataFlowSemaPhase {
         parentSymbol: SemanticSymbol,
         memberName: InternedString,
         memberRange: SourceRange,
+        ownerSymbol: SymbolID,
         ctx: OpenFinalOverrideContext
     ) {
         guard let parentSignature = ctx.symbols.functionSignature(for: parentSymbol.id) else {
@@ -628,19 +642,48 @@ extension DataFlowSemaPhase {
         }
         let parentReturnType = parentSignature.returnType
 
-        // Covariance validation is deferred until findInheritedMember performs
-        // full signature matching (parameter types + name). With name-only lookup,
-        // the inherited member selected here may be a different overload than the
-        // one actually being overridden, which would produce false
-        // KSWIFTK-SEMA-OVERRIDE errors for valid covariant overrides in overloaded
-        // hierarchies (e.g. base has foo(Int): Int and foo(String): String;
-        // child overrides foo(String): String).
-        // TODO: Enable subtype check once signature-aware lookup is implemented.
-        _ = childReturnType
-        _ = parentReturnType
-        _ = memberName
-        _ = memberRange
-        _ = parentSymbol
+        // Skip check if this member is overloaded in the parent hierarchy.
+        // With name-only lookup, findInheritedMember may match a different overload
+        // than the one actually being overridden, producing false positives for valid
+        // covariant overrides (e.g. base has foo(Int): Int and foo(String): String;
+        // child overrides foo(String): String with return type String).
+        let allParentMembers = findAllInheritedMembers(
+            named: memberName,
+            for: ownerSymbol,
+            symbols: ctx.symbols
+        )
+        guard allParentMembers.count == 1 else {
+            // Multiple overloads with this name: skip covariance check to avoid
+            // false positives. A future signature-aware lookup will handle this.
+            return
+        }
+
+        // Skip covariance check when the parent or child return type involves type parameters
+        // (including type parameters nested inside generic type arguments, e.g. List<T>).
+        // Type parameter substitution (e.g. T -> String for Producer<String>) is not
+        // performed here; such cases require full generic instantiation which is out of
+        // scope for this lightweight check.
+        if typeContainsAnyTypeParam(parentReturnType, types: ctx.types) {
+            return
+        }
+        if typeContainsAnyTypeParam(childReturnType, types: ctx.types) {
+            return
+        }
+
+        // Child return type must be a subtype of parent return type (covariant return).
+        guard !ctx.types.isSubtype(childReturnType, parentReturnType) else {
+            return // Valid: child return type is a subtype of parent return type
+        }
+
+        let name = ctx.interner.resolve(memberName)
+        let parentReturnTypeStr = ctx.types.renderType(parentReturnType)
+        let childReturnTypeStr = ctx.types.renderType(childReturnType)
+        ctx.diagnostics.error(
+            "KSWIFTK-SEMA-OVERRIDE-RETURN",
+            "Override of '\(name)' has incompatible return type. "
+                + "Expected subtype of '\(parentReturnTypeStr)' but found '\(childReturnTypeStr)'.",
+            range: memberRange
+        )
     }
 
     // MARK: - Check 2b: visibility expansion
@@ -784,5 +827,76 @@ extension DataFlowSemaPhase {
             )
         }
         return nil
+    }
+
+    // MARK: - Type parameter detection helper
+
+    /// Returns true if the type (or any of its generic type arguments) contains
+    /// a type parameter. Used to skip covariance checks that require substitution.
+    private func typeContainsAnyTypeParam(_ typeID: TypeID, types: TypeSystem) -> Bool {
+        switch types.kind(of: typeID) {
+        case .typeParam:
+            return true
+        case let .classType(classType):
+            return classType.args.contains { arg in
+                switch arg {
+                case let .invariant(inner), let .out(inner), let .in(inner):
+                    return typeContainsAnyTypeParam(inner, types: types)
+                case .star:
+                    return false
+                }
+            }
+        case let .functionType(ft):
+            if let receiver = ft.receiver, typeContainsAnyTypeParam(receiver, types: types) { return true }
+            if ft.params.contains(where: { typeContainsAnyTypeParam($0, types: types) }) { return true }
+            return typeContainsAnyTypeParam(ft.returnType, types: types)
+        case let .intersection(parts):
+            return parts.contains { typeContainsAnyTypeParam($0, types: types) }
+        case let .kClassType(kct):
+            return typeContainsAnyTypeParam(kct.argument, types: types)
+        default:
+            return false
+        }
+    }
+
+    /// Returns all inherited members with the given name across the entire supertype
+    /// hierarchy. Used for overload count detection in covariance checking.
+    private func findAllInheritedMembers(
+        named memberName: InternedString,
+        for classSymbol: SymbolID,
+        symbols: SymbolTable
+    ) -> [OFOInheritedMember] {
+        var visited: Set<SymbolID> = [classSymbol]
+        var queue = symbols.directSupertypes(for: classSymbol)
+        var results: [OFOInheritedMember] = []
+
+        while !queue.isEmpty {
+            let current = queue.removeFirst()
+            guard visited.insert(current).inserted else { continue }
+            guard let sym = symbols.symbol(current) else { continue }
+
+            var foundAtThisLevel = false
+            for childID in symbols.children(ofFQName: sym.fqName) {
+                guard let child = symbols.symbol(childID) else { continue }
+                let isMatch = child.kind == .function || child.kind == .property
+                if isMatch, child.name == memberName {
+                    results.append(OFOInheritedMember(
+                        memberID: childID,
+                        ownerName: sym.name,
+                        ownerIsInterface: sym.kind == .interface
+                    ))
+                    foundAtThisLevel = true
+                }
+            }
+
+            // If this class defines the member, do not traverse its ancestors:
+            // ancestor definitions are earlier overrides of the same logical member,
+            // not separate overloads.  Continuing upward would inflate the count
+            // and cause the guard at the call-site to skip the covariance check.
+            if !foundAtThisLevel {
+                queue.append(contentsOf: symbols.directSupertypes(for: current))
+            }
+        }
+        return results
     }
 }

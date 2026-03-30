@@ -11,6 +11,7 @@ final class RuntimeMutexHandle: @unchecked Sendable {
     private let lock = NSLock()
     private var isHeld = false
     private var waiters: [Int] = []
+    private var blockingWaiters: [DispatchSemaphore] = []
 
     var isLocked: Bool {
         lock.lock()
@@ -28,6 +29,21 @@ final class RuntimeMutexHandle: @unchecked Sendable {
         }
         isHeld = true
         return true
+    }
+
+    /// Acquire the mutex, blocking the calling thread until it is available.
+    /// Used by `kk_mutex_withLock` which runs on a regular (non-coroutine) thread.
+    func lockBlocking() {
+        lock.lock()
+        if !isHeld {
+            isHeld = true
+            lock.unlock()
+            return
+        }
+        let sema = DispatchSemaphore(value: 0)
+        blockingWaiters.append(sema)
+        lock.unlock()
+        sema.wait()
     }
 
     /// Acquire the lock synchronously (non-suspend path).
@@ -54,6 +70,14 @@ final class RuntimeMutexHandle: @unchecked Sendable {
         guard isHeld else {
             lock.unlock()
             fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: Mutex.unlock() called on an unlocked mutex")
+        }
+        // Prefer blocking (thread-based) waiters before coroutine waiters.
+        if !blockingWaiters.isEmpty {
+            let sema = blockingWaiters.removeFirst()
+            // Keep isHeld = true — ownership transfers to the blocking waiter.
+            lock.unlock()
+            sema.signal()
+            return
         }
         while let continuation = waiters.first {
             waiters.removeFirst()
@@ -255,4 +279,45 @@ public func kk_semaphore_availablePermits(_ handle: Int) -> Int {
     }
     let semaphore = Unmanaged<RuntimeSemaphoreHandle>.fromOpaque(ptr).takeUnretainedValue()
     return semaphore.availablePermits
+}
+
+// MARK: - Mutex.withLock { } (kotlinx.coroutines.sync.Mutex.withLock)
+
+/// Runtime backing for `Mutex.withLock { }`.
+///
+/// Attempts to acquire the mutex using the coroutine suspension mechanism.
+/// If the mutex is free, acquires it, invokes `action`, releases the mutex,
+/// and returns the action result.  If the mutex is already held, enqueues the
+/// continuation and returns `COROUTINE_SUSPENDED` so the coroutine runtime
+/// can release the thread and resume when the lock becomes available.
+/// The action is passed as a Swift function pointer (`actionFnPtr`) and an
+/// opaque environment pointer (`actionEnvPtr`) following the standard closure-
+/// conversion ABI used throughout KSwiftK.
+@_cdecl("kk_mutex_withLock")
+public func kk_mutex_withLock(_ handle: Int, _ actionFnPtr: Int, _ actionEnvPtr: Int, _ continuation: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_mutex_withLock received invalid mutex handle")
+    }
+    let mutex = Unmanaged<RuntimeMutexHandle>.fromOpaque(ptr).takeUnretainedValue()
+
+    // Attempt to acquire the mutex via the coroutine suspension mechanism.
+    // If contended, lockSync enqueues the continuation and returns COROUTINE_SUSPENDED.
+    let lockResult = mutex.lockSync(continuation: continuation)
+    if lockResult != 0 {
+        // Mutex is contended — caller will be resumed once the lock is available.
+        return lockResult
+    }
+    defer { mutex.unlock() }
+
+    // Invoke the action closure: fn(envPtr) -> intptr_t.
+    var result: Int = 0
+    if actionFnPtr != 0,
+       let fnRaw = UnsafeRawPointer(bitPattern: actionFnPtr)
+    {
+        typealias ActionFn = @convention(c) (Int) -> Int
+        let fn = unsafeBitCast(fnRaw, to: ActionFn.self)
+        result = fn(actionEnvPtr)
+    }
+
+    return result
 }
