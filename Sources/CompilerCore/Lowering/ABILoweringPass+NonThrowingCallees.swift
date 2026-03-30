@@ -318,8 +318,6 @@ extension ABILoweringPass {
             interner.intern("kk_flow_collect"),
             interner.intern("kk_flow_retain"),
             interner.intern("kk_flow_release"),
-            interner.intern("kk_flow_to_list"),
-            interner.intern("kk_flow_first"),
             interner.intern("kk_coroutine_launcher_arg_set"),
             interner.intern("kk_coroutine_launcher_arg_get"),
             interner.intern("kk_kxmini_run_blocking_with_cont"),
@@ -825,10 +823,18 @@ extension ABILoweringPass {
             interner.intern("kk_kclass_is_sealed"),
             interner.intern("kk_kclass_is_value"),
             interner.intern("kk_kclass_members_count"),
-            // Job State Queries (STDLIB-CORO-070)
-            interner.intern("kk_job_is_active"),
-            interner.intern("kk_job_is_completed"),
-            interner.intern("kk_job_is_cancelled"),
+            // BigInteger non-throwing operations (STDLIB-NUM-129)
+            // divide, pow, and fromString are intentionally excluded here — they
+            // use outThrown and are marked .throwingFunction in the sema stubs.
+            interner.intern("kk_biginteger_valueOf"),
+            interner.intern("kk_biginteger_add"),
+            interner.intern("kk_biginteger_subtract"),
+            interner.intern("kk_biginteger_multiply"),
+            interner.intern("kk_biginteger_gcd"),
+            interner.intern("kk_biginteger_abs"),
+            interner.intern("kk_biginteger_toInt"),
+            interner.intern("kk_biginteger_toLong"),
+            interner.intern("kk_biginteger_toString"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }
