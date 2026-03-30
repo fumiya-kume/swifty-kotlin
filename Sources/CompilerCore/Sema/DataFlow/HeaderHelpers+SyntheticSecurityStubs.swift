@@ -36,6 +36,7 @@ extension DataFlowSemaPhase {
                 ("key", byteArrayType),
                 ("algorithm", stringType),
             ],
+            canThrow: true,
             symbols: symbols,
             interner: interner
         )
@@ -383,6 +384,7 @@ extension DataFlowSemaPhase {
         ownerSymbol: SymbolID,
         ownerType: TypeID,
         parameters: [(name: String, type: TypeID)],
+        canThrow: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -429,6 +431,7 @@ extension DataFlowSemaPhase {
             FunctionSignature(
                 parameterTypes: parameters.map(\.type),
                 returnType: ownerType,
+                canThrow: canThrow,
                 valueParameterSymbols: valueParameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
