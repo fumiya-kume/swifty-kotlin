@@ -8,4 +8,3 @@ fun main() {
     repeat3 { count++ }
     println(count)
 }
-// SKIP-DIFF: inline reified parity pending

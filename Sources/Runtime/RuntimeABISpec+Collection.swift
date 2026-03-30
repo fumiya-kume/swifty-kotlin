@@ -1071,9 +1071,25 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_builder_list_addAll",
+            parameters: [
+                RuntimeABIParameter(name: "collectionRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_builder_set_add",
             parameters: [
                 RuntimeABIParameter(name: "elem", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_builder_set_addAll",
+            parameters: [
+                RuntimeABIParameter(name: "collectionRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Collection"

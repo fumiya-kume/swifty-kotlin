@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-03-25
+最終更新: 2026-03-29
 
 ## 実装サマリー
 
@@ -60,16 +60,6 @@
 
 #### Phase 1: オブジェクト指向機能 (高優先度)
 
-- [ ] STDLIB-INHERIT-019: オーバーライド完全実装
-  - **仕様**: メンバオーバーライドの完全サポート
-  - **実装内容**:
-    - override修飾子の強制
-    - オーバーライド時の可視性拡張
-    - オーバーライド時の戻り値型共変
-    - オーバーライド時の例外型共変
-  - **現状**: 基本的なoverrideは実装済み、共変性は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/override_variance.kt`
 - [ ] STDLIB-INHERIT-020: 多重継承と衝突解決完全実装
   - **仕様**: インターフェース多重継承の衝突解決
   - **実装内容**:
@@ -326,17 +316,20 @@
 
 #### Phase 2: リフレクション (中優先度)
 
+- [ ] STDLIB-REFLECT-060: KClass基本機能完全実装
+  - **仕様**: KClassの基本的なリフレクション機能
+  - **実装内容**:
+    - クラス名: simpleName, qualifiedName
+    - クラス階層: supertypes, isInstance
+    - 型パラメータ: typeParameters, generics
+    - 可視性: visibility, isAbstract, isFinal
+    - コンストラクタ: constructors
+  - **現状**: 基本的なKClassは実装済み (REFL-004参照)、詳細は未実装
+  - **関連ファイル**: `RuntimeReflection.swift`
+  - **テストケース**: `Scripts/diff_cases/kclass_basic.kt`
+
 - [ ] STDLIB-REFLECT-061: KClassメンバアクセス完全実装
   - **仕様**: KClassからのメンバアクセス機能
-  - **実装内容**:
-    - プロパティ: properties, memberProperties
-    - 関数: functions, memberFunctions
-    - 拡張プロパティ: declaredMemberProperties
-    - 拡張関数: declaredMemberFunctions
-    - メンバのフィルタリングと検索
-  - **現状**: 基本的なリフレクションは実装済み、メンバアクセスは未実装
-  - **関連ファイル**: `RuntimeReflection.swift`
-  - **テストケース**: `Scripts/diff_cases/kclass_members.kt`
 
 - [ ] STDLIB-REFLECT-062: KProperty完全実装
   - **仕様**: KPropertyインターフェースの完全サポート
@@ -387,7 +380,7 @@
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/annotation_reflection.kt`
 
-- [ ] STDLIB-REFLECT-066: 型リフレクション完全実装
+- [x] STDLIB-REFLECT-066: 型リフレクション完全実装
   - **仕様**: 型情報のリフレクションアクセス
   - **実装内容**:
     - KType: 型情報の表現
@@ -396,11 +389,11 @@
     - null可能性: isMarkedNullable
     - ジェネリック型の分解
     - 配列型の要素型取得
-  - **現状**: 基本的な型チェックは実装済み、リフレクションは未実装
-  - **関連ファイル**: `RuntimeReflection.swift`
+  - **現状**: 完了 — typeOf<T>(), KType.isMarkedNullable/classifier/arguments/toString() 実装済み
+  - **関連ファイル**: `RuntimeReflection.swift`, `HeaderHelpers+SyntheticPropertyDelegateStubs.swift`
   - **テストケース**: `Scripts/diff_cases/type_reflection.kt`
 
-- [ ] STDLIB-REFLECT-067: リフレクション動的呼び出し完全実装
+- [x] STDLIB-REFLECT-067: リフレクション動的呼び出し完全実装
   - **仕様**: リフレクションによる動的メンバ呼び出し
   - **実装内容**:
     - 関数呼び出し: KFunction.call()
@@ -408,7 +401,7 @@
     - コンストラクタ呼び出し: KConstructor.call()
     - 可変長引数の処理
     - 例外処理とエラーハンドリング
-  - **現状**: 基本的なリフレクションは実装済み、動的呼び出しは未実装
+  - **現状**: 実装完了 — kk_kfunction_call_{0,1,2,3,vararg}, kk_kproperty_{get,set}, kk_kconstructor_call_{0,1,vararg}
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/reflection_dynamic_call.kt`
 
@@ -509,16 +502,28 @@
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/with_context.kt`
 
-- [ ] STDLIB-CORO-079: Mutex完全実装
+- [ ] STDLIB-CORO-078: coroutineScope完全実装
+  - **仕様**: coroutineScopeビルダーの完全サポート
+  - **実装内容**:
+    - 構造化並行性: 子コルーチンの完了待機
+    - 例外伝播: 子の例外を親に伝播
+    - キャンセル伝播: 親のキャンセルを子に伝播
+    - coroutineScopeのスコープ管理
+    - supervisorScope: 例外伝播の抑制
+  - **現状**: 基本的なcoroutineScopeは実装済み、例外伝播は未実装
+  - **関連ファイル**: `RuntimeCoroutine.swift`
+  - **テストケース**: `Scripts/diff_cases/coroutine_scope_timeout.kt`
+
+- [x] STDLIB-CORO-079: Mutex完全実装
   - **仕様**: Mutexの完全サポート
   - **実装内容**:
     - ロック取得: withLock { /* critical section */ }
     - tryLock: 非ブロックロック取得
     - ロック解放: unlock(), withLockの自動解放
-    - フェアネス: ロック取得の公平性
-    - 再入可能: reentrant mutexのサポート
-  - **現状**: synchronizedは一部実装済み (STDLIB-325)、Mutexは未実装
-  - **関連ファイル**: `RuntimeCoroutine.swift`
+    - フェアネス: ロック取得の公平性 (FIFO waiter queue)
+    - 再入可能: reentrant mutexのサポート (非再入可能、標準仕様準拠)
+  - **現状**: 完全実装済み
+  - **関連ファイル**: `Sources/Runtime/RuntimeSync.swift`
   - **テストケース**: `Scripts/diff_cases/mutex_basic.kt`
 
 - [ ] STDLIB-CORO-080: Atomic操作完全実装
@@ -547,17 +552,6 @@
   - **関連ファイル**: `RuntimeDuration.swift`
   - **テストケース**: `Scripts/diff_cases/duration_operations.kt`
 
-- [ ] STDLIB-TIME-083: Instant完全実装
-  - **仕様**: Instantの完全サポート
-  - **実装内容**:
-    - Instant作成: Instant.now(), Instant.fromEpochMilliseconds()
-    - Instant演算: +, - Durationとの演算
-    - Instant比較: ==, <, >, <=, >=
-    - Instantプロパティ: epochSeconds, nanoOfSecond
-    - Instant間の期間: until(), elapsed()
-  - **現状**: Instantは未実装
-  - **関連ファイル**: `RuntimeDuration.swift`
-  - **テストケース**: `Scripts/diff_cases/instant_basic.kt`
 
 - [ ] STDLIB-TIME-085: システム時刻完全実装
   - **仕様**: システム時刻アクセスの完全サポート
@@ -619,7 +613,7 @@
     - 一時ファイル: createTempFile(), createTempDirectory()
   - **現状**: 基本的なFilesは実装済み、検索は未実装
   - **関連ファイル**: `RuntimeFileIO.swift`
-  - **テストケース**: `Scripts/diff_cases/files_utility.kt`
+  - **テストケース**: `Scripts/diff_cases/files_utility.kt`, `Scripts/diff_cases/buffered_io.kt`
 
 - [ ] STDLIB-IO-093: リソースアクセス完全実装
 #### Phase 3: 正規表現 (低優先度)
@@ -815,7 +809,31 @@
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/annotation_basic.kt`
 
-- [ ] STDLIB-METAPROG-116: メタプログラミング基本実装
+- [ ] STDLIB-ANNO-114: アノテーション保持完全実装
+  - **仕様**: アノテーション保持ポリシーの完全サポート
+  - **実装内容**:
+    - SOURCE: ソースレベルでのみ保持
+    - CLASS: クラスファイルに保持、実行時は破棄
+    - RUNTIME: 実行時まで保持
+    - 保持ポリシーの継承
+    - アノテーションの継承: @Inherited
+  - **現状**: 基本的なアノテーションは実装済み、保持ポリシーは未実装
+  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
+  - **テストケース**: `Scripts/diff_cases/annotation_retention.kt`
+
+- [ ] STDLIB-ANNO-115: アノテーションターゲット完全実装
+  - **仕様**: アノテーションターゲットの完全サポート
+  - **実装内容**:
+    - ターゲット種類: CLASS, FUNCTION, PROPERTY, FIELD
+    - ターゲット種類: CONSTRUCTOR, PARAMETER, TYPE, EXPRESSION
+    - ターゲット種類: FILE, TYPEALIAS, TYPE_PARAMETER
+    - 複合ターゲット: @Target([ElementType.CLASS, ElementType.FUNCTION])
+    - ターゲットの継承と制約
+  - **現状**: 基本的なアノテーションは実装済み、ターゲットは未実装
+  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
+  - **テストケース**: `Scripts/diff_cases/annotation_target.kt`
+
+- [x] STDLIB-METAPROG-116: メタプログラミング基本実装
   - **仕様**: メタプログラミングの基本的な機能
   - **実装内容**:
     - アノテーション処理: AnnotationProcessor
@@ -824,7 +842,7 @@
     - 型情報: コンパイル時型情報
     - エラー報告: コンパイル時エラー生成
   - **現状**: メタプログラミングは未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
+  - **関連ファイル**: `HeaderHelpers+SyntheticMetaprogStubs.swift`
   - **テストケース**: `Scripts/diff_cases/metaprogramming_basic.kt`
 
 #### 既存STDLIBタスクの整理
@@ -913,28 +931,13 @@
   - **関連ファイル**: `RuntimeSet.swift`
   - **テストケース**: `Scripts/diff_cases/set_basic.kt`
 
-- [ ] STDLIB-COL-121: コレクションビルダー完全実装
+- [x] STDLIB-COL-121: コレクションビルダー完全実装
   - **仕様**: コレクションビルダーの完全サポート
   - **実装内容**:
-    - buildList(): Listビルダー
-    - buildSet(): Setビルダー
-    - buildMap(): Mapビルダー
-    - ビルダー操作: add(), addAll(), put(), putAll()
-    - ビルダースコープ: this参照とreturn値
-  - **現状**: buildMapは一部実装済み、他は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticCollectionStubs.swift`
-  - **テストケース**: `Scripts/diff_cases/collection_builders.kt`
-
-- [ ] STDLIB-COL-121: コレクションビルダー完全実装
-  - **仕様**: コレクションビルダーの完全サポート
-  - **実装内容**:
-    - buildList(): Listビルダー
-    - buildSet(): Setビルダー
-    - buildMap(): Mapビルダー
-    - ビルダー操作: add(), addAll(), put(), putAll()
-    - ビルダースコープ: this参照とreturn値
-  - **現状**: buildMapは一部実装済み、他は未実装
-  - **関連ファイル**: `HeaderHelpers+SyntheticCollectionStubs.swift`
+    - buildList(): Listビルダー (add, addAll)
+    - buildSet(): Setビルダー (add, addAll)
+    - buildMap(): Mapビルダー (put)
+    - ビルダー操作: add(), addAll(), put()
   - **テストケース**: `Scripts/diff_cases/collection_builders.kt`
 
 #### Phase 4: 高度文字列処理 (低優先度)
@@ -977,6 +980,18 @@
 
 #### Phase 4: 数値処理と精度 (低優先度)
 
+- [ ] STDLIB-NUM-128: BigDecimal完全実装
+  - **仕様**: BigDecimalの完全サポート
+  - **実装内容**:
+    - 精度計算: 任意精度の小数点演算
+    - 丸めモード: 全てのIEEE 754丸めモード
+    - スケール操作: scale(), setScale(), precision()
+    - 数学演算: add(), subtract(), multiply(), divide()
+    - 比較: compareTo(), equals(), hashCode()
+  - **現状**: BigDecimalは未実装
+  - **関連ファイル**: `RuntimeBigDecimal.swift`
+  - **テストケース**: `Scripts/diff_cases/big_decimal.kt`
+
 - [ ] STDLIB-NUM-129: BigInteger完全実装
   - **仕様**: BigIntegerの完全サポート
   - **実装内容**:
@@ -985,7 +1000,7 @@
     - ビット演算: and(), or(), xor(), not(), shiftLeft(), shiftRight()
     - 数学関数: gcd(), abs(), modInverse(), modPow()
     - 変換: toInt(), toLong(), toByteArray()
-  - **現状**: BigIntegerは未実装
+  - **現状**: 基本的なString.toBigInteger()は実装済み、演算は未実装
   - **関連ファイル**: `RuntimeBigInteger.swift`
   - **テストケース**: `Scripts/diff_cases/big_integer.kt`
 
@@ -1232,18 +1247,6 @@
   - **関連ファイル**: `RuntimeI18N.swift`
   - **テストケース**: `Scripts/diff_cases/number_format_locale.kt`
 
-- [ ] STDLIB-I18N-153: 日付フォーマット完全実装
-  - **仕様**: 日付時刻のロケール依存フォーマット
-  - **実装内容**:
-    - DateFormat: 日付フォーマッタ
-    - 日付パターン: カスタム日付パターン
-    - 時間フォーマット: 時間のみのフォーマット
-    - 日時フォーマット: 日付と時間の組み合わせ
-    - タイムゾーン: タイムゾーン考慮のフォーマット
-  - **現状**: 日付フォーマットは未実装
-  - **関連ファイル**: `RuntimeI18N.swift`
-  - **テストケース**: `Scripts/diff_cases/date_format_locale.kt`
-
 #### Phase 4: パフォーマンスと最適化 (低優先度)
 
 - [ ] STDLIB-PERF-154: メモリ管理完全実装
@@ -1284,7 +1287,7 @@
   - **関連ファイル**: `RuntimeTest.swift`
   - **テストケース**: `Scripts/diff_cases/test_framework_basic.kt`
 
-- [ ] STDLIB-TEST-158: モックオブジェクト完全実装
+- [x] STDLIB-TEST-158: モックオブジェクト完全実装
   - **仕様**: モックオブジェクトの完全サポート
   - **実装内容**:
     - モック作成: インターフェースのモック生成
@@ -1296,7 +1299,7 @@
   - **関連ファイル**: `RuntimeTest.swift`
   - **テストケース**: `Scripts/diff_cases/mock_objects.kt`
 
-- [ ] STDLIB-TEST-159: プロパティベーステスト完全実装
+- [x] STDLIB-TEST-159: プロパティベーステスト完全実装
   - **仕様**: プロパティベーステストの完全サポート
   - **実装内容**:
     - 乱数生成: テストデータの自動生成

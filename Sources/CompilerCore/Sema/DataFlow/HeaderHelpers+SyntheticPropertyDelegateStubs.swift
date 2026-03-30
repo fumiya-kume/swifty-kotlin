@@ -41,6 +41,12 @@ extension DataFlowSemaPhase {
             named: "KProperty", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
 
+        // STDLIB-REFLECT-066: Register kotlin.reflect.KType and typeOf<T>() stubs
+        registerSyntheticKTypeStubs(
+            symbols: symbols, types: types, interner: interner,
+            kotlinReflectPkg: kotlinReflectPkg, kotlinPkg: kotlinPkg
+        )
+
         // Register `name` property on KProperty (inherited from KCallable).
         let stringType = types.make(.primitive(.string, .nonNull))
         if let kPropertyInfo = symbols.symbol(kPropertySymbol) {
@@ -167,6 +173,141 @@ extension DataFlowSemaPhase {
                     receiverType: delegatesType, parameterTypes: [], returnType: rwPropertyType
                 ),
                 for: notNullSymbol
+            )
+        }
+    }
+
+    // STDLIB-REFLECT-066: Register KType interface stub and typeOf<T>() function stub.
+    private func registerSyntheticKTypeStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinReflectPkg: [InternedString],
+        kotlinPkg: [InternedString]
+    ) {
+        let anyType = types.anyType
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+
+        // Register kotlin.reflect.KType interface stub
+        let kTypeSymbol = ensureInterfaceSymbol(
+            named: "KType", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+        let kTypeType = types.make(.classType(ClassType(
+            classSymbol: kTypeSymbol, args: [], nullability: .nonNull
+        )))
+
+        if let kTypeInfo = symbols.symbol(kTypeSymbol) {
+            // KType.isMarkedNullable: Boolean
+            let isMarkedNullableName = interner.intern("isMarkedNullable")
+            let isMarkedNullableFQ = kTypeInfo.fqName + [isMarkedNullableName]
+            if symbols.lookup(fqName: isMarkedNullableFQ) == nil {
+                let propSym = symbols.define(
+                    kind: .property, name: isMarkedNullableName, fqName: isMarkedNullableFQ,
+                    declSite: nil, visibility: .public, flags: [.synthetic]
+                )
+                symbols.setParentSymbol(kTypeSymbol, for: propSym)
+                symbols.setPropertyType(boolType, for: propSym)
+                symbols.setExternalLinkName("kk_ktype_isMarkedNullable", for: propSym)
+            }
+
+            // KType.classifier: KClassifier? (returns Any? opaque handle)
+            let classifierName = interner.intern("classifier")
+            let classifierFQ = kTypeInfo.fqName + [classifierName]
+            if symbols.lookup(fqName: classifierFQ) == nil {
+                let propSym = symbols.define(
+                    kind: .property, name: classifierName, fqName: classifierFQ,
+                    declSite: nil, visibility: .public, flags: [.synthetic]
+                )
+                symbols.setParentSymbol(kTypeSymbol, for: propSym)
+                symbols.setPropertyType(types.makeNullable(anyType), for: propSym)
+                symbols.setExternalLinkName("kk_ktype_classifier", for: propSym)
+            }
+
+            // KType.arguments: List<KTypeProjection> (returns Any opaque)
+            let argumentsName = interner.intern("arguments")
+            let argumentsFQ = kTypeInfo.fqName + [argumentsName]
+            if symbols.lookup(fqName: argumentsFQ) == nil {
+                let propSym = symbols.define(
+                    kind: .property, name: argumentsName, fqName: argumentsFQ,
+                    declSite: nil, visibility: .public, flags: [.synthetic]
+                )
+                symbols.setParentSymbol(kTypeSymbol, for: propSym)
+                symbols.setPropertyType(anyType, for: propSym)
+                symbols.setExternalLinkName("kk_ktype_arguments", for: propSym)
+            }
+        }
+
+        // Register kotlin.reflect.KTypeProjection class stub
+        _ = ensureClassSymbol(
+            named: "KTypeProjection", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+
+        // Register kotlin.reflect.KClassifier interface stub (supertype of KClass)
+        _ = ensureInterfaceSymbol(
+            named: "KClassifier", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+
+        // Register typeOf<T>(): KType — inline reified function accessible without import.
+        // Available in the kotlin package as a top-level function.
+        let typeOfName = interner.intern("typeOf")
+        let typeOfFQName = kotlinPkg + [typeOfName]
+        if symbols.lookupAll(fqName: typeOfFQName).isEmpty {
+            let tParamName = interner.intern("T")
+            let tParamFQName = typeOfFQName + [tParamName]
+            let tParamSymbol = symbols.define(
+                kind: .typeParameter, name: tParamName, fqName: tParamFQName,
+                declSite: nil, visibility: .private, flags: [.reifiedTypeParameter]
+            )
+
+            let funcSymbol = symbols.define(
+                kind: .function, name: typeOfName, fqName: typeOfFQName,
+                declSite: nil, visibility: .public, flags: [.synthetic, .inlineFunction]
+            )
+            if let pkg = symbols.lookup(fqName: kotlinPkg), pkg != .invalid {
+                symbols.setParentSymbol(pkg, for: funcSymbol)
+            }
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    parameterTypes: [],
+                    returnType: kTypeType,
+                    isSuspend: false,
+                    typeParameterSymbols: [tParamSymbol],
+                    reifiedTypeParameterIndices: [0],
+                    typeParameterUpperBoundsList: [[]],
+                    classTypeParameterCount: 0
+                ),
+                for: funcSymbol
+            )
+        }
+
+        // Also register typeOf in kotlin.reflect package for `import kotlin.reflect.typeOf` usage.
+        let typeOfReflectFQName = kotlinReflectPkg + [typeOfName]
+        if symbols.lookupAll(fqName: typeOfReflectFQName).isEmpty {
+            let tParamName2 = interner.intern("T")
+            let tParamFQName2 = typeOfReflectFQName + [tParamName2]
+            let tParamSymbol2 = symbols.define(
+                kind: .typeParameter, name: tParamName2, fqName: tParamFQName2,
+                declSite: nil, visibility: .private, flags: [.reifiedTypeParameter]
+            )
+
+            let funcSymbol2 = symbols.define(
+                kind: .function, name: typeOfName, fqName: typeOfReflectFQName,
+                declSite: nil, visibility: .public, flags: [.synthetic, .inlineFunction]
+            )
+            if let pkg = symbols.lookup(fqName: kotlinReflectPkg), pkg != .invalid {
+                symbols.setParentSymbol(pkg, for: funcSymbol2)
+            }
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    parameterTypes: [],
+                    returnType: kTypeType,
+                    isSuspend: false,
+                    typeParameterSymbols: [tParamSymbol2],
+                    reifiedTypeParameterIndices: [0],
+                    typeParameterUpperBoundsList: [[]],
+                    classTypeParameterCount: 0
+                ),
+                for: funcSymbol2
             )
         }
     }

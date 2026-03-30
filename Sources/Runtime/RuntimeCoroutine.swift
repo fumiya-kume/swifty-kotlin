@@ -58,6 +58,11 @@ private final class RuntimeResumeContinuationBox: @unchecked Sendable {
     }
 }
 
+private final class RuntimeCoroutineExceptionHandlerBox: @unchecked Sendable {
+    let handler: (Error) -> Void
+    init(_ handler: @escaping (Error) -> Void) { self.handler = handler }
+}
+
 // MARK: - CORO-004 Migration Plan: DispatchSemaphore -> Continuation Model
 //
 // The suspend-entry loop (`runSuspendEntryLoopWithContinuation`) has already
@@ -127,6 +132,11 @@ final class RuntimeContinuationState: @unchecked Sendable {
     /// CORO-003: The coroutine scope is carried in the continuation context instead
     /// of Thread Local Storage, so it survives suspend/resume across threads.
     var scope: RuntimeCoroutineScope?
+    /// Stores a thrown exception pointer when the coroutine body throws.
+    /// Zero means no exception was thrown.  Set by runSuspendEntryLoopWithContinuation
+    /// and consumed by kk_kxmini_launch_with_exception_handler to reliably
+    /// distinguish exception returns from normal (possibly non-zero) return values.
+    var thrownException: Int = 0
     private let stateLock = NSLock()
     private var delayTimers: [ObjectIdentifier: DispatchSourceTimer]
 
@@ -951,6 +961,177 @@ public func kk_kxmini_async_with_cont(_ entryPointRaw: Int, _ continuation: Int)
         task.complete(with: result)
     }
     return Int(bitPattern: taskPtr)
+}
+
+// MARK: - Dispatcher-aware launch (STDLIB-CORO-072)
+
+/// Launch a coroutine on a specific dispatcher (fire-and-forget).
+/// dispatcherRaw is a dispatcher tag (kk_dispatcher_default/io/main).
+/// Returns an opaque job handle (RuntimeJobHandle*).
+@_cdecl("kk_kxmini_launch_with_dispatcher")
+public func kk_kxmini_launch_with_dispatcher(_ entryPointRaw: Int, _ functionID: Int, _ dispatcherRaw: Int) -> Int {
+    let job = RuntimeJobHandle()
+    let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: jobPtr))
+    }
+    let continuation = kk_coroutine_continuation_new(functionID)
+    if let state = runtimeContinuationState(from: continuation) {
+        job.continuationState = state
+        state.jobHandle = job
+    }
+
+    let callerScope = RuntimeCoroutineScope.current
+    if let callerScope {
+        callerScope.registerChild(Int(bitPattern: jobPtr))
+    }
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = callerScope
+    }
+
+    let dispatcher = runtimeResolveDispatcher(from: dispatcherRaw)
+    dispatcher.dispatchAsync {
+        RuntimeCoroutineScope.current = callerScope
+        let result = runSuspendEntryLoopWithContinuation(
+            entryPointRaw: entryPointRaw,
+            continuation: continuation
+        )
+        RuntimeCoroutineScope.current = nil
+        job.complete(with: result)
+    }
+    return Int(bitPattern: jobPtr)
+}
+
+/// Variant of kk_kxmini_launch_with_dispatcher that accepts a pre-built continuation.
+@_cdecl("kk_kxmini_launch_with_dispatcher_and_cont")
+public func kk_kxmini_launch_with_dispatcher_and_cont(_ entryPointRaw: Int, _ continuation: Int, _ dispatcherRaw: Int) -> Int {
+    let job = RuntimeJobHandle()
+    let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: jobPtr))
+    }
+
+    if let contState = runtimeContinuationState(from: continuation) {
+        job.continuationState = contState
+        contState.jobHandle = job
+    }
+
+    let callerScope = RuntimeCoroutineScope.current
+    if let callerScope {
+        callerScope.registerChild(Int(bitPattern: jobPtr))
+    }
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = callerScope
+    }
+
+    let dispatcher = runtimeResolveDispatcher(from: dispatcherRaw)
+    dispatcher.dispatchAsync {
+        RuntimeCoroutineScope.current = callerScope
+        let result = runSuspendEntryLoopWithContinuation(
+            entryPointRaw: entryPointRaw,
+            continuation: continuation
+        )
+        RuntimeCoroutineScope.current = nil
+        job.complete(with: result)
+    }
+    return Int(bitPattern: jobPtr)
+}
+
+// MARK: - CoroutineExceptionHandler (STDLIB-CORO-072)
+
+/// A heap-allocated box holding a Swift closure that acts as a CoroutineExceptionHandler.
+/// The closure receives the raw throwable pointer and handles it.
+final class RuntimeExceptionHandlerBox: @unchecked Sendable {
+    let handler: @Sendable (Int) -> Void
+    init(handler: @escaping @Sendable (Int) -> Void) {
+        self.handler = handler
+    }
+}
+
+/// Create a CoroutineExceptionHandler that prints the exception message.
+/// Returns an opaque handle to a RuntimeExceptionHandlerBox.
+@_cdecl("kk_exception_handler_new")
+public func kk_exception_handler_new() -> Int {
+    let box = RuntimeExceptionHandlerBox { throwableRaw in
+        // Default handler: print the exception to stderr
+        var message = "Unknown exception"
+        if throwableRaw != 0, let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw) {
+            if let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) {
+                message = throwable.message
+            } else if let cancellation = tryCast(ptr, to: RuntimeCancellationBox.self) {
+                message = cancellation.message
+            }
+        }
+        FileHandle.standardError.write(Data("CoroutineExceptionHandler: \(message)\n".utf8))
+    }
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+    return Int(bitPattern: ptr)
+}
+
+/// Launch a coroutine with a CoroutineExceptionHandler.
+/// If the coroutine throws an uncaught exception, the handler is invoked.
+/// handlerRaw is an opaque RuntimeExceptionHandlerBox handle (or 0 for no handler).
+@_cdecl("kk_kxmini_launch_with_exception_handler")
+public func kk_kxmini_launch_with_exception_handler(_ entryPointRaw: Int, _ functionID: Int, _ handlerRaw: Int) -> Int {
+    let job = RuntimeJobHandle()
+    let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: jobPtr))
+    }
+    let continuation = kk_coroutine_continuation_new(functionID)
+    if let state = runtimeContinuationState(from: continuation) {
+        job.continuationState = state
+        state.jobHandle = job
+    }
+
+    let callerScope = RuntimeCoroutineScope.current
+    if let callerScope {
+        callerScope.registerChild(Int(bitPattern: jobPtr))
+    }
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = callerScope
+    }
+
+    // Resolve exception handler
+    var exceptionHandler: RuntimeExceptionHandlerBox?
+    if handlerRaw != 0, let ptr = UnsafeMutableRawPointer(bitPattern: handlerRaw) {
+        let isObjPointer = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if isObjPointer {
+            exceptionHandler = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue() as? RuntimeExceptionHandlerBox
+        }
+    }
+
+    // Capture the continuation state so the launch closure can read the
+    // thrownException flag set by runSuspendEntryLoopWithContinuation.
+    let capturedContState = runtimeContinuationState(from: continuation)
+
+    KxMiniRuntime.launch {
+        RuntimeCoroutineScope.current = callerScope
+        let result = runSuspendEntryLoopWithContinuation(
+            entryPointRaw: entryPointRaw,
+            continuation: continuation
+        )
+        RuntimeCoroutineScope.current = nil
+        // Reliably detect a thrown exception using the flag set inside
+        // runSuspendEntryLoopWithContinuation rather than inspecting the
+        // object-pointer registry.  The registry check is unreliable because
+        // any non-zero boxed value (string, integer box, etc.) that happens to
+        // be registered would otherwise be misidentified as an exception.
+        let thrownException = capturedContState?.thrownException ?? 0
+        if thrownException != 0, let handler = exceptionHandler {
+            handler.handler(thrownException)
+            // Fire-and-forget with handler; do not propagate the exception.
+            job.complete(with: 0)
+            return
+        }
+        job.complete(with: result)
+    }
+    return Int(bitPattern: jobPtr)
 }
 
 @_cdecl("kk_kxmini_async_await")
@@ -2945,6 +3126,11 @@ func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) 
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
             _ = kk_coroutine_state_exit(continuation, 0)
+            // Record the thrown exception in the continuation state so callers
+            // such as kk_kxmini_launch_with_exception_handler can reliably
+            // distinguish a thrown exception from a normal (possibly non-zero)
+            // return value without inspecting the object-pointer registry.
+            contState?.thrownException = outThrown
             resultBox.value = outThrown
             completionGate.signal()
             return

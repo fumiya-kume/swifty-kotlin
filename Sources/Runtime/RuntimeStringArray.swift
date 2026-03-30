@@ -441,11 +441,39 @@ public func kk_type_token_simple_name(_ typeToken: Int, _ nameHint: Int) -> Int 
 }
 
 /// Returns the qualified name of the type encoded in the given type token.
-/// Behaves identically to `kk_type_token_simple_name` for now; a future
-/// implementation may distinguish package-qualified names for nominal types.
+/// For built-in Kotlin stdlib types (Any, String, Int, Boolean, etc.) this
+/// returns the fully-qualified "kotlin.X" name as Kotlin reflection specifies.
+/// For nominal (user-defined) types the compiler-supplied name hint already
+/// carries the fully-qualified name, so it is returned unchanged.
 @_cdecl("kk_type_token_qualified_name")
 public func kk_type_token_qualified_name(_ typeToken: Int, _ nameHint: Int) -> Int {
-    kk_type_token_simple_name(typeToken, nameHint)
+    let token = Int64(truncatingIfNeeded: typeToken)
+    let base = token & RuntimeTypeTokenEncoding.baseMask
+    // Built-in stdlib types always live in the `kotlin` package.
+    let qualifiedName: String? = switch base {
+    case RuntimeTypeTokenEncoding.anyBase:     "kotlin.Any"
+    case RuntimeTypeTokenEncoding.stringBase:  "kotlin.String"
+    case RuntimeTypeTokenEncoding.intBase:     "kotlin.Int"
+    case RuntimeTypeTokenEncoding.uintBase:    "kotlin.UInt"
+    case RuntimeTypeTokenEncoding.ulongBase:   "kotlin.ULong"
+    case RuntimeTypeTokenEncoding.ubyteBase:   "kotlin.UByte"
+    case RuntimeTypeTokenEncoding.ushortBase:  "kotlin.UShort"
+    case RuntimeTypeTokenEncoding.booleanBase: "kotlin.Boolean"
+    case RuntimeTypeTokenEncoding.longBase:    "kotlin.Long"
+    case RuntimeTypeTokenEncoding.doubleBase:  "kotlin.Double"
+    case RuntimeTypeTokenEncoding.floatBase:   "kotlin.Float"
+    case RuntimeTypeTokenEncoding.charBase:    "kotlin.Char"
+    case RuntimeTypeTokenEncoding.nullBase:    "kotlin.Nothing"
+    default: nil
+    }
+    if let qualifiedName {
+        let utf8 = Array(qualifiedName.utf8)
+        return utf8.withUnsafeBufferPointer { buf in
+            Int(bitPattern: kk_string_from_utf8(buf.baseAddress!, Int32(buf.count)))
+        }
+    }
+    // For nominal types the nameHint carries the fully-qualified name.
+    return kk_type_token_simple_name(typeToken, nameHint)
 }
 
 private func runtimeKClassBox(from raw: Int) -> RuntimeKClassBox? {
@@ -1069,6 +1097,12 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print(sbBox.value)
         return
     }
+    // STDLIB-REFLECT-066: KType toString
+    if let ktypeBox = tryCast(raw, to: RuntimeKTypeBox.self) {
+        let str = runtimeKTypeToString(ktypeBox)
+        Swift.print(str)
+        return
+    }
     Swift.print("<object \(raw)>")
 }
 
@@ -1233,6 +1267,10 @@ func runtimeRenderAnyForPrint(_ value: Int) -> String {
     }
     if let sbBox = tryCast(raw, to: RuntimeStringBuilderBox.self) {
         return sbBox.value
+    }
+    // STDLIB-REFLECT-066: KType rendering
+    if let ktypeBox = tryCast(raw, to: RuntimeKTypeBox.self) {
+        return runtimeKTypeToString(ktypeBox)
     }
     return "<object \(raw)>"
 }

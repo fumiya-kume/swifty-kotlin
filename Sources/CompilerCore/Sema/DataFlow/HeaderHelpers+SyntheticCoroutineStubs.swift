@@ -180,6 +180,23 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        // STDLIB-CORO-072: Dispatcher-aware overload: launch(context, block)
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "launch",
+            packageFQName: coroutinesPkg,
+            parameters: [
+                (name: "context", type: dispatcherType),
+                (name: "block", type: types.make(.functionType(FunctionType(
+                    params: [],
+                    returnType: types.unitType,
+                    isSuspend: true,
+                    nullability: .nonNull
+                )))),
+            ],
+            returnType: jobType,
+            symbols: symbols,
+            interner: interner
+        )
         registerSyntheticCoroutineTopLevelFunction(
             named: "async",
             packageFQName: coroutinesPkg,
@@ -472,6 +489,27 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // Mutex.withLock(action: suspend () -> T): T
+        // Suspend extension that acquires the lock, runs action, then releases.
+        registerSyntheticCoroutineMember(
+            ownerSymbol: mutexSymbol,
+            ownerType: mutexType,
+            name: "withLock",
+            externalLinkName: "kk_mutex_withLock",
+            returnType: types.anyType,
+            parameters: [(
+                name: "action",
+                type: types.make(.functionType(FunctionType(
+                    params: [],
+                    returnType: types.anyType,
+                    isSuspend: true,
+                    nullability: .nonNull
+                )))
+            )],
+            symbols: symbols,
+            interner: interner
+        )
+
         // Semaphore (kotlinx.coroutines.sync.Semaphore)
         let semaphoreSymbol = ensureInterfaceSymbol(
             named: "Semaphore",
@@ -574,15 +612,17 @@ extension DataFlowSemaPhase {
     ) {
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
-        // Only skip if a function with this FQName already exists.
+        // Skip if a function with this FQName and the same parameter count already exists.
+        // Allow multiple overloads with different parameter counts (e.g. launch {} vs launch(ctx) {}).
         // A nominal type (class/interface) sharing the same FQName is allowed
         // (Kotlin supports factory functions with the same name as a type).
         let existingSymbols = symbols.lookupAll(fqName: functionFQName)
-        let hasExistingFunction = existingSymbols.contains { id in
-            guard let sym = symbols.symbol(id) else { return false }
-            return sym.kind == .function
+        let hasExistingFunctionWithSameArity = existingSymbols.contains { id in
+            guard let sym = symbols.symbol(id), sym.kind == .function else { return false }
+            let sig = symbols.functionSignature(for: id)
+            return sig?.parameterTypes.count == parameters.count
         }
-        guard !hasExistingFunction else {
+        guard !hasExistingFunctionWithSameArity else {
             return
         }
         let functionSymbol = symbols.define(

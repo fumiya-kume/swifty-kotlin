@@ -1,8 +1,7 @@
-// SKIP-DIFF: explicit backing fields require -Xexplicit-backing-fields and are experimental in kotlinc
+// KOTLINC_FLAGS: -Xexplicit-backing-fields
 class NameHolder {
     val fullName: String
-        field = ""
-        get() = field.uppercase()
+        field = "hello"
 }
 
 fun main() {

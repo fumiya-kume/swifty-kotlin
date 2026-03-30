@@ -9,6 +9,9 @@ public extension RuntimeABIExterns {
         kk_result_getOrThrow,
         kk_result_exceptionOrNull,
         kk_result_map,
+        kk_result_mapCatching,
+        kk_result_flatMap,
+        kk_result_flatMapCatching,
         kk_result_fold,
         kk_result_onSuccess,
         kk_result_onFailure,
@@ -72,6 +75,24 @@ public extension RuntimeABIExterns {
     // STDLIB-283: Result HOF functions
     static let kk_result_map = ExternDecl(
         name: "kk_result_map",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_result_mapCatching = ExternDecl(
+        name: "kk_result_mapCatching",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_result_flatMap = ExternDecl(
+        name: "kk_result_flatMap",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_result_flatMapCatching = ExternDecl(
+        name: "kk_result_flatMapCatching",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )

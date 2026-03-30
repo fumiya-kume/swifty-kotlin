@@ -82,6 +82,15 @@ public extension RuntimeABIExterns {
         kk_math_round_half_down_float,
         kk_math_round_half_even_float,
         kk_math_round_unnecessary_float,
+        // STDLIB-MATH-109: Hyperbolic functions and cbrt
+        kk_math_sinh,
+        kk_math_cosh,
+        kk_math_tanh,
+        kk_math_cbrt,
+        kk_math_sinh_float,
+        kk_math_cosh_float,
+        kk_math_tanh_float,
+        kk_math_cbrt_float,
     ]
 
     static let kk_math_abs_int = ExternDecl(
@@ -295,4 +304,14 @@ public extension RuntimeABIExterns {
     static let kk_math_round_half_down_float = ExternDecl(name: "kk_math_round_half_down_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
     static let kk_math_round_half_even_float = ExternDecl(name: "kk_math_round_half_even_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
     static let kk_math_round_unnecessary_float = ExternDecl(name: "kk_math_round_unnecessary_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+
+    // STDLIB-MATH-109: Hyperbolic functions and cbrt
+    static let kk_math_sinh = ExternDecl(name: "kk_math_sinh", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_cosh = ExternDecl(name: "kk_math_cosh", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_tanh = ExternDecl(name: "kk_math_tanh", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_cbrt = ExternDecl(name: "kk_math_cbrt", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_sinh_float = ExternDecl(name: "kk_math_sinh_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_cosh_float = ExternDecl(name: "kk_math_cosh_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_tanh_float = ExternDecl(name: "kk_math_tanh_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_cbrt_float = ExternDecl(name: "kk_math_cbrt_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
 }
