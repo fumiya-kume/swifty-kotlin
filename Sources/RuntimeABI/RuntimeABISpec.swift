@@ -55,7 +55,7 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
         return "\(returnType.rawValue) \(name)(\(params));"
     }
 
-    /// Parameter types only (no names), for ABI reconciliation with CompilerCore's RuntimeABIExterns.
+    /// Parameter types only (no names), for ABI reconciliation with `RuntimeABIExterns`.
     public var parameterTypeStrings: [String] {
         parameters.map(\.type.rawValue)
     }
