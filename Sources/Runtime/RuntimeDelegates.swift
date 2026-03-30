@@ -160,7 +160,10 @@ public func kk_kproperty_stub_visibility(_ handle: Int) -> Int {
         return runtimeNullSentinelInt
     }
     if stub.visibility == 0 {
-        return kk_kproperty_stub_make_string("PUBLIC")
+        if defaultKPropertyVisibilityPublicString == 0 {
+            defaultKPropertyVisibilityPublicString = kk_kproperty_stub_make_string("PUBLIC")
+        }
+        return defaultKPropertyVisibilityPublicString
     }
     return stub.visibility
 }
@@ -269,6 +272,10 @@ public func kk_kproperty_stub_set_value(_ handle: Int, _ value: Int) -> Int {
     let fn = unsafeBitCast(stub.setterFnPtr, to: SetterFn.self)
     return fn(stub.receiverPtr, value)
 }
+
+/// Cached KKString handle for the default "PUBLIC" visibility value.
+/// Initialized lazily on first use to avoid allocating a new string on every call.
+private nonisolated(unsafe) var defaultKPropertyVisibilityPublicString: Int = 0
 
 /// Build a KKString from a Swift String literal (used for default enum-like values).
 private func kk_kproperty_stub_make_string(_ s: String) -> Int {
