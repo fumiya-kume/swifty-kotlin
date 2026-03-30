@@ -1689,6 +1689,7 @@ extension DataFlowSemaPhase {
 
         // STDLIB-STR-125: String(ByteArray, Charset) constructor
         // Allows decoding a byte array with an explicit charset: String(bytes, Charsets.UTF_8)
+        // Register on both List<Int> (internal representation) and ByteArray (user-facing type)
         let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
         let stringClassSymbol = ensureClassSymbol(
             named: "String",
@@ -1696,23 +1697,25 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-        registerStringConstructorFromBytes(
-            ownerSymbol: stringClassSymbol,
-            ownerType: stringType,
-            parameters: [("bytes", listIntType), ("charset", charsetType)],
-            externalLinkName: "kk_bytearray_decodeToString_charset",
-            symbols: symbols,
-            interner: interner
-        )
-        // String(ByteArray) — default UTF-8 decoding
-        registerStringConstructorFromBytes(
-            ownerSymbol: stringClassSymbol,
-            ownerType: stringType,
-            parameters: [("bytes", listIntType)],
-            externalLinkName: "kk_bytearray_decodeToString",
-            symbols: symbols,
-            interner: interner
-        )
+        for bytesType in [listIntType, byteArrayType] {
+            registerStringConstructorFromBytes(
+                ownerSymbol: stringClassSymbol,
+                ownerType: stringType,
+                parameters: [("bytes", bytesType), ("charset", charsetType)],
+                externalLinkName: "kk_bytearray_decodeToString_charset",
+                symbols: symbols,
+                interner: interner
+            )
+            // String(ByteArray) — default UTF-8 decoding
+            registerStringConstructorFromBytes(
+                ownerSymbol: stringClassSymbol,
+                ownerType: stringType,
+                parameters: [("bytes", bytesType)],
+                externalLinkName: "kk_bytearray_decodeToString",
+                symbols: symbols,
+                interner: interner
+            )
+        }
 
         // --- STDLIB-316: String.chunked / String.windowed ---
 
