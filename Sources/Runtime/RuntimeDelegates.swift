@@ -66,26 +66,28 @@ private func runtimeTagCallableRef(
     _ callable: Int,
     name: Int,
     arity: Int,
-    kind: RuntimeCallableRefKind
+    kind: RuntimeCallableRefKind,
+    isSuspend: Bool = false
 ) -> Int {
     runtimeStorage.withLock { state in
         state.callableRefMetadataByValue[callable] = RuntimeCallableRefMetadata(
             nameRaw: name,
             arity: arity,
-            kind: kind
+            kind: kind,
+            isSuspend: isSuspend
         )
     }
     return callable
 }
 
 @_cdecl("kk_callable_ref_tag_kfunction")
-public func kk_callable_ref_tag_kfunction(_ callable: Int, _ name: Int, _ arity: Int) -> Int {
-    runtimeTagCallableRef(callable, name: name, arity: arity, kind: .function)
+public func kk_callable_ref_tag_kfunction(_ callable: Int, _ name: Int, _ arity: Int, _ isSuspend: Int) -> Int {
+    runtimeTagCallableRef(callable, name: name, arity: arity, kind: .function, isSuspend: isSuspend != 0)
 }
 
 @_cdecl("kk_callable_ref_tag_kproperty")
 public func kk_callable_ref_tag_kproperty(_ callable: Int, _ name: Int, _ arity: Int) -> Int {
-    runtimeTagCallableRef(callable, name: name, arity: arity, kind: .property)
+    runtimeTagCallableRef(callable, name: name, arity: arity, kind: .property, isSuspend: false)
 }
 
 @_cdecl("kk_callable_ref_name")
@@ -106,8 +108,9 @@ public func kk_callable_ref_arity(_ tagged: Int) -> Int {
 
 @_cdecl("kk_callable_ref_is_suspend")
 public func kk_callable_ref_is_suspend(_ tagged: Int) -> Int {
-    // Top-level callable refs created via :: are never suspend functions.
-    return 0
+    runtimeStorage.withLock { state in
+        state.callableRefMetadataByValue[tagged]?.isSuspend == true ? 1 : 0
+    }
 }
 
 @_cdecl("kk_callable_ref_parameters")

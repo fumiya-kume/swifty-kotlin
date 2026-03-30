@@ -8,11 +8,11 @@
 // and an arity, and returns the tagged callable value.
 
 public extension RuntimeABIExterns {
-    /// Tags a callable value as a KFunction reference.
-    /// Signature: kk_callable_ref_tag_kfunction(callable, name, arity) -> tagged
+    /// Tags a callable value as a KFunction reference, recording whether it is suspend.
+    /// Signature: kk_callable_ref_tag_kfunction(callable, name, arity, isSuspend) -> tagged
     static let kk_callable_ref_tag_kfunction = ExternDecl(
         name: "kk_callable_ref_tag_kfunction",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 

@@ -178,6 +178,7 @@ struct RuntimeCallableRefMetadata {
     let nameRaw: Int
     let arity: Int
     let kind: RuntimeCallableRefKind
+    let isSuspend: Bool
 }
 
 final class RuntimeFunctionValueBox {
