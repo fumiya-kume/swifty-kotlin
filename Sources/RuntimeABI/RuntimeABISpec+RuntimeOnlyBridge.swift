@@ -1,600 +1,178 @@
-public extension RuntimeABISpec {
-    static let runtimeOnlyBridgeFunctions: [RuntimeABIFunctionSpec] = [
-        RuntimeABIFunctionSpec(
-            name: "kk_array_all",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_count",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_filterIndexed",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_filterNot",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_filterNotNull",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_find",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_findLast",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_first",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_firstOrNull",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_flatMap",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_fold",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "initial", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_foldIndexed",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "initial", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_last",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_lastOrNull",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_mapIndexed",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_mapNotNull",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_reduce",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_reduceIndexed",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_reduceOrNull",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_bits_to_double",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
-            ],
-            returnType: .double,
-            section: "NumericConversion"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_bits_to_float",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
-            ],
-            returnType: .float,
-            section: "NumericConversion"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_byte_to_char",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "NumericConversion"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_byte_to_uint",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "NumericConversion"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_byte_to_ulong",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "NumericConversion"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_double_to_bits",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .double),
-            ],
-            returnType: .intptr,
-            section: "NumericConversion"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_float_to_bits",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .float),
-            ],
-            returnType: .intptr,
-            section: "NumericConversion"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_flow_stopped",
-            parameters: [],
-            returnType: .intptr,
-            section: "Coroutine"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kclass_get_arity",
-            parameters: [
-                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kclass_get_field_count",
-            parameters: [
-                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kclass_get_instance_size_words",
-            parameters: [
-                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kclass_get_qualified_name",
-            parameters: [
-                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kclass_get_simple_name",
-            parameters: [
-                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kclass_get_superclass_name",
-            parameters: [
-                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kclass_is_data_class",
-            parameters: [
-                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kclass_is_sealed_class",
-            parameters: [
-                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kclass_is_value_class",
-            parameters: [
-                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kfunction_call_0",
-            parameters: [
-                RuntimeABIParameter(name: "kfunctionRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kfunction_call_1",
-            parameters: [
-                RuntimeABIParameter(name: "kfunctionRaw", type: .intptr),
-                RuntimeABIParameter(name: "arg", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kfunction_call_2",
-            parameters: [
-                RuntimeABIParameter(name: "kfunctionRaw", type: .intptr),
-                RuntimeABIParameter(name: "arg1", type: .intptr),
-                RuntimeABIParameter(name: "arg2", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kfunction_call_3",
-            parameters: [
-                RuntimeABIParameter(name: "kfunctionRaw", type: .intptr),
-                RuntimeABIParameter(name: "arg1", type: .intptr),
-                RuntimeABIParameter(name: "arg2", type: .intptr),
-                RuntimeABIParameter(name: "arg3", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kfunction_call_vararg",
-            parameters: [
-                RuntimeABIParameter(name: "kfunctionRaw", type: .intptr),
-                RuntimeABIParameter(name: "argsListRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kfunction_create",
-            parameters: [
-                RuntimeABIParameter(name: "nameRaw", type: .intptr),
-                RuntimeABIParameter(name: "arity", type: .intptr),
-                RuntimeABIParameter(name: "returnTypeRaw", type: .intptr),
-                RuntimeABIParameter(name: "isSuspend", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kfunction_get_arity",
-            parameters: [
-                RuntimeABIParameter(name: "kfunctionRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kfunction_get_name",
-            parameters: [
-                RuntimeABIParameter(name: "kfunctionRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kfunction_get_parameters",
-            parameters: [
-                RuntimeABIParameter(name: "kfunctionRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kfunction_get_return_type",
-            parameters: [
-                RuntimeABIParameter(name: "kfunctionRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kfunction_is_suspend",
-            parameters: [
-                RuntimeABIParameter(name: "kfunctionRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "TypeCheck"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kxmini_run_loop",
-            parameters: [
-                RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
-                RuntimeABIParameter(name: "functionID", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Coroutine"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_math_IEEErem",
-            parameters: [
-                RuntimeABIParameter(name: "x", type: .intptr),
-                RuntimeABIParameter(name: "y", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Math"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_math_IEEErem_float",
-            parameters: [
-                RuntimeABIParameter(name: "x", type: .intptr),
-                RuntimeABIParameter(name: "y", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Math"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_math_nextTowards",
-            parameters: [
-                RuntimeABIParameter(name: "from", type: .intptr),
-                RuntimeABIParameter(name: "to", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Math"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_math_withSign",
-            parameters: [
-                RuntimeABIParameter(name: "x", type: .intptr),
-                RuntimeABIParameter(name: "sign", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Math"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_math_withSign_float",
-            parameters: [
-                RuntimeABIParameter(name: "x", type: .intptr),
-                RuntimeABIParameter(name: "sign", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Math"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_math_withSign_int",
-            parameters: [
-                RuntimeABIParameter(name: "x", type: .intptr),
-                RuntimeABIParameter(name: "sign", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Math"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_sequence_all",
-            parameters: [
-                RuntimeABIParameter(name: "seqRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Sequence"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_sequence_any",
-            parameters: [
-                RuntimeABIParameter(name: "seqRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Sequence"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_sequence_fold",
-            parameters: [
-                RuntimeABIParameter(name: "seqRaw", type: .intptr),
-                RuntimeABIParameter(name: "initial", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Sequence"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_sequence_none",
-            parameters: [
-                RuntimeABIParameter(name: "seqRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Sequence"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_sequence_reduce",
-            parameters: [
-                RuntimeABIParameter(name: "seqRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Sequence"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_short_to_char",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "NumericConversion"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_short_to_uint",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "NumericConversion"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_short_to_ulong",
-            parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "NumericConversion"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_supervisor_scope_new",
-            parameters: [],
-            returnType: .intptr,
-            section: "Coroutine"
+private let arrayHOFBridgeNames = [
+    "kk_array_all",
+    "kk_array_count",
+    "kk_array_filterIndexed",
+    "kk_array_filterNot",
+    "kk_array_find",
+    "kk_array_findLast",
+    "kk_array_first",
+    "kk_array_firstOrNull",
+    "kk_array_flatMap",
+    "kk_array_last",
+    "kk_array_lastOrNull",
+    "kk_array_mapIndexed",
+    "kk_array_mapNotNull",
+    "kk_array_reduce",
+    "kk_array_reduceIndexed",
+    "kk_array_reduceOrNull",
+]
+
+private let arrayHOFBridgeFunctions = arrayHOFBridgeNames.map {
+    bridgeSpec(
+        $0,
+        section: "Collection",
+        typedParams: [
+            ("arrayRaw", .intptr),
+            ("fnPtr", .intptr),
+            ("closureRaw", .intptr),
+            ("outThrown", .nullableIntptrPointer),
+        ]
+    )
+}
+
+private let arrayFoldBridgeFunctions = [
+    "kk_array_fold",
+    "kk_array_foldIndexed",
+].map {
+    bridgeSpec(
+        $0,
+        section: "Collection",
+        typedParams: [
+            ("arrayRaw", .intptr),
+            ("initial", .intptr),
+            ("fnPtr", .intptr),
+            ("closureRaw", .intptr),
+            ("outThrown", .nullableIntptrPointer),
+        ]
+    )
+}
+
+private let arraySpecialBridgeFunctions: [RuntimeABIFunctionSpec] = [
+    bridgeSpec("kk_array_filterNotNull", section: "Collection", params: ["arrayRaw"]),
+    RuntimeABIFunctionSpec(
+        name: "kk_bits_to_double",
+        parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+        returnType: .double,
+        section: "NumericConversion"
+    ),
+    RuntimeABIFunctionSpec(
+        name: "kk_bits_to_float",
+        parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+        returnType: .float,
+        section: "NumericConversion"
+    ),
+    RuntimeABIFunctionSpec(
+        name: "kk_double_to_bits",
+        parameters: [RuntimeABIParameter(name: "value", type: .double)],
+        returnType: .intptr,
+        section: "NumericConversion"
+    ),
+    RuntimeABIFunctionSpec(
+        name: "kk_float_to_bits",
+        parameters: [RuntimeABIParameter(name: "value", type: .float)],
+        returnType: .intptr,
+        section: "NumericConversion"
+    ),
+]
+
+private let numericOnlyBridgeFunctions: [RuntimeABIFunctionSpec] =
+    ["kk_byte_to_char", "kk_byte_to_uint", "kk_byte_to_ulong",
+     "kk_short_to_char", "kk_short_to_uint", "kk_short_to_ulong"].map {
+        bridgeSpec($0, section: "NumericConversion", params: ["value"])
+    }
+
+private let coroutineOnlyBridgeFunctions: [RuntimeABIFunctionSpec] = [
+    bridgeSpec("kk_flow_stopped", section: "Coroutine"),
+    bridgeSpec("kk_kxmini_run_loop", section: "Coroutine", params: ["entryPointRaw", "functionID"]),
+    bridgeSpec("kk_supervisor_scope_new", section: "Coroutine"),
+]
+
+private let kclassBridgeFunctions = [
+    "kk_kclass_get_arity",
+    "kk_kclass_get_field_count",
+    "kk_kclass_get_instance_size_words",
+    "kk_kclass_get_qualified_name",
+    "kk_kclass_get_simple_name",
+    "kk_kclass_get_superclass_name",
+    "kk_kclass_is_data_class",
+    "kk_kclass_is_sealed_class",
+    "kk_kclass_is_value_class",
+].map { bridgeSpec($0, section: "TypeCheck", params: ["kclassRaw"]) }
+
+private let kfunctionBridgeFunctions: [RuntimeABIFunctionSpec] =
+    [bridgeSpec("kk_kfunction_create", section: "TypeCheck",
+                params: ["nameRaw", "arity", "returnTypeRaw", "isSuspend", "fnPtr", "closureRaw"])]
+    + ["kk_kfunction_get_arity", "kk_kfunction_get_name", "kk_kfunction_get_parameters",
+       "kk_kfunction_get_return_type", "kk_kfunction_is_suspend"].map {
+        bridgeSpec($0, section: "TypeCheck", params: ["kfunctionRaw"])
+    }
+    + [
+        bridgeSpec("kk_kfunction_call_0", section: "TypeCheck",
+                   typedParams: [("kfunctionRaw", .intptr), ("outThrown", .nullableIntptrPointer)]),
+        bridgeSpec("kk_kfunction_call_1", section: "TypeCheck",
+                   typedParams: [("kfunctionRaw", .intptr), ("arg", .intptr), ("outThrown", .nullableIntptrPointer)]),
+        bridgeSpec("kk_kfunction_call_2", section: "TypeCheck",
+                   typedParams: [("kfunctionRaw", .intptr), ("arg1", .intptr), ("arg2", .intptr), ("outThrown", .nullableIntptrPointer)]),
+        bridgeSpec("kk_kfunction_call_3", section: "TypeCheck",
+                   typedParams: [("kfunctionRaw", .intptr), ("arg1", .intptr), ("arg2", .intptr), ("arg3", .intptr), ("outThrown", .nullableIntptrPointer)]),
+        bridgeSpec("kk_kfunction_call_vararg", section: "TypeCheck",
+                   typedParams: [("kfunctionRaw", .intptr), ("argsListRaw", .intptr), ("outThrown", .nullableIntptrPointer)]),
+    ]
+
+private let sequenceHOFBridgeNames = [
+    "kk_sequence_all",
+    "kk_sequence_any",
+    "kk_sequence_none",
+    "kk_sequence_reduce",
+]
+
+private let sequenceOnlyBridgeFunctions: [RuntimeABIFunctionSpec] =
+    sequenceHOFBridgeNames.map {
+        bridgeSpec(
+            $0,
+            section: "Sequence",
+            typedParams: [
+                ("seqRaw", .intptr),
+                ("fnPtr", .intptr),
+                ("closureRaw", .intptr),
+                ("outThrown", .nullableIntptrPointer),
+            ]
+        )
+    }
+    + [
+        bridgeSpec(
+            "kk_sequence_fold",
+            section: "Sequence",
+            typedParams: [
+                ("seqRaw", .intptr),
+                ("initial", .intptr),
+                ("fnPtr", .intptr),
+                ("closureRaw", .intptr),
+                ("outThrown", .nullableIntptrPointer),
+            ]
         ),
     ]
+
+private let mathOnlyBridgeFunctions: [RuntimeABIFunctionSpec] =
+    ["kk_math_IEEErem", "kk_math_IEEErem_float"].map {
+        bridgeSpec($0, section: "Math", params: ["x", "y"])
+    }
+    + [
+        bridgeSpec("kk_math_nextTowards", section: "Math", params: ["from", "to"]),
+        bridgeSpec("kk_math_withSign", section: "Math", params: ["x", "sign"]),
+        bridgeSpec("kk_math_withSign_float", section: "Math", params: ["x", "sign"]),
+        bridgeSpec("kk_math_withSign_int", section: "Math", params: ["x", "sign"]),
+    ]
+
+public extension RuntimeABISpec {
+    static let runtimeOnlyBridgeFunctions: [RuntimeABIFunctionSpec] =
+        arrayHOFBridgeFunctions
+        + arrayFoldBridgeFunctions
+        + arraySpecialBridgeFunctions
+        + numericOnlyBridgeFunctions
+        + coroutineOnlyBridgeFunctions
+        + kclassBridgeFunctions
+        + kfunctionBridgeFunctions
+        + sequenceOnlyBridgeFunctions
+        + mathOnlyBridgeFunctions
 }

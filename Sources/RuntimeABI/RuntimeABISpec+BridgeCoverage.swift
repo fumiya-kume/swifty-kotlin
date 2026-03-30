@@ -1,4 +1,4 @@
-private func bridgeSpec(
+func bridgeSpec(
     _ name: String,
     section: String,
     params: [String] = [],
@@ -12,7 +12,7 @@ private func bridgeSpec(
     )
 }
 
-private func bridgeSpec(
+func bridgeSpec(
     _ name: String,
     section: String,
     typedParams: [(String, RuntimeABICType)],

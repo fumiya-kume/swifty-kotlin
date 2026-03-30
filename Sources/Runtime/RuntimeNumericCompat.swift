@@ -1244,8 +1244,7 @@ public func kk_long_takeHighestOneBit(_ value: Int) -> Int {
 
 @_cdecl("kk_long_takeLowestOneBit")
 public func kk_long_takeLowestOneBit(_ value: Int) -> Int {
-    if value == 0 { return 0 }
-    return value & (value ^ (value - 1))
+    kk_long_lowestOneBit(value)
 }
 
 @_cdecl("kk_int_coerceIn")
