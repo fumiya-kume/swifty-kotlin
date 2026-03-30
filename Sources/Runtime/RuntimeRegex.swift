@@ -723,15 +723,19 @@ public func kk_regex_matches(_ regexRaw: Int, _ inputRaw: Int) -> Int {
     let rawInput = regexStringFromRaw(inputRaw) ?? ""
     guard let regexBox = regexBoxFromRaw(regexRaw) else { return kk_box_bool(0) }
     let input = regexBox.normalizeIfNeeded(rawInput)
-    let anchoredPattern = "\\A(?:\(regexBox.regex.pattern))\\z"
-    // Remove .anchorsMatchLines so that \A/\z always bind to string boundaries,
-    // not line boundaries.
-    // NOTE: Do NOT remove .ignoreMetacharacters here. NSRegularExpression.pattern
-    // returns the original pattern string as passed to the initializer; the
-    // .ignoreMetacharacters flag is applied internally by the matching engine and
-    // is NOT baked into the stored pattern. Stripping the flag would cause LITERAL
-    // regex patterns to have their metacharacters re-interpreted as regex syntax.
-    let anchoredOptions = regexBox.regex.options.subtracting(.anchorsMatchLines)
+    // For LITERAL regexes, the \A, (?:, ), and \z wrapper characters would also be
+    // treated as literal text if .ignoreMetacharacters is kept, making the match always
+    // fail. Instead, escape the inner pattern and remove .ignoreMetacharacters so the
+    // anchored wrapper is parsed as normal regex syntax.
+    var anchoredOptions = regexBox.regex.options.subtracting(.anchorsMatchLines)
+    let innerPattern: String
+    if regexBox.regex.options.contains(.ignoreMetacharacters) {
+        innerPattern = NSRegularExpression.escapedPattern(for: regexBox.regex.pattern)
+        anchoredOptions.remove(.ignoreMetacharacters)
+    } else {
+        innerPattern = regexBox.regex.pattern
+    }
+    let anchoredPattern = "\\A(?:\(innerPattern))\\z"
     guard let anchoredRegex = try? NSRegularExpression(
         pattern: anchoredPattern,
         options: anchoredOptions
