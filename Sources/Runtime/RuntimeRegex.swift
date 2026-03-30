@@ -737,8 +737,9 @@ public func kk_string_replaceFirst_regex(_ strRaw: Int, _ regexRaw: Int, _ repla
           let matchRange = Range(match.range, in: str) else {
         return regexMakeStringRaw(str)
     }
+    let templateResult = regexBox.regex.replacementString(for: match, in: str, offset: 0, template: replacement)
     var result = str
-    result.replaceSubrange(matchRange, with: replacement)
+    result.replaceSubrange(matchRange, with: templateResult)
     return regexMakeStringRaw(result)
 }
 
