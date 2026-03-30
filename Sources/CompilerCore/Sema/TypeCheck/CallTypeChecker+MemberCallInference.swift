@@ -5293,24 +5293,18 @@ extension CallTypeChecker {
         if sema.types.isSubtype(nonNullReceiver, closeableType) {
             return true
         }
-        // Fallback: check if the class has a `close()` member function.
-        // This handles synthetic IO types (BufferedReader, BufferedWriter, InputStream,
-        // OutputStream) registered via registerSyntheticFileIOStubs.
-        guard case let .classType(classType) = sema.types.kind(of: nonNullReceiver),
-              let classInfo = sema.symbols.symbol(classType.classSymbol)
+        // Fallback: check if the class explicitly declares Closeable or AutoCloseable
+        // in its registered supertype list.  This handles synthetic IO types
+        // (BufferedReader, BufferedWriter, InputStream, OutputStream) whose supertypes
+        // are registered via registerSyntheticFileIOStubs / setDirectSupertypes, without
+        // accidentally treating every class that happens to define close() as Closeable.
+        guard let closeableSymbol = sema.types.closeableInterfaceSymbol,
+              case let .classType(classType) = sema.types.kind(of: nonNullReceiver)
         else {
             return false
         }
-        let closeFQName = classInfo.fqName + [interner.intern("close")]
-        return sema.symbols.lookupAll(fqName: closeFQName).contains { symbolID in
-            guard let sym = sema.symbols.symbol(symbolID),
-                  sym.kind == .function,
-                  let sig = sema.symbols.functionSignature(for: symbolID)
-            else {
-                return false
-            }
-            return sig.parameterTypes.isEmpty
-        }
+        let directSupertypes = sema.symbols.directSupertypes(for: classType.classSymbol)
+        return directSupertypes.contains(closeableSymbol)
     }
 
     // MARK: - Result helpers (STDLIB-590)
