@@ -3165,6 +3165,14 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Range"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_range_step",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
         // Range HOFs (STDLIB-RANGE-038)
         RuntimeABIFunctionSpec(
             name: "kk_range_mapIndexed",
