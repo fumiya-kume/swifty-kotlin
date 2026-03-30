@@ -335,7 +335,7 @@ public func kk_path_nameCount(_ pathRaw: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_nameCount received invalid Path handle")
     }
     let components = path.pathString.split(separator: "/", omittingEmptySubsequences: true)
-    return kk_box_int(components.count)
+    return components.count
 }
 
 // MARK: - Path.startsWith()
