@@ -10,6 +10,9 @@ public extension RuntimeABIExterns {
         kk_uuid_toByteArray,
         kk_uuid_version,
         kk_uuid_variant,
+        kk_uuid_mostSignificantBits,
+        kk_uuid_leastSignificantBits,
+        kk_uuid_nameUUIDFromBytes,
     ]
 
     static let kk_uuid_random = ExternDecl(
@@ -56,6 +59,24 @@ public extension RuntimeABIExterns {
 
     static let kk_uuid_variant = ExternDecl(
         name: "kk_uuid_variant",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_uuid_mostSignificantBits = ExternDecl(
+        name: "kk_uuid_mostSignificantBits",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_uuid_leastSignificantBits = ExternDecl(
+        name: "kk_uuid_leastSignificantBits",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_uuid_nameUUIDFromBytes = ExternDecl(
+        name: "kk_uuid_nameUUIDFromBytes",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
