@@ -145,15 +145,6 @@ public extension RuntimeABISpec {
             section: "StringBuilder"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_string_builder_charAt",
-            parameters: [
-                RuntimeABIParameter(name: "sbRaw", type: .intptr),
-                RuntimeABIParameter(name: "index", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "StringBuilder"
-        ),
-        RuntimeABIFunctionSpec(
             name: "kk_string_builder_capacity",
             parameters: [
                 RuntimeABIParameter(name: "sbRaw", type: .intptr),

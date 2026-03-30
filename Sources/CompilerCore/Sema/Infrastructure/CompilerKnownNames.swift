@@ -185,7 +185,6 @@ struct KnownCompilerNames {
     // STDLIB-STR-123
     let replace: InternedString
     let setCharAt: InternedString
-    let charAt: InternedString
     let capacity: InternedString
     let ensureCapacity: InternedString
     let trimToSize: InternedString
@@ -331,7 +330,6 @@ struct KnownCompilerNames {
         // STDLIB-STR-123
         replace = interner.intern("replace")
         setCharAt = interner.intern("setCharAt")
-        charAt = interner.intern("charAt")
         capacity = interner.intern("capacity")
         ensureCapacity = interner.intern("ensureCapacity")
         trimToSize = interner.intern("trimToSize")

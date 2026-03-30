@@ -13,9 +13,9 @@ fun main() {
     sb.setCharAt(0, 'H')
     println(sb.toString())
 
-    // charAt(index)
+    // get(index) — Kotlin uses get(index) or [index]; charAt does not exist in Kotlin
     val sb2 = StringBuilder("Kotlin")
-    println(sb2.charAt(0))
+    println(sb2.get(0))
 
     // replace(start, end, str)
     println(StringBuilder("hello world").replace(6, 11, "Kotlin").toString())

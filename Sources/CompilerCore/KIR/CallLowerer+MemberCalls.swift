@@ -2766,8 +2766,6 @@ extension CallLowerer {
                     "kk_string_builder_deleteCharAt"
                 } else if calleeName == sbNames.get {
                     "kk_string_builder_get"
-                } else if calleeName == sbNames.charAt {
-                    "kk_string_builder_charAt"
                 } else if calleeName == sbNames.ensureCapacity {
                     "kk_string_builder_ensureCapacity"
                 } else {

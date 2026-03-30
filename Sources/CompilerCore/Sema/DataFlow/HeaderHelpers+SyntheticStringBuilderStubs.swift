@@ -190,18 +190,6 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // charAt(Int): Char
-        registerStringBuilderMemberFunction(
-            named: "charAt",
-            externalLinkName: "kk_string_builder_charAt",
-            ownerSymbol: sbSymbol,
-            ownerType: sbType,
-            parameters: [("index", intType, false, false)],
-            returnType: charType,
-            symbols: symbols,
-            interner: interner
-        )
-
         // capacity(): Int
         registerStringBuilderMemberFunction(
             named: "capacity",

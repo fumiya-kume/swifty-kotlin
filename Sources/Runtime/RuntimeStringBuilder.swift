@@ -195,22 +195,6 @@ public func kk_string_builder_setCharAt(_ sbRaw: Int, _ index: Int, _ charValue:
     return sbRaw
 }
 
-@_cdecl("kk_string_builder_charAt")
-public func kk_string_builder_charAt(_ sbRaw: Int, _ index: Int) -> Int {
-    // Identical semantics to kk_string_builder_get — charAt(index) is an alias in Kotlin
-    guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return 0 }
-    let utf8Count = sb.value.utf8.count
-    guard index >= 0, index < utf8Count else {
-        fatalError("StringIndexOutOfBoundsException: index=\(index), length=\(utf8Count)")
-    }
-    let utf8Index = sb.value.utf8.index(sb.value.utf8.startIndex, offsetBy: index)
-    guard let charIdx = String.Index(utf8Index, within: sb.value) else {
-        fatalError("StringIndexOutOfBoundsException: index=\(index), length=\(utf8Count)")
-    }
-    let charVal = Int(sb.value[charIdx].unicodeScalars.first?.value ?? 0)
-    return kk_box_char(charVal)
-}
-
 @_cdecl("kk_string_builder_capacity")
 public func kk_string_builder_capacity(_ sbRaw: Int) -> Int {
     // Swift Strings have no separate capacity concept; return length + 16 as a
