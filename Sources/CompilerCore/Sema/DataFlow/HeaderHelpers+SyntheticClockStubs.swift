@@ -111,7 +111,7 @@ extension DataFlowSemaPhase {
 
         // --- Instant instance methods ---
 
-        // plus(duration: Duration): Instant
+        // plus(duration: Duration): Instant  [operator fun]
         registerClockMemberFunction(
             named: "plus",
             externalLinkName: "kk_instant_plus_duration",
@@ -120,10 +120,11 @@ extension DataFlowSemaPhase {
             parameters: [(name: "duration", type: durationType)],
             returnType: instantType,
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            isOperator: true
         )
 
-        // minus(duration: Duration): Instant
+        // minus(duration: Duration): Instant  [operator fun]
         registerClockMemberFunction(
             named: "minus",
             externalLinkName: "kk_instant_minus_duration",
@@ -132,7 +133,8 @@ extension DataFlowSemaPhase {
             parameters: [(name: "duration", type: durationType)],
             returnType: instantType,
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            isOperator: true
         )
 
         // until(other: Instant): Duration
@@ -147,7 +149,7 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // compareTo(other: Instant): Int
+        // compareTo(other: Instant): Int  [operator fun]
         registerClockMemberFunction(
             named: "compareTo",
             externalLinkName: "kk_instant_compare",
@@ -156,7 +158,8 @@ extension DataFlowSemaPhase {
             parameters: [(name: "other", type: instantType)],
             returnType: intType,
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            isOperator: true
         )
 
         // MARK: - Clock interface
@@ -347,7 +350,8 @@ extension DataFlowSemaPhase {
         parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
         symbols: SymbolTable,
-        interner: StringInterner
+        interner: StringInterner,
+        isOperator: Bool = false
     ) {
         guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
         let memberName = interner.intern(name)
@@ -361,13 +365,15 @@ extension DataFlowSemaPhase {
         }) == nil else {
             return
         }
+        var flags: SymbolFlags = [.synthetic]
+        if isOperator { flags.insert(.operatorFunction) }
         let memberSymbol = symbols.define(
             kind: .function,
             name: memberName,
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
         symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
