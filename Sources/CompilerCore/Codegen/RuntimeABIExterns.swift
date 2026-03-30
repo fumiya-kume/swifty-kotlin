@@ -3452,7 +3452,7 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
-    // STDLIB-IO-091: BufferedWriter
+    // STDLIB-IO-091/093: BufferedWriter
     public static let kk_file_bufferedWriter = ExternDecl(
         name: "kk_file_bufferedWriter",
         parameterTypes: [intptr, nullableIntptrPtr],
@@ -3634,7 +3634,6 @@ public enum RuntimeABIExterns {
         parameterTypes: [intptr],
         returnType: intptr
     )
-
 
     public static let kk_file_useLines = ExternDecl(
         name: "kk_file_useLines",

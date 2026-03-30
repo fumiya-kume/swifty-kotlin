@@ -6193,7 +6193,16 @@ extension CallLowerer {
                         let closeCandidateFQ = recvInfo.fqName + [closeName]
                         if let concreteSym = sema.symbols.lookup(fqName: closeCandidateFQ) {
                             concreteCloseSymbol = concreteSym
-                            concreteCloseName = sema.symbols.symbol(concreteSym)?.name ?? closeName
+                            // Prefer the externalLinkName (e.g. kk_buffered_writer_close) over
+                            // the Kotlin symbol name (which would just be "close") so that the
+                            // generated .call instruction targets the correct runtime C function.
+                            if let extLink = sema.symbols.externalLinkName(for: concreteSym),
+                               !extLink.isEmpty
+                            {
+                                concreteCloseName = interner.intern(extLink)
+                            } else {
+                                concreteCloseName = sema.symbols.symbol(concreteSym)?.name ?? closeName
+                            }
                         }
                     }
                 }

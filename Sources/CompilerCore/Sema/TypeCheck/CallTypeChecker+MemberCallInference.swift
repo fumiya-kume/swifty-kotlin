@@ -397,7 +397,7 @@ extension CallTypeChecker {
             case "run": .scopeRun
             case "apply": .scopeApply
             case "also": .scopeAlso
-            case "use" where isCloseableReceiver(receiverType, sema: sema): .scopeUse
+            case "use" where isCloseableReceiver(receiverType, sema: sema, interner: interner): .scopeUse
             default: nil
             }
             let hasUserDefinedMember = if scopeKind != nil {
@@ -5371,12 +5371,32 @@ extension CallTypeChecker {
     /// Note: AutoCloseable is registered as a typealias to Closeable (see
     /// HeaderHelpers+SyntheticCloseableStubs.swift), so checking Closeable alone
     /// covers both Closeable and AutoCloseable receivers.
-    private func isCloseableReceiver(_ receiverType: TypeID, sema: SemaModule) -> Bool {
+    ///
+    /// As a fallback for synthetic IO types (BufferedReader, BufferedWriter, InputStream,
+    /// OutputStream) that implement Closeable through the nominal supertype chain registered
+    /// by registerSyntheticFileIOStubs, we also accept any class type whose class symbol
+    /// has a `close()` member function registered with no parameters — this ensures that
+    /// `file.bufferedReader().use { }` and similar patterns resolve correctly.
+    private func isCloseableReceiver(_ receiverType: TypeID, sema: SemaModule, interner: StringInterner) -> Bool {
         guard let closeableType = sema.types.closeableTypeID else {
             return false
         }
         let nonNullReceiver = sema.types.makeNonNullable(receiverType)
-        return sema.types.isSubtype(nonNullReceiver, closeableType)
+        if sema.types.isSubtype(nonNullReceiver, closeableType) {
+            return true
+        }
+        // Fallback: check if the class explicitly declares Closeable or AutoCloseable
+        // in its registered supertype list.  This handles synthetic IO types
+        // (BufferedReader, BufferedWriter, InputStream, OutputStream) whose supertypes
+        // are registered via registerSyntheticFileIOStubs / setDirectSupertypes, without
+        // accidentally treating every class that happens to define close() as Closeable.
+        guard let closeableSymbol = sema.types.closeableInterfaceSymbol,
+              case let .classType(classType) = sema.types.kind(of: nonNullReceiver)
+        else {
+            return false
+        }
+        let directSupertypes = sema.symbols.directSupertypes(for: classType.classSymbol)
+        return directSupertypes.contains(closeableSymbol)
     }
 
     // MARK: - Result helpers (STDLIB-590)

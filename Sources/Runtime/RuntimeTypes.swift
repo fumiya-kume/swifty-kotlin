@@ -1161,7 +1161,7 @@ final class RuntimeOutputStreamBox {
     }
 }
 
-// MARK: - BufferedWriter (STDLIB-IO-091)
+// MARK: - BufferedWriter (STDLIB-IO-091/093)
 
 /// Runtime box for `java.io.BufferedWriter` returned by `File.bufferedWriter()`.
 /// Wraps a streaming file writer, supporting `write()`, `newLine()`, `flush()`, and `close()`.

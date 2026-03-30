@@ -4651,7 +4651,7 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
-        // STDLIB-IO-091: BufferedWriter
+        // STDLIB-IO-091/093: BufferedWriter
         RuntimeABIFunctionSpec(
             name: "kk_file_bufferedWriter",
             parameters: [

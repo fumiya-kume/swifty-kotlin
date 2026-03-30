@@ -40,10 +40,11 @@ final class RuntimeResourceAccessTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(stringValue(pathRaw), fileURL.path)
 
         let streamRaw = kk_classloader_getResourceAsStream(loaderRaw, runtimeString("bytes.bin"))
-        XCTAssertEqual(kk_resource_stream_read(streamRaw), 65)
-        XCTAssertEqual(kk_resource_stream_read(streamRaw), 66)
-        XCTAssertEqual(kk_resource_stream_read(streamRaw), -1)
-        XCTAssertEqual(kk_resource_stream_close(streamRaw), 0)
+        var thrown: Int = 0
+        XCTAssertEqual(kk_input_stream_read(streamRaw, &thrown), 65)
+        XCTAssertEqual(kk_input_stream_read(streamRaw, &thrown), 66)
+        XCTAssertEqual(kk_input_stream_read(streamRaw, &thrown), -1)
+        XCTAssertEqual(kk_input_stream_close(streamRaw), 0)
     }
 
     private func runtimeString(_ text: String) -> Int {

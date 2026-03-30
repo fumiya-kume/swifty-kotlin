@@ -473,6 +473,13 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // Register BufferedReader as a Closeable subtype (STDLIB-IO-093)
+        // so that .use {} pattern works: `file.bufferedReader().use { reader -> ... }`
+        if let closeableSymbol = types.closeableInterfaceSymbol {
+            symbols.setDirectSupertypes([closeableSymbol], for: bufferedReaderSymbol)
+            types.setNominalDirectSupertypes([closeableSymbol], for: bufferedReaderSymbol)
+        }
+
         // BufferedReader.read() -> Int  (STDLIB-IO-091)
         registerFileMemberFunction(
             named: "read",
@@ -497,7 +504,7 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // MARK: - BufferedWriter (STDLIB-IO-091)
+        // MARK: - BufferedWriter type and File.bufferedWriter() (STDLIB-IO-091/093)
 
         let bufferedWriterSymbol = ensureClassSymbol(
             named: "BufferedWriter",
@@ -512,6 +519,12 @@ extension DataFlowSemaPhase {
             classSymbol: bufferedWriterSymbol, args: [], nullability: .nonNull
         )))
         symbols.setPropertyType(bufferedWriterType, for: bufferedWriterSymbol)
+
+        // Register BufferedWriter as a Closeable subtype (STDLIB-IO-093)
+        if let closeableSymbol = types.closeableInterfaceSymbol {
+            symbols.setDirectSupertypes([closeableSymbol], for: bufferedWriterSymbol)
+            types.setNominalDirectSupertypes([closeableSymbol], for: bufferedWriterSymbol)
+        }
 
         // File.bufferedWriter() -> BufferedWriter
         registerFileMemberFunction(
@@ -623,6 +636,15 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(inputStreamType, for: inputStreamSymbol)
         symbols.setPropertyType(outputStreamType, for: outputStreamSymbol)
+
+        // Register InputStream/OutputStream as Closeable subtypes (STDLIB-IO-093)
+        // so that .use {} works with stream resources.
+        if let closeableSymbol = types.closeableInterfaceSymbol {
+            symbols.setDirectSupertypes([closeableSymbol], for: inputStreamSymbol)
+            types.setNominalDirectSupertypes([closeableSymbol], for: inputStreamSymbol)
+            symbols.setDirectSupertypes([closeableSymbol], for: outputStreamSymbol)
+            types.setNominalDirectSupertypes([closeableSymbol], for: outputStreamSymbol)
+        }
 
         let nullableInputStreamType = types.makeNullable(inputStreamType)
 
