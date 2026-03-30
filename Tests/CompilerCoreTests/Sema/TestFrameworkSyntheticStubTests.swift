@@ -115,6 +115,9 @@ final class TestFrameworkSyntheticStubTests: XCTestCase {
                     expectedLinkName
                 )
             }
+        }
+    }
+
     private func lookupTestSymbols(
         sema: SemaModule,
         interner: StringInterner,
