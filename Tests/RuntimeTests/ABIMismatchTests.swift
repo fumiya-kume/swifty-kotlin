@@ -123,7 +123,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 78)
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 79)
     }
 
     func testBoxingFunctionCount() {
@@ -156,6 +156,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.exceptionFunctions,
             RuntimeABISpec.testFunctions,
             RuntimeABISpec.stringFunctions,
+            RuntimeABISpec.stringBridgeFunctions,
             RuntimeABISpec.consolePrintFunctions,
             RuntimeABISpec.ioFunctions,
             RuntimeABISpec.systemFunctions,
@@ -166,14 +167,17 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.operatorFunctions,
             RuntimeABISpec.rangeFunctions,
             RuntimeABISpec.primitiveNumericConversionFunctions,
+            RuntimeABISpec.numericRuntimeBridgeFunctions,
             RuntimeABISpec.kPropertyStubFunctions,
             RuntimeABISpec.delegateFunctions,
+            RuntimeABISpec.dispatchBridgeFunctions,
             RuntimeABISpec.bitwiseFunctions,
             RuntimeABISpec.booleanFunctions,
             RuntimeABISpec.charFunctions,
             RuntimeABISpec.mathFunctions,
             RuntimeABISpec.randomFunctions,
             RuntimeABISpec.collectionFunctions,
+            RuntimeABISpec.collectionBridgeFunctions,
             RuntimeABISpec.sequenceFunctions,
             RuntimeABISpec.regexFunctions,
             RuntimeABISpec.hexFormatFunctions,
@@ -184,6 +188,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.i18nFunctions,
             RuntimeABISpec.uuidFunctions,
             RuntimeABISpec.durationFunctions,
+            RuntimeABISpec.timeAndPathBridgeFunctions,
             RuntimeABISpec.atomicFunctions,
             RuntimeABISpec.securityFunctions,
         ]
@@ -191,7 +196,7 @@ final class ABIMismatchTests: XCTestCase {
             partial + section.count
         }
         XCTAssertEqual(RuntimeABISpec.allFunctions.count, expected)
-        XCTAssertEqual(RuntimeABISpec.allFunctions.count, 1176)
+        XCTAssertEqual(RuntimeABISpec.allFunctions.count, 1362)
     }
 
     // MARK: - J16.1 Signature Verification (spec-fixed)

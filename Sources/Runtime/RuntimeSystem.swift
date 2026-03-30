@@ -3,6 +3,8 @@ import Foundation
 
 // MARK: - kotlin.system functions (STDLIB-131/132)
 
+private let runtimeProcessStartNanos = DispatchTime.now().uptimeNanoseconds
+
 /// Runtime support for kotlin.system.exitProcess(status) (STDLIB-132/657).
 /// Returns `Never` because `exit()` never returns – matching Kotlin's `Nothing` semantics.
 @_cdecl("kk_system_exitProcess")
@@ -27,6 +29,12 @@ public func kk_system_nanoTime() -> Int {
     // is effectively a no-op. On hypothetical 32-bit targets this would saturate
     // at ~2.1 seconds, but the compiler only targets 64-bit macOS (LP64).
     Int(clamping: DispatchTime.now().uptimeNanoseconds)
+}
+
+/// Runtime support for exposing the monotonic process start timestamp.
+@_cdecl("kk_system_process_start_nanos")
+public func kk_system_process_start_nanos() -> Int {
+    Int(clamping: runtimeProcessStartNanos)
 }
 
 // MARK: - measureTimeMillis / measureNanoTime (STDLIB-550)
