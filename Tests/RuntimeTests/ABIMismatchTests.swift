@@ -178,6 +178,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.randomFunctions,
             RuntimeABISpec.collectionFunctions,
             RuntimeABISpec.collectionBridgeFunctions,
+            RuntimeABISpec.runtimeOnlyBridgeFunctions,
             RuntimeABISpec.sequenceFunctions,
             RuntimeABISpec.regexFunctions,
             RuntimeABISpec.hexFormatFunctions,
@@ -196,7 +197,7 @@ final class ABIMismatchTests: XCTestCase {
             partial + section.count
         }
         XCTAssertEqual(RuntimeABISpec.allFunctions.count, expected)
-        XCTAssertEqual(RuntimeABISpec.allFunctions.count, 1362)
+        XCTAssertEqual(RuntimeABISpec.allFunctions.count, 1425)
     }
 
     // MARK: - J16.1 Signature Verification (spec-fixed)

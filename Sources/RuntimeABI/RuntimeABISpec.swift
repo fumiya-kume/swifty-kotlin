@@ -15,6 +15,8 @@ public enum RuntimeABICType: String, Equatable, Sendable {
     case constRawPointer = "const void *"
     case nullableConstRawPointer = "const void * _Nullable"
     case nullableIntptrPointer = "intptr_t * _Nullable"
+    case float = "float"
+    case double = "double"
     case noreturn = "_Noreturn void"
 }
 
@@ -5505,6 +5507,7 @@ public enum RuntimeABISpec {
             + randomFunctions
             + collectionFunctions
             + collectionBridgeFunctions
+            + runtimeOnlyBridgeFunctions
             + sequenceFunctions
             + regexFunctions
             + hexFormatFunctions
