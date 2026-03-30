@@ -20,7 +20,7 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(
             RuntimeABISpec.specVersion,
             RuntimeABIExterns.specVersion,
-            "Runtime spec version must match CompilerCore extern spec version"
+            "Runtime spec version must match shared RuntimeABI extern spec version"
         )
     }
 
