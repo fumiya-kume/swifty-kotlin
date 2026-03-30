@@ -179,6 +179,10 @@ private let throwingHOFLambda: @convention(c) (Int, Int, UnsafeMutablePointer<In
     return 0
 }
 
+private let mapSentinelToValue: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value == runtimeNullSentinelInt ? 99 : value * 2
+}
+
 final class RuntimeCollectionHOFTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -219,6 +223,21 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
         let sorted = kk_list_sortedBy(makeList([22, 12, 21, 11]), unsafeBitCast(sortedByTens, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(sorted), [12, 11, 22, 21])
+    }
+
+    func testCollectionMapNotNullPassesSentinelInputsToTransform() {
+        let source = makeList([1, runtimeNullSentinelInt, 3])
+
+        let listMapped = kk_list_mapNotNull(source, unsafeBitCast(mapSentinelToValue, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(listMapped), [2, 99, 6])
+
+        let setSource = kk_set_of(makeArray([1, runtimeNullSentinelInt, 3]), 3)
+        let setMapped = kk_set_mapNotNull(setSource, unsafeBitCast(mapSentinelToValue, to: Int.self), 0, nil)
+        XCTAssertEqual(Set(listElements(setMapped)), Set([2, 99, 6]))
+
+        let arraySource = makeArray([1, runtimeNullSentinelInt, 3])
+        let arrayMapped = kk_array_mapNotNull(arraySource, unsafeBitCast(mapSentinelToValue, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(arrayMapped), [2, 99, 6])
     }
 
     func testSortedByWithStringKeyHandlesNonIntegerComparison() {

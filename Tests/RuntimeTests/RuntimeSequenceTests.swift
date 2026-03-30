@@ -602,6 +602,19 @@ final class RuntimeSequenceTests: XCTestCase {
         XCTAssertEqual(sequenceElements(mapped), [10, 20, 30])
     }
 
+    func testSequenceMapPassesSentinelInputsToTransform() {
+        let seq = makeSequence([1, runtimeNullSentinelInt, 3])
+        let mapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value == runtimeNullSentinelInt ? 99 : value * 2
+        }
+        let mapped = kk_sequence_map(
+            seq,
+            unsafeBitCast(mapFn, to: Int.self),
+            0
+        )
+        XCTAssertEqual(sequenceElements(mapped), [2, 99, 6])
+    }
+
     func testSequenceBuilderBuildWithTake() {
         // sequence { yield(1); yield(2); yield(3); yield(4); yield(5) }.take(3).toList()
         let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
@@ -1019,6 +1032,20 @@ final class RuntimeSequenceTests: XCTestCase {
         )
         let result = sequenceElements(mapped)
         XCTAssertEqual(result, [2, 6, 10]) // Only non-null values doubled
+    }
+
+    func testSequenceMapNotNullPassesSentinelInputsToTransform() {
+        let seq = makeSequence([1, runtimeNullSentinelInt, 3])
+        let mapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value == runtimeNullSentinelInt ? 99 : value * 2
+        }
+        let mapped = kk_sequence_mapNotNull(
+            seq,
+            unsafeBitCast(mapFn, to: Int.self),
+            0,
+            nil
+        )
+        XCTAssertEqual(sequenceElements(mapped), [2, 99, 6])
     }
 
     func testSequenceFilterNotNullCorrectness() {
