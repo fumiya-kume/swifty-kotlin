@@ -60,6 +60,23 @@ extension DataFlowSemaPhase {
                 symbols.setParentSymbol(kPropertySymbol, for: namePropSymbol)
                 symbols.setPropertyType(stringType, for: namePropSymbol)
             }
+
+            let returnTypeName = interner.intern("returnType")
+            let returnTypeFQ = kPropertyInfo.fqName + [returnTypeName]
+            if symbols.lookup(fqName: returnTypeFQ) == nil {
+                let kTypeSymbol = ensureInterfaceSymbol(
+                    named: "KType", in: kotlinReflectPkg, symbols: symbols, interner: interner
+                )
+                let kTypeType = types.make(.classType(ClassType(
+                    classSymbol: kTypeSymbol, args: [], nullability: .nonNull
+                )))
+                let returnTypeSymbol = symbols.define(
+                    kind: .property, name: returnTypeName, fqName: returnTypeFQ,
+                    declSite: nil, visibility: .public, flags: [.synthetic]
+                )
+                symbols.setParentSymbol(kPropertySymbol, for: returnTypeSymbol)
+                symbols.setPropertyType(kTypeType, for: returnTypeSymbol)
+            }
         }
 
         // Also register KProperty0, KProperty1, KMutableProperty, KMutableProperty0, KMutableProperty1

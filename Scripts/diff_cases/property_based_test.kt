@@ -10,7 +10,13 @@ data class PropertyStats(
 
 private fun seededSamples(seed: Int, count: Int): List<Int> {
     val random = Random(seed)
-    return List(count) { random.nextInt(-32, 33) }
+    val samples = mutableListOf<Int>()
+    var index = 0
+    while (index < count) {
+        samples.add(random.nextInt(-32, 33))
+        index += 1
+    }
+    return samples
 }
 
 private fun shrinkTowardZero(value: Int): Int? {
@@ -71,9 +77,13 @@ fun main() {
 
     val successSamples = seededSamples(seed = 42, count = 32)
     val success = runPropertyCheck(successSamples) { sample -> sample + 0 == sample }
-    println("success stats: $success")
+    println("success checked: ${success.checked}")
+    println("success failures: ${success.failures}")
+    println("success shrinks: ${success.shrinks}")
+    println("success minimized: ${success.minimizedCounterexample}")
 
     val failingSamples = listOf(13) + seededSamples(seed = 31415, count = 15).map { abs(it % 17) * 2 + 1 }
     val failure = runPropertyCheck(failingSamples) { sample -> sample == 0 }
-    println("failure stats: $failure")
+    println("failure checked: ${failure.checked}")
+    println("failure failures: ${failure.failures}")
 }
