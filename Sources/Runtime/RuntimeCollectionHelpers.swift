@@ -204,6 +204,13 @@ func runtimeNormalizeNullableCollectionValue(_ raw: Int) -> Int? {
     return maybeUnbox(raw)
 }
 
+func runtimeMapNotNullResultValue(_ raw: Int) -> Int? {
+    if raw == runtimeNullSentinelInt {
+        return nil
+    }
+    return maybeUnbox(raw)
+}
+
 func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
     if lhs == rhs {
         return true

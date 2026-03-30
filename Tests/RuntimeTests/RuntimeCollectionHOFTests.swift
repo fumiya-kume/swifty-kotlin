@@ -183,6 +183,10 @@ private let mapSentinelToValue: @convention(c) (Int, Int, UnsafeMutablePointer<I
     value == runtimeNullSentinelInt ? 99 : value * 2
 }
 
+private let identityMapValue: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value
+}
+
 final class RuntimeCollectionHOFTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -238,6 +242,21 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         let arraySource = makeArray([1, runtimeNullSentinelInt, 3])
         let arrayMapped = kk_array_mapNotNull(arraySource, unsafeBitCast(mapSentinelToValue, to: Int.self), 0, nil)
         XCTAssertEqual(listElements(arrayMapped), [2, 99, 6])
+    }
+
+    func testCollectionMapNotNullPreservesZeroResults() {
+        let source = makeList([0, 1, 2])
+
+        let listMapped = kk_list_mapNotNull(source, unsafeBitCast(identityMapValue, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(listMapped), [0, 1, 2])
+
+        let setSource = kk_set_of(makeArray([0, 1, 2]), 3)
+        let setMapped = kk_set_mapNotNull(setSource, unsafeBitCast(identityMapValue, to: Int.self), 0, nil)
+        XCTAssertEqual(Set(listElements(setMapped)), Set([0, 1, 2]))
+
+        let arraySource = makeArray([0, 1, 2])
+        let arrayMapped = kk_array_mapNotNull(arraySource, unsafeBitCast(identityMapValue, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(arrayMapped), [0, 1, 2])
     }
 
     func testSortedByWithStringKeyHandlesNonIntegerComparison() {
