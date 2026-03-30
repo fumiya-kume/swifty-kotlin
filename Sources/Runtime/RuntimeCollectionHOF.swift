@@ -2310,12 +2310,11 @@ public func kk_set_mapNotNull(_ setRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ 
     guard let set = runtimeSetBox(from: setRaw) else {
         invalidContainerPanic(#function, "set")
     }
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var mapped: [Int] = []
     for elem in set.elements {
         var thrown = 0
-        let result = lambda(closureRaw, elem, &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if let normalized = runtimeNormalizeNullableCollectionValue(result) {
             mapped.append(normalized)
         }

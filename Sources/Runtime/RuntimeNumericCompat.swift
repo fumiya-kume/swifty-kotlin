@@ -1201,9 +1201,7 @@ public func kk_int_takeHighestOneBit(_ value: Int) -> Int {
 
 @_cdecl("kk_int_takeLowestOneBit")
 public func kk_int_takeLowestOneBit(_ value: Int) -> Int {
-    let u = UInt32(bitPattern: Int32(truncatingIfNeeded: value))
-    if u == 0 { return 0 }
-    return Int(Int32(bitPattern: u & (0 &- u)))
+    kk_int_lowestOneBit(value)
 }
 
 // Long bit manipulation functions (64-bit)

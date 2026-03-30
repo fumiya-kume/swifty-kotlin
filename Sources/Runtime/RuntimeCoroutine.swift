@@ -1642,7 +1642,34 @@ public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ tag: Int) -> Int {
     if tag == RuntimeFlowTag.emit.rawValue {
         let context = runtimeFlowCurrentCollectContext()
         if let context, !context.cancelled {
-            context.emittedValues.append(runtimeFlowMaybeUnbox(value))
+            let unboxedValue = runtimeFlowMaybeUnbox(value)
+            if let ops = context.directOps {
+                let result = runtimeFlowApplyOpsLazy(
+                    unboxedValue,
+                    ops: ops,
+                    takeCounters: &context.directTakeCounters,
+                    lastValues: &context.directLastValues
+                )
+                switch result {
+                case .emit(let emittedValue):
+                    let delivered = runtimeFlowDeliverValue(
+                        emittedValue,
+                        collectorFnPtr: context.collectorFnPtr,
+                        continuation: context.continuation
+                    )
+                    if !delivered || runtimeFlowTakeExhausted(ops: ops, takeCounters: context.directTakeCounters) {
+                        context.cancelled = true
+                        return runtimeFlowStopSentinel
+                    }
+                case .filtered:
+                    break
+                case .thrown, .done:
+                    context.cancelled = true
+                    return runtimeFlowStopSentinel
+                }
+            } else {
+                context.emittedValues.append(unboxedValue)
+            }
         }
         return value
     }
