@@ -329,6 +329,133 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // STDLIB-NUM-130: isNaN / isInfinite / isFinite / toBits / fromBits
+
+        // Int.countOneBits() / countLeadingZeroBits() / countTrailingZeroBits() (STDLIB-501)
+        // STDLIB-BIT-007: Additional bit manipulation functions
+        // Use if-let instead of guard-return so future registrations below are not skipped.
+        if let kotlinPackageSymbol = symbols.lookup(fqName: kotlinPkg) {
+            let boolType = types.make(.primitive(.boolean, .nonNull))
+
+            // Double.isNaN() / isInfinite() / isFinite()
+            registerSyntheticCoercionFunction(
+                named: "isNaN",
+                externalLinkName: "kk_double_isNaN",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: boolType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticCoercionFunction(
+                named: "isInfinite",
+                externalLinkName: "kk_double_isInfinite",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: boolType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticCoercionFunction(
+                named: "isFinite",
+                externalLinkName: "kk_double_isFinite",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: boolType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            // Float.isNaN() / isInfinite() / isFinite()
+            registerSyntheticCoercionFunction(
+                named: "isNaN",
+                externalLinkName: "kk_float_isNaN",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: boolType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticCoercionFunction(
+                named: "isInfinite",
+                externalLinkName: "kk_float_isInfinite",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: boolType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticCoercionFunction(
+                named: "isFinite",
+                externalLinkName: "kk_float_isFinite",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: boolType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            // Double.toBits(): Long / Double.toRawBits(): Long
+            registerSyntheticCoercionFunction(
+                named: "toBits",
+                externalLinkName: "kk_double_toBits",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: types.longType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticCoercionFunction(
+                named: "toRawBits",
+                externalLinkName: "kk_double_toRawBits",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: types.longType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            // Float.toBits(): Int / Float.toRawBits(): Int
+            registerSyntheticCoercionFunction(
+                named: "toBits",
+                externalLinkName: "kk_float_toBits",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticCoercionFunction(
+                named: "toRawBits",
+                externalLinkName: "kk_float_toRawBits",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinPkg,
+                packageSymbol: kotlinPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         // Int.countOneBits() / countLeadingZeroBits() / countTrailingZeroBits() (STDLIB-501)
         // STDLIB-BIT-007: Additional bit manipulation functions
         // Use if-let instead of guard-return so future registrations below are not skipped.
@@ -1042,6 +1169,88 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+
+        // STDLIB-NUM-130: Double.fromBits(bits: Long) and Float.fromBits(bits: Int)
+        // Registered as top-level kotlin package functions (no receiver) so that the
+        // numericCompanionFunction path in the type checker can resolve them.
+        registerSyntheticTopLevelFunction(
+            named: "fromBits",
+            packageFQName: kotlinPkg,
+            parameters: [(name: "bits", type: types.longType)],
+            returnType: types.doubleType,
+            externalLinkName: "kk_double_fromBits",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticTopLevelFunction(
+            named: "fromBits",
+            packageFQName: kotlinPkg,
+            parameters: [(name: "bits", type: types.intType)],
+            returnType: types.floatType,
+            externalLinkName: "kk_float_fromBits",
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticTopLevelFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        // Avoid duplicate registration (same signature).
+        if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+            guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+            return sig.receiverType == nil
+                && sig.parameterTypes == parameters.map(\.type)
+                && sig.returnType == returnType
+        }) {
+            return
+        }
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let paramNameID = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: paramNameID,
+                fqName: functionFQName + [paramNameID],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: nil,
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
     }
 
     private func registerSyntheticCoercionFunction(

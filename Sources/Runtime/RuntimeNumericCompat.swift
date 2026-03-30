@@ -636,6 +636,83 @@ public func kk_float_nextDown(_ value: Int) -> Int {
     kk_float_to_bits(kk_bits_to_float(value).nextDown)
 }
 
+// MARK: - STDLIB-NUM-130: Floating-point precision — isNaN / isInfinite / isFinite / toBits / fromBits
+
+@_cdecl("kk_double_isNaN")
+public func kk_double_isNaN(_ value: Int) -> Int {
+    kk_bits_to_double(value).isNaN ? 1 : 0
+}
+
+@_cdecl("kk_double_isInfinite")
+public func kk_double_isInfinite(_ value: Int) -> Int {
+    kk_bits_to_double(value).isInfinite ? 1 : 0
+}
+
+@_cdecl("kk_double_isFinite")
+public func kk_double_isFinite(_ value: Int) -> Int {
+    kk_bits_to_double(value).isFinite ? 1 : 0
+}
+
+@_cdecl("kk_float_isNaN")
+public func kk_float_isNaN(_ value: Int) -> Int {
+    kk_bits_to_float(value).isNaN ? 1 : 0
+}
+
+@_cdecl("kk_float_isInfinite")
+public func kk_float_isInfinite(_ value: Int) -> Int {
+    kk_bits_to_float(value).isInfinite ? 1 : 0
+}
+
+@_cdecl("kk_float_isFinite")
+public func kk_float_isFinite(_ value: Int) -> Int {
+    kk_bits_to_float(value).isFinite ? 1 : 0
+}
+
+/// Double.toBits(): Long — returns IEEE 754 bit representation as Long.
+/// Canonicalizes NaN to the standard quiet NaN bit pattern per Kotlin semantics.
+@_cdecl("kk_double_toBits")
+public func kk_double_toBits(_ value: Int) -> Int {
+    let d = kk_bits_to_double(value)
+    if d.isNaN { return Int(bitPattern: UInt(0x7FF8_0000_0000_0000 as UInt64)) }
+    return kk_double_to_bits(d)
+}
+
+/// Double.toRawBits(): Long — same as toBits() for finite values; differs for NaN.
+/// In Kotlin toRawBits returns the actual bit pattern without canonicalizing NaN.
+@_cdecl("kk_double_toRawBits")
+public func kk_double_toRawBits(_ value: Int) -> Int {
+    value  // bit pattern is already canonical in our ABI
+}
+
+/// Double.Companion.fromBits(bits: Long): Double
+/// The bits Int is already the IEEE 754 bit pattern used by the ABI,
+/// so reconstructing it is a no-op — just return the same Int.
+@_cdecl("kk_double_fromBits")
+public func kk_double_fromBits(_ bits: Int) -> Int {
+    bits  // already the correct ABI representation for Double
+}
+
+/// Float.toBits(): Int — returns IEEE 754 bit representation as Int.
+/// Canonicalizes NaN to the standard quiet NaN bit pattern per Kotlin semantics.
+@_cdecl("kk_float_toBits")
+public func kk_float_toBits(_ value: Int) -> Int {
+    let f = kk_bits_to_float(value)
+    if f.isNaN { return Int(bitPattern: UInt(0x7FC0_0000 as UInt32)) }
+    return kk_float_to_bits(f)
+}
+
+/// Float.toRawBits(): Int — actual bit pattern without canonicalizing NaN.
+@_cdecl("kk_float_toRawBits")
+public func kk_float_toRawBits(_ value: Int) -> Int {
+    value  // bit pattern is already canonical in our ABI
+}
+
+/// Float.Companion.fromBits(bits: Int): Float
+@_cdecl("kk_float_fromBits")
+public func kk_float_fromBits(_ bits: Int) -> Int {
+    bits  // already Float bit representation in ABI
+}
+
 // MARK: - STDLIB-111: IEEE 754 rounding modes
 //
 // Kotlin exposes rounding mode as an Int constant matching java.math.RoundingMode ordinals:

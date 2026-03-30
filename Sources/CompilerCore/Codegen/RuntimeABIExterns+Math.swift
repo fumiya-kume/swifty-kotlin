@@ -52,6 +52,19 @@ public extension RuntimeABIExterns {
         kk_double_roundToInt,
         kk_float_roundToLong,
         kk_double_roundToLong,
+        // STDLIB-NUM-130: isNaN / isInfinite / isFinite / toBits / fromBits
+        kk_double_isNaN,
+        kk_double_isInfinite,
+        kk_double_isFinite,
+        kk_float_isNaN,
+        kk_float_isInfinite,
+        kk_float_isFinite,
+        kk_double_toBits,
+        kk_double_toRawBits,
+        kk_double_fromBits,
+        kk_float_toBits,
+        kk_float_toRawBits,
+        kk_float_fromBits,
         // STDLIB-512~513: ulp / nextUp / nextDown
         kk_double_ulp,
         kk_double_nextUp,
@@ -265,6 +278,21 @@ public extension RuntimeABIExterns {
     static let kk_double_roundToInt = ExternDecl(name: "kk_double_roundToInt", parameterTypes: ["intptr_t"], returnType: "intptr_t")
     static let kk_float_roundToLong = ExternDecl(name: "kk_float_roundToLong", parameterTypes: ["intptr_t"], returnType: "intptr_t")
     static let kk_double_roundToLong = ExternDecl(name: "kk_double_roundToLong", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+
+    // STDLIB-NUM-130: isNaN / isInfinite / isFinite / toBits / fromBits
+
+    static let kk_double_isNaN = ExternDecl(name: "kk_double_isNaN", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_double_isInfinite = ExternDecl(name: "kk_double_isInfinite", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_double_isFinite = ExternDecl(name: "kk_double_isFinite", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_float_isNaN = ExternDecl(name: "kk_float_isNaN", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_float_isInfinite = ExternDecl(name: "kk_float_isInfinite", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_float_isFinite = ExternDecl(name: "kk_float_isFinite", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_double_toBits = ExternDecl(name: "kk_double_toBits", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_double_toRawBits = ExternDecl(name: "kk_double_toRawBits", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_double_fromBits = ExternDecl(name: "kk_double_fromBits", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_float_toBits = ExternDecl(name: "kk_float_toBits", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_float_toRawBits = ExternDecl(name: "kk_float_toRawBits", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_float_fromBits = ExternDecl(name: "kk_float_fromBits", parameterTypes: ["intptr_t"], returnType: "intptr_t")
 
     // STDLIB-512~513: ulp / nextUp / nextDown
 
