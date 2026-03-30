@@ -1006,7 +1006,7 @@ extension DataFlowSemaPhase {
             visibility: .public,
             flags: [.synthetic]
         )
-        if let packageSymbol = symbols.lookup(fqName: functionFQName) {
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
             symbols.setParentSymbol(packageSymbol, for: functionSymbol)
         }
         symbols.setExternalLinkName("kk_channel_create", for: functionSymbol)

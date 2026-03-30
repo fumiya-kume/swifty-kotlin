@@ -141,10 +141,9 @@ final class CoroutineLowerer {
         case "isClosedForSend": "kk_channel_is_closed_for_send"
         default: nil
         }
-        
+
         if let runtimeName {
             let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
-            
             let resultType: TypeID = switch calleeStr {
             case "isClosedForReceive", "isClosedForSend":
                 sema.types.booleanType
@@ -168,10 +167,10 @@ final class CoroutineLowerer {
             ))
             return result
         }
-        
+
         return nil
     }
-    
+
     // MARK: - コルーチンランチャー
     
     /// コルーチンランチャーのコールを処理
