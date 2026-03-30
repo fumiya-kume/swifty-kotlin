@@ -1145,9 +1145,9 @@ public func kk_int_highestOneBit(_ value: Int) -> Int {
 
 @_cdecl("kk_int_lowestOneBit")
 public func kk_int_lowestOneBit(_ value: Int) -> Int {
-    let truncated = Int32(truncatingIfNeeded: value)
-    if truncated == 0 { return 0 }
-    return Int(truncated & -truncated)
+    let bits = UInt32(bitPattern: Int32(truncatingIfNeeded: value))
+    if bits == 0 { return 0 }
+    return Int(Int32(bitPattern: bits & (0 &- bits)))
 }
 
 @_cdecl("kk_int_takeHighestOneBit")
@@ -1192,8 +1192,9 @@ public func kk_long_highestOneBit(_ value: Int) -> Int {
 
 @_cdecl("kk_long_lowestOneBit")
 public func kk_long_lowestOneBit(_ value: Int) -> Int {
-    if value == 0 { return 0 }
-    return value & -value
+    let bits = UInt(bitPattern: value)
+    if bits == 0 { return 0 }
+    return Int(bitPattern: bits & (0 &- bits))
 }
 
 @_cdecl("kk_long_takeHighestOneBit")

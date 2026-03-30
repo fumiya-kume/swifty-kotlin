@@ -45,7 +45,7 @@ final class RuntimeEncodeDecodeTests: IsolatedRuntimeXCTestCase {
         let strRaw = makeString("\u{00E9}") // e-acute (U+00E9), UTF-8: [0xC3, 0xA9]
         let result = kk_string_encodeToByteArray(strRaw)
         let elements = extractListElements(result)
-        XCTAssertEqual(elements, [0xC3, 0xA9])
+        XCTAssertEqual(elements, [-61, -87])
     }
 
     // MARK: - encodeToByteArray matches toByteArray

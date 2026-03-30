@@ -1293,6 +1293,11 @@ private final class RuntimeFlowCollectContext {
     /// without a collector. In lazy mode, values flow directly to the collector.
     var emittedValues: [Int] = []
     var cancelled = false
+    var directOps: [RuntimeFlowOp]? = nil
+    var directTakeCounters: [Int: Int] = [:]
+    var directLastValues: [Int: Int] = [:]
+    var collectorFnPtr: Int = 0
+    var continuation: Int = 0
 }
 
 /// Opaque flow handle. Immutable operation chain; source emitter is re-executed
@@ -1509,6 +1514,28 @@ private func runtimeFlowCollectLazy(
     collectorFnPtr: Int,
     continuation: Int
 ) -> Int {
+    if flow.fixedValues == nil, flow.emitterFnPtr != 0 {
+        let context = RuntimeFlowCollectContext()
+        context.directOps = flow.opChain
+        context.directTakeCounters = runtimeFlowInitTakeCounters(flow.opChain)
+        context.collectorFnPtr = collectorFnPtr
+        context.continuation = continuation
+        runtimeFlowPushCollectContext(context)
+        defer { runtimeFlowPopCollectContext() }
+
+        if runtimeFlowTakeExhausted(ops: flow.opChain, takeCounters: context.directTakeCounters) {
+            return 0
+        }
+
+        let emitter = unsafeBitCast(
+            flow.emitterFnPtr,
+            to: (@convention(c) (UnsafeMutablePointer<Int>?) -> Int).self
+        )
+        var outThrown = 0
+        _ = emitter(&outThrown)
+        return 0
+    }
+
     guard let sourceValues = runtimeFlowSourceValues(flow) else {
         return 0
     }
@@ -1547,6 +1574,9 @@ private func runtimeFlowCollectLazy(
             }
 
         case .filtered:
+            if runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
+                return 0
+            }
             continue
 
         case .thrown, .done:
@@ -1641,10 +1671,40 @@ private let runtimeFlowStopSentinel: Int = kk_flow_stopped()
 public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ tag: Int) -> Int {
     if tag == RuntimeFlowTag.emit.rawValue {
         let context = runtimeFlowCurrentCollectContext()
+        let unboxedValue = runtimeFlowMaybeUnbox(value)
         if let context, !context.cancelled {
-            context.emittedValues.append(runtimeFlowMaybeUnbox(value))
+            if let ops = context.directOps {
+                let result = runtimeFlowApplyOpsLazy(
+                    unboxedValue,
+                    ops: ops,
+                    takeCounters: &context.directTakeCounters,
+                    lastValues: &context.directLastValues
+                )
+                switch result {
+                case .emit(let emittedValue):
+                    let delivered = runtimeFlowDeliverValue(
+                        emittedValue,
+                        collectorFnPtr: context.collectorFnPtr,
+                        continuation: context.continuation
+                    )
+                    if !delivered || runtimeFlowTakeExhausted(ops: ops, takeCounters: context.directTakeCounters) {
+                        context.cancelled = true
+                        return runtimeFlowStopSentinel
+                    }
+                case .filtered:
+                    if runtimeFlowTakeExhausted(ops: ops, takeCounters: context.directTakeCounters) {
+                        context.cancelled = true
+                        return runtimeFlowStopSentinel
+                    }
+                case .thrown, .done:
+                    context.cancelled = true
+                    return runtimeFlowStopSentinel
+                }
+            } else {
+                context.emittedValues.append(unboxedValue)
+            }
         }
-        return value
+        return context?.cancelled == true ? runtimeFlowStopSentinel : value
     }
     guard let opKind = RuntimeFlowTag(rawValue: tag) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_flow_emit received unknown op tag \(tag)")
@@ -2116,13 +2176,6 @@ public func kk_dispatcher_main() -> Int {
     RuntimeDispatcherTag.mainDispatcher
 }
 
-/// A simple heap-allocated, `@unchecked Sendable` box used to pass an integer
-/// result from a `DispatchQueue.async` closure back to the waiting thread.
-/// Synchronization is provided externally by a `DispatchSemaphore`.
-private final class WithContextResultBox: @unchecked Sendable {
-    var value: Int = 0
-}
-
 /// Kotlin `withContext(dispatcher) { block }` — switches coroutine execution
 /// to the dispatch queue that corresponds to `dispatcherRaw`, runs the
 /// suspend-aware block through the full entry loop (supporting intermediate
@@ -2145,8 +2198,6 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
         return 0
     }
 
-    let queue = dispatchQueue(for: resolvedDispatcher)
-
     // Capture the current coroutine scope so child launches inside the block
     // are registered with the correct scope on the target queue's thread.
     let parentScope = RuntimeCoroutineScope.current
@@ -2160,14 +2211,11 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
         contState.scope = parentScope
     }
 
+    let dispatcher = runtimeResolveDispatcher(from: resolvedDispatcher)
+
     // NOTE: When the target queue is DispatchQueue.main and we are already on
-    // the main thread, dispatching async + semaphore.wait() would deadlock
-    // because the main thread cannot process the enqueued block while blocked.
-    // CLI programs produced by this compiler do not run a main run loop, so
-    // even calls from a background thread targeting the main queue would hang.
-    // We therefore execute inline whenever we are already on the target queue
-    // (main-thread case) to avoid the deadlock.
-    if queue === DispatchQueue.main && Thread.isMainThread {
+    // the main thread, dispatchSync executes inline via RuntimeDispatcher.isCurrent.
+    return dispatcher.dispatchSync {
         let savedScope = RuntimeCoroutineScope.current
         defer { RuntimeCoroutineScope.current = savedScope }
         RuntimeCoroutineScope.current = parentScope
@@ -2176,28 +2224,6 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
             continuation: continuation
         )
     }
-
-    // CORO-004: Continuation-based withContext is still in progress.
-    // For now keep the semaphore fallback, which matches the current runtime
-    // model and avoids relying on unfinished continuation result plumbing.
-    let semaphore = DispatchSemaphore(value: 0)
-    let resultBox = WithContextResultBox()
-
-    queue.async {
-        // Propagate the coroutine scope to the target thread.
-        let savedScope = RuntimeCoroutineScope.current
-        RuntimeCoroutineScope.current = parentScope
-        defer { RuntimeCoroutineScope.current = savedScope }
-
-        resultBox.value = runSuspendEntryLoopWithContinuation(
-            entryPointRaw: blockFnPtr,
-            continuation: continuation
-        )
-        semaphore.signal()
-    }
-
-    semaphore.wait()
-    return resultBox.value
 }
 
 // MARK: - Channel Runtime (CORO-001)
