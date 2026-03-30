@@ -478,6 +478,13 @@ get_diff_line_pattern() {
   grep -E '^[[:space:]]*//[[:space:]]*DIFF_LINE_PATTERN:' "$kt_file" 2>/dev/null | head -1 | sed 's/.*DIFF_LINE_PATTERN:[[:space:]]*//'
 }
 
+# Extract extra kotlinc flags from // KOTLINC_FLAGS: directives in the test file
+# Format: // KOTLINC_FLAGS: <flags>
+get_kotlinc_extra_flags() {
+  local kt_file="$1"
+  grep -E '^[[:space:]]*//[[:space:]]*KOTLINC_FLAGS:' "$kt_file" 2>/dev/null | sed 's/.*KOTLINC_FLAGS:[[:space:]]*//' | tr '\n' ' ' | sed 's/[[:space:]]*$//'
+}
+
 # Normalize stdout: replace lines matching pattern with placeholder for diff
 normalize_stdout_for_diff() {
   local file="$1"
@@ -533,14 +540,19 @@ run_case() {
     is_script=1
   fi
 
+  local kotlinc_extra_flags
+  kotlinc_extra_flags="$(get_kotlinc_extra_flags "$kt_file")"
+
   if [[ $is_script -eq 1 ]]; then
     local kts_tmp="$tmp_dir/${basename%.kt}.kts"
     cp "$kt_file" "$kts_tmp"
     local script_exit=0
     if [[ -n "$KOTLINC_CLASSPATH" ]]; then
-      "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$KOTLINC" -Xcontext-parameters -classpath "$KOTLINC_CLASSPATH" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
+      # shellcheck disable=SC2086
+      "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$KOTLINC" -Xcontext-parameters $kotlinc_extra_flags -classpath "$KOTLINC_CLASSPATH" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
     else
-      "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$KOTLINC" -Xcontext-parameters -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
+      # shellcheck disable=SC2086
+      "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$KOTLINC" -Xcontext-parameters $kotlinc_extra_flags -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
     fi
     if [[ $script_exit -eq 124 ]]; then
       # Timeout in script mode is a runtime timeout, not a compile timeout
@@ -552,9 +564,11 @@ run_case() {
     fi
   else
     if [[ -n "$KOTLINC_CLASSPATH" ]]; then
-      "$TIMEOUT_CMD" "$COMPILE_TIMEOUT" "$KOTLINC" -Xcontext-parameters -classpath "$KOTLINC_CLASSPATH" "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
+      # shellcheck disable=SC2086
+      "$TIMEOUT_CMD" "$COMPILE_TIMEOUT" "$KOTLINC" -Xcontext-parameters $kotlinc_extra_flags -classpath "$KOTLINC_CLASSPATH" "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
     else
-      "$TIMEOUT_CMD" "$COMPILE_TIMEOUT" "$KOTLINC" -Xcontext-parameters "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
+      # shellcheck disable=SC2086
+      "$TIMEOUT_CMD" "$COMPILE_TIMEOUT" "$KOTLINC" -Xcontext-parameters $kotlinc_extra_flags "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
     fi
     if [[ $ref_compile_exit -eq 0 ]]; then
       if [[ -n "$KOTLINC_CLASSPATH" ]]; then
