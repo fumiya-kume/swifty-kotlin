@@ -165,7 +165,8 @@ final class ABIMismatchTests: XCTestCase {
         // - 16 IEEE 754 rounding mode convenience entry points (8 Double + 8 Float)
         // - 14 STDLIB-MATH-112 numeric constants (5 Double + 5 Float + 2 Int + 2 Long)
         // - 2 generic mode-dispatch (round_mode, round_mode_float)
-        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 87)
+        // - 8 STDLIB-MATH-109 hyperbolic/cbrt entries (sinh, cosh, tanh, cbrt + Float overloads)
+        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 95)
         // Random ABI currently includes default, seeded, and bounded long/float helpers.
         XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 19)
     }
