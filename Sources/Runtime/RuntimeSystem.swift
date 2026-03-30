@@ -3,6 +3,8 @@ import Foundation
 
 // MARK: - kotlin.system functions (STDLIB-131/132, STDLIB-TIME-085)
 
+private let runtimeProcessStartNanos = DispatchTime.now().uptimeNanoseconds
+
 /// Runtime support for kotlin.system.exitProcess(status) (STDLIB-132/657).
 /// Returns `Never` because `exit()` never returns – matching Kotlin's `Nothing` semantics.
 @_cdecl("kk_system_exitProcess")

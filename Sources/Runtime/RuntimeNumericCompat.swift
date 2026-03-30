@@ -322,6 +322,26 @@ public func kk_math_tan(_ value: Int) -> Int {
     kk_double_to_bits(tan(kk_bits_to_double(value)))
 }
 
+@_cdecl("kk_math_sinh")
+public func kk_math_sinh(_ value: Int) -> Int {
+    kk_double_to_bits(sinh(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_cosh")
+public func kk_math_cosh(_ value: Int) -> Int {
+    kk_double_to_bits(cosh(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_tanh")
+public func kk_math_tanh(_ value: Int) -> Int {
+    kk_double_to_bits(tanh(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_cbrt")
+public func kk_math_cbrt(_ value: Int) -> Int {
+    kk_double_to_bits(cbrt(kk_bits_to_double(value)))
+}
+
 @_cdecl("kk_math_asin")
 public func kk_math_asin(_ value: Int) -> Int {
     kk_double_to_bits(asin(kk_bits_to_double(value)))
@@ -425,6 +445,26 @@ public func kk_math_cos_float(_ v: Int) -> Int {
 @_cdecl("kk_math_tan_float")
 public func kk_math_tan_float(_ v: Int) -> Int {
     applyFloatUnaryOp(v, tanf)
+}
+
+@_cdecl("kk_math_sinh_float")
+public func kk_math_sinh_float(_ v: Int) -> Int {
+    applyFloatUnaryOp(v, sinhf)
+}
+
+@_cdecl("kk_math_cosh_float")
+public func kk_math_cosh_float(_ v: Int) -> Int {
+    applyFloatUnaryOp(v, coshf)
+}
+
+@_cdecl("kk_math_tanh_float")
+public func kk_math_tanh_float(_ v: Int) -> Int {
+    applyFloatUnaryOp(v, tanhf)
+}
+
+@_cdecl("kk_math_cbrt_float")
+public func kk_math_cbrt_float(_ v: Int) -> Int {
+    applyFloatUnaryOp(v, cbrtf)
 }
 
 @_cdecl("kk_math_asin_float")
