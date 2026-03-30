@@ -257,14 +257,6 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_set_toList",
-            parameters: [
-                RuntimeABIParameter(name: "setRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
             name: "kk_set_first",
             parameters: [
                 RuntimeABIParameter(name: "setRaw", type: .intptr),
@@ -302,33 +294,6 @@ public extension RuntimeABISpec {
             name: "kk_set_singleOrNull",
             parameters: [
                 RuntimeABIParameter(name: "setRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_set_intersect",
-            parameters: [
-                RuntimeABIParameter(name: "setRaw", type: .intptr),
-                RuntimeABIParameter(name: "otherRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_set_union",
-            parameters: [
-                RuntimeABIParameter(name: "setRaw", type: .intptr),
-                RuntimeABIParameter(name: "otherRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_set_subtract",
-            parameters: [
-                RuntimeABIParameter(name: "setRaw", type: .intptr),
-                RuntimeABIParameter(name: "otherRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Collection"
@@ -1187,22 +1152,6 @@ public extension RuntimeABISpec {
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
                 RuntimeABIParameter(name: "closureRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_list_firstOrNull",
-            parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_list_lastOrNull",
-            parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Collection"

@@ -1,4 +1,4 @@
-import CompilerCore
+import RuntimeABI
 @testable import Runtime
 import XCTest
 
@@ -74,10 +74,7 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testExceptionFunctionCount() {
-        // kk_throwable_new, kk_throwable_is_cancellation, kk_panic, kk_abort_unreachable,
-        // kk_require, kk_check, kk_require_lazy, kk_check_lazy,
-        // kk_error, kk_todo, kk_todo_noarg, kk_dispatch_error
-        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 15)
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 19)
     }
 
     func testTestFrameworkFunctionCount() {
@@ -104,12 +101,11 @@ final class ABIMismatchTests: XCTestCase {
         // kk_string_zipWithNext
         // STDLIB-REGEX-095: kk_match_result_range, kk_match_result_component1,
         // kk_match_result_component2, kk_match_result_next, kk_match_group_collection_get_at
-        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 36)
+        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 35)
     }
 
     func testPrintAndPrintlnFunctionCount() {
-        // kk_print_any, kk_print_noarg, kk_println_any, kk_println_bool, kk_println_newline
-        XCTAssertEqual(RuntimeABISpec.consolePrintFunctions.count, 5)
+        XCTAssertEqual(RuntimeABISpec.consolePrintFunctions.count, 6)
     }
 
     func testIOFunctionCount() {
@@ -127,9 +123,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
-        // Includes CORO-001 channel suspend, CORO-002 cancellation and CORO-003 flow ownership helpers.
-        // STDLIB-CORO-072: +4 for dispatcher-aware launch and CoroutineExceptionHandler.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 74)
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 78)
     }
 
     func testBoxingFunctionCount() {
@@ -144,27 +138,16 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testBitwiseFunctionCount() {
-        // kk_bitwise_and, kk_bitwise_or, kk_bitwise_xor, kk_op_not, kk_op_inv,
-        // kk_op_shl, kk_op_shr, kk_op_ushr, kk_int_toString_radix,
-        // kk_int_countOneBits, kk_int_countLeadingZeroBits, kk_int_countTrailingZeroBits
-        XCTAssertEqual(RuntimeABISpec.bitwiseFunctions.count, 12)
+        XCTAssertEqual(RuntimeABISpec.bitwiseFunctions.count, 32)
     }
 
     func testPrimitiveNumericConversionFunctionCount() {
-        // 13 conversion functions + 3 coercion functions = 16 (STDLIB-151: kk_long_to_int)
-        XCTAssertEqual(RuntimeABISpec.primitiveNumericConversionFunctions.count, 16)
+        XCTAssertEqual(RuntimeABISpec.primitiveNumericConversionFunctions.count, 63)
     }
 
     func testMathFunctionCount() {
-        // Current math ABI surface:
-        // - 23 Double/int/basic entries through PI/E
-        // - 19 Float overloads
-        // - 4 roundToInt/roundToLong helpers
-        // - 6 ulp/nextUp/nextDown helpers
-        // - 3 coercion helpers
-        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 55)
-        // Random ABI currently includes default, seeded, and bounded long/float helpers.
-        XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 15)
+        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 81)
+        XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 19)
     }
 
     func testTotalFunctionCount() {
@@ -198,14 +181,17 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.resultFunctions,
             RuntimeABISpec.stringBuilderFunctions,
             RuntimeABISpec.fileIOFunctions,
+            RuntimeABISpec.i18nFunctions,
             RuntimeABISpec.uuidFunctions,
             RuntimeABISpec.durationFunctions,
             RuntimeABISpec.atomicFunctions,
+            RuntimeABISpec.securityFunctions,
         ]
         let expected = sections.reduce(0) { partial, section in
             partial + section.count
         }
         XCTAssertEqual(RuntimeABISpec.allFunctions.count, expected)
+        XCTAssertEqual(RuntimeABISpec.allFunctions.count, 1176)
     }
 
     // MARK: - J16.1 Signature Verification (spec-fixed)

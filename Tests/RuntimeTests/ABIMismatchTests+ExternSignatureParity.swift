@@ -1,8 +1,8 @@
-import CompilerCore
+import RuntimeABI
 @testable import Runtime
 import XCTest
 
-// MARK: - Cross-Module ABI Reconciliation (Runtime <-> CompilerCore)
+// MARK: - Shared ABI Spec / Extern Adapter Reconciliation
 
 extension ABIMismatchTests {
     func testExternCountMatchesSpec() {
@@ -124,6 +124,7 @@ extension ABIMismatchTests {
         let builderThunks: Set<String> = [
             "kk_build_string", "kk_build_list", "kk_build_list_with_capacity",
             "kk_build_set", "kk_build_map", "kk_sequence_builder_build",
+            "kk_iterator_builder_build",
         ]
         let hofSections: Set<String> = ["Collection", "Sequence"]
         let hofFunctions = RuntimeABISpec.allFunctions.filter {

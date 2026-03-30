@@ -1,4 +1,4 @@
-import CompilerCore
+import RuntimeABI
 @testable import Runtime
 import XCTest
 

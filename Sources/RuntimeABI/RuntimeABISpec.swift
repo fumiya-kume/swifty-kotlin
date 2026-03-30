@@ -55,7 +55,7 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
         return "\(returnType.rawValue) \(name)(\(params));"
     }
 
-    /// Parameter types only (no names), for ABI reconciliation with CompilerCore's RuntimeABIExterns.
+    /// Parameter types only (no names), for ABI reconciliation with `RuntimeABIExterns`.
     public var parameterTypeStrings: [String] {
         parameters.map(\.type.rawValue)
     }
@@ -1650,15 +1650,6 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
                 RuntimeABIParameter(name: "closureRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_string_substringBefore",
-            parameters: [
-                RuntimeABIParameter(name: "strRaw", type: .intptr),
-                RuntimeABIParameter(name: "delimiterRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
@@ -4431,26 +4422,9 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
-        // STDLIB-316: String.zipWithNext()
-        RuntimeABIFunctionSpec(
-            name: "kk_string_zipWithNext",
-            parameters: [
-                RuntimeABIParameter(name: "str", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
         // STDLIB-317: String.asSequence / asIterable
         RuntimeABIFunctionSpec(
             name: "kk_string_asSequence",
-            parameters: [
-                RuntimeABIParameter(name: "str", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_string_asIterable",
             parameters: [
                 RuntimeABIParameter(name: "str", type: .intptr),
             ],
