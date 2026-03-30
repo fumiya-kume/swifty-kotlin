@@ -106,6 +106,13 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // Register kotlin.reflect.KFunction<out R> interface stub (STDLIB-REFLECT-063).
+        // Store in TypeSystem so subtyping checks can recognise KFunction receivers.
+        let kFunctionSymbol = ensureInterfaceSymbol(
+            named: "KFunction", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+        types.kFunctionInterfaceSymbol = kFunctionSymbol
+
         // Register `lazy` as a top-level function in the kotlin package.
         // Kotlin signature: fun <T> lazy(initializer: () -> T): Lazy<T>
         let lazyName = interner.intern("lazy")
