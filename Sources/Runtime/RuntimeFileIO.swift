@@ -179,7 +179,7 @@ public func kk_readResourceAsText(_ nameRaw: Int, _ outThrown: UnsafeMutablePoin
 
 @_cdecl("kk_resource_stream_read")
 public func kk_resource_stream_read(_ streamRaw: Int) -> Int {
-    guard let stream = runtimeResourceInputStreamBox(from: streamRaw) else {
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_resource_stream_read received invalid InputStream handle")
     }
     return stream.readByte()
@@ -187,7 +187,7 @@ public func kk_resource_stream_read(_ streamRaw: Int) -> Int {
 
 @_cdecl("kk_resource_stream_close")
 public func kk_resource_stream_close(_ streamRaw: Int) -> Int {
-    guard let stream = runtimeResourceInputStreamBox(from: streamRaw) else {
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_resource_stream_close received invalid InputStream handle")
     }
     stream.close()
