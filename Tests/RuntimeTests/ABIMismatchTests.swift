@@ -202,6 +202,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.randomFunctions,
             RuntimeABISpec.collectionFunctions,
             RuntimeABISpec.collectionBridgeFunctions,
+            RuntimeABISpec.runtimeOnlyBridgeFunctions,
             RuntimeABISpec.sequenceFunctions,
             RuntimeABISpec.regexFunctions,
             RuntimeABISpec.hexFormatFunctions,
