@@ -1,0 +1,6 @@
+fun testIntProgression(): List<Int> = IntProgression.fromClosedRange(1, 10, 2).toList()
+fun testLongProgression(): List<Long> = LongProgression.fromClosedRange(1L, 10L, 3).toList()
+fun testUIntProgression(): List<UInt> = UIntProgression.fromClosedRange(1u, 10u, 2).toList()
+fun testULongProgression(): List<ULong> = ULongProgression.fromClosedRange(1UL, 10UL, 3).toList()
+fun testIntProgressionReversed(): List<Int> = IntProgression.fromClosedRange(1, 9, 2).reversed().toList()
+fun testIntProgressionIsEmpty(): Boolean = IntProgression.fromClosedRange(10, 1, 1).isEmpty()

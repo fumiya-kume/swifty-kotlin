@@ -170,7 +170,7 @@
   - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
   - **テストケース**: `Scripts/diff_cases/ulong_range.kt`
 
-- [ ] STDLIB-RANGE-039: 範囲進行完全実装
+- [x] STDLIB-RANGE-039: 範囲進行完全実装
   - **仕様**: 範囲進行（Progression）の完全サポート
   - **実装内容**:
     - IntProgression: IntProgression.fromClosedRange()
@@ -179,7 +179,7 @@
     - ULongProgression: ULongProgression.fromClosedRange()
     - stepプロパティと進行制御
     - 逆進行: reversed()
-  - **現状**: 基本的な進行は実装済み、unsigned進行は未実装
+  - **現状**: 完全実装済み（RuntimeRangeAndDispatch.swift + コンパイラスタブ）
   - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
   - **テストケース**: `Scripts/diff_cases/progression.kt`
 
