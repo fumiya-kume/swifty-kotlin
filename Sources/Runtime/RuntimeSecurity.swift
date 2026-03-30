@@ -800,16 +800,11 @@ private func runtimeSignatureTransform(
         }
         var error: Unmanaged<CFError>?
         let verified = SecKeyVerifySignature(publicKey.secKey, secAlgorithm, messageData as CFData, runtimeMakeData(signatureBytes) as CFData, &error)
-        // SecKeyVerifySignature sets error both on operational failures *and* on signature mismatch
-        // (e.g. errSSLCrypto). A signature mismatch is not an error — Signature.verify() should
-        // return false in that case. Only treat the error as fatal when the key operation itself
-        // failed but verified is still true (which would be contradictory); in practice we just
-        // ignore the error and rely on the bool result, matching the Java Signature.verify() contract.
-        if !verified {
-            error?.release()
-            return 0
-        }
-        return 1
+        // SecKeyVerifySignature sets error both on operational failures AND on signature mismatch.
+        // A signature mismatch is not an error — Signature.verify() should return false.
+        // Release the CFError if one was created.
+        if let error { error.release() }
+        return verified ? 1 : 0
     }
 }
 
