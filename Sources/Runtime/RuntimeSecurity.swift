@@ -2071,7 +2071,15 @@ public func kk_x509certificate_getPublicKey(_ certificateRaw: Int, _ outThrown: 
         runtimeSetThrown(outThrown, message: "CertificateException: unable to extract public key")
         return 0
     }
-    return registerRuntimeObject(RuntimePublicKeyBox(secKey: publicKey, algorithm: .rsa))
+    let detectedAlgorithm: RuntimeCipherAlgorithm
+    if let attrs = SecKeyCopyAttributes(publicKey) as? [String: Any],
+       let keyType = attrs[kSecAttrKeyType as String] as? String,
+       keyType == (kSecAttrKeyTypeEC as String) || keyType == (kSecAttrKeyTypeECSECPrimeRandom as String) {
+        detectedAlgorithm = .ec
+    } else {
+        detectedAlgorithm = .rsa
+    }
+    return registerRuntimeObject(RuntimePublicKeyBox(secKey: publicKey, algorithm: detectedAlgorithm))
 }
 
 @_cdecl("kk_x509certificate_getEncoded")
