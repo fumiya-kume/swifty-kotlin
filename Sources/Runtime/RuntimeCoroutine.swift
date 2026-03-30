@@ -1289,8 +1289,6 @@ private struct RuntimeFlowOp {
 /// Currently, short-circuiting is handled by `runtimeFlowTakeExhausted` after
 /// each element delivery rather than through this flag.
 private final class RuntimeFlowCollectContext {
-    /// Legacy field kept for backward compatibility with tests that inspect emitted values
-    /// without a collector. In lazy mode, values flow directly to the collector.
     var emittedValues: [Int] = []
     var cancelled = false
 }
@@ -1662,10 +1660,7 @@ public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ tag: Int) -> Int {
                         return runtimeFlowStopSentinel
                     }
                 case .filtered:
-                    if runtimeFlowTakeExhausted(ops: ops, takeCounters: context.directTakeCounters) {
-                        context.cancelled = true
-                        return runtimeFlowStopSentinel
-                    }
+                    break
                 case .thrown, .done:
                     context.cancelled = true
                     return runtimeFlowStopSentinel

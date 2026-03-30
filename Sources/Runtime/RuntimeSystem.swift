@@ -8,12 +8,12 @@ private let runtimeProcessStartNanos = runtimeComputeProcessStartNanos()
 
 private func runtimeComputeProcessStartNanos() -> UInt64 {
     var processInfo = proc_bsdinfo()
-    let infoSize = MemoryLayout<proc_bsdinfo>.stride
+    let infoSize = MemoryLayout<proc_bsdinfo>.size
     let readSize = withUnsafeMutablePointer(to: &processInfo) { infoPtr in
         proc_pidinfo(getpid(), PROC_PIDTBSDINFO, 0, infoPtr, Int32(infoSize))
     }
 
-    guard readSize == infoSize else {
+    guard Int(readSize) == infoSize else {
         return DispatchTime.now().uptimeNanoseconds
     }
 
