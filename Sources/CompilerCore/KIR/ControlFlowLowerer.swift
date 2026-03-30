@@ -604,16 +604,70 @@ final class ControlFlowLowerer {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &finallyInstructions
             )
-            appendThrowAwareInstructions(
-                finallyInstructions,
-                exceptionSlot: exceptionSlot,
-                exceptionTypeSlot: exceptionTypeSlot,
-                thrownTarget: rethrowLabel,
-                sema: sema,
-                interner: interner,
-                arena: arena,
-                instructions: &instructions
-            )
+
+            let hasThrowableCall = finallyInstructions.contains { (instr: KIRInstruction) -> Bool in
+                switch instr {
+                case .call(_, _, _, _, _, _, _, _),
+                     .virtualCall(_, _, _, _, _, _, _, _),
+                     .rethrow:
+                    return true
+                default:
+                    return false
+                }
+            }
+
+            if hasThrowableCall {
+                // Allocate separate slots for exceptions thrown *inside* the
+                // finally body.  Using the outer exceptionSlot would destroy
+                // the pending exception when a finally call succeeds (writes
+                // null to the slot), silently swallowing the in-flight error.
+                let finallyExSlot = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: sema.types.nullableAnyType
+                )
+                let finallyExTypeSlot = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: intType
+                )
+                let finallyNullValue = arena.appendExpr(.null, type: sema.types.nullableAnyType)
+                let finallyZeroValue = arena.appendExpr(.intLiteral(0), type: intType)
+
+                // Wrap with guard sentinels so that an outer
+                // appendThrowAwareInstructions pass does not double-wrap the
+                // already-routed exception handling inside this finally block.
+                instructions.append(.beginFinallyGuard)
+
+                instructions.append(.constValue(result: finallyNullValue, value: .null))
+                instructions.append(.constValue(result: finallyZeroValue, value: .intLiteral(0)))
+                instructions.append(.copy(from: finallyNullValue, to: finallyExSlot))
+                instructions.append(.copy(from: finallyZeroValue, to: finallyExTypeSlot))
+
+                let finallyRethrowLabel = driver.ctx.makeLoopLabel()
+                let finallyAfterLabel = driver.ctx.makeLoopLabel()
+
+                appendThrowAwareInstructions(
+                    finallyInstructions,
+                    exceptionSlot: finallyExSlot,
+                    exceptionTypeSlot: finallyExTypeSlot,
+                    thrownTarget: finallyRethrowLabel,
+                    sema: sema,
+                    interner: interner,
+                    arena: arena,
+                    instructions: &instructions
+                )
+                instructions.append(.jump(finallyAfterLabel))
+                instructions.append(.endFinallyGuard)
+
+                // Finally body itself threw — rethrow that exception (replaces
+                // the original in-flight exception per Kotlin semantics).
+                instructions.append(.label(finallyRethrowLabel))
+                instructions.append(.rethrow(value: finallyExSlot))
+
+                instructions.append(.label(finallyAfterLabel))
+            } else {
+                // No throwable calls — append the finally body directly.
+                instructions.append(contentsOf: finallyInstructions)
+            }
         }
         instructions.append(.jumpIfNotNull(value: exceptionSlot, target: rethrowLabel))
         instructions.append(.jump(endLabel))
