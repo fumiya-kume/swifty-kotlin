@@ -122,5 +122,52 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "StringBuilder"
         ),
+        // STDLIB-STR-123
+        RuntimeABIFunctionSpec(
+            name: "kk_string_builder_replace_obj",
+            parameters: [
+                RuntimeABIParameter(name: "sbRaw", type: .intptr),
+                RuntimeABIParameter(name: "start", type: .intptr),
+                RuntimeABIParameter(name: "end", type: .intptr),
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "StringBuilder"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_builder_setCharAt",
+            parameters: [
+                RuntimeABIParameter(name: "sbRaw", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .intptr),
+                RuntimeABIParameter(name: "charValue", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "StringBuilder"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_builder_capacity",
+            parameters: [
+                RuntimeABIParameter(name: "sbRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "StringBuilder"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_builder_ensureCapacity",
+            parameters: [
+                RuntimeABIParameter(name: "sbRaw", type: .intptr),
+                RuntimeABIParameter(name: "minimumCapacity", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "StringBuilder"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_builder_trimToSize",
+            parameters: [
+                RuntimeABIParameter(name: "sbRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "StringBuilder"
+        ),
     ]
 }

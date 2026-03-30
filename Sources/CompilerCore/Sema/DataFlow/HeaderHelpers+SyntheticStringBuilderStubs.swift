@@ -163,6 +163,68 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // STDLIB-STR-123: Additional StringBuilder methods
+
+        // replace(Int, Int, String): StringBuilder
+        registerStringBuilderMemberFunction(
+            named: "replace",
+            externalLinkName: "kk_string_builder_replace_obj",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("start", intType, false, false), ("end", intType, false, false), ("str", stringType, false, false)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // setCharAt(Int, Char): Unit
+        registerStringBuilderMemberFunction(
+            named: "setCharAt",
+            externalLinkName: "kk_string_builder_setCharAt",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("index", intType, false, false), ("value", charType, false, false)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // capacity(): Int
+        registerStringBuilderMemberFunction(
+            named: "capacity",
+            externalLinkName: "kk_string_builder_capacity",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [],
+            returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // ensureCapacity(Int): Unit
+        registerStringBuilderMemberFunction(
+            named: "ensureCapacity",
+            externalLinkName: "kk_string_builder_ensureCapacity",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("minimumCapacity", intType, false, false)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // trimToSize(): Unit
+        registerStringBuilderMemberFunction(
+            named: "trimToSize",
+            externalLinkName: "kk_string_builder_trimToSize",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Private Helpers

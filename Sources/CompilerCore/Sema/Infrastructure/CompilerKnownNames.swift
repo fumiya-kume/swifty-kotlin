@@ -189,6 +189,12 @@ struct KnownCompilerNames {
     let clear: InternedString
     let reverse: InternedString
     let length: InternedString
+    // STDLIB-STR-123
+    let replace: InternedString
+    let setCharAt: InternedString
+    let capacity: InternedString
+    let ensureCapacity: InternedString
+    let trimToSize: InternedString
 
     let kotlinRegexFQName: [InternedString]
     let kotlinStringBuilderFQName: [InternedString]
@@ -335,6 +341,12 @@ struct KnownCompilerNames {
         clear = interner.intern("clear")
         reverse = interner.intern("reverse")
         length = interner.intern("length")
+        // STDLIB-STR-123
+        replace = interner.intern("replace")
+        setCharAt = interner.intern("setCharAt")
+        capacity = interner.intern("capacity")
+        ensureCapacity = interner.intern("ensureCapacity")
+        trimToSize = interner.intern("trimToSize")
 
         let kotlin = interner.intern("kotlin")
         let kotlinText = interner.intern("text")
