@@ -195,9 +195,195 @@ extension DataFlowSemaPhase {
 
         registerDigestTopLevel(packageFQName: securityPkg, name: "getInstance", parameterTypes: [types.stringType], returnType: digestType, externalLinkName: "kk_message_digest_getInstance", symbols: symbols, interner: interner)
         registerDigestMember(ownerSymbol: digestSymbol, ownerType: digestType, name: "digest", parameterTypes: [digestByteArrayType], returnType: digestByteArrayType, externalLinkName: "kk_message_digest_digest", symbols: symbols, interner: interner)
+
+        // MARK: KeyPairGenerator, KeyPair (STDLIB-SEC-146)
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+
+        let keyPairGeneratorSymbol = ensureClassSymbol(
+            named: "KeyPairGenerator",
+            in: securityPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: keyPairGeneratorSymbol) }
+        let keyPairGeneratorType = types.make(.classType(ClassType(
+            classSymbol: keyPairGeneratorSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(keyPairGeneratorType, for: keyPairGeneratorSymbol)
+
+        let keyPairSymbol = ensureClassSymbol(
+            named: "KeyPair",
+            in: securityPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: keyPairSymbol) }
+        let keyPairType = types.make(.classType(ClassType(
+            classSymbol: keyPairSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(keyPairType, for: keyPairSymbol)
+
+        let keyPairGeneratorCompanionFQName = ensureCompanionSymbol(
+            ownerSymbol: keyPairGeneratorSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityCompanionFactory(
+            name: "getInstance",
+            externalLinkName: "kk_keypairgenerator_getInstance",
+            companionFQName: keyPairGeneratorCompanionFQName,
+            parameters: [("algorithm", stringType)],
+            returnType: keyPairGeneratorType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityInstanceMethod(
+            name: "initialize",
+            externalLinkName: "kk_keypairgenerator_initialize",
+            ownerSymbol: keyPairGeneratorSymbol,
+            ownerType: keyPairGeneratorType,
+            parameters: [("keySize", intType)],
+            returnType: unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityInstanceMethod(
+            name: "generateKeyPair",
+            externalLinkName: "kk_keypairgenerator_generateKeyPair",
+            ownerSymbol: keyPairGeneratorSymbol,
+            ownerType: keyPairGeneratorType,
+            parameters: [],
+            returnType: keyPairType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: Signature (STDLIB-SEC-146)
+        let signatureSymbol = ensureClassSymbol(
+            named: "Signature",
+            in: securityPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: signatureSymbol) }
+        let signatureType = types.make(.classType(ClassType(
+            classSymbol: signatureSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(signatureType, for: signatureSymbol)
+
+        let signatureCompanionFQName = ensureCompanionSymbol(
+            ownerSymbol: signatureSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityCompanionFactory(
+            name: "getInstance",
+            externalLinkName: "kk_signature_getInstance",
+            companionFQName: signatureCompanionFQName,
+            parameters: [("algorithm", stringType)],
+            returnType: signatureType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityInstanceMethod(
+            name: "initSign",
+            externalLinkName: "kk_signature_initSign",
+            ownerSymbol: signatureSymbol,
+            ownerType: signatureType,
+            parameters: [("privateKey", types.anyType)],
+            returnType: unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityInstanceMethod(
+            name: "initVerify",
+            externalLinkName: "kk_signature_initVerify",
+            ownerSymbol: signatureSymbol,
+            ownerType: signatureType,
+            parameters: [("publicKey", types.anyType)],
+            returnType: unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityInstanceMethod(
+            name: "update",
+            externalLinkName: "kk_signature_update",
+            ownerSymbol: signatureSymbol,
+            ownerType: signatureType,
+            parameters: [("data", byteArrayType)],
+            returnType: unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityInstanceMethod(
+            name: "sign",
+            externalLinkName: "kk_signature_sign",
+            ownerSymbol: signatureSymbol,
+            ownerType: signatureType,
+            parameters: [],
+            returnType: byteArrayType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityInstanceMethod(
+            name: "verify",
+            externalLinkName: "kk_signature_verify",
+            ownerSymbol: signatureSymbol,
+            ownerType: signatureType,
+            parameters: [("signature", byteArrayType)],
+            returnType: boolType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: CertificateFactory (STDLIB-SEC-146)
+        let certFactorySymbol = ensureClassSymbol(
+            named: "CertificateFactory",
+            in: securityPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: certFactorySymbol) }
+        let certFactoryType = types.make(.classType(ClassType(
+            classSymbol: certFactorySymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(certFactoryType, for: certFactorySymbol)
+
+        let certFactoryCompanionFQName = ensureCompanionSymbol(
+            ownerSymbol: certFactorySymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityCompanionFactory(
+            name: "getInstance",
+            externalLinkName: "kk_certificatefactory_getInstance",
+            companionFQName: certFactoryCompanionFQName,
+            parameters: [("type", stringType)],
+            returnType: certFactoryType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityInstanceMethod(
+            name: "generateCertificate",
+            externalLinkName: "kk_certificatefactory_generateCertificate",
+            ownerSymbol: certFactorySymbol,
+            ownerType: certFactoryType,
+            parameters: [("data", byteArrayType)],
+            returnType: types.anyType,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
-    private func ensureCipherCompanionSymbol(
+    private func ensureCompanionSymbol(
         ownerSymbol: SymbolID,
         symbols: SymbolTable,
         interner: StringInterner
@@ -224,6 +410,14 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(ownerSymbol, for: companionSymbol)
         symbols.setCompanionObjectSymbol(companionSymbol, for: ownerSymbol)
         return companionFQName
+    }
+
+    private func ensureCipherCompanionSymbol(
+        ownerSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> [InternedString] {
+        return ensureCompanionSymbol(ownerSymbol: ownerSymbol, symbols: symbols, interner: interner)
     }
 
     private func registerCipherConstant(
