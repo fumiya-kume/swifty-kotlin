@@ -26,7 +26,7 @@ private func runtimeSequenceBuilderBox(from rawValue: Int) -> RuntimeSequenceBui
     resolveRuntimeHandle(rawValue, as: RuntimeSequenceBuilderBox.self)
 }
 
-private func runtimeSequenceSourceElements(from rawValue: Int) -> [Int]? {
+func runtimeSequenceSourceElements(from rawValue: Int) -> [Int]? {
     if let seq = runtimeSequenceBox(from: rawValue) {
         return evaluateSequence(seq)
     }

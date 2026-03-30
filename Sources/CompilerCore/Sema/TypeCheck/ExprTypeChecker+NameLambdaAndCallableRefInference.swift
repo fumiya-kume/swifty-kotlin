@@ -652,6 +652,30 @@ extension ExprTypeChecker {
             if !memberCandidates.isEmpty {
                 candidates = memberCandidates
             } else {
+                if case let .classType(classType) = sema.types.kind(of: nonNullReceiver),
+                   let owner = sema.symbols.symbol(classType.classSymbol)
+                {
+                    let propertyCandidates = sema.symbols.lookupAll(
+                        fqName: owner.fqName + [member]
+                    ).filter { symbolID in
+                        guard let symbol = ctx.cachedSymbol(symbolID) else {
+                            return false
+                        }
+                        return symbol.kind == .property || symbol.kind == .field
+                    }
+                    if let propertySymbol = propertyCandidates.first {
+                        let propertyType = sema.symbols.propertyType(for: propertySymbol) ?? sema.types.errorType
+                        let resultType = expectedType ?? propertyType
+                        sema.bindings.bindIdentifier(id, symbol: propertySymbol)
+                        sema.bindings.bindCallableTarget(id, target: .symbol(propertySymbol))
+                        sema.bindings.bindCallableRefKind(id, kind: .propertyRef)
+                        if unboundClassType != nil {
+                            sema.bindings.markUnboundCallableRef(id)
+                        }
+                        sema.bindings.bindExprType(id, type: resultType)
+                        return resultType
+                    }
+                }
                 candidates = ctx.cachedScopeLookup(member).filter { symbolID in
                     guard let symbol = ctx.cachedSymbol(symbolID),
                           symbol.kind == .function,

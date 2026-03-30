@@ -160,4 +160,5 @@ final class TestFrameworkSyntheticStubTests: XCTestCase {
             XCTAssertEqual(sema.symbols.externalLinkName(for: symbol), entry.link)
         }
     }
+
 }
