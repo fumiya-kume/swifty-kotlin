@@ -1,12 +1,18 @@
 import Dispatch
-import Darwin
 import Foundation
+
+#if canImport(Darwin)
+    import Darwin
+#elseif canImport(Glibc)
+    import Glibc
+#endif
 
 // MARK: - kotlin.system functions (STDLIB-131/132, STDLIB-TIME-085)
 
 private let runtimeProcessStartNanos = runtimeComputeProcessStartNanos()
 
 private func runtimeComputeProcessStartNanos() -> UInt64 {
+#if canImport(Darwin)
     var processInfo = proc_bsdinfo()
     let infoSize = MemoryLayout<proc_bsdinfo>.size
     let readSize = withUnsafeMutablePointer(to: &processInfo) { infoPtr in
@@ -31,6 +37,9 @@ private func runtimeComputeProcessStartNanos() -> UInt64 {
         return 0
     }
     return nowUptimeNanos - elapsedNanos
+#else
+    return DispatchTime.now().uptimeNanoseconds
+#endif
 }
 
 /// Runtime support for kotlin.system.exitProcess(status) (STDLIB-132/657).

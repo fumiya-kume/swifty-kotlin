@@ -1660,7 +1660,10 @@ public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ tag: Int) -> Int {
                         return runtimeFlowStopSentinel
                     }
                 case .filtered:
-                    break
+                    if runtimeFlowTakeExhausted(ops: ops, takeCounters: context.directTakeCounters) {
+                        context.cancelled = true
+                        return runtimeFlowStopSentinel
+                    }
                 case .thrown, .done:
                     context.cancelled = true
                     return runtimeFlowStopSentinel
