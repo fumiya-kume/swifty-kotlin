@@ -1,4 +1,3 @@
-// SKIP-DIFF: comparator-based max/min extensions not yet fully matched by kotlinc diff harness
 fun main() {
     val words = listOf("a", "bbb", "cc")
 

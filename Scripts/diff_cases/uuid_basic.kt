@@ -26,5 +26,27 @@ fun main() {
     val bytes = parsed.toByteArray()
     println("byteArray size: ${bytes.size == 16}")
 
+    // version() and variant()
+    val version = parsed.version()
+    println("version is 4: ${version == 4}")
+    val variant = parsed.variant()
+    println("variant is 2: ${variant == 2}")
+
+    // mostSignificantBits and leastSignificantBits
+    val msb = parsed.mostSignificantBits
+    val lsb = parsed.leastSignificantBits
+    println("msb not zero: ${msb != 0L}")
+    println("lsb not zero: ${lsb != 0L}")
+
+    // nameUUIDFromBytes() generates a deterministic version-3 UUID
+    val nameBytes = byteArrayOf(1, 2, 3, 4, 5)
+    val named1 = Uuid.nameUUIDFromBytes(nameBytes)
+    val named2 = Uuid.nameUUIDFromBytes(nameBytes)
+    println("named uuid length: ${named1.toString().length == 36}")
+    println("named uuid deterministic: ${named1.toString() == named2.toString()}")
+    println("named uuid version 3: ${named1.version() == 3}")
+    println("named uuid variant 2: ${named1.variant() == 2}")
+
     println("OK")
 }
+// SKIP-DIFF: uses non-standard APIs (version(), variant(), mostSignificantBits, leastSignificantBits, nameUUIDFromBytes) not in kotlin.uuid.Uuid
