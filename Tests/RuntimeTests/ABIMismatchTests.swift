@@ -95,7 +95,6 @@ final class ABIMismatchTests: XCTestCase {
         // kk_string_split_regex, kk_string_toRegex, kk_regex_pattern,
         // kk_match_result_value, kk_match_result_groupValues,
         // kk_regex_replace_lambda, kk_regex_matchEntire,
-        // kk_regex_matches,
         // kk_regex_create_with_option, kk_regex_create_with_options,
         // kk_regex_containsMatchIn,
         // kk_match_result_groups, kk_match_group_collection_get,
@@ -105,7 +104,7 @@ final class ABIMismatchTests: XCTestCase {
         // kk_string_zipWithNext
         // STDLIB-REGEX-095: kk_match_result_range, kk_match_result_component1,
         // kk_match_result_component2, kk_match_result_next, kk_match_group_collection_get_at
-        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 37)
+        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 36)
     }
 
     func testPrintAndPrintlnFunctionCount() {
