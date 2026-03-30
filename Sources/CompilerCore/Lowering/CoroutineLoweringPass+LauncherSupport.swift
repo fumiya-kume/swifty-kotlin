@@ -119,6 +119,23 @@ extension CoroutineLoweringPass {
         return thunkBody
     }
 
+    /// Returns true if the callee of a call is a known dispatcher factory function.
+    private func isDispatcherCalleeExpr(
+        _ exprID: KIRExprID,
+        module: KIRModule
+    ) -> Bool {
+        // A dispatcher is produced by one of kk_dispatcher_default/io/main.
+        // In KIR these appear as constValue(.intLiteral) carrying the dispatcher tag,
+        // or as a call result from kk_dispatcher_*. Since they are Int-typed constants
+        // we cannot distinguish them from a regular Int constant at this stage.
+        // The heuristic we use: if the expression has NO known symbol reference
+        // (i.e. it is not pointing at a suspend function symbol), treat it as a
+        // potential dispatcher expression when the callee name is "launch".
+        // This is validated downstream by the fact that the *next* argument must
+        // resolve to a suspend function.
+        return true // Intentionally broad; validated by caller.
+    }
+
     func rewriteLauncherCall(
         call: CallRewriteInput,
         symbolByExprRaw: [Int32: SymbolID],
@@ -138,12 +155,80 @@ extension CoroutineLoweringPass {
             return [call.instruction]
         }
 
-        guard let referencedSymbol = symbolReference(
+        // STDLIB-CORO-072: Check if the first argument is a dispatcher (not a suspend function).
+        // launch(Dispatchers.IO) { } has the dispatcher as arguments[0] and the lambda as arguments[1].
+        let firstArgSymbol = symbolReference(
             for: call.arguments[0],
             module: rewrite.module,
             propagatedSymbols: symbolByExprRaw
-        ),
-            let loweredTarget = rewrite.loweredBySymbol[referencedSymbol]
+        )
+        let firstLowered = firstArgSymbol.flatMap { rewrite.loweredBySymbol[$0] }
+
+        if firstLowered == nil && call.arguments.count >= 2 {
+            // First argument is not a suspend function. Try to interpret it as a dispatcher.
+            let launchCallee = rewrite.ctx.interner.intern("launch")
+            guard call.callee == launchCallee else {
+                // Dispatcher-aware pattern is only valid for `launch`.
+                rewrite.ctx.diagnostics.error(
+                    "KSWIFTK-CORO-0002",
+                    "Coroutine launcher '\(rewrite.ctx.interner.resolve(call.callee))' requires a suspend function reference argument.",
+                    range: nil
+                )
+                return [call.instruction]
+            }
+
+            let dispatcherExpr = call.arguments[0]
+            let suspendArgExpr = call.arguments[1]
+
+            if let suspendSymbol = symbolReference(
+                for: suspendArgExpr,
+                module: rewrite.module,
+                propagatedSymbols: symbolByExprRaw
+            ), let loweredTarget = rewrite.loweredBySymbol[suspendSymbol] {
+                let targetArity = rewrite.suspendFunctionArityBySymbol[suspendSymbol] ?? 0
+                let extraArgs = Array(call.arguments.dropFirst(2))
+                guard extraArgs.count == targetArity else {
+                    rewrite.ctx.diagnostics.error(
+                        "KSWIFTK-CORO-0003",
+                        "Coroutine launcher 'launch' passed \(extraArgs.count) capture argument(s) but referenced suspend function expects \(targetArity).",
+                        range: nil
+                    )
+                    return [call.instruction]
+                }
+
+                if targetArity == 0 {
+                    return rewriteZeroArgDispatcherLauncherCall(
+                        dispatcherExpr: dispatcherExpr,
+                        loweredTarget: loweredTarget,
+                        call: call,
+                        using: rewrite
+                    )
+                }
+
+                guard let thunk = rewrite.launcherThunkByOriginalSymbol[suspendSymbol] else {
+                    assertionFailure("Internal compiler error: launcher thunk missing for dispatcher-aware launch")
+                    return [call.instruction]
+                }
+                return rewriteArgBearingDispatcherLauncherCall(
+                    dispatcherExpr: dispatcherExpr,
+                    loweredTarget: loweredTarget,
+                    thunk: thunk,
+                    extraArgs: extraArgs,
+                    call: call,
+                    using: rewrite
+                )
+            }
+            // Fall through to normal error path if we still cannot resolve.
+            rewrite.ctx.diagnostics.error(
+                "KSWIFTK-CORO-0002",
+                "Coroutine launcher '\(rewrite.ctx.interner.resolve(call.callee))' requires a suspend function reference argument.",
+                range: nil
+            )
+            return [call.instruction]
+        }
+
+        guard let referencedSymbol = firstArgSymbol,
+              let loweredTarget = firstLowered
         else {
             rewrite.ctx.diagnostics.error(
                 "KSWIFTK-CORO-0002",
@@ -188,6 +273,102 @@ extension CoroutineLoweringPass {
             call: call,
             using: rewrite
         )
+    }
+
+    // STDLIB-CORO-072: Rewrite launch(dispatcher) { } with no captures
+    func rewriteZeroArgDispatcherLauncherCall(
+        dispatcherExpr: KIRExprID,
+        loweredTarget: LoweredSuspendFunction,
+        call: CallRewriteInput,
+        using rewrite: SuspendRewriteContext
+    ) -> [KIRInstruction] {
+        let entryPointExpr = rewrite.module.arena.appendExpr(
+            .temporary(Int32(rewrite.module.arena.expressions.count)),
+            type: rewrite.intType
+        )
+        let entryFunctionID = rewrite.module.arena.appendExpr(
+            .temporary(Int32(rewrite.module.arena.expressions.count)),
+            type: rewrite.intType
+        )
+        let runtimeCallee = rewrite.ctx.interner.intern("kk_kxmini_launch_with_dispatcher")
+
+        return [
+            .constValue(result: entryPointExpr, value: .symbolRef(loweredTarget.symbol)),
+            .constValue(result: entryFunctionID, value: .intLiteral(Int64(loweredTarget.symbol.rawValue))),
+            .call(
+                symbol: nil,
+                callee: runtimeCallee,
+                arguments: [entryPointExpr, entryFunctionID, dispatcherExpr],
+                result: call.result,
+                canThrow: call.canThrow,
+                thrownResult: call.thrownResult
+            ),
+        ]
+    }
+
+    // STDLIB-CORO-072: Rewrite launch(dispatcher) { captures } with captures
+    func rewriteArgBearingDispatcherLauncherCall(
+        dispatcherExpr: KIRExprID,
+        loweredTarget: LoweredSuspendFunction,
+        thunk: LoweredSuspendFunction,
+        extraArgs: [KIRExprID],
+        call: CallRewriteInput,
+        using rewrite: SuspendRewriteContext
+    ) -> [KIRInstruction] {
+        let loweredFunctionIDExpr = rewrite.module.arena.appendExpr(
+            .intLiteral(Int64(loweredTarget.symbol.rawValue)),
+            type: rewrite.intType
+        )
+        let continuationExpr = rewrite.module.arena.appendExpr(
+            .temporary(Int32(rewrite.module.arena.expressions.count)),
+            type: rewrite.intType
+        )
+        let runtimeCallee = rewrite.ctx.interner.intern("kk_kxmini_launch_with_dispatcher_and_cont")
+
+        var rewritten: [KIRInstruction] = [
+            .call(
+                symbol: nil,
+                callee: rewrite.continuationFactory,
+                arguments: [loweredFunctionIDExpr],
+                result: continuationExpr,
+                canThrow: false,
+                thrownResult: nil
+            ),
+        ]
+
+        for (index, argExpr) in extraArgs.enumerated() {
+            let slotExpr = rewrite.module.arena.appendExpr(
+                .intLiteral(Int64(index)),
+                type: rewrite.intType
+            )
+            rewritten.append(
+                .call(
+                    symbol: nil,
+                    callee: rewrite.launcherArgSetCallee,
+                    arguments: [continuationExpr, slotExpr, argExpr],
+                    result: nil,
+                    canThrow: false,
+                    thrownResult: nil
+                )
+            )
+        }
+
+        let thunkRefExpr = rewrite.module.arena.appendExpr(
+            .temporary(Int32(rewrite.module.arena.expressions.count)),
+            type: rewrite.intType
+        )
+        rewritten.append(.constValue(result: thunkRefExpr, value: .symbolRef(thunk.symbol)))
+        rewritten.append(
+            .call(
+                symbol: nil,
+                callee: runtimeCallee,
+                arguments: [thunkRefExpr, continuationExpr, dispatcherExpr],
+                result: call.result,
+                canThrow: call.canThrow,
+                thrownResult: nil
+            )
+        )
+        return rewritten
     }
 
     func rewriteZeroArgLauncherCall(

@@ -403,3 +403,38 @@ public func kk_kfunction_call_vararg(
     }
 }
 
+// MARK: - STDLIB-REFLECT-066: KType toString
+
+/// Internal helper to render a KTypeBox as a human-readable string.
+func runtimeKTypeToString(_ box: RuntimeKTypeBox) -> String {
+    var baseName = "kotlin.Any"
+    if box.classifierRaw != 0,
+       box.classifierRaw != runtimeNullSentinelInt,
+       let classifierPtr = UnsafeMutableRawPointer(bitPattern: box.classifierRaw),
+       runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: classifierPtr)) }),
+       let kclassBox = tryCast(classifierPtr, to: RuntimeKClassBox.self)
+    {
+        let qualName = kclassBox.reflectionQualifiedName
+        if !qualName.isEmpty {
+            baseName = qualName
+        } else {
+            let simpleName = kclassBox.reflectionSimpleName
+            if !simpleName.isEmpty {
+                baseName = simpleName
+            }
+        }
+    }
+    return box.isMarkedNullable ? baseName + "?" : baseName
+}
+
+/// Returns a human-readable string for a KType, e.g. "kotlin.String" or "kotlin.String?".
+@_cdecl("kk_ktype_to_string")
+public func kk_ktype_to_string(_ ktypeRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: ktypeRaw),
+          runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let box = tryCast(ptr, to: RuntimeKTypeBox.self)
+    else {
+        return runtimeReflectionStringRaw("kotlin.Any")
+    }
+    return runtimeReflectionStringRaw(runtimeKTypeToString(box))
+}

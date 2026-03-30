@@ -1,4 +1,7 @@
 // SKIP-DIFF
+// kswiftc uses xorshift64* for Random(seed), while kotlinc JVM uses LCG (java.util.Random).
+// The same seed produces different sequences, so output cannot match between the two runtimes.
+// Additionally, kswiftc has a known issue with mutableList.add() inside repeat{} lambdas.
 import kotlin.math.abs
 import kotlin.random.Random
 
@@ -11,7 +14,9 @@ data class PropertyStats(
 
 private fun seededSamples(seed: Int, count: Int): List<Int> {
     val random = Random(seed)
-    return List(count) { random.nextInt(-32, 33) }
+    val result = mutableListOf<Int>()
+    repeat(count) { result.add(random.nextInt(-32, 33)) }
+    return result
 }
 
 private fun shrinkTowardZero(value: Int): Int? {
