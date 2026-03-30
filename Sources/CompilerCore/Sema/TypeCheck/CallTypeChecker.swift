@@ -777,6 +777,34 @@ final class CallTypeChecker {
             return resultType
         }
 
+        // --- STDLIB-REFLECT-066: typeOf<T>() — inline reified reflection ---
+        if let calleeName,
+           args.isEmpty,
+           interner.resolve(calleeName) == "typeOf",
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
+        {
+            // Resolve the KType return type from the stub.
+            let candidates = ctx.filterByVisibility(ctx.cachedScopeLookup(calleeName)).visible
+            if let stubSymbol = candidates.first(where: { candidate in
+                guard let signature = sema.symbols.functionSignature(for: candidate) else { return false }
+                return signature.reifiedTypeParameterIndices.contains(0)
+            }), let signature = sema.symbols.functionSignature(for: stubSymbol) {
+                let typeArg = explicitTypeArgs.first ?? sema.types.anyType
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: stubSymbol,
+                        substitutedTypeArguments: [typeArg],
+                        parameterMapping: [:]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(stubSymbol))
+                sema.bindings.markStdlibSpecialCallExpr(id, kind: .typeOf)
+                sema.bindings.bindExprType(id, type: signature.returnType)
+                return signature.returnType
+            }
+        }
+
         // --- Stdlib enumValues<T>() / enumValueOf<T>(name) (STDLIB-171) ---
         if let calleeName,
            let enumSpecialKind = enumStdlibSpecialCallKind(
@@ -1149,11 +1177,27 @@ final class CallTypeChecker {
 
         let coroutineLauncherName = calleeName.map { interner.resolve($0) }
         let coroutineLauncherExpectedLambdaType: TypeID?
+        // STDLIB-CORO-072: Support launch(dispatcher) { } by checking both first and
+        // second argument for a trailing lambda. When the first argument is a dispatcher
+        // (non-lambda) and the second is a lambda, treat it as the block argument.
+        let coroutineLauncherLambdaArgIndex: Int? = {
+            guard let name = coroutineLauncherName,
+                  ["runBlocking", "launch", "async", "coroutineScope"].contains(name)
+            else { return nil }
+            if let firstArgExpr = args.first.flatMap({ ast.arena.expr($0.expr) }),
+               case .lambdaLiteral = firstArgExpr {
+                return 0
+            }
+            if args.count >= 2,
+               let secondArgExpr = ast.arena.expr(args[1].expr),
+               case .lambdaLiteral = secondArgExpr {
+                return 1
+            }
+            return nil
+        }()
         if let coroutineLauncherName,
-           ["runBlocking", "launch", "async", "coroutineScope"].contains(coroutineLauncherName),
-           let firstArg = args.first,
-           let firstArgExpr = ast.arena.expr(firstArg.expr),
-           case .lambdaLiteral = firstArgExpr
+           let lambdaIndex = coroutineLauncherLambdaArgIndex,
+           lambdaIndex < args.count
         {
             let lambdaReturnType: TypeID = switch coroutineLauncherName {
             case "launch":
@@ -1322,7 +1366,11 @@ final class CallTypeChecker {
         }
 
         let contextualArgExpectedTypes: [TypeID?] = args.enumerated().map { index, argument in
-            if index == 0, let coroutineLauncherExpectedLambdaType {
+            // STDLIB-CORO-072: Apply expected lambda type to the correct index
+            // (0 for standard launch/runBlocking, 1 for launch(dispatcher) { })
+            if let launcherIndex = coroutineLauncherLambdaArgIndex,
+               index == launcherIndex,
+               let coroutineLauncherExpectedLambdaType {
                 return coroutineLauncherExpectedLambdaType
             }
             if index == 1, let withContextExpectedLambdaType {
@@ -1394,11 +1442,11 @@ final class CallTypeChecker {
                     expectedType: contextualExpectedType
                 )
             }
-            // Reuse the type already inferred during the non-lambda pre-pass
-            // (inferredNonLambdaArgTypes) to avoid running inferExpr twice for
-            // the same expression, which would cause duplicate diagnostics.
-            if let alreadyInferred = inferredNonLambdaArgTypes[index] {
-                return alreadyInferred
+            // Reuse the type already inferred in inferredNonLambdaArgTypes to avoid
+            // re-evaluating non-lambda arguments a second time, which would emit
+            // duplicate diagnostics (e.g. "Unresolved reference") for each argument.
+            if let cached = inferredNonLambdaArgTypes[index] {
+                return cached
             }
             return driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
         }
@@ -1632,7 +1680,8 @@ final class CallTypeChecker {
                 (name == "append" && args.count == 1)
                     || (name == "appendLine" && args.count <= 1)
                     || (name == "appendRange" && args.count == 3)
-            case .buildList, .buildSet: name == "add" && args.count == 1
+            case .buildList, .buildSet:
+                (name == "add" && args.count == 1) || (name == "addAll" && args.count == 1)
             case .buildMap: name == "put" && args.count == 2
             }
             if isBuilderMember {

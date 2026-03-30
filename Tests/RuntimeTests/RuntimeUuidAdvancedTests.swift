@@ -33,4 +33,38 @@ final class RuntimeUuidAdvancedTests: XCTestCase {
         XCTAssertEqual(kk_uuid_version(uuidRaw), 1)
         XCTAssertEqual(kk_uuid_variant(uuidRaw), 2)
     }
+
+    func testMostSignificantBitsMatchesExpected() {
+        var thrown = 0
+        let uuidRaw = kk_uuid_parse(makeRuntimeString("550e8400-e29b-41d4-a716-446655440000"), &thrown)
+        XCTAssertEqual(thrown, 0)
+        let msb = kk_uuid_mostSignificantBits(uuidRaw)
+        // 550e8400-e29b-41d4 -> msb = 0x550e8400e29b41d4
+        XCTAssertEqual(UInt64(bitPattern: Int64(msb)), 0x550e8400e29b41d4)
+    }
+
+    func testLeastSignificantBitsMatchesExpected() {
+        var thrown = 0
+        let uuidRaw = kk_uuid_parse(makeRuntimeString("550e8400-e29b-41d4-a716-446655440000"), &thrown)
+        XCTAssertEqual(thrown, 0)
+        let lsb = kk_uuid_leastSignificantBits(uuidRaw)
+        // a716-446655440000 -> lsb = 0xa716446655440000
+        XCTAssertEqual(UInt64(bitPattern: Int64(lsb)), 0xa716446655440000)
+    }
+
+    func testNameUUIDFromBytesIsDeterministic() {
+        let nameArr = RuntimeArrayBox(length: 5)
+        for i in 0..<5 {
+            nameArr.elements[i] = i + 1
+        }
+        let rawArr = registerRuntimeObject(nameArr)
+
+        let uuid1 = kk_uuid_nameUUIDFromBytes(rawArr)
+        let uuid2 = kk_uuid_nameUUIDFromBytes(rawArr)
+
+        XCTAssertEqual(kk_uuid_version(uuid1), 3)
+        XCTAssertEqual(kk_uuid_variant(uuid1), 2)
+        XCTAssertEqual(kk_uuid_mostSignificantBits(uuid1), kk_uuid_mostSignificantBits(uuid2))
+        XCTAssertEqual(kk_uuid_leastSignificantBits(uuid1), kk_uuid_leastSignificantBits(uuid2))
+    }
 }

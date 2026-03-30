@@ -50,10 +50,12 @@ Cases:
 - `builder_dsl_invalid_arg.kt`: builder への不正引数（非 lambda）を compile error として扱う parity
 - `builder_dsl_shadowing.kt`: user-defined `buildString` / `buildList` / `buildMap` が DSL 特別扱いに奪われないことの parity
 - `value_classes.kt`: `@JvmInline` / `inline class` / `value class` の value class 基本動作 parity
+- `mock_objects.kt`: mock / spy パターン（stubbing, verification, any/eq matcher）の parity
 - `sequence_lazy.kt`: `Sequence<T>` lazy evaluation chain（`asSequence` → `map` → `filter` → `toList`）の parity
 - `stdlib_collection_hof.kt`: collection HOF（map/filter/flatMap/fold/reduce/any/all/none/groupBy/sortedBy/find/count/first/last）と capture lambda の parity
 - `stdlib_string_ops.kt`: String stdlib parity（`trim/split/replace/startsWith/endsWith/contains/toInt/toDouble/format/substring/lowercase/uppercase/toIntOrNull/toDoubleOrNull/indexOf/lastIndexOf/padStart/padEnd/repeat/reversed/toList/toCharArray/drop/take/dropLast/takeLast`）
 - `flow_cold.kt`: `Flow<T>` cold stream chain（`flow { emit(...) }.map { ... }.collect { ... }`）の parity（kotlinx classpath 必須）
 - `deprecated_error.kt`: `@Deprecated(level = DeprecationLevel.ERROR)` 呼び出しの compile-error parity
+- `property_based_test.kt`: seeded samples, shrinking, statistics report を持つ property-based style parity
 
 The set intentionally includes both successful programs and compile-error cases.

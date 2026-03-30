@@ -81,6 +81,23 @@ public func kk_file_new(_ pathRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeFileBox(path))
 }
 
+/// File(parent: String, child: String) constructor (STDLIB-IO-087)
+@_cdecl("kk_file_new_parent_child")
+public func kk_file_new_parent_child(_ parentRaw: Int, _ childRaw: Int) -> Int {
+    guard let parentPtr = UnsafeMutableRawPointer(bitPattern: parentRaw),
+          let parent = extractString(from: parentPtr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_new_parent_child received invalid parent")
+    }
+    guard let childPtr = UnsafeMutableRawPointer(bitPattern: childRaw),
+          let child = extractString(from: childPtr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_new_parent_child received invalid child")
+    }
+    let path = (parent as NSString).appendingPathComponent(child)
+    return registerRuntimeObject(RuntimeFileBox(path))
+}
+
 @_cdecl("kk_file_readText")
 public func kk_file_readText(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -306,6 +323,100 @@ public func kk_file_path(_ fileRaw: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_path received invalid File handle")
     }
     return fileMakeStringRaw(file.path)
+}
+
+// MARK: - STDLIB-IO-087: Additional File properties and operations
+
+@_cdecl("kk_file_absolutePath")
+public func kk_file_absolutePath(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_absolutePath received invalid File handle")
+    }
+    let url = URL(fileURLWithPath: file.path)
+    return fileMakeStringRaw(url.path)
+}
+
+@_cdecl("kk_file_canonicalPath")
+public func kk_file_canonicalPath(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_canonicalPath received invalid File handle")
+    }
+    let resolved = (file.path as NSString).standardizingPath
+    return fileMakeStringRaw(resolved)
+}
+
+@_cdecl("kk_file_parent")
+public func kk_file_parent(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_parent received invalid File handle")
+    }
+    let parent = (file.path as NSString).deletingLastPathComponent
+    // Return null sentinel if the path has no parent (e.g., root "/")
+    if parent.isEmpty || parent == file.path {
+        return runtimeNullSentinelInt
+    }
+    return fileMakeStringRaw(parent)
+}
+
+@_cdecl("kk_file_length")
+public func kk_file_length(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_length received invalid File handle")
+    }
+    guard let attrs = try? FileManager.default.attributesOfItem(atPath: file.path),
+          let size = attrs[.size] as? Int else {
+        return 0
+    }
+    return size
+}
+
+@_cdecl("kk_file_lastModified")
+public func kk_file_lastModified(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_lastModified received invalid File handle")
+    }
+    guard let attrs = try? FileManager.default.attributesOfItem(atPath: file.path),
+          let modDate = attrs[.modificationDate] as? Date else {
+        return 0
+    }
+    // Kotlin returns milliseconds since epoch (Long)
+    return Int(modDate.timeIntervalSince1970 * 1000)
+}
+
+@_cdecl("kk_file_createNewFile")
+public func kk_file_createNewFile(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_createNewFile received invalid File handle")
+    }
+    if FileManager.default.fileExists(atPath: file.path) {
+        return kk_box_bool(0) // false: file already exists
+    }
+    let created = FileManager.default.createFile(atPath: file.path, contents: nil)
+    return kk_box_bool(created ? 1 : 0)
+}
+
+@_cdecl("kk_file_canRead")
+public func kk_file_canRead(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_canRead received invalid File handle")
+    }
+    return kk_box_bool(FileManager.default.isReadableFile(atPath: file.path) ? 1 : 0)
+}
+
+@_cdecl("kk_file_canWrite")
+public func kk_file_canWrite(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_canWrite received invalid File handle")
+    }
+    return kk_box_bool(FileManager.default.isWritableFile(atPath: file.path) ? 1 : 0)
+}
+
+@_cdecl("kk_file_canExecute")
+public func kk_file_canExecute(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_canExecute received invalid File handle")
+    }
+    return kk_box_bool(FileManager.default.isExecutableFile(atPath: file.path) ? 1 : 0)
 }
 
 // MARK: - STDLIB-322: File line-by-line operations
@@ -642,10 +753,83 @@ public func kk_input_stream_read_bytes(_ streamRaw: Int, _ bytesRaw: Int, _ outT
     return stream.read(into: list)
 }
 
+@_cdecl("kk_input_stream_mark")
+public func kk_input_stream_mark(_ streamRaw: Int, _ readLimitRaw: Int) -> Int {
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_mark received invalid InputStream handle")
+    }
+    stream.mark(readLimit: readLimitRaw)
+    return 0
+}
+
+@_cdecl("kk_input_stream_reset")
+public func kk_input_stream_reset(_ streamRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_reset received invalid InputStream handle")
+    }
+    if !stream.reset() {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: mark/reset not supported")
+    }
+    return 0
+}
+
+@_cdecl("kk_input_stream_mark_supported")
+public func kk_input_stream_mark_supported(_ streamRaw: Int) -> Int {
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_mark_supported received invalid InputStream handle")
+    }
+    return kk_box_bool(stream.markSupported() ? 1 : 0)
+}
+
 @_cdecl("kk_input_stream_close")
 public func kk_input_stream_close(_ streamRaw: Int) -> Int {
     guard let stream = runtimeInputStreamBox(from: streamRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_close received invalid InputStream handle")
+    }
+    stream.close()
+    return 0
+}
+
+// MARK: - SequenceInputStream (STDLIB-IO-092)
+
+private func runtimeSequenceInputStreamBox(from raw: Int) -> RuntimeSequenceInputStreamBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeSequenceInputStreamBox.self)
+}
+
+@_cdecl("kk_sequence_input_stream_new")
+public func kk_sequence_input_stream_new(_ firstRaw: Int, _ secondRaw: Int) -> Int {
+    guard let first = runtimeInputStreamBox(from: firstRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_input_stream_new: invalid first InputStream handle")
+    }
+    guard let second = runtimeInputStreamBox(from: secondRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_input_stream_new: invalid second InputStream handle")
+    }
+    return registerRuntimeObject(RuntimeSequenceInputStreamBox(first: first, second: second))
+}
+
+@_cdecl("kk_sequence_input_stream_read")
+public func kk_sequence_input_stream_read(_ streamRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let stream = runtimeSequenceInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_input_stream_read received invalid SequenceInputStream handle")
+    }
+    return stream.readByte()
+}
+
+@_cdecl("kk_sequence_input_stream_available")
+public func kk_sequence_input_stream_available(_ streamRaw: Int) -> Int {
+    guard let stream = runtimeSequenceInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_input_stream_available received invalid SequenceInputStream handle")
+    }
+    return stream.available()
+}
+
+@_cdecl("kk_sequence_input_stream_close")
+public func kk_sequence_input_stream_close(_ streamRaw: Int) -> Int {
+    guard let stream = runtimeSequenceInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_input_stream_close received invalid SequenceInputStream handle")
     }
     stream.close()
     return 0

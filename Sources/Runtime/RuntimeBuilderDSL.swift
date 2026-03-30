@@ -123,6 +123,15 @@ private final class RuntimeBuilderState: @unchecked Sendable {
         }
     }
 
+    func appendListElements(_ values: [Int]) {
+        withThreadState { state in
+            guard !state.listFrames.isEmpty else {
+                return
+            }
+            state.listFrames[state.listFrames.count - 1].elements.append(contentsOf: values)
+        }
+    }
+
     func pushSetFrame() -> Bool {
         withThreadState { state in
             guard state.setFrames.count < maxDepth else {
@@ -148,6 +157,21 @@ private final class RuntimeBuilderState: @unchecked Sendable {
             let key = RuntimeElementKey(value: value)
             if state.setFrames[index].elements.insert(key).inserted {
                 state.setFrames[index].insertionOrder.append(value)
+            }
+        }
+    }
+
+    func addSetElements(_ values: [Int]) {
+        withThreadState { state in
+            guard !state.setFrames.isEmpty else {
+                return
+            }
+            let index = state.setFrames.count - 1
+            for value in values {
+                let key = RuntimeElementKey(value: value)
+                if state.setFrames[index].elements.insert(key).inserted {
+                    state.setFrames[index].insertionOrder.append(value)
+                }
             }
         }
     }
@@ -292,6 +316,18 @@ public func kk_builder_list_add(_ elem: Int) -> Int {
     return 0
 }
 
+@_cdecl("kk_builder_list_addAll")
+public func kk_builder_list_addAll(_ collectionRaw: Int) -> Int {
+    var elements: [Int] = []
+    if let listBox = runtimeListBox(from: collectionRaw) {
+        elements = listBox.elements
+    } else if let setBox = runtimeSetBox(from: collectionRaw) {
+        elements = setBox.elements
+    }
+    runtimeBuilderState.appendListElements(elements)
+    return 0
+}
+
 @_cdecl("kk_build_list")
 public func kk_build_list(_ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -331,6 +367,18 @@ public func kk_build_list_with_capacity(
 @_cdecl("kk_builder_set_add")
 public func kk_builder_set_add(_ elem: Int) -> Int {
     runtimeBuilderState.addSetElement(elem)
+    return 0
+}
+
+@_cdecl("kk_builder_set_addAll")
+public func kk_builder_set_addAll(_ collectionRaw: Int) -> Int {
+    var elements: [Int] = []
+    if let listBox = runtimeListBox(from: collectionRaw) {
+        elements = listBox.elements
+    } else if let setBox = runtimeSetBox(from: collectionRaw) {
+        elements = setBox.elements
+    }
+    runtimeBuilderState.addSetElements(elements)
     return 0
 }
 
