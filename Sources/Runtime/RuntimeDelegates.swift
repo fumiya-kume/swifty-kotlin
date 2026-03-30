@@ -160,10 +160,12 @@ public func kk_kproperty_stub_visibility(_ handle: Int) -> Int {
         return runtimeNullSentinelInt
     }
     if stub.visibility == 0 {
-        if defaultKPropertyVisibilityPublicString == 0 {
-            defaultKPropertyVisibilityPublicString = kk_kproperty_stub_make_string("PUBLIC")
+        return runtimeStorage.withLock { _ in
+            if defaultKPropertyVisibilityPublicString == 0 {
+                defaultKPropertyVisibilityPublicString = kk_kproperty_stub_make_string("PUBLIC")
+            }
+            return defaultKPropertyVisibilityPublicString
         }
-        return defaultKPropertyVisibilityPublicString
     }
     return stub.visibility
 }

@@ -759,10 +759,7 @@ private func runtimeSignatureTransform(
         }
         var error: Unmanaged<CFError>?
         let verified = SecKeyVerifySignature(publicKey.secKey, secAlgorithm, messageData as CFData, runtimeMakeData(signatureBytes) as CFData, &error)
-        if error != nil {
-            runtimeSetThrown(outThrown, message: runtimeSecurityErrorMessage("SignatureException", error: error))
-            return nil
-        }
+        if let error { error.release() }
         return verified ? 1 : 0
     }
 }
