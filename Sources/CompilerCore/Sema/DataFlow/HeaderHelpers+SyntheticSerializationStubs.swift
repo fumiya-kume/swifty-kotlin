@@ -119,7 +119,7 @@ extension DataFlowSemaPhase {
 
         // Also register the Json.Default property on the companion
         let defaultName = interner.intern("Default")
-        let defaultFQName = ownerInfo.fqName + [defaultName, defaultName]
+        let defaultFQName = companionFQName + [defaultName]
         if symbols.lookup(fqName: defaultFQName) == nil {
             let defaultSymbol = symbols.define(
                 kind: .property,
