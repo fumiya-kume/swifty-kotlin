@@ -1,6 +1,7 @@
 class Context(val prefix: String)
 
 class Greeter {
+    context(Context)
     fun run() {
         println(message())
         println(secondary())
