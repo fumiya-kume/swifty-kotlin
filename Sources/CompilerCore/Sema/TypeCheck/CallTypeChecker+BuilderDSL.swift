@@ -736,7 +736,6 @@ extension CallTypeChecker {
             visibility: .public,
             flags: [.synthetic]
         )
-        }
     }
 
     private func sequenceBuilderElementType(
@@ -766,18 +765,45 @@ extension CallTypeChecker {
             yielded: &yieldedExprs,
             yieldedCollections: &yieldedCollectionExprs
         )
-        var elementTypes: [TypeID] = yieldedExprs.compactMap { exprID in
-            let inferredType = sema.bindings.exprType(for: exprID)
-            guard let inferredType, inferredType != sema.types.errorType else {
-                return nil
+        // Pre-infer yield argument types when they are not yet in the binding table.
+        // This breaks the chicken-and-egg: the lambda body hasn't been fully type-checked
+        // yet, so we run a lightweight inference pass on each yield argument before
+        // using them to determine the element type T for SequenceScope<T>.
+        // We use a snapshot/truncate pattern on the diagnostic engine so that
+        // speculative errors (e.g. unresolved loop variables) are discarded.
+        var previewLocals = locals
+        let diagnosticEngine = ctx.semaCtx.diagnostics
+        var elementTypes: [TypeID] = []
+        for exprID in yieldedExprs {
+            if let cached = sema.bindings.exprType(for: exprID),
+               cached != sema.types.errorType {
+                elementTypes.append(cached)
+                continue
             }
-            return inferredType
+            let snapshot = diagnosticEngine.count
+            let inferredType = driver.inferExpr(exprID, ctx: ctx, locals: &previewLocals)
+            if inferredType == sema.types.errorType {
+                diagnosticEngine.truncate(to: snapshot)
+                continue
+            }
+            // Discard any spurious diagnostics emitted during speculative inference
+            // (e.g. "unresolved reference" for loop variables not yet in scope).
+            diagnosticEngine.truncate(to: snapshot)
+            elementTypes.append(inferredType)
         }
         for exprID in yieldedCollectionExprs {
-            guard let inferredType = sema.bindings.exprType(for: exprID),
-                  inferredType != sema.types.errorType
-            else {
-                continue
+            let inferredType: TypeID
+            if let cached = sema.bindings.exprType(for: exprID),
+               cached != sema.types.errorType {
+                inferredType = cached
+            } else {
+                let snapshot = diagnosticEngine.count
+                let preInferred = driver.inferExpr(exprID, ctx: ctx, locals: &previewLocals)
+                diagnosticEngine.truncate(to: snapshot)
+                guard preInferred != sema.types.errorType else {
+                    continue
+                }
+                inferredType = preInferred
             }
             if let elementType = sequenceBuilderCollectionElementType(
                 inferredType,
@@ -800,12 +826,21 @@ extension CallTypeChecker {
     ) -> TypeID? {
         guard let expectedType,
               case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(expectedType)),
-              let symbol = sema.symbols.symbol(classType.classSymbol),
-              symbol.fqName == [
-                  interner.intern("kotlin"),
-                  interner.intern("sequences"),
-                  interner.intern("Sequence"),
-              ],
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return nil
+        }
+        let sequenceFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("sequences"),
+            interner.intern("Sequence"),
+        ]
+        let iteratorFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Iterator"),
+        ]
+        guard symbol.fqName == sequenceFQName || symbol.fqName == iteratorFQName,
               let firstArg = classType.args.first
         else {
             return nil
@@ -971,3 +1006,4 @@ extension CallTypeChecker {
             break
         }
     }
+}

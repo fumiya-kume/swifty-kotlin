@@ -1,10 +1,4 @@
-// SKIP-DIFF
 // STDLIB-331/564: iterator {} builder
-// Currently blocked on builder DSL type inference for SequenceScope<T> receiver.
-// The runtime infrastructure (kk_iterator_builder_build, kk_iterator_builder_yield,
-// kk_iterator_builder_hasNext, kk_iterator_builder_next) is implemented and tested
-// at the unit level. End-to-end compilation depends on the type inference fix for
-// generic builder lambdas with receiver types (shared with sequence {} builder).
 fun main() {
     val iter = iterator {
         yield(10)
