@@ -726,12 +726,12 @@ public func kk_regex_matches(_ regexRaw: Int, _ inputRaw: Int) -> Int {
     let anchoredPattern = "\\A(?:\(regexBox.regex.pattern))\\z"
     // Remove .anchorsMatchLines so that \A/\z always bind to string boundaries,
     // not line boundaries.
-    // Remove .ignoreMetacharacters so that \A, (?:...), and \z in the anchored
-    // wrapper are interpreted as real regex syntax, not literal characters.
-    // The original LITERAL semantics are already baked into regexBox.regex.pattern
-    // (the escaped form stored by NSRegularExpression).
-    var anchoredOptions = regexBox.regex.options.subtracting(.anchorsMatchLines)
-    anchoredOptions.remove(.ignoreMetacharacters)
+    // NOTE: Do NOT remove .ignoreMetacharacters here. NSRegularExpression.pattern
+    // returns the original pattern string as passed to the initializer; the
+    // .ignoreMetacharacters flag is applied internally by the matching engine and
+    // is NOT baked into the stored pattern. Stripping the flag would cause LITERAL
+    // regex patterns to have their metacharacters re-interpreted as regex syntax.
+    let anchoredOptions = regexBox.regex.options.subtracting(.anchorsMatchLines)
     guard let anchoredRegex = try? NSRegularExpression(
         pattern: anchoredPattern,
         options: anchoredOptions
