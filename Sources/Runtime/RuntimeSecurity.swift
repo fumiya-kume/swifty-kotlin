@@ -805,7 +805,11 @@ private func runtimeSignatureTransform(
         // return false in that case. Only treat the error as fatal when the key operation itself
         // failed but verified is still true (which would be contradictory); in practice we just
         // ignore the error and rely on the bool result, matching the Java Signature.verify() contract.
-        return verified ? 1 : 0
+        if !verified {
+            error?.release()
+            return 0
+        }
+        return 1
     }
 }
 
