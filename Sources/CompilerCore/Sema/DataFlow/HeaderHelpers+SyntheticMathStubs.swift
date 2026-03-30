@@ -627,8 +627,10 @@ extension DataFlowSemaPhase {
                     declSite: nil,
                     visibility: .public,
                     flags: [.synthetic]
-            )
+                )
+            }
         }
+        return fqName
     }
 
     private func registerSyntheticMathTopLevelProperty(
@@ -662,7 +664,5 @@ extension DataFlowSemaPhase {
         }
         symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
         symbols.setPropertyType(returnType, for: propertySymbol)
-    }
-        return fqName
     }
 }
