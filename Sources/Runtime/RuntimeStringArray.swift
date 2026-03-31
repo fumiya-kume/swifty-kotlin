@@ -570,6 +570,31 @@ public func kk_kclass_register_metadata(
     _ memberCount: Int,
     _ constructorCount: Int
 ) -> Int {
+    return kk_kclass_register_metadata_v2(
+        typeToken, qualifiedNameRaw, simpleNameRaw, supertypeNameRaw,
+        flags, fieldCount, memberCount, constructorCount, 0, 0
+    )
+}
+
+/// STDLIB-REFLECT-060: Extended metadata registration with visibility and type parameter count.
+/// - visibilityRaw: Runtime string pointer for visibility ("PUBLIC", "INTERNAL", etc.), 0 if unknown.
+/// - typeParameterCount: Number of type parameters on the class.
+/// Flags bit layout: bit 0=dataClass, bit 1=sealedClass, bit 2=valueClass,
+///   bit 3=interface, bit 4=object, bit 5=enumClass, bit 6=annotationClass,
+///   bit 7=abstract, bit 8=final, bit 9=open.
+@_cdecl("kk_kclass_register_metadata_v2")
+public func kk_kclass_register_metadata_v2(
+    _ typeToken: Int,
+    _ qualifiedNameRaw: Int,
+    _ simpleNameRaw: Int,
+    _ supertypeNameRaw: Int,
+    _ flags: Int,
+    _ fieldCount: Int,
+    _ memberCount: Int,
+    _ constructorCount: Int,
+    _ visibilityRaw: Int,
+    _ typeParameterCount: Int
+) -> Int {
     let qualifiedName = extractString(from: UnsafeMutableRawPointer(bitPattern: qualifiedNameRaw)) ?? "Unknown"
     let simpleName = extractString(from: UnsafeMutableRawPointer(bitPattern: simpleNameRaw)) ?? "Unknown"
     let supertypeName: String?
@@ -577,6 +602,15 @@ public func kk_kclass_register_metadata(
         supertypeName = extractString(from: UnsafeMutableRawPointer(bitPattern: supertypeNameRaw))
     } else {
         supertypeName = nil
+    }
+
+    let visibility: String
+    if visibilityRaw != 0, visibilityRaw != runtimeNullSentinelInt,
+       let visStr = extractString(from: UnsafeMutableRawPointer(bitPattern: visibilityRaw))
+    {
+        visibility = visStr
+    } else {
+        visibility = "PUBLIC"
     }
 
     let entry = RuntimeKClassMetadataEntry(
@@ -593,7 +627,11 @@ public func kk_kclass_register_metadata(
         isAbstract: (flags & (1 << 7)) != 0,
         fieldCount: fieldCount,
         memberCount: memberCount,
-        constructorCount: constructorCount
+        constructorCount: constructorCount,
+        isFinal: (flags & (1 << 8)) != 0,
+        isOpen: (flags & (1 << 9)) != 0,
+        visibility: visibility,
+        typeParameterCount: typeParameterCount
     )
     runtimeKClassMetadataRegistry.register(typeToken: typeToken, entry: entry)
     return 0
@@ -667,6 +705,73 @@ public func kk_kclass_is_abstract(_ kclassRaw: Int) -> Int {
         return 0
     }
     return metadata.isAbstract ? 1 : 0
+}
+
+// MARK: - STDLIB-REFLECT-060: KClass basic reflection features
+
+/// Returns 1 if the KClass represents a final class, 0 otherwise.
+/// A class is final if it is not abstract, not open, and not an interface.
+@_cdecl("kk_kclass_is_final")
+public func kk_kclass_is_final(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return 0
+    }
+    return metadata.isFinal ? 1 : 0
+}
+
+/// Returns 1 if the KClass represents an open class, 0 otherwise.
+@_cdecl("kk_kclass_is_open")
+public func kk_kclass_is_open(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return 0
+    }
+    return metadata.isOpen ? 1 : 0
+}
+
+/// Returns the visibility of this KClass as a runtime string ("PUBLIC", "INTERNAL", "PRIVATE", "PROTECTED").
+/// Returns null sentinel if unknown.
+@_cdecl("kk_kclass_visibility")
+public func kk_kclass_visibility(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return runtimeNullSentinelInt
+    }
+    let utf8 = Array(metadata.visibility.utf8)
+    return utf8.withUnsafeBufferPointer { buf in
+        Int(bitPattern: kk_string_from_utf8(buf.baseAddress!, Int32(buf.count)))
+    }
+}
+
+/// Returns the type parameters of this KClass as a runtime list.
+/// Each element is an integer representing the type parameter index.
+/// Returns an empty list if no type parameters.
+@_cdecl("kk_kclass_type_parameters")
+public func kk_kclass_type_parameters(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let count = max(0, metadata.typeParameterCount)
+    let indices = (0..<count).map { $0 }
+    return registerRuntimeObject(RuntimeListBox(elements: indices))
+}
+
+/// Returns the supertypes of this KClass as a runtime list of strings.
+/// Currently returns a list with the single supertype name if present.
+@_cdecl("kk_kclass_supertypes")
+public func kk_kclass_supertypes(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata,
+          let superName = metadata.supertypeName else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let utf8 = Array(superName.utf8)
+    let nameRaw = utf8.withUnsafeBufferPointer { buf in
+        Int(bitPattern: kk_string_from_utf8(buf.baseAddress!, Int32(buf.count)))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: [nameRaw]))
 }
 
 /// Returns the supertype name as a runtime string pointer, or null sentinel if none.
