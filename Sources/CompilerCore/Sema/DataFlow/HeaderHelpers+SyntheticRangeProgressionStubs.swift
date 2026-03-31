@@ -194,9 +194,27 @@ extension DataFlowSemaPhase {
         )
 
         let listType = syntheticListType(elementType: elementType, symbols: symbols, types: types, interner: interner)
-        let firstLastRuntime = name == "ULongProgression" ? ("kk_ulong_range_first", "kk_ulong_range_last") : ("kk_range_first", "kk_range_last")
-        let stepRuntime = name == "ULongProgression" ? "kk_ulong_range_step" : "kk_range_step"
-        let isEmptyRuntime = name == "ULongProgression" ? "kk_ulong_range_isEmpty" : "kk_range_isEmpty"
+        let firstLastRuntime: (String, String)
+        switch name {
+        case "UIntProgression":
+            firstLastRuntime = ("kk_uint_range_first", "kk_uint_range_last")
+        case "ULongProgression":
+            firstLastRuntime = ("kk_ulong_range_first", "kk_ulong_range_last")
+        default:
+            firstLastRuntime = ("kk_range_first", "kk_range_last")
+        }
+        let stepRuntime: String
+        switch name {
+        case "UIntProgression": stepRuntime = "kk_uint_range_step"
+        case "ULongProgression": stepRuntime = "kk_ulong_range_step"
+        default: stepRuntime = "kk_range_step"
+        }
+        let isEmptyRuntime: String
+        switch name {
+        case "UIntProgression": isEmptyRuntime = "kk_uint_range_isEmpty"
+        case "ULongProgression": isEmptyRuntime = "kk_ulong_range_isEmpty"
+        default: isEmptyRuntime = "kk_range_isEmpty"
+        }
         let reversedRuntime: String
         let toListRuntime: String
         switch name {

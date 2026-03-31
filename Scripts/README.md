@@ -95,6 +95,12 @@ Emit a machine-readable report (TSV) for CI tooling:
 bash Scripts/diff_kotlinc.sh --report /tmp/diff_report.tsv Scripts/diff_cases
 ```
 
+Omit `PASS` lines in logs (CI uses `DIFF_LOG_PASS=0`):
+
+```bash
+DIFF_LOG_PASS=0 bash Scripts/diff_kotlinc.sh Scripts/diff_cases
+```
+
 You can control parallel execution:
 
 ```bash

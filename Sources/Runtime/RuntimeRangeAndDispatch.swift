@@ -1245,6 +1245,222 @@ public func kk_uint_range_toList(_ rangeRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: elements))
 }
 
+// MARK: - UIntRange properties and HOFs (STDLIB-RANGE-036)
+
+@_cdecl("kk_uint_range_contains")
+public func kk_uint_range_contains(_ rangeRaw: Int, _ value: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_contains")
+    }
+    let first = UInt(bitPattern: range.first)
+    let last = UInt(bitPattern: range.last)
+    let uValue = UInt(bitPattern: value)
+    let rawStep = range.step
+    if rawStep > 0 {
+        let uStep = UInt(bitPattern: rawStep)
+        guard first <= uValue && uValue <= last else { return 0 }
+        return (uValue - first) % uStep == 0 ? 1 : 0
+    } else if rawStep < 0 {
+        let uStep = UInt(bitPattern: -rawStep)
+        guard last <= uValue && uValue <= first else { return 0 }
+        return (first - uValue) % uStep == 0 ? 1 : 0
+    }
+    return 0
+}
+
+@_cdecl("kk_uint_range_isEmpty")
+public func kk_uint_range_isEmpty(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_isEmpty")
+    }
+    let first = UInt(bitPattern: range.first)
+    let last = UInt(bitPattern: range.last)
+    if range.step > 0 {
+        return first > last ? 1 : 0
+    } else if range.step < 0 {
+        return first < last ? 1 : 0
+    }
+    return 1
+}
+
+@_cdecl("kk_uint_range_first")
+public func kk_uint_range_first(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_first")
+    }
+    return range.first
+}
+
+@_cdecl("kk_uint_range_last")
+public func kk_uint_range_last(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_last")
+    }
+    return range.last
+}
+
+@_cdecl("kk_uint_range_step")
+public func kk_uint_range_step(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_step")
+    }
+    return range.step
+}
+
+@_cdecl("kk_uint_range_count")
+public func kk_uint_range_count(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_count")
+    }
+    let first = UInt(bitPattern: range.first)
+    let last = UInt(bitPattern: range.last)
+    if range.step > 0 {
+        guard first <= last else { return 0 }
+        let uStep = UInt(bitPattern: range.step)
+        return Int(bitPattern: (last - first) / uStep + 1)
+    } else if range.step < 0 {
+        guard first >= last else { return 0 }
+        let uStep = UInt(range.step.magnitude)
+        return Int(bitPattern: (first - last) / uStep + 1)
+    }
+    return 0
+}
+
+@_cdecl("kk_uint_range_sum")
+public func kk_uint_range_sum(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_sum")
+    }
+    var sum = UInt(0)
+    var current = UInt(bitPattern: range.first)
+    let last = UInt(bitPattern: range.last)
+    if range.step > 0 {
+        let uStep = UInt(bitPattern: range.step)
+        while current <= last {
+            sum &+= current
+            let (next, overflow) = current.addingReportingOverflow(uStep)
+            if overflow { break }
+            current = next
+        }
+    } else if range.step < 0 {
+        let uStep = UInt(range.step.magnitude)
+        while current >= last {
+            sum &+= current
+            let (next, overflow) = current.subtractingReportingOverflow(uStep)
+            if overflow { break }
+            current = next
+        }
+    }
+    return Int(bitPattern: sum)
+}
+
+@_cdecl("kk_uint_range_toUIntArray")
+public func kk_uint_range_toUIntArray(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_toUIntArray")
+    }
+    let firstUnsigned = UInt(bitPattern: range.first)
+    let lastUnsigned = UInt(bitPattern: range.last)
+    var elements: [Int] = []
+    var current = firstUnsigned
+
+    if range.step > 0 {
+        let uStep = UInt(bitPattern: range.step)
+        while current <= lastUnsigned {
+            elements.append(Int(bitPattern: current))
+            let (next, overflow) = current.addingReportingOverflow(uStep)
+            if overflow { break }
+            current = next
+        }
+    } else if range.step < 0 {
+        let uStep = UInt(range.step.magnitude)
+        while current >= lastUnsigned {
+            elements.append(Int(bitPattern: current))
+            let (next, overflow) = current.subtractingReportingOverflow(uStep)
+            if overflow { break }
+            current = next
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
+@_cdecl("kk_uint_range_forEach")
+public func kk_uint_range_forEach(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                  _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_forEach")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var current = UInt(bitPattern: range.first)
+    let last = UInt(bitPattern: range.last)
+    if range.step > 0 {
+        let uStep = UInt(bitPattern: range.step)
+        while current <= last {
+            var thrown = 0
+            _ = lambda(closureRaw, Int(bitPattern: current), &thrown)
+            if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+            let (next, overflow) = current.addingReportingOverflow(uStep)
+            if overflow { break }
+            current = next
+        }
+    } else if range.step < 0 {
+        let uStep = UInt(range.step.magnitude)
+        while current >= last {
+            var thrown = 0
+            _ = lambda(closureRaw, Int(bitPattern: current), &thrown)
+            if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+            let (next, overflow) = current.subtractingReportingOverflow(uStep)
+            if overflow { break }
+            current = next
+        }
+    }
+    return 0
+}
+
+@_cdecl("kk_uint_range_map")
+public func kk_uint_range_map(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                              _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_map")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mapped: [Int] = []
+    var current = UInt(bitPattern: range.first)
+    let last = UInt(bitPattern: range.last)
+    if range.step > 0 {
+        let uStep = UInt(bitPattern: range.step)
+        while current <= last {
+            var thrown = 0
+            let result = lambda(closureRaw, Int(bitPattern: current), &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return registerRuntimeObject(RuntimeListBox(elements: []))
+            }
+            mapped.append(result)
+            let (next, overflow) = current.addingReportingOverflow(uStep)
+            if overflow { break }
+            current = next
+        }
+    } else if range.step < 0 {
+        let uStep = UInt(range.step.magnitude)
+        while current >= last {
+            var thrown = 0
+            let result = lambda(closureRaw, Int(bitPattern: current), &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return registerRuntimeObject(RuntimeListBox(elements: []))
+            }
+            mapped.append(result)
+            let (next, overflow) = current.subtractingReportingOverflow(uStep)
+            if overflow { break }
+            current = next
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
 // MARK: - ULongProgression operations (STDLIB-RANGE-039)
 
 @_cdecl("kk_ulong_rangeTo")

@@ -1,0 +1,25 @@
+name: Setup Swift and LLVM (Ubuntu)
+description: Install Swift toolchain and LLVM dev packages; set C_INCLUDE_PATH and LIBRARY_PATH for the job.
+
+inputs:
+  swift-version:
+    description: Swift version string for swift-actions/setup-swift
+    required: false
+    default: "6.2"
+
+runs:
+  using: composite
+  steps:
+    - name: Install Swift
+      uses: swift-actions/setup-swift@v2
+      with:
+        swift-version: ${{ inputs.swift-version }}
+    - name: Install LLVM
+      shell: bash
+      run: sudo apt-get update && sudo apt-get install -y llvm-dev
+    - name: Configure LLVM paths
+      shell: bash
+      run: |
+        LLVM_PREFIX="$(llvm-config --prefix)"
+        echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
+        echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"

@@ -462,20 +462,18 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        registerSyntheticMathTopLevelFunction(
+        registerSyntheticMathTopLevelProperty(
             named: "PI",
             packageFQName: kotlinMathPkg,
-            parameters: [],
             returnType: types.doubleType,
             externalLinkName: "kk_math_PI",
             symbols: symbols,
             interner: interner
         )
 
-        registerSyntheticMathTopLevelFunction(
+        registerSyntheticMathTopLevelProperty(
             named: "E",
             packageFQName: kotlinMathPkg,
-            parameters: [],
             returnType: types.doubleType,
             externalLinkName: "kk_math_E",
             symbols: symbols,
@@ -633,5 +631,38 @@ extension DataFlowSemaPhase {
             }
         }
         return fqName
+    }
+
+    private func registerSyntheticMathTopLevelProperty(
+        named name: String,
+        packageFQName: [InternedString],
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = packageFQName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            symbols.setPropertyType(returnType, for: existing)
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+        symbols.setPropertyType(returnType, for: propertySymbol)
     }
 }

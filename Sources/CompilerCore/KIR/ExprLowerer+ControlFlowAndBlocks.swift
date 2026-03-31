@@ -1894,16 +1894,39 @@ extension ExprLowerer {
                 propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions
             )
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? boolType)
-            appendContainsCall(
-                exprID: exprID,
-                elementID: lhsID,
-                containerID: rhsID,
-                resultID: result,
-                sema: sema,
-                arena: arena,
-                interner: interner,
-                instructions: &instructions
-            )
+            let rhsType = sema.bindings.exprTypes[rhsExpr]
+            if let rhsType = rhsType,
+               sema.types.makeNonNullable(rhsType) == sema.types.uintType {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_uint_range_contains"),
+                    arguments: [rhsID, lhsID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            } else if let rhsType = rhsType,
+                      (sema.bindings.isULongRangeExpr(rhsExpr) || sema.types.makeNonNullable(rhsType) == sema.types.ulongType) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_ulong_range_contains"),
+                    arguments: [rhsID, lhsID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            } else {
+                appendContainsCall(
+                    exprID: exprID,
+                    elementID: lhsID,
+                    containerID: rhsID,
+                    resultID: result,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
+            }
             return result
 
         case let .notInExpr(lhsExpr, rhsExpr, _):
@@ -1915,17 +1938,39 @@ extension ExprLowerer {
                 rhsExpr, ast: ast, sema: sema, arena: arena, interner: interner,
                 propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions
             )
+            let notInRhsType = sema.bindings.exprTypes[rhsExpr]
+            let notInContainsCallee: String
+            if let notInRhsType = notInRhsType,
+               sema.types.makeNonNullable(notInRhsType) == sema.types.uintType {
+                notInContainsCallee = "kk_uint_range_contains"
+            } else if let notInRhsType = notInRhsType,
+                      (sema.bindings.isULongRangeExpr(rhsExpr) || sema.types.makeNonNullable(notInRhsType) == sema.types.ulongType) {
+                notInContainsCallee = "kk_ulong_range_contains"
+            } else {
+                notInContainsCallee = "kk_op_contains"
+            }
             let containsResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
-            appendContainsCall(
-                exprID: exprID,
-                elementID: lhsID,
-                containerID: rhsID,
-                resultID: containsResult,
-                sema: sema,
-                arena: arena,
-                interner: interner,
-                instructions: &instructions
-            )
+            if notInContainsCallee == "kk_uint_range_contains" || notInContainsCallee == "kk_ulong_range_contains" {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern(notInContainsCallee),
+                    arguments: [rhsID, lhsID],
+                    result: containsResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            } else {
+                appendContainsCall(
+                    exprID: exprID,
+                    elementID: lhsID,
+                    containerID: rhsID,
+                    resultID: containsResult,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
+            }
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? boolType)
             let falseValue = arena.appendExpr(.boolLiteral(false), type: boolType)
             instructions.append(.constValue(result: falseValue, value: .boolLiteral(false)))

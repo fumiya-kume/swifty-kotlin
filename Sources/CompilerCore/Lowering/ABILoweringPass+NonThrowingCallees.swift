@@ -275,6 +275,17 @@ extension ABILoweringPass {
             interner.intern("kk_range_step"),
             interner.intern("kk_range_reversed"),
             interner.intern("kk_char_range_toList"),
+            // UIntRange properties and HOFs (STDLIB-RANGE-036)
+            interner.intern("kk_uint_range_contains"),
+            interner.intern("kk_uint_range_isEmpty"),
+            interner.intern("kk_uint_range_first"),
+            interner.intern("kk_uint_range_last"),
+            interner.intern("kk_uint_range_step"),
+            interner.intern("kk_uint_range_count"),
+            interner.intern("kk_uint_range_sum"),
+            interner.intern("kk_uint_range_toUIntArray"),
+            interner.intern("kk_uint_range_reversed"),
+            interner.intern("kk_uint_range_toList"),
             // kk_property_access removed — PropertyLowering now emits direct accessor
             // calls with synthetic symbols; canThrow is handled via symbol check below.
             interner.intern("kk_lambda_invoke"),
