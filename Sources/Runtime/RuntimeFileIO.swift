@@ -897,10 +897,36 @@ private func runtimePathBox(from raw: Int) -> RuntimePathBox? {
     return tryCast(ptr, to: RuntimePathBox.self)
 }
 
+final class RuntimeFileTimeBox {
+    let milliseconds: Int
+
+    init(milliseconds: Int) {
+        self.milliseconds = milliseconds
+    }
+}
+
+private func runtimeFileTimeBox(from raw: Int) -> RuntimeFileTimeBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeFileTimeBox.self)
+}
+
+private func runtimeFileIOStringArgument(_ raw: Int, caller: StaticString) -> String {
+    if let string = extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) {
+        return string
+    }
+    if let ptr = UnsafePointer<CChar>(bitPattern: raw),
+       let string = String(validatingCString: ptr)
+    {
+        return string
+    }
+    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(caller) received invalid string handle")
+}
+
 /// Files.createFile(path) — creates a new empty file, returns the path.
 @_cdecl("kk_files_createFile")
-public func kk_files_createFile(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_files_createFile(_ filesRaw: Int, _ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
+    _ = filesRaw
     guard let path = runtimePathBox(from: pathRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_createFile received invalid Path handle")
     }
@@ -917,8 +943,9 @@ public func kk_files_createFile(_ pathRaw: Int, _ outThrown: UnsafeMutablePointe
 
 /// Files.delete(path) — deletes a file or empty directory.
 @_cdecl("kk_files_delete")
-public func kk_files_delete(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_files_delete(_ filesRaw: Int, _ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
+    _ = filesRaw
     guard let path = runtimePathBox(from: pathRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_delete received invalid Path handle")
     }
@@ -936,8 +963,9 @@ public func kk_files_delete(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<In
 
 /// Files.copy(source, target) — copies a file, returns the target path.
 @_cdecl("kk_files_copy")
-public func kk_files_copy(_ sourceRaw: Int, _ targetRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_files_copy(_ filesRaw: Int, _ sourceRaw: Int, _ targetRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
+    _ = filesRaw
     guard let source = runtimePathBox(from: sourceRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_copy received invalid source Path handle")
     }
@@ -954,8 +982,9 @@ public func kk_files_copy(_ sourceRaw: Int, _ targetRaw: Int, _ outThrown: Unsaf
 
 /// Files.move(source, target) — moves/renames a file, returns the target path.
 @_cdecl("kk_files_move")
-public func kk_files_move(_ sourceRaw: Int, _ targetRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_files_move(_ filesRaw: Int, _ sourceRaw: Int, _ targetRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
+    _ = filesRaw
     guard let source = runtimePathBox(from: sourceRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_move received invalid source Path handle")
     }
@@ -972,8 +1001,9 @@ public func kk_files_move(_ sourceRaw: Int, _ targetRaw: Int, _ outThrown: Unsaf
 
 /// Files.createDirectory(path) — creates a single directory, returns the path.
 @_cdecl("kk_files_createDirectory")
-public func kk_files_createDirectory(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_files_createDirectory(_ filesRaw: Int, _ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
+    _ = filesRaw
     guard let path = runtimePathBox(from: pathRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_createDirectory received invalid Path handle")
     }
@@ -987,8 +1017,9 @@ public func kk_files_createDirectory(_ pathRaw: Int, _ outThrown: UnsafeMutableP
 
 /// Files.createDirectories(path) — creates directory tree, returns the path.
 @_cdecl("kk_files_createDirectories")
-public func kk_files_createDirectories(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_files_createDirectories(_ filesRaw: Int, _ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
+    _ = filesRaw
     guard let path = runtimePathBox(from: pathRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_createDirectories received invalid Path handle")
     }
@@ -1002,8 +1033,9 @@ public func kk_files_createDirectories(_ pathRaw: Int, _ outThrown: UnsafeMutabl
 
 /// Files.size(path) — returns file size in bytes.
 @_cdecl("kk_files_size")
-public func kk_files_size(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_files_size(_ filesRaw: Int, _ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
+    _ = filesRaw
     guard let path = runtimePathBox(from: pathRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_size received invalid Path handle")
     }
@@ -1016,28 +1048,39 @@ public func kk_files_size(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>
     }
 }
 
-/// Files.lastModifiedTime(path) — returns modification time as millis since epoch.
-@_cdecl("kk_files_lastModifiedTime")
-public func kk_files_lastModifiedTime(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+/// Files.getLastModifiedTime(path) — returns the modification time as a FileTime.
+@_cdecl("kk_files_getLastModifiedTime")
+public func kk_files_getLastModifiedTime(_ filesRaw: Int, _ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
+    _ = filesRaw
     guard let path = runtimePathBox(from: pathRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_lastModifiedTime received invalid Path handle")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_getLastModifiedTime received invalid Path handle")
     }
     do {
         let attrs = try FileManager.default.attributesOfItem(atPath: path.pathString)
         guard let modDate = attrs[.modificationDate] as? Date else {
-            return 0
+            return registerRuntimeObject(RuntimeFileTimeBox(milliseconds: 0))
         }
-        return Int(modDate.timeIntervalSince1970 * 1000)
+        return registerRuntimeObject(RuntimeFileTimeBox(milliseconds: Int(modDate.timeIntervalSince1970 * 1000)))
     } catch {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
-        return 0
+        return registerRuntimeObject(RuntimeFileTimeBox(milliseconds: 0))
     }
+}
+
+/// FileTime.toMillis() — returns the stored epoch millis.
+@_cdecl("kk_fileTime_toMillis")
+public func kk_fileTime_toMillis(_ fileTimeRaw: Int) -> Int {
+    guard let fileTime = runtimeFileTimeBox(from: fileTimeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_fileTime_toMillis received invalid FileTime handle")
+    }
+    return fileTime.milliseconds
 }
 
 /// Files.isRegularFile(path) — returns true if the path is a regular file.
 @_cdecl("kk_files_isRegularFile")
-public func kk_files_isRegularFile(_ pathRaw: Int) -> Int {
+public func kk_files_isRegularFile(_ filesRaw: Int, _ pathRaw: Int) -> Int {
+    _ = filesRaw
     guard let path = runtimePathBox(from: pathRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_isRegularFile received invalid Path handle")
     }
@@ -1048,7 +1091,8 @@ public func kk_files_isRegularFile(_ pathRaw: Int) -> Int {
 
 /// Files.isDirectory(path) — returns true if the path is a directory.
 @_cdecl("kk_files_isDirectory")
-public func kk_files_isDirectory(_ pathRaw: Int) -> Int {
+public func kk_files_isDirectory(_ filesRaw: Int, _ pathRaw: Int) -> Int {
+    _ = filesRaw
     guard let path = runtimePathBox(from: pathRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_isDirectory received invalid Path handle")
     }
@@ -1059,7 +1103,8 @@ public func kk_files_isDirectory(_ pathRaw: Int) -> Int {
 
 /// Files.exists(path) — returns true if the path exists.
 @_cdecl("kk_files_exists")
-public func kk_files_exists(_ pathRaw: Int) -> Int {
+public func kk_files_exists(_ filesRaw: Int, _ pathRaw: Int) -> Int {
+    _ = filesRaw
     guard let path = runtimePathBox(from: pathRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_exists received invalid Path handle")
     }
@@ -1068,8 +1113,9 @@ public func kk_files_exists(_ pathRaw: Int) -> Int {
 
 /// Files.walk(path) — recursively walks the directory tree, returns List<Path>.
 @_cdecl("kk_files_walk")
-public func kk_files_walk(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_files_walk(_ filesRaw: Int, _ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
+    _ = filesRaw
     guard let path = runtimePathBox(from: pathRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_walk received invalid Path handle")
     }
@@ -1086,8 +1132,9 @@ public func kk_files_walk(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>
 
 /// Files.list(path) — lists direct children of a directory, returns List<Path>.
 @_cdecl("kk_files_list")
-public func kk_files_list(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_files_list(_ filesRaw: Int, _ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
+    _ = filesRaw
     guard let path = runtimePathBox(from: pathRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_list received invalid Path handle")
     }
@@ -1106,24 +1153,17 @@ public func kk_files_list(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>
 
 /// Files.newDirectoryStream(path) — alias for list(), returns List<Path>.
 @_cdecl("kk_files_newDirectoryStream")
-public func kk_files_newDirectoryStream(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    return kk_files_list(pathRaw, outThrown)
+public func kk_files_newDirectoryStream(_ filesRaw: Int, _ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    kk_files_list(filesRaw, pathRaw, outThrown)
 }
 
 /// Files.createTempFile(prefix, suffix) — creates a temporary file, returns Path.
 @_cdecl("kk_files_createTempFile")
-public func kk_files_createTempFile(_ prefixRaw: Int, _ suffixRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_files_createTempFile(_ filesRaw: Int, _ prefixRaw: Int, _ suffixRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    guard let prefixPtr = UnsafeMutableRawPointer(bitPattern: prefixRaw),
-          let prefix = extractString(from: prefixPtr)
-    else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_createTempFile received invalid prefix")
-    }
-    guard let suffixPtr = UnsafeMutableRawPointer(bitPattern: suffixRaw),
-          let suffix = extractString(from: suffixPtr)
-    else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_createTempFile received invalid suffix")
-    }
+    _ = filesRaw
+    let prefix = runtimeFileIOStringArgument(prefixRaw, caller: #function)
+    let suffix = runtimeFileIOStringArgument(suffixRaw, caller: #function)
     let tmpDir = NSTemporaryDirectory()
     let fileName = "\(prefix)\(UUID().uuidString)\(suffix)"
     let fullPath = (tmpDir as NSString).appendingPathComponent(fileName)
@@ -1137,13 +1177,10 @@ public func kk_files_createTempFile(_ prefixRaw: Int, _ suffixRaw: Int, _ outThr
 
 /// Files.createTempDirectory(prefix) — creates a temporary directory, returns Path.
 @_cdecl("kk_files_createTempDirectory")
-public func kk_files_createTempDirectory(_ prefixRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_files_createTempDirectory(_ filesRaw: Int, _ prefixRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    guard let prefixPtr = UnsafeMutableRawPointer(bitPattern: prefixRaw),
-          let prefix = extractString(from: prefixPtr)
-    else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_createTempDirectory received invalid prefix")
-    }
+    _ = filesRaw
+    let prefix = runtimeFileIOStringArgument(prefixRaw, caller: #function)
     let tmpDir = NSTemporaryDirectory()
     let dirName = "\(prefix)\(UUID().uuidString)"
     let fullPath = (tmpDir as NSString).appendingPathComponent(dirName)

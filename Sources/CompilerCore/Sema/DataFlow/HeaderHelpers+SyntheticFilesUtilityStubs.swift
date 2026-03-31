@@ -3,7 +3,7 @@
 /// Covers:
 /// - File operations: `createFile()`, `delete()`, `copy()`, `move()`
 /// - Directory operations: `createDirectory()`, `createDirectories()`
-/// - File attributes: `size()`, `lastModifiedTime()`, `isRegularFile()`, `isDirectory()`, `exists()`
+/// - File attributes: `size()`, `getLastModifiedTime()`, `isRegularFile()`, `isDirectory()`, `exists()`
 /// - File search: `walk()`, `list()`, `newDirectoryStream()`
 /// - Temporary files: `createTempFile()`, `createTempDirectory()`
 ///
@@ -41,6 +41,14 @@ extension DataFlowSemaPhase {
         }
         let pathType = types.make(.classType(ClassType(
             classSymbol: pathSym, args: [], nullability: .nonNull
+        )))
+        let fileTimeSymbol = ensureFileTimeSymbol(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let fileTimeType = types.make(.classType(ClassType(
+            classSymbol: fileTimeSymbol, args: [], nullability: .nonNull
         )))
 
         // List<Path> type for walk/list/newDirectoryStream return
@@ -139,12 +147,12 @@ extension DataFlowSemaPhase {
         )
 
         registerFilesMemberFunction(
-            named: "lastModifiedTime",
-            externalLinkName: "kk_files_lastModifiedTime",
+            named: "getLastModifiedTime",
+            externalLinkName: "kk_files_getLastModifiedTime",
             ownerSymbol: filesSymbol,
             ownerType: filesType,
             parameters: [("path", pathType)],
-            returnType: types.longType,
+            returnType: fileTimeType,
             symbols: symbols,
             interner: interner
         )
@@ -305,6 +313,105 @@ extension DataFlowSemaPhase {
         return symbols.lookup(fqName: listFQName)
     }
 
+    private func ensureFileTimeSymbol(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> SymbolID {
+        let javaPkg = [interner.intern("java")]
+        if symbols.lookup(fqName: javaPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("java"),
+                fqName: javaPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        let javaNIOPkg = javaPkg + [interner.intern("nio")]
+        if symbols.lookup(fqName: javaNIOPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("nio"),
+                fqName: javaNIOPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        let javaNIOFilePkg = javaNIOPkg + [interner.intern("file")]
+        if symbols.lookup(fqName: javaNIOFilePkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("file"),
+                fqName: javaNIOFilePkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        let javaNIOFileAttributePkg = javaNIOFilePkg + [interner.intern("attribute")]
+        let javaNIOFileAttributePkgSymbol: SymbolID = if let existing = symbols.lookup(fqName: javaNIOFileAttributePkg) {
+            existing
+        } else {
+            symbols.define(
+                kind: .package,
+                name: interner.intern("attribute"),
+                fqName: javaNIOFileAttributePkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        let fileTimeName = interner.intern("FileTime")
+        let fileTimeFQName = javaNIOFileAttributePkg + [fileTimeName]
+        let fileTimeSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: fileTimeFQName) {
+            fileTimeSymbol = existing
+        } else {
+            let symbol = symbols.define(
+                kind: .class,
+                name: fileTimeName,
+                fqName: fileTimeFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(javaNIOFileAttributePkgSymbol, for: symbol)
+            fileTimeSymbol = symbol
+        }
+
+        let fileTimeType = types.make(.classType(ClassType(
+            classSymbol: fileTimeSymbol, args: [], nullability: .nonNull
+        )))
+        let toMillisName = interner.intern("toMillis")
+        let toMillisFQName = fileTimeFQName + [toMillisName]
+        if symbols.lookup(fqName: toMillisFQName) == nil {
+            let toMillisSymbol = symbols.define(
+                kind: .function,
+                name: toMillisName,
+                fqName: toMillisFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(fileTimeSymbol, for: toMillisSymbol)
+            symbols.setExternalLinkName("kk_fileTime_toMillis", for: toMillisSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: fileTimeType,
+                    parameterTypes: [],
+                    returnType: types.longType
+                ),
+                for: toMillisSymbol
+            )
+        }
+
+        return fileTimeSymbol
+    }
+
     private func registerFilesMemberFunction(
         named name: String,
         externalLinkName: String,
@@ -341,7 +448,7 @@ extension DataFlowSemaPhase {
             fqName: functionFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: [.synthetic, .static]
         )
         symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
         symbols.setExternalLinkName(externalLinkName, for: functionSymbol)

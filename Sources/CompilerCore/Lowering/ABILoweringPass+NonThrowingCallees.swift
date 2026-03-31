@@ -797,6 +797,7 @@ extension ABILoweringPass {
             interner.intern("kk_files_isRegularFile"),
             interner.intern("kk_files_isDirectory"),
             interner.intern("kk_files_exists"),
+            interner.intern("kk_fileTime_toMillis"),
             interner.intern("kk_uri_toString"),
             interner.intern("kk_uri_scheme"),
             interner.intern("kk_uri_authority"),

@@ -1,9 +1,9 @@
 import java.nio.file.Files
-import kotlin.io.path.Path
 
 fun main() {
     // --- createTempDirectory / exists / isDirectory ---
-    val tmpDir = Files.createTempDirectory("kswiftk_files_test_")
+    val tempDirPrefix = "kswiftk_files_test_" + System.currentTimeMillis()
+    val tmpDir = Files.createTempDirectory(tempDirPrefix)
     println(Files.exists(tmpDir))        // true
     println(Files.isDirectory(tmpDir))   // true
     println(Files.isRegularFile(tmpDir)) // false
@@ -15,9 +15,9 @@ fun main() {
     println(Files.isRegularFile(filePath)) // true
     println(Files.isDirectory(filePath))   // false
 
-    // --- size / lastModifiedTime ---
+    // --- size / getLastModifiedTime ---
     println(Files.size(filePath))              // 0
-    println(Files.lastModifiedTime(filePath) > 0) // true
+    println(Files.getLastModifiedTime(filePath).toMillis() > 0) // true
 
     // --- createDirectory ---
     val subDir = tmpDir.resolve("sub")
@@ -42,18 +42,20 @@ fun main() {
 
     // --- list ---
     val entries = Files.list(tmpDir)
-    println(entries.size > 0) // true
+    println(entries.toList().size > 0) // true
 
     // --- walk (recursive) ---
     val walked = Files.walk(tmpDir)
-    println(walked.size > 0) // true
+    println(walked.toList().size > 0) // true
 
     // --- newDirectoryStream ---
     val stream = Files.newDirectoryStream(tmpDir)
-    println(stream.size > 0) // true
+    println(stream.toList().size > 0) // true
 
     // --- createTempFile ---
-    val tempFile = Files.createTempFile("kswiftk_", ".tmp")
+    val tempFilePrefix = "kswiftk_" + System.currentTimeMillis()
+    val tempFileSuffix = "." + "tmp"
+    val tempFile = Files.createTempFile(tempFilePrefix, tempFileSuffix)
     println(Files.exists(tempFile))        // true
     println(Files.isRegularFile(tempFile)) // true
 
