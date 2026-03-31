@@ -692,19 +692,6 @@ private func makeMatchResultWithOffset(
 
 // MARK: - STDLIB-REGEX-094: Regex.fromLiteral / Regex.matches / String.replaceFirst(Regex)
 
-/// Regex.matches(input: String) -> Boolean
-/// Returns true iff the entire input string matches the regex.
-@_cdecl("kk_regex_matches")
-public func kk_regex_matches(_ regexRaw: Int, _ inputRaw: Int) -> Int {
-    let rawInput = regexStringFromRaw(inputRaw) ?? ""
-    guard let regexBox = regexBoxFromRaw(regexRaw) else { return kk_box_bool(0) }
-    let str = regexBox.normalizeIfNeeded(rawInput)
-    let options = regexBox.regex.options.subtracting(.anchorsMatchLines)
-    let anchoredPattern = "\\A(?:\(regexBox.regex.pattern))\\z"
-    guard let anchoredRegex = try? NSRegularExpression(pattern: anchoredPattern, options: options) else { return kk_box_bool(0) }
-    let range = NSRange(str.startIndex..., in: str)
-    return anchoredRegex.firstMatch(in: str, options: [], range: range) != nil ? kk_box_bool(1) : kk_box_bool(0)
-}
 
 /// Regex.Companion.fromLiteral(literal: String) -> Regex
 /// Creates a Regex that matches the literal string (all special chars are escaped).

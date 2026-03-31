@@ -164,7 +164,7 @@ extension CoroutineLoweringPass {
         loweredBody.reserveCapacity(function.body.count)
 
         for instruction in function.body {
-            guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType) = instruction else {
+            guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, _) = instruction else {
                 loweredBody.append(instruction)
                 continue
             }
