@@ -1,31 +1,53 @@
 import Foundation
 
-// MARK: - kotlin.time.Instant Runtime (STDLIB-TIME-083)
+// MARK: - kotlin.time.Instant Runtime (STDLIB-TIME-083/086)
+//
+// Implements the runtime entry points for kotlin.time.Instant and
+// kotlin.time.Clock.  Instant is stored as a (epochSeconds: Int64,
+// nanoOfSecond: Int32) pair, matching Kotlin's Instant representation.
+// All functions are thread-safe because Date() and SystemRandomNumberGenerator
+// are safe to call from any thread and the box objects are immutable once
+// created.
 
+// MARK: - Box
+
+/// Immutable box holding a kotlin.time.Instant value.
 /// Instant is stored as (epochSeconds: Int64, nanoOfSecond: Int32) internally,
 /// matching Kotlin's Instant semantics where nanoOfSecond is in [0, 999_999_999].
 final class RuntimeInstantBox {
     let epochSeconds: Int64
     let nanoOfSecond: Int32
 
-    init(epochSeconds: Int64, nanoOfSecond: Int32) {
-        // Normalize so nanoOfSecond is always non-negative
-        if nanoOfSecond < 0 {
-            self.epochSeconds = epochSeconds - 1
-            self.nanoOfSecond = nanoOfSecond + 1_000_000_000
-        } else if nanoOfSecond >= 1_000_000_000 {
-            self.epochSeconds = epochSeconds + Int64(nanoOfSecond / 1_000_000_000)
-            self.nanoOfSecond = nanoOfSecond % 1_000_000_000
+    init(epochSeconds: Int64, nanoOfSecond rawNano: Int32) {
+        // Normalise nanoOfSecond into [0, 999_999_999].
+        // Use division/modulo to handle multi-second overflow or borrow:
+        //   - rawNano >= 1_000_000_000: carry full seconds into epochSeconds
+        //   - rawNano < 0: borrow full seconds from epochSeconds
+        // Work in Int64 to avoid overflow during intermediate calculations.
+        let nano64 = Int64(rawNano)
+        let carry: Int64
+        if nano64 >= 0 {
+            carry = nano64 / 1_000_000_000
         } else {
-            self.epochSeconds = epochSeconds
-            self.nanoOfSecond = nanoOfSecond
+            // Floor division for negative values: borrow enough full seconds
+            // so the remainder lands in [0, 999_999_999].
+            carry = (nano64 - 999_999_999) / 1_000_000_000
         }
+        self.epochSeconds = epochSeconds + carry
+        self.nanoOfSecond = Int32(nano64 - carry * 1_000_000_000)
     }
 }
+
+// MARK: - Helpers
 
 private func runtimeInstantBox(from raw: Int) -> RuntimeInstantBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
     return tryCast(ptr, to: RuntimeInstantBox.self)
+}
+
+private func runtimeDurationBox(from raw: Int) -> RuntimeDurationBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeDurationBox.self)
 }
 
 private func saturatingAdd(_ a: Int64, _ b: Int64) -> Int64 {
@@ -38,6 +60,10 @@ private func saturatingAdd(_ a: Int64, _ b: Int64) -> Int64 {
 
 // MARK: - Instant construction
 
+/// Returns the current wall-clock time as a kotlin.time.Instant.
+/// Thread-safe: Date() reads a system clock and is reentrant.
+///
+/// Kotlin: Instant.now()  /  Clock.System.now()
 @_cdecl("kk_instant_now")
 public func kk_instant_now() -> Int {
     let now = Date()
@@ -48,6 +74,26 @@ public func kk_instant_now() -> Int {
     return registerRuntimeObject(box)
 }
 
+/// Alias used when Clock.System.now() is dispatched via the Clock.System object.
+/// Both map to the same underlying wall-clock read.
+///
+/// Kotlin: Clock.System.now()
+@_cdecl("kk_clock_system_now")
+public func kk_clock_system_now() -> Int {
+    kk_instant_now()
+}
+
+/// Generic Clock interface now() — delegates to the system clock.
+///
+/// Kotlin: clock.now()
+@_cdecl("kk_clock_now")
+public func kk_clock_now(_ receiver: Int) -> Int {
+    kk_instant_now()
+}
+
+/// Creates an Instant from an epoch-millisecond value.
+///
+/// Kotlin: Instant.fromEpochMilliseconds(epochMilliseconds: Long)
 @_cdecl("kk_instant_from_epoch_millis")
 public func kk_instant_from_epoch_millis(_ millis: Int) -> Int {
     let epochSec = Int64(millis) / 1_000
@@ -58,6 +104,9 @@ public func kk_instant_from_epoch_millis(_ millis: Int) -> Int {
 
 // MARK: - Instant properties
 
+/// Returns the epochSeconds component of an Instant as Long.
+///
+/// Kotlin: instant.epochSeconds
 @_cdecl("kk_instant_epoch_seconds")
 public func kk_instant_epoch_seconds(_ instantRaw: Int) -> Int {
     guard let box = runtimeInstantBox(from: instantRaw) else {
@@ -66,6 +115,9 @@ public func kk_instant_epoch_seconds(_ instantRaw: Int) -> Int {
     return Int(box.epochSeconds)
 }
 
+/// Returns the nanoOfSecond component of an Instant as Int.
+///
+/// Kotlin: instant.nanoOfSecond
 @_cdecl("kk_instant_nano_of_second")
 public func kk_instant_nano_of_second(_ instantRaw: Int) -> Int {
     guard let box = runtimeInstantBox(from: instantRaw) else {
@@ -76,6 +128,9 @@ public func kk_instant_nano_of_second(_ instantRaw: Int) -> Int {
 
 // MARK: - Instant arithmetic
 
+/// Returns a new Instant shifted forward by the given Duration.
+///
+/// Kotlin: instant + duration
 @_cdecl("kk_instant_plus_duration")
 public func kk_instant_plus_duration(_ instantRaw: Int, _ durationRaw: Int) -> Int {
     guard let ibox = runtimeInstantBox(from: instantRaw),
@@ -94,6 +149,9 @@ public func kk_instant_plus_duration(_ instantRaw: Int, _ durationRaw: Int) -> I
     return registerRuntimeObject(result)
 }
 
+/// Returns a new Instant shifted backward by the given Duration.
+///
+/// Kotlin: instant - duration
 @_cdecl("kk_instant_minus_duration")
 public func kk_instant_minus_duration(_ instantRaw: Int, _ durationRaw: Int) -> Int {
     guard let ibox = runtimeInstantBox(from: instantRaw),
@@ -115,6 +173,9 @@ public func kk_instant_minus_duration(_ instantRaw: Int, _ durationRaw: Int) -> 
 // MARK: - Instant comparison
 // Returns: negative if a < b, 0 if a == b, positive if a > b
 
+/// Compares two Instants, returning negative / zero / positive.
+///
+/// Kotlin: instant.compareTo(other)
 @_cdecl("kk_instant_compare")
 public func kk_instant_compare(_ aRaw: Int, _ bRaw: Int) -> Int {
     guard let a = runtimeInstantBox(from: aRaw),
@@ -133,6 +194,9 @@ public func kk_instant_compare(_ aRaw: Int, _ bRaw: Int) -> Int {
 
 // MARK: - until() — Duration between two Instants
 
+/// Returns the Duration from this Instant until the other Instant.
+///
+/// Kotlin: instant.until(other)
 @_cdecl("kk_instant_until")
 public func kk_instant_until(_ fromRaw: Int, _ toRaw: Int) -> Int {
     guard let fromBox = runtimeInstantBox(from: fromRaw),

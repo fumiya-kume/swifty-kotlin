@@ -4450,6 +4450,11 @@ extension CallTypeChecker {
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
+                case "isActive", "isCompleted", "isCancelled", "isClosedForReceive", "isClosedForSend":
+                    let resultType = sema.types.booleanType
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
                 default:
                     break
                 }

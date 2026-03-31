@@ -333,6 +333,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticChannelFactoryBridgeWithCapacity(
+            packageFQName: channelsPkg,
+            channelSymbol: channelSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         registerSyntheticObjectProperty(
             ownerSymbol: dispatchersSymbol,
@@ -440,6 +447,27 @@ extension DataFlowSemaPhase {
             name: "close",
             externalLinkName: "kk_channel_close",
             returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+        // Channel.isClosedForReceive: Boolean (CORO-075)
+        registerSyntheticObjectProperty(
+            ownerSymbol: channelSymbol,
+            ownerType: channelType,
+            name: "isClosedForReceive",
+            propertyType: types.booleanType,
+            externalLinkName: "kk_channel_is_closed_for_receive",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Channel.isClosedForSend: Boolean (CORO-075)
+        registerSyntheticObjectProperty(
+            ownerSymbol: channelSymbol,
+            ownerType: channelType,
+            name: "isClosedForSend",
+            propertyType: types.booleanType,
+            externalLinkName: "kk_channel_is_closed_for_send",
             symbols: symbols,
             interner: interner
         )
@@ -925,6 +953,78 @@ extension DataFlowSemaPhase {
             FunctionSignature(
                 parameterTypes: [],
                 returnType: returnType,
+                typeParameterSymbols: [typeParamSymbol]
+            ),
+            for: functionSymbol
+        )
+    }
+
+    /// Registers a synthetic `Channel(capacity: Int)` factory function that maps
+    /// to `kk_channel_create` for buffered channel construction.
+    private func registerSyntheticChannelFactoryBridgeWithCapacity(
+        packageFQName: [InternedString],
+        channelSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("Channel")
+        let functionFQName = packageFQName + [functionName]
+        // Use a unique synthetic suffix to distinguish from the no-arg overload.
+        let overloadFQName = packageFQName + [interner.intern("Channel$capacity")]
+        guard symbols.lookup(fqName: overloadFQName) == nil else {
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: overloadFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: functionFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName("kk_channel_create", for: functionSymbol)
+
+        let typeParamName = interner.intern("T")
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: overloadFQName + [interner.intern("$synthetic"), typeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: channelSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let capacityParamName = interner.intern("capacity")
+        let capacityParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: capacityParamName,
+            fqName: overloadFQName + [capacityParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: capacityParamSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [types.intType],
+                returnType: returnType,
+                valueParameterSymbols: [capacityParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
                 typeParameterSymbols: [typeParamSymbol]
             ),
             for: functionSymbol

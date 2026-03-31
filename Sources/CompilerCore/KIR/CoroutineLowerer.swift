@@ -137,19 +137,33 @@ final class CoroutineLowerer {
         case "send": "kk_channel_send"
         case "receive": "kk_channel_receive"
         case "close": "kk_channel_close"
+        case "isClosedForReceive": "kk_channel_is_closed_for_receive"
+        case "isClosedForSend": "kk_channel_is_closed_for_send"
         default: nil
         }
         
         if let runtimeName {
             let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
             
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
+            let resultType: TypeID = switch calleeStr {
+            case "isClosedForReceive", "isClosedForSend":
+                sema.types.booleanType
+            default:
+                boundType
+            }
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            let operationCanThrow: Bool = switch calleeStr {
+            case "isClosedForReceive", "isClosedForSend":
+                false
+            default:
+                true
+            }
             context.append(.call(
                 symbol: nil,
                 callee: interner.intern(runtimeName),
                 arguments: [receiverID] + args,
                 result: result,
-                canThrow: true,
+                canThrow: operationCanThrow,
                 thrownResult: nil
             ))
             return result

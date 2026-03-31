@@ -8,7 +8,7 @@ struct MemberCallReceiver {
 
 extension CallLowerer {
     static let unresolvedCoroutineHandleMemberNames: Set<String> = ["await", "join", "cancel", "isActive", "isCompleted", "isCancelled"]
-    private static let unresolvedChannelMemberNames: Set<String> = ["send", "receive", "close"]
+    private static let unresolvedChannelMemberNames: Set<String> = ["send", "receive", "close", "isClosedForReceive", "isClosedForSend"]
 
     func anyFallbackTag(for type: TypeID, sema: SemaModule) -> Int64 {
         switch sema.types.kind(of: sema.types.makeNonNullable(type)) {
@@ -162,12 +162,7 @@ extension CallLowerer {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
         let calleeStr = interner.resolve(calleeName)
-        // STDLIB-REFLECT-062: map known KProperty members to runtime calls
-        let knownKPropertyMembers: Set<String> = [
-            "name", "returnType", "visibility", "isLateinit", "isConst",
-            "getter", "setter", "get", "set",
-        ]
-        guard knownKPropertyMembers.contains(calleeStr) else { return nil }
+        guard calleeStr == "name" else { return nil }
         let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         guard isKPropertyReceiverType(receiverType, sema: sema, interner: interner) else { return nil }
 
@@ -178,59 +173,16 @@ extension CallLowerer {
             instructions: &instructions
         )
 
-        // Determine the runtime callee name and argument list for this member.
-        let runtimeCallee: String
-        var callArgs: [KIRExprID] = [receiverID]
-        switch calleeStr {
-        case "name":
-            runtimeCallee = "kk_kproperty_stub_name"
-        case "returnType":
-            runtimeCallee = "kk_kproperty_stub_return_type"
-        case "visibility":
-            runtimeCallee = "kk_kproperty_stub_visibility"
-        case "isLateinit":
-            runtimeCallee = "kk_kproperty_stub_is_lateinit"
-        case "isConst":
-            runtimeCallee = "kk_kproperty_stub_is_const"
-        case "getter":
-            runtimeCallee = "kk_kproperty_stub_getter"
-        case "setter":
-            runtimeCallee = "kk_kproperty_stub_setter"
-        case "get":
-            runtimeCallee = "kk_kproperty_stub_get_value"
-        case "set":
-            runtimeCallee = "kk_kproperty_stub_set_value"
-            if let valueArg = args.first {
-                let valueID = driver.exprLowerer.lowerExpr(
-                    valueArg.expr, ast: ast, sema: sema, arena: arena, interner: interner,
-                    propertyConstantInitializers: propertyConstantInitializers,
-                    instructions: &instructions
-                )
-                callArgs.append(valueID)
-            }
-        default:
-            return nil
-        }
-
-        let resultType = sema.bindings.exprTypes[exprID] ?? {
-            switch calleeStr {
-            case "name", "returnType", "visibility":
-                return sema.types.make(.primitive(.string, .nonNull))
-            case "isLateinit", "isConst":
-                return sema.types.booleanType
-            default:
-                // getter, setter, get, set and any future members
-                return sema.types.anyType
-            }
-        }()
+        let resultType = sema.bindings.exprTypes[exprID]
+            ?? sema.types.make(.primitive(.string, .nonNull))
         let result = arena.appendExpr(
             .temporary(Int32(arena.expressions.count)),
             type: resultType
         )
         instructions.append(.call(
             symbol: nil,
-            callee: interner.intern(runtimeCallee),
-            arguments: callArgs,
+            callee: interner.intern("kk_kproperty_stub_name"),
+            arguments: [receiverID],
             result: result,
             canThrow: false,
             thrownResult: nil
@@ -4475,7 +4427,9 @@ extension CallLowerer {
         var callArguments = finalArguments
         if loweredCallee == interner.intern("kk_system_currentTimeMillis")
             || loweredCallee == interner.intern("kk_system_nanoTime")
-            || loweredCallee == interner.intern("kk_system_process_start_nanos") {
+            || loweredCallee == interner.intern("kk_system_process_start_nanos")
+            || loweredCallee == interner.intern("kk_instant_now")
+            || loweredCallee == interner.intern("kk_clock_system_now") {
             callArguments = []
         }
         // Result HOF functions accept an outThrown parameter but we don't need
@@ -4736,6 +4690,10 @@ extension CallLowerer {
                 return interner.intern("kk_channel_receive")
             case "close":
                 return interner.intern("kk_channel_close")
+            case "isClosedForReceive":
+                return interner.intern("kk_channel_is_closed_for_receive")
+            case "isClosedForSend":
+                return interner.intern("kk_channel_is_closed_for_send")
             default:
                 break
             }
