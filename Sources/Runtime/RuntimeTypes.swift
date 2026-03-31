@@ -63,7 +63,10 @@ final class RuntimeStringBox {
 
 final class RuntimeThrowableBox {
     let message: String
-    let cause: Int
+    var cause: Int
+    /// Suppressed exceptions (STDLIB-EXCEPT-105).
+    /// Stores raw Int pointers to other RuntimeThrowableBox instances.
+    var suppressed: [Int] = []
 
     init(message: String, cause: Int = 0) {
         self.message = message

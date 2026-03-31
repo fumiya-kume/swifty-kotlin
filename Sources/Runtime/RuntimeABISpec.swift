@@ -278,6 +278,33 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Exception"
         ),
+        // STDLIB-EXCEPT-105: Advanced exception handling
+        RuntimeABIFunctionSpec(
+            name: "kk_throwable_initCause",
+            parameters: [
+                RuntimeABIParameter(name: "throwableRaw", type: .intptr),
+                RuntimeABIParameter(name: "causeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_throwable_addSuppressed",
+            parameters: [
+                RuntimeABIParameter(name: "throwableRaw", type: .intptr),
+                RuntimeABIParameter(name: "suppressedRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_throwable_getSuppressed",
+            parameters: [
+                RuntimeABIParameter(name: "throwableRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
     ]
 
     public static let testFunctions: [RuntimeABIFunctionSpec] = [
