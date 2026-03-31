@@ -374,13 +374,14 @@ extension DataFlowSemaPhase {
         }
         let memberName = interner.intern(name)
         let memberFQName = ownerInfo.fqName + [memberName]
-        guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+        if let existing = symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
             guard let existingSignature = symbols.functionSignature(for: symbolID) else {
                 return false
             }
             return existingSignature.parameterTypes == parameters.map(\.type) &&
                 existingSignature.returnType == returnType
-        }) == nil else {
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
             return
         }
         var flags: SymbolFlags = [.synthetic]

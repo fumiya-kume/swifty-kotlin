@@ -25,3 +25,7 @@ data class Base(val value: String)
 class Multi(val prop: Int) : Base("test"), Interface1, Interface2 {
     // This should cause KSWIFTK-SEMA-DATA-INHERIT error for Base
 }
+
+fun main() {
+    // Regression case entry point for tracking tests.
+}

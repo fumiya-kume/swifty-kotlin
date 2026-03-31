@@ -1,12 +1,11 @@
 import java.math.BigInteger
 
 fun main() {
-    // BigInteger.valueOf(long)
-    val a = BigInteger.valueOf(100)
-    val b = BigInteger.valueOf(200)
-    println("valueOf: ${a.toString()}")
-
     // BigInteger(String) constructor
+    val a = BigInteger("100")
+    val b = BigInteger("200")
+    println("ctorSmall: ${a.toString()}")
+
     val c = BigInteger("12345678901234567890")
     println("fromString: ${c.toString()}")
 
@@ -27,22 +26,22 @@ fun main() {
     println("divide: ${quotient.toString()}")
 
     // gcd()
-    val x = BigInteger.valueOf(12)
-    val y = BigInteger.valueOf(8)
+    val x = BigInteger("12")
+    val y = BigInteger("8")
     val g = x.gcd(y)
     println("gcd: ${g.toString()}")
 
     // abs()
-    val neg = BigInteger.valueOf(-42)
+    val neg = BigInteger("-42")
     println("abs: ${neg.abs().toString()}")
 
     // pow()
-    val base = BigInteger.valueOf(2)
+    val base = BigInteger("2")
     val powered = base.pow(10)
     println("pow: ${powered.toString()}")
 
     // toInt()
-    val small = BigInteger.valueOf(42)
+    val small = BigInteger("42")
     println("toInt: ${small.toInt()}")
 
     // toLong()
