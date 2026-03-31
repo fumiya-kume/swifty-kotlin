@@ -4040,34 +4040,6 @@ public enum RuntimeABISpec {
             section: "Delegate"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_callable_ref_tag_kfunction",
-            parameters: [
-                RuntimeABIParameter(name: "callableRaw", type: .intptr),
-                RuntimeABIParameter(name: "nameRaw", type: .intptr),
-                RuntimeABIParameter(name: "arity", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Delegate"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_callable_ref_tag_kproperty",
-            parameters: [
-                RuntimeABIParameter(name: "callableRaw", type: .intptr),
-                RuntimeABIParameter(name: "nameRaw", type: .intptr),
-                RuntimeABIParameter(name: "arity", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Delegate"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_callable_ref_name",
-            parameters: [
-                RuntimeABIParameter(name: "callableRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Delegate"
-        ),
-        RuntimeABIFunctionSpec(
             name: "kk_function_invoke",
             parameters: [
                 RuntimeABIParameter(name: "functionRaw", type: .intptr),

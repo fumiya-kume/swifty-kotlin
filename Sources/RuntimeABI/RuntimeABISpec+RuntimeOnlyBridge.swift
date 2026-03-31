@@ -172,7 +172,6 @@ public extension RuntimeABISpec {
         + numericOnlyBridgeFunctions
         + coroutineOnlyBridgeFunctions
         + kclassBridgeFunctions
-        + kfunctionBridgeFunctions
         + sequenceOnlyBridgeFunctions
         + mathOnlyBridgeFunctions
 }
