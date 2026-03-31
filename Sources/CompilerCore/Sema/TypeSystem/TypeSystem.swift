@@ -16,6 +16,10 @@ public final class TypeSystem {
     /// Avoids repeated `make(...)` allocations on the hot path in `isCloseableReceiver`.
     public internal(set) var closeableTypeID: TypeID?
 
+    /// The symbol ID of the synthetic `kotlin.reflect.KFunction` interface (STDLIB-REFLECT-063).
+    /// Used in subtyping to allow function types to be assigned to KFunction<R> variables.
+    public internal(set) var kFunctionInterfaceSymbol: SymbolID?
+
     /// Symbol table reference for SAM (fun interface) subtyping. Set during DataFlowSemaPhase.
     public weak var symbolTable: SymbolTable?
 

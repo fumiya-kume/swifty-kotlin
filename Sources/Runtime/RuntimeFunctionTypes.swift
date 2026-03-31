@@ -190,7 +190,7 @@ public func kk_function_curried<P1, P2, R>(
     }
 }
 
-private func runtimeFunctionValueBox(from rawValue: Int) -> RuntimeFunctionValueBox? {
+func runtimeFunctionValueBox(from rawValue: Int) -> RuntimeFunctionValueBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }

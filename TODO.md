@@ -250,7 +250,19 @@
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/kclass_basic.kt`
 
-- [ ] STDLIB-REFLECT-063: KFunction完全実装
+- [x] STDLIB-REFLECT-062: KProperty完全実装
+  - **仕様**: KPropertyインターフェースの完全サポート
+  - **実装内容**:
+    - プロパティ名: name
+    - プロパティ型: returnType
+    - 可視性: visibility, isLateinit, isConst
+    - ゲッター/セッター: getter, setter
+    - プロパティ値の取得/設定: get(), set()
+  - **現状**: 実装完了
+  - **関連ファイル**: `Sources/Runtime/RuntimeDelegates.swift`, `Sources/Runtime/RuntimeABISpec+KPropertyStub.swift`, `Sources/CompilerCore/Codegen/RuntimeABIExterns+KPropertyStub.swift`, `Sources/CompilerCore/KIR/CallLowerer+MemberCalls.swift`
+  - **テストケース**: `Scripts/diff_cases/kproperty_basic.kt`
+
+- [x] STDLIB-REFLECT-063: KFunction完全実装
   - **仕様**: KFunctionインターフェースの完全サポート
   - **実装内容**:
     - 関数名: name
@@ -259,8 +271,8 @@
     - 戻り値型: returnType
     - 関数の呼び出し: call()
     - suspend関数: isSuspend
-  - **現状**: 基本的なKFunctionは実装済み、呼び出しは未実装
-  - **関連ファイル**: `RuntimeReflection.swift`
+  - **現状**: 完全実装済み (RuntimeReflection.swift に kk_kfunction_* 関数群を追加、RuntimeABIExterns+KFunction.swift を新規作成)
+  - **関連ファイル**: `RuntimeReflection.swift`, `RuntimeABIExterns+KFunction.swift`
   - **テストケース**: `Scripts/diff_cases/kfunction_basic.kt`
 
 - [ ] STDLIB-REFLECT-064: KConstructor完全実装

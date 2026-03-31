@@ -185,6 +185,29 @@ extension TypeSystem {
             }
             return isSubtype(leftFunction.returnType, rightFunction.returnType)
 
+        case let (.functionType(leftFunction), .classType(rightClass)):
+            // STDLIB-REFLECT-063: A function type (e.g. (String) -> String) is a subtype of
+            // KFunction<R> so that `val f: KFunction<String> = ::greet` compiles.
+            guard let kFuncSym = kFunctionInterfaceSymbol,
+                  rightClass.classSymbol == kFuncSym
+            else {
+                return false
+            }
+            guard nullabilitySubtype(leftFunction.nullability, rightClass.nullability) else {
+                return false
+            }
+            // KFunction<R> has one type arg (the return type). Accept if none specified or return
+            // type matches.
+            if rightClass.args.isEmpty { return true }
+            guard rightClass.args.count == 1 else { return false }
+            let returnArg = rightClass.args[0]
+            switch returnArg {
+            case .star: return true
+            case let .out(argType): return isSubtype(leftFunction.returnType, argType)
+            case let .invariant(argType): return isSubtype(leftFunction.returnType, argType)
+            case .in: return true
+            }
+
         case let (.classType(leftClass), .functionType(rightFunction)):
             // SAM: fun interface <: function type when the SAM method signature matches
             guard nullabilitySubtype(leftClass.nullability, rightFunction.nullability) else {

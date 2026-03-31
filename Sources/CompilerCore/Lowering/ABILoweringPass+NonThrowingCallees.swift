@@ -813,6 +813,10 @@ extension ABILoweringPass {
             interner.intern("kk_callable_ref_tag_kfunction"),
             interner.intern("kk_callable_ref_tag_kproperty"),
             interner.intern("kk_callable_ref_name"),
+            // STDLIB-REFLECT-063: KFunction reflection helpers.
+            interner.intern("kk_callable_ref_arity"),
+            interner.intern("kk_callable_ref_is_suspend"),
+            interner.intern("kk_callable_ref_parameters"),
             // STDLIB-REFLECT-063: KFunction / KParameter reflection — pure metadata
             // lookups that cannot throw.
             interner.intern("kk_kfunction_get_name"),

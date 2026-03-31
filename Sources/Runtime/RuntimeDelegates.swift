@@ -66,26 +66,28 @@ private func runtimeTagCallableRef(
     _ callable: Int,
     name: Int,
     arity: Int,
-    kind: RuntimeCallableRefKind
+    kind: RuntimeCallableRefKind,
+    isSuspend: Bool = false
 ) -> Int {
     runtimeStorage.withLock { state in
         state.callableRefMetadataByValue[callable] = RuntimeCallableRefMetadata(
             nameRaw: name,
             arity: arity,
-            kind: kind
+            kind: kind,
+            isSuspend: isSuspend
         )
     }
     return callable
 }
 
 @_cdecl("kk_callable_ref_tag_kfunction")
-public func kk_callable_ref_tag_kfunction(_ callable: Int, _ name: Int, _ arity: Int) -> Int {
-    runtimeTagCallableRef(callable, name: name, arity: arity, kind: .function)
+public func kk_callable_ref_tag_kfunction(_ callable: Int, _ name: Int, _ arity: Int, _ isSuspend: Int) -> Int {
+    runtimeTagCallableRef(callable, name: name, arity: arity, kind: .function, isSuspend: isSuspend != 0)
 }
 
 @_cdecl("kk_callable_ref_tag_kproperty")
 public func kk_callable_ref_tag_kproperty(_ callable: Int, _ name: Int, _ arity: Int) -> Int {
-    runtimeTagCallableRef(callable, name: name, arity: arity, kind: .property)
+    runtimeTagCallableRef(callable, name: name, arity: arity, kind: .property, isSuspend: false)
 }
 
 @_cdecl("kk_callable_ref_name")
@@ -93,6 +95,158 @@ public func kk_callable_ref_name(_ tagged: Int) -> Int {
     runtimeStorage.withLock { state in
         state.callableRefMetadataByValue[tagged]?.nameRaw ?? runtimeNullSentinelInt
     }
+}
+
+// STDLIB-REFLECT-063: KFunction reflection helpers for callable refs.
+
+@_cdecl("kk_callable_ref_arity")
+public func kk_callable_ref_arity(_ tagged: Int) -> Int {
+    runtimeStorage.withLock { state in
+        state.callableRefMetadataByValue[tagged]?.arity ?? 0
+    }
+}
+
+@_cdecl("kk_callable_ref_is_suspend")
+public func kk_callable_ref_is_suspend(_ tagged: Int) -> Int {
+    runtimeStorage.withLock { state in
+        state.callableRefMetadataByValue[tagged]?.isSuspend == true ? 1 : 0
+    }
+}
+
+@_cdecl("kk_callable_ref_parameters")
+public func kk_callable_ref_parameters(_ tagged: Int) -> Int {
+    let arity = runtimeStorage.withLock { state in
+        state.callableRefMetadataByValue[tagged]?.arity ?? 0
+    }
+    // Return a runtime List of placeholder ints (one element per parameter).
+    let placeholders = Array(repeating: 0, count: max(0, arity))
+    return registerRuntimeObject(RuntimeListBox(elements: placeholders))
+}
+
+/// Invokes a callable ref (tagged function pointer) with zero arguments (STDLIB-REFLECT-063).
+/// For bound member references (closures), prepends the closure environment before calling.
+@_cdecl("kk_callable_ref_call_0")
+public func kk_callable_ref_call_0(
+    _ tagged: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard tagged != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "KFunction call: null function reference")
+        return 0
+    }
+    let expectedArity = runtimeStorage.withLock { state in
+        state.callableRefMetadataByValue[tagged]?.arity
+    }
+    if let expectedArity {
+        guard expectedArity == 0 else {
+            outThrown?.pointee = runtimeAllocateThrowable(
+                message: "KFunction call arity mismatch: expected \(expectedArity), got 0"
+            )
+            return 0
+        }
+    }
+    if let box = runtimeFunctionValueBox(from: tagged) {
+        let fn = unsafeBitCast(box.fnPtr, to: KKClosureThunkEntryPoint.self)
+        return fn(box.closureRaw, outThrown)
+    }
+    let fn = unsafeBitCast(tagged, to: KKThunkEntryPoint.self)
+    return fn(outThrown)
+}
+
+/// Invokes a callable ref (tagged function pointer) with one argument (STDLIB-REFLECT-063).
+/// For bound member references (closures), prepends the closure environment before calling.
+@_cdecl("kk_callable_ref_call_1")
+public func kk_callable_ref_call_1(
+    _ tagged: Int,
+    _ arg: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard tagged != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "KFunction call: null function reference")
+        return 0
+    }
+    let expectedArity = runtimeStorage.withLock { state in
+        state.callableRefMetadataByValue[tagged]?.arity
+    }
+    if let expectedArity {
+        guard expectedArity == 1 else {
+            outThrown?.pointee = runtimeAllocateThrowable(
+                message: "KFunction call arity mismatch: expected \(expectedArity), got 1"
+            )
+            return 0
+        }
+    }
+    if let box = runtimeFunctionValueBox(from: tagged) {
+        let fn = unsafeBitCast(box.fnPtr, to: KKClosureFunctionEntryPoint1.self)
+        return fn(box.closureRaw, arg, outThrown)
+    }
+    let fn = unsafeBitCast(tagged, to: KKFunctionEntryPoint1.self)
+    return fn(arg, outThrown)
+}
+
+/// Invokes a callable ref (tagged function pointer) with two arguments (STDLIB-REFLECT-063).
+/// For bound member references (closures), prepends the closure environment before calling.
+@_cdecl("kk_callable_ref_call_2")
+public func kk_callable_ref_call_2(
+    _ tagged: Int,
+    _ arg1: Int,
+    _ arg2: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard tagged != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "KFunction call: null function reference")
+        return 0
+    }
+    let expectedArity = runtimeStorage.withLock { state in
+        state.callableRefMetadataByValue[tagged]?.arity
+    }
+    if let expectedArity {
+        guard expectedArity == 2 else {
+            outThrown?.pointee = runtimeAllocateThrowable(
+                message: "KFunction call arity mismatch: expected \(expectedArity), got 2"
+            )
+            return 0
+        }
+    }
+    if let box = runtimeFunctionValueBox(from: tagged) {
+        let fn = unsafeBitCast(box.fnPtr, to: KKClosureFunctionEntryPoint2.self)
+        return fn(box.closureRaw, arg1, arg2, outThrown)
+    }
+    let fn = unsafeBitCast(tagged, to: KKFunctionEntryPoint2.self)
+    return fn(arg1, arg2, outThrown)
+}
+
+/// Invokes a callable ref (tagged function pointer) with three arguments (STDLIB-REFLECT-063).
+/// For bound member references (closures), prepends the closure environment before calling.
+@_cdecl("kk_callable_ref_call_3")
+public func kk_callable_ref_call_3(
+    _ tagged: Int,
+    _ arg1: Int,
+    _ arg2: Int,
+    _ arg3: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard tagged != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "KFunction call: null function reference")
+        return 0
+    }
+    let expectedArity = runtimeStorage.withLock { state in
+        state.callableRefMetadataByValue[tagged]?.arity
+    }
+    if let expectedArity {
+        guard expectedArity == 3 else {
+            outThrown?.pointee = runtimeAllocateThrowable(
+                message: "KFunction call arity mismatch: expected \(expectedArity), got 3"
+            )
+            return 0
+        }
+    }
+    if let box = runtimeFunctionValueBox(from: tagged) {
+        let fn = unsafeBitCast(box.fnPtr, to: KKClosureFunctionEntryPoint3.self)
+        return fn(box.closureRaw, arg1, arg2, arg3, outThrown)
+    }
+    let fn = unsafeBitCast(tagged, to: KKFunctionEntryPoint3.self)
+    return fn(arg1, arg2, arg3, outThrown)
 }
 
 @_cdecl("kk_kproperty_stub_create")

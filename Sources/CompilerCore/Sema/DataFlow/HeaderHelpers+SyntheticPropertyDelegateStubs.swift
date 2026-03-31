@@ -106,6 +106,52 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // Register kotlin.reflect.KFunction<out R> interface stub (STDLIB-REFLECT-063).
+        // Store in TypeSystem so subtyping checks can recognise KFunction receivers.
+        let kFunctionSymbol = ensureInterfaceSymbol(
+            named: "KFunction", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+        types.kFunctionInterfaceSymbol = kFunctionSymbol
+
+        // Register KFunction member properties: name, isSuspend, parameters (STDLIB-REFLECT-063).
+        if let kFunctionInfo = symbols.symbol(kFunctionSymbol) {
+            // name: String
+            let namePropName = interner.intern("name")
+            let namePropFQ = kFunctionInfo.fqName + [namePropName]
+            if symbols.lookup(fqName: namePropFQ) == nil {
+                let namePropSymbol = symbols.define(
+                    kind: .property, name: namePropName, fqName: namePropFQ,
+                    declSite: nil, visibility: .public, flags: [.synthetic]
+                )
+                symbols.setParentSymbol(kFunctionSymbol, for: namePropSymbol)
+                symbols.setPropertyType(stringType, for: namePropSymbol)
+            }
+
+            // isSuspend: Boolean
+            let isSuspendName = interner.intern("isSuspend")
+            let isSuspendFQ = kFunctionInfo.fqName + [isSuspendName]
+            if symbols.lookup(fqName: isSuspendFQ) == nil {
+                let isSuspendSymbol = symbols.define(
+                    kind: .property, name: isSuspendName, fqName: isSuspendFQ,
+                    declSite: nil, visibility: .public, flags: [.synthetic]
+                )
+                symbols.setParentSymbol(kFunctionSymbol, for: isSuspendSymbol)
+                symbols.setPropertyType(types.booleanType, for: isSuspendSymbol)
+            }
+
+            // parameters: Any (patched to List<Any?> later by patchKFunctionParametersType)
+            let paramsName = interner.intern("parameters")
+            let paramsFQ = kFunctionInfo.fqName + [paramsName]
+            if symbols.lookup(fqName: paramsFQ) == nil {
+                let paramsSymbol = symbols.define(
+                    kind: .property, name: paramsName, fqName: paramsFQ,
+                    declSite: nil, visibility: .public, flags: [.synthetic]
+                )
+                symbols.setParentSymbol(kFunctionSymbol, for: paramsSymbol)
+                symbols.setPropertyType(anyType, for: paramsSymbol)
+            }
+        }
+
         // Register `lazy` as a top-level function in the kotlin package.
         // Kotlin signature: fun <T> lazy(initializer: () -> T): Lazy<T>
         let lazyName = interner.intern("lazy")
@@ -326,6 +372,39 @@ extension DataFlowSemaPhase {
                 ),
                 for: funcSymbol2
             )
+        }
+    }
+
+    /// Updates the `parameters` property type of `KFunction` to `List<Any?>` once the
+    /// collection stubs have been registered.  Called from `registerSyntheticDelegateStubs`
+    /// after `registerSyntheticCollectionStubs` (STDLIB-REFLECT-063).
+    func patchKFunctionParametersType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        // Locate kotlin.collections.List
+        let listFQName: [InternedString] = [
+            interner.intern("kotlin"), interner.intern("collections"), interner.intern("List"),
+        ]
+        guard let listSymbol = symbols.lookup(fqName: listFQName),
+              let kFunctionSymbol = types.kFunctionInterfaceSymbol
+        else {
+            return
+        }
+        // Build List<Any?> type for parameters.
+        let nullableAny = types.makeNullable(types.anyType)
+        let listOfAnyNullable = types.make(.classType(ClassType(
+            classSymbol: listSymbol,
+            args: [.out(nullableAny)],
+            nullability: .nonNull
+        )))
+
+        // Update KFunction.parameters property type.
+        guard let kFunctionInfo = symbols.symbol(kFunctionSymbol) else { return }
+        let paramsPropFQ = kFunctionInfo.fqName + [interner.intern("parameters")]
+        if let paramsPropSymbol = symbols.lookup(fqName: paramsPropFQ) {
+            symbols.setPropertyType(listOfAnyNullable, for: paramsPropSymbol)
         }
     }
 }
