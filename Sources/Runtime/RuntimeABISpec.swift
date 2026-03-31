@@ -268,7 +268,67 @@ public enum RuntimeABISpec {
         ),
     ]
 
-    public static let testFunctions: [RuntimeABIFunctionSpec] = []
+    public static let testFunctions: [RuntimeABIFunctionSpec] = [
+        RuntimeABIFunctionSpec(
+            name: "kk_test_assertEquals",
+            parameters: [
+                RuntimeABIParameter(name: "expected", type: .intptr),
+                RuntimeABIParameter(name: "actual", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Test"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_test_assertEquals_message",
+            parameters: [
+                RuntimeABIParameter(name: "expected", type: .intptr),
+                RuntimeABIParameter(name: "actual", type: .intptr),
+                RuntimeABIParameter(name: "messageRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Test"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_test_assertTrue",
+            parameters: [
+                RuntimeABIParameter(name: "condition", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Test"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_test_assertTrue_message",
+            parameters: [
+                RuntimeABIParameter(name: "condition", type: .intptr),
+                RuntimeABIParameter(name: "messageRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Test"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_test_assertNull",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Test"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_test_assertNull_message",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "messageRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Test"
+        ),
+    ]
 
     public static let stringFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
@@ -1548,15 +1608,6 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
                 RuntimeABIParameter(name: "closureRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_string_substringBefore",
-            parameters: [
-                RuntimeABIParameter(name: "strRaw", type: .intptr),
-                RuntimeABIParameter(name: "delimiterRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
@@ -3978,15 +4029,6 @@ public enum RuntimeABISpec {
             section: "Regex"
         ),
         // STDLIB-REGEX-094: Regex.matches(input)
-        RuntimeABIFunctionSpec(
-            name: "kk_regex_matches",
-            parameters: [
-                RuntimeABIParameter(name: "regexRaw", type: .intptr),
-                RuntimeABIParameter(name: "inputRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Regex"
-        ),
         // STDLIB-REGEX-094: Regex.fromLiteral
         // First param is the Companion object receiver (ignored at runtime).
         RuntimeABIFunctionSpec(
@@ -4098,25 +4140,9 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         // STDLIB-316: String.zipWithNext()
-        RuntimeABIFunctionSpec(
-            name: "kk_string_zipWithNext",
-            parameters: [
-                RuntimeABIParameter(name: "str", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
         // STDLIB-317: String.asSequence / asIterable
         RuntimeABIFunctionSpec(
             name: "kk_string_asSequence",
-            parameters: [
-                RuntimeABIParameter(name: "str", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_string_asIterable",
             parameters: [
                 RuntimeABIParameter(name: "str", type: .intptr),
             ],

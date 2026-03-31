@@ -1,6 +1,12 @@
 import Foundation
 
 extension TypeCheckHelpers {
+    private struct MemberDispatchKey: Hashable {
+        let name: InternedString
+        let parameterTypes: [TypeID]
+        let isSuspend: Bool
+    }
+
     func substituteAliasArg(
         _ arg: TypeArg,
         argSubstitution: [SymbolID: TypeArg],
@@ -278,31 +284,32 @@ extension TypeCheckHelpers {
             return []
         }
 
-        var ownerQueue: [SymbolID] = nominalRoots
+        var ownerQueue: [(owner: SymbolID, depth: Int)] = nominalRoots.map { ($0, 0) }
         var visitedOwners: Set<SymbolID> = []
-        var ownersInLookupOrder: [SymbolID] = []
+        var ownersInLookupOrder: [(owner: SymbolID, depth: Int)] = []
         while !ownerQueue.isEmpty {
-            let owner = ownerQueue.removeFirst()
+            let (owner, depth) = ownerQueue.removeFirst()
             guard visitedOwners.insert(owner).inserted else {
                 continue
             }
             if let allowedOwnerSymbols {
                 if allowedOwnerSymbols.contains(owner) {
-                    ownersInLookupOrder.append(owner)
+                    ownersInLookupOrder.append((owner, depth))
                 }
             } else {
-                ownersInLookupOrder.append(owner)
+                ownersInLookupOrder.append((owner, depth))
             }
-            ownerQueue.append(contentsOf: sema.symbols.directSupertypes(for: owner))
+            ownerQueue.append(contentsOf: sema.symbols.directSupertypes(for: owner).map { ($0, depth + 1) })
         }
 
         if ownersInLookupOrder.isEmpty {
             return []
         }
 
-        var candidates: [SymbolID] = []
+        var candidatesByKey: [MemberDispatchKey: [(symbol: SymbolID, owner: SymbolID, depth: Int)]] = [:]
+        var keyOrder: [MemberDispatchKey] = []
         var seenCandidates: Set<SymbolID> = []
-        for owner in ownersInLookupOrder {
+        for (owner, depth) in ownersInLookupOrder {
             guard let ownerSymbol = sema.symbols.symbol(owner) else {
                 continue
             }
@@ -317,8 +324,33 @@ extension TypeCheckHelpers {
                 else {
                     continue
                 }
-                candidates.append(candidate)
+                let key = MemberDispatchKey(
+                    name: calleeName,
+                    parameterTypes: signature.parameterTypes,
+                    isSuspend: signature.isSuspend
+                )
+                if candidatesByKey[key] == nil {
+                    keyOrder.append(key)
+                }
+                candidatesByKey[key, default: []].append((candidate, owner, depth))
             }
+        }
+
+        var candidates: [SymbolID] = []
+        for key in keyOrder {
+            guard let grouped = candidatesByKey[key], !grouped.isEmpty else {
+                continue
+            }
+            let minDepth = grouped.map(\.depth).min() ?? 0
+            let mostSpecificAtDepth = grouped.filter { $0.depth == minDepth }
+            let classBacked = mostSpecificAtDepth.filter { candidate in
+                guard let ownerSymbol = sema.symbols.symbol(candidate.owner) else {
+                    return false
+                }
+                return ownerSymbol.kind == .class || ownerSymbol.kind == .enumClass || ownerSymbol.kind == .object
+            }
+            let winners = classBacked.isEmpty ? mostSpecificAtDepth : classBacked
+            candidates.append(contentsOf: winners.map(\.symbol))
         }
         return candidates
     }

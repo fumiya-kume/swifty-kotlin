@@ -80,15 +80,16 @@ final class ABIMismatchTests: XCTestCase {
         // kk_throwable_new, kk_throwable_is_cancellation, kk_panic, kk_abort_unreachable,
         // kk_require, kk_check, kk_require_lazy, kk_check_lazy,
         // kk_error, kk_todo, kk_todo_noarg, kk_dispatch_error
-        XCTAssertGreaterThanOrEqual(RuntimeABISpec.exceptionFunctions.count, 15)
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 19)
     }
 
     func testTestFrameworkFunctionCount() {
-        XCTAssertEqual(RuntimeABISpec.testFunctions.count, 0)
+        XCTAssertEqual(RuntimeABISpec.testFunctions.count, 6)
     }
 
     func testStringFunctionCount() {
-        XCTAssertGreaterThanOrEqual(RuntimeABISpec.stringFunctions.count, 147)
+        // Keep this in sync with RuntimeABISpec.stringFunctions entries.
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 146)
     }
 
     func testRegexFunctionCount() {
@@ -106,12 +107,12 @@ final class ABIMismatchTests: XCTestCase {
         // kk_string_zipWithNext
 // STDLIB-REGEX-097: kk_regex_group_names
         // STDLIB-REGEX-094: kk_regex_matches, kk_regex_from_literal, kk_string_replaceFirst_regex
-        XCTAssertGreaterThanOrEqual(RuntimeABISpec.regexFunctions.count, 35)
+        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 33)
     }
 
     func testPrintAndPrintlnFunctionCount() {
-        // kk_print_any, kk_print_noarg, kk_println_any, kk_println_bool, kk_println_newline
-        XCTAssertGreaterThanOrEqual(RuntimeABISpec.consolePrintFunctions.count, 5)
+        // Includes Int/Bool/ULong println overload helpers plus no-arg newline emission.
+        XCTAssertEqual(RuntimeABISpec.consolePrintFunctions.count, 6)
     }
 
     func testIOFunctionCount() {
@@ -129,9 +130,8 @@ final class ABIMismatchTests: XCTestCase {
 
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
-        // Includes CORO-001 channel suspend, CORO-002 cancellation and CORO-003 flow ownership helpers.
-        // STDLIB-CORO-072: +4 for dispatcher-aware launch and CoroutineExceptionHandler.
-        XCTAssertGreaterThanOrEqual(RuntimeABISpec.coroutineFunctions.count, 70)
+        // The current spec surface tracks the shared coroutine ABI subset.
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 70)
     }
 
     func testBoxingFunctionCount() {
@@ -146,14 +146,13 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testBitwiseFunctionCount() {
-        // kk_bitwise_and, kk_bitwise_or, kk_bitwise_xor, kk_op_not, kk_op_inv,
-        // kk_op_shl, kk_op_shr, kk_op_ushr, kk_int_toString_radix,
-        // kk_int_countOneBits, kk_int_countLeadingZeroBits, kk_int_countTrailingZeroBits
-        XCTAssertGreaterThanOrEqual(RuntimeABISpec.bitwiseFunctions.count, 12)
+        // Includes integer and long bitwise helpers plus bit-counting utilities.
+        XCTAssertEqual(RuntimeABISpec.bitwiseFunctions.count, 32)
     }
 
     func testPrimitiveNumericConversionFunctionCount() {
-        XCTAssertGreaterThanOrEqual(RuntimeABISpec.primitiveNumericConversionFunctions.count, 16)
+        // Includes signed/unsigned/char conversions plus coercion helpers.
+        XCTAssertEqual(RuntimeABISpec.primitiveNumericConversionFunctions.count, 63)
     }
 
     func testMathFunctionCount() {

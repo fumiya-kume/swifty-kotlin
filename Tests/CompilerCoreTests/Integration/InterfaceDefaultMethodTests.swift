@@ -372,6 +372,88 @@ final class InterfaceDefaultMethodTests: XCTestCase {
         XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
     }
 
+    func testDiamondConflictResolutionUsesFullSignature() throws {
+        let source = """
+        interface Left {
+            fun method(value: Int): String = "LeftInt"
+        }
+        interface Right {
+            fun method(value: String): String = "RightString"
+        }
+        class TestClass : Left, Right
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.code == "KSWIFTK-SEMA-0171" }))
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
+    }
+
+    func testConcreteSuperclassDefaultBeatsInterfaceConflict() throws {
+        let source = """
+        open class Base {
+            open fun method(): String = "Base"
+        }
+        interface Left {
+            fun method(): String = "Left"
+        }
+        interface Right {
+            fun method(): String = "Right"
+        }
+        class TestClass : Base(), Left, Right
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.code == "KSWIFTK-SEMA-0171" }))
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
+    }
+
+    func testConcreteSuperclassDefaultCallResolvesWithoutAmbiguity() throws {
+        let source = """
+        open class Base {
+            open fun method(): String = "Base"
+        }
+        interface Left {
+            fun method(): String = "Left"
+        }
+        interface Right {
+            fun method(): String = "Right"
+        }
+        class TestClass : Base(), Left, Right
+        fun main() {
+            println(TestClass().method())
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.code == "KSWIFTK-SEMA-0003" }))
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
+    }
+
+    func testSignatureAwareInheritedOverloadsResolveCalls() throws {
+        let source = """
+        interface Left {
+            fun method(value: Int): String = "LeftInt"
+        }
+        interface Right {
+            fun method(value: String): String = "RightString"
+        }
+        class TestClass : Left, Right
+        fun main() {
+            val instance = TestClass()
+            println(instance.method(1))
+            println(instance.method("x"))
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.code == "KSWIFTK-SEMA-0003" }))
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
+    }
+
     // MARK: - Complex Interface Inheritance Tests
 
     func testComplexInterfaceInheritance() throws {

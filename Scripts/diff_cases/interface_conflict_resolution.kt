@@ -22,6 +22,26 @@ class WithSuperCall : Left, Right {
     override fun method(): String = super<Left>.method() + " + " + super<Right>.method()
 }
 
+open class ConcreteBase {
+    open fun method(): String = "Base"
+}
+
+class SuperPriority : ConcreteBase(), Left, Right {
+    // Should prefer ConcreteBase.method() without requiring an override
+}
+
+interface LeftInt {
+    fun overload(value: Int): String = "LeftInt:$value"
+}
+
+interface RightString {
+    fun overload(value: String): String = "RightString:$value"
+}
+
+class SignatureAwareInheritance : LeftInt, RightString {
+    // Different signatures should not conflict
+}
+
 interface A {
     fun default1(): String = "A1"
     fun default2(): String = "A2"
@@ -56,4 +76,11 @@ fun main() {
     println(complex.default3())
     println(complex.default4())
     println(complex.abstract1())
+
+    val superPriority = SuperPriority()
+    println(superPriority.method())
+
+    val signatureAware = SignatureAwareInheritance()
+    println(signatureAware.overload(1))
+    println(signatureAware.overload("x"))
 }
