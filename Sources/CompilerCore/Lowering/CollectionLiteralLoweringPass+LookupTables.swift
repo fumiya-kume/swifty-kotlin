@@ -377,6 +377,12 @@ struct CollectionLiteralLookupTables {
     let kkULongRangeIsEmptyName: InternedString
     let kkULongRangeReversedName: InternedString
     let kkULongRangeToULongArrayName: InternedString
+    let kkULongRangeCountName: InternedString
+    let kkULongRangeIteratorName: InternedString
+    let kkULongRangeHasNextName: InternedString
+    let kkULongRangeNextName: InternedString
+    let kkULongRangeForEachName: InternedString
+    let kkULongRangeMapName: InternedString
 
     let sizeName: InternedString
     let getName: InternedString
@@ -1019,6 +1025,12 @@ struct CollectionLiteralLookupTables {
         kkULongRangeIsEmptyName = interner.intern("kk_ulong_range_isEmpty")
         kkULongRangeReversedName = interner.intern("kk_ulong_range_reversed")
         kkULongRangeToULongArrayName = interner.intern("kk_ulong_range_toULongArray")
+        kkULongRangeCountName = interner.intern("kk_ulong_range_count")
+        kkULongRangeIteratorName = interner.intern("kk_ulong_range_iterator")
+        kkULongRangeHasNextName = interner.intern("kk_ulong_range_hasNext")
+        kkULongRangeNextName = interner.intern("kk_ulong_range_next")
+        kkULongRangeForEachName = interner.intern("kk_ulong_range_forEach")
+        kkULongRangeMapName = interner.intern("kk_ulong_range_map")
 
         sizeName = interner.intern("size")
         getName = interner.intern("get")

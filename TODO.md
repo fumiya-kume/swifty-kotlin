@@ -168,15 +168,16 @@
   - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
   - **テストケース**: `Scripts/diff_cases/uint_range.kt`
 
-- [ ] STDLIB-RANGE-037: ULongRange完全実装
+- [x] STDLIB-RANGE-037: ULongRange完全実装
   - **仕様**: ULongRangeの完全な機能サポート
   - **実装内容**:
     - コンストラクタ: ULongRange(start, end), startUL..endUL
     - プロパティ: start, end, first, last, step
     - 包含判定: contains(), isEmpty()
-    - 反復: iterator(), reversed()
+    - 反復: iterator(), reversed(), count()
     - 変換: toList(), toULongArray()
-  - **現状**: ULongRangeは未実装
+    - HOF: forEach(), map()
+  - **現状**: 実装完了 (STDLIB-RANGE-037)
   - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
   - **テストケース**: `Scripts/diff_cases/ulong_range.kt`
 

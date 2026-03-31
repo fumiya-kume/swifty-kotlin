@@ -4146,7 +4146,7 @@ extension CallLowerer {
         let calleeText = interner.resolve(calleeName)
         if sema.bindings.isRangeExpr(receiverExpr) {
             let rangeMembers: Set<String> = [
-                "first", "last", "step", "contains", "isEmpty", "sum",
+                "first", "last", "step", "contains", "isEmpty", "sum", "count",
                 "toList", "forEach", "map", "mapIndexed", "mapNotNull",
                 "filter", "filterIndexed", "filterNot", "reduce", "reduceIndexed",
                 "fold", "foldIndexed", "find", "findLast", "firstOrNull",
@@ -4763,6 +4763,9 @@ extension CallLowerer {
                 }
                 return interner.intern("kk_range_sum")
             case "count":
+                if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                    return interner.intern("kk_ulong_range_count")
+                }
                 if nonNullReceiverType == sema.types.uintType {
                     return interner.intern("kk_uint_range_count")
                 }
@@ -4778,11 +4781,17 @@ extension CallLowerer {
             case "toUIntArray":
                 return interner.intern("kk_uint_range_toUIntArray")
             case "forEach":
+                if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                    return interner.intern("kk_ulong_range_forEach")
+                }
                 if nonNullReceiverType == sema.types.uintType {
                     return interner.intern("kk_uint_range_forEach")
                 }
                 return interner.intern("kk_range_forEach")
             case "map":
+                if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                    return interner.intern("kk_ulong_range_map")
+                }
                 if nonNullReceiverType == sema.types.uintType {
                     return interner.intern("kk_uint_range_map")
                 }

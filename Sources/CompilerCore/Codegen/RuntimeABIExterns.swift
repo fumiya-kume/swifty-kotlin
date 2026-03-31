@@ -2527,6 +2527,44 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // MARK: - ULongRange count, iterator, forEach, map (STDLIB-RANGE-037)
+
+    public static let kk_ulong_range_count = ExternDecl(
+        name: "kk_ulong_range_count",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_ulong_range_iterator = ExternDecl(
+        name: "kk_ulong_range_iterator",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_ulong_range_hasNext = ExternDecl(
+        name: "kk_ulong_range_hasNext",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_ulong_range_next = ExternDecl(
+        name: "kk_ulong_range_next",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_ulong_range_forEach = ExternDecl(
+        name: "kk_ulong_range_forEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_ulong_range_map = ExternDecl(
+        name: "kk_ulong_range_map",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_range_forEach = ExternDecl(
         name: "kk_range_forEach",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
@@ -4136,6 +4174,13 @@ public enum RuntimeABIExterns {
             kk_ulong_range_isEmpty,
             kk_ulong_range_reversed,
             kk_ulong_range_toULongArray,
+            // ULongRange count, iterator, forEach, map (STDLIB-RANGE-037)
+            kk_ulong_range_count,
+            kk_ulong_range_iterator,
+            kk_ulong_range_hasNext,
+            kk_ulong_range_next,
+            kk_ulong_range_forEach,
+            kk_ulong_range_map,
             kk_range_forEach,
             kk_range_map,
             kk_range_step,
