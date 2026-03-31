@@ -2232,7 +2232,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_coroutine_name_create",
             parameters: [
-                RuntimeABIParameter(name: "nameHandle", type: .intptr),
+                RuntimeABIParameter(name: "nameRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2240,7 +2240,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_coroutine_name_get",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "handleRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2256,9 +2256,9 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_exception_handler_invoke",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr),
-                RuntimeABIParameter(name: "context", type: .intptr),
-                RuntimeABIParameter(name: "throwable", type: .intptr),
+                RuntimeABIParameter(name: "handlerRaw", type: .intptr),
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
+                RuntimeABIParameter(name: "exceptionRaw", type: .intptr),
             ],
             returnType: .void,
             section: "Coroutine"
@@ -2266,8 +2266,8 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_context_plus",
             parameters: [
-                RuntimeABIParameter(name: "lhs", type: .intptr),
-                RuntimeABIParameter(name: "rhs", type: .intptr),
+                RuntimeABIParameter(name: "leftRaw", type: .intptr),
+                RuntimeABIParameter(name: "rightRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2275,7 +2275,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_context_get_dispatcher",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2283,7 +2283,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_context_get_name",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2291,7 +2291,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_context_get_exception_handler",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2299,7 +2299,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_context_release",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
             ],
             returnType: .void,
             section: "Coroutine"
@@ -2307,7 +2307,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_with_context_full",
             parameters: [
-                RuntimeABIParameter(name: "context", type: .intptr),
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
                 RuntimeABIParameter(name: "blockFnPtr", type: .intptr),
                 RuntimeABIParameter(name: "continuation", type: .intptr),
             ],

@@ -318,6 +318,109 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // STDLIB-CORO-077: CoroutineContext, CoroutineName, CoroutineExceptionHandler
+        let coroutineContextSymbol = ensureClassSymbol(
+            named: "CoroutineContext",
+            in: coroutinesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let coroutineContextType = types.make(.classType(ClassType(
+            classSymbol: coroutineContextSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(coroutineContextType, for: coroutineContextSymbol)
+
+        let coroutineNameSymbol = ensureClassSymbol(
+            named: "CoroutineName",
+            in: coroutinesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let coroutineNameType = types.make(.classType(ClassType(
+            classSymbol: coroutineNameSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(coroutineNameType, for: coroutineNameSymbol)
+        symbols.setDirectSupertypes([coroutineContextSymbol], for: coroutineNameSymbol)
+
+        let coroutineExceptionHandlerSymbol = ensureClassSymbol(
+            named: "CoroutineExceptionHandler",
+            in: coroutinesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let coroutineExceptionHandlerType = types.make(.classType(ClassType(
+            classSymbol: coroutineExceptionHandlerSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(coroutineExceptionHandlerType, for: coroutineExceptionHandlerSymbol)
+        symbols.setDirectSupertypes([coroutineContextSymbol], for: coroutineExceptionHandlerSymbol)
+
+        // Make CoroutineDispatcher a subtype of CoroutineContext
+        symbols.setDirectSupertypes([coroutineContextSymbol], for: dispatcherSymbol)
+
+        // CoroutineName(name: String) constructor
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "CoroutineName",
+            packageFQName: coroutinesPkg,
+            parameters: [(name: "name", type: types.stringType)],
+            returnType: coroutineNameType,
+            externalLinkName: "kk_coroutine_name_create",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // CoroutineExceptionHandler { context, exception -> } factory
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "CoroutineExceptionHandler",
+            packageFQName: coroutinesPkg,
+            parameters: [(name: "handler", type: types.make(.functionType(FunctionType(
+                params: [coroutineContextType, types.anyType],
+                returnType: types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            ))))],
+            returnType: coroutineExceptionHandlerType,
+            externalLinkName: "kk_exception_handler_create",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // withContext overload accepting CoroutineContext (not just dispatcher)
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "withContext",
+            packageFQName: coroutinesPkg,
+            parameters: [
+                (name: "context", type: coroutineContextType),
+                (name: "block", type: types.make(.functionType(FunctionType(
+                    params: [],
+                    returnType: types.anyType,
+                    isSuspend: true,
+                    nullability: .nonNull
+                )))),
+            ],
+            returnType: types.anyType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // CoroutineContext.plus(other: CoroutineContext): CoroutineContext
+        registerSyntheticCoroutineMember(
+            ownerSymbol: coroutineContextSymbol,
+            ownerType: coroutineContextType,
+            name: "plus",
+            externalLinkName: "kk_context_plus",
+            returnType: coroutineContextType,
+            parameters: [(name: "context", type: coroutineContextType)],
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticCoroutineConstructor(
             ownerSymbol: channelSymbol,
             ownerType: channelType,

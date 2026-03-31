@@ -4532,6 +4532,17 @@ public enum RuntimeABIExterns {
             kk_dispatcher_io,
             kk_dispatcher_main,
             kk_with_context,
+            // CoroutineContext elements (STDLIB-CORO-077)
+            kk_coroutine_name_create,
+            kk_coroutine_name_get,
+            kk_exception_handler_create,
+            kk_exception_handler_invoke,
+            kk_context_plus,
+            kk_context_get_dispatcher,
+            kk_context_get_name,
+            kk_context_get_exception_handler,
+            kk_context_release,
+            kk_with_context_full,
             // Channel (CORO-001)
             kk_channel_create,
             kk_channel_send,
