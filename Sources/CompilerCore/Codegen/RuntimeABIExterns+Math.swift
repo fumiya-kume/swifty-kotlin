@@ -104,6 +104,21 @@ public extension RuntimeABIExterns {
         kk_math_cosh_float,
         kk_math_tanh_float,
         kk_math_cbrt_float,
+        // STDLIB-MATH-112: numeric constants
+        kk_double_positive_infinity,
+        kk_double_negative_infinity,
+        kk_double_nan,
+        kk_double_max_value,
+        kk_double_min_value,
+        kk_float_positive_infinity,
+        kk_float_negative_infinity,
+        kk_float_nan,
+        kk_float_max_value,
+        kk_float_min_value,
+        kk_int_max_value,
+        kk_int_min_value,
+        kk_long_max_value,
+        kk_long_min_value,
     ]
 
     static let kk_math_abs_int = ExternDecl(
@@ -342,4 +357,23 @@ public extension RuntimeABIExterns {
     static let kk_math_cosh_float = ExternDecl(name: "kk_math_cosh_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
     static let kk_math_tanh_float = ExternDecl(name: "kk_math_tanh_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
     static let kk_math_cbrt_float = ExternDecl(name: "kk_math_cbrt_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    // STDLIB-MATH-112: numeric constants — Double special values
+    static let kk_double_positive_infinity = ExternDecl(name: "kk_double_positive_infinity", parameterTypes: [], returnType: "intptr_t")
+    static let kk_double_negative_infinity = ExternDecl(name: "kk_double_negative_infinity", parameterTypes: [], returnType: "intptr_t")
+    static let kk_double_nan = ExternDecl(name: "kk_double_nan", parameterTypes: [], returnType: "intptr_t")
+    static let kk_double_max_value = ExternDecl(name: "kk_double_max_value", parameterTypes: [], returnType: "intptr_t")
+    static let kk_double_min_value = ExternDecl(name: "kk_double_min_value", parameterTypes: [], returnType: "intptr_t")
+
+    // STDLIB-MATH-112: numeric constants — Float special values
+    static let kk_float_positive_infinity = ExternDecl(name: "kk_float_positive_infinity", parameterTypes: [], returnType: "intptr_t")
+    static let kk_float_negative_infinity = ExternDecl(name: "kk_float_negative_infinity", parameterTypes: [], returnType: "intptr_t")
+    static let kk_float_nan = ExternDecl(name: "kk_float_nan", parameterTypes: [], returnType: "intptr_t")
+    static let kk_float_max_value = ExternDecl(name: "kk_float_max_value", parameterTypes: [], returnType: "intptr_t")
+    static let kk_float_min_value = ExternDecl(name: "kk_float_min_value", parameterTypes: [], returnType: "intptr_t")
+
+    // STDLIB-MATH-112: numeric constants — Int/Long bounds
+    static let kk_int_max_value = ExternDecl(name: "kk_int_max_value", parameterTypes: [], returnType: "intptr_t")
+    static let kk_int_min_value = ExternDecl(name: "kk_int_min_value", parameterTypes: [], returnType: "intptr_t")
+    static let kk_long_max_value = ExternDecl(name: "kk_long_max_value", parameterTypes: [], returnType: "intptr_t")
+    static let kk_long_min_value = ExternDecl(name: "kk_long_min_value", parameterTypes: [], returnType: "intptr_t")
 }

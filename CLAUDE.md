@@ -32,6 +32,8 @@ bash Scripts/diff_kotlinc.sh Scripts/diff_cases/hello.kt  # 単一ケース
 bash Scripts/diff_kotlinc.sh Scripts/diff_cases            # 全ケース
 ```
 
+CI で diff が落ちたとき: GitHub 上はジョブ **Summary** と **Artifacts**（TSV・失敗ケースディレクトリ）を優先。`gh run view RUN_ID --log-failed` だけだと、kotlinc diff ステップは `continue-on-error` のため **本体ログが含まれない**ことがある。全文ログでは `FAIL ` を grep。
+
 ## アーキテクチャ概要
 
 ```

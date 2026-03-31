@@ -359,3 +359,28 @@ public func kk_random_nextBoolean(_ receiver: Int) -> Int {
     }
     return kk_box_bool(Bool.random() ? 1 : 0)
 }
+
+// MARK: - nextBits (STDLIB-RANDOM-100)
+
+@_cdecl("kk_random_nextBits")
+public func kk_random_nextBits(_ receiver: Int, _ bitCount: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard bitCount >= 0, bitCount <= 32 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: bitCount (\(bitCount)) must be in 0..32."
+        )
+        return 0
+    }
+    if bitCount == 0 { return 0 }
+    let raw: UInt64
+    if let box = seededBox(from: receiver) {
+        raw = box.nextBits()
+    } else {
+        var rng = SystemRandomNumberGenerator()
+        raw = rng.next()
+    }
+    // Keep only the lower `bitCount` bits as an unsigned value, then
+    // reinterpret as a signed Int so the result fits Kotlin's Int type.
+    let mask: UInt64 = bitCount == 32 ? 0xFFFFFFFF : (1 << bitCount) - 1
+    return Int(Int32(bitPattern: UInt32(raw & mask)))
+}

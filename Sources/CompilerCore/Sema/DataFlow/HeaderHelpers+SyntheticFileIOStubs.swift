@@ -479,6 +479,7 @@ extension DataFlowSemaPhase {
             symbols.setDirectSupertypes([closeableSymbol], for: bufferedReaderSymbol)
             types.setNominalDirectSupertypes([closeableSymbol], for: bufferedReaderSymbol)
         }
+        // MARK: - BufferedWriter type and File.bufferedWriter() (STDLIB-IO-091)
 
         // BufferedReader.read() -> Int  (STDLIB-IO-091)
         registerFileMemberFunction(
@@ -610,9 +611,14 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(classLoaderType, for: classLoaderSymbol)
 
-
         let inputStreamSymbol = ensureClassSymbol(
             named: "InputStream",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let sequenceInputStreamSymbol = ensureClassSymbol(
+            named: "SequenceInputStream",
             in: javaIOPkg,
             symbols: symbols,
             interner: interner
@@ -625,16 +631,21 @@ extension DataFlowSemaPhase {
         )
         if let javaIOPkgSymbol {
             symbols.setParentSymbol(javaIOPkgSymbol, for: inputStreamSymbol)
+            symbols.setParentSymbol(javaIOPkgSymbol, for: sequenceInputStreamSymbol)
             symbols.setParentSymbol(javaIOPkgSymbol, for: outputStreamSymbol)
         }
 
         let inputStreamType = types.make(.classType(ClassType(
             classSymbol: inputStreamSymbol, args: [], nullability: .nonNull
         )))
+        let sequenceInputStreamType = types.make(.classType(ClassType(
+            classSymbol: sequenceInputStreamSymbol, args: [], nullability: .nonNull
+        )))
         let outputStreamType = types.make(.classType(ClassType(
             classSymbol: outputStreamSymbol, args: [], nullability: .nonNull
         )))
         symbols.setPropertyType(inputStreamType, for: inputStreamSymbol)
+        symbols.setPropertyType(sequenceInputStreamType, for: sequenceInputStreamSymbol)
         symbols.setPropertyType(outputStreamType, for: outputStreamSymbol)
 
         // Register InputStream/OutputStream as Closeable subtypes (STDLIB-IO-093)
@@ -645,9 +656,9 @@ extension DataFlowSemaPhase {
             symbols.setDirectSupertypes([closeableSymbol], for: outputStreamSymbol)
             types.setNominalDirectSupertypes([closeableSymbol], for: outputStreamSymbol)
         }
-
+        symbols.setDirectSupertypes([inputStreamSymbol], for: sequenceInputStreamSymbol)
+        types.setNominalDirectSupertypes([inputStreamSymbol], for: sequenceInputStreamSymbol)
         let nullableInputStreamType = types.makeNullable(inputStreamType)
-
 
         registerFileMemberFunction(
             named: "inputStream",
@@ -667,6 +678,15 @@ extension DataFlowSemaPhase {
             ownerType: fileType,
             parameters: [],
             returnType: outputStreamType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileConstructor(
+            ownerSymbol: sequenceInputStreamSymbol,
+            ownerType: sequenceInputStreamType,
+            parameters: [("first", inputStreamType), ("second", inputStreamType)],
+            externalLinkName: "kk_sequence_input_stream_new",
             symbols: symbols,
             interner: interner
         )
@@ -755,31 +775,6 @@ extension DataFlowSemaPhase {
             ownerType: inputStreamType,
             parameters: [],
             returnType: types.unitType,
-            symbols: symbols,
-            interner: interner
-        )
-
-        // MARK: - SequenceInputStream (STDLIB-IO-092)
-
-        let sequenceInputStreamSymbol = ensureClassSymbol(
-            named: "SequenceInputStream",
-            in: javaIOPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        if let javaIOPkgSymbol {
-            symbols.setParentSymbol(javaIOPkgSymbol, for: sequenceInputStreamSymbol)
-        }
-        let sequenceInputStreamType = types.make(.classType(ClassType(
-            classSymbol: sequenceInputStreamSymbol, args: [], nullability: .nonNull
-        )))
-        symbols.setPropertyType(sequenceInputStreamType, for: sequenceInputStreamSymbol)
-
-        registerFileConstructor(
-            ownerSymbol: sequenceInputStreamSymbol,
-            ownerType: sequenceInputStreamType,
-            parameters: [("first", inputStreamType), ("second", inputStreamType)],
-            externalLinkName: "kk_sequence_input_stream_new",
             symbols: symbols,
             interner: interner
         )

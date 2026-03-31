@@ -644,6 +644,5 @@ final class MemberCallLowerer {
     // MARK: - 定数
     
     static let unresolvedCoroutineHandleMemberNames: Set<String> = ["await", "join", "cancel"]
-    static let unresolvedChannelMemberNames: Set<String> = ["send", "receive", "close"]
+    static let unresolvedChannelMemberNames: Set<String> = ["send", "receive", "close", "isClosedForReceive", "isClosedForSend"]
 }
-

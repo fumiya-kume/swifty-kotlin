@@ -20,7 +20,7 @@ final class CoroutineLowerer {
     ) -> KIRExprID? {
         let sema = context.sema
         let interner = context.interner
-        let calleeStr = interner.resolve(calleeName)
+        let _ = interner.resolve(calleeName)
         
         // コルーチンハンドル操作
         if isCoroutineHandleCall(receiverExpr: receiverExpr, calleeName: calleeName, sema: sema, interner: interner) {
@@ -51,7 +51,7 @@ final class CoroutineLowerer {
         args: [KIRExprID],
         context: inout CallLoweringContext
     ) -> KIRExprID? {
-        let sema = context.sema
+        let _ = context.sema
         let interner = context.interner
         let knownNames = KnownCompilerNames(interner: interner)
 
@@ -137,19 +137,33 @@ final class CoroutineLowerer {
         case "send": "kk_channel_send"
         case "receive": "kk_channel_receive"
         case "close": "kk_channel_close"
+        case "isClosedForReceive": "kk_channel_is_closed_for_receive"
+        case "isClosedForSend": "kk_channel_is_closed_for_send"
         default: nil
         }
         
         if let runtimeName {
             let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
             
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
+            let resultType: TypeID = switch calleeStr {
+            case "isClosedForReceive", "isClosedForSend":
+                sema.types.booleanType
+            default:
+                boundType
+            }
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            let operationCanThrow: Bool = switch calleeStr {
+            case "isClosedForReceive", "isClosedForSend":
+                false
+            default:
+                true
+            }
             context.append(.call(
                 symbol: nil,
                 callee: interner.intern(runtimeName),
                 arguments: [receiverID] + args,
                 result: result,
-                canThrow: true,
+                canThrow: operationCanThrow,
                 thrownResult: nil
             ))
             return result
@@ -211,7 +225,7 @@ final class CoroutineLowerer {
         let sema = context.sema
         let arena = context.arena
         let interner = context.interner
-        let knownNames = KnownCompilerNames(interner: interner)
+        let _ = KnownCompilerNames(interner: interner)
         let boundType = sema.types.anyType // TODO: 実際の結果型を取得
         
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
@@ -245,8 +259,8 @@ final class CoroutineLowerer {
         args: [CallArgument],
         context: inout CallLoweringContext
     ) -> KIRExprID? {
-        let sema = context.sema
-        let interner = context.interner
+        let _ = context.sema
+        let _ = context.interner
         
         // coroutineビルダーの特殊処理
         if let coroutineResult = lowerCoroutineBuilderCall(

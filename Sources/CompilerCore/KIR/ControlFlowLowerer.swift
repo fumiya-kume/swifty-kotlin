@@ -25,6 +25,24 @@ final class ControlFlowLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
+        // CORO-075: Detect Channel iterables and route to channel-specific
+        // iterator functions that perform blocking-suspend receive internally.
+        let iterableType = sema.bindings.exprTypes[iterableExpr] ?? sema.types.anyType
+        if isChannelType(iterableType, sema: sema, interner: interner) {
+            return lowerChannelForExpr(
+                exprID,
+                iterableExpr: iterableExpr,
+                bodyExpr: bodyExpr,
+                label: label,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+        }
+
         let boolType = sema.types.make(.primitive(.boolean, .nonNull))
         let iterableID = driver.lowerExpr(
             iterableExpr,
@@ -102,6 +120,115 @@ final class ControlFlowLowerer {
         let unit = arena.appendExpr(.unit, type: sema.types.unitType)
         instructions.append(.constValue(result: unit, value: .unit))
         return unit
+    }
+
+    // MARK: - Channel For-Loop (CORO-075)
+
+    /// Lower a `for (value in channel)` loop using the channel iterator
+    /// protocol: `kk_channel_iterator` / `kk_channel_iterator_hasNext` /
+    /// `kk_channel_iterator_next`.
+    private func lowerChannelForExpr(
+        _ exprID: ExprID,
+        iterableExpr: ExprID,
+        bodyExpr: ExprID,
+        label: InternedString?,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        // Lower the channel expression.
+        let channelID = driver.lowerExpr(
+            iterableExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        // Create the channel iterator.
+        let iteratorID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_channel_iterator"),
+            arguments: [channelID],
+            result: iteratorID,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        let continueLabel = driver.ctx.makeLoopLabel()
+        let breakLabel = driver.ctx.makeLoopLabel()
+        instructions.append(.label(continueLabel))
+
+        // Call hasNext (blocks until value or close).
+        let hasNextID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_channel_iterator_hasNext"),
+            arguments: [iteratorID],
+            result: hasNextID,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        let falseID = arena.appendExpr(.boolLiteral(false), type: boolType)
+        instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
+        instructions.append(.jumpIfEqual(lhs: hasNextID, rhs: falseID, target: breakLabel))
+
+        let loopVariableSymbol = sema.bindings.identifierSymbols[exprID]
+        let previousLoopValue = loopVariableSymbol.flatMap { driver.ctx.localValue(for: $0) }
+        let nextValueID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_channel_iterator_next"),
+            arguments: [iteratorID],
+            result: nextValueID,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        if let loopVariableSymbol {
+            driver.ctx.setLocalValue(nextValueID, for: loopVariableSymbol)
+        }
+
+        driver.ctx.pushLoopControl(continueLabel: continueLabel, breakLabel: breakLabel, name: label)
+        _ = driver.lowerExpr(
+            bodyExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        _ = driver.ctx.popLoopControl()
+        instructions.append(.jump(continueLabel))
+        instructions.append(.label(breakLabel))
+
+        if let loopVariableSymbol {
+            if let previousLoopValue {
+                driver.ctx.setLocalValue(previousLoopValue, for: loopVariableSymbol)
+            } else {
+                driver.ctx.clearLocalValue(for: loopVariableSymbol)
+            }
+        }
+
+        let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+        instructions.append(.constValue(result: unit, value: .unit))
+        return unit
+    }
+
+    /// Returns true if `type` is a Channel type.
+    private func isChannelType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(type)),
+              let symbol = sema.symbols.symbol(classType.classSymbol) else {
+            return false
+        }
+        return knownNames.isChannelSymbol(symbol)
     }
 
     func lowerWhileExpr(

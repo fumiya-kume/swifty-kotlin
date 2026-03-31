@@ -23,7 +23,7 @@ final class CallLoweringCoordinator {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
-        var context = CallLoweringContext(
+        let _ = CallLoweringContext(
             driver: driver,
             ast: ast,
             sema: sema,
