@@ -99,7 +99,12 @@ extension ControlFlowTypeChecker {
 
         let iterableType = driver.inferExpr(iterableExpr, ctx: ctx, locals: &locals, expectedType: nil)
         let isRangeExpr = Self.isRangeExpression(iterableExpr, ast: ctx.ast)
-        let elementType: TypeID = driver.helpers.iterableElementType(for: iterableType, isRangeExpr: isRangeExpr, sema: sema, interner: interner) ?? {
+        let elementType: TypeID = bindLoopIterationOperators(
+            exprID: id,
+            iterableType: iterableType,
+            range: range,
+            ctx: ctx
+        ) ?? driver.helpers.iterableElementType(for: iterableType, isRangeExpr: isRangeExpr, sema: sema, interner: interner) ?? {
             ctx.semaCtx.diagnostics.error(
                 "KSWIFTK-SEMA-0087",
                 "Cannot determine element type for destructuring in for-loop.",
