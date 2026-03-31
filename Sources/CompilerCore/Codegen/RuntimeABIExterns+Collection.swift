@@ -16,6 +16,8 @@ public extension RuntimeABIExterns {
         kk_list_iterator,
         kk_list_iterator_hasNext,
         kk_list_iterator_next,
+        kk_iterator_hasNext,
+        kk_iterator_next,
         kk_list_iterator_hasPrevious,
         kk_list_iterator_previous,
         kk_list_to_string,
@@ -414,6 +416,18 @@ public extension RuntimeABIExterns {
 
     static let kk_list_iterator_next = ExternDecl(
         name: "kk_list_iterator_next",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_iterator_hasNext = ExternDecl(
+        name: "kk_iterator_hasNext",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_iterator_next = ExternDecl(
+        name: "kk_iterator_next",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )

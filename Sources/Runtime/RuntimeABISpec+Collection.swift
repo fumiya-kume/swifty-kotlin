@@ -106,6 +106,22 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_iterator_hasNext",
+            parameters: [
+                RuntimeABIParameter(name: "iterRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_iterator_next",
+            parameters: [
+                RuntimeABIParameter(name: "iterRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_list_iterator_hasPrevious",
             parameters: [
                 RuntimeABIParameter(name: "iterRaw", type: .intptr),

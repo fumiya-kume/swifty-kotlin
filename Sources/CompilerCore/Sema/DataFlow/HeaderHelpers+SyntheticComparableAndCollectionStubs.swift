@@ -996,6 +996,9 @@ extension DataFlowSemaPhase {
             visibility: .private,
             flags: []
         )
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol, nullability: .nonNull
+        )))
         types.setNominalTypeParameterSymbols([typeParamSymbol], for: iterableInterfaceSymbol)
         types.setNominalTypeParameterVariances([.out], for: iterableInterfaceSymbol)
 
@@ -1027,17 +1030,69 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterSymbols([itTypeParamSymbol], for: iteratorSymbol)
         types.setNominalTypeParameterVariances([.out], for: iteratorSymbol)
 
+        // Iterable.iterator(): Iterator<E>
+        let iterableReceiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let iteratorReturnType = types.make(.classType(ClassType(
+            classSymbol: iteratorSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let iteratorMemberName = interner.intern("iterator")
+        let iteratorMemberFQName = iterableFQName + [iteratorMemberName]
+        if symbols.lookup(fqName: iteratorMemberFQName) == nil {
+            let iteratorMemberSymbol = symbols.define(
+                kind: .function,
+                name: iteratorMemberName,
+                fqName: iteratorMemberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(iterableInterfaceSymbol, for: iteratorMemberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: iterableReceiverType,
+                    parameterTypes: [],
+                    returnType: iteratorReturnType,
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: iteratorMemberSymbol
+            )
+        }
+
         // Iterator.hasNext(): Boolean
         let hasNextName = interner.intern("hasNext")
         let hasNextFQName = iteratorFQName + [hasNextName]
         if symbols.lookup(fqName: hasNextFQName) == nil {
+            let iteratorReceiverType = types.make(.classType(ClassType(
+                classSymbol: iteratorSymbol,
+                args: [.out(typeParamType)],
+                nullability: .nonNull
+            )))
             let sym = symbols.define(
                 kind: .function, name: hasNextName, fqName: hasNextFQName,
                 declSite: nil, visibility: .public, flags: [.synthetic]
             )
+            symbols.setParentSymbol(iteratorSymbol, for: sym)
             symbols.setPropertyType(types.make(.functionType(FunctionType(
                 params: [], returnType: types.booleanType, isSuspend: false, nullability: .nonNull
             ))), for: sym)
+            symbols.setExternalLinkName("kk_iterator_hasNext", for: sym)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: iteratorReceiverType,
+                    parameterTypes: [],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [itTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: sym
+            )
         }
 
         // Iterator.next(): T
@@ -1045,13 +1100,30 @@ extension DataFlowSemaPhase {
         let nextFQName = iteratorFQName + [nextName]
         if symbols.lookup(fqName: nextFQName) == nil {
             let itTypeParamType = types.make(.typeParam(TypeParamType(symbol: itTypeParamSymbol, nullability: .nonNull)))
+            let iteratorReceiverType = types.make(.classType(ClassType(
+                classSymbol: iteratorSymbol,
+                args: [.out(itTypeParamType)],
+                nullability: .nonNull
+            )))
             let sym = symbols.define(
                 kind: .function, name: nextName, fqName: nextFQName,
                 declSite: nil, visibility: .public, flags: [.synthetic]
             )
+            symbols.setParentSymbol(iteratorSymbol, for: sym)
             symbols.setPropertyType(types.make(.functionType(FunctionType(
                 params: [], returnType: itTypeParamType, isSuspend: false, nullability: .nonNull
             ))), for: sym)
+            symbols.setExternalLinkName("kk_iterator_next", for: sym)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: iteratorReceiverType,
+                    parameterTypes: [],
+                    returnType: itTypeParamType,
+                    typeParameterSymbols: [itTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: sym
+            )
         }
 
         // MutableIterator<T> : Iterator<T> (STDLIB-221)
@@ -1072,9 +1144,26 @@ extension DataFlowSemaPhase {
                 kind: .function, name: removeName, fqName: removeFQName,
                 declSite: nil, visibility: .public, flags: [.synthetic]
             )
+            let itTypeParamType = types.make(.typeParam(TypeParamType(symbol: itTypeParamSymbol, nullability: .nonNull)))
+            let mutableIteratorReceiverType = types.make(.classType(ClassType(
+                classSymbol: mutIterSym,
+                args: [.out(itTypeParamType)],
+                nullability: .nonNull
+            )))
+            symbols.setParentSymbol(mutIterSym, for: removeSym)
             symbols.setPropertyType(types.make(.functionType(FunctionType(
                 params: [], returnType: types.unitType, isSuspend: false, nullability: .nonNull
             ))), for: removeSym)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: mutableIteratorReceiverType,
+                    parameterTypes: [],
+                    returnType: types.unitType,
+                    typeParameterSymbols: [itTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: removeSym
+            )
         }
 
         return iterableInterfaceSymbol
@@ -1389,6 +1478,14 @@ extension DataFlowSemaPhase {
             listTypeParamSymbol: listTypeParamSymbol,
             listTypeParamType: listTypeParamType
         )
+        registerListIteratorOperatorMember(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            listFQName: listFQName,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType
+        )
         return listInterfaceSymbol
     }
 
@@ -1626,6 +1723,62 @@ extension DataFlowSemaPhase {
             declSite: nil,
             visibility: .public,
             flags: [.synthetic]
+        )
+        symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_iterator", for: memberSymbol)
+        symbols.setPropertyType(types.make(.functionType(FunctionType(
+            params: [], returnType: returnType, isSuspend: false, nullability: .nonNull
+        ))), for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: listReceiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [listTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `List<E>.iterator(): Iterator<E>` with the list-local type parameter.
+    /// This avoids inherited receiver-type-parameter mismatches during member-call substitution.
+    private func registerListIteratorOperatorMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        listFQName: [InternedString],
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID
+    ) {
+        let iteratorName = interner.intern("Iterator")
+        let iteratorFQName = kotlinCollectionsPkg + [iteratorName]
+        guard let iteratorSymbol = symbols.lookup(fqName: iteratorFQName) else { return }
+
+        let memberName = interner.intern("iterator")
+        let memberFQName = listFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let listReceiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: iteratorSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
         )
         symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_list_iterator", for: memberSymbol)

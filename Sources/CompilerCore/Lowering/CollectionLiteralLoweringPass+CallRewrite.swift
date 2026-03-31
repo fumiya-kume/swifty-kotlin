@@ -105,6 +105,31 @@ extension CollectionLiteralLoweringPass {
         return isStdlibCollectionFactory(symbol: symbol, callee: callee, lookup: lookup, ctx: ctx)
     }
 
+    private func isStdlibIteratorBuilderCall(
+        symbol: SymbolID?,
+        ctx: KIRContext,
+        interner: StringInterner
+    ) -> Bool {
+        guard let symbol,
+              let resolved = ctx.sema?.symbols.symbol(symbol)
+        else {
+            return false
+        }
+
+        if let linkName = ctx.sema?.symbols.externalLinkName(for: symbol),
+           linkName == "kk_iterator_builder_build"
+        {
+            return true
+        }
+
+        let iteratorBuilderFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("sequences"),
+            interner.intern("iterator"),
+        ]
+        return resolved.fqName == iteratorBuilderFQName
+    }
+
     private func isJavaIOFileMember(
         symbol: SymbolID?,
         ctx: KIRContext,
@@ -2460,7 +2485,9 @@ extension CollectionLiteralLoweringPass {
                     // by this point plain `iterator { ... }` should refer to
                     // kotlin.sequences.iterator rather than a user-defined
                     // overload. Keep the runtime call non-throwing.
-                    if callee == lookup.iteratorBuilderName, arguments.count == 1 {
+                    if callee == lookup.iteratorBuilderName,
+                       arguments.count == 1,
+                       isStdlibIteratorBuilderCall(symbol: symbol, ctx: ctx, interner: ctx.interner) {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: lookup.kkIteratorBuilderBuildName,
