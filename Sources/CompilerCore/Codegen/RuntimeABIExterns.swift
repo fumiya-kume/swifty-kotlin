@@ -4354,7 +4354,6 @@ public enum RuntimeABIExterns {
             kk_instant_until,
         ]
         all += atomicExterns
-        all += kFunctionExterns
         all += securityExterns
         all += parallelExterns
         return all

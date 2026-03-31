@@ -47,7 +47,7 @@ final class CoercionRuntimeTests: XCTestCase {
 
         // Test with negative values
         XCTAssertEqual(kk_int_coerceAtMost(-5, -1), -5, "Negative value below negative maximum should remain unchanged")
-        XCTAssertEqual(kk_int_coerceAtMost(-15, -1), -1, "Negative value above negative maximum should be clamped")
+        XCTAssertEqual(kk_int_coerceAtMost(-15, -1), -15, "Negative value below negative maximum should remain unchanged")
     }
 
     // MARK: - Long Coercion Runtime Tests
@@ -246,11 +246,12 @@ final class CoercionRuntimeTests: XCTestCase {
     // MARK: - Precision Tests
 
     func testFloatToDoublePrecision() {
-        // Test precision loss when converting between Float and Double
+        // Test precision loss when converting Double -> Float -> Double.
         let preciseDouble = 1.23456789012345
         let doubleBits = doubleToBits(preciseDouble)
-        let floatBits = kk_float_to_double_bits(doubleBits)
-        let convertedBack = bitsToDouble(floatBits)
+        let floatBits = kk_double_to_float(doubleBits)
+        let convertedBackBits = kk_float_to_double_bits(floatBits)
+        let convertedBack = bitsToDouble(convertedBackBits)
 
         // Should lose some precision due to Float conversion
         XCTAssertNotEqual(convertedBack, preciseDouble, accuracy: 1e-15, "Precision should be lost in Float conversion")
