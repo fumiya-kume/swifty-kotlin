@@ -2486,7 +2486,7 @@ extension DataFlowSemaPhase {
                     parameterTypes: parameterTypes,
                     returnType: returnTypeOverride ?? listReturnType,
                     typeParameterSymbols: [listTypeParamSymbol],
-                    typeParameterUpperBoundsList: typeParameterUpperBoundsList,
+                    typeParameterUpperBoundsList: typeParameterUpperBoundsList ?? [],
                     classTypeParameterCount: 1
                 ),
                 for: memberSymbol
