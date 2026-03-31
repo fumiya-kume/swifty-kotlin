@@ -1921,6 +1921,44 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // BroadcastChannel / Pipeline (CORO-076)
+
+    public static let kk_broadcast_channel_create = ExternDecl(
+        name: "kk_broadcast_channel_create",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_broadcast_channel_subscribe = ExternDecl(
+        name: "kk_broadcast_channel_subscribe",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_broadcast_channel_unsubscribe = ExternDecl(
+        name: "kk_broadcast_channel_unsubscribe",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_broadcast_channel_send = ExternDecl(
+        name: "kk_broadcast_channel_send",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_broadcast_channel_close = ExternDecl(
+        name: "kk_broadcast_channel_close",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_channel_pipeline_drain = ExternDecl(
+        name: "kk_channel_pipeline_drain",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // Deferred / awaitAll (P5-135)
 
     public static let kk_await_all = ExternDecl(
@@ -4063,6 +4101,13 @@ public enum RuntimeABIExterns {
             kk_channel_iterator,
             kk_channel_iterator_hasNext,
             kk_channel_iterator_next,
+            // BroadcastChannel / Pipeline (CORO-076)
+            kk_broadcast_channel_create,
+            kk_broadcast_channel_subscribe,
+            kk_broadcast_channel_unsubscribe,
+            kk_broadcast_channel_send,
+            kk_broadcast_channel_close,
+            kk_channel_pipeline_drain,
             // Deferred / awaitAll
             kk_await_all,
             // Structured Concurrency (P5-89)

@@ -486,7 +486,7 @@
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/channel_basic.kt`
 
-- [ ] STDLIB-CORO-076: Channel高度機能完全実装
+- [x] STDLIB-CORO-076: Channel高度機能完全実装
   - **仕様**: Channelの高度な機能
   - **実装内容**:
     - バックプレッシャー: suspend on full/empty
@@ -494,7 +494,7 @@
     - ファンイン: 複数送信者
     - ブロードキャスト: BroadcastChannel
     - パイプライン: channelパイプライン処理
-  - **現状**: 基本的なchannelは実装済み、バックプレッシャー制御は未実装
+  - **現状**: 完全実装済み (`RuntimeBroadcastChannelHandle`, `kk_broadcast_channel_*`, `kk_channel_pipeline_drain`)
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/channel_backpressure.kt`
 

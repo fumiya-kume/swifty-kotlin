@@ -395,24 +395,37 @@ private func runtimeParallelReduceElements(
                 guard let firstIndex = job.range.first else {
                     continue
                 }
-                var acc = maybeUnbox(elements[firstIndex])
-                if job.range.count > 1 {
-                    for index in job.range.dropFirst() {
-                        if queue.hasThrown() {
-                            return
-                        }
-                        var thrown = 0
-                        acc = maybeUnbox(runtimeInvokeCollectionLambda2(
-                            fnPtr: fnPtr,
-                            closureRaw: closureRaw,
-                            lhs: acc,
-                            rhs: elements[index],
-                            outThrown: &thrown
-                        ))
-                        if thrown != 0 {
-                            queue.recordThrow(thrown)
-                            return
-                        }
+                // The first chunk starts from `initial` so that the caller-provided
+                // initial value is correctly incorporated into the reduction.
+                // Subsequent chunks start from their own first element and their
+                // partial result is merged into `initial` during the final sequential
+                // fold below.
+                var acc: Int
+                let remainingRange: Range<Int>
+                if job.index == 0 {
+                    // First chunk: start from `initial` and fold every element.
+                    acc = initial
+                    remainingRange = job.range
+                } else {
+                    // Other chunks: start from the chunk's first element.
+                    acc = maybeUnbox(elements[firstIndex])
+                    remainingRange = (firstIndex + 1)..<job.range.upperBound
+                }
+                for index in remainingRange {
+                    if queue.hasThrown() {
+                        return
+                    }
+                    var thrown = 0
+                    acc = maybeUnbox(runtimeInvokeCollectionLambda2(
+                        fnPtr: fnPtr,
+                        closureRaw: closureRaw,
+                        lhs: acc,
+                        rhs: elements[index],
+                        outThrown: &thrown
+                    ))
+                    if thrown != 0 {
+                        queue.recordThrow(thrown)
+                        return
                     }
                 }
                 partialsBox.value[job.index] = acc
@@ -426,8 +439,10 @@ private func runtimeParallelReduceElements(
         return runtimeParallelThrow(thrown, outThrown)
     }
 
-    var acc = initial
-    for index in 0..<chunks.count {
+    // Chunk 0 already incorporates `initial`, so start the merge from its
+    // partial rather than from `initial` again.
+    var acc = partials[0]
+    for index in 1..<chunks.count {
         let chunkPartial = partials[index]
         var thrown = 0
         acc = maybeUnbox(runtimeInvokeCollectionLambda2(

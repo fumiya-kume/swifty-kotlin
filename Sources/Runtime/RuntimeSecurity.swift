@@ -464,10 +464,13 @@ private func runtimeSecurityString(from raw: Int, caller: StaticString) -> Strin
 }
 
 private func runtimeSecurityBytes(from raw: Int, caller: StaticString) -> [UInt8]? {
-    guard let box = runtimeArrayBox(from: raw) else {
-        return nil
+    if let box = runtimeArrayBox(from: raw) {
+        return box.elements.map { UInt8(truncatingIfNeeded: $0) }
     }
-    return box.elements.map { UInt8(truncatingIfNeeded: $0) }
+    if let list = runtimeListBox(from: raw) {
+        return list.elements.map { UInt8(truncatingIfNeeded: $0) }
+    }
+    return nil
 }
 
 private func runtimeMakeByteArrayRaw(_ bytes: [UInt8]) -> Int {
@@ -584,8 +587,10 @@ private func runtimeCipherRSAAlgorithm(for padding: RuntimeCipherPadding) -> Sec
     switch padding {
     case .pkcs1:
         .rsaEncryptionPKCS1
-    case .pkcs5, .pkcs7, .none:
+    case .pkcs5, .pkcs7:
         .rsaEncryptionPKCS1
+    case .none:
+        .rsaEncryptionRaw
     }
 }
 
@@ -1223,7 +1228,7 @@ public func kk_signature_verify(
     guard let verified = runtimeSignatureTransform(signature: signature, outThrown: outThrown, verifySignatureBytes: signatureBytes) else {
         return 0
     }
-    return verified
+    return kk_box_bool(verified)
 }
 
 @_cdecl("kk_cipher_getInstance")
@@ -1608,6 +1613,10 @@ public func kk_certpathvalidator_validate(
 }
 #else
 // MARK: - Platform stubs: CommonCrypto/Security not available on Linux
+
+private func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, message: String) {
+    outThrown?.pointee = runtimeAllocateThrowable(message: message)
+}
 
 @_cdecl("kk_secretkeyspec_new")
 public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int) -> Int {
