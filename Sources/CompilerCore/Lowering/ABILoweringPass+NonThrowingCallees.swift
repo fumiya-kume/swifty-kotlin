@@ -810,10 +810,6 @@ extension ABILoweringPass {
             interner.intern("kk_kclass_is_sealed"),
             interner.intern("kk_kclass_is_value"),
             interner.intern("kk_kclass_members_count"),
-            // JSON Serialization (STDLIB-SER-132) — no outThrown parameter
-            interner.intern("kk_json_encodeToString"),
-            interner.intern("kk_json_encodeMapToString"),
-            interner.intern("kk_json_default"),
             // Job State Queries (STDLIB-CORO-070)
             interner.intern("kk_job_is_active"),
             interner.intern("kk_job_is_completed"),
