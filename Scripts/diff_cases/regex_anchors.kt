@@ -44,4 +44,16 @@ fun main() {
     val negativeLookbehind = Regex("(?<!foo)bar")
     println(negativeLookbehind.containsMatchIn("bazbar")) // true
     println(negativeLookbehind.containsMatchIn("foobar")) // false
+
+    // STDLIB-REGEX-098: Word boundary in containsMatchIn
+    println(Regex("\\bword\\b").containsMatchIn("a word here")) // true
+    println(Regex("\\bword\\b").containsMatchIn("awordhere"))   // false
+
+    // STDLIB-REGEX-098: Regex.matches - full string match with lookahead
+    println(Regex("(?=.*\\d).*").matches("abc123")) // true
+    println(Regex("(?=.*\\d).*").matches("abcdef")) // false
+
+    // STDLIB-REGEX-098: Lookahead in find - extract value before lookahead
+    println(Regex("\\d+(?= dollars)").find("100 dollars")?.value) // 100
+    println(Regex("\\d+(?= dollars)").find("100 euros")?.value)   // null
 }

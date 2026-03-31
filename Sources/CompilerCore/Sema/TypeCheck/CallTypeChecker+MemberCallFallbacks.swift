@@ -199,6 +199,9 @@ extension CallTypeChecker {
             listStringType
         case ("replace", 2):
             sema.types.stringType
+        // STDLIB-REGEX-094: String.replaceFirst(Regex, String) -> String
+        case ("replaceFirst", 2):
+            sema.types.stringType
         case ("chunked", 1):
             listStringType
         case ("windowed", 1):
@@ -255,7 +258,8 @@ extension CallTypeChecker {
             _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: expectedType)
         }
         if args.indices.contains(0), let regexType {
-            let expectedType = memberName == "replace" || memberName == "contains" || memberName == "matches" || memberName == "split"
+            let expectedType = memberName == "replace" || memberName == "replaceFirst"
+                || memberName == "contains" || memberName == "matches" || memberName == "split"
                 ? regexType
                 : nil
             if let expectedType {
@@ -276,7 +280,7 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: expectedType)
             }
         }
-        if memberName == "replace", args.indices.contains(1) {
+        if (memberName == "replace" || memberName == "replaceFirst"), args.indices.contains(1) {
             _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: sema.types.stringType)
         }
         if memberName == "replaceFirstChar", args.indices.contains(0) {

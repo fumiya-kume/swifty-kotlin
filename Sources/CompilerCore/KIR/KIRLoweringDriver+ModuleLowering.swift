@@ -50,6 +50,13 @@ extension KIRLoweringDriver {
             files.append(KIRFile(fileID: file.fileID, decls: declIDs))
         }
 
+        emitSyntheticTopLevelExternalPropertyInitializers(
+            arena: arena,
+            sema: sema,
+            interner: compilationCtx.interner,
+            allTopLevelInitInstructions: &allTopLevelInitInstructions
+        )
+
         appendCompanionInitializerCalls(
             arena: arena, sema: sema,
             allTopLevelInitInstructions: &allTopLevelInitInstructions
@@ -219,6 +226,66 @@ extension KIRLoweringDriver {
     }
 
     // MARK: - Companion initializer calls
+
+    private func emitSyntheticTopLevelExternalPropertyInitializers(
+        arena: KIRArena,
+        sema: SemaModule,
+        interner: StringInterner,
+        allTopLevelInitInstructions: inout KIRLoweringEmitContext
+    ) {
+        var existingGlobals: Set<SymbolID> = []
+        for declaration in arena.declarations {
+            guard case let .global(global) = declaration else { continue }
+            existingGlobals.insert(global.symbol)
+        }
+
+        for symbolInfo in sema.symbols.allSymbols()
+        where symbolInfo.kind == .property || symbolInfo.kind == .field || symbolInfo.kind == .backingField
+        {
+            let symbol = symbolInfo.id
+            guard !existingGlobals.contains(symbol),
+                  sema.symbols.backingFieldSymbol(for: symbol) == nil,
+                  let propertyType = sema.symbols.propertyType(for: symbol),
+                  let externalLinkName = sema.symbols.externalLinkName(for: symbol),
+                  !externalLinkName.isEmpty
+            else {
+                continue
+            }
+
+            let parentKind = sema.symbols.parentSymbol(for: symbol).flatMap {
+                sema.symbols.symbol($0)?.kind
+            }
+            if parentKind != nil && parentKind != .package && parentKind != .object {
+                continue
+            }
+
+            arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propertyType)))
+            existingGlobals.insert(symbol)
+
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: propertyType
+            )
+            let storage = arena.appendExpr(
+                .symbolRef(symbol),
+                type: propertyType
+            )
+
+            allTopLevelInitInstructions.append(
+                .call(
+                    symbol: nil,
+                    callee: interner.intern(externalLinkName),
+                    arguments: [],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                )
+            )
+            allTopLevelInitInstructions.append(
+                .copy(from: result, to: storage)
+            )
+        }
+    }
 
     private func appendCompanionInitializerCalls(
         arena: KIRArena,

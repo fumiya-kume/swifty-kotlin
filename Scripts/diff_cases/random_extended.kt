@@ -73,5 +73,33 @@ fun main() {
     }
     println("nextBytes in Byte range: $bytesInRange")
 
+    // STDLIB-RANDOM-100: nextBits(bitCount) determinism with seeded Random
+    val r6 = Random(42)
+    val r7 = Random(42)
+    println("seeded nextBits(8) match: ${r6.nextBits(8) == r7.nextBits(8)}")
+    println("seeded nextBits(16) match: ${r6.nextBits(16) == r7.nextBits(16)}")
+    println("seeded nextBits(32) match: ${r6.nextBits(32) == r7.nextBits(32)}")
+
+    // nextBits(bitCount) values must be in [0, 2^bitCount)
+    var bitsInRange8 = true
+    val r8 = Random(7)
+    repeat(200) {
+        val v = r8.nextBits(8)
+        if (v < 0 || v >= 256) {
+            bitsInRange8 = false
+        }
+    }
+    println("nextBits(8) in range: $bitsInRange8")
+
+    var bitsInRange1 = true
+    val r9 = Random(3)
+    repeat(200) {
+        val v = r9.nextBits(1)
+        if (v != 0 && v != 1) {
+            bitsInRange1 = false
+        }
+    }
+    println("nextBits(1) in range: $bitsInRange1")
+
     println("OK")
 }

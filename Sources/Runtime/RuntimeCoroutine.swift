@@ -2565,6 +2565,26 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         }
     }
 
+    /// `true` when the channel is closed AND its buffer is fully drained.
+    /// Once `isClosedForReceive` is `true`, any subsequent `receive()` call will
+    /// immediately return `kChannelClosedSentinel` without blocking.
+    /// Matches Kotlin's `ReceiveChannel.isClosedForReceive` contract.
+    var isClosedForReceive: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return closed && buffer.isEmpty && senderQueue.isEmpty
+    }
+
+    /// Thread-safe snapshot of the closed flag.
+    ///
+    /// Acquires the channel lock before reading `closed` to avoid data races
+    /// with concurrent `send()`, `receive()`, and `close()` calls.
+    func isClosedSnapshot() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return closed
+    }
+
     // MARK: - Private helpers
 
     /// CORO-004: Resume a suspended sender using continuation model if available,
@@ -2655,6 +2675,130 @@ public func kk_channel_close(_ handle: Int) -> Int {
 @_cdecl("kk_channel_is_closed_token")
 public func kk_channel_is_closed_token(_ value: Int) -> Int {
     return value == kChannelClosedSentinel ? 1 : 0
+}
+
+/// Returns 1 if the channel is closed for receiving (i.e., it is closed AND the buffer
+/// is empty — no more values will ever be available).  Returns 0 if the channel is
+/// open or if it is closed but still has buffered values to drain.
+///
+/// Maps to Kotlin's `Channel.isClosedForReceive` property.
+@_cdecl("kk_channel_is_closed_for_receive")
+public func kk_channel_is_closed_for_receive(_ handle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_channel_is_closed_for_receive received invalid channel handle")
+    }
+    let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(ptr).takeUnretainedValue()
+    return channel.isClosedForReceive ? 1 : 0
+}
+
+/// Returns 1 if the channel is closed for sending (i.e., it has been closed via
+/// `close()`).  Returns 0 if the channel is still open for new sends.
+///
+/// Maps to Kotlin's `Channel.isClosedForSend` property.
+@_cdecl("kk_channel_is_closed_for_send")
+public func kk_channel_is_closed_for_send(_ handle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_channel_is_closed_for_send received invalid channel handle")
+    }
+    let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(ptr).takeUnretainedValue()
+    return channel.isClosedSnapshot() ? 1 : 0
+}
+
+// MARK: - Channel Iterator (CORO-075)
+//
+// A lightweight wrapper that allows channels to participate in the
+// `kk_range_iterator` / `kk_range_hasNext` / `kk_range_next` loop protocol.
+//
+// The iterator holds the channel handle (strongly retained) and caches the
+// result of the most recent `receive()` call.  `hasNext` must be called before
+// `next` in each iteration step — which matches the pattern emitted by
+// ControlFlowLowerer.lowerForExpr.
+//
+// IMPORTANT: `kk_channel_iterator_hasNext` suspends (blocking) on each call
+// until either a value arrives or the channel is closed.  This means that
+// for-in loops over channels are blocking-suspend operations, consistent with
+// Kotlin's semantics when running inside runBlocking / launch.
+private final class RuntimeChannelIterator: @unchecked Sendable {
+    let channel: RuntimeChannelHandle
+    /// Most recent value fetched by `hasNext`.  Reset to `nil` after `next`.
+    var peekedValue: Int?
+    /// Set to `true` once we observe the closed sentinel from `receive()`.
+    var done: Bool = false
+    private let lock = NSLock()
+
+    init(channel: RuntimeChannelHandle) {
+        self.channel = channel
+    }
+
+    /// Advance the iterator by doing a blocking receive.  Returns `true` if a
+    /// value is available, `false` if the channel is closed and drained.
+    func advance(continuation: Int = 0) -> Bool {
+        lock.lock()
+        if done {
+            lock.unlock()
+            return false
+        }
+        lock.unlock()
+
+        let value = channel.receive(continuation: continuation)
+        lock.lock()
+        defer { lock.unlock() }
+        if value == kChannelClosedSentinel {
+            done = true
+            peekedValue = nil
+            return false
+        }
+        peekedValue = value
+        return true
+    }
+
+    /// Return the cached value and clear it.
+    func takeValue() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        let v = peekedValue ?? 0
+        peekedValue = nil
+        return v
+    }
+}
+
+/// Create a channel iterator for use in for-in loops.  The iterator reference
+/// is registered in `runtimeStorage` so the GC can track it.
+@_cdecl("kk_channel_iterator")
+public func kk_channel_iterator(_ handle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_channel_iterator received invalid channel handle")
+    }
+    let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(ptr).takeUnretainedValue()
+    let iter = RuntimeChannelIterator(channel: channel)
+    let iterPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(iter).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: iterPtr))
+    }
+    return Int(bitPattern: iterPtr)
+}
+
+/// Returns 1 if the channel iterator has a next value, 0 if the channel is
+/// closed and drained.  Blocks (suspends) until a value arrives or the channel
+/// is closed.
+@_cdecl("kk_channel_iterator_hasNext")
+public func kk_channel_iterator_hasNext(_ iterHandle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: iterHandle) else {
+        return 0
+    }
+    let iter = Unmanaged<RuntimeChannelIterator>.fromOpaque(ptr).takeUnretainedValue()
+    return iter.advance() ? 1 : 0
+}
+
+/// Returns the value fetched by the most recent `kk_channel_iterator_hasNext`
+/// call.  Must only be called after `kk_channel_iterator_hasNext` returns 1.
+@_cdecl("kk_channel_iterator_next")
+public func kk_channel_iterator_next(_ iterHandle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: iterHandle) else {
+        return 0
+    }
+    let iter = Unmanaged<RuntimeChannelIterator>.fromOpaque(ptr).takeUnretainedValue()
+    return iter.takeValue()
 }
 
 // MARK: - Deferred / awaitAll Runtime Stub (P5-135)

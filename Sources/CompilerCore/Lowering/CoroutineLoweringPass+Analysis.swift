@@ -522,7 +522,7 @@ extension CoroutineLoweringPass {
 
     func extractCallInfo(_ instruction: KIRInstruction) -> CallInfo? {
         switch instruction {
-        case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
+        case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, _):
             CallInfo(
                 symbol: symbol,
                 callee: callee,

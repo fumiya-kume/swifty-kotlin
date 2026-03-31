@@ -83,7 +83,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 152)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 146)
     }
 
     func testRegexFunctionCount() {
@@ -101,7 +101,9 @@ final class ABIMismatchTests: XCTestCase {
         // kk_string_zipWithNext
         // STDLIB-REGEX-095: kk_match_result_range, kk_match_result_component1,
         // kk_match_result_component2, kk_match_result_next, kk_match_group_collection_get_at
-        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 35)
+        // STDLIB-REGEX-097: kk_regex_group_names
+        // STDLIB-REGEX-094: kk_regex_matches, kk_regex_from_literal, kk_string_replaceFirst_regex
+        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 33)
     }
 
     func testPrintAndPrintlnFunctionCount() {
@@ -123,7 +125,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 79)
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 71)
     }
 
     func testBoxingFunctionCount() {
@@ -146,7 +148,18 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testMathFunctionCount() {
-        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 81)
+        // Current math ABI surface:
+        // - 23 Double/int/basic entries through PI/E
+        // - 19 Float overloads
+        // - 4 roundToInt/roundToLong helpers
+        // - 6 ulp/nextUp/nextDown helpers
+        // - 3 coercion helpers
+        // - 16 IEEE 754 rounding mode convenience entry points (8 Double + 8 Float)
+        // - 14 STDLIB-MATH-112 numeric constants (5 Double + 5 Float + 2 Int + 2 Long)
+        // - 2 generic mode-dispatch (round_mode, round_mode_float)
+        // - 8 STDLIB-MATH-109 hyperbolic/cbrt entries (sinh, cosh, tanh, cbrt + Float overloads)
+        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 95)
+        // Random ABI currently includes default, seeded, and bounded long/float helpers.
         XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 19)
     }
 
@@ -186,18 +199,18 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.resultFunctions,
             RuntimeABISpec.stringBuilderFunctions,
             RuntimeABISpec.fileIOFunctions,
-            RuntimeABISpec.i18nFunctions,
             RuntimeABISpec.uuidFunctions,
             RuntimeABISpec.durationFunctions,
             RuntimeABISpec.timeAndPathBridgeFunctions,
             RuntimeABISpec.atomicFunctions,
             RuntimeABISpec.securityFunctions,
+            RuntimeABISpec.parallelFunctions,
         ]
         let expected = sections.reduce(0) { partial, section in
             partial + section.count
         }
         XCTAssertEqual(RuntimeABISpec.allFunctions.count, expected)
-        XCTAssertEqual(RuntimeABISpec.allFunctions.count, 1425)
+        XCTAssertEqual(RuntimeABISpec.allFunctions.count, 1419)
     }
 
     // MARK: - J16.1 Signature Verification (spec-fixed)

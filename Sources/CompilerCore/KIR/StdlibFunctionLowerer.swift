@@ -435,8 +435,8 @@ final class StdlibFunctionLowerer {
         args: [CallArgument],
         context: inout CallLoweringContext
     ) -> KIRExprID? {
-        let sema = context.sema
-        let interner = context.interner
+        let _ = context.sema
+        let _ = context.interner
         
         // measureTimeMillis
         if let timeResult = lowerMeasureTimeMillisCall(exprID: exprID, args: args, context: &context) {
@@ -729,8 +729,8 @@ final class StdlibFunctionLowerer {
         args: [CallArgument],
         context: inout CallLoweringContext
     ) -> KIRExprID? {
-        let sema = context.sema
-        let interner = context.interner
+        let _ = context.sema
+        let _ = context.interner
         
         // with関数
         if let withResult = lowerWithFunction(exprID: exprID, args: args, context: &context) {
@@ -753,7 +753,7 @@ final class StdlibFunctionLowerer {
     ) -> KIRExprID? {
         let sema = context.sema
         let arena = context.arena
-        let interner = context.interner
+        let _ = context.interner
         let boundType = sema.bindings.exprTypes[exprID]
         
         guard let scopeKind = sema.bindings.scopeFunctionKind(for: exprID),
