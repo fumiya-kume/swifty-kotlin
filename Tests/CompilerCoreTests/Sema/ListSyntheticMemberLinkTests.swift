@@ -252,6 +252,74 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListSortedAndSortedDescendingHaveComparableUpperBound() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let baseFQName: [InternedString] = [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("List"),
+            ]
+            let memberCases: [(String, String)] = [
+                ("sorted", "kk_list_sorted"),
+                ("sortedDescending", "kk_list_sortedDescending"),
+            ]
+
+            for (memberName, externalLinkName) in memberCases {
+                let symbolID = try XCTUnwrap(
+                    sema.symbols.lookupAll(
+                        fqName: baseFQName + [ctx.interner.intern(memberName)]
+                    ).first(where: { sema.symbols.externalLinkName(for: $0) == externalLinkName }),
+                    "Expected synthetic List member \(memberName) to be registered"
+                )
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+                XCTAssertEqual(signature.typeParameterUpperBoundsList.count, 1)
+                let upperBounds = signature.typeParameterUpperBoundsList[0]
+                XCTAssertEqual(upperBounds.count, 1, "Expected Comparable upper bound for \(memberName) element type")
+
+                guard case let .classType(boundType) = sema.types.kind(of: upperBounds[0]) else {
+                    return XCTFail("Expected \(memberName) upper bound to be a class type")
+                }
+
+                XCTAssertEqual(boundType.classSymbol, sema.types.comparableInterfaceSymbol)
+                XCTAssertEqual(boundType.args.count, 1)
+
+                guard case let .invariant(argumentType) = boundType.args[0] else {
+                    return XCTFail("Expected \(memberName) upper bound to reference invariant element type")
+                }
+
+                let expectedElementType = sema.types.make(.typeParam(TypeParamType(
+                    symbol: signature.typeParameterSymbols[0],
+                    nullability: .nonNull
+                )))
+                XCTAssertEqual(argumentType, expectedElementType)
+            }
+        }
+    }
+
+    func testListSortedAndSortedDescendingRequireComparableElements() throws {
+        let source = """
+        class Box
+
+        fun render(values: List<Box>) {
+            values.sorted()
+            values.sortedDescending()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runFrontend(ctx)
+            try? SemaPhase().run(ctx)
+
+            let boundDiagnostics = ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-BOUND" }
+            XCTAssertEqual(boundDiagnostics.count, 2, "Expected bound diagnostics for sorted/sortedDescending")
+        }
+    }
+
     func testListConversionMembersUseRuntimeExternalLinks() throws {
         let source = """
         fun convert(values: List<Int>) {

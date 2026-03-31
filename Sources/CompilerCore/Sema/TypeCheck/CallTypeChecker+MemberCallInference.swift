@@ -4646,6 +4646,13 @@ extension CallTypeChecker {
             ctx: ctx.semaCtx
         )
         if let diagnostic = resolved.diagnostic {
+            if diagnostic.code == "KSWIFTK-SEMA-BOUND" {
+                let callee = interner.resolve(calleeName)
+                if callee == "sorted" || callee == "sortedDescending" {
+                    ctx.semaCtx.diagnostics.emit(diagnostic)
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+            }
             if isClassNameReceiver,
                args.isEmpty,
                let classNameReceiverNominalSymbol,
@@ -4673,6 +4680,17 @@ extension CallTypeChecker {
                 sema.bindings.bindIdentifier(id, symbol: staticMember.symbol)
                 sema.bindings.bindExprType(id, type: staticMember.type)
                 return staticMember.type
+            }
+            if let projectionDiagnostic = makeProjectionViolationDiagnostic(
+                candidates: candidates,
+                receiverType: lookupReceiverType,
+                calleeName: calleeName,
+                range: range,
+                sema: sema,
+                interner: interner
+            ) {
+                ctx.semaCtx.diagnostics.emit(projectionDiagnostic)
+                return driver.helpers.bindAndReturnErrorType(id, sema: sema)
             }
             if let fallbackType = tryCollectionMemberFallback(
                 id,
@@ -4800,6 +4818,17 @@ extension CallTypeChecker {
                 sema.bindings.bindIdentifier(id, symbol: staticMember.symbol)
                 sema.bindings.bindExprType(id, type: staticMember.type)
                 return staticMember.type
+            }
+            if let projectionDiagnostic = makeProjectionViolationDiagnostic(
+                candidates: candidates,
+                receiverType: lookupReceiverType,
+                calleeName: calleeName,
+                range: range,
+                sema: sema,
+                interner: interner
+            ) {
+                ctx.semaCtx.diagnostics.emit(projectionDiagnostic)
+                return driver.helpers.bindAndReturnErrorType(id, sema: sema)
             }
             if let fallbackType = tryCollectionMemberFallback(
                 id,

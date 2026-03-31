@@ -62,7 +62,8 @@ jobs:
   diff-regression:
     name: kotlinc Diff Regression
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # Kotlin/Java tool downloads occasionally spike on GitHub-hosted runners.
+    timeout-minutes: 120
     env:
       KOTLIN_VERSION: "2.3.10"
       KOTLINX_COROUTINES_VERSION: "1.10.2"
