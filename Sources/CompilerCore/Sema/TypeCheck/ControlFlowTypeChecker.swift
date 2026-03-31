@@ -7,6 +7,174 @@ final class ControlFlowTypeChecker {
         self.driver = driver
     }
 
+    func bindLoopIterationOperators(
+        exprID: ExprID,
+        iterableType: TypeID,
+        range: SourceRange,
+        ctx: TypeInferenceContext
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let nonNullIterableType = sema.types.makeNonNullable(iterableType)
+
+        guard case .classType = sema.types.kind(of: nonNullIterableType) else {
+            return nil
+        }
+
+        let iteratorName = interner.intern("iterator")
+        let iteratorCandidates = driver.helpers.collectMemberFunctionCandidates(
+            named: iteratorName,
+            receiverType: nonNullIterableType,
+            sema: sema
+        ).filter { candidate in
+            guard let symbol = sema.symbols.symbol(candidate),
+                  symbol.flags.contains(.operatorFunction),
+                  !symbol.flags.contains(.synthetic),
+                  let signature = sema.symbols.functionSignature(for: candidate)
+            else {
+                return false
+            }
+            return signature.parameterTypes.isEmpty
+        }
+
+        guard !iteratorCandidates.isEmpty else {
+            return nil
+        }
+
+        let iteratorResolved = ctx.resolver.resolveCall(
+            candidates: iteratorCandidates,
+            call: CallExpr(range: range, calleeName: iteratorName, args: []),
+            expectedType: nil,
+            implicitReceiverType: nonNullIterableType,
+            ctx: ctx.semaCtx
+        )
+
+        guard let iteratorChosen = iteratorResolved.chosenCallee,
+              let iteratorSignature = sema.symbols.functionSignature(for: iteratorChosen)
+        else {
+            return nil
+        }
+
+        let iteratorCall = CallBinding(
+            chosenCallee: iteratorChosen,
+            substitutedTypeArguments: iteratorResolved.substitutedTypeArguments
+                .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                .map(\.value),
+            parameterMapping: iteratorResolved.parameterMapping
+        )
+
+        let iteratorType = substituteResolvedType(
+            iteratorSignature.returnType,
+            signature: iteratorSignature,
+            substitutedTypeArguments: iteratorResolved.substitutedTypeArguments,
+            sema: sema
+        )
+
+        let hasNextName = interner.intern("hasNext")
+        let hasNextCandidates = driver.helpers.collectMemberFunctionCandidates(
+            named: hasNextName,
+            receiverType: iteratorType,
+            sema: sema
+        ).filter { candidate in
+            guard let symbol = sema.symbols.symbol(candidate),
+                  symbol.flags.contains(.operatorFunction),
+                  let signature = sema.symbols.functionSignature(for: candidate)
+            else {
+                return false
+            }
+            return signature.parameterTypes.isEmpty
+        }
+
+        let nextName = interner.intern("next")
+        let nextCandidates = driver.helpers.collectMemberFunctionCandidates(
+            named: nextName,
+            receiverType: iteratorType,
+            sema: sema
+        ).filter { candidate in
+            guard let symbol = sema.symbols.symbol(candidate),
+                  symbol.flags.contains(.operatorFunction),
+                  let signature = sema.symbols.functionSignature(for: candidate)
+            else {
+                return false
+            }
+            return signature.parameterTypes.isEmpty
+        }
+
+        guard !hasNextCandidates.isEmpty, !nextCandidates.isEmpty else {
+            return nil
+        }
+
+        let hasNextResolved = ctx.resolver.resolveCall(
+            candidates: hasNextCandidates,
+            call: CallExpr(range: range, calleeName: hasNextName, args: []),
+            expectedType: nil,
+            implicitReceiverType: iteratorType,
+            ctx: ctx.semaCtx
+        )
+        let nextResolved = ctx.resolver.resolveCall(
+            candidates: nextCandidates,
+            call: CallExpr(range: range, calleeName: nextName, args: []),
+            expectedType: nil,
+            implicitReceiverType: iteratorType,
+            ctx: ctx.semaCtx
+        )
+
+        guard let hasNextChosen = hasNextResolved.chosenCallee,
+              let nextChosen = nextResolved.chosenCallee,
+              let nextSignature = sema.symbols.functionSignature(for: nextChosen)
+        else {
+            return nil
+        }
+
+        let hasNextCall = CallBinding(
+            chosenCallee: hasNextChosen,
+            substitutedTypeArguments: hasNextResolved.substitutedTypeArguments
+                .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                .map(\.value),
+            parameterMapping: hasNextResolved.parameterMapping
+        )
+        let nextCall = CallBinding(
+            chosenCallee: nextChosen,
+            substitutedTypeArguments: nextResolved.substitutedTypeArguments
+                .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                .map(\.value),
+            parameterMapping: nextResolved.parameterMapping
+        )
+
+        let elementType = substituteResolvedType(
+            nextSignature.returnType,
+            signature: nextSignature,
+            substitutedTypeArguments: nextResolved.substitutedTypeArguments,
+            sema: sema
+        )
+
+        sema.bindings.bindLoopIteration(
+            exprID,
+            binding: LoopIterationBinding(
+                iteratorCall: iteratorCall,
+                hasNextCall: hasNextCall,
+                nextCall: nextCall,
+                iteratorType: iteratorType,
+                elementType: elementType
+            )
+        )
+        return elementType
+    }
+
+    private func substituteResolvedType(
+        _ type: TypeID,
+        signature: FunctionSignature,
+        substitutedTypeArguments: [TypeVarID: TypeID],
+        sema: SemaModule
+    ) -> TypeID {
+        let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+        return sema.types.substituteTypeParameters(
+            in: type,
+            substitution: substitutedTypeArguments,
+            typeVarBySymbol: typeVarBySymbol
+        )
+    }
+
     func inferForExpr(
         _ id: ExprID,
         loopVariable: InternedString?,
@@ -22,7 +190,17 @@ final class ControlFlowTypeChecker {
         var bodyLocals = locals
         if let loopVariable {
             let isRangeExpr = Self.isRangeExpression(iterableExpr, ast: ctx.ast)
-            let elementType = driver.helpers.iterableElementType(for: iterableType, isRangeExpr: isRangeExpr, sema: sema, interner: ctx.interner) ?? sema.types.anyType
+            let elementType = bindLoopIterationOperators(
+                exprID: id,
+                iterableType: iterableType,
+                range: range,
+                ctx: ctx
+            ) ?? driver.helpers.iterableElementType(
+                for: iterableType,
+                isRangeExpr: isRangeExpr,
+                sema: sema,
+                interner: ctx.interner
+            ) ?? sema.types.anyType
             let loopVariableSymbol = sema.symbols.define(
                 kind: .local,
                 name: loopVariable,

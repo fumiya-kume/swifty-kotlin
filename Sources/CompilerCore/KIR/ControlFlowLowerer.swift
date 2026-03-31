@@ -7,6 +7,22 @@ final class ControlFlowLowerer {
         self.driver = driver
     }
 
+    private func resolvedLoopCallee(
+        for binding: CallBinding,
+        sema: SemaModule,
+        interner: StringInterner,
+        fallback: String
+    ) -> InternedString {
+        if let linkName = sema.symbols.externalLinkName(for: binding.chosenCallee),
+           !linkName.isEmpty {
+            return interner.intern(linkName)
+        }
+        if let symbol = sema.symbols.symbol(binding.chosenCallee) {
+            return symbol.name
+        }
+        return interner.intern(fallback)
+    }
+
     /// Check if a lowered expression is a terminator (return/throw/Nothing type).
     /// When true, no instructions should follow in the same linear block.
     func isTerminatedExpr(_ exprID: KIRExprID, arena: KIRArena, sema: SemaModule) -> Bool {
@@ -34,6 +50,21 @@ final class ControlFlowLowerer {
                 iterableExpr: iterableExpr,
                 bodyExpr: bodyExpr,
                 label: label,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+        }
+        if let loopBinding = sema.bindings.loopIterationBinding(for: exprID) {
+            return lowerCustomForExpr(
+                exprID,
+                iterableExpr: iterableExpr,
+                bodyExpr: bodyExpr,
+                label: label,
+                loopBinding: loopBinding,
                 ast: ast,
                 sema: sema,
                 arena: arena,
@@ -86,6 +117,98 @@ final class ControlFlowLowerer {
         instructions.append(.call(
             symbol: nil,
             callee: interner.intern("kk_range_next"),
+            arguments: [iteratorID],
+            result: nextValueID,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        if let loopVariableSymbol {
+            driver.ctx.setLocalValue(nextValueID, for: loopVariableSymbol)
+        }
+
+        driver.ctx.pushLoopControl(continueLabel: continueLabel, breakLabel: breakLabel, name: label)
+        _ = driver.lowerExpr(
+            bodyExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        _ = driver.ctx.popLoopControl()
+        instructions.append(.jump(continueLabel))
+        instructions.append(.label(breakLabel))
+
+        if let loopVariableSymbol {
+            if let previousLoopValue {
+                driver.ctx.setLocalValue(previousLoopValue, for: loopVariableSymbol)
+            } else {
+                driver.ctx.clearLocalValue(for: loopVariableSymbol)
+            }
+        }
+
+        let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+        instructions.append(.constValue(result: unit, value: .unit))
+        return unit
+    }
+
+    private func lowerCustomForExpr(
+        _ exprID: ExprID,
+        iterableExpr: ExprID,
+        bodyExpr: ExprID,
+        label: InternedString?,
+        loopBinding: LoopIterationBinding,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        let iterableID = driver.lowerExpr(
+            iterableExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        let iteratorID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: loopBinding.iteratorType)
+        instructions.append(.call(
+            symbol: loopBinding.iteratorCall.chosenCallee,
+            callee: resolvedLoopCallee(for: loopBinding.iteratorCall, sema: sema, interner: interner, fallback: "iterator"),
+            arguments: [iterableID],
+            result: iteratorID,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        let continueLabel = driver.ctx.makeLoopLabel()
+        let breakLabel = driver.ctx.makeLoopLabel()
+        instructions.append(.label(continueLabel))
+
+        let hasNextID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+        instructions.append(.call(
+            symbol: loopBinding.hasNextCall.chosenCallee,
+            callee: resolvedLoopCallee(for: loopBinding.hasNextCall, sema: sema, interner: interner, fallback: "hasNext"),
+            arguments: [iteratorID],
+            result: hasNextID,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        let falseID = arena.appendExpr(.boolLiteral(false), type: boolType)
+        instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
+        instructions.append(.jumpIfEqual(lhs: hasNextID, rhs: falseID, target: breakLabel))
+
+        let loopVariableSymbol = sema.bindings.identifierSymbols[exprID]
+        let previousLoopValue = loopVariableSymbol.flatMap { driver.ctx.localValue(for: $0) }
+        let nextValueID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: loopBinding.elementType)
+        instructions.append(.call(
+            symbol: loopBinding.nextCall.chosenCallee,
+            callee: resolvedLoopCallee(for: loopBinding.nextCall, sema: sema, interner: interner, fallback: "next"),
             arguments: [iteratorID],
             result: nextValueID,
             canThrow: false,
@@ -1034,6 +1157,21 @@ final class ControlFlowLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
+        if let loopBinding = sema.bindings.loopIterationBinding(for: exprID) {
+            return lowerCustomForDestructuringExpr(
+                exprID,
+                names: names,
+                iterableExpr: iterableExpr,
+                bodyExpr: bodyExpr,
+                loopBinding: loopBinding,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+        }
         let boolType = sema.types.make(.primitive(.boolean, .nonNull))
         let iterableID = driver.lowerExpr(
             iterableExpr,
@@ -1179,6 +1317,137 @@ final class ControlFlowLowerer {
         instructions.append(.label(breakLabel))
 
         // Restore previous values
+        for (symbol, previous) in previousValues {
+            if let previous {
+                driver.ctx.setLocalValue(previous, for: symbol)
+            } else {
+                driver.ctx.clearLocalValue(for: symbol)
+            }
+        }
+
+        let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+        instructions.append(.constValue(result: unit, value: .unit))
+        return unit
+    }
+
+    private func lowerCustomForDestructuringExpr(
+        _ exprID: ExprID,
+        names: [InternedString?],
+        iterableExpr: ExprID,
+        bodyExpr: ExprID,
+        loopBinding: LoopIterationBinding,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        let iterableID = driver.lowerExpr(
+            iterableExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        let iteratorID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: loopBinding.iteratorType)
+        instructions.append(.call(
+            symbol: loopBinding.iteratorCall.chosenCallee,
+            callee: resolvedLoopCallee(for: loopBinding.iteratorCall, sema: sema, interner: interner, fallback: "iterator"),
+            arguments: [iterableID],
+            result: iteratorID,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        let continueLabel = driver.ctx.makeLoopLabel()
+        let breakLabel = driver.ctx.makeLoopLabel()
+        instructions.append(.label(continueLabel))
+
+        let hasNextID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+        instructions.append(.call(
+            symbol: loopBinding.hasNextCall.chosenCallee,
+            callee: resolvedLoopCallee(for: loopBinding.hasNextCall, sema: sema, interner: interner, fallback: "hasNext"),
+            arguments: [iteratorID],
+            result: hasNextID,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        let falseID = arena.appendExpr(.boolLiteral(false), type: boolType)
+        instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
+        instructions.append(.jumpIfEqual(lhs: hasNextID, rhs: falseID, target: breakLabel))
+
+        let nextValueID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: loopBinding.elementType)
+        instructions.append(.call(
+            symbol: loopBinding.nextCall.chosenCallee,
+            callee: resolvedLoopCallee(for: loopBinding.nextCall, sema: sema, interner: interner, fallback: "next"),
+            arguments: [iteratorID],
+            result: nextValueID,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        let nonNullElementType = sema.types.makeNonNullable(loopBinding.elementType)
+        var previousValues: [(SymbolID, KIRExprID?)] = []
+        for (index, name) in names.enumerated() {
+            guard let name else {
+                continue
+            }
+            let componentIndex = index + 1
+            let componentName = interner.intern("component\(componentIndex)")
+            let candidates = sema.symbols.lookupAll(fqName: [
+                interner.intern("__for_destructuring_\(exprID.rawValue)"),
+                name,
+            ])
+            let componentType = candidates.first.flatMap { sema.symbols.propertyType(for: $0) } ?? sema.types.anyType
+            let componentResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: componentType)
+
+            let memberCandidates = TypeCheckHelpers().collectMemberFunctionCandidates(
+                named: componentName,
+                receiverType: nonNullElementType,
+                sema: sema
+            )
+            let resolvedCallee: InternedString = if let chosen = memberCandidates.first,
+                                                    let linkName = sema.symbols.externalLinkName(for: chosen),
+                                                    !linkName.isEmpty
+            {
+                interner.intern(linkName)
+            } else {
+                componentName
+            }
+            instructions.append(.call(
+                symbol: nil,
+                callee: resolvedCallee,
+                arguments: [nextValueID],
+                result: componentResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+
+            if let symbol = candidates.first {
+                previousValues.append((symbol, driver.ctx.localValue(for: symbol)))
+                driver.ctx.setLocalValue(componentResult, for: symbol)
+            }
+        }
+
+        let loopLabel = ast.arena.loopLabel(for: exprID)
+        driver.ctx.pushLoopControl(continueLabel: continueLabel, breakLabel: breakLabel, name: loopLabel)
+        _ = driver.lowerExpr(
+            bodyExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        _ = driver.ctx.popLoopControl()
+        instructions.append(.jump(continueLabel))
+        instructions.append(.label(breakLabel))
+
         for (symbol, previous) in previousValues {
             if let previous {
                 driver.ctx.setLocalValue(previous, for: symbol)
