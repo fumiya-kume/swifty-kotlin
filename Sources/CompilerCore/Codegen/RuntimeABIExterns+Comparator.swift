@@ -47,6 +47,12 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_comparator_then_by_descending = ExternDecl(
+        name: "kk_comparator_then_by_descending",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     static let kk_comparator_then_by_trampoline = ExternDecl(
         name: "kk_comparator_then_by_trampoline",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
@@ -55,6 +61,30 @@ public extension RuntimeABIExterns {
 
     static let kk_comparator_then_by_descending_trampoline = ExternDecl(
         name: "kk_comparator_then_by_descending_trampoline",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_comparator_nulls_first = ExternDecl(
+        name: "kk_comparator_nulls_first",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_comparator_nulls_first_trampoline = ExternDecl(
+        name: "kk_comparator_nulls_first_trampoline",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_comparator_nulls_last = ExternDecl(
+        name: "kk_comparator_nulls_last",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_comparator_nulls_last_trampoline = ExternDecl(
+        name: "kk_comparator_nulls_last_trampoline",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
@@ -128,8 +158,13 @@ public extension RuntimeABIExterns {
         kk_comparator_from_multi_selectors3,
         kk_comparator_from_multi_selectors_trampoline,
         kk_comparator_then_by,
+        kk_comparator_then_by_descending,
         kk_comparator_then_by_trampoline,
         kk_comparator_then_by_descending_trampoline,
+        kk_comparator_nulls_first,
+        kk_comparator_nulls_first_trampoline,
+        kk_comparator_nulls_last,
+        kk_comparator_nulls_last_trampoline,
         kk_comparator_reversed,
         kk_comparator_reversed_trampoline,
         kk_comparator_natural_order_trampoline,

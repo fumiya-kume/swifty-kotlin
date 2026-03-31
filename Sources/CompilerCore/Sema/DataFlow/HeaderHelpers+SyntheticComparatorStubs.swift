@@ -45,6 +45,13 @@ extension DataFlowSemaPhase {
             comparatorSymbol: comparatorSymbol
         )
 
+        registerNullsComparators(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparatorSymbol: comparatorSymbol
+        )
+
         registerNaturalAndReverseOrder(
             symbols: symbols,
             types: types,
@@ -435,6 +442,61 @@ extension DataFlowSemaPhase {
             )
             symbols.setParentSymbol(comparatorSymbol, for: memberSymbol)
             symbols.setExternalLinkName("kk_comparator_reversed", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [],
+                    returnType: receiverType,
+                    typeParameterSymbols: [tParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+    }
+
+    private func registerNullsComparators(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparatorSymbol: SymbolID
+    ) {
+        guard let compInfo = symbols.symbol(comparatorSymbol) else { return }
+        let comparatorFQName = compInfo.fqName
+        let tParamName = interner.intern("T")
+        let tParamFQName = comparatorFQName + [tParamName]
+        guard let tParamSymbol = symbols.lookup(fqName: tParamFQName) else { return }
+        let tParamType = types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol, nullability: .nonNull
+        )))
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: comparatorSymbol,
+            args: [.invariant(tParamType)],
+            nullability: .nonNull
+        )))
+
+        for (name, extLink) in [
+            ("nullsFirst", "kk_comparator_nulls_first"),
+            ("nullsLast", "kk_comparator_nulls_last"),
+        ] {
+            let memberName = interner.intern(name)
+            let memberFQName = comparatorFQName + [memberName]
+            if let existing = symbols.lookup(fqName: memberFQName) {
+                symbols.setExternalLinkName(extLink, for: existing)
+                continue
+            }
+
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(comparatorSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(extLink, for: memberSymbol)
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: receiverType,

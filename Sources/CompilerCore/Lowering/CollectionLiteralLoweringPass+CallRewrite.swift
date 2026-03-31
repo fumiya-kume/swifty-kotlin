@@ -3182,6 +3182,10 @@ extension CollectionLiteralLoweringPass {
                                     multiSelectorCallee: lookup.kkComparatorFromMultiSelectorsName,
                                     naturalOrderCallee: lookup.kkComparatorNaturalOrderName,
                                     reverseOrderCallee: lookup.kkComparatorReverseOrderName,
+                                    thenByCallee: lookup.kkComparatorThenByName,
+                                    thenByDescendingCallee: lookup.kkComparatorThenByDescendingName,
+                                    nullsFirstCallee: lookup.kkComparatorNullsFirstName,
+                                    nullsLastCallee: lookup.kkComparatorNullsLastName,
                                     multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
                                     reversedCallee: lookup.kkComparatorReversedName
                                 )
@@ -3220,6 +3224,18 @@ extension CollectionLiteralLoweringPass {
                                 case .multiSelector:
                                     trampolineName = lookup.kkComparatorFromMultiSelectorsTrampolineName
                                     closureExpr = comparatorExpr
+                                case .thenBy:
+                                    trampolineName = lookup.kkComparatorThenByTrampolineName
+                                    closureExpr = comparatorExpr
+                                case .thenByDescending:
+                                    trampolineName = lookup.kkComparatorThenByDescendingTrampolineName
+                                    closureExpr = comparatorExpr
+                                case .nullsFirst:
+                                    trampolineName = lookup.kkComparatorNullsFirstTrampolineName
+                                    closureExpr = comparatorExpr
+                                case .nullsLast:
+                                    trampolineName = lookup.kkComparatorNullsLastTrampolineName
+                                    closureExpr = comparatorExpr
                                 case .naturalOrder:
                                     trampolineName = lookup.kkComparatorNaturalOrderTrampolineName
                                     let zero = module.arena.appendExpr(.intLiteral(0), type: nil)
@@ -3240,6 +3256,10 @@ extension CollectionLiteralLoweringPass {
                                         multiSelectorCallee: lookup.kkComparatorFromMultiSelectorsName,
                                         naturalOrderCallee: lookup.kkComparatorNaturalOrderName,
                                         reverseOrderCallee: lookup.kkComparatorReverseOrderName,
+                                        thenByCallee: lookup.kkComparatorThenByName,
+                                        thenByDescendingCallee: lookup.kkComparatorThenByDescendingName,
+                                        nullsFirstCallee: lookup.kkComparatorNullsFirstName,
+                                        nullsLastCallee: lookup.kkComparatorNullsLastName,
                                         multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
                                         reversedCallee: lookup.kkComparatorReversedName
                                     )
@@ -3254,6 +3274,18 @@ extension CollectionLiteralLoweringPass {
                                         innerClosureExpr = innerExpr
                                     case .multiSelector:
                                         innerTrampolineName = lookup.kkComparatorFromMultiSelectorsTrampolineName
+                                        innerClosureExpr = innerExpr
+                                    case .thenBy:
+                                        innerTrampolineName = lookup.kkComparatorThenByTrampolineName
+                                        innerClosureExpr = innerExpr
+                                    case .thenByDescending:
+                                        innerTrampolineName = lookup.kkComparatorThenByDescendingTrampolineName
+                                        innerClosureExpr = innerExpr
+                                    case .nullsFirst:
+                                        innerTrampolineName = lookup.kkComparatorNullsFirstTrampolineName
+                                        innerClosureExpr = innerExpr
+                                    case .nullsLast:
+                                        innerTrampolineName = lookup.kkComparatorNullsLastTrampolineName
                                         innerClosureExpr = innerExpr
                                     case .naturalOrder:
                                         innerTrampolineName = lookup.kkComparatorNaturalOrderTrampolineName
@@ -3370,6 +3402,10 @@ extension CollectionLiteralLoweringPass {
                                     multiSelectorCallee: lookup.kkComparatorFromMultiSelectorsName,
                                     naturalOrderCallee: lookup.kkComparatorNaturalOrderName,
                                     reverseOrderCallee: lookup.kkComparatorReverseOrderName,
+                                    thenByCallee: lookup.kkComparatorThenByName,
+                                    thenByDescendingCallee: lookup.kkComparatorThenByDescendingName,
+                                    nullsFirstCallee: lookup.kkComparatorNullsFirstName,
+                                    nullsLastCallee: lookup.kkComparatorNullsLastName,
                                     multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
                                     reversedCallee: lookup.kkComparatorReversedName
                                 )
@@ -3381,6 +3417,18 @@ extension CollectionLiteralLoweringPass {
                                     cmpClosureExpr = cmpExpr
                                 case .multiSelector:
                                     cmpTrampolineName = lookup.kkComparatorFromMultiSelectorsTrampolineName
+                                    cmpClosureExpr = cmpExpr
+                                case .thenBy:
+                                    cmpTrampolineName = lookup.kkComparatorThenByTrampolineName
+                                    cmpClosureExpr = cmpExpr
+                                case .thenByDescending:
+                                    cmpTrampolineName = lookup.kkComparatorThenByDescendingTrampolineName
+                                    cmpClosureExpr = cmpExpr
+                                case .nullsFirst:
+                                    cmpTrampolineName = lookup.kkComparatorNullsFirstTrampolineName
+                                    cmpClosureExpr = cmpExpr
+                                case .nullsLast:
+                                    cmpTrampolineName = lookup.kkComparatorNullsLastTrampolineName
                                     cmpClosureExpr = cmpExpr
                                 case .naturalOrder:
                                     cmpTrampolineName = lookup.kkComparatorNaturalOrderTrampolineName
@@ -3402,6 +3450,10 @@ extension CollectionLiteralLoweringPass {
                                         multiSelectorCallee: lookup.kkComparatorFromMultiSelectorsName,
                                         naturalOrderCallee: lookup.kkComparatorNaturalOrderName,
                                         reverseOrderCallee: lookup.kkComparatorReverseOrderName,
+                                        thenByCallee: lookup.kkComparatorThenByName,
+                                        thenByDescendingCallee: lookup.kkComparatorThenByDescendingName,
+                                        nullsFirstCallee: lookup.kkComparatorNullsFirstName,
+                                        nullsLastCallee: lookup.kkComparatorNullsLastName,
                                         multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
                                         reversedCallee: lookup.kkComparatorReversedName
                                     )
@@ -3416,6 +3468,18 @@ extension CollectionLiteralLoweringPass {
                                         innerClosureExpr = innerExpr
                                     case .multiSelector:
                                         innerTrampolineName = lookup.kkComparatorFromMultiSelectorsTrampolineName
+                                        innerClosureExpr = innerExpr
+                                    case .thenBy:
+                                        innerTrampolineName = lookup.kkComparatorThenByTrampolineName
+                                        innerClosureExpr = innerExpr
+                                    case .thenByDescending:
+                                        innerTrampolineName = lookup.kkComparatorThenByDescendingTrampolineName
+                                        innerClosureExpr = innerExpr
+                                    case .nullsFirst:
+                                        innerTrampolineName = lookup.kkComparatorNullsFirstTrampolineName
+                                        innerClosureExpr = innerExpr
+                                    case .nullsLast:
+                                        innerTrampolineName = lookup.kkComparatorNullsLastTrampolineName
                                         innerClosureExpr = innerExpr
                                     case .naturalOrder:
                                         innerTrampolineName = lookup.kkComparatorNaturalOrderTrampolineName
@@ -3998,6 +4062,10 @@ extension CollectionLiteralLoweringPass {
                             multiSelectorCallee: lookup.kkComparatorFromMultiSelectorsName,
                             naturalOrderCallee: lookup.kkComparatorNaturalOrderName,
                             reverseOrderCallee: lookup.kkComparatorReverseOrderName,
+                            thenByCallee: lookup.kkComparatorThenByName,
+                            thenByDescendingCallee: lookup.kkComparatorThenByDescendingName,
+                            nullsFirstCallee: lookup.kkComparatorNullsFirstName,
+                            nullsLastCallee: lookup.kkComparatorNullsLastName,
                             multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
                             reversedCallee: lookup.kkComparatorReversedName
                         )
@@ -4025,6 +4093,18 @@ extension CollectionLiteralLoweringPass {
                             case .multiSelector:
                                 trampolineName = lookup.kkComparatorFromMultiSelectorsTrampolineName
                                 closureExpr = comparatorExpr
+                            case .thenBy:
+                                trampolineName = lookup.kkComparatorThenByTrampolineName
+                                closureExpr = comparatorExpr
+                            case .thenByDescending:
+                                trampolineName = lookup.kkComparatorThenByDescendingTrampolineName
+                                closureExpr = comparatorExpr
+                            case .nullsFirst:
+                                trampolineName = lookup.kkComparatorNullsFirstTrampolineName
+                                closureExpr = comparatorExpr
+                            case .nullsLast:
+                                trampolineName = lookup.kkComparatorNullsLastTrampolineName
+                                closureExpr = comparatorExpr
                             case .naturalOrder:
                                 trampolineName = lookup.kkComparatorNaturalOrderTrampolineName
                                 let zero = module.arena.appendExpr(.intLiteral(0), type: nil)
@@ -4045,6 +4125,10 @@ extension CollectionLiteralLoweringPass {
                                     multiSelectorCallee: lookup.kkComparatorFromMultiSelectorsName,
                                     naturalOrderCallee: lookup.kkComparatorNaturalOrderName,
                                     reverseOrderCallee: lookup.kkComparatorReverseOrderName,
+                                    thenByCallee: lookup.kkComparatorThenByName,
+                                    thenByDescendingCallee: lookup.kkComparatorThenByDescendingName,
+                                    nullsFirstCallee: lookup.kkComparatorNullsFirstName,
+                                    nullsLastCallee: lookup.kkComparatorNullsLastName,
                                     multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
                                     reversedCallee: lookup.kkComparatorReversedName
                                 )
@@ -4059,6 +4143,18 @@ extension CollectionLiteralLoweringPass {
                                     innerClosureExpr = innerExpr
                                 case .multiSelector:
                                     innerTrampolineName = lookup.kkComparatorFromMultiSelectorsTrampolineName
+                                    innerClosureExpr = innerExpr
+                                case .thenBy:
+                                    innerTrampolineName = lookup.kkComparatorThenByTrampolineName
+                                    innerClosureExpr = innerExpr
+                                case .thenByDescending:
+                                    innerTrampolineName = lookup.kkComparatorThenByDescendingTrampolineName
+                                    innerClosureExpr = innerExpr
+                                case .nullsFirst:
+                                    innerTrampolineName = lookup.kkComparatorNullsFirstTrampolineName
+                                    innerClosureExpr = innerExpr
+                                case .nullsLast:
+                                    innerTrampolineName = lookup.kkComparatorNullsLastTrampolineName
                                     innerClosureExpr = innerExpr
                                 case .naturalOrder:
                                     innerTrampolineName = lookup.kkComparatorNaturalOrderTrampolineName

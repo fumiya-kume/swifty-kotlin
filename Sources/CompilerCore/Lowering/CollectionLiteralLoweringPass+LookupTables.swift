@@ -197,6 +197,14 @@ struct CollectionLiteralLookupTables {
     let kkComparatorReverseOrderName: InternedString
     let kkComparatorNaturalOrderTrampolineName: InternedString
     let kkComparatorReverseOrderTrampolineName: InternedString
+    let kkComparatorThenByName: InternedString
+    let kkComparatorThenByDescendingName: InternedString
+    let kkComparatorThenByTrampolineName: InternedString
+    let kkComparatorThenByDescendingTrampolineName: InternedString
+    let kkComparatorNullsFirstName: InternedString
+    let kkComparatorNullsLastName: InternedString
+    let kkComparatorNullsFirstTrampolineName: InternedString
+    let kkComparatorNullsLastTrampolineName: InternedString
     let kkComparatorReversedName: InternedString
     let kkComparatorReversedTrampolineName: InternedString
     let kkCompareValuesName: InternedString
@@ -847,6 +855,14 @@ struct CollectionLiteralLookupTables {
         kkComparatorReverseOrderName = interner.intern("kk_comparator_reverse_order")
         kkComparatorNaturalOrderTrampolineName = interner.intern("kk_comparator_natural_order_trampoline")
         kkComparatorReverseOrderTrampolineName = interner.intern("kk_comparator_reverse_order_trampoline")
+        kkComparatorThenByName = interner.intern("kk_comparator_then_by")
+        kkComparatorThenByDescendingName = interner.intern("kk_comparator_then_by_descending")
+        kkComparatorThenByTrampolineName = interner.intern("kk_comparator_then_by_trampoline")
+        kkComparatorThenByDescendingTrampolineName = interner.intern("kk_comparator_then_by_descending_trampoline")
+        kkComparatorNullsFirstName = interner.intern("kk_comparator_nulls_first")
+        kkComparatorNullsLastName = interner.intern("kk_comparator_nulls_last")
+        kkComparatorNullsFirstTrampolineName = interner.intern("kk_comparator_nulls_first_trampoline")
+        kkComparatorNullsLastTrampolineName = interner.intern("kk_comparator_nulls_last_trampoline")
         kkComparatorReversedName = interner.intern("kk_comparator_reversed")
         kkComparatorReversedTrampolineName = interner.intern("kk_comparator_reversed_trampoline")
         kkCompareValuesName = interner.intern("kk_compareValues")
