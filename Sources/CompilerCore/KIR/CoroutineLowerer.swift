@@ -144,7 +144,7 @@ final class CoroutineLowerer {
         
         if let runtimeName {
             let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
-            
+
             let resultType: TypeID = switch calleeStr {
             case "isClosedForReceive", "isClosedForSend":
                 sema.types.booleanType

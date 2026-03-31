@@ -472,6 +472,28 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // Channel.isClosedForReceive: Boolean (CORO-075)
+        registerSyntheticObjectProperty(
+            ownerSymbol: channelSymbol,
+            ownerType: channelType,
+            name: "isClosedForReceive",
+            propertyType: types.booleanType,
+            externalLinkName: "kk_channel_is_closed_for_receive",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Channel.isClosedForSend: Boolean (CORO-075)
+        registerSyntheticObjectProperty(
+            ownerSymbol: channelSymbol,
+            ownerType: channelType,
+            name: "isClosedForSend",
+            propertyType: types.booleanType,
+            externalLinkName: "kk_channel_is_closed_for_send",
+            symbols: symbols,
+            interner: interner
+        )
+
         // Mutex (kotlinx.coroutines.sync.Mutex)
         let syncPkg = ensureSyntheticPackage(
             coroutinesPkg + [interner.intern("sync")],
@@ -984,7 +1006,7 @@ extension DataFlowSemaPhase {
             visibility: .public,
             flags: [.synthetic]
         )
-        if let packageSymbol = symbols.lookup(fqName: functionFQName) {
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
             symbols.setParentSymbol(packageSymbol, for: functionSymbol)
         }
         symbols.setExternalLinkName("kk_channel_create", for: functionSymbol)
