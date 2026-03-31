@@ -828,6 +828,13 @@ extension ABILoweringPass {
             interner.intern("kk_kclass_is_sealed"),
             interner.intern("kk_kclass_is_value"),
             interner.intern("kk_kclass_members_count"),
+            // STDLIB-REFLECT-060: KClass basic reflection non-throwing callees
+            interner.intern("kk_kclass_is_final"),
+            interner.intern("kk_kclass_is_open"),
+            interner.intern("kk_kclass_is_abstract"),
+            interner.intern("kk_kclass_visibility"),
+            interner.intern("kk_kclass_type_parameters"),
+            interner.intern("kk_kclass_supertypes"),
             // BigInteger non-throwing operations (STDLIB-NUM-129)
             // divide, pow, and fromString are intentionally excluded here — they
             // use outThrown and are marked .throwingFunction in the sema stubs.

@@ -2397,6 +2397,44 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-REFLECT-060: KClass basic reflection features
+
+    public static let kk_kclass_is_final = ExternDecl(
+        name: "kk_kclass_is_final",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_is_open = ExternDecl(
+        name: "kk_kclass_is_open",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_visibility = ExternDecl(
+        name: "kk_kclass_visibility",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_type_parameters = ExternDecl(
+        name: "kk_kclass_type_parameters",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_supertypes = ExternDecl(
+        name: "kk_kclass_supertypes",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_register_metadata_v2 = ExternDecl(
+        name: "kk_kclass_register_metadata_v2",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_kclass_supertype_name = ExternDecl(
         name: "kk_kclass_supertype_name",
         parameterTypes: ["intptr_t"],
@@ -4366,6 +4404,13 @@ public enum RuntimeABIExterns {
             kk_kclass_is_abstract,
             kk_kclass_supertype_name,
             kk_kclass_members_count,
+            // STDLIB-REFLECT-060: KClass basic reflection features
+            kk_kclass_is_final,
+            kk_kclass_is_open,
+            kk_kclass_visibility,
+            kk_kclass_type_parameters,
+            kk_kclass_supertypes,
+            kk_kclass_register_metadata_v2,
             // REFL-005: KClass.isInstance, members, constructors, KType, typeOf
             kk_kclass_isInstance,
             kk_kclass_members,

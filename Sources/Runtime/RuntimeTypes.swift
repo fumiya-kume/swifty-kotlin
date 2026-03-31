@@ -753,6 +753,11 @@ struct RuntimeKClassMetadataEntry {
     let fieldCount: Int
     let memberCount: Int
     let constructorCount: Int
+    // STDLIB-REFLECT-060: additional KClass basic reflection fields
+    let isFinal: Bool
+    let isOpen: Bool
+    let visibility: String
+    let typeParameterCount: Int
 }
 
 /// Global registry mapping type tokens to runtime metadata entries.
