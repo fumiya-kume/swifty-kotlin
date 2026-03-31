@@ -759,6 +759,16 @@ struct RuntimeKClassMetadataEntry {
     let isOpen: Bool
     let visibility: String
     let typeParameterCount: Int
+    /// Runtime annotations attached to this type (STDLIB-REFLECT-065).
+    var annotations: [RuntimeAnnotationRecord] = []
+}
+
+/// Runtime representation of an annotation attached to a declaration (STDLIB-REFLECT-065).
+struct RuntimeAnnotationRecord {
+    /// Fully-qualified name of the annotation class (e.g. "MyLabel").
+    let annotationFQName: String
+    /// Argument values serialized as strings (e.g. ["hello"]).
+    let arguments: [String]
 }
 
 /// Global registry mapping type tokens to runtime metadata entries.
@@ -777,6 +787,15 @@ final class RuntimeKClassMetadataRegistry: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         return entries[typeToken]
+    }
+
+    func appendAnnotations(typeToken: Int, annotations: [RuntimeAnnotationRecord]) {
+        lock.lock()
+        defer { lock.unlock() }
+        if var entry = entries[typeToken] {
+            entry.annotations.append(contentsOf: annotations)
+            entries[typeToken] = entry
+        }
     }
 
     func reset() {
@@ -923,6 +942,26 @@ final class RuntimeKFunctionBox {
         self.closureRaw = closureRaw
         self.parameterRaws = parameterRaws
         self.typeStringRaw = typeStringRaw
+    }
+}
+
+// MARK: - Annotation Reflection (STDLIB-REFLECT-065)
+
+/// Runtime box for a Kotlin annotation instance.
+/// Represents a single annotation applied to a declaration, with its class
+/// name and argument values accessible at runtime.
+final class RuntimeAnnotationBox {
+    /// Fully-qualified name of the annotation class.
+    let annotationFQName: String
+    /// Argument values serialized as strings.
+    let arguments: [String]
+    /// Raw KClass handle for the annotation class (0 if not available).
+    let annotationClassRaw: Int
+
+    init(annotationFQName: String, arguments: [String], annotationClassRaw: Int = 0) {
+        self.annotationFQName = annotationFQName
+        self.arguments = arguments
+        self.annotationClassRaw = annotationClassRaw
     }
 }
 

@@ -268,6 +268,7 @@ extension CallTypeChecker {
                     sema.bindings.bindExprType(id, type: nullableStringType)
                     return nullableStringType
                 }
+                // STDLIB-REFLECT-065: annotations
                 let kclassMemberCollectionCallees: Set<InternedString> = [
                     knownNames.membersName, knownNames.constructorsName,
                     knownNames.propertiesName, knownNames.memberPropertiesName,
@@ -276,6 +277,7 @@ extension CallTypeChecker {
                     knownNames.declaredMemberFunctionsName,
                     // STDLIB-REFLECT-060: KClass collection properties
                     knownNames.typeParametersName, knownNames.supertypesName,
+                    knownNames.annotationsName,
                 ]
                 if kclassMemberCollectionCallees.contains(calleeName), args.isEmpty {
                     let listType = makeSyntheticListType(
@@ -287,6 +289,16 @@ extension CallTypeChecker {
                     sema.bindings.markCollectionExpr(id)
                     sema.bindings.bindExprType(id, type: listType)
                     return listType
+                }
+                // STDLIB-REFLECT-065: findAnnotation<T>()
+                if calleeName == knownNames.findAnnotationName {
+                    // Infer arguments if present.
+                    for arg in args {
+                        _ = driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
+                    }
+                    let nullableAnyType = sema.types.makeNullable(sema.types.anyType)
+                    sema.bindings.bindExprType(id, type: nullableAnyType)
+                    return nullableAnyType
                 }
             }
         }
@@ -361,14 +373,16 @@ extension CallTypeChecker {
                 sema.bindings.bindExprType(id, type: nullableStringType)
                 return nullableStringType
             }
+            // STDLIB-REFLECT-065: annotations
             let kclassVarMemberCollectionCallees: Set<InternedString> = [
                 knownNames.membersName, knownNames.constructorsName,
                 knownNames.propertiesName, knownNames.memberPropertiesName,
                 knownNames.declaredMemberPropertiesName,
                 knownNames.functionsName, knownNames.memberFunctionsName,
                 knownNames.declaredMemberFunctionsName,
-                // STDLIB-REFLECT-060: KClass collection properties
-                knownNames.typeParametersName, knownNames.supertypesName,
+                    // STDLIB-REFLECT-060: KClass collection properties
+                    knownNames.typeParametersName, knownNames.supertypesName,
+                    knownNames.annotationsName,
             ]
             if kclassVarMemberCollectionCallees.contains(calleeName), args.isEmpty {
                 let listType = makeSyntheticListType(
@@ -380,6 +394,15 @@ extension CallTypeChecker {
                 sema.bindings.markCollectionExpr(id)
                 sema.bindings.bindExprType(id, type: listType)
                 return listType
+            }
+            // STDLIB-REFLECT-065: findAnnotation<T>()
+            if calleeName == knownNames.findAnnotationName {
+                for arg in args {
+                    _ = driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
+                }
+                let nullableAnyType = sema.types.makeNullable(sema.types.anyType)
+                sema.bindings.bindExprType(id, type: nullableAnyType)
+                return nullableAnyType
             }
         }
 

@@ -164,6 +164,10 @@ struct KnownCompilerNames {
     let functionsName: InternedString
     let memberFunctionsName: InternedString
     let declaredMemberFunctionsName: InternedString
+    // STDLIB-REFLECT-065: Annotation reflection
+    let annotationsName: InternedString
+    let findAnnotationName: InternedString
+    let annotationClassName: InternedString
     let size: InternedString
     let isEmpty: InternedString
     let getValue: InternedString
@@ -323,6 +327,10 @@ struct KnownCompilerNames {
         functionsName = interner.intern("functions")
         memberFunctionsName = interner.intern("memberFunctions")
         declaredMemberFunctionsName = interner.intern("declaredMemberFunctions")
+        // STDLIB-REFLECT-065: Annotation reflection
+        annotationsName = interner.intern("annotations")
+        findAnnotationName = interner.intern("findAnnotation")
+        annotationClassName = interner.intern("annotationClass")
         size = interner.intern("size")
         isEmpty = interner.intern("isEmpty")
         getValue = interner.intern("getValue")
