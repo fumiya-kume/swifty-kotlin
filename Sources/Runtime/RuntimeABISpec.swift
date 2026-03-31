@@ -4611,6 +4611,42 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(name: "kk_cache_size", parameters: [RuntimeABIParameter(name: "cacheRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
     ]
 
+    // MARK: - Path (STDLIB-IO-089)
+
+    public static let pathFunctions: [RuntimeABIFunctionSpec] = [
+        RuntimeABIFunctionSpec(name: "kk_path_new", parameters: [RuntimeABIParameter(name: "pathStringRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_name", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_fileName", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_parent", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_root", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_nameCount", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_toString", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_resolve_string", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "otherRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_resolve_path", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "otherRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_relativize", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "otherRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_normalize", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_exists", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_isDirectory", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_isRegularFile", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_isAbsolute", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_readText", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_writeText", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "textRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_readLines", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_createDirectories", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_deleteIfExists", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_listDirectoryEntries", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_equals", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "otherRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_startsWith_path", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "otherRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_startsWith_string", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "otherRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_endsWith_path", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "otherRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_endsWith_string", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "otherRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_toFile", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_toUri", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_get", parameters: [RuntimeABIParameter(name: "pathStringRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_toAbsolutePath", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_getName", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "indexRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+    ]
+
     // MARK: - Duration / measureTime (STDLIB-230/231)
 
     public static let durationFunctions: [RuntimeABIFunctionSpec] = [
@@ -4823,6 +4859,7 @@ public enum RuntimeABISpec {
             + resultFunctions
             + stringBuilderFunctions
             + fileIOFunctions
+            + pathFunctions
             + uuidFunctions
             + durationFunctions
             + atomicFunctions
