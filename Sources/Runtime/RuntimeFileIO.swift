@@ -889,3 +889,268 @@ public func kk_output_stream_close(_ streamRaw: Int) -> Int {
     stream.close()
     return 0
 }
+
+// MARK: - STDLIB-IO-090: Files utility (java.nio.file.Files)
+
+private func runtimePathBox(from raw: Int) -> RuntimePathBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimePathBox.self)
+}
+
+/// Files.createFile(path) — creates a new empty file, returns the path.
+@_cdecl("kk_files_createFile")
+public func kk_files_createFile(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_createFile received invalid Path handle")
+    }
+    if FileManager.default.fileExists(atPath: path.pathString) {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "FileAlreadyExistsException: \(path.pathString)")
+        return pathRaw
+    }
+    let created = FileManager.default.createFile(atPath: path.pathString, contents: nil)
+    if !created {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: Failed to create file \(path.pathString)")
+    }
+    return pathRaw
+}
+
+/// Files.delete(path) — deletes a file or empty directory.
+@_cdecl("kk_files_delete")
+public func kk_files_delete(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_delete received invalid Path handle")
+    }
+    guard FileManager.default.fileExists(atPath: path.pathString) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchFileException: \(path.pathString)")
+        return 0
+    }
+    do {
+        try FileManager.default.removeItem(atPath: path.pathString)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
+/// Files.copy(source, target) — copies a file, returns the target path.
+@_cdecl("kk_files_copy")
+public func kk_files_copy(_ sourceRaw: Int, _ targetRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let source = runtimePathBox(from: sourceRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_copy received invalid source Path handle")
+    }
+    guard let target = runtimePathBox(from: targetRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_copy received invalid target Path handle")
+    }
+    do {
+        try FileManager.default.copyItem(atPath: source.pathString, toPath: target.pathString)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return targetRaw
+}
+
+/// Files.move(source, target) — moves/renames a file, returns the target path.
+@_cdecl("kk_files_move")
+public func kk_files_move(_ sourceRaw: Int, _ targetRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let source = runtimePathBox(from: sourceRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_move received invalid source Path handle")
+    }
+    guard let target = runtimePathBox(from: targetRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_move received invalid target Path handle")
+    }
+    do {
+        try FileManager.default.moveItem(atPath: source.pathString, toPath: target.pathString)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return targetRaw
+}
+
+/// Files.createDirectory(path) — creates a single directory, returns the path.
+@_cdecl("kk_files_createDirectory")
+public func kk_files_createDirectory(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_createDirectory received invalid Path handle")
+    }
+    do {
+        try FileManager.default.createDirectory(atPath: path.pathString, withIntermediateDirectories: false)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return pathRaw
+}
+
+/// Files.createDirectories(path) — creates directory tree, returns the path.
+@_cdecl("kk_files_createDirectories")
+public func kk_files_createDirectories(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_createDirectories received invalid Path handle")
+    }
+    do {
+        try FileManager.default.createDirectory(atPath: path.pathString, withIntermediateDirectories: true)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return pathRaw
+}
+
+/// Files.size(path) — returns file size in bytes.
+@_cdecl("kk_files_size")
+public func kk_files_size(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_size received invalid Path handle")
+    }
+    do {
+        let attrs = try FileManager.default.attributesOfItem(atPath: path.pathString)
+        return (attrs[.size] as? Int) ?? 0
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return 0
+    }
+}
+
+/// Files.lastModifiedTime(path) — returns modification time as millis since epoch.
+@_cdecl("kk_files_lastModifiedTime")
+public func kk_files_lastModifiedTime(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_lastModifiedTime received invalid Path handle")
+    }
+    do {
+        let attrs = try FileManager.default.attributesOfItem(atPath: path.pathString)
+        guard let modDate = attrs[.modificationDate] as? Date else {
+            return 0
+        }
+        return Int(modDate.timeIntervalSince1970 * 1000)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return 0
+    }
+}
+
+/// Files.isRegularFile(path) — returns true if the path is a regular file.
+@_cdecl("kk_files_isRegularFile")
+public func kk_files_isRegularFile(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_isRegularFile received invalid Path handle")
+    }
+    var isDir: ObjCBool = false
+    let exists = FileManager.default.fileExists(atPath: path.pathString, isDirectory: &isDir)
+    return kk_box_bool(exists && !isDir.boolValue ? 1 : 0)
+}
+
+/// Files.isDirectory(path) — returns true if the path is a directory.
+@_cdecl("kk_files_isDirectory")
+public func kk_files_isDirectory(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_isDirectory received invalid Path handle")
+    }
+    var isDir: ObjCBool = false
+    let exists = FileManager.default.fileExists(atPath: path.pathString, isDirectory: &isDir)
+    return kk_box_bool(exists && isDir.boolValue ? 1 : 0)
+}
+
+/// Files.exists(path) — returns true if the path exists.
+@_cdecl("kk_files_exists")
+public func kk_files_exists(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_exists received invalid Path handle")
+    }
+    return kk_box_bool(FileManager.default.fileExists(atPath: path.pathString) ? 1 : 0)
+}
+
+/// Files.walk(path) — recursively walks the directory tree, returns List<Path>.
+@_cdecl("kk_files_walk")
+public func kk_files_walk(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_walk received invalid Path handle")
+    }
+    // Include root as first element, matching Kotlin Files.walk() behaviour
+    var paths: [Int] = [registerRuntimeObject(RuntimePathBox(path.pathString))]
+    if let enumerator = FileManager.default.enumerator(atPath: path.pathString) {
+        while let relativePath = enumerator.nextObject() as? String {
+            let fullPath = (path.pathString as NSString).appendingPathComponent(relativePath)
+            paths.append(registerRuntimeObject(RuntimePathBox(fullPath)))
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: paths))
+}
+
+/// Files.list(path) — lists direct children of a directory, returns List<Path>.
+@_cdecl("kk_files_list")
+public func kk_files_list(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_list received invalid Path handle")
+    }
+    do {
+        let entries = try FileManager.default.contentsOfDirectory(atPath: path.pathString)
+        let elements = entries.map { entry -> Int in
+            let childPath = (path.pathString as NSString).appendingPathComponent(entry)
+            return registerRuntimeObject(RuntimePathBox(childPath))
+        }
+        return registerRuntimeObject(RuntimeListBox(elements: elements))
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+}
+
+/// Files.newDirectoryStream(path) — alias for list(), returns List<Path>.
+@_cdecl("kk_files_newDirectoryStream")
+public func kk_files_newDirectoryStream(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    return kk_files_list(pathRaw, outThrown)
+}
+
+/// Files.createTempFile(prefix, suffix) — creates a temporary file, returns Path.
+@_cdecl("kk_files_createTempFile")
+public func kk_files_createTempFile(_ prefixRaw: Int, _ suffixRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let prefixPtr = UnsafeMutableRawPointer(bitPattern: prefixRaw),
+          let prefix = extractString(from: prefixPtr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_createTempFile received invalid prefix")
+    }
+    guard let suffixPtr = UnsafeMutableRawPointer(bitPattern: suffixRaw),
+          let suffix = extractString(from: suffixPtr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_createTempFile received invalid suffix")
+    }
+    let tmpDir = NSTemporaryDirectory()
+    let fileName = "\(prefix)\(UUID().uuidString)\(suffix)"
+    let fullPath = (tmpDir as NSString).appendingPathComponent(fileName)
+    let created = FileManager.default.createFile(atPath: fullPath, contents: nil)
+    if !created {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: Failed to create temp file \(fullPath)")
+        return registerRuntimeObject(RuntimePathBox(fullPath))
+    }
+    return registerRuntimeObject(RuntimePathBox(fullPath))
+}
+
+/// Files.createTempDirectory(prefix) — creates a temporary directory, returns Path.
+@_cdecl("kk_files_createTempDirectory")
+public func kk_files_createTempDirectory(_ prefixRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let prefixPtr = UnsafeMutableRawPointer(bitPattern: prefixRaw),
+          let prefix = extractString(from: prefixPtr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_createTempDirectory received invalid prefix")
+    }
+    let tmpDir = NSTemporaryDirectory()
+    let dirName = "\(prefix)\(UUID().uuidString)"
+    let fullPath = (tmpDir as NSString).appendingPathComponent(dirName)
+    do {
+        try FileManager.default.createDirectory(atPath: fullPath, withIntermediateDirectories: true)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return registerRuntimeObject(RuntimePathBox(fullPath))
+}
