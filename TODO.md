@@ -238,7 +238,7 @@
 
 #### Phase 2: リフレクション (中優先度)
 
-- [ ] STDLIB-REFLECT-060: KClass基本機能完全実装
+- [x] STDLIB-REFLECT-060: KClass基本機能完全実装
   - **仕様**: KClassの基本的なリフレクション機能
   - **実装内容**:
     - クラス名: simpleName, qualifiedName

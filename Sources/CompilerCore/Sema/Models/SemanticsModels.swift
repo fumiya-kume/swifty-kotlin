@@ -969,6 +969,7 @@ public final class BindingTable {
     public private(set) var exprTypes: [ExprID: TypeID] = [:]
     public private(set) var identifierSymbols: [ExprID: SymbolID] = [:]
     public private(set) var callBindings: [ExprID: CallBinding] = [:]
+    public private(set) var loopIterationBindings: [ExprID: LoopIterationBinding] = [:]
     public private(set) var callableTargets: [ExprID: CallableTarget] = [:]
     public private(set) var callableValueCalls: [ExprID: CallableValueCallBinding] = [:]
     public private(set) var isCheckTargetTypes: [ExprID: TypeID] = [:]
@@ -1048,6 +1049,10 @@ public final class BindingTable {
 
     public func bindCall(_ expr: ExprID, binding: CallBinding) {
         callBindings[expr] = binding
+    }
+
+    public func bindLoopIteration(_ expr: ExprID, binding: LoopIterationBinding) {
+        loopIterationBindings[expr] = binding
     }
 
     public func bindCallableTarget(_ expr: ExprID, target: CallableTarget) {
@@ -1232,6 +1237,10 @@ public final class BindingTable {
 
     public func callBinding(for expr: ExprID) -> CallBinding? {
         callBindings[expr]
+    }
+
+    public func loopIterationBinding(for expr: ExprID) -> LoopIterationBinding? {
+        loopIterationBindings[expr]
     }
 
     public func callableTarget(for expr: ExprID) -> CallableTarget? {

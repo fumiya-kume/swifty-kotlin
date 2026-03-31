@@ -808,6 +808,23 @@ extension ABILoweringPass {
             interner.intern("kk_callable_ref_tag_kfunction"),
             interner.intern("kk_callable_ref_tag_kproperty"),
             interner.intern("kk_callable_ref_name"),
+            // STDLIB-REFLECT-063: KFunction / KParameter reflection — pure metadata
+            // lookups that cannot throw.
+            interner.intern("kk_kfunction_get_name"),
+            interner.intern("kk_kfunction_get_arity"),
+            interner.intern("kk_kfunction_get_return_type"),
+            interner.intern("kk_kfunction_is_suspend"),
+            interner.intern("kk_kfunction_get_parameters"),
+            interner.intern("kk_kfunction_get_value_parameters"),
+            interner.intern("kk_kfunction_get_type"),
+            interner.intern("kk_kfunction_create"),
+            interner.intern("kk_kfunction_create_full"),
+            interner.intern("kk_kparameter_create"),
+            interner.intern("kk_kparameter_get_index"),
+            interner.intern("kk_kparameter_get_name"),
+            interner.intern("kk_kparameter_get_type"),
+            interner.intern("kk_kparameter_is_optional"),
+            interner.intern("kk_kparameter_get_kind"),
             interner.intern("kk_pair_new"),
             interner.intern("kk_triple_new"),
             // STDLIB-REFLECT-066: KType / KClass reflection — all are pure metadata
@@ -829,6 +846,13 @@ extension ABILoweringPass {
             interner.intern("kk_kclass_is_sealed"),
             interner.intern("kk_kclass_is_value"),
             interner.intern("kk_kclass_members_count"),
+            // STDLIB-REFLECT-060: KClass basic reflection non-throwing callees
+            interner.intern("kk_kclass_is_final"),
+            interner.intern("kk_kclass_is_open"),
+            interner.intern("kk_kclass_is_abstract"),
+            interner.intern("kk_kclass_visibility"),
+            interner.intern("kk_kclass_type_parameters"),
+            interner.intern("kk_kclass_supertypes"),
             // BigInteger non-throwing operations (STDLIB-NUM-129)
             // divide, pow, and fromString are intentionally excluded here — they
             // use outThrown and are marked .throwingFunction in the sema stubs.
@@ -841,6 +865,14 @@ extension ABILoweringPass {
             interner.intern("kk_biginteger_toInt"),
             interner.intern("kk_biginteger_toLong"),
             interner.intern("kk_biginteger_toString"),
+            // Job State Queries (STDLIB-CORO-070)
+            interner.intern("kk_job_is_active"),
+            interner.intern("kk_job_is_completed"),
+            interner.intern("kk_job_is_cancelled"),
+            // JSON Serialization (STDLIB-SER-132) — no outThrown parameter
+            interner.intern("kk_json_encodeToString"),
+            interner.intern("kk_json_encodeMapToString"),
+            interner.intern("kk_json_default"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }
