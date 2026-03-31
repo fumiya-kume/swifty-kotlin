@@ -3008,6 +3008,22 @@ extension CallTypeChecker {
                 }
             }
         }
+        if allCandidates.isEmpty,
+           let boundType = tryBindSyntheticBigIntegerMemberFallback(
+               id,
+               calleeName: calleeName,
+               receiverType: memberLookupType,
+               args: args,
+               argTypes: argTypes,
+               range: range,
+               ctx: ctx,
+               expectedType: expectedType,
+               explicitTypeArgs: explicitTypeArgs,
+               safeCall: safeCall
+           )
+        {
+            return boundType
+        }
         let isNullLiteralReceiver = if case let .nameRef(name, _) = ast.arena.expr(receiverID) {
             name == KnownCompilerNames(interner: interner).null
         } else {
@@ -5081,6 +5097,81 @@ extension CallTypeChecker {
             candidates = sema.symbols.lookupAll(fqName: stringMemberFQName).filter { candidate in
                 isSyntheticStringMemberCandidate(candidate, named: calleeName, sema: sema, interner: interner)
             }
+        }
+        guard !candidates.isEmpty else {
+            return nil
+        }
+
+        let resolvedArgs = zip(args, argTypes).map { argument, type in
+            CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
+        }
+        let resolved = ctx.resolver.resolveCall(
+            candidates: candidates,
+            call: CallExpr(
+                range: range,
+                calleeName: calleeName,
+                args: resolvedArgs,
+                explicitTypeArgs: explicitTypeArgs
+            ),
+            expectedType: expectedType,
+            implicitReceiverType: receiverType,
+            ctx: ctx.semaCtx
+        )
+        if let diagnostic = resolved.diagnostic {
+            ctx.semaCtx.diagnostics.emit(diagnostic)
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
+        }
+        guard let chosen = resolved.chosenCallee else {
+            return nil
+        }
+
+        let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+        let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
+    }
+
+    private func tryBindSyntheticBigIntegerMemberFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        receiverType: TypeID,
+        args: [CallArgument],
+        argTypes: [TypeID],
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID],
+        safeCall: Bool
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let normalizedReceiverType = sema.types.makeNonNullable(receiverType)
+        let bigIntegerFQName = [
+            interner.intern("java"),
+            interner.intern("math"),
+            interner.intern("BigInteger"),
+        ]
+        guard let bigIntegerSymbol = sema.symbols.lookup(fqName: bigIntegerFQName),
+              case let .classType(receiverClass) = sema.types.kind(of: normalizedReceiverType),
+              receiverClass.classSymbol == bigIntegerSymbol
+        else {
+            return nil
+        }
+
+        let extensionFQName = [
+            interner.intern("kotlin"),
+            calleeName,
+        ]
+        let candidates = sema.symbols.lookupAll(fqName: extensionFQName).filter { candidate in
+            guard let symbol = sema.symbols.symbol(candidate),
+                  symbol.kind == .function,
+                  let signature = sema.symbols.functionSignature(for: candidate)
+            else {
+                return false
+            }
+            return signature.receiverType == normalizedReceiverType &&
+                signature.parameterTypes == [normalizedReceiverType]
         }
         guard !candidates.isEmpty else {
             return nil

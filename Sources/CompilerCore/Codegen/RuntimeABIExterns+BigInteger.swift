@@ -11,6 +11,7 @@ public extension RuntimeABIExterns {
         kk_biginteger_gcd,
         kk_biginteger_abs,
         kk_biginteger_pow,
+        kk_biginteger_and,
         kk_biginteger_toInt,
         kk_biginteger_toLong,
         kk_biginteger_toString,
@@ -67,6 +68,12 @@ public extension RuntimeABIExterns {
     static let kk_biginteger_pow = ExternDecl(
         name: "kk_biginteger_pow",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_biginteger_and = ExternDecl(
+        name: "kk_biginteger_and",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 

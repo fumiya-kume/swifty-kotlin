@@ -17,6 +17,11 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         let javaMathPkgSymbol = symbols.lookup(fqName: javaMathPkg)
+        let kotlinPkg = ensurePackage(
+            path: ["kotlin"],
+            symbols: symbols,
+            interner: interner
+        )
 
         // --- BigInteger class symbol ---
         let bigIntegerSymbol = ensureClassSymbol(
@@ -39,6 +44,17 @@ extension DataFlowSemaPhase {
         let intType = types.intType
         let longType = types.longType
         let stringType = types.stringType
+
+        registerBigIntegerExtensionFunction(
+            named: "and",
+            externalLinkName: "kk_biginteger_and",
+            receiverType: bigIntegerType,
+            parameters: [("other", bigIntegerType)],
+            returnType: bigIntegerType,
+            packageFQName: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
 
         // --- BigInteger(String) constructor ---
         // kk_biginteger_fromString accepts outThrown to signal NumberFormatException.
@@ -288,6 +304,72 @@ extension DataFlowSemaPhase {
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
             ),
             for: memberSymbol
+        )
+    }
+
+    private func registerBigIntegerExtensionFunction(
+        named name: String,
+        externalLinkName: String,
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType &&
+                signature.parameterTypes == parameters.map(\.type) &&
+                signature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var parameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            parameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count)
+            ),
+            for: functionSymbol
         )
     }
 
