@@ -1,4 +1,4 @@
-import kotlin.io.path.Path
+import kotlin.io.path.*
 
 fun main() {
     val tmpDir = "/tmp/kswiftk_path_test_" + System.currentTimeMillis()
