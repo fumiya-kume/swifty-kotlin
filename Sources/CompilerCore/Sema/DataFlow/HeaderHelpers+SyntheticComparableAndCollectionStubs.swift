@@ -2423,6 +2423,15 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         let listReturnType = receiverType
+        let comparableElementBounds: [TypeID] = if let comparableSymbol = types.comparableInterfaceSymbol {
+            [types.make(.classType(ClassType(
+                classSymbol: comparableSymbol,
+                args: [.invariant(listTypeParamType)],
+                nullability: .nonNull
+            )))]
+        } else {
+            []
+        }
 
         // Register a synthetic member on List. Short-circuits when a symbol
         // with the same fully-qualified name already exists (first-wins).
@@ -2430,7 +2439,8 @@ extension DataFlowSemaPhase {
             name: String,
             parameterTypes: [TypeID],
             externalLinkName: String,
-            returnTypeOverride: TypeID? = nil
+            returnTypeOverride: TypeID? = nil,
+            typeParameterUpperBoundsList: [[TypeID]]? = nil
         ) {
             let memberName = interner.intern(name)
             let memberFQName = listFQName + [memberName]
@@ -2440,7 +2450,8 @@ extension DataFlowSemaPhase {
                 memberFQName: memberFQName,
                 parameterTypes: parameterTypes,
                 externalLinkName: externalLinkName,
-                returnTypeOverride: returnTypeOverride
+                returnTypeOverride: returnTypeOverride,
+                typeParameterUpperBoundsList: typeParameterUpperBoundsList
             )
         }
 
@@ -2451,7 +2462,8 @@ extension DataFlowSemaPhase {
             memberFQName: [InternedString],
             parameterTypes: [TypeID],
             externalLinkName: String,
-            returnTypeOverride: TypeID? = nil
+            returnTypeOverride: TypeID? = nil,
+            typeParameterUpperBoundsList: [[TypeID]]? = nil
         ) {
             let alreadyRegistered = symbols.lookupAll(fqName: memberFQName).contains { symbolID in
                 guard let sig = symbols.functionSignature(for: symbolID) else { return false }
@@ -2474,6 +2486,7 @@ extension DataFlowSemaPhase {
                     parameterTypes: parameterTypes,
                     returnType: returnTypeOverride ?? listReturnType,
                     typeParameterSymbols: [listTypeParamSymbol],
+                    typeParameterUpperBoundsList: typeParameterUpperBoundsList,
                     classTypeParameterCount: 1
                 ),
                 for: memberSymbol
@@ -2485,7 +2498,12 @@ extension DataFlowSemaPhase {
         registerMember(name: "sum", parameterTypes: [], externalLinkName: "kk_list_sum", returnTypeOverride: types.intType)
         registerMember(name: "reversed", parameterTypes: [], externalLinkName: "kk_list_reversed")
         registerMember(name: "asReversed", parameterTypes: [], externalLinkName: "kk_list_as_reversed")
-        registerMember(name: "sorted", parameterTypes: [], externalLinkName: "kk_list_sorted")
+        registerMember(
+            name: "sorted",
+            parameterTypes: [],
+            externalLinkName: "kk_list_sorted",
+            typeParameterUpperBoundsList: [comparableElementBounds]
+        )
         registerMember(name: "distinct", parameterTypes: [], externalLinkName: "kk_list_distinct")
         registerMember(name: "shuffled", parameterTypes: [], externalLinkName: "kk_list_shuffled")
 
@@ -2553,7 +2571,12 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_list_windowed_partial",
             returnTypeOverride: listOfListReturnType
         )
-        registerMember(name: "sortedDescending", parameterTypes: [], externalLinkName: "kk_list_sortedDescending")
+        registerMember(
+            name: "sortedDescending",
+            parameterTypes: [],
+            externalLinkName: "kk_list_sortedDescending",
+            typeParameterUpperBoundsList: [comparableElementBounds]
+        )
         registerMember(name: "subList", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_subList")
 
         // chunked(size, transform) — HOF overload (STDLIB-548)
