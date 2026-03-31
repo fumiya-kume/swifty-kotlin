@@ -83,6 +83,17 @@ struct TypeCheckHelpers {
         if isRangeExpr, iterableType == sema.types.ulongType {
             return sema.types.ulongType
         }
+        if case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(iterableType)),
+           let symbol = sema.symbols.symbol(classType.classSymbol)
+        {
+            let name = interner.resolve(symbol.name)
+            if name == "IntRange" {
+                return sema.types.intType
+            }
+            if name == "LongRange" {
+                return sema.types.longType
+            }
+        }
         // Map/MutableMap iteration yields Map.Entry<K, V>, not the first type argument.
         if let entryType = mapEntryElementType(for: iterableType, sema: sema, interner: interner) {
             return entryType

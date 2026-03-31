@@ -390,7 +390,10 @@ struct CollectionLiteralLookupTables {
     let removeName: InternedString
     let firstName: InternedString
     let lastName: InternedString
+    let startName: InternedString
+    let endInclusiveName: InternedString
     let stepName: InternedString
+    let iteratorName: InternedString
 
     // ListIterator member names (STDLIB-538)
     let listIteratorMemberName: InternedString
@@ -1032,7 +1035,10 @@ struct CollectionLiteralLookupTables {
         removeName = interner.intern("remove")
         firstName = interner.intern("first")
         lastName = interner.intern("last")
+        startName = interner.intern("start")
+        endInclusiveName = interner.intern("endInclusive")
         stepName = interner.intern("step")
+        iteratorName = interner.intern("iterator")
 
         // ListIterator member names (STDLIB-538)
         listIteratorMemberName = interner.intern("listIterator")

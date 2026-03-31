@@ -2050,8 +2050,8 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // first / last / count — simple property access (STDLIB-092)
-        if callee == lookup.firstName, arguments.isEmpty {
+        // first / last / start / endInclusive / count — simple property access (STDLIB-092 / STDLIB-RANGE-034)
+        if (callee == lookup.firstName || callee == lookup.startName), arguments.isEmpty {
             let firstName = isULongRange ? lookup.kkULongRangeFirstName : lookup.kkRangeFirstName
             loweredBody.append(.call(
                 symbol: nil, callee: firstName,
@@ -2060,7 +2060,7 @@ extension CollectionLiteralLoweringPass {
             ))
             return true
         }
-        if callee == lookup.lastName, arguments.isEmpty {
+        if (callee == lookup.lastName || callee == lookup.endInclusiveName), arguments.isEmpty {
             let lastName = isULongRange ? lookup.kkULongRangeLastName : lookup.kkRangeLastName
             loweredBody.append(.call(
                 symbol: nil, callee: lastName,
@@ -2140,6 +2140,15 @@ extension CollectionLiteralLoweringPass {
         if callee == lookup.toIntArrayName, arguments.isEmpty, !isCharRange, !isULongRange {
             loweredBody.append(.call(
                 symbol: nil, callee: lookup.kkRangeToIntArrayName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
+            return true
+        }
+
+        if callee == lookup.iteratorName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil, callee: lookup.kkRangeIteratorName,
                 arguments: [receiver], result: result,
                 canThrow: false, thrownResult: nil
             ))

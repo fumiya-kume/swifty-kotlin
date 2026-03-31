@@ -149,6 +149,36 @@ final class RuntimeRangeStepTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_list_size(list), 0)
     }
 
+    func testRangeContainsBoundaries() {
+        let range = kk_op_rangeTo(1, 10)
+        XCTAssertEqual(kk_op_contains(range, 1), 1)
+        XCTAssertEqual(kk_op_contains(range, 10), 1)
+        XCTAssertEqual(kk_op_contains(range, 0), 0)
+        XCTAssertEqual(kk_op_contains(range, 11), 0)
+    }
+
+    func testRangeToIntArray() {
+        let range = kk_op_rangeTo(1, 10)
+        let array = runtimeArrayBox(from: kk_range_toIntArray(range))
+        XCTAssertNotNil(array)
+        XCTAssertEqual(array?.elements.count, 10)
+        XCTAssertEqual(array?.elements[0], 1)
+        XCTAssertEqual(array?.elements[9], 10)
+    }
+
+    func testRangeReversedToList() {
+        let range = kk_op_rangeTo(1, 5)
+        let reversed = kk_range_reversed(range)
+        XCTAssertEqual(kk_range_first(reversed), 5)
+        XCTAssertEqual(kk_range_last(reversed), 1)
+        XCTAssertEqual(kk_range_count(reversed), 5)
+
+        let list = kk_range_toList(reversed)
+        XCTAssertEqual(kk_list_size(list), 5)
+        XCTAssertEqual(kk_list_get(list, 0), 5)
+        XCTAssertEqual(kk_list_get(list, 4), 1)
+    }
+
     // MARK: - Progression fromClosedRange tests (STDLIB-RANGE-039)
 
     func testIntProgressionFromClosedRange() {

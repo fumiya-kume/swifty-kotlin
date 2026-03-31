@@ -23,6 +23,7 @@ extension CallTypeChecker {
         }
         if let externalLinkName = sema.symbols.externalLinkName(for: chosen),
            [
+               "kk_op_rangeTo",
                "kk_int_progression_fromClosedRange",
                "kk_long_progression_fromClosedRange",
                "kk_uint_progression_fromClosedRange",

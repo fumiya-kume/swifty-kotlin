@@ -287,4 +287,25 @@ final class KotlinCompilationBasicTests: XCTestCase {
         }
         """)
     }
+
+    func testCompile_intRange_constructor_and_properties() throws {
+        try assertKotlinCompilesToKIR("""
+        import kotlin.ranges.IntRange
+
+        fun main() {
+            val r = IntRange(1, 10)
+            val s = r.start
+            val e = r.endInclusive
+            val f = r.first
+            val l = r.last
+            val step = r.step
+            val hasFive = r.contains(5)
+            val reversed = r.reversed().toList()
+            val arr = r.toIntArray()
+            for (i in r) {
+                println(i)
+            }
+        }
+        """)
+    }
 }

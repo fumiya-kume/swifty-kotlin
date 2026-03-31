@@ -1,0 +1,19 @@
+{
+  "": {
+    "swift-dependencies": "/Users/kuu/.codex/worktrees/e6f3/kotlin-compiler/.build-intRange/arm64-apple-macosx/debug/KSwiftKCLI.build/master.swiftdeps"
+  },
+  "/Users/kuu/.codex/worktrees/e6f3/kotlin-compiler/Sources/KSwiftKCLI/CLIParser.swift": {
+    "dependencies": "/Users/kuu/.codex/worktrees/e6f3/kotlin-compiler/.build-intRange/arm64-apple-macosx/debug/KSwiftKCLI.build/CLIParser.d",
+    "object": "/Users/kuu/.codex/worktrees/e6f3/kotlin-compiler/.build-intRange/arm64-apple-macosx/debug/KSwiftKCLI.build/CLIParser.swift.o",
+    "swiftmodule": "/Users/kuu/.codex/worktrees/e6f3/kotlin-compiler/.build-intRange/arm64-apple-macosx/debug/KSwiftKCLI.build/CLIParser~partial.swiftmodule",
+    "swift-dependencies": "/Users/kuu/.codex/worktrees/e6f3/kotlin-compiler/.build-intRange/arm64-apple-macosx/debug/KSwiftKCLI.build/CLIParser.swiftdeps",
+    "diagnostics": "/Users/kuu/.codex/worktrees/e6f3/kotlin-compiler/.build-intRange/arm64-apple-macosx/debug/KSwiftKCLI.build/CLIParser.dia"
+  },
+  "/Users/kuu/.codex/worktrees/e6f3/kotlin-compiler/Sources/KSwiftKCLI/main.swift": {
+    "dependencies": "/Users/kuu/.codex/worktrees/e6f3/kotlin-compiler/.build-intRange/arm64-apple-macosx/debug/KSwiftKCLI.build/main.d",
+    "object": "/Users/kuu/.codex/worktrees/e6f3/kotlin-compiler/.build-intRange/arm64-apple-macosx/debug/KSwiftKCLI.build/main.swift.o",
+    "swiftmodule": "/Users/kuu/.codex/worktrees/e6f3/kotlin-compiler/.build-intRange/arm64-apple-macosx/debug/KSwiftKCLI.build/main~partial.swiftmodule",
+    "swift-dependencies": "/Users/kuu/.codex/worktrees/e6f3/kotlin-compiler/.build-intRange/arm64-apple-macosx/debug/KSwiftKCLI.build/main.swiftdeps",
+    "diagnostics": "/Users/kuu/.codex/worktrees/e6f3/kotlin-compiler/.build-intRange/arm64-apple-macosx/debug/KSwiftKCLI.build/main.dia"
+  }
+}
