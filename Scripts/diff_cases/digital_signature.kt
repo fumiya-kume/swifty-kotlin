@@ -7,27 +7,27 @@ import java.security.cert.PKIXParameters
 import java.security.cert.TrustAnchor
 
 fun main() {
-    val generator = KeyPairGenerator.getInstance("RSA")
+    val generator = KeyPairGenerator("RSA")
     generator.initialize(2048)
     val keyPair = generator.generateKeyPair()
 
     val message = byteArrayOf(1, 2, 3, 4, 5, 6)
-    val signerSha1 = Signature.getInstance("SHA1withRSA")
+    val signerSha1 = Signature("SHA1withRSA")
     signerSha1.initSign(keyPair.privateKey)
     signerSha1.update(message)
     val signatureSha1 = signerSha1.sign()
 
-    val verifierSha1 = Signature.getInstance("SHA1withRSA")
+    val verifierSha1 = Signature("SHA1withRSA")
     verifierSha1.initVerify(keyPair.publicKey)
     verifierSha1.update(message)
     val verifiedSha1 = verifierSha1.verify(signatureSha1)
 
-    val signerSha256 = Signature.getInstance("SHA256withRSA")
+    val signerSha256 = Signature("SHA256withRSA")
     signerSha256.initSign(keyPair.privateKey)
     signerSha256.update(message)
     val signatureSha256 = signerSha256.sign()
 
-    val verifierSha256 = Signature.getInstance("SHA256withRSA")
+    val verifierSha256 = Signature("SHA256withRSA")
     verifierSha256.initVerify(keyPair.publicKey)
     verifierSha256.update(message)
     val verifiedSha256 = verifierSha256.verify(signatureSha256)
@@ -54,11 +54,11 @@ fun main() {
         -----END CERTIFICATE-----
     """.trimIndent().toByteArray()
 
-    val certificateFactory = CertificateFactory.getInstance("X.509")
+    val certificateFactory = CertificateFactory("X.509")
     val certificate = certificateFactory.generateCertificate(certificatePem)
     val certPath = CertPath(listOf(certificate))
     val trustAnchor = TrustAnchor(certificate)
     val parameters = PKIXParameters(listOf(trustAnchor))
-    val validator = CertPathValidator.getInstance("PKIX")
+    val validator = CertPathValidator("PKIX")
     val valid = validator.validate(certPath, parameters)
 }
