@@ -626,18 +626,43 @@ final class ExprTypeChecker {
                 // and Comparable.compareTo inherit operator status.
                 if symbol.flags.contains(.operatorFunction) {
                     candidates.append(candidate)
-                } else if isInheritedOperator, symbol.kind == .function {
-                    // Accept user-defined overrides (has .overrideMember flag) and
-                    // also user-defined functions named equals/compareTo that have
-                    // a matching receiver type (the overload resolver will verify
-                    // the full signature).
-                    if symbol.flags.contains(.overrideMember) {
-                        candidates.append(candidate)
-                    } else if !symbol.flags.contains(.synthetic),
-                              let sig = sema.symbols.functionSignature(for: candidate),
-                              sig.receiverType != nil {
-                        candidates.append(candidate)
+                } else if isInheritedOperator,
+                          symbol.kind == .function,
+                          symbol.flags.contains(.overrideMember) {
+                    candidates.append(candidate)
+                }
+            }
+
+            guard isInheritedOperator else {
+                continue
+            }
+
+            let nominalRoots = driver.helpers.allNominalSymbols(
+                of: receiverType,
+                types: sema.types,
+                symbols: sema.symbols
+            )
+            var ownerQueue: [SymbolID] = nominalRoots
+            var visitedOwners: Set<SymbolID> = []
+            while !ownerQueue.isEmpty {
+                let owner = ownerQueue.removeFirst()
+                guard visitedOwners.insert(owner).inserted,
+                      let ownerSymbol = sema.symbols.symbol(owner)
+                else {
+                    continue
+                }
+                ownerQueue.append(contentsOf: sema.symbols.directSupertypes(for: owner))
+                let memberFQName = ownerSymbol.fqName + [name]
+                for candidate in sema.symbols.lookupAll(fqName: memberFQName) {
+                    guard seen.insert(candidate).inserted,
+                          let symbol = sema.symbols.symbol(candidate),
+                          symbol.kind == .function,
+                          symbol.flags.contains(.overrideMember),
+                          sema.symbols.parentSymbol(for: candidate) == owner
+                    else {
+                        continue
                     }
+                    candidates.append(candidate)
                 }
             }
         }

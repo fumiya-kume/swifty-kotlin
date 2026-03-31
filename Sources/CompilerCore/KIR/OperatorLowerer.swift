@@ -44,20 +44,31 @@ final class OperatorLowerer {
         
         // compareTo/equals脱糖の処理
         if let callBinding = sema.bindings.callBindings[exprID],
-           let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
-           signature.receiverType != nil {
-
-            return handleCompareToDesugaring(
-                op: op,
-                lhsID: lhsID,
-                lhsExpr: lhs,
-                rhsID: rhsID,
-                callBinding: callBinding,
-                isCompareToDesugaring: isCompareToDesugaring,
-                isEqualsDesugaring: isEqualsDesugaring,
-                result: result,
-                context: &context
-            )
+           let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee) {
+            let isNominalMemberOperator = if let owner = sema.symbols.parentSymbol(for: callBinding.chosenCallee),
+                                            let ownerSymbol = sema.symbols.symbol(owner) {
+                switch ownerSymbol.kind {
+                case .class, .interface, .object, .enumClass, .annotationClass:
+                    true
+                default:
+                    false
+                }
+            } else {
+                false
+            }
+            if signature.receiverType != nil || isNominalMemberOperator {
+                return handleCompareToDesugaring(
+                    op: op,
+                    lhsID: lhsID,
+                    lhsExpr: lhs,
+                    rhsID: rhsID,
+                    callBinding: callBinding,
+                    isCompareToDesugaring: isCompareToDesugaring,
+                    isEqualsDesugaring: isEqualsDesugaring,
+                    result: result,
+                    context: &context
+                )
+            }
         }
         
         // シーケンスのplus/minus演算子 (STDLIB-561/562)

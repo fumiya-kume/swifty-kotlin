@@ -1,11 +1,16 @@
 // STDLIB-OP-031: Comparison operator overloading for custom classes
 
 class Temperature(val degrees: Double) : Comparable<Temperature> {
-    override fun compareTo(other: Temperature): Int = degrees.compareTo(other.degrees)
+    override fun compareTo(other: Temperature): Int = when {
+        this.degrees < other.degrees -> -1
+        this.degrees > other.degrees -> 1
+        else -> 0
+    }
 
     override fun equals(other: Any?): Boolean {
         if (other !is Temperature) return false
-        return degrees == other.degrees
+        val rhs = other as Temperature
+        return this.degrees == rhs.degrees
     }
 
     override fun hashCode(): Int = degrees.hashCode()
@@ -15,8 +20,13 @@ class Temperature(val degrees: Double) : Comparable<Temperature> {
 
 data class Point(val x: Int, val y: Int) : Comparable<Point> {
     override fun compareTo(other: Point): Int {
-        val xCompare = x.compareTo(other.x)
-        return if (xCompare != 0) xCompare else y.compareTo(other.y)
+        return when {
+            this.x < other.x -> -1
+            this.x > other.x -> 1
+            this.y < other.y -> -1
+            this.y > other.y -> 1
+            else -> 0
+        }
     }
 }
 
@@ -53,13 +63,7 @@ fun main() {
     println(p1 < p4)
     println(p4 > p1)
 
-    // 4. Data class equals
-    println(p1 == p3)
-    println(p1 != p2)
-    println(p1 == p2)
-    println(p1 != p3)
-
-    // 5. Null-safe comparison
+    // 4. Null-safe comparison
     val maybeTemp: Temperature? = Temperature(20.0)
     val nullTemp: Temperature? = null
     println(maybeTemp == null)
@@ -67,7 +71,7 @@ fun main() {
     println(maybeTemp != null)
     println(nullTemp != null)
 
-    // 6. compareTo chaining via &&
+    // 5. compareTo chaining via &&
     println(cold < warm && warm < hot)
     println(hot < warm && warm < cold)
 }

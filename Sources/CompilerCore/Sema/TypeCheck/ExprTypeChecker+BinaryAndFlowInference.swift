@@ -86,11 +86,21 @@ extension ExprTypeChecker {
         let lhsIsPrimitive = if case .primitive = sema.types.kind(of: lhs) { true } else { false }
         let operatorNames = operatorFunctionNames(for: op, interner: interner)
         let operatorName = operatorNames[0]
-        let operatorCandidates = collectOperatorCandidates(
-            names: operatorNames,
-            receiverType: lhs,
-            ctx: ctx
-        )
+        let shouldUseInheritedEqualityDispatch: Bool = switch op {
+        case .equal, .notEqual:
+            sema.types.isDefinitelyNonNull(lhs) && sema.types.isDefinitelyNonNull(rhs)
+        default:
+            true
+        }
+        let operatorCandidates: [SymbolID] = if shouldUseInheritedEqualityDispatch {
+            collectOperatorCandidates(
+                names: operatorNames,
+                receiverType: lhs,
+                ctx: ctx
+            )
+        } else {
+            []
+        }
         // STDLIB-345: List plus/minus operators
         if !lhsIsPrimitive, operatorCandidates.isEmpty, (op == .add || op == .subtract) {
             if driver.callChecker.isListLikeType(lhs, sema: sema, interner: interner)
