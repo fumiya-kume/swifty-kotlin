@@ -210,13 +210,14 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.atomicFunctions,
             RuntimeABISpec.securityFunctions,
             RuntimeABISpec.parallelFunctions,
+            RuntimeABISpec.bigIntegerFunctions,
             RuntimeABISpec.serializationFunctions,
-            RuntimeABISpec.parallelFunctions,
+            RuntimeABISpec.abiParityFunctions,
         ]
-        let expected = sections.reduce(0) { partial, section in
-            partial + section.count
-        }
-        XCTAssertEqual(RuntimeABISpec.allFunctions.count, expected)
+        XCTAssertEqual(
+            RuntimeABISpec.allFunctions.count,
+            Set(sections.flatMap { $0.map(\.name) }).count
+        )
     }
 
     // MARK: - J16.1 Signature Verification (spec-fixed)

@@ -443,20 +443,8 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    public static let kk_instant_epoch_seconds = ExternDecl(
-        name: "kk_instant_epoch_seconds",
-        parameterTypes: ["intptr_t"],
-        returnType: "intptr_t"
-    )
-
     public static let kk_duration_isPositive = ExternDecl(
         name: "kk_duration_isPositive",
-        parameterTypes: ["intptr_t"],
-        returnType: "intptr_t"
-    )
-
-    public static let kk_instant_nano_of_second = ExternDecl(
-        name: "kk_instant_nano_of_second",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
@@ -479,32 +467,14 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    public static let kk_instant_plus_duration = ExternDecl(
-        name: "kk_instant_plus_duration",
-        parameterTypes: ["intptr_t", "intptr_t"],
-        returnType: "intptr_t"
-    )
-
     public static let kk_duration_minus = ExternDecl(
         name: "kk_duration_minus",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_instant_minus_duration = ExternDecl(
-        name: "kk_instant_minus_duration",
-        parameterTypes: ["intptr_t", "intptr_t"],
-        returnType: "intptr_t"
-    )
-
     public static let kk_duration_times_int = ExternDecl(
         name: "kk_duration_times_int",
-        parameterTypes: ["intptr_t", "intptr_t"],
-        returnType: "intptr_t"
-    )
-
-    public static let kk_instant_compare = ExternDecl(
-        name: "kk_instant_compare",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
@@ -4214,7 +4184,6 @@ public enum RuntimeABIExterns {
             kk_string_zipWithNext,
             kk_string_orEmpty,
             kk_string_asSequence,
-            kk_string_asIterable,
             // Print / Println
             kk_print_any,
             kk_print_noarg,
@@ -4273,6 +4242,17 @@ public enum RuntimeABIExterns {
             // CoroutineExceptionHandler (STDLIB-CORO-072)
             kk_exception_handler_new,
             kk_kxmini_launch_with_exception_handler,
+            // CORO-077: coroutine context and name helpers
+            kk_coroutine_name_create,
+            kk_coroutine_name_get,
+            kk_exception_handler_create,
+            kk_exception_handler_invoke,
+            kk_context_plus,
+            kk_context_get_dispatcher,
+            kk_context_get_name,
+            kk_context_get_exception_handler,
+            kk_context_release,
+            kk_with_context_full,
             // Flow (CORO-003)
             kk_flow_create,
             kk_flow_emit,
@@ -4489,7 +4469,6 @@ public enum RuntimeABIExterns {
             kk_ulong_rangeTo,
             kk_ulong_downTo,
             kk_ulong_step,
-            kk_ulong_range_reversed,
             // CharRange (STDLIB-290)
             kk_char_range_toList,
             kk_char_range_forEach,
@@ -4554,6 +4533,7 @@ public enum RuntimeABIExterns {
         all += resultExterns
         all += stringBuilderExterns
         all += fileIOExterns
+        all += pathExterns
         all += i18nExterns
         all += uuidExterns
         // Duration / measureTime / measureTimedValue (STDLIB-230/231/660)
@@ -4615,6 +4595,7 @@ public enum RuntimeABIExterns {
         all += bigIntegerExterns
         all += serializationExterns
         all += parallelExterns
+        all += abiParityExterns
         return all
     }()
 
