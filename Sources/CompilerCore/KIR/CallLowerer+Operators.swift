@@ -46,14 +46,21 @@ extension CallLowerer {
         default:
             false
         }
+        // STDLIB-OP-031: Detect != desugaring to equals() call + negation.
+        let isEqualsDesugaring: Bool = op == .notEqual
+            && sema.bindings.callBindings[exprID] != nil
+        let boolType = sema.types.booleanType
         if let callBinding = sema.bindings.callBindings[exprID],
            let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
            signature.receiverType != nil
         {
             // For compareTo desugaring, the call result is Int, not Bool.
-            // We allocate a separate temporary for the compareTo call result.
+            // For != (equals desugaring), the call result is Bool that needs negation.
+            // We allocate a separate temporary for both cases.
             let callResult: KIRExprID = if isCompareToDesugaring {
                 arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+            } else if isEqualsDesugaring {
+                arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
             } else {
                 result
             }
@@ -163,6 +170,10 @@ extension CallLowerer {
                 default: fatalError("Unreachable: isCompareToDesugaring should only be true for comparison operators")
                 }
                 instructions.append(.binary(op: cmpOp, lhs: callResult, rhs: zeroExpr, result: result))
+            }
+            // STDLIB-OP-031: != desugaring: negate the equals() result
+            if isEqualsDesugaring {
+                instructions.append(.unary(op: .not, operand: callResult, result: result))
             }
             return result
         }

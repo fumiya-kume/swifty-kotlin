@@ -599,22 +599,46 @@ final class ExprTypeChecker {
         let isPrimitive = if case .primitive = sema.types.kind(of: receiverType) { true } else { false }
         guard !isPrimitive else { return [] }
 
+        // STDLIB-OP-031: Names that are inherently operator functions in Kotlin
+        // (e.g. equals, compareTo). Overrides of these inherit operator status
+        // even without the explicit `operator` keyword.
+        let inheritedOperatorNames: Set<String> = ["equals", "compareTo"]
+
         var candidates: [SymbolID] = []
         var seen: Set<SymbolID> = []
 
         for name in names {
+            let nameStr = ctx.interner.resolve(name)
+            let isInheritedOperator = inheritedOperatorNames.contains(nameStr)
             for candidate in driver.helpers.collectMemberFunctionCandidates(
                 named: name,
                 receiverType: receiverType,
                 sema: sema
             ) {
                 guard seen.insert(candidate).inserted,
-                      let symbol = sema.symbols.symbol(candidate),
-                      symbol.flags.contains(.operatorFunction)
+                      let symbol = sema.symbols.symbol(candidate)
                 else {
                     continue
                 }
-                candidates.append(candidate)
+                // Accept explicit operator functions, and also accept overrides
+                // of inherited operator functions (equals, compareTo) that may
+                // omit the `operator` keyword. In Kotlin, overrides of Any.equals
+                // and Comparable.compareTo inherit operator status.
+                if symbol.flags.contains(.operatorFunction) {
+                    candidates.append(candidate)
+                } else if isInheritedOperator, symbol.kind == .function {
+                    // Accept user-defined overrides (has .overrideMember flag) and
+                    // also user-defined functions named equals/compareTo that have
+                    // a matching receiver type (the overload resolver will verify
+                    // the full signature).
+                    if symbol.flags.contains(.overrideMember) {
+                        candidates.append(candidate)
+                    } else if !symbol.flags.contains(.synthetic),
+                              let sig = sema.symbols.functionSignature(for: candidate),
+                              sig.receiverType != nil {
+                        candidates.append(candidate)
+                    }
+                }
             }
         }
 
