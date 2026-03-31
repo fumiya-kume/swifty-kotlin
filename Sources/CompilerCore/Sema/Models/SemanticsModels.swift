@@ -55,6 +55,10 @@ public struct SymbolFlags: OptionSet, Sendable {
     public static let expectDeclaration = SymbolFlags(rawValue: 1 << 17)
     public static let actualDeclaration = SymbolFlags(rawValue: 1 << 18)
     public static let lateinitProperty = SymbolFlags(rawValue: 1 << 19)
+    /// Marks a synthetic stub function as one that passes an outThrown pointer
+    /// to signal ArithmeticException / NumberFormatException at runtime.
+    /// The ABI lowering pass must NOT add this symbol to nonThrowingCallees.
+    public static let throwingFunction = SymbolFlags(rawValue: 1 << 20)
 }
 
 public struct SemanticSymbol: Sendable {

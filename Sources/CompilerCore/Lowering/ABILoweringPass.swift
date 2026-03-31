@@ -231,14 +231,22 @@ final class ABILoweringPass: LoweringPass {
                     guard let s = callSymbol else { return false }
                     return SyntheticSymbolScheme.isLikelySyntheticPropertyAccessor(s)
                 }()
+                // Stubs explicitly marked .throwingFunction (e.g. BigInteger.divide,
+                // BigInteger(String)) must always emit the outThrown channel regardless
+                // of whether their callee name appears in nonThrowingCallees.
+                let isExplicitlyThrowing: Bool = {
+                    guard let s = callSymbol, let sym = symbols?.symbol(s) else { return false }
+                    return sym.flags.contains(.throwingFunction)
+                }()
                 // Closure-related callees (kk_closure_invoke_* wrappers and their
                 // internal kk_lambda_* targets) are registered as non-throwing by
                 // LambdaClosureConversionPass via module.nonThrowingClosureCallees.
                 // This avoids brittle string-prefix coupling between passes.
                 let isClosureRelatedCallee = module.nonThrowingClosureCallees.contains(callee)
-                let canThrow = !isSyntheticAccessor
-                    && !isClosureRelatedCallee
-                    && !nonThrowingCallees.contains(callee)
+                let canThrow = isExplicitlyThrowing
+                    || (!isSyntheticAccessor
+                        && !isClosureRelatedCallee
+                        && !nonThrowingCallees.contains(callee))
 
                 var signature: FunctionSignature?
                 if let symbols, let callSymbol {

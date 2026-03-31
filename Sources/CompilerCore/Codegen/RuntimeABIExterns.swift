@@ -4356,6 +4356,7 @@ public enum RuntimeABIExterns {
         all += atomicExterns
         all += securityExterns
         all += parallelExterns
+        all += bigIntegerExterns
         return all
     }()
 
