@@ -27,6 +27,28 @@ public struct CallableValueCallBinding {
     }
 }
 
+public struct LoopIterationBinding {
+    public let iteratorCall: CallBinding
+    public let hasNextCall: CallBinding
+    public let nextCall: CallBinding
+    public let iteratorType: TypeID
+    public let elementType: TypeID
+
+    public init(
+        iteratorCall: CallBinding,
+        hasNextCall: CallBinding,
+        nextCall: CallBinding,
+        iteratorType: TypeID,
+        elementType: TypeID
+    ) {
+        self.iteratorCall = iteratorCall
+        self.hasNextCall = hasNextCall
+        self.nextCall = nextCall
+        self.iteratorType = iteratorType
+        self.elementType = elementType
+    }
+}
+
 /// Identifies the kind of builder DSL function (STDLIB-002).
 public enum BuilderDSLKind: Equatable {
     case buildString
