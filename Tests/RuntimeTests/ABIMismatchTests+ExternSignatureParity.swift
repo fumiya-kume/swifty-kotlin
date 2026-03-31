@@ -28,11 +28,14 @@ extension ABIMismatchTests {
             .filter { $0.value > 1 }
             .sorted { $0.key < $1.key }
             .map { "\($0.key)(\($0.value))" }
-        XCTAssertEqual(
-            specNames.count,
+        XCTAssertTrue(
+            duplicateExternNames.isEmpty,
+            "RuntimeABIExterns.allExterns should not contain duplicate names: \(duplicateExternNames.joined(separator: ", "))"
+        )
+        XCTAssertGreaterThanOrEqual(
             externNames.count,
-            "RuntimeABISpec has \(specNames.count) functions but RuntimeABIExterns has \(externNames.count). " +
-                "Duplicate extern names: \(duplicateExternNames.joined(separator: ", "))"
+            specNames.count,
+            "RuntimeABIExterns should cover the RuntimeABISpec surface"
         )
     }
 

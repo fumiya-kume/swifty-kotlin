@@ -4648,7 +4648,6 @@ public enum RuntimeABIExterns {
         all += parallelExterns
         all += bigIntegerExterns
         all += serializationExterns
-        all += parallelExterns
         all += abiParityExterns
         return all
     }()
