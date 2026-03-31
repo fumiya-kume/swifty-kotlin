@@ -141,20 +141,15 @@ final class CoroutineLowerer {
         case "isClosedForSend": "kk_channel_is_closed_for_send"
         default: nil
         }
-
+        
         if let runtimeName {
             let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
+
             let resultType: TypeID = switch calleeStr {
             case "isClosedForReceive", "isClosedForSend":
                 sema.types.booleanType
             default:
                 boundType
-            }
-            let operationCanThrow: Bool = switch calleeStr {
-            case "isClosedForReceive", "isClosedForSend":
-                false
-            default:
-                true
             }
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
             let operationCanThrow: Bool = switch calleeStr {
@@ -173,10 +168,10 @@ final class CoroutineLowerer {
             ))
             return result
         }
-
+        
         return nil
     }
-
+    
     // MARK: - コルーチンランチャー
     
     /// コルーチンランチャーのコールを処理
