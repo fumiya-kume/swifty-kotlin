@@ -848,6 +848,10 @@ extension ABILoweringPass {
             interner.intern("kk_job_is_active"),
             interner.intern("kk_job_is_completed"),
             interner.intern("kk_job_is_cancelled"),
+            // JSON Serialization (STDLIB-SER-132) — no outThrown parameter
+            interner.intern("kk_json_encodeToString"),
+            interner.intern("kk_json_encodeMapToString"),
+            interner.intern("kk_json_default"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }
