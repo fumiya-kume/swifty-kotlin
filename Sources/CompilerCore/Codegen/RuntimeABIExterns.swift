@@ -3827,6 +3827,29 @@ public enum RuntimeABIExterns {
     public static let kk_logger_severe = ExternDecl(name: "kk_logger_severe", parameterTypes: [intptr, intptr], returnType: intptr)
     public static let kk_message_digest_getInstance = ExternDecl(name: "kk_message_digest_getInstance", parameterTypes: [intptr, nullableIntptrPtr], returnType: intptr)
     public static let kk_message_digest_digest = ExternDecl(name: "kk_message_digest_digest", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    // STDLIB-SEC-146: Digital signatures / certificates (java.security)
+    public static let kk_keypairgenerator_getInstance = ExternDecl(name: "kk_keypairgenerator_getInstance", parameterTypes: [intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_keypairgenerator_initialize = ExternDecl(name: "kk_keypairgenerator_initialize", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_keypairgenerator_generateKeyPair = ExternDecl(name: "kk_keypairgenerator_generateKeyPair", parameterTypes: [intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_keypair_new = ExternDecl(name: "kk_keypair_new", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_keypair_publicKey = ExternDecl(name: "kk_keypair_publicKey", parameterTypes: [intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_keypair_privateKey = ExternDecl(name: "kk_keypair_privateKey", parameterTypes: [intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_signature_getInstance = ExternDecl(name: "kk_signature_getInstance", parameterTypes: [intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_signature_initSign = ExternDecl(name: "kk_signature_initSign", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_signature_initVerify = ExternDecl(name: "kk_signature_initVerify", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_signature_update = ExternDecl(name: "kk_signature_update", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_signature_sign = ExternDecl(name: "kk_signature_sign", parameterTypes: [intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_signature_verify = ExternDecl(name: "kk_signature_verify", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_certificatefactory_getInstance = ExternDecl(name: "kk_certificatefactory_getInstance", parameterTypes: [intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_certificatefactory_generateCertificate = ExternDecl(name: "kk_certificatefactory_generateCertificate", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_x509certificate_getPublicKey = ExternDecl(name: "kk_x509certificate_getPublicKey", parameterTypes: [intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_x509certificate_getEncoded = ExternDecl(name: "kk_x509certificate_getEncoded", parameterTypes: [intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_certpath_new = ExternDecl(name: "kk_certpath_new", parameterTypes: [intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_certpathvalidator_getInstance = ExternDecl(name: "kk_certpathvalidator_getInstance", parameterTypes: [intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_certpathvalidator_validate = ExternDecl(name: "kk_certpathvalidator_validate", parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_trustanchor_new = ExternDecl(name: "kk_trustanchor_new", parameterTypes: [intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_pkixparameters_new = ExternDecl(name: "kk_pkixparameters_new", parameterTypes: [intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_pkixparameters_setTrustAnchors = ExternDecl(name: "kk_pkixparameters_setTrustAnchors", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
     public static let kk_cache_new = ExternDecl(name: "kk_cache_new", parameterTypes: [intptr], returnType: intptr)
     public static let kk_cache_put = ExternDecl(name: "kk_cache_put", parameterTypes: [intptr, intptr, intptr], returnType: intptr)
     public static let kk_cache_get = ExternDecl(name: "kk_cache_get", parameterTypes: [intptr, intptr], returnType: intptr)
@@ -3986,6 +4009,29 @@ public enum RuntimeABIExterns {
         kk_logger_severe,
         kk_message_digest_getInstance,
         kk_message_digest_digest,
+        // STDLIB-SEC-146: Digital signatures / certificates
+        kk_keypairgenerator_getInstance,
+        kk_keypairgenerator_initialize,
+        kk_keypairgenerator_generateKeyPair,
+        kk_keypair_new,
+        kk_keypair_publicKey,
+        kk_keypair_privateKey,
+        kk_signature_getInstance,
+        kk_signature_initSign,
+        kk_signature_initVerify,
+        kk_signature_update,
+        kk_signature_sign,
+        kk_signature_verify,
+        kk_certificatefactory_getInstance,
+        kk_certificatefactory_generateCertificate,
+        kk_x509certificate_getPublicKey,
+        kk_x509certificate_getEncoded,
+        kk_certpath_new,
+        kk_certpathvalidator_getInstance,
+        kk_certpathvalidator_validate,
+        kk_trustanchor_new,
+        kk_pkixparameters_new,
+        kk_pkixparameters_setTrustAnchors,
         kk_cache_new,
         kk_cache_put,
         kk_cache_get,

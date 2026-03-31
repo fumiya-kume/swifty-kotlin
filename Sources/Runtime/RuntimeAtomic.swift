@@ -65,6 +65,19 @@ final class AtomicIntBox {
         storage = storage &+ delta
         return storage
     }
+
+    func getAndUpdate(transform: (Int) -> Int, outThrown: UnsafeMutablePointer<Int>?) -> (old: Int, new: Int) {
+        while true {
+            let old = load()
+            let new = transform(old)
+            if let thrown = outThrown, thrown.pointee != 0 {
+                return (old, old)
+            }
+            if compareAndSet(expect: old, update: new) {
+                return (old, new)
+            }
+        }
+    }
 }
 
 private func atomicIntBox(from raw: Int) -> AtomicIntBox? {
@@ -145,6 +158,32 @@ public func kk_atomic_int_decrementAndFetch(_ receiver: Int) -> Int {
     return box.addAndFetch(-1)
 }
 
+@_cdecl("kk_atomic_int_getAndUpdate")
+public func kk_atomic_int_getAndUpdate(
+    _ receiver: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let box = atomicIntBox(from: receiver) else { return 0 }
+    let result = box.getAndUpdate(transform: { old in
+        kk_function_invoke(updateFn, old, outThrown)
+    }, outThrown: outThrown)
+    return result.old
+}
+
+@_cdecl("kk_atomic_int_updateAndGet")
+public func kk_atomic_int_updateAndGet(
+    _ receiver: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let box = atomicIntBox(from: receiver) else { return 0 }
+    let result = box.getAndUpdate(transform: { old in
+        kk_function_invoke(updateFn, old, outThrown)
+    }, outThrown: outThrown)
+    return result.new
+}
+
 // MARK: - AtomicLong
 
 /// Backing storage for kotlin.concurrent.AtomicLong.
@@ -209,6 +248,19 @@ final class AtomicLongBox {
         defer { lock.unlock() }
         storage = storage &+ delta
         return storage
+    }
+
+    func getAndUpdate(transform: (Int) -> Int, outThrown: UnsafeMutablePointer<Int>?) -> (old: Int, new: Int) {
+        while true {
+            let old = load()
+            let new = transform(old)
+            if let thrown = outThrown, thrown.pointee != 0 {
+                return (old, old)
+            }
+            if compareAndSet(expect: old, update: new) {
+                return (old, new)
+            }
+        }
     }
 }
 
@@ -290,6 +342,173 @@ public func kk_atomic_long_decrementAndFetch(_ receiver: Int) -> Int {
     return box.addAndFetch(-1)
 }
 
+@_cdecl("kk_atomic_long_getAndUpdate")
+public func kk_atomic_long_getAndUpdate(
+    _ receiver: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let box = atomicLongBox(from: receiver) else { return 0 }
+    let result = box.getAndUpdate(transform: { old in
+        kk_function_invoke(updateFn, old, outThrown)
+    }, outThrown: outThrown)
+    return result.old
+}
+
+@_cdecl("kk_atomic_long_updateAndGet")
+public func kk_atomic_long_updateAndGet(
+    _ receiver: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let box = atomicLongBox(from: receiver) else { return 0 }
+    let result = box.getAndUpdate(transform: { old in
+        kk_function_invoke(updateFn, old, outThrown)
+    }, outThrown: outThrown)
+    return result.new
+}
+
+// MARK: - AtomicBoolean
+
+/// Backing storage for kotlin.concurrent.AtomicBoolean.
+/// Boolean values are stored as Int: 1 = true, 0 = false.
+final class AtomicBooleanBox {
+    private var storage: Int
+    private let lock = NSLock()
+
+    init(initial: Bool) {
+        self.storage = initial ? 1 : 0
+    }
+
+    func load() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return storage != 0
+    }
+
+    func store(_ value: Bool) {
+        lock.lock()
+        defer { lock.unlock() }
+        storage = value ? 1 : 0
+    }
+
+    func exchange(_ new: Bool) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        let old = storage != 0
+        storage = new ? 1 : 0
+        return old
+    }
+
+    func compareAndSet(expect: Bool, update: Bool) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        let expectInt = expect ? 1 : 0
+        if storage == expectInt {
+            storage = update ? 1 : 0
+            return true
+        }
+        return false
+    }
+
+    func compareAndExchange(expect: Bool, update: Bool) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        let old = storage != 0
+        if storage == (expect ? 1 : 0) {
+            storage = update ? 1 : 0
+        }
+        return old
+    }
+
+    func getAndUpdate(transform: (Bool) -> Bool, outThrown: UnsafeMutablePointer<Int>?) -> (old: Bool, new: Bool) {
+        while true {
+            let old = load()
+            let new = transform(old)
+            if let thrown = outThrown, thrown.pointee != 0 {
+                return (old, old)
+            }
+            if compareAndSet(expect: old, update: new) {
+                return (old, new)
+            }
+        }
+    }
+}
+
+private func atomicBoolBox(from raw: Int) -> AtomicBooleanBox? {
+    guard raw != 0, let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    return Unmanaged<AtomicBooleanBox>.fromOpaque(ptr).takeUnretainedValue()
+}
+
+@_cdecl("kk_atomic_bool_create")
+public func kk_atomic_bool_create(_ initial: Int) -> Int {
+    let box = AtomicBooleanBox(initial: initial != 0)
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+    return Int(bitPattern: ptr)
+}
+
+@_cdecl("kk_atomic_bool_load")
+public func kk_atomic_bool_load(_ receiver: Int) -> Int {
+    guard let box = atomicBoolBox(from: receiver) else { return 0 }
+    return box.load() ? 1 : 0
+}
+
+@_cdecl("kk_atomic_bool_store")
+public func kk_atomic_bool_store(_ receiver: Int, _ value: Int) -> Int {
+    guard let box = atomicBoolBox(from: receiver) else { return 0 }
+    box.store(value != 0)
+    return 0
+}
+
+@_cdecl("kk_atomic_bool_exchange")
+public func kk_atomic_bool_exchange(_ receiver: Int, _ new: Int) -> Int {
+    guard let box = atomicBoolBox(from: receiver) else { return 0 }
+    return box.exchange(new != 0) ? 1 : 0
+}
+
+@_cdecl("kk_atomic_bool_compareAndSet")
+public func kk_atomic_bool_compareAndSet(_ receiver: Int, _ expect: Int, _ update: Int) -> Int {
+    guard let box = atomicBoolBox(from: receiver) else { return 0 }
+    return box.compareAndSet(expect: expect != 0, update: update != 0) ? 1 : 0
+}
+
+@_cdecl("kk_atomic_bool_compareAndExchange")
+public func kk_atomic_bool_compareAndExchange(_ receiver: Int, _ expect: Int, _ update: Int) -> Int {
+    guard let box = atomicBoolBox(from: receiver) else { return 0 }
+    return box.compareAndExchange(expect: expect != 0, update: update != 0) ? 1 : 0
+}
+
+@_cdecl("kk_atomic_bool_getAndUpdate")
+public func kk_atomic_bool_getAndUpdate(
+    _ receiver: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let box = atomicBoolBox(from: receiver) else { return 0 }
+    let result = box.getAndUpdate(transform: { old in
+        kk_function_invoke(updateFn, old ? 1 : 0, outThrown) != 0
+    }, outThrown: outThrown)
+    return result.old ? 1 : 0
+}
+
+@_cdecl("kk_atomic_bool_updateAndGet")
+public func kk_atomic_bool_updateAndGet(
+    _ receiver: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let box = atomicBoolBox(from: receiver) else { return 0 }
+    let result = box.getAndUpdate(transform: { old in
+        kk_function_invoke(updateFn, old ? 1 : 0, outThrown) != 0
+    }, outThrown: outThrown)
+    return result.new ? 1 : 0
+}
+
 // MARK: - AtomicReference<T>
 
 /// Backing storage for kotlin.concurrent.AtomicReference<T>.
@@ -341,6 +560,19 @@ final class AtomicRefBox {
         }
         return old
     }
+
+    func getAndUpdate(transform: (Int) -> Int, outThrown: UnsafeMutablePointer<Int>?) -> (old: Int, new: Int) {
+        while true {
+            let old = load()
+            let new = transform(old)
+            if let thrown = outThrown, thrown.pointee != 0 {
+                return (old, old)
+            }
+            if compareAndSet(expect: old, update: new) {
+                return (old, new)
+            }
+        }
+    }
 }
 
 private func atomicRefBox(from raw: Int) -> AtomicRefBox? {
@@ -389,4 +621,30 @@ public func kk_atomic_ref_compareAndSet(_ receiver: Int, _ expect: Int, _ update
 public func kk_atomic_ref_compareAndExchange(_ receiver: Int, _ expect: Int, _ update: Int) -> Int {
     guard let box = atomicRefBox(from: receiver) else { return 0 }
     return box.compareAndExchange(expect: expect, update: update)
+}
+
+@_cdecl("kk_atomic_ref_getAndUpdate")
+public func kk_atomic_ref_getAndUpdate(
+    _ receiver: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let box = atomicRefBox(from: receiver) else { return 0 }
+    let result = box.getAndUpdate(transform: { old in
+        kk_function_invoke(updateFn, old, outThrown)
+    }, outThrown: outThrown)
+    return result.old
+}
+
+@_cdecl("kk_atomic_ref_updateAndGet")
+public func kk_atomic_ref_updateAndGet(
+    _ receiver: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let box = atomicRefBox(from: receiver) else { return 0 }
+    let result = box.getAndUpdate(transform: { old in
+        kk_function_invoke(updateFn, old, outThrown)
+    }, outThrown: outThrown)
+    return result.new
 }
