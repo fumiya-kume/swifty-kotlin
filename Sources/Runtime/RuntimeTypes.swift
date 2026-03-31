@@ -926,6 +926,47 @@ final class RuntimeKFunctionBox {
     }
 }
 
+// MARK: - kotlin.reflect.KConstructor (STDLIB-REFLECT-064)
+
+/// Runtime box for `kotlin.reflect.KFunction<T>` representing a constructor.
+/// Extends the basic KFunction box with constructor-specific metadata:
+/// isPrimary, visibility, and the declaring class reference.
+final class RuntimeKConstructorBox {
+    let nameRaw: Int
+    let arity: Int
+    let returnTypeRaw: Int
+    /// C function pointer for the underlying constructor implementation (0 if unavailable).
+    let fnPtr: Int
+    /// Whether this is the primary constructor of the class.
+    let isPrimary: Bool
+    /// Visibility as a KKString raw handle (e.g. "PUBLIC", "PRIVATE", "PROTECTED", "INTERNAL").
+    let visibilityRaw: Int
+    /// The declaring KClass raw handle (0 if unknown).
+    let declaringClassRaw: Int
+    /// Parameter names as KKString raw handles.
+    let parameterNameRaws: [Int]
+
+    init(
+        nameRaw: Int,
+        arity: Int,
+        returnTypeRaw: Int = 0,
+        fnPtr: Int = 0,
+        isPrimary: Bool = false,
+        visibilityRaw: Int = 0,
+        declaringClassRaw: Int = 0,
+        parameterNameRaws: [Int] = []
+    ) {
+        self.nameRaw = nameRaw
+        self.arity = arity
+        self.returnTypeRaw = returnTypeRaw
+        self.fnPtr = fnPtr
+        self.isPrimary = isPrimary
+        self.visibilityRaw = visibilityRaw
+        self.declaringClassRaw = declaringClassRaw
+        self.parameterNameRaws = parameterNameRaws
+    }
+}
+
 // MARK: - BufferedReader (STDLIB-567)
 
 /// Runtime box for `java.io.BufferedReader` returned by `File.bufferedReader()`.

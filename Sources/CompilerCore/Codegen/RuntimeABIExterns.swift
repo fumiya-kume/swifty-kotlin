@@ -2467,6 +2467,13 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-REFLECT-064: KClass.primaryConstructor
+    public static let kk_kclass_primary_constructor = ExternDecl(
+        name: "kk_kclass_primary_constructor",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // STDLIB-REFLECT-061: KClass member access
 
     public static let kk_kclass_properties = ExternDecl(
@@ -4461,6 +4468,7 @@ public enum RuntimeABIExterns {
             kk_kclass_isInstance,
             kk_kclass_members,
             kk_kclass_constructors,
+            kk_kclass_primary_constructor,
             // STDLIB-REFLECT-061: KClass member access
             kk_kclass_properties,
             kk_kclass_member_properties,
@@ -4686,7 +4694,6 @@ public enum RuntimeABIExterns {
         all += parallelExterns
         all += bigIntegerExterns
         all += serializationExterns
-        all += parallelExterns
         all += abiParityExterns
         return all
     }()

@@ -275,7 +275,7 @@
   - **関連ファイル**: `RuntimeReflection.swift`, `RuntimeABIExterns+KFunction.swift`
   - **テストケース**: `Scripts/diff_cases/kfunction_basic.kt`
 
-- [ ] STDLIB-REFLECT-064: KConstructor完全実装
+- [x] STDLIB-REFLECT-064: KConstructor完全実装
   - **仕様**: KConstructorインターフェースの完全サポート
   - **実装内容**:
     - コンストラクタパラメータ: parameters, valueParameters

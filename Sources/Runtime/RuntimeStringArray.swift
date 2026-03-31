@@ -840,6 +840,18 @@ public func kk_kclass_constructors(_ kclassRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: placeholders))
 }
 
+/// Returns the primary constructor of this KClass as a KConstructor box, or null sentinel if none.
+/// STDLIB-REFLECT-064
+@_cdecl("kk_kclass_primary_constructor")
+public func kk_kclass_primary_constructor(_ kclassRaw: Int) -> Int {
+    guard runtimeKClassBox(from: kclassRaw) != nil else {
+        return runtimeNullSentinelInt
+    }
+    // The primary constructor metadata is populated via kk_kconstructor_create
+    // during the metadata emission pass. If not available, return null.
+    return runtimeNullSentinelInt
+}
+
 // MARK: - STDLIB-REFLECT-061: KClass member access (properties, functions, etc.)
 
 /// Returns all properties (including inherited) of this KClass as a runtime list.

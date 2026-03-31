@@ -471,9 +471,9 @@ extension CallLowerer {
             }
             // REFL-005: KClass.isInstance(value), members, constructors
             // STDLIB-REFLECT-061: properties, memberProperties, functions, memberFunctions, declaredMemberProperties, declaredMemberFunctions
-            // STDLIB-REFLECT-060: isFinal, isOpen, isAbstract, visibility, typeParameters, supertypes
+            // STDLIB-REFLECT-060 / STDLIB-REFLECT-064: basic metadata and primaryConstructor
             let kclassCallees: Set<String> = [
-                "isInstance", "members", "constructors",
+                "isInstance", "members", "constructors", "primaryConstructor",
                 "properties", "memberProperties", "declaredMemberProperties",
                 "functions", "memberFunctions", "declaredMemberFunctions",
                 "isFinal", "isOpen", "isAbstract", "visibility",
@@ -497,13 +497,13 @@ extension CallLowerer {
 
         // REFL-005: KClass-typed variable receiver — dogClass.isInstance(dog) / dogClass.members / dogClass.constructors
         // STDLIB-REFLECT-061: properties, memberProperties, functions, memberFunctions, declaredMemberProperties, declaredMemberFunctions
-        // STDLIB-REFLECT-060: isFinal, isOpen, isAbstract, visibility, typeParameters, supertypes
+        // STDLIB-REFLECT-060 / STDLIB-REFLECT-064: basic metadata and primaryConstructor
         if let receiverType = sema.bindings.exprTypes[receiverExpr],
            case .kClassType = sema.types.kind(of: sema.types.makeNonNullable(receiverType))
         {
             let callee = interner.resolve(calleeName)
             let kclassVarCallees: Set<String> = [
-                "isInstance", "members", "constructors",
+                "isInstance", "members", "constructors", "primaryConstructor",
                 "properties", "memberProperties", "declaredMemberProperties",
                 "functions", "memberFunctions", "declaredMemberFunctions",
                 "isFinal", "isOpen", "isAbstract", "visibility",
@@ -5966,6 +5966,21 @@ extension CallLowerer {
             ))
             return result
 
+        // STDLIB-REFLECT-064: KClass.primaryConstructor
+        case "primaryConstructor":
+            // primaryConstructor: KFunction<T>?
+            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_kclass_primary_constructor"),
+                arguments: [kclassExpr],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+
         // STDLIB-REFLECT-061: KClass member access — properties/functions variants
         case "properties":
             let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
@@ -6205,6 +6220,20 @@ extension CallLowerer {
             instructions.append(.call(
                 symbol: nil,
                 callee: interner.intern("kk_kclass_constructors"),
+                arguments: [kclassExpr],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+
+        // STDLIB-REFLECT-064: KClass.primaryConstructor (variable receiver)
+        case "primaryConstructor":
+            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_kclass_primary_constructor"),
                 arguments: [kclassExpr],
                 result: result,
                 canThrow: false,
