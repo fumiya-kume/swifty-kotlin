@@ -84,27 +84,13 @@ extension ExprTypeChecker {
         let lhs = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)
         let rhs = driver.inferExpr(rhsID, ctx: ctx, locals: &locals)
         let lhsIsPrimitive = if case .primitive = sema.types.kind(of: lhs) { true } else { false }
-        let operatorName = interner.intern(op.kotlinFunctionName)
-        let memberOperatorCandidates = lhsIsPrimitive ? [] : driver.helpers.collectMemberFunctionCandidates(
-            named: operatorName,
+        let operatorNames = operatorFunctionNames(for: op, interner: interner)
+        let operatorName = operatorNames[0]
+        let operatorCandidates = collectOperatorCandidates(
+            names: operatorNames,
             receiverType: lhs,
-            sema: sema
+            ctx: ctx
         )
-        let operatorCandidates: [SymbolID] = if !memberOperatorCandidates.isEmpty {
-            memberOperatorCandidates
-        } else if !lhsIsPrimitive {
-            ctx.cachedScopeLookup(operatorName).filter { candidate in
-                guard let symbol = ctx.cachedSymbol(candidate),
-                      symbol.kind == .function,
-                      let signature = sema.symbols.functionSignature(for: candidate)
-                else {
-                    return false
-                }
-                return signature.receiverType != nil
-            }
-        } else {
-            []
-        }
         // STDLIB-345: List plus/minus operators
         if !lhsIsPrimitive, operatorCandidates.isEmpty, (op == .add || op == .subtract) {
             if driver.callChecker.isListLikeType(lhs, sema: sema, interner: interner)

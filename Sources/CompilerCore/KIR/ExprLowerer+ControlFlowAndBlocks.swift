@@ -1368,8 +1368,7 @@ extension ExprLowerer {
             )
 
         case let .unaryExpr(op, operandExpr, _):
-            if op != .not,
-               let callBinding = sema.bindings.callBindings[exprID],
+            if let callBinding = sema.bindings.callBindings[exprID],
                let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
                signature.receiverType != nil
             {
@@ -1545,7 +1544,7 @@ extension ExprLowerer {
             let stringType = sema.types.stringType
             let nullableStringType = sema.types.make(.primitive(.string, .nullable))
 
-            func appendCompoundResult(
+            func appendBuiltinCompoundResult(
                 lhs: KIRExprID,
                 lhsType: TypeID,
                 rhs: KIRExprID,
@@ -1614,6 +1613,52 @@ extension ExprLowerer {
                 ))
                 return resultID
             }
+
+            func appendOperatorCompoundResult(
+                lhs: KIRExprID,
+                rhs: KIRExprID,
+                resultType: TypeID
+            ) -> KIRExprID? {
+                guard let callBinding = sema.bindings.callBindings[exprID],
+                      let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
+                      signature.receiverType != nil
+                else {
+                    return nil
+                }
+
+                let normalizedResult = driver.callSupportLowerer.normalizedCallArguments(
+                    providedArguments: [rhs],
+                    callBinding: callBinding,
+                    chosenCallee: callBinding.chosenCallee,
+                    spreadFlags: [false],
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+                var finalArguments = normalizedResult.arguments
+                finalArguments.insert(lhs, at: 0)
+                let callResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+                let loweredCalleeName: InternedString = if let externalLinkName = sema.symbols.externalLinkName(for: callBinding.chosenCallee),
+                                                           !externalLinkName.isEmpty {
+                    interner.intern(externalLinkName)
+                } else if let symbol = sema.symbols.symbol(callBinding.chosenCallee) {
+                    symbol.name
+                } else {
+                    interner.intern(op.kotlinFunctionName)
+                }
+                instructions.append(.call(
+                    symbol: callBinding.chosenCallee,
+                    callee: loweredCalleeName,
+                    arguments: finalArguments,
+                    result: callResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return callResult
+            }
             if let symbol = sema.bindings.identifierSymbols[exprID] {
                 // Top-level or object-member property compound assignment
                 // needs a copy to global storage. Top-level properties have
@@ -1628,13 +1673,22 @@ extension ExprLowerer {
                     instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
                     let loadedValue = arena.appendExpr(.symbolRef(symbol), type: propType)
                     instructions.append(.loadGlobal(result: loadedValue, symbol: symbol))
-                    let resultID = appendCompoundResult(
-                        lhs: loadedValue,
-                        lhsType: propType,
-                        rhs: rhsID,
-                        rhsType: arena.exprType(rhsID)
-                    )
-                    instructions.append(.copy(from: resultID, to: globalRef))
+                    if let callBinding = sema.bindings.callBindings[exprID],
+                       let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee) {
+                        if signature.returnType == sema.types.unitType {
+                            _ = appendOperatorCompoundResult(lhs: loadedValue, rhs: rhsID, resultType: signature.returnType)
+                        } else if let resultID = appendOperatorCompoundResult(lhs: loadedValue, rhs: rhsID, resultType: signature.returnType) {
+                            instructions.append(.copy(from: resultID, to: globalRef))
+                        }
+                    } else {
+                        let resultID = appendBuiltinCompoundResult(
+                            lhs: loadedValue,
+                            lhsType: propType,
+                            rhs: rhsID,
+                            rhsType: arena.exprType(rhsID)
+                        )
+                        instructions.append(.copy(from: resultID, to: globalRef))
+                    }
                 } else if driver.ctx.isMutableCaptureBoxed(symbol),
                           let loadedValue = loadMutableCaptureCellValue(
                               symbol: symbol,
@@ -1650,33 +1704,58 @@ extension ExprLowerer {
                 {
                     let symbolType = driver.ctx.localDeclaredType(for: symbol)
                         ?? driver.lambdaLowerer.typeForSymbolReference(symbol, sema: sema)
-                    let resultID = appendCompoundResult(
-                        lhs: loadedValue,
-                        lhsType: symbolType,
-                        rhs: rhsID,
-                        rhsType: arena.exprType(rhsID)
-                    )
-                    _ = storeMutableCaptureCellValue(
-                        resultID,
-                        for: symbol,
-                        sema: sema,
-                        arena: arena,
-                        interner: interner,
-                        instructions: &instructions
-                    )
+                    if let callBinding = sema.bindings.callBindings[exprID],
+                       let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee) {
+                        if signature.returnType == sema.types.unitType {
+                            _ = appendOperatorCompoundResult(lhs: loadedValue, rhs: rhsID, resultType: signature.returnType)
+                        } else if let resultID = appendOperatorCompoundResult(lhs: loadedValue, rhs: rhsID, resultType: signature.returnType) {
+                            _ = storeMutableCaptureCellValue(
+                                resultID,
+                                for: symbol,
+                                sema: sema,
+                                arena: arena,
+                                interner: interner,
+                                instructions: &instructions
+                            )
+                        }
+                    } else {
+                        let resultID = appendBuiltinCompoundResult(
+                            lhs: loadedValue,
+                            lhsType: symbolType,
+                            rhs: rhsID,
+                            rhsType: arena.exprType(rhsID)
+                        )
+                        _ = storeMutableCaptureCellValue(
+                            resultID,
+                            for: symbol,
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                    }
                 } else {
                     if let storageID = driver.ctx.localValue(for: symbol) {
                         // Compute lhs op rhs and update storage in place so the value
                         // persists across loop iterations.
                         let symbolType = driver.ctx.localDeclaredType(for: symbol)
                             ?? driver.lambdaLowerer.typeForSymbolReference(symbol, sema: sema)
-                        let resultID = appendCompoundResult(
-                            lhs: storageID,
-                            lhsType: symbolType,
-                            rhs: rhsID,
-                            rhsType: arena.exprType(rhsID)
-                        )
-                        instructions.append(.copy(from: resultID, to: storageID))
+                        if let callBinding = sema.bindings.callBindings[exprID],
+                           let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee) {
+                            if signature.returnType == sema.types.unitType {
+                                _ = appendOperatorCompoundResult(lhs: storageID, rhs: rhsID, resultType: signature.returnType)
+                            } else if let resultID = appendOperatorCompoundResult(lhs: storageID, rhs: rhsID, resultType: signature.returnType) {
+                                instructions.append(.copy(from: resultID, to: storageID))
+                            }
+                        } else {
+                            let resultID = appendBuiltinCompoundResult(
+                                lhs: storageID,
+                                lhsType: symbolType,
+                                rhs: rhsID,
+                                rhsType: arena.exprType(rhsID)
+                            )
+                            instructions.append(.copy(from: resultID, to: storageID))
+                        }
                     } else {
                         // No existing local value — create a symbol reference as lhs
                         // so compound assignment still computes lhs op rhs.
@@ -1684,13 +1763,22 @@ extension ExprLowerer {
                             ?? driver.lambdaLowerer.typeForSymbolReference(symbol, sema: sema)
                         let lhsID = arena.appendExpr(.symbolRef(symbol), type: symbolType)
                         instructions.append(.constValue(result: lhsID, value: .symbolRef(symbol)))
-                        let resultID = appendCompoundResult(
-                            lhs: lhsID,
-                            lhsType: symbolType,
-                            rhs: rhsID,
-                            rhsType: arena.exprType(rhsID)
-                        )
-                        driver.ctx.setLocalValue(resultID, for: symbol)
+                        if let callBinding = sema.bindings.callBindings[exprID],
+                           let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee) {
+                            if signature.returnType == sema.types.unitType {
+                                _ = appendOperatorCompoundResult(lhs: lhsID, rhs: rhsID, resultType: signature.returnType)
+                            } else if let resultID = appendOperatorCompoundResult(lhs: lhsID, rhs: rhsID, resultType: signature.returnType) {
+                                driver.ctx.setLocalValue(resultID, for: symbol)
+                            }
+                        } else {
+                            let resultID = appendBuiltinCompoundResult(
+                                lhs: lhsID,
+                                lhsType: symbolType,
+                                rhs: rhsID,
+                                rhsType: arena.exprType(rhsID)
+                            )
+                            driver.ctx.setLocalValue(resultID, for: symbol)
+                        }
                     }
                 }
             }

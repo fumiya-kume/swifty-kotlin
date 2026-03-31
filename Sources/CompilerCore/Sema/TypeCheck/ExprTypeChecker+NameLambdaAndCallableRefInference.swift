@@ -1,6 +1,106 @@
 import Foundation
 
 extension ExprTypeChecker {
+    private func bindCompoundAssignmentOperatorCall(
+        exprID: ExprID,
+        op: CompoundAssignOp,
+        receiverType: TypeID,
+        valueType: TypeID,
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        requireUnitReturn: Bool,
+        emitDiagnostics: Bool = true,
+        bindCall: Bool = true
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let operatorNames = operatorFunctionNames(for: op, interner: interner)
+        let operatorCandidates = collectOperatorCandidates(
+            names: operatorNames,
+            receiverType: receiverType,
+            ctx: ctx
+        )
+        guard !operatorCandidates.isEmpty else {
+            return nil
+        }
+
+        let resolved = ctx.resolver.resolveCall(
+            candidates: operatorCandidates,
+            call: CallExpr(
+                range: range,
+                calleeName: operatorNames[0],
+                args: [CallArg(type: valueType)]
+            ),
+            expectedType: nil,
+            implicitReceiverType: receiverType,
+            ctx: ctx.semaCtx
+        )
+
+        if let diagnostic = resolved.diagnostic {
+            if emitDiagnostics {
+                ctx.semaCtx.diagnostics.emit(diagnostic)
+                sema.bindings.bindExprType(exprID, type: sema.types.errorType)
+            }
+            return sema.types.errorType
+        }
+
+        guard let chosen = resolved.chosenCallee else {
+            return nil
+        }
+
+        let returnType: TypeID
+        if bindCall {
+            returnType = driver.callChecker.bindCallAndResolveReturnType(
+                exprID,
+                chosen: chosen,
+                resolved: resolved,
+                sema: sema
+            )
+        } else if let signature = sema.symbols.functionSignature(for: chosen) {
+            let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+            returnType = sema.types.substituteTypeParameters(
+                in: signature.returnType,
+                substitution: resolved.substitutedTypeArguments,
+                typeVarBySymbol: typeVarBySymbol
+            )
+        } else {
+            returnType = sema.types.anyType
+        }
+
+        if requireUnitReturn,
+           !sema.types.isSubtype(returnType, sema.types.unitType)
+        {
+            if emitDiagnostics {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0300",
+                    "Operator '\(interner.resolve(operatorNames[0]))' used in compound assignment must return Unit.",
+                    range: range
+                )
+                sema.bindings.bindExprType(exprID, type: sema.types.errorType)
+            }
+            return sema.types.errorType
+        }
+
+        if !requireUnitReturn,
+           !sema.types.isSubtype(returnType, receiverType)
+        {
+            if emitDiagnostics {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0301",
+                    "Operator '\(interner.resolve(operatorNames[0]))' result type must be assignable to the left-hand side.",
+                    range: range
+                )
+                sema.bindings.bindExprType(exprID, type: sema.types.errorType)
+            }
+            return sema.types.errorType
+        }
+
+        if bindCall {
+            sema.bindings.bindExprType(exprID, type: sema.types.unitType)
+        }
+        return sema.types.unitType
+    }
+
     func inferCompoundAssignExpr(
         _ id: ExprID,
         op: CompoundAssignOp,
@@ -26,6 +126,62 @@ extension ExprTypeChecker {
                     "Variable '\(interner.resolve(name))' must be initialized before use.",
                     range: range
                 )
+            }
+            if let resolvedType = bindCompoundAssignmentOperatorCall(
+                exprID: id,
+                op: op,
+                receiverType: local.type,
+                valueType: valueType,
+                range: range,
+                ctx: ctx,
+                requireUnitReturn: true
+            ) {
+                if local.isMutable,
+                   let binaryFallback = bindCompoundAssignmentOperatorCall(
+                       exprID: id,
+                       op: op,
+                       receiverType: local.type,
+                       valueType: valueType,
+                       range: range,
+                       ctx: ctx,
+                       requireUnitReturn: false,
+                       emitDiagnostics: false,
+                       bindCall: false
+                   ),
+                   binaryFallback != sema.types.errorType
+                {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0302",
+                        "Assignment operator is ambiguous because both '\(interner.resolve(operatorFunctionNames(for: op, interner: interner)[0]))' and the corresponding binary operator are applicable.",
+                        range: range
+                    )
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
+                return resolvedType
+            }
+            if let resolvedType = bindCompoundAssignmentOperatorCall(
+                exprID: id,
+                op: op,
+                receiverType: local.type,
+                valueType: valueType,
+                range: range,
+                ctx: ctx,
+                requireUnitReturn: false
+            ) {
+                if resolvedType == sema.types.errorType || !local.isMutable {
+                    if !local.isMutable, resolvedType != sema.types.errorType {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-0014",
+                            "Val cannot be reassigned.",
+                            range: range
+                        )
+                    }
+                    return resolvedType == sema.types.errorType ? resolvedType : sema.types.errorType
+                }
+                locals[name] = (local.type, local.symbol, local.isMutable, local.isInitialized)
+                sema.bindings.bindExprType(id, type: sema.types.unitType)
+                return sema.types.unitType
             }
             if !local.isMutable {
                 ctx.semaCtx.diagnostics.error(
@@ -78,6 +234,61 @@ extension ExprTypeChecker {
         }) {
             sema.bindings.bindIdentifier(id, symbol: propSymbol.id)
             let propType = sema.symbols.propertyType(for: propSymbol.id) ?? sema.types.errorType
+            if let resolvedType = bindCompoundAssignmentOperatorCall(
+                exprID: id,
+                op: op,
+                receiverType: propType,
+                valueType: valueType,
+                range: range,
+                ctx: ctx,
+                requireUnitReturn: true
+            ) {
+                if propSymbol.flags.contains(.mutable),
+                   let binaryFallback = bindCompoundAssignmentOperatorCall(
+                       exprID: id,
+                       op: op,
+                       receiverType: propType,
+                       valueType: valueType,
+                       range: range,
+                       ctx: ctx,
+                       requireUnitReturn: false,
+                       emitDiagnostics: false,
+                       bindCall: false
+                   ),
+                   binaryFallback != sema.types.errorType
+                {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0302",
+                        "Assignment operator is ambiguous because both '\(interner.resolve(operatorFunctionNames(for: op, interner: interner)[0]))' and the corresponding binary operator are applicable.",
+                        range: range
+                    )
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
+                return resolvedType
+            }
+            if let resolvedType = bindCompoundAssignmentOperatorCall(
+                exprID: id,
+                op: op,
+                receiverType: propType,
+                valueType: valueType,
+                range: range,
+                ctx: ctx,
+                requireUnitReturn: false
+            ) {
+                if resolvedType == sema.types.errorType || !propSymbol.flags.contains(.mutable) {
+                    if !propSymbol.flags.contains(.mutable), resolvedType != sema.types.errorType {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-0014",
+                            "Val cannot be reassigned.",
+                            range: range
+                        )
+                    }
+                    return resolvedType == sema.types.errorType ? resolvedType : sema.types.errorType
+                }
+                sema.bindings.bindExprType(id, type: sema.types.unitType)
+                return sema.types.unitType
+            }
             if !propSymbol.flags.contains(.mutable) {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0014",
