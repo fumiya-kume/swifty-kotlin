@@ -111,7 +111,7 @@ public func kk_kclass_get_field_count(_ kclassRaw: Int) -> Int {
 
 @_cdecl("kk_kclass_get_instance_size_words")
 public func kk_kclass_get_instance_size_words(_ kclassRaw: Int) -> Int {
-    guard let kclass = runtimeReflectionKClassBox(from: kclassRaw) else {
+    guard runtimeReflectionKClassBox(from: kclassRaw) != nil else {
         return 0
     }
     // The current metadata registry does not expose instance size yet.

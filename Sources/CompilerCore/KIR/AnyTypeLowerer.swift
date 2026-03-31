@@ -18,7 +18,7 @@ final class AnyTypeLowerer {
         args: [KIRExprID],
         context: inout CallLoweringContext
     ) -> KIRExprID? {
-        let sema = context.sema
+        let _ = context.sema
         let interner = context.interner
         let calleeStr = interner.resolve(calleeName)
         
@@ -295,7 +295,7 @@ final class AnyTypeLowerer {
         let receiverTag = CallLoweringHelpers.anyFallbackTag(for: receiverType, sema: sema)
         let argTag = CallLoweringHelpers.anyFallbackTag(for: argType, sema: sema)
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        let booleanType = sema.types.make(.primitive(.boolean, .nonNull))
+        let _ = sema.types.make(.primitive(.boolean, .nonNull))
         
         let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
 

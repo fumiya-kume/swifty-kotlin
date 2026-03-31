@@ -544,7 +544,7 @@ final class CallLowerer {
         } else {
             nil
         }
-        if let callableInvokeCallee {
+        if callableInvokeCallee != nil {
             finalArgIDs.insert(loweredCalleeExprID, at: 0)
         }
         if callableInvokeCallee == nil, let loweredCallable {

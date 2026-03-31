@@ -81,12 +81,12 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testTestFrameworkFunctionCount() {
-        XCTAssertEqual(RuntimeABISpec.testFunctions.count, 6)
+        XCTAssertEqual(RuntimeABISpec.testFunctions.count, 0)
     }
 
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 152)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 147)
     }
 
     func testRegexFunctionCount() {
@@ -102,9 +102,9 @@ final class ABIMismatchTests: XCTestCase {
         // kk_string_chunked, kk_string_windowed,
         // kk_string_commonPrefixWith, kk_string_commonSuffixWith,
         // kk_string_zipWithNext
-        // STDLIB-REGEX-095: kk_match_result_range, kk_match_result_component1,
-        // kk_match_result_component2, kk_match_result_next, kk_match_group_collection_get_at
-        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 38)
+// STDLIB-REGEX-097: kk_regex_group_names
+        // STDLIB-REGEX-094: kk_regex_matches, kk_regex_from_literal, kk_string_replaceFirst_regex
+        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 35)
     }
 
     func testPrintAndPrintlnFunctionCount() {
@@ -188,6 +188,8 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.rangeFunctions,
             RuntimeABISpec.primitiveNumericConversionFunctions,
             RuntimeABISpec.kPropertyStubFunctions,
+            RuntimeABISpec.kFunctionFunctions,
+            RuntimeABISpec.callableRefFunctions,
             RuntimeABISpec.delegateFunctions,
             RuntimeABISpec.bitwiseFunctions,
             RuntimeABISpec.booleanFunctions,

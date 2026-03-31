@@ -690,6 +690,46 @@ private func makeMatchResultWithOffset(
     )
 }
 
+// MARK: - STDLIB-REGEX-094: Regex.fromLiteral / Regex.matches / String.replaceFirst(Regex)
+
+
+/// Regex.Companion.fromLiteral(literal: String) -> Regex
+/// Creates a Regex that matches the literal string (all special chars are escaped).
+/// The first argument is the Companion object receiver (ignored; companion singleton).
+@_cdecl("kk_regex_from_literal")
+public func kk_regex_from_literal(_ companionRef: Int, _ literalRaw: Int) -> Int {
+    let literal = regexStringFromRaw(literalRaw) ?? ""
+    let escapedPattern = NSRegularExpression.escapedPattern(for: literal)
+    guard let regex = try? NSRegularExpression(pattern: escapedPattern, options: []) else {
+        do {
+            let fallback = try NSRegularExpression(pattern: "(?!)", options: [])
+            return registerRuntimeObject(RuntimeRegexBox(regex: fallback, pattern: literal))
+        } catch {
+            fatalError("Failed to create fallback NSRegularExpression")
+        }
+    }
+    return registerRuntimeObject(RuntimeRegexBox(regex: regex, pattern: escapedPattern))
+}
+
+/// String.replaceFirst(regex: Regex, replacement: String) -> String
+/// Replaces only the first match of the regex in the string.
+@_cdecl("kk_string_replaceFirst_regex")
+public func kk_string_replaceFirst_regex(_ strRaw: Int, _ regexRaw: Int, _ replacementRaw: Int) -> Int {
+    let rawStr = regexStringFromRaw(strRaw) ?? ""
+    let replacement = regexStringFromRaw(replacementRaw) ?? ""
+    guard let regexBox = regexBoxFromRaw(regexRaw) else { return regexMakeStringRaw(rawStr) }
+    let str = regexBox.normalizeIfNeeded(rawStr)
+    let range = NSRange(str.startIndex..., in: str)
+    guard let match = regexBox.regex.firstMatch(in: str, options: [], range: range),
+          let matchRange = Range(match.range, in: str) else {
+        return regexMakeStringRaw(str)
+    }
+    let templateResult = regexBox.regex.replacementString(for: match, in: str, offset: 0, template: replacement)
+    var result = str
+    result.replaceSubrange(matchRange, with: templateResult)
+    return regexMakeStringRaw(result)
+}
+
 // MARK: - STDLIB-REGEX-097: Regex.groupNames
 
 /// Regex.groupNames: Set<String>

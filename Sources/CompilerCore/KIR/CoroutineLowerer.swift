@@ -20,7 +20,7 @@ final class CoroutineLowerer {
     ) -> KIRExprID? {
         let sema = context.sema
         let interner = context.interner
-        let calleeStr = interner.resolve(calleeName)
+        let _ = interner.resolve(calleeName)
         
         // コルーチンハンドル操作
         if isCoroutineHandleCall(receiverExpr: receiverExpr, calleeName: calleeName, sema: sema, interner: interner) {
@@ -51,7 +51,7 @@ final class CoroutineLowerer {
         args: [KIRExprID],
         context: inout CallLoweringContext
     ) -> KIRExprID? {
-        let sema = context.sema
+        let _ = context.sema
         let interner = context.interner
         let knownNames = KnownCompilerNames(interner: interner)
 
@@ -211,7 +211,7 @@ final class CoroutineLowerer {
         let sema = context.sema
         let arena = context.arena
         let interner = context.interner
-        let knownNames = KnownCompilerNames(interner: interner)
+        let _ = KnownCompilerNames(interner: interner)
         let boundType = sema.types.anyType // TODO: 実際の結果型を取得
         
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
@@ -245,8 +245,8 @@ final class CoroutineLowerer {
         args: [CallArgument],
         context: inout CallLoweringContext
     ) -> KIRExprID? {
-        let sema = context.sema
-        let interner = context.interner
+        let _ = context.sema
+        let _ = context.interner
         
         // coroutineビルダーの特殊処理
         if let coroutineResult = lowerCoroutineBuilderCall(
