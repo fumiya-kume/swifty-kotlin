@@ -5,26 +5,28 @@ final class KotlinCompilationDigitalSignatureTests: XCTestCase {
     func testCompile_digitalSignatureBasicUsage() throws {
         try assertKotlinCompilesToKIR(##"""
         import java.security.KeyPairGenerator
+        import java.io.ByteArrayInputStream
         import java.security.Signature
         import java.security.cert.CertPath
         import java.security.cert.CertPathValidator
         import java.security.cert.CertificateFactory
         import java.security.cert.PKIXParameters
+        import java.security.cert.X509Certificate
         import java.security.cert.TrustAnchor
 
         fun main() {
-            val generator = KeyPairGenerator("RSA")
+            val generator = KeyPairGenerator.getInstance("RSA")
             generator.initialize(2048)
             val keyPair = generator.generateKeyPair()
 
             val message = byteArrayOf(1, 2, 3, 4)
-            val signer = Signature("SHA256withRSA")
-            signer.initSign(keyPair.privateKey)
+            val signer = Signature.getInstance("SHA256withRSA")
+            signer.initSign(keyPair.getPrivate())
             signer.update(message)
             val sha256Signature = signer.sign()
 
             val verifier = Signature.getInstance("SHA256withRSA")
-            verifier.initVerify(keyPair.publicKey)
+            verifier.initVerify(keyPair.getPublic())
             verifier.update(message)
             val verified = verifier.verify(sha256Signature)
 
@@ -50,12 +52,12 @@ final class KotlinCompilationDigitalSignatureTests: XCTestCase {
                 -----END CERTIFICATE-----
             """.trimIndent().toByteArray()
 
-            val factory = CertificateFactory("X.509")
-            val certificate = factory.generateCertificate(certificatePem)
-            val path = CertPath(listOf(certificate))
-            val trustAnchor = TrustAnchor(certificate)
-            val parameters = PKIXParameters(listOf(trustAnchor))
-            val validator = CertPathValidator("PKIX")
+            val factory = CertificateFactory.getInstance("X.509")
+            val certificate = factory.generateCertificate(ByteArrayInputStream(certificatePem)) as X509Certificate
+            val path = factory.generateCertPath(listOf(certificate))
+            val trustAnchor = TrustAnchor(certificate, null)
+            val parameters = PKIXParameters(setOf(trustAnchor))
+            val validator = CertPathValidator.getInstance("PKIX")
             val valid = validator.validate(path, parameters)
         }
         """##)
