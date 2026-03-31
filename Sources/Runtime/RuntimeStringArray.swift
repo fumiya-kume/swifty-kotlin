@@ -97,6 +97,62 @@ public func kk_throwable_stackTraceToString(_ throwableRaw: Int) -> Int {
     return Int(bitPattern: opaque)
 }
 
+// MARK: - Advanced exception features (STDLIB-EXCEPT-105)
+
+/// initCause(cause: Throwable?): Throwable — sets the cause on a throwable, returns the throwable.
+@_cdecl("kk_throwable_initCause")
+public func kk_throwable_initCause(_ throwableRaw: Int, _ causeRaw: Int) -> Int {
+    guard throwableRaw != runtimeNullSentinelInt, throwableRaw != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw),
+          let throwable = tryCast(ptr, to: RuntimeThrowableBox.self)
+    else {
+        return throwableRaw
+    }
+    let causeValue = (causeRaw == runtimeNullSentinelInt || causeRaw == 0) ? 0 : causeRaw
+    throwable.cause = causeValue
+    return throwableRaw
+}
+
+/// addSuppressed(exception: Throwable): Unit — adds a suppressed exception.
+@_cdecl("kk_throwable_addSuppressed")
+public func kk_throwable_addSuppressed(_ throwableRaw: Int, _ suppressedRaw: Int) -> Int {
+    guard throwableRaw != runtimeNullSentinelInt, throwableRaw != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw),
+          let throwable = tryCast(ptr, to: RuntimeThrowableBox.self)
+    else {
+        return 0
+    }
+    if suppressedRaw != runtimeNullSentinelInt && suppressedRaw != 0 {
+        throwable.suppressed.append(suppressedRaw)
+    }
+    return 0
+}
+
+/// getSuppressed(): Array<Throwable> — returns the suppressed exceptions as an array.
+@_cdecl("kk_throwable_getSuppressed")
+public func kk_throwable_getSuppressed(_ throwableRaw: Int) -> Int {
+    guard throwableRaw != runtimeNullSentinelInt, throwableRaw != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw),
+          let throwable = tryCast(ptr, to: RuntimeThrowableBox.self)
+    else {
+        let emptyArray = RuntimeArrayBox(length: 0)
+        let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(emptyArray).toOpaque())
+        runtimeStorage.withLock { state in
+            state.objectPointers.insert(UInt(bitPattern: opaque))
+        }
+        return Int(bitPattern: opaque)
+    }
+    let arrayBox = RuntimeArrayBox(length: throwable.suppressed.count)
+    for (i, elem) in throwable.suppressed.enumerated() {
+        arrayBox.elements[i] = elem
+    }
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(arrayBox).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
+
 @_cdecl("kk_panic")
 public func kk_panic(_ cstr: UnsafePointer<CChar>) -> Never {
     fatalError(runtimePanicMessage(fromCString: cstr))

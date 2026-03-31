@@ -476,6 +476,25 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-EXCEPT-105: Advanced exception handling
+    public static let kk_throwable_initCause = ExternDecl(
+        name: "kk_throwable_initCause",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_throwable_addSuppressed = ExternDecl(
+        name: "kk_throwable_addSuppressed",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_throwable_getSuppressed = ExternDecl(
+        name: "kk_throwable_getSuppressed",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Test Framework (STDLIB-TEST-157)
 
     public static let kk_test_assertEquals = ExternDecl(
@@ -3857,6 +3876,9 @@ public enum RuntimeABIExterns {
             kk_throwable_message,
             kk_throwable_cause,
             kk_throwable_stackTraceToString,
+            kk_throwable_initCause,
+            kk_throwable_addSuppressed,
+            kk_throwable_getSuppressed,
             // Test Framework
             kk_test_assertEquals,
             kk_test_assertEquals_message,
