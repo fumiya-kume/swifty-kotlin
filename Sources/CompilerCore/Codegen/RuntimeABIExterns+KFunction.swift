@@ -1,13 +1,16 @@
-// MARK: - KFunction / KProperty / KConstructor dynamic call (STDLIB-REFLECT-067)
+// MARK: - KFunction / KProperty / KConstructor / KParameter dynamic call (STDLIB-REFLECT-063 / STDLIB-REFLECT-067)
 
 public extension RuntimeABIExterns {
     static let kFunctionExterns: [ExternDecl] = [
         kk_kfunction_create,
+        kk_kfunction_create_full,
         kk_kfunction_get_name,
         kk_kfunction_get_arity,
         kk_kfunction_get_return_type,
         kk_kfunction_is_suspend,
         kk_kfunction_get_parameters,
+        kk_kfunction_get_value_parameters,
+        kk_kfunction_get_type,
         kk_kfunction_call_0,
         kk_kfunction_call_1,
         kk_kfunction_call_2,
@@ -20,11 +23,64 @@ public extension RuntimeABIExterns {
         kk_kconstructor_call_vararg,
     ]
 
+    // MARK: - KParameter (STDLIB-REFLECT-063)
+
+    static let kParameterExterns: [ExternDecl] = [
+        kk_kparameter_create,
+        kk_kparameter_get_index,
+        kk_kparameter_get_name,
+        kk_kparameter_get_type,
+        kk_kparameter_is_optional,
+        kk_kparameter_get_kind,
+    ]
+
+    static let kk_kparameter_create = ExternDecl(
+        name: "kk_kparameter_create",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kparameter_get_index = ExternDecl(
+        name: "kk_kparameter_get_index",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kparameter_get_name = ExternDecl(
+        name: "kk_kparameter_get_name",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kparameter_get_type = ExternDecl(
+        name: "kk_kparameter_get_type",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kparameter_is_optional = ExternDecl(
+        name: "kk_kparameter_is_optional",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kparameter_get_kind = ExternDecl(
+        name: "kk_kparameter_get_kind",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - KFunction factory
 
     static let kk_kfunction_create = ExternDecl(
         name: "kk_kfunction_create",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kfunction_create_full = ExternDecl(
+        name: "kk_kfunction_create_full",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -56,6 +112,18 @@ public extension RuntimeABIExterns {
 
     static let kk_kfunction_get_parameters = ExternDecl(
         name: "kk_kfunction_get_parameters",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kfunction_get_value_parameters = ExternDecl(
+        name: "kk_kfunction_get_value_parameters",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kfunction_get_type = ExternDecl(
+        name: "kk_kfunction_get_type",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )

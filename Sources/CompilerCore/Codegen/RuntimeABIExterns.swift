@@ -4519,6 +4519,7 @@ public enum RuntimeABIExterns {
             kk_char_range_forEach,
         ]
         all += kPropertyStubExterns
+        all += kParameterExterns
         all += kFunctionExterns
         all += callableRefExterns
         all += [
