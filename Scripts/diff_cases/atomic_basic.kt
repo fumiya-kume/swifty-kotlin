@@ -1,6 +1,7 @@
 import kotlin.concurrent.AtomicInt
 import kotlin.concurrent.AtomicLong
 import kotlin.concurrent.AtomicReference
+import kotlin.concurrent.AtomicBoolean
 
 fun main() {
     // AtomicInt basics
@@ -48,4 +49,21 @@ fun main() {
     println(ar.load())              // world
     println(ar.exchange("foo"))     // world
     println(ar.load())              // foo
+
+    // AtomicBoolean basics
+    val ab = AtomicBoolean(true)
+    println(ab.load())              // true
+    ab.store(false)
+    println(ab.load())              // false
+    println(ab.exchange(true))      // false
+    println(ab.load())              // true
+
+    // AtomicBoolean compareAndSet
+    println(ab.compareAndSet(true, false))   // true
+    println(ab.compareAndSet(true, false))   // false
+    println(ab.load())                       // false
+
+    // AtomicBoolean compareAndExchange
+    println(ab.compareAndExchange(false, true))  // false
+    println(ab.load())                           // true
 }

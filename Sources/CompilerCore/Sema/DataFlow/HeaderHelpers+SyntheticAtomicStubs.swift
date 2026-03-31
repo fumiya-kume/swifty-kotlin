@@ -73,6 +73,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        let intToIntFnType = types.make(.functionType(FunctionType(
+            params: [intType],
+            returnType: intType
+        )))
+        registerAtomicUpdateMethods(
+            ownerSymbol: atomicIntSymbol,
+            ownerType: atomicIntType,
+            valueType: intType,
+            functionType: intToIntFnType,
+            prefix: "kk_atomic_int",
+            symbols: symbols,
+            interner: interner
+        )
+
         // -- AtomicLong --
         let atomicLongSymbol = ensureClassSymbol(
             named: "AtomicLong",
@@ -125,6 +139,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        let longToLongFnType = types.make(.functionType(FunctionType(
+            params: [longType],
+            returnType: longType
+        )))
+        registerAtomicUpdateMethods(
+            ownerSymbol: atomicLongSymbol,
+            ownerType: atomicLongType,
+            valueType: longType,
+            functionType: longToLongFnType,
+            prefix: "kk_atomic_long",
+            symbols: symbols,
+            interner: interner
+        )
+
         // -- AtomicReference<T> --
         let atomicRefSymbol = ensureClassSymbol(
             named: "AtomicReference",
@@ -165,6 +193,77 @@ extension DataFlowSemaPhase {
             boolType: boolType,
             unitType: unitType,
             prefix: "kk_atomic_ref",
+            symbols: symbols,
+            interner: interner
+        )
+
+        let anyToAnyFnType = types.make(.functionType(FunctionType(
+            params: [anyNullableType],
+            returnType: anyNullableType
+        )))
+        registerAtomicUpdateMethods(
+            ownerSymbol: atomicRefSymbol,
+            ownerType: atomicRefType,
+            valueType: anyNullableType,
+            functionType: anyToAnyFnType,
+            prefix: "kk_atomic_ref",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // -- AtomicBoolean --
+        let atomicBoolSymbol = ensureClassSymbol(
+            named: "AtomicBoolean",
+            in: concurrentPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let atomicBoolType = types.make(.classType(ClassType(
+            classSymbol: atomicBoolSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(atomicBoolType, for: atomicBoolSymbol)
+
+        registerAtomicConstructor(
+            ownerSymbol: atomicBoolSymbol,
+            ownerType: atomicBoolType,
+            externalLinkName: "kk_atomic_boolean_create",
+            paramType: boolType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicValueProperty(
+            ownerSymbol: atomicBoolSymbol,
+            ownerType: atomicBoolType,
+            valueType: boolType,
+            getterLinkName: "kk_atomic_boolean_load",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicCoreMethods(
+            ownerSymbol: atomicBoolSymbol,
+            ownerType: atomicBoolType,
+            valueType: boolType,
+            boolType: boolType,
+            unitType: unitType,
+            prefix: "kk_atomic_boolean",
+            symbols: symbols,
+            interner: interner
+        )
+
+        let boolToBoolFnType = types.make(.functionType(FunctionType(
+            params: [boolType],
+            returnType: boolType
+        )))
+        registerAtomicUpdateMethods(
+            ownerSymbol: atomicBoolSymbol,
+            ownerType: atomicBoolType,
+            valueType: boolType,
+            functionType: boolToBoolFnType,
+            prefix: "kk_atomic_boolean",
             symbols: symbols,
             interner: interner
         )
@@ -354,6 +453,31 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "decrementAndFetch", externalLinkName: "\(prefix)_decrementAndFetch",
             returnType: valueType, parameters: [],
+            symbols: symbols, interner: interner
+        )
+    }
+
+    private func registerAtomicUpdateMethods(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        valueType: TypeID,
+        functionType: TypeID,
+        prefix: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        // getAndUpdate(function: (T) -> T) -> T
+        registerAtomicMember(
+            ownerSymbol: ownerSymbol, ownerType: ownerType,
+            name: "getAndUpdate", externalLinkName: "\(prefix)_getAndUpdate",
+            returnType: valueType, parameters: [(name: "function", type: functionType)],
+            symbols: symbols, interner: interner
+        )
+        // updateAndGet(function: (T) -> T) -> T
+        registerAtomicMember(
+            ownerSymbol: ownerSymbol, ownerType: ownerType,
+            name: "updateAndGet", externalLinkName: "\(prefix)_updateAndGet",
+            returnType: valueType, parameters: [(name: "function", type: functionType)],
             symbols: symbols, interner: interner
         )
     }

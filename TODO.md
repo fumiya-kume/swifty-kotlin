@@ -386,7 +386,7 @@
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/mutex_basic.kt`
 
-- [ ] STDLIB-CORO-080: Atomic操作完全実装
+- [x] STDLIB-CORO-080: Atomic操作完全実装
   - **仕様**: アトミック操作の完全サポート
   - **実装内容**:
     - AtomicInt: 整数のアトミック操作
@@ -394,7 +394,7 @@
     - AtomicReference: 参照のアトミック操作
     - compareAndSet: CAS操作
     - getAndUpdate, updateAndGet: アトミック更新
-  - **現状**: atomic操作は一部実装済み、完全な実装は未完了
+  - **現状**: 完全実装済み (AtomicBoolean追加、getAndUpdate/updateAndGet全型対応)
   - **関連ファイル**: `RuntimeAtomic.swift`
   - **テストケース**: `Scripts/diff_cases/atomic_basic.kt`
 
