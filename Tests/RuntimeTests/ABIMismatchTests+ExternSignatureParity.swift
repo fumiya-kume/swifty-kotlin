@@ -20,10 +20,19 @@ extension ABIMismatchTests {
     func testExternCountMatchesSpec() {
         let specNames = RuntimeABISpec.allFunctions.map(\.name)
         let externNames = RuntimeABIExterns.allExterns.map(\.name)
-        XCTAssertGreaterThanOrEqual(
-            externNames.count,
+        var externNameCounts: [String: Int] = [:]
+        for name in externNames {
+            externNameCounts[name, default: 0] += 1
+        }
+        let duplicateExternNames = externNameCounts
+            .filter { $0.value > 1 }
+            .sorted { $0.key < $1.key }
+            .map { "\($0.key)(\($0.value))" }
+        XCTAssertEqual(
             specNames.count,
-            "RuntimeABIExterns should cover at least the RuntimeABISpec surface"
+            externNames.count,
+            "RuntimeABISpec has \(specNames.count) functions but RuntimeABIExterns has \(externNames.count). " +
+                "Duplicate extern names: \(duplicateExternNames.joined(separator: ", "))"
         )
     }
 
