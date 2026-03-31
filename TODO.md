@@ -143,7 +143,7 @@
   - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
   - **テストケース**: `Scripts/diff_cases/range_basic.kt`
 
-- [ ] STDLIB-RANGE-035: LongRange完全実装
+- [x] STDLIB-RANGE-035: LongRange完全実装
   - **仕様**: LongRangeの完全な機能サポート
   - **実装内容**:
     - コンストラクタ: LongRange(start, end), startL..endL

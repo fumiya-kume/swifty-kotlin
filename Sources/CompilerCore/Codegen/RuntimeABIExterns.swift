@@ -3001,6 +3001,147 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // MARK: - UIntRange properties and HOFs (STDLIB-RANGE-036)
+
+    public static let kk_uint_range_contains = ExternDecl(
+        name: "kk_uint_range_contains",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_uint_range_isEmpty = ExternDecl(
+        name: "kk_uint_range_isEmpty",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_uint_range_first = ExternDecl(
+        name: "kk_uint_range_first",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_uint_range_last = ExternDecl(
+        name: "kk_uint_range_last",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_uint_range_step = ExternDecl(
+        name: "kk_uint_range_step",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_uint_range_count = ExternDecl(
+        name: "kk_uint_range_count",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_uint_range_sum = ExternDecl(
+        name: "kk_uint_range_sum",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_uint_range_toUIntArray = ExternDecl(
+        name: "kk_uint_range_toUIntArray",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_uint_range_forEach = ExternDecl(
+        name: "kk_uint_range_forEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_uint_range_map = ExternDecl(
+        name: "kk_uint_range_map",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // MARK: - LongRange (STDLIB-RANGE-035)
+
+    public static let kk_long_rangeTo = ExternDecl(
+        name: "kk_long_rangeTo",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_range_first = ExternDecl(
+        name: "kk_long_range_first",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_range_last = ExternDecl(
+        name: "kk_long_range_last",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_range_step = ExternDecl(
+        name: "kk_long_range_step",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_range_contains = ExternDecl(
+        name: "kk_long_range_contains",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_range_isEmpty = ExternDecl(
+        name: "kk_long_range_isEmpty",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_range_iterator = ExternDecl(
+        name: "kk_long_range_iterator",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_range_reversed = ExternDecl(
+        name: "kk_long_range_reversed",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_range_toList = ExternDecl(
+        name: "kk_long_range_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_range_toLongArray = ExternDecl(
+        name: "kk_long_range_toLongArray",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_range_count = ExternDecl(
+        name: "kk_long_range_count",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_range_forEach = ExternDecl(
+        name: "kk_long_range_forEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_long_range_map = ExternDecl(
+        name: "kk_long_range_map",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
     // MARK: - ULongProgression operations (STDLIB-RANGE-039)
 
     public static let kk_ulong_rangeTo = ExternDecl(
@@ -4564,6 +4705,31 @@ public enum RuntimeABIExterns {
             kk_uint_step,
             kk_uint_range_reversed,
             kk_uint_range_toList,
+            // UIntRange properties and HOFs (STDLIB-RANGE-036)
+            kk_uint_range_contains,
+            kk_uint_range_isEmpty,
+            kk_uint_range_first,
+            kk_uint_range_last,
+            kk_uint_range_step,
+            kk_uint_range_count,
+            kk_uint_range_sum,
+            kk_uint_range_toUIntArray,
+            kk_uint_range_forEach,
+            kk_uint_range_map,
+            // LongRange (STDLIB-RANGE-035)
+            kk_long_rangeTo,
+            kk_long_range_first,
+            kk_long_range_last,
+            kk_long_range_step,
+            kk_long_range_contains,
+            kk_long_range_isEmpty,
+            kk_long_range_iterator,
+            kk_long_range_reversed,
+            kk_long_range_toList,
+            kk_long_range_toLongArray,
+            kk_long_range_count,
+            kk_long_range_forEach,
+            kk_long_range_map,
             // ULongProgression operations (STDLIB-RANGE-039)
             kk_ulong_rangeTo,
             kk_ulong_downTo,

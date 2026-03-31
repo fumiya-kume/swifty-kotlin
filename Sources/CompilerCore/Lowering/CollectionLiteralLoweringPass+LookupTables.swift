@@ -521,6 +521,8 @@ struct CollectionLiteralLookupTables {
     let toListName: InternedString
     let toULongArrayName: InternedString
     let toIntArrayName: InternedString
+    let toLongArrayName: InternedString
+    let kkLongRangeToLongArrayName: InternedString
     let toSetName: InternedString
     let toMapName: InternedString
     let takeName: InternedString
@@ -1175,6 +1177,8 @@ struct CollectionLiteralLookupTables {
         toListName = interner.intern("toList")
         toULongArrayName = interner.intern("toULongArray")
         toIntArrayName = interner.intern("toIntArray")
+        toLongArrayName = interner.intern("toLongArray")
+        kkLongRangeToLongArrayName = interner.intern("kk_long_range_toLongArray")
         toSetName = interner.intern("toSet")
         toMapName = interner.intern("toMap")
         takeName = interner.intern("take")

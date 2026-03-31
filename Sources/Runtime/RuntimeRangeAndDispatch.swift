@@ -1648,6 +1648,208 @@ public func kk_ulong_range_toULongArray(_ rangeRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: elements))
 }
 
+// MARK: - LongRange (STDLIB-RANGE-035)
+
+@_cdecl("kk_long_rangeTo")
+public func kk_long_rangeTo(_ lhs: Int, _ rhs: Int) -> Int {
+    registerRuntimeObject(RuntimeRangeBox(first: lhs, last: rhs, step: 1))
+}
+
+@_cdecl("kk_long_range_first")
+public func kk_long_range_first(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_first")
+    }
+    return range.first
+}
+
+@_cdecl("kk_long_range_last")
+public func kk_long_range_last(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_last")
+    }
+    return range.last
+}
+
+@_cdecl("kk_long_range_step")
+public func kk_long_range_step(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_step")
+    }
+    return range.step
+}
+
+@_cdecl("kk_long_range_contains")
+public func kk_long_range_contains(_ rangeRaw: Int, _ value: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_contains")
+    }
+    if range.step > 0 {
+        guard range.first <= value && value <= range.last else { return 0 }
+        return (value &- range.first) % range.step == 0 ? 1 : 0
+    } else if range.step < 0 {
+        guard range.last <= value && value <= range.first else { return 0 }
+        return (range.first &- value) % (0 &- range.step) == 0 ? 1 : 0
+    }
+    return 0
+}
+
+@_cdecl("kk_long_range_isEmpty")
+public func kk_long_range_isEmpty(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_isEmpty")
+    }
+    if range.step > 0 {
+        return range.first > range.last ? 1 : 0
+    } else if range.step < 0 {
+        return range.first < range.last ? 1 : 0
+    }
+    return 1
+}
+
+@_cdecl("kk_long_range_iterator")
+public func kk_long_range_iterator(_ rangeRaw: Int) -> Int {
+    if runtimeIteratorBuilderBox(from: rangeRaw) != nil {
+        return rangeRaw
+    }
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        return 0
+    }
+    return registerRuntimeObject(
+        RuntimeRangeIteratorBox(current: range.first, last: range.last, step: range.step)
+    )
+}
+
+@_cdecl("kk_long_range_reversed")
+public func kk_long_range_reversed(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_reversed")
+    }
+    return registerRuntimeObject(RuntimeRangeBox(first: range.last, last: range.first, step: 0 &- range.step))
+}
+
+@_cdecl("kk_long_range_toList")
+public func kk_long_range_toList(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_toList")
+    }
+    var elements: [Int] = []
+    var current = range.first
+    if range.step > 0 {
+        while current <= range.last {
+            elements.append(current)
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        while current >= range.last {
+            elements.append(current)
+            current &+= range.step
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
+@_cdecl("kk_long_range_toLongArray")
+public func kk_long_range_toLongArray(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_toLongArray")
+    }
+    var current = range.first
+    var elements: [Int] = []
+    if range.step > 0 {
+        while current <= range.last {
+            elements.append(current)
+            let (next, overflow) = current.addingReportingOverflow(range.step)
+            if overflow { break }
+            current = next
+        }
+    } else if range.step < 0 {
+        while current >= range.last {
+            elements.append(current)
+            let (next, overflow) = current.addingReportingOverflow(range.step)
+            if overflow { break }
+            current = next
+        }
+    }
+    let box = RuntimeArrayBox(length: elements.count)
+    for (i, elem) in elements.enumerated() {
+        box.elements[i] = elem
+    }
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_long_range_count")
+public func kk_long_range_count(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_count")
+    }
+    if range.step > 0 {
+        guard range.first <= range.last else { return 0 }
+        return (range.last &- range.first) / range.step &+ 1
+    } else if range.step < 0 {
+        guard range.first >= range.last else { return 0 }
+        return (range.first &- range.last) / (0 &- range.step) &+ 1
+    }
+    return 0
+}
+
+@_cdecl("kk_long_range_forEach")
+public func kk_long_range_forEach(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                  _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_forEach")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var current = range.first
+    if range.step > 0 {
+        while current <= range.last {
+            var thrown = 0
+            _ = lambda(closureRaw, current, &thrown)
+            if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        while current >= range.last {
+            var thrown = 0
+            _ = lambda(closureRaw, current, &thrown)
+            if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+            current &+= range.step
+        }
+    }
+    return 0
+}
+
+@_cdecl("kk_long_range_map")
+public func kk_long_range_map(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                              _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_map")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mapped: [Int] = []
+    var current = range.first
+    if range.step > 0 {
+        while current <= range.last {
+            var thrown = 0
+            let result = lambda(closureRaw, current, &thrown)
+            if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+            mapped.append(result)
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        while current >= range.last {
+            var thrown = 0
+            let result = lambda(closureRaw, current, &thrown)
+            if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+            mapped.append(result)
+            current &+= range.step
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
 // MARK: - IntRange toIntArray (STDLIB-RANGE-034)
 
 @_cdecl("kk_range_toIntArray")

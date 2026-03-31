@@ -2003,6 +2003,17 @@ extension ExprLowerer {
                     canThrow: false,
                     thrownResult: nil
                 ))
+            } else if let rhsType = rhsType,
+                      sema.types.makeNonNullable(rhsType) == sema.types.longType,
+                      sema.bindings.isRangeExpr(rhsExpr) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_long_range_contains"),
+                    arguments: [rhsID, lhsID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
             } else {
                 appendContainsCall(
                     exprID: exprID,
@@ -2034,11 +2045,15 @@ extension ExprLowerer {
             } else if let notInRhsType = notInRhsType,
                       (sema.bindings.isULongRangeExpr(rhsExpr) || sema.types.makeNonNullable(notInRhsType) == sema.types.ulongType) {
                 notInContainsCallee = "kk_ulong_range_contains"
+            } else if let notInRhsType = notInRhsType,
+                      sema.types.makeNonNullable(notInRhsType) == sema.types.longType,
+                      sema.bindings.isRangeExpr(rhsExpr) {
+                notInContainsCallee = "kk_long_range_contains"
             } else {
                 notInContainsCallee = "kk_op_contains"
             }
             let containsResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
-            if notInContainsCallee == "kk_uint_range_contains" || notInContainsCallee == "kk_ulong_range_contains" {
+            if notInContainsCallee == "kk_uint_range_contains" || notInContainsCallee == "kk_ulong_range_contains" || notInContainsCallee == "kk_long_range_contains" {
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern(notInContainsCallee),

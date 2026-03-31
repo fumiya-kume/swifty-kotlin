@@ -124,7 +124,7 @@ extension CallTypeChecker {
         let rangeMembers: Set = [
             "start", "end", "endInclusive", "first", "last", "count", "contains",
             "iterator",
-            "toList", "toIntArray", "toUIntArray", "forEach", "map", "mapIndexed", "mapNotNull",
+            "toList", "toIntArray", "toLongArray", "toUIntArray", "forEach", "map", "mapIndexed", "mapNotNull",
             "filter", "filterIndexed", "filterNot",
             "reduce", "reduceIndexed", "fold", "foldIndexed",
             "find", "findLast", "firstOrNull", "lastOrNull",
@@ -137,7 +137,7 @@ extension CallTypeChecker {
 
     private func isValidRangeMemberArity(_ memberName: String, argCount: Int) -> Bool {
         switch memberName {
-        case "count", "start", "end", "endInclusive", "iterator", "toList", "toIntArray", "toUIntArray", "reversed", "isEmpty", "sum":
+        case "count", "start", "end", "endInclusive", "iterator", "toList", "toIntArray", "toLongArray", "toUIntArray", "reversed", "isEmpty", "sum":
             argCount == 0
         case "step":
             argCount == 0 || argCount == 1
@@ -222,6 +222,8 @@ extension CallTypeChecker {
             return rangeMemberListType(elementType: elementType, sema: sema, interner: interner)
         case "toIntArray":
             return rangeMemberIntArrayType(sema: sema, interner: interner)
+        case "toLongArray":
+            return rangeMemberLongArrayType(sema: sema, interner: interner)
         case "toUIntArray":
             return rangeMemberUIntArrayType(sema: sema, interner: interner)
         case "iterator":
@@ -309,6 +311,20 @@ extension CallTypeChecker {
         }
         return sema.types.make(.classType(ClassType(
             classSymbol: intArraySymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+    }
+
+    private func rangeMemberLongArrayType(
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID {
+        guard let longArraySymbol = sema.symbols.lookupByShortName(interner.intern("LongArray")).first else {
+            return sema.types.anyType
+        }
+        return sema.types.make(.classType(ClassType(
+            classSymbol: longArraySymbol,
             args: [],
             nullability: .nonNull
         )))

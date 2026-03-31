@@ -949,8 +949,10 @@ final class CallLowerer {
             switch symbol.name {
             case knownNames.list, knownNames.mutableList:
                 nil
-            case interner.intern("Range"), interner.intern("IntRange"), interner.intern("LongRange"):
+            case interner.intern("Range"), interner.intern("IntRange"):
                 interner.intern("kk_range_toList")
+            case interner.intern("LongRange"):
+                interner.intern("kk_long_range_toList")
             case interner.intern("ULongRange"):
                 interner.intern("kk_ulong_range_toList")
             case interner.intern("CharRange"):

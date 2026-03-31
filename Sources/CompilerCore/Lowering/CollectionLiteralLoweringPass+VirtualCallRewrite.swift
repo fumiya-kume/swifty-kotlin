@@ -2224,6 +2224,16 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // toLongArray — returns a LongArray (STDLIB-RANGE-035)
+        if callee == lookup.toLongArrayName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil, callee: lookup.kkLongRangeToLongArrayName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
+            return true
+        }
+
         // toIntArray — returns an IntArray (STDLIB-RANGE-034)
         if callee == lookup.toIntArrayName, arguments.isEmpty, !isCharRange, !isULongRange {
             loweredBody.append(.call(
