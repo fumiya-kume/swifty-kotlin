@@ -31,7 +31,11 @@ final class RuntimeKClassMetadataTests: XCTestCase {
             isAbstract: false,
             fieldCount: 3,
             memberCount: 7,
-            constructorCount: 0
+            constructorCount: 0,
+            isFinal: false,
+            isOpen: false,
+            visibility: "PUBLIC",
+            typeParameterCount: 0
         )
         XCTAssertEqual(entry.qualifiedName, "com.example.Foo")
         XCTAssertEqual(entry.simpleName, "Foo")
@@ -64,7 +68,11 @@ final class RuntimeKClassMetadataTests: XCTestCase {
             isAbstract: false,
             fieldCount: 2,
             memberCount: 5,
-            constructorCount: 0
+            constructorCount: 0,
+            isFinal: true,
+            isOpen: false,
+            visibility: "PUBLIC",
+            typeParameterCount: 0
         )
         runtimeKClassMetadataRegistry.register(typeToken: 42, entry: entry)
         let result = runtimeKClassMetadataRegistry.lookup(typeToken: 42)
@@ -90,7 +98,11 @@ final class RuntimeKClassMetadataTests: XCTestCase {
             isAbstract: false,
             fieldCount: 0,
             memberCount: 0,
-            constructorCount: 0
+            constructorCount: 0,
+            isFinal: false,
+            isOpen: false,
+            visibility: "PUBLIC",
+            typeParameterCount: 0
         )
         runtimeKClassMetadataRegistry.register(typeToken: 100, entry: entry)
         XCTAssertNotNil(runtimeKClassMetadataRegistry.lookup(typeToken: 100))
@@ -121,7 +133,11 @@ final class RuntimeKClassMetadataTests: XCTestCase {
             isAbstract: false,
             fieldCount: 4,
             memberCount: 6,
-            constructorCount: 0
+            constructorCount: 0,
+            isFinal: true,
+            isOpen: false,
+            visibility: "PUBLIC",
+            typeParameterCount: 0
         )
         runtimeKClassMetadataRegistry.register(typeToken: 77, entry: entry)
         let box = RuntimeKClassBox(typeToken: 77, nameHint: 0)
