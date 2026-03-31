@@ -3230,6 +3230,13 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-REGEX-096: Regex.options: Set<RegexOption>
+    public static let kk_regex_options = ExternDecl(
+        name: "kk_regex_options",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_match_result_value = ExternDecl(
         name: "kk_match_result_value",
         parameterTypes: ["intptr_t"],
@@ -3806,6 +3813,7 @@ public enum RuntimeABIExterns {
         kk_string_split_regex,
         kk_string_toRegex,
         kk_regex_pattern,
+        kk_regex_options,
         kk_match_result_value,
         kk_match_result_groupValues,
         kk_regex_replace_lambda,

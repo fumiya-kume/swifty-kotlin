@@ -245,6 +245,21 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
+        // --- STDLIB-REGEX-096: Regex.options: Set<RegexOption> ---
+        if let setRegexOptionType = makeSetType(
+            symbols: symbols, types: types, interner: interner,
+            elementType: regexOptionType
+        ) {
+            registerRegexMemberProperty(
+                named: "options",
+                externalLinkName: "kk_regex_options",
+                ownerSymbol: regexSymbol,
+                returnType: setRegexOptionType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         // --- STDLIB-480: Regex(pattern, option) constructor ---
         registerRegexTopLevelFunction(
             named: "Regex",

@@ -673,6 +673,7 @@ extension ABILoweringPass {
             interner.intern("kk_regex_matchEntire"),
             interner.intern("kk_string_toRegex"),
             interner.intern("kk_regex_pattern"),
+            interner.intern("kk_regex_options"),
             interner.intern("kk_match_result_value"),
             interner.intern("kk_match_result_groupValues"),
             // Regex (STDLIB-480)

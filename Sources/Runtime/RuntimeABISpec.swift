@@ -3916,6 +3916,15 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Regex"
         ),
+        // STDLIB-REGEX-096: Regex.options: Set<RegexOption>
+        RuntimeABIFunctionSpec(
+            name: "kk_regex_options",
+            parameters: [
+                RuntimeABIParameter(name: "regex", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_match_result_value",
             parameters: [
