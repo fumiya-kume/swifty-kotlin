@@ -83,6 +83,14 @@ extension ExprTypeChecker {
 
         let lhs = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)
         let rhs = driver.inferExpr(rhsID, ctx: ctx, locals: &locals)
+        if op == .add,
+           isCoroutineContextLikeType(lhs, sema: sema, interner: interner),
+           isCoroutineContextLikeType(rhs, sema: sema, interner: interner),
+           let coroutineContextType = coroutineContextType(sema: sema, interner: interner)
+        {
+            sema.bindings.bindExprType(id, type: coroutineContextType)
+            return coroutineContextType
+        }
         let lhsIsPrimitive = if case .primitive = sema.types.kind(of: lhs) { true } else { false }
         let operatorNames = operatorFunctionNames(for: op, interner: interner)
         let operatorName = operatorNames[0]
@@ -475,6 +483,43 @@ extension ExprTypeChecker {
         default:
             return false
         }
+    }
+
+    private func coroutineContextType(sema: SemaModule, interner: StringInterner) -> TypeID? {
+        let fqName = [
+            interner.intern("kotlinx"),
+            interner.intern("coroutines"),
+            interner.intern("CoroutineContext"),
+        ]
+        guard let symbol = sema.symbols.lookup(fqName: fqName) else {
+            return nil
+        }
+        return sema.types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+    }
+
+    private func isCoroutineContextLikeType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(type)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        let coroutinesPkg = [
+            interner.intern("kotlinx"),
+            interner.intern("coroutines"),
+        ]
+        guard symbol.fqName.starts(with: coroutinesPkg) else {
+            return false
+        }
+        let typeName = interner.resolve(symbol.name)
+        return typeName == "CoroutineContext"
+            || typeName == "CoroutineDispatcher"
+            || typeName == "CoroutineName"
+            || typeName == "CoroutineExceptionHandler"
+            || typeName == "Job"
     }
 
     // MARK: - Compound Assignment

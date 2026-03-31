@@ -374,6 +374,14 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticCoroutineConstructor(
+            ownerSymbol: coroutineNameSymbol,
+            ownerType: coroutineNameType,
+            externalLinkName: "kk_coroutine_name_create",
+            parameters: [(name: "name", type: types.stringType)],
+            symbols: symbols,
+            interner: interner
+        )
 
         // CoroutineExceptionHandler { context, exception -> } factory
         registerSyntheticCoroutineTopLevelFunction(
@@ -387,6 +395,19 @@ extension DataFlowSemaPhase {
             ))))],
             returnType: coroutineExceptionHandlerType,
             externalLinkName: "kk_exception_handler_create",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineConstructor(
+            ownerSymbol: coroutineExceptionHandlerSymbol,
+            ownerType: coroutineExceptionHandlerType,
+            externalLinkName: "kk_exception_handler_create",
+            parameters: [(name: "handler", type: types.make(.functionType(FunctionType(
+                params: [coroutineContextType, types.anyType],
+                returnType: types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            ))))],
             symbols: symbols,
             interner: interner
         )
@@ -417,6 +438,51 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_context_plus",
             returnType: coroutineContextType,
             parameters: [(name: "context", type: coroutineContextType)],
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: dispatcherSymbol,
+            ownerType: dispatcherType,
+            name: "plus",
+            externalLinkName: "kk_context_plus",
+            returnType: coroutineContextType,
+            parameters: [(name: "context", type: coroutineContextType)],
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: coroutineNameSymbol,
+            ownerType: coroutineNameType,
+            name: "plus",
+            externalLinkName: "kk_context_plus",
+            returnType: coroutineContextType,
+            parameters: [(name: "context", type: coroutineContextType)],
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: coroutineExceptionHandlerSymbol,
+            ownerType: coroutineExceptionHandlerType,
+            name: "plus",
+            externalLinkName: "kk_context_plus",
+            returnType: coroutineContextType,
+            parameters: [(name: "context", type: coroutineContextType)],
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: jobSymbol,
+            ownerType: jobType,
+            name: "plus",
+            externalLinkName: "kk_context_plus",
+            returnType: coroutineContextType,
+            parameters: [(name: "context", type: coroutineContextType)],
+            flags: [.synthetic, .operatorFunction],
             symbols: symbols,
             interner: interner
         )
@@ -794,17 +860,22 @@ extension DataFlowSemaPhase {
     ) {
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
-        // Skip if a function with this FQName and the same parameter count already exists.
-        // Allow multiple overloads with different parameter counts (e.g. launch {} vs launch(ctx) {}).
-        // A nominal type (class/interface) sharing the same FQName is allowed
-        // (Kotlin supports factory functions with the same name as a type).
+        // Skip only true duplicate function signatures. Allow overloads with the
+        // same arity but different parameter types, and allow nominal types to
+        // share the same FQName with factory-style functions.
         let existingSymbols = symbols.lookupAll(fqName: functionFQName)
-        let hasExistingFunctionWithSameArity = existingSymbols.contains { id in
-            guard let sym = symbols.symbol(id), sym.kind == .function else { return false }
-            let sig = symbols.functionSignature(for: id)
-            return sig?.parameterTypes.count == parameters.count
+        let hasExistingFunctionWithSameSignature = existingSymbols.contains { id in
+            guard let sym = symbols.symbol(id),
+                  sym.kind == .function,
+                  let sig = symbols.functionSignature(for: id)
+            else {
+                return false
+            }
+            return sig.receiverType == nil
+                && sig.parameterTypes == parameters.map(\.type)
+                && sig.returnType == returnType
         }
-        guard !hasExistingFunctionWithSameArity else {
+        guard !hasExistingFunctionWithSameSignature else {
             return
         }
         let functionSymbol = symbols.define(
@@ -872,6 +943,7 @@ extension DataFlowSemaPhase {
         externalLinkName: String,
         returnType: TypeID,
         parameters: [(name: String, type: TypeID)] = [],
+        flags: SymbolFlags = [.synthetic],
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -889,7 +961,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
         symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
