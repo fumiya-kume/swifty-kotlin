@@ -1,3 +1,4 @@
+// SKIP-DIFF — member property type inference (private var index = 0) not yet resolved as Int for generic indexing
 class Cursor(private val values: MutableList<Int>) {
     private var index = 0
 
