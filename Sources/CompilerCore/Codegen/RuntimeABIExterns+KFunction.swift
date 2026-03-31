@@ -66,35 +66,35 @@ public extension RuntimeABIExterns {
     /// Signature: (kfunctionRaw: intptr_t, outThrown: intptr_t*) -> intptr_t
     static let kk_kfunction_call_0 = ExternDecl(
         name: "kk_kfunction_call_0",
-        parameterTypes: ["intptr_t", "intptr_t*"],
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     /// KFunction.call(arg) with 1 argument.
     static let kk_kfunction_call_1 = ExternDecl(
         name: "kk_kfunction_call_1",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t*"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     /// KFunction.call(arg1, arg2) with 2 arguments.
     static let kk_kfunction_call_2 = ExternDecl(
         name: "kk_kfunction_call_2",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t*"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     /// KFunction.call(arg1, arg2, arg3) with 3 arguments.
     static let kk_kfunction_call_3 = ExternDecl(
         name: "kk_kfunction_call_3",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t*"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     /// KFunction.call(vararg args) — dispatch via runtime List.
     static let kk_kfunction_call_vararg = ExternDecl(
         name: "kk_kfunction_call_vararg",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t*"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
@@ -102,13 +102,13 @@ public extension RuntimeABIExterns {
 
     static let kk_kproperty_get = ExternDecl(
         name: "kk_kproperty_get",
-        parameterTypes: ["intptr_t", "intptr_t*"],
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     static let kk_kproperty_set = ExternDecl(
         name: "kk_kproperty_set",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t*"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
@@ -116,19 +116,19 @@ public extension RuntimeABIExterns {
 
     static let kk_kconstructor_call_0 = ExternDecl(
         name: "kk_kconstructor_call_0",
-        parameterTypes: ["intptr_t", "intptr_t*"],
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     static let kk_kconstructor_call_1 = ExternDecl(
         name: "kk_kconstructor_call_1",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t*"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     static let kk_kconstructor_call_vararg = ExternDecl(
         name: "kk_kconstructor_call_vararg",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t*"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 }
