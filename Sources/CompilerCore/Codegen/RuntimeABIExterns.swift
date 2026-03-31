@@ -2465,6 +2465,62 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-REFLECT-065: Annotation reflection
+
+    public static let kk_annotation_create = ExternDecl(
+        name: "kk_annotation_create",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_annotation_get_class = ExternDecl(
+        name: "kk_annotation_get_class",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_annotation_get_fqname = ExternDecl(
+        name: "kk_annotation_get_fqname",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_annotation_get_value = ExternDecl(
+        name: "kk_annotation_get_value",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_annotation_get_arg_count = ExternDecl(
+        name: "kk_annotation_get_arg_count",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_annotation_to_string = ExternDecl(
+        name: "kk_annotation_to_string",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_get_annotations = ExternDecl(
+        name: "kk_kclass_get_annotations",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_find_annotation = ExternDecl(
+        name: "kk_kclass_find_annotation",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_register_single_annotation = ExternDecl(
+        name: "kk_kclass_register_single_annotation",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // REFL-005: KClass.isInstance, members, constructors
 
     public static let kk_kclass_isInstance = ExternDecl(
@@ -4634,6 +4690,16 @@ public enum RuntimeABIExterns {
             kk_kclass_type_parameters,
             kk_kclass_supertypes,
             kk_kclass_register_metadata_v2,
+            // STDLIB-REFLECT-065: Annotation reflection
+            kk_annotation_create,
+            kk_annotation_get_class,
+            kk_annotation_get_fqname,
+            kk_annotation_get_value,
+            kk_annotation_get_arg_count,
+            kk_annotation_to_string,
+            kk_kclass_get_annotations,
+            kk_kclass_find_annotation,
+            kk_kclass_register_single_annotation,
             // REFL-005: KClass.isInstance, members, constructors, KType, typeOf
             kk_kclass_isInstance,
             kk_kclass_members,

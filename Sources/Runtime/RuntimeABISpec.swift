@@ -2976,6 +2976,86 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "TypeCheck"
         ),
+        // STDLIB-REFLECT-065: Annotation reflection
+        RuntimeABIFunctionSpec(
+            name: "kk_annotation_create",
+            parameters: [
+                RuntimeABIParameter(name: "fqNameRaw", type: .intptr),
+                RuntimeABIParameter(name: "argsListRaw", type: .intptr),
+                RuntimeABIParameter(name: "annotationClassRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_annotation_get_class",
+            parameters: [
+                RuntimeABIParameter(name: "annotationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_annotation_get_fqname",
+            parameters: [
+                RuntimeABIParameter(name: "annotationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_annotation_get_value",
+            parameters: [
+                RuntimeABIParameter(name: "annotationRaw", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_annotation_get_arg_count",
+            parameters: [
+                RuntimeABIParameter(name: "annotationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_annotation_to_string",
+            parameters: [
+                RuntimeABIParameter(name: "annotationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kclass_get_annotations",
+            parameters: [
+                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kclass_find_annotation",
+            parameters: [
+                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
+                RuntimeABIParameter(name: "nameRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kclass_register_single_annotation",
+            parameters: [
+                RuntimeABIParameter(name: "typeToken", type: .intptr),
+                RuntimeABIParameter(name: "fqNameRaw", type: .intptr),
+                RuntimeABIParameter(name: "argsEncodedRaw", type: .intptr),
+                RuntimeABIParameter(name: "argCount", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
         // REFL-005: KClass.isInstance, members, constructors
         RuntimeABIFunctionSpec(
             name: "kk_kclass_isInstance",
