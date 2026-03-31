@@ -4809,7 +4809,7 @@ public enum RuntimeABISpec {
             + operatorFunctions
             + primitiveNumericConversionFunctions
             + rangeFunctions
-            + kPropertyStubFunctions + kFunctionFunctions + callableRefFunctions + delegateFunctions
+            + kPropertyStubFunctions + kParameterFunctions + kFunctionFunctions + callableRefFunctions + delegateFunctions
             + bitwiseFunctions
             + booleanFunctions
             + charFunctions
