@@ -908,12 +908,23 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let returnsSymbol = ensureInterfaceSymbol(
+            named: "Returns",
+            in: contractsFQName,
+            symbols: symbols,
+            interner: interner
+        )
         if contractsPkg != .invalid {
             symbols.setParentSymbol(contractsPkg, for: builderSymbol)
             symbols.setParentSymbol(contractsPkg, for: effectSymbol)
+            symbols.setParentSymbol(contractsPkg, for: returnsSymbol)
         }
         let builderType = types.make(.classType(ClassType(classSymbol: builderSymbol, args: [], nullability: .nonNull)))
         let effectType = types.make(.classType(ClassType(classSymbol: effectSymbol, args: [], nullability: .nonNull)))
+        let returnsType = types.make(.classType(ClassType(classSymbol: returnsSymbol, args: [], nullability: .nonNull)))
+
+        symbols.setDirectSupertypes([effectSymbol], for: returnsSymbol)
+        symbols.setSupertypeTypeArgs([], for: returnsSymbol, supertype: effectSymbol)
 
         let contractName = interner.intern("contract")
         let contractFQName = contractsFQName + [contractName]
@@ -984,7 +995,7 @@ extension DataFlowSemaPhase {
             name: "returns",
             receiverType: builderType,
             params: [],
-            returnType: effectType
+            returnType: returnsType
         )
         ensureMember(
             owner: builderSymbol,
@@ -992,7 +1003,7 @@ extension DataFlowSemaPhase {
             name: "returns",
             receiverType: builderType,
             params: [types.booleanType],
-            returnType: effectType
+            returnType: returnsType
         )
         ensureMember(
             owner: effectSymbol,
