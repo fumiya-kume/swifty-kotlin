@@ -80,6 +80,99 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isWarning), "Unchecked-cast diagnostics should be warnings")
     }
 
+    func testAnnotationTargetEnumConstantResolves() {
+        let source = """
+        fun targetSmoke(): AnnotationTarget = AnnotationTarget.CLASS
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected AnnotationTarget smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testTargetAnnotationIsRejectedOnRegularClass() {
+        let source = """
+        @Target(AnnotationTarget.CLASS)
+        class BadTarget
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one annotation-target diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
+    func testTargetAnnotationAllowsAnnotationClassButRejectsFunctionUsage() {
+        let source = """
+        @Target(AnnotationTarget.CLASS)
+        annotation class ClassOnly
+
+        @ClassOnly
+        class Good
+
+        @ClassOnly
+        fun bad() {}
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected exactly one annotation-target diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
+    func testFieldTargetAllowsBackedFieldAndRejectsMissingBackingField() {
+        let source = """
+        @Target(value = [AnnotationTarget.FIELD])
+        annotation class FieldOnly
+
+        class Storage {
+            @field:FieldOnly val stored: String = ""
+        }
+
+        class Missing {
+            @field:FieldOnly val missing: String
+                get() = "x"
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected exactly one annotation-target diagnostic for the missing backing field, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
+    func testFieldTargetRejectsExtensionProperty() {
+        let source = """
+        @Target(value = [AnnotationTarget.FIELD])
+        annotation class FieldOnly
+
+        @field:FieldOnly
+        val String.ext: Int
+            get() = length
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one annotation-target diagnostic for the extension property, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
+    func testAnnotationTargetSuppressionAliasSuppressesDiagnostic() {
+        let source = """
+        @Suppress("ANNOTATION_TARGET")
+        @Target(AnnotationTarget.CLASS)
+        class BadTarget
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected ANNOTATION_TARGET suppression alias to suppress annotation-target diagnostics, got: \(ctx.diagnostics.diagnostics)")
+    }
+
     private func runSemaCollectingDiagnostics(_ source: String) -> CompilationContext {
         let ctx = makeContextFromSource(source)
         do {
