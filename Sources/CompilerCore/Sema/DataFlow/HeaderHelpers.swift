@@ -964,38 +964,7 @@ extension DataFlowSemaPhase {
         registerSyntheticConcurrencyStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoroutineCancellationStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoroutineIntrinsicsStubs(symbols: symbols, types: types, interner: interner)
-    }
-
-    /// Register the synthetic `kotlin.Any` and `kotlin.Annotation` built-in stubs.
-    ///
-    /// `Any` is needed as the root nominal type for default superclass binding, and
-    /// `Annotation` is the built-in supertype used by annotation classes and the
-    /// `Annotation` type name resolver.
-    func registerSyntheticAnyStub(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        kotlinPkg: [InternedString]? = nil
-    ) {
-        let kotlinPkg = kotlinPkg ?? ensureKotlinPackage(symbols: symbols, interner: interner)
-
-        let anySymbol = ensureClassSymbol(
-            named: "Any",
-            in: kotlinPkg,
-            symbols: symbols,
-            interner: interner
-        )
-
-        let annotationSymbol = ensureInterfaceSymbol(
-            named: "Annotation",
-            in: kotlinPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        types.annotationInterfaceSymbol = annotationSymbol
-
-        symbols.setDirectSupertypes([anySymbol], for: annotationSymbol)
-        types.setNominalDirectSupertypes([anySymbol], for: annotationSymbol)
+        registerSyntheticReadWriteLockStubs(symbols: symbols, types: types, interner: interner)
     }
 
     func registerSyntheticContractStubs(

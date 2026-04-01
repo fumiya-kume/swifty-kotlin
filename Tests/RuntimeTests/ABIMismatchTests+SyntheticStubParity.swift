@@ -131,6 +131,9 @@ extension ABIMismatchTests {
             "kk_read_write_lock_create",
             "kk_read_write_lock_read",
             "kk_read_write_lock_write",
+            // Read/write lock (java.util.concurrent.locks / kotlin.concurrent)
+            "kk_reentrant_read_write_lock_new",
+            "kk_reentrant_read_write_lock_read",
             // Symmetric crypto (javax.crypto)
             "kk_secretkeyspec_new",
             "kk_ivparameterspec_new",

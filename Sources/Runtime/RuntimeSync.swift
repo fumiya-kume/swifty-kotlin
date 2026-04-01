@@ -102,6 +102,14 @@ final class RuntimeMutexHandle: @unchecked Sendable {
     }
 }
 
+// MARK: - ReentrantReadWriteLock (java.util.concurrent.locks)
+
+/// Runtime backing for `java.util.concurrent.locks.ReentrantReadWriteLock`.
+///
+/// The handle is an identity token; the actual recursive lock lives in shared
+/// runtime state and is keyed by the handle value.
+final class RuntimeReentrantReadWriteLockHandle: @unchecked Sendable {}
+
 // MARK: - Semaphore (kotlinx.coroutines.sync.Semaphore)
 
 /// Runtime backing for `kotlinx.coroutines.sync.Semaphore`.
@@ -279,6 +287,16 @@ private func runtimeSyncContinuationIsCancelled(_ continuation: Int) -> Bool {
 public func kk_mutex_create() -> Int {
     let mutex = RuntimeMutexHandle()
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(mutex).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+    return Int(bitPattern: ptr)
+}
+
+@_cdecl("kk_reentrant_read_write_lock_new")
+public func kk_reentrant_read_write_lock_new() -> Int {
+    let handle = RuntimeReentrantReadWriteLockHandle()
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(handle).toOpaque())
     runtimeStorage.withLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
