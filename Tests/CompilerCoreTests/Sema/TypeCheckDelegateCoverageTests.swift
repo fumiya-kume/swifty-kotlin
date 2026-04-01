@@ -168,6 +168,7 @@ final class TypeCheckDelegateCoverageTests: XCTestCase {
             valueParams: [ValueParamDecl(name: fixture.interner.intern("x"), type: intTypeRef)],
             returnTypeRef: intTypeRef,
             body: .expr(bodyExpr, range),
+            isSuspend: true,
             range: range,
             ctx: ctx,
             locals: &locals
@@ -182,6 +183,7 @@ final class TypeCheckDelegateCoverageTests: XCTestCase {
             valueParams: [ValueParamDecl(name: fixture.interner.intern("x"), type: intTypeRef)],
             returnTypeRef: intTypeRef,
             body: .block([bodyExpr, bodyExpr2], range),
+            isSuspend: false,
             range: range,
             ctx: ctx,
             locals: &locals
@@ -195,6 +197,7 @@ final class TypeCheckDelegateCoverageTests: XCTestCase {
             valueParams: [],
             returnTypeRef: nil,
             body: .unit,
+            isSuspend: false,
             range: range,
             ctx: ctx,
             locals: &locals
@@ -207,6 +210,8 @@ final class TypeCheckDelegateCoverageTests: XCTestCase {
 
         let exprFunSymbol = fixture.bindings.identifierSymbol(for: exprFunID)
         XCTAssertEqual(fixture.symbols.symbol(exprFunSymbol ?? .invalid)?.kind, .function)
+        XCTAssertTrue(fixture.symbols.symbol(exprFunSymbol ?? .invalid)?.flags.contains(.suspendFunction) ?? false)
+        XCTAssertTrue(fixture.symbols.functionSignature(for: exprFunSymbol ?? .invalid)?.isSuspend ?? false)
     }
 
     func testInferDestructuringDeclUsesMemberAndFallbackComponents() {

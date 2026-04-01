@@ -83,6 +83,23 @@ final class BuildASTBodyParsingRegressionTests: XCTestCase {
         }
     }
 
+    func testSuspendLocalFunctionParsesThroughKIR() throws {
+        let source = """
+        suspend fun delayed(value: Int): Int = value
+
+        fun outer(): Int {
+            suspend fun local(value: Int): Int = delayed(value)
+            return 1
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            let sema = try XCTUnwrap(ctx.sema)
+            XCTAssertFalse(sema.bindings.exprTypes.isEmpty)
+        }
+    }
+
     // MARK: - Compound assignment operators in body parsing
 
     func testCompoundAssignmentOperatorsInBody() throws {
