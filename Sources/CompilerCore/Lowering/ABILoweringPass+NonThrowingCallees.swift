@@ -383,6 +383,7 @@ extension ABILoweringPass {
             interner.intern("kk_atomic_ref_exchange"),
             interner.intern("kk_atomic_ref_compareAndSet"),
             interner.intern("kk_atomic_ref_compareAndExchange"),
+            interner.intern("kk_thread_local_new"),
             interner.intern("kk_atomic_bool_create"),
             interner.intern("kk_atomic_bool_load"),
             interner.intern("kk_atomic_bool_store"),
