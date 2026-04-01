@@ -68,6 +68,9 @@ extension ABIMismatchTests {
             "kk_atomic_ref_exchange",
             "kk_atomic_ref_compareAndSet",
             "kk_atomic_ref_compareAndExchange",
+            // ThreadLocal (java.lang / kotlin.concurrent)
+            "kk_thread_local_new",
+            "kk_thread_local_getOrSet",
             // Symmetric crypto (javax.crypto)
             "kk_secretkeyspec_new",
             "kk_ivparameterspec_new",

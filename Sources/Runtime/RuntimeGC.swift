@@ -32,6 +32,8 @@ struct RuntimeStorageState {
     var objectTypeByPointer: [UInt: Int64] = [:]
     var objectItableMethods: [UInt: [UInt64: Int]] = [:]
     var kClassBoxCache: [KClassCacheKey: Int] = [:]
+    var threadLocalBoxes: Set<UInt> = []
+    var threadLocalValues: [UInt: [ObjectIdentifier: Int]] = [:]
     var typeParents: [Int64: Set<Int64>] = [:]
     var globalRootSlots: Set<UInt> = []
     var frameMaps: [UInt32: [Int32]] = [:]
@@ -248,6 +250,15 @@ func collectRootPointersLocked(state: RuntimeStorageState, into worklist: inout 
         }
         worklist.append(ptr)
     }
+
+    for threadValues in state.threadLocalValues.values {
+        for raw in threadValues.values {
+            guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+                continue
+            }
+            worklist.append(ptr)
+        }
+    }
 }
 
 func appendObjectChildrenLocked(of object: HeapObjectRecord, into worklist: inout [UnsafeMutableRawPointer]) {
@@ -282,6 +293,11 @@ func resetRuntimeLocked(state: inout RuntimeStorageState) {
             Unmanaged<RuntimeKClassBox>.fromOpaque(ptr).release()
         }
     }
+    for threadLocalRaw in state.threadLocalBoxes {
+        if let ptr = UnsafeMutableRawPointer(bitPattern: threadLocalRaw) {
+            Unmanaged<AnyObject>.fromOpaque(ptr).release()
+        }
+    }
     state.heapObjects.removeAll(keepingCapacity: false)
     state.objectPointers.removeAll(keepingCapacity: false)
     state.flowHandles.removeAll(keepingCapacity: false)
@@ -294,6 +310,8 @@ func resetRuntimeLocked(state: inout RuntimeStorageState) {
     state.activeFrames.removeAll(keepingCapacity: false)
     state.coroutineRoots.removeAll(keepingCapacity: false)
     state.kClassBoxCache.removeAll(keepingCapacity: false)
+    state.threadLocalBoxes.removeAll(keepingCapacity: false)
+    state.threadLocalValues.removeAll(keepingCapacity: false)
     // REFL-004: Clear the KClass metadata registry on reset.
     runtimeKClassMetadataRegistry.reset()
 }
