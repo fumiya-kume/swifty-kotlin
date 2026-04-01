@@ -548,6 +548,8 @@ final class RuntimeCoroutineScope: @unchecked Sendable {
     private(set) var isCancelled = false
     let isSupervisor: Bool
     fileprivate var parent: RuntimeCoroutineScope?
+    /// Optional debug name assigned via CoroutineName context element (STDLIB-CORO-077).
+    var name: String?
 
     // CORO-003: Task-local scope registry (replaces TLS).
     // Maps an opaque task token (assigned by the suspend-entry loop on entry) to
@@ -1976,6 +1978,256 @@ public func kk_flow_of(_ arrayHandle: Int, _ count: Int) -> Int {
     return runtimeRegisterFlowHandle(handle)
 }
 
+// MARK: - CoroutineContext Elements (STDLIB-CORO-077)
+
+/// A coroutine context is a keyed collection of context elements.
+/// Elements include: dispatcher, Job, CoroutineName, CoroutineExceptionHandler.
+/// Contexts compose via the `+` operator (right-hand side wins for same key).
+final class RuntimeCoroutineContext: @unchecked Sendable {
+    var dispatcher: Int  // 0 means "inherit from parent"
+    var name: String?
+    var exceptionHandler: RuntimeExceptionHandlerBox?
+    var jobHandle: RuntimeJobHandle?
+
+    init(
+        dispatcher: Int = 0,
+        name: String? = nil,
+        exceptionHandler: RuntimeExceptionHandlerBox? = nil,
+        jobHandle: RuntimeJobHandle? = nil
+    ) {
+        self.dispatcher = dispatcher
+        self.name = name
+        self.exceptionHandler = exceptionHandler
+        self.jobHandle = jobHandle
+    }
+
+    /// Merge another context into this one. Right-hand side wins for duplicate keys.
+    func plus(_ other: RuntimeCoroutineContext) -> RuntimeCoroutineContext {
+        RuntimeCoroutineContext(
+            dispatcher: other.dispatcher != 0 ? other.dispatcher : self.dispatcher,
+            name: other.name ?? self.name,
+            exceptionHandler: other.exceptionHandler ?? self.exceptionHandler,
+            jobHandle: other.jobHandle ?? self.jobHandle
+        )
+    }
+}
+
+/// A CoroutineName element wrapping a String name.
+final class RuntimeCoroutineNameBox: @unchecked Sendable {
+    let name: String
+    init(name: String) {
+        self.name = name
+    }
+}
+
+/// Register a heap-allocated object in the runtime storage so it is not GC'd.
+private func runtimeRegisterObject<T: AnyObject>(_ object: T) -> Int {
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(object).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+    return Int(bitPattern: ptr)
+}
+
+/// Create a CoroutineName context element.
+/// nameRaw is a pointer to a runtime string (RuntimeStringBox or interned).
+@_cdecl("kk_coroutine_name_create")
+public func kk_coroutine_name_create(_ nameRaw: Int) -> Int {
+    let nameStr: String
+    if nameRaw != 0, let ptr = UnsafeMutableRawPointer(bitPattern: nameRaw) {
+        if let stringBox = tryCast(ptr, to: RuntimeStringBox.self) {
+            nameStr = stringBox.value
+        } else {
+            nameStr = "coroutine"
+        }
+    } else {
+        nameStr = "coroutine"
+    }
+    let box = RuntimeCoroutineNameBox(name: nameStr)
+    return runtimeRegisterObject(box)
+}
+
+/// Get the name string from a CoroutineName handle.
+/// Returns a RuntimeStringBox pointer.
+@_cdecl("kk_coroutine_name_get")
+public func kk_coroutine_name_get(_ handleRaw: Int) -> Int {
+    guard handleRaw != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: handleRaw),
+          let nameBox = tryCast(ptr, to: RuntimeCoroutineNameBox.self)
+    else {
+        let emptyBox = RuntimeStringBox("")
+        return runtimeRegisterObject(emptyBox)
+    }
+    let resultBox = RuntimeStringBox(nameBox.name)
+    return runtimeRegisterObject(resultBox)
+}
+
+/// Create a CoroutineExceptionHandler from a function pointer.
+/// handlerFnPtr is an opaque callable reference (a block entry point) compiled
+/// from the Kotlin lambda `{ context, exception -> ... }`.  Since the compiled
+/// lambda follows the standard KK ABI (first arg = value, second arg = outThrown
+/// pointer), we bitcast it to the 1-arg entry point and invoke it with the
+/// exception raw pointer.  If the function pointer is invalid, the handler falls
+/// back to printing the exception to stderr.
+@_cdecl("kk_exception_handler_create")
+public func kk_exception_handler_create(_ handlerFnPtr: Int) -> Int {
+    let capturedFnPtr = handlerFnPtr
+    let box = RuntimeExceptionHandlerBox { throwableRaw in
+        if capturedFnPtr != 0 {
+            let entryPoint: KKFunctionEntryPoint1 = unsafeBitCast(capturedFnPtr, to: KKFunctionEntryPoint1.self)
+            _ = entryPoint(throwableRaw, nil)
+        } else {
+            var message = "Unknown exception"
+            if throwableRaw != 0, let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw) {
+                if let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) {
+                    message = throwable.message
+                } else if let cancellation = tryCast(ptr, to: RuntimeCancellationBox.self) {
+                    message = cancellation.message
+                }
+            }
+            FileHandle.standardError.write(Data("CoroutineExceptionHandler: \(message)\n".utf8))
+        }
+    }
+    return runtimeRegisterObject(box)
+}
+
+/// Invoke a CoroutineExceptionHandler with a context and exception.
+@_cdecl("kk_exception_handler_invoke")
+public func kk_exception_handler_invoke(_ handlerRaw: Int, _ contextRaw: Int, _ exceptionRaw: Int) {
+    guard handlerRaw != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: handlerRaw),
+          let handler = tryCast(ptr, to: RuntimeExceptionHandlerBox.self)
+    else {
+        return
+    }
+    handler.handler(exceptionRaw)
+}
+
+/// Compose two CoroutineContext elements using the + operator.
+/// Each argument can be a RuntimeCoroutineContext, a dispatcher tag,
+/// a RuntimeCoroutineNameBox, or a RuntimeExceptionHandlerBox.
+@_cdecl("kk_context_plus")
+public func kk_context_plus(_ leftRaw: Int, _ rightRaw: Int) -> Int {
+    let leftCtx = resolveToCoroutineContext(leftRaw)
+    let rightCtx = resolveToCoroutineContext(rightRaw)
+    let merged = leftCtx.plus(rightCtx)
+    return runtimeRegisterObject(merged)
+}
+
+/// Extract the dispatcher from a CoroutineContext.
+/// Returns a dispatcher tag (or 0 if none).
+@_cdecl("kk_context_get_dispatcher")
+public func kk_context_get_dispatcher(_ contextRaw: Int) -> Int {
+    if contextRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: contextRaw),
+       let ctx = tryCast(ptr, to: RuntimeCoroutineContext.self)
+    {
+        return ctx.dispatcher
+    }
+    if isDispatcherTag(contextRaw) {
+        return contextRaw
+    }
+    return 0
+}
+
+/// Extract the CoroutineName from a CoroutineContext.
+/// Returns a RuntimeStringBox pointer (or 0 if no name).
+@_cdecl("kk_context_get_name")
+public func kk_context_get_name(_ contextRaw: Int) -> Int {
+    guard contextRaw != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: contextRaw),
+          let ctx = tryCast(ptr, to: RuntimeCoroutineContext.self),
+          let name = ctx.name
+    else {
+        return 0
+    }
+    let resultBox = RuntimeStringBox(name)
+    return runtimeRegisterObject(resultBox)
+}
+
+/// Extract the CoroutineExceptionHandler from a CoroutineContext.
+/// Returns handler handle (or 0 if none).
+@_cdecl("kk_context_get_exception_handler")
+public func kk_context_get_exception_handler(_ contextRaw: Int) -> Int {
+    guard contextRaw != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: contextRaw),
+          let ctx = tryCast(ptr, to: RuntimeCoroutineContext.self),
+          let handler = ctx.exceptionHandler
+    else {
+        return 0
+    }
+    let handlerPtr = UnsafeMutableRawPointer(Unmanaged.passUnretained(handler).toOpaque())
+    return Int(bitPattern: handlerPtr)
+}
+
+/// Release a CoroutineContext (decrement reference count).
+@_cdecl("kk_context_release")
+public func kk_context_release(_ contextRaw: Int) {
+    guard contextRaw != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: contextRaw)
+    else {
+        return
+    }
+    runtimeStorage.withLock { state in
+        state.objectPointers.remove(UInt(bitPattern: ptr))
+    }
+    Unmanaged<AnyObject>.fromOpaque(ptr).release()
+}
+
+/// withContext with a full CoroutineContext (not just a dispatcher tag).
+/// Extracts the dispatcher from the context and delegates to the dispatcher-
+/// aware withContext, while propagating context elements (name, handler).
+@_cdecl("kk_with_context_full")
+public func kk_with_context_full(_ contextRaw: Int, _ blockFnPtr: Int, _ continuation: Int) -> Int {
+    let resolvedCtx = resolveToCoroutineContext(contextRaw)
+    let dispatcherTag = resolvedCtx.dispatcher != 0
+        ? resolvedCtx.dispatcher
+        : RuntimeDispatcherTag.defaultDispatcher
+
+    if let contState = runtimeContinuationState(from: continuation) {
+        if let name = resolvedCtx.name, let scope = contState.scope {
+            scope.name = name
+        }
+    }
+
+    return kk_with_context(dispatcherTag, blockFnPtr, continuation)
+}
+
+/// Check if a raw Int value is a known dispatcher tag.
+private func isDispatcherTag(_ raw: Int) -> Bool {
+    raw == RuntimeDispatcherTag.defaultDispatcher ||
+    raw == RuntimeDispatcherTag.ioDispatcher ||
+    raw == RuntimeDispatcherTag.mainDispatcher
+}
+
+/// Convert any context-like raw value to a RuntimeCoroutineContext.
+/// Handles: RuntimeCoroutineContext, dispatcher tags, RuntimeCoroutineNameBox,
+/// RuntimeExceptionHandlerBox.
+private func resolveToCoroutineContext(_ raw: Int) -> RuntimeCoroutineContext {
+    if raw == 0 {
+        return RuntimeCoroutineContext()
+    }
+    if isDispatcherTag(raw) {
+        return RuntimeCoroutineContext(dispatcher: raw)
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return RuntimeCoroutineContext()
+    }
+    if let ctx = tryCast(ptr, to: RuntimeCoroutineContext.self) {
+        return ctx
+    }
+    if let nameBox = tryCast(ptr, to: RuntimeCoroutineNameBox.self) {
+        return RuntimeCoroutineContext(name: nameBox.name)
+    }
+    if let handler = tryCast(ptr, to: RuntimeExceptionHandlerBox.self) {
+        return RuntimeCoroutineContext(exceptionHandler: handler)
+    }
+    if let job = tryCast(ptr, to: RuntimeJobHandle.self) {
+        return RuntimeCoroutineContext(jobHandle: job)
+    }
+    return RuntimeCoroutineContext(dispatcher: raw)
+}
+
 // MARK: - Coroutine Dispatcher Scheduler (STDLIB-133)
 
 /// A coroutine dispatcher that schedules work on a specific GCD queue.
@@ -2128,8 +2380,21 @@ private final class WithContextResultBox: @unchecked Sendable {
 /// suspend-aware block through the full entry loop (supporting intermediate
 /// suspension points such as `delay`), and blocks the caller until the block
 /// completes, returning its result.
+///
+/// STDLIB-CORO-077: Also handles RuntimeCoroutineContext objects. If dispatcherRaw
+/// is a pointer to a RuntimeCoroutineContext, the dispatcher is extracted from it
+/// and context elements (name, exception handler) are propagated.
 @_cdecl("kk_with_context")
 public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuation: Int) -> Int {
+    // STDLIB-CORO-077: If dispatcherRaw is a RuntimeCoroutineContext, delegate
+    // to kk_with_context_full which handles context element propagation.
+    if !isDispatcherTag(dispatcherRaw), dispatcherRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: dispatcherRaw),
+       tryCast(ptr, to: RuntimeCoroutineContext.self) != nil
+    {
+        return kk_with_context_full(dispatcherRaw, blockFnPtr, continuation)
+    }
+
     let resolvedDispatcher = switch dispatcherRaw {
     case RuntimeDispatcherTag.defaultDispatcher,
          RuntimeDispatcherTag.ioDispatcher,
