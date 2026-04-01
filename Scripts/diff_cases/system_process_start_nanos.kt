@@ -1,3 +1,4 @@
+// SKIP-DIFF: System.processStartNanos() is not yet available in kotlinc.
 fun main() {
     val startNanos = System.processStartNanos()
     val now = System.nanoTime()
