@@ -4138,6 +4138,25 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+    // STDLIB-IO-090: Files utility (java.nio.file.Files)
+    public static let kk_files_createFile = ExternDecl(name: "kk_files_createFile", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_delete = ExternDecl(name: "kk_files_delete", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_copy = ExternDecl(name: "kk_files_copy", parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_move = ExternDecl(name: "kk_files_move", parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_createDirectory = ExternDecl(name: "kk_files_createDirectory", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_createDirectories = ExternDecl(name: "kk_files_createDirectories", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_size = ExternDecl(name: "kk_files_size", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_getLastModifiedTime = ExternDecl(name: "kk_files_getLastModifiedTime", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_fileTime_toMillis = ExternDecl(name: "kk_fileTime_toMillis", parameterTypes: [intptr], returnType: intptr)
+    public static let kk_files_isRegularFile = ExternDecl(name: "kk_files_isRegularFile", parameterTypes: [intptr, intptr], returnType: intptr)
+    public static let kk_files_isDirectory = ExternDecl(name: "kk_files_isDirectory", parameterTypes: [intptr, intptr], returnType: intptr)
+    public static let kk_files_exists = ExternDecl(name: "kk_files_exists", parameterTypes: [intptr, intptr], returnType: intptr)
+    public static let kk_files_walk = ExternDecl(name: "kk_files_walk", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_list = ExternDecl(name: "kk_files_list", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_newDirectoryStream = ExternDecl(name: "kk_files_newDirectoryStream", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_createTempFile = ExternDecl(name: "kk_files_createTempFile", parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_createTempDirectory = ExternDecl(name: "kk_files_createTempDirectory", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+
     public static let fileIOExterns: [ExternDecl] = [
         kk_file_new,
         kk_file_readText,
@@ -4253,6 +4272,24 @@ public enum RuntimeABIExterns {
         kk_cache_put,
         kk_cache_get,
         kk_cache_size,
+        // STDLIB-IO-090: Files utility
+        kk_files_createFile,
+        kk_files_delete,
+        kk_files_copy,
+        kk_files_move,
+        kk_files_createDirectory,
+        kk_files_createDirectories,
+        kk_files_size,
+        kk_files_getLastModifiedTime,
+        kk_fileTime_toMillis,
+        kk_files_isRegularFile,
+        kk_files_isDirectory,
+        kk_files_exists,
+        kk_files_walk,
+        kk_files_list,
+        kk_files_newDirectoryStream,
+        kk_files_createTempFile,
+        kk_files_createTempDirectory,
         kk_resource_bundle_getBundle,
         kk_resource_bundle_getString,
         kk_resource_bundle_getKeys,
