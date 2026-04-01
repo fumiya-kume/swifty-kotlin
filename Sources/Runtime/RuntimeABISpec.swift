@@ -192,6 +192,17 @@ public enum RuntimeABISpec {
             section: "Exception"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_reentrant_read_write_lock_read",
+            parameters: [
+                RuntimeABIParameter(name: "lock", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_check_lazy",
             parameters: [
                 RuntimeABIParameter(name: "condition", type: .intptr),
@@ -2540,6 +2551,12 @@ public enum RuntimeABISpec {
         // Mutex / Semaphore (sync primitives)
         RuntimeABIFunctionSpec(
             name: "kk_mutex_create",
+            parameters: [],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_reentrant_read_write_lock_new",
             parameters: [],
             returnType: .intptr,
             section: "Coroutine"

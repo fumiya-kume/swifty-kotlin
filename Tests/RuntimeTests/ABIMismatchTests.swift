@@ -78,9 +78,10 @@ final class ABIMismatchTests: XCTestCase {
 
     func testExceptionFunctionCount() {
         // kk_throwable_new, kk_throwable_is_cancellation, kk_panic, kk_abort_unreachable,
-        // kk_require, kk_check, kk_require_lazy, kk_check_lazy,
+        // kk_require, kk_check, kk_require_lazy, kk_synchronized,
+        // kk_reentrant_read_write_lock_read, kk_check_lazy,
         // kk_error, kk_todo, kk_todo_noarg, kk_dispatch_error
-        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 19)
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 20)
     }
 
     func testTestFrameworkFunctionCount() {
@@ -131,7 +132,7 @@ final class ABIMismatchTests: XCTestCase {
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
         // The current spec surface tracks the shared coroutine ABI subset.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 88)
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 89)
     }
 
     func testBoxingFunctionCount() {

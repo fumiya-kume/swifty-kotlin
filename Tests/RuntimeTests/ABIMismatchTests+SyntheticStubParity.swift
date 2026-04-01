@@ -66,6 +66,9 @@ extension ABIMismatchTests {
             "kk_atomic_ref_exchange",
             "kk_atomic_ref_compareAndSet",
             "kk_atomic_ref_compareAndExchange",
+            // Read/write lock (java.util.concurrent.locks / kotlin.concurrent)
+            "kk_reentrant_read_write_lock_new",
+            "kk_reentrant_read_write_lock_read",
             // Symmetric crypto (javax.crypto)
             "kk_secretkeyspec_new",
             "kk_ivparameterspec_new",

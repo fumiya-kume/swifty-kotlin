@@ -197,6 +197,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_reentrant_read_write_lock_read = ExternDecl(
+        name: "kk_reentrant_read_write_lock_read",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Duration / measureTime / measureTimedValue (STDLIB-230/231/660)
 
     public static let kk_measureTime = ExternDecl(
@@ -2121,6 +2127,12 @@ public enum RuntimeABIExterns {
 
     public static let kk_mutex_create = ExternDecl(
         name: "kk_mutex_create",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_reentrant_read_write_lock_new = ExternDecl(
+        name: "kk_reentrant_read_write_lock_new",
         parameterTypes: [],
         returnType: "intptr_t"
     )
@@ -4272,6 +4284,7 @@ public enum RuntimeABIExterns {
             kk_check,
             kk_require_lazy,
             kk_synchronized,
+            kk_reentrant_read_write_lock_read,
             kk_check_lazy,
             kk_precondition_assert,
             kk_precondition_assert_lazy,
@@ -4574,6 +4587,7 @@ public enum RuntimeABIExterns {
             kk_job_is_cancelled,
             // Mutex / Semaphore (sync primitives)
             kk_mutex_create,
+            kk_reentrant_read_write_lock_new,
             kk_mutex_lock,
             kk_mutex_unlock,
             kk_mutex_tryLock,
