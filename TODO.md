@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-03-31
+最終更新: 2026-04-01
 
 ## 実装サマリー
 
@@ -599,7 +599,7 @@
 
 ## 実装計画のまとめ
 
-### 残タスク数: 87件
+### 残タスク数: 88件
 
 ### 実装方針
 
@@ -633,6 +633,19 @@
   - **現状**: buildMapは一部実装済み、他は未実装
   - **関連ファイル**: `HeaderHelpers+SyntheticCollectionStubs.swift`
   - **テストケース**: `Scripts/diff_cases/collection_builders.kt`
+
+- [ ] STDLIB-COL-123: kotlin.collections 主要HOFカバレッジ
+  - **仕様**: kotlin.collections の主要 HOF の回帰カバレッジ維持
+  - **実装内容**:
+    - 変換: map(), filter(), flatMap()
+    - 集約: fold(), reduce()
+    - 判定: any(), all(), none(), count()
+    - 検索: first(), last(), find()
+    - グループ化/並び替え: groupBy(), sortedBy()
+    - 反復: forEach() と capture lambda の parity
+  - **現状**: 主要な collection HOF は実装済み、`stdlib_collection_hof.kt` で kotlinc parity を継続監視する
+  - **関連ファイル**: `RuntimeCollectionHOF.swift`
+  - **テストケース**: `Scripts/diff_cases/stdlib_collection_hof.kt`
 
 #### Phase 4: 高度文字列処理 (低優先度)
 
@@ -1177,6 +1190,6 @@
 
 ### 全体実装計画の最終更新
 
-**残タスク数: 87件**
+**残タスク数: 88件**
 
 Phase 1-3の基盤タスクを優先し、Phase 4-5は段階的に実装します。
