@@ -173,6 +173,27 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.isEmpty, "Expected ANNOTATION_TARGET suppression alias to suppress annotation-target diagnostics, got: \(ctx.diagnostics.diagnostics)")
     }
 
+    func testWasExperimentalAnnotationIsCollectedOnDeclaration() throws {
+        let source = """
+        annotation class ExperimentalApi
+
+        @WasExperimental(markerClass = ExperimentalApi::class)
+        fun stabilizedApi(): Int = 42
+        """
+
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let symbolID = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ctx.interner.intern("stabilizedApi")]).first)
+        let annotations = sema.symbols.annotations(for: symbolID)
+        let annotation = try XCTUnwrap(annotations.first(where: {
+            KnownCompilerAnnotation.wasExperimental.matches($0.annotationFQName)
+        }))
+
+        XCTAssertEqual(annotation.arguments, ["markerClass=ExperimentalApiclass"])
+    }
+
     private func runSemaCollectingDiagnostics(_ source: String) -> CompilationContext {
         let ctx = makeContextFromSource(source)
         do {
