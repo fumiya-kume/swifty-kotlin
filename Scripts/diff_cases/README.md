@@ -20,6 +20,7 @@ Cases:
 - `hello.kt`: minimal executable smoke case
 - `control_when.kt`: `when` with value subject (`Int`)
 - `boolean_when.kt`: `when` with `Boolean` subject
+- `atomic_basic.kt`: `AtomicInt` / `AtomicLong` / `AtomicBoolean` / `AtomicReference` / `AtomicNativePtr` runtime parity
 - `if_expr.kt`: expression-body `if` function
 - `named_default.kt`: named argument + default parameter補完
 - `extension_receiver.kt`: extension receiver 呼び出しと `this` 束縛

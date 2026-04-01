@@ -1,6 +1,7 @@
 import Foundation
 
-/// Synthetic stdlib stubs for kotlin.concurrent.AtomicInt, AtomicLong, AtomicReference.
+/// Synthetic stdlib stubs for kotlin.concurrent.AtomicInt, AtomicLong, AtomicReference,
+/// AtomicBoolean, and AtomicNativePtr, plus kotlinx.cinterop.NativePtr.
 /// Registers constructors, load/store/exchange/compareAndSet/compareAndExchange methods,
 /// arithmetic methods (AtomicInt/AtomicLong), and the `value` property.
 extension DataFlowSemaPhase {
@@ -265,6 +266,93 @@ extension DataFlowSemaPhase {
             ownerType: atomicBoolType,
             valueType: boolType,
             prefix: "kk_atomic_bool",
+            symbols: symbols,
+            interner: interner,
+            types: types
+        )
+    }
+
+    func registerSyntheticAtomicNativePtrStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let concurrentPkg = ensurePackage(
+            path: ["kotlin", "concurrent"],
+            symbols: symbols,
+            interner: interner
+        )
+        let cinteropPkg = ensurePackage(
+            path: ["kotlinx", "cinterop"],
+            symbols: symbols,
+            interner: interner
+        )
+
+        let longType = types.longType
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let unitType = types.unitType
+
+        let nativePtrName = interner.intern("NativePtr")
+        let nativePtrFQName = cinteropPkg + [nativePtrName]
+        if symbols.lookup(fqName: nativePtrFQName) == nil {
+            let aliasSymbol = symbols.define(
+                kind: .typeAlias,
+                name: nativePtrName,
+                fqName: nativePtrFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setTypeAliasUnderlyingType(longType, for: aliasSymbol)
+        }
+
+        let atomicNativePtrSymbol = ensureClassSymbol(
+            named: "AtomicNativePtr",
+            in: concurrentPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let atomicNativePtrType = types.make(.classType(ClassType(
+            classSymbol: atomicNativePtrSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(atomicNativePtrType, for: atomicNativePtrSymbol)
+
+        registerAtomicConstructor(
+            ownerSymbol: atomicNativePtrSymbol,
+            ownerType: atomicNativePtrType,
+            externalLinkName: "kk_atomic_native_ptr_create",
+            paramType: longType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicValueProperty(
+            ownerSymbol: atomicNativePtrSymbol,
+            ownerType: atomicNativePtrType,
+            valueType: longType,
+            getterLinkName: "kk_atomic_native_ptr_load",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicCoreMethods(
+            ownerSymbol: atomicNativePtrSymbol,
+            ownerType: atomicNativePtrType,
+            valueType: longType,
+            boolType: boolType,
+            unitType: unitType,
+            prefix: "kk_atomic_native_ptr",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicGetAndUpdateMethods(
+            ownerSymbol: atomicNativePtrSymbol,
+            ownerType: atomicNativePtrType,
+            valueType: longType,
+            prefix: "kk_atomic_native_ptr",
             symbols: symbols,
             interner: interner,
             types: types

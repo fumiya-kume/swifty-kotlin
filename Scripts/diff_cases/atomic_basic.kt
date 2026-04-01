@@ -1,7 +1,10 @@
+// SKIP-DIFF: Synthetic atomic APIs are not present in upstream kotlinc.
 import kotlin.concurrent.AtomicInt
 import kotlin.concurrent.AtomicLong
 import kotlin.concurrent.AtomicBoolean
 import kotlin.concurrent.AtomicReference
+import kotlin.concurrent.AtomicNativePtr
+import kotlinx.cinterop.NativePtr
 
 fun main() {
     // AtomicInt basics
@@ -74,10 +77,22 @@ fun main() {
     println(ab.load())                 // false
 
     // AtomicReference basics
-    val ar = AtomicReference<String>("hello")
+    val ar = AtomicReference("hello")
     println(ar.load())              // hello
     ar.store("world")
     println(ar.load())              // world
     println(ar.exchange("foo"))     // world
     println(ar.load())              // foo
+
+    // AtomicNativePtr basics
+    val np: NativePtr = 0L
+    val anp = AtomicNativePtr(np)
+    println(anp.load())             // 0
+    anp.store(42L)
+    println(anp.load())             // 42
+    println(anp.exchange(7L))       // 42
+    println(anp.compareAndSet(7L, 9L))  // true
+    println(anp.compareAndExchange(9L, 11L))  // 9
+    println(anp.getAndUpdate { it + 1 })      // 11
+    println(anp.updateAndGet { it + 1 })      // 13
 }

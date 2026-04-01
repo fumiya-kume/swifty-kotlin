@@ -24,6 +24,30 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testAtomicNativePtrSyntheticTypesAreTypeChecked() throws {
+        let source = """
+        import kotlin.concurrent.AtomicNativePtr
+        import kotlinx.cinterop.NativePtr
+
+        fun main() {
+            val ptr: NativePtr = 123L
+            val atom = AtomicNativePtr(ptr)
+            val loaded: NativePtr = atom.load()
+            atom.store(loaded)
+            val stored: Unit = atom.store(ptr)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "AtomicNativePtr and NativePtr should type-check: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testTypeSystemLUBAndGLB() {
         let types = TypeSystem()
 

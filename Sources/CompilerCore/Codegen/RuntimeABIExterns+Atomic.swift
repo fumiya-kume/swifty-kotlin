@@ -1,4 +1,5 @@
-// MARK: - Atomic (kotlin.concurrent.AtomicInt / AtomicLong / AtomicReference)
+// MARK: - Atomic (kotlin.concurrent.AtomicInt / AtomicLong / AtomicReference /
+// AtomicBoolean / AtomicNativePtr)
 
 public extension RuntimeABIExterns {
     static let atomicExterns: [ExternDecl] = [
@@ -49,6 +50,15 @@ public extension RuntimeABIExterns {
         // AtomicReference getAndUpdate / updateAndGet
         kk_atomic_ref_getAndUpdate,
         kk_atomic_ref_updateAndGet,
+        // AtomicNativePtr
+        kk_atomic_native_ptr_create,
+        kk_atomic_native_ptr_load,
+        kk_atomic_native_ptr_store,
+        kk_atomic_native_ptr_exchange,
+        kk_atomic_native_ptr_compareAndSet,
+        kk_atomic_native_ptr_compareAndExchange,
+        kk_atomic_native_ptr_getAndUpdate,
+        kk_atomic_native_ptr_updateAndGet,
     ]
 
     // MARK: - AtomicInt
@@ -309,6 +319,56 @@ public extension RuntimeABIExterns {
 
     static let kk_atomic_ref_updateAndGet = ExternDecl(
         name: "kk_atomic_ref_updateAndGet",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // MARK: - AtomicNativePtr
+
+    static let kk_atomic_native_ptr_create = ExternDecl(
+        name: "kk_atomic_native_ptr_create",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_native_ptr_load = ExternDecl(
+        name: "kk_atomic_native_ptr_load",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_native_ptr_store = ExternDecl(
+        name: "kk_atomic_native_ptr_store",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_native_ptr_exchange = ExternDecl(
+        name: "kk_atomic_native_ptr_exchange",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_native_ptr_compareAndSet = ExternDecl(
+        name: "kk_atomic_native_ptr_compareAndSet",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_native_ptr_compareAndExchange = ExternDecl(
+        name: "kk_atomic_native_ptr_compareAndExchange",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_native_ptr_getAndUpdate = ExternDecl(
+        name: "kk_atomic_native_ptr_getAndUpdate",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_native_ptr_updateAndGet = ExternDecl(
+        name: "kk_atomic_native_ptr_updateAndGet",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )

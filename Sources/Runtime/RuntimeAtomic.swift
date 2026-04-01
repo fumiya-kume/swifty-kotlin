@@ -648,3 +648,143 @@ public func kk_atomic_ref_updateAndGet(
     }, outThrown: outThrown)
     return result.new
 }
+
+// MARK: - AtomicNativePtr
+
+/// Backing storage for kotlin.concurrent.AtomicNativePtr.
+/// NativePtr values are represented as pointer-sized integers.
+final class AtomicNativePtrBox {
+    private var storage: Int
+    private let lock = NSLock()
+
+    init(initial: Int) {
+        self.storage = initial
+    }
+
+    func load() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return storage
+    }
+
+    func store(_ value: Int) {
+        lock.lock()
+        defer { lock.unlock() }
+        storage = value
+    }
+
+    func exchange(_ new: Int) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        let old = storage
+        storage = new
+        return old
+    }
+
+    func compareAndSet(expect: Int, update: Int) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        if storage == expect {
+            storage = update
+            return true
+        }
+        return false
+    }
+
+    func compareAndExchange(expect: Int, update: Int) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        let old = storage
+        if old == expect {
+            storage = update
+        }
+        return old
+    }
+
+    func getAndUpdate(transform: (Int) -> Int, outThrown: UnsafeMutablePointer<Int>?) -> (old: Int, new: Int) {
+        while true {
+            let old = load()
+            let new = transform(old)
+            if let thrown = outThrown, thrown.pointee != 0 {
+                return (old, old)
+            }
+            if compareAndSet(expect: old, update: new) {
+                return (old, new)
+            }
+        }
+    }
+}
+
+private func atomicNativePtrBox(from raw: Int) -> AtomicNativePtrBox? {
+    guard raw != 0, let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    return Unmanaged<AtomicNativePtrBox>.fromOpaque(ptr).takeUnretainedValue()
+}
+
+@_cdecl("kk_atomic_native_ptr_create")
+public func kk_atomic_native_ptr_create(_ initial: Int) -> Int {
+    let box = AtomicNativePtrBox(initial: initial)
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+    return Int(bitPattern: ptr)
+}
+
+@_cdecl("kk_atomic_native_ptr_load")
+public func kk_atomic_native_ptr_load(_ receiver: Int) -> Int {
+    guard let box = atomicNativePtrBox(from: receiver) else { return 0 }
+    return box.load()
+}
+
+@_cdecl("kk_atomic_native_ptr_store")
+public func kk_atomic_native_ptr_store(_ receiver: Int, _ value: Int) -> Int {
+    guard let box = atomicNativePtrBox(from: receiver) else { return 0 }
+    box.store(value)
+    return 0
+}
+
+@_cdecl("kk_atomic_native_ptr_exchange")
+public func kk_atomic_native_ptr_exchange(_ receiver: Int, _ new: Int) -> Int {
+    guard let box = atomicNativePtrBox(from: receiver) else { return 0 }
+    return box.exchange(new)
+}
+
+@_cdecl("kk_atomic_native_ptr_compareAndSet")
+public func kk_atomic_native_ptr_compareAndSet(_ receiver: Int, _ expect: Int, _ update: Int) -> Int {
+    guard let box = atomicNativePtrBox(from: receiver) else { return 0 }
+    return box.compareAndSet(expect: expect, update: update) ? 1 : 0
+}
+
+@_cdecl("kk_atomic_native_ptr_compareAndExchange")
+public func kk_atomic_native_ptr_compareAndExchange(_ receiver: Int, _ expect: Int, _ update: Int) -> Int {
+    guard let box = atomicNativePtrBox(from: receiver) else { return 0 }
+    return box.compareAndExchange(expect: expect, update: update)
+}
+
+@_cdecl("kk_atomic_native_ptr_getAndUpdate")
+public func kk_atomic_native_ptr_getAndUpdate(
+    _ receiver: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let box = atomicNativePtrBox(from: receiver) else { return 0 }
+    let result = box.getAndUpdate(transform: { old in
+        kk_function_invoke(updateFn, old, outThrown)
+    }, outThrown: outThrown)
+    return result.old
+}
+
+@_cdecl("kk_atomic_native_ptr_updateAndGet")
+public func kk_atomic_native_ptr_updateAndGet(
+    _ receiver: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let box = atomicNativePtrBox(from: receiver) else { return 0 }
+    let result = box.getAndUpdate(transform: { old in
+        kk_function_invoke(updateFn, old, outThrown)
+    }, outThrown: outThrown)
+    return result.new
+}
