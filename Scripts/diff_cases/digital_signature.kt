@@ -1,3 +1,4 @@
+// SKIP-DIFF: uses JDK security stubs (KeyPairGenerator, Signature, etc.) that kswiftc provides natively but kotlinc rejects due to protected/abstract constructors
 import java.security.KeyPairGenerator
 import java.security.Signature
 import java.security.cert.CertPath
