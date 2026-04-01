@@ -12,7 +12,7 @@ import Foundation
 /// The build-time ABI reconciliation tests (in RuntimeTests) verify that
 /// these declarations match the Runtime module's `RuntimeABISpec`.
 public enum RuntimeABIExterns {
-    public static let specVersion = "J26"
+    public static let specVersion = "J27"
 
     /// A single extern function declaration for the C preamble.
     public struct ExternDecl: Equatable, Sendable {
@@ -4985,6 +4985,7 @@ public enum RuntimeABIExterns {
             kk_instant_until,
         ]
         all += atomicExterns
+        all += threadLocalExterns
         all += securityExterns
         all += parallelExterns
         all += bigIntegerExterns
