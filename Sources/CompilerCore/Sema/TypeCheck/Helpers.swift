@@ -93,7 +93,7 @@ struct TypeCheckHelpers {
                 return sema.types.longType
             case "UIntRange", "UIntProgression":
                 return sema.types.uintType
-            case "ULongProgression":
+            case "ULongRange", "ULongProgression":
                 return sema.types.ulongType
             default:
                 break

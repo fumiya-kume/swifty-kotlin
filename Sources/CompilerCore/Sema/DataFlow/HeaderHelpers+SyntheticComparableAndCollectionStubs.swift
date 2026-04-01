@@ -7148,6 +7148,8 @@ extension DataFlowSemaPhase {
         let primitiveArrayNames = [
             "IntArray",
             "LongArray",
+            "UIntArray",
+            "ULongArray",
             "DoubleArray",
             "FloatArray",
             "BooleanArray",

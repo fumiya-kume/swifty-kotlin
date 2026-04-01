@@ -6,6 +6,7 @@ fun main() {
     println(x.toLong())
     println(x.toULong())
     println(y.toInt())
+    println((1uL..7uL).toULongArray().size)
     println(100u / 3u)
     println(100u % 3u)
     println(255u and 15u)

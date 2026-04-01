@@ -124,7 +124,7 @@ extension CallTypeChecker {
         let rangeMembers: Set = [
             "start", "end", "endInclusive", "first", "last", "count", "contains",
             "iterator",
-            "toList", "toIntArray", "toLongArray", "toUIntArray", "forEach", "map", "mapIndexed", "mapNotNull",
+            "toList", "toIntArray", "toLongArray", "toUIntArray", "toULongArray", "forEach", "map", "mapIndexed", "mapNotNull",
             "filter", "filterIndexed", "filterNot",
             "reduce", "reduceIndexed", "fold", "foldIndexed",
             "find", "findLast", "firstOrNull", "lastOrNull",
@@ -137,7 +137,7 @@ extension CallTypeChecker {
 
     private func isValidRangeMemberArity(_ memberName: String, argCount: Int) -> Bool {
         switch memberName {
-        case "count", "start", "end", "endInclusive", "iterator", "toList", "toIntArray", "toLongArray", "toUIntArray", "reversed", "isEmpty", "sum":
+        case "count", "start", "end", "endInclusive", "iterator", "toList", "toIntArray", "toLongArray", "toUIntArray", "toULongArray", "reversed", "isEmpty", "sum":
             argCount == 0
         case "step":
             argCount == 0 || argCount == 1
@@ -226,6 +226,8 @@ extension CallTypeChecker {
             return rangeMemberLongArrayType(sema: sema, interner: interner)
         case "toUIntArray":
             return rangeMemberUIntArrayType(sema: sema, interner: interner)
+        case "toULongArray":
+            return rangeMemberULongArrayType(sema: sema, interner: interner)
         case "iterator":
             return rangeMemberIteratorType(elementType: elementType, sema: sema, interner: interner)
         case "filter", "filterIndexed", "filterNot":
@@ -339,6 +341,20 @@ extension CallTypeChecker {
         }
         return sema.types.make(.classType(ClassType(
             classSymbol: uintArraySymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+    }
+
+    private func rangeMemberULongArrayType(
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID {
+        guard let ulongArraySymbol = sema.symbols.lookupByShortName(interner.intern("ULongArray")).first else {
+            return sema.types.anyType
+        }
+        return sema.types.make(.classType(ClassType(
+            classSymbol: ulongArraySymbol,
             args: [],
             nullability: .nonNull
         )))
