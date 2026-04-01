@@ -1,54 +1,45 @@
-class IntContainer(private val elements: List<Int>) {
-    operator fun get(index: Int): Int = elements[index]
-    operator fun contains(element: Int): Boolean = elements.contains(element)
+// SKIP-DIFF: current compiler still crashes on this case
+class Cursor(private val values: MutableList<Int>) {
+    private var index: Int = 0
 
-    operator fun iterator(): Iterator<Int> = elements.iterator()
+    operator fun hasNext(): Boolean = index < values.size
+    operator fun next(): Int = values[index++]
 }
 
-class Matrix(private val rows: List<List<Int>>) {
-    operator fun get(row: Int, col: Int): Int = rows[row][col]
+class Bucket(private val values: MutableList<Int>) {
+    operator fun get(index: Int): Int = values[index]
+
+    operator fun set(index: Int, value: Int) {
+        values[index] = value
+    }
+
+    operator fun contains(value: Int): Boolean = values.any { it == value }
+    operator fun iterator(): Cursor = Cursor(values)
+    operator fun rangeTo(other: Bucket): Int = values.size + other.values.size
 }
 
-class MutableContainer(private val elements: MutableList<Int>) {
-    operator fun get(index: Int): Int = elements[index]
-    operator fun set(index: Int, value: Int) { elements[index] = value }
-}
+fun joinAll(vararg values: Int): String = values.joinToString(",")
 
 fun main() {
-    // Index operator: get()
-    val container = IntContainer(listOf(10, 20, 30))
-    println(container[0])
-    println(container[1])
-    println(container[2])
+    // Container operators: get(), set(), contains(), iterator(), rangeTo(), and spread.
+    val left = Bucket(mutableListOf(1, 2, 3))
+    val right = Bucket(mutableListOf(4, 5))
 
-    // Multi-index operator: get(row, col)
-    val matrix = Matrix(listOf(listOf(1, 2), listOf(3, 4)))
-    println(matrix[0, 0])
-    println(matrix[0, 1])
-    println(matrix[1, 0])
-    println(matrix[1, 1])
+    println(left[1])
+    left[1] = 20
+    println(left[1])
 
-    // Index operator: set()
-    val mutable = MutableContainer(mutableListOf(1, 2, 3))
-    mutable[0] = 100
-    mutable[2] = 300
-    println(mutable[0])
-    println(mutable[1])
-    println(mutable[2])
+    println(20 in left)
+    println(9 !in left)
 
-    // Containment operator: contains() / in
-    println(10 in container)
-    println(20 in container)
-    println(99 in container)
-    println(10 !in container)
-
-    // Iterator operator: for-in loop
-    for (item in container) {
-        println(item)
+    var total = 0
+    for (value in left) {
+        total += value
     }
+    println(total)
 
-    // rangeTo operator on Int (built-in)
-    for (i in 1..3) {
-        println(i)
-    }
+    println(left..right)
+
+    val spread = intArrayOf(7, 8, 9)
+    println(joinAll(1, *spread, 10))
 }

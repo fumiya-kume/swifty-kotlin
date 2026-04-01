@@ -357,7 +357,14 @@ extension BuildASTPhase.ExpressionParser {
             }
 
             if case let .stringSegment(segment) = token.kind {
-                parts.append(.literal(segment))
+                // Decode escape sequences in template literal parts just as we do in
+                // non-template string literals (e.g. `\"` → `"`, `\n` → newline).
+                let effectiveSegment: InternedString = if shouldDecodeEscapes {
+                    interner.intern(decodeEscapedStringSegment(interner.resolve(segment)))
+                } else {
+                    segment
+                }
+                parts.append(.literal(effectiveSegment))
                 end = token.range.end
                 _ = consume()
                 continue

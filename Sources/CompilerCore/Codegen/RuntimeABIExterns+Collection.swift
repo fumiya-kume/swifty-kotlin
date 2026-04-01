@@ -267,6 +267,7 @@ public extension RuntimeABIExterns {
         kk_mutable_list_clear,
         kk_mutable_list_sort,
         kk_mutable_list_sortBy,
+        kk_mutable_list_sortDescending,
         kk_mutable_list_sortByDescending,
         kk_mutable_list_add_at,
         kk_mutable_list_set,

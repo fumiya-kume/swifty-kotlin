@@ -178,6 +178,7 @@ struct RuntimeCallableRefMetadata {
     let nameRaw: Int
     let arity: Int
     let kind: RuntimeCallableRefKind
+    let isSuspend: Bool
 }
 
 final class RuntimeFunctionValueBox {
@@ -753,6 +754,11 @@ struct RuntimeKClassMetadataEntry {
     let fieldCount: Int
     let memberCount: Int
     let constructorCount: Int
+    // STDLIB-REFLECT-060: additional KClass basic reflection fields
+    let isFinal: Bool
+    let isOpen: Bool
+    let visibility: String
+    let typeParameterCount: Int
 }
 
 /// Global registry mapping type tokens to runtime metadata entries.
@@ -856,25 +862,67 @@ final class RuntimeKCallableBox {
     }
 }
 
-/// Runtime box for `kotlin.reflect.KFunction<T>`.
-/// Represents a constructor or function member.
-final class RuntimeKFunctionBox {
+/// Runtime box for `kotlin.reflect.KParameter`.
+/// Represents a single parameter of a KFunction or KConstructor.
+final class RuntimeKParameterBox {
+    /// Parameter index (0-based).
+    let index: Int
+    /// Parameter name as a KKString raw handle (0 if unnamed).
     let nameRaw: Int
-    let arity: Int
-    let returnTypeRaw: Int
-    let isSuspend: Bool
-    /// C function pointer for the underlying implementation (0 if unknown).
-    let fnPtr: Int
-    /// Closure environment pointer (0 for top-level functions).
-    let closureRaw: Int
+    /// Parameter type as a KKString raw handle describing the type name.
+    let typeRaw: Int
+    /// Whether this parameter is optional (has a default value).
+    let isOptional: Bool
+    /// Parameter kind: 0 = INSTANCE, 1 = EXTENSION_RECEIVER, 2 = VALUE.
+    let kind: Int
 
-    init(nameRaw: Int, arity: Int, returnTypeRaw: Int = 0, isSuspend: Bool = false, fnPtr: Int = 0, closureRaw: Int = 0) {
+    init(index: Int, nameRaw: Int, typeRaw: Int, isOptional: Bool = false, kind: Int = 2) {
+        self.index = index
+        self.nameRaw = nameRaw
+        self.typeRaw = typeRaw
+        self.isOptional = isOptional
+        self.kind = kind
+    }
+}
+
+/// Runtime box for `kotlin.reflect.KFunction<T>`.
+/// Represents a constructor or function member with full reflection metadata (STDLIB-REFLECT-063).
+final class RuntimeKFunctionBox {
+    /// Interned KKString raw pointer for the function name.
+    let nameRaw: Int
+    /// Number of value parameters (not counting the dispatch receiver).
+    let arity: Int
+    /// Interned KKString raw pointer for the return type descriptor, or 0 if unknown.
+    let returnTypeRaw: Int
+    /// Whether this function is declared `suspend`.
+    let isSuspend: Bool
+    /// Raw function pointer used by `call()` dispatch.  Zero when not callable.
+    let fnPtr: Int
+    /// Closure environment for the callable reference (zero for top-level functions).
+    let closureRaw: Int
+    /// KParameter raw handles for all parameters (including receiver if any).
+    let parameterRaws: [Int]
+    /// Function type string as a KKString raw handle (e.g. "(Int, Int) -> Int").
+    let typeStringRaw: Int
+
+    init(
+        nameRaw: Int,
+        arity: Int,
+        returnTypeRaw: Int = 0,
+        isSuspend: Bool = false,
+        fnPtr: Int = 0,
+        closureRaw: Int = 0,
+        parameterRaws: [Int] = [],
+        typeStringRaw: Int = 0
+    ) {
         self.nameRaw = nameRaw
         self.arity = arity
         self.returnTypeRaw = returnTypeRaw
         self.isSuspend = isSuspend
         self.fnPtr = fnPtr
         self.closureRaw = closureRaw
+        self.parameterRaws = parameterRaws
+        self.typeStringRaw = typeStringRaw
     }
 }
 

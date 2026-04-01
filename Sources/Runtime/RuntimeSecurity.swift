@@ -925,7 +925,7 @@ private func runtimeCipherInitialize(
 ) -> Int {
     outThrown?.pointee = 0
     guard let cipher = runtimeCipherBox(from: cipherRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: cipher init received invalid Cipher handle \(cipherRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: cipher init received invalid Cipher handle")
     }
     guard let opmode = runtimeCipherOperation(from: opmodeRaw) else {
         runtimeSetThrown(outThrown, message: "IllegalStateException: Unsupported cipher mode \(opmodeRaw)")
@@ -1045,7 +1045,7 @@ public func kk_keypairgenerator_initialize(
 ) -> Int {
     outThrown?.pointee = 0
     guard let generator = runtimeKeyPairGeneratorBox(from: generatorRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_keypairgenerator_initialize received invalid KeyPairGenerator handle \(generatorRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_keypairgenerator_initialize received invalid KeyPairGenerator handle")
     }
     generator.keySizeInBits = keySizeRaw
     return 0
@@ -1058,7 +1058,7 @@ public func kk_keypairgenerator_generateKeyPair(
 ) -> Int {
     outThrown?.pointee = 0
     guard let generator = runtimeKeyPairGeneratorBox(from: generatorRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_keypairgenerator_generateKeyPair received invalid KeyPairGenerator handle \(generatorRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_keypairgenerator_generateKeyPair received invalid KeyPairGenerator handle")
     }
     return runtimeKeyPairGeneratorCreate(
         algorithm: generator.algorithm,
@@ -1070,7 +1070,7 @@ public func kk_keypairgenerator_generateKeyPair(
 @_cdecl("kk_keypair_public")
 public func kk_keypair_public(_ keyPairRaw: Int) -> Int {
     guard let keyPair = runtimeKeyPairBox(from: keyPairRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_keypair_public received invalid KeyPair handle \(keyPairRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_keypair_public received invalid KeyPair handle")
     }
     return keyPair.publicKeyRaw
 }
@@ -1078,7 +1078,7 @@ public func kk_keypair_public(_ keyPairRaw: Int) -> Int {
 @_cdecl("kk_keypair_private")
 public func kk_keypair_private(_ keyPairRaw: Int) -> Int {
     guard let keyPair = runtimeKeyPairBox(from: keyPairRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_keypair_private received invalid KeyPair handle \(keyPairRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_keypair_private received invalid KeyPair handle")
     }
     return keyPair.privateKeyRaw
 }
@@ -1105,7 +1105,7 @@ public func kk_keypair_new(
 public func kk_keypair_publicKey(_ keyPairRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     guard let keyPair = runtimeKeyPairBox(from: keyPairRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_keypair_publicKey received invalid KeyPair handle \(keyPairRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_keypair_publicKey received invalid KeyPair handle")
     }
     return keyPair.publicKeyRaw
 }
@@ -1114,7 +1114,7 @@ public func kk_keypair_publicKey(_ keyPairRaw: Int, _ outThrown: UnsafeMutablePo
 public func kk_keypair_privateKey(_ keyPairRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     guard let keyPair = runtimeKeyPairBox(from: keyPairRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_keypair_privateKey received invalid KeyPair handle \(keyPairRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_keypair_privateKey received invalid KeyPair handle")
     }
     return keyPair.privateKeyRaw
 }
@@ -1138,7 +1138,7 @@ public func kk_signature_initSign(
 ) -> Int {
     outThrown?.pointee = 0
     guard let signature = runtimeSignatureBox(from: signatureRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_signature_initSign received invalid Signature handle \(signatureRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_signature_initSign received invalid Signature handle")
     }
     guard let keyBox = runtimePrivateKeyBox(from: keyRaw) else {
         runtimeSetThrown(outThrown, message: "InvalidKeyException: expected PrivateKey")
@@ -1162,7 +1162,7 @@ public func kk_signature_initVerify(
 ) -> Int {
     outThrown?.pointee = 0
     guard let signature = runtimeSignatureBox(from: signatureRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_signature_initVerify received invalid Signature handle \(signatureRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_signature_initVerify received invalid Signature handle")
     }
     guard let keyBox = runtimePublicKeyBox(from: keyRaw) else {
         runtimeSetThrown(outThrown, message: "InvalidKeyException: expected PublicKey")
@@ -1186,7 +1186,7 @@ public func kk_signature_update(
 ) -> Int {
     outThrown?.pointee = 0
     guard let signature = runtimeSignatureBox(from: signatureRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_signature_update received invalid Signature handle \(signatureRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_signature_update received invalid Signature handle")
     }
     guard let bytes = runtimeSecurityBytes(from: dataRaw, caller: #function) else {
         runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected ByteArray/List<Int>")
@@ -1203,7 +1203,7 @@ public func kk_signature_sign(
 ) -> Int {
     outThrown?.pointee = 0
     guard let signature = runtimeSignatureBox(from: signatureRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_signature_sign received invalid Signature handle \(signatureRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_signature_sign received invalid Signature handle")
     }
     guard let result = runtimeSignatureTransform(signature: signature, outThrown: outThrown) else {
         return 0
@@ -1219,7 +1219,7 @@ public func kk_signature_verify(
 ) -> Int {
     outThrown?.pointee = 0
     guard let signature = runtimeSignatureBox(from: signatureRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_signature_verify received invalid Signature handle \(signatureRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_signature_verify received invalid Signature handle")
     }
     guard let signatureBytes = runtimeSecurityBytes(from: signatureBytesRaw, caller: #function) else {
         runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected ByteArray/List<Int>")
@@ -1277,7 +1277,7 @@ public func kk_cipher_doFinal(
 ) -> Int {
     outThrown?.pointee = 0
     guard let cipher = runtimeCipherBox(from: cipherRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_cipher_doFinal received invalid Cipher handle \(cipherRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_cipher_doFinal received invalid Cipher handle")
     }
     guard let input = runtimeSecurityBytes(from: dataRaw, caller: #function) else {
         runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected ByteArray/List<Int>")
@@ -1296,7 +1296,7 @@ public func kk_cipher_doFinal_noarg(
 ) -> Int {
     outThrown?.pointee = 0
     guard let cipher = runtimeCipherBox(from: cipherRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_cipher_doFinal_noarg received invalid Cipher handle \(cipherRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_cipher_doFinal_noarg received invalid Cipher handle")
     }
     guard let output = runtimeCipherTransform(cipher: cipher, inputBytes: [], outThrown: outThrown) else {
         return 0
@@ -1443,7 +1443,7 @@ public func kk_certificatefactory_generateCertificate(
 ) -> Int {
     outThrown?.pointee = 0
     guard let factory = runtimeCertificateFactoryBox(from: factoryRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_certificatefactory_generateCertificate received invalid CertificateFactory handle \(factoryRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_certificatefactory_generateCertificate received invalid CertificateFactory handle")
     }
     guard factory.typeName.uppercased() == "X.509" || factory.typeName.uppercased() == "X509" else {
         runtimeSetThrown(outThrown, message: "CertificateException: unsupported certificate factory \(factory.typeName)")
@@ -1464,7 +1464,7 @@ public func kk_certificatefactory_generateCertificate(
 public func kk_x509certificate_getPublicKey(_ certificateRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     guard let certificate = runtimeX509CertificateBox(from: certificateRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_x509certificate_getPublicKey received invalid X509Certificate handle \(certificateRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_x509certificate_getPublicKey received invalid X509Certificate handle")
     }
     guard let publicKey = SecCertificateCopyKey(certificate.certificate) else {
         runtimeSetThrown(outThrown, message: "CertificateException: unable to extract public key")
@@ -1478,7 +1478,7 @@ public func kk_x509certificate_getPublicKey(_ certificateRaw: Int, _ outThrown: 
 public func kk_x509certificate_getEncoded(_ certificateRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     guard let certificate = runtimeX509CertificateBox(from: certificateRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_x509certificate_getEncoded received invalid X509Certificate handle \(certificateRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_x509certificate_getEncoded received invalid X509Certificate handle")
     }
     return runtimeMakeByteArrayRaw(certificate.encodedBytes)
 }
@@ -1540,7 +1540,7 @@ public func kk_pkixparameters_setTrustAnchors(
 ) -> Int {
     outThrown?.pointee = 0
     guard let parameters = runtimePKIXParametersBox(from: parametersRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_pkixparameters_setTrustAnchors received invalid PKIXParameters handle \(parametersRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_pkixparameters_setTrustAnchors received invalid PKIXParameters handle")
     }
     guard let trustAnchorList = runtimeListBox(from: trustAnchorsRaw) else {
         runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected List<TrustAnchor>")
@@ -1567,7 +1567,7 @@ public func kk_certpathvalidator_validate(
 ) -> Int {
     outThrown?.pointee = 0
     guard let validator = runtimeCertPathValidatorBox(from: validatorRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_certpathvalidator_validate received invalid CertPathValidator handle \(validatorRaw)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_certpathvalidator_validate received invalid CertPathValidator handle")
     }
     guard validator.algorithm.uppercased() == "PKIX" else {
         runtimeSetThrown(outThrown, message: "NoSuchAlgorithmException: \(validator.algorithm)")

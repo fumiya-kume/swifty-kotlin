@@ -251,12 +251,31 @@ extension CallTypeChecker {
                     sema.bindings.bindExprType(id, type: boolType)
                     return boolType
                 }
+                // STDLIB-REFLECT-060: KClass boolean properties (isFinal, isOpen, isAbstract)
+                let kclassBooleanCallees: Set<InternedString> = [
+                    knownNames.isFinalName, knownNames.isOpenName, knownNames.isAbstractName,
+                ]
+                if kclassBooleanCallees.contains(calleeName), args.isEmpty {
+                    let boolType = sema.types.booleanType
+                    sema.bindings.bindExprType(id, type: boolType)
+                    return boolType
+                }
+                // STDLIB-REFLECT-060: KClass.visibility -> String?
+                if calleeName == knownNames.visibilityName, args.isEmpty {
+                    let nullableStringType = sema.types.makeNullable(
+                        sema.types.make(.primitive(.string, .nonNull))
+                    )
+                    sema.bindings.bindExprType(id, type: nullableStringType)
+                    return nullableStringType
+                }
                 let kclassMemberCollectionCallees: Set<InternedString> = [
                     knownNames.membersName, knownNames.constructorsName,
                     knownNames.propertiesName, knownNames.memberPropertiesName,
                     knownNames.declaredMemberPropertiesName,
                     knownNames.functionsName, knownNames.memberFunctionsName,
                     knownNames.declaredMemberFunctionsName,
+                    // STDLIB-REFLECT-060: KClass collection properties
+                    knownNames.typeParametersName, knownNames.supertypesName,
                 ]
                 if kclassMemberCollectionCallees.contains(calleeName), args.isEmpty {
                     let listType = makeSyntheticListType(
@@ -325,12 +344,31 @@ extension CallTypeChecker {
                 sema.bindings.bindExprType(id, type: boolType)
                 return boolType
             }
+            // STDLIB-REFLECT-060: KClass boolean properties via variable receiver
+            let kclassVarBooleanCallees: Set<InternedString> = [
+                knownNames.isFinalName, knownNames.isOpenName, knownNames.isAbstractName,
+            ]
+            if kclassVarBooleanCallees.contains(calleeName), args.isEmpty {
+                let boolType = sema.types.booleanType
+                sema.bindings.bindExprType(id, type: boolType)
+                return boolType
+            }
+            // STDLIB-REFLECT-060: KClass.visibility via variable receiver -> String?
+            if calleeName == knownNames.visibilityName, args.isEmpty {
+                let nullableStringType = sema.types.makeNullable(
+                    sema.types.make(.primitive(.string, .nonNull))
+                )
+                sema.bindings.bindExprType(id, type: nullableStringType)
+                return nullableStringType
+            }
             let kclassVarMemberCollectionCallees: Set<InternedString> = [
                 knownNames.membersName, knownNames.constructorsName,
                 knownNames.propertiesName, knownNames.memberPropertiesName,
                 knownNames.declaredMemberPropertiesName,
                 knownNames.functionsName, knownNames.memberFunctionsName,
                 knownNames.declaredMemberFunctionsName,
+                // STDLIB-REFLECT-060: KClass collection properties
+                knownNames.typeParametersName, knownNames.supertypesName,
             ]
             if kclassVarMemberCollectionCallees.contains(calleeName), args.isEmpty {
                 let listType = makeSyntheticListType(
@@ -4302,6 +4340,18 @@ extension CallTypeChecker {
             ) {
                 return fallbackType
             }
+            if let fallbackType = tryKFunctionMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
             if let fallbackType = tryStringMemberFallback(
                 id,
                 calleeName: calleeName,
@@ -4648,6 +4698,18 @@ extension CallTypeChecker {
             ) {
                 return fallbackType
             }
+            if let fallbackType = tryKFunctionMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
             if let fallbackType = tryStringMemberFallback(
                 id,
                 calleeName: calleeName,
@@ -4752,6 +4814,18 @@ extension CallTypeChecker {
                 return fallbackType
             }
             if let fallbackType = tryRegexMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
+            if let fallbackType = tryKFunctionMemberFallback(
                 id,
                 calleeName: calleeName,
                 isClassNameReceiver: isClassNameReceiver,

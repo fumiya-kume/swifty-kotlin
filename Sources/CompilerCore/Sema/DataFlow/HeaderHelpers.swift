@@ -834,6 +834,9 @@ extension DataFlowSemaPhase {
         // shuffled(random: Random) can look up the kotlin.random.Random symbol.
         registerSyntheticRandomStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCollectionStubs(symbols: symbols, types: types, interner: interner)
+        // STDLIB-REFLECT-063: Now that List is registered, update KFunction.parameters type to
+        // List<Any?> so that `.size` resolves correctly on the parameters property.
+        patchKFunctionParametersType(symbols: symbols, types: types, interner: interner)
         registerSyntheticRangeProgressionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
         registerSyntheticBuilderDSLStubs(symbols: symbols, types: types, interner: interner)
@@ -869,6 +872,7 @@ extension DataFlowSemaPhase {
         registerSyntheticEnumStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticAtomicStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticUuidStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticSerializationStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticURIStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticLoggingStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticSecurityStubs(symbols: symbols, types: types, interner: interner)
