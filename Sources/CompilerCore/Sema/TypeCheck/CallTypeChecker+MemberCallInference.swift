@@ -3057,7 +3057,7 @@ extension CallTypeChecker {
                 if !innerCtorCandidates.isEmpty {
                     allCandidates = innerCtorCandidates
                 } else {
-                    allCandidates = ctx.cachedScopeLookup(calleeName).filter { candidate in
+                    var scopeCandidates = ctx.cachedScopeLookup(calleeName).filter { candidate in
                         guard let symbol = ctx.cachedSymbol(candidate),
                               symbol.kind == .function,
                               let signature = sema.symbols.functionSignature(for: candidate) else { return false }
@@ -3067,6 +3067,23 @@ extension CallTypeChecker {
                         }
                         return true
                     }
+                    // Extension functions are excluded from scope by the scope
+                    // builder so they don't shadow top-level calls.  Fall back
+                    // to a direct symbol-table lookup by short name to find
+                    // synthetic extension functions (e.g. Double.pow, roundToInt).
+                    if scopeCandidates.isEmpty {
+                        let nonNullReceiver = sema.types.makeNonNullable(memberLookupType)
+                        scopeCandidates = sema.symbols.lookupByShortName(calleeName).filter { candidate in
+                            guard let symbol = sema.symbols.symbol(candidate),
+                                  symbol.kind == .function,
+                                  symbol.flags.contains(.synthetic),
+                                  let signature = sema.symbols.functionSignature(for: candidate),
+                                  let recvType = signature.receiverType
+                            else { return false }
+                            return sema.types.isSubtype(nonNullReceiver, recvType)
+                        }
+                    }
+                    allCandidates = scopeCandidates
                 }
             }
         }
