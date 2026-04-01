@@ -8,9 +8,9 @@
 /// - Temporary files: `createTempFile()`, `createTempDirectory()`
 ///
 /// `Files` is modelled as a Kotlin `object` (singleton) whose methods are
-/// dispatched to `kk_files_*` runtime entry points.  The Path type is
-/// resolved from the existing kotlin.io.path.Path symbol registered by
-/// `registerSyntheticPathStubs`.
+/// dispatched to `kk_files_*` runtime entry points.  The `Path` type is
+/// modelled as `java.nio.file.Path` so the Files API can share the existing
+/// runtime path box without exposing extra `kotlin.io.path` extension stubs.
 extension DataFlowSemaPhase {
     func registerSyntheticFilesUtilityStubs(
         symbols: SymbolTable,
@@ -33,15 +33,16 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(filesType, for: filesSymbol)
 
-        // Resolve Path type from kotlin.io.path.Path
-        let pathSymbol = resolveFilesPathSymbol(symbols: symbols, interner: interner)
-        guard let pathSym = pathSymbol else {
-            // Path stubs not yet registered; bail out — will be retried on next pass
-            return
-        }
+        let pathSymbol = ensureJavaNIOPathSymbol(
+            in: javaNIOFilePkg,
+            pkgSymbol: javaNIOFilePkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
         let pathType = types.make(.classType(ClassType(
-            classSymbol: pathSym, args: [], nullability: .nonNull
+            classSymbol: pathSymbol, args: [], nullability: .nonNull
         )))
+        symbols.setPropertyType(pathType, for: pathSymbol)
         let fileTimeSymbol = ensureFileTimeSymbol(
             symbols: symbols,
             types: types,
@@ -128,6 +129,28 @@ extension DataFlowSemaPhase {
             ownerSymbol: filesSymbol,
             ownerType: filesType,
             parameters: [("path", pathType)],
+            returnType: pathType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFilesMemberFunction(
+            named: "resolve",
+            externalLinkName: "kk_path_resolve_string",
+            ownerSymbol: pathSymbol,
+            ownerType: pathType,
+            parameters: [("other", types.stringType)],
+            returnType: pathType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFilesMemberFunction(
+            named: "resolve",
+            externalLinkName: "kk_path_resolve_path",
+            ownerSymbol: pathSymbol,
+            ownerType: pathType,
+            parameters: [("other", pathType)],
             returnType: pathType,
             symbols: symbols,
             interner: interner
@@ -288,17 +311,29 @@ extension DataFlowSemaPhase {
         return filesSymbol
     }
 
-    private func resolveFilesPathSymbol(
+    private func ensureJavaNIOPathSymbol(
+        in pkg: [InternedString],
+        pkgSymbol: SymbolID?,
         symbols: SymbolTable,
         interner: StringInterner
-    ) -> SymbolID? {
-        let pathFQName: [InternedString] = [
-            interner.intern("kotlin"),
-            interner.intern("io"),
-            interner.intern("path"),
-            interner.intern("Path"),
-        ]
-        return symbols.lookup(fqName: pathFQName)
+    ) -> SymbolID {
+        let pathName = interner.intern("Path")
+        let pathFQName = pkg + [pathName]
+        if let existing = symbols.lookup(fqName: pathFQName) {
+            return existing
+        }
+        let pathSymbol = symbols.define(
+            kind: .class,
+            name: pathName,
+            fqName: pathFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let pkgSym = pkgSymbol {
+            symbols.setParentSymbol(pkgSym, for: pathSymbol)
+        }
+        return pathSymbol
     }
 
     private func resolveFilesListSymbol(
