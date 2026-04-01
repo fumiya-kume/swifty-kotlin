@@ -24,6 +24,28 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testAtomicReferenceInAtomicsPackageIsResolved() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+
+        import kotlin.concurrent.atomics.AtomicReference
+
+        fun main() {
+            val ar = AtomicReference<String>("hello")
+            println(ar.load())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "AtomicReference in kotlin.concurrent.atomics should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testTypeSystemLUBAndGLB() {
         let types = TypeSystem()
 
