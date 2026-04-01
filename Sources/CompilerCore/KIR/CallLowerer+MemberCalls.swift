@@ -3649,39 +3649,38 @@ extension CallLowerer {
         return finalArgs
     }
 
-    private func makeComparatorTrampolineArgument(
+    func comparatorTrampolineName(
         comparatorExprID: ExprID?,
         loweredComparatorID: KIRExprID,
         sema: SemaModule,
-        arena: KIRArena,
         interner: StringInterner,
-        instructions: inout [KIRInstruction]
-    ) -> [KIRExprID]? {
+        instructions: [KIRInstruction]
+    ) -> String? {
         func trampolineName(for externalLinkName: String) -> String? {
             switch externalLinkName {
-        case "kk_comparator_from_selector":
-            return "kk_comparator_from_selector_trampoline"
-        case "kk_comparator_from_selector_descending":
-            return "kk_comparator_from_selector_descending_trampoline"
-        case "kk_comparator_from_multi_selectors",
-             "kk_comparator_from_multi_selectors3":
-            return "kk_comparator_from_multi_selectors_trampoline"
-        case "kk_comparator_nulls_first":
-            return "kk_comparator_nulls_first_trampoline"
-        case "kk_comparator_nulls_last":
-            return "kk_comparator_nulls_last_trampoline"
-        case "kk_comparator_then_by":
-            return "kk_comparator_then_by_trampoline"
-        case "kk_comparator_then_by_descending":
-            return "kk_comparator_then_by_descending_trampoline"
-        case "kk_comparator_reversed":
-            return "kk_comparator_reversed_trampoline"
-        case "kk_comparator_natural_order":
-            return "kk_comparator_natural_order_trampoline"
-        case "kk_comparator_reverse_order":
-            return "kk_comparator_reverse_order_trampoline"
-        default:
-            return nil
+            case "kk_comparator_from_selector":
+                return "kk_comparator_from_selector_trampoline"
+            case "kk_comparator_from_selector_descending":
+                return "kk_comparator_from_selector_descending_trampoline"
+            case "kk_comparator_from_multi_selectors",
+                 "kk_comparator_from_multi_selectors3":
+                return "kk_comparator_from_multi_selectors_trampoline"
+            case "kk_comparator_nulls_first":
+                return "kk_comparator_nulls_first_trampoline"
+            case "kk_comparator_nulls_last":
+                return "kk_comparator_nulls_last_trampoline"
+            case "kk_comparator_then_by":
+                return "kk_comparator_then_by_trampoline"
+            case "kk_comparator_then_by_descending":
+                return "kk_comparator_then_by_descending_trampoline"
+            case "kk_comparator_reversed":
+                return "kk_comparator_reversed_trampoline"
+            case "kk_comparator_natural_order":
+                return "kk_comparator_natural_order_trampoline"
+            case "kk_comparator_reverse_order":
+                return "kk_comparator_reverse_order_trampoline"
+            default:
+                return nil
             }
         }
 
@@ -3713,30 +3712,46 @@ extension CallLowerer {
             }
         }
 
-        let trampolineName: String? = {
-            if let comparatorExprID,
-               let chosenCallee = sema.bindings.callBinding(for: comparatorExprID)?.chosenCallee
+        if let comparatorExprID,
+           let chosenCallee = sema.bindings.callBinding(for: comparatorExprID)?.chosenCallee
+        {
+            if let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
+               let trampolineName = trampolineName(for: externalLinkName)
             {
-                if let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
-                   let trampolineName = trampolineName(for: externalLinkName)
-                {
-                    return trampolineName
-                }
-                if let trampolineName = trampolineName(for: chosenCallee) {
-                    return trampolineName
-                }
-            }
-            for instruction in instructions.reversed() {
-                guard case let .call(_, callee, _, result, _, _, _, _) = instruction,
-                      result == loweredComparatorID,
-                      let trampolineName = trampolineName(for: interner.resolve(callee))
-                else {
-                    continue
-                }
                 return trampolineName
             }
-            return nil
-        }()
+            if let trampolineName = trampolineName(for: chosenCallee) {
+                return trampolineName
+            }
+        }
+
+        for instruction in instructions.reversed() {
+            guard case let .call(_, callee, _, result, _, _, _, _) = instruction,
+                  result == loweredComparatorID,
+                  let trampolineName = trampolineName(for: interner.resolve(callee))
+            else {
+                continue
+            }
+            return trampolineName
+        }
+        return nil
+    }
+
+    private func makeComparatorTrampolineArgument(
+        comparatorExprID: ExprID?,
+        loweredComparatorID: KIRExprID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> [KIRExprID]? {
+        let trampolineName = comparatorTrampolineName(
+            comparatorExprID: comparatorExprID,
+            loweredComparatorID: loweredComparatorID,
+            sema: sema,
+            interner: interner,
+            instructions: instructions
+        )
         guard let trampolineName else {
             return nil
         }
