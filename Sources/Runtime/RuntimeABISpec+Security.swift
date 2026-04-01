@@ -1,4 +1,4 @@
-// Symmetric crypto functions (STDLIB-SEC-144).
+// Security runtime functions (STDLIB-SEC-144..146).
 
 public extension RuntimeABISpec {
     static let securityFunctions: [RuntimeABIFunctionSpec] = [

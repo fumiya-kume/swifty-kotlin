@@ -1,4 +1,3 @@
-// SKIP-DIFF
 // STDLIB-REFLECT-064: KConstructor complete implementation
 class Simple
 

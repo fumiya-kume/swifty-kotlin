@@ -46,7 +46,7 @@ final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
         let verifier = kk_signature_getInstance(runtimeString(algorithm), nil)
         _ = kk_signature_initVerify(verifier, publicKey, nil)
         _ = kk_signature_update(verifier, runtimeBytes(message), nil)
-        return kk_signature_verify(verifier, signatureBytes, nil) == kk_box_bool(1)
+        return kk_unbox_bool(kk_signature_verify(verifier, signatureBytes, nil)) == 1
     }
 
     func testSignatureRoundTripsWithSHA1AndSHA256() {
@@ -88,8 +88,8 @@ final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
         let parameters = kk_pkixparameters_new(runtimeList([trustAnchor]), nil)
         let validator = kk_certpathvalidator_getInstance(runtimeString("PKIX"), nil)
         XCTAssertEqual(
-            kk_certpathvalidator_validate(validator, certPath, parameters, nil),
-            kk_box_bool(1)
+            kk_unbox_bool(kk_certpathvalidator_validate(validator, certPath, parameters, nil)),
+            1
         )
     }
 }

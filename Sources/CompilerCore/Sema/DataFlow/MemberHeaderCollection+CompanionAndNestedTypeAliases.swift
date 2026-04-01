@@ -6,6 +6,7 @@ extension DataFlowSemaPhase {
         ownerFQName: [InternedString],
         ownerSymbol: SymbolID,
         ownerType: TypeID?,
+        sourceFileID: FileID,
         ast: ASTModule,
         symbols: SymbolTable,
         types: TypeSystem,
@@ -38,6 +39,7 @@ extension DataFlowSemaPhase {
             visibility: visibility(from: companionObject.modifiers),
             flags: flags(from: companionObject.modifiers)
         )
+        symbols.setSourceFileID(sourceFileID, for: companionSymbol)
         registerAnnotations(
             for: decl,
             symbol: companionSymbol,
@@ -60,6 +62,7 @@ extension DataFlowSemaPhase {
         collectNestedTypeAliases(
             companionObject.nestedTypeAliases,
             ownerFQName: companionFQName,
+            sourceFileID: sourceFileID,
             ast: ast,
             symbols: symbols,
             types: types,
@@ -74,6 +77,7 @@ extension DataFlowSemaPhase {
                 nestedObjects: companionObject.nestedObjects
             ),
             owner: OwnerContext(fqName: companionFQName, symbol: companionSymbol, type: companionType),
+            sourceFileID: sourceFileID,
             ast: ast,
             symbols: symbols,
             types: types,
@@ -100,6 +104,7 @@ extension DataFlowSemaPhase {
     func collectNestedTypeAliases(
         _ aliases: [TypeAliasDecl],
         ownerFQName: [InternedString],
+        sourceFileID: FileID,
         ast: ASTModule,
         symbols: SymbolTable,
         types: TypeSystem,
@@ -124,6 +129,7 @@ extension DataFlowSemaPhase {
                 visibility: visibility(from: alias.modifiers),
                 flags: flags(from: alias.modifiers)
             )
+            symbols.setSourceFileID(sourceFileID, for: aliasSymbol)
             let localTypeParameters = registerTypeAliasTypeParameters(
                 alias.typeParams,
                 aliasSymbol: aliasSymbol,
