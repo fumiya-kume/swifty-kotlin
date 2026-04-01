@@ -71,6 +71,38 @@ public struct SemanticSymbol: Sendable {
     public var flags: SymbolFlags
 }
 
+func isCompatibleExpectActualPair(
+    newKind: SymbolKind,
+    newFlags: SymbolFlags,
+    existing: SemanticSymbol
+) -> Bool {
+    let isNewExpect = newFlags.contains(.expectDeclaration)
+    let isNewActual = newFlags.contains(.actualDeclaration)
+    guard isNewExpect != isNewActual else {
+        return false
+    }
+
+    let hasExistingExpect = existing.flags.contains(.expectDeclaration)
+    let hasExistingActual = existing.flags.contains(.actualDeclaration)
+    guard hasExistingExpect != hasExistingActual else {
+        return false
+    }
+
+    if isNewExpect {
+        guard hasExistingActual else {
+            return false
+        }
+        return newKind == existing.kind
+            || (newKind == .annotationClass && existing.kind == .typeAlias)
+    }
+
+    guard hasExistingExpect else {
+        return false
+    }
+    return newKind == existing.kind
+        || (newKind == .typeAlias && existing.kind == .annotationClass)
+}
+
 public struct FunctionSignature: Hashable, Sendable {
     public let receiverType: TypeID?
     public let parameterTypes: [TypeID]
@@ -529,28 +561,12 @@ public final class SymbolTable {
         flags: SymbolFlags,
         existingSymbols: [SemanticSymbol]
     ) -> Bool {
-        // For Kotlin MPP, allow one `expect` + one `actual` symbol with the same FQ name.
-        // This is required for non-overloadable kinds like properties and classes.
-        let isNewExpect = flags.contains(.expectDeclaration)
-        let isNewActual = flags.contains(.actualDeclaration)
-        guard isNewExpect || isNewActual, !(isNewExpect && isNewActual) else {
+        // Allow exactly one matching `expect`/`actual` partner at a given FQ name.
+        let existingNonPackage = existingSymbols.filter { $0.kind != .package }
+        guard existingNonPackage.count == 1, let existing = existingNonPackage.first else {
             return false
         }
-
-        let oppositeFlag: SymbolFlags = isNewExpect ? .actualDeclaration : .expectDeclaration
-        let sameFlag: SymbolFlags = isNewExpect ? .expectDeclaration : .actualDeclaration
-
-        let sameKindExisting = existingSymbols.filter { $0.kind == kind }
-        let hasOpposite = sameKindExisting.contains { $0.flags.contains(oppositeFlag) }
-        let hasSame = sameKindExisting.contains { $0.flags.contains(sameFlag) }
-
-        // Only permit coexistence when we're pairing an `expect` with an `actual`.
-        // If a non-MPP symbol already exists at this name+kind, treat it as a conflict.
-        let hasNonMPP = sameKindExisting.contains { sym in
-            !sym.flags.contains(.expectDeclaration) && !sym.flags.contains(.actualDeclaration)
-        }
-
-        return hasOpposite && !hasSame && !hasNonMPP
+        return isCompatibleExpectActualPair(newKind: kind, newFlags: flags, existing: existing)
     }
 
     private func canCoexistAsSyntheticPropertyFamily(
