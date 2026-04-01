@@ -3614,6 +3614,7 @@ private func resolveToCoroutineContext(_ raw: Int) -> RuntimeCoroutineContext {
     return RuntimeCoroutineContext(dispatcher: raw)
 }
 
+
 // MARK: - Coroutine Dispatcher Scheduler (STDLIB-133)
 
 /// A coroutine dispatcher that schedules work on a specific GCD queue.
@@ -3767,18 +3768,11 @@ private final class WithContextResultBox: @unchecked Sendable {
 /// suspension points such as `delay`), and blocks the caller until the block
 /// completes, returning its result.
 ///
-/// STDLIB-CORO-077: Also handles RuntimeCoroutineContext objects. If dispatcherRaw
-/// is a pointer to a RuntimeCoroutineContext, the dispatcher is extracted from it
-/// and context elements (name, exception handler) are propagated.
+/// STDLIB-CORO-077: Also handles CoroutineContext handles. If dispatcherRaw
+/// is a context handle, element propagation is delegated to kk_with_context_full.
 @_cdecl("kk_with_context")
 public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuation: Int) -> Int {
-    // STDLIB-CORO-077: If dispatcherRaw is a RuntimeCoroutineContext, delegate
-    // to kk_with_context_full which handles context element propagation.
-    if !isDispatcherTag(dispatcherRaw), dispatcherRaw != 0,
-       let ptr = UnsafeMutableRawPointer(bitPattern: dispatcherRaw),
-       runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
-       tryCast(ptr, to: RuntimeCoroutineContext.self) != nil
-    {
+    if dispatcherRaw != 0, contextBoxFromHandle(dispatcherRaw) != nil {
         return kk_with_context_full(dispatcherRaw, blockFnPtr, continuation)
     }
 
