@@ -2252,10 +2252,49 @@ extension CallTypeChecker {
             }
         }
 
-        // Infer argument types for the normal resolution path (scope functions and
-        // collection HOFs infer their lambda args with expected type above and return).
+        // Comparator member HOFs (STDLIB-176): thenBy/thenByDescending/thenComparator.
+        // These need the Comparator<T> receiver type so the lambda gets the correct
+        // contextual function signature before the general resolution path runs.
+        if args.count == 1 {
+            let calleeStr = interner.resolve(calleeName)
+            if let comparatorElementType = resolvedComparatorElementType(
+                of: receiverType,
+                sema: sema,
+                interner: interner
+            ) {
+                if let lambdaExpr = ast.arena.expr(args[0].expr),
+                   lambdaExpr.isLambdaOrCallableRef
+                {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                switch calleeStr {
+                case "thenBy", "thenByDescending":
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [comparatorElementType],
+                        returnType: sema.types.anyType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                case "thenComparator":
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [comparatorElementType, comparatorElementType],
+                        returnType: sema.types.intType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                default:
+                    break
+                }
+            }
+        }
+
+        // Infer argument types for the normal resolution path (scope functions,
+        // collection HOFs, and comparator HOFs infer their lambda args with
+        // expected type above and return).
         let argTypes = args.enumerated().map { _, arg in
-            return driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
+            sema.bindings.exprType(for: arg.expr) ?? driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
         }
 
         let hasLeadingLocaleArgument = calleeName == interner.intern("format")
@@ -5414,6 +5453,80 @@ extension CallTypeChecker {
         return switch firstArg {
         case let .invariant(id), let .out(id), let .in(id): id
         case .star: sema.types.anyType
+        }
+    }
+
+    /// Extract the element type T from a Comparator<T> receiver type.
+    /// Returns `nil` if the receiver does not resolve to Comparator.
+    private func resolvedComparatorElementType(
+        of type: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        let comparatorFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("Comparator"),
+        ]
+        var visited: Set<SymbolID> = []
+        return resolvedComparatorElementType(
+            of: type,
+            comparatorFQName: comparatorFQName,
+            sema: sema,
+            visited: &visited
+        )
+    }
+
+    private func resolvedComparatorElementType(
+        of type: TypeID,
+        comparatorFQName: [InternedString],
+        sema: SemaModule,
+        visited: inout Set<SymbolID>
+    ) -> TypeID? {
+        let nonNullType = sema.types.makeNonNullable(type)
+        switch sema.types.kind(of: nonNullType) {
+        case let .classType(classType):
+            guard let symbol = sema.symbols.symbol(classType.classSymbol),
+                  symbol.fqName == comparatorFQName,
+                  let firstArg = classType.args.first
+            else {
+                return nil
+            }
+            return switch firstArg {
+            case let .invariant(id), let .out(id), let .in(id): id
+            case .star: sema.types.anyType
+            }
+
+        case let .intersection(parts):
+            for part in parts {
+                if let elementType = resolvedComparatorElementType(
+                    of: part,
+                    comparatorFQName: comparatorFQName,
+                    sema: sema,
+                    visited: &visited
+                ) {
+                    return elementType
+                }
+            }
+            return nil
+
+        case let .typeParam(typeParam):
+            guard visited.insert(typeParam.symbol).inserted else {
+                return nil
+            }
+            for bound in sema.symbols.typeParameterUpperBounds(for: typeParam.symbol) {
+                if let elementType = resolvedComparatorElementType(
+                    of: bound,
+                    comparatorFQName: comparatorFQName,
+                    sema: sema,
+                    visited: &visited
+                ) {
+                    return elementType
+                }
+            }
+            return nil
+
+        default:
+            return nil
         }
     }
 

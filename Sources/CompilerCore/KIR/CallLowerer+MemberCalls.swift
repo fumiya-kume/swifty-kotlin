@@ -3674,6 +3674,8 @@ extension CallLowerer {
             return "kk_comparator_then_by_trampoline"
         case "kk_comparator_then_by_descending":
             return "kk_comparator_then_by_descending_trampoline"
+        case "kk_comparator_then_comparator":
+            return "kk_comparator_then_comparator_trampoline"
         case "kk_comparator_reversed":
             return "kk_comparator_reversed_trampoline"
         case "kk_comparator_natural_order":
@@ -3698,6 +3700,8 @@ extension CallLowerer {
                 return "kk_comparator_then_by_trampoline"
             case "thenByDescending":
                 return "kk_comparator_then_by_descending_trampoline"
+            case "thenComparator":
+                return "kk_comparator_then_comparator_trampoline"
             case "nullsFirst":
                 return "kk_comparator_nulls_first_trampoline"
             case "nullsLast":
