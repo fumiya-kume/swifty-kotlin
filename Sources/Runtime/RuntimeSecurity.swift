@@ -1818,7 +1818,6 @@ public func kk_certpathvalidator_validate(_ validatorRaw: Int, _ certPathRaw: In
     return 0
 }
 #endif
-
 // MARK: - MessageDigest Runtime Support (STDLIB-SEC-143)
 
 #if canImport(CryptoKit)
@@ -1904,4 +1903,3 @@ public func kk_message_digest_digest(_ digestRaw: Int, _ dataRaw: Int, _ outThro
     return 0
 }
 #endif
-
