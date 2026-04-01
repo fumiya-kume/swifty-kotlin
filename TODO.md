@@ -38,6 +38,10 @@
 - `TODO.md` は未完了タスクを主に管理しつつ、直近で完了した大きめの項目は `[x]` で残してよい。
 - タスクIDはカテゴリ接頭辞 (`LEX/TYPE/EXPR/CTRL/DECL/CLASS/PROP/FUNC/GEN/NULL/CORO/STDLIB/ANNO/TOOL/MPP`) + 3桁連番を使用する。
 - 完了済みタスクを参照する場合は `[x]` または `既存実装済み` のどちらかで明示する。
+- API-entry を追加/更新するときは、`RuntimeABISpec` 系 (`RuntimeABISpec.swift` / `RuntimeABISpec+*.swift`) と
+  `RuntimeABIExterns` 系 (`RuntimeABIExterns.swift` / `RuntimeABIExterns+*.swift`) を対にし、
+  `Sources/Runtime/*` の `@_cdecl` 実装、必要に応じた `ABILoweringPass+NonThrowingCallees.swift`、
+  `ABIMismatchTests+ExternSignatureParity.swift` の parity を同時に揃える。
 - 共通完了条件（全タスク共通）:
   1. `Scripts/diff_kotlinc.sh` が exit 0 かつ stdout 完全一致
   2. golden テストが byte 一致
@@ -420,8 +424,10 @@
     - Instant比較: ==, <, >, <=, >=
     - Instantプロパティ: epochSeconds, nanoOfSecond
     - Instant間の期間: until(), elapsed()
-  - **現状**: Instantは未実装
-  - **関連ファイル**: `RuntimeDuration.swift`
+  - **現状**: `RuntimeInstant.swift` に `@_cdecl` の API-entry 群 (`kk_instant_*` / `kk_clock_*`) があり、
+    `RuntimeABISpec+ABIParity.swift` と `RuntimeABIExterns.swift` で ABI を揃えている。`elapsed()` と
+    完全な `Clock` 抽象はまだ未完了。
+  - **関連ファイル**: `RuntimeInstant.swift`, `RuntimeDuration.swift`, `RuntimeABISpec+ABIParity.swift`, `RuntimeABIExterns.swift`, `ABILoweringPass+NonThrowingCallees.swift`
   - **テストケース**: `Scripts/diff_cases/instant_basic.kt`
 
 - [ ] STDLIB-TIME-085: システム時刻完全実装
@@ -444,8 +450,9 @@
     - Clockの抽象化: 時間ソースの統一インターフェース
     - Clockの調整: テスト用の時間操作
     - Clockのスレッドセーフティ
-  - **現状**: Clockは未実装
-  - **関連ファイル**: `RuntimeDuration.swift`
+  - **現状**: `kk_clock_system_now` / `kk_clock_now` の runtime entry はあるが、`SystemClock` / `TestClock`
+    の型としての実装は未完了。現行の入口は `Instant.now()` への alias になっている。
+  - **関連ファイル**: `RuntimeInstant.swift`, `RuntimeABISpec+ABIParity.swift`, `RuntimeABIExterns.swift`
   - **テストケース**: `Scripts/diff_cases/clock_basic.kt`
 
 #### Phase 3: I/Oとファイルシステム (低優先度)
