@@ -255,7 +255,7 @@ final class CallTypeChecker {
             // First arg is the receiver object
             let withReceiverType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             // Second arg is the lambda with receiver
-            var receiverCtx = ctx.with(implicitReceiverType: withReceiverType)
+            let receiverCtx = ctx.with(implicitReceiverType: withReceiverType)
             let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                 receiver: withReceiverType,
                 params: [],
@@ -1346,6 +1346,22 @@ final class CallTypeChecker {
                             candidates = vis
                             callInvisible.append(contentsOf: invis)
                         }
+                    }
+                }
+            }
+            if interner.resolve(calleeName) == "AtomicLongArray" {
+                let atomicLongArrayFQName = [
+                    interner.intern("kotlin"),
+                    interner.intern("concurrent"),
+                    interner.intern("AtomicLongArray"),
+                ]
+                if sema.symbols.lookup(fqName: atomicLongArrayFQName) != nil {
+                    let initName = interner.intern("<init>")
+                    let ctorSymbols = sema.symbols.lookupAll(fqName: atomicLongArrayFQName + [initName])
+                    if !ctorSymbols.isEmpty {
+                        let (vis, invis) = ctx.filterByVisibility(ctorSymbols)
+                        candidates.append(contentsOf: vis)
+                        callInvisible.append(contentsOf: invis)
                     }
                 }
             }

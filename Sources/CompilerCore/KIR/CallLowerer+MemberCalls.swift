@@ -4843,6 +4843,20 @@ extension CallLowerer {
         let fallbackName = interner.resolve(fallback)
         let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        if let atomicLongArrayRuntimeName = atomicLongArrayRuntimeCalleeName(
+            memberName: fallbackName,
+            receiverType: nonNullReceiverType,
+            sema: sema,
+            interner: interner
+        ) {
+            if let chosenCallee,
+               let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
+               !externalLinkName.isEmpty
+            {
+                return interner.intern(externalLinkName)
+            }
+            return atomicLongArrayRuntimeName
+        }
         let isProgressionReceiver: Bool = {
             guard case let .classType(classType) = sema.types.kind(of: nonNullReceiverType),
                   let symbol = sema.symbols.symbol(classType.classSymbol)
@@ -5629,6 +5643,49 @@ extension CallLowerer {
         }
 
         return nil
+    }
+
+    private func atomicLongArrayRuntimeCalleeName(
+        memberName: String,
+        receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> InternedString? {
+        guard case let .classType(classType) = sema.types.kind(of: receiverType),
+              let symbol = sema.symbols.symbol(classType.classSymbol),
+              interner.resolve(symbol.name) == "AtomicLongArray"
+        else {
+            return nil
+        }
+
+        switch memberName {
+        case "get":
+            return interner.intern("kk_atomic_long_array_get")
+        case "set":
+            return interner.intern("kk_atomic_long_array_set")
+        case "getAndAdd":
+            return interner.intern("kk_atomic_long_array_getAndAdd")
+        case "addAndGet":
+            return interner.intern("kk_atomic_long_array_addAndGet")
+        case "getAndIncrement":
+            return interner.intern("kk_atomic_long_array_getAndIncrement")
+        case "incrementAndGet":
+            return interner.intern("kk_atomic_long_array_incrementAndGet")
+        case "getAndDecrement":
+            return interner.intern("kk_atomic_long_array_getAndDecrement")
+        case "decrementAndGet":
+            return interner.intern("kk_atomic_long_array_decrementAndGet")
+        case "getAndSet":
+            return interner.intern("kk_atomic_long_array_getAndSet")
+        case "compareAndSet":
+            return interner.intern("kk_atomic_long_array_compareAndSet")
+        case "compareAndExchange":
+            return interner.intern("kk_atomic_long_array_compareAndExchange")
+        case "toString":
+            return interner.intern("kk_atomic_long_array_toString")
+        default:
+            return nil
+        }
     }
 
     // swiftlint:enable cyclomatic_complexity

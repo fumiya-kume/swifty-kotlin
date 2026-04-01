@@ -1,4 +1,4 @@
-// MARK: - Atomic (kotlin.concurrent.AtomicInt / AtomicLong / AtomicReference)
+// MARK: - Atomic (kotlin.concurrent.AtomicInt / AtomicLong / AtomicLongArray / AtomicReference)
 
 public extension RuntimeABIExterns {
     static let atomicExterns: [ExternDecl] = [
@@ -30,6 +30,22 @@ public extension RuntimeABIExterns {
         kk_atomic_long_decrementAndFetch,
         kk_atomic_long_getAndUpdate,
         kk_atomic_long_updateAndGet,
+        // AtomicLongArray
+        kk_atomic_long_array_create,
+        kk_atomic_long_array_create_with_init,
+        kk_atomic_long_array_length,
+        kk_atomic_long_array_get,
+        kk_atomic_long_array_set,
+        kk_atomic_long_array_getAndAdd,
+        kk_atomic_long_array_addAndGet,
+        kk_atomic_long_array_getAndIncrement,
+        kk_atomic_long_array_incrementAndGet,
+        kk_atomic_long_array_getAndDecrement,
+        kk_atomic_long_array_decrementAndGet,
+        kk_atomic_long_array_getAndSet,
+        kk_atomic_long_array_compareAndSet,
+        kk_atomic_long_array_compareAndExchange,
+        kk_atomic_long_array_toString,
         // AtomicReference
         kk_atomic_ref_create,
         kk_atomic_ref_load,
@@ -208,6 +224,98 @@ public extension RuntimeABIExterns {
     static let kk_atomic_long_updateAndGet = ExternDecl(
         name: "kk_atomic_long_updateAndGet",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // MARK: - AtomicLongArray
+
+    static let kk_atomic_long_array_create = ExternDecl(
+        name: "kk_atomic_long_array_create",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_long_array_create_with_init = ExternDecl(
+        name: "kk_atomic_long_array_create_with_init",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_long_array_length = ExternDecl(
+        name: "kk_atomic_long_array_length",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_long_array_get = ExternDecl(
+        name: "kk_atomic_long_array_get",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_long_array_set = ExternDecl(
+        name: "kk_atomic_long_array_set",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_long_array_getAndAdd = ExternDecl(
+        name: "kk_atomic_long_array_getAndAdd",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_long_array_addAndGet = ExternDecl(
+        name: "kk_atomic_long_array_addAndGet",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_long_array_getAndIncrement = ExternDecl(
+        name: "kk_atomic_long_array_getAndIncrement",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_long_array_incrementAndGet = ExternDecl(
+        name: "kk_atomic_long_array_incrementAndGet",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_long_array_getAndDecrement = ExternDecl(
+        name: "kk_atomic_long_array_getAndDecrement",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_long_array_decrementAndGet = ExternDecl(
+        name: "kk_atomic_long_array_decrementAndGet",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_long_array_getAndSet = ExternDecl(
+        name: "kk_atomic_long_array_getAndSet",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_long_array_compareAndSet = ExternDecl(
+        name: "kk_atomic_long_array_compareAndSet",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_long_array_compareAndExchange = ExternDecl(
+        name: "kk_atomic_long_array_compareAndExchange",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_long_array_toString = ExternDecl(
+        name: "kk_atomic_long_array_toString",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 

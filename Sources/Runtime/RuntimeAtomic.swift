@@ -368,6 +368,352 @@ public func kk_atomic_long_updateAndGet(
     return result.new
 }
 
+// MARK: - AtomicLongArray
+
+/// Backing storage for kotlin.concurrent.AtomicLongArray.
+final class AtomicLongArrayBox {
+    private var storage: [Int]
+    private let lock = NSLock()
+
+    init(length: Int) {
+        self.storage = Array(repeating: 0, count: max(0, length))
+    }
+
+    init(elements: [Int]) {
+        self.storage = elements
+    }
+
+    private func withLock<R>(_ body: () -> R) -> R {
+        lock.lock()
+        defer { lock.unlock() }
+        return body()
+    }
+
+    func length() -> Int {
+        withLock { storage.count }
+    }
+
+    func snapshot() -> [Int] {
+        withLock { storage }
+    }
+
+    func get(index: Int) -> Int? {
+        withLock {
+            guard storage.indices.contains(index) else { return nil }
+            return storage[index]
+        }
+    }
+
+    func set(index: Int, value: Int) -> Int? {
+        withLock {
+            guard storage.indices.contains(index) else { return nil }
+            storage[index] = value
+            return value
+        }
+    }
+
+    func getAndSet(index: Int, value: Int) -> Int? {
+        withLock {
+            guard storage.indices.contains(index) else { return nil }
+            let old = storage[index]
+            storage[index] = value
+            return old
+        }
+    }
+
+    func getAndAdd(index: Int, delta: Int) -> Int? {
+        withLock {
+            guard storage.indices.contains(index) else { return nil }
+            let old = storage[index]
+            storage[index] = old &+ delta
+            return old
+        }
+    }
+
+    func addAndGet(index: Int, delta: Int) -> Int? {
+        withLock {
+            guard storage.indices.contains(index) else { return nil }
+            storage[index] = storage[index] &+ delta
+            return storage[index]
+        }
+    }
+
+    func compareAndSet(index: Int, expect: Int, update: Int) -> Bool? {
+        withLock {
+            guard storage.indices.contains(index) else { return nil }
+            if storage[index] == expect {
+                storage[index] = update
+                return true
+            }
+            return false
+        }
+    }
+
+    func compareAndExchange(index: Int, expect: Int, update: Int) -> Int? {
+        withLock {
+            guard storage.indices.contains(index) else { return nil }
+            let old = storage[index]
+            if old == expect {
+                storage[index] = update
+            }
+            return old
+        }
+    }
+}
+
+private func atomicLongArrayBox(from raw: Int) -> AtomicLongArrayBox? {
+    guard raw != 0, let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    return Unmanaged<AtomicLongArrayBox>.fromOpaque(ptr).takeUnretainedValue()
+}
+
+private func runtimeAtomicLongArrayMakeString(_ value: String) -> Int {
+    value.withCString { cString in
+        let bytes = UnsafeRawPointer(cString).assumingMemoryBound(to: UInt8.self)
+        return Int(bitPattern: kk_string_from_utf8(bytes, Int32(value.utf8.count)))
+    }
+}
+
+@_cdecl("kk_atomic_long_array_create")
+public func kk_atomic_long_array_create(
+    _ size: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard size >= 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: size must be non-negative.")
+        return 0
+    }
+    return registerRuntimeObject(AtomicLongArrayBox(length: size))
+}
+
+@_cdecl("kk_atomic_long_array_create_with_init")
+public func kk_atomic_long_array_create_with_init(
+    _ size: Int,
+    _ initFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard size >= 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: size must be non-negative.")
+        return 0
+    }
+    guard initFn != 0 else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_atomic_long_array_create_with_init called with null function pointer")
+    }
+    var values = Array(repeating: 0, count: size)
+    for index in values.indices {
+        var thrown = 0
+        let value = kk_function_invoke(initFn, index, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        values[index] = value
+    }
+    return registerRuntimeObject(AtomicLongArrayBox(elements: values))
+}
+
+@_cdecl("kk_atomic_long_array_length")
+public func kk_atomic_long_array_length(_ receiver: Int) -> Int {
+    guard let box = atomicLongArrayBox(from: receiver) else { return 0 }
+    return box.length()
+}
+
+@_cdecl("kk_atomic_long_array_get")
+public func kk_atomic_long_array_get(
+    _ receiver: Int,
+    _ index: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicLongArrayBox(from: receiver) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "AtomicLongArray reference is null.")
+        return 0
+    }
+    guard let value = box.get(index: index) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "AtomicLongArray index \(index) out of bounds for length \(box.length())."
+        )
+        return 0
+    }
+    return value
+}
+
+@_cdecl("kk_atomic_long_array_set")
+public func kk_atomic_long_array_set(
+    _ receiver: Int,
+    _ index: Int,
+    _ value: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicLongArrayBox(from: receiver) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "AtomicLongArray reference is null.")
+        return 0
+    }
+    guard let stored = box.set(index: index, value: value) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "AtomicLongArray index \(index) out of bounds for length \(box.length())."
+        )
+        return 0
+    }
+    return stored
+}
+
+@_cdecl("kk_atomic_long_array_getAndAdd")
+public func kk_atomic_long_array_getAndAdd(
+    _ receiver: Int,
+    _ index: Int,
+    _ delta: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicLongArrayBox(from: receiver) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "AtomicLongArray reference is null.")
+        return 0
+    }
+    guard let old = box.getAndAdd(index: index, delta: delta) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "AtomicLongArray index \(index) out of bounds for length \(box.length())."
+        )
+        return 0
+    }
+    return old
+}
+
+@_cdecl("kk_atomic_long_array_addAndGet")
+public func kk_atomic_long_array_addAndGet(
+    _ receiver: Int,
+    _ index: Int,
+    _ delta: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicLongArrayBox(from: receiver) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "AtomicLongArray reference is null.")
+        return 0
+    }
+    guard let newValue = box.addAndGet(index: index, delta: delta) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "AtomicLongArray index \(index) out of bounds for length \(box.length())."
+        )
+        return 0
+    }
+    return newValue
+}
+
+@_cdecl("kk_atomic_long_array_getAndIncrement")
+public func kk_atomic_long_array_getAndIncrement(
+    _ receiver: Int,
+    _ index: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_atomic_long_array_getAndAdd(receiver, index, 1, outThrown)
+}
+
+@_cdecl("kk_atomic_long_array_incrementAndGet")
+public func kk_atomic_long_array_incrementAndGet(
+    _ receiver: Int,
+    _ index: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_atomic_long_array_addAndGet(receiver, index, 1, outThrown)
+}
+
+@_cdecl("kk_atomic_long_array_getAndDecrement")
+public func kk_atomic_long_array_getAndDecrement(
+    _ receiver: Int,
+    _ index: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_atomic_long_array_getAndAdd(receiver, index, -1, outThrown)
+}
+
+@_cdecl("kk_atomic_long_array_decrementAndGet")
+public func kk_atomic_long_array_decrementAndGet(
+    _ receiver: Int,
+    _ index: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_atomic_long_array_addAndGet(receiver, index, -1, outThrown)
+}
+
+@_cdecl("kk_atomic_long_array_getAndSet")
+public func kk_atomic_long_array_getAndSet(
+    _ receiver: Int,
+    _ index: Int,
+    _ value: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicLongArrayBox(from: receiver) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "AtomicLongArray reference is null.")
+        return 0
+    }
+    guard let old = box.getAndSet(index: index, value: value) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "AtomicLongArray index \(index) out of bounds for length \(box.length())."
+        )
+        return 0
+    }
+    return old
+}
+
+@_cdecl("kk_atomic_long_array_compareAndSet")
+public func kk_atomic_long_array_compareAndSet(
+    _ receiver: Int,
+    _ index: Int,
+    _ expect: Int,
+    _ update: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicLongArrayBox(from: receiver) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "AtomicLongArray reference is null.")
+        return 0
+    }
+    guard let matched = box.compareAndSet(index: index, expect: expect, update: update) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "AtomicLongArray index \(index) out of bounds for length \(box.length())."
+        )
+        return 0
+    }
+    return matched ? 1 : 0
+}
+
+@_cdecl("kk_atomic_long_array_compareAndExchange")
+public func kk_atomic_long_array_compareAndExchange(
+    _ receiver: Int,
+    _ index: Int,
+    _ expect: Int,
+    _ update: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicLongArrayBox(from: receiver) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "AtomicLongArray reference is null.")
+        return 0
+    }
+    guard let old = box.compareAndExchange(index: index, expect: expect, update: update) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "AtomicLongArray index \(index) out of bounds for length \(box.length())."
+        )
+        return 0
+    }
+    return old
+}
+
+@_cdecl("kk_atomic_long_array_toString")
+public func kk_atomic_long_array_toString(_ receiver: Int) -> Int {
+    guard let box = atomicLongArrayBox(from: receiver) else {
+        return runtimeAtomicLongArrayMakeString("[]")
+    }
+    let parts = box.snapshot().map(String.init)
+    return runtimeAtomicLongArrayMakeString("[" + parts.joined(separator: ", ") + "]")
+}
+
 // MARK: - AtomicBoolean
 
 /// Backing storage for kotlin.concurrent.AtomicBoolean.

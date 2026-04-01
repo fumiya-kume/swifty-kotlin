@@ -1,8 +1,9 @@
 import Foundation
 
-/// Synthetic stdlib stubs for kotlin.concurrent.AtomicInt, AtomicLong, AtomicReference.
+/// Synthetic stdlib stubs for kotlin.concurrent.AtomicInt, AtomicLong, AtomicLongArray, AtomicReference.
 /// Registers constructors, load/store/exchange/compareAndSet/compareAndExchange methods,
-/// arithmetic methods (AtomicInt/AtomicLong), and the `value` property.
+/// arithmetic methods (AtomicInt/AtomicLong), AtomicLongArray access/update methods,
+/// and the `value` property.
 extension DataFlowSemaPhase {
     func registerSyntheticAtomicStubs(
         symbols: SymbolTable,
@@ -163,6 +164,226 @@ extension DataFlowSemaPhase {
             types: types
         )
 
+        // -- AtomicLongArray --
+        let atomicLongArraySymbol = ensureClassSymbol(
+            named: "AtomicLongArray",
+            in: concurrentPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let atomicLongArrayType = types.make(.classType(ClassType(
+            classSymbol: atomicLongArraySymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(atomicLongArrayType, for: atomicLongArraySymbol)
+
+        registerAtomicConstructor(
+            ownerSymbol: atomicLongArraySymbol,
+            ownerType: atomicLongArrayType,
+            externalLinkName: "kk_atomic_long_array_create",
+            paramType: intType,
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        let atomicLongArrayInitType = types.make(.functionType(FunctionType(
+            receiver: nil,
+            params: [intType],
+            returnType: longType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerAtomicTopLevelFunction(
+            named: "AtomicLongArray",
+            packageFQName: concurrentPkg,
+            parameters: [
+                (name: "size", type: intType),
+                (name: "init", type: atomicLongArrayInitType),
+            ],
+            returnType: atomicLongArrayType,
+            externalLinkName: "kk_atomic_long_array_create_with_init",
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicProperty(
+            ownerSymbol: atomicLongArraySymbol,
+            ownerType: atomicLongArrayType,
+            propertyName: "length",
+            propertyType: intType,
+            getterLinkName: "kk_atomic_long_array_length",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicLongArraySymbol,
+            ownerType: atomicLongArrayType,
+            name: "get",
+            externalLinkName: "kk_atomic_long_array_get",
+            returnType: longType,
+            parameters: [(name: "index", type: intType)],
+            canThrow: true,
+            isOperator: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicLongArraySymbol,
+            ownerType: atomicLongArrayType,
+            name: "set",
+            externalLinkName: "kk_atomic_long_array_set",
+            returnType: unitType,
+            parameters: [
+                (name: "index", type: intType),
+                (name: "value", type: longType),
+            ],
+            canThrow: true,
+            isOperator: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicLongArraySymbol,
+            ownerType: atomicLongArrayType,
+            name: "getAndAdd",
+            externalLinkName: "kk_atomic_long_array_getAndAdd",
+            returnType: longType,
+            parameters: [
+                (name: "index", type: intType),
+                (name: "delta", type: longType),
+            ],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicLongArraySymbol,
+            ownerType: atomicLongArrayType,
+            name: "addAndGet",
+            externalLinkName: "kk_atomic_long_array_addAndGet",
+            returnType: longType,
+            parameters: [
+                (name: "index", type: intType),
+                (name: "delta", type: longType),
+            ],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicLongArraySymbol,
+            ownerType: atomicLongArrayType,
+            name: "getAndIncrement",
+            externalLinkName: "kk_atomic_long_array_getAndIncrement",
+            returnType: longType,
+            parameters: [(name: "index", type: intType)],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicLongArraySymbol,
+            ownerType: atomicLongArrayType,
+            name: "incrementAndGet",
+            externalLinkName: "kk_atomic_long_array_incrementAndGet",
+            returnType: longType,
+            parameters: [(name: "index", type: intType)],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicLongArraySymbol,
+            ownerType: atomicLongArrayType,
+            name: "getAndDecrement",
+            externalLinkName: "kk_atomic_long_array_getAndDecrement",
+            returnType: longType,
+            parameters: [(name: "index", type: intType)],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicLongArraySymbol,
+            ownerType: atomicLongArrayType,
+            name: "decrementAndGet",
+            externalLinkName: "kk_atomic_long_array_decrementAndGet",
+            returnType: longType,
+            parameters: [(name: "index", type: intType)],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicLongArraySymbol,
+            ownerType: atomicLongArrayType,
+            name: "getAndSet",
+            externalLinkName: "kk_atomic_long_array_getAndSet",
+            returnType: longType,
+            parameters: [
+                (name: "index", type: intType),
+                (name: "value", type: longType),
+            ],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicLongArraySymbol,
+            ownerType: atomicLongArrayType,
+            name: "compareAndSet",
+            externalLinkName: "kk_atomic_long_array_compareAndSet",
+            returnType: boolType,
+            parameters: [
+                (name: "index", type: intType),
+                (name: "expect", type: longType),
+                (name: "update", type: longType),
+            ],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicLongArraySymbol,
+            ownerType: atomicLongArrayType,
+            name: "compareAndExchange",
+            externalLinkName: "kk_atomic_long_array_compareAndExchange",
+            returnType: longType,
+            parameters: [
+                (name: "index", type: intType),
+                (name: "expect", type: longType),
+                (name: "update", type: longType),
+            ],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicLongArraySymbol,
+            ownerType: atomicLongArrayType,
+            name: "toString",
+            externalLinkName: "kk_atomic_long_array_toString",
+            returnType: types.stringType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+
         // -- AtomicReference<T> --
         let atomicRefSymbol = ensureClassSymbol(
             named: "AtomicReference",
@@ -278,28 +499,37 @@ extension DataFlowSemaPhase {
         ownerType: TypeID,
         externalLinkName: String,
         paramType: TypeID,
+        canThrow: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
         guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
         let initName = interner.intern("<init>")
         let ctorFQName = ownerInfo.fqName + [initName]
-        let hasMatch = symbols.lookupAll(fqName: ctorFQName).contains { id in
+        let existingMatches = symbols.lookupAll(fqName: ctorFQName)
+        if let existing = existingMatches.first(where: { id in
             guard let sym = symbols.symbol(id),
                   sym.kind == .constructor,
                   let sig = symbols.functionSignature(for: id)
             else { return false }
             return sig.parameterTypes == [paramType]
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            if canThrow {
+                symbols.insertFlags([.throwingFunction], for: existing)
+            }
+            return
         }
-        guard !hasMatch else { return }
 
+        var flags: SymbolFlags = [.synthetic]
+        if canThrow { flags.formUnion([.throwingFunction]) }
         let ctorSymbol = symbols.define(
             kind: .constructor,
             name: initName,
             fqName: ctorFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
         symbols.setExternalLinkName(externalLinkName, for: ctorSymbol)
@@ -327,6 +557,109 @@ extension DataFlowSemaPhase {
         )
     }
 
+    private func registerAtomicTopLevelFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        externalLinkName: String,
+        canThrow: Bool = false,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.receiverType == nil &&
+                existingSignature.parameterTypes == parameters.map(\.type) &&
+                existingSignature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            if canThrow {
+                symbols.insertFlags([.throwingFunction], for: existing)
+            }
+            return
+        }
+
+        var flags: SymbolFlags = [.synthetic]
+        if canThrow { flags.formUnion([.throwingFunction]) }
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: flags
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerAtomicProperty(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        propertyName: String,
+        propertyType: TypeID,
+        getterLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
+        let propertyNameID = interner.intern(propertyName)
+        let propertyFQName = ownerInfo.fqName + [propertyNameID]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { id in
+            symbols.symbol(id)?.kind == .property
+        }) {
+            symbols.setExternalLinkName(getterLinkName, for: existing)
+            symbols.setPropertyType(propertyType, for: existing)
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyNameID,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setExternalLinkName(getterLinkName, for: propertySymbol)
+        symbols.setPropertyType(propertyType, for: propertySymbol)
+    }
+
     private func registerAtomicValueProperty(
         ownerSymbol: SymbolID,
         ownerType: TypeID,
@@ -335,28 +668,15 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         interner: StringInterner
     ) {
-        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
-        let propertyName = interner.intern("value")
-        let propertyFQName = ownerInfo.fqName + [propertyName]
-        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { id in
-            symbols.symbol(id)?.kind == .property
-        }) {
-            symbols.setExternalLinkName(getterLinkName, for: existing)
-            symbols.setPropertyType(valueType, for: existing)
-            return
-        }
-
-        let propertySymbol = symbols.define(
-            kind: .property,
-            name: propertyName,
-            fqName: propertyFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic]
+        registerAtomicProperty(
+            ownerSymbol: ownerSymbol,
+            ownerType: ownerType,
+            propertyName: "value",
+            propertyType: valueType,
+            getterLinkName: getterLinkName,
+            symbols: symbols,
+            interner: interner
         )
-        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
-        symbols.setExternalLinkName(getterLinkName, for: propertySymbol)
-        symbols.setPropertyType(valueType, for: propertySymbol)
     }
 
     private func registerAtomicCoreMethods(
@@ -497,25 +817,39 @@ extension DataFlowSemaPhase {
         externalLinkName: String,
         returnType: TypeID,
         parameters: [(name: String, type: TypeID)],
+        canThrow: Bool = false,
+        isOperator: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
         guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
         let memberName = interner.intern(name)
         let memberFQName = ownerInfo.fqName + [memberName]
-        guard symbols.lookupAll(fqName: memberFQName).first(where: { id in
+        if let existing = symbols.lookupAll(fqName: memberFQName).first(where: { id in
             guard let sig = symbols.functionSignature(for: id) else { return false }
             return sig.parameterTypes == parameters.map(\.type) &&
                 sig.returnType == returnType
-        }) == nil else { return }
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            var extraFlags = SymbolFlags()
+            if canThrow { extraFlags.formUnion([.throwingFunction]) }
+            if isOperator { extraFlags.formUnion([.operatorFunction]) }
+            if !extraFlags.isEmpty {
+                symbols.insertFlags(extraFlags, for: existing)
+            }
+            return
+        }
 
+        var flags: SymbolFlags = [.synthetic]
+        if canThrow { flags.formUnion([.throwingFunction]) }
+        if isOperator { flags.formUnion([.operatorFunction]) }
         let memberSymbol = symbols.define(
             kind: .function,
             name: memberName,
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
         symbols.setExternalLinkName(externalLinkName, for: memberSymbol)

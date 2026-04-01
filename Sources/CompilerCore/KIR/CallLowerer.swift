@@ -396,6 +396,46 @@ final class CallLowerer {
                 instructions: &instructions
             )
         }
+        if sourceCalleeName == interner.intern("AtomicLongArray"),
+           loweredArgIDs.count == 1
+        {
+            let atomicLongArrayType: TypeID = if let chosen,
+                                                 let chosenInfo = sema.symbols.symbol(chosen)
+            {
+                if chosenInfo.kind == .constructor,
+                   let ownerSymbol = sema.symbols.parentSymbol(for: chosen)
+                {
+                    sema.types.make(.classType(ClassType(
+                        classSymbol: ownerSymbol,
+                        args: [],
+                        nullability: .nonNull
+                    )))
+                } else if chosenInfo.kind == .class {
+                    sema.types.make(.classType(ClassType(
+                        classSymbol: chosen,
+                        args: [],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    boundType ?? sema.types.anyType
+                }
+            } else {
+                boundType ?? sema.types.anyType
+            }
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: atomicLongArrayType
+            )
+            instructions.append(.call(
+                symbol: chosen,
+                callee: interner.intern("kk_atomic_long_array_create"),
+                arguments: [loweredArgIDs[0]],
+                result: result,
+                canThrow: true,
+                thrownResult: nil
+            ))
+            return result
+        }
         let knownNames = KnownCompilerNames(interner: interner)
         if sourceCalleeName == interner.intern("generateSequence"),
            loweredArgIDs.count == 2,

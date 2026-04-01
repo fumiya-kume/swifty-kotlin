@@ -377,6 +377,8 @@ extension ABILoweringPass {
             interner.intern("kk_atomic_long_fetchAndIncrement"),
             interner.intern("kk_atomic_long_incrementAndFetch"),
             interner.intern("kk_atomic_long_decrementAndFetch"),
+            interner.intern("kk_atomic_long_array_length"),
+            interner.intern("kk_atomic_long_array_toString"),
             interner.intern("kk_atomic_ref_create"),
             interner.intern("kk_atomic_ref_load"),
             interner.intern("kk_atomic_ref_store"),

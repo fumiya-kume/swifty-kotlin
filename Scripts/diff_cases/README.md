@@ -29,6 +29,7 @@ Cases:
 - `local_assign.kt`: block 内 local `var` 再代入
 - `loop_basic.kt`: `while` / `do-while` の制御フローと `break` の基本実行
 - `array_index.kt`: `IntArray` の index read/write と算術
+- `atomic_long_array.kt`: `AtomicLongArray` の constructor / factory / index / atomic update / toString
 - `overload.kt`: overload resolution by parameter type
 - `string_concat.kt`: string `+` lowering via runtime concat helper
 - `val_reassign_error.kt`: local `val` 再代入の compile-error parity

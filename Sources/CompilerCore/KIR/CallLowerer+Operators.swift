@@ -685,7 +685,14 @@ extension CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        if let callBinding = sema.bindings.callBindings[exprID] {
+        let callBinding = recoverMemberCallBinding(
+            exprID: exprID,
+            receiverExpr: receiverExpr,
+            calleeName: interner.intern("set"),
+            argumentExprs: indices + [valueExpr],
+            sema: sema
+        ) ?? sema.bindings.callBindings[exprID]
+        if let callBinding {
             let chosenSet = callBinding.chosenCallee
             var loweredIndices: [KIRExprID] = []
             for (i, indexExpr) in indices.enumerated() {
