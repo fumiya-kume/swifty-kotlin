@@ -103,7 +103,72 @@ struct TypeCheckHelpers {
         if let entryType = mapEntryElementType(for: iterableType, sema: sema, interner: interner) {
             return entryType
         }
-        return arrayElementType(for: iterableType, sema: sema, interner: interner)
+        if let arrayElement = arrayElementType(for: iterableType, sema: sema, interner: interner) {
+            return arrayElement
+        }
+        // STDLIB-OP-032: Custom classes with operator fun iterator() are iterable.
+        // Resolve the element type from the iterator's next() return type or the
+        // Iterator<T> type argument.
+        return customIteratorElementType(for: iterableType, sema: sema, interner: interner)
+    }
+
+    /// Resolves the element type of a custom class with `operator fun iterator()`.
+    /// Returns nil if no such operator is defined.
+    private func customIteratorElementType(
+        for iterableType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        let nonNullType = sema.types.makeNonNullable(iterableType)
+        guard case .classType = sema.types.kind(of: nonNullType) else { return nil }
+
+        let iteratorName = interner.intern("iterator")
+        let candidates = collectMemberFunctionCandidates(
+            named: iteratorName,
+            receiverType: nonNullType,
+            sema: sema
+        ).filter { candidate in
+            guard let symbol = sema.symbols.symbol(candidate),
+                  symbol.flags.contains(.operatorFunction),
+                  let signature = sema.symbols.functionSignature(for: candidate),
+                  signature.parameterTypes.isEmpty
+            else {
+                return false
+            }
+            return true
+        }
+
+        guard let chosen = candidates.first,
+              let signature = sema.symbols.functionSignature(for: chosen)
+        else {
+            return nil
+        }
+
+        // The iterator() return type should be Iterator<T> — extract T from its type args.
+        let returnType = signature.returnType
+        if case let .classType(iteratorClassType) = sema.types.kind(of: returnType),
+           !iteratorClassType.args.isEmpty
+        {
+            switch iteratorClassType.args[0] {
+            case let .invariant(inner), let .out(inner), let .in(inner):
+                return inner
+            case .star:
+                return sema.types.nullableAnyType
+            }
+        }
+        // Fallback: try to find next() on the iterator type and use its return type.
+        let nextName = interner.intern("next")
+        let nextCandidates = collectMemberFunctionCandidates(
+            named: nextName,
+            receiverType: returnType,
+            sema: sema
+        )
+        if let nextCandidate = nextCandidates.first,
+           let nextSignature = sema.symbols.functionSignature(for: nextCandidate)
+        {
+            return nextSignature.returnType
+        }
+        return sema.types.anyType
     }
 
     /// For Map<K, V> and MutableMap<K, V>, return Map.Entry<K, V> as the element type.

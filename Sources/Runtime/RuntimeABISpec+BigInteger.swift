@@ -84,6 +84,15 @@ public extension RuntimeABISpec {
             section: "BigInteger"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_biginteger_and",
+            parameters: [
+                RuntimeABIParameter(name: "self", type: .intptr),
+                RuntimeABIParameter(name: "other", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "BigInteger"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_biginteger_toInt",
             parameters: [
                 RuntimeABIParameter(name: "self", type: .intptr),

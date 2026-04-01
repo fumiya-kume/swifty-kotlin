@@ -251,12 +251,33 @@ extension CallTypeChecker {
                     sema.bindings.bindExprType(id, type: boolType)
                     return boolType
                 }
+                // STDLIB-REFLECT-060: KClass boolean properties (isFinal, isOpen, isAbstract)
+                let kclassBooleanCallees: Set<InternedString> = [
+                    knownNames.isFinalName, knownNames.isOpenName, knownNames.isAbstractName,
+                ]
+                if kclassBooleanCallees.contains(calleeName), args.isEmpty {
+                    let boolType = sema.types.booleanType
+                    sema.bindings.bindExprType(id, type: boolType)
+                    return boolType
+                }
+                // STDLIB-REFLECT-060: KClass.visibility -> String?
+                if calleeName == knownNames.visibilityName, args.isEmpty {
+                    let nullableStringType = sema.types.makeNullable(
+                        sema.types.make(.primitive(.string, .nonNull))
+                    )
+                    sema.bindings.bindExprType(id, type: nullableStringType)
+                    return nullableStringType
+                }
+                // STDLIB-REFLECT-065: annotations
                 let kclassMemberCollectionCallees: Set<InternedString> = [
                     knownNames.membersName, knownNames.constructorsName,
                     knownNames.propertiesName, knownNames.memberPropertiesName,
                     knownNames.declaredMemberPropertiesName,
                     knownNames.functionsName, knownNames.memberFunctionsName,
                     knownNames.declaredMemberFunctionsName,
+                    // STDLIB-REFLECT-060: KClass collection properties
+                    knownNames.typeParametersName, knownNames.supertypesName,
+                    knownNames.annotationsName,
                 ]
                 if kclassMemberCollectionCallees.contains(calleeName), args.isEmpty {
                     let listType = makeSyntheticListType(
@@ -268,6 +289,16 @@ extension CallTypeChecker {
                     sema.bindings.markCollectionExpr(id)
                     sema.bindings.bindExprType(id, type: listType)
                     return listType
+                }
+                // STDLIB-REFLECT-065: findAnnotation<T>()
+                if calleeName == knownNames.findAnnotationName {
+                    // Infer arguments if present.
+                    for arg in args {
+                        _ = driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
+                    }
+                    let nullableAnyType = sema.types.makeNullable(sema.types.anyType)
+                    sema.bindings.bindExprType(id, type: nullableAnyType)
+                    return nullableAnyType
                 }
             }
         }
@@ -325,12 +356,33 @@ extension CallTypeChecker {
                 sema.bindings.bindExprType(id, type: boolType)
                 return boolType
             }
+            // STDLIB-REFLECT-060: KClass boolean properties via variable receiver
+            let kclassVarBooleanCallees: Set<InternedString> = [
+                knownNames.isFinalName, knownNames.isOpenName, knownNames.isAbstractName,
+            ]
+            if kclassVarBooleanCallees.contains(calleeName), args.isEmpty {
+                let boolType = sema.types.booleanType
+                sema.bindings.bindExprType(id, type: boolType)
+                return boolType
+            }
+            // STDLIB-REFLECT-060: KClass.visibility via variable receiver -> String?
+            if calleeName == knownNames.visibilityName, args.isEmpty {
+                let nullableStringType = sema.types.makeNullable(
+                    sema.types.make(.primitive(.string, .nonNull))
+                )
+                sema.bindings.bindExprType(id, type: nullableStringType)
+                return nullableStringType
+            }
+            // STDLIB-REFLECT-065: annotations
             let kclassVarMemberCollectionCallees: Set<InternedString> = [
                 knownNames.membersName, knownNames.constructorsName,
                 knownNames.propertiesName, knownNames.memberPropertiesName,
                 knownNames.declaredMemberPropertiesName,
                 knownNames.functionsName, knownNames.memberFunctionsName,
                 knownNames.declaredMemberFunctionsName,
+                // STDLIB-REFLECT-060: KClass collection properties
+                knownNames.typeParametersName, knownNames.supertypesName,
+                knownNames.annotationsName,
             ]
             if kclassVarMemberCollectionCallees.contains(calleeName), args.isEmpty {
                 let listType = makeSyntheticListType(
@@ -342,6 +394,15 @@ extension CallTypeChecker {
                 sema.bindings.markCollectionExpr(id)
                 sema.bindings.bindExprType(id, type: listType)
                 return listType
+            }
+            // STDLIB-REFLECT-065: findAnnotation<T>()
+            if calleeName == knownNames.findAnnotationName {
+                for arg in args {
+                    _ = driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
+                }
+                let nullableAnyType = sema.types.makeNullable(sema.types.anyType)
+                sema.bindings.bindExprType(id, type: nullableAnyType)
+                return nullableAnyType
             }
         }
 
@@ -2970,6 +3031,22 @@ extension CallTypeChecker {
                 }
             }
         }
+        if allCandidates.isEmpty,
+           let boundType = tryBindSyntheticBigIntegerMemberFallback(
+               id,
+               calleeName: calleeName,
+               receiverType: memberLookupType,
+               args: args,
+               argTypes: argTypes,
+               range: range,
+               ctx: ctx,
+               expectedType: expectedType,
+               explicitTypeArgs: explicitTypeArgs,
+               safeCall: safeCall
+           )
+        {
+            return boundType
+        }
         let isNullLiteralReceiver = if case let .nameRef(name, _) = ast.arena.expr(receiverID) {
             name == KnownCompilerNames(interner: interner).null
         } else {
@@ -4302,6 +4379,18 @@ extension CallTypeChecker {
             ) {
                 return fallbackType
             }
+            if let fallbackType = tryKFunctionMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
             if let fallbackType = tryStringMemberFallback(
                 id,
                 calleeName: calleeName,
@@ -4596,6 +4685,13 @@ extension CallTypeChecker {
             ctx: ctx.semaCtx
         )
         if let diagnostic = resolved.diagnostic {
+            if diagnostic.code == "KSWIFTK-SEMA-BOUND" {
+                let callee = interner.resolve(calleeName)
+                if callee == "sorted" || callee == "sortedDescending" {
+                    ctx.semaCtx.diagnostics.emit(diagnostic)
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+            }
             if isClassNameReceiver,
                args.isEmpty,
                let classNameReceiverNominalSymbol,
@@ -4624,6 +4720,17 @@ extension CallTypeChecker {
                 sema.bindings.bindExprType(id, type: staticMember.type)
                 return staticMember.type
             }
+            if let projectionDiagnostic = makeProjectionViolationDiagnostic(
+                candidates: candidates,
+                receiverType: lookupReceiverType,
+                calleeName: calleeName,
+                range: range,
+                sema: sema,
+                interner: interner
+            ) {
+                ctx.semaCtx.diagnostics.emit(projectionDiagnostic)
+                return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+            }
             if let fallbackType = tryCollectionMemberFallback(
                 id,
                 calleeName: calleeName,
@@ -4637,6 +4744,18 @@ extension CallTypeChecker {
                 return fallbackType
             }
             if let fallbackType = tryRegexMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
+            if let fallbackType = tryKFunctionMemberFallback(
                 id,
                 calleeName: calleeName,
                 isClassNameReceiver: isClassNameReceiver,
@@ -4739,6 +4858,17 @@ extension CallTypeChecker {
                 sema.bindings.bindExprType(id, type: staticMember.type)
                 return staticMember.type
             }
+            if let projectionDiagnostic = makeProjectionViolationDiagnostic(
+                candidates: candidates,
+                receiverType: lookupReceiverType,
+                calleeName: calleeName,
+                range: range,
+                sema: sema,
+                interner: interner
+            ) {
+                ctx.semaCtx.diagnostics.emit(projectionDiagnostic)
+                return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+            }
             if let fallbackType = tryCollectionMemberFallback(
                 id,
                 calleeName: calleeName,
@@ -4752,6 +4882,18 @@ extension CallTypeChecker {
                 return fallbackType
             }
             if let fallbackType = tryRegexMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
+            if let fallbackType = tryKFunctionMemberFallback(
                 id,
                 calleeName: calleeName,
                 isClassNameReceiver: isClassNameReceiver,
@@ -5043,6 +5185,81 @@ extension CallTypeChecker {
             candidates = sema.symbols.lookupAll(fqName: stringMemberFQName).filter { candidate in
                 isSyntheticStringMemberCandidate(candidate, named: calleeName, sema: sema, interner: interner)
             }
+        }
+        guard !candidates.isEmpty else {
+            return nil
+        }
+
+        let resolvedArgs = zip(args, argTypes).map { argument, type in
+            CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
+        }
+        let resolved = ctx.resolver.resolveCall(
+            candidates: candidates,
+            call: CallExpr(
+                range: range,
+                calleeName: calleeName,
+                args: resolvedArgs,
+                explicitTypeArgs: explicitTypeArgs
+            ),
+            expectedType: expectedType,
+            implicitReceiverType: receiverType,
+            ctx: ctx.semaCtx
+        )
+        if let diagnostic = resolved.diagnostic {
+            ctx.semaCtx.diagnostics.emit(diagnostic)
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
+        }
+        guard let chosen = resolved.chosenCallee else {
+            return nil
+        }
+
+        let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+        let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
+    }
+
+    private func tryBindSyntheticBigIntegerMemberFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        receiverType: TypeID,
+        args: [CallArgument],
+        argTypes: [TypeID],
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID],
+        safeCall: Bool
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let normalizedReceiverType = sema.types.makeNonNullable(receiverType)
+        let bigIntegerFQName = [
+            interner.intern("java"),
+            interner.intern("math"),
+            interner.intern("BigInteger"),
+        ]
+        guard let bigIntegerSymbol = sema.symbols.lookup(fqName: bigIntegerFQName),
+              case let .classType(receiverClass) = sema.types.kind(of: normalizedReceiverType),
+              receiverClass.classSymbol == bigIntegerSymbol
+        else {
+            return nil
+        }
+
+        let extensionFQName = [
+            interner.intern("kotlin"),
+            calleeName,
+        ]
+        let candidates = sema.symbols.lookupAll(fqName: extensionFQName).filter { candidate in
+            guard let symbol = sema.symbols.symbol(candidate),
+                  symbol.kind == .function,
+                  let signature = sema.symbols.functionSignature(for: candidate)
+            else {
+                return false
+            }
+            return signature.receiverType == normalizedReceiverType &&
+                signature.parameterTypes == [normalizedReceiverType]
         }
         guard !candidates.isEmpty else {
             return nil

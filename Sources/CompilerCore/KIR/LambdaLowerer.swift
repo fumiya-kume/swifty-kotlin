@@ -1142,13 +1142,16 @@ final class LambdaLowerer {
         interner: StringInterner,
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
-        // Compute arity from the function type (number of value parameters).
+        // Compute arity and isSuspend from the function type.
         let arity: Int64
+        let isSuspendFlag: Int64
         if case let .functionType(functionType) = sema.types.kind(of: callableType) {
             arity = Int64(functionType.params.count)
+            isSuspendFlag = functionType.isSuspend ? 1 : 0
         } else {
             // Property references have arity 0 (no value params, just a getter).
             arity = 0
+            isSuspendFlag = 0
         }
 
         // Emit the name string literal.
@@ -1170,6 +1173,14 @@ final class LambdaLowerer {
             "kk_callable_ref_tag_kproperty"
         }
 
+        // For function refs, emit the isSuspend flag as a fourth argument.
+        var tagArguments: [KIRExprID] = [callableExpr, nameExpr, arityExpr]
+        if refKind == .functionRef {
+            let isSuspendExpr = arena.appendExpr(.intLiteral(isSuspendFlag), type: sema.types.intType)
+            instructions.append(.constValue(result: isSuspendExpr, value: .intLiteral(isSuspendFlag)))
+            tagArguments.append(isSuspendExpr)
+        }
+
         // Emit the tagging call.
         let taggedExpr = arena.appendExpr(
             .temporary(Int32(arena.expressions.count)),
@@ -1178,7 +1189,7 @@ final class LambdaLowerer {
         instructions.append(.call(
             symbol: nil,
             callee: interner.intern(tagCallee),
-            arguments: [callableExpr, nameExpr, arityExpr],
+            arguments: tagArguments,
             result: taggedExpr,
             canThrow: false,
             thrownResult: nil

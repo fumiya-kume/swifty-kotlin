@@ -290,6 +290,18 @@ extension ABILoweringPass {
             interner.intern("kk_uint_range_toUIntArray"),
             interner.intern("kk_uint_range_reversed"),
             interner.intern("kk_uint_range_toList"),
+            // LongRange properties and methods (STDLIB-RANGE-035)
+            interner.intern("kk_long_rangeTo"),
+            interner.intern("kk_long_range_contains"),
+            interner.intern("kk_long_range_isEmpty"),
+            interner.intern("kk_long_range_first"),
+            interner.intern("kk_long_range_last"),
+            interner.intern("kk_long_range_step"),
+            interner.intern("kk_long_range_count"),
+            interner.intern("kk_long_range_toLongArray"),
+            interner.intern("kk_long_range_reversed"),
+            interner.intern("kk_long_range_toList"),
+            interner.intern("kk_long_range_iterator"),
             // kk_property_access removed — PropertyLowering now emits direct accessor
             // calls with synthetic symbols; canThrow is handled via symbol check below.
             interner.intern("kk_lambda_invoke"),
@@ -371,6 +383,12 @@ extension ABILoweringPass {
             interner.intern("kk_atomic_ref_exchange"),
             interner.intern("kk_atomic_ref_compareAndSet"),
             interner.intern("kk_atomic_ref_compareAndExchange"),
+            interner.intern("kk_atomic_bool_create"),
+            interner.intern("kk_atomic_bool_load"),
+            interner.intern("kk_atomic_bool_store"),
+            interner.intern("kk_atomic_bool_exchange"),
+            interner.intern("kk_atomic_bool_compareAndSet"),
+            interner.intern("kk_atomic_bool_compareAndExchange"),
             interner.intern("kk_array_new"),
             interner.intern("kk_object_new"),
             interner.intern("kk_object_type_id"),
@@ -429,6 +447,9 @@ extension ABILoweringPass {
             interner.intern("kk_throwable_message"),
             interner.intern("kk_throwable_cause"),
             interner.intern("kk_throwable_stackTraceToString"),
+            interner.intern("kk_throwable_initCause"),
+            interner.intern("kk_throwable_addSuppressed"),
+            interner.intern("kk_throwable_getSuppressed"),
             interner.intern("kk_abort_unreachable"),
             interner.intern("kk_op_elvis"),
             interner.intern("kk_lazy_create"),
@@ -673,6 +694,7 @@ extension ABILoweringPass {
             interner.intern("kk_regex_matchEntire"),
             interner.intern("kk_string_toRegex"),
             interner.intern("kk_regex_pattern"),
+            interner.intern("kk_regex_options"),
             interner.intern("kk_match_result_value"),
             interner.intern("kk_match_result_groupValues"),
             // Regex (STDLIB-480)
@@ -771,6 +793,11 @@ extension ABILoweringPass {
             interner.intern("kk_file_mkdirs"),
             interner.intern("kk_file_listFiles"),
             interner.intern("kk_file_walk"),
+            // Files utility (STDLIB-IO-090) — non-throwing subset
+            interner.intern("kk_files_isRegularFile"),
+            interner.intern("kk_files_isDirectory"),
+            interner.intern("kk_files_exists"),
+            interner.intern("kk_fileTime_toMillis"),
             interner.intern("kk_uri_toString"),
             interner.intern("kk_uri_scheme"),
             interner.intern("kk_uri_authority"),
@@ -807,6 +834,27 @@ extension ABILoweringPass {
             interner.intern("kk_callable_ref_tag_kfunction"),
             interner.intern("kk_callable_ref_tag_kproperty"),
             interner.intern("kk_callable_ref_name"),
+            // STDLIB-REFLECT-063: KFunction reflection helpers.
+            interner.intern("kk_callable_ref_arity"),
+            interner.intern("kk_callable_ref_is_suspend"),
+            interner.intern("kk_callable_ref_parameters"),
+            // STDLIB-REFLECT-063: KFunction / KParameter reflection — pure metadata
+            // lookups that cannot throw.
+            interner.intern("kk_kfunction_get_name"),
+            interner.intern("kk_kfunction_get_arity"),
+            interner.intern("kk_kfunction_get_return_type"),
+            interner.intern("kk_kfunction_is_suspend"),
+            interner.intern("kk_kfunction_get_parameters"),
+            interner.intern("kk_kfunction_get_value_parameters"),
+            interner.intern("kk_kfunction_get_type"),
+            interner.intern("kk_kfunction_create"),
+            interner.intern("kk_kfunction_create_full"),
+            interner.intern("kk_kparameter_create"),
+            interner.intern("kk_kparameter_get_index"),
+            interner.intern("kk_kparameter_get_name"),
+            interner.intern("kk_kparameter_get_type"),
+            interner.intern("kk_kparameter_is_optional"),
+            interner.intern("kk_kparameter_get_kind"),
             interner.intern("kk_pair_new"),
             interner.intern("kk_triple_new"),
             // STDLIB-REFLECT-066: KType / KClass reflection — all are pure metadata
@@ -828,6 +876,23 @@ extension ABILoweringPass {
             interner.intern("kk_kclass_is_sealed"),
             interner.intern("kk_kclass_is_value"),
             interner.intern("kk_kclass_members_count"),
+            // STDLIB-REFLECT-060: KClass basic reflection non-throwing callees
+            interner.intern("kk_kclass_is_final"),
+            interner.intern("kk_kclass_is_open"),
+            interner.intern("kk_kclass_is_abstract"),
+            interner.intern("kk_kclass_visibility"),
+            interner.intern("kk_kclass_type_parameters"),
+            interner.intern("kk_kclass_supertypes"),
+            // STDLIB-REFLECT-065: Annotation reflection
+            interner.intern("kk_annotation_create"),
+            interner.intern("kk_annotation_get_class"),
+            interner.intern("kk_annotation_get_fqname"),
+            interner.intern("kk_annotation_get_value"),
+            interner.intern("kk_annotation_get_arg_count"),
+            interner.intern("kk_annotation_to_string"),
+            interner.intern("kk_kclass_get_annotations"),
+            interner.intern("kk_kclass_find_annotation"),
+            interner.intern("kk_kclass_register_single_annotation"),
             // BigInteger non-throwing operations (STDLIB-NUM-129)
             // divide, pow, and fromString are intentionally excluded here — they
             // use outThrown and are marked .throwingFunction in the sema stubs.
@@ -840,6 +905,14 @@ extension ABILoweringPass {
             interner.intern("kk_biginteger_toInt"),
             interner.intern("kk_biginteger_toLong"),
             interner.intern("kk_biginteger_toString"),
+            // Job State Queries (STDLIB-CORO-070)
+            interner.intern("kk_job_is_active"),
+            interner.intern("kk_job_is_completed"),
+            interner.intern("kk_job_is_cancelled"),
+            // JSON Serialization (STDLIB-SER-132) — no outThrown parameter
+            interner.intern("kk_json_encodeToString"),
+            interner.intern("kk_json_encodeMapToString"),
+            interner.intern("kk_json_default"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }

@@ -89,6 +89,7 @@ public enum DiagnosticRegistry {
         "UNCHECKED_CAST": ["KSWIFTK-SEMA-UNCHECKED-CAST"],
         "DEPRECATION": ["KSWIFTK-SEMA-DEPRECATED"],
         "UNCHECKED_IS": ["KSWIFTK-SEMA-ERASED-TYPE"],
+        "ANNOTATION_TARGET": ["KSWIFTK-SEMA-ANNOTATION-TARGET"],
     ]
 
     // MARK: - Lexer pass (LEX)
@@ -346,6 +347,12 @@ public enum DiagnosticRegistry {
             pass: "SEMA",
             defaultSeverity: .warning,
             summary: "Reference to deprecated declaration."
+        ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-ANNOTATION-TARGET",
+            pass: "SEMA",
+            defaultSeverity: .error,
+            summary: "Annotation is not applicable to this declaration target."
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0061",

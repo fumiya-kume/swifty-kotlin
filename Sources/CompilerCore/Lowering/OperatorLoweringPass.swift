@@ -111,6 +111,15 @@ final class OperatorLoweringPass: LoweringPass {
         types: TypeSystem?,
         newBody: inout [KIRInstruction]
     ) {
+        // STDLIB-CORO-077: CoroutineContext + operator -> kk_context_plus
+        if op == .add, isCoroutineContextType(lhs, arena: arena, types: types, interner: interner)
+            || isCoroutineContextType(rhs, arena: arena, types: types, interner: interner)
+        {
+            let callee = interner.intern("kk_context_plus")
+            newBody.append(.call(symbol: nil, callee: callee, arguments: [lhs, rhs], result: result, canThrow: false, thrownResult: nil))
+            return
+        }
+
         let lhsRank = primitiveRank(for: lhs, arena: arena, types: types)
         let rhsRank = primitiveRank(for: rhs, arena: arena, types: types)
         let rank = max(lhsRank, rhsRank)
@@ -337,6 +346,20 @@ final class OperatorLoweringPass: LoweringPass {
             return false
         case .classType, .any:
             return true
+        default:
+            return false
+        }
+    }
+
+    /// STDLIB-CORO-077: Detect CoroutineContext-family types for `+` operator rewriting.
+    private func isCoroutineContextType(_ exprID: KIRExprID, arena: KIRArena, types: TypeSystem?, interner: StringInterner) -> Bool {
+        guard let types, let typeID = arena.exprType(exprID) else { return false }
+        switch types.kind(of: typeID) {
+        case let .classType(ct):
+            guard let sym = types.symbolTable?.symbol(ct.classSymbol) else { return false }
+            let name = interner.resolve(sym.name)
+            return name == "CoroutineContext" || name == "CoroutineDispatcher"
+                || name == "CoroutineName" || name == "CoroutineExceptionHandler"
         default:
             return false
         }

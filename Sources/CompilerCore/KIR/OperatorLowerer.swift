@@ -37,22 +37,38 @@ final class OperatorLowerer {
         default:
             false
         }
+
+        // STDLIB-OP-031: equals脱糖の検出 (!=はequals()を呼んで結果をnotする)
+        let isEqualsDesugaring: Bool = op == .notEqual
+            && sema.bindings.callBindings[exprID] != nil
         
-        // compareTo脱糖の処理
+        // compareTo/equals脱糖の処理
         if let callBinding = sema.bindings.callBindings[exprID],
-           let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
-           signature.receiverType != nil {
-            
-            return handleCompareToDesugaring(
-                op: op,
-                lhsID: lhsID,
-                lhsExpr: lhs,
-                rhsID: rhsID,
-                callBinding: callBinding,
-                isCompareToDesugaring: isCompareToDesugaring,
-                result: result,
-                context: &context
-            )
+           let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee) {
+            let isNominalMemberOperator = if let owner = sema.symbols.parentSymbol(for: callBinding.chosenCallee),
+                                            let ownerSymbol = sema.symbols.symbol(owner) {
+                switch ownerSymbol.kind {
+                case .class, .interface, .object, .enumClass, .annotationClass:
+                    true
+                default:
+                    false
+                }
+            } else {
+                false
+            }
+            if signature.receiverType != nil || isNominalMemberOperator {
+                return handleCompareToDesugaring(
+                    op: op,
+                    lhsID: lhsID,
+                    lhsExpr: lhs,
+                    rhsID: rhsID,
+                    callBinding: callBinding,
+                    isCompareToDesugaring: isCompareToDesugaring,
+                    isEqualsDesugaring: isEqualsDesugaring,
+                    result: result,
+                    context: &context
+                )
+            }
         }
         
         // シーケンスのplus/minus演算子 (STDLIB-561/562)
@@ -132,7 +148,7 @@ final class OperatorLowerer {
     
     // MARK: - 特殊な演算子処理
     
-    /// compareTo脱糖を処理
+    /// compareTo/equals脱糖を処理
     private func handleCompareToDesugaring(
         op: BinaryOp,
         lhsID: KIRExprID,
@@ -140,6 +156,7 @@ final class OperatorLowerer {
         rhsID: KIRExprID,
         callBinding: CallBinding,
         isCompareToDesugaring: Bool,
+        isEqualsDesugaring: Bool = false,
         result: KIRExprID,
         context: inout CallLoweringContext
     ) -> KIRExprID {
@@ -147,10 +164,14 @@ final class OperatorLowerer {
         let arena = context.arena
         let interner = context.interner
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        
-        // compareTo呼び出しの結果格納用
+        let boolType = sema.types.booleanType
+
+        // STDLIB-OP-031: For !=, equals() returns Bool; we store in a temporary
+        // and negate afterward.
         let callResult: KIRExprID = if isCompareToDesugaring {
             arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+        } else if isEqualsDesugaring {
+            arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
         } else {
             result
         }
@@ -260,7 +281,13 @@ final class OperatorLowerer {
                 context: &context
             )
         }
-        
+
+        // STDLIB-OP-031: != は equals() の結果を反転
+        if isEqualsDesugaring {
+            context.append(.unary(op: .not, operand: callResult, result: result))
+            return result
+        }
+
         return callResult
     }
     

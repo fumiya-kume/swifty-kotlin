@@ -76,6 +76,7 @@ public struct FunctionSignature: Hashable, Sendable {
     public let parameterTypes: [TypeID]
     public let returnType: TypeID
     public let isSuspend: Bool
+    public let canThrow: Bool
     public let valueParameterSymbols: [SymbolID]
     public let valueParameterHasDefaultValues: [Bool]
     public let valueParameterIsVararg: [Bool]
@@ -94,6 +95,7 @@ public struct FunctionSignature: Hashable, Sendable {
         parameterTypes: [TypeID],
         returnType: TypeID,
         isSuspend: Bool = false,
+        canThrow: Bool = false,
         valueParameterSymbols: [SymbolID] = [],
         valueParameterHasDefaultValues: [Bool] = [],
         valueParameterIsVararg: [Bool] = [],
@@ -107,6 +109,7 @@ public struct FunctionSignature: Hashable, Sendable {
         self.parameterTypes = parameterTypes
         self.returnType = returnType
         self.isSuspend = isSuspend
+        self.canThrow = canThrow
         self.valueParameterSymbols = valueParameterSymbols
         self.valueParameterHasDefaultValues = valueParameterHasDefaultValues
         self.valueParameterIsVararg = valueParameterIsVararg
@@ -969,6 +972,7 @@ public final class BindingTable {
     public private(set) var exprTypes: [ExprID: TypeID] = [:]
     public private(set) var identifierSymbols: [ExprID: SymbolID] = [:]
     public private(set) var callBindings: [ExprID: CallBinding] = [:]
+    public private(set) var loopIterationBindings: [ExprID: LoopIterationBinding] = [:]
     public private(set) var callableTargets: [ExprID: CallableTarget] = [:]
     public private(set) var callableValueCalls: [ExprID: CallableValueCallBinding] = [:]
     public private(set) var isCheckTargetTypes: [ExprID: TypeID] = [:]
@@ -1048,6 +1052,10 @@ public final class BindingTable {
 
     public func bindCall(_ expr: ExprID, binding: CallBinding) {
         callBindings[expr] = binding
+    }
+
+    public func bindLoopIteration(_ expr: ExprID, binding: LoopIterationBinding) {
+        loopIterationBindings[expr] = binding
     }
 
     public func bindCallableTarget(_ expr: ExprID, target: CallableTarget) {
@@ -1232,6 +1240,10 @@ public final class BindingTable {
 
     public func callBinding(for expr: ExprID) -> CallBinding? {
         callBindings[expr]
+    }
+
+    public func loopIterationBinding(for expr: ExprID) -> LoopIterationBinding? {
+        loopIterationBindings[expr]
     }
 
     public func callableTarget(for expr: ExprID) -> CallableTarget? {

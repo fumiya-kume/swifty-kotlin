@@ -2460,7 +2460,7 @@ extension CollectionLiteralLoweringPass {
                     // by this point plain `iterator { ... }` should refer to
                     // kotlin.sequences.iterator rather than a user-defined
                     // overload. Keep the runtime call non-throwing.
-                    if callee == lookup.iteratorBuilderName, arguments.count == 1 {
+                    if callee == lookup.iteratorBuilderName, arguments.count == 1, symbol == nil {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: lookup.kkIteratorBuilderBuildName,

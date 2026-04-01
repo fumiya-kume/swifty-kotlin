@@ -1,5 +1,6 @@
 import kotlin.concurrent.AtomicInt
 import kotlin.concurrent.AtomicLong
+import kotlin.concurrent.AtomicBoolean
 import kotlin.concurrent.AtomicReference
 
 fun main() {
@@ -29,6 +30,12 @@ fun main() {
     println(ai.incrementAndFetch())    // 72
     println(ai.decrementAndFetch())    // 71
 
+    // getAndUpdate / updateAndGet for AtomicInt
+    println(ai.getAndUpdate { it * 2 })   // 71
+    println(ai.load())                     // 142
+    println(ai.updateAndGet { it + 1 })   // 143
+    println(ai.load())                     // 143
+
     // AtomicLong basics
     val al = AtomicLong(100L)
     println(al.load())              // 100
@@ -40,6 +47,31 @@ fun main() {
     println(al.fetchAndAdd(10L))           // 400
     println(al.incrementAndFetch())        // 411
     println(al.decrementAndFetch())        // 410
+
+    // getAndUpdate / updateAndGet for AtomicLong
+    println(al.getAndUpdate { it + 10L })  // 410
+    println(al.load())                      // 420
+    println(al.updateAndGet { it - 5L })   // 415
+    println(al.load())                      // 415
+
+    // AtomicBoolean basics
+    val ab = AtomicBoolean(false)
+    println(ab.load())                          // false
+    ab.store(true)
+    println(ab.load())                          // true
+    println(ab.exchange(false))                 // true
+    println(ab.load())                          // false
+    println(ab.compareAndSet(false, true))      // true
+    println(ab.compareAndSet(false, true))      // false
+    println(ab.load())                          // true
+    println(ab.compareAndExchange(true, false)) // true
+    println(ab.load())                          // false
+
+    // getAndUpdate / updateAndGet for AtomicBoolean
+    println(ab.getAndUpdate { !it })  // false
+    println(ab.load())                 // true
+    println(ab.updateAndGet { !it })   // false
+    println(ab.load())                 // false
 
     // AtomicReference basics
     val ar = AtomicReference<String>("hello")

@@ -1,13 +1,16 @@
-// MARK: - KFunction / KProperty / KConstructor dynamic call (STDLIB-REFLECT-067)
+// MARK: - KFunction / KProperty / KConstructor / KParameter dynamic call (STDLIB-REFLECT-063 / STDLIB-REFLECT-067)
 
 public extension RuntimeABIExterns {
     static let kFunctionExterns: [ExternDecl] = [
         kk_kfunction_create,
+        kk_kfunction_create_full,
         kk_kfunction_get_name,
         kk_kfunction_get_arity,
         kk_kfunction_get_return_type,
         kk_kfunction_is_suspend,
         kk_kfunction_get_parameters,
+        kk_kfunction_get_value_parameters,
+        kk_kfunction_get_type,
         kk_kfunction_call_0,
         kk_kfunction_call_1,
         kk_kfunction_call_2,
@@ -15,16 +18,79 @@ public extension RuntimeABIExterns {
         kk_kfunction_call_vararg,
         kk_kproperty_get,
         kk_kproperty_set,
+        kk_kconstructor_create,
+        kk_kconstructor_get_name,
+        kk_kconstructor_get_arity,
+        kk_kconstructor_get_return_type,
+        kk_kconstructor_is_primary,
+        kk_kconstructor_get_visibility,
+        kk_kconstructor_get_parameters,
+        kk_kconstructor_get_value_parameters,
         kk_kconstructor_call_0,
         kk_kconstructor_call_1,
+        kk_kconstructor_call_2,
+        kk_kconstructor_call_3,
         kk_kconstructor_call_vararg,
     ]
+
+    // MARK: - KParameter (STDLIB-REFLECT-063)
+
+    static let kParameterExterns: [ExternDecl] = [
+        kk_kparameter_create,
+        kk_kparameter_get_index,
+        kk_kparameter_get_name,
+        kk_kparameter_get_type,
+        kk_kparameter_is_optional,
+        kk_kparameter_get_kind,
+    ]
+
+    static let kk_kparameter_create = ExternDecl(
+        name: "kk_kparameter_create",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kparameter_get_index = ExternDecl(
+        name: "kk_kparameter_get_index",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kparameter_get_name = ExternDecl(
+        name: "kk_kparameter_get_name",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kparameter_get_type = ExternDecl(
+        name: "kk_kparameter_get_type",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kparameter_is_optional = ExternDecl(
+        name: "kk_kparameter_is_optional",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kparameter_get_kind = ExternDecl(
+        name: "kk_kparameter_get_kind",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
 
     // MARK: - KFunction factory
 
     static let kk_kfunction_create = ExternDecl(
         name: "kk_kfunction_create",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kfunction_create_full = ExternDecl(
+        name: "kk_kfunction_create_full",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -56,6 +122,18 @@ public extension RuntimeABIExterns {
 
     static let kk_kfunction_get_parameters = ExternDecl(
         name: "kk_kfunction_get_parameters",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kfunction_get_value_parameters = ExternDecl(
+        name: "kk_kfunction_get_value_parameters",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kfunction_get_type = ExternDecl(
+        name: "kk_kfunction_get_type",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
@@ -112,6 +190,58 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // MARK: - KConstructor factory (STDLIB-REFLECT-064)
+
+    static let kk_kconstructor_create = ExternDecl(
+        name: "kk_kconstructor_create",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // MARK: - KConstructor accessors
+
+    static let kk_kconstructor_get_name = ExternDecl(
+        name: "kk_kconstructor_get_name",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kconstructor_get_arity = ExternDecl(
+        name: "kk_kconstructor_get_arity",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kconstructor_get_return_type = ExternDecl(
+        name: "kk_kconstructor_get_return_type",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kconstructor_is_primary = ExternDecl(
+        name: "kk_kconstructor_is_primary",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kconstructor_get_visibility = ExternDecl(
+        name: "kk_kconstructor_get_visibility",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kconstructor_get_parameters = ExternDecl(
+        name: "kk_kconstructor_get_parameters",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kconstructor_get_value_parameters = ExternDecl(
+        name: "kk_kconstructor_get_value_parameters",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - KConstructor.call() overloads
 
     static let kk_kconstructor_call_0 = ExternDecl(
@@ -123,6 +253,18 @@ public extension RuntimeABIExterns {
     static let kk_kconstructor_call_1 = ExternDecl(
         name: "kk_kconstructor_call_1",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kconstructor_call_2 = ExternDecl(
+        name: "kk_kconstructor_call_2",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_kconstructor_call_3 = ExternDecl(
+        name: "kk_kconstructor_call_3",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

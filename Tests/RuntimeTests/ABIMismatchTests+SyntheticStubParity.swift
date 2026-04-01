@@ -35,6 +35,8 @@ extension ABIMismatchTests {
             "kk_sequence_generate",
             "kk_system_exitProcess",
             "kk_system_currentTimeMillis",
+            "kk_system_nanoTime",
+            "kk_system_process_start_nanos",
             "kk_system_measureTimeMillis",
             "kk_system_measureNanoTime",
             // Atomic (kotlin.concurrent)
@@ -74,6 +76,11 @@ extension ABIMismatchTests {
             "kk_cipher_init_with_iv",
             "kk_cipher_doFinal",
             "kk_cipher_doFinal_noarg",
+            // JSON Serialization (STDLIB-SER-132)
+            "kk_json_default",
+            "kk_json_encodeToString",
+            "kk_json_decodeFromString",
+            "kk_json_encodeMapToString",
         ]
 
         for linkName in syntheticLinkNames {

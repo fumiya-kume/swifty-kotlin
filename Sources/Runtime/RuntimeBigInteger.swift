@@ -217,6 +217,171 @@ struct BigIntValue: Equatable {
         return (quotient, remainder)
     }
 
+    private static func divideDigitsByUInt32(_ digits: [UInt64], _ divisor: UInt32) -> ([UInt64], UInt32) {
+        guard divisor != 0 else {
+            return ([0], 0)
+        }
+        var quotient = [UInt64](repeating: 0, count: max(digits.count, 1))
+        var remainder: UInt64 = 0
+        for index in stride(from: digits.count - 1, through: 0, by: -1) {
+            let partial = remainder * base + digits[index]
+            quotient[index] = partial / UInt64(divisor)
+            remainder = partial % UInt64(divisor)
+        }
+        while quotient.count > 1 && quotient.last == 0 {
+            quotient.removeLast()
+        }
+        return (quotient, UInt32(remainder))
+    }
+
+    private static func multiplyDigitsByUInt32(_ digits: [UInt64], _ factor: UInt32) -> [UInt64] {
+        guard factor != 0 else { return [0] }
+        var result = [UInt64](repeating: 0, count: max(digits.count, 1))
+        var carry: UInt64 = 0
+        for index in 0..<digits.count {
+            let partial = digits[index] * UInt64(factor) + carry
+            result[index] = partial % base
+            carry = partial / base
+        }
+        while carry > 0 {
+            result.append(carry % base)
+            carry /= base
+        }
+        while result.count > 1 && result.last == 0 {
+            result.removeLast()
+        }
+        return result
+    }
+
+    private static func addUInt32ToDigits(_ digits: [UInt64], _ value: UInt32) -> [UInt64] {
+        var result = digits.isEmpty ? [0] : digits
+        var carry = UInt64(value)
+        var index = 0
+        while carry > 0 {
+            if index == result.count {
+                result.append(0)
+            }
+            let partial = result[index] + carry
+            result[index] = partial % base
+            carry = partial / base
+            index += 1
+        }
+        while result.count > 1 && result.last == 0 {
+            result.removeLast()
+        }
+        return result
+    }
+
+    private static func magnitudeBytes(from decimalString: String) -> [UInt8] {
+        var digits = stringToDigits(decimalString)
+        if digits.count == 1, digits[0] == 0 {
+            return [0]
+        }
+        var bytes: [UInt8] = []
+        while !(digits.count == 1 && digits[0] == 0) {
+            let (quotient, remainder) = divideDigitsByUInt32(digits, 256)
+            bytes.append(UInt8(truncatingIfNeeded: remainder))
+            digits = quotient
+        }
+        return bytes.reversed()
+    }
+
+    private static func digits(fromMagnitudeBytes bytes: [UInt8]) -> [UInt64] {
+        var digits: [UInt64] = [0]
+        for byte in bytes {
+            digits = multiplyDigitsByUInt32(digits, 256)
+            digits = addUInt32ToDigits(digits, UInt32(byte))
+        }
+        return digits
+    }
+
+    private static func normalizeTwosComplementBytes(_ bytes: [UInt8]) -> [UInt8] {
+        guard !bytes.isEmpty else { return [0] }
+        let negative = bytes[0] & 0x80 != 0
+        var start = 0
+        if negative {
+            while start < bytes.count - 1 && bytes[start] == 0xFF && bytes[start + 1] & 0x80 != 0 {
+                start += 1
+            }
+        } else {
+            while start < bytes.count - 1 && bytes[start] == 0x00 && bytes[start + 1] & 0x80 == 0 {
+                start += 1
+            }
+        }
+        return Array(bytes[start...])
+    }
+
+    private static func signExtended(_ bytes: [UInt8], to width: Int) -> [UInt8] {
+        guard bytes.count < width else { return bytes }
+        let fill = bytes.first.map { $0 & 0x80 != 0 ? UInt8(0xFF) : UInt8(0x00) } ?? 0x00
+        return Array(repeating: fill, count: width - bytes.count) + bytes
+    }
+
+    private static func addOneToBytes(_ bytes: [UInt8]) -> [UInt8] {
+        guard !bytes.isEmpty else { return [1] }
+        var result = bytes
+        var index = result.count - 1
+        while true {
+            if result[index] == 0xFF {
+                result[index] = 0x00
+                if index == 0 {
+                    result.insert(0x01, at: 0)
+                    break
+                }
+                index -= 1
+            } else {
+                result[index] &+= 1
+                break
+            }
+        }
+        return result
+    }
+
+    private func twosComplementBytes() -> [UInt8] {
+        if stringValue == "0" {
+            return [0]
+        }
+        let magnitude = BigIntValue.magnitudeBytes(from: absString)
+        if !isNegative {
+            if let first = magnitude.first, first & 0x80 != 0 {
+                return [0x00] + magnitude
+            }
+            return magnitude
+        }
+
+        var width = magnitude.count
+        if let first = magnitude.first,
+           first > 0x80 || (first == 0x80 && magnitude.dropFirst().contains(where: { $0 != 0 }))
+        {
+            width += 1
+        }
+        var bytes = BigIntValue.signExtended(magnitude, to: width)
+        bytes = bytes.map { ~$0 }
+        bytes = BigIntValue.addOneToBytes(bytes)
+        return BigIntValue.normalizeTwosComplementBytes(bytes)
+    }
+
+    private static func fromTwosComplementBytes(_ bytes: [UInt8]) -> BigIntValue {
+        let normalized = normalizeTwosComplementBytes(bytes)
+        guard !normalized.isEmpty else {
+            return .zero
+        }
+        let negative = normalized[0] & 0x80 != 0
+        if !negative {
+            let magnitude = digits(fromMagnitudeBytes: normalized)
+            return BigIntValue(string: digitsToString(magnitude))
+        }
+
+        var magnitudeBytes = normalized.map { ~$0 }
+        magnitudeBytes = addOneToBytes(magnitudeBytes)
+        while magnitudeBytes.count > 1 && magnitudeBytes[0] == 0 {
+            magnitudeBytes.removeFirst()
+        }
+        let magnitudeDigits = digits(fromMagnitudeBytes: magnitudeBytes)
+        let magnitudeString = digitsToString(magnitudeDigits)
+        return magnitudeString == "0" ? .zero : BigIntValue(string: "-" + magnitudeString)
+    }
+
     // MARK: - Operations
 
     func add(_ other: BigIntValue) -> BigIntValue {
@@ -298,6 +463,16 @@ struct BigIntValue: Equatable {
             exp >>= 1
         }
         return result
+    }
+
+    func and(_ other: BigIntValue) -> BigIntValue {
+        let lhsBytes = twosComplementBytes()
+        let rhsBytes = other.twosComplementBytes()
+        let width = max(lhsBytes.count, rhsBytes.count)
+        let lhsExtended = BigIntValue.signExtended(lhsBytes, to: width)
+        let rhsExtended = BigIntValue.signExtended(rhsBytes, to: width)
+        let resultBytes = zip(lhsExtended, rhsExtended).map { $0 & $1 }
+        return BigIntValue.fromTwosComplementBytes(resultBytes)
     }
 
 }
@@ -468,6 +643,19 @@ public func kk_biginteger_pow(_ selfRaw: Int, _ exponent: Int, _ outThrown: Unsa
         return kk_biginteger_valueOf(0)
     }
     let result = selfBox.value.pow(exponent)
+    return registerRuntimeObject(RuntimeBigIntegerBox(value: result))
+}
+
+// MARK: - and()
+
+@_cdecl("kk_biginteger_and")
+public func kk_biginteger_and(_ selfRaw: Int, _ otherRaw: Int) -> Int {
+    guard let selfBox = runtimeBigIntegerBox(from: selfRaw),
+          let otherBox = runtimeBigIntegerBox(from: otherRaw)
+    else {
+        return kk_biginteger_valueOf(0)
+    }
+    let result = selfBox.value.and(otherBox.value)
     return registerRuntimeObject(RuntimeBigIntegerBox(value: result))
 }
 

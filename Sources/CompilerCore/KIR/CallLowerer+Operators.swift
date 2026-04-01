@@ -46,125 +46,149 @@ extension CallLowerer {
         default:
             false
         }
+        // STDLIB-OP-031: Detect != desugaring to equals() call + negation.
+        let isEqualsDesugaring: Bool = op == .notEqual
+            && sema.bindings.callBindings[exprID] != nil
+        let boolType = sema.types.booleanType
         if let callBinding = sema.bindings.callBindings[exprID],
-           let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
-           signature.receiverType != nil
+           let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee)
         {
-            // For compareTo desugaring, the call result is Int, not Bool.
-            // We allocate a separate temporary for the compareTo call result.
-            let callResult: KIRExprID = if isCompareToDesugaring {
-                arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
-            } else {
-                result
-            }
-            if isCompareToDesugaring,
-               shouldLowerComparableTypeParamViaRuntime(
-                   chosenCallee: callBinding.chosenCallee,
-                   receiverExpr: lhs,
-                   sema: sema
-               )
+            let isNominalMemberOperator = if let owner = sema.symbols.parentSymbol(for: callBinding.chosenCallee),
+                                            let ownerSymbol = sema.symbols.symbol(owner)
             {
-                instructions.append(.call(
-                    symbol: nil,
-                    callee: interner.intern("kk_compare_any"),
-                    arguments: [lhsID, rhsID],
-                    result: callResult,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-                let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
-                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                let cmpOp: KIRBinaryOp
-                switch op {
-                case .lessThan: cmpOp = .lessThan
-                case .lessOrEqual: cmpOp = .lessOrEqual
-                case .greaterThan: cmpOp = .greaterThan
-                case .greaterOrEqual: cmpOp = .greaterOrEqual
-                default: fatalError("Unreachable: erased Comparable runtime path only applies to comparison operators")
+                switch ownerSymbol.kind {
+                case .class, .interface, .object, .enumClass, .annotationClass:
+                    true
+                default:
+                    false
                 }
-                instructions.append(.binary(op: cmpOp, lhs: callResult, rhs: zeroExpr, result: result))
+            } else {
+                false
+            }
+            if signature.receiverType != nil || isNominalMemberOperator {
+                // For compareTo desugaring, the call result is Int, not Bool.
+                // For != (equals desugaring), the call result is Bool that needs negation.
+                // We allocate a separate temporary for both cases.
+                let callResult: KIRExprID = if isCompareToDesugaring {
+                    arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                } else if isEqualsDesugaring {
+                    arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+                } else {
+                    result
+                }
+                if isCompareToDesugaring,
+                   shouldLowerComparableTypeParamViaRuntime(
+                       chosenCallee: callBinding.chosenCallee,
+                       receiverExpr: lhs,
+                       sema: sema
+                   )
+                {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_compare_any"),
+                        arguments: [lhsID, rhsID],
+                        result: callResult,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    let cmpOp: KIRBinaryOp
+                    switch op {
+                    case .lessThan: cmpOp = .lessThan
+                    case .lessOrEqual: cmpOp = .lessOrEqual
+                    case .greaterThan: cmpOp = .greaterThan
+                    case .greaterOrEqual: cmpOp = .greaterOrEqual
+                    default: fatalError("Unreachable: erased Comparable runtime path only applies to comparison operators")
+                    }
+                    instructions.append(.binary(op: cmpOp, lhs: callResult, rhs: zeroExpr, result: result))
+                    return result
+                }
+                let normalizedResult = driver.callSupportLowerer.normalizedCallArguments(
+                    providedArguments: [rhsID],
+                    callBinding: callBinding,
+                    chosenCallee: callBinding.chosenCallee,
+                    spreadFlags: [false],
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+                var finalArguments = normalizedResult.arguments
+                finalArguments.insert(lhsID, at: 0)
+                if !signature.reifiedTypeParameterIndices.isEmpty {
+                    for index in signature.reifiedTypeParameterIndices.sorted() {
+                        let concreteType = index < callBinding.substitutedTypeArguments.count
+                            ? callBinding.substitutedTypeArguments[index]
+                            : sema.types.anyType
+                        let encodedToken = RuntimeTypeCheckToken.encode(type: concreteType, sema: sema, interner: interner)
+                        let tokenExpr = arena.appendExpr(
+                            .intLiteral(encodedToken),
+                            type: intType
+                        )
+                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
+                        finalArguments.append(tokenExpr)
+                    }
+                }
+                if normalizedResult.defaultMask != 0,
+                   sema.symbols.externalLinkName(for: callBinding.chosenCallee)?.isEmpty ?? true
+                {
+                    let maskExpr = arena.appendExpr(.intLiteral(Int64(normalizedResult.defaultMask)), type: intType)
+                    instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(normalizedResult.defaultMask))))
+                    finalArguments.append(maskExpr)
+                    let stubName = interner.intern(
+                        (sema.symbols.symbol(callBinding.chosenCallee).map { interner.resolve($0.name) } ?? "unknown") + "$default"
+                    )
+                    let stubSym = driver.callSupportLowerer.defaultStubSymbol(for: callBinding.chosenCallee)
+                    instructions.append(.call(
+                        symbol: stubSym,
+                        callee: stubName,
+                        arguments: finalArguments,
+                        result: callResult,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                } else {
+                    let loweredCalleeName: InternedString = if let externalLinkName = sema.symbols.externalLinkName(for: callBinding.chosenCallee),
+                                                               !externalLinkName.isEmpty
+                    {
+                        interner.intern(externalLinkName)
+                    } else if let symbol = sema.symbols.symbol(callBinding.chosenCallee) {
+                        symbol.name
+                    } else {
+                        interner.intern(op.kotlinFunctionName)
+                    }
+                    instructions.append(.call(
+                        symbol: callBinding.chosenCallee,
+                        callee: loweredCalleeName,
+                        arguments: finalArguments,
+                        result: callResult,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                }
+                // compareTo desugaring: emit `compareTo(a,b) <op> 0` to produce Bool
+                if isCompareToDesugaring {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    let cmpOp: KIRBinaryOp
+                    switch op {
+                    case .lessThan: cmpOp = .lessThan
+                    case .lessOrEqual: cmpOp = .lessOrEqual
+                    case .greaterThan: cmpOp = .greaterThan
+                    case .greaterOrEqual: cmpOp = .greaterOrEqual
+                    default: fatalError("Unreachable: isCompareToDesugaring should only be true for comparison operators")
+                    }
+                    instructions.append(.binary(op: cmpOp, lhs: callResult, rhs: zeroExpr, result: result))
+                }
+                // STDLIB-OP-031: != desugaring: negate the equals() result
+                if isEqualsDesugaring {
+                    instructions.append(.unary(op: .not, operand: callResult, result: result))
+                }
                 return result
             }
-            let normalizedResult = driver.callSupportLowerer.normalizedCallArguments(
-                providedArguments: [rhsID],
-                callBinding: callBinding,
-                chosenCallee: callBinding.chosenCallee,
-                spreadFlags: [false],
-                ast: ast,
-                sema: sema,
-                arena: arena,
-                interner: interner,
-                propertyConstantInitializers: propertyConstantInitializers,
-                instructions: &instructions
-            )
-            var finalArguments = normalizedResult.arguments
-            finalArguments.insert(lhsID, at: 0)
-            if !signature.reifiedTypeParameterIndices.isEmpty {
-                for index in signature.reifiedTypeParameterIndices.sorted() {
-                    let concreteType = index < callBinding.substitutedTypeArguments.count
-                        ? callBinding.substitutedTypeArguments[index]
-                        : sema.types.anyType
-                    let encodedToken = RuntimeTypeCheckToken.encode(type: concreteType, sema: sema, interner: interner)
-                    let tokenExpr = arena.appendExpr(
-                        .intLiteral(encodedToken),
-                        type: intType
-                    )
-                    instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
-                    finalArguments.append(tokenExpr)
-                }
-            }
-            if normalizedResult.defaultMask != 0,
-               sema.symbols.externalLinkName(for: callBinding.chosenCallee)?.isEmpty ?? true
-            {
-                let maskExpr = arena.appendExpr(.intLiteral(Int64(normalizedResult.defaultMask)), type: intType)
-                instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(normalizedResult.defaultMask))))
-                finalArguments.append(maskExpr)
-                let stubName = interner.intern(
-                    (sema.symbols.symbol(callBinding.chosenCallee).map { interner.resolve($0.name) } ?? "unknown") + "$default"
-                )
-                let stubSym = driver.callSupportLowerer.defaultStubSymbol(for: callBinding.chosenCallee)
-                instructions.append(.call(
-                    symbol: stubSym,
-                    callee: stubName,
-                    arguments: finalArguments,
-                    result: callResult,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-            } else {
-                let loweredCalleeName: InternedString = if let externalLinkName = sema.symbols.externalLinkName(for: callBinding.chosenCallee),
-                                                           !externalLinkName.isEmpty
-                {
-                    interner.intern(externalLinkName)
-                } else if let symbol = sema.symbols.symbol(callBinding.chosenCallee) {
-                    symbol.name
-                } else {
-                    interner.intern(op.kotlinFunctionName)
-                }
-                instructions.append(.call(
-                    symbol: callBinding.chosenCallee,
-                    callee: loweredCalleeName,
-                    arguments: finalArguments,
-                    result: callResult,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-            }
-            // compareTo desugaring: emit `compareTo(a,b) <op> 0` to produce Bool
-            if isCompareToDesugaring {
-                let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
-                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                let cmpOp: KIRBinaryOp
-                switch op {
-                case .lessThan: cmpOp = .lessThan
-                case .lessOrEqual: cmpOp = .lessOrEqual
-                case .greaterThan: cmpOp = .greaterThan
-                case .greaterOrEqual: cmpOp = .greaterOrEqual
-                default: fatalError("Unreachable: isCompareToDesugaring should only be true for comparison operators")
-                }
-                instructions.append(.binary(op: cmpOp, lhs: callResult, rhs: zeroExpr, result: result))
-            }
-            return result
         }
         // STDLIB-561/562: Sequence plus/minus operators
         // For plus:

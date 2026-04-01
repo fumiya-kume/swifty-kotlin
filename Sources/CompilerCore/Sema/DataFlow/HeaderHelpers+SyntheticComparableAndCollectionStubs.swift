@@ -1026,6 +1026,61 @@ extension DataFlowSemaPhase {
         )
         types.setNominalTypeParameterSymbols([itTypeParamSymbol], for: iteratorSymbol)
         types.setNominalTypeParameterVariances([.out], for: iteratorSymbol)
+        let iteratorTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: itTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let iteratorReceiverType = types.make(.classType(ClassType(
+            classSymbol: iteratorSymbol,
+            args: [.out(iteratorTypeParamType)],
+            nullability: .nonNull
+        )))
+
+        // Iterable.iterator(): Iterator<E>
+        let iterFnName = interner.intern("iterator")
+        let iterFnFQName = iterableFQName + [iterFnName]
+        if symbols.lookup(fqName: iterFnFQName) == nil {
+            let typeParamType = types.make(.typeParam(TypeParamType(
+                symbol: typeParamSymbol,
+                nullability: .nonNull
+            )))
+            let iterableReceiverType = types.make(.classType(ClassType(
+                classSymbol: iterableInterfaceSymbol,
+                args: [.out(typeParamType)],
+                nullability: .nonNull
+            )))
+            let iteratorReturnType = types.make(.classType(ClassType(
+                classSymbol: iteratorSymbol,
+                args: [.out(typeParamType)],
+                nullability: .nonNull
+            )))
+            let iterFnSymbol = symbols.define(
+                kind: .function,
+                name: iterFnName,
+                fqName: iterFnFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(iterableInterfaceSymbol, for: iterFnSymbol)
+            symbols.setExternalLinkName("kk_range_iterator", for: iterFnSymbol)
+            symbols.setPropertyType(types.make(.functionType(FunctionType(
+                params: [],
+                returnType: iteratorReturnType,
+                isSuspend: false,
+                nullability: .nonNull
+            ))), for: iterFnSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: iterableReceiverType,
+                    parameterTypes: [],
+                    returnType: iteratorReturnType,
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: iterFnSymbol
+            )
+        }
 
         // Iterator.hasNext(): Boolean
         let hasNextName = interner.intern("hasNext")
@@ -1035,23 +1090,46 @@ extension DataFlowSemaPhase {
                 kind: .function, name: hasNextName, fqName: hasNextFQName,
                 declSite: nil, visibility: .public, flags: [.synthetic]
             )
+            symbols.setParentSymbol(iteratorSymbol, for: sym)
+            symbols.setExternalLinkName("kk_iterator_hasNext", for: sym)
             symbols.setPropertyType(types.make(.functionType(FunctionType(
                 params: [], returnType: types.booleanType, isSuspend: false, nullability: .nonNull
             ))), for: sym)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: iteratorReceiverType,
+                    parameterTypes: [],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [itTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: sym
+            )
         }
 
         // Iterator.next(): T
         let nextName = interner.intern("next")
         let nextFQName = iteratorFQName + [nextName]
         if symbols.lookup(fqName: nextFQName) == nil {
-            let itTypeParamType = types.make(.typeParam(TypeParamType(symbol: itTypeParamSymbol, nullability: .nonNull)))
             let sym = symbols.define(
                 kind: .function, name: nextName, fqName: nextFQName,
                 declSite: nil, visibility: .public, flags: [.synthetic]
             )
+            symbols.setParentSymbol(iteratorSymbol, for: sym)
+            symbols.setExternalLinkName("kk_iterator_next", for: sym)
             symbols.setPropertyType(types.make(.functionType(FunctionType(
-                params: [], returnType: itTypeParamType, isSuspend: false, nullability: .nonNull
+                params: [], returnType: iteratorTypeParamType, isSuspend: false, nullability: .nonNull
             ))), for: sym)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: iteratorReceiverType,
+                    parameterTypes: [],
+                    returnType: iteratorTypeParamType,
+                    typeParameterSymbols: [itTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: sym
+            )
         }
 
         // MutableIterator<T> : Iterator<T> (STDLIB-221)
@@ -2423,6 +2501,18 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         let listReturnType = receiverType
+        if types.comparableInterfaceSymbol == nil {
+            registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
+        }
+        let comparableElementBounds: [TypeID] = if let comparableSymbol = types.comparableInterfaceSymbol {
+            [types.make(.classType(ClassType(
+                classSymbol: comparableSymbol,
+                args: [.invariant(listTypeParamType)],
+                nullability: .nonNull
+            )))]
+        } else {
+            []
+        }
 
         // Register a synthetic member on List. Short-circuits when a symbol
         // with the same fully-qualified name already exists (first-wins).
@@ -2430,7 +2520,8 @@ extension DataFlowSemaPhase {
             name: String,
             parameterTypes: [TypeID],
             externalLinkName: String,
-            returnTypeOverride: TypeID? = nil
+            returnTypeOverride: TypeID? = nil,
+            typeParameterUpperBoundsList: [[TypeID]]? = nil
         ) {
             let memberName = interner.intern(name)
             let memberFQName = listFQName + [memberName]
@@ -2440,7 +2531,8 @@ extension DataFlowSemaPhase {
                 memberFQName: memberFQName,
                 parameterTypes: parameterTypes,
                 externalLinkName: externalLinkName,
-                returnTypeOverride: returnTypeOverride
+                returnTypeOverride: returnTypeOverride,
+                typeParameterUpperBoundsList: typeParameterUpperBoundsList
             )
         }
 
@@ -2451,7 +2543,8 @@ extension DataFlowSemaPhase {
             memberFQName: [InternedString],
             parameterTypes: [TypeID],
             externalLinkName: String,
-            returnTypeOverride: TypeID? = nil
+            returnTypeOverride: TypeID? = nil,
+            typeParameterUpperBoundsList: [[TypeID]]? = nil
         ) {
             let alreadyRegistered = symbols.lookupAll(fqName: memberFQName).contains { symbolID in
                 guard let sig = symbols.functionSignature(for: symbolID) else { return false }
@@ -2474,6 +2567,7 @@ extension DataFlowSemaPhase {
                     parameterTypes: parameterTypes,
                     returnType: returnTypeOverride ?? listReturnType,
                     typeParameterSymbols: [listTypeParamSymbol],
+                    typeParameterUpperBoundsList: typeParameterUpperBoundsList ?? [],
                     classTypeParameterCount: 1
                 ),
                 for: memberSymbol
@@ -2485,7 +2579,12 @@ extension DataFlowSemaPhase {
         registerMember(name: "sum", parameterTypes: [], externalLinkName: "kk_list_sum", returnTypeOverride: types.intType)
         registerMember(name: "reversed", parameterTypes: [], externalLinkName: "kk_list_reversed")
         registerMember(name: "asReversed", parameterTypes: [], externalLinkName: "kk_list_as_reversed")
-        registerMember(name: "sorted", parameterTypes: [], externalLinkName: "kk_list_sorted")
+        registerMember(
+            name: "sorted",
+            parameterTypes: [],
+            externalLinkName: "kk_list_sorted",
+            typeParameterUpperBoundsList: [comparableElementBounds]
+        )
         registerMember(name: "distinct", parameterTypes: [], externalLinkName: "kk_list_distinct")
         registerMember(name: "shuffled", parameterTypes: [], externalLinkName: "kk_list_shuffled")
 
@@ -2553,7 +2652,12 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_list_windowed_partial",
             returnTypeOverride: listOfListReturnType
         )
-        registerMember(name: "sortedDescending", parameterTypes: [], externalLinkName: "kk_list_sortedDescending")
+        registerMember(
+            name: "sortedDescending",
+            parameterTypes: [],
+            externalLinkName: "kk_list_sortedDescending",
+            typeParameterUpperBoundsList: [comparableElementBounds]
+        )
         registerMember(name: "subList", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_subList")
 
         // chunked(size, transform) — HOF overload (STDLIB-548)
