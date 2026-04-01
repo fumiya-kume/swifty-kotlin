@@ -380,4 +380,90 @@ extension BuildKIRRegressionTests {
             XCTAssertTrue(codes.contains("KSWIFTK-SEMA-0001"))
         }
     }
+
+    func testAtomicIntArrayConstructorsAndIndexedCallsLowerToAtomicRuntimeCalls() throws {
+        let source = """
+        import kotlin.concurrent.atomics.AtomicIntArray
+
+        fun main(): Int {
+            val fromSize = AtomicIntArray(3)
+            val fromArray = AtomicIntArray(intArrayOf(1, 2, 3))
+            val fromFactory = AtomicIntArray(3) { it + 1 }
+
+            fromSize[0] = 7
+            val first = fromSize[0]
+            fromSize.loadAt(1)
+            fromSize.storeAt(1, 8)
+            fromSize.compareAndSetAt(1, 8, 9)
+            fromSize.compareAndExchangeAt(1, 9, 10)
+            fromSize.fetchAndAddAt(1, 2)
+            fromSize.addAndFetchAt(1, 3)
+            fromSize.fetchAndIncrementAt(1)
+            fromSize.incrementAndFetchAt(1)
+            fromSize.fetchAndDecrementAt(1)
+            fromSize.decrementAndFetchAt(1)
+            fromSize.fetchAndUpdateAt(1) { it + 1 }
+            fromSize.updateAndFetchAt(1) { it + 1 }
+            fromSize.updateAt(1) { it + 1 }
+
+            val size = fromFactory.size
+            val length = fromFactory.length
+            return first + size + length + fromArray[0]
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+            let throwFlags = extractThrowFlags(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_new"))
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_fromArray"))
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_create"))
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_size"))
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_loadAt"))
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_storeAt"))
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_compareAndSetAt"))
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_compareAndExchangeAt"))
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_fetchAndAddAt"))
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_addAndFetchAt"))
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_fetchAndIncrementAt"))
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_incrementAndFetchAt"))
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_fetchAndDecrementAt"))
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_decrementAndFetchAt"))
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_fetchAndUpdateAt"))
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_updateAndFetchAt"))
+            XCTAssertTrue(callNames.contains("kk_atomic_int_array_updateAt"))
+            XCTAssertFalse(callNames.contains("kk_atomic_int_array_length"))
+            XCTAssertFalse(callNames.contains("kk_array_get"))
+            XCTAssertFalse(callNames.contains("AtomicIntArray"))
+            XCTAssertFalse(callNames.contains("loadAt"))
+            XCTAssertFalse(callNames.contains("storeAt"))
+            XCTAssertFalse(callNames.contains("size"))
+            XCTAssertFalse(callNames.contains("length"))
+
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_new"]?.allSatisfy { $0 == false }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_fromArray"]?.allSatisfy { $0 == false }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_create"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_size"]?.allSatisfy { $0 == false }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_loadAt"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_storeAt"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_compareAndSetAt"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_compareAndExchangeAt"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_fetchAndAddAt"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_addAndFetchAt"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_fetchAndIncrementAt"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_incrementAndFetchAt"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_fetchAndDecrementAt"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_decrementAndFetchAt"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_fetchAndUpdateAt"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_updateAndFetchAt"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_int_array_updateAt"]?.allSatisfy { $0 == true }, true)
+        }
+    }
 }

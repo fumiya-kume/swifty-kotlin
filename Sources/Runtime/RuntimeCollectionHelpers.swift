@@ -425,6 +425,10 @@ func runtimeElementToString(_ elem: Int) -> String {
             return "\(first)..\(last) step \(rangeBox.step)"
         }
     }
+    if let atomicIntArrayBox = tryCast(ptr, to: AtomicIntArrayBox.self) {
+        let parts = atomicIntArrayBox.snapshotElements().map(String.init)
+        return "[" + parts.joined(separator: ", ") + "]"
+    }
     if let arrayBox = tryCast(ptr, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
         let parts = arrayBox.elements.map { runtimeElementToString($0) }
         return "[" + parts.joined(separator: ", ") + "]"

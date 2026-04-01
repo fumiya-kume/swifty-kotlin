@@ -55,6 +55,20 @@ extension CallLowerer {
         return knownNames.isChannelSymbol(symbol)
     }
 
+    private func isAtomicIntArrayReceiverType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        let fqName = symbol.fqName.map(interner.resolve)
+        return fqName == ["kotlin", "concurrent", "atomics", "AtomicIntArray"]
+    }
+
     private func wrapLateinitReadIfNeeded(
         _ valueExpr: KIRExprID,
         symbol: SymbolID,
@@ -126,6 +140,24 @@ extension CallLowerer {
         "addFirst", "addLast",
         "sum",
         "to", // FUNC-002
+    ]
+    private static let unresolvedAtomicIntArrayMemberNames: Set<String> = [
+        "loadAt", "storeAt", "exchangeAt",
+        "compareAndSetAt", "compareAndExchangeAt",
+        "fetchAndAddAt", "addAndFetchAt",
+        "fetchAndIncrementAt", "incrementAndFetchAt",
+        "fetchAndDecrementAt", "decrementAndFetchAt",
+        "fetchAndUpdateAt", "updateAndFetchAt", "updateAt",
+        "getAndSet", "getAndAdd", "getAndIncrement", "incrementAndGet", "getAndDecrement", "decrementAndGet",
+        "toString",
+    ]
+    private static let unresolvedAtomicIntArrayDirectMemberNames: Set<String> = [
+        "loadAt", "storeAt", "exchangeAt",
+        "compareAndSetAt", "compareAndExchangeAt",
+        "fetchAndAddAt", "addAndFetchAt",
+        "fetchAndIncrementAt", "incrementAndFetchAt",
+        "fetchAndDecrementAt", "decrementAndFetchAt",
+        "fetchAndUpdateAt", "updateAndFetchAt", "updateAt",
     ]
 
     // MARK: - KProperty member access lowering (PROP-007)
@@ -956,7 +988,7 @@ extension CallLowerer {
             interner: interner,
             propertyConstantInitializers: propertyConstantInitializers,
             requireNonNullableReceiverForConstFold: true,
-            prependReceiverForUnresolvedCollectionCall: false,
+            prependReceiverForUnresolvedCollectionCall: true,
             instructions: &instructions
         )
         instructions.append(.copy(from: innerResult, to: result))
@@ -4434,6 +4466,16 @@ extension CallLowerer {
             arguments.insert(loweredReceiverID, at: 0)
             return
         }
+        if Self.unresolvedAtomicIntArrayDirectMemberNames.contains(calleeText) {
+            arguments.insert(loweredReceiverID, at: 0)
+            return
+        }
+        if isAtomicIntArrayReceiverType(receiverType, sema: sema, interner: interner),
+           Self.unresolvedAtomicIntArrayMemberNames.contains(calleeText)
+        {
+            arguments.insert(loweredReceiverID, at: 0)
+            return
+        }
         let isCoroutineHandleReceiver = isCoroutineHandleReceiverType(
             receiverType,
             sema: sema,
@@ -4768,6 +4810,20 @@ extension CallLowerer {
             interner.intern("kk_sequence_count"),
             interner.intern("kk_list_binarySearch_compare"),
             interner.intern("kk_result_getOrThrow"),
+            interner.intern("kk_atomic_int_array_loadAt"),
+            interner.intern("kk_atomic_int_array_storeAt"),
+            interner.intern("kk_atomic_int_array_exchangeAt"),
+            interner.intern("kk_atomic_int_array_compareAndSetAt"),
+            interner.intern("kk_atomic_int_array_compareAndExchangeAt"),
+            interner.intern("kk_atomic_int_array_fetchAndAddAt"),
+            interner.intern("kk_atomic_int_array_addAndFetchAt"),
+            interner.intern("kk_atomic_int_array_fetchAndIncrementAt"),
+            interner.intern("kk_atomic_int_array_incrementAndFetchAt"),
+            interner.intern("kk_atomic_int_array_fetchAndDecrementAt"),
+            interner.intern("kk_atomic_int_array_decrementAndFetchAt"),
+            interner.intern("kk_atomic_int_array_fetchAndUpdateAt"),
+            interner.intern("kk_atomic_int_array_updateAndFetchAt"),
+            interner.intern("kk_atomic_int_array_updateAt"),
         ])
     }
 
@@ -5002,6 +5058,78 @@ extension CallLowerer {
         interner: StringInterner
     ) -> InternedString? {
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        if Self.unresolvedAtomicIntArrayDirectMemberNames.contains(memberName) {
+            switch memberName {
+            case "loadAt":
+                return interner.intern("kk_atomic_int_array_loadAt")
+            case "storeAt":
+                return interner.intern("kk_atomic_int_array_storeAt")
+            case "exchangeAt":
+                return interner.intern("kk_atomic_int_array_exchangeAt")
+            case "compareAndSetAt":
+                return interner.intern("kk_atomic_int_array_compareAndSetAt")
+            case "compareAndExchangeAt":
+                return interner.intern("kk_atomic_int_array_compareAndExchangeAt")
+            case "fetchAndAddAt":
+                return interner.intern("kk_atomic_int_array_fetchAndAddAt")
+            case "addAndFetchAt":
+                return interner.intern("kk_atomic_int_array_addAndFetchAt")
+            case "fetchAndIncrementAt":
+                return interner.intern("kk_atomic_int_array_fetchAndIncrementAt")
+            case "incrementAndFetchAt":
+                return interner.intern("kk_atomic_int_array_incrementAndFetchAt")
+            case "fetchAndDecrementAt":
+                return interner.intern("kk_atomic_int_array_fetchAndDecrementAt")
+            case "decrementAndFetchAt":
+                return interner.intern("kk_atomic_int_array_decrementAndFetchAt")
+            case "fetchAndUpdateAt":
+                return interner.intern("kk_atomic_int_array_fetchAndUpdateAt")
+            case "updateAndFetchAt":
+                return interner.intern("kk_atomic_int_array_updateAndFetchAt")
+            case "updateAt":
+                return interner.intern("kk_atomic_int_array_updateAt")
+            default:
+                break
+            }
+        }
+        if isAtomicIntArrayReceiverType(receiverType, sema: sema, interner: interner) {
+            switch memberName {
+            case "size", "length":
+                return interner.intern("kk_atomic_int_array_size")
+            case "loadAt", "get":
+                return interner.intern("kk_atomic_int_array_loadAt")
+            case "storeAt", "set":
+                return interner.intern("kk_atomic_int_array_storeAt")
+            case "exchangeAt", "getAndSet":
+                return interner.intern("kk_atomic_int_array_exchangeAt")
+            case "compareAndSetAt":
+                return interner.intern("kk_atomic_int_array_compareAndSetAt")
+            case "compareAndExchangeAt":
+                return interner.intern("kk_atomic_int_array_compareAndExchangeAt")
+            case "fetchAndAddAt", "getAndAdd":
+                return interner.intern("kk_atomic_int_array_fetchAndAddAt")
+            case "addAndFetchAt":
+                return interner.intern("kk_atomic_int_array_addAndFetchAt")
+            case "fetchAndIncrementAt", "getAndIncrement":
+                return interner.intern("kk_atomic_int_array_fetchAndIncrementAt")
+            case "incrementAndFetchAt", "incrementAndGet":
+                return interner.intern("kk_atomic_int_array_incrementAndFetchAt")
+            case "fetchAndDecrementAt", "getAndDecrement":
+                return interner.intern("kk_atomic_int_array_fetchAndDecrementAt")
+            case "decrementAndFetchAt", "decrementAndGet":
+                return interner.intern("kk_atomic_int_array_decrementAndFetchAt")
+            case "fetchAndUpdateAt":
+                return interner.intern("kk_atomic_int_array_fetchAndUpdateAt")
+            case "updateAndFetchAt":
+                return interner.intern("kk_atomic_int_array_updateAndFetchAt")
+            case "updateAt":
+                return interner.intern("kk_atomic_int_array_updateAt")
+            case "toString":
+                return interner.intern("kk_atomic_int_array_toString")
+            default:
+                break
+            }
+        }
         if sema.bindings.isRangeExpr(receiverExpr) {
             switch memberName {
             case "contains":

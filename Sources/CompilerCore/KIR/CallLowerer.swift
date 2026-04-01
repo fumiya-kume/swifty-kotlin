@@ -385,6 +385,20 @@ final class CallLowerer {
         } else {
             interner.intern("<unknown>")
         }
+        if let loweredAtomicIntArray = lowerAtomicIntArrayCallExpr(
+            exprID,
+            sourceCalleeName: sourceCalleeName,
+            chosenCallee: chosen,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredAtomicIntArray
+        }
         let loweredArgIDs = args.map { argument in
             driver.lowerExpr(
                 argument.expr,

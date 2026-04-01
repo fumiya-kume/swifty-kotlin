@@ -163,4 +163,112 @@ extension CallLowerer {
         // 8. Return the array
         return arrayExpr
     }
+
+    func lowerAtomicIntArrayCallExpr(
+        _ exprID: ExprID,
+        sourceCalleeName: InternedString,
+        chosenCallee: SymbolID?,
+        args: [CallArgument],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard chosenCallee == nil,
+              interner.resolve(sourceCalleeName) == "AtomicIntArray"
+        else {
+            return nil
+        }
+
+        let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+
+        switch args.count {
+        case 1:
+            let argumentType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+            let nonNullArgumentType = sema.types.makeNonNullable(argumentType)
+            let runtimeCallee: String?
+            if nonNullArgumentType == sema.types.intType {
+                runtimeCallee = "kk_atomic_int_array_new"
+            } else if case let .classType(classType) = sema.types.kind(of: nonNullArgumentType),
+                      let symbol = sema.symbols.symbol(classType.classSymbol),
+                      interner.resolve(symbol.name) == "IntArray"
+            {
+                runtimeCallee = "kk_atomic_int_array_fromArray"
+            } else {
+                runtimeCallee = nil
+            }
+
+            guard let runtimeCallee else {
+                return nil
+            }
+
+            let loweredArgument = driver.lowerExpr(
+                args[0].expr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern(runtimeCallee),
+                arguments: [loweredArgument],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+
+        case 2:
+            let sizeType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+            guard sema.types.makeNonNullable(sizeType) == sema.types.intType else {
+                return nil
+            }
+            let initType = sema.bindings.exprTypes[args[1].expr] ?? sema.types.anyType
+            guard case .functionType = sema.types.kind(of: sema.types.makeNonNullable(initType)) else {
+                return nil
+            }
+
+            let loweredSize = driver.lowerExpr(
+                args[0].expr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let loweredInit = driver.lowerExpr(
+                args[1].expr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            let thrownResult = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: sema.types.nullableAnyType
+            )
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_atomic_int_array_create"),
+                arguments: [loweredSize, loweredInit],
+                result: result,
+                canThrow: true,
+                thrownResult: thrownResult
+            ))
+            return result
+
+        default:
+            return nil
+        }
+    }
 }

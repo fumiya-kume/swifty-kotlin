@@ -870,7 +870,6 @@ extension DataFlowSemaPhase {
         registerLateListIndexedMembers(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoercionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticEnumStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticAtomicStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticUuidStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticSerializationStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticURIStubs(symbols: symbols, types: types, interner: interner)
@@ -882,6 +881,7 @@ extension DataFlowSemaPhase {
         registerSyntheticDateFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticMetaprogStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticBigIntegerStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticAtomicStubs(symbols: symbols, types: types, interner: interner)
     }
 
     func registerSyntheticContractStubs(

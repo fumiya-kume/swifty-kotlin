@@ -2576,48 +2576,129 @@ symbol s2574 kind=function fq=kotlin.concurrent.atomics.AtomicIntArray.updateAt 
 symbol s2575 kind=valueParameter fq=kotlin.concurrent.atomics.AtomicIntArray.updateAt.index vis=private flags=synthetic
 symbol s2576 kind=valueParameter fq=kotlin.concurrent.atomics.AtomicIntArray.updateAt.transform vis=private flags=synthetic
 symbol s2577 kind=function fq=kotlin.concurrent.atomics.AtomicIntArray.toString vis=public flags=synthetic sig=recv=Class#2510 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s2578 kind=function fq=golden.sema.useTakeIf vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
-symbol s2579 kind=function fq=golden.sema.useTakeUnless vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
-symbol s2580 kind=function fq=golden.sema.useTakeIfFalse vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
-symbol s2581 kind=function fq=golden.sema.useTakeUnlessFalse vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
+symbol s2578 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s2579 kind=local fq=__local_3.fromSize vis=private flags=_ type=<error>
+symbol s2580 kind=local fq=__local_11.fromArray vis=private flags=_ type=<error>
+symbol s2581 kind=local fq=__local_22.fromFactory vis=private flags=_ type=Class#2510
+symbol s2582 kind=local fq=__local_25.size vis=private flags=_ type=<error>
+symbol s2583 kind=local fq=__local_28.length vis=private flags=_ type=Int
+symbol s2584 kind=local fq=__local_37.first vis=private flags=_ type=Char
 file f0 package=golden.sema
-  decl d0 fun useTakeIf suspend=0 inline=0 sym=s2578
-  decl d1 fun useTakeUnless suspend=0 inline=0 sym=s2579
-  decl d2 fun useTakeIfFalse suspend=0 inline=0 sym=s2580
-  decl d3 fun useTakeUnlessFalse suspend=0 inline=0 sym=s2581
-expr e0 int(42) type=Int
-expr e1 name(it) type=_
-expr e2 int(0) type=_
-expr e3 binary(greaterThan) lhs=e1 rhs=e2 type=_
-expr e4 name(it) type=Int ref=s-1001792
-expr e5 int(0) type=Int
-expr e6 binary(greaterThan) lhs=e4 rhs=e5 type=Boolean
-expr e7 lambda params=[] body=e6 label=takeIf type=(Int) -> Boolean
-expr e8 memberCall recv=e0 callee=takeIf args=[_:e7] type=Int?
-expr e9 int(42) type=Int
-expr e10 name(it) type=_
-expr e11 int(0) type=_
-expr e12 binary(greaterThan) lhs=e10 rhs=e11 type=_
-expr e13 name(it) type=Int ref=s-1004096
-expr e14 int(0) type=Int
-expr e15 binary(greaterThan) lhs=e13 rhs=e14 type=Boolean
-expr e16 lambda params=[] body=e15 label=takeUnless type=(Int) -> Boolean
-expr e17 memberCall recv=e9 callee=takeUnless args=[_:e16] type=Int?
-expr e18 int(42) type=Int
-expr e19 name(it) type=_
-expr e20 int(0) type=_
-expr e21 binary(lessThan) lhs=e19 rhs=e20 type=_
-expr e22 name(it) type=Int ref=s-1006400
-expr e23 int(0) type=Int
-expr e24 binary(lessThan) lhs=e22 rhs=e23 type=Boolean
-expr e25 lambda params=[] body=e24 label=takeIf type=(Int) -> Boolean
-expr e26 memberCall recv=e18 callee=takeIf args=[_:e25] type=Int?
-expr e27 int(42) type=Int
-expr e28 name(it) type=_
-expr e29 int(0) type=_
-expr e30 binary(lessThan) lhs=e28 rhs=e29 type=_
-expr e31 name(it) type=Int ref=s-1008704
-expr e32 int(0) type=Int
-expr e33 binary(lessThan) lhs=e31 rhs=e32 type=Boolean
-expr e34 lambda params=[] body=e33 label=takeUnless type=(Int) -> Boolean
-expr e35 memberCall recv=e27 callee=takeUnless args=[_:e34] type=Int?
+  decl d0 fun main suspend=0 inline=0 sym=s2578
+expr e0 name(AtomicIntArray) type=_
+expr e1 int(3) type=Int
+expr e2 call callee=e0 args=[_:e1] type=<error>
+expr e3 localDecl fromSize mutable=0 type=_ init=e2 type=Unit ref=s2579
+expr e4 name(AtomicIntArray) type=_
+expr e5 name(intArrayOf) type=_
+expr e6 int(1) type=Int
+expr e7 int(2) type=Int
+expr e8 int(3) type=Int
+expr e9 call callee=e5 args=[_:e6,_:e7,_:e8] type=Class#340 call=s356 map=[0->0,1->0,2->0] targs=[]
+expr e10 call callee=e4 args=[_:e9] type=<error>
+expr e11 localDecl fromArray mutable=0 type=_ init=e10 type=Unit ref=s2580
+expr e12 name(AtomicIntArray) type=_
+expr e13 int(3) type=Int
+expr e14 name(it) type=_
+expr e15 int(1) type=_
+expr e16 binary(add) lhs=e14 rhs=e15 type=_
+expr e17 name(it) type=Int ref=s-1005120
+expr e18 int(1) type=Int
+expr e19 binary(add) lhs=e17 rhs=e18 type=Int
+expr e20 lambda params=[] body=e19 label=AtomicIntArray type=(Int) -> Int
+expr e21 call callee=e12 args=[_:e13,_:e20] type=Class#2510 call=s2511 map=[0->0,1->1] targs=[]
+expr e22 localDecl fromFactory mutable=0 type=_ init=e21 type=Unit ref=s2581
+expr e23 name(fromSize) type=<error> ref=s2579
+expr e24 memberCall recv=e23 callee=size args=[] type=<error>
+expr e25 localDecl size mutable=0 type=_ init=e24 type=Unit ref=s2582
+expr e26 name(fromSize) type=<error> ref=s2579
+expr e27 memberCall recv=e26 callee=length args=[] type=Int
+expr e28 localDecl length mutable=0 type=_ init=e27 type=Unit ref=s2583
+expr e29 name(fromSize) type=<error> ref=s2579
+expr e30 int(0) type=Int
+expr e31 indexedAccess receiver=e29 indices=[e30] type=_
+expr e32 int(7) type=Int
+expr e33 indexedAssign receiver=e29 indices=[e30] value=e32 type=Unit
+expr e34 name(fromSize) type=<error> ref=s2579
+expr e35 int(0) type=Int
+expr e36 indexedAccess receiver=e34 indices=[e35] type=Char
+expr e37 localDecl first mutable=0 type=_ init=e36 type=Unit ref=s2584
+expr e38 name(fromSize) type=<error> ref=s2579
+expr e39 int(1) type=Int
+expr e40 memberCall recv=e38 callee=loadAt args=[_:e39] type=<error>
+expr e41 name(fromSize) type=<error> ref=s2579
+expr e42 int(1) type=Int
+expr e43 int(8) type=Int
+expr e44 memberCall recv=e41 callee=storeAt args=[_:e42,_:e43] type=<error>
+expr e45 name(fromSize) type=<error> ref=s2579
+expr e46 int(1) type=Int
+expr e47 int(8) type=Int
+expr e48 int(9) type=Int
+expr e49 memberCall recv=e45 callee=compareAndSetAt args=[_:e46,_:e47,_:e48] type=<error>
+expr e50 name(fromSize) type=<error> ref=s2579
+expr e51 int(1) type=Int
+expr e52 int(9) type=Int
+expr e53 int(10) type=Int
+expr e54 memberCall recv=e50 callee=compareAndExchangeAt args=[_:e51,_:e52,_:e53] type=<error>
+expr e55 name(fromSize) type=<error> ref=s2579
+expr e56 int(1) type=Int
+expr e57 int(2) type=Int
+expr e58 memberCall recv=e55 callee=fetchAndAddAt args=[_:e56,_:e57] type=<error>
+expr e59 name(fromSize) type=<error> ref=s2579
+expr e60 int(1) type=Int
+expr e61 int(3) type=Int
+expr e62 memberCall recv=e59 callee=addAndFetchAt args=[_:e60,_:e61] type=<error>
+expr e63 name(fromSize) type=<error> ref=s2579
+expr e64 int(1) type=Int
+expr e65 memberCall recv=e63 callee=fetchAndIncrementAt args=[_:e64] type=<error>
+expr e66 name(fromSize) type=<error> ref=s2579
+expr e67 int(1) type=Int
+expr e68 memberCall recv=e66 callee=incrementAndFetchAt args=[_:e67] type=<error>
+expr e69 name(fromSize) type=<error> ref=s2579
+expr e70 int(1) type=Int
+expr e71 memberCall recv=e69 callee=fetchAndDecrementAt args=[_:e70] type=<error>
+expr e72 name(fromSize) type=<error> ref=s2579
+expr e73 int(1) type=Int
+expr e74 memberCall recv=e72 callee=decrementAndFetchAt args=[_:e73] type=<error>
+expr e75 name(fromSize) type=<error> ref=s2579
+expr e76 int(1) type=Int
+expr e77 name(it) type=_
+expr e78 int(1) type=_
+expr e79 binary(add) lhs=e77 rhs=e78 type=_
+expr e80 name(it) type=<error>
+expr e81 int(1) type=Int
+expr e82 binary(add) lhs=e80 rhs=e81 type=Int
+expr e83 lambda params=[] body=e82 label=fetchAndUpdateAt type=() -> Int
+expr e84 memberCall recv=e75 callee=fetchAndUpdateAt args=[_:e76,_:e83] type=<error>
+expr e85 name(fromSize) type=<error> ref=s2579
+expr e86 int(1) type=Int
+expr e87 name(it) type=_
+expr e88 int(1) type=_
+expr e89 binary(add) lhs=e87 rhs=e88 type=_
+expr e90 name(it) type=<error>
+expr e91 int(1) type=Int
+expr e92 binary(add) lhs=e90 rhs=e91 type=Int
+expr e93 lambda params=[] body=e92 label=updateAndFetchAt type=() -> Int
+expr e94 memberCall recv=e85 callee=updateAndFetchAt args=[_:e86,_:e93] type=<error>
+expr e95 name(fromSize) type=<error> ref=s2579
+expr e96 int(1) type=Int
+expr e97 name(it) type=_
+expr e98 int(1) type=_
+expr e99 binary(add) lhs=e97 rhs=e98 type=_
+expr e100 name(it) type=<error>
+expr e101 int(1) type=Int
+expr e102 binary(add) lhs=e100 rhs=e101 type=Int
+expr e103 lambda params=[] body=e102 label=updateAt type=() -> Int
+expr e104 memberCall recv=e95 callee=updateAt args=[_:e96,_:e103] type=<error>
+expr e105 name(fromArray) type=<error> ref=s2580
+expr e106 int(0) type=Int
+expr e107 indexedAccess receiver=e105 indices=[e106] type=Char
+expr e108 name(fromFactory) type=Class#2510 ref=s2581
+expr e109 memberCall recv=e108 callee=toString args=[] type=String call=s2577 map=[] targs=[]
+expr e110 name(println) type=_
+expr e111 name(size) type=<error> ref=s2582
+expr e112 name(length) type=Int ref=s2583
+expr e113 binary(add) lhs=e111 rhs=e112 type=Int
+expr e114 name(first) type=Char ref=s2584
+expr e115 binary(add) lhs=e113 rhs=e114 type=Int
+expr e116 call callee=e110 args=[_:e115] type=Unit call=s1371 map=[0->0] targs=[]
