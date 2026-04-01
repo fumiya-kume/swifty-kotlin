@@ -2242,7 +2242,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_coroutine_name_create",
             parameters: [
-                RuntimeABIParameter(name: "nameHandle", type: .intptr),
+                RuntimeABIParameter(name: "nameRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2250,7 +2250,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_coroutine_name_get",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "handleRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2266,9 +2266,9 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_exception_handler_invoke",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr),
-                RuntimeABIParameter(name: "context", type: .intptr),
-                RuntimeABIParameter(name: "throwable", type: .intptr),
+                RuntimeABIParameter(name: "handlerRaw", type: .intptr),
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
+                RuntimeABIParameter(name: "exceptionRaw", type: .intptr),
             ],
             returnType: .void,
             section: "Coroutine"
@@ -2276,8 +2276,8 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_context_plus",
             parameters: [
-                RuntimeABIParameter(name: "lhs", type: .intptr),
-                RuntimeABIParameter(name: "rhs", type: .intptr),
+                RuntimeABIParameter(name: "leftRaw", type: .intptr),
+                RuntimeABIParameter(name: "rightRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2285,7 +2285,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_context_get_dispatcher",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2293,7 +2293,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_context_get_name",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2301,7 +2301,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_context_get_exception_handler",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2309,7 +2309,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_context_release",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
             ],
             returnType: .void,
             section: "Coroutine"
@@ -2317,7 +2317,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_with_context_full",
             parameters: [
-                RuntimeABIParameter(name: "context", type: .intptr),
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
                 RuntimeABIParameter(name: "blockFnPtr", type: .intptr),
                 RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
@@ -2985,6 +2985,86 @@ public enum RuntimeABISpec {
             ],
             returnType: .intptr,
             section: "TypeCheck"
+        ),
+        // STDLIB-REFLECT-065: Annotation reflection
+        RuntimeABIFunctionSpec(
+            name: "kk_annotation_create",
+            parameters: [
+                RuntimeABIParameter(name: "fqNameRaw", type: .intptr),
+                RuntimeABIParameter(name: "argsListRaw", type: .intptr),
+                RuntimeABIParameter(name: "annotationClassRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_annotation_get_class",
+            parameters: [
+                RuntimeABIParameter(name: "annotationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_annotation_get_fqname",
+            parameters: [
+                RuntimeABIParameter(name: "annotationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_annotation_get_value",
+            parameters: [
+                RuntimeABIParameter(name: "annotationRaw", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_annotation_get_arg_count",
+            parameters: [
+                RuntimeABIParameter(name: "annotationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_annotation_to_string",
+            parameters: [
+                RuntimeABIParameter(name: "annotationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kclass_get_annotations",
+            parameters: [
+                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kclass_find_annotation",
+            parameters: [
+                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
+                RuntimeABIParameter(name: "nameRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kclass_register_single_annotation",
+            parameters: [
+                RuntimeABIParameter(name: "typeToken", type: .intptr),
+                RuntimeABIParameter(name: "fqNameRaw", type: .intptr),
+                RuntimeABIParameter(name: "argsEncodedRaw", type: .intptr),
+                RuntimeABIParameter(name: "argCount", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
         ),
         // REFL-005: KClass.isInstance, members, constructors
         RuntimeABIFunctionSpec(

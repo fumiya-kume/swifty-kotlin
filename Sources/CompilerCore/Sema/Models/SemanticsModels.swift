@@ -76,6 +76,7 @@ public struct FunctionSignature: Hashable, Sendable {
     public let parameterTypes: [TypeID]
     public let returnType: TypeID
     public let isSuspend: Bool
+    public let canThrow: Bool
     public let valueParameterSymbols: [SymbolID]
     public let valueParameterHasDefaultValues: [Bool]
     public let valueParameterIsVararg: [Bool]
@@ -94,6 +95,7 @@ public struct FunctionSignature: Hashable, Sendable {
         parameterTypes: [TypeID],
         returnType: TypeID,
         isSuspend: Bool = false,
+        canThrow: Bool = false,
         valueParameterSymbols: [SymbolID] = [],
         valueParameterHasDefaultValues: [Bool] = [],
         valueParameterIsVararg: [Bool] = [],
@@ -107,6 +109,7 @@ public struct FunctionSignature: Hashable, Sendable {
         self.parameterTypes = parameterTypes
         self.returnType = returnType
         self.isSuspend = isSuspend
+        self.canThrow = canThrow
         self.valueParameterSymbols = valueParameterSymbols
         self.valueParameterHasDefaultValues = valueParameterHasDefaultValues
         self.valueParameterIsVararg = valueParameterIsVararg
