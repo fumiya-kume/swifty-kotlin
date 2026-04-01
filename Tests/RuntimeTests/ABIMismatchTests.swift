@@ -80,7 +80,7 @@ final class ABIMismatchTests: XCTestCase {
         // kk_throwable_new, kk_throwable_is_cancellation, kk_panic, kk_abort_unreachable,
         // kk_require, kk_check, kk_require_lazy, kk_check_lazy,
         // kk_error, kk_todo, kk_todo_noarg, kk_dispatch_error
-        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 19)
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 22)
     }
 
     func testTestFrameworkFunctionCount() {
@@ -89,7 +89,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 145)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 144)
     }
 
     func testRegexFunctionCount() {
@@ -107,7 +107,7 @@ final class ABIMismatchTests: XCTestCase {
         // kk_string_zipWithNext
 // STDLIB-REGEX-097: kk_regex_group_names
         // STDLIB-REGEX-094: kk_regex_matches, kk_regex_from_literal, kk_string_replaceFirst_regex
-        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 32)
+        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 33)
     }
 
     func testPrintAndPrintlnFunctionCount() {
@@ -131,7 +131,7 @@ final class ABIMismatchTests: XCTestCase {
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
         // The current spec surface tracks the shared coroutine ABI subset.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 88)
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 89)
     }
 
     func testBoxingFunctionCount() {
@@ -210,6 +210,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.resultFunctions,
             RuntimeABISpec.stringBuilderFunctions,
             RuntimeABISpec.fileIOFunctions,
+            RuntimeABISpec.i18nFunctions,
             RuntimeABISpec.uuidFunctions,
             RuntimeABISpec.durationFunctions,
             RuntimeABISpec.timeAndPathBridgeFunctions,
