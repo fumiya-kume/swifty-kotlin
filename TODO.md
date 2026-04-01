@@ -424,7 +424,7 @@
   - **関連ファイル**: `RuntimeDuration.swift`
   - **テストケース**: `Scripts/diff_cases/instant_basic.kt`
 
-- [ ] STDLIB-TIME-085: システム時刻完全実装
+- [x] STDLIB-TIME-085: システム時刻完全実装
   - **仕様**: システム時刻アクセスの完全サポート
   - **実装内容**:
     - currentTimeMillis: ミリ秒単位の現在時刻
@@ -432,9 +432,9 @@
     - processStartNanos: プロセス開始時刻
     - 時刻の精度と分解能
     - 時刻のモノトニック性保証
-  - **現状**: currentTimeMillis等は一部実装済み (STDLIB-131/132)、完全な実装は未完了
+  - **現状**: 完全実装済み (STDLIB-TIME-085) - kk_system_process_start_nanos追加、ABI登録完了
   - **関連ファイル**: `RuntimeSystem.swift`
-  - **テストケース**: `Scripts/diff_cases/system_current_time_millis.kt`
+  - **テストケース**: `Scripts/diff_cases/system_current_time_millis.kt`, `Scripts/diff_cases/system_nano_time.kt`, `Scripts/diff_cases/system_process_start_nanos.kt`
 
 - [ ] STDLIB-TIME-086: Clock完全実装
   - **仕様**: Clockインターフェースの完全サポート

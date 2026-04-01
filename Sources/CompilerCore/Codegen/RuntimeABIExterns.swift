@@ -3651,8 +3651,8 @@ public enum RuntimeABIExterns {
     // but if you add or change a parameter type here, update RuntimeABISpec
     // (and vice-versa) to keep both sides in sync.
 
-    private static let intptr = "intptr_t"
-    private static let nullableIntptrPtr = "intptr_t * _Nullable"
+    static let intptr = "intptr_t"
+    static let nullableIntptrPtr = "intptr_t * _Nullable"
 
     public static let kk_file_new = ExternDecl(
         name: "kk_file_new",
