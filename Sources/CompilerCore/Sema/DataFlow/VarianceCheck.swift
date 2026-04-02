@@ -224,6 +224,9 @@ extension DataFlowSemaPhase {
                 checkTypeRefVariance(partRef, position: position,
                                      varianceMap: varianceMap, env: env, memberRange: memberRange)
             }
+        case let .annotated(base, _):
+            checkTypeRefVariance(base, position: position,
+                                 varianceMap: varianceMap, env: env, memberRange: memberRange)
         }
     }
 

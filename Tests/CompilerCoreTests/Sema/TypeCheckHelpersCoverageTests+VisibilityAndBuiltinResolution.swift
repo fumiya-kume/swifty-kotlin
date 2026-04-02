@@ -243,4 +243,75 @@ extension TypeCheckHelpersCoverageTests {
             fixture.types.errorType
         )
     }
+
+    func testResolveAnnotatedExtensionFunctionTypeVariants() {
+        let fixture = makeHelpersFixture()
+        let helpers = TypeCheckHelpers()
+
+        let function2Name = fixture.interner.intern("Function2")
+        _ = fixture.symbols.define(
+            kind: .class,
+            name: function2Name,
+            fqName: [function2Name],
+            declSite: nil,
+            visibility: .public
+        )
+        let listName = fixture.interner.intern("List")
+        _ = fixture.symbols.define(
+            kind: .class,
+            name: listName,
+            fqName: [listName],
+            declSite: nil,
+            visibility: .public
+        )
+
+        let intRef = fixture.astArena.appendTypeRef(
+            .named(path: [fixture.interner.intern("Int")], args: [], nullable: false)
+        )
+        let function2Ref = fixture.astArena.appendTypeRef(
+            .named(
+                path: [function2Name],
+                args: [.invariant(intRef), .invariant(intRef), .invariant(intRef)],
+                nullable: false
+            )
+        )
+        let annotatedFunction2Ref = fixture.astArena.appendTypeRef(
+            .annotated(base: function2Ref, annotations: [AnnotationNode(name: "ExtensionFunctionType")])
+        )
+
+        let resolved = helpers.resolveTypeRef(
+            annotatedFunction2Ref,
+            ast: fixture.ast,
+            sema: fixture.sema,
+            interner: fixture.interner,
+            diagnostics: fixture.diagnostics
+        )
+
+        if case let .functionType(ft) = fixture.types.kind(of: resolved) {
+            XCTAssertEqual(ft.receiver, fixture.types.intType)
+            XCTAssertEqual(ft.params, [fixture.types.intType])
+            XCTAssertEqual(ft.returnType, fixture.types.intType)
+            XCTAssertFalse(ft.isSuspend)
+            XCTAssertEqual(ft.nullability, .nonNull)
+        } else {
+            XCTFail("Expected extension function type to normalize to functionType")
+        }
+
+        let listRef = fixture.astArena.appendTypeRef(
+            .named(path: [listName], args: [.invariant(intRef)], nullable: false)
+        )
+        let annotatedListRef = fixture.astArena.appendTypeRef(
+            .annotated(base: listRef, annotations: [AnnotationNode(name: "ExtensionFunctionType")])
+        )
+        let invalidResult = helpers.resolveTypeRef(
+            annotatedListRef,
+            ast: fixture.ast,
+            sema: fixture.sema,
+            interner: fixture.interner,
+            diagnostics: fixture.diagnostics
+        )
+
+        XCTAssertEqual(invalidResult, fixture.types.errorType)
+        XCTAssertTrue(fixture.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-SEMA-EXTFN-TYPE" })
+    }
 }

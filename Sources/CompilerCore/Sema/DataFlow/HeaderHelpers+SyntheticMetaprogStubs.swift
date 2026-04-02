@@ -107,6 +107,25 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerSyntheticJvmAnnotationClass(
+            named: "ExtensionFunctionType",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let extFunctionTypeSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("ExtensionFunctionType")]) {
+            let record = MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.TYPE"]
+            )
+            var annotations = symbols.annotations(for: extFunctionTypeSymbol)
+            if !annotations.contains(record) {
+                annotations.append(record)
+            }
+            symbols.setAnnotations(annotations, for: extFunctionTypeSymbol)
+        }
+
         // kotlin.annotation package — provides @Target and AnnotationTarget.
         let kotlinAnnotationPkg = ensurePackage(
             path: ["kotlin", "annotation"],

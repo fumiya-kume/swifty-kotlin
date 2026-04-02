@@ -64,6 +64,15 @@ extension ExprLowerer {
 
         case .intersection:
             return emitLiteral(RuntimeTypeCheckToken.unknownBase)
+        case let .annotated(base, _):
+            return lowerIsCheckTypeTokenExpr(
+                typeRefID: base,
+                ast: ast,
+                sema: sema,
+                interner: interner,
+                arena: arena,
+                instructions: &instructions
+            )
         }
     }
 

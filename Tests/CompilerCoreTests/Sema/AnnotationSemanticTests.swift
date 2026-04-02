@@ -295,7 +295,120 @@ final class AnnotationSemanticTests: XCTestCase {
             KnownCompilerAnnotation.wasExperimental.matches($0.annotationFQName)
         }))
 
-        XCTAssertEqual(annotation.arguments, ["markerClass=ExperimentalApiclass"])
+        XCTAssertEqual(annotation.arguments, ["markerClass=ExperimentalApi::class"])
+    }
+
+    func testExtensionFunctionTypeResolvesInterfacePropertyAndTypeAlias() throws {
+        let source = """
+        interface Host {
+            val receiverAction: @ExtensionFunctionType Function1<String, Unit>
+        }
+
+        typealias Action = @ExtensionFunctionType Function2<String, Int, Unit>
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected extension function type source to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let sema = try XCTUnwrap(ctx.sema)
+        let file = try XCTUnwrap(ast.files.first)
+
+        let interfaceDeclID = try XCTUnwrap(
+            file.topLevelDecls.first(where: {
+                if case .interfaceDecl = ast.arena.decl($0) {
+                    return true
+                }
+                return false
+            })
+        )
+        guard case let .interfaceDecl(interfaceDecl) = ast.arena.decl(interfaceDeclID) else {
+            XCTFail("Expected interface declaration")
+            return
+        }
+        let propertyDeclID = try XCTUnwrap(interfaceDecl.memberProperties.first)
+        let propertySymbol = try XCTUnwrap(sema.bindings.declSymbol(for: propertyDeclID))
+        let propertyType = try XCTUnwrap(sema.symbols.propertyType(for: propertySymbol))
+
+        if case let .functionType(functionType) = sema.types.kind(of: propertyType) {
+            XCTAssertEqual(functionType.receiver, sema.types.stringType)
+            XCTAssertTrue(functionType.params.isEmpty)
+            XCTAssertEqual(functionType.returnType, sema.types.unitType)
+            XCTAssertFalse(functionType.isSuspend)
+        } else {
+            XCTFail("Expected interface property type to resolve as functionType")
+        }
+
+        let actionSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [ctx.interner.intern("Action")]))
+        let actionUnderlyingType = try XCTUnwrap(sema.symbols.typeAliasUnderlyingType(for: actionSymbol))
+
+        if case let .functionType(functionType) = sema.types.kind(of: actionUnderlyingType) {
+            XCTAssertEqual(functionType.receiver, sema.types.stringType)
+            XCTAssertEqual(functionType.params, [sema.types.intType])
+            XCTAssertEqual(functionType.returnType, sema.types.unitType)
+            XCTAssertFalse(functionType.isSuspend)
+        } else {
+            XCTFail("Expected typealias underlying type to resolve as functionType")
+        }
+    }
+
+    func testExtensionFunctionTypeRejectsFunction0() {
+        let source = """
+        interface Host {
+            val invalid: @ExtensionFunctionType Function0<Unit>
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-EXTFN-TYPE", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one extension-function-type diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Extension-function-type diagnostics should be errors")
+    }
+
+    func testExtensionFunctionTypeRejectsNonFunctionNominalType() {
+        let source = """
+        interface Host {
+            val invalid: @ExtensionFunctionType List<String>
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-EXTFN-TYPE", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one extension-function-type diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Extension-function-type diagnostics should be errors")
+    }
+
+    func testTypeAnnotationTargetValidationRejectsClassOnlyAnnotationOnTypeUsage() {
+        let source = """
+        @Target(AnnotationTarget.CLASS)
+        annotation class ClassOnly
+
+        interface Host {
+            val invalid: @ClassOnly String
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one annotation-target diagnostic for type usage, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
+    func testTypeAnnotationRejectsUseSiteTarget() {
+        let source = """
+        interface Host {
+            val invalid: @field:ExtensionFunctionType Function1<String, Unit>
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-PARSE-TYPE-ANNOTATION", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one parse diagnostic for type annotation use-site target, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Type-annotation parse diagnostics should be errors")
     }
 
     private func runSemaCollectingDiagnostics(_ source: String) -> CompilationContext {

@@ -530,6 +530,37 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(setElements(target), [1, 2, 3, 4])
     }
 
+    func testSetBinaryOperationsWithStringHandlesUseValueEqualityAndPreserveLeftOrder() {
+        let leftAlpha = makeRuntimeStringRaw("alpha")
+        let leftBeta = makeRuntimeStringRaw("beta")
+        let rightBeta = makeRuntimeStringRaw("beta")
+        let rightGamma = makeRuntimeStringRaw("gamma")
+
+        let left = registerRuntimeObject(RuntimeSetBox(elements: [leftAlpha, leftBeta]))
+        let right = registerRuntimeObject(RuntimeListBox(elements: [rightBeta, rightGamma, rightBeta]))
+
+        let intersected = kk_set_intersect(left, right)
+        let unioned = kk_set_union(left, right)
+        let subtracted = kk_set_subtract(left, right)
+
+        XCTAssertEqual(setElements(intersected), [leftBeta])
+        XCTAssertEqual(setElements(unioned), [leftAlpha, leftBeta, rightGamma])
+        XCTAssertEqual(setElements(subtracted), [leftAlpha])
+    }
+
+    func testSetBinaryOperationsAcceptSetInputAndPreserveOrder() {
+        let left = registerRuntimeObject(RuntimeSetBox(elements: [1, 2, 3]))
+        let right = registerRuntimeObject(RuntimeSetBox(elements: [3, 4, 2]))
+
+        let intersected = kk_set_intersect(left, right)
+        let unioned = kk_set_union(left, right)
+        let subtracted = kk_set_subtract(left, right)
+
+        XCTAssertEqual(setElements(intersected), [2, 3])
+        XCTAssertEqual(setElements(unioned), [1, 2, 3, 4])
+        XCTAssertEqual(setElements(subtracted), [1])
+    }
+
     func testBoolAbiForCollectionHelpersReturnsRaw() {
         let source = makeList([1, 2, 3])
         XCTAssertEqual(kk_unbox_bool(kk_list_contains(source, 2)), 1)

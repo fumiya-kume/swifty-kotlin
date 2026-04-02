@@ -9,6 +9,7 @@ public enum TypeRef: Equatable {
     case named(path: [InternedString], args: [TypeArgRef], nullable: Bool)
     case functionType(contextReceivers: [TypeRefID], receiver: TypeRefID?, params: [TypeRefID], returnType: TypeRefID, isSuspend: Bool, nullable: Bool)
     case intersection(parts: [TypeRefID])
+    case annotated(base: TypeRefID, annotations: [AnnotationNode])
 }
 
 public enum BinaryOp: Equatable {

@@ -37,6 +37,32 @@ extension BuildKIRRegressionTests {
         XCTAssertTrue(callees.contains(interner.intern("kk_set_subtract")))
     }
 
+    func testBuildKIRLowersSetBinaryMembersToCollectionRuntimeCalls() throws {
+        let source = """
+        fun main(values: Set<Int>, other: List<Int>) {
+            values.intersect(other)
+            values.union(other)
+            values.subtract(other)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callNames.contains("kk_set_intersect"))
+            XCTAssertTrue(callNames.contains("kk_set_union"))
+            XCTAssertTrue(callNames.contains("kk_set_subtract"))
+            XCTAssertFalse(callNames.contains("intersect"))
+            XCTAssertFalse(callNames.contains("union"))
+            XCTAssertFalse(callNames.contains("subtract"))
+        }
+    }
+
     func testABILoweringMarksAtomicRuntimeHelpersAsNonThrowing() {
         let pass = ABILoweringPass()
         let interner = StringInterner()

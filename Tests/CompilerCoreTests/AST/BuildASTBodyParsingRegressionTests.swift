@@ -180,6 +180,51 @@ final class BuildASTBodyParsingRegressionTests: XCTestCase {
         }
     }
 
+    func testAnnotatedExtensionFunctionTypeAliasPreservesTypeAnnotations() throws {
+        let source = """
+        annotation class A
+        annotation class B
+        typealias Action = @A @B @ExtensionFunctionType Function1<String, Unit>
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runFrontend(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let file = try XCTUnwrap(ast.files.first)
+            let aliasDeclID = try XCTUnwrap(
+                file.topLevelDecls.first(where: {
+                    if case .typeAliasDecl = ast.arena.decl($0) {
+                        return true
+                    }
+                    return false
+                })
+            )
+
+            guard case let .typeAliasDecl(typeAliasDecl) = ast.arena.decl(aliasDeclID) else {
+                XCTFail("Expected typealias declaration")
+                return
+            }
+            let underlyingType = try XCTUnwrap(typeAliasDecl.underlyingType)
+            guard case let .annotated(base, annotations) = try XCTUnwrap(ast.arena.typeRef(underlyingType)) else {
+                XCTFail("Expected annotated type reference")
+                return
+            }
+
+            XCTAssertEqual(annotations.map(\.name), ["A", "B", "ExtensionFunctionType"])
+
+            guard case let .named(path, args, nullable) = try XCTUnwrap(ast.arena.typeRef(base)) else {
+                XCTFail("Expected named type reference")
+                return
+            }
+
+            XCTAssertEqual(path.map(ctx.interner.resolve), ["Function1"])
+            XCTAssertEqual(args.count, 2)
+            XCTAssertFalse(nullable)
+        }
+    }
+
     // MARK: - Lambda/Object literal/Callable reference roundtrip
 
     func testLambdaObjectLiteralAndCallableReferenceRoundtripToASTLocals() throws {

@@ -205,6 +205,27 @@ extension DataFlowSemaPhase {
             }
             guard partTypes.count == partRefs.count else { return nil }
             return types.make(.intersection(partTypes))
+
+        case let .annotated(base, annotations):
+            guard let baseType = resolveTypeRef(
+                base,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                localTypeParameters: localTypeParameters,
+                diagnostics: diagnostics
+            ) else {
+                return nil
+            }
+            return ExtensionFunctionTypeSupport.normalizeAnnotatedType(
+                baseType: baseType,
+                annotations: annotations,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                diagnostics: diagnostics
+            )
         }
     }
 

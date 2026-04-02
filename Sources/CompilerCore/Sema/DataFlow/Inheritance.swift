@@ -117,7 +117,7 @@ extension DataFlowSemaPhase {
         case let .named(refPath, refs, _):
             path = refPath
             argRefs = refs
-        case .functionType, .intersection:
+        case .functionType, .intersection, .annotated:
             return nil
         }
         guard !path.isEmpty else {
@@ -251,6 +251,25 @@ extension DataFlowSemaPhase {
             let partTypes = partRefs.compactMap { resolveTypeRefForInheritance($0, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types, interner: interner) }
             guard partTypes.count == partRefs.count else { return nil }
             return types.make(.intersection(partTypes))
+        case let .annotated(base, annotations):
+            guard let baseType = resolveTypeRefForInheritance(
+                base,
+                currentPackage: currentPackage,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            ) else {
+                return nil
+            }
+            return ExtensionFunctionTypeSupport.normalizeAnnotatedType(
+                baseType: baseType,
+                annotations: annotations,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                diagnostics: nil
+            )
         }
     }
 

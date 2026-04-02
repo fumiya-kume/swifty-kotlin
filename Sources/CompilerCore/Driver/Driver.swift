@@ -399,6 +399,11 @@ public final class CompilerDriver {
             for part in parts {
                 collectTypeRefDependencies(typeRefID: part, ast: ast, interner: interner, depended: &depended)
             }
+        case let .annotated(base, annotations):
+            for annotation in annotations {
+                depended.insert(annotation.name.split(separator: ".").last.map(String.init) ?? annotation.name)
+            }
+            collectTypeRefDependencies(typeRefID: base, ast: ast, interner: interner, depended: &depended)
         }
     }
 }
