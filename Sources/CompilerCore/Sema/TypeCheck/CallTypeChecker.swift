@@ -1932,146 +1932,37 @@ final class CallTypeChecker {
             }
         }
 
-        var inferredNonLambdaArgTypes: [Int: TypeID] = [:]
-        for (index, argument) in args.enumerated() {
-            guard let argumentExpr = ast.arena.expr(argument.expr) else {
-                continue
-            }
-            switch argumentExpr {
-            case .lambdaLiteral, .callableRef:
-                continue
-            default:
-                inferredNonLambdaArgTypes[index] = driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
-            }
+        var expectedTypeOverrides: [Int: TypeID] = [:]
+        if let launcherIndex = coroutineLauncherLambdaArgIndex,
+           let coroutineLauncherExpectedLambdaType
+        {
+            expectedTypeOverrides[launcherIndex] = coroutineLauncherExpectedLambdaType
         }
-
-        let contextualArgExpectedTypes: [TypeID?] = args.enumerated().map { index, argument in
-            // STDLIB-CORO-072: Apply expected lambda type to the correct index
-            // (0 for standard launch/runBlocking, 1 for launch(dispatcher) { })
-            if let launcherIndex = coroutineLauncherLambdaArgIndex,
-               index == launcherIndex,
-               let coroutineLauncherExpectedLambdaType {
-                return coroutineLauncherExpectedLambdaType
-            }
-            if index == 1, let withContextExpectedLambdaType {
-                return withContextExpectedLambdaType
-            }
-
-            guard let argumentExpr = ast.arena.expr(argument.expr) else {
-                return nil
-            }
-            let isLambdaLike = switch argumentExpr {
-            case .lambdaLiteral, .callableRef:
-                true
-            default:
-                false
-            }
-            guard isLambdaLike else {
-                return nil
-            }
-
-            let narrowedCandidates = candidates.filter { candidate in
-                guard let signature = sema.symbols.functionSignature(for: candidate),
-                      isCallableArityCompatible(signature: signature, argCount: args.count)
-                else {
-                    return false
-                }
-                for (otherIndex, inferredType) in inferredNonLambdaArgTypes {
-                    guard let parameterType = parameterTypeForArgument(at: otherIndex, in: signature) else {
-                        return false
-                    }
-                    if !sema.types.isSubtype(inferredType, parameterType) {
-                        return false
-                    }
-                }
-                return true
-            }
-            let expectedTypeCandidates = narrowedCandidates.isEmpty ? candidates : narrowedCandidates
-
-            if expectedTypeCandidates.count == 1,
-               let chosenCandidate = sema.symbols.symbol(expectedTypeCandidates[0]),
-               let signature = sema.symbols.functionSignature(for: expectedTypeCandidates[0]),
-               index < signature.parameterTypes.count
-            {
-                var parameterType = signature.parameterTypes[index]
-                if !explicitTypeArgs.isEmpty {
-                    let isConstructor = chosenCandidate.kind == .constructor
-                    let expectedExplicitTypeArgCount = isConstructor
-                        ? signature.classTypeParameterCount
-                        : signature.typeParameterSymbols.count - signature.classTypeParameterCount
-                    if explicitTypeArgs.count == expectedExplicitTypeArgCount {
-                        let typeArgOffset = isConstructor ? 0 : signature.classTypeParameterCount
-                        let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
-                        var substitution: [TypeVarID: TypeID] = [:]
-                        for (explicitIndex, explicitTypeArg) in explicitTypeArgs.enumerated() {
-                            let typeParameterSymbol = signature.typeParameterSymbols[typeArgOffset + explicitIndex]
-                            if let typeVariable = typeVarBySymbol[typeParameterSymbol] {
-                                substitution[typeVariable] = explicitTypeArg
-                            }
-                        }
-                        parameterType = sema.types.substituteTypeParameters(
-                            in: parameterType,
-                            substitution: substitution,
-                            typeVarBySymbol: typeVarBySymbol
-                        )
-                    }
-                }
-                return parameterType
-            }
-
-            var matchingParameterTypes: [TypeID] = []
-            for candidate in expectedTypeCandidates {
-                guard let signature = sema.symbols.functionSignature(for: candidate),
-                      index < signature.parameterTypes.count
-                else {
-                    continue
-                }
-                let parameterType = signature.parameterTypes[index]
-                if driver.helpers.samFunctionType(for: parameterType, sema: sema) != nil {
-                    matchingParameterTypes.append(parameterType)
-                }
-            }
-            guard let firstType = matchingParameterTypes.first else {
-                return nil
-            }
-            let allSame = matchingParameterTypes.dropFirst().allSatisfy { $0 == firstType }
-            return allSame ? firstType : nil
+        if let withContextExpectedLambdaType, args.count > 1 {
+            expectedTypeOverrides[1] = withContextExpectedLambdaType
         }
-        let argTypes = args.enumerated().map { index, argument in
-            if let contextualExpectedType = contextualArgExpectedTypes[index] {
-                return driver.inferExpr(
-                    argument.expr,
-                    ctx: ctx,
-                    locals: &locals,
-                    expectedType: contextualExpectedType
-                )
-            }
-            // Reuse already-inferred type for non-lambda args to avoid emitting
-            // duplicate diagnostics (e.g. "Unresolved reference") for the same
-            // expression. Non-lambda args are pre-evaluated in the
-            // inferredNonLambdaArgTypes pass above to determine contextual
-            // expected types for lambda args; re-inferring them here would cause
-            // every diagnostic to fire twice.
-            if let cached = inferredNonLambdaArgTypes[index] {
-                return cached
-            }
-            return driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
-        }
+        let preparedArgs = prepareCallArguments(
+            args: args,
+            candidates: candidates,
+            expectedTypeOverrides: expectedTypeOverrides,
+            ctx: ctx,
+            locals: &locals
+        )
+        let argTypes = preparedArgs.argTypes
         if !candidates.isEmpty {
-            let resolvedArgs: [CallArg] = zip(args, argTypes).map { argument, type in
-                CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
-            }
-            let resolved = ctx.resolver.resolveCall(
+            let resolved = resolveCallRespectingLambdaReturnType(
                 candidates: candidates,
-                call: CallExpr(
-                    range: range,
-                    calleeName: calleeName ?? InternedString(),
-                    args: resolvedArgs,
-                    explicitTypeArgs: explicitTypeArgs
-                ),
+                args: args,
+                argTypes: argTypes,
+                range: range,
+                calleeName: calleeName ?? InternedString(),
+                explicitTypeArgs: explicitTypeArgs,
                 expectedType: expectedType,
                 implicitReceiverType: ctx.implicitReceiverType,
-                ctx: ctx.semaCtx
+                lambdaLiteralIndices: preparedArgs.lambdaLiteralIndices,
+                inputOnlyLambdaIndices: preparedArgs.inputOnlyLambdaIndices,
+                blockedLambdaRefinement: preparedArgs.blockedLambdaRefinement,
+                ctx: ctx
             )
             if let diagnostic = resolved.diagnostic {
                 ctx.semaCtx.diagnostics.emit(diagnostic)

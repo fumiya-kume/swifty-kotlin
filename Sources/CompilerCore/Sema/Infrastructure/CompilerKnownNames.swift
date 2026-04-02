@@ -17,7 +17,9 @@ enum KnownCompilerAnnotation {
     case suppress
     case dslMarker
     case wasExperimental
+    case optIn
     case experimentalTypeInference
+    case overloadResolutionByLambdaReturnType
 
     var simpleName: String {
         switch self {
@@ -53,8 +55,12 @@ enum KnownCompilerAnnotation {
             "DslMarker"
         case .wasExperimental:
             "WasExperimental"
+        case .optIn:
+            "OptIn"
         case .experimentalTypeInference:
             "ExperimentalTypeInference"
+        case .overloadResolutionByLambdaReturnType:
+            "OverloadResolutionByLambdaReturnType"
         }
     }
 
@@ -92,8 +98,12 @@ enum KnownCompilerAnnotation {
             "kotlin.DslMarker"
         case .wasExperimental:
             "kotlin.WasExperimental"
+        case .optIn:
+            "kotlin.OptIn"
         case .experimentalTypeInference:
             "kotlin.experimental.ExperimentalTypeInference"
+        case .overloadResolutionByLambdaReturnType:
+            "kotlin.OverloadResolutionByLambdaReturnType"
         }
     }
 

@@ -125,6 +125,12 @@ public final class DataFlowSemaPhase: CompilerPhase {
             diagnostics: ctx.diagnostics,
             interner: ctx.interner
         )
+        validateExperimentalTypeInferenceOptIn(
+            ast: ast,
+            symbols: symbols,
+            bindings: bindings,
+            diagnostics: ctx.diagnostics
+        )
         validateConstructorDelegation(ast: ast, symbols: symbols, diagnostics: ctx.diagnostics)
         validateDeclarationSiteVariance(
             ast: ast, symbols: symbols, bindings: bindings,

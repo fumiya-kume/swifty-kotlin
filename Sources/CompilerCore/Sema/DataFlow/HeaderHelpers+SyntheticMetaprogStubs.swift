@@ -126,6 +126,91 @@ extension DataFlowSemaPhase {
             symbols.setAnnotations(annotations, for: extFunctionTypeSymbol)
         }
 
+        registerSyntheticJvmAnnotationClass(
+            named: "OptIn",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let optInSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("OptIn")]) {
+            let record = MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: [
+                    "AnnotationTarget.CLASS",
+                    "AnnotationTarget.ANNOTATION_CLASS",
+                    "AnnotationTarget.PROPERTY",
+                    "AnnotationTarget.FIELD",
+                    "AnnotationTarget.LOCAL_VARIABLE",
+                    "AnnotationTarget.VALUE_PARAMETER",
+                    "AnnotationTarget.CONSTRUCTOR",
+                    "AnnotationTarget.FUNCTION",
+                    "AnnotationTarget.TYPEALIAS",
+                    "AnnotationTarget.EXPRESSION",
+                    "AnnotationTarget.FILE",
+                ]
+            )
+            var annotations = symbols.annotations(for: optInSymbol)
+            if !annotations.contains(record) {
+                annotations.append(record)
+            }
+            symbols.setAnnotations(annotations, for: optInSymbol)
+        }
+
+        registerSyntheticJvmAnnotationClass(
+            named: "OverloadResolutionByLambdaReturnType",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let overloadSymbol = symbols.lookup(
+            fqName: kotlinPkg + [interner.intern("OverloadResolutionByLambdaReturnType")]
+        ) {
+            let targetRecord = MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.FUNCTION"]
+            )
+            let experimentalRecord = MetadataAnnotationRecord(
+                annotationFQName: "kotlin.experimental.ExperimentalTypeInference"
+            )
+            var annotations = symbols.annotations(for: overloadSymbol)
+            if !annotations.contains(targetRecord) {
+                annotations.append(targetRecord)
+            }
+            if !annotations.contains(experimentalRecord) {
+                annotations.append(experimentalRecord)
+            }
+            symbols.setAnnotations(annotations, for: overloadSymbol)
+        }
+
+        let kotlinExperimentalPkg = ensurePackage(
+            path: ["kotlin", "experimental"],
+            symbols: symbols,
+            interner: interner
+        )
+        let kotlinExperimentalPkgSymbol = symbols.lookup(fqName: kotlinExperimentalPkg) ?? .invalid
+        registerSyntheticAnnotationClass(
+            named: "ExperimentalTypeInference",
+            packageFQName: kotlinExperimentalPkg,
+            packageSymbol: kotlinExperimentalPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let experimentalSymbol = symbols.lookup(
+            fqName: kotlinExperimentalPkg + [interner.intern("ExperimentalTypeInference")]
+        ) {
+            let record = MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
+            )
+            var annotations = symbols.annotations(for: experimentalSymbol)
+            if !annotations.contains(record) {
+                annotations.append(record)
+            }
+            symbols.setAnnotations(annotations, for: experimentalSymbol)
+        }
+
         // kotlin.annotation package — provides @Target and AnnotationTarget.
         let kotlinAnnotationPkg = ensurePackage(
             path: ["kotlin", "annotation"],

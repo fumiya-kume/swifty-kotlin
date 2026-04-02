@@ -5208,14 +5208,38 @@ extension CallTypeChecker {
         // Use the companion type as implicit receiver when the candidates were
         // redirected from the owner class to its companion object.
         let effectiveReceiverType = companionReceiverType ?? lookupReceiverType
-
-        let resolvedArgs = zip(args, argTypes).map { CallArg(label: $0.label, isSpread: $0.isSpread, type: $1) }
-        let resolved = ctx.resolver.resolveCall(
+        var cachedNonLambdaArgTypes: [Int: TypeID] = [:]
+        for (index, argument) in args.enumerated() {
+            guard let argumentExpr = ast.arena.expr(argument.expr) else {
+                continue
+            }
+            switch argumentExpr {
+            case .lambdaLiteral, .callableRef:
+                continue
+            default:
+                cachedNonLambdaArgTypes[index] = argTypes[index]
+            }
+        }
+        let preparedArgs = prepareCallArguments(
+            args: args,
             candidates: candidates,
-            call: CallExpr(range: range, calleeName: calleeName, args: resolvedArgs, explicitTypeArgs: explicitTypeArgs),
+            preInferredNonLambdaArgTypes: cachedNonLambdaArgTypes,
+            ctx: ctx,
+            locals: &locals
+        )
+        let resolved = resolveCallRespectingLambdaReturnType(
+            candidates: candidates,
+            args: args,
+            argTypes: preparedArgs.argTypes,
+            range: range,
+            calleeName: calleeName,
+            explicitTypeArgs: explicitTypeArgs,
             expectedType: expectedType,
             implicitReceiverType: effectiveReceiverType,
-            ctx: ctx.semaCtx
+            lambdaLiteralIndices: preparedArgs.lambdaLiteralIndices,
+            inputOnlyLambdaIndices: preparedArgs.inputOnlyLambdaIndices,
+            blockedLambdaRefinement: preparedArgs.blockedLambdaRefinement,
+            ctx: ctx
         )
         if let diagnostic = resolved.diagnostic {
             if diagnostic.code == "KSWIFTK-SEMA-BOUND" {

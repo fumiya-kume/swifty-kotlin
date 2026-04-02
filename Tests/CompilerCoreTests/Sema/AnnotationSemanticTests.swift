@@ -230,6 +230,111 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isWarning), "Unchecked-cast diagnostics should be warnings")
     }
 
+    func testAnnotationTargetEnumConstantResolves() {
+        let source = """
+        fun targetSmoke(): AnnotationTarget = AnnotationTarget.CLASS
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected AnnotationTarget smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testOverloadResolutionByLambdaReturnTypeResolves() {
+        let source = """
+        import kotlin.OverloadResolutionByLambdaReturnType
+
+        fun marker(x: OverloadResolutionByLambdaReturnType?): Int = 0
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected OverloadResolutionByLambdaReturnType smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testExperimentalTypeInferenceResolves() {
+        let source = """
+        import kotlin.experimental.ExperimentalTypeInference
+
+        fun marker(x: ExperimentalTypeInference?): Int = 0
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected ExperimentalTypeInference smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testOptInResolves() {
+        let source = """
+        fun marker(x: OptIn?): Int = 0
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected OptIn smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testTargetAnnotationIsRejectedOnRegularClass() {
+        let source = """
+        @Target(AnnotationTarget.CLASS)
+        class BadTarget
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one annotation-target diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
+    func testTargetAnnotationAllowsAnnotationClassButRejectsFunctionUsage() {
+        let source = """
+        @Target(AnnotationTarget.CLASS)
+        annotation class ClassOnly
+
+        @ClassOnly
+        class Good
+
+        @ClassOnly
+        fun bad() {}
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected exactly one annotation-target diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
+    func testMustBeDocumentedAnnotationIsSyntheticAndTargetedToAnnotationClasses() throws {
+        let source = """
+        annotation class ExperimentalApi
+        """
+
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let mustBeDocumentedFQName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("annotation"),
+            ctx.interner.intern("MustBeDocumented"),
+        ]
+        let symbolID = try XCTUnwrap(sema.symbols.lookup(fqName: mustBeDocumentedFQName))
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.visibility, .public)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+        XCTAssertEqual(symbol.kind, .annotationClass)
+
+        let annotations = sema.symbols.annotations(for: symbol.id)
+        XCTAssertTrue(
+            annotations.contains(
+                where: {
+                    $0.annotationFQName == "kotlin.annotation.Target"
+                        && $0.arguments == ["AnnotationTarget.ANNOTATION_CLASS"]
+                }
+            ),
+            "Expected MustBeDocumented to carry @Target(AnnotationTarget.ANNOTATION_CLASS), got: \(annotations)"
+        )
+    }
+
     func testAnnotationClassInheritsKotlinAnnotation() throws {
         let source = """
         annotation class MyAnnotation
@@ -298,6 +403,72 @@ final class AnnotationSemanticTests: XCTestCase {
             ),
             "Expected ExperimentalContracts to carry @Retention(AnnotationRetention.BINARY), got: \(annotations)"
         )
+    }
+
+    func testOverloadResolutionByLambdaReturnTypeRejectsClassTarget() {
+        let source = """
+        import kotlin.OverloadResolutionByLambdaReturnType
+        import kotlin.OptIn
+        import kotlin.experimental.ExperimentalTypeInference
+
+        @Target(AnnotationTarget.CLASS)
+        @OptIn(ExperimentalTypeInference::class)
+        @OverloadResolutionByLambdaReturnType
+        class Bad
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 2, "Expected target diagnostics for both @Target and @OverloadResolutionByLambdaReturnType misuse, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
+    func testExperimentalTypeInferenceRejectsFunctionTarget() {
+        let source = """
+        import kotlin.experimental.ExperimentalTypeInference
+
+        @ExperimentalTypeInference
+        fun bad() {}
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one annotation-target diagnostic for ExperimentalTypeInference misuse, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
+    func testOverloadResolutionByLambdaReturnTypeRequiresOptIn() {
+        let source = """
+        import kotlin.OverloadResolutionByLambdaReturnType
+
+        @OverloadResolutionByLambdaReturnType
+        fun foo(block: () -> Int): Int = block()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPTIN", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one opt-in diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Opt-in diagnostics should be errors")
+    }
+
+    func testOverloadResolutionByLambdaReturnTypeAcceptsOptIn() {
+        let source = """
+        import kotlin.OptIn
+        import kotlin.OverloadResolutionByLambdaReturnType
+        import kotlin.experimental.ExperimentalTypeInference
+
+        @OptIn(ExperimentalTypeInference::class)
+        @OverloadResolutionByLambdaReturnType
+        fun foo(block: () -> Int): Int = block()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPTIN", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected opt-in diagnostic to be suppressed by @OptIn, got: \(ctx.diagnostics.diagnostics)")
     }
 
     func testFieldTargetAllowsBackedFieldAndRejectsMissingBackingField() {
