@@ -1555,13 +1555,10 @@ final class CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: inputType)
                 let fqName = [interner.intern("kotlin"), interner.intern("DeepRecursiveScope"), interner.intern("callRecursive")]
                 if let chosen = sema.symbols.lookupAll(fqName: fqName).first(where: { symbolID in
-                    guard let signature = sema.symbols.functionSignature(for: symbolID),
-                          case let .classType(classType) = sema.types.kind(of: signature.receiverType ?? sema.types.errorType),
-                          let symbol = sema.symbols.symbol(classType.classSymbol)
-                    else {
+                    guard let signature = sema.symbols.functionSignature(for: symbolID) else {
                         return false
                     }
-                    return interner.resolve(symbol.name) == "DeepRecursiveScope"
+                    return signature.typeParameterSymbols.count == signature.classTypeParameterCount
                 }) {
                     sema.bindings.bindCall(
                         id,
@@ -2560,13 +2557,10 @@ final class CallTypeChecker {
                     _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: inputType)
                     let fqName = [interner.intern("kotlin"), interner.intern("DeepRecursiveScope"), interner.intern("callRecursive")]
                     if let chosen = sema.symbols.lookupAll(fqName: fqName).first(where: { symbolID in
-                        guard let signature = sema.symbols.functionSignature(for: symbolID),
-                              case let .classType(classType) = sema.types.kind(of: signature.receiverType ?? sema.types.errorType),
-                              let symbol = sema.symbols.symbol(classType.classSymbol)
-                        else {
+                        guard let signature = sema.symbols.functionSignature(for: symbolID) else {
                             return false
                         }
-                        return interner.resolve(symbol.name) == "DeepRecursiveScope"
+                        return signature.typeParameterSymbols.count == signature.classTypeParameterCount
                     }) {
                         sema.bindings.bindCall(
                             id,
