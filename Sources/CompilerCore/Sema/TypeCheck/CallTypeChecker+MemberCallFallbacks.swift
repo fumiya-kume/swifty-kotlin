@@ -467,6 +467,25 @@ extension CallTypeChecker {
             argCount: args.count,
             sema: sema
         ) {
+            // Check variance projection constraints before binding the call.
+            // When the receiver has an out-projection (e.g. MutableList<out Number>),
+            // mutation members like addAll/removeAll/retainAll use the element type
+            // in an 'in' position and must be rejected.
+            let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+            let callRange = ctx.ast.arena.exprRange(id) ?? ctx.ast.arena.exprRange(receiverID)
+            if let callRange,
+               let projectionDiagnostic = makeProjectionViolationDiagnostic(
+                candidates: [fallbackCallee],
+                receiverType: receiverType,
+                calleeName: calleeName,
+                range: callRange,
+                sema: sema,
+                interner: interner
+            ) {
+                ctx.semaCtx.diagnostics.emit(projectionDiagnostic)
+                return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+            }
+
             let parameterMapping = buildCollectionFallbackParameterMapping(
                 memberName: calleeName,
                 args: args,
