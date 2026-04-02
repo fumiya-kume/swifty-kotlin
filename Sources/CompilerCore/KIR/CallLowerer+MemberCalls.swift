@@ -5149,6 +5149,8 @@ extension CallLowerer {
                 return interner.intern("kk_range_toList")
             case "toUIntArray":
                 return interner.intern("kk_uint_range_toUIntArray")
+            case "toULongArray":
+                return interner.intern("kk_ulong_range_toULongArray")
             case "toLongArray":
                 return interner.intern("kk_long_range_toLongArray")
             case "iterator":

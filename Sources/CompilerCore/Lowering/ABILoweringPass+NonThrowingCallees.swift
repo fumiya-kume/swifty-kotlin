@@ -290,6 +290,7 @@ extension ABILoweringPass {
             interner.intern("kk_uint_range_toUIntArray"),
             interner.intern("kk_uint_range_reversed"),
             interner.intern("kk_uint_range_toList"),
+            interner.intern("kk_ulong_range_toULongArray"),
             // LongRange properties and methods (STDLIB-RANGE-035)
             interner.intern("kk_long_rangeTo"),
             interner.intern("kk_long_range_contains"),

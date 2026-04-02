@@ -6,6 +6,7 @@ fun main() {
     val c = x.toLong()
     val d = x.toULong()
     val e = y.toInt()
+    val h = (1uL..7uL).toULongArray()
     val f = 100u / 3u
     val g = 100u % 3u
     val i = 255u and 15u
@@ -16,6 +17,7 @@ fun main() {
     println(c)
     println(d)
     println(e)
+    println(h)
     println(f)
     println(g)
     println(i)
