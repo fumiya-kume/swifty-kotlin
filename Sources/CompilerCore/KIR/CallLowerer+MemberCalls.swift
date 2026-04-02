@@ -4654,13 +4654,70 @@ extension CallLowerer {
         if loweredCallee == interner.intern("kk_lock_withLock"),
            finalArguments.count == 2
         {
-            let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
-                finalArguments[1],
-                sema: sema,
-                arena: arena,
-                interner: interner,
-                instructions: &instructions
-            )
+            let lambdaID = finalArguments[1]
+            let fnPtrExpr: KIRExprID
+            let envPtrExpr: KIRExprID
+            if let callableInfo = driver.ctx.callableValueInfo(for: lambdaID) {
+                fnPtrExpr = arena.appendExpr(
+                    .symbolRef(callableInfo.symbol),
+                    type: sema.types.anyType
+                )
+                instructions.append(.constValue(result: fnPtrExpr, value: .symbolRef(callableInfo.symbol)))
+                if callableInfo.captureArguments.count >= 2 {
+                    // Multi-capture: pack captures into a closure object.
+                    // The lambda has been generated to unpack them via kk_array_get_inbounds.
+                    let intType = sema.types.intType
+                    let anyType = sema.types.anyType
+                    let kkObjectNew = interner.intern("kk_object_new")
+                    let kkArraySet = interner.intern("kk_array_set")
+                    let slotCount = Int64(2 + callableInfo.captureArguments.count)
+                    let slotCountExpr = arena.appendExpr(.intLiteral(slotCount), type: intType)
+                    instructions.append(.constValue(result: slotCountExpr, value: .intLiteral(slotCount)))
+                    let classIDExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                    instructions.append(.constValue(result: classIDExpr, value: .intLiteral(0)))
+                    let closureObjExpr = arena.appendExpr(
+                        .temporary(Int32(clamping: arena.expressions.count)), type: anyType)
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: kkObjectNew,
+                        arguments: [slotCountExpr, classIDExpr],
+                        result: closureObjExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    for (captureIndex, captureArg) in callableInfo.captureArguments.enumerated() {
+                        let fieldOffset = Int64(captureIndex + 2)
+                        let offsetExpr = arena.appendExpr(.intLiteral(fieldOffset), type: intType)
+                        instructions.append(.constValue(result: offsetExpr, value: .intLiteral(fieldOffset)))
+                        let unusedResult = arena.appendExpr(
+                            .temporary(Int32(clamping: arena.expressions.count)), type: anyType)
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: kkArraySet,
+                            arguments: [closureObjExpr, offsetExpr, captureArg],
+                            result: unusedResult,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                    }
+                    envPtrExpr = closureObjExpr
+                } else if let closureRaw = callableInfo.captureArguments.first {
+                    envPtrExpr = closureRaw
+                } else {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    envPtrExpr = zeroExpr
+                }
+            } else {
+                // Fallback when callableValueInfo is unavailable (e.g. stored lambda /
+                // function reference): treat lambdaID as the function pointer and pass
+                // zero as the environment pointer so the argument count always matches
+                // the 3-parameter ABI (handle, actionFnPtr, actionEnvPtr).
+                fnPtrExpr = lambdaID
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                envPtrExpr = zeroExpr
+            }
             finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
         }
         if let inst = tryEmitVirtualDispatch(
