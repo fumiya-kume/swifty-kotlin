@@ -2112,6 +2112,49 @@ public func kk_context_plus(_ leftRaw: Int, _ rightRaw: Int) -> Int {
     return runtimeRegisterObject(merged)
 }
 
+/// Fetch a context element by key.
+/// The current runtime recognizes the closed set of coroutine element handles
+/// already modeled in RuntimeCoroutineContext.
+@_cdecl("kk_context_get")
+public func kk_context_get(_ contextRaw: Int, _ keyRaw: Int) -> Int {
+    let ctx = resolveToCoroutineContext(contextRaw)
+    if let match = runtimeCoroutineContextElementHandle(for: keyRaw, in: ctx) {
+        return match
+    }
+    return 0
+}
+
+/// Fold the known coroutine context elements from left to right.
+@_cdecl("kk_context_fold")
+public func kk_context_fold(
+    _ contextRaw: Int,
+    _ initial: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    let ctx = resolveToCoroutineContext(contextRaw)
+    var acc = initial
+    for elementRaw in runtimeCoroutineContextElementHandles(in: ctx) {
+        var thrown = 0
+        acc = maybeUnbox(lambda(closureRaw, acc, elementRaw, &thrown))
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return initial
+        }
+    }
+    return acc
+}
+
+/// Remove a context element by key.
+@_cdecl("kk_context_minusKey")
+public func kk_context_minusKey(_ contextRaw: Int, _ keyRaw: Int) -> Int {
+    let resolved = resolveToCoroutineContext(contextRaw)
+    let reduced = runtimeCoroutineContextRemovingElement(for: keyRaw, from: resolved)
+    return runtimeRegisterObject(reduced)
+}
+
 /// Extract the dispatcher from a CoroutineContext.
 /// Returns a dispatcher tag (or 0 if none).
 @_cdecl("kk_context_get_dispatcher")
@@ -2171,6 +2214,110 @@ public func kk_continuation_interceptor_intercept_continuation(
         return continuationRaw
     }
     return runtimeRegisterObject(interceptedObject)
+}
+
+/// Return the raw handle for a known context element matching the supplied key.
+private func runtimeCoroutineContextElementHandle(for keyRaw: Int, in ctx: RuntimeCoroutineContext) -> Int? {
+    if keyRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
+       let dispatcher = tryCast(ptr, to: RuntimeDispatcher.self)
+    {
+        return ctx.dispatcher == dispatcher.tag ? ctx.dispatcher : nil
+    }
+    if isDispatcherTag(keyRaw) {
+        return ctx.dispatcher == keyRaw ? ctx.dispatcher : nil
+    }
+    if keyRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
+       let nameBox = tryCast(ptr, to: RuntimeCoroutineNameBox.self)
+    {
+        return ctx.name == nameBox.name ? runtimeRegisterObject(RuntimeCoroutineNameBox(name: nameBox.name)) : nil
+    }
+    if keyRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
+       tryCast(ptr, to: RuntimeExceptionHandlerBox.self) != nil
+    {
+        return ctx.exceptionHandler.map { Int(bitPattern: UnsafeMutableRawPointer(Unmanaged.passUnretained($0).toOpaque())) }
+    }
+    if keyRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
+       let job = tryCast(ptr, to: RuntimeJobHandle.self)
+    {
+        guard let ctxJob = ctx.jobHandle, ctxJob === job else { return nil }
+        return Int(bitPattern: UnsafeMutableRawPointer(Unmanaged.passUnretained(job).toOpaque()))
+    }
+    return nil
+}
+
+/// Return the raw handles for the known elements stored in the context.
+private func runtimeCoroutineContextElementHandles(in ctx: RuntimeCoroutineContext) -> [Int] {
+    var handles: [Int] = []
+    if ctx.dispatcher != 0 {
+        handles.append(ctx.dispatcher)
+    }
+    if let name = ctx.name {
+        handles.append(runtimeRegisterObject(RuntimeCoroutineNameBox(name: name)))
+    }
+    if let handler = ctx.exceptionHandler {
+        handles.append(Int(bitPattern: UnsafeMutableRawPointer(Unmanaged.passUnretained(handler).toOpaque())))
+    }
+    if let job = ctx.jobHandle {
+        handles.append(Int(bitPattern: UnsafeMutableRawPointer(Unmanaged.passUnretained(job).toOpaque())))
+    }
+    return handles
+}
+
+/// Remove any known element that matches the supplied key handle.
+private func runtimeCoroutineContextRemovingElement(for keyRaw: Int, from ctx: RuntimeCoroutineContext) -> RuntimeCoroutineContext {
+    let next = RuntimeCoroutineContext(
+        dispatcher: ctx.dispatcher,
+        name: ctx.name,
+        exceptionHandler: ctx.exceptionHandler,
+        jobHandle: ctx.jobHandle
+    )
+    if keyRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
+       let dispatcher = tryCast(ptr, to: RuntimeDispatcher.self)
+    {
+        if next.dispatcher == dispatcher.tag {
+            next.dispatcher = 0
+        }
+        return next
+    }
+    if isDispatcherTag(keyRaw) {
+        if next.dispatcher == keyRaw {
+            next.dispatcher = 0
+        }
+        return next
+    }
+    if keyRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
+       let nameBox = tryCast(ptr, to: RuntimeCoroutineNameBox.self)
+    {
+        if next.name == nameBox.name {
+            next.name = nil
+        }
+        return next
+    }
+    if keyRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
+       let handler = tryCast(ptr, to: RuntimeExceptionHandlerBox.self)
+    {
+        if next.exceptionHandler === handler {
+            next.exceptionHandler = nil
+        }
+        return next
+    }
+    if keyRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
+       let job = tryCast(ptr, to: RuntimeJobHandle.self)
+    {
+        if next.jobHandle === job {
+            next.jobHandle = nil
+        }
+        return next
+    }
+    return next
 }
 
 /// Extract the CoroutineName from a CoroutineContext.

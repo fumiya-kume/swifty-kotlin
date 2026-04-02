@@ -397,10 +397,10 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // STDLIB-CORO-077: CoroutineContext, CoroutineName, CoroutineExceptionHandler
-        let coroutineContextSymbol = ensureClassSymbol(
+        // STDLIB-CORO-077: CoroutineContext, CoroutineContext.Element, CoroutineContext.Key
+        let coroutineContextSymbol = ensureInterfaceSymbol(
             named: "CoroutineContext",
-            in: coroutinesPkg,
+            in: kotlinCoroutinesPkg,
             symbols: symbols,
             interner: interner
         )
@@ -410,6 +410,227 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(coroutineContextType, for: coroutineContextSymbol)
+
+        let coroutineContextFQName = kotlinCoroutinesPkg + [interner.intern("CoroutineContext")]
+        let coroutineContextElementSymbol = ensureInterfaceSymbol(
+            named: "Element",
+            in: coroutineContextFQName,
+            symbols: symbols,
+            interner: interner,
+            visibility: .internal
+        )
+        symbols.setParentSymbol(coroutineContextSymbol, for: coroutineContextElementSymbol)
+        let coroutineContextElementType = types.make(.classType(ClassType(
+            classSymbol: coroutineContextElementSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(coroutineContextElementType, for: coroutineContextElementSymbol)
+        symbols.setDirectSupertypes([coroutineContextSymbol], for: coroutineContextElementSymbol)
+        symbols.setDirectSupertypes([coroutineContextElementSymbol], for: jobSymbol)
+
+        let coroutineContextKeySymbol = ensureInterfaceSymbol(
+            named: "Key",
+            in: coroutineContextFQName,
+            symbols: symbols,
+            interner: interner,
+            visibility: .internal
+        )
+        symbols.setParentSymbol(coroutineContextSymbol, for: coroutineContextKeySymbol)
+        let coroutineContextKeyTypeParamName = interner.intern("E")
+        let coroutineContextKeyTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: coroutineContextKeyTypeParamName,
+            fqName: coroutineContextFQName + [interner.intern("Key"), interner.intern("$synthetic"), coroutineContextKeyTypeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(coroutineContextKeySymbol, for: coroutineContextKeyTypeParamSymbol)
+        let coroutineContextKeyTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: coroutineContextKeyTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        symbols.setTypeParameterUpperBounds([coroutineContextElementType], for: coroutineContextKeyTypeParamSymbol)
+        let coroutineContextKeyType = types.make(.classType(ClassType(
+            classSymbol: coroutineContextKeySymbol,
+            args: [.invariant(coroutineContextKeyTypeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(coroutineContextKeyType, for: coroutineContextKeySymbol)
+
+        let coroutineContextKeyTypeParamBound = coroutineContextElementType
+
+        // CoroutineContext.get(key: Key<E>): E?
+        do {
+            let functionName = interner.intern("get")
+            let functionFQName = coroutineContextFQName + [functionName]
+            if symbols.lookup(fqName: functionFQName) == nil {
+                let functionSymbol = symbols.define(
+                    kind: .function,
+                    name: functionName,
+                    fqName: functionFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(coroutineContextSymbol, for: functionSymbol)
+                let functionTypeParamName = interner.intern("E")
+                let functionTypeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: functionTypeParamName,
+                    fqName: functionFQName + [interner.intern("$synthetic"), functionTypeParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                let functionTypeParamType = types.make(.typeParam(TypeParamType(
+                    symbol: functionTypeParamSymbol,
+                    nullability: .nonNull
+                )))
+                symbols.setTypeParameterUpperBounds([coroutineContextKeyTypeParamBound], for: functionTypeParamSymbol)
+
+                let keyType = types.make(.classType(ClassType(
+                    classSymbol: coroutineContextKeySymbol,
+                    args: [.invariant(functionTypeParamType)],
+                    nullability: .nonNull
+                )))
+                let keyParamName = interner.intern("key")
+                let keyParamSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: keyParamName,
+                    fqName: functionFQName + [keyParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(functionSymbol, for: keyParamSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        parameterTypes: [keyType],
+                        returnType: types.makeNullable(functionTypeParamType),
+                        valueParameterSymbols: [keyParamSymbol],
+                        valueParameterHasDefaultValues: [false],
+                        valueParameterIsVararg: [false],
+                        typeParameterSymbols: [functionTypeParamSymbol],
+                        typeParameterUpperBoundsList: [[coroutineContextKeyTypeParamBound]]
+                    ),
+                    for: functionSymbol
+                )
+                symbols.setExternalLinkName("kk_context_get", for: functionSymbol)
+            }
+        }
+
+        // CoroutineContext.fold(initial: R, operation: (R, Element) -> R): R
+        do {
+            let functionName = interner.intern("fold")
+            let functionFQName = coroutineContextFQName + [functionName]
+            if symbols.lookup(fqName: functionFQName) == nil {
+                let functionSymbol = symbols.define(
+                    kind: .function,
+                    name: functionName,
+                    fqName: functionFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(coroutineContextSymbol, for: functionSymbol)
+                let rTypeParamName = interner.intern("R")
+                let rTypeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: rTypeParamName,
+                    fqName: functionFQName + [interner.intern("$synthetic"), rTypeParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                let rType = types.make(.typeParam(TypeParamType(
+                    symbol: rTypeParamSymbol,
+                    nullability: .nonNull
+                )))
+                let operationType = types.make(.functionType(FunctionType(
+                    params: [rType, coroutineContextElementType],
+                    returnType: rType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                let initialParamName = interner.intern("initial")
+                let initialParamSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: initialParamName,
+                    fqName: functionFQName + [initialParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                let operationParamName = interner.intern("operation")
+                let operationParamSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: operationParamName,
+                    fqName: functionFQName + [operationParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(functionSymbol, for: initialParamSymbol)
+                symbols.setParentSymbol(functionSymbol, for: operationParamSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        parameterTypes: [rType, operationType],
+                        returnType: rType,
+                        valueParameterSymbols: [initialParamSymbol, operationParamSymbol],
+                        valueParameterHasDefaultValues: [false, false],
+                        valueParameterIsVararg: [false, false],
+                        typeParameterSymbols: [rTypeParamSymbol]
+                    ),
+                    for: functionSymbol
+                )
+                symbols.setExternalLinkName("kk_context_fold", for: functionSymbol)
+            }
+        }
+
+        // CoroutineContext.minusKey(key: Key<*>): CoroutineContext
+        do {
+            let functionName = interner.intern("minusKey")
+            let functionFQName = coroutineContextFQName + [functionName]
+            if symbols.lookup(fqName: functionFQName) == nil {
+                let functionSymbol = symbols.define(
+                    kind: .function,
+                    name: functionName,
+                    fqName: functionFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(coroutineContextSymbol, for: functionSymbol)
+                let keyType = types.make(.classType(ClassType(
+                    classSymbol: coroutineContextKeySymbol,
+                    args: [.star],
+                    nullability: .nonNull
+                )))
+                let keyParamName = interner.intern("key")
+                let keyParamSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: keyParamName,
+                    fqName: functionFQName + [keyParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(functionSymbol, for: keyParamSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        parameterTypes: [keyType],
+                        returnType: coroutineContextType,
+                        valueParameterSymbols: [keyParamSymbol],
+                        valueParameterHasDefaultValues: [false],
+                        valueParameterIsVararg: [false]
+                    ),
+                    for: functionSymbol
+                )
+                symbols.setExternalLinkName("kk_context_minusKey", for: functionSymbol)
+            }
+        }
 
         let coroutineNameSymbol = ensureClassSymbol(
             named: "CoroutineName",
@@ -423,7 +644,7 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(coroutineNameType, for: coroutineNameSymbol)
-        symbols.setDirectSupertypes([coroutineContextSymbol], for: coroutineNameSymbol)
+        symbols.setDirectSupertypes([coroutineContextElementSymbol], for: coroutineNameSymbol)
 
         let coroutineExceptionHandlerSymbol = ensureClassSymbol(
             named: "CoroutineExceptionHandler",
@@ -437,10 +658,10 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(coroutineExceptionHandlerType, for: coroutineExceptionHandlerSymbol)
-        symbols.setDirectSupertypes([coroutineContextSymbol], for: coroutineExceptionHandlerSymbol)
+        symbols.setDirectSupertypes([coroutineContextElementSymbol], for: coroutineExceptionHandlerSymbol)
 
-        // Make CoroutineDispatcher a subtype of CoroutineContext and ContinuationInterceptor.
-        symbols.setDirectSupertypes([coroutineContextSymbol, continuationInterceptorSymbol], for: dispatcherSymbol)
+        // Make CoroutineDispatcher a subtype of CoroutineContext.Element
+        symbols.setDirectSupertypes([coroutineContextElementSymbol], for: dispatcherSymbol)
 
         // CoroutineName(name: String) constructor
         registerSyntheticCoroutineTopLevelFunction(
