@@ -167,7 +167,7 @@ extension DataFlowSemaPhase {
                 continue
             }
             
-            if isSubclassable(sup) { continue }
+            if isSubclassable(sup, interner: ctx.interner) { continue }
             let name = sup.fqName
                 .map { ctx.interner.resolve($0) }
                 .joined(separator: ".")
@@ -180,7 +180,15 @@ extension DataFlowSemaPhase {
         }
     }
 
-    private func isSubclassable(_ sym: SemanticSymbol) -> Bool {
+    private func isSubclassable(_ sym: SemanticSymbol, interner: StringInterner) -> Bool {
+        // kotlin.Any is the root superclass and must stay subclassable even if
+        // the imported metadata marks it as final.
+        if sym.fqName.count == 2,
+           interner.resolve(sym.fqName[0]) == "kotlin",
+           interner.resolve(sym.fqName[1]) == "Any"
+        {
+            return true
+        }
         if sym.kind == .interface { return true }
         if sym.flags.contains(.abstractType) { return true }
         if sym.flags.contains(.sealedType) { return true }
