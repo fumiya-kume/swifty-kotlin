@@ -563,7 +563,7 @@
     - 例外抑制: addSuppressed(), getSuppressed()
     - try-with-resources: use()関数
     - 例外フィルタリング: catchの条件付き
-  - **現状**: 基本的な例外は実装済み、抑制は未実装
+  - **現状**: 基本的な例外・cause chain・suppressed・`use()` の抑制連携は実装済み。残課題は stack trace など他の高度機能の互換性向上
   - **関連ファイル**: `RuntimeThrowableBox`
   - **テストケース**: `Scripts/diff_cases/exception_advanced.kt`
 

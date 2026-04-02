@@ -1,5 +1,30 @@
 import Foundation
 
+private func runtimeThrowableBox(from raw: Int) -> RuntimeThrowableBox? {
+    guard raw != runtimeNullSentinelInt,
+          raw != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: raw)
+    else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeThrowableBox.self)
+}
+
+private func runtimeAllocateArrayBox(length: Int) -> Int {
+    let arrayBox = RuntimeArrayBox(length: length)
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(arrayBox).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
+
 @_cdecl("kk_throwable_new")
 public func kk_throwable_new(_ message: UnsafeMutableRawPointer?) -> UnsafeMutableRawPointer {
     let text = extractString(from: message) ?? "Throwable"
@@ -116,32 +141,31 @@ public func kk_throwable_initCause(_ throwableRaw: Int, _ causeRaw: Int) -> Int 
 /// addSuppressed(exception: Throwable): Unit — adds a suppressed exception.
 @_cdecl("kk_throwable_addSuppressed")
 public func kk_throwable_addSuppressed(_ throwableRaw: Int, _ suppressedRaw: Int) -> Int {
-    guard throwableRaw != runtimeNullSentinelInt, throwableRaw != 0,
-          let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw),
-          let throwable = tryCast(ptr, to: RuntimeThrowableBox.self)
+    guard let throwable = runtimeThrowableBox(from: throwableRaw)
     else {
         return 0
     }
-    if suppressedRaw != runtimeNullSentinelInt && suppressedRaw != 0 {
-        throwable.suppressed.append(suppressedRaw)
+
+    guard let suppressed = runtimeThrowableBox(from: suppressedRaw) else {
+        return 0
     }
+
+    // Match Kotlin/JVM's major behavior by rejecting self-suppression while
+    // remaining ABI-compatible with this non-throwing runtime entrypoint.
+    guard throwable !== suppressed else { return 0 }
+
+    throwable.suppressed.append(suppressedRaw)
     return 0
 }
 
 /// getSuppressed(): Array<Throwable> — returns the suppressed exceptions as an array.
 @_cdecl("kk_throwable_getSuppressed")
 public func kk_throwable_getSuppressed(_ throwableRaw: Int) -> Int {
-    guard throwableRaw != runtimeNullSentinelInt, throwableRaw != 0,
-          let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw),
-          let throwable = tryCast(ptr, to: RuntimeThrowableBox.self)
+    guard let throwable = runtimeThrowableBox(from: throwableRaw)
     else {
-        let emptyArray = RuntimeArrayBox(length: 0)
-        let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(emptyArray).toOpaque())
-        runtimeStorage.withLock { state in
-            state.objectPointers.insert(UInt(bitPattern: opaque))
-        }
-        return Int(bitPattern: opaque)
+        return runtimeAllocateArrayBox(length: 0)
     }
+
     let arrayBox = RuntimeArrayBox(length: throwable.suppressed.count)
     for (i, elem) in throwable.suppressed.enumerated() {
         arrayBox.elements[i] = elem
