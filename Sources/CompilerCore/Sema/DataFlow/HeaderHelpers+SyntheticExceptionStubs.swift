@@ -385,9 +385,12 @@ extension DataFlowSemaPhase {
             )
             symbols.setParentSymbol(throwableSymbol, for: getSuppressedSymbol)
             symbols.setExternalLinkName("kk_throwable_getSuppressed", for: getSuppressedSymbol)
-            // Return type is Array<Throwable>, but since we lower to runtime calls
-            // returning opaque arrays, we use anyType as the return representation.
-            let returnType = types.anyType
+            let returnType = makeSyntheticArrayType(
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                elementType: throwableType
+            )
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: throwableType,
@@ -397,6 +400,26 @@ extension DataFlowSemaPhase {
                 for: getSuppressedSymbol
             )
         }
+    }
+
+    private func makeSyntheticArrayType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID {
+        let arrayFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("Array"),
+        ]
+        guard let arraySymbol = symbols.lookup(fqName: arrayFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: arraySymbol,
+            args: [.invariant(elementType)],
+            nullability: .nonNull
+        )))
     }
 
     private func registerSyntheticExceptionConstructors(

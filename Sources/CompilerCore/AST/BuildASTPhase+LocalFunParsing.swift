@@ -6,13 +6,35 @@ extension BuildASTPhase {
         interner: StringInterner,
         astArena: ASTArena
     ) -> ExprID? {
-        guard let head = statementTokens.first,
-              case .keyword(.fun) = head.kind
+        guard !statementTokens.isEmpty else {
+            return nil
+        }
+
+        var startIndex = 0
+        var isSuspend = false
+        while startIndex < statementTokens.count,
+              case let .keyword(keyword) = statementTokens[startIndex].kind,
+              KotlinParser.isDeclarationModifierKeyword(keyword)
+        {
+            if keyword == .suspend {
+                isSuspend = true
+            }
+            startIndex += 1
+        }
+
+        guard startIndex < statementTokens.count else {
+            return nil
+        }
+
+        let head = statementTokens[startIndex]
+        guard case .keyword(.fun) = head.kind
         else {
             return nil
         }
 
-        guard let nameToken = statementTokens.dropFirst().first(where: { token in
+        let funTokens = Array(statementTokens[startIndex...])
+
+        guard let nameToken = funTokens.dropFirst().first(where: { token in
             isTypeLikeNameToken(token.kind)
         }),
             let name = internedIdentifier(from: nameToken, interner: interner)
@@ -20,7 +42,7 @@ extension BuildASTPhase {
             return nil
         }
 
-        guard let lParenIndex = statementTokens.firstIndex(where: { $0.kind == .symbol(.lParen) }) else {
+        guard let lParenIndex = funTokens.firstIndex(where: { $0.kind == .symbol(.lParen) }) else {
             return nil
         }
 
@@ -28,8 +50,8 @@ extension BuildASTPhase {
         var depth = BracketDepth()
         var paramTokens: [Token] = []
         var index = lParenIndex + 1
-        while index < statementTokens.count {
-            let token = statementTokens[index]
+        while index < funTokens.count {
+            let token = funTokens[index]
             if token.kind == .symbol(.rParen), depth.paren == 0 {
                 break
             }
@@ -46,28 +68,28 @@ extension BuildASTPhase {
             appendValueParameter(from: paramTokens, into: &valueParams, interner: interner, astArena: astArena)
         }
 
-        guard index < statementTokens.count, statementTokens[index].kind == .symbol(.rParen) else {
+        guard index < funTokens.count, funTokens[index].kind == .symbol(.rParen) else {
             return nil
         }
         index += 1
 
         let returnType = parseReturnTypeAnnotation(
-            from: statementTokens, index: &index, interner: interner, astArena: astArena
+            from: funTokens, index: &index, interner: interner, astArena: astArena
         )
 
         let body: FunctionBody
-        if index < statementTokens.count, statementTokens[index].kind == .symbol(.assign) {
+        if index < funTokens.count, funTokens[index].kind == .symbol(.assign) {
             index += 1
-            let exprTokens = Array(statementTokens[index...]).filter { $0.kind != .symbol(.semicolon) }
+            let exprTokens = Array(funTokens[index...]).filter { $0.kind != .symbol(.semicolon) }
             let parser = ExpressionParser(tokens: exprTokens, interner: interner, astArena: astArena)
             if let exprID = parser.parse(), let exprRange = astArena.exprRange(exprID) {
                 body = .expr(exprID, exprRange)
             } else {
                 body = .unit
             }
-        } else if index < statementTokens.count, statementTokens[index].kind == .symbol(.lBrace) {
+        } else if index < funTokens.count, funTokens[index].kind == .symbol(.lBrace) {
             body = parseBraceBody(
-                from: statementTokens, index: &index, interner: interner, astArena: astArena
+                from: funTokens, index: &index, interner: interner, astArena: astArena
             )
         } else {
             body = .unit
@@ -87,6 +109,7 @@ extension BuildASTPhase {
             valueParams: valueParams,
             returnType: returnType,
             body: body,
+            isSuspend: isSuspend,
             range: range
         ))
     }

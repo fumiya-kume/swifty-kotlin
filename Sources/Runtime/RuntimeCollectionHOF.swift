@@ -67,7 +67,10 @@ public func kk_use(_ resourceRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThr
     // 3. If only close() threw, propagate the close exception.
     if blockThrown != 0 {
         // Block threw — propagate the block exception (case 1 & 2).
-        // Note: close exception, if any, is suppressed.
+        // If close() also threw, attach it as a suppressed exception.
+        if closeThrown != 0 {
+            _ = kk_throwable_addSuppressed(blockThrown, closeThrown)
+        }
         return handleCollectionLambdaThrow(blockThrown, outThrown)
     }
     if closeThrown != 0 {
@@ -150,7 +153,7 @@ public func kk_list_mapNotNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
-        if let normalized = runtimeNormalizeNullableCollectionValue(result) {
+        if let normalized = runtimeMapNotNullResultValue(result) {
             mapped.append(normalized)
         }
     }
@@ -2310,13 +2313,12 @@ public func kk_set_mapNotNull(_ setRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ 
     guard let set = runtimeSetBox(from: setRaw) else {
         invalidContainerPanic(#function, "set")
     }
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var mapped: [Int] = []
     for elem in set.elements {
         var thrown = 0
-        let result = lambda(closureRaw, elem, &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
-        if let normalized = runtimeNormalizeNullableCollectionValue(result) {
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if let normalized = runtimeMapNotNullResultValue(result) {
             mapped.append(normalized)
         }
     }
@@ -2444,8 +2446,7 @@ public func kk_array_mapNotNull(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
-        let normalized = maybeUnbox(result)
-        if normalized != runtimeNullSentinelInt {
+        if let normalized = runtimeMapNotNullResultValue(result) {
             mapped.append(normalized)
         }
     }

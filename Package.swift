@@ -25,8 +25,11 @@ let package = Package(
             name: "CLLVM"
         ),
         .target(
+            name: "RuntimeABI"
+        ),
+        .target(
             name: "CompilerCore",
-            dependencies: ["CLLVM"]
+            dependencies: ["CLLVM", "RuntimeABI"]
         ),
         .executableTarget(
             name: "KSwiftKCLI",
@@ -43,7 +46,7 @@ let package = Package(
         ),
         .testTarget(
             name: "RuntimeTests",
-            dependencies: ["Runtime", "CompilerCore"],
+            dependencies: ["Runtime", "RuntimeABI"],
             path: "Tests/RuntimeTests"
         ),
         .testTarget(

@@ -137,13 +137,14 @@ final class SymbolTableTests: XCTestCase {
         XCTAssertEqual(symbols.count, 1)
     }
 
-    func testMixedOverloadAndNonOverloadReturnsExisting() {
+    func testFunctionCanCoexistWithNominalTypeUsingSameName() {
         let interner = StringInterner()
         let symbols = SymbolTable()
         let fqName = [interner.intern("x")]
         let id1 = symbols.define(kind: .class, name: interner.intern("x"), fqName: fqName, declSite: nil, visibility: .public)
         let id2 = symbols.define(kind: .function, name: interner.intern("x"), fqName: fqName, declSite: nil, visibility: .public)
-        XCTAssertEqual(id1, id2)
+        XCTAssertNotEqual(id1, id2)
+        XCTAssertEqual(symbols.count, 2)
     }
 
     func testExpectAnnotationClassCanCoexistWithActualTypeAlias() throws {

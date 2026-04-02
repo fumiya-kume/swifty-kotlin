@@ -62,7 +62,7 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // kotlin package — ensure @Suppress is present as an annotation class.
+        // kotlin package — ensure built-in metadata annotations are present.
         let kotlinPkg = ensurePackage(
             path: ["kotlin"],
             symbols: symbols,
@@ -72,6 +72,35 @@ extension DataFlowSemaPhase {
 
         registerSyntheticJvmAnnotationClass(
             named: "Suppress",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticJvmAnnotationClass(
+            named: "Deprecated",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticJvmAnnotationClass(
+            named: "ReplaceWith",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticDeprecationLevelEnum(
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerSyntheticJvmAnnotationClass(
+            named: "WasExperimental",
             packageFQName: kotlinPkg,
             packageSymbol: kotlinPkgSymbol,
             symbols: symbols,
@@ -224,6 +253,64 @@ extension DataFlowSemaPhase {
             "FILE",
             "TYPEALIAS",
         ] {
+            let entry = interner.intern(entryName)
+            let entryFQName = enumFQName + [entry]
+            let entrySymbol: SymbolID
+            if let existing = symbols.lookup(fqName: entryFQName) {
+                entrySymbol = existing
+            } else {
+                entrySymbol = symbols.define(
+                    kind: .field,
+                    name: entry,
+                    fqName: entryFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+            }
+            symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+            if symbols.propertyType(for: entrySymbol) == nil {
+                symbols.setPropertyType(enumType, for: entrySymbol)
+            }
+        }
+    }
+
+    private func registerSyntheticDeprecationLevelEnum(
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let enumName = interner.intern("DeprecationLevel")
+        let enumFQName = packageFQName + [enumName]
+        let enumSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: enumFQName) {
+            enumSymbol = existing
+            if packageSymbol != .invalid {
+                symbols.setParentSymbol(packageSymbol, for: existing)
+            }
+        } else {
+            enumSymbol = symbols.define(
+                kind: .enumClass,
+                name: enumName,
+                fqName: enumFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if packageSymbol != .invalid {
+                symbols.setParentSymbol(packageSymbol, for: enumSymbol)
+            }
+        }
+
+        let enumType = types.make(.classType(ClassType(
+            classSymbol: enumSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        for entryName in ["WARNING", "ERROR", "HIDDEN"] {
             let entry = interner.intern(entryName)
             let entryFQName = enumFQName + [entry]
             let entrySymbol: SymbolID

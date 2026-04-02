@@ -2,6 +2,7 @@ import Foundation
 
 enum KnownCompilerAnnotation {
     case deprecated
+    case replaceWith
     case target
     case jvmStatic
     case jvmName
@@ -10,11 +11,14 @@ enum KnownCompilerAnnotation {
     case throws_
     case suppress
     case dslMarker
+    case wasExperimental
 
     var simpleName: String {
         switch self {
         case .deprecated:
             "Deprecated"
+        case .replaceWith:
+            "ReplaceWith"
         case .target:
             "Target"
         case .jvmStatic:
@@ -31,6 +35,8 @@ enum KnownCompilerAnnotation {
             "Suppress"
         case .dslMarker:
             "DslMarker"
+        case .wasExperimental:
+            "WasExperimental"
         }
     }
 
@@ -38,6 +44,8 @@ enum KnownCompilerAnnotation {
         switch self {
         case .deprecated:
             "kotlin.Deprecated"
+        case .replaceWith:
+            "kotlin.ReplaceWith"
         case .target:
             "kotlin.annotation.Target"
         case .jvmStatic:
@@ -54,6 +62,8 @@ enum KnownCompilerAnnotation {
             "kotlin.Suppress"
         case .dslMarker:
             "kotlin.DslMarker"
+        case .wasExperimental:
+            "kotlin.WasExperimental"
         }
     }
 

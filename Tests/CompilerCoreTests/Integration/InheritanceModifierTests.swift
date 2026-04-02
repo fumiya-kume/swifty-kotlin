@@ -246,7 +246,7 @@ final class InheritanceModifierTests: XCTestCase {
         let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
-        assertHasDiagnostic("KSWIFTK-SEMA-OVERRIDE", in: ctx)
+        assertHasDiagnostic("KSWIFTK-SEMA-OVERRIDE-RETURN", in: ctx)
     }
 
     // MARK: - Complex Inheritance Scenarios

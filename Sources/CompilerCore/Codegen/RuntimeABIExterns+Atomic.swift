@@ -1,3 +1,5 @@
+import RuntimeABI
+
 // MARK: - Atomic (kotlin.concurrent.AtomicInt / AtomicLong / AtomicBoolean /
 // kotlin.concurrent.AtomicReference / kotlin.concurrent.atomics.AtomicIntArray)
 

@@ -322,6 +322,26 @@ public func kk_math_tan(_ value: Int) -> Int {
     kk_double_to_bits(tan(kk_bits_to_double(value)))
 }
 
+@_cdecl("kk_math_sinh")
+public func kk_math_sinh(_ value: Int) -> Int {
+    kk_double_to_bits(sinh(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_cosh")
+public func kk_math_cosh(_ value: Int) -> Int {
+    kk_double_to_bits(cosh(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_tanh")
+public func kk_math_tanh(_ value: Int) -> Int {
+    kk_double_to_bits(tanh(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_cbrt")
+public func kk_math_cbrt(_ value: Int) -> Int {
+    kk_double_to_bits(cbrt(kk_bits_to_double(value)))
+}
+
 @_cdecl("kk_math_asin")
 public func kk_math_asin(_ value: Int) -> Int {
     kk_double_to_bits(asin(kk_bits_to_double(value)))
@@ -426,6 +446,26 @@ public func kk_math_cos_float(_ v: Int) -> Int {
 @_cdecl("kk_math_tan_float")
 public func kk_math_tan_float(_ v: Int) -> Int {
     applyFloatUnaryOp(v, tanf)
+}
+
+@_cdecl("kk_math_sinh_float")
+public func kk_math_sinh_float(_ v: Int) -> Int {
+    applyFloatUnaryOp(v, sinhf)
+}
+
+@_cdecl("kk_math_cosh_float")
+public func kk_math_cosh_float(_ v: Int) -> Int {
+    applyFloatUnaryOp(v, coshf)
+}
+
+@_cdecl("kk_math_tanh_float")
+public func kk_math_tanh_float(_ v: Int) -> Int {
+    applyFloatUnaryOp(v, tanhf)
+}
+
+@_cdecl("kk_math_cbrt_float")
+public func kk_math_cbrt_float(_ v: Int) -> Int {
+    applyFloatUnaryOp(v, cbrtf)
 }
 
 @_cdecl("kk_math_asin_float")
@@ -938,48 +978,6 @@ public func kk_math_truncate_float(_ value: Int) -> Int {
     kk_float_to_bits(truncf(kk_bits_to_float(value)))
 }
 
-// MARK: - STDLIB-MATH-109: Hyperbolic functions and cbrt
-
-@_cdecl("kk_math_sinh")
-public func kk_math_sinh(_ value: Int) -> Int {
-    kk_double_to_bits(sinh(kk_bits_to_double(value)))
-}
-
-@_cdecl("kk_math_cosh")
-public func kk_math_cosh(_ value: Int) -> Int {
-    kk_double_to_bits(cosh(kk_bits_to_double(value)))
-}
-
-@_cdecl("kk_math_tanh")
-public func kk_math_tanh(_ value: Int) -> Int {
-    kk_double_to_bits(tanh(kk_bits_to_double(value)))
-}
-
-@_cdecl("kk_math_cbrt")
-public func kk_math_cbrt(_ value: Int) -> Int {
-    kk_double_to_bits(cbrt(kk_bits_to_double(value)))
-}
-
-@_cdecl("kk_math_sinh_float")
-public func kk_math_sinh_float(_ v: Int) -> Int {
-    applyFloatUnaryOp(v, sinhf)
-}
-
-@_cdecl("kk_math_cosh_float")
-public func kk_math_cosh_float(_ v: Int) -> Int {
-    applyFloatUnaryOp(v, coshf)
-}
-
-@_cdecl("kk_math_tanh_float")
-public func kk_math_tanh_float(_ v: Int) -> Int {
-    applyFloatUnaryOp(v, tanhf)
-}
-
-@_cdecl("kk_math_cbrt_float")
-public func kk_math_cbrt_float(_ v: Int) -> Int {
-    applyFloatUnaryOp(v, cbrtf)
-}
-
 @_cdecl("kk_math_IEEErem")
 public func kk_math_IEEErem(_ x: Int, _ y: Int) -> Int {
     kk_double_to_bits(remainder(kk_bits_to_double(x), kk_bits_to_double(y)))
@@ -1188,9 +1186,9 @@ public func kk_int_highestOneBit(_ value: Int) -> Int {
 
 @_cdecl("kk_int_lowestOneBit")
 public func kk_int_lowestOneBit(_ value: Int) -> Int {
-    let truncated = Int32(truncatingIfNeeded: value)
-    if truncated == 0 { return 0 }
-    return Int(truncated & -truncated)
+    let bits = UInt32(bitPattern: Int32(truncatingIfNeeded: value))
+    if bits == 0 { return 0 }
+    return Int(Int32(bitPattern: bits & (0 &- bits)))
 }
 
 @_cdecl("kk_int_takeHighestOneBit")
@@ -1204,9 +1202,7 @@ public func kk_int_takeHighestOneBit(_ value: Int) -> Int {
 
 @_cdecl("kk_int_takeLowestOneBit")
 public func kk_int_takeLowestOneBit(_ value: Int) -> Int {
-    let u = UInt32(bitPattern: Int32(truncatingIfNeeded: value))
-    if u == 0 { return 0 }
-    return Int(Int32(bitPattern: u & (0 &- u)))
+    kk_int_lowestOneBit(value)
 }
 
 // Long bit manipulation functions (64-bit)
@@ -1235,8 +1231,9 @@ public func kk_long_highestOneBit(_ value: Int) -> Int {
 
 @_cdecl("kk_long_lowestOneBit")
 public func kk_long_lowestOneBit(_ value: Int) -> Int {
-    if value == 0 { return 0 }
-    return value & -value
+    let bits = UInt(bitPattern: value)
+    if bits == 0 { return 0 }
+    return Int(bitPattern: bits & (0 &- bits))
 }
 
 @_cdecl("kk_long_takeHighestOneBit")
@@ -1248,8 +1245,7 @@ public func kk_long_takeHighestOneBit(_ value: Int) -> Int {
 
 @_cdecl("kk_long_takeLowestOneBit")
 public func kk_long_takeLowestOneBit(_ value: Int) -> Int {
-    if value == 0 { return 0 }
-    return value & (value ^ (value - 1))
+    kk_long_lowestOneBit(value)
 }
 
 @_cdecl("kk_int_coerceIn")

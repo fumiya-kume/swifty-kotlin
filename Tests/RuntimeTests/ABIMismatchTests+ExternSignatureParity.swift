@@ -1,8 +1,8 @@
-import CompilerCore
+import RuntimeABI
 @testable import Runtime
 import XCTest
 
-// MARK: - Cross-Module ABI Reconciliation (Runtime <-> CompilerCore)
+// MARK: - Shared ABI Spec / Extern Adapter Reconciliation
 
 extension ABIMismatchTests {
     private func normalizedABIType(_ type: String) -> String {

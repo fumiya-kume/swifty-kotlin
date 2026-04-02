@@ -80,7 +80,7 @@ extension CodegenBackendIntegrationTests {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "Throwable(IllegalArgumentException: value)\n")
+            XCTAssertEqual(normalizedStdout, "Throwable(value)\n")
         }
     }
 
