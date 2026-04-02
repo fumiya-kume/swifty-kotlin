@@ -5651,14 +5651,31 @@ extension CallLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> InternedString? {
-        guard case let .classType(classType) = sema.types.kind(of: receiverType),
-              let symbol = sema.symbols.symbol(classType.classSymbol),
-              interner.resolve(symbol.name) == "AtomicLongArray"
-        else {
+        guard atomicLongArrayOwnerSymbol(
+            for: receiverType,
+            sema: sema,
+            interner: interner
+        ) != nil else {
             return nil
         }
 
         switch memberName {
+        case "loadAt":
+            return interner.intern("kk_atomic_long_array_get")
+        case "storeAt":
+            return interner.intern("kk_atomic_long_array_set")
+        case "exchangeAt":
+            return interner.intern("kk_atomic_long_array_getAndSet")
+        case "fetchAndAddAt":
+            return interner.intern("kk_atomic_long_array_getAndAdd")
+        case "addAndFetchAt":
+            return interner.intern("kk_atomic_long_array_addAndGet")
+        case "getAndSetAt":
+            return interner.intern("kk_atomic_long_array_getAndSet")
+        case "compareAndSetAt":
+            return interner.intern("kk_atomic_long_array_compareAndSet")
+        case "compareAndExchangeAt":
+            return interner.intern("kk_atomic_long_array_compareAndExchange")
         case "get":
             return interner.intern("kk_atomic_long_array_get")
         case "set":
@@ -5686,6 +5703,35 @@ extension CallLowerer {
         default:
             return nil
         }
+    }
+
+    private func atomicLongArrayOwnerSymbol(
+        for receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> SemanticSymbol? {
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullReceiverType),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return nil
+        }
+
+        if interner.resolve(symbol.name) == "AtomicLongArray" {
+            return symbol
+        }
+
+        guard symbol.kind == .typeAlias,
+              let underlyingType = sema.symbols.typeAliasUnderlyingType(for: symbol.id)
+        else {
+            return nil
+        }
+
+        return atomicLongArrayOwnerSymbol(
+            for: underlyingType,
+            sema: sema,
+            interner: interner
+        )
     }
 
     // swiftlint:enable cyclomatic_complexity

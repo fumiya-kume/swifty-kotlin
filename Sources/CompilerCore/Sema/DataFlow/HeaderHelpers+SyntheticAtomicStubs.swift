@@ -164,23 +164,28 @@ extension DataFlowSemaPhase {
             types: types
         )
 
-        // -- AtomicLongArray --
-        let atomicLongArraySymbol = ensureClassSymbol(
-            named: "AtomicLongArray",
-            in: concurrentPkg,
+        // -- kotlin.concurrent.atomics.AtomicLongArray --
+        let atomicLongArrayCommonPkg = ensureAtomicPackage(
+            path: ["kotlin", "concurrent", "atomics"],
             symbols: symbols,
             interner: interner
         )
-        let atomicLongArrayType = types.make(.classType(ClassType(
-            classSymbol: atomicLongArraySymbol,
+        let atomicLongArrayCommonSymbol = ensureClassSymbol(
+            named: "AtomicLongArray",
+            in: atomicLongArrayCommonPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let atomicLongArrayCommonType = types.make(.classType(ClassType(
+            classSymbol: atomicLongArrayCommonSymbol,
             args: [],
             nullability: .nonNull
         )))
-        symbols.setPropertyType(atomicLongArrayType, for: atomicLongArraySymbol)
+        symbols.setPropertyType(atomicLongArrayCommonType, for: atomicLongArrayCommonSymbol)
 
         registerAtomicConstructor(
-            ownerSymbol: atomicLongArraySymbol,
-            ownerType: atomicLongArrayType,
+            ownerSymbol: atomicLongArrayCommonSymbol,
+            ownerType: atomicLongArrayCommonType,
             externalLinkName: "kk_atomic_long_array_create",
             paramType: intType,
             canThrow: true,
@@ -188,31 +193,10 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        let atomicLongArrayInitType = types.make(.functionType(FunctionType(
-            receiver: nil,
-            params: [intType],
-            returnType: longType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-        registerAtomicTopLevelFunction(
-            named: "AtomicLongArray",
-            packageFQName: concurrentPkg,
-            parameters: [
-                (name: "size", type: intType),
-                (name: "init", type: atomicLongArrayInitType),
-            ],
-            returnType: atomicLongArrayType,
-            externalLinkName: "kk_atomic_long_array_create_with_init",
-            canThrow: true,
-            symbols: symbols,
-            interner: interner
-        )
-
         registerAtomicProperty(
-            ownerSymbol: atomicLongArraySymbol,
-            ownerType: atomicLongArrayType,
-            propertyName: "length",
+            ownerSymbol: atomicLongArrayCommonSymbol,
+            ownerType: atomicLongArrayCommonType,
+            propertyName: "size",
             propertyType: intType,
             getterLinkName: "kk_atomic_long_array_length",
             symbols: symbols,
@@ -220,22 +204,21 @@ extension DataFlowSemaPhase {
         )
 
         registerAtomicMember(
-            ownerSymbol: atomicLongArraySymbol,
-            ownerType: atomicLongArrayType,
-            name: "get",
+            ownerSymbol: atomicLongArrayCommonSymbol,
+            ownerType: atomicLongArrayCommonType,
+            name: "loadAt",
             externalLinkName: "kk_atomic_long_array_get",
             returnType: longType,
             parameters: [(name: "index", type: intType)],
             canThrow: true,
-            isOperator: true,
             symbols: symbols,
             interner: interner
         )
 
         registerAtomicMember(
-            ownerSymbol: atomicLongArraySymbol,
-            ownerType: atomicLongArrayType,
-            name: "set",
+            ownerSymbol: atomicLongArrayCommonSymbol,
+            ownerType: atomicLongArrayCommonType,
+            name: "storeAt",
             externalLinkName: "kk_atomic_long_array_set",
             returnType: unitType,
             parameters: [
@@ -243,15 +226,61 @@ extension DataFlowSemaPhase {
                 (name: "value", type: longType),
             ],
             canThrow: true,
-            isOperator: true,
             symbols: symbols,
             interner: interner
         )
 
         registerAtomicMember(
-            ownerSymbol: atomicLongArraySymbol,
-            ownerType: atomicLongArrayType,
-            name: "getAndAdd",
+            ownerSymbol: atomicLongArrayCommonSymbol,
+            ownerType: atomicLongArrayCommonType,
+            name: "exchangeAt",
+            externalLinkName: "kk_atomic_long_array_getAndSet",
+            returnType: longType,
+            parameters: [
+                (name: "index", type: intType),
+                (name: "newValue", type: longType),
+            ],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicLongArrayCommonSymbol,
+            ownerType: atomicLongArrayCommonType,
+            name: "compareAndSetAt",
+            externalLinkName: "kk_atomic_long_array_compareAndSet",
+            returnType: boolType,
+            parameters: [
+                (name: "index", type: intType),
+                (name: "expectedValue", type: longType),
+                (name: "newValue", type: longType),
+            ],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicLongArrayCommonSymbol,
+            ownerType: atomicLongArrayCommonType,
+            name: "compareAndExchangeAt",
+            externalLinkName: "kk_atomic_long_array_compareAndExchange",
+            returnType: longType,
+            parameters: [
+                (name: "index", type: intType),
+                (name: "expectedValue", type: longType),
+                (name: "newValue", type: longType),
+            ],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicLongArrayCommonSymbol,
+            ownerType: atomicLongArrayCommonType,
+            name: "fetchAndAddAt",
             externalLinkName: "kk_atomic_long_array_getAndAdd",
             returnType: longType,
             parameters: [
@@ -264,9 +293,9 @@ extension DataFlowSemaPhase {
         )
 
         registerAtomicMember(
-            ownerSymbol: atomicLongArraySymbol,
-            ownerType: atomicLongArrayType,
-            name: "addAndGet",
+            ownerSymbol: atomicLongArrayCommonSymbol,
+            ownerType: atomicLongArrayCommonType,
+            name: "addAndFetchAt",
             externalLinkName: "kk_atomic_long_array_addAndGet",
             returnType: longType,
             parameters: [
@@ -279,103 +308,8 @@ extension DataFlowSemaPhase {
         )
 
         registerAtomicMember(
-            ownerSymbol: atomicLongArraySymbol,
-            ownerType: atomicLongArrayType,
-            name: "getAndIncrement",
-            externalLinkName: "kk_atomic_long_array_getAndIncrement",
-            returnType: longType,
-            parameters: [(name: "index", type: intType)],
-            canThrow: true,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicMember(
-            ownerSymbol: atomicLongArraySymbol,
-            ownerType: atomicLongArrayType,
-            name: "incrementAndGet",
-            externalLinkName: "kk_atomic_long_array_incrementAndGet",
-            returnType: longType,
-            parameters: [(name: "index", type: intType)],
-            canThrow: true,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicMember(
-            ownerSymbol: atomicLongArraySymbol,
-            ownerType: atomicLongArrayType,
-            name: "getAndDecrement",
-            externalLinkName: "kk_atomic_long_array_getAndDecrement",
-            returnType: longType,
-            parameters: [(name: "index", type: intType)],
-            canThrow: true,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicMember(
-            ownerSymbol: atomicLongArraySymbol,
-            ownerType: atomicLongArrayType,
-            name: "decrementAndGet",
-            externalLinkName: "kk_atomic_long_array_decrementAndGet",
-            returnType: longType,
-            parameters: [(name: "index", type: intType)],
-            canThrow: true,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicMember(
-            ownerSymbol: atomicLongArraySymbol,
-            ownerType: atomicLongArrayType,
-            name: "getAndSet",
-            externalLinkName: "kk_atomic_long_array_getAndSet",
-            returnType: longType,
-            parameters: [
-                (name: "index", type: intType),
-                (name: "value", type: longType),
-            ],
-            canThrow: true,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicMember(
-            ownerSymbol: atomicLongArraySymbol,
-            ownerType: atomicLongArrayType,
-            name: "compareAndSet",
-            externalLinkName: "kk_atomic_long_array_compareAndSet",
-            returnType: boolType,
-            parameters: [
-                (name: "index", type: intType),
-                (name: "expect", type: longType),
-                (name: "update", type: longType),
-            ],
-            canThrow: true,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicMember(
-            ownerSymbol: atomicLongArraySymbol,
-            ownerType: atomicLongArrayType,
-            name: "compareAndExchange",
-            externalLinkName: "kk_atomic_long_array_compareAndExchange",
-            returnType: longType,
-            parameters: [
-                (name: "index", type: intType),
-                (name: "expect", type: longType),
-                (name: "update", type: longType),
-            ],
-            canThrow: true,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicMember(
-            ownerSymbol: atomicLongArraySymbol,
-            ownerType: atomicLongArrayType,
+            ownerSymbol: atomicLongArrayCommonSymbol,
+            ownerType: atomicLongArrayCommonType,
             name: "toString",
             externalLinkName: "kk_atomic_long_array_toString",
             returnType: types.stringType,

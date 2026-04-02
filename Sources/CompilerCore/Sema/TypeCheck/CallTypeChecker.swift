@@ -1349,22 +1349,6 @@ final class CallTypeChecker {
                     }
                 }
             }
-            if interner.resolve(calleeName) == "AtomicLongArray" {
-                let atomicLongArrayFQName = [
-                    interner.intern("kotlin"),
-                    interner.intern("concurrent"),
-                    interner.intern("AtomicLongArray"),
-                ]
-                if sema.symbols.lookup(fqName: atomicLongArrayFQName) != nil {
-                    let initName = interner.intern("<init>")
-                    let ctorSymbols = sema.symbols.lookupAll(fqName: atomicLongArrayFQName + [initName])
-                    if !ctorSymbols.isEmpty {
-                        let (vis, invis) = ctx.filterByVisibility(ctorSymbols)
-                        candidates.append(contentsOf: vis)
-                        callInvisible.append(contentsOf: invis)
-                    }
-                }
-            }
         } else {
             candidates = []
         }

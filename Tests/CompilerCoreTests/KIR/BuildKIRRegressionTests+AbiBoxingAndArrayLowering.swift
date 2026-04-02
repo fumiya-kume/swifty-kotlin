@@ -50,24 +50,28 @@ extension BuildKIRRegressionTests {
 
     func testAtomicLongArrayLoweringUsesExpectedRuntimeCallsAndThrowFlags() throws {
         let source = """
-        import kotlin.concurrent.AtomicLongArray
+        import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
+        typealias AtomicLongArray = kotlin.concurrent.atomics.AtomicLongArray
+
+        @OptIn(ExperimentalAtomicApi::class)
         fun main(): Long {
             val a = AtomicLongArray(3)
-            val b = AtomicLongArray(3) { it.toLong() }
-            a[0] = 7L
-            val first = a[0]
-            val oldSet = a.getAndSet(1, 8L)
-            val cas = a.compareAndSet(2, 2L, 11L)
-            val exchanged = a.compareAndExchange(1, 8L, 9L)
-            val added = a.getAndAdd(0, 2L)
-            val newAdded = a.addAndGet(0, 3L)
-            val oldInc = a.getAndIncrement(0)
-            val newInc = a.incrementAndGet(0)
-            val oldDec = a.getAndDecrement(0)
-            val newDec = a.decrementAndGet(0)
-            val len = a.length
+            val b = AtomicLongArray(3)
+            a.storeAt(0, 7L)
+            val first = a.loadAt(0)
+            val oldSet = a.exchangeAt(1, 8L)
+            val cas = a.compareAndSetAt(2, 2L, 11L)
+            val exchanged = a.compareAndExchangeAt(1, 8L, 9L)
+            val added = a.fetchAndAddAt(0, 2L)
+            val newAdded = a.addAndFetchAt(0, 3L)
+            val oldInc = a.fetchAndAddAt(0, 1L)
+            val newInc = a.addAndFetchAt(0, 1L)
+            val oldDec = a.fetchAndAddAt(0, -1L)
+            val newDec = a.addAndFetchAt(0, -1L)
+            val len = a.size
             val text = a.toString()
+            b.storeAt(2, 2L)
             return first +
                 oldSet +
                 (if (cas) 1L else 0L) +
@@ -79,7 +83,7 @@ extension BuildKIRRegressionTests {
                 oldDec +
                 newDec +
                 len.toLong() +
-                b[2] +
+                b.loadAt(2) +
                 text.length.toLong()
         }
         """
@@ -95,7 +99,6 @@ extension BuildKIRRegressionTests {
 
             for expected in [
                 "kk_atomic_long_array_create",
-                "kk_atomic_long_array_create_with_init",
                 "kk_atomic_long_array_get",
                 "kk_atomic_long_array_set",
                 "kk_atomic_long_array_getAndSet",
@@ -103,10 +106,6 @@ extension BuildKIRRegressionTests {
                 "kk_atomic_long_array_compareAndExchange",
                 "kk_atomic_long_array_getAndAdd",
                 "kk_atomic_long_array_addAndGet",
-                "kk_atomic_long_array_getAndIncrement",
-                "kk_atomic_long_array_incrementAndGet",
-                "kk_atomic_long_array_getAndDecrement",
-                "kk_atomic_long_array_decrementAndGet",
                 "kk_atomic_long_array_length",
                 "kk_atomic_long_array_toString",
             ] {
@@ -116,7 +115,6 @@ extension BuildKIRRegressionTests {
             let throwFlags = extractThrowFlags(from: body, interner: ctx.interner)
             for expected in [
                 "kk_atomic_long_array_create",
-                "kk_atomic_long_array_create_with_init",
                 "kk_atomic_long_array_get",
                 "kk_atomic_long_array_set",
                 "kk_atomic_long_array_getAndSet",
@@ -124,10 +122,6 @@ extension BuildKIRRegressionTests {
                 "kk_atomic_long_array_compareAndExchange",
                 "kk_atomic_long_array_getAndAdd",
                 "kk_atomic_long_array_addAndGet",
-                "kk_atomic_long_array_getAndIncrement",
-                "kk_atomic_long_array_incrementAndGet",
-                "kk_atomic_long_array_getAndDecrement",
-                "kk_atomic_long_array_decrementAndGet",
             ] {
                 XCTAssertEqual(throwFlags[expected]?.allSatisfy { $0 == true }, true, "\(expected) should be lowered as throwing")
             }
