@@ -145,6 +145,7 @@ struct KnownCompilerNames {
     let withContext: InternedString
     let withTimeout: InternedString
     let withTimeoutOrNull: InternedString
+    let suspendCoroutineUninterceptedOrReturn: InternedString
     let flow: InternedString
     let emit: InternedString
     let to: InternedString
@@ -243,6 +244,12 @@ struct KnownCompilerNames {
     let kotlinxCoroutinesRunBlockingFQName: [InternedString]
     let kotlinxCoroutinesLaunchFQName: [InternedString]
     let kotlinxCoroutinesAsyncFQName: [InternedString]
+    let kotlinCoroutinesFQName: [InternedString]
+    let kotlinCoroutinesIntrinsicsFQName: [InternedString]
+    let kotlinCoroutinesContinuationFQName: [InternedString]
+    let kotlinCoroutinesCoroutineContextFQName: [InternedString]
+    let kotlinCoroutinesCoroutineSuspendedFQName: [InternedString]
+    let kotlinCoroutinesSuspendCoroutineUninterceptedOrReturnFQName: [InternedString]
     let kotlinResultFQName: [InternedString]
     let kotlinRunCatchingFQName: [InternedString]
 
@@ -310,6 +317,7 @@ struct KnownCompilerNames {
         withContext = interner.intern("withContext")
         withTimeout = interner.intern("withTimeout")
         withTimeoutOrNull = interner.intern("withTimeoutOrNull")
+        suspendCoroutineUninterceptedOrReturn = interner.intern("suspendCoroutineUninterceptedOrReturn")
         flow = interner.intern("flow")
         emit = interner.intern("emit")
         to = interner.intern("to")
@@ -397,6 +405,11 @@ struct KnownCompilerNames {
         let coroutines = interner.intern("coroutines")
         let channels = interner.intern("channels")
         let flowPkg = interner.intern("flow")
+        let coroutineSuspended = interner.intern("COROUTINE_SUSPENDED")
+        let continuation = interner.intern("Continuation")
+        let coroutineContext = interner.intern("CoroutineContext")
+        let coroutinesIntrinsics = interner.intern("intrinsics")
+        let suspendCoroutineUninterceptedOrReturn = interner.intern("suspendCoroutineUninterceptedOrReturn")
 
         kotlinRegexFQName = [kotlin, kotlinText, regex]
         kotlinStringBuilderFQName = [kotlin, kotlinText, stringBuilder]
@@ -417,6 +430,12 @@ struct KnownCompilerNames {
         kotlinxCoroutinesRunBlockingFQName = [kotlinx, coroutines, runBlocking]
         kotlinxCoroutinesLaunchFQName = [kotlinx, coroutines, launch]
         kotlinxCoroutinesAsyncFQName = [kotlinx, coroutines, async]
+        kotlinCoroutinesFQName = [kotlin, coroutines]
+        kotlinCoroutinesIntrinsicsFQName = [kotlin, coroutines, coroutinesIntrinsics]
+        kotlinCoroutinesContinuationFQName = [kotlin, coroutines, continuation]
+        kotlinCoroutinesCoroutineContextFQName = [kotlin, coroutines, coroutineContext]
+        kotlinCoroutinesCoroutineSuspendedFQName = [kotlin, coroutines, coroutinesIntrinsics, coroutineSuspended]
+        kotlinCoroutinesSuspendCoroutineUninterceptedOrReturnFQName = [kotlin, coroutines, coroutinesIntrinsics, suspendCoroutineUninterceptedOrReturn]
 
         let resultName = interner.intern("Result")
         kotlinResultFQName = [kotlin, resultName]

@@ -21,6 +21,7 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("withTimeoutOrNull"),
             ctx.interner.intern("coroutineScope"),
             ctx.interner.intern("supervisorScope"),
+            ctx.interner.intern("suspendCoroutineUninterceptedOrReturn"),
             ctx.interner.intern("flow"),
             ctx.interner.intern("emit"),
             ctx.interner.intern("collect"),
@@ -74,6 +75,7 @@ final class CoroutineLoweringPass: LoweringPass {
         let kxMiniWithTimeoutOrNullCallee = ctx.interner.intern("withTimeoutOrNull")
         let kxMiniCoroutineScopeCallee = ctx.interner.intern("coroutineScope")
         let kxMiniSupervisorScopeCallee = ctx.interner.intern("supervisorScope")
+        let suspendCoroutineUninterceptedOrReturnCallee = ctx.interner.intern("suspendCoroutineUninterceptedOrReturn")
         let kxMiniDelayCallee = ctx.interner.intern("delay")
         let kxMiniYieldCallee = ctx.interner.intern("yield")
         let runtimeRunBlockingCallee = ctx.interner.intern("kk_kxmini_run_blocking")
@@ -86,7 +88,7 @@ final class CoroutineLoweringPass: LoweringPass {
         let runtimeWithTimeoutCallee = ctx.interner.intern("kk_with_timeout")
         let runtimeWithTimeoutOrNullCallee = ctx.interner.intern("kk_with_timeout_or_null")
         let flowCollectCallee = ctx.interner.intern("kk_flow_collect")
-        let runtimeSuspendCallNames: Set<InternedString> = [kxMiniDelayCallee, runtimeDelayCallee, kxMiniYieldCallee, runtimeYieldCallee]
+        let runtimeSuspendCallNames: Set<InternedString> = [kxMiniDelayCallee, runtimeDelayCallee, kxMiniYieldCallee, runtimeYieldCallee, suspendCoroutineUninterceptedOrReturnCallee]
         let kxMiniLauncherRuntimeCallees: [InternedString: InternedString] = [
             kxMiniRunBlockingCallee: runtimeRunBlockingCallee,
             kxMiniLaunchCallee: runtimeLaunchCallee,
@@ -264,6 +266,7 @@ final class CoroutineLoweringPass: LoweringPass {
             runtimeWithTimeoutOrNullCallee: runtimeWithTimeoutOrNullCallee,
             yieldCallee: kxMiniYieldCallee,
             runtimeYieldCallee: runtimeYieldCallee,
+            suspendCoroutineUninterceptedOrReturnCallee: suspendCoroutineUninterceptedOrReturnCallee,
             continuationFactory: continuationFactory,
             launcherArgSetCallee: launcherArgSetCallee,
             runtimeRunBlockingWithContCallee: runtimeRunBlockingWithContCallee,

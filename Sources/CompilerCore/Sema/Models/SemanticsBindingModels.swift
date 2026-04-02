@@ -103,6 +103,7 @@ public enum StdlibSpecialCallKind: Equatable {
     case enumValues
     case enumValueOf
     case enumEntries
+    case suspendCoroutineUninterceptedOrReturn
 }
 
 /// Identifies whether a callable reference (`::foo`) refers to a function
