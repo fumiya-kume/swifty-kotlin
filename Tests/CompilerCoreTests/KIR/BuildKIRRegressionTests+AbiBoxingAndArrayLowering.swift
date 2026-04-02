@@ -47,7 +47,6 @@ extension BuildKIRRegressionTests {
         XCTAssertTrue(callees.contains(interner.intern("kk_atomic_long_compareAndExchange")))
         XCTAssertTrue(callees.contains(interner.intern("kk_atomic_ref_exchange")))
         XCTAssertTrue(callees.contains(interner.intern("kk_atomic_array_create")))
-        XCTAssertTrue(callees.contains(interner.intern("kk_atomic_array_ofNulls")))
         XCTAssertTrue(callees.contains(interner.intern("kk_atomic_array_size")))
         XCTAssertTrue(callees.contains(interner.intern("kk_atomic_array_toString")))
     }
@@ -83,32 +82,21 @@ extension BuildKIRRegressionTests {
             let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let throwFlags = extractThrowFlags(from: body, interner: ctx.interner)
 
-            let expectedThrowingNames = [
-                "kk_atomic_array_new",
-                "kk_atomic_array_loadAt",
-                "kk_atomic_array_storeAt",
-                "kk_atomic_array_exchangeAt",
-                "kk_atomic_array_compareAndSetAt",
-                "kk_atomic_array_compareAndExchangeAt",
-                "kk_atomic_array_fetchAndUpdateAt",
-                "kk_atomic_array_updateAndFetchAt",
-                "kk_atomic_array_updateAt",
-            ]
-            for name in expectedThrowingNames {
-                let flags = try XCTUnwrap(throwFlags[name], "Missing lowered call to \(name)")
-                XCTAssertTrue(flags.allSatisfy { $0 }, "\(name) should be lowered as throwing")
-            }
+            // Indexed AtomicArray helpers are throwing because they can fail bounds checks.
+            XCTAssertEqual(throwFlags["kk_atomic_array_new"]?.allSatisfy { $0 }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_array_ofNulls"]?.allSatisfy { $0 }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_array_loadAt"]?.allSatisfy { $0 }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_array_storeAt"]?.allSatisfy { $0 }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_array_exchangeAt"]?.allSatisfy { $0 }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_array_compareAndSetAt"]?.allSatisfy { $0 }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_array_compareAndExchangeAt"]?.allSatisfy { $0 }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_array_fetchAndUpdateAt"]?.allSatisfy { $0 }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_array_updateAndFetchAt"]?.allSatisfy { $0 }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_array_updateAt"]?.allSatisfy { $0 }, true)
 
-            let expectedNonThrowingNames = [
-                "kk_atomic_array_create",
-                "kk_atomic_array_ofNulls",
-                "kk_atomic_array_size",
-                "kk_atomic_array_toString",
-            ]
-            for name in expectedNonThrowingNames {
-                let flags = try XCTUnwrap(throwFlags[name], "Missing lowered call to \(name)")
-                XCTAssertTrue(flags.allSatisfy { !$0 }, "\(name) should be lowered as non-throwing")
-            }
+            XCTAssertEqual(throwFlags["kk_atomic_array_create"]?.allSatisfy { !$0 }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_array_size"]?.allSatisfy { !$0 }, true)
+            XCTAssertEqual(throwFlags["kk_atomic_array_toString"]?.allSatisfy { !$0 }, true)
         }
     }
 

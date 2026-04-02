@@ -103,7 +103,9 @@ final class RuntimeAtomicArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_atomic_array_loadAt(atomic, 1, &thrown), 15)
         XCTAssertEqual(thrown, 0)
 
-        let atomicNulls = kk_atomic_array_ofNulls(2)
+        var nullsThrown = 0
+        let atomicNulls = kk_atomic_array_ofNulls(2, &nullsThrown)
+        XCTAssertEqual(nullsThrown, 0)
         XCTAssertEqual(kk_atomic_array_size(atomicNulls), 2)
         XCTAssertEqual(extractString(from: kk_atomic_array_toString(atomicNulls)), "[null, null]")
         let printedNulls = capturePrintln { kk_println_any(kk_atomic_array_toString(atomicNulls)) }
@@ -146,8 +148,9 @@ final class RuntimeAtomicArrayTests: IsolatedRuntimeXCTestCase {
     }
 
     func testAtomicArrayBoundsAndNegativeSizeErrors() {
-        let atomic = kk_atomic_array_ofNulls(1)
         var thrown = 0
+        let atomic = kk_atomic_array_ofNulls(1, &thrown)
+        XCTAssertEqual(thrown, 0)
 
         XCTAssertEqual(kk_atomic_array_loadAt(atomic, 10, &thrown), 0)
         XCTAssertNotEqual(thrown, 0)
@@ -161,6 +164,12 @@ final class RuntimeAtomicArrayTests: IsolatedRuntimeXCTestCase {
         thrown = 0
         let negative = kk_atomic_array_new(-1, unsafeBitCast(atomicArrayIndexTimesTen, to: Int.self), &thrown)
         XCTAssertEqual(negative, 0)
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(throwableMessage(thrown), "IllegalArgumentException: size must be non-negative, but was -1.")
+
+        thrown = 0
+        let negativeNulls = kk_atomic_array_ofNulls(-1, &thrown)
+        XCTAssertEqual(negativeNulls, 0)
         XCTAssertNotEqual(thrown, 0)
         XCTAssertEqual(throwableMessage(thrown), "IllegalArgumentException: size must be non-negative, but was -1.")
     }

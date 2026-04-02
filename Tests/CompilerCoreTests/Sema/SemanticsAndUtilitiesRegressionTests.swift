@@ -162,7 +162,7 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
             XCTAssertEqual(ofNullsSignature.parameterTypes.count, 1)
             XCTAssertEqual(ofNullsSignature.typeParameterSymbols.count, 1)
             XCTAssertEqual(ofNullsSignature.classTypeParameterCount, 0)
-            XCTAssertFalse(sema.symbols.symbol(ofNullsSymbol)?.flags.contains(.throwingFunction) ?? true)
+            XCTAssertTrue(sema.symbols.symbol(ofNullsSymbol)?.flags.contains(.throwingFunction) ?? false)
             let ofNullsTypeParamSymbol = try XCTUnwrap(ofNullsSignature.typeParameterSymbols.first)
             XCTAssertNotEqual(ofNullsTypeParamSymbol, classTypeParamSymbol)
 

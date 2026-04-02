@@ -11,7 +11,8 @@ final class AtomicArrayBox {
     }
 
     init(length: Int, initialValue: Int = runtimeNullSentinelInt) {
-        self.storage = Array(repeating: initialValue, count: max(0, length))
+        precondition(length >= 0, "AtomicArray length must be non-negative.")
+        self.storage = Array(repeating: initialValue, count: length)
     }
 
     var count: Int {
@@ -168,7 +169,12 @@ public func kk_atomic_array_new(_ size: Int, _ initFn: Int, _ outThrown: UnsafeM
 }
 
 @_cdecl("kk_atomic_array_ofNulls")
-public func kk_atomic_array_ofNulls(_ size: Int) -> Int {
+public func kk_atomic_array_ofNulls(_ size: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard size >= 0 else {
+        outThrown?.pointee = runtimeAtomicArraySizeThrowable(size: size)
+        return 0
+    }
     let box = AtomicArrayBox(length: size)
     return registerRuntimeObject(box)
 }

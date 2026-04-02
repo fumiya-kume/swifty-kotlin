@@ -289,25 +289,24 @@ extension DataFlowSemaPhase {
 
         // Constructor: AtomicArray(array: Array<T>)
         let arrayFQName = [interner.intern("kotlin"), interner.intern("Array")]
-        guard let arraySymbol = symbols.lookup(fqName: arrayFQName) else {
-            return
+        if let arraySymbol = symbols.lookup(fqName: arrayFQName) {
+            let sourceArrayType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(atomicArrayTypeParamType)],
+                nullability: .nonNull
+            )))
+            registerAtomicConstructor(
+                ownerSymbol: atomicArraySymbol,
+                ownerType: atomicArrayType,
+                externalLinkName: "kk_atomic_array_create",
+                paramType: sourceArrayType,
+                parameterName: "array",
+                typeParameterSymbols: [atomicArrayTypeParamSymbol],
+                classTypeParameterCount: 1,
+                symbols: symbols,
+                interner: interner
+            )
         }
-        let sourceArrayType = types.make(.classType(ClassType(
-            classSymbol: arraySymbol,
-            args: [.invariant(atomicArrayTypeParamType)],
-            nullability: .nonNull
-        )))
-        registerAtomicConstructor(
-            ownerSymbol: atomicArraySymbol,
-            ownerType: atomicArrayType,
-            externalLinkName: "kk_atomic_array_create",
-            paramType: sourceArrayType,
-            parameterName: "array",
-            typeParameterSymbols: [atomicArrayTypeParamSymbol],
-            classTypeParameterCount: 1,
-            symbols: symbols,
-            interner: interner
-        )
 
         registerAtomicValueProperty(
             ownerSymbol: atomicArraySymbol,
@@ -389,6 +388,7 @@ extension DataFlowSemaPhase {
             ],
             returnType: ofNullsReturnType,
             typeParameterSymbols: [ofNullsTypeParamSymbol],
+            canThrow: true,
             symbols: symbols,
             interner: interner
         )
@@ -824,7 +824,7 @@ extension DataFlowSemaPhase {
         let memberFQName = ownerInfo.fqName + [memberName]
         guard symbols.lookupAll(fqName: memberFQName).first(where: { id in
             guard let sig = symbols.functionSignature(for: id) else { return false }
-            return sig.parameterTypes == parameters.map(\.type) &&
+            return sig.parameterTypes == parameters.map { $0.type } &&
                 sig.returnType == returnType
         }) == nil else { return }
 
@@ -861,7 +861,7 @@ extension DataFlowSemaPhase {
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: ownerType,
-                parameterTypes: parameters.map(\.type),
+                parameterTypes: parameters.map { $0.type },
                 returnType: returnType,
                 isSuspend: false,
                 valueParameterSymbols: valueParameterSymbols,
@@ -931,7 +931,7 @@ extension DataFlowSemaPhase {
 
         symbols.setFunctionSignature(
             FunctionSignature(
-                parameterTypes: parameters.map(\.type),
+                parameterTypes: parameters.map { $0.type },
                 returnType: returnType,
                 isSuspend: false,
                 valueParameterSymbols: valueParameterSymbols,

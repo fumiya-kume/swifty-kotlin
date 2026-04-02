@@ -783,18 +783,9 @@ extension CallTypeChecker {
                    classType.classSymbol == atomicArraySymbol,
                    classType.args.count == 1
                 {
-                let elementType: TypeID = if let firstArg = classType.args.first {
-                    switch firstArg {
-                    case let .invariant(type), let .out(type), let .in(type):
-                        type
-                    case .star:
-                        sema.types.anyType
-                    }
-                } else {
-                    sema.types.anyType
-                }
-
-                if atomicArrayMemberNames.contains(calleeName) {
+                if atomicArrayMemberNames.contains(calleeName),
+                   case let .invariant(elementType)? = classType.args.first
+                {
                     _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
                     let updateExpectedType = sema.types.make(.functionType(FunctionType(
                         params: [elementType],

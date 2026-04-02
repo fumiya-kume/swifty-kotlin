@@ -433,6 +433,7 @@ public extension RuntimeABISpec {
             name: "kk_atomic_array_ofNulls",
             parameters: [
                 RuntimeABIParameter(name: "size", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Atomic"

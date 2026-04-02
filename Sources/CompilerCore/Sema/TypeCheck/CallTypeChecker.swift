@@ -782,7 +782,7 @@ final class CallTypeChecker {
         if let calleeName,
            interner.resolve(calleeName) == "AtomicArray",
            args.count == 1,
-           locals[calleeName] == nil
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
         {
             let sourceArrayType = driver.inferExpr(
                 args[0].expr,
@@ -796,24 +796,38 @@ final class CallTypeChecker {
             guard let sourceArraySymbol = sema.symbols.lookup(fqName: kotlinArrayFQName) else {
                 return sema.types.errorType
             }
-            let elementType: TypeID = if case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(sourceArrayType)),
-                                         classType.classSymbol == sourceArraySymbol,
-                                         let firstArg = classType.args.first
+            let elementType: TypeID
+            let expectedSourceArrayType: TypeID
+            if let explicitTypeArg = explicitTypeArgs.first {
+                elementType = explicitTypeArg
+                expectedSourceArrayType = sema.types.make(.classType(ClassType(
+                    classSymbol: sourceArraySymbol,
+                    args: [.invariant(explicitTypeArg)],
+                    nullability: .nonNull
+                )))
+            } else if case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(sourceArrayType)),
+                      classType.classSymbol == sourceArraySymbol,
+                      let firstArg = classType.args.first
             {
                 switch firstArg {
                 case let .invariant(type), let .in(type), let .out(type):
-                    type
+                    elementType = type
                 case .star:
-                    sema.types.anyType
+                    elementType = sema.types.anyType
                 }
+                expectedSourceArrayType = sema.types.make(.classType(ClassType(
+                    classSymbol: sourceArraySymbol,
+                    args: [.invariant(elementType)],
+                    nullability: .nonNull
+                )))
             } else {
-                sema.types.anyType
+                elementType = sema.types.anyType
+                expectedSourceArrayType = sema.types.make(.classType(ClassType(
+                    classSymbol: sourceArraySymbol,
+                    args: [.invariant(elementType)],
+                    nullability: .nonNull
+                )))
             }
-            let expectedSourceArrayType = sema.types.make(.classType(ClassType(
-                classSymbol: sourceArraySymbol,
-                args: [.invariant(elementType)],
-                nullability: .nonNull
-            )))
             driver.emitSubtypeConstraint(
                 left: sourceArrayType,
                 right: expectedSourceArrayType,
@@ -867,7 +881,7 @@ final class CallTypeChecker {
         if let calleeName,
            interner.resolve(calleeName) == "AtomicArray",
            args.count == 2,
-           locals[calleeName] == nil
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
         {
             let intType = sema.types.intType
             let atomicArrayFQName: [InternedString] = [

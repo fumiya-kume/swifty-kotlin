@@ -279,7 +279,7 @@ public extension RuntimeABIExterns {
 
     static let kk_atomic_array_ofNulls = ExternDecl(
         name: "kk_atomic_array_ofNulls",
-        parameterTypes: ["intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
