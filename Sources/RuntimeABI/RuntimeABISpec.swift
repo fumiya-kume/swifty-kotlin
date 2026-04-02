@@ -6027,6 +6027,7 @@ public enum RuntimeABISpec {
             + atomicFunctions
             + threadLocalFunctions
             + securityFunctions
+            + databaseFunctions
             + parallelFunctions
             + bigIntegerFunctions
             + broadcastChannelFunctions
