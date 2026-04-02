@@ -86,4 +86,6 @@ fun main() {
     val failure = runPropertyCheck(failingSamples) { sample -> sample == 0 }
     println("failure checked: ${failure.checked}")
     println("failure failures: ${failure.failures}")
+    println("failure shrinks: ${failure.shrinks}")
+    println("failure minimized: ${failure.minimizedCounterexample}")
 }

@@ -1001,21 +1001,30 @@ private func runtimeKeyPairGeneratorInitialize(
 }
 
 @_cdecl("kk_secretkeyspec_new")
-public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int) -> Int {
+public func kk_secretkeyspec_new(
+    _ keyRaw: Int,
+    _ algorithmRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
     let algorithm = runtimeSecurityString(from: algorithmRaw, caller: #function)
     guard let parsedAlgorithm = RuntimeCipherAlgorithm(transformationComponent: algorithm) else {
-        return runtimeAllocateThrowable(message: "NoSuchAlgorithmException: \(algorithm)")
+        runtimeSetThrown(outThrown, message: "NoSuchAlgorithmException: \(algorithm)")
+        return 0
     }
     guard let keyBytes = runtimeSecurityBytes(from: keyRaw, caller: #function) else {
-        return runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>")
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected ByteArray/List<Int>")
+        return 0
     }
     return registerRuntimeObject(RuntimeSecretKeySpecBox(keyBytes: keyBytes, algorithm: parsedAlgorithm))
 }
 
 @_cdecl("kk_ivparameterspec_new")
-public func kk_ivparameterspec_new(_ ivRaw: Int) -> Int {
+public func kk_ivparameterspec_new(_ ivRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
     guard let ivBytes = runtimeSecurityBytes(from: ivRaw, caller: #function) else {
-        return runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>")
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected ByteArray/List<Int>")
+        return 0
     }
     return registerRuntimeObject(RuntimeIvParameterSpecBox(ivBytes: ivBytes))
 }
@@ -1529,6 +1538,10 @@ public func kk_pkixparameters_new(_ trustAnchorsRaw: Int, _ outThrown: UnsafeMut
         }
         anchors.append(anchorRaw)
     }
+    guard !anchors.isEmpty else {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: trustAnchors must not be empty")
+        return 0
+    }
     return registerRuntimeObject(RuntimePKIXParametersBox(trustAnchorsRaw: anchors))
 }
 
@@ -1553,6 +1566,10 @@ public func kk_pkixparameters_setTrustAnchors(
             return 0
         }
         anchors.append(anchorRaw)
+    }
+    guard !anchors.isEmpty else {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: trustAnchors must not be empty")
+        return 0
     }
     parameters.trustAnchorsRaw = anchors
     return 0
@@ -1596,6 +1613,10 @@ public func kk_certpathvalidator_validate(
         runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected TrustAnchor certificate")
         return 0
     }
+    guard !anchors.isEmpty else {
+        runtimeSetThrown(outThrown, message: "InvalidAlgorithmParameterException: trustAnchors must not be empty")
+        return 0
+    }
 
     let policy = SecPolicyCreateBasicX509()
     var trust: SecTrust?
@@ -1604,10 +1625,8 @@ public func kk_certpathvalidator_validate(
         runtimeSetThrown(outThrown, message: "CertificateException: failed to create trust evaluation context")
         return 0
     }
-    if !anchors.isEmpty {
-        SecTrustSetAnchorCertificates(trust, anchors as CFArray)
-        SecTrustSetAnchorCertificatesOnly(trust, true)
-    }
+    SecTrustSetAnchorCertificates(trust, anchors as CFArray)
+    SecTrustSetAnchorCertificatesOnly(trust, true)
     let ok = SecTrustEvaluateWithError(trust, nil)
     return kk_box_bool(ok ? 1 : 0)
 }
@@ -1619,13 +1638,19 @@ private func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, message: 
 }
 
 @_cdecl("kk_secretkeyspec_new")
-public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int) -> Int {
-    return runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform")
+public func kk_secretkeyspec_new(
+    _ keyRaw: Int,
+    _ algorithmRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
+    return 0
 }
 
 @_cdecl("kk_ivparameterspec_new")
-public func kk_ivparameterspec_new(_ ivRaw: Int) -> Int {
-    return runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform")
+public func kk_ivparameterspec_new(_ ivRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
+    return 0
 }
 
 @_cdecl("kk_keypairgenerator_getInstance")
@@ -1904,4 +1929,3 @@ public func kk_message_digest_digest(_ digestRaw: Int, _ dataRaw: Int, _ outThro
     return 0
 }
 #endif
-

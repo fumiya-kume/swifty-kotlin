@@ -76,6 +76,17 @@ extension ABIMismatchTests {
             "kk_cipher_init_with_iv",
             "kk_cipher_doFinal",
             "kk_cipher_doFinal_noarg",
+            // CoroutineContext / withContext
+            "kk_coroutine_name_create",
+            "kk_coroutine_name_get",
+            "kk_exception_handler_create",
+            "kk_exception_handler_invoke",
+            "kk_context_plus",
+            "kk_context_get_dispatcher",
+            "kk_context_get_name",
+            "kk_context_get_exception_handler",
+            "kk_context_release",
+            "kk_with_context_full",
             // JSON Serialization (STDLIB-SER-132)
             "kk_json_default",
             "kk_json_encodeToString",

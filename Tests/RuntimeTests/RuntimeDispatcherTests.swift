@@ -156,6 +156,24 @@ final class RuntimeDispatcherTests: IsolatedRuntimeXCTestCase {
                        "withContext(Default) should execute with Default dispatcher active")
     }
 
+    func testWithContextWithoutDispatcherInheritsCurrentDispatcher() {
+        typealias SuspendEntry = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
+        let entryRaw = unsafeBitCast(
+            runtime_test_dispatcher_observe_entry as SuspendEntry,
+            to: Int.self
+        )
+        let ioDispatcher = runtimeResolveDispatcher(from: kk_dispatcher_io())
+        let observedTag = ioDispatcher.dispatchSync {
+            let contextHandle = kk_context_plus(0, 0)
+            defer { kk_context_release(contextHandle) }
+
+            let continuation = kk_coroutine_continuation_new(7006)
+            return kk_with_context(contextHandle, entryRaw, continuation)
+        }
+        XCTAssertEqual(observedTag, kk_dispatcher_io(),
+                       "withContext(context without dispatcher) should inherit the caller dispatcher")
+    }
+
     func testWithContextFallsBackToDefaultForUnknownTag() {
         typealias SuspendEntry = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
         let entryRaw = unsafeBitCast(

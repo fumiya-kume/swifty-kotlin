@@ -316,7 +316,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_signature_update",
             ownerSymbol: signatureSymbol,
             ownerType: signatureType,
-            parameters: [("data", byteArrayType)],
+            parameters: [("data", securityByteArrayType)],
             returnType: unitType,
             symbols: symbols,
             interner: interner
@@ -327,7 +327,7 @@ extension DataFlowSemaPhase {
             ownerSymbol: signatureSymbol,
             ownerType: signatureType,
             parameters: [],
-            returnType: byteArrayType,
+            returnType: securityByteArrayType,
             symbols: symbols,
             interner: interner
         )
@@ -336,7 +336,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_signature_verify",
             ownerSymbol: signatureSymbol,
             ownerType: signatureType,
-            parameters: [("signature", byteArrayType)],
+            parameters: [("signature", securityByteArrayType)],
             returnType: boolType,
             symbols: symbols,
             interner: interner
@@ -376,7 +376,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_certificatefactory_generateCertificate",
             ownerSymbol: certFactorySymbol,
             ownerType: certFactoryType,
-            parameters: [("data", byteArrayType)],
+            parameters: [("data", securityByteArrayType)],
             returnType: types.anyType,
             symbols: symbols,
             interner: interner

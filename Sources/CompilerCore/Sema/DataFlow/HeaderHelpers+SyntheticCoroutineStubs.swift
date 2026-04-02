@@ -880,7 +880,7 @@ extension DataFlowSemaPhase {
                 return false
             }
             return sig.receiverType == nil
-                && sig.parameterTypes == parameters.map(\.type)
+                && sig.parameterTypes == parameters.map { $0.type }
                 && sig.returnType == returnType
         }
         guard !hasExistingFunctionWithSameSignature else {
@@ -932,7 +932,7 @@ extension DataFlowSemaPhase {
         }
         symbols.setFunctionSignature(
             FunctionSignature(
-                parameterTypes: parameters.map(\.type),
+                parameterTypes: parameters.map { $0.type },
                 returnType: returnType,
                 isSuspend: false,
                 valueParameterSymbols: valueParameterSymbols,
@@ -990,7 +990,7 @@ extension DataFlowSemaPhase {
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: ownerType,
-                parameterTypes: parameters.map(\.type),
+                parameterTypes: parameters.map { $0.type },
                 returnType: returnType,
                 isSuspend: false,
                 valueParameterSymbols: valueParameterSymbols,
@@ -1045,7 +1045,7 @@ extension DataFlowSemaPhase {
 
         symbols.setFunctionSignature(
             FunctionSignature(
-                parameterTypes: parameters.map(\.type),
+                parameterTypes: parameters.map { $0.type },
                 returnType: ownerType,
                 isSuspend: false,
                 valueParameterSymbols: valueParameterSymbols,
@@ -1282,7 +1282,7 @@ extension DataFlowSemaPhase {
         let alreadyRegistered = existingSymbols.contains { id in
             guard let sym = symbols.symbol(id), sym.kind == .function,
                   let sig = symbols.functionSignature(for: id) else { return false }
-            return sig.parameterTypes == parameters.map(\.type)
+            return sig.parameterTypes == parameters.map { $0.type }
         }
         guard !alreadyRegistered else { return }
 
@@ -1315,7 +1315,7 @@ extension DataFlowSemaPhase {
         }
         symbols.setFunctionSignature(
             FunctionSignature(
-                parameterTypes: parameters.map(\.type),
+                parameterTypes: parameters.map { $0.type },
                 returnType: types.anyType,
                 isSuspend: true,
                 valueParameterSymbols: valueParameterSymbols,

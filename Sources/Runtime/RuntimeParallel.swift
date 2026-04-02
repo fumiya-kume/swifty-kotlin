@@ -349,114 +349,17 @@ private func runtimeParallelReduceElements(
     closureRaw: Int,
     outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    guard !elements.isEmpty else {
-        return initial
-    }
-    if workerCount <= 1 || elements.count == 1 {
-        return runtimeParallelReduceSerial(
-            elements,
-            initial: initial,
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            outThrown: outThrown
-        )
-    }
-
-    let chunks = runtimeParallelChunkPlan(count: elements.count, chunkSize: chunkSize)
-    guard chunks.count > 1 else {
-        return runtimeParallelReduceSerial(
-            elements,
-            initial: initial,
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            outThrown: outThrown
-        )
-    }
-
-    let partials = UnsafeMutablePointer<Int>.allocate(capacity: chunks.count)
-    partials.initialize(repeating: 0, count: chunks.count)
-    defer {
-        partials.deinitialize(count: chunks.count)
-        partials.deallocate()
-    }
-    let partialsBox = UnsafeSendableBox(partials)
-
-    let queue = RuntimeParallelChunkQueue(chunks: chunks)
-    let group = DispatchGroup()
-    let jobCount = min(workerCount, chunks.count)
-    for _ in 0..<jobCount {
-        group.enter()
-        DispatchQueue.global(qos: .userInitiated).async {
-            defer { group.leave() }
-            while let job = queue.nextChunk() {
-                if queue.hasThrown() {
-                    return
-                }
-                guard let firstIndex = job.range.first else {
-                    continue
-                }
-                // The first chunk starts from `initial` so that the caller-provided
-                // initial value is correctly incorporated into the reduction.
-                // Subsequent chunks start from their own first element and their
-                // partial result is merged into `initial` during the final sequential
-                // fold below.
-                var acc: Int
-                let remainingRange: Range<Int>
-                if job.index == 0 {
-                    // First chunk: start from `initial` and fold every element.
-                    acc = initial
-                    remainingRange = job.range
-                } else {
-                    // Other chunks: start from the chunk's first element.
-                    acc = maybeUnbox(elements[firstIndex])
-                    remainingRange = (firstIndex + 1)..<job.range.upperBound
-                }
-                for index in remainingRange {
-                    if queue.hasThrown() {
-                        return
-                    }
-                    var thrown = 0
-                    acc = maybeUnbox(runtimeInvokeCollectionLambda2(
-                        fnPtr: fnPtr,
-                        closureRaw: closureRaw,
-                        lhs: acc,
-                        rhs: elements[index],
-                        outThrown: &thrown
-                    ))
-                    if thrown != 0 {
-                        queue.recordThrow(thrown)
-                        return
-                    }
-                }
-                partialsBox.value[job.index] = acc
-            }
-        }
-    }
-    group.wait()
-
-    let thrown = queue.thrownValue()
-    if thrown != 0 {
-        return runtimeParallelThrow(thrown, outThrown)
-    }
-
-    // Chunk 0 already incorporates `initial`, so start the merge from its
-    // partial rather than from `initial` again.
-    var acc = partials[0]
-    for index in 1..<chunks.count {
-        let chunkPartial = partials[index]
-        var thrown = 0
-        acc = maybeUnbox(runtimeInvokeCollectionLambda2(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            lhs: acc,
-            rhs: chunkPartial,
-            outThrown: &thrown
-        ))
-        if thrown != 0 {
-            return runtimeParallelThrow(thrown, outThrown)
-        }
-    }
-    return acc
+    // Reduce is order-sensitive for many reducers, so keep semantics identical
+    // to the sequential Kotlin fold implementation.
+    _ = workerCount
+    _ = chunkSize
+    return runtimeParallelReduceSerial(
+        elements,
+        initial: initial,
+        fnPtr: fnPtr,
+        closureRaw: closureRaw,
+        outThrown: outThrown
+    )
 }
 
 @_cdecl("kk_parallel_pool_new")

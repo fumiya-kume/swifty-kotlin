@@ -34,30 +34,30 @@ fun main() {
 
     val certificatePem = """
         -----BEGIN CERTIFICATE-----
-        MIIDETCCAfmgAwIBAgIUcxF2L3bduVaHSKZgnMkuXiPhUq0wDQYJKoZIhvcNAQEL
-        BQAwFzEVMBMGA1UEAwwMU3dpZnR5SyBUZXN0MCAXDTI2MDMzMDA1MzMxOVoYDzIx
-        MjYwMzA2MDUzMzE5WjAXMRUwEwYDVQQDDAxTd2lmdHlLIFRlc3QwggEiMA0GCSqG
-        SIb3DQEBAQUAA4IBDwAwggEKAoIBAQClxokntX5Xk6MnHIS4tmtch2dmAldd8p2p
-        1BxQ8CmcirtKjT0HaDj+0PCFXz7wYXJTPI+MxmUeOljZ4qXC1YiuOUKNGdocAvON
-        Q8QhW3oGhYq5hRQFxSAc9tedSr+i7nQ834h5R305HC1XGFQMhFukPjKI4NlqvfAF
-        nf69Oig3ORa92A3pzo26/owcxsnz2K5pwZ8Mi8bgDKqrq/3fAQtAvAi0mqK5WUbs
-        nqf49hpdev3QtAjpvJlaKSFVqzaC3rL5zkQu+Zv+1Uet6c5dXvVPe0YniZk9Kdb1
-        e48Fq4afxzjf3Q6PlXjOa/5v1uMqRtxdHUTCE9rOS9jJvqYFy8AjAgMBAAGjUzBR
-        MB0GA1UdDgQWBBSPJ+Hv9iVf0u+bEPdKqikI5zjJyTAfBgNVHSMEGDAWgBSPJ+Hv
-        9iVf0u+bEPdKqikI5zjJyTAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUA
-        A4IBAQAIdP1M8HY2R6PEsWK9gIiGR0CIaIrGiP5VshD81Mdd6FBShljEFLwzmFQ6
-        4NK42mPI5LM12N3cC9RlIHecWTxsXXEoi5WMPaJESWRLX9TmdghZoUb3/OqYvRD1
-        gUn0/gp953+jQI++vhSFYoxdFMxYmn1uEDWMGR5kL6ZTk9yWqnjP0btge5uI9OdZ
-        C6bJ1m9z93Qi2TFvpNihj90nzZbo/Love3HhZmkdMzPp0MSBDMk/0AUD2dtXr8pE
-        zprZgaiWWRxlWLZdOiK1MY8YiRpCChD5wD14r7A7yqm3YfsMUjd+oFy9TsUGvqmS
-        MZoskJV+S+JCSRI+6c7i54cdin4E
+        MIIDDzCCAfegAwIBAgIUcFVKxN1SswLgzUjzHyPAjHfPjGkwDQYJKoZIhvcNAQEL
+        BQAwFzEVMBMGA1UEAwwMU3dpZnR5SyBUZXN0MB4XDTI2MDQwMjAxMDczMVoXDTM2
+        MDMzMDAxMDczMVowFzEVMBMGA1UEAwwMU3dpZnR5SyBUZXN0MIIBIjANBgkqhkiG
+        9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqPFu3Cqkgi/m0kXqKzCslYne96Qn+U2jWkFq
+        DSTIe6ODCUicHjdraDCshKdh2b2ji0x5jTyOqPiphDZAfQGVMKRmBLfwRSVr6GSC
+        +ZzHl7sjJzC+sy/nGpl3o6CDXqcFqxpAWZ1LjDxrrXUauupjT+D6XQgHcl+xMb6+
+        doDuGVrh9ISJ9N5k5v/1rwDbAtONJN1/nnIG8c/2KIbyC/Bi68syGWU7qPMKvEp2
+        NB5kkN4Ou1QWnOThOAFLY6aZYJ+hVAHx1EDWhh4RKNWOc5rK/Mfcfl3i9seozjfb
+        f7Ud2yx+XzCovGzFYhAvxULwRS3KowPxZx8TqGedE2uc4L9cUwIDAQABo1MwUTAd
+        BgNVHQ4EFgQUVkcRtpz46E2fkLbaezb/6mm+fFAwHwYDVR0jBBgwFoAUVkcRtpz4
+        6E2fkLbaezb/6mm+fFAwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOC
+        AQEAdSCqrLnSX86r+9xTj8eMTP+qh29MB96KOpw2GWToOsrbs//XJauhMfyZ4kkl
+        7O5QTs97N1u2OomBpH9KFOR1ksm7Py0cOyx4SGEgqSV0rJjm0Funclv4BaKqJ96s
+        XLj5k1BftgTWWymkfK/uFy+2VfdEu+v0H4CInon7LY3mN/8jseRnz2QCTFmItodN
+        e2yo/y1PRxiTpKYaWb2gCh21oV5A+jXCM7yXVBhNZVkJA9pscCSvnqtnZdzeFwaE
+        NBWCMzK0AGJUUihDIp41CsnCKKD13PRq38SHhF6W66hQXpGvLU4S1zWEH4OPLHwS
+        qubAN1ZdyYrmalZrl5TR0XqmPw==
         -----END CERTIFICATE-----
     """.trimIndent().toByteArray()
 
     val certificateFactory = CertificateFactory.getInstance("X.509")
     val certificate = certificateFactory.generateCertificate(certificatePem)
-    val certPath = CertPath(listOf(certificate))
-    val trustAnchor = TrustAnchor(certificate)
+    val certPath = certificateFactory.generateCertPath(listOf(certificate))
+    val trustAnchor = TrustAnchor(certificate, null)
     val parameters = PKIXParameters(listOf(trustAnchor))
     val validator = CertPathValidator.getInstance("PKIX")
     val valid = validator.validate(certPath, parameters)
