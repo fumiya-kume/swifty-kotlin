@@ -15,6 +15,10 @@ private let thenByDescendingTrampoline: @convention(c) (Int, Int, Int, UnsafeMut
     kk_comparator_then_by_descending_trampoline(closureRaw, a, b, outThrown)
 }
 
+private let thenComparatorTrampoline: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { closureRaw, a, b, outThrown in
+    kk_comparator_then_comparator_trampoline(closureRaw, a, b, outThrown)
+}
+
 private let nullsFirstTrampoline: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { closureRaw, a, b, outThrown in
     kk_comparator_nulls_first_trampoline(closureRaw, a, b, outThrown)
 }
@@ -145,6 +149,23 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertGreaterThan(result2, 0)
     }
 
+    // MARK: - thenComparator
+
+    func testComparatorThenComparator() {
+        let closureRaw = kk_comparator_then_comparator(
+            comparatorPtr(comparatorByModTen),
+            0,
+            comparatorPtr(comparatorReversed),
+            0
+        )
+
+        let result = kk_comparator_then_comparator_trampoline(closureRaw, 13, 23, nil)
+        XCTAssertGreaterThan(result, 0)
+
+        let result2 = kk_comparator_then_comparator_trampoline(closureRaw, 15, 23, nil)
+        XCTAssertGreaterThan(result2, 0)
+    }
+
     // MARK: - reversed
 
     func testComparatorReversed() {
@@ -200,24 +221,49 @@ final class RuntimeComparatorTests: XCTestCase {
 
     func testSortedWithThenByComparator() {
         let source = makeList([14, 3, 23, 5, 13, 24])
-        let byMod10 = kk_comparator_from_selector(selectorPtr(selectModTen), 0)
-        let chain = kk_comparator_then_by(byMod10, 0, selectorPtr(selectIdentity), 0)
+        let chain = kk_comparator_then_by(
+            comparatorPtr(comparatorByModTen),
+            0,
+            selectorPtr(selectIdentity),
+            0
+        )
         let sorted = kk_list_sortedWith(
             source,
             comparatorPtr(thenByTrampoline),
             chain,
             nil
         )
-        XCTAssertEqual(listElements(sorted), [13, 23, 14, 24, 3, 5])
+        XCTAssertEqual(listElements(sorted), [3, 13, 23, 14, 24, 5])
     }
 
     func testSortedWithThenByDescendingComparator() {
         let source = makeList([14, 3, 23, 5, 13, 24])
-        let byMod10 = kk_comparator_from_selector(selectorPtr(selectModTen), 0)
-        let chain = kk_comparator_then_by_descending(byMod10, 0, selectorPtr(selectIdentity), 0)
+        let chain = kk_comparator_then_by_descending(
+            comparatorPtr(comparatorByModTen),
+            0,
+            selectorPtr(selectIdentity),
+            0
+        )
         let sorted = kk_list_sortedWith(
             source,
             comparatorPtr(thenByDescendingTrampoline),
+            chain,
+            nil
+        )
+        XCTAssertEqual(listElements(sorted), [23, 13, 3, 24, 14, 5])
+    }
+
+    func testSortedWithThenComparator() {
+        let source = makeList([14, 3, 23, 5, 13, 24])
+        let chain = kk_comparator_then_comparator(
+            comparatorPtr(comparatorByModTen),
+            0,
+            comparatorPtr(comparatorReversed),
+            0
+        )
+        let sorted = kk_list_sortedWith(
+            source,
+            comparatorPtr(thenComparatorTrampoline),
             chain,
             nil
         )
@@ -260,6 +306,19 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertEqual(result, 0)
     }
 
+    func testThenComparatorThrowPropagation() {
+        let closureRaw = kk_comparator_then_comparator(
+            comparatorPtr(comparatorNatural),
+            0,
+            comparatorPtr(throwingComparator),
+            0
+        )
+        var thrown = 0
+        let result = kk_comparator_then_comparator_trampoline(closureRaw, 1, 1, &thrown)
+        XCTAssertNotEqual(thrown, 0, "thrown should propagate from thenComparator secondary comparator")
+        XCTAssertEqual(result, 0)
+    }
+
     // MARK: - Edge cases
 
     func testComparatorTrampolineWithNullClosureRawReturnsZero() {
@@ -290,8 +349,12 @@ final class RuntimeComparatorTests: XCTestCase {
     }
 
     func testComparatorThenByDescendingTrampoline() {
-        let byMod10 = kk_comparator_from_selector(selectorPtr(selectModTen), 0)
-        let chain = kk_comparator_then_by_descending(byMod10, 0, selectorPtr(selectIdentity), 0)
+        let chain = kk_comparator_then_by_descending(
+            comparatorPtr(comparatorByModTen),
+            0,
+            selectorPtr(selectIdentity),
+            0
+        )
         XCTAssertGreaterThan(kk_comparator_then_by_descending_trampoline(chain, 13, 23, nil), 0)
         XCTAssertLessThan(kk_comparator_then_by_descending_trampoline(chain, 23, 13, nil), 0)
         XCTAssertGreaterThan(kk_comparator_then_by_descending_trampoline(chain, 15, 23, nil), 0)

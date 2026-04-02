@@ -401,6 +401,7 @@ public func kk_math_E() -> Int {
 }
 
 // MARK: - STDLIB-500~509: Float trig/math overloads
+
 //
 // Float values are transported as bit-encoded Int (intptr_t), just like Double.
 // The low 32 bits carry the IEEE 754 single-precision payload; upper bits are
@@ -533,9 +534,9 @@ public func kk_math_hypot_float(_ x: Int, _ y: Int) -> Int {
 private func roundFloatJava7(_ raw: Float) -> Int64 {
     let bits = raw.bitPattern
     let biasedExp = Int((bits >> 23) & 0xFF)
-    let shift = 149 - biasedExp  // (23 - 1 + 127) - biasedExp
-    if (shift & ~31) == 0 {  // 0 <= shift <= 31
-        var r = Int32(bitPattern: (bits & 0x7F_FFFF) | 0x80_0000)
+    let shift = 149 - biasedExp // (23 - 1 + 127) - biasedExp
+    if (shift & ~31) == 0 { // 0 <= shift <= 31
+        var r = Int32(bitPattern: (bits & 0x7FFFFF) | 0x800000)
         if Int32(bitPattern: bits) < 0 { r = -r }
         return Int64((r >> shift) &+ 1) >> 1
     } else {
@@ -552,8 +553,8 @@ private func roundFloatJava7(_ raw: Float) -> Int64 {
 private func roundDoubleJava7(_ raw: Double) -> Int64 {
     let bits = raw.bitPattern
     let biasedExp = Int((bits >> 52) & 0x7FF)
-    let shift = 1074 - biasedExp  // (52 - 1 + 1023) - biasedExp
-    if (shift & ~63) == 0 {  // 0 <= shift <= 63
+    let shift = 1074 - biasedExp // (52 - 1 + 1023) - biasedExp
+    if (shift & ~63) == 0 { // 0 <= shift <= 63
         var r = Int64(bitPattern: (bits & 0xF_FFFF_FFFF_FFFF) | 0x10_0000_0000_0000)
         if Int64(bitPattern: bits) < 0 { r = -r }
         return ((r >> shift) &+ 1) >> 1
@@ -937,6 +938,48 @@ public func kk_math_truncate_float(_ value: Int) -> Int {
     kk_float_to_bits(truncf(kk_bits_to_float(value)))
 }
 
+// MARK: - STDLIB-MATH-109: Hyperbolic functions and cbrt
+
+@_cdecl("kk_math_sinh")
+public func kk_math_sinh(_ value: Int) -> Int {
+    kk_double_to_bits(sinh(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_cosh")
+public func kk_math_cosh(_ value: Int) -> Int {
+    kk_double_to_bits(cosh(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_tanh")
+public func kk_math_tanh(_ value: Int) -> Int {
+    kk_double_to_bits(tanh(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_cbrt")
+public func kk_math_cbrt(_ value: Int) -> Int {
+    kk_double_to_bits(cbrt(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_sinh_float")
+public func kk_math_sinh_float(_ v: Int) -> Int {
+    applyFloatUnaryOp(v, sinhf)
+}
+
+@_cdecl("kk_math_cosh_float")
+public func kk_math_cosh_float(_ v: Int) -> Int {
+    applyFloatUnaryOp(v, coshf)
+}
+
+@_cdecl("kk_math_tanh_float")
+public func kk_math_tanh_float(_ v: Int) -> Int {
+    applyFloatUnaryOp(v, tanhf)
+}
+
+@_cdecl("kk_math_cbrt_float")
+public func kk_math_cbrt_float(_ v: Int) -> Int {
+    applyFloatUnaryOp(v, cbrtf)
+}
+
 @_cdecl("kk_math_IEEErem")
 public func kk_math_IEEErem(_ x: Int, _ y: Int) -> Int {
     kk_double_to_bits(remainder(kk_bits_to_double(x), kk_bits_to_double(y)))
@@ -1066,9 +1109,9 @@ public func kk_float_to_long(_ value: Int) -> Int {
     return Int(Int64(f))
 }
 
-// Long→* conversions: `Int` (intptr_t) is used for Long values.
-// This is correct on 64-bit macOS where Int == Int64; see the note above
-// kk_long_coerceIn for the full rationale.
+/// Long→* conversions: `Int` (intptr_t) is used for Long values.
+/// This is correct on 64-bit macOS where Int == Int64; see the note above
+/// kk_long_coerceIn for the full rationale.
 @_cdecl("kk_long_to_int")
 public func kk_long_to_int(_ value: Int) -> Int {
     Int(Int32(truncatingIfNeeded: value))
@@ -1155,7 +1198,7 @@ public func kk_int_takeHighestOneBit(_ value: Int) -> Int {
     let truncated = Int32(truncatingIfNeeded: value)
     if truncated == 0 { return 0 }
     let shift = 31 - truncated.leadingZeroBitCount
-    let mask = Int32(bitPattern: UInt32(0xFFFFFFFF) << shift)
+    let mask = Int32(bitPattern: UInt32(0xFFFF_FFFF) << shift)
     return Int(truncated & mask)
 }
 
@@ -1238,7 +1281,7 @@ public func kk_int_coerceAtMost(_ value: Int, _ maximum: Int) -> Int {
 //
 // Compile-time assertion: Long == Int requires 64-bit Int.
 #if !arch(arm64) && !arch(x86_64)
-#error("KSwiftK runtime requires a 64-bit platform where Int == Int64.")
+    #error("KSwiftK runtime requires a 64-bit platform where Int == Int64.")
 #endif
 
 @_cdecl("kk_long_coerceIn")
@@ -1259,7 +1302,7 @@ public func kk_long_coerceAtMost(_ value: Int, _ maximum: Int) -> Int {
     value > maximum ? maximum : value
 }
 
-// Double coercion (STDLIB-500) — values passed as bit-encoded intptr_t.
+/// Double coercion (STDLIB-500) — values passed as bit-encoded intptr_t.
 @_cdecl("kk_double_coerceIn")
 public func kk_double_coerceIn(_ value: Int, _ minimum: Int, _ maximum: Int) -> Int {
     let v = kk_bits_to_double(value)
@@ -1285,7 +1328,7 @@ public func kk_double_coerceAtMost(_ value: Int, _ maximum: Int) -> Int {
     return v > hi ? maximum : value
 }
 
-// Float coercion (STDLIB-500) — values passed as bit-encoded intptr_t.
+/// Float coercion (STDLIB-500) — values passed as bit-encoded intptr_t.
 @_cdecl("kk_float_coerceIn")
 public func kk_float_coerceIn(_ value: Int, _ minimum: Int, _ maximum: Int) -> Int {
     let v = kk_bits_to_float(value)
@@ -1313,7 +1356,7 @@ public func kk_float_coerceAtMost(_ value: Int, _ maximum: Int) -> Int {
 
 // MARK: - Range-based coercion functions (STDLIB-CONV-006)
 
-// Double.coerceIn(range) — range object argument
+/// Double.coerceIn(range) — range object argument
 @_cdecl("kk_double_coerceIn_range")
 public func kk_double_coerceIn_range(_ value: Int, _ rangeRaw: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
@@ -1324,7 +1367,7 @@ public func kk_double_coerceIn_range(_ value: Int, _ rangeRaw: Int) -> Int {
     return kk_double_coerceIn(value, minimum, maximum)
 }
 
-// Float.coerceIn(range) — range object argument
+/// Float.coerceIn(range) — range object argument
 @_cdecl("kk_float_coerceIn_range")
 public func kk_float_coerceIn_range(_ value: Int, _ rangeRaw: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
@@ -1335,7 +1378,7 @@ public func kk_float_coerceIn_range(_ value: Int, _ rangeRaw: Int) -> Int {
     return kk_float_coerceIn(value, minimum, maximum)
 }
 
-// Int.coerceIn(range) — range object argument
+/// Int.coerceIn(range) — range object argument
 @_cdecl("kk_int_coerceIn_range")
 public func kk_int_coerceIn_range(_ value: Int, _ rangeRaw: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
@@ -1344,7 +1387,7 @@ public func kk_int_coerceIn_range(_ value: Int, _ rangeRaw: Int) -> Int {
     return kk_int_coerceIn(value, range.first, range.last)
 }
 
-// Long.coerceIn(range) — range object argument
+/// Long.coerceIn(range) — range object argument
 @_cdecl("kk_long_coerceIn_range")
 public func kk_long_coerceIn_range(_ value: Int, _ rangeRaw: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
@@ -1355,7 +1398,7 @@ public func kk_long_coerceIn_range(_ value: Int, _ rangeRaw: Int) -> Int {
 
 // MARK: - Range-based coerceAtLeast/coerceAtMost functions (STDLIB-CONV-006)
 
-// Double.coerceAtLeast(range) — use range first as minimum
+/// Double.coerceAtLeast(range) — use range first as minimum
 @_cdecl("kk_double_coerceAtLeast_range")
 public func kk_double_coerceAtLeast_range(_ value: Int, _ rangeRaw: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
@@ -1365,7 +1408,7 @@ public func kk_double_coerceAtLeast_range(_ value: Int, _ rangeRaw: Int) -> Int 
     return kk_double_coerceAtLeast(value, minimum)
 }
 
-// Double.coerceAtMost(range) — use range last as maximum
+/// Double.coerceAtMost(range) — use range last as maximum
 @_cdecl("kk_double_coerceAtMost_range")
 public func kk_double_coerceAtMost_range(_ value: Int, _ rangeRaw: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
@@ -1375,7 +1418,7 @@ public func kk_double_coerceAtMost_range(_ value: Int, _ rangeRaw: Int) -> Int {
     return kk_double_coerceAtMost(value, maximum)
 }
 
-// Float.coerceAtLeast(range) — use range first as minimum
+/// Float.coerceAtLeast(range) — use range first as minimum
 @_cdecl("kk_float_coerceAtLeast_range")
 public func kk_float_coerceAtLeast_range(_ value: Int, _ rangeRaw: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
@@ -1385,7 +1428,7 @@ public func kk_float_coerceAtLeast_range(_ value: Int, _ rangeRaw: Int) -> Int {
     return kk_float_coerceAtLeast(value, minimum)
 }
 
-// Float.coerceAtMost(range) — use range last as maximum
+/// Float.coerceAtMost(range) — use range last as maximum
 @_cdecl("kk_float_coerceAtMost_range")
 public func kk_float_coerceAtMost_range(_ value: Int, _ rangeRaw: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
@@ -1395,7 +1438,7 @@ public func kk_float_coerceAtMost_range(_ value: Int, _ rangeRaw: Int) -> Int {
     return kk_float_coerceAtMost(value, maximum)
 }
 
-// Int.coerceAtLeast(range) — use range first as minimum
+/// Int.coerceAtLeast(range) — use range first as minimum
 @_cdecl("kk_int_coerceAtLeast_range")
 public func kk_int_coerceAtLeast_range(_ value: Int, _ rangeRaw: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
@@ -1404,7 +1447,7 @@ public func kk_int_coerceAtLeast_range(_ value: Int, _ rangeRaw: Int) -> Int {
     return kk_int_coerceAtLeast(value, range.first)
 }
 
-// Int.coerceAtMost(range) — use range last as maximum
+/// Int.coerceAtMost(range) — use range last as maximum
 @_cdecl("kk_int_coerceAtMost_range")
 public func kk_int_coerceAtMost_range(_ value: Int, _ rangeRaw: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
@@ -1413,7 +1456,7 @@ public func kk_int_coerceAtMost_range(_ value: Int, _ rangeRaw: Int) -> Int {
     return kk_int_coerceAtMost(value, range.last)
 }
 
-// Long.coerceAtLeast(range) — use range first as minimum
+/// Long.coerceAtLeast(range) — use range first as minimum
 @_cdecl("kk_long_coerceAtLeast_range")
 public func kk_long_coerceAtLeast_range(_ value: Int, _ rangeRaw: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
@@ -1422,7 +1465,7 @@ public func kk_long_coerceAtLeast_range(_ value: Int, _ rangeRaw: Int) -> Int {
     return kk_long_coerceAtLeast(value, range.first)
 }
 
-// Long.coerceAtMost(range) — use range last as maximum
+/// Long.coerceAtMost(range) — use range last as maximum
 @_cdecl("kk_long_coerceAtMost_range")
 public func kk_long_coerceAtMost_range(_ value: Int, _ rangeRaw: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
@@ -1521,49 +1564,49 @@ public func kk_ulong_to_ushort(_ value: Int) -> Int {
 @_cdecl("kk_ubyte_to_int")
 public func kk_ubyte_to_int(_ value: Int) -> Int {
     // UByte is always in valid range for Int
-    return value
+    value
 }
 
 @_cdecl("kk_ushort_to_int")
 public func kk_ushort_to_int(_ value: Int) -> Int {
     // UShort is always in valid range for Int
-    return value
+    value
 }
 
 @_cdecl("kk_ubyte_to_long")
 public func kk_ubyte_to_long(_ value: Int) -> Int {
     // UByte is always in valid range for Long
-    return value
+    value
 }
 
 @_cdecl("kk_ushort_to_long")
 public func kk_ushort_to_long(_ value: Int) -> Int {
     // UShort is always in valid range for Long
-    return value
+    value
 }
 
 @_cdecl("kk_ubyte_to_uint")
 public func kk_ubyte_to_uint(_ value: Int) -> Int {
     // UByte is always in valid range for UInt
-    return value
+    value
 }
 
 @_cdecl("kk_ushort_to_uint")
 public func kk_ushort_to_uint(_ value: Int) -> Int {
     // UShort is always in valid range for UInt
-    return value
+    value
 }
 
 @_cdecl("kk_ubyte_to_ulong")
 public func kk_ubyte_to_ulong(_ value: Int) -> Int {
     // UByte is always in valid range for ULong
-    return value
+    value
 }
 
 @_cdecl("kk_ushort_to_ulong")
 public func kk_ushort_to_ulong(_ value: Int) -> Int {
     // UShort is always in valid range for ULong
-    return value
+    value
 }
 
 // MARK: - Char Conversions (STDLIB-PRIM-002)
@@ -1591,37 +1634,37 @@ public func kk_ulong_to_char(_ value: Int) -> Int {
 @_cdecl("kk_ubyte_to_char")
 public func kk_ubyte_to_char(_ value: Int) -> Int {
     // UByte is always in valid range for Char
-    return value
+    value
 }
 
 @_cdecl("kk_ushort_to_char")
 public func kk_ushort_to_char(_ value: Int) -> Int {
     // UShort is always in valid range for Char
-    return value
+    value
 }
 
 @_cdecl("kk_char_to_int")
 public func kk_char_to_int(_ value: Int) -> Int {
     // Char is stored as Int, so this is identity
-    return value
+    value
 }
 
 @_cdecl("kk_char_to_long")
 public func kk_char_to_long(_ value: Int) -> Int {
     // Char is stored as Int, so this is identity
-    return value
+    value
 }
 
 @_cdecl("kk_char_to_uint")
 public func kk_char_to_uint(_ value: Int) -> Int {
     // Char is stored as Int, so this is identity
-    return value
+    value
 }
 
 @_cdecl("kk_char_to_ulong")
 public func kk_char_to_ulong(_ value: Int) -> Int {
     // Char is stored as Int, so this is identity
-    return value
+    value
 }
 
 // MARK: - Additional Unsigned Conversions (STDLIB-PRIM-002)
@@ -1937,7 +1980,7 @@ public func kk_char_rangeTo(_ startValue: Int, _ endValue: Int) -> UnsafeMutable
     let endScalar = UnicodeScalar(endChar) ?? zeroScalar
 
     if startScalar <= endScalar {
-        let rangeString = (startScalar.value...endScalar.value)
+        let rangeString = (startScalar.value ... endScalar.value)
             .compactMap(UnicodeScalar.init)
             .map(String.init)
             .joined()

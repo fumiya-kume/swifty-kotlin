@@ -2,13 +2,21 @@
 ///
 /// Covers:
 /// - `Path(pathString: String)` constructor
-/// - `name: String`, `parent: Path?` properties
+/// - `name: String`, `parent: Path?`, `fileName: Path?`, `root: Path?` properties
+/// - `nameCount: Int`, `isAbsolute: Boolean` properties
 /// - `toString(): String`
 /// - `resolve(other: String): Path`, `resolve(other: Path): Path`
+/// - `relativize(other: Path): Path`, `normalize(): Path`
 /// - `exists(): Boolean`, `isDirectory(): Boolean`, `isRegularFile(): Boolean`
+/// - `startsWith(other: Path): Boolean`, `startsWith(other: String): Boolean`
+/// - `endsWith(other: Path): Boolean`, `endsWith(other: String): Boolean`
+/// - `toFile(): File`, `toUri(): URI`, `toAbsolutePath(): Path`
+/// - `getName(index: Int): Path`
 /// - `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
 /// - `createDirectories(): Path`, `deleteIfExists(): Boolean`
 /// - `listDirectoryEntries(): List<Path>`
+/// - Top-level `Path(pathString: String)` factory (kotlin.io.path.Path)
+/// - `Paths.get(pathString: String)` factory (java.nio.file.Paths)
 ///
 /// Each stub registers the kotlin.io.path.Path class, its constructor, member
 /// properties, and member functions in the symbol table so that name resolution
@@ -64,6 +72,34 @@ extension DataFlowSemaPhase {
             types.anyType
         }
 
+        // Resolve java.io.File type for toFile() return
+        let javaIOPkg: [InternedString] = [
+            interner.intern("java"),
+            interner.intern("io"),
+        ]
+        let fileSymbol = symbols.lookup(fqName: javaIOPkg + [interner.intern("File")])
+        let fileType: TypeID = if let fileSym = fileSymbol {
+            types.make(.classType(ClassType(
+                classSymbol: fileSym, args: [], nullability: .nonNull
+            )))
+        } else {
+            types.anyType
+        }
+
+        // Resolve java.net.URI type for toUri() return
+        let javaNetPkg: [InternedString] = [
+            interner.intern("java"),
+            interner.intern("net"),
+        ]
+        let uriSymbol = symbols.lookup(fqName: javaNetPkg + [interner.intern("URI")])
+        let uriType: TypeID = if let uriSym = uriSymbol {
+            types.make(.classType(ClassType(
+                classSymbol: uriSym, args: [], nullability: .nonNull
+            )))
+        } else {
+            types.anyType
+        }
+
         // MARK: - Path(pathString: String) constructor
 
         registerPathConstructor(
@@ -87,10 +123,46 @@ extension DataFlowSemaPhase {
         )
 
         registerPathMemberProperty(
+            named: "fileName",
+            externalLinkName: "kk_path_fileName",
+            ownerSymbol: pathSymbol,
+            returnType: nullablePathType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathMemberProperty(
             named: "parent",
             externalLinkName: "kk_path_parent",
             ownerSymbol: pathSymbol,
             returnType: nullablePathType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathMemberProperty(
+            named: "root",
+            externalLinkName: "kk_path_root",
+            ownerSymbol: pathSymbol,
+            returnType: nullablePathType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathMemberProperty(
+            named: "nameCount",
+            externalLinkName: "kk_path_nameCount",
+            ownerSymbol: pathSymbol,
+            returnType: types.intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathMemberProperty(
+            named: "isAbsolute",
+            externalLinkName: "kk_path_isAbsolute",
+            ownerSymbol: pathSymbol,
+            returnType: types.booleanType,
             symbols: symbols,
             interner: interner
         )
@@ -132,6 +204,32 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - Path.relativize(other: Path)
+
+        registerPathMemberFunction(
+            named: "relativize",
+            externalLinkName: "kk_path_relativize",
+            ownerSymbol: pathSymbol,
+            ownerType: pathType,
+            parameters: [("other", pathType)],
+            returnType: pathType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - Path.normalize()
+
+        registerPathMemberFunction(
+            named: "normalize",
+            externalLinkName: "kk_path_normalize",
+            ownerSymbol: pathSymbol,
+            ownerType: pathType,
+            parameters: [],
+            returnType: pathType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - Path query methods
 
         registerPathMemberFunction(
@@ -163,6 +261,98 @@ extension DataFlowSemaPhase {
             ownerType: pathType,
             parameters: [],
             returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - Path comparison methods
+
+        registerPathMemberFunction(
+            named: "startsWith",
+            externalLinkName: "kk_path_startsWith_path",
+            ownerSymbol: pathSymbol,
+            ownerType: pathType,
+            parameters: [("other", pathType)],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathMemberFunction(
+            named: "startsWith",
+            externalLinkName: "kk_path_startsWith_string",
+            ownerSymbol: pathSymbol,
+            ownerType: pathType,
+            parameters: [("other", types.stringType)],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathMemberFunction(
+            named: "endsWith",
+            externalLinkName: "kk_path_endsWith_path",
+            ownerSymbol: pathSymbol,
+            ownerType: pathType,
+            parameters: [("other", pathType)],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathMemberFunction(
+            named: "endsWith",
+            externalLinkName: "kk_path_endsWith_string",
+            ownerSymbol: pathSymbol,
+            ownerType: pathType,
+            parameters: [("other", types.stringType)],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - Path conversion methods
+
+        registerPathMemberFunction(
+            named: "toFile",
+            externalLinkName: "kk_path_toFile",
+            ownerSymbol: pathSymbol,
+            ownerType: pathType,
+            parameters: [],
+            returnType: fileType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathMemberFunction(
+            named: "toUri",
+            externalLinkName: "kk_path_toUri",
+            ownerSymbol: pathSymbol,
+            ownerType: pathType,
+            parameters: [],
+            returnType: uriType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathMemberFunction(
+            named: "toAbsolutePath",
+            externalLinkName: "kk_path_toAbsolutePath",
+            ownerSymbol: pathSymbol,
+            ownerType: pathType,
+            parameters: [],
+            returnType: pathType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathMemberFunction(
+            named: "getName",
+            externalLinkName: "kk_path_getName",
+            ownerSymbol: pathSymbol,
+            ownerType: pathType,
+            parameters: [("index", types.intType)],
+            returnType: pathType,
             symbols: symbols,
             interner: interner
         )
@@ -233,6 +423,53 @@ extension DataFlowSemaPhase {
             ownerType: pathType,
             parameters: [],
             returnType: listOfPathType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - Top-level Path() factory (kotlin.io.path.Path)
+
+        registerPathTopLevelFunction(
+            named: "Path",
+            packageFQName: kotlinIOPathPkg,
+            parameters: [("pathString", types.stringType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_get",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - Paths.get() (java.nio.file.Paths)
+
+        let javaNioFilePkg = ensurePackage(
+            path: ["java", "nio", "file"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaNioFilePkgSymbol = symbols.lookup(fqName: javaNioFilePkg)
+
+        let pathsSymbol = ensureClassSymbol(
+            named: "Paths",
+            in: javaNioFilePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaNioFilePkgSymbol {
+            symbols.setParentSymbol(javaNioFilePkgSymbol, for: pathsSymbol)
+        }
+        let pathsType = types.make(.classType(ClassType(
+            classSymbol: pathsSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(pathsType, for: pathsSymbol)
+
+        // Paths.get(pathString: String): Path
+        registerPathMemberFunction(
+            named: "get",
+            externalLinkName: "kk_path_get",
+            ownerSymbol: pathsSymbol,
+            ownerType: pathsType,
+            parameters: [("pathString", types.stringType)],
+            returnType: pathType,
             symbols: symbols,
             interner: interner
         )
@@ -480,5 +717,68 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
         symbols.setPropertyType(returnType, for: propertySymbol)
+    }
+
+    private func registerPathTopLevelFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.parameterTypes == parameters.map(\.type)
+                && existingSignature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let paramNameID = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: paramNameID,
+                fqName: functionFQName + [paramNameID],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
     }
 }

@@ -124,6 +124,7 @@ extension LocalDeclTypeChecker {
         valueParams: [ValueParamDecl],
         returnTypeRef: TypeRefID?,
         body: FunctionBody,
+        isSuspend: Bool,
         range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout LocalBindings
@@ -181,6 +182,10 @@ extension LocalDeclTypeChecker {
             }
         }
 
+        var functionFlags: SymbolFlags = []
+        if isSuspend {
+            functionFlags.insert(.suspendFunction)
+        }
         let funSymbol = sema.symbols.define(
             kind: .function,
             name: name,
@@ -190,12 +195,13 @@ extension LocalDeclTypeChecker {
             ],
             declSite: range,
             visibility: .private,
-            flags: []
+            flags: functionFlags
         )
 
         let signature = FunctionSignature(
             parameterTypes: parameterTypes,
             returnType: resolvedReturnType,
+            isSuspend: isSuspend,
             valueParameterSymbols: paramSymbols,
             valueParameterHasDefaultValues: valueParams.map(\.hasDefaultValue),
             valueParameterIsVararg: valueParams.map(\.isVararg)
@@ -205,7 +211,7 @@ extension LocalDeclTypeChecker {
         let funType = sema.types.make(.functionType(FunctionType(
             params: parameterTypes,
             returnType: resolvedReturnType,
-            isSuspend: false,
+            isSuspend: isSuspend,
             nullability: .nonNull
         )))
 
@@ -240,6 +246,7 @@ extension LocalDeclTypeChecker {
             let inferredSignature = FunctionSignature(
                 parameterTypes: parameterTypes,
                 returnType: inferredBodyType,
+                isSuspend: isSuspend,
                 valueParameterSymbols: paramSymbols,
                 valueParameterHasDefaultValues: valueParams.map(\.hasDefaultValue),
                 valueParameterIsVararg: valueParams.map(\.isVararg)
@@ -250,7 +257,7 @@ extension LocalDeclTypeChecker {
         let finalFunType = sema.types.make(.functionType(FunctionType(
             params: parameterTypes,
             returnType: finalReturnType,
-            isSuspend: false,
+            isSuspend: isSuspend,
             nullability: .nonNull
         )))
 

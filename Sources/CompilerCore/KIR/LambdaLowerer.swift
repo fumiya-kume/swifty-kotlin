@@ -843,6 +843,16 @@ final class LambdaLowerer {
             thrownResult: nil
         ))
 
+        // Expose the SAM wrapper as an invokable comparator value so stdlib
+        // comparison lowering can call `compare` directly when needed.
+        driver.ctx.registerCallableValue(
+            wrapperValue,
+            symbol: methodSymbol,
+            callee: methodName,
+            captureArguments: [wrapperValue],
+            hasClosureParam: false
+        )
+
         for (index, capture) in captureBindings.enumerated() {
             guard index < captureFieldSymbols.count,
                   let fieldOffset = fieldOffsets[captureFieldSymbols[index]]

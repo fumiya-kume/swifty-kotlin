@@ -1,6 +1,6 @@
 import Foundation
 
-/// Synthetic stdlib stubs for kotlin.concurrent.AtomicInt, AtomicLong, AtomicReference.
+/// Synthetic stdlib stubs for kotlin.concurrent atomic and lock types.
 /// Registers constructors, load/store/exchange/compareAndSet/compareAndExchange methods,
 /// arithmetic methods (AtomicInt/AtomicLong), and the `value` property.
 extension DataFlowSemaPhase {
@@ -268,6 +268,38 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner,
             types: types
+        )
+
+        // -- Lock --
+        let lockSymbol = ensureClassSymbol(
+            named: "Lock",
+            in: concurrentPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let lockType = types.make(.classType(ClassType(
+            classSymbol: lockSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(lockType, for: lockSymbol)
+        registerAtomicMember(
+            ownerSymbol: lockSymbol,
+            ownerType: lockType,
+            name: "withLock",
+            externalLinkName: "kk_lock_withLock",
+            returnType: types.anyType,
+            parameters: [(
+                name: "action",
+                type: types.make(.functionType(FunctionType(
+                    params: [],
+                    returnType: types.anyType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            )],
+            symbols: symbols,
+            interner: interner
         )
     }
 

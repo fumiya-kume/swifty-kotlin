@@ -127,6 +127,206 @@ public func kk_kclass_get_arity(_ kclassRaw: Int) -> Int {
     return 0
 }
 
+// MARK: - Annotation Reflection (STDLIB-REFLECT-065)
+
+/// Creates a runtime annotation box and registers it.
+/// - Parameters:
+///   - fqNameRaw: Opaque pointer to the KKString for the annotation FQ name.
+///   - argsListRaw: Opaque pointer to a RuntimeListBox of string argument values (0 if none).
+///   - annotationClassRaw: Opaque pointer to the KClass for the annotation class (0 if unavailable).
+/// - Returns: Opaque pointer to a RuntimeAnnotationBox.
+@_cdecl("kk_annotation_create")
+public func kk_annotation_create(
+    _ fqNameRaw: Int,
+    _ argsListRaw: Int,
+    _ annotationClassRaw: Int
+) -> Int {
+    let fqName = extractString(from: UnsafeMutableRawPointer(bitPattern: fqNameRaw)) ?? "Unknown"
+
+    var arguments: [String] = []
+    if argsListRaw != 0, argsListRaw != runtimeNullSentinelInt,
+       let ptr = UnsafeMutableRawPointer(bitPattern: argsListRaw),
+       runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
+       let listBox = tryCast(ptr, to: RuntimeListBox.self)
+    {
+        for element in listBox.elements {
+            if let str = extractString(from: UnsafeMutableRawPointer(bitPattern: element)) {
+                arguments.append(str)
+            }
+        }
+    }
+
+    let box = RuntimeAnnotationBox(
+        annotationFQName: fqName,
+        arguments: arguments,
+        annotationClassRaw: annotationClassRaw
+    )
+    return registerRuntimeObject(box)
+}
+
+/// Returns the `annotationClass` (KClass) for an annotation instance.
+/// - Parameter annotationRaw: Opaque pointer to a RuntimeAnnotationBox.
+/// - Returns: KClass raw handle, or null sentinel if unavailable.
+@_cdecl("kk_annotation_get_class")
+public func kk_annotation_get_class(_ annotationRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: annotationRaw),
+          runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let box = tryCast(ptr, to: RuntimeAnnotationBox.self)
+    else {
+        return runtimeNullSentinelInt
+    }
+    return box.annotationClassRaw != 0 ? box.annotationClassRaw : runtimeNullSentinelInt
+}
+
+/// Returns the fully-qualified name of an annotation as a runtime string.
+/// - Parameter annotationRaw: Opaque pointer to a RuntimeAnnotationBox.
+/// - Returns: Runtime string for the annotation FQ name.
+@_cdecl("kk_annotation_get_fqname")
+public func kk_annotation_get_fqname(_ annotationRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: annotationRaw),
+          runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let box = tryCast(ptr, to: RuntimeAnnotationBox.self)
+    else {
+        return runtimeNullSentinelInt
+    }
+    return runtimeReflectionStringRaw(box.annotationFQName)
+}
+
+/// Returns the argument value at a given index from an annotation.
+/// - Parameters:
+///   - annotationRaw: Opaque pointer to a RuntimeAnnotationBox.
+///   - index: 0-based index into the arguments list.
+/// - Returns: Runtime string for the argument value, or null sentinel if out of range.
+@_cdecl("kk_annotation_get_value")
+public func kk_annotation_get_value(_ annotationRaw: Int, _ index: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: annotationRaw),
+          runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let box = tryCast(ptr, to: RuntimeAnnotationBox.self)
+    else {
+        return runtimeNullSentinelInt
+    }
+    guard index >= 0, index < box.arguments.count else {
+        return runtimeNullSentinelInt
+    }
+    return runtimeReflectionStringRaw(box.arguments[index])
+}
+
+/// Returns the number of arguments in an annotation.
+/// - Parameter annotationRaw: Opaque pointer to a RuntimeAnnotationBox.
+/// - Returns: Number of arguments, or 0 if invalid.
+@_cdecl("kk_annotation_get_arg_count")
+public func kk_annotation_get_arg_count(_ annotationRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: annotationRaw),
+          runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let box = tryCast(ptr, to: RuntimeAnnotationBox.self)
+    else {
+        return 0
+    }
+    return box.arguments.count
+}
+
+/// Returns the annotations list for a KClass as a RuntimeListBox.
+/// Each element is a RuntimeAnnotationBox raw handle.
+/// - Parameter kclassRaw: Opaque pointer to a RuntimeKClassBox.
+/// - Returns: Opaque pointer to a RuntimeListBox of annotation handles.
+@_cdecl("kk_kclass_get_annotations")
+public func kk_kclass_get_annotations(_ kclassRaw: Int) -> Int {
+    guard let kclass = runtimeReflectionKClassBox(from: kclassRaw),
+          let metadata = kclass.metadata
+    else {
+        // Return empty list.
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+
+    var annotationHandles: [Int] = []
+    for record in metadata.annotations {
+        let box = RuntimeAnnotationBox(
+            annotationFQName: record.annotationFQName,
+            arguments: record.arguments,
+            annotationClassRaw: 0
+        )
+        annotationHandles.append(registerRuntimeObject(box))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: annotationHandles))
+}
+
+/// Searches for an annotation by its simple or qualified name on a KClass.
+/// Implements `KClass.findAnnotation<T>()` — returns the first matching annotation or null.
+/// - Parameters:
+///   - kclassRaw: Opaque pointer to a RuntimeKClassBox.
+///   - nameRaw: Opaque pointer to the annotation class name string to search for.
+/// - Returns: Opaque pointer to a RuntimeAnnotationBox, or null sentinel if not found.
+@_cdecl("kk_kclass_find_annotation")
+public func kk_kclass_find_annotation(_ kclassRaw: Int, _ nameRaw: Int) -> Int {
+    guard let kclass = runtimeReflectionKClassBox(from: kclassRaw),
+          let metadata = kclass.metadata,
+          let searchName = extractString(from: UnsafeMutableRawPointer(bitPattern: nameRaw))
+    else {
+        return runtimeNullSentinelInt
+    }
+
+    for record in metadata.annotations {
+        // Match by FQ name or simple name.
+        let simpleName = record.annotationFQName.split(separator: ".").last.map(String.init) ?? record.annotationFQName
+        if record.annotationFQName == searchName || simpleName == searchName {
+            let box = RuntimeAnnotationBox(
+                annotationFQName: record.annotationFQName,
+                arguments: record.arguments,
+                annotationClassRaw: 0
+            )
+            return registerRuntimeObject(box)
+        }
+    }
+    return runtimeNullSentinelInt
+}
+
+/// Registers a single annotation for a KClass identified by typeToken.
+/// Called during module initialization (once per annotation) to attach compile-time
+/// annotation data to the already-registered metadata entry.
+/// - Parameters:
+///   - typeToken: The type token identifying the type.
+///   - fqNameRaw: Runtime string pointer for the annotation FQ name.
+///   - argsEncodedRaw: Runtime string pointer for pipe-delimited argument values (empty string if none).
+///   - argCount: Number of arguments encoded in the argsEncoded string.
+@_cdecl("kk_kclass_register_single_annotation")
+public func kk_kclass_register_single_annotation(
+    _ typeToken: Int,
+    _ fqNameRaw: Int,
+    _ argsEncodedRaw: Int,
+    _ argCount: Int
+) -> Int {
+    let fqName = extractString(from: UnsafeMutableRawPointer(bitPattern: fqNameRaw)) ?? "Unknown"
+
+    var arguments: [String] = []
+    if argCount > 0,
+       let argsEncoded = extractString(from: UnsafeMutableRawPointer(bitPattern: argsEncodedRaw)),
+       !argsEncoded.isEmpty
+    {
+        arguments = argsEncoded.components(separatedBy: "|")
+    }
+
+    let record = RuntimeAnnotationRecord(annotationFQName: fqName, arguments: arguments)
+    runtimeKClassMetadataRegistry.appendAnnotations(typeToken: typeToken, annotations: [record])
+    return 0
+}
+
+/// Returns a string representation of an annotation (e.g. "@MyLabel(name=hello)").
+@_cdecl("kk_annotation_to_string")
+public func kk_annotation_to_string(_ annotationRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: annotationRaw),
+          runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let box = tryCast(ptr, to: RuntimeAnnotationBox.self)
+    else {
+        return runtimeReflectionStringRaw("@Unknown")
+    }
+    let simpleName = box.annotationFQName.split(separator: ".").last.map(String.init) ?? box.annotationFQName
+    if box.arguments.isEmpty {
+        return runtimeReflectionStringRaw("@\(simpleName)()")
+    }
+    let argsStr = box.arguments.joined(separator: ", ")
+    return runtimeReflectionStringRaw("@\(simpleName)(\(argsStr))")
+}
+
 // MARK: - KFunction Dynamic Call (STDLIB-REFLECT-067)
 
 private func runtimeKFunctionBox(from raw: Int) -> RuntimeKFunctionBox? {

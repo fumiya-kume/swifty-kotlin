@@ -339,3 +339,32 @@ public func kk_mutex_withLock(_ handle: Int, _ actionFnPtr: Int, _ actionEnvPtr:
 
     return result
 }
+
+// MARK: - Lock.withLock { } (kotlin.concurrent.Lock.withLock)
+
+/// Runtime backing for `kotlin.concurrent.Lock.withLock { }`.
+///
+/// Acquires the mutex in a blocking way using `lockBlocking()`, executes the action,
+/// and releases the mutex. The action is represented as a plain closure call with
+/// no coroutine suspension support.
+@_cdecl("kk_lock_withLock")
+public func kk_lock_withLock(_ handle: Int, _ actionFnPtr: Int, _ actionEnvPtr: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_lock_withLock received invalid mutex handle")
+    }
+    let mutex = Unmanaged<RuntimeMutexHandle>.fromOpaque(ptr).takeUnretainedValue()
+
+    mutex.lockBlocking()
+    defer { mutex.unlock() }
+
+    var result: Int = 0
+    if actionFnPtr != 0,
+       let fnRaw = UnsafeRawPointer(bitPattern: actionFnPtr)
+    {
+        typealias ActionFn = @convention(c) (Int) -> Int
+        let fn = unsafeBitCast(fnRaw, to: ActionFn.self)
+        result = fn(actionEnvPtr)
+    }
+
+    return result
+}
