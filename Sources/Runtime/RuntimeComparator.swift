@@ -262,7 +262,9 @@ public func kk_comparator_then_descending(
     let inner1 = RuntimePairBox(first: c1Fn, second: c1Closure)
     let inner2 = RuntimePairBox(first: comparatorFn, second: comparatorClosure)
     let outer = RuntimePairBox(first: registerRuntimeObject(inner1), second: registerRuntimeObject(inner2))
-    return registerRuntimeObject(outer)
+    let raw = registerRuntimeObject(outer)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_then_descending_trampoline)
+    return raw
 }
 
 /// thenComparator: first comparator, then comparator for tie-breaker.
