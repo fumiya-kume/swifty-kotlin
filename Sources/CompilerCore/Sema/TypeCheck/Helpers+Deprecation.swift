@@ -66,6 +66,40 @@ extension TypeCheckHelpers {
         }
     }
 
+    func checkBuiltinDeprecation(
+        calleeName: InternedString,
+        receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner,
+        range: SourceRange?,
+        diagnostics: DiagnosticEngine
+    ) {
+        let callee = interner.resolve(calleeName)
+        guard callee == "toChar" else {
+            return
+        }
+
+        let receiver = sema.types.makeNonNullable(receiverType)
+        let deprecatedReceiverTypes: Set<TypeID> = [
+            sema.types.intType,
+            sema.types.longType,
+            sema.types.uintType,
+            sema.types.ulongType,
+            sema.types.ubyteType,
+            sema.types.ushortType,
+        ]
+        guard deprecatedReceiverTypes.contains(receiver) else {
+            return
+        }
+
+        diagnostics.warning(
+            "KSWIFTK-SEMA-DEPRECATED",
+            "'\(callee)' is deprecated. Use toInt().toChar() or Char(code) instead.",
+            range: range,
+            codeActions: [DiagnosticCodeAction(title: "Replace with 'toInt().toChar()'")]
+        )
+    }
+
     private func parseDeprecatedArguments(_ arguments: [String]) -> DeprecatedArguments {
         var namedArgs: [String: String] = [:]
         var positionalArgs: [String] = []

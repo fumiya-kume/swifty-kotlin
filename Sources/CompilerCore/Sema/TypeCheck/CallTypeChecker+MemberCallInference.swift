@@ -2655,6 +2655,14 @@ extension CallTypeChecker {
             }
             if matches {
                 let finalType = safeCall ? sema.types.makeNullable(targetType) : targetType
+                driver.helpers.checkBuiltinDeprecation(
+                    calleeName: calleeName,
+                    receiverType: receiverForCheck,
+                    sema: sema,
+                    interner: interner,
+                    range: range,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
                 sema.bindings.bindExprType(id, type: finalType)
                 return finalType
             }
