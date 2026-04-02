@@ -957,6 +957,7 @@ extension DataFlowSemaPhase {
         registerSyntheticMetaprogStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsInteropStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticKSPStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticNativeInteropStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticBigIntegerStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticThreadLocalStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticConcurrencyStubs(symbols: symbols, types: types, interner: interner)
