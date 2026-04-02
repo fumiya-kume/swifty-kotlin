@@ -84,6 +84,9 @@ extension ABIMismatchTests {
             "kk_cipher_init_with_iv",
             "kk_cipher_doFinal",
             "kk_cipher_doFinal_noarg",
+            "kk_mac_getInstance",
+            "kk_mac_init",
+            "kk_mac_doFinal",
             // JSON Serialization (STDLIB-SER-132)
             "kk_json_default",
             "kk_json_encodeToString",
