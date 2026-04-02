@@ -4862,6 +4862,14 @@ extension CallLowerer {
             interner.intern("kk_sequence_count"),
             interner.intern("kk_list_binarySearch_compare"),
             interner.intern("kk_result_getOrThrow"),
+            interner.intern("kk_atomic_int_array_get"),
+            interner.intern("kk_atomic_int_array_set"),
+            interner.intern("kk_atomic_int_array_compareAndSet"),
+            interner.intern("kk_atomic_int_array_getAndAdd"),
+            interner.intern("kk_atomic_long_array_get"),
+            interner.intern("kk_atomic_long_array_set"),
+            interner.intern("kk_atomic_long_array_compareAndSet"),
+            interner.intern("kk_atomic_long_array_getAndAdd"),
         ])
     }
 

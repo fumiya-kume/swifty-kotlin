@@ -46,6 +46,39 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testAtomicArraysInAtomicsPackageAreResolved() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+
+        import kotlin.concurrent.atomics.AtomicIntArray
+        import kotlin.concurrent.atomics.AtomicLongArray
+
+        fun main() {
+            val ints = AtomicIntArray(2)
+            val longs = AtomicLongArray(2)
+            ints.set(0, 1)
+            longs.set(1, 2L)
+            println(ints.get(0))
+            println(ints.compareAndSet(0, 1, 3))
+            println(ints.getAndAdd(0, 2))
+            println(ints.size)
+            println(longs.get(1))
+            println(longs.compareAndSet(1, 2L, 4L))
+            println(longs.getAndAdd(1, 3L))
+            println(longs.size)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "AtomicIntArray / AtomicLongArray in kotlin.concurrent.atomics should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testTypeSystemLUBAndGLB() {
         let types = TypeSystem()
 
