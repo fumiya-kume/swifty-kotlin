@@ -4778,6 +4778,11 @@ extension CallLowerer {
         if loweredCallee == interner.intern("kk_system_currentTimeMillis")
             || loweredCallee == interner.intern("kk_system_nanoTime")
             || loweredCallee == interner.intern("kk_system_process_start_nanos")
+            || loweredCallee == interner.intern("kk_system_gc")
+            || loweredCallee == interner.intern("kk_runtime_getRuntime")
+            || loweredCallee == interner.intern("kk_runtime_totalMemory")
+            || loweredCallee == interner.intern("kk_runtime_freeMemory")
+            || loweredCallee == interner.intern("kk_runtime_maxMemory")
             || loweredCallee == interner.intern("kk_instant_now")
             || loweredCallee == interner.intern("kk_clock_system_now") {
             callArguments = []
