@@ -19,31 +19,34 @@ extension TypeCheckHelpers {
         range: SourceRange?,
         diagnostics: DiagnosticEngine
     ) {
-        guard let requirement = requiredOptInRequirements(for: symbolID, ctx: ctx).first else {
+        let requirements = requiredOptInRequirements(for: symbolID, ctx: ctx)
+        guard !requirements.isEmpty else {
             return
         }
         let optedInMarkers = activeOptInMarkers(in: ctx)
-        guard !optedInMarkers.contains(requirement.markerSymbol) else {
-            return
-        }
+        for requirement in requirements {
+            guard !optedInMarkers.contains(requirement.markerSymbol) else {
+                continue
+            }
 
-        let messageSuffix = requirement.message.isEmpty ? "" : " \(requirement.message)"
-        let diagnosticMessage = "'\(requirement.markerName)' requires opt-in. " +
-            "Annotate the usage with '@\(requirement.markerName)' or '@OptIn(\(requirement.markerName)::class)'.\(messageSuffix)"
+            let messageSuffix = requirement.message.isEmpty ? "" : " \(requirement.message)"
+            let diagnosticMessage = "'\(requirement.markerName)' requires opt-in. " +
+                "Annotate the usage with '@\(requirement.markerName)' or '@OptIn(\(requirement.markerName)::class)'.\(messageSuffix)"
 
-        switch requirement.level {
-        case .warning:
-            diagnostics.warning(
-                "KSWIFTK-SEMA-OPT-IN",
-                diagnosticMessage,
-                range: range
-            )
-        case .error:
-            diagnostics.error(
-                "KSWIFTK-SEMA-OPT-IN",
-                diagnosticMessage,
-                range: range
-            )
+            switch requirement.level {
+            case .warning:
+                diagnostics.warning(
+                    "KSWIFTK-SEMA-OPT-IN",
+                    diagnosticMessage,
+                    range: range
+                )
+            case .error:
+                diagnostics.error(
+                    "KSWIFTK-SEMA-OPT-IN",
+                    diagnosticMessage,
+                    range: range
+                )
+            }
         }
     }
 
@@ -240,15 +243,29 @@ extension TypeCheckHelpers {
         ctx: TypeInferenceContext,
         into markers: inout Set<SymbolID>
     ) {
-        for annotation in annotations where KnownCompilerAnnotation.optIn.matches(annotation.annotationFQName) {
-            for markerName in parseOptInMarkerNames(annotation.arguments) {
-                if let markerSymbol = resolveAnnotationClassSymbol(
-                    named: markerName,
-                    file: file,
-                    ctx: ctx
-                ) {
-                    markers.insert(markerSymbol)
+        for annotation in annotations {
+            if KnownCompilerAnnotation.optIn.matches(annotation.annotationFQName) {
+                for markerName in parseOptInMarkerNames(annotation.arguments) {
+                    if let markerSymbol = resolveAnnotationClassSymbol(
+                        named: markerName,
+                        file: file,
+                        ctx: ctx
+                    ) {
+                        markers.insert(markerSymbol)
+                    }
                 }
+            }
+
+            // If this annotation is itself a @RequiresOptIn marker, it implicitly
+            // grants opt-in for that marker within the annotated declaration's scope.
+            if let annotationSymbol = resolveAnnotationClassSymbol(
+                named: annotation.annotationFQName,
+                file: file,
+                ctx: ctx
+            ),
+               optInRequirement(forMarkerAnnotation: annotationSymbol, ctx: ctx) != nil
+            {
+                markers.insert(annotationSymbol)
             }
         }
     }
@@ -259,15 +276,29 @@ extension TypeCheckHelpers {
         ctx: TypeInferenceContext,
         into markers: inout Set<SymbolID>
     ) {
-        for annotation in annotations where KnownCompilerAnnotation.optIn.matches(annotation.name) {
-            for markerName in parseOptInMarkerNames(annotation.arguments) {
-                if let markerSymbol = resolveAnnotationClassSymbol(
-                    named: markerName,
-                    file: file,
-                    ctx: ctx
-                ) {
-                    markers.insert(markerSymbol)
+        for annotation in annotations {
+            if KnownCompilerAnnotation.optIn.matches(annotation.name) {
+                for markerName in parseOptInMarkerNames(annotation.arguments) {
+                    if let markerSymbol = resolveAnnotationClassSymbol(
+                        named: markerName,
+                        file: file,
+                        ctx: ctx
+                    ) {
+                        markers.insert(markerSymbol)
+                    }
                 }
+            }
+
+            // If this annotation is itself a @RequiresOptIn marker, it implicitly
+            // grants opt-in for that marker within the annotated declaration's scope.
+            if let annotationSymbol = resolveAnnotationClassSymbol(
+                named: annotation.name,
+                file: file,
+                ctx: ctx
+            ),
+               optInRequirement(forMarkerAnnotation: annotationSymbol, ctx: ctx) != nil
+            {
+                markers.insert(annotationSymbol)
             }
         }
     }
