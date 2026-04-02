@@ -614,15 +614,7 @@ public final class MetadataEncoder {
 
         // Only emit valueClass=1 when the underlying type is available;
         // without it, importers cannot resolve/unbox the value class.
-        let isValueClass: Bool
-        if rawIsValueClass, valueClassUnderlyingTypeSig == nil {
-            assertionFailure(
-                "Value class '\(fqName)' is missing underlying type; omitting valueClass flag from metadata."
-            )
-            isValueClass = false
-        } else {
-            isValueClass = rawIsValueClass
-        }
+        let isValueClass = rawIsValueClass && valueClassUnderlyingTypeSig != nil
 
         let annotationEntries = symbols.annotations(for: symbol.id)
 

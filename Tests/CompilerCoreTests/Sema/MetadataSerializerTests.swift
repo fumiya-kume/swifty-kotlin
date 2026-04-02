@@ -327,6 +327,33 @@ final class MetadataSerializerTests: XCTestCase {
         XCTAssertTrue(output.contains("target:get"))
     }
 
+    func testBuildRecordSkipsMissingValueClassUnderlyingType() throws {
+        let encoder = MetadataEncoder()
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+
+        let symbol = symbols.define(
+            kind: .class,
+            name: interner.intern("Wrapper"),
+            fqName: [interner.intern("demo"), interner.intern("Wrapper")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.valueType]
+        )
+
+        let record = encoder.buildRecord(
+            for: XCTUnwrap(symbols.symbol(symbol)),
+            symbols: symbols,
+            types: types,
+            moduleName: "Demo",
+            interner: interner
+        )
+
+        XCTAssertFalse(record.isValueClass)
+        XCTAssertNil(record.valueClassUnderlyingTypeSig)
+    }
+
     func testSerializeMultipleRecords() {
         let encoder = MetadataEncoder()
         let records = [
