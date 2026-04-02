@@ -1427,7 +1427,19 @@ private func runtimeSecurityInputStreamBytes(from raw: Int) -> Data? {
         }
         bytes.append(UInt8(truncatingIfNeeded: byte))
     }
-    return Data(bytes)
+    let data = Data(bytes)
+    guard let text = String(data: data, encoding: .utf8) else {
+        return data
+    }
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard trimmed.contains("-----BEGIN") else {
+        return data
+    }
+    let base64 = trimmed
+        .split(separator: "\n")
+        .filter { !$0.hasPrefix("-----BEGIN") && !$0.hasPrefix("-----END") }
+        .joined()
+    return Data(base64Encoded: base64)
 }
 
 private func runtimeSecurityCertificate(from data: Data) -> SecCertificate? {
