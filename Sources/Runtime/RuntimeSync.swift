@@ -1,4 +1,9 @@
 import Foundation
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
 
 // MARK: - Mutex (kotlinx.coroutines.sync.Mutex)
 
@@ -168,6 +173,44 @@ final class RuntimeSemaphoreHandle: @unchecked Sendable {
     }
 }
 
+// MARK: - ReadWriteLock (kotlin.concurrent.ReentrantReadWriteLock)
+
+/// Runtime backing for `kotlin.concurrent.ReentrantReadWriteLock`.
+///
+/// Uses a native pthread read/write lock to allow concurrent readers and an
+/// exclusive writer on blocking threads.
+final class RuntimeReadWriteLockHandle: @unchecked Sendable {
+    private var lock = pthread_rwlock_t()
+
+    init() {
+        precondition(pthread_rwlock_init(&lock, nil) == 0, "Failed to initialize pthread_rwlock_t")
+    }
+
+    func readLock() {
+        precondition(pthread_rwlock_rdlock(&lock) == 0, "Failed to acquire read lock")
+    }
+
+    func writeLock() {
+        precondition(pthread_rwlock_wrlock(&lock) == 0, "Failed to acquire write lock")
+    }
+
+    func unlock() {
+        precondition(pthread_rwlock_unlock(&lock) == 0, "Failed to unlock read/write lock")
+    }
+}
+
+private func runtimeInvokeReadWriteLockAction(_ actionFnPtr: Int, _ actionEnvPtr: Int) -> Int {
+    var result: Int = 0
+    if actionFnPtr != 0,
+       let fnRaw = UnsafeRawPointer(bitPattern: actionFnPtr)
+    {
+        typealias ActionFn = @convention(c) (Int) -> Int
+        let fn = unsafeBitCast(fnRaw, to: ActionFn.self)
+        result = fn(actionEnvPtr)
+    }
+    return result
+}
+
 private func runtimeSyncResume(_ continuation: Int) {
     guard continuation != 0,
           let contPtr = UnsafeMutableRawPointer(bitPattern: continuation)
@@ -282,6 +325,38 @@ public func kk_semaphore_availablePermits(_ handle: Int) -> Int {
     }
     let semaphore = Unmanaged<RuntimeSemaphoreHandle>.fromOpaque(ptr).takeUnretainedValue()
     return semaphore.availablePermits
+}
+
+@_cdecl("kk_read_write_lock_create")
+public func kk_read_write_lock_create() -> Int {
+    let lock = RuntimeReadWriteLockHandle()
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(lock).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+    return Int(bitPattern: ptr)
+}
+
+@_cdecl("kk_read_write_lock_read")
+public func kk_read_write_lock_read(_ handle: Int, _ actionFnPtr: Int, _ actionEnvPtr: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_read_write_lock_read received invalid read/write lock handle")
+    }
+    let lock = Unmanaged<RuntimeReadWriteLockHandle>.fromOpaque(ptr).takeUnretainedValue()
+    lock.readLock()
+    defer { lock.unlock() }
+    return runtimeInvokeReadWriteLockAction(actionFnPtr, actionEnvPtr)
+}
+
+@_cdecl("kk_read_write_lock_write")
+public func kk_read_write_lock_write(_ handle: Int, _ actionFnPtr: Int, _ actionEnvPtr: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_read_write_lock_write received invalid read/write lock handle")
+    }
+    let lock = Unmanaged<RuntimeReadWriteLockHandle>.fromOpaque(ptr).takeUnretainedValue()
+    lock.writeLock()
+    defer { lock.unlock() }
+    return runtimeInvokeReadWriteLockAction(actionFnPtr, actionEnvPtr)
 }
 
 // MARK: - Mutex.withLock { } (kotlinx.coroutines.sync.Mutex.withLock)

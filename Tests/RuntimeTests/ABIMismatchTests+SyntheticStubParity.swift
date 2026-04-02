@@ -128,6 +128,9 @@ extension ABIMismatchTests {
             "kk_mutex_tryLock",
             "kk_mutex_isLocked",
             "kk_mutex_withLock",
+            "kk_read_write_lock_create",
+            "kk_read_write_lock_read",
+            "kk_read_write_lock_write",
             // Symmetric crypto (javax.crypto)
             "kk_secretkeyspec_new",
             "kk_ivparameterspec_new",

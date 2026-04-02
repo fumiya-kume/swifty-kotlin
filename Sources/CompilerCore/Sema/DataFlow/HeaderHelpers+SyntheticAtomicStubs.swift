@@ -182,6 +182,68 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // -- ReentrantReadWriteLock --
+        let rwLockSymbol = ensureClassSymbol(
+            named: "ReentrantReadWriteLock",
+            in: concurrentPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let rwLockType = types.make(.classType(ClassType(
+            classSymbol: rwLockSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(rwLockType, for: rwLockSymbol)
+
+        registerReadWriteLockConstructor(
+            ownerSymbol: rwLockSymbol,
+            ownerType: rwLockType,
+            externalLinkName: "kk_read_write_lock_create",
+            symbols: symbols,
+            interner: interner
+        )
+
+        let readWriteActionType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: types.anyType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerAtomicMember(
+            ownerSymbol: rwLockSymbol,
+            ownerType: rwLockType,
+            name: "read",
+            externalLinkName: "kk_read_write_lock_read",
+            returnType: types.anyType,
+            parameters: [(
+                name: "action",
+                type: readWriteActionType
+            )],
+            symbols: symbols,
+            interner: interner
+        )
+        registerAtomicMember(
+            ownerSymbol: rwLockSymbol,
+            ownerType: rwLockType,
+            name: "write",
+            externalLinkName: "kk_read_write_lock_write",
+            returnType: types.anyType,
+            parameters: [(
+                name: "action",
+                type: readWriteActionType
+            )],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerReadWriteLockFactory(
+            packageFQName: concurrentPkg,
+            returnType: rwLockType,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Helpers
@@ -650,6 +712,47 @@ extension DataFlowSemaPhase {
         )
     }
 
+    private func registerReadWriteLockConstructor(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
+        let initName = interner.intern("<init>")
+        let ctorFQName = ownerInfo.fqName + [initName]
+        let hasMatch = symbols.lookupAll(fqName: ctorFQName).contains { id in
+            guard let sym = symbols.symbol(id),
+                  sym.kind == .constructor,
+                  let sig = symbols.functionSignature(for: id)
+            else { return false }
+            return sig.parameterTypes.isEmpty
+        }
+        guard !hasMatch else { return }
+
+        let ctorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: ctorFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: ctorSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [],
+                returnType: ownerType,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: []
+            ),
+            for: ctorSymbol
+        )
+    }
+
     private func registerAtomicValueProperty(
         ownerSymbol: SymbolID,
         ownerType: TypeID,
@@ -1028,6 +1131,50 @@ extension DataFlowSemaPhase {
                 classTypeParameterCount: classTypeParameterCount
             ),
             for: memberSymbol
+        )
+    }
+
+    private func registerReadWriteLockFactory(
+        packageFQName: [InternedString],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("readWriteLock")
+        let functionFQName = packageFQName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.parameterTypes.isEmpty
+                && existingSignature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName("kk_read_write_lock_create", for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName("kk_read_write_lock_create", for: functionSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [],
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: []
+            ),
+            for: functionSymbol
         )
     }
 

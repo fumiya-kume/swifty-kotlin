@@ -4897,9 +4897,12 @@ extension CallLowerer {
             instructions.append(.constValue(result: continuationExpr, value: .intLiteral(0)))
             finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr, continuationExpr]
         }
-        // kk_lock_withLock(handle, actionFnPtr, actionEnvPtr): split the lambda
-        // argument at index 1 into a function pointer and environment pointer.
-        if loweredCallee == interner.intern("kk_lock_withLock"),
+        // kk_read_write_lock_read(handle, actionFnPtr, actionEnvPtr) and
+        // kk_read_write_lock_write(handle, actionFnPtr, actionEnvPtr): split the
+        // lambda argument at index 1 into a function pointer and environment pointer.
+        if (loweredCallee == interner.intern("kk_lock_withLock")
+            || loweredCallee == interner.intern("kk_read_write_lock_read")
+            || loweredCallee == interner.intern("kk_read_write_lock_write")),
            finalArguments.count == 2
         {
             let lambdaID = finalArguments[1]
