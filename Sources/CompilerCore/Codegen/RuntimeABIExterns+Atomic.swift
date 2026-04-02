@@ -1,4 +1,4 @@
-// MARK: - Atomic (kotlin.concurrent.AtomicInt / AtomicLong / AtomicReference)
+// MARK: - Atomic (kotlin.concurrent.AtomicInt / AtomicLong / AtomicReference / atomics.AtomicArray)
 
 public extension RuntimeABIExterns {
     static let atomicExterns: [ExternDecl] = [
@@ -49,6 +49,20 @@ public extension RuntimeABIExterns {
         // AtomicReference getAndUpdate / updateAndGet
         kk_atomic_ref_getAndUpdate,
         kk_atomic_ref_updateAndGet,
+        // AtomicArray
+        kk_atomic_array_create,
+        kk_atomic_array_new,
+        kk_atomic_array_ofNulls,
+        kk_atomic_array_size,
+        kk_atomic_array_loadAt,
+        kk_atomic_array_storeAt,
+        kk_atomic_array_exchangeAt,
+        kk_atomic_array_compareAndSetAt,
+        kk_atomic_array_compareAndExchangeAt,
+        kk_atomic_array_fetchAndUpdateAt,
+        kk_atomic_array_updateAndFetchAt,
+        kk_atomic_array_updateAt,
+        kk_atomic_array_toString,
     ]
 
     // MARK: - AtomicInt
@@ -247,6 +261,86 @@ public extension RuntimeABIExterns {
         name: "kk_atomic_ref_compareAndExchange",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
+    )
+
+    // MARK: - AtomicArray
+
+    static let kk_atomic_array_create = ExternDecl(
+        name: "kk_atomic_array_create",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_array_new = ExternDecl(
+        name: "kk_atomic_array_new",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_array_ofNulls = ExternDecl(
+        name: "kk_atomic_array_ofNulls",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_array_size = ExternDecl(
+        name: "kk_atomic_array_size",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_array_loadAt = ExternDecl(
+        name: "kk_atomic_array_loadAt",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_array_storeAt = ExternDecl(
+        name: "kk_atomic_array_storeAt",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_array_exchangeAt = ExternDecl(
+        name: "kk_atomic_array_exchangeAt",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_array_compareAndSetAt = ExternDecl(
+        name: "kk_atomic_array_compareAndSetAt",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_array_compareAndExchangeAt = ExternDecl(
+        name: "kk_atomic_array_compareAndExchangeAt",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_array_fetchAndUpdateAt = ExternDecl(
+        name: "kk_atomic_array_fetchAndUpdateAt",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_array_updateAndFetchAt = ExternDecl(
+        name: "kk_atomic_array_updateAndFetchAt",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_array_updateAt = ExternDecl(
+        name: "kk_atomic_array_updateAt",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_atomic_array_toString = ExternDecl(
+        name: "kk_atomic_array_toString",
+        parameterTypes: ["intptr_t"],
+        returnType: "void *"
     )
 
     // MARK: - AtomicBool

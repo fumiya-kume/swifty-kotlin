@@ -24,6 +24,204 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testAtomicArrayStubsAreRegisteredWithSharedClassAndFunctionName() throws {
+        let source = """
+        import kotlin.concurrent.atomics.AtomicArray
+        import kotlin.concurrent.atomics.atomicArrayOfNulls
+
+        fun main(source: Array<Int>) {
+            val copied = AtomicArray(source)
+            val sized = AtomicArray(2) { it }
+            val nulls = atomicArrayOfNulls<Int>(2)
+            val size = copied.size
+            val first = copied.loadAt(0)
+            copied.storeAt(0, 1)
+            copied.exchangeAt(0, 2)
+            copied.compareAndSetAt(0, 1, 2)
+            copied.compareAndExchangeAt(0, 1, 2)
+            copied.fetchAndUpdateAt(0) { it + 1 }
+            copied.updateAndFetchAt(0) { it + 1 }
+            copied.updateAt(0) { it + 1 }
+            val text = copied.toString()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "AtomicArray stubs should resolve without diagnostics: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let interner = ctx.interner
+            let atomicArrayFQName = [
+                interner.intern("kotlin"),
+                interner.intern("concurrent"),
+                interner.intern("atomics"),
+                interner.intern("AtomicArray"),
+            ]
+
+            let atomicArraySymbols = sema.symbols.lookupAll(fqName: atomicArrayFQName)
+            let atomicArrayClassSymbol = try XCTUnwrap(
+                atomicArraySymbols.first(where: { sema.symbols.symbol($0)?.kind == .class })
+            )
+            let atomicArrayFunctionSymbol = try XCTUnwrap(
+                atomicArraySymbols.first(where: { sema.symbols.symbol($0)?.kind == .function })
+            )
+            XCTAssertFalse(atomicArrayClassSymbol == atomicArrayFunctionSymbol)
+
+            let classTypeParameters = sema.types.nominalTypeParameterSymbols(for: atomicArrayClassSymbol)
+            XCTAssertEqual(classTypeParameters.count, 1)
+            let classTypeParamSymbol = try XCTUnwrap(classTypeParameters.first)
+            XCTAssertEqual(sema.symbols.symbol(classTypeParamSymbol)?.name, interner.intern("T"))
+            XCTAssertEqual(sema.types.nominalTypeParameterVariances(for: atomicArrayClassSymbol), [.invariant])
+
+            let constructorFQName = atomicArrayFQName + [interner.intern("<init>")]
+            let constructorSymbol = try XCTUnwrap(
+                sema.symbols.lookupAll(fqName: constructorFQName).first(where: { sema.symbols.symbol($0)?.kind == .constructor })
+            )
+            let constructorSignature = try XCTUnwrap(sema.symbols.functionSignature(for: constructorSymbol))
+            XCTAssertEqual(constructorSignature.parameterTypes.count, 1)
+            XCTAssertEqual(constructorSignature.classTypeParameterCount, 1)
+            XCTAssertEqual(constructorSignature.typeParameterSymbols, [classTypeParamSymbol])
+            XCTAssertFalse(sema.symbols.symbol(constructorSymbol)?.flags.contains(.throwingFunction) ?? true)
+
+            switch sema.types.kind(of: constructorSignature.parameterTypes[0]) {
+            case let .classType(classType):
+                XCTAssertEqual(sema.symbols.symbol(classType.classSymbol)?.name, interner.intern("Array"))
+                XCTAssertEqual(classType.args.count, 1)
+                switch classType.args[0] {
+                case let .invariant(argType):
+                    switch sema.types.kind(of: argType) {
+                    case let .typeParam(typeParamType):
+                        XCTAssertEqual(typeParamType.symbol, classTypeParamSymbol)
+                        XCTAssertEqual(typeParamType.nullability, .nonNull)
+                    default:
+                        XCTFail("Expected AtomicArray(array:) to take Array<T>.")
+                    }
+                default:
+                    XCTFail("Expected AtomicArray(array:) to take invariant Array<T>.")
+                }
+            default:
+                XCTFail("Expected AtomicArray(array:) to take Array<T>.")
+            }
+
+            let factorySignature = try XCTUnwrap(sema.symbols.functionSignature(for: atomicArrayFunctionSymbol))
+            XCTAssertEqual(factorySignature.parameterTypes.count, 2)
+            XCTAssertEqual(factorySignature.typeParameterSymbols.count, 1)
+            XCTAssertEqual(factorySignature.classTypeParameterCount, 0)
+            XCTAssertTrue(sema.symbols.symbol(atomicArrayFunctionSymbol)?.flags.contains(.throwingFunction) ?? false)
+            let factoryTypeParamSymbol = try XCTUnwrap(factorySignature.typeParameterSymbols.first)
+            XCTAssertNotEqual(factoryTypeParamSymbol, classTypeParamSymbol)
+
+            switch sema.types.kind(of: factorySignature.returnType) {
+            case let .classType(classType):
+                XCTAssertEqual(sema.symbols.symbol(classType.classSymbol)?.name, interner.intern("AtomicArray"))
+                XCTAssertEqual(classType.args.count, 1)
+                switch classType.args[0] {
+                case let .invariant(argType):
+                    switch sema.types.kind(of: argType) {
+                    case let .typeParam(typeParamType):
+                        XCTAssertEqual(typeParamType.symbol, factoryTypeParamSymbol)
+                        XCTAssertEqual(typeParamType.nullability, .nonNull)
+                    default:
+                        XCTFail("Expected AtomicArray(size, init) to return AtomicArray<T>.")
+                    }
+                default:
+                    XCTFail("Expected AtomicArray(size, init) to return AtomicArray<T>.")
+                }
+            default:
+                XCTFail("Expected AtomicArray(size, init) to return AtomicArray<T>.")
+            }
+
+            switch sema.types.kind(of: factorySignature.parameterTypes[1]) {
+            case let .functionType(functionType):
+                XCTAssertEqual(functionType.params.count, 1)
+                switch sema.types.kind(of: functionType.returnType) {
+                case let .typeParam(typeParamType):
+                    XCTAssertEqual(typeParamType.symbol, factoryTypeParamSymbol)
+                default:
+                    XCTFail("Expected AtomicArray(size, init) lambda to return T.")
+                }
+            default:
+                XCTFail("Expected AtomicArray(size, init) lambda parameter to be a function type.")
+            }
+
+            let ofNullsFQName = [
+                interner.intern("kotlin"),
+                interner.intern("concurrent"),
+                interner.intern("atomics"),
+                interner.intern("atomicArrayOfNulls"),
+            ]
+            let ofNullsSymbol = try XCTUnwrap(
+                sema.symbols.lookupAll(fqName: ofNullsFQName).first(where: { sema.symbols.symbol($0)?.kind == .function })
+            )
+            let ofNullsSignature = try XCTUnwrap(sema.symbols.functionSignature(for: ofNullsSymbol))
+            XCTAssertEqual(ofNullsSignature.parameterTypes.count, 1)
+            XCTAssertEqual(ofNullsSignature.typeParameterSymbols.count, 1)
+            XCTAssertEqual(ofNullsSignature.classTypeParameterCount, 0)
+            XCTAssertFalse(sema.symbols.symbol(ofNullsSymbol)?.flags.contains(.throwingFunction) ?? true)
+            let ofNullsTypeParamSymbol = try XCTUnwrap(ofNullsSignature.typeParameterSymbols.first)
+            XCTAssertNotEqual(ofNullsTypeParamSymbol, classTypeParamSymbol)
+
+            switch sema.types.kind(of: ofNullsSignature.returnType) {
+            case let .classType(classType):
+                XCTAssertEqual(sema.symbols.symbol(classType.classSymbol)?.name, interner.intern("AtomicArray"))
+                XCTAssertEqual(classType.args.count, 1)
+                switch classType.args[0] {
+                case let .invariant(argType):
+                    switch sema.types.kind(of: argType) {
+                    case let .typeParam(typeParamType):
+                        XCTAssertEqual(typeParamType.symbol, ofNullsTypeParamSymbol)
+                        XCTAssertEqual(typeParamType.nullability, .nullable)
+                    default:
+                        XCTFail("Expected atomicArrayOfNulls<T> to return AtomicArray<T?>.")
+                    }
+                default:
+                    XCTFail("Expected atomicArrayOfNulls<T> to return AtomicArray<T?>.")
+                }
+            default:
+                XCTFail("Expected atomicArrayOfNulls<T> to return AtomicArray<T?>.")
+            }
+
+            let sizeFQName = atomicArrayFQName + [interner.intern("size")]
+            let sizeSymbol = try XCTUnwrap(
+                sema.symbols.lookupAll(fqName: sizeFQName).first(where: { sema.symbols.symbol($0)?.kind == .property })
+            )
+            XCTAssertEqual(sema.symbols.externalLinkName(for: sizeSymbol), "kk_atomic_array_size")
+            XCTAssertFalse(sema.symbols.symbol(sizeSymbol)?.flags.contains(.throwingFunction) ?? true)
+
+            let throwingMemberNames = [
+                "loadAt",
+                "storeAt",
+                "exchangeAt",
+                "compareAndSetAt",
+                "compareAndExchangeAt",
+                "fetchAndUpdateAt",
+                "updateAndFetchAt",
+                "updateAt",
+            ]
+            for memberName in throwingMemberNames {
+                let memberFQName = atomicArrayFQName + [interner.intern(memberName)]
+                let memberSymbol = try XCTUnwrap(
+                    sema.symbols.lookupAll(fqName: memberFQName).first(where: { sema.symbols.symbol($0)?.kind == .function })
+                )
+                XCTAssertTrue(sema.symbols.symbol(memberSymbol)?.flags.contains(.throwingFunction) ?? false, "\(memberName) should be marked throwing.")
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: memberSymbol))
+                XCTAssertEqual(signature.classTypeParameterCount, 1)
+                XCTAssertEqual(signature.typeParameterSymbols, [classTypeParamSymbol])
+            }
+
+            let toStringSymbol = try XCTUnwrap(
+                sema.symbols.lookupAll(fqName: atomicArrayFQName + [interner.intern("toString")]).first(where: { sema.symbols.symbol($0)?.kind == .function })
+            )
+            XCTAssertEqual(sema.symbols.externalLinkName(for: toStringSymbol), "kk_atomic_array_toString")
+            XCTAssertFalse(sema.symbols.symbol(toStringSymbol)?.flags.contains(.throwingFunction) ?? true)
+        }
+    }
+
     func testTypeSystemLUBAndGLB() {
         let types = TypeSystem()
 

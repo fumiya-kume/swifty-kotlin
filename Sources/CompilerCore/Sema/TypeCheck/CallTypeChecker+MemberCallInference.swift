@@ -738,6 +738,89 @@ extension CallTypeChecker {
             }
         }
 
+        // --- AtomicArray indexed update methods ---
+        if args.count == 2 {
+            let atomicArrayFQName: [InternedString] = [
+                interner.intern("kotlin"),
+                interner.intern("concurrent"),
+                interner.intern("atomics"),
+                interner.intern("AtomicArray"),
+            ]
+            let atomicArrayMemberNames: Set<InternedString> = [
+                interner.intern("fetchAndUpdateAt"),
+                interner.intern("updateAndFetchAt"),
+                interner.intern("updateAt"),
+            ]
+            let atomicArraySymbol = sema.symbols.lookupAll(fqName: atomicArrayFQName).first(where: { candidate in
+                sema.symbols.symbol(candidate)?.kind == .class
+            })
+            switch sema.types.kind(of: sema.types.makeNonNullable(receiverType)) {
+            case let .classType(classType):
+                if let atomicArraySymbol,
+                   classType.classSymbol == atomicArraySymbol,
+                   classType.args.count == 1
+                {
+                let elementType: TypeID = if let firstArg = classType.args.first {
+                    switch firstArg {
+                    case let .invariant(type), let .out(type), let .in(type):
+                        type
+                    case .star:
+                        sema.types.anyType
+                    }
+                } else {
+                    sema.types.anyType
+                }
+
+                if atomicArrayMemberNames.contains(calleeName) {
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+                    let updateExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [elementType],
+                        returnType: elementType
+                    )))
+                    if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                    }
+                    _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: updateExpectedType)
+
+                    let memberFQName = atomicArrayFQName + [calleeName]
+                    if let chosen = sema.symbols.lookupAll(fqName: memberFQName).first(where: { candidate in
+                        guard let symbol = sema.symbols.symbol(candidate) else {
+                            return false
+                        }
+                        return symbol.kind == .function
+                    }) {
+                        let returnType: TypeID = if calleeName == interner.intern("updateAt") {
+                            sema.types.unitType
+                        } else {
+                            elementType
+                        }
+                        let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
+                        sema.bindings.bindCall(
+                            id,
+                            binding: CallBinding(
+                                chosenCallee: chosen,
+                                substitutedTypeArguments: [elementType],
+                                parameterMapping: [0: 0, 1: 1]
+                            )
+                        )
+                        sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                        driver.helpers.checkDeprecation(
+                            for: chosen,
+                            sema: sema,
+                            interner: interner,
+                            range: range,
+                            diagnostics: ctx.semaCtx.diagnostics
+                        )
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
+                }
+                }
+            default:
+                break
+            }
+        }
+
         // --- takeIf / takeUnless (STDLIB-160) ---
         // T.takeIf((T) -> Boolean): T? / T.takeUnless((T) -> Boolean): T?
         // Inline-expanded by CallLowerer; no runtime call.

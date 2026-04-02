@@ -255,7 +255,7 @@ final class CallTypeChecker {
             // First arg is the receiver object
             let withReceiverType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             // Second arg is the lambda with receiver
-            var receiverCtx = ctx.with(implicitReceiverType: withReceiverType)
+            let receiverCtx = ctx.with(implicitReceiverType: withReceiverType)
             let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                 receiver: withReceiverType,
                 params: [],
@@ -771,6 +771,222 @@ final class CallTypeChecker {
                     types: sema.types,
                     interner: interner,
                     arrayName: calleeNameStr
+                )
+            }
+            sema.bindings.bindExprType(id, type: resultType)
+            return resultType
+        }
+
+        // --- AtomicArray(array) constructor ---
+        if let calleeName,
+           interner.resolve(calleeName) == "AtomicArray",
+           args.count == 1,
+           locals[calleeName] == nil
+        {
+            let sourceArrayType = driver.inferExpr(
+                args[0].expr,
+                ctx: ctx,
+                locals: &locals
+            )
+            let kotlinArrayFQName: [InternedString] = [
+                interner.intern("kotlin"),
+                interner.intern("Array"),
+            ]
+            guard let sourceArraySymbol = sema.symbols.lookup(fqName: kotlinArrayFQName) else {
+                return sema.types.errorType
+            }
+            let elementType: TypeID = if case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(sourceArrayType)),
+                                         classType.classSymbol == sourceArraySymbol,
+                                         let firstArg = classType.args.first
+            {
+                switch firstArg {
+                case let .invariant(type), let .in(type), let .out(type):
+                    type
+                case .star:
+                    sema.types.anyType
+                }
+            } else {
+                sema.types.anyType
+            }
+            let expectedSourceArrayType = sema.types.make(.classType(ClassType(
+                classSymbol: sourceArraySymbol,
+                args: [.invariant(elementType)],
+                nullability: .nonNull
+            )))
+            driver.emitSubtypeConstraint(
+                left: sourceArrayType,
+                right: expectedSourceArrayType,
+                range: ast.arena.exprRange(args[0].expr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+
+            let resultType = makeSyntheticAtomicArrayType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: elementType
+            )
+            let atomicArrayFQName: [InternedString] = [
+                interner.intern("kotlin"),
+                interner.intern("concurrent"),
+                interner.intern("atomics"),
+                interner.intern("AtomicArray"),
+            ]
+            let ctorFQName = atomicArrayFQName + [interner.intern("<init>")]
+            if let ctorSymbol = sema.symbols.lookupAll(fqName: ctorFQName).first(where: { candidate in
+                guard let symbol = sema.symbols.symbol(candidate) else {
+                    return false
+                }
+                return symbol.kind == .constructor
+            }) {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: ctorSymbol,
+                        substitutedTypeArguments: [elementType],
+                        parameterMapping: [0: 0]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(ctorSymbol))
+                driver.helpers.checkDeprecation(
+                    for: ctorSymbol,
+                    sema: sema,
+                    interner: interner,
+                    range: range,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+            }
+            sema.bindings.bindExprType(id, type: resultType)
+            return resultType
+        }
+
+        // --- AtomicArray(size) { init } constructor ---
+        if let calleeName,
+           interner.resolve(calleeName) == "AtomicArray",
+           args.count == 2,
+           locals[calleeName] == nil
+        {
+            let intType = sema.types.intType
+            let atomicArrayFQName: [InternedString] = [
+                interner.intern("kotlin"),
+                interner.intern("concurrent"),
+                interner.intern("atomics"),
+                interner.intern("AtomicArray"),
+            ]
+            guard let atomicArraySymbol = sema.symbols.lookupAll(fqName: atomicArrayFQName).first(where: { candidate in
+                sema.symbols.symbol(candidate)?.kind == .class
+            }) else {
+                return sema.types.errorType
+            }
+
+            let countType = driver.inferExpr(
+                args[0].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: intType
+            )
+            driver.emitSubtypeConstraint(
+                left: countType,
+                right: intType,
+                range: ast.arena.exprRange(args[0].expr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+
+            let elementReturnType: TypeID
+            let didBroadInference: Bool
+            if let explicitTypeArg = explicitTypeArgs.first {
+                elementReturnType = explicitTypeArg
+                didBroadInference = false
+            } else if let expectedType, expectedType != sema.types.errorType,
+                      case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+                      expectedClassType.classSymbol == atomicArraySymbol,
+                      let firstArg = expectedClassType.args.first
+            {
+                switch firstArg {
+                case let .invariant(type), let .in(type), let .out(type):
+                    elementReturnType = type
+                case .star:
+                    elementReturnType = sema.types.anyType
+                }
+                didBroadInference = false
+            } else {
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [intType],
+                    returnType: sema.types.makeNullable(sema.types.anyType)
+                )))
+                _ = driver.inferExpr(
+                    args[1].expr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: lambdaExpectedType
+                )
+                let bodyType: TypeID? = if case let .lambdaLiteral(_, body, _, _) = ast.arena.expr(args[1].expr) {
+                    sema.bindings.exprTypes[body]
+                } else {
+                    nil
+                }
+                let inferred = bodyType ?? sema.types.anyType
+                elementReturnType = (inferred != sema.types.errorType) ? inferred : sema.types.anyType
+                didBroadInference = true
+            }
+
+            let initExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [intType],
+                returnType: elementReturnType
+            )))
+            if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef {
+                sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+            }
+            if !didBroadInference {
+                _ = driver.inferExpr(
+                    args[1].expr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: initExpectedType
+                )
+            }
+            if didBroadInference {
+                _ = driver.inferExpr(
+                    args[1].expr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: initExpectedType
+                )
+            }
+
+            let resultType = makeSyntheticAtomicArrayType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: elementReturnType
+            )
+            let factorySymbol = sema.symbols.lookupAll(fqName: atomicArrayFQName).first(where: { candidate in
+                guard let symbol = sema.symbols.symbol(candidate) else {
+                    return false
+                }
+                return symbol.kind == .function
+                    && sema.symbols.externalLinkName(for: candidate) == "kk_atomic_array_new"
+            })
+            if let factorySymbol {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: factorySymbol,
+                        substitutedTypeArguments: [elementReturnType],
+                        parameterMapping: [0: 0, 1: 1]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(factorySymbol))
+                driver.helpers.checkDeprecation(
+                    for: factorySymbol,
+                    sema: sema,
+                    interner: interner,
+                    range: range,
+                    diagnostics: ctx.semaCtx.diagnostics
                 )
             }
             sema.bindings.bindExprType(id, type: resultType)
@@ -2412,6 +2628,30 @@ final class CallTypeChecker {
         }
         return types.make(.classType(ClassType(
             classSymbol: arraySymbol,
+            args: [.invariant(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func makeSyntheticAtomicArrayType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID {
+        let atomicArrayFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("concurrent"),
+            interner.intern("atomics"),
+            interner.intern("AtomicArray"),
+        ]
+        guard let atomicArraySymbol = symbols.lookupAll(fqName: atomicArrayFQName).first(where: { candidate in
+            symbols.symbol(candidate)?.kind == .class
+        }) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: atomicArraySymbol,
             args: [.invariant(elementType)],
             nullability: .nonNull
         )))

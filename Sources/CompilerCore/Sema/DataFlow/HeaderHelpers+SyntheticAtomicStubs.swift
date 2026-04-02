@@ -1,8 +1,10 @@
 import Foundation
 
-/// Synthetic stdlib stubs for kotlin.concurrent.AtomicInt, AtomicLong, AtomicReference.
+/// Synthetic stdlib stubs for kotlin.concurrent.AtomicInt, AtomicLong, AtomicReference,
+/// and kotlin.concurrent.atomics.AtomicArray.
 /// Registers constructors, load/store/exchange/compareAndSet/compareAndExchange methods,
-/// arithmetic methods (AtomicInt/AtomicLong), and the `value` property.
+/// arithmetic methods (AtomicInt/AtomicLong), AtomicArray indexed operations,
+/// and the relevant properties / factory functions.
 extension DataFlowSemaPhase {
     func registerSyntheticAtomicStubs(
         symbols: SymbolTable,
@@ -11,6 +13,11 @@ extension DataFlowSemaPhase {
     ) {
         let concurrentPkg = ensureAtomicPackage(
             path: ["kotlin", "concurrent"],
+            symbols: symbols,
+            interner: interner
+        )
+        let atomicsPkg = ensureAtomicPackage(
+            path: ["kotlin", "concurrent", "atomics"],
             symbols: symbols,
             interner: interner
         )
@@ -269,6 +276,297 @@ extension DataFlowSemaPhase {
             interner: interner,
             types: types
         )
+
+        // -- AtomicArray<T> --
+        let atomicArraySymbol = ensureClassSymbol(
+            named: "AtomicArray",
+            in: atomicsPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let atomicArrayTypeParamName = interner.intern("T")
+        let atomicArrayTypeParamFQName = atomicsPkg + [interner.intern("AtomicArray"), atomicArrayTypeParamName]
+        let atomicArrayTypeParamSymbol = symbols.lookup(fqName: atomicArrayTypeParamFQName) ?? symbols.define(
+            kind: .typeParameter,
+            name: atomicArrayTypeParamName,
+            fqName: atomicArrayTypeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let atomicArrayTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: atomicArrayTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let atomicArrayType = types.make(.classType(ClassType(
+            classSymbol: atomicArraySymbol,
+            args: [.invariant(atomicArrayTypeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(atomicArrayType, for: atomicArraySymbol)
+        types.setNominalTypeParameterSymbols([atomicArrayTypeParamSymbol], for: atomicArraySymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: atomicArraySymbol)
+
+        // Constructor: AtomicArray(array: Array<T>)
+        let arrayFQName = [interner.intern("kotlin"), interner.intern("Array")]
+        guard let arraySymbol = symbols.lookup(fqName: arrayFQName) else {
+            return
+        }
+        let sourceArrayType = types.make(.classType(ClassType(
+            classSymbol: arraySymbol,
+            args: [.invariant(atomicArrayTypeParamType)],
+            nullability: .nonNull
+        )))
+        registerAtomicConstructor(
+            ownerSymbol: atomicArraySymbol,
+            ownerType: atomicArrayType,
+            externalLinkName: "kk_atomic_array_create",
+            paramType: sourceArrayType,
+            parameterName: "array",
+            typeParameterSymbols: [atomicArrayTypeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicValueProperty(
+            ownerSymbol: atomicArraySymbol,
+            ownerType: atomicArrayType,
+            propertyName: "size",
+            valueType: types.intType,
+            getterLinkName: "kk_atomic_array_size",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Factory: AtomicArray(size: Int, init: (Int) -> T)
+        let factoryTypeParamName = interner.intern("T")
+        let factoryTypeParamFQName = atomicsPkg + [interner.intern("AtomicArray"), factoryTypeParamName, interner.intern("$synthetic")]
+        let factoryTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: factoryTypeParamName,
+            fqName: factoryTypeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let factoryTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: factoryTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let factoryInitType = types.make(.functionType(FunctionType(
+            params: [types.intType],
+            returnType: factoryTypeParamType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let factoryReturnType = types.make(.classType(ClassType(
+            classSymbol: atomicArraySymbol,
+            args: [.invariant(factoryTypeParamType)],
+            nullability: .nonNull
+        )))
+        registerAtomicTopLevelFunction(
+            named: "AtomicArray",
+            packageFQName: atomicsPkg,
+            externalLinkName: "kk_atomic_array_new",
+            parameters: [
+                (name: "size", type: types.intType),
+                (name: "init", type: factoryInitType),
+            ],
+            returnType: factoryReturnType,
+            typeParameterSymbols: [factoryTypeParamSymbol],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Factory: atomicArrayOfNulls<T>(size: Int)
+        let ofNullsTypeParamName = interner.intern("T")
+        let ofNullsTypeParamFQName = atomicsPkg + [interner.intern("atomicArrayOfNulls"), ofNullsTypeParamName]
+        let ofNullsTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: ofNullsTypeParamName,
+            fqName: ofNullsTypeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let ofNullsTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: ofNullsTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let ofNullsReturnType = types.make(.classType(ClassType(
+            classSymbol: atomicArraySymbol,
+            args: [.invariant(types.makeNullable(ofNullsTypeParamType))],
+            nullability: .nonNull
+        )))
+        registerAtomicTopLevelFunction(
+            named: "atomicArrayOfNulls",
+            packageFQName: atomicsPkg,
+            externalLinkName: "kk_atomic_array_ofNulls",
+            parameters: [
+                (name: "size", type: types.intType),
+            ],
+            returnType: ofNullsReturnType,
+            typeParameterSymbols: [ofNullsTypeParamSymbol],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicArraySymbol,
+            ownerType: atomicArrayType,
+            name: "loadAt",
+            externalLinkName: "kk_atomic_array_loadAt",
+            returnType: atomicArrayTypeParamType,
+            parameters: [(name: "index", type: types.intType)],
+            canThrow: true,
+            typeParameterSymbols: [atomicArrayTypeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicArraySymbol,
+            ownerType: atomicArrayType,
+            name: "storeAt",
+            externalLinkName: "kk_atomic_array_storeAt",
+            returnType: unitType,
+            parameters: [
+                (name: "index", type: types.intType),
+                (name: "value", type: atomicArrayTypeParamType),
+            ],
+            canThrow: true,
+            typeParameterSymbols: [atomicArrayTypeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicArraySymbol,
+            ownerType: atomicArrayType,
+            name: "exchangeAt",
+            externalLinkName: "kk_atomic_array_exchangeAt",
+            returnType: atomicArrayTypeParamType,
+            parameters: [
+                (name: "index", type: types.intType),
+                (name: "new", type: atomicArrayTypeParamType),
+            ],
+            canThrow: true,
+            typeParameterSymbols: [atomicArrayTypeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicArraySymbol,
+            ownerType: atomicArrayType,
+            name: "compareAndSetAt",
+            externalLinkName: "kk_atomic_array_compareAndSetAt",
+            returnType: boolType,
+            parameters: [
+                (name: "index", type: types.intType),
+                (name: "expect", type: atomicArrayTypeParamType),
+                (name: "update", type: atomicArrayTypeParamType),
+            ],
+            canThrow: true,
+            typeParameterSymbols: [atomicArrayTypeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicArraySymbol,
+            ownerType: atomicArrayType,
+            name: "compareAndExchangeAt",
+            externalLinkName: "kk_atomic_array_compareAndExchangeAt",
+            returnType: atomicArrayTypeParamType,
+            parameters: [
+                (name: "index", type: types.intType),
+                (name: "expect", type: atomicArrayTypeParamType),
+                (name: "update", type: atomicArrayTypeParamType),
+            ],
+            canThrow: true,
+            typeParameterSymbols: [atomicArrayTypeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        let atomicArrayTransformType = types.make(.functionType(FunctionType(
+            params: [atomicArrayTypeParamType],
+            returnType: atomicArrayTypeParamType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        registerAtomicMember(
+            ownerSymbol: atomicArraySymbol,
+            ownerType: atomicArrayType,
+            name: "fetchAndUpdateAt",
+            externalLinkName: "kk_atomic_array_fetchAndUpdateAt",
+            returnType: atomicArrayTypeParamType,
+            parameters: [
+                (name: "index", type: types.intType),
+                (name: "updateFn", type: atomicArrayTransformType),
+            ],
+            canThrow: true,
+            typeParameterSymbols: [atomicArrayTypeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicArraySymbol,
+            ownerType: atomicArrayType,
+            name: "updateAndFetchAt",
+            externalLinkName: "kk_atomic_array_updateAndFetchAt",
+            returnType: atomicArrayTypeParamType,
+            parameters: [
+                (name: "index", type: types.intType),
+                (name: "updateFn", type: atomicArrayTransformType),
+            ],
+            canThrow: true,
+            typeParameterSymbols: [atomicArrayTypeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicArraySymbol,
+            ownerType: atomicArrayType,
+            name: "updateAt",
+            externalLinkName: "kk_atomic_array_updateAt",
+            returnType: unitType,
+            parameters: [
+                (name: "index", type: types.intType),
+                (name: "updateFn", type: atomicArrayTransformType),
+            ],
+            canThrow: true,
+            typeParameterSymbols: [atomicArrayTypeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: atomicArraySymbol,
+            ownerType: atomicArrayType,
+            name: "toString",
+            externalLinkName: "kk_atomic_array_toString",
+            returnType: types.stringType,
+            parameters: [],
+            typeParameterSymbols: [atomicArrayTypeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Helpers
@@ -278,6 +576,9 @@ extension DataFlowSemaPhase {
         ownerType: TypeID,
         externalLinkName: String,
         paramType: TypeID,
+        parameterName: String = "initial",
+        typeParameterSymbols: [SymbolID] = [],
+        classTypeParameterCount: Int = 0,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -304,7 +605,7 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
         symbols.setExternalLinkName(externalLinkName, for: ctorSymbol)
 
-        let paramName = interner.intern("initial")
+        let paramName = interner.intern(parameterName)
         let paramSymbol = symbols.define(
             kind: .valueParameter,
             name: paramName,
@@ -321,7 +622,9 @@ extension DataFlowSemaPhase {
                 returnType: ownerType,
                 valueParameterSymbols: [paramSymbol],
                 valueParameterHasDefaultValues: [false],
-                valueParameterIsVararg: [false]
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: typeParameterSymbols,
+                classTypeParameterCount: classTypeParameterCount
             ),
             for: ctorSymbol
         )
@@ -330,14 +633,15 @@ extension DataFlowSemaPhase {
     private func registerAtomicValueProperty(
         ownerSymbol: SymbolID,
         ownerType: TypeID,
+        propertyName: String = "value",
         valueType: TypeID,
         getterLinkName: String,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
         guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
-        let propertyName = interner.intern("value")
-        let propertyFQName = ownerInfo.fqName + [propertyName]
+        let propertyNameID = interner.intern(propertyName)
+        let propertyFQName = ownerInfo.fqName + [propertyNameID]
         if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { id in
             symbols.symbol(id)?.kind == .property
         }) {
@@ -348,7 +652,7 @@ extension DataFlowSemaPhase {
 
         let propertySymbol = symbols.define(
             kind: .property,
-            name: propertyName,
+            name: propertyNameID,
             fqName: propertyFQName,
             declSite: nil,
             visibility: .public,
@@ -497,6 +801,9 @@ extension DataFlowSemaPhase {
         externalLinkName: String,
         returnType: TypeID,
         parameters: [(name: String, type: TypeID)],
+        canThrow: Bool = false,
+        typeParameterSymbols: [SymbolID] = [],
+        classTypeParameterCount: Int = 0,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -509,13 +816,17 @@ extension DataFlowSemaPhase {
                 sig.returnType == returnType
         }) == nil else { return }
 
+        var flags: SymbolFlags = [.synthetic]
+        if canThrow {
+            flags.formUnion([.throwingFunction])
+        }
         let memberSymbol = symbols.define(
             kind: .function,
             name: memberName,
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
         symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
@@ -543,9 +854,80 @@ extension DataFlowSemaPhase {
                 isSuspend: false,
                 valueParameterSymbols: valueParameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
-                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
+                typeParameterSymbols: typeParameterSymbols,
+                classTypeParameterCount: classTypeParameterCount
             ),
             for: memberSymbol
+        )
+    }
+
+    private func registerAtomicTopLevelFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        externalLinkName: String,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        typeParameterSymbols: [SymbolID] = [],
+        canThrow: Bool = false,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        let existingSymbols = symbols.lookupAll(fqName: functionFQName)
+        let hasExistingFunctionWithSameArity = existingSymbols.contains { id in
+            guard let sym = symbols.symbol(id), sym.kind == .function else { return false }
+            let sig = symbols.functionSignature(for: id)
+            return sig?.parameterTypes.count == parameters.count
+        }
+        guard !hasExistingFunctionWithSameArity else {
+            return
+        }
+
+        var flags: SymbolFlags = [.synthetic]
+        if canThrow {
+            flags.formUnion([.throwingFunction])
+        }
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: flags
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let paramNameID = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: paramNameID,
+                fqName: functionFQName + [paramNameID],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
+                typeParameterSymbols: typeParameterSymbols
+            ),
+            for: functionSymbol
         )
     }
 

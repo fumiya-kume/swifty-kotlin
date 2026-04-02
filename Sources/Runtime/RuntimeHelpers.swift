@@ -28,6 +28,19 @@ func runtimeArrayBox(from rawValue: Int) -> RuntimeArrayBox? {
     return tryCast(ptr, to: RuntimeArrayBox.self)
 }
 
+func runtimeAtomicArrayBox(from rawValue: Int) -> AtomicArrayBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: AtomicArrayBox.self)
+}
+
 func runtimeRegisterObjectType(rawValue: Int, classID: Int64) {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue), classID != 0 else {
         return

@@ -1349,6 +1349,11 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print(runtimeRenderStringIterableForPrint(iterableBox.strRaw))
         return
     }
+    if let atomicArrayBox = tryCast(raw, to: AtomicArrayBox.self) {
+        let rendered = atomicArrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", ")
+        Swift.print("[\(rendered)]")
+        return
+    }
     if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
         let rendered = arrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", ")
         Swift.print("[\(rendered)]")
@@ -1522,6 +1527,9 @@ func runtimeRenderAnyForPrint(_ value: Int) -> String {
     }
     if let iterableBox = tryCast(raw, to: RuntimeStringIterableBox.self) {
         return runtimeRenderStringIterableForPrint(iterableBox.strRaw)
+    }
+    if let atomicArrayBox = tryCast(raw, to: AtomicArrayBox.self) {
+        return "[\(atomicArrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"
     }
     if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
         return "[\(arrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"
