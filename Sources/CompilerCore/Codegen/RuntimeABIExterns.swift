@@ -2155,6 +2155,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_lock_withLock = ExternDecl(
+        name: "kk_lock_withLock",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_semaphore_create = ExternDecl(
         name: "kk_semaphore_create",
         parameterTypes: ["intptr_t"],
@@ -4671,6 +4677,7 @@ public enum RuntimeABIExterns {
             kk_mutex_tryLock,
             kk_mutex_isLocked,
             kk_mutex_withLock,
+            kk_lock_withLock,
             kk_semaphore_create,
             kk_semaphore_acquire,
             kk_semaphore_release,

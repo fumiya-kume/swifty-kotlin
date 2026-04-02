@@ -1,7 +1,6 @@
 import Foundation
 
-/// Synthetic stdlib stubs for kotlin.concurrent.AtomicInt, AtomicLong, AtomicReference,
-/// and kotlin.concurrent.atomics.AtomicReference.
+/// Synthetic stdlib stubs for kotlin.concurrent atomic and lock types.
 /// Registers constructors, load/store/exchange/compareAndSet/compareAndExchange methods,
 /// arithmetic methods (AtomicInt/AtomicLong), and the `value` property.
 extension DataFlowSemaPhase {
@@ -19,6 +18,7 @@ extension DataFlowSemaPhase {
         let intType = types.intType
         let longType = types.longType
         let boolType = types.make(.primitive(.boolean, .nonNull))
+        let anyNullableType = types.make(.any(.nullable))
         let unitType = types.unitType
 
         // -- AtomicInt --
@@ -164,13 +164,57 @@ extension DataFlowSemaPhase {
         )
 
         // -- AtomicReference<T> --
-        registerAtomicReferenceStubs(
-            packagePath: ["kotlin", "concurrent"],
+        let atomicRefSymbol = ensureClassSymbol(
+            named: "AtomicReference",
+            in: concurrentPkg,
             symbols: symbols,
-            types: types,
-            interner: interner,
+            interner: interner
+        )
+        let atomicRefType = types.make(.classType(ClassType(
+            classSymbol: atomicRefSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(atomicRefType, for: atomicRefSymbol)
+
+        // AtomicReference stores values as Any? at the ABI level.
+        registerAtomicConstructor(
+            ownerSymbol: atomicRefSymbol,
+            ownerType: atomicRefType,
+            externalLinkName: "kk_atomic_ref_create",
+            paramType: anyNullableType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicValueProperty(
+            ownerSymbol: atomicRefSymbol,
+            ownerType: atomicRefType,
+            valueType: anyNullableType,
+            getterLinkName: "kk_atomic_ref_load",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicCoreMethods(
+            ownerSymbol: atomicRefSymbol,
+            ownerType: atomicRefType,
+            valueType: anyNullableType,
             boolType: boolType,
-            unitType: unitType
+            unitType: unitType,
+            prefix: "kk_atomic_ref",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicGetAndUpdateMethods(
+            ownerSymbol: atomicRefSymbol,
+            ownerType: atomicRefType,
+            valueType: anyNullableType,
+            prefix: "kk_atomic_ref",
+            symbols: symbols,
+            interner: interner,
+            types: types
         )
 
         // -- AtomicBoolean --
@@ -226,123 +270,46 @@ extension DataFlowSemaPhase {
             types: types
         )
 
-        // -- AtomicReference<T> (kotlin.concurrent.atomics) --
-        registerAtomicReferenceStubs(
-            packagePath: ["kotlin", "concurrent", "atomics"],
+        // -- Lock --
+        let lockSymbol = ensureClassSymbol(
+            named: "Lock",
+            in: concurrentPkg,
             symbols: symbols,
-            types: types,
-            interner: interner,
-            boolType: boolType,
-            unitType: unitType
+            interner: interner
+        )
+        let lockType = types.make(.classType(ClassType(
+            classSymbol: lockSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(lockType, for: lockSymbol)
+        registerAtomicMember(
+            ownerSymbol: lockSymbol,
+            ownerType: lockType,
+            name: "withLock",
+            externalLinkName: "kk_lock_withLock",
+            returnType: types.anyType,
+            parameters: [(
+                name: "action",
+                type: types.make(.functionType(FunctionType(
+                    params: [],
+                    returnType: types.anyType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            )],
+            symbols: symbols,
+            interner: interner
         )
     }
 
     // MARK: - Helpers
-
-    private func registerAtomicReferenceStubs(
-        packagePath: [String],
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        boolType: TypeID,
-        unitType: TypeID
-    ) {
-        let atomicPkg = ensureAtomicPackage(
-            path: packagePath,
-            symbols: symbols,
-            interner: interner
-        )
-        let atomicRefSymbol = ensureClassSymbol(
-            named: "AtomicReference",
-            in: atomicPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        guard let atomicRefInfo = symbols.symbol(atomicRefSymbol) else { return }
-
-        let tName = interner.intern("T")
-        let tFQName = atomicRefInfo.fqName + [tName]
-        let tSymbol: SymbolID
-        if let existing = symbols.lookup(fqName: tFQName) {
-            tSymbol = existing
-        } else {
-            tSymbol = symbols.define(
-                kind: .typeParameter,
-                name: tName,
-                fqName: tFQName,
-                declSite: nil,
-                visibility: .private,
-                flags: []
-            )
-        }
-        symbols.setParentSymbol(atomicRefSymbol, for: tSymbol)
-
-        let tType = types.make(.typeParam(TypeParamType(symbol: tSymbol, nullability: .nonNull)))
-        types.setNominalTypeParameterSymbols([tSymbol], for: atomicRefSymbol)
-        types.setNominalTypeParameterVariances([.invariant], for: atomicRefSymbol)
-
-        let atomicRefType = types.make(.classType(ClassType(
-            classSymbol: atomicRefSymbol,
-            args: [.invariant(tType)],
-            nullability: .nonNull
-        )))
-        symbols.setPropertyType(atomicRefType, for: atomicRefSymbol)
-
-        // AtomicReference is source-level generic over T, but the ABI stores
-        // values as Any? so the runtime can erase the element type.
-        registerAtomicConstructor(
-            ownerSymbol: atomicRefSymbol,
-            ownerType: atomicRefType,
-            externalLinkName: "kk_atomic_ref_create",
-            paramType: tType,
-            typeParameterSymbols: [tSymbol],
-            classTypeParameterCount: 1,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicValueProperty(
-            ownerSymbol: atomicRefSymbol,
-            ownerType: atomicRefType,
-            valueType: tType,
-            getterLinkName: "kk_atomic_ref_load",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicCoreMethods(
-            ownerSymbol: atomicRefSymbol,
-            ownerType: atomicRefType,
-            valueType: tType,
-            boolType: boolType,
-            unitType: unitType,
-            prefix: "kk_atomic_ref",
-            typeParameterSymbols: [tSymbol],
-            classTypeParameterCount: 1,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicGetAndUpdateMethods(
-            ownerSymbol: atomicRefSymbol,
-            ownerType: atomicRefType,
-            valueType: tType,
-            prefix: "kk_atomic_ref",
-            typeParameterSymbols: [tSymbol],
-            classTypeParameterCount: 1,
-            symbols: symbols,
-            interner: interner,
-            types: types
-        )
-    }
 
     private func registerAtomicConstructor(
         ownerSymbol: SymbolID,
         ownerType: TypeID,
         externalLinkName: String,
         paramType: TypeID,
-        typeParameterSymbols: [SymbolID] = [],
-        classTypeParameterCount: Int = 0,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -386,9 +353,7 @@ extension DataFlowSemaPhase {
                 returnType: ownerType,
                 valueParameterSymbols: [paramSymbol],
                 valueParameterHasDefaultValues: [false],
-                valueParameterIsVararg: [false],
-                typeParameterSymbols: typeParameterSymbols,
-                classTypeParameterCount: classTypeParameterCount
+                valueParameterIsVararg: [false]
             ),
             for: ctorSymbol
         )
@@ -433,8 +398,6 @@ extension DataFlowSemaPhase {
         boolType: TypeID,
         unitType: TypeID,
         prefix: String,
-        typeParameterSymbols: [SymbolID] = [],
-        classTypeParameterCount: Int = 0,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -443,8 +406,6 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "load", externalLinkName: "\(prefix)_load",
             returnType: valueType, parameters: [],
-            typeParameterSymbols: typeParameterSymbols,
-            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
         // store(value: T) -> Unit (returns via side effect)
@@ -452,8 +413,6 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "store", externalLinkName: "\(prefix)_store",
             returnType: unitType, parameters: [(name: "value", type: valueType)],
-            typeParameterSymbols: typeParameterSymbols,
-            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
         // exchange(new: T) -> T
@@ -461,8 +420,6 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "exchange", externalLinkName: "\(prefix)_exchange",
             returnType: valueType, parameters: [(name: "new", type: valueType)],
-            typeParameterSymbols: typeParameterSymbols,
-            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
         // compareAndSet(expect: T, update: T) -> Boolean
@@ -474,8 +431,6 @@ extension DataFlowSemaPhase {
                 (name: "expect", type: valueType),
                 (name: "update", type: valueType),
             ],
-            typeParameterSymbols: typeParameterSymbols,
-            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
         // compareAndExchange(expect: T, update: T) -> T
@@ -487,8 +442,6 @@ extension DataFlowSemaPhase {
                 (name: "expect", type: valueType),
                 (name: "update", type: valueType),
             ],
-            typeParameterSymbols: typeParameterSymbols,
-            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
     }
@@ -543,8 +496,6 @@ extension DataFlowSemaPhase {
         ownerType: TypeID,
         valueType: TypeID,
         prefix: String,
-        typeParameterSymbols: [SymbolID] = [],
-        classTypeParameterCount: Int = 0,
         symbols: SymbolTable,
         interner: StringInterner,
         types: TypeSystem
@@ -560,8 +511,6 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "getAndUpdate", externalLinkName: "\(prefix)_getAndUpdate",
             returnType: valueType, parameters: [(name: "transform", type: transformType)],
-            typeParameterSymbols: typeParameterSymbols,
-            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
         // updateAndGet(transform: (T) -> T) -> T
@@ -569,8 +518,6 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "updateAndGet", externalLinkName: "\(prefix)_updateAndGet",
             returnType: valueType, parameters: [(name: "transform", type: transformType)],
-            typeParameterSymbols: typeParameterSymbols,
-            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
     }
@@ -582,8 +529,6 @@ extension DataFlowSemaPhase {
         externalLinkName: String,
         returnType: TypeID,
         parameters: [(name: String, type: TypeID)],
-        typeParameterSymbols: [SymbolID] = [],
-        classTypeParameterCount: Int = 0,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -630,9 +575,7 @@ extension DataFlowSemaPhase {
                 isSuspend: false,
                 valueParameterSymbols: valueParameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
-                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
-                typeParameterSymbols: typeParameterSymbols,
-                classTypeParameterCount: classTypeParameterCount
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
             ),
             for: memberSymbol
         )
