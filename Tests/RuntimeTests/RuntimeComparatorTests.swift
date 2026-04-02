@@ -15,6 +15,10 @@ private let thenByDescendingTrampoline: @convention(c) (Int, Int, Int, UnsafeMut
     kk_comparator_then_by_descending_trampoline(closureRaw, a, b, outThrown)
 }
 
+private let thenDescendingTrampoline: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { closureRaw, a, b, outThrown in
+    kk_comparator_then_descending_trampoline(closureRaw, a, b, outThrown)
+}
+
 private let thenComparatorTrampoline: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { closureRaw, a, b, outThrown in
     kk_comparator_then_comparator_trampoline(closureRaw, a, b, outThrown)
 }
@@ -149,6 +153,29 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertGreaterThan(result2, 0)
     }
 
+    // MARK: - thenDescending
+
+    func testComparatorThenDescending() {
+        let closureRaw = kk_comparator_then_descending(
+            comparatorPtr(comparatorByModTen),
+            0,
+            comparatorPtr(comparatorNatural),
+            0
+        )
+
+        var thrown = 0
+        let result = kk_comparator_then_descending_trampoline(closureRaw, 13, 23, &thrown)
+        XCTAssertGreaterThan(result, 0)
+        XCTAssertEqual(thrown, 0)
+
+        let result2 = kk_comparator_then_descending_trampoline(closureRaw, 15, 23, &thrown)
+        XCTAssertGreaterThan(result2, 0)
+        XCTAssertEqual(thrown, 0)
+
+        let result3 = kk_comparator_then_descending_trampoline(closureRaw, 23, 13, &thrown)
+        XCTAssertLessThan(result3, 0)
+    }
+
     // MARK: - thenComparator
 
     func testComparatorThenComparator() {
@@ -253,6 +280,23 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertEqual(listElements(sorted), [23, 13, 3, 24, 14, 5])
     }
 
+    func testSortedWithThenDescendingComparator() {
+        let source = makeList([14, 3, 23, 5, 13, 24])
+        let chain = kk_comparator_then_descending(
+            comparatorPtr(comparatorByModTen),
+            0,
+            comparatorPtr(comparatorNatural),
+            0
+        )
+        let sorted = kk_list_sortedWith(
+            source,
+            comparatorPtr(thenDescendingTrampoline),
+            chain,
+            nil
+        )
+        XCTAssertEqual(listElements(sorted), [23, 13, 3, 24, 14, 5])
+    }
+
     func testSortedWithThenComparator() {
         let source = makeList([14, 3, 23, 5, 13, 24])
         let chain = kk_comparator_then_comparator(
@@ -319,6 +363,19 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertEqual(result, 0)
     }
 
+    func testThenDescendingThrowPropagation() {
+        let closureRaw = kk_comparator_then_descending(
+            comparatorPtr(comparatorNatural),
+            0,
+            comparatorPtr(throwingComparator),
+            0
+        )
+        var thrown = 0
+        let result = kk_comparator_then_descending_trampoline(closureRaw, 1, 1, &thrown)
+        XCTAssertNotEqual(thrown, 0, "thrown should propagate from thenDescending secondary comparator")
+        XCTAssertEqual(result, 0)
+    }
+
     // MARK: - Edge cases
 
     func testComparatorTrampolineWithNullClosureRawReturnsZero() {
@@ -358,5 +415,9 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertGreaterThan(kk_comparator_then_by_descending_trampoline(chain, 13, 23, nil), 0)
         XCTAssertLessThan(kk_comparator_then_by_descending_trampoline(chain, 23, 13, nil), 0)
         XCTAssertGreaterThan(kk_comparator_then_by_descending_trampoline(chain, 15, 23, nil), 0)
+    }
+
+    func testComparatorThenDescendingTrampolineWithNullClosureRawReturnsZero() {
+        XCTAssertEqual(kk_comparator_then_descending_trampoline(0, 1, 2, nil), 0)
     }
 }

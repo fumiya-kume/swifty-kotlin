@@ -151,6 +151,20 @@ public func kk_comparator_then_by_descending(
     kk_comparator_then_by(c1Fn, c1Closure, selectorFn, selectorClosure)
 }
 
+/// thenDescending: first comparator, then comparator for tie-breaker.
+@_cdecl("kk_comparator_then_descending")
+public func kk_comparator_then_descending(
+    _ c1Fn: Int,
+    _ c1Closure: Int,
+    _ comparatorFn: Int,
+    _ comparatorClosure: Int
+) -> Int {
+    let inner1 = RuntimePairBox(first: c1Fn, second: c1Closure)
+    let inner2 = RuntimePairBox(first: comparatorFn, second: comparatorClosure)
+    let outer = RuntimePairBox(first: registerRuntimeObject(inner1), second: registerRuntimeObject(inner2))
+    return registerRuntimeObject(outer)
+}
+
 /// thenComparator: first comparator, then comparator for tie-breaker.
 @_cdecl("kk_comparator_then_comparator")
 public func kk_comparator_then_comparator(
@@ -247,6 +261,105 @@ public func kk_comparator_then_comparator_trampoline(
     return r2
 }
 
+/// Trampoline for thenByDescending: reverse only the tie-breaker result.
+@_cdecl("kk_comparator_then_by_descending_trampoline")
+public func kk_comparator_then_by_descending_trampoline(
+    _ closureRaw: Int,
+    _ a: Int,
+    _ b: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let outerBox = tryCast(ptr, to: RuntimePairBox.self)
+    else {
+        // Return 0 instead of panic for invalid/null comparator closure
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator closure")
+        return 0
+    }
+    guard let ptr1 = UnsafeMutableRawPointer(bitPattern: outerBox.first),
+          let ptr2 = UnsafeMutableRawPointer(bitPattern: outerBox.second),
+          let inner1 = tryCast(ptr1, to: RuntimePairBox.self),
+          let inner2 = tryCast(ptr2, to: RuntimePairBox.self)
+    else {
+        // Return 0 instead of panic for invalid/null inner comparator closure
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator inner closure")
+        return 0
+    }
+    var thrown = 0
+    let r1 = runtimeInvokeCollectionLambda2(
+        fnPtr: inner1.first,
+        closureRaw: inner1.second,
+        lhs: a,
+        rhs: b,
+        outThrown: &thrown
+    )
+    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    if r1 != 0 { return r1 }
+    let keyA = runtimeInvokeCollectionLambda1(
+        fnPtr: inner2.first,
+        closureRaw: inner2.second,
+        value: a,
+        outThrown: &thrown
+    )
+    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    let keyB = runtimeInvokeCollectionLambda1(
+        fnPtr: inner2.first,
+        closureRaw: inner2.second,
+        value: b,
+        outThrown: &thrown
+    )
+    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    let r2 = runtimeCompareValues(keyA, keyB)
+    return r2 == 0 ? 0 : -r2
+}
+
+/// Trampoline for thenDescending: reverse only the tie-breaker result.
+@_cdecl("kk_comparator_then_descending_trampoline")
+public func kk_comparator_then_descending_trampoline(
+    _ closureRaw: Int,
+    _ a: Int,
+    _ b: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let outerBox = tryCast(ptr, to: RuntimePairBox.self)
+    else {
+        // Return 0 instead of panic for invalid/null comparator closure
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator closure")
+        return 0
+    }
+    guard let ptr1 = UnsafeMutableRawPointer(bitPattern: outerBox.first),
+          let ptr2 = UnsafeMutableRawPointer(bitPattern: outerBox.second),
+          let inner1 = tryCast(ptr1, to: RuntimePairBox.self),
+          let inner2 = tryCast(ptr2, to: RuntimePairBox.self)
+    else {
+        // Return 0 instead of panic for invalid/null inner comparator closure
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator inner closure")
+        return 0
+    }
+    var thrown = 0
+    let r1 = runtimeInvokeCollectionLambda2(
+        fnPtr: inner1.first,
+        closureRaw: inner1.second,
+        lhs: a,
+        rhs: b,
+        outThrown: &thrown
+    )
+    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    if r1 != 0 { return r1 }
+    let r2 = runtimeInvokeCollectionLambda2(
+        fnPtr: inner2.first,
+        closureRaw: inner2.second,
+        lhs: a,
+        rhs: b,
+        outThrown: &thrown
+    )
+    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    return r2 == 0 ? 0 : -r2
+}
+
 @_cdecl("kk_comparator_nulls_first")
 public func kk_comparator_nulls_first(_ cFn: Int, _ cClosure: Int) -> Int {
     let pair = RuntimePairBox(first: cFn, second: cClosure)
@@ -271,60 +384,6 @@ private func runtimeCompareNullableOrder(
     if aIsNull { return nullsFirst ? -1 : 1 }
     if bIsNull { return nullsFirst ? 1 : -1 }
     return nil
-}
-
-@_cdecl("kk_comparator_then_by_descending_trampoline")
-public func kk_comparator_then_by_descending_trampoline(
-    _ closureRaw: Int,
-    _ a: Int,
-    _ b: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
-          let outerBox = tryCast(ptr, to: RuntimePairBox.self)
-    else {
-        // Return 0 instead of panic for invalid/null comparator closure
-        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator closure")
-        return 0
-    }
-    guard let ptr1 = UnsafeMutableRawPointer(bitPattern: outerBox.first),
-          let ptr2 = UnsafeMutableRawPointer(bitPattern: outerBox.second),
-          let inner1 = tryCast(ptr1, to: RuntimePairBox.self),
-          let inner2 = tryCast(ptr2, to: RuntimePairBox.self)
-    else {
-        // Return 0 instead of panic for invalid/null comparator closure
-        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator inner closure")
-        return 0
-    }
-
-    var thrown = 0
-    let r1 = runtimeInvokeCollectionLambda2(
-        fnPtr: inner1.first,
-        closureRaw: inner1.second,
-        lhs: a,
-        rhs: b,
-        outThrown: &thrown
-    )
-    if thrown != 0 {
-        outThrown?.pointee = thrown
-        return 0
-    }
-    if r1 != 0 {
-        return r1
-    }
-    let keyA = runtimeInvokeCollectionLambda1(fnPtr: inner2.first, closureRaw: inner2.second, value: a, outThrown: &thrown)
-    if thrown != 0 {
-        outThrown?.pointee = thrown
-        return 0
-    }
-    let keyB = runtimeInvokeCollectionLambda1(fnPtr: inner2.first, closureRaw: inner2.second, value: b, outThrown: &thrown)
-    if thrown != 0 {
-        outThrown?.pointee = thrown
-        return 0
-    }
-    let secondary = runtimeCompareValues(keyA, keyB)
-    return secondary == 0 ? 0 : -secondary
 }
 
 @_cdecl("kk_comparator_nulls_first_trampoline")

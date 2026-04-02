@@ -1,7 +1,7 @@
 import Foundation
 
 /// Synthetic stubs for Comparator, compareBy, compareByDescending (STDLIB-175),
-/// thenBy, thenByDescending, thenComparator, reversed (STDLIB-176),
+/// thenBy, thenByDescending, thenDescending, thenComparator, reversed (STDLIB-176),
 /// naturalOrder, reverseOrder (STDLIB-177).
 extension DataFlowSemaPhase {
     func registerSyntheticComparatorStubs(
@@ -388,19 +388,20 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
 
-        for (name, extLink) in [
-            ("thenBy", "kk_comparator_then_by"),
-            ("thenByDescending", "kk_comparator_then_by_descending"),
+        for (name, extLink, parameterType, parameterName) in [
+            ("thenBy", "kk_comparator_then_by", selectorType, "selector"),
+            ("thenByDescending", "kk_comparator_then_by_descending", selectorType, "selector"),
+            ("thenDescending", "kk_comparator_then_descending", comparisonType, "comparator"),
         ] {
             let memberName = interner.intern(name)
             let memberFQName = comparatorFQName + [memberName]
             if symbols.lookup(fqName: memberFQName) != nil { continue }
 
-            let selectorParamName = interner.intern("selector")
+            let parameterName = interner.intern(parameterName)
             let selectorParamSymbol = symbols.define(
                 kind: .valueParameter,
-                name: selectorParamName,
-                fqName: memberFQName + [selectorParamName],
+                name: parameterName,
+                fqName: memberFQName + [parameterName],
                 declSite: nil,
                 visibility: .private,
                 flags: [.synthetic]
@@ -419,7 +420,7 @@ extension DataFlowSemaPhase {
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: receiverType,
-                    parameterTypes: [selectorType],
+                    parameterTypes: [parameterType],
                     returnType: receiverType,
                     typeParameterSymbols: [tParamSymbol],
                     classTypeParameterCount: 1
