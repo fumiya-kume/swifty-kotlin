@@ -20,6 +20,7 @@ public struct BuiltinTypeNames {
     public let null: InternedString
     public let intArray: InternedString
     public let longArray: InternedString
+    public let ubyteArray: InternedString
     public let doubleArray: InternedString
     public let floatArray: InternedString
     public let booleanArray: InternedString
@@ -44,6 +45,7 @@ public struct BuiltinTypeNames {
         self.null = interner.intern("null")
         self.intArray = interner.intern("IntArray")
         self.longArray = interner.intern("LongArray")
+        self.ubyteArray = interner.intern("UByteArray")
         self.doubleArray = interner.intern("DoubleArray")
         self.floatArray = interner.intern("FloatArray")
         self.booleanArray = interner.intern("BooleanArray")

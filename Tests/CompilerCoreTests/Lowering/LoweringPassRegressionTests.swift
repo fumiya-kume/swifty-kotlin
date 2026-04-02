@@ -147,6 +147,49 @@ final class LoweringPassRegressionTests: XCTestCase {
         }
     }
 
+    func testCoroutineLoweringRewritesSuspendLocalFunctionCalls() throws {
+        let source = """
+        suspend fun delayedValue(v: Int): Int = v
+
+        suspend fun outerSuspendHost(value: Int): Int {
+            suspend fun localSuspendBridge(value: Int): Int = delayedValue(value)
+            return localSuspendBridge(value)
+        }
+
+        fun main(): Any? = runBlocking(outerSuspendHost)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "SuspendLocalLowering", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let allFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case let .function(function) = decl else {
+                    return nil
+                }
+                return function
+            }
+
+            let loweredOuter = try XCTUnwrap(allFunctions.first(where: { function in
+                ctx.interner.resolve(function.name) == "kk_suspend_outerSuspendHost"
+            }))
+            let loweredLocal = try XCTUnwrap(allFunctions.first(where: { function in
+                ctx.interner.resolve(function.name) == "kk_suspend_localSuspendBridge"
+            }))
+
+            let outerCallees = extractCallees(from: loweredOuter.body, interner: ctx.interner)
+            XCTAssertTrue(outerCallees.contains("kk_suspend_localSuspendBridge"))
+            XCTAssertFalse(outerCallees.contains("localSuspendBridge"))
+
+            let localCallees = extractCallees(from: loweredLocal.body, interner: ctx.interner)
+            XCTAssertTrue(localCallees.contains("kk_suspend_delayedValue"))
+            XCTAssertTrue(localCallees.contains("kk_coroutine_state_enter"))
+            XCTAssertTrue(localCallees.contains("kk_coroutine_state_exit"))
+        }
+    }
+
     func testKxMiniRunBlockingDelayExecutableReturnsExpectedExitCode() throws {
         let source = """
         suspend fun delayedValue(): Int {

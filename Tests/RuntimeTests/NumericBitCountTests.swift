@@ -361,4 +361,11 @@ final class NumericBitCountTests: XCTestCase {
             }
         }
     }
+
+    func testLowestOneBitHandlesMinimumValues() {
+        XCTAssertEqual(kk_int_lowestOneBit(Int(Int32.min)), Int(Int32.min))
+        XCTAssertEqual(kk_int_takeLowestOneBit(Int(Int32.min)), Int(Int32.min))
+        XCTAssertEqual(kk_long_lowestOneBit(Int.min), Int.min)
+        XCTAssertEqual(kk_long_takeLowestOneBit(Int.min), Int.min)
+    }
 }

@@ -41,7 +41,10 @@ fun main() {
         throw primary
     } catch (e: Exception) {
         println("Primary: ${e.message}")
-        println("Has suppressed: true")
+        val suppressed = e.getSuppressed()
+        println("Suppressed count: ${suppressed.size}")
+        println("Suppressed[0]: ${suppressed[0].message}")
+        println("Suppressed[1]: ${suppressed[1].message}")
     }
 
     // Test 5: Nested try-finally (try-with-resources pattern)

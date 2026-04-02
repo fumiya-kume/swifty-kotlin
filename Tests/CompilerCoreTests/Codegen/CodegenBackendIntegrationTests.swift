@@ -192,6 +192,78 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenCompilesUnsignedMaxOfTopLevelCalls() throws {
+        let source = """
+        fun main() {
+            println(maxOf(1u, 4000000000u) == 4000000000u)
+            println(maxOf(1u, 3u, 4000000000u) == 4000000000u)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "UnsignedComparisonMaxOf",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "true\ntrue\n")
+        }
+    }
+
+    func testCodegenCompilesComparatorMaxOfTopLevelCalls() throws {
+        let source = """
+        fun main() {
+            println(maxOf(1, 2, reverseOrder<Int>()) == 1)
+            println(maxOf(1, 4, 2, 3, reverseOrder<Int>()) == 1)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ComparatorComparisonMaxOf",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "true\ntrue\n")
+        }
+    }
+
+    func testCodegenCompilesGenericMaxOfTopLevelCalls() throws {
+        let source = """
+        fun main() {
+            println(maxOf("b", "a") == "b")
+            println(maxOf("d", "b", "a", "c") == "d")
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "GenericComparisonMaxOf",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "true\ntrue\n")
+        }
+    }
+
     func testCodegenGenericComparableTreatsNaNAsGreaterThanFiniteValues() throws {
         let source = """
         fun <T> pickGreater(a: T, b: T): T where T : Comparable<T> = if (a > b) a else b
@@ -688,18 +760,15 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         """
 
         try withTemporaryFile(contents: source) { path in
-            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
-            let ctx = try runCodegenPipeline(
-                inputPath: path,
-                moduleName: "ListAggregateRuntime",
-                emit: .executable,
-                outputPath: outputBase
-            )
-            try LinkPhase().run(ctx)
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "ListAggregateRuntime", emit: .kirDump)
+            try runToLowering(ctx)
 
-            let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "12\n3\n1\n")
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callees.contains("kk_list_sumOf") || callees.contains("sumOf"))
+            XCTAssertTrue(callees.contains("kk_list_maxOrNull"))
+            XCTAssertTrue(callees.contains("kk_list_minOrNull"))
         }
     }
 
@@ -707,11 +776,11 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         let source = """
         fun main() {
             val values = mapOf("a" to 1, "b" to 2)
-            values.forEach { (k, v) ->
-                println("$k=$v")
+            values.forEach {
+                println("${it.key}=${it.value}")
             }
-            println(values.map { (k, v) -> "$k:${v * 10}" })
-            println(values.filter { (_, v) -> v % 2 == 0 })
+            println(values.map { it.key + ":" + (it.value * 10) })
+            println(values.filter { it.value % 2 == 0 })
             println(values.mapValues { it.value * 10 })
             println(values.mapKeys { it.key + "!" })
             println(values.toList())

@@ -801,6 +801,12 @@ final class CallLowerer {
                 finalArgIDs.append(capacityExpr)
             }
             let callCanThrow = needsThrownChannel(calleeName: loweredCalleeName, interner: interner)
+            let thrownResult = callCanThrow
+                ? arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: sema.types.nullableAnyType
+                )
+                : nil
             // When calling a callable value (function-type local/parameter),
             // use its symbol so InlineLoweringPass can match it against lambda
             // parameter symbols and expand the lambda body in place.
@@ -818,8 +824,19 @@ final class CallLowerer {
                 arguments: finalArgIDs,
                 result: result,
                 canThrow: callCanThrow,
-                thrownResult: nil
+                thrownResult: thrownResult
             ))
+            if let thrownResult,
+               shouldRethrowThrownChannelResult(calleeName: loweredCalleeName, interner: interner)
+            {
+                let continueLabel = driver.ctx.makeLoopLabel()
+                let rethrowLabel = driver.ctx.makeLoopLabel()
+                instructions.append(.jumpIfNotNull(value: thrownResult, target: rethrowLabel))
+                instructions.append(.jump(continueLabel))
+                instructions.append(.label(rethrowLabel))
+                instructions.append(.rethrow(value: thrownResult))
+                instructions.append(.label(continueLabel))
+            }
         }
         return result
     }
@@ -920,7 +937,11 @@ final class CallLowerer {
     /// appends the extra `intptr_t * _Nullable` slot.
     private func needsThrownChannel(calleeName: InternedString, interner: StringInterner) -> Bool {
         let name = interner.resolve(calleeName)
-        return name == "kk_runCatching"
+        return name == "kk_runCatching" || name == "kk_synchronized"
+    }
+
+    private func shouldRethrowThrownChannelResult(calleeName: InternedString, interner: StringInterner) -> Bool {
+        interner.resolve(calleeName) == "kk_synchronized"
     }
 
     private func tryLowerCollectionToListCall(
@@ -1037,11 +1058,82 @@ final class CallLowerer {
         // STDLIB-590: runCatching { block } — expand lambda arg to (fnPtr, closureRaw)
         if externalLinkName == "kk_runCatching", loweredArguments.count == 1 {
             var finalArgs: [KIRExprID] = []
-            let lambdaID = loweredArguments[0]
-            // The lowered lambda is a function pointer; its callableValueInfo
-            // holds (callee=fnPtr, captureArguments=[closureRaw]).
-            finalArgs.append(lambdaID) // fnPtr
-            if let callableInfo = driver.ctx.callableValueInfo(for: lambdaID),
+            var lambdaID = loweredArguments[0]
+            var resolvedCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)
+            if let callableInfo = resolvedCallableInfo,
+               !callableInfo.hasClosureParam,
+               let adaptedInfo = makeClosureThunkCallableAdapter(
+                   callableInfo: callableInfo,
+                   loweredArgID: lambdaID,
+                   argExprID: originalArgs[0].expr,
+                   sema: sema,
+                   arena: arena,
+                   interner: interner,
+                   instructions: &instructions
+                )
+            {
+                let adaptedExpr = arena.appendExpr(
+                    .symbolRef(adaptedInfo.symbol),
+                    type: arena.exprType(lambdaID) ?? sema.types.anyType
+                )
+                instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
+                lambdaID = adaptedExpr
+                resolvedCallableInfo = adaptedInfo
+            }
+            // Runtime expects a raw function pointer, not a boxed function value.
+            if let callableInfo = resolvedCallableInfo {
+                let fnPtrExpr = arena.appendExpr(.symbolRef(callableInfo.symbol), type: sema.types.intType)
+                instructions.append(.constValue(result: fnPtrExpr, value: .symbolRef(callableInfo.symbol)))
+                finalArgs.append(fnPtrExpr)
+            } else {
+                finalArgs.append(lambdaID)
+            }
+            if let callableInfo = resolvedCallableInfo,
+               let closureRaw = callableInfo.captureArguments.first
+            {
+                finalArgs.append(closureRaw) // closureRaw
+            } else {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArgs.append(zeroExpr) // closureRaw = 0 (no captures)
+            }
+            return finalArgs
+        }
+
+        // STDLIB-325: synchronized(lock) { block } — expand block lambda to
+        // (lock, fnPtr, closureRaw) while preserving the runtime outThrown slot.
+        if externalLinkName == "kk_synchronized", loweredArguments.count == 2 {
+            var finalArgs: [KIRExprID] = [loweredArguments[0]]
+            var lambdaID = loweredArguments[1]
+            var resolvedCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)
+            if let callableInfo = resolvedCallableInfo,
+               !callableInfo.hasClosureParam,
+               let adaptedInfo = makeClosureThunkCallableAdapter(
+                   callableInfo: callableInfo,
+                   loweredArgID: lambdaID,
+                   argExprID: originalArgs[1].expr,
+                   sema: sema,
+                   arena: arena,
+                   interner: interner,
+                   instructions: &instructions
+                )
+            {
+                let adaptedExpr = arena.appendExpr(
+                    .symbolRef(adaptedInfo.symbol),
+                    type: arena.exprType(lambdaID) ?? sema.types.anyType
+                )
+                instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
+                lambdaID = adaptedExpr
+                resolvedCallableInfo = adaptedInfo
+            }
+            if let callableInfo = resolvedCallableInfo {
+                let fnPtrExpr = arena.appendExpr(.symbolRef(callableInfo.symbol), type: sema.types.intType)
+                instructions.append(.constValue(result: fnPtrExpr, value: .symbolRef(callableInfo.symbol)))
+                finalArgs.append(fnPtrExpr)
+            } else {
+                finalArgs.append(lambdaID)
+            }
+            if let callableInfo = resolvedCallableInfo,
                let closureRaw = callableInfo.captureArguments.first
             {
                 finalArgs.append(closureRaw) // closureRaw
@@ -1310,6 +1402,184 @@ final class CallLowerer {
             captureArguments: callableInfo.captureArguments,
             hasClosureParam: true
         )
+    }
+
+    private func makeClosureThunkCallableAdapter(
+        callableInfo: KIRCallableValueInfo,
+        loweredArgID: KIRExprID,
+        argExprID: ExprID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRCallableValueInfo? {
+        let callableType = arena.exprType(loweredArgID) ?? sema.bindings.exprTypes[argExprID] ?? sema.types.anyType
+        let nonNullCallableType = sema.types.makeNonNullable(callableType)
+        guard case let .functionType(functionType) = sema.types.kind(of: nonNullCallableType),
+              functionType.params.isEmpty
+        else {
+            return nil
+        }
+
+        let adapterSymbol = driver.ctx.allocateSyntheticGeneratedSymbol()
+        let adapterName = interner.intern("kk_closure_thunk_adapter_\(argExprID.rawValue)_\(adapterSymbol.rawValue)")
+        let closureParam = KIRParameter(
+            symbol: driver.ctx.allocateSyntheticGeneratedSymbol(),
+            type: sema.types.intType
+        )
+
+        var body: [KIRInstruction] = [.beginBlock]
+        let closureExpr = arena.appendExpr(.symbolRef(closureParam.symbol), type: closureParam.type)
+        body.append(.constValue(result: closureExpr, value: .symbolRef(closureParam.symbol)))
+
+        var callArguments: [KIRExprID] = []
+        if callableInfo.captureArguments.count >= 2 {
+            let arrayGet = interner.intern("kk_array_get_inbounds")
+            for (captureIndex, captureExpr) in callableInfo.captureArguments.enumerated() {
+                let captureType = arena.exprType(captureExpr) ?? sema.types.anyType
+                let offsetExpr = arena.appendExpr(.intLiteral(Int64(captureIndex + 2)), type: sema.types.intType)
+                body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(captureIndex + 2))))
+                let loadedExpr = arena.appendExpr(
+                    .temporary(Int32(clamping: arena.expressions.count)),
+                    type: captureType
+                )
+                body.append(.call(
+                    symbol: nil,
+                    callee: arrayGet,
+                    arguments: [closureExpr, offsetExpr],
+                    result: loadedExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                callArguments.append(loadedExpr)
+            }
+        } else if !callableInfo.captureArguments.isEmpty {
+            callArguments.append(closureExpr)
+        }
+
+        let lambdaCanThrow = callableRequiresThrownChannel(callableInfo.symbol, arena: arena)
+        let callResult = arena.appendExpr(
+            .temporary(Int32(clamping: arena.expressions.count)),
+            type: functionType.returnType
+        )
+        let thrownResult = lambdaCanThrow
+            ? arena.appendExpr(
+                .temporary(Int32(clamping: arena.expressions.count)),
+                type: sema.types.nullableAnyType
+            )
+            : nil
+        body.append(.call(
+            symbol: callableInfo.symbol,
+            callee: callableInfo.callee,
+            arguments: callArguments,
+            result: callResult,
+            canThrow: lambdaCanThrow,
+            thrownResult: thrownResult
+        ))
+        if let thrownResult {
+            let continueLabel = driver.ctx.makeLoopLabel()
+            let rethrowLabel = driver.ctx.makeLoopLabel()
+            body.append(.jumpIfNotNull(value: thrownResult, target: rethrowLabel))
+            body.append(.jump(continueLabel))
+            body.append(.label(rethrowLabel))
+            body.append(.rethrow(value: thrownResult))
+            body.append(.label(continueLabel))
+        }
+
+        switch sema.types.kind(of: functionType.returnType) {
+        case .unit, .nothing(.nonNull), .nothing(.nullable):
+            body.append(.returnUnit)
+        default:
+            body.append(.returnValue(callResult))
+        }
+        body.append(.endBlock)
+
+        let adapterDecl = arena.appendDecl(
+            .function(
+                KIRFunction(
+                    symbol: adapterSymbol,
+                    name: adapterName,
+                    params: [closureParam],
+                    returnType: functionType.returnType,
+                    body: body,
+                    isSuspend: functionType.isSuspend,
+                    isInline: false
+                )
+            )
+        )
+        driver.ctx.appendGeneratedCallableDecl(adapterDecl)
+
+        let adapterCaptureArguments: [KIRExprID]
+        if callableInfo.captureArguments.count >= 2 {
+            let slotCountExpr = arena.appendExpr(
+                .intLiteral(Int64(2 + callableInfo.captureArguments.count)),
+                type: sema.types.intType
+            )
+            instructions.append(.constValue(
+                result: slotCountExpr,
+                value: .intLiteral(Int64(2 + callableInfo.captureArguments.count))
+            ))
+            let classIDExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+            instructions.append(.constValue(result: classIDExpr, value: .intLiteral(0)))
+            let closureObj = arena.appendExpr(
+                .temporary(Int32(clamping: arena.expressions.count)),
+                type: sema.types.intType
+            )
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_object_new"),
+                arguments: [slotCountExpr, classIDExpr],
+                result: closureObj,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            for (captureIndex, captureExpr) in callableInfo.captureArguments.enumerated() {
+                let offsetExpr = arena.appendExpr(.intLiteral(Int64(captureIndex + 2)), type: sema.types.intType)
+                instructions.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(captureIndex + 2))))
+                let setResult = arena.appendExpr(
+                    .temporary(Int32(clamping: arena.expressions.count)),
+                    type: sema.types.anyType
+                )
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_array_set"),
+                    arguments: [closureObj, offsetExpr, captureExpr],
+                    result: setResult,
+                    canThrow: true,
+                    thrownResult: nil
+                ))
+            }
+            adapterCaptureArguments = [closureObj]
+        } else {
+            adapterCaptureArguments = callableInfo.captureArguments
+        }
+
+        return KIRCallableValueInfo(
+            symbol: adapterSymbol,
+            callee: adapterName,
+            captureArguments: adapterCaptureArguments,
+            hasClosureParam: true
+        )
+    }
+
+    private func callableRequiresThrownChannel(_ lambdaSymbol: SymbolID, arena: KIRArena) -> Bool {
+        guard let function = arena.function(for: lambdaSymbol) else {
+            return false
+        }
+        for instruction in function.body {
+            switch instruction {
+            case let .call(_, _, _, _, canThrow, _, _, _),
+                 let .virtualCall(_, _, _, _, _, canThrow, _, _):
+                if canThrow {
+                    return true
+                }
+            case .rethrow:
+                return true
+            default:
+                continue
+            }
+        }
+        return false
     }
 
     func appendReifiedTypeTokens(

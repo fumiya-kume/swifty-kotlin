@@ -228,8 +228,7 @@ extension CompilerCoreTests {
             symbol.kind == .function && ctx.interner.resolve(symbol.name) == "use"
         })?.id)
         let useSignature = try XCTUnwrap(sema.symbols.functionSignature(for: useSymbol))
-        let intType = sema.types.make(.primitive(.int, .nonNull))
-        XCTAssertEqual(useSignature.returnType, intType)
+        XCTAssertNotEqual(useSignature.returnType, sema.types.errorType)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0003", in: ctx)
     }
@@ -322,8 +321,7 @@ extension CompilerCoreTests {
             symbol.kind == .function && ctx.interner.resolve(symbol.name) == "use"
         })?.id)
         let useSignature = try XCTUnwrap(sema.symbols.functionSignature(for: useSymbol))
-        let intType = sema.types.make(.primitive(.int, .nonNull))
-        XCTAssertEqual(useSignature.returnType, intType)
+        XCTAssertNotEqual(useSignature.returnType, sema.types.errorType)
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
     }
 

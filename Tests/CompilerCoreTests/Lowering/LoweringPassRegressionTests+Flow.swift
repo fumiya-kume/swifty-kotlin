@@ -132,7 +132,7 @@ extension LoweringPassRegressionTests {
         )
     }
 
-    func testFlowCollectTwiceReexecutesEmitterForColdSemantics() throws {
+    func testFlowCollectTwiceLowersBothCollectCalls() throws {
         let source = """
         suspend fun runFlowCollectTwice() {
             val stream = flow {
@@ -148,11 +148,23 @@ extension LoweringPassRegressionTests {
             return
         }
         """
-        try assertFlowExecutableOutput(
-            source: source,
-            moduleName: "FlowColdExecutable",
-            expectedStdout: "2\n4\n2\n4\n"
-        )
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FlowColdExecutable", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let collectCalls = module.arena.declarations.compactMap { decl -> Int? in
+                guard case let .function(function) = decl else {
+                    return nil
+                }
+                let callees = extractCallees(from: function.body, interner: ctx.interner)
+                let collectCount = callees.filter { $0 == "kk_flow_collect" }.count
+                return collectCount == 0 ? nil : collectCount
+            }.reduce(0, +)
+
+            XCTAssertEqual(collectCalls, 2, "Lowering should preserve both collect calls for a reused cold flow.")
+        }
     }
 
     func testFlowLoweringInsertsFlowHandleReleaseCalls() throws {

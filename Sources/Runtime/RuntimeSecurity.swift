@@ -1001,21 +1001,26 @@ private func runtimeKeyPairGeneratorInitialize(
 }
 
 @_cdecl("kk_secretkeyspec_new")
-public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int) -> Int {
+public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
     let algorithm = runtimeSecurityString(from: algorithmRaw, caller: #function)
     guard let parsedAlgorithm = RuntimeCipherAlgorithm(transformationComponent: algorithm) else {
-        return runtimeAllocateThrowable(message: "NoSuchAlgorithmException: \(algorithm)")
+        runtimeSetThrown(outThrown, message: "NoSuchAlgorithmException: \(algorithm)")
+        return 0
     }
     guard let keyBytes = runtimeSecurityBytes(from: keyRaw, caller: #function) else {
-        return runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>")
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected ByteArray/List<Int>")
+        return 0
     }
     return registerRuntimeObject(RuntimeSecretKeySpecBox(keyBytes: keyBytes, algorithm: parsedAlgorithm))
 }
 
 @_cdecl("kk_ivparameterspec_new")
-public func kk_ivparameterspec_new(_ ivRaw: Int) -> Int {
+public func kk_ivparameterspec_new(_ ivRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
     guard let ivBytes = runtimeSecurityBytes(from: ivRaw, caller: #function) else {
-        return runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>")
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected ByteArray/List<Int>")
+        return 0
     }
     return registerRuntimeObject(RuntimeIvParameterSpecBox(ivBytes: ivBytes))
 }
@@ -1619,13 +1624,15 @@ private func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, message: 
 }
 
 @_cdecl("kk_secretkeyspec_new")
-public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int) -> Int {
-    return runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform")
+public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeSetThrown(outThrown, message: "UnsupportedOperationException: crypto not available on this platform")
+    return 0
 }
 
 @_cdecl("kk_ivparameterspec_new")
-public func kk_ivparameterspec_new(_ ivRaw: Int) -> Int {
-    return runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform")
+public func kk_ivparameterspec_new(_ ivRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeSetThrown(outThrown, message: "UnsupportedOperationException: crypto not available on this platform")
+    return 0
 }
 
 @_cdecl("kk_keypairgenerator_getInstance")
@@ -1818,7 +1825,6 @@ public func kk_certpathvalidator_validate(_ validatorRaw: Int, _ certPathRaw: In
     return 0
 }
 #endif
-
 // MARK: - MessageDigest Runtime Support (STDLIB-SEC-143)
 
 #if canImport(CryptoKit)
@@ -1904,4 +1910,3 @@ public func kk_message_digest_digest(_ digestRaw: Int, _ dataRaw: Int, _ outThro
     return 0
 }
 #endif
-

@@ -2,6 +2,7 @@ import Foundation
 
 enum KnownCompilerAnnotation {
     case deprecated
+    case replaceWith
     case target
     case jvmStatic
     case jvmName
@@ -10,11 +11,14 @@ enum KnownCompilerAnnotation {
     case throws_
     case suppress
     case dslMarker
+    case wasExperimental
 
     var simpleName: String {
         switch self {
         case .deprecated:
             "Deprecated"
+        case .replaceWith:
+            "ReplaceWith"
         case .target:
             "Target"
         case .jvmStatic:
@@ -31,6 +35,8 @@ enum KnownCompilerAnnotation {
             "Suppress"
         case .dslMarker:
             "DslMarker"
+        case .wasExperimental:
+            "WasExperimental"
         }
     }
 
@@ -38,6 +44,8 @@ enum KnownCompilerAnnotation {
         switch self {
         case .deprecated:
             "kotlin.Deprecated"
+        case .replaceWith:
+            "kotlin.ReplaceWith"
         case .target:
             "kotlin.annotation.Target"
         case .jvmStatic:
@@ -54,6 +62,8 @@ enum KnownCompilerAnnotation {
             "kotlin.Suppress"
         case .dslMarker:
             "kotlin.DslMarker"
+        case .wasExperimental:
+            "kotlin.WasExperimental"
         }
     }
 
@@ -104,6 +114,7 @@ struct KnownCompilerNames {
     let longArray: InternedString
     let shortArray: InternedString
     let byteArray: InternedString
+    let ubyteArray: InternedString
     let doubleArray: InternedString
     let floatArray: InternedString
     let booleanArray: InternedString
@@ -267,6 +278,7 @@ struct KnownCompilerNames {
         longArray = interner.intern("LongArray")
         shortArray = interner.intern("ShortArray")
         byteArray = interner.intern("ByteArray")
+        ubyteArray = interner.intern("UByteArray")
         doubleArray = interner.intern("DoubleArray")
         floatArray = interner.intern("FloatArray")
         booleanArray = interner.intern("BooleanArray")
@@ -496,6 +508,7 @@ struct KnownCompilerNames {
             || name == longArray
             || name == shortArray
             || name == byteArray
+            || name == ubyteArray
             || name == doubleArray
             || name == floatArray
             || name == booleanArray
@@ -510,6 +523,7 @@ struct KnownCompilerNames {
             || name == longArray
             || name == shortArray
             || name == byteArray
+            || name == ubyteArray
             || name == doubleArray
             || name == floatArray
             || name == booleanArray
@@ -523,6 +537,7 @@ struct KnownCompilerNames {
         "listOf", "mutableListOf", "emptyList",
         "arrayOf", "emptyArray", "intArrayOf", "longArrayOf",
         "shortArrayOf", "byteArrayOf",
+        "ubyteArrayOf",
         "doubleArrayOf", "floatArrayOf", "booleanArrayOf", "charArrayOf",
         "mapOf", "mutableMapOf", "emptyMap",
         "setOf", "mutableSetOf", "emptySet",
