@@ -2216,8 +2216,28 @@ public func kk_flow_share_in(_ flowHandle: Int, _ replay: Int) -> Int {
         return runtimeRegisterObject(RuntimeSharedFlowHandle(replay: replay))
     }
     let shared = RuntimeSharedFlowHandle(replay: replay)
-    for value in sourceValues {
-        shared.emit(value)
+    let ops = flow.opChain
+    var takeCounters = runtimeFlowInitTakeCounters(ops)
+    var lastValues: [Int: Int] = [:]
+    if !runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
+        for rawValue in sourceValues {
+            let result = runtimeFlowApplyOpsLazy(
+                rawValue, ops: ops,
+                takeCounters: &takeCounters,
+                lastValues: &lastValues
+            )
+            switch result {
+            case .emit(let value):
+                shared.emit(value)
+                if runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
+                    break
+                }
+            case .filtered:
+                continue
+            case .thrown, .done:
+                break
+            }
+        }
     }
     return runtimeRegisterObject(shared)
 }
@@ -2228,8 +2248,28 @@ public func kk_flow_state_in(_ flowHandle: Int, _ initialValue: Int) -> Int {
     if let flow = runtimeFlowHandle(from: flowHandle),
        let sourceValues = runtimeFlowSourceValues(flow)
     {
-        for value in sourceValues {
-            state.emit(value)
+        let ops = flow.opChain
+        var takeCounters = runtimeFlowInitTakeCounters(ops)
+        var lastValues: [Int: Int] = [:]
+        if !runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
+            for rawValue in sourceValues {
+                let result = runtimeFlowApplyOpsLazy(
+                    rawValue, ops: ops,
+                    takeCounters: &takeCounters,
+                    lastValues: &lastValues
+                )
+                switch result {
+                case .emit(let value):
+                    state.emit(value)
+                    if runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
+                        break
+                    }
+                case .filtered:
+                    continue
+                case .thrown, .done:
+                    break
+                }
+            }
         }
     }
     return runtimeRegisterObject(state)

@@ -252,7 +252,7 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([flowInterfaceSymbol], for: sharedFlowSymbol)
         symbols.setDirectSupertypes([sharedFlowSymbol], for: stateFlowSymbol)
         symbols.setDirectSupertypes([sharedFlowSymbol], for: mutableSharedFlowSymbol)
-        symbols.setDirectSupertypes([stateFlowSymbol], for: mutableStateFlowSymbol)
+        symbols.setDirectSupertypes([stateFlowSymbol, mutableSharedFlowSymbol], for: mutableStateFlowSymbol)
 
         registerSyntheticCoroutineTopLevelFunction(
             named: "runBlocking",
