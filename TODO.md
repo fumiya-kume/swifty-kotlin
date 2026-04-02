@@ -155,7 +155,7 @@
   - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
   - **テストケース**: `Scripts/diff_cases/long_range.kt`
 
-- [ ] STDLIB-RANGE-036: UIntRange完全実装
+- [x] STDLIB-RANGE-036: UIntRange完全実装
   - **仕様**: UIntRangeの完全な機能サポート
   - **実装内容**:
     - コンストラクタ: UIntRange(start, end), startU..endU

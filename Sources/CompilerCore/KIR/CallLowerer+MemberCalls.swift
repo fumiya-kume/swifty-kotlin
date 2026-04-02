@@ -5158,6 +5158,12 @@ extension CallLowerer {
             case "toLongArray":
                 return interner.intern("kk_long_range_toLongArray")
             case "iterator":
+                if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                    return interner.intern("kk_ulong_range_iterator")
+                }
+                if sema.bindings.isUIntRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.uintType {
+                    return interner.intern("kk_uint_range_iterator")
+                }
                 if nonNullReceiverType == sema.types.longType {
                     return interner.intern("kk_long_range_iterator")
                 }
