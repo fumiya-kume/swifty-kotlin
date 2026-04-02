@@ -249,6 +249,64 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testCollectionFallbackResolvesTrailingLambdaIndexedLookups() throws {
+        let source = """
+        fun probe(): Int {
+            val list = listOf(1, 2, 3)
+            val listValue = list.getOrElse(5) { -1 }
+            val map = mapOf("a" to 1, "b" to 2)
+            val mapValue = map.getOrElse("z") { 99 }
+            val mutableMap = mutableMapOf("a" to 1, "b" to 2)
+            val mutableValue = mutableMap.getOrPut("c") { 3 }
+            return listValue + mapValue + mutableValue
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            assertNoDiagnostic("KSWIFTK-SEMA-0003", in: ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let listCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(receiver, callee, _, _, _) = expr,
+                      ctx.interner.resolve(callee) == "getOrElse",
+                      let receiverExpr = ast.arena.expr(receiver),
+                      case let .nameRef(receiverName, _) = receiverExpr
+                else { return false }
+                return ctx.interner.resolve(receiverName) == "list"
+            }, "Expected a getOrElse member call")
+            let listCallee = try XCTUnwrap(sema.bindings.callBinding(for: listCall)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: listCallee), "kk_list_getOrElse")
+
+            let mapCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(receiver, callee, _, _, _) = expr,
+                      ctx.interner.resolve(callee) == "getOrElse",
+                      let receiverExpr = ast.arena.expr(receiver),
+                      case let .nameRef(receiverName, _) = receiverExpr
+                else { return false }
+                return ctx.interner.resolve(receiverName) == "map"
+            }, "Expected a getOrElse member call")
+            let mapCallee = try XCTUnwrap(sema.bindings.callBinding(for: mapCall)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: mapCallee), "kk_map_getOrElse")
+
+            let mutableCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(receiver, callee, _, _, _) = expr,
+                      ctx.interner.resolve(callee) == "getOrPut",
+                      let receiverExpr = ast.arena.expr(receiver),
+                      case let .nameRef(receiverName, _) = receiverExpr
+                else { return false }
+                return ctx.interner.resolve(receiverName) == "mutableMap"
+            }, "Expected a getOrPut member call")
+            let mutableCallee = try XCTUnwrap(sema.bindings.callBinding(for: mutableCall)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: mutableCallee), "kk_mutable_map_getOrPut")
+        }
+    }
+
     func testListBinarySearchHasComparableElementUpperBound() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])

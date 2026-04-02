@@ -5131,6 +5131,22 @@ extension CallTypeChecker {
                 }
             }
 
+            // Collection fallback needs to run before the generic overload resolver
+            // so synthetic collection members can use their specialized lambda
+            // expectations without type-variable noise from the general path.
+            if let fallbackType = tryCollectionMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
+
             // Receiver-lambda invocation: `receiver.localVar()` where localVar
             // has a function-with-receiver type matching the receiver.
             // e.g. `sb.action()` where action: StringBuilder.() -> Unit
@@ -5208,6 +5224,20 @@ extension CallTypeChecker {
         // Use the companion type as implicit receiver when the candidates were
         // redirected from the owner class to its companion object.
         let effectiveReceiverType = companionReceiverType ?? lookupReceiverType
+        // Synthetic collection members need to short-circuit before the generic
+        // overload resolver so their trailing-lambda expectations stay concrete.
+        if let fallbackType = tryCollectionMemberFallback(
+            id,
+            calleeName: calleeName,
+            isClassNameReceiver: isClassNameReceiver,
+            safeCall: safeCall,
+            receiverID: receiverID,
+            args: args,
+            ctx: ctx,
+            locals: &locals
+        ) {
+            return fallbackType
+        }
         var cachedNonLambdaArgTypes: [Int: TypeID] = [:]
         for (index, argument) in args.enumerated() {
             guard let argumentExpr = ast.arena.expr(argument.expr) else {
@@ -5287,18 +5317,6 @@ extension CallTypeChecker {
             ) {
                 ctx.semaCtx.diagnostics.emit(projectionDiagnostic)
                 return driver.helpers.bindAndReturnErrorType(id, sema: sema)
-            }
-            if let fallbackType = tryCollectionMemberFallback(
-                id,
-                calleeName: calleeName,
-                isClassNameReceiver: isClassNameReceiver,
-                safeCall: safeCall,
-                receiverID: receiverID,
-                args: args,
-                ctx: ctx,
-                locals: &locals
-            ) {
-                return fallbackType
             }
             if let fallbackType = tryRegexMemberFallback(
                 id,

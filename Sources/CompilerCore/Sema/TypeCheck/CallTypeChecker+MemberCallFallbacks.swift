@@ -814,7 +814,7 @@ extension CallTypeChecker {
         case knownNames.getOrDefault:
             return isMapReceiver && argCount == 2
         case knownNames.getOrElse:
-            return isMapReceiver ? argCount == 1 : argCount == 2
+            return argCount == 2
         case knownNames.getOrPut:
             return isMutableMapReceiver && argCount == 2
         case interner.intern("addAll"), interner.intern("removeAll"), interner.intern("retainAll"):
@@ -1175,7 +1175,7 @@ extension CallTypeChecker {
             knownNames.getOrElse,
         ]
         if mapOnlyMembers.contains(memberName) {
-            guard isMapReceiver, argCount == 1 else {
+            guard isMapReceiver else {
                 return nil
             }
         }
@@ -1395,7 +1395,7 @@ extension CallTypeChecker {
             return (argumentIndex: 1, expectedType: expectedType)
         }
 
-        if memberName == knownNames.getOrElse, isMapReceiver, argCount == 1 {
+        if memberName == knownNames.getOrElse, isMapReceiver, argCount == 2 {
             let valueType: TypeID = if case let .classType(classType) = sema.types.kind(of: receiverElementType),
                                        classType.args.count >= 2
             {
