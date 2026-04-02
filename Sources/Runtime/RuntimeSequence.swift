@@ -287,7 +287,7 @@ private func runtimeSequenceTransformElement(
             state.stop = true
             return
         }
-        if let unboxed = runtimeNormalizeNullableCollectionValue(mapped) {
+        if let unboxed = runtimeMapNotNullResultValue(mapped) {
             runtimeSequenceTransformElement(
                 unboxed,
                 steps: steps,
@@ -626,7 +626,7 @@ private func applyMapNotNullStep(_ elements: [Int], fnPtr: Int, closureRaw: Int,
             }
             return []
         }
-        if let normalized = runtimeNormalizeNullableCollectionValue(result) {
+        if let normalized = runtimeMapNotNullResultValue(result) {
             mapped.append(normalized)
         }
     }

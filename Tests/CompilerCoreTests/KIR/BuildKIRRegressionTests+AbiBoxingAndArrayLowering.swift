@@ -37,6 +37,32 @@ extension BuildKIRRegressionTests {
         XCTAssertTrue(callees.contains(interner.intern("kk_set_subtract")))
     }
 
+    func testBuildKIRLowersSetBinaryMembersToCollectionRuntimeCalls() throws {
+        let source = """
+        fun main(values: Set<Int>, other: List<Int>) {
+            values.intersect(other)
+            values.union(other)
+            values.subtract(other)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callNames.contains("kk_set_intersect"))
+            XCTAssertTrue(callNames.contains("kk_set_union"))
+            XCTAssertTrue(callNames.contains("kk_set_subtract"))
+            XCTAssertFalse(callNames.contains("intersect"))
+            XCTAssertFalse(callNames.contains("union"))
+            XCTAssertFalse(callNames.contains("subtract"))
+        }
+    }
+
     func testABILoweringMarksAtomicRuntimeHelpersAsNonThrowing() {
         let pass = ABILoweringPass()
         let interner = StringInterner()
@@ -174,6 +200,34 @@ extension BuildKIRRegressionTests {
         fun main(): Any? {
             val arr = IntArray(2)
             arr[0] = 7
+            return arr[0]
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callNames.contains("kk_array_new"))
+            XCTAssertTrue(callNames.contains("kk_array_set"))
+            XCTAssertTrue(callNames.contains("kk_array_get"))
+
+            let throwFlags = extractThrowFlags(from: body, interner: ctx.interner)
+            XCTAssertEqual(throwFlags["kk_array_new"]?.allSatisfy { $0 == false }, true)
+            XCTAssertEqual(throwFlags["kk_array_set"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_array_get"]?.allSatisfy { $0 == true }, true)
+        }
+    }
+
+    func testUShortArrayLoweringUsesSharedArrayRuntimeCalls() throws {
+        let source = """
+        fun main(): UShort {
+            val arr = UShortArray(2) { (it + 1).toUShort() }
+            arr[0] = 65535.toUShort()
             return arr[0]
         }
         """

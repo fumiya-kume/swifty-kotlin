@@ -22,6 +22,7 @@
 
 ```text
 Package.swift
+ +-- RuntimeABI    (target)    Runtime ABI 契約と extern view の共有境界
  +-- CompilerCore  (library)   コンパイラ本体ロジック全般
  +-- KSwiftKCLI   (executable) CLI エントリポイント -> kswiftc
  +-- Runtime       (library)   GC / coroutine / boxing ヘルパー
@@ -32,6 +33,7 @@ Package.swift
 
 ```text
 KSwiftKCLI --> CompilerCore --> CLLVM
+RuntimeTests --> RuntimeABI
 Runtime (独立 — リンク時に結合)
 ```
 
@@ -92,7 +94,13 @@ LoadSources --> Lex --> Parse --> BuildAST --> SemaPasses --> BuildKIR --> Lower
 | `RuntimeBoxing.swift` | Int/Bool ボクシング |
 | `RuntimeHelpers.swift` | ヘルパー関数、null sentinel、`KxMiniRuntime` |
 | `RuntimeDelegates.swift` | delegate プロパティランタイムサポート |
-| `RuntimeABISpec.swift` | ABI 仕様定数 |
+
+### `Sources/RuntimeABI/`
+
+| ファイル | 責務 |
+|---|---|
+| `RuntimeABISpec.swift` | Runtime ABI 仕様定数と C ヘッダ生成 |
+| `RuntimeABIExterns.swift` | `RuntimeABISpec` から導出される extern 宣言 view |
 
 ### `Sources/CLLVM/`
 
@@ -286,7 +294,7 @@ Swift + LLVM のセットアップは [`.github/actions/setup-swift-llvm`](../.g
 3. `Codegen/CodegenPhase.swift` — Codegen フェーズ制御、emit モード分岐
 4. `Codegen/LinkPhase.swift` — リンクコマンド構築、エントリラッパー生成
 5. `Codegen/NameMangler.swift` — シンボル名マングリング
-6. `Codegen/RuntimeABIExterns.swift` — ランタイムヘルパーの extern 宣言
+6. `RuntimeABI/RuntimeABIExterns.swift` — ランタイム ABI extern view
 
 ### ランタイム動作のバグを直す
 

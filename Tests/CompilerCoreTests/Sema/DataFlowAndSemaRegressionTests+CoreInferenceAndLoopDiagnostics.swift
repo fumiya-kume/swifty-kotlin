@@ -66,6 +66,23 @@ extension DataFlowAndSemaRegressionTests {
         }
     }
 
+    func testSuspendLocalFunctionDeclarationInference() throws {
+        let source = """
+        suspend fun delayed(v: Int): Int = v
+
+        fun main(): Int {
+            suspend fun local(v: Int): Int = delayed(v)
+            return 0
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            let sema = try XCTUnwrap(ctx.sema)
+            XCTAssertFalse(sema.bindings.exprTypes.isEmpty)
+        }
+    }
+
     // MARK: - ExprInference: array access and assign
 
     func testArrayAccessAndAssignInference() throws {

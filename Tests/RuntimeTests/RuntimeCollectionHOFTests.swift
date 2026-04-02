@@ -179,6 +179,14 @@ private let throwingHOFLambda: @convention(c) (Int, Int, UnsafeMutablePointer<In
     return 0
 }
 
+private let mapSentinelToValue: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value == runtimeNullSentinelInt ? 99 : value * 2
+}
+
+private let identityMapValue: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value
+}
+
 final class RuntimeCollectionHOFTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -219,6 +227,53 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
         let sorted = kk_list_sortedBy(makeList([22, 12, 21, 11]), unsafeBitCast(sortedByTens, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(sorted), [12, 11, 22, 21])
+    }
+
+    func testCollectionMapNotNullPassesSentinelInputsToTransform() {
+        let source = makeList([1, runtimeNullSentinelInt, 3])
+
+        let listMapped = kk_list_mapNotNull(source, unsafeBitCast(mapSentinelToValue, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(listMapped), [2, 99, 6])
+
+        let setSource = kk_set_of(makeArray([1, runtimeNullSentinelInt, 3]), 3)
+        let setMapped = kk_set_mapNotNull(setSource, unsafeBitCast(mapSentinelToValue, to: Int.self), 0, nil)
+        XCTAssertEqual(Set(listElements(setMapped)), Set([2, 99, 6]))
+
+        let arraySource = makeArray([1, runtimeNullSentinelInt, 3])
+        let arrayMapped = kk_array_mapNotNull(arraySource, unsafeBitCast(mapSentinelToValue, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(arrayMapped), [2, 99, 6])
+    }
+
+    func testCollectionMapNotNullPreservesZeroResults() {
+        let source = makeList([0, 1, 2])
+
+        let listMapped = kk_list_mapNotNull(source, unsafeBitCast(identityMapValue, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(listMapped), [0, 1, 2])
+
+        let setSource = kk_set_of(makeArray([0, 1, 2]), 3)
+        let setMapped = kk_set_mapNotNull(setSource, unsafeBitCast(identityMapValue, to: Int.self), 0, nil)
+        XCTAssertEqual(Set(listElements(setMapped)), Set([0, 1, 2]))
+
+        let arraySource = makeArray([0, 1, 2])
+        let arrayMapped = kk_array_mapNotNull(arraySource, unsafeBitCast(identityMapValue, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(arrayMapped), [0, 1, 2])
+    }
+
+    func testCollectionFilterNotNullPreservesZeroAfterMapNotNull() {
+        let source = makeList([0, 1, 2])
+        let mapped = kk_list_mapNotNull(source, unsafeBitCast(identityMapValue, to: Int.self), 0, nil)
+        let filtered = kk_list_filterNotNull(mapped)
+        XCTAssertEqual(listElements(filtered), [0, 1, 2])
+
+        let setSource = kk_set_of(makeArray([0, 1, 2]), 3)
+        let setMapped = kk_set_mapNotNull(setSource, unsafeBitCast(identityMapValue, to: Int.self), 0, nil)
+        let setFiltered = kk_list_filterNotNull(setMapped)
+        XCTAssertEqual(Set(listElements(setFiltered)), Set([0, 1, 2]))
+
+        let arraySource = makeArray([0, 1, 2])
+        let arrayMapped = kk_array_mapNotNull(arraySource, unsafeBitCast(identityMapValue, to: Int.self), 0, nil)
+        let arrayFiltered = kk_list_filterNotNull(arrayMapped)
+        XCTAssertEqual(listElements(arrayFiltered), [0, 1, 2])
     }
 
     func testSortedByWithStringKeyHandlesNonIntegerComparison() {
@@ -473,6 +528,37 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
         XCTAssertEqual(kk_unbox_bool(modified), 1)
         XCTAssertEqual(setElements(target), [1, 2, 3, 4])
+    }
+
+    func testSetBinaryOperationsWithStringHandlesUseValueEqualityAndPreserveLeftOrder() {
+        let leftAlpha = makeRuntimeStringRaw("alpha")
+        let leftBeta = makeRuntimeStringRaw("beta")
+        let rightBeta = makeRuntimeStringRaw("beta")
+        let rightGamma = makeRuntimeStringRaw("gamma")
+
+        let left = registerRuntimeObject(RuntimeSetBox(elements: [leftAlpha, leftBeta]))
+        let right = registerRuntimeObject(RuntimeListBox(elements: [rightBeta, rightGamma, rightBeta]))
+
+        let intersected = kk_set_intersect(left, right)
+        let unioned = kk_set_union(left, right)
+        let subtracted = kk_set_subtract(left, right)
+
+        XCTAssertEqual(setElements(intersected), [leftBeta])
+        XCTAssertEqual(setElements(unioned), [leftAlpha, leftBeta, rightGamma])
+        XCTAssertEqual(setElements(subtracted), [leftAlpha])
+    }
+
+    func testSetBinaryOperationsAcceptSetInputAndPreserveOrder() {
+        let left = registerRuntimeObject(RuntimeSetBox(elements: [1, 2, 3]))
+        let right = registerRuntimeObject(RuntimeSetBox(elements: [3, 4, 2]))
+
+        let intersected = kk_set_intersect(left, right)
+        let unioned = kk_set_union(left, right)
+        let subtracted = kk_set_subtract(left, right)
+
+        XCTAssertEqual(setElements(intersected), [2, 3])
+        XCTAssertEqual(setElements(unioned), [1, 2, 3, 4])
+        XCTAssertEqual(setElements(subtracted), [1])
     }
 
     func testBoolAbiForCollectionHelpersReturnsRaw() {

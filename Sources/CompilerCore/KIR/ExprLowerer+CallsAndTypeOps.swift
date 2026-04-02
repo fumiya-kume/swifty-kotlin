@@ -54,7 +54,7 @@ extension ExprLowerer {
                 ?? RuntimeTypeCheckToken.encode(base: RuntimeTypeCheckToken.unknownBase, nullable: nullable)
             return emitLiteral(literal)
 
-        case let .functionType(_, _, _, _, nullable):
+        case let .functionType(_, _, _, _, _, nullable):
             return emitLiteral(
                 RuntimeTypeCheckToken.encode(
                     base: RuntimeTypeCheckToken.unknownBase,
@@ -64,6 +64,15 @@ extension ExprLowerer {
 
         case .intersection:
             return emitLiteral(RuntimeTypeCheckToken.unknownBase)
+        case let .annotated(base, _):
+            return lowerIsCheckTypeTokenExpr(
+                typeRefID: base,
+                ast: ast,
+                sema: sema,
+                interner: interner,
+                arena: arena,
+                instructions: &instructions
+            )
         }
     }
 

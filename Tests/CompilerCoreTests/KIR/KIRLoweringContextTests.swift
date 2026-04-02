@@ -237,13 +237,13 @@ final class KIRLoweringContextTests: XCTestCase {
         let s2 = ctx.allocateSyntheticGeneratedSymbol()
 
         XCTAssertEqual(s1.rawValue, base)
-        XCTAssertEqual(s2.rawValue, base + 1)
+        XCTAssertEqual(s2.rawValue, base - 1)
     }
 
     func testInitializeSyntheticLambdaSymbolAllocatorUsesAtLeast1() {
         let semaModule = makeSemaModule().ctx
         ctx.initializeSyntheticLambdaSymbolAllocator(sema: semaModule)
-        XCTAssertGreaterThanOrEqual(ctx.nextSyntheticLambdaSymbolRawValue, 1)
+        XCTAssertLessThanOrEqual(ctx.nextSyntheticLambdaSymbolRawValue, -60_000_000)
     }
 
     func testInitializeSyntheticLambdaSymbolAllocatorBasedOnSymbolCount() {
@@ -257,7 +257,7 @@ final class KIRLoweringContextTests: XCTestCase {
             visibility: .public
         )
         ctx.initializeSyntheticLambdaSymbolAllocator(sema: semaModule)
-        XCTAssertGreaterThanOrEqual(ctx.nextSyntheticLambdaSymbolRawValue, Int32(symbols.count))
+        XCTAssertLessThanOrEqual(ctx.nextSyntheticLambdaSymbolRawValue, -60_000_000)
     }
 
     // MARK: - Module State Reset

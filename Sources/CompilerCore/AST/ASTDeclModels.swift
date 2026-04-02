@@ -1,5 +1,5 @@
 /// Represents a single annotation usage in Kotlin source code, e.g. `@Suppress("UNCHECKED_CAST")`.
-public struct AnnotationNode {
+public struct AnnotationNode: Equatable {
     /// The simple or qualified name of the annotation (e.g. "Suppress", "kotlin.Deprecated").
     public let name: String
     /// Serialized argument values extracted from the annotation's parenthesized argument list.

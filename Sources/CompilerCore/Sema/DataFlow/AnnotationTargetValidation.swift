@@ -96,6 +96,16 @@ extension DataFlowSemaPhase {
             )
         }
 
+        validateTypeAnnotationTargets(
+            in: decl,
+            file: file,
+            ast: ast,
+            symbols: symbols,
+            diagnostics: diagnostics,
+            interner: interner,
+            filesByID: filesByID
+        )
+
         switch decl {
         case let .classDecl(classDecl):
             validateMemberAnnotationTargets(
@@ -482,6 +492,8 @@ extension DataFlowSemaPhase {
             return allowedTargets.contains("FIELD")
         case .file:
             return allowedTargets.contains("FILE")
+        case .type:
+            return allowedTargets.contains("TYPE")
         }
     }
 
@@ -524,6 +536,8 @@ extension DataFlowSemaPhase {
             return "a delegate storage field"
         case .file:
             return "the file"
+        case .type:
+            return "a type usage"
         }
     }
 
@@ -588,5 +602,126 @@ extension DataFlowSemaPhase {
         case field
         case delegate
         case file
+        case type
+    }
+}
+
+private extension DataFlowSemaPhase {
+    func validateTypeAnnotationTargets(
+        in decl: Decl,
+        file: ASTFile,
+        ast: ASTModule,
+        symbols: SymbolTable,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner,
+        filesByID: [Int32: ASTFile]
+    ) {
+        switch decl {
+        case let .classDecl(classDecl):
+            for superType in classDecl.superTypeEntries {
+                validateTypeAnnotationTargets(
+                    typeRefID: superType.typeRef,
+                    ownerRange: classDecl.range,
+                    file: file,
+                    ast: ast,
+                    symbols: symbols,
+                    diagnostics: diagnostics,
+                    interner: interner,
+                    filesByID: filesByID
+                )
+            }
+            for param in classDecl.primaryConstructorParams {
+                if let type = param.type {
+                    validateTypeAnnotationTargets(typeRefID: type, ownerRange: classDecl.range, file: file, ast: ast, symbols: symbols, diagnostics: diagnostics, interner: interner, filesByID: filesByID)
+                }
+            }
+        case let .interfaceDecl(interfaceDecl):
+            for superType in interfaceDecl.superTypes {
+                validateTypeAnnotationTargets(typeRefID: superType, ownerRange: interfaceDecl.range, file: file, ast: ast, symbols: symbols, diagnostics: diagnostics, interner: interner, filesByID: filesByID)
+            }
+        case let .funDecl(funDecl):
+            if let receiverType = funDecl.receiverType {
+                validateTypeAnnotationTargets(typeRefID: receiverType, ownerRange: funDecl.range, file: file, ast: ast, symbols: symbols, diagnostics: diagnostics, interner: interner, filesByID: filesByID)
+            }
+            for param in funDecl.valueParams {
+                if let type = param.type {
+                    validateTypeAnnotationTargets(typeRefID: type, ownerRange: funDecl.range, file: file, ast: ast, symbols: symbols, diagnostics: diagnostics, interner: interner, filesByID: filesByID)
+                }
+            }
+            if let returnType = funDecl.returnType {
+                validateTypeAnnotationTargets(typeRefID: returnType, ownerRange: funDecl.range, file: file, ast: ast, symbols: symbols, diagnostics: diagnostics, interner: interner, filesByID: filesByID)
+            }
+        case let .propertyDecl(propertyDecl):
+            if let receiverType = propertyDecl.receiverType {
+                validateTypeAnnotationTargets(typeRefID: receiverType, ownerRange: propertyDecl.range, file: file, ast: ast, symbols: symbols, diagnostics: diagnostics, interner: interner, filesByID: filesByID)
+            }
+            if let type = propertyDecl.type {
+                validateTypeAnnotationTargets(typeRefID: type, ownerRange: propertyDecl.range, file: file, ast: ast, symbols: symbols, diagnostics: diagnostics, interner: interner, filesByID: filesByID)
+            }
+            if let fieldType = propertyDecl.explicitBackingField?.type {
+                validateTypeAnnotationTargets(typeRefID: fieldType, ownerRange: propertyDecl.range, file: file, ast: ast, symbols: symbols, diagnostics: diagnostics, interner: interner, filesByID: filesByID)
+            }
+        case let .typeAliasDecl(typeAliasDecl):
+            if let underlyingType = typeAliasDecl.underlyingType {
+                validateTypeAnnotationTargets(typeRefID: underlyingType, ownerRange: typeAliasDecl.range, file: file, ast: ast, symbols: symbols, diagnostics: diagnostics, interner: interner, filesByID: filesByID)
+            }
+        case .objectDecl, .enumEntryDecl:
+            break
+        }
+    }
+
+    func validateTypeAnnotationTargets(
+        typeRefID: TypeRefID,
+        ownerRange: SourceRange?,
+        file: ASTFile,
+        ast: ASTModule,
+        symbols: SymbolTable,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner,
+        filesByID: [Int32: ASTFile]
+    ) {
+        guard let typeRef = ast.arena.typeRef(typeRefID) else {
+            return
+        }
+
+        switch typeRef {
+        case let .named(_, args, _):
+            for arg in args {
+                switch arg {
+                case let .invariant(inner), let .out(inner), let .in(inner):
+                    validateTypeAnnotationTargets(typeRefID: inner, ownerRange: ownerRange, file: file, ast: ast, symbols: symbols, diagnostics: diagnostics, interner: interner, filesByID: filesByID)
+                case .star:
+                    break
+                }
+            }
+        case let .functionType(contextReceivers, receiver, params, returnType, isSuspend, nullable):
+            if let receiver {
+                validateTypeAnnotationTargets(typeRefID: receiver, ownerRange: ownerRange, file: file, ast: ast, symbols: symbols, diagnostics: diagnostics, interner: interner, filesByID: filesByID)
+            }
+            for param in params {
+                validateTypeAnnotationTargets(typeRefID: param, ownerRange: ownerRange, file: file, ast: ast, symbols: symbols, diagnostics: diagnostics, interner: interner, filesByID: filesByID)
+            }
+            validateTypeAnnotationTargets(typeRefID: returnType, ownerRange: ownerRange, file: file, ast: ast, symbols: symbols, diagnostics: diagnostics, interner: interner, filesByID: filesByID)
+        case let .intersection(parts):
+            for part in parts {
+                validateTypeAnnotationTargets(typeRefID: part, ownerRange: ownerRange, file: file, ast: ast, symbols: symbols, diagnostics: diagnostics, interner: interner, filesByID: filesByID)
+            }
+        case let .annotated(base, annotations):
+            for annotation in annotations {
+                validateAnnotationTarget(
+                    annotation: annotation,
+                    site: .type,
+                    ownerRange: ownerRange,
+                    decl: nil,
+                    file: file,
+                    propertySymbol: nil,
+                    symbols: symbols,
+                    diagnostics: diagnostics,
+                    interner: interner,
+                    filesByID: filesByID
+                )
+            }
+            validateTypeAnnotationTargets(typeRefID: base, ownerRange: ownerRange, file: file, ast: ast, symbols: symbols, diagnostics: diagnostics, interner: interner, filesByID: filesByID)
+        }
     }
 }

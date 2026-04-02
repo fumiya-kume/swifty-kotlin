@@ -547,6 +547,7 @@ extension CallLowerer {
         {
             [
                 "Array", "IntArray", "LongArray", "DoubleArray", "FloatArray", "BooleanArray", "CharArray",
+                "UShortArray",
             ].contains(interner.resolve(symbol.name))
         } else {
             false

@@ -215,6 +215,17 @@ extension DataFlowSemaPhase {
         }
         if let mathPackageSymbol = symbols.lookup(fqName: kotlinMathPkg) {
             registerSyntheticCoercionFunction(
+                named: "pow",
+                externalLinkName: "kk_math_pow",
+                receiverType: types.doubleType,
+                parameters: [(name: "x", type: types.doubleType)],
+                returnType: types.doubleType,
+                packageFQName: kotlinMathPkg,
+                packageSymbol: mathPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticCoercionFunction(
                 named: "roundToInt",
                 externalLinkName: "kk_float_roundToInt",
                 receiverType: types.floatType,

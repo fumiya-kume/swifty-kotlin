@@ -129,8 +129,23 @@ extension DataFlowSemaPhase {
             )
             return types.errorType
 
-        case let .functionType(receiverRefID, paramRefIDs, returnRefID, isSuspend, nullable):
+        case let .functionType(contextReceiverRefIDs, receiverRefID, paramRefIDs, returnRefID, isSuspend, nullable):
             let nullability: Nullability = nullable ? .nullable : .nonNull
+            var contextReceiverTypes: [TypeID] = []
+            for contextReceiverRef in contextReceiverRefIDs {
+                guard let contextReceiverType = resolveTypeRef(
+                    contextReceiverRef,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner,
+                    localTypeParameters: localTypeParameters,
+                    diagnostics: diagnostics
+                ) else {
+                    return nil
+                }
+                contextReceiverTypes.append(contextReceiverType)
+            }
             var receiverType: TypeID? = nil
             if let receiverRefID {
                 receiverType = resolveTypeRef(
@@ -168,6 +183,7 @@ extension DataFlowSemaPhase {
                 diagnostics: diagnostics
             ) ?? types.unitType
             return types.make(.functionType(FunctionType(
+                contextReceivers: contextReceiverTypes,
                 receiver: receiverType,
                 params: paramTypes,
                 returnType: returnType,
@@ -189,6 +205,27 @@ extension DataFlowSemaPhase {
             }
             guard partTypes.count == partRefs.count else { return nil }
             return types.make(.intersection(partTypes))
+
+        case let .annotated(base, annotations):
+            guard let baseType = resolveTypeRef(
+                base,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                localTypeParameters: localTypeParameters,
+                diagnostics: diagnostics
+            ) else {
+                return nil
+            }
+            return ExtensionFunctionTypeSupport.normalizeAnnotatedType(
+                baseType: baseType,
+                annotations: annotations,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                diagnostics: diagnostics
+            )
         }
     }
 
@@ -270,7 +307,7 @@ extension DataFlowSemaPhase {
         case let .typeParam(tp):
             return types.make(.typeParam(TypeParamType(symbol: tp.symbol, nullability: .nullable)))
         case let .functionType(ft):
-            return types.make(.functionType(FunctionType(receiver: ft.receiver, params: ft.params, returnType: ft.returnType, isSuspend: ft.isSuspend, nullability: .nullable)))
+            return types.make(.functionType(FunctionType(contextReceivers: ft.contextReceivers, receiver: ft.receiver, params: ft.params, returnType: ft.returnType, isSuspend: ft.isSuspend, nullability: .nullable)))
         case let .kClassType(kc):
             return types.make(.kClassType(KClassType(argument: kc.argument, nullability: .nullable)))
         case .any, .unit, .nothing:
@@ -417,10 +454,11 @@ extension DataFlowSemaPhase {
             }
             return types.make(.classType(ClassType(classSymbol: ct.classSymbol, args: newArgs, nullability: ct.nullability)))
         case let .functionType(ft):
+            let newContextReceivers = ft.contextReceivers.map { applySubstitution($0, argSubstitution: argSubstitution, types: types, symbols: symbols) }
             let newReceiver = ft.receiver.map { applySubstitution($0, argSubstitution: argSubstitution, types: types, symbols: symbols) }
             let newParams = ft.params.map { applySubstitution($0, argSubstitution: argSubstitution, types: types, symbols: symbols) }
             let newReturn = applySubstitution(ft.returnType, argSubstitution: argSubstitution, types: types, symbols: symbols)
-            return types.make(.functionType(FunctionType(receiver: newReceiver, params: newParams, returnType: newReturn, isSuspend: ft.isSuspend, nullability: ft.nullability)))
+            return types.make(.functionType(FunctionType(contextReceivers: newContextReceivers, receiver: newReceiver, params: newParams, returnType: newReturn, isSuspend: ft.isSuspend, nullability: ft.nullability)))
         case let .kClassType(kc):
             let newArg = applySubstitution(kc.argument, argSubstitution: argSubstitution, types: types, symbols: symbols)
             if newArg == kc.argument { return typeID }

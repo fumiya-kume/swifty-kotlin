@@ -1,4 +1,4 @@
-import CompilerCore
+import RuntimeABI
 @testable import Runtime
 import XCTest
 
@@ -20,7 +20,7 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(
             RuntimeABISpec.specVersion,
             RuntimeABIExterns.specVersion,
-            "Runtime spec version must match CompilerCore extern spec version"
+            "Runtime spec version must match shared RuntimeABI extern spec version"
         )
     }
 
@@ -80,7 +80,7 @@ final class ABIMismatchTests: XCTestCase {
         // kk_throwable_new, kk_throwable_is_cancellation, kk_panic, kk_abort_unreachable,
         // kk_require, kk_check, kk_require_lazy, kk_check_lazy,
         // kk_error, kk_todo, kk_todo_noarg, kk_dispatch_error
-        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 19)
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 22)
     }
 
     func testTestFrameworkFunctionCount() {
@@ -89,7 +89,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 145)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 144)
     }
 
     func testRegexFunctionCount() {
@@ -107,7 +107,7 @@ final class ABIMismatchTests: XCTestCase {
         // kk_string_zipWithNext
 // STDLIB-REGEX-097: kk_regex_group_names
         // STDLIB-REGEX-094: kk_regex_matches, kk_regex_from_literal, kk_string_replaceFirst_regex
-        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 32)
+        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 33)
     }
 
     func testPrintAndPrintlnFunctionCount() {
@@ -135,7 +135,7 @@ final class ABIMismatchTests: XCTestCase {
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
         // The current spec surface tracks the shared coroutine ABI subset.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 88)
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 90)
     }
 
     func testBoxingFunctionCount() {
@@ -181,6 +181,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.exceptionFunctions,
             RuntimeABISpec.testFunctions,
             RuntimeABISpec.stringFunctions,
+            RuntimeABISpec.stringBridgeFunctions,
             RuntimeABISpec.consolePrintFunctions,
             RuntimeABISpec.ioFunctions,
             RuntimeABISpec.systemFunctions,
@@ -191,17 +192,21 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.operatorFunctions,
             RuntimeABISpec.rangeFunctions,
             RuntimeABISpec.primitiveNumericConversionFunctions,
+            RuntimeABISpec.numericRuntimeBridgeFunctions,
             RuntimeABISpec.kPropertyStubFunctions,
             RuntimeABISpec.kParameterFunctions,
             RuntimeABISpec.kFunctionFunctions,
             RuntimeABISpec.callableRefFunctions,
             RuntimeABISpec.delegateFunctions,
+            RuntimeABISpec.dispatchBridgeFunctions,
             RuntimeABISpec.bitwiseFunctions,
             RuntimeABISpec.booleanFunctions,
             RuntimeABISpec.charFunctions,
             RuntimeABISpec.mathFunctions,
             RuntimeABISpec.randomFunctions,
             RuntimeABISpec.collectionFunctions,
+            RuntimeABISpec.collectionBridgeFunctions,
+            RuntimeABISpec.runtimeOnlyBridgeFunctions,
             RuntimeABISpec.sequenceFunctions,
             RuntimeABISpec.regexFunctions,
             RuntimeABISpec.hexFormatFunctions,
@@ -209,9 +214,11 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.resultFunctions,
             RuntimeABISpec.stringBuilderFunctions,
             RuntimeABISpec.fileIOFunctions,
+            RuntimeABISpec.pathFunctions,
             RuntimeABISpec.i18nFunctions,
             RuntimeABISpec.uuidFunctions,
             RuntimeABISpec.durationFunctions,
+            RuntimeABISpec.timeAndPathBridgeFunctions,
             RuntimeABISpec.atomicFunctions,
             RuntimeABISpec.threadLocalFunctions,
             RuntimeABISpec.securityFunctions,
@@ -365,6 +372,18 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters[2].type, .intptr)
         XCTAssertEqual(spec.parameters[3].name, "outThrown")
         XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
+    }
+
+    func testKKLockWithLockSignature() throws {
+        let spec = try requireSpec("kk_lock_withLock")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 3)
+        XCTAssertEqual(spec.parameters[0].name, "handle")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "actionFnPtr")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "actionEnvPtr")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
     }
 
     // MARK: - Collection HOF Scan/Reduce (STDLIB-526..530)

@@ -83,6 +83,23 @@ final class BuildASTBodyParsingRegressionTests: XCTestCase {
         }
     }
 
+    func testSuspendLocalFunctionParsesThroughKIR() throws {
+        let source = """
+        suspend fun delayed(value: Int): Int = value
+
+        fun outer(): Int {
+            suspend fun local(value: Int): Int = delayed(value)
+            return 1
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            let sema = try XCTUnwrap(ctx.sema)
+            XCTAssertFalse(sema.bindings.exprTypes.isEmpty)
+        }
+    }
+
     // MARK: - Compound assignment operators in body parsing
 
     func testCompoundAssignmentOperatorsInBody() throws {
@@ -160,6 +177,51 @@ final class BuildASTBodyParsingRegressionTests: XCTestCase {
             try runToKIR(ctx)
             let sema = try XCTUnwrap(ctx.sema)
             XCTAssertFalse(sema.bindings.exprTypes.isEmpty)
+        }
+    }
+
+    func testAnnotatedExtensionFunctionTypeAliasPreservesTypeAnnotations() throws {
+        let source = """
+        annotation class A
+        annotation class B
+        typealias Action = @A @B @ExtensionFunctionType Function1<String, Unit>
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runFrontend(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let file = try XCTUnwrap(ast.files.first)
+            let aliasDeclID = try XCTUnwrap(
+                file.topLevelDecls.first(where: {
+                    if case .typeAliasDecl = ast.arena.decl($0) {
+                        return true
+                    }
+                    return false
+                })
+            )
+
+            guard case let .typeAliasDecl(typeAliasDecl) = ast.arena.decl(aliasDeclID) else {
+                XCTFail("Expected typealias declaration")
+                return
+            }
+            let underlyingType = try XCTUnwrap(typeAliasDecl.underlyingType)
+            guard case let .annotated(base, annotations) = try XCTUnwrap(ast.arena.typeRef(underlyingType)) else {
+                XCTFail("Expected annotated type reference")
+                return
+            }
+
+            XCTAssertEqual(annotations.map(\.name), ["A", "B", "ExtensionFunctionType"])
+
+            guard case let .named(path, args, nullable) = try XCTUnwrap(ast.arena.typeRef(base)) else {
+                XCTFail("Expected named type reference")
+                return
+            }
+
+            XCTAssertEqual(path.map(ctx.interner.resolve), ["Function1"])
+            XCTAssertEqual(args.count, 2)
+            XCTAssertFalse(nullable)
         }
     }
 

@@ -8,6 +8,12 @@ extension TypeCheckHelpers {
         case error
     }
 
+    private struct DeprecatedArguments {
+        let message: String
+        let level: DeprecatedLevel
+        let replaceWith: String?
+    }
+
     /// Checks whether `symbol` has a `@Deprecated` annotation and emits an appropriate
     /// diagnostic at `range` (the call/reference site).
     ///
@@ -30,28 +36,37 @@ extension TypeCheckHelpers {
                 "<unknown>"
             }
             let parsed = parseDeprecatedArguments(ann.arguments)
-            let deprecationMessage = parsed.message.isEmpty
+            var deprecationMessage = parsed.message.isEmpty
                 ? "'\(symbolName)' is deprecated."
                 : "'\(symbolName)' is deprecated. \(parsed.message)"
+            let codeActions: [DiagnosticCodeAction]
+            if let replaceWith = parsed.replaceWith, !replaceWith.isEmpty {
+                deprecationMessage += " Replace with: \(replaceWith)"
+                codeActions = [DiagnosticCodeAction(title: "Replace with '\(replaceWith)'")]
+            } else {
+                codeActions = []
+            }
 
             if parsed.level == .error {
                 diagnostics.error(
                     "KSWIFTK-SEMA-DEPRECATED",
                     deprecationMessage,
-                    range: range
+                    range: range,
+                    codeActions: codeActions
                 )
             } else {
                 diagnostics.warning(
                     "KSWIFTK-SEMA-DEPRECATED",
                     deprecationMessage,
-                    range: range
+                    range: range,
+                    codeActions: codeActions
                 )
             }
             return // Only emit one deprecation diagnostic per symbol reference.
         }
     }
 
-    private func parseDeprecatedArguments(_ arguments: [String]) -> (message: String, level: DeprecatedLevel) {
+    private func parseDeprecatedArguments(_ arguments: [String]) -> DeprecatedArguments {
         var namedArgs: [String: String] = [:]
         var positionalArgs: [String] = []
 
@@ -72,12 +87,15 @@ extension TypeCheckHelpers {
 
         let levelCandidate = namedArgs["level"] ?? positionalArgs.first(where: { parseDeprecatedLevel($0) != nil })
         let level = parseDeprecatedLevel(levelCandidate) ?? .warning
+        let replaceWithCandidate = namedArgs["replacewith"]
+            ?? positionalArgs.first(where: { isReplaceWithExpression($0) })
+        let replaceWith = parseReplaceWithExpression(replaceWithCandidate)
 
-        return (message, level)
+        return DeprecatedArguments(message: message, level: level, replaceWith: replaceWith)
     }
 
     private func splitNamedArgument(_ argument: String) -> (String, String)? {
-        guard let equalIndex = argument.firstIndex(of: "=") else {
+        guard let equalIndex = firstTopLevelIndex(of: "=", in: argument) else {
             return nil
         }
         let name = argument[..<equalIndex].trimmingCharacters(in: .whitespacesAndNewlines)
@@ -104,6 +122,159 @@ extension TypeCheckHelpers {
         default:
             nil
         }
+    }
+
+    private func isReplaceWithExpression(_ raw: String) -> Bool {
+        let normalized = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        return normalized.hasPrefix(KnownCompilerAnnotation.replaceWith.simpleName + "(")
+            || normalized.hasPrefix(KnownCompilerAnnotation.replaceWith.qualifiedName + "(")
+    }
+
+    private func parseReplaceWithExpression(_ raw: String?) -> String? {
+        guard let raw else {
+            return nil
+        }
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard isReplaceWithExpression(trimmed),
+              let lParen = trimmed.firstIndex(of: "("),
+              let rParen = trimmed.lastIndex(of: ")"),
+              lParen < rParen
+        else {
+            return nil
+        }
+
+        let innerStart = trimmed.index(after: lParen)
+        let inner = String(trimmed[innerStart..<rParen])
+        let arguments = splitAnnotationArguments(inner)
+        var namedArgs: [String: String] = [:]
+        var positionalArgs: [String] = []
+        for argument in arguments {
+            if let (name, value) = splitNamedArgument(argument) {
+                namedArgs[name.lowercased()] = value
+            } else {
+                positionalArgs.append(argument)
+            }
+        }
+
+        let expressionCandidate = namedArgs["expression"] ?? positionalArgs.first
+        let expression = expressionCandidate.map(normalizeAnnotationStringLiteral) ?? ""
+        return expression.isEmpty ? nil : expression
+    }
+
+    private func splitAnnotationArguments(_ raw: String) -> [String] {
+        var arguments: [String] = []
+        var current = ""
+        var parenDepth = 0
+        var bracketDepth = 0
+        var braceDepth = 0
+        var inString = false
+        var stringDelimiter: Character?
+        var previousWasEscape = false
+
+        for character in raw {
+            current.append(character)
+            if inString {
+                if character == "\\" && !previousWasEscape {
+                    previousWasEscape = true
+                    continue
+                }
+                if character == stringDelimiter && !previousWasEscape {
+                    inString = false
+                    stringDelimiter = nil
+                }
+                previousWasEscape = false
+                continue
+            }
+
+            switch character {
+            case "\"", "'":
+                inString = true
+                stringDelimiter = character
+                previousWasEscape = false
+            case "(":
+                parenDepth += 1
+            case ")":
+                parenDepth = max(0, parenDepth - 1)
+            case "[":
+                bracketDepth += 1
+            case "]":
+                bracketDepth = max(0, bracketDepth - 1)
+            case "{":
+                braceDepth += 1
+            case "}":
+                braceDepth = max(0, braceDepth - 1)
+            case "," where parenDepth == 0 && bracketDepth == 0 && braceDepth == 0:
+                current.removeLast()
+                let trimmed = current.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty {
+                    arguments.append(trimmed)
+                }
+                current = ""
+            default:
+                break
+            }
+        }
+
+        let trailing = current.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trailing.isEmpty {
+            arguments.append(trailing)
+        }
+        return arguments
+    }
+
+    private func firstTopLevelIndex(of character: Character, in raw: String) -> String.Index? {
+        var parenDepth = 0
+        var bracketDepth = 0
+        var braceDepth = 0
+        var inString = false
+        var stringDelimiter: Character?
+        var previousWasEscape = false
+
+        for index in raw.indices {
+            let current = raw[index]
+            if inString {
+                if current == "\\" && !previousWasEscape {
+                    previousWasEscape = true
+                    continue
+                }
+                if current == stringDelimiter && !previousWasEscape {
+                    inString = false
+                    stringDelimiter = nil
+                }
+                previousWasEscape = false
+                continue
+            }
+
+            switch current {
+            case "\"", "'":
+                inString = true
+                stringDelimiter = current
+                previousWasEscape = false
+            case "(":
+                parenDepth += 1
+            case ")":
+                parenDepth = max(0, parenDepth - 1)
+            case "[":
+                bracketDepth += 1
+            case "]":
+                bracketDepth = max(0, bracketDepth - 1)
+            case "{":
+                braceDepth += 1
+            case "}":
+                braceDepth = max(0, braceDepth - 1)
+            default:
+                break
+            }
+
+            if current == character,
+               parenDepth == 0,
+               bracketDepth == 0,
+               braceDepth == 0
+            {
+                return index
+            }
+        }
+        return nil
     }
 
     private func normalizeAnnotationStringLiteral(_ raw: String) -> String {

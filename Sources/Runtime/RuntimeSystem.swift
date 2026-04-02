@@ -1,7 +1,46 @@
 import Dispatch
 import Foundation
 
+#if canImport(Darwin)
+    import Darwin
+#elseif canImport(Glibc)
+    import Glibc
+#endif
+
 // MARK: - kotlin.system functions (STDLIB-131/132, STDLIB-TIME-085)
+
+private let runtimeProcessStartNanos = runtimeComputeProcessStartNanos()
+
+private func runtimeComputeProcessStartNanos() -> UInt64 {
+#if canImport(Darwin)
+    var processInfo = proc_bsdinfo()
+    let infoSize = MemoryLayout<proc_bsdinfo>.size
+    let readSize = withUnsafeMutablePointer(to: &processInfo) { infoPtr in
+        proc_pidinfo(getpid(), PROC_PIDTBSDINFO, 0, infoPtr, Int32(infoSize))
+    }
+
+    guard Int(readSize) == infoSize else {
+        return DispatchTime.now().uptimeNanoseconds
+    }
+
+    let startEpochNanos = processInfo.pbi_start_tvsec &* 1_000_000_000
+        &+ processInfo.pbi_start_tvusec &* 1_000
+    let nowEpochNanos = UInt64(Date().timeIntervalSince1970 * 1_000_000_000)
+    let nowUptimeNanos = DispatchTime.now().uptimeNanoseconds
+
+    guard nowEpochNanos >= startEpochNanos else {
+        return nowUptimeNanos
+    }
+
+    let elapsedNanos = nowEpochNanos - startEpochNanos
+    guard nowUptimeNanos >= elapsedNanos else {
+        return 0
+    }
+    return nowUptimeNanos - elapsedNanos
+#else
+    return DispatchTime.now().uptimeNanoseconds
+#endif
+}
 
 /// Runtime support for kotlin.system.exitProcess(status) (STDLIB-132/657).
 /// Returns `Never` because `exit()` never returns – matching Kotlin's `Nothing` semantics.

@@ -11,9 +11,15 @@ extension DataFlowSemaPhase {
         let cryptoSpecPkg = ensurePackage(path: ["javax", "crypto", "spec"], symbols: symbols, interner: interner)
 
         let intType = types.intType
+        let boolType = types.booleanType
         let stringType = types.stringType
         let unitType = types.unitType
+        let anyType = types.anyType
         let byteArrayType = makeSecurityByteArrayType(symbols: symbols, types: types, interner: interner)
+        let securityPkg = ensurePackage(path: ["java", "security"], symbols: symbols, interner: interner)
+        let securityPkgSymbol = symbols.lookup(fqName: securityPkg)
+        let certPkg = ensurePackage(path: ["java", "security", "cert"], symbols: symbols, interner: interner)
+        let certPkgSymbol = symbols.lookup(fqName: certPkg)
 
         let secretKeySpecSymbol = ensureClassSymbol(
             named: "SecretKeySpec",
@@ -61,7 +67,6 @@ extension DataFlowSemaPhase {
             parameters: [
                 ("iv", byteArrayType),
             ],
-            canThrow: true,
             symbols: symbols,
             interner: interner
         )
@@ -129,7 +134,15 @@ extension DataFlowSemaPhase {
             parameters: [("transformation", stringType)],
             returnType: cipherType,
             symbols: symbols,
-            types: types,
+            interner: interner
+        )
+        registerSecurityStaticMethod(
+            name: "getInstance",
+            externalLinkName: "kk_cipher_getInstance",
+            ownerSymbol: cipherSymbol,
+            parameters: [("transformation", stringType)],
+            returnType: cipherType,
+            symbols: symbols,
             interner: interner
         )
 
@@ -184,33 +197,33 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // MARK: - MessageDigest stubs (java.security)
-        let securityPkg = ensurePackage(path: ["java", "security"], symbols: symbols, interner: interner)
-        let securityPkgSymbol = symbols.lookup(fqName: securityPkg)
-        let digestSymbol = ensureClassSymbol(named: "MessageDigest", in: securityPkg, symbols: symbols, interner: interner)
-        if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: digestSymbol) }
-        let digestType = types.make(.classType(ClassType(classSymbol: digestSymbol, args: [], nullability: .nonNull)))
-        symbols.setPropertyType(digestType, for: digestSymbol)
-
-        registerDigestTopLevel(packageFQName: securityPkg, name: "getInstance", parameterTypes: [types.stringType], returnType: digestType, externalLinkName: "kk_message_digest_getInstance", symbols: symbols, interner: interner)
-        registerDigestMember(ownerSymbol: digestSymbol, ownerType: digestType, name: "digest", parameterTypes: [byteArrayType], returnType: byteArrayType, externalLinkName: "kk_message_digest_digest", symbols: symbols, interner: interner)
-
-        // MARK: KeyPairGenerator, KeyPair (STDLIB-SEC-146)
-        let boolType = types.make(.primitive(.boolean, .nonNull))
-
-        let keyPairGeneratorSymbol = ensureClassSymbol(
-            named: "KeyPairGenerator",
+        let publicKeySymbol = ensureClassSymbol(
+            named: "PublicKey",
             in: securityPkg,
             symbols: symbols,
             interner: interner
         )
-        if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: keyPairGeneratorSymbol) }
-        let keyPairGeneratorType = types.make(.classType(ClassType(
-            classSymbol: keyPairGeneratorSymbol,
+        if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: publicKeySymbol) }
+        let publicKeyType = types.make(.classType(ClassType(
+            classSymbol: publicKeySymbol,
             args: [],
             nullability: .nonNull
         )))
-        symbols.setPropertyType(keyPairGeneratorType, for: keyPairGeneratorSymbol)
+        symbols.setPropertyType(publicKeyType, for: publicKeySymbol)
+
+        let privateKeySymbol = ensureClassSymbol(
+            named: "PrivateKey",
+            in: securityPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: privateKeySymbol) }
+        let privateKeyType = types.make(.classType(ClassType(
+            classSymbol: privateKeySymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(privateKeyType, for: privateKeySymbol)
 
         let keyPairSymbol = ensureClassSymbol(
             named: "KeyPair",
@@ -226,8 +239,44 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(keyPairType, for: keyPairSymbol)
 
-        let keyPairGeneratorCompanionFQName = ensureCompanionSymbol(
+        registerSecurityMemberProperty(
+            name: "publicKey",
+            ownerSymbol: keyPairSymbol,
+            propertyType: publicKeyType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityMemberProperty(
+            name: "privateKey",
+            ownerSymbol: keyPairSymbol,
+            propertyType: privateKeyType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        let keyPairGeneratorSymbol = ensureClassSymbol(
+            named: "KeyPairGenerator",
+            in: securityPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: keyPairGeneratorSymbol) }
+        let keyPairGeneratorType = types.make(.classType(ClassType(
+            classSymbol: keyPairGeneratorSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(keyPairGeneratorType, for: keyPairGeneratorSymbol)
+        let keyPairGeneratorCompanionFQName = ensureCipherCompanionSymbol(
             ownerSymbol: keyPairGeneratorSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityConstructor(
+            externalLinkName: "kk_keypairgenerator_getInstance",
+            ownerSymbol: keyPairGeneratorSymbol,
+            ownerType: keyPairGeneratorType,
+            parameters: [("algorithm", stringType)],
             symbols: symbols,
             interner: interner
         )
@@ -237,9 +286,16 @@ extension DataFlowSemaPhase {
             companionFQName: keyPairGeneratorCompanionFQName,
             parameters: [("algorithm", stringType)],
             returnType: keyPairGeneratorType,
-            canThrow: true,
             symbols: symbols,
-            types: types,
+            interner: interner
+        )
+        registerSecurityStaticMethod(
+            name: "getInstance",
+            externalLinkName: "kk_keypairgenerator_getInstance",
+            ownerSymbol: keyPairGeneratorSymbol,
+            parameters: [("algorithm", stringType)],
+            returnType: keyPairGeneratorType,
+            symbols: symbols,
             interner: interner
         )
         registerSecurityInstanceMethod(
@@ -263,40 +319,6 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        registerSecurityValueProperty(
-            ownerSymbol: keyPairSymbol,
-            propertyName: "public",
-            getterLinkName: "kk_keypair_public",
-            valueType: types.anyType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSecurityValueProperty(
-            ownerSymbol: keyPairSymbol,
-            propertyName: "private",
-            getterLinkName: "kk_keypair_private",
-            valueType: types.anyType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSecurityValueProperty(
-            ownerSymbol: keyPairSymbol,
-            propertyName: "publicKey",
-            getterLinkName: "kk_keypair_publicKey",
-            valueType: types.anyType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSecurityValueProperty(
-            ownerSymbol: keyPairSymbol,
-            propertyName: "privateKey",
-            getterLinkName: "kk_keypair_privateKey",
-            valueType: types.anyType,
-            symbols: symbols,
-            interner: interner
-        )
-
-        // MARK: Signature (STDLIB-SEC-146)
         let signatureSymbol = ensureClassSymbol(
             named: "Signature",
             in: securityPkg,
@@ -310,9 +332,16 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(signatureType, for: signatureSymbol)
-
-        let signatureCompanionFQName = ensureCompanionSymbol(
+        let signatureCompanionFQName = ensureCipherCompanionSymbol(
             ownerSymbol: signatureSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityConstructor(
+            externalLinkName: "kk_signature_getInstance",
+            ownerSymbol: signatureSymbol,
+            ownerType: signatureType,
+            parameters: [("algorithm", stringType)],
             symbols: symbols,
             interner: interner
         )
@@ -322,9 +351,16 @@ extension DataFlowSemaPhase {
             companionFQName: signatureCompanionFQName,
             parameters: [("algorithm", stringType)],
             returnType: signatureType,
-            canThrow: true,
             symbols: symbols,
-            types: types,
+            interner: interner
+        )
+        registerSecurityStaticMethod(
+            name: "getInstance",
+            externalLinkName: "kk_signature_getInstance",
+            ownerSymbol: signatureSymbol,
+            parameters: [("algorithm", stringType)],
+            returnType: signatureType,
+            symbols: symbols,
             interner: interner
         )
         registerSecurityInstanceMethod(
@@ -332,7 +368,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_signature_initSign",
             ownerSymbol: signatureSymbol,
             ownerType: signatureType,
-            parameters: [("privateKey", types.anyType)],
+            parameters: [("privateKey", privateKeyType)],
             returnType: unitType,
             symbols: symbols,
             interner: interner
@@ -342,7 +378,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_signature_initVerify",
             ownerSymbol: signatureSymbol,
             ownerType: signatureType,
-            parameters: [("publicKey", types.anyType)],
+            parameters: [("publicKey", publicKeyType)],
             returnType: unitType,
             symbols: symbols,
             interner: interner
@@ -372,82 +408,33 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_signature_verify",
             ownerSymbol: signatureSymbol,
             ownerType: signatureType,
-            parameters: [("signature", byteArrayType)],
+            parameters: [("signatureBytes", byteArrayType)],
             returnType: boolType,
             symbols: symbols,
             interner: interner
         )
 
-        // MARK: CertificateFactory (STDLIB-SEC-146)
-        let certFactorySymbol = ensureClassSymbol(
+        let certificateFactorySymbol = ensureClassSymbol(
             named: "CertificateFactory",
-            in: securityPkg,
+            in: certPkg,
             symbols: symbols,
             interner: interner
         )
-        if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: certFactorySymbol) }
-        let certFactoryType = types.make(.classType(ClassType(
-            classSymbol: certFactorySymbol,
+        if let certPkgSymbol { symbols.setParentSymbol(certPkgSymbol, for: certificateFactorySymbol) }
+        let certificateFactoryType = types.make(.classType(ClassType(
+            classSymbol: certificateFactorySymbol,
             args: [],
             nullability: .nonNull
         )))
-        symbols.setPropertyType(certFactoryType, for: certFactorySymbol)
-
-        let certFactoryCompanionFQName = ensureCompanionSymbol(
-            ownerSymbol: certFactorySymbol,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSecurityCompanionFactory(
-            name: "getInstance",
-            externalLinkName: "kk_certificatefactory_getInstance",
-            companionFQName: certFactoryCompanionFQName,
-            parameters: [("type", stringType)],
-            returnType: certFactoryType,
-            canThrow: true,
-            symbols: symbols,
-            types: types,
-            interner: interner
-        )
-
-        let inputStreamType: TypeID = if let inputStreamSymbol = symbols.lookup(fqName: [
-            interner.intern("java"),
-            interner.intern("io"),
-            interner.intern("InputStream")
-        ]) {
-            types.make(.classType(ClassType(
-                classSymbol: inputStreamSymbol,
-                args: [],
-                nullability: .nonNull
-            )))
-        } else {
-            types.anyType
-        }
-
-        // MARK: Certificate / trust path support (STDLIB-SEC-146)
-        let certPathPkg = ensurePackage(path: ["java", "security", "cert"], symbols: symbols, interner: interner)
-
-        let certPathSymbol = ensureClassSymbol(
-            named: "CertPath",
-            in: certPathPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: certPathSymbol) }
-        let certPathType = types.make(.classType(ClassType(
-            classSymbol: certPathSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
-        symbols.setPropertyType(certPathType, for: certPathSymbol)
+        symbols.setPropertyType(certificateFactoryType, for: certificateFactorySymbol)
 
         let x509CertificateSymbol = ensureClassSymbol(
             named: "X509Certificate",
-            in: certPathPkg,
+            in: certPkg,
             symbols: symbols,
             interner: interner
         )
-        if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: x509CertificateSymbol) }
+        if let certPkgSymbol { symbols.setParentSymbol(certPkgSymbol, for: x509CertificateSymbol) }
         let x509CertificateType = types.make(.classType(ClassType(
             classSymbol: x509CertificateSymbol,
             args: [],
@@ -455,13 +442,27 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(x509CertificateType, for: x509CertificateSymbol)
 
-        let trustAnchorSymbol = ensureClassSymbol(
-            named: "TrustAnchor",
-            in: certPathPkg,
+        let certPathSymbol = ensureClassSymbol(
+            named: "CertPath",
+            in: certPkg,
             symbols: symbols,
             interner: interner
         )
-        if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: trustAnchorSymbol) }
+        if let certPkgSymbol { symbols.setParentSymbol(certPkgSymbol, for: certPathSymbol) }
+        let certPathType = types.make(.classType(ClassType(
+            classSymbol: certPathSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(certPathType, for: certPathSymbol)
+
+        let trustAnchorSymbol = ensureClassSymbol(
+            named: "TrustAnchor",
+            in: certPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let certPkgSymbol { symbols.setParentSymbol(certPkgSymbol, for: trustAnchorSymbol) }
         let trustAnchorType = types.make(.classType(ClassType(
             classSymbol: trustAnchorSymbol,
             args: [],
@@ -471,11 +472,11 @@ extension DataFlowSemaPhase {
 
         let pkixParametersSymbol = ensureClassSymbol(
             named: "PKIXParameters",
-            in: certPathPkg,
+            in: certPkg,
             symbols: symbols,
             interner: interner
         )
-        if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: pkixParametersSymbol) }
+        if let certPkgSymbol { symbols.setParentSymbol(certPkgSymbol, for: pkixParametersSymbol) }
         let pkixParametersType = types.make(.classType(ClassType(
             classSymbol: pkixParametersSymbol,
             args: [],
@@ -485,11 +486,11 @@ extension DataFlowSemaPhase {
 
         let certPathValidatorSymbol = ensureClassSymbol(
             named: "CertPathValidator",
-            in: certPathPkg,
+            in: certPkg,
             symbols: symbols,
             interner: interner
         )
-        if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: certPathValidatorSymbol) }
+        if let certPkgSymbol { symbols.setParentSymbol(certPkgSymbol, for: certPathValidatorSymbol) }
         let certPathValidatorType = types.make(.classType(ClassType(
             classSymbol: certPathValidatorSymbol,
             args: [],
@@ -497,73 +498,44 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(certPathValidatorType, for: certPathValidatorSymbol)
 
-        let listIntType = makeSecurityListType(elementType: types.intType, symbols: symbols, types: types, interner: interner)
-        let nullableByteArrayType = types.makeNullable(byteArrayType)
+        let certificateFactoryCompanionFQName = ensureCipherCompanionSymbol(
+            ownerSymbol: certificateFactorySymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityConstructor(
+            externalLinkName: "kk_certificatefactory_getInstance",
+            ownerSymbol: certificateFactorySymbol,
+            ownerType: certificateFactoryType,
+            parameters: [("type", stringType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityCompanionFactory(
+            name: "getInstance",
+            externalLinkName: "kk_certificatefactory_getInstance",
+            companionFQName: certificateFactoryCompanionFQName,
+            parameters: [("type", stringType)],
+            returnType: certificateFactoryType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityStaticMethod(
+            name: "getInstance",
+            externalLinkName: "kk_certificatefactory_getInstance",
+            ownerSymbol: certificateFactorySymbol,
+            parameters: [("type", stringType)],
+            returnType: certificateFactoryType,
+            symbols: symbols,
+            interner: interner
+        )
         registerSecurityInstanceMethod(
             name: "generateCertificate",
             externalLinkName: "kk_certificatefactory_generateCertificate",
-            ownerSymbol: certFactorySymbol,
-            ownerType: certFactoryType,
-            parameters: [("data", listIntType)],
+            ownerSymbol: certificateFactorySymbol,
+            ownerType: certificateFactoryType,
+            parameters: [("data", anyType)],
             returnType: x509CertificateType,
-            canThrow: true,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSecurityInstanceMethod(
-            name: "generateCertificate",
-            externalLinkName: "kk_certificatefactory_generateCertificate_inputStream",
-            ownerSymbol: certFactorySymbol,
-            ownerType: certFactoryType,
-            parameters: [("data", inputStreamType)],
-            returnType: x509CertificateType,
-            canThrow: true,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSecurityInstanceMethod(
-            name: "generateCertificate",
-            externalLinkName: "kk_certificatefactory_generateCertificate",
-            ownerSymbol: certFactorySymbol,
-            ownerType: certFactoryType,
-            parameters: [("data", byteArrayType)],
-            returnType: x509CertificateType,
-            canThrow: true,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSecurityInstanceMethod(
-            name: "getPublicKey",
-            externalLinkName: "kk_x509certificate_getPublicKey",
-            ownerSymbol: x509CertificateSymbol,
-            ownerType: x509CertificateType,
-            parameters: [],
-            returnType: types.anyType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSecurityInstanceMethod(
-            name: "getEncoded",
-            externalLinkName: "kk_x509certificate_getEncoded",
-            ownerSymbol: x509CertificateSymbol,
-            ownerType: x509CertificateType,
-            parameters: [],
-            returnType: byteArrayType,
-            symbols: symbols,
-            interner: interner
-        )
-
-        let listX509CertificateType = makeSecurityListType(elementType: x509CertificateType, symbols: symbols, types: types, interner: interner)
-        let listTrustAnchorType = makeSecurityListType(elementType: trustAnchorType, symbols: symbols, types: types, interner: interner)
-
-        registerSecurityInstanceMethod(
-            name: "generateCertPath",
-            externalLinkName: "kk_certificatefactory_generateCertPath",
-            ownerSymbol: certFactorySymbol,
-            ownerType: certFactoryType,
-            parameters: [("certificates", listX509CertificateType)],
-            returnType: certPathType,
-            canThrow: true,
             symbols: symbols,
             interner: interner
         )
@@ -572,66 +544,37 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_certpath_new",
             ownerSymbol: certPathSymbol,
             ownerType: certPathType,
-            parameters: [("certificates", listX509CertificateType)],
-            canThrow: true,
+            parameters: [("certificates", anyType)],
             symbols: symbols,
             interner: interner
         )
-
         registerSecurityConstructor(
             externalLinkName: "kk_trustanchor_new",
             ownerSymbol: trustAnchorSymbol,
             ownerType: trustAnchorType,
             parameters: [("certificate", x509CertificateType)],
-            canThrow: true,
             symbols: symbols,
             interner: interner
         )
-        registerSecurityConstructor(
-            externalLinkName: "kk_trustanchor_new_with_constraints",
-            ownerSymbol: trustAnchorSymbol,
-            ownerType: trustAnchorType,
-            parameters: [
-                ("certificate", x509CertificateType),
-                ("nameConstraints", nullableByteArrayType),
-            ],
-            canThrow: true,
-            symbols: symbols,
-            interner: interner
-        )
-
         registerSecurityConstructor(
             externalLinkName: "kk_pkixparameters_new",
             ownerSymbol: pkixParametersSymbol,
             ownerType: pkixParametersType,
-            parameters: [("trustAnchors", listTrustAnchorType)],
-            canThrow: true,
+            parameters: [("trustAnchors", anyType)],
+            symbols: symbols,
+            interner: interner
+        )
+
+        let certPathValidatorCompanionFQName = ensureCipherCompanionSymbol(
+            ownerSymbol: certPathValidatorSymbol,
             symbols: symbols,
             interner: interner
         )
         registerSecurityConstructor(
-            externalLinkName: "kk_pkixparameters_new_from_set",
-            ownerSymbol: pkixParametersSymbol,
-            ownerType: pkixParametersType,
-            parameters: [("trustAnchors", makeSecuritySetType(elementType: trustAnchorType, symbols: symbols, types: types, interner: interner))],
-            canThrow: true,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerSecurityInstanceMethod(
-            name: "setTrustAnchors",
-            externalLinkName: "kk_pkixparameters_setTrustAnchors",
-            ownerSymbol: pkixParametersSymbol,
-            ownerType: pkixParametersType,
-            parameters: [("trustAnchors", listTrustAnchorType)],
-            returnType: unitType,
-            symbols: symbols,
-            interner: interner
-        )
-
-        let certPathValidatorCompanionFQName = ensureCompanionSymbol(
+            externalLinkName: "kk_certpathvalidator_getInstance",
             ownerSymbol: certPathValidatorSymbol,
+            ownerType: certPathValidatorType,
+            parameters: [("algorithm", stringType)],
             symbols: symbols,
             interner: interner
         )
@@ -641,9 +584,16 @@ extension DataFlowSemaPhase {
             companionFQName: certPathValidatorCompanionFQName,
             parameters: [("algorithm", stringType)],
             returnType: certPathValidatorType,
-            canThrow: true,
             symbols: symbols,
-            types: types,
+            interner: interner
+        )
+        registerSecurityStaticMethod(
+            name: "getInstance",
+            externalLinkName: "kk_certpathvalidator_getInstance",
+            ownerSymbol: certPathValidatorSymbol,
+            parameters: [("algorithm", stringType)],
+            returnType: certPathValidatorType,
+            symbols: symbols,
             interner: interner
         )
         registerSecurityInstanceMethod(
@@ -651,11 +601,26 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_certpathvalidator_validate",
             ownerSymbol: certPathValidatorSymbol,
             ownerType: certPathValidatorType,
-            parameters: [("certPath", certPathType), ("parameters", pkixParametersType)],
-            returnType: types.anyType,
+            parameters: [
+                ("certPath", certPathType),
+                ("parameters", pkixParametersType),
+            ],
+            returnType: boolType,
             symbols: symbols,
             interner: interner
         )
+
+        // MARK: - MessageDigest stubs (java.security)
+        let digestSymbol = ensureClassSymbol(named: "MessageDigest", in: securityPkg, symbols: symbols, interner: interner)
+        if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: digestSymbol) }
+        let digestType = types.make(.classType(ClassType(classSymbol: digestSymbol, args: [], nullability: .nonNull)))
+        let digestByteArrayType: TypeID = if let listSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("collections"), interner.intern("List")]) {
+            types.make(.classType(ClassType(classSymbol: listSymbol, args: [.out(types.intType)], nullability: .nonNull)))
+        } else { types.anyType }
+        symbols.setPropertyType(digestType, for: digestSymbol)
+
+        registerDigestTopLevel(packageFQName: securityPkg, name: "getInstance", parameterTypes: [types.stringType], returnType: digestType, externalLinkName: "kk_message_digest_getInstance", symbols: symbols, interner: interner)
+        registerDigestMember(ownerSymbol: digestSymbol, ownerType: digestType, name: "digest", parameterTypes: [digestByteArrayType], returnType: digestByteArrayType, externalLinkName: "kk_message_digest_digest", symbols: symbols, interner: interner)
     }
 
     private func ensureCompanionSymbol(
@@ -717,7 +682,8 @@ extension DataFlowSemaPhase {
             visibility: .public,
             flags: [.synthetic, .constValue]
         )
-        symbols.setParentSymbol(ownerSymbol, for: symbol)
+        let parentSymbol = symbols.lookup(fqName: ownerFQName) ?? ownerSymbol
+        symbols.setParentSymbol(parentSymbol, for: symbol)
         symbols.setPropertyType(intType, for: symbol)
         symbols.setConstValueExprKind(.intLiteral(Int64(value)), for: symbol)
     }
@@ -728,29 +694,22 @@ extension DataFlowSemaPhase {
         companionFQName: [InternedString],
         parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
-        canThrow: Bool = false,
         symbols: SymbolTable,
-        types: TypeSystem,
         interner: StringInterner
     ) {
         let functionName = interner.intern(name)
         let functionFQName = companionFQName + [functionName]
-        guard let companionSymbol = symbols.lookup(fqName: companionFQName) else {
-            return
-        }
-        let companionType = types.make(.classType(ClassType(
-            classSymbol: companionSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
         guard symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
             guard let existingSignature = symbols.functionSignature(for: symbolID) else {
                 return false
             }
-            return existingSignature.parameterTypes == parameters.map { $0.type } &&
-                existingSignature.returnType == returnType &&
-                existingSignature.receiverType == companionType
+            return existingSignature.parameterTypes == parameters.map(\.type) &&
+                existingSignature.returnType == returnType
         }) == nil else {
+            return
+        }
+
+        guard let companionSymbol = symbols.lookup(fqName: companionFQName) else {
             return
         }
 
@@ -760,7 +719,7 @@ extension DataFlowSemaPhase {
             fqName: functionFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: [.synthetic, .static]
         )
         symbols.setParentSymbol(companionSymbol, for: functionSymbol)
         symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
@@ -782,10 +741,71 @@ extension DataFlowSemaPhase {
 
         symbols.setFunctionSignature(
             FunctionSignature(
-                receiverType: companionType,
-                parameterTypes: parameters.map { $0.type },
+                parameterTypes: parameters.map(\.type),
                 returnType: returnType,
-                canThrow: canThrow,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerSecurityStaticMethod(
+        name: String,
+        externalLinkName: String,
+        ownerSymbol: SymbolID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let functionName = interner.intern(name)
+        let functionFQName = ownerInfo.fqName + [functionName]
+        guard symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.parameterTypes == parameters.map(\.type) &&
+                existingSignature.returnType == returnType &&
+                existingSignature.receiverType == nil
+        }) == nil else {
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .static]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
                 valueParameterSymbols: valueParameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
@@ -801,7 +821,6 @@ extension DataFlowSemaPhase {
         ownerType: TypeID,
         parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
-        canThrow: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -812,7 +831,7 @@ extension DataFlowSemaPhase {
             guard let existingSignature = symbols.functionSignature(for: symbolID) else {
                 return false
             }
-            return existingSignature.parameterTypes == parameters.map { $0.type } &&
+            return existingSignature.parameterTypes == parameters.map(\.type) &&
                 existingSignature.returnType == returnType &&
                 existingSignature.receiverType == ownerType
         }) == nil else {
@@ -848,47 +867,14 @@ extension DataFlowSemaPhase {
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: ownerType,
-                parameterTypes: parameters.map { $0.type },
+                parameterTypes: parameters.map(\.type),
                 returnType: returnType,
-                canThrow: canThrow,
                 valueParameterSymbols: valueParameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
             ),
             for: functionSymbol
         )
-    }
-
-    private func registerSecurityValueProperty(
-        ownerSymbol: SymbolID,
-        propertyName: String,
-        getterLinkName: String,
-        valueType: TypeID,
-        symbols: SymbolTable,
-        interner: StringInterner
-    ) {
-        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
-        let propertyNameID = interner.intern(propertyName)
-        let propertyFQName = ownerInfo.fqName + [propertyNameID]
-        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { id in
-            symbols.symbol(id)?.kind == .property
-        }) {
-            symbols.setExternalLinkName(getterLinkName, for: existing)
-            symbols.setPropertyType(valueType, for: existing)
-            return
-        }
-
-        let propertySymbol = symbols.define(
-            kind: .property,
-            name: propertyNameID,
-            fqName: propertyFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic]
-        )
-        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
-        symbols.setExternalLinkName(getterLinkName, for: propertySymbol)
-        symbols.setPropertyType(valueType, for: propertySymbol)
     }
 
     private func registerSecurityConstructor(
@@ -907,7 +893,7 @@ extension DataFlowSemaPhase {
             guard let existingSignature = symbols.functionSignature(for: symbolID) else {
                 return false
             }
-            return existingSignature.parameterTypes == parameters.map { $0.type } &&
+            return existingSignature.parameterTypes == parameters.map(\.type) &&
                 existingSignature.returnType == ownerType
         }) == nil else {
             return
@@ -941,7 +927,7 @@ extension DataFlowSemaPhase {
 
         symbols.setFunctionSignature(
             FunctionSignature(
-                parameterTypes: parameters.map { $0.type },
+                parameterTypes: parameters.map(\.type),
                 returnType: ownerType,
                 canThrow: canThrow,
                 valueParameterSymbols: valueParameterSymbols,
@@ -950,6 +936,33 @@ extension DataFlowSemaPhase {
             ),
             for: ctorSymbol
         )
+    }
+
+    private func registerSecurityMemberProperty(
+        name: String,
+        ownerSymbol: SymbolID,
+        propertyType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerInfo.fqName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbols.symbol($0)?.kind == .property }) {
+            symbols.setPropertyType(propertyType, for: existing)
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(propertyType, for: propertySymbol)
     }
 
     private func makeSecurityByteArrayType(
@@ -971,48 +984,6 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(byteArrayType, for: byteArraySymbol)
         return byteArrayType
-    }
-
-    private func makeSecurityListType(
-        elementType: TypeID,
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner
-    ) -> TypeID {
-        let listFQName: [InternedString] = [
-            interner.intern("kotlin"),
-            interner.intern("collections"),
-            interner.intern("List"),
-        ]
-        guard let listSymbol = symbols.lookup(fqName: listFQName) else {
-            return types.anyType
-        }
-        return types.make(.classType(ClassType(
-            classSymbol: listSymbol,
-            args: [.out(elementType)],
-            nullability: .nonNull
-        )))
-    }
-
-    private func makeSecuritySetType(
-        elementType: TypeID,
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner
-    ) -> TypeID {
-        let setFQName: [InternedString] = [
-            interner.intern("kotlin"),
-            interner.intern("collections"),
-            interner.intern("Set"),
-        ]
-        guard let setSymbol = symbols.lookup(fqName: setFQName) else {
-            return types.anyType
-        }
-        return types.make(.classType(ClassType(
-            classSymbol: setSymbol,
-            args: [.out(elementType)],
-            nullability: .nonNull
-        )))
     }
 
     private func registerDigestTopLevel(packageFQName: [InternedString], name: String, parameterTypes: [TypeID], returnType: TypeID, externalLinkName: String, symbols: SymbolTable, interner: StringInterner) {

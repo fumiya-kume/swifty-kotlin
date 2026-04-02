@@ -128,7 +128,7 @@ extension GoldenHarnessTests {
         case let .callableRef(receiver, member, _):
             let renderedReceiver = receiver.map { "e\($0.rawValue)" } ?? "_"
             return "callableRef recv=\(renderedReceiver) member=\(interner.resolve(member))"
-        case let .localFunDecl(name, valueParams, returnType, body, _):
+        case let .localFunDecl(name, valueParams, returnType, body, isSuspend, _):
             let params = valueParams.map { interner.resolve($0.name) }.joined(separator: ",")
             let bodyStr = switch body {
             case let .block(exprs, _):
@@ -139,7 +139,7 @@ extension GoldenHarnessTests {
                 "unit"
             }
             let retStr = returnType.map { "t\($0.rawValue)" } ?? "nil"
-            return "localFunDecl \(interner.resolve(name)) params=[\(params)] returnType=\(retStr) body=\(bodyStr)"
+            return "localFunDecl \(interner.resolve(name)) suspend=\(isSuspend ? 1 : 0) params=[\(params)] returnType=\(retStr) body=\(bodyStr)"
         case let .blockExpr(statements, trailingExpr, _):
             let stmts = statements.map { "e\($0.rawValue)" }.joined(separator: ",")
             let trailing = trailingExpr.map { "e\($0.rawValue)" } ?? "_"
