@@ -829,6 +829,41 @@ extension DataFlowSemaPhase {
 
     }
 
+    func registerSyntheticCoroutineCancellationStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let jobFQName: [InternedString] = [interner.intern("kotlinx"), interner.intern("coroutines"), interner.intern("Job")]
+        guard let jobSymbol = symbols.lookup(fqName: jobFQName) else {
+            return
+        }
+        let jobType = types.make(.classType(ClassType(
+            classSymbol: jobSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let cancellationPkg = ensureSyntheticPackage(
+            ensurePackage(
+                path: ["kotlin", "coroutines", "cancellation"],
+                symbols: symbols,
+                interner: interner
+            ),
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticCoroutineExtensionFunction(
+            named: "cancel",
+            packageFQName: cancellationPkg,
+            receiverType: jobType,
+            externalLinkName: "kk_job_cancel",
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
     private func registerSyntheticCoroutineTopLevelFunction(
         named name: String,
         packageFQName: [InternedString],
@@ -931,6 +966,52 @@ extension DataFlowSemaPhase {
                 valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
                 typeParameterSymbols: typeParameterSymbols
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerSyntheticCoroutineExtensionFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        externalLinkName: String,
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        let existingSymbols = symbols.lookupAll(fqName: functionFQName)
+        if let existing = existingSymbols.first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType
             ),
             for: functionSymbol
         )
