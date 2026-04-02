@@ -61,7 +61,9 @@ public func kk_thread_create(
             outThrown: &thrown
         )
         if thrown != 0 {
-            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_thread_create block threw an exception")
+            let errorMessage = "Thread exception occurred in kk_thread_create block (diagnostic code: \(runtimePanicDiagnosticCode), thrown: \(thrown))"
+            print("[ERROR] RuntimeThread: \(errorMessage)")
+            return
         }
     }
 
