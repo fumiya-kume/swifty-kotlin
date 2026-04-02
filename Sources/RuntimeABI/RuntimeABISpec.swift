@@ -5521,6 +5521,75 @@ public enum RuntimeABISpec {
     // MARK: - I18N (STDLIB-I18N-153)
 
     public static let i18nFunctions: [RuntimeABIFunctionSpec] = [
+        // STDLIB-I18N-152: NumberFormat
+        RuntimeABIFunctionSpec(
+            name: "kk_numberformat_getIntegerInstance",
+            parameters: [
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_numberformat_getNumberInstance",
+            parameters: [
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_numberformat_getCurrencyInstance",
+            parameters: [
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_numberformat_getPercentInstance",
+            parameters: [
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_numberformat_formatInt",
+            parameters: [
+                RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_numberformat_formatLong",
+            parameters: [
+                RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_numberformat_formatFloat",
+            parameters: [
+                RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .float),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_numberformat_formatDouble",
+            parameters: [
+                RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .double),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
         // STDLIB-I18N-153: DateFormat
         RuntimeABIFunctionSpec(
             name: "kk_dateformat_ofPattern",
