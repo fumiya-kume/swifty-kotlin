@@ -1,5 +1,30 @@
 import Foundation
 
+private func runtimeThrowableBox(from raw: Int) -> RuntimeThrowableBox? {
+    guard raw != runtimeNullSentinelInt,
+          raw != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: raw)
+    else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeThrowableBox.self)
+}
+
+private func runtimeAllocateArrayBox(length: Int) -> Int {
+    let arrayBox = RuntimeArrayBox(length: length)
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(arrayBox).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
+
 @_cdecl("kk_throwable_new")
 public func kk_throwable_new(_ message: UnsafeMutableRawPointer?) -> UnsafeMutableRawPointer {
     let text = extractString(from: message) ?? "Throwable"
@@ -83,7 +108,7 @@ public func kk_throwable_stackTraceToString(_ throwableRaw: Int) -> Int {
         return Int(bitPattern: opaque)
     }
     let message: String = if let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) {
-        throwable.message
+        throwable.renderedMessage
     } else if let cancellation = tryCast(ptr, to: RuntimeCancellationBox.self) {
         cancellation.message
     } else {
@@ -116,32 +141,31 @@ public func kk_throwable_initCause(_ throwableRaw: Int, _ causeRaw: Int) -> Int 
 /// addSuppressed(exception: Throwable): Unit — adds a suppressed exception.
 @_cdecl("kk_throwable_addSuppressed")
 public func kk_throwable_addSuppressed(_ throwableRaw: Int, _ suppressedRaw: Int) -> Int {
-    guard throwableRaw != runtimeNullSentinelInt, throwableRaw != 0,
-          let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw),
-          let throwable = tryCast(ptr, to: RuntimeThrowableBox.self)
+    guard let throwable = runtimeThrowableBox(from: throwableRaw)
     else {
         return 0
     }
-    if suppressedRaw != runtimeNullSentinelInt && suppressedRaw != 0 {
-        throwable.suppressed.append(suppressedRaw)
+
+    guard let suppressed = runtimeThrowableBox(from: suppressedRaw) else {
+        return 0
     }
+
+    // Match Kotlin/JVM's major behavior by rejecting self-suppression while
+    // remaining ABI-compatible with this non-throwing runtime entrypoint.
+    guard throwable !== suppressed else { return 0 }
+
+    throwable.suppressed.append(suppressedRaw)
     return 0
 }
 
 /// getSuppressed(): Array<Throwable> — returns the suppressed exceptions as an array.
 @_cdecl("kk_throwable_getSuppressed")
 public func kk_throwable_getSuppressed(_ throwableRaw: Int) -> Int {
-    guard throwableRaw != runtimeNullSentinelInt, throwableRaw != 0,
-          let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw),
-          let throwable = tryCast(ptr, to: RuntimeThrowableBox.self)
+    guard let throwable = runtimeThrowableBox(from: throwableRaw)
     else {
-        let emptyArray = RuntimeArrayBox(length: 0)
-        let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(emptyArray).toOpaque())
-        runtimeStorage.withLock { state in
-            state.objectPointers.insert(UInt(bitPattern: opaque))
-        }
-        return Int(bitPattern: opaque)
+        return runtimeAllocateArrayBox(length: 0)
     }
+
     let arrayBox = RuntimeArrayBox(length: throwable.suppressed.count)
     for (i, elem) in throwable.suppressed.enumerated() {
         arrayBox.elements[i] = elem
@@ -359,17 +383,24 @@ public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
         if let sourceTypeID = runtimeObjectTypeID(rawValue: value) {
             return runtimeIsAssignable(sourceTypeID: sourceTypeID, targetTypeID: payload) ? 1 : 0
         }
-        // RuntimeThrowableBox objects from external/runtime calls don't have
-        // registered type IDs. They should match any exception catch clause
-        // since the runtime cannot distinguish exact exception subtypes for
-        // throwables created by runtimeAllocateThrowable.
         guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
             return 0
         }
-        let isThrowable = runtimeStorage.withLock { state in
+        let throwable = runtimeStorage.withLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
-        } && tryCast(ptr, to: RuntimeThrowableBox.self) != nil
-        return isThrowable ? 1 : 0
+                ? tryCast(ptr, to: RuntimeThrowableBox.self)
+                : nil
+        }
+        guard let throwable else {
+            return 0
+        }
+        if runtimeThrowableMatchesNominalTypeID(throwable, targetTypeID: payload) {
+            return 1
+        }
+        // RuntimeThrowableBox objects from external/runtime calls usually do not
+        // have registered type IDs. Preserve the broad throwable fallback for
+        // unknown nominal tokens so existing catch-path behaviour does not regress.
+        return 1
 
     default:
         return 0
@@ -1291,7 +1322,7 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         return
     }
     if let throwable = tryCast(raw, to: RuntimeThrowableBox.self) {
-        Swift.print("Throwable(\(throwable.message))")
+        Swift.print("Throwable(\(throwable.renderedMessage))")
         return
     }
     if let charBox = tryCast(raw, to: RuntimeCharBox.self) {
@@ -1485,7 +1516,7 @@ func runtimeRenderAnyForPrint(_ value: Int) -> String {
         return "�"
     }
     if let throwable = tryCast(raw, to: RuntimeThrowableBox.self) {
-        return "Throwable(\(throwable.message))"
+        return "Throwable(\(throwable.renderedMessage))"
     }
     if let listBox = tryCast(raw, to: RuntimeListBox.self) {
         return "[\(listBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"

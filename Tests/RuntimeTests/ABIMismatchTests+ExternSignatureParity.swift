@@ -1,8 +1,8 @@
-import CompilerCore
+import RuntimeABI
 @testable import Runtime
 import XCTest
 
-// MARK: - Cross-Module ABI Reconciliation (Runtime <-> CompilerCore)
+// MARK: - Shared ABI Spec / Extern Adapter Reconciliation
 
 extension ABIMismatchTests {
     private func normalizedABIType(_ type: String) -> String {
@@ -134,6 +134,8 @@ extension ABIMismatchTests {
 
     func testComparatorNullsAndThenByDescSymbolsPresent() {
         let requiredComparatorSymbols: Set<String> = [
+            "kk_comparator_then_comparator",
+            "kk_comparator_then_comparator_trampoline",
             "kk_comparator_then_by_descending",
             "kk_comparator_then_by_descending_trampoline",
             "kk_comparator_nulls_first",
@@ -157,11 +159,13 @@ extension ABIMismatchTests {
 
     func testComparatorNullsThenBySignaturesMatchExpectedShape() {
         let expectedFunctionTypes: [String: [String]] = [
+            "kk_comparator_then_comparator": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue],
             "kk_comparator_then_by_descending": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue],
             "kk_comparator_nulls_first": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue],
             "kk_comparator_nulls_last": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue],
         ]
         let expectedTrampolineTypes: [String: [String]] = [
+            "kk_comparator_then_comparator_trampoline": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.nullableIntptrPointer.rawValue],
             "kk_comparator_then_by_descending_trampoline": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.nullableIntptrPointer.rawValue],
             "kk_comparator_nulls_first_trampoline": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.nullableIntptrPointer.rawValue],
             "kk_comparator_nulls_last_trampoline": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.nullableIntptrPointer.rawValue],

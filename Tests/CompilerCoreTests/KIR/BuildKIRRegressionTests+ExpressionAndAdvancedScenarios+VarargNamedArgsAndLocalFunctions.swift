@@ -107,19 +107,21 @@ extension BuildKIRRegressionTests {
 
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
 
             // After ABI lowering, the vararg-packed array should NOT be boxed.
             // If boxing were incorrectly applied, we would see kk_box_int
             // targeting the array argument passed to `sum`.
-            let sumCalls = body.filter { instruction in
+            let loweredAggregateCalls = body.filter { instruction in
                 guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return false }
-                return ctx.interner.resolve(callee) == "sum"
+                let calleeName = ctx.interner.resolve(callee)
+                return calleeName == "sum" || calleeName == "kk_list_sum"
             }
-            XCTAssertFalse(sumCalls.isEmpty, "Expected a call to sum after ABI lowering.")
+            XCTAssertFalse(loweredAggregateCalls.isEmpty, "Expected an aggregate call after ABI lowering.")
 
             // Verify that arguments to sum are not individually boxed—the
             // array_new/array_set calls produce the packed array argument.
-            for call in sumCalls {
+            for call in loweredAggregateCalls {
                 guard case let .call(_, _, arguments, _, _, _, _, _) = call else { continue }
                 for arg in arguments {
                     guard let argKind = module.arena.expr(arg) else { continue }
@@ -136,8 +138,7 @@ extension BuildKIRRegressionTests {
             // The real check: kk_box_int should NOT appear before the call to sum
             // for the purpose of boxing vararg elements into the packed argument.
             // The array_set calls handle packing, not boxing.
-            let callNames = extractCallees(from: body, interner: ctx.interner)
-            let sumIndex = callNames.firstIndex(of: "sum")
+            let sumIndex = callNames.firstIndex(where: { $0 == "sum" || $0 == "kk_list_sum" })
             let boxIntIndices = callNames.indices.filter { callNames[$0] == "kk_box_int" }
             // Any kk_box_int calls that appear should be for array_set element boxing,
             // not for the final argument to sum itself.

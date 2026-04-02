@@ -1,9 +1,12 @@
 package golden.diagnostics
 
-@Deprecated("Use replacement", level = DeprecationLevel.ERROR)
+@Deprecated("Use replacement", replaceWith = ReplaceWith("newError()"), level = DeprecationLevel.ERROR)
 fun oldError(): Int = 1
 
-@Deprecated("Use replacement")
+@Deprecated("Use replacement", replaceWith = ReplaceWith(expression = "newWarning()"))
 fun oldWarning(): Int = 2
 
-fun caller(): Int = oldError() + oldWarning()
+fun newError(): Int = 3
+fun newWarning(): Int = 4
+
+fun caller(): Int = oldError() + oldWarning() + newError() + newWarning()

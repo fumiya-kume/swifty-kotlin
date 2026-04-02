@@ -369,27 +369,5 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Reflection"
         ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kfunction_call_3",
-            parameters: [
-                RuntimeABIParameter(name: "kfunctionRaw", type: .intptr),
-                RuntimeABIParameter(name: "arg1", type: .intptr),
-                RuntimeABIParameter(name: "arg2", type: .intptr),
-                RuntimeABIParameter(name: "arg3", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "KFunction"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_kfunction_call_vararg",
-            parameters: [
-                RuntimeABIParameter(name: "kfunctionRaw", type: .intptr),
-                RuntimeABIParameter(name: "argsListRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "KFunction"
-        ),
     ]
 }

@@ -11,6 +11,14 @@ extension DataFlowSemaPhase {
         _ = ensureSyntheticPackage(fqName: kotlinPkg, symbols: symbols)
         let comparisonsPackageSymbol = ensureSyntheticPackage(fqName: comparisonsPkg, symbols: symbols)
 
+        if types.comparableInterfaceSymbol == nil {
+            registerSyntheticComparableStub(
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
+
         // 2-arg overloads: Int, Long, Double, Float
         let twoArgTypes: [(TypeID, TypeID)] = [
             (types.intType, types.intType),
@@ -75,10 +83,35 @@ extension DataFlowSemaPhase {
             )
         }
 
+        registerSyntheticMaxOfComparableStubs(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol
+        )
+
         let comparatorFQName = kotlinPkg + [interner.intern("Comparator")]
         guard let comparatorSymbol = symbols.lookup(fqName: comparatorFQName) else {
             return
         }
+
+        registerSyntheticMaxOfComparatorStubs(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol,
+            comparatorSymbol: comparatorSymbol
+        )
+
+        registerSyntheticMaxOfUnsignedStubs(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol
+        )
 
         registerCompareValuesAndCompareValuesBy(
             symbols: symbols,
@@ -115,6 +148,9 @@ extension DataFlowSemaPhase {
         parameterTypes: [TypeID],
         returnType: TypeID,
         parameterNames: [String],
+        valueParameterIsVararg: [Bool] = [],
+        typeParameterSymbols: [SymbolID] = [],
+        typeParameterUpperBoundsList: [[TypeID]] = [],
         packageFQName: [InternedString],
         packageSymbol: SymbolID,
         types: TypeSystem,
@@ -123,12 +159,17 @@ extension DataFlowSemaPhase {
     ) {
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
+        let normalizedVararg = valueParameterIsVararg.isEmpty
+            ? Array(repeating: false, count: parameterNames.count)
+            : valueParameterIsVararg
         if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
             guard let signature = symbols.functionSignature(for: symbolID) else {
                 return false
             }
             return signature.parameterTypes == parameterTypes
                 && signature.returnType == returnType
+                && signature.valueParameterIsVararg == normalizedVararg
+                && signature.typeParameterSymbols.count == typeParameterSymbols.count
         }) {
             return
         }
@@ -165,10 +206,213 @@ extension DataFlowSemaPhase {
                 isSuspend: false,
                 valueParameterSymbols: paramSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: parameterNames.count),
-                valueParameterIsVararg: Array(repeating: false, count: parameterNames.count)
+                valueParameterIsVararg: normalizedVararg,
+                typeParameterSymbols: typeParameterSymbols,
+                typeParameterUpperBoundsList: typeParameterUpperBoundsList
             ),
             for: functionSymbol
         )
+    }
+
+    private func registerSyntheticMaxOfComparableStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparisonsPkg: [InternedString],
+        comparisonsPackageSymbol: SymbolID
+    ) {
+        guard let comparableSymbol = types.comparableInterfaceSymbol else {
+            return
+        }
+
+        let maxOfName = "maxOf"
+        let functionName = interner.intern(maxOfName)
+        let functionFQName = comparisonsPkg + [functionName]
+        let tParamName = interner.intern("T")
+        let tParamFQName = functionFQName + [tParamName]
+        let tParamSymbol = symbols.lookup(fqName: tParamFQName) ?? symbols.define(
+            kind: .typeParameter,
+            name: tParamName,
+            fqName: tParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let tParamType = types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol,
+            nullability: .nonNull
+        )))
+        let comparableUpperBounds: [TypeID] = [types.make(.classType(ClassType(
+            classSymbol: comparableSymbol,
+            args: [.in(tParamType)],
+            nullability: .nonNull
+        )))]
+
+        registerSyntheticComparisonFunction(
+            named: maxOfName,
+            parameterTypes: [tParamType, tParamType],
+            returnType: tParamType,
+            parameterNames: ["a", "b"],
+            typeParameterSymbols: [tParamSymbol],
+            typeParameterUpperBoundsList: [comparableUpperBounds],
+            packageFQName: comparisonsPkg,
+            packageSymbol: comparisonsPackageSymbol,
+            types: types,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticComparisonFunction(
+            named: maxOfName,
+            parameterTypes: [tParamType, tParamType, tParamType],
+            returnType: tParamType,
+            parameterNames: ["a", "b", "c"],
+            typeParameterSymbols: [tParamSymbol],
+            typeParameterUpperBoundsList: [comparableUpperBounds],
+            packageFQName: comparisonsPkg,
+            packageSymbol: comparisonsPackageSymbol,
+            types: types,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticComparisonFunction(
+            named: maxOfName,
+            parameterTypes: [tParamType],
+            returnType: tParamType,
+            parameterNames: ["a"],
+            valueParameterIsVararg: [true],
+            typeParameterSymbols: [tParamSymbol],
+            typeParameterUpperBoundsList: [comparableUpperBounds],
+            packageFQName: comparisonsPkg,
+            packageSymbol: comparisonsPackageSymbol,
+            types: types,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticMaxOfComparatorStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparisonsPkg: [InternedString],
+        comparisonsPackageSymbol: SymbolID,
+        comparatorSymbol: SymbolID
+    ) {
+        let functionName = "maxOf"
+        let functionNameID = interner.intern(functionName)
+        let functionFQName = comparisonsPkg + [functionNameID]
+        let tParamName = interner.intern("T")
+        let tParamFQName = functionFQName + [tParamName]
+        let tParamSymbol = symbols.lookup(fqName: tParamFQName) ?? symbols.define(
+            kind: .typeParameter,
+            name: tParamName,
+            fqName: tParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let tParamType = types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol,
+            nullability: .nonNull
+        )))
+        let comparatorType = types.make(.classType(ClassType(
+            classSymbol: comparatorSymbol,
+            args: [.invariant(tParamType)],
+            nullability: .nonNull
+        )))
+
+        registerSyntheticComparisonFunction(
+            named: functionName,
+            parameterTypes: [tParamType, tParamType, comparatorType],
+            returnType: tParamType,
+            parameterNames: ["a", "b", "comparator"],
+            typeParameterSymbols: [tParamSymbol],
+            typeParameterUpperBoundsList: [[]],
+            packageFQName: comparisonsPkg,
+            packageSymbol: comparisonsPackageSymbol,
+            types: types,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticComparisonFunction(
+            named: functionName,
+            parameterTypes: [tParamType, tParamType, tParamType, comparatorType],
+            returnType: tParamType,
+            parameterNames: ["a", "b", "c", "comparator"],
+            typeParameterSymbols: [tParamSymbol],
+            typeParameterUpperBoundsList: [[]],
+            packageFQName: comparisonsPkg,
+            packageSymbol: comparisonsPackageSymbol,
+            types: types,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticComparisonFunction(
+            named: functionName,
+            parameterTypes: [tParamType, tParamType, comparatorType],
+            returnType: tParamType,
+            parameterNames: ["a", "other", "comparator"],
+            valueParameterIsVararg: [false, true, false],
+            typeParameterSymbols: [tParamSymbol],
+            typeParameterUpperBoundsList: [[]],
+            packageFQName: comparisonsPkg,
+            packageSymbol: comparisonsPackageSymbol,
+            types: types,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticMaxOfUnsignedStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparisonsPkg: [InternedString],
+        comparisonsPackageSymbol: SymbolID
+    ) {
+        let unsignedTypes: [(String, TypeID)] = [
+            ("UByte", types.ubyteType),
+            ("UShort", types.ushortType),
+            ("UInt", types.uintType),
+            ("ULong", types.ulongType),
+        ]
+
+        for (_, typeID) in unsignedTypes {
+            registerSyntheticComparisonFunction(
+                named: "maxOf",
+                parameterTypes: [typeID, typeID],
+                returnType: typeID,
+                parameterNames: ["a", "b"],
+                packageFQName: comparisonsPkg,
+                packageSymbol: comparisonsPackageSymbol,
+                types: types,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticComparisonFunction(
+                named: "maxOf",
+                parameterTypes: [typeID, typeID, typeID],
+                returnType: typeID,
+                parameterNames: ["a", "b", "c"],
+                packageFQName: comparisonsPkg,
+                packageSymbol: comparisonsPackageSymbol,
+                types: types,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticComparisonFunction(
+                named: "maxOf",
+                parameterTypes: [typeID, typeID],
+                returnType: typeID,
+                parameterNames: ["a", "other"],
+                valueParameterIsVararg: [false, true],
+                packageFQName: comparisonsPkg,
+                packageSymbol: comparisonsPackageSymbol,
+                types: types,
+                symbols: symbols,
+                interner: interner
+            )
+        }
     }
 
     private func registerCompareValuesAndCompareValuesBy(
