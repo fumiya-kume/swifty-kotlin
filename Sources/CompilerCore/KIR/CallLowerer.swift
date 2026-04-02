@@ -1053,6 +1053,108 @@ final class CallLowerer {
             return finalArgs
         }
 
+        // kotlin.DeepRecursiveFunction { block } — expand the callable argument
+        // to (fnPtr, closureRaw) so runtime can retain both the entry point and
+        // the captured environment. Multi-capture lambdas are packed into a
+        // closure object, reusing the same adapter strategy as collection HOFs.
+        if externalLinkName == "kk_deep_recursive_function_new", loweredArguments.count == 1 {
+            let lambdaID = loweredArguments[0]
+            var loweredCallableID = lambdaID
+            var callableInfo = driver.ctx.callableValueInfo(for: lambdaID)
+
+            if let originalCallableInfo = callableInfo,
+               !originalCallableInfo.hasClosureParam,
+               !originalCallableInfo.captureArguments.isEmpty,
+               let adapted = makeCollectionHOFCallableAdapter(
+                    callableInfo: originalCallableInfo,
+                    loweredArgID: lambdaID,
+                    argExprID: originalArgs[0].expr,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner
+               )
+            {
+                let adaptedExpr = arena.appendExpr(
+                    .symbolRef(adapted.symbol),
+                    type: arena.exprType(lambdaID) ?? sema.types.anyType
+                )
+                instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adapted.symbol)))
+                loweredCallableID = adaptedExpr
+                callableInfo = adapted
+            }
+
+            var finalArgs: [KIRExprID] = [loweredCallableID]
+            if let callableInfo {
+                if callableInfo.captureArguments.count >= 2 {
+                    let intType = sema.types.intType
+                    let anyType = sema.types.anyType
+                    let kkObjectNew = interner.intern("kk_object_new")
+                    let kkArraySet = interner.intern("kk_array_set")
+
+                    let slotCountExpr = arena.appendExpr(
+                        .intLiteral(Int64(2 + callableInfo.captureArguments.count)),
+                        type: intType
+                    )
+                    instructions.append(.constValue(
+                        result: slotCountExpr,
+                        value: .intLiteral(Int64(2 + callableInfo.captureArguments.count))
+                    ))
+
+                    let classIDExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                    instructions.append(.constValue(result: classIDExpr, value: .intLiteral(0)))
+
+                    let closureObjExpr = arena.appendExpr(
+                        .temporary(Int32(clamping: arena.expressions.count)),
+                        type: anyType
+                    )
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: kkObjectNew,
+                        arguments: [slotCountExpr, classIDExpr],
+                        result: closureObjExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+
+                    for (captureIndex, captureArg) in callableInfo.captureArguments.enumerated() {
+                        let offsetExpr = arena.appendExpr(
+                            .intLiteral(Int64(captureIndex + 2)),
+                            type: intType
+                        )
+                        instructions.append(.constValue(
+                            result: offsetExpr,
+                            value: .intLiteral(Int64(captureIndex + 2))
+                        ))
+                        let unusedResult = arena.appendExpr(
+                            .temporary(Int32(clamping: arena.expressions.count)),
+                            type: anyType
+                        )
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: kkArraySet,
+                            arguments: [closureObjExpr, offsetExpr, captureArg],
+                            result: unusedResult,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                    }
+
+                    finalArgs.append(closureObjExpr)
+                } else if let closureRaw = callableInfo.captureArguments.first {
+                    finalArgs.append(closureRaw)
+                } else {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    finalArgs.append(zeroExpr)
+                }
+            } else {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArgs.append(zeroExpr)
+            }
+            return finalArgs
+        }
+
         // compareValuesBy: expand selector lambda args to (fnPtr, closureRaw) pairs.
         // kk_compareValuesBy1(a, b, selector) → (a, b, selectorFn, selectorClosureRaw)
         // kk_compareValuesBy(a, b, sel1, sel2) → (a, b, sel1Fn, sel1Closure, sel2Fn, sel2Closure)

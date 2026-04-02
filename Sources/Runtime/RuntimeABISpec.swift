@@ -5585,6 +5585,7 @@ public enum RuntimeABISpec {
             + hexFormatFunctions
             + comparatorFunctions
             + resultFunctions
+            + deepRecursiveFunctions
             + stringBuilderFunctions
             + fileIOFunctions
             + pathFunctions

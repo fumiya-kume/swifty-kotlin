@@ -975,6 +975,92 @@ final class CallTypeChecker {
             return sema.types.unitType
         }
 
+        // --- kotlin.DeepRecursiveFunction<T, R> { ... } ---
+        // Infer the block with a DeepRecursiveScope<T, R> implicit receiver so
+        // unqualified callRecursive(...) resolves inside the lambda body.
+        if let calleeName,
+           interner.resolve(calleeName) == "DeepRecursiveFunction",
+           args.count == 1
+        {
+            let functionFQName = [interner.intern("kotlin"), interner.intern("DeepRecursiveFunction")]
+            let scopeFQName = [interner.intern("kotlin"), interner.intern("DeepRecursiveScope")]
+            let inferredTypeArgs: [TypeID]?
+            if explicitTypeArgs.count == 2 {
+                inferredTypeArgs = explicitTypeArgs
+            } else if let expectedType,
+                      case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(expectedType)),
+                      sema.symbols.symbol(classType.classSymbol)?.fqName == functionFQName,
+                      classType.args.count == 2
+            {
+                let unpacked = classType.args.compactMap { arg -> TypeID? in
+                    switch arg {
+                    case let .invariant(type), let .in(type), let .out(type):
+                        type
+                    case .star:
+                        nil
+                    }
+                }
+                inferredTypeArgs = unpacked.count == 2 ? unpacked : nil
+            } else {
+                inferredTypeArgs = nil
+            }
+
+            let functionSymbol = sema.symbols.lookup(fqName: functionFQName)
+            let scopeSymbol = sema.symbols.lookup(fqName: scopeFQName)
+            let ctorSymbol = sema.symbols.lookup(fqName: functionFQName + [interner.intern("<init>")])
+
+            if let typeArgs = inferredTypeArgs,
+               let functionSymbol,
+               let scopeSymbol,
+               let ctorSymbol
+            {
+                let argumentExprID = args[0].expr
+                guard isValidBuilderLambdaArgument(argumentExprID, ast: ast) else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0002",
+                        "No viable overload found for call.",
+                        range: range
+                    )
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
+
+                let scopeType = sema.types.make(.classType(ClassType(
+                    classSymbol: scopeSymbol,
+                    args: [.invariant(typeArgs[0]), .invariant(typeArgs[1])],
+                    nullability: .nonNull
+                )))
+                let resultType = sema.types.make(.classType(ClassType(
+                    classSymbol: functionSymbol,
+                    args: [.invariant(typeArgs[0]), .invariant(typeArgs[1])],
+                    nullability: .nonNull
+                )))
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    receiver: scopeType,
+                    params: [typeArgs[0]],
+                    returnType: typeArgs[1],
+                    nullability: .nonNull
+                )))
+                _ = driver.inferExpr(
+                    argumentExprID,
+                    ctx: ctx.with(implicitReceiverType: scopeType),
+                    locals: &locals,
+                    expectedType: lambdaExpectedType
+                )
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: ctorSymbol,
+                        substitutedTypeArguments: typeArgs,
+                        parameterMapping: [0: 0]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(ctorSymbol))
+                sema.bindings.bindExprType(id, type: resultType)
+                return resultType
+            }
+        }
+
         // --- Comparator factory functions: compareBy, compareByDescending (STDLIB-649) ---
         if let calleeName,
            args.count == 1,

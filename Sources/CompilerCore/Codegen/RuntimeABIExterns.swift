@@ -4926,6 +4926,7 @@ public enum RuntimeABIExterns {
         all += hexFormatExterns
         all += comparatorExterns
         all += resultExterns
+        all += deepRecursiveExterns
         all += stringBuilderExterns
         all += fileIOExterns
         all += pathExterns
