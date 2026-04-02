@@ -677,7 +677,7 @@ extension CollectionLiteralLoweringPass {
             mapExprIDs.insert(rawID)
         case "Array", "IntArray", "LongArray", "DoubleArray",
              "FloatArray", "BooleanArray", "CharArray",
-             "ByteArray", "ShortArray", "UShortArray", "UIntArray", "ULongArray":
+             "ByteArray", "ShortArray", "UByteArray", "UShortArray", "UIntArray", "ULongArray":
             arrayExprIDs.insert(rawID)
         case "Sequence":
             sequenceExprIDs.insert(rawID)

@@ -241,6 +241,8 @@ struct TypeCheckHelpers {
             return sema.types.intType
         case knownNames.byteArray:
             return sema.types.intType
+        case knownNames.ubyteArray:
+            return sema.types.ubyteType
         case knownNames.ushortArray:
             return sema.types.ushortType
         case knownNames.doubleArray:

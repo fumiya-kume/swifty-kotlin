@@ -255,7 +255,7 @@ final class CallTypeChecker {
             // First arg is the receiver object
             let withReceiverType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             // Second arg is the lambda with receiver
-            var receiverCtx = ctx.with(implicitReceiverType: withReceiverType)
+            let receiverCtx = ctx.with(implicitReceiverType: withReceiverType)
             let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                 receiver: withReceiverType,
                 params: [],
@@ -736,6 +736,7 @@ final class CallTypeChecker {
                 case "ShortArray": sema.types.intType
                 case "ByteArray": sema.types.intType
                 case "UShortArray": sema.types.ushortType
+                case "UByteArray": sema.types.ubyteType
                 case "DoubleArray": sema.types.make(.primitive(.double, .nonNull))
                 case "FloatArray": sema.types.make(.primitive(.float, .nonNull))
                 case "BooleanArray": sema.types.booleanType
@@ -877,75 +878,94 @@ final class CallTypeChecker {
 
             // Resolve which numeric type this overload targets.
             let supportedNumericTypes = [sema.types.longType, sema.types.doubleType, sema.types.floatType, sema.types.intType]
-            let resolvedParamType = supportedNumericTypes.first(where: { firstArgType == $0 }) ?? sema.types.intType
-
-            if let specialKind = comparisonSpecialCallKind(
-                for: calleeName,
-                argCount: args.count,
-                resolvedParamType: resolvedParamType,
-                ctx: ctx,
-                locals: locals
-            ) {
-                let expectedType = resolvedParamType
-
-                // Emit subtype constraint for the first argument.
-                driver.emitSubtypeConstraint(
-                    left: firstArgType,
-                    right: expectedType,
-                    range: ast.arena.exprRange(args[0].expr) ?? range,
-                    solver: ConstraintSolver(),
-                    sema: sema,
-                    diagnostics: ctx.semaCtx.diagnostics
-                )
-
-                // Infer remaining arguments with the resolved type.
-                for i in 1 ..< args.count {
-                    let argType = driver.inferExpr(
-                        args[i].expr,
+            if let resolvedParamType = supportedNumericTypes.first(where: { firstArgType == $0 }) {
+                var shouldUsePrimitiveComparisonFastPath = true
+                if args.count == 3 {
+                    var tentativeLocals = locals
+                    let secondArgType = driver.inferExpr(
+                        args[1].expr,
                         ctx: ctx,
-                        locals: &locals,
-                        expectedType: expectedType
+                        locals: &tentativeLocals,
+                        expectedType: nil
                     )
+                    let thirdArgType = driver.inferExpr(
+                        args[2].expr,
+                        ctx: ctx,
+                        locals: &tentativeLocals,
+                        expectedType: nil
+                    )
+                    shouldUsePrimitiveComparisonFastPath = secondArgType == resolvedParamType && thirdArgType == resolvedParamType
+                }
+
+                if shouldUsePrimitiveComparisonFastPath,
+                   let specialKind = comparisonSpecialCallKind(
+                    for: calleeName,
+                    argCount: args.count,
+                    resolvedParamType: resolvedParamType,
+                    ctx: ctx,
+                    locals: locals
+                ) {
+                    let expectedType = resolvedParamType
+
+                    // Emit subtype constraint for the first argument.
                     driver.emitSubtypeConstraint(
-                        left: argType,
+                        left: firstArgType,
                         right: expectedType,
-                        range: ast.arena.exprRange(args[i].expr) ?? range,
+                        range: ast.arena.exprRange(args[0].expr) ?? range,
                         solver: ConstraintSolver(),
                         sema: sema,
                         diagnostics: ctx.semaCtx.diagnostics
                     )
-                }
 
-                let paramTypes = Array(repeating: expectedType, count: args.count)
-                let chosen = ctx.filterByVisibility(ctx.cachedScopeLookup(calleeName)).visible.first(where: { candidate in
-                    guard let signature = sema.symbols.functionSignature(for: candidate) else {
-                        return false
-                    }
-                    return signature.parameterTypes == paramTypes
-                })
-                if let chosen,
-                   let signature = sema.symbols.functionSignature(for: chosen)
-                {
-                    var paramMapping: [Int: Int] = [:]
-                    for i in 0 ..< args.count {
-                        paramMapping[i] = i
-                    }
-                    sema.bindings.bindCall(
-                        id,
-                        binding: CallBinding(
-                            chosenCallee: chosen,
-                            substitutedTypeArguments: [],
-                            parameterMapping: paramMapping
+                    // Infer remaining arguments with the resolved type.
+                    for i in 1 ..< args.count {
+                        let argType = driver.inferExpr(
+                            args[i].expr,
+                            ctx: ctx,
+                            locals: &locals,
+                            expectedType: expectedType
                         )
-                    )
-                    sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                        driver.emitSubtypeConstraint(
+                            left: argType,
+                            right: expectedType,
+                            range: ast.arena.exprRange(args[i].expr) ?? range,
+                            solver: ConstraintSolver(),
+                            sema: sema,
+                            diagnostics: ctx.semaCtx.diagnostics
+                        )
+                    }
+
+                    let paramTypes = Array(repeating: expectedType, count: args.count)
+                    let chosen = ctx.filterByVisibility(ctx.cachedScopeLookup(calleeName)).visible.first(where: { candidate in
+                        guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                            return false
+                        }
+                        return signature.parameterTypes == paramTypes
+                    })
+                    if let chosen,
+                       let signature = sema.symbols.functionSignature(for: chosen)
+                    {
+                        var paramMapping: [Int: Int] = [:]
+                        for i in 0 ..< args.count {
+                            paramMapping[i] = i
+                        }
+                        sema.bindings.bindCall(
+                            id,
+                            binding: CallBinding(
+                                chosenCallee: chosen,
+                                substitutedTypeArguments: [],
+                                parameterMapping: paramMapping
+                            )
+                        )
+                        sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                        sema.bindings.markStdlibSpecialCallExpr(id, kind: specialKind)
+                        sema.bindings.bindExprType(id, type: signature.returnType)
+                        return signature.returnType
+                    }
                     sema.bindings.markStdlibSpecialCallExpr(id, kind: specialKind)
-                    sema.bindings.bindExprType(id, type: signature.returnType)
-                    return signature.returnType
+                    sema.bindings.bindExprType(id, type: expectedType)
+                    return expectedType
                 }
-                sema.bindings.markStdlibSpecialCallExpr(id, kind: specialKind)
-                sema.bindings.bindExprType(id, type: expectedType)
-                return expectedType
             }
         }
 
@@ -1051,7 +1071,9 @@ final class CallTypeChecker {
         {
             let calleeNameStr = interner.resolve(calleeName)
             if calleeNameStr == "naturalOrder" || calleeNameStr == "reverseOrder" {
-                let elementType: TypeID = if let expectedType,
+                let elementType: TypeID = if let explicitTypeArg = explicitTypeArgs.first {
+                    explicitTypeArg
+                } else if let expectedType,
                     case let .classType(classType) = sema.types.kind(of: expectedType),
                     let firstArg = classType.args.first
                 {
@@ -1494,6 +1516,86 @@ final class CallTypeChecker {
                 diagnostics: ctx.semaCtx.diagnostics
             )
             let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+            let adjustedReturnType: TypeID = if let externalLinkName = sema.symbols.externalLinkName(for: chosen) {
+                switch externalLinkName {
+                case "kk_emptyList":
+                    if let expectedType, expectedType != sema.types.errorType,
+                       case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+                       !expectedClassType.args.isEmpty
+                    {
+                        expectedType
+                    } else if let explicitTypeArg = explicitTypeArgs.first,
+                              let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
+                    {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: listSymbol,
+                            args: [.out(explicitTypeArg)],
+                            nullability: .nonNull
+                        )))
+                    } else if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: listSymbol,
+                            args: [.out(sema.types.nothingType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        returnType
+                    }
+
+                case "kk_emptySet":
+                    if let expectedType, expectedType != sema.types.errorType,
+                       case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+                       !expectedClassType.args.isEmpty
+                    {
+                        expectedType
+                    } else if let explicitTypeArg = explicitTypeArgs.first,
+                              let setSymbol = sema.symbols.lookupByShortName(interner.intern("Set")).first
+                    {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: setSymbol,
+                            args: [.out(explicitTypeArg)],
+                            nullability: .nonNull
+                        )))
+                    } else if let setSymbol = sema.symbols.lookupByShortName(interner.intern("Set")).first {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: setSymbol,
+                            args: [.out(sema.types.nothingType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        returnType
+                    }
+
+                case "kk_emptyMap":
+                    if let expectedType, expectedType != sema.types.errorType,
+                       case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+                       expectedClassType.args.count == 2
+                    {
+                        expectedType
+                    } else if explicitTypeArgs.count == 2,
+                              let mapSymbol = sema.symbols.lookupByShortName(interner.intern("Map")).first
+                    {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: mapSymbol,
+                            args: [.invariant(explicitTypeArgs[0]), .out(explicitTypeArgs[1])],
+                            nullability: .nonNull
+                        )))
+                    } else if let mapSymbol = sema.symbols.lookupByShortName(interner.intern("Map")).first {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: mapSymbol,
+                            args: [.invariant(sema.types.nothingType), .out(sema.types.nothingType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        returnType
+                    }
+
+                default:
+                    returnType
+                }
+            } else {
+                returnType
+            }
             if args.count == 2,
                let externalLinkName = sema.symbols.externalLinkName(for: chosen),
                ["kk_require_lazy", "kk_check_lazy", "kk_precondition_assert_lazy"].contains(externalLinkName)
@@ -1531,8 +1633,8 @@ final class CallTypeChecker {
                     sema.bindings.markULongRangeExpr(id)
                 }
             }
-            sema.bindings.bindExprType(id, type: returnType)
-            return returnType
+            sema.bindings.bindExprType(id, type: adjustedReturnType)
+            return adjustedReturnType
         }
 
         var callableTarget: CallableTarget?
@@ -2087,6 +2189,7 @@ final class CallTypeChecker {
                         "shortArrayOf": "ShortArray",
                         "byteArrayOf": "ByteArray",
                         "ushortArrayOf": "UShortArray",
+                        "ubyteArrayOf": "UByteArray",
                         "doubleArrayOf": "DoubleArray",
                         "floatArrayOf": "FloatArray",
                         "booleanArrayOf": "BooleanArray",

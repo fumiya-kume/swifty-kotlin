@@ -245,6 +245,30 @@ extension LibMetadataSerializationTests {
         XCTAssertEqual(decoded[0].annotations[2].arguments, ["UNCHECKED_CAST"])
     }
 
+    func testAnnotationRoundTripWithWasExperimentalArgument() {
+        let annotations = [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.WasExperimental",
+                arguments: ["markerClass = demo.ExperimentalApi::class"]
+            ),
+        ]
+        let record = MetadataRecord(
+            kind: .function,
+            mangledName: "_kk_stable",
+            fqName: "demo.stable",
+            annotations: annotations
+        )
+        let encoder = MetadataEncoder()
+        let serialized = encoder.serialize([record])
+        let decoder = MetadataDecoder()
+        let decoded = decoder.decode(serialized)
+
+        XCTAssertEqual(decoded.count, 1)
+        XCTAssertEqual(decoded[0].annotations.count, 1)
+        XCTAssertEqual(decoded[0].annotations[0].annotationFQName, "kotlin.WasExperimental")
+        XCTAssertEqual(decoded[0].annotations[0].arguments, ["markerClass = demo.ExperimentalApi::class"])
+    }
+
     func testAnnotationRecordEquatable() {
         let a = MetadataAnnotationRecord(annotationFQName: "kotlin.Deprecated", arguments: ["msg"], useSiteTarget: "get")
         let b = MetadataAnnotationRecord(annotationFQName: "kotlin.Deprecated", arguments: ["msg"], useSiteTarget: "get")
@@ -438,6 +462,61 @@ extension LibMetadataSerializationTests {
             XCTAssertEqual(annotations.count, 1)
             XCTAssertEqual(annotations[0].annotationFQName, "kotlin.Deprecated")
             XCTAssertEqual(annotations[0].arguments, ["replaced"])
+        }
+    }
+
+    func testMetadataImportRestoresWasExperimentalAnnotationsViaLibrary() throws {
+        let fm = FileManager.default
+        let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let libDir = baseDir.appendingPathExtension("kklib")
+        try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+
+        let manifest = """
+        {
+          "formatVersion": 1,
+          "moduleName": "ExtStable",
+          "metadata": "metadata.bin"
+        }
+        """
+        let encoder = MetadataEncoder()
+        let annotatedRecord = MetadataRecord(
+            kind: .function,
+            mangledName: "_kk_ext_stable",
+            fqName: "ext.stableApi",
+            arity: 0,
+            annotations: [
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.WasExperimental",
+                    arguments: ["markerClass = ext.ExperimentalApi::class"]
+                ),
+            ]
+        )
+        let serialized = encoder.serialize([annotatedRecord])
+        let functionLine = serialized.split(whereSeparator: \.isNewline)
+            .first { $0.hasPrefix("function") }
+        XCTAssertNotNil(functionLine)
+
+        let metadata = "symbols=1\n\(functionLine!)\n"
+        try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
+
+        try withTemporaryFile(contents: "fun main() = 0") { path in
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "WasExperimentalImport",
+                emit: .kirDump,
+                searchPaths: [libDir.path]
+            )
+            try runToKIR(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ext = ctx.interner.intern("ext")
+            let stableApi = ctx.interner.intern("stableApi")
+            let symbolID = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ext, stableApi]).first)
+            let annotations = sema.symbols.annotations(for: symbolID)
+            XCTAssertEqual(annotations.count, 1)
+            XCTAssertEqual(annotations[0].annotationFQName, "kotlin.WasExperimental")
+            XCTAssertEqual(annotations[0].arguments, ["markerClass = ext.ExperimentalApi::class"])
         }
     }
 }

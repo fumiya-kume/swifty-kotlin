@@ -137,6 +137,32 @@ final class LibMetadataSerializationTests: XCTestCase {
         XCTAssertEqual(decoded[0].annotations[1].useSiteTarget, "get")
     }
 
+    func testMetadataEncoderDecoderRoundTripForWasExperimentalAnnotation() {
+        let annotations = [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.WasExperimental",
+                arguments: ["markerClass = demo.ExperimentalApi::class"],
+                useSiteTarget: nil
+            ),
+        ]
+        let record = MetadataRecord(
+            kind: .function,
+            mangledName: "_kk_stable_api",
+            fqName: "demo.stableApi",
+            annotations: annotations
+        )
+        let encoder = MetadataEncoder()
+        let serialized = encoder.serialize([record])
+
+        let decoder = MetadataDecoder()
+        let decoded = decoder.decode(serialized)
+        XCTAssertEqual(decoded.count, 1)
+        XCTAssertEqual(decoded[0].annotations.count, 1)
+        XCTAssertEqual(decoded[0].annotations[0].annotationFQName, "kotlin.WasExperimental")
+        XCTAssertEqual(decoded[0].annotations[0].arguments, ["markerClass = demo.ExperimentalApi::class"])
+        XCTAssertNil(decoded[0].annotations[0].useSiteTarget)
+    }
+
     func testMetadataEncoderDecoderRoundTripForDataAndSealedBothSet() {
         let record = MetadataRecord(
             kind: .class,

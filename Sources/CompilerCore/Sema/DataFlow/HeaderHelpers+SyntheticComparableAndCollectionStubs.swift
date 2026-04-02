@@ -7154,6 +7154,7 @@ extension DataFlowSemaPhase {
             "CharArray",
             "ByteArray",
             "ShortArray",
+            "UByteArray",
             "UShortArray",
         ]
         for name in primitiveArrayNames {
@@ -7199,6 +7200,7 @@ extension DataFlowSemaPhase {
             ("charArrayOf", "CharArray", types.charType),
             ("byteArrayOf", "ByteArray", types.intType),
             ("shortArrayOf", "ShortArray", types.intType),
+            ("ubyteArrayOf", "UByteArray", types.ubyteType),
             ("ushortArrayOf", "UShortArray", types.ushortType),
         ]
         for (factoryName, arrayName, elementType) in primitiveArrayFactoryTypes {

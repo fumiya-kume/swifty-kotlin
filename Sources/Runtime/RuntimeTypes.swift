@@ -61,16 +61,47 @@ final class RuntimeStringBox {
     }
 }
 
-final class RuntimeThrowableBox {
+class RuntimeThrowableBox {
     let message: String
     var cause: Int
     /// Suppressed exceptions (STDLIB-EXCEPT-105).
     /// Stores raw Int pointers to other RuntimeThrowableBox instances.
     var suppressed: [Int] = []
 
+    var exceptionFQName: String {
+        "kotlin.Throwable"
+    }
+
+    var exceptionHierarchyFQNames: [String] {
+        [exceptionFQName]
+    }
+
+    var renderedMessage: String {
+        message
+    }
+
     init(message: String, cause: Int = 0) {
         self.message = message
         self.cause = cause
+    }
+}
+
+final class RuntimeUninitializedPropertyAccessExceptionBox: RuntimeThrowableBox {
+    override var exceptionFQName: String {
+        "kotlin.UninitializedPropertyAccessException"
+    }
+
+    override var exceptionHierarchyFQNames: [String] {
+        [
+            "kotlin.UninitializedPropertyAccessException",
+            "kotlin.RuntimeException",
+            "kotlin.Exception",
+            "kotlin.Throwable",
+        ]
+    }
+
+    override var renderedMessage: String {
+        "UninitializedPropertyAccessException: \(message)"
     }
 }
 
