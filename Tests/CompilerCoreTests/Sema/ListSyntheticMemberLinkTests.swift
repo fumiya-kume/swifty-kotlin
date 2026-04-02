@@ -341,6 +341,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
     }
 
 
+
     func testListBinarySearchHasComparableElementUpperBound() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
