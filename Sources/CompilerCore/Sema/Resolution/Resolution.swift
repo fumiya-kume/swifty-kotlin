@@ -385,9 +385,10 @@ extension OverloadResolver {
         if let argReceiver = argFunction.receiver,
            let paramReceiver = paramFunction.receiver
         {
+            // Function receivers are contravariant — flip direction.
             constraints.append(contentsOf: decomposeSubtypeConstraint(
-                subtype: argReceiver,
-                supertype: paramReceiver,
+                subtype: paramReceiver,
+                supertype: argReceiver,
                 typeVarBySymbol: typeVarBySymbol,
                 typeSystem: typeSystem,
                 blameRange: blameRange
@@ -396,10 +397,12 @@ extension OverloadResolver {
             return false
         }
 
+        // Function type parameters are contravariant — flip direction
+        // (matching decomposeSubtypeConstraintImpl in Resolution+TypeConstraints.swift).
         for (argParameter, paramParameter) in zip(argFunction.params, paramFunction.params) {
             constraints.append(contentsOf: decomposeSubtypeConstraint(
-                subtype: argParameter,
-                supertype: paramParameter,
+                subtype: paramParameter,
+                supertype: argParameter,
                 typeVarBySymbol: typeVarBySymbol,
                 typeSystem: typeSystem,
                 blameRange: blameRange

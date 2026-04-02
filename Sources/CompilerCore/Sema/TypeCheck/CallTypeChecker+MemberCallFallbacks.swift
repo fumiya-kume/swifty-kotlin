@@ -1191,7 +1191,6 @@ extension CallTypeChecker {
             filterKeys,
             filterValues,
             knownNames.getOrDefault,
-            knownNames.getOrElse,
         ]
         if mapOnlyMembers.contains(memberName) {
             guard isMapReceiver else {
