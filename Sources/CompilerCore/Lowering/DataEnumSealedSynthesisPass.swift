@@ -1271,6 +1271,19 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
     /// Synthesizes `toString(): String` for data class with properties.
     /// Output format: "ClassName(prop1=val1, prop2=val2)"
     /// Each property value is converted to string via `kk_any_to_string` and concatenated.
+    private func dataClassExplicitSuperclass(
+        owner: SemanticSymbol,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> SemanticSymbol? {
+        let anyName = interner.intern("Any")
+        return sema.symbols.directSupertypes(for: owner.id)
+            .compactMap { sema.symbols.symbol($0) }
+            .first(where: { symbol in
+                symbol.kind == .class && symbol.name != anyName
+            })
+    }
+
     private func appendSyntheticDataClassToStringIfNeeded(
         name: InternedString,
         owner: SemanticSymbol,
@@ -1312,9 +1325,9 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         var body: [KIRInstruction] = []
 
         // STDLIB-DATA-014: If data class inherits from another class, start with super.toString()
-        let supertypes = sema.symbols.directSupertypes(for: owner.id)
+        let explicitSuperclass = dataClassExplicitSuperclass(owner: owner, sema: sema, interner: interner)
         var builderExpr: KIRExprID
-        if let firstSuper = supertypes.first, let superSymbol = sema.symbols.symbol(firstSuper), superSymbol.kind == .class {
+        if let superSymbol = explicitSuperclass {
             let receiverRef = module.arena.appendExpr(.symbolRef(parameterSymbol), type: receiverType)
             body.append(.constValue(result: receiverRef, value: .symbolRef(parameterSymbol)))
             
@@ -1471,8 +1484,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         }
 
         // Append closing ")" only if not inheriting from another class
-        let shouldCloseParen = !(supertypes.first != nil && 
-            supertypes.first.map { sema.symbols.symbol($0)?.kind == .class } ?? false)
+        let shouldCloseParen = explicitSuperclass == nil
         
         if shouldCloseParen {
             let suffixStr = interner.intern(")")
@@ -1596,8 +1608,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             body.append(.constValue(result: otherRef, value: .symbolRef(paramSymbol)))
             
             // STDLIB-DATA-014: If data class inherits from another class, call super.equals()
-            let supertypes = sema.symbols.directSupertypes(for: owner.id)
-            if let firstSuper = supertypes.first, let superSymbol = sema.symbols.symbol(firstSuper), superSymbol.kind == .class {
+            if let superSymbol = dataClassExplicitSuperclass(owner: owner, sema: sema, interner: interner) {
                 // Find super.equals() method symbol
                 let equalsName = interner.intern("equals")
                 let superEqualsFQName = superSymbol.fqName + [equalsName]
@@ -1761,8 +1772,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             }
 
             // STDLIB-DATA-014: If data class inherits from another class, call super.equals() first
-            let supertypes = sema.symbols.directSupertypes(for: owner.id)
-            if let firstSuper = supertypes.first, let superSymbol = sema.symbols.symbol(firstSuper), superSymbol.kind == .class {
+            if let superSymbol = dataClassExplicitSuperclass(owner: owner, sema: sema, interner: interner) {
                 let receiverRef = module.arena.appendExpr(.symbolRef(receiverParam.symbol), type: receiverType)
                 let otherRef = module.arena.appendExpr(.symbolRef(paramSymbol), type: nullableAnyType)
                 let superEqualsResult = module.arena.appendExpr(
