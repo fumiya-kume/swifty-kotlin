@@ -29,6 +29,12 @@ final class RuntimeEncodeDecodeTests: IsolatedRuntimeXCTestCase {
         return registerRuntimeObject(box)
     }
 
+    private func makeArrayRaw(_ elements: [Int]) -> Int {
+        let box = RuntimeArrayBox(length: elements.count)
+        box.elements = elements
+        return registerRuntimeObject(box)
+    }
+
     // MARK: - encodeToByteArray: basic ASCII round-trip
 
     func testEncodeToByteArrayASCII() {
@@ -134,37 +140,37 @@ final class RuntimeEncodeDecodeTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(extractSwiftString(result), "Hello")
     }
 
-    // MARK: - decodeToString(charset): US-ASCII (charset ID 1)
+    // MARK: - decodeToString(charset): US-ASCII (charset ID 2)
 
     func testDecodeToStringCharsetASCII() {
         let byteArray = makeListRaw([65, 66, 67]) // "ABC"
-        let result = kk_bytearray_decodeToString_charset(byteArray, 1)
+        let result = kk_bytearray_decodeToString_charset(byteArray, 2)
         XCTAssertEqual(extractSwiftString(result), "ABC")
     }
 
     func testDecodeToStringCharsetASCIINonASCIIByte() {
         // Bytes > 127 should produce replacement character in US-ASCII
         let byteArray = makeListRaw([0xC3, 0xA9]) // UTF-8 for e-acute, but invalid ASCII
-        let result = kk_bytearray_decodeToString_charset(byteArray, 1)
+        let result = kk_bytearray_decodeToString_charset(byteArray, 2)
         let decoded = extractSwiftString(result)
         XCTAssertNotNil(decoded)
         XCTAssertEqual(decoded, "\u{FFFD}\u{FFFD}",
                        "Non-ASCII bytes should produce replacement characters in US-ASCII mode")
     }
 
-    // MARK: - decodeToString(charset): ISO-8859-1 (charset ID 2)
+    // MARK: - decodeToString(charset): ISO-8859-1 (charset ID 1)
 
     func testDecodeToStringCharsetLatin1() {
         // In ISO-8859-1, byte 0xE9 = U+00E9 (e-acute), direct 1:1 mapping
         let byteArray = makeListRaw([0x48, 0x65, 0x6C, 0x6C, 0x6F, 0xE9]) // "Hello" + e-acute
-        let result = kk_bytearray_decodeToString_charset(byteArray, 2)
+        let result = kk_bytearray_decodeToString_charset(byteArray, 1)
         XCTAssertEqual(extractSwiftString(result), "Hello\u{00E9}")
     }
 
     func testDecodeToStringCharsetLatin1HighBytes() {
         // ISO-8859-1: every byte 0x00..0xFF maps to same Unicode code point
         let byteArray = makeListRaw([0xFF, 0xFE, 0xA0])
-        let result = kk_bytearray_decodeToString_charset(byteArray, 2)
+        let result = kk_bytearray_decodeToString_charset(byteArray, 1)
         XCTAssertEqual(extractSwiftString(result), "\u{FF}\u{FE}\u{A0}")
     }
 
@@ -174,5 +180,11 @@ final class RuntimeEncodeDecodeTests: IsolatedRuntimeXCTestCase {
         let byteArray = makeListRaw([])
         let result = kk_bytearray_decodeToString_charset(byteArray, 0)
         XCTAssertEqual(extractSwiftString(result), "")
+    }
+
+    func testDecodeToStringCharsetAcceptsArrayBox() {
+        let byteArray = makeArrayRaw([72, 101, 108, 108, 111])
+        let result = kk_bytearray_decodeToString_charset(byteArray, 0)
+        XCTAssertEqual(extractSwiftString(result), "Hello")
     }
 }

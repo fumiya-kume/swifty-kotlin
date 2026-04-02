@@ -83,7 +83,7 @@ public func kk_throwable_stackTraceToString(_ throwableRaw: Int) -> Int {
         return Int(bitPattern: opaque)
     }
     let message: String = if let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) {
-        throwable.message
+        throwable.renderedMessage
     } else if let cancellation = tryCast(ptr, to: RuntimeCancellationBox.self) {
         cancellation.message
     } else {
@@ -359,17 +359,24 @@ public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
         if let sourceTypeID = runtimeObjectTypeID(rawValue: value) {
             return runtimeIsAssignable(sourceTypeID: sourceTypeID, targetTypeID: payload) ? 1 : 0
         }
-        // RuntimeThrowableBox objects from external/runtime calls don't have
-        // registered type IDs. They should match any exception catch clause
-        // since the runtime cannot distinguish exact exception subtypes for
-        // throwables created by runtimeAllocateThrowable.
         guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
             return 0
         }
-        let isThrowable = runtimeStorage.withLock { state in
+        let throwable = runtimeStorage.withLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
-        } && tryCast(ptr, to: RuntimeThrowableBox.self) != nil
-        return isThrowable ? 1 : 0
+                ? tryCast(ptr, to: RuntimeThrowableBox.self)
+                : nil
+        }
+        guard let throwable else {
+            return 0
+        }
+        if runtimeThrowableMatchesNominalTypeID(throwable, targetTypeID: payload) {
+            return 1
+        }
+        // RuntimeThrowableBox objects from external/runtime calls usually do not
+        // have registered type IDs. Preserve the broad throwable fallback for
+        // unknown nominal tokens so existing catch-path behaviour does not regress.
+        return 1
 
     default:
         return 0
@@ -1291,7 +1298,7 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         return
     }
     if let throwable = tryCast(raw, to: RuntimeThrowableBox.self) {
-        Swift.print("Throwable(\(throwable.message))")
+        Swift.print("Throwable(\(throwable.renderedMessage))")
         return
     }
     if let charBox = tryCast(raw, to: RuntimeCharBox.self) {
@@ -1485,7 +1492,7 @@ func runtimeRenderAnyForPrint(_ value: Int) -> String {
         return "�"
     }
     if let throwable = tryCast(raw, to: RuntimeThrowableBox.self) {
-        return "Throwable(\(throwable.message))"
+        return "Throwable(\(throwable.renderedMessage))"
     }
     if let listBox = tryCast(raw, to: RuntimeListBox.self) {
         return "[\(listBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"

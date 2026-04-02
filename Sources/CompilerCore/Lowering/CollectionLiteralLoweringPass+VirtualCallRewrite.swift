@@ -1101,6 +1101,7 @@ extension CollectionLiteralLoweringPass {
         case thenBy(inner: KIRExprID)
         case thenByDescending(inner: KIRExprID)
         case thenDescending(inner: KIRExprID)
+        case thenComparator(inner: KIRExprID)
         case nullsFirst(inner: KIRExprID)
         case nullsLast(inner: KIRExprID)
         /// The comparator was produced by `Comparator.reversed()`.
@@ -1120,6 +1121,7 @@ extension CollectionLiteralLoweringPass {
         thenByCallee: InternedString? = nil,
         thenByDescendingCallee: InternedString? = nil,
         thenDescendingCallee: InternedString? = nil,
+        thenComparatorCallee: InternedString? = nil,
         nullsFirstCallee: InternedString? = nil,
         nullsLastCallee: InternedString? = nil,
         multiSelector3Callee: InternedString? = nil,
@@ -1143,6 +1145,9 @@ extension CollectionLiteralLoweringPass {
                     }
                     if let thenDescending = thenDescendingCallee, callee == thenDescending, let innerExpr = arguments.first {
                         return .thenDescending(inner: innerExpr)
+                    }
+                    if let thenComparator = thenComparatorCallee, callee == thenComparator, let innerExpr = arguments.first {
+                        return .thenComparator(inner: innerExpr)
                     }
                     if let nullsFirst = nullsFirstCallee, callee == nullsFirst, let innerExpr = arguments.first {
                         return .nullsFirst(inner: innerExpr)
@@ -1168,6 +1173,7 @@ extension CollectionLiteralLoweringPass {
                         thenByCallee: thenByCallee,
                         thenByDescendingCallee: thenByDescendingCallee,
                         thenDescendingCallee: thenDescendingCallee,
+                        thenComparatorCallee: thenComparatorCallee,
                         nullsFirstCallee: nullsFirstCallee,
                         nullsLastCallee: nullsLastCallee,
                         multiSelector3Callee: multiSelector3Callee,
@@ -1258,6 +1264,7 @@ extension CollectionLiteralLoweringPass {
                 thenByCallee: lookup.kkComparatorThenByName,
                 thenByDescendingCallee: lookup.kkComparatorThenByDescendingName,
                 thenDescendingCallee: lookup.kkComparatorThenDescendingName,
+                thenComparatorCallee: lookup.kkComparatorThenComparatorName,
                 nullsFirstCallee: lookup.kkComparatorNullsFirstName,
                 nullsLastCallee: lookup.kkComparatorNullsLastName,
                 multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
@@ -1280,6 +1287,9 @@ extension CollectionLiteralLoweringPass {
                 closureExpr = comparatorExpr
             case .thenDescending:
                 trampolineName = lookup.kkComparatorThenDescendingTrampolineName
+                closureExpr = comparatorExpr
+            case .thenComparator:
+                trampolineName = lookup.kkComparatorThenComparatorTrampolineName
                 closureExpr = comparatorExpr
             case .nullsFirst:
                 trampolineName = lookup.kkComparatorNullsFirstTrampolineName
@@ -1313,6 +1323,7 @@ extension CollectionLiteralLoweringPass {
                     thenByCallee: lookup.kkComparatorThenByName,
                     thenByDescendingCallee: lookup.kkComparatorThenByDescendingName,
                     thenDescendingCallee: lookup.kkComparatorThenDescendingName,
+                    thenComparatorCallee: lookup.kkComparatorThenComparatorName,
                     nullsFirstCallee: lookup.kkComparatorNullsFirstName,
                     nullsLastCallee: lookup.kkComparatorNullsLastName,
                     multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
@@ -1348,6 +1359,9 @@ extension CollectionLiteralLoweringPass {
                     innerClosureExpr = innerExpr
                 case .thenDescending:
                     innerTrampolineName = lookup.kkComparatorThenDescendingTrampolineName
+                    innerClosureExpr = innerExpr
+                case .thenComparator:
+                    innerTrampolineName = lookup.kkComparatorThenComparatorTrampolineName
                     innerClosureExpr = innerExpr
                 case .nullsFirst:
                     innerTrampolineName = lookup.kkComparatorNullsFirstTrampolineName
@@ -1404,6 +1418,7 @@ extension CollectionLiteralLoweringPass {
                 thenByCallee: lookup.kkComparatorThenByName,
                 thenByDescendingCallee: lookup.kkComparatorThenByDescendingName,
                 thenDescendingCallee: lookup.kkComparatorThenDescendingName,
+                thenComparatorCallee: lookup.kkComparatorThenComparatorName,
                 nullsFirstCallee: lookup.kkComparatorNullsFirstName,
                 nullsLastCallee: lookup.kkComparatorNullsLastName,
                 multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
@@ -1423,6 +1438,9 @@ extension CollectionLiteralLoweringPass {
                 cmpClosureExpr = comparatorExpr
             case .thenDescending:
                 cmpTrampolineName = lookup.kkComparatorThenDescendingTrampolineName
+                cmpClosureExpr = comparatorExpr
+            case .thenComparator:
+                cmpTrampolineName = lookup.kkComparatorThenComparatorTrampolineName
                 cmpClosureExpr = comparatorExpr
             case .nullsFirst:
                 cmpTrampolineName = lookup.kkComparatorNullsFirstTrampolineName
@@ -2599,7 +2617,7 @@ extension CollectionLiteralLoweringPass {
             mapExprIDs.insert(raw)
         case "Array", "IntArray", "LongArray", "DoubleArray",
              "FloatArray", "BooleanArray", "CharArray",
-             "ByteArray", "ShortArray", "UIntArray", "ULongArray":
+             "ByteArray", "ShortArray", "UByteArray", "UIntArray", "ULongArray":
             arrayExprIDs.insert(raw)
         case "Sequence":
             sequenceExprIDs.insert(raw)

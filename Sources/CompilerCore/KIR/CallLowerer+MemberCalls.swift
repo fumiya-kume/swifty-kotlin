@@ -3653,41 +3653,42 @@ extension CallLowerer {
         return finalArgs
     }
 
-    private func makeComparatorTrampolineArgument(
+    func comparatorTrampolineName(
         comparatorExprID: ExprID?,
         loweredComparatorID: KIRExprID,
         sema: SemaModule,
-        arena: KIRArena,
         interner: StringInterner,
-        instructions: inout [KIRInstruction]
-    ) -> [KIRExprID]? {
+        instructions: [KIRInstruction]
+    ) -> String? {
         func trampolineName(for externalLinkName: String) -> String? {
             switch externalLinkName {
-        case "kk_comparator_from_selector":
-            return "kk_comparator_from_selector_trampoline"
-        case "kk_comparator_from_selector_descending":
-            return "kk_comparator_from_selector_descending_trampoline"
-        case "kk_comparator_from_multi_selectors",
-             "kk_comparator_from_multi_selectors3":
-            return "kk_comparator_from_multi_selectors_trampoline"
-        case "kk_comparator_nulls_first":
-            return "kk_comparator_nulls_first_trampoline"
-        case "kk_comparator_nulls_last":
-            return "kk_comparator_nulls_last_trampoline"
-        case "kk_comparator_then_by":
-            return "kk_comparator_then_by_trampoline"
-        case "kk_comparator_then_by_descending":
-            return "kk_comparator_then_by_descending_trampoline"
-        case "kk_comparator_then_descending":
-            return "kk_comparator_then_descending_trampoline"
-        case "kk_comparator_reversed":
-            return "kk_comparator_reversed_trampoline"
-        case "kk_comparator_natural_order":
-            return "kk_comparator_natural_order_trampoline"
-        case "kk_comparator_reverse_order":
-            return "kk_comparator_reverse_order_trampoline"
-        default:
-            return nil
+            case "kk_comparator_from_selector":
+                return "kk_comparator_from_selector_trampoline"
+            case "kk_comparator_from_selector_descending":
+                return "kk_comparator_from_selector_descending_trampoline"
+            case "kk_comparator_from_multi_selectors",
+                 "kk_comparator_from_multi_selectors3":
+                return "kk_comparator_from_multi_selectors_trampoline"
+            case "kk_comparator_nulls_first":
+                return "kk_comparator_nulls_first_trampoline"
+            case "kk_comparator_nulls_last":
+                return "kk_comparator_nulls_last_trampoline"
+            case "kk_comparator_then_by":
+                return "kk_comparator_then_by_trampoline"
+            case "kk_comparator_then_by_descending":
+                return "kk_comparator_then_by_descending_trampoline"
+            case "kk_comparator_then_descending":
+                return "kk_comparator_then_descending_trampoline"
+            case "kk_comparator_then_comparator":
+                return "kk_comparator_then_comparator_trampoline"
+            case "kk_comparator_reversed":
+                return "kk_comparator_reversed_trampoline"
+            case "kk_comparator_natural_order":
+                return "kk_comparator_natural_order_trampoline"
+            case "kk_comparator_reverse_order":
+                return "kk_comparator_reverse_order_trampoline"
+            default:
+                return nil
             }
         }
 
@@ -3706,6 +3707,8 @@ extension CallLowerer {
                 return "kk_comparator_then_by_descending_trampoline"
             case "thenDescending":
                 return "kk_comparator_then_descending_trampoline"
+            case "thenComparator":
+                return "kk_comparator_then_comparator_trampoline"
             case "nullsFirst":
                 return "kk_comparator_nulls_first_trampoline"
             case "nullsLast":
@@ -3721,30 +3724,46 @@ extension CallLowerer {
             }
         }
 
-        let trampolineName: String? = {
-            if let comparatorExprID,
-               let chosenCallee = sema.bindings.callBinding(for: comparatorExprID)?.chosenCallee
+        if let comparatorExprID,
+           let chosenCallee = sema.bindings.callBinding(for: comparatorExprID)?.chosenCallee
+        {
+            if let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
+               let trampolineName = trampolineName(for: externalLinkName)
             {
-                if let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
-                   let trampolineName = trampolineName(for: externalLinkName)
-                {
-                    return trampolineName
-                }
-                if let trampolineName = trampolineName(for: chosenCallee) {
-                    return trampolineName
-                }
-            }
-            for instruction in instructions.reversed() {
-                guard case let .call(_, callee, _, result, _, _, _, _) = instruction,
-                      result == loweredComparatorID,
-                      let trampolineName = trampolineName(for: interner.resolve(callee))
-                else {
-                    continue
-                }
                 return trampolineName
             }
-            return nil
-        }()
+            if let trampolineName = trampolineName(for: chosenCallee) {
+                return trampolineName
+            }
+        }
+
+        for instruction in instructions.reversed() {
+            guard case let .call(_, callee, _, result, _, _, _, _) = instruction,
+                  result == loweredComparatorID,
+                  let trampolineName = trampolineName(for: interner.resolve(callee))
+            else {
+                continue
+            }
+            return trampolineName
+        }
+        return nil
+    }
+
+    private func makeComparatorTrampolineArgument(
+        comparatorExprID: ExprID?,
+        loweredComparatorID: KIRExprID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> [KIRExprID]? {
+        let trampolineName = comparatorTrampolineName(
+            comparatorExprID: comparatorExprID,
+            loweredComparatorID: loweredComparatorID,
+            sema: sema,
+            interner: interner,
+            instructions: instructions
+        )
         guard let trampolineName else {
             return nil
         }
@@ -4674,6 +4693,77 @@ extension CallLowerer {
             let continuationExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
             instructions.append(.constValue(result: continuationExpr, value: .intLiteral(0)))
             finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr, continuationExpr]
+        }
+        // kk_lock_withLock(handle, actionFnPtr, actionEnvPtr): split the lambda
+        // argument at index 1 into a function pointer and environment pointer.
+        if loweredCallee == interner.intern("kk_lock_withLock"),
+           finalArguments.count == 2
+        {
+            let lambdaID = finalArguments[1]
+            let fnPtrExpr: KIRExprID
+            let envPtrExpr: KIRExprID
+            if let callableInfo = driver.ctx.callableValueInfo(for: lambdaID) {
+                fnPtrExpr = arena.appendExpr(
+                    .symbolRef(callableInfo.symbol),
+                    type: sema.types.anyType
+                )
+                instructions.append(.constValue(result: fnPtrExpr, value: .symbolRef(callableInfo.symbol)))
+                if callableInfo.captureArguments.count >= 2 {
+                    // Multi-capture: pack captures into a closure object.
+                    // The lambda has been generated to unpack them via kk_array_get_inbounds.
+                    let intType = sema.types.intType
+                    let anyType = sema.types.anyType
+                    let kkObjectNew = interner.intern("kk_object_new")
+                    let kkArraySet = interner.intern("kk_array_set")
+                    let slotCount = Int64(2 + callableInfo.captureArguments.count)
+                    let slotCountExpr = arena.appendExpr(.intLiteral(slotCount), type: intType)
+                    instructions.append(.constValue(result: slotCountExpr, value: .intLiteral(slotCount)))
+                    let classIDExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                    instructions.append(.constValue(result: classIDExpr, value: .intLiteral(0)))
+                    let closureObjExpr = arena.appendExpr(
+                        .temporary(Int32(clamping: arena.expressions.count)), type: anyType)
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: kkObjectNew,
+                        arguments: [slotCountExpr, classIDExpr],
+                        result: closureObjExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    for (captureIndex, captureArg) in callableInfo.captureArguments.enumerated() {
+                        let fieldOffset = Int64(captureIndex + 2)
+                        let offsetExpr = arena.appendExpr(.intLiteral(fieldOffset), type: intType)
+                        instructions.append(.constValue(result: offsetExpr, value: .intLiteral(fieldOffset)))
+                        let unusedResult = arena.appendExpr(
+                            .temporary(Int32(clamping: arena.expressions.count)), type: anyType)
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: kkArraySet,
+                            arguments: [closureObjExpr, offsetExpr, captureArg],
+                            result: unusedResult,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                    }
+                    envPtrExpr = closureObjExpr
+                } else if let closureRaw = callableInfo.captureArguments.first {
+                    envPtrExpr = closureRaw
+                } else {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    envPtrExpr = zeroExpr
+                }
+            } else {
+                // Fallback when callableValueInfo is unavailable (e.g. stored lambda /
+                // function reference): treat lambdaID as the function pointer and pass
+                // zero as the environment pointer so the argument count always matches
+                // the 3-parameter ABI (handle, actionFnPtr, actionEnvPtr).
+                fnPtrExpr = lambdaID
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                envPtrExpr = zeroExpr
+            }
+            finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
         }
         if let inst = tryEmitVirtualDispatch(
             chosenCallee: chosenCallee, calleeName: loweredCallee,

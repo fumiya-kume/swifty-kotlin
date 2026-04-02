@@ -59,6 +59,12 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_comparator_then_comparator = ExternDecl(
+        name: "kk_comparator_then_comparator",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     static let kk_comparator_then_by_trampoline = ExternDecl(
         name: "kk_comparator_then_by_trampoline",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
@@ -73,6 +79,12 @@ public extension RuntimeABIExterns {
 
     static let kk_comparator_then_descending_trampoline = ExternDecl(
         name: "kk_comparator_then_descending_trampoline",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_comparator_then_comparator_trampoline = ExternDecl(
+        name: "kk_comparator_then_comparator_trampoline",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
@@ -172,9 +184,11 @@ public extension RuntimeABIExterns {
         kk_comparator_then_by,
         kk_comparator_then_by_descending,
         kk_comparator_then_descending,
+        kk_comparator_then_comparator,
         kk_comparator_then_by_trampoline,
         kk_comparator_then_by_descending_trampoline,
         kk_comparator_then_descending_trampoline,
+        kk_comparator_then_comparator_trampoline,
         kk_comparator_nulls_first,
         kk_comparator_nulls_first_trampoline,
         kk_comparator_nulls_last,
