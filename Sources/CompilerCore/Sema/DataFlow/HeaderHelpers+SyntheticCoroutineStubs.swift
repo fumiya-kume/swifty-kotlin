@@ -23,6 +23,11 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let kotlinCoroutinesPkg = ensureSyntheticPackage(
+            kotlinPkg + [interner.intern("coroutines")],
+            symbols: symbols,
+            interner: interner
+        )
         let coroutinesPkg = ensureSyntheticPackage(
             kotlinxPkg + [interner.intern("coroutines")],
             symbols: symbols,
@@ -662,6 +667,37 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // kotlin.coroutines compatibility shim for EmptyCoroutineContext
+        let kotlinCoroutineContextSymbol = ensureInterfaceSymbol(
+            named: "CoroutineContext",
+            in: kotlinCoroutinesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let kotlinCoroutineContextType = types.make(.classType(ClassType(
+            classSymbol: kotlinCoroutineContextSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(kotlinCoroutineContextType, for: kotlinCoroutineContextSymbol)
+        symbols.setDirectSupertypes([coroutineContextSymbol], for: kotlinCoroutineContextSymbol)
+        types.setNominalDirectSupertypes([coroutineContextSymbol], for: kotlinCoroutineContextSymbol)
+
+        let emptyCoroutineContextSymbol = ensureObjectSymbol(
+            named: "EmptyCoroutineContext",
+            in: kotlinCoroutinesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let emptyCoroutineContextType = types.make(.classType(ClassType(
+            classSymbol: emptyCoroutineContextSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(emptyCoroutineContextType, for: emptyCoroutineContextSymbol)
+        symbols.setDirectSupertypes([kotlinCoroutineContextSymbol], for: emptyCoroutineContextSymbol)
+        types.setNominalDirectSupertypes([kotlinCoroutineContextSymbol], for: emptyCoroutineContextSymbol)
 
         // Mutex (kotlinx.coroutines.sync.Mutex)
         let syncPkg = ensureSyntheticPackage(
