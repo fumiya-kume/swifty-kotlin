@@ -23,6 +23,7 @@ extension CallSupportLowerer {
 
     func normalizedCallArguments(
         providedArguments: [KIRExprID],
+        originalArgs: [CallArgument],
         callBinding: CallBinding?,
         chosenCallee: SymbolID?,
         spreadFlags: [Bool],
@@ -31,6 +32,7 @@ extension CallSupportLowerer {
     ) -> NormalizedCallResult {
         normalizedCallArguments(
             providedArguments: providedArguments,
+            originalArgs: originalArgs,
             callBinding: callBinding,
             chosenCallee: chosenCallee,
             spreadFlags: spreadFlags,

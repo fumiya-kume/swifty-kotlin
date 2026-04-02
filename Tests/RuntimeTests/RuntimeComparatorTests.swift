@@ -112,6 +112,35 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertEqual(result3, 0)
     }
 
+    func testComparatorFromMultiSelectorsVararg() {
+        let selectors = makeList([
+            selectorPtr(selectModTen), 0,
+            selectorPtr(selectIdentity), 0,
+            selectorPtr(selectIdentity), 0,
+            selectorPtr(selectIdentity), 0,
+        ])
+        let closureRaw = kk_comparator_from_multi_selectors_vararg(selectors)
+        let result = kk_comparator_from_multi_selectors_trampoline(closureRaw, 13, 23, nil)
+        XCTAssertLessThan(result, 0)
+
+        var thrown = 0
+        let throwingSelectors = makeList([
+            selectorPtr(throwingSelector), 0,
+            selectorPtr(selectIdentity), 0,
+            selectorPtr(selectIdentity), 0,
+            selectorPtr(selectIdentity), 0,
+        ])
+        let throwingClosureRaw = kk_comparator_from_multi_selectors_vararg(throwingSelectors)
+        let throwingResult = kk_comparator_from_multi_selectors_trampoline(
+            throwingClosureRaw,
+            13,
+            23,
+            &thrown
+        )
+        XCTAssertEqual(throwingResult, 0)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     // MARK: - compareByDescending
 
     func testComparatorFromSelectorDescending() {

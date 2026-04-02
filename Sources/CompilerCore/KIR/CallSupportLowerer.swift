@@ -235,6 +235,7 @@ final class CallSupportLowerer {
 
     func normalizedCallArguments(
         providedArguments: [KIRExprID],
+        originalArgs: [CallArgument],
         callBinding: CallBinding?,
         chosenCallee: SymbolID?,
         spreadFlags: [Bool],
@@ -260,6 +261,7 @@ final class CallSupportLowerer {
         let isVararg = normalizeBoolFlags(signature.valueParameterIsVararg, count: parameterCount)
         let hasDefaultValues = normalizeBoolFlags(signature.valueParameterHasDefaultValues, count: parameterCount)
         let preserveArrayVarargs = externalLinkName == "kk_array_of" || externalLinkName == "kk_sequence_of"
+        let isComparatorVararg = externalLinkName == "kk_comparator_from_multi_selectors_vararg"
 
         var argIndicesByParameter: [Int: [Int]] = [:]
         for (argIndex, paramIndex) in callBinding.parameterMapping {
@@ -335,6 +337,23 @@ final class CallSupportLowerer {
                 instructions.append(.constValue(result: countExpr, value: .intLiteral(Int64(argIndices.count))))
             }
             return NormalizedCallResult(arguments: [packedArray, countExpr], defaultMask: 0)
+        }
+
+        if isComparatorVararg,
+           parameterCount == 1,
+           isVararg.first == true
+        {
+            let selectorArgIndices = argIndicesByParameter[0] ?? []
+            let pairList = packComparatorSelectorVarargArguments(
+                argIndices: selectorArgIndices,
+                providedArguments: providedArguments,
+                originalArgs: originalArgs,
+                arena: arena,
+                interner: interner,
+                sema: sema,
+                instructions: &instructions
+            )
+            return NormalizedCallResult(arguments: [pairList], defaultMask: 0)
         }
 
         var normalized: [KIRExprID] = []
@@ -514,6 +533,118 @@ final class CallSupportLowerer {
             )
         }
         return arrayID
+    }
+
+    func comparatorSelectorRuntimeArguments(
+        loweredArgID: KIRExprID,
+        originalArgExprID: ExprID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> [KIRExprID] {
+        var loweredSelectorID = loweredArgID
+        var selectorCallableInfo = driver.ctx.callableValueInfo(for: loweredSelectorID)
+        if selectorCallableInfo == nil,
+           case let .symbolRef(symbol)? = arena.expr(loweredSelectorID),
+           let function = arena.function(for: symbol)
+        {
+            selectorCallableInfo = KIRCallableValueInfo(
+                symbol: function.symbol,
+                callee: function.name,
+                captureArguments: arena.lambdaCaptureArgsBySymbol[function.symbol] ?? [],
+                hasClosureParam: function.params.count >= 2
+            )
+        }
+        if let callableInfo = selectorCallableInfo,
+           !callableInfo.hasClosureParam,
+           let adaptedInfo = driver.callLowerer.makeCollectionHOFCallableAdapter(
+                callableInfo: callableInfo,
+                loweredArgID: loweredSelectorID,
+                argExprID: originalArgExprID,
+                sema: sema,
+                arena: arena,
+                interner: interner
+            )
+        {
+            let adaptedExpr = arena.appendExpr(.symbolRef(adaptedInfo.symbol), type: arena.exprType(loweredSelectorID) ?? sema.types.anyType)
+            instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
+            loweredSelectorID = adaptedExpr
+            selectorCallableInfo = adaptedInfo
+        }
+        var finalArgs: [KIRExprID] = []
+        if let callableInfo = selectorCallableInfo {
+            let fnPtrExpr = arena.appendExpr(.symbolRef(callableInfo.symbol), type: sema.types.intType)
+            instructions.append(.constValue(result: fnPtrExpr, value: .symbolRef(callableInfo.symbol)))
+            finalArgs.append(fnPtrExpr)
+            if let closureRaw = callableInfo.captureArguments.first {
+                finalArgs.append(closureRaw)
+            } else {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArgs.append(zeroExpr)
+            }
+        } else {
+            finalArgs.append(loweredSelectorID)
+            let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+            instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            finalArgs.append(zeroExpr)
+        }
+        return finalArgs
+    }
+
+    func packComparatorSelectorVarargArguments(
+        argIndices: [Int],
+        providedArguments: [KIRExprID],
+        originalArgs: [CallArgument],
+        arena: KIRArena,
+        interner: StringInterner,
+        sema: SemaModule,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        let pairCount = argIndices.count
+        let pairArray = emitArrayNew(
+            count: pairCount * 2,
+            arena: arena,
+            interner: interner,
+            intType: intType,
+            anyType: sema.types.anyType,
+            instructions: &instructions
+        )
+        for (pairIndex, argIndex) in argIndices.enumerated() {
+            guard argIndex >= 0, argIndex < providedArguments.count, argIndex < originalArgs.count else {
+                continue
+            }
+            let selectorArgs = comparatorSelectorRuntimeArguments(
+                loweredArgID: providedArguments[argIndex],
+                originalArgExprID: originalArgs[argIndex].expr,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            for (offset, selectorArg) in selectorArgs.enumerated() {
+                let valueIndex = pairIndex * 2 + offset
+                let indexExpr = arena.appendExpr(.intLiteral(Int64(valueIndex)), type: intType)
+                instructions.append(.constValue(result: indexExpr, value: .intLiteral(Int64(valueIndex))))
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_array_set"),
+                    arguments: [pairArray, indexExpr, selectorArg],
+                    result: nil,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            }
+        }
+        return emitArrayToList(
+            pairArray,
+            arena: arena,
+            interner: interner,
+            anyType: sema.types.anyType,
+            instructions: &instructions
+        )
     }
 
     private func emitArrayToList(

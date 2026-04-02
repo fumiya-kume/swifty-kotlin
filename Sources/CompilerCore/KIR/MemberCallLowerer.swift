@@ -212,6 +212,7 @@ final class MemberCallLowerer {
         if let callBinding, let chosen {
             let normalizedResult = coordinator.driver.callSupportLowerer.normalizedCallArguments(
                 providedArguments: loweredArgIDs,
+                originalArgs: args,
                 callBinding: callBinding,
                 chosenCallee: chosen,
                 spreadFlags: args.map(\.isSpread),

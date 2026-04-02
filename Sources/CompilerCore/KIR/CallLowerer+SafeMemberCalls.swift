@@ -642,6 +642,7 @@ extension CallLowerer {
         let chosen = callBinding?.chosenCallee
         let safeNormalized = driver.callSupportLowerer.normalizedCallArguments(
             providedArguments: loweredArgIDs,
+            originalArgs: args,
             callBinding: callBinding,
             chosenCallee: chosen,
             spreadFlags: args.map(\.isSpread),

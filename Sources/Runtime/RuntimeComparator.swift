@@ -64,13 +64,17 @@ public func kk_comparator_from_selector_descending(_ selectorFn: Int, _ selector
 
 /// Creates a comparator closure from multiple selectors.
 /// Stores the (fn, closure) pairs in a RuntimeListBox for the trampoline to iterate.
+private func runtimeComparatorFromSelectorPairs(_ elements: [Int]) -> Int {
+    let box = RuntimeListBox(elements: elements)
+    return registerRuntimeObject(box)
+}
+
 @_cdecl("kk_comparator_from_multi_selectors")
 public func kk_comparator_from_multi_selectors(
     _ sel1Fn: Int, _ sel1Closure: Int,
     _ sel2Fn: Int, _ sel2Closure: Int
 ) -> Int {
-    let box = RuntimeListBox(elements: [sel1Fn, sel1Closure, sel2Fn, sel2Closure])
-    return registerRuntimeObject(box)
+    runtimeComparatorFromSelectorPairs([sel1Fn, sel1Closure, sel2Fn, sel2Closure])
 }
 
 /// 3-selector variant.
@@ -80,8 +84,42 @@ public func kk_comparator_from_multi_selectors3(
     _ sel2Fn: Int, _ sel2Closure: Int,
     _ sel3Fn: Int, _ sel3Closure: Int
 ) -> Int {
-    let box = RuntimeListBox(elements: [sel1Fn, sel1Closure, sel2Fn, sel2Closure, sel3Fn, sel3Closure])
-    return registerRuntimeObject(box)
+    runtimeComparatorFromSelectorPairs([sel1Fn, sel1Closure, sel2Fn, sel2Closure, sel3Fn, sel3Closure])
+}
+
+/// Packed-list vararg variant.
+@_cdecl("kk_comparator_from_multi_selectors_vararg")
+public func kk_comparator_from_multi_selectors_vararg(_ selectorsRaw: Int) -> Int {
+    guard let selectorsBox = runtimeListBox(from: selectorsRaw) else {
+        return runtimeComparatorFromSelectorPairs([])
+    }
+    return runtimeComparatorFromSelectorPairs(selectorsBox.elements)
+}
+
+private func runtimeCompareMultiSelectorComparator(
+    listBox: RuntimeListBox,
+    a: Int,
+    b: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let elements = listBox.elements
+    // Elements are packed as [fn1, closure1, fn2, closure2, ...].
+    guard elements.count % 2 == 0, elements.count >= 4 else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: malformed multi-selector comparator: expected even element count >= 4, got \(elements.count)")
+    }
+    let selectorCount = elements.count / 2
+    var thrown = 0
+    for i in 0..<selectorCount {
+        let selectorFn = elements[i * 2]
+        let selectorClosure = elements[i * 2 + 1]
+        let keyA = runtimeInvokeCollectionLambda1(fnPtr: selectorFn, closureRaw: selectorClosure, value: a, outThrown: &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        let keyB = runtimeInvokeCollectionLambda1(fnPtr: selectorFn, closureRaw: selectorClosure, value: b, outThrown: &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        let cmp = runtimeCompareValues(keyA, keyB)
+        if cmp != 0 { return cmp }
+    }
+    return 0
 }
 
 /// Trampoline for multi-selector compareBy.
@@ -100,24 +138,7 @@ public func kk_comparator_from_multi_selectors_trampoline(
         outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator closure")
         return 0
     }
-    let elements = listBox.elements
-    // Elements are packed as [fn1, closure1, fn2, closure2, ...]
-    guard elements.count % 2 == 0, elements.count >= 4 else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: malformed multi-selector comparator: expected even element count >= 4, got \(elements.count)")
-    }
-    let selectorCount = elements.count / 2
-    var thrown = 0
-    for i in 0..<selectorCount {
-        let selectorFn = elements[i * 2]
-        let selectorClosure = elements[i * 2 + 1]
-        let keyA = runtimeInvokeCollectionLambda1(fnPtr: selectorFn, closureRaw: selectorClosure, value: a, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-        let keyB = runtimeInvokeCollectionLambda1(fnPtr: selectorFn, closureRaw: selectorClosure, value: b, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-        let cmp = runtimeCompareValues(keyA, keyB)
-        if cmp != 0 { return cmp }
-    }
-    return 0
+    return runtimeCompareMultiSelectorComparator(listBox: listBox, a: a, b: b, outThrown: outThrown)
 }
 
 // MARK: - Chained comparators (STDLIB-176)

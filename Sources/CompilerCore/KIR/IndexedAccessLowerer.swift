@@ -260,6 +260,9 @@ final class IndexedAccessLowerer {
         emitMemberCallInstruction(
             normalized: coordinator.driver.callSupportLowerer.normalizedCallArguments(
                 providedArguments: loweredIndices,
+                originalArgs: indices.map { indexExpr in
+                    CallArgument(label: nil, isSpread: false, expr: indexExpr)
+                },
                 callBinding: callBinding,
                 chosenCallee: chosenGet,
                 spreadFlags: Array(repeating: false, count: loweredIndices.count),
@@ -346,6 +349,7 @@ final class IndexedAccessLowerer {
         emitMemberCallInstruction(
             normalized: coordinator.driver.callSupportLowerer.normalizedCallArguments(
                 providedArguments: loweredArgs,
+                originalArgs: [],
                 callBinding: callBinding,
                 chosenCallee: chosenSet,
                 spreadFlags: Array(repeating: false, count: loweredArgs.count),

@@ -203,6 +203,7 @@ final class OperatorLowerer {
         // 通常のcompareTo呼び出し
         let normalizedResult = coordinator.driver.callSupportLowerer.normalizedCallArguments(
             providedArguments: [rhsID],
+            originalArgs: [CallArgument(label: nil, isSpread: false, expr: lhsExpr)],
             callBinding: callBinding,
             chosenCallee: callBinding.chosenCallee,
             spreadFlags: [false],

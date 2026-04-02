@@ -65,6 +65,14 @@ public extension RuntimeABISpec {
             section: "Comparator"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_comparator_from_multi_selectors_vararg",
+            parameters: [
+                RuntimeABIParameter(name: "selectorsListRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Comparator"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_comparator_from_multi_selectors_trampoline",
             parameters: [
                 RuntimeABIParameter(name: "closureRaw", type: .intptr),

@@ -3474,6 +3474,7 @@ extension CallLowerer {
         }
         let normalized = driver.callSupportLowerer.normalizedCallArguments(
             providedArguments: normalizedArgIDs,
+            originalArgs: args,
             callBinding: callBinding,
             chosenCallee: chosen,
             spreadFlags: args.map(\.isSpread),
@@ -3667,7 +3668,8 @@ extension CallLowerer {
             case "kk_comparator_from_selector_descending":
                 return "kk_comparator_from_selector_descending_trampoline"
             case "kk_comparator_from_multi_selectors",
-                 "kk_comparator_from_multi_selectors3":
+                 "kk_comparator_from_multi_selectors3",
+                 "kk_comparator_from_multi_selectors_vararg":
                 return "kk_comparator_from_multi_selectors_trampoline"
             case "kk_comparator_nulls_first":
                 return "kk_comparator_nulls_first_trampoline"
@@ -3870,111 +3872,6 @@ extension CallLowerer {
         }
 
         return finalArguments
-    }
-
-    private func makeCollectionHOFCallableAdapter(
-        callableInfo: KIRCallableValueInfo,
-        loweredArgID: KIRExprID,
-        argExprID: ExprID,
-        sema: SemaModule,
-        arena: KIRArena,
-        interner: StringInterner
-    ) -> KIRCallableValueInfo? {
-        let callableType = arena.exprType(loweredArgID) ?? sema.bindings.exprTypes[argExprID] ?? sema.types.anyType
-        let nonNullCallableType = sema.types.makeNonNullable(callableType)
-        guard case let .functionType(functionType) = sema.types.kind(of: nonNullCallableType) else {
-            return nil
-        }
-
-        let adapterSymbol = driver.ctx.allocateSyntheticGeneratedSymbol()
-        let adapterName = interner.intern("kk_hof_adapter_\(argExprID.rawValue)_\(adapterSymbol.rawValue)")
-        let closureParam = KIRParameter(
-            symbol: driver.ctx.allocateSyntheticGeneratedSymbol(),
-            type: sema.types.intType
-        )
-        let valueParams: [KIRParameter] = functionType.params.enumerated().map { index, type in
-            KIRParameter(
-                symbol: SymbolID(rawValue: Int32(clamping: -700_000 - Int64(argExprID.rawValue) * 16 - Int64(index))),
-                type: type
-            )
-        }
-
-        var body: [KIRInstruction] = [.beginBlock]
-        let closureExpr = arena.appendExpr(.symbolRef(closureParam.symbol), type: closureParam.type)
-        body.append(.constValue(result: closureExpr, value: .symbolRef(closureParam.symbol)))
-
-        var callArguments: [KIRExprID] = []
-        if callableInfo.captureArguments.count >= 2 {
-            let kkArrayGet = interner.intern("kk_array_get_inbounds")
-            for (captureIndex, captureExpr) in callableInfo.captureArguments.enumerated() {
-                let captureType = arena.exprType(captureExpr) ?? sema.types.anyType
-                let offsetExpr = arena.appendExpr(.intLiteral(Int64(captureIndex + 2)), type: sema.types.intType)
-                body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(captureIndex + 2))))
-                let loadedExpr = arena.appendExpr(
-                    .temporary(Int32(clamping: arena.expressions.count)),
-                    type: captureType
-                )
-                body.append(.call(
-                    symbol: nil,
-                    callee: kkArrayGet,
-                    arguments: [closureExpr, offsetExpr],
-                    result: loadedExpr,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-                callArguments.append(loadedExpr)
-            }
-        } else if !callableInfo.captureArguments.isEmpty {
-            callArguments.append(closureExpr)
-        }
-
-        for param in valueParams {
-            let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
-            body.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
-            callArguments.append(paramExpr)
-        }
-
-        let callResult = arena.appendExpr(
-            .temporary(Int32(clamping: arena.expressions.count)),
-            type: functionType.returnType
-        )
-        body.append(.call(
-            symbol: callableInfo.symbol,
-            callee: callableInfo.callee,
-            arguments: callArguments,
-            result: callResult,
-            canThrow: false,
-            thrownResult: nil
-        ))
-        switch sema.types.kind(of: functionType.returnType) {
-        case .unit, .nothing(.nonNull), .nothing(.nullable):
-            body.append(.returnUnit)
-        default:
-            body.append(.returnValue(callResult))
-        }
-        body.append(.endBlock)
-
-        let adapterDecl = arena.appendDecl(
-            .function(
-                KIRFunction(
-                    symbol: adapterSymbol,
-                    name: adapterName,
-                    params: [closureParam] + valueParams,
-                    returnType: functionType.returnType,
-                    body: body,
-                    isSuspend: functionType.isSuspend,
-                    isInline: false
-                )
-            )
-        )
-        driver.ctx.appendGeneratedCallableDecl(adapterDecl)
-
-        return KIRCallableValueInfo(
-            symbol: adapterSymbol,
-            callee: adapterName,
-            captureArguments: callableInfo.captureArguments,
-            hasClosureParam: true
-        )
     }
 
     private func tryLowerObjectMemberPropertyRead(

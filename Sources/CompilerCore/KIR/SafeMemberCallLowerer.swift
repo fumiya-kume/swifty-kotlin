@@ -611,15 +611,12 @@ final class SafeMemberCallLowerer {
         if let callBinding, let chosen {
             let normalizedResult = coordinator.driver.callSupportLowerer.normalizedCallArguments(
                 providedArguments: loweredArgIDs,
+                originalArgs: [],
                 callBinding: callBinding,
                 chosenCallee: chosen,
                 spreadFlags: Array(repeating: false, count: loweredArgIDs.count),
-                ast: shared.ast,
-                sema: sema,
-                arena: arena,
-                interner: interner,
-                propertyConstantInitializers: shared.propertyConstantInitializers,
-                instructions: &instructions.instructions
+                shared: shared,
+                emit: &instructions
             )
             
             var finalArguments = normalizedResult.arguments

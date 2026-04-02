@@ -106,6 +106,7 @@ extension CallLowerer {
                 }
                 let normalizedResult = driver.callSupportLowerer.normalizedCallArguments(
                     providedArguments: [rhsID],
+                    originalArgs: [],
                     callBinding: callBinding,
                     chosenCallee: callBinding.chosenCallee,
                     spreadFlags: [false],
@@ -597,6 +598,9 @@ extension CallLowerer {
             emitMemberCallInstruction(
                 normalized: driver.callSupportLowerer.normalizedCallArguments(
                     providedArguments: loweredIndices,
+                    originalArgs: indices.map { indexExpr in
+                        CallArgument(label: nil, isSpread: false, expr: indexExpr)
+                    },
                     callBinding: callBinding,
                     chosenCallee: chosenGet,
                     spreadFlags: Array(repeating: false, count: loweredIndices.count),
@@ -710,6 +714,9 @@ extension CallLowerer {
             emitMemberCallInstruction(
                 normalized: driver.callSupportLowerer.normalizedCallArguments(
                     providedArguments: loweredArgs,
+                    originalArgs: indices.map { indexExpr in
+                        CallArgument(label: nil, isSpread: false, expr: indexExpr)
+                    } + [CallArgument(label: nil, isSpread: false, expr: valueExpr)],
                     callBinding: callBinding,
                     chosenCallee: chosenSet,
                     spreadFlags: Array(repeating: false, count: loweredArgs.count),

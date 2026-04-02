@@ -32,6 +32,7 @@ extension ABIMismatchTests {
             "kk_readln",
             "kk_readlnOrNull",
             // Comparator (STDLIB-176)
+            "kk_comparator_from_multi_selectors_vararg",
             "kk_comparator_then_comparator",
             "kk_sequence_of",
             "kk_sequence_generate",

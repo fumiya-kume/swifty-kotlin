@@ -511,6 +511,7 @@ final class CallLowerer {
         let callNormalized: NormalizedCallResult = if callBinding != nil {
             driver.callSupportLowerer.normalizedCallArguments(
                 providedArguments: loweredArgIDs,
+                originalArgs: args,
                 callBinding: callBinding,
                 chosenCallee: chosen,
                 spreadFlags: args.map(\.isSpread),
@@ -1017,6 +1018,28 @@ final class CallLowerer {
             return loweredArguments
         }
 
+        let comparatorFactoryNames: Set = [
+            "kk_comparator_from_selector",
+            "kk_comparator_from_selector_descending",
+            "kk_comparator_from_multi_selectors",
+            "kk_comparator_from_multi_selectors3",
+        ]
+        if comparatorFactoryNames.contains(externalLinkName) {
+            var finalArgs: [KIRExprID] = []
+            for (index, loweredArgID) in loweredArguments.enumerated() {
+                let pairArgs = driver.callSupportLowerer.comparatorSelectorRuntimeArguments(
+                    loweredArgID: loweredArgID,
+                    originalArgExprID: originalArgs[index].expr,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
+                finalArgs.append(contentsOf: pairArgs)
+            }
+            return finalArgs
+        }
+
         let legacyNames: Set = ["kk_require_lazy", "kk_check_lazy", "kk_precondition_assert_lazy", "kk_sequence_generate"]
         if legacyNames.contains(externalLinkName), loweredArguments.count == 2 {
             var seedArgument = loweredArguments[0]
@@ -1202,7 +1225,7 @@ final class CallLowerer {
         return loweredArguments
     }
 
-    private func makeCollectionHOFCallableAdapter(
+    func makeCollectionHOFCallableAdapter(
         callableInfo: KIRCallableValueInfo,
         loweredArgID: KIRExprID,
         argExprID: ExprID,

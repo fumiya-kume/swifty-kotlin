@@ -358,6 +358,7 @@ final class CoroutineLowerer {
         // デフォルトマスクの処理
         let normalizedResult = coordinator.driver.callSupportLowerer.normalizedCallArguments(
             providedArguments: loweredArgIDs,
+            originalArgs: args,
             callBinding: callBinding,
             chosenCallee: callBinding.chosenCallee,
             spreadFlags: args.map(\.isSpread),

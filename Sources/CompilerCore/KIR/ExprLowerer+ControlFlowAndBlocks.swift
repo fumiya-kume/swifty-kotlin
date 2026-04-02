@@ -1628,6 +1628,7 @@ extension ExprLowerer {
 
                 let normalizedResult = driver.callSupportLowerer.normalizedCallArguments(
                     providedArguments: [rhs],
+                    originalArgs: [],
                     callBinding: callBinding,
                     chosenCallee: callBinding.chosenCallee,
                     spreadFlags: [false],

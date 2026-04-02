@@ -260,7 +260,7 @@ extension DataFlowSemaPhase {
         }
     }
 
-    /// Register compareBy overloads that take 2 or 3 selectors (STDLIB-613).
+    /// Register compareBy overloads that take 2, 3, or vararg selectors (STDLIB-613).
     private func registerCompareByMultiSelector(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -282,9 +282,18 @@ extension DataFlowSemaPhase {
             args: [.invariant(tParamType)],
             nullability: .nonNull
         )))
+        let comparableSelectorReturnType: TypeID = if let comparableSymbol = types.comparableInterfaceSymbol {
+            types.makeNullable(types.make(.classType(ClassType(
+                classSymbol: comparableSymbol,
+                args: [.star],
+                nullability: .nonNull
+            ))))
+        } else {
+            types.anyType
+        }
         let selectorType = types.make(.functionType(FunctionType(
             params: [tParamType],
-            returnType: types.anyType,
+            returnType: comparableSelectorReturnType,
             isSuspend: false,
             nullability: .nonNull
         )))
@@ -292,12 +301,12 @@ extension DataFlowSemaPhase {
         let functionName = interner.intern("compareBy")
         let functionFQName = comparisonsPkg + [functionName]
 
-        // Register 2-selector and 3-selector overloads
+        // Register 2-selector and 3-selector overloads.
         for arity in 2...3 {
             let paramTypes = Array(repeating: selectorType, count: arity)
-
-            // Check if this overload already exists
-            let extLink = arity == 2 ? "kk_comparator_from_multi_selectors" : "kk_comparator_from_multi_selectors3"
+            let extLink = arity == 2
+                ? "kk_comparator_from_multi_selectors"
+                : "kk_comparator_from_multi_selectors3"
             if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
                 guard let sig = symbols.functionSignature(for: symbolID) else { return false }
                 return sig.parameterTypes == paramTypes && sig.returnType == comparatorType
@@ -353,6 +362,62 @@ extension DataFlowSemaPhase {
                 for: funcSymbol
             )
         }
+
+        // Register the packed-list vararg overload.
+        let varargExtLink = "kk_comparator_from_multi_selectors_vararg"
+        let varargParamTypes = [selectorType]
+        if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+            guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+            return sig.parameterTypes == varargParamTypes
+                && sig.returnType == comparatorType
+                && sig.valueParameterIsVararg.first == true
+        }) {
+            if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                return sig.parameterTypes == varargParamTypes
+                    && sig.returnType == comparatorType
+                    && sig.valueParameterIsVararg.first == true
+            }) {
+                symbols.setExternalLinkName(varargExtLink, for: existing)
+            }
+            return
+        }
+
+        let varargFuncSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(comparisonsPackageSymbol, for: varargFuncSymbol)
+        symbols.setExternalLinkName(varargExtLink, for: varargFuncSymbol)
+
+        let selectorsParamName = interner.intern("selectors")
+        let selectorsParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: selectorsParamName,
+            fqName: functionFQName + [selectorsParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(varargFuncSymbol, for: selectorsParamSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: varargParamTypes,
+                returnType: comparatorType,
+                isSuspend: false,
+                valueParameterSymbols: [selectorsParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [true],
+                typeParameterSymbols: [tParamSymbol],
+                typeParameterUpperBoundsList: [[]]
+            ),
+            for: varargFuncSymbol
+        )
     }
 
     private func registerThenByAndReversed(

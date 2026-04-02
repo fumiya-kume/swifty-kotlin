@@ -134,6 +134,7 @@ extension ABIMismatchTests {
 
     func testComparatorNullsAndThenByDescSymbolsPresent() {
         let requiredComparatorSymbols: Set<String> = [
+            "kk_comparator_from_multi_selectors_vararg",
             "kk_comparator_then_comparator",
             "kk_comparator_then_comparator_trampoline",
             "kk_comparator_then_by_descending",
@@ -202,6 +203,25 @@ extension ABIMismatchTests {
                 "RuntimeABIExterns parameter types for '\(name)' are unexpected"
             )
         }
+    }
+
+    func testComparatorVarargFactoryUsesPackedListABI() {
+        let name = "kk_comparator_from_multi_selectors_vararg"
+        let expectedTypes = [RuntimeABICType.intptr.rawValue]
+        let spec = RuntimeABISpec.allFunctions.first { $0.name == name }
+        XCTAssertNotNil(spec, "RuntimeABISpec should include '\(name)'")
+        XCTAssertEqual(
+            spec?.parameterTypeStrings ?? [],
+            expectedTypes,
+            "RuntimeABISpec parameter types for '\(name)' are unexpected"
+        )
+        let externDecl = RuntimeABIExterns.externDecl(named: name)
+        XCTAssertNotNil(externDecl, "RuntimeABIExterns should include '\(name)'")
+        XCTAssertEqual(
+            externDecl?.parameterTypes ?? [],
+            expectedTypes,
+            "RuntimeABIExterns parameter types for '\(name)' are unexpected"
+        )
     }
 
     // MARK: - HOF function fnPtr parameter consistency
