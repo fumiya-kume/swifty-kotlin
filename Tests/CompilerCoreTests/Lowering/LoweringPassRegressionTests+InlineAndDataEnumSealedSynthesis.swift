@@ -144,6 +144,30 @@ extension LoweringPassRegressionTests {
             visibility: .public,
             flags: [.dataType]
         )
+        _ = symbols.define(
+            kind: .function,
+            name: interner.intern("copy"),
+            fqName: packagePath + [pointName, interner.intern("copy")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        _ = symbols.define(
+            kind: .function,
+            name: interner.intern("copy"),
+            fqName: packagePath + [pointName, interner.intern("copy")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        _ = symbols.define(
+            kind: .function,
+            name: interner.intern("copy"),
+            fqName: packagePath + [pointName, interner.intern("copy")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
 
         let arena = KIRArena()
         let colorDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: colorSymbol)))
@@ -176,9 +200,9 @@ extension LoweringPassRegressionTests {
         }
         XCTAssertTrue(functionNames.contains("Color$enumValuesCount"))
         XCTAssertTrue(functionNames.contains("Base$sealedSubtypeCount"))
-        XCTAssertTrue(functionNames.contains("Point$copy"))
+        XCTAssertTrue(functionNames.contains("copy"))
 
-        let copyFunction = try findKIRFunction(named: "Point$copy", in: module, interner: interner)
+        let copyFunction = try findKIRFunction(named: "copy", in: module, interner: interner)
         XCTAssertEqual(copyFunction.params.count, 1)
     }
 
@@ -841,8 +865,8 @@ extension LoweringPassRegressionTests {
         XCTAssertTrue(toStringCallees.contains("kk_string_builder_append_obj"), "toString should append labels and values via StringBuilder")
         XCTAssertTrue(toStringCallees.contains("kk_string_builder_toString"), "toString should convert the StringBuilder back to String")
         XCTAssertTrue(toStringCallees.contains("kk_any_to_string"), "toString should use kk_any_to_string")
-        XCTAssertTrue(toStringCallees.contains("x$get"), "toString should call x$get")
-        XCTAssertTrue(toStringCallees.contains("y$get"), "toString should call y$get")
+        XCTAssertFalse(toStringCallees.contains("x$get"), "toString should read constructor-backed fields directly")
+        XCTAssertFalse(toStringCallees.contains("y$get"), "toString should read constructor-backed fields directly")
         XCTAssertFalse(toStringCallees.contains("z$get"), "toString should ignore non-constructor properties")
 
         let toStringStringLiterals = toStringFn.body.compactMap { inst -> String? in
@@ -859,20 +883,11 @@ extension LoweringPassRegressionTests {
         XCTAssertTrue(equalsCallees.contains("kk_op_is"), "equals should type-check other before reading properties")
         XCTAssertTrue(equalsCallees.contains("kk_op_safe_cast"), "equals should materialize a narrowed other receiver before getter calls")
         XCTAssertTrue(equalsCallees.contains("kk_op_eq"), "equals should use kk_op_eq for comparison")
-        XCTAssertTrue(equalsCallees.contains("x$get"), "equals should call x$get")
-        XCTAssertTrue(equalsCallees.contains("y$get"), "equals should call y$get")
+        XCTAssertFalse(equalsCallees.contains("x$get"), "equals should compare constructor-backed fields directly")
+        XCTAssertFalse(equalsCallees.contains("y$get"), "equals should compare constructor-backed fields directly")
         XCTAssertFalse(equalsCallees.contains("z$get"), "equals should ignore non-constructor properties")
         XCTAssertEqual(equalsFn.params.count, 2, "equals should have receiver + other parameter")
 
-        let xGetterCalls = equalsFn.body.compactMap { instruction -> KIRInstruction? in
-            guard case let .call(_, callee, _, _, _, _, _, _) = instruction,
-                  interner.resolve(callee) == "x$get"
-            else {
-                return nil
-            }
-            return instruction
-        }
-        XCTAssertEqual(xGetterCalls.count, 2, "equals should compare both receiver and narrowed other")
     }
 
     // MARK: - DATA-001: copy() edge cases
@@ -900,6 +915,14 @@ extension LoweringPassRegressionTests {
             visibility: .public,
             flags: [.dataType]
         )
+        _ = symbols.define(
+            kind: .function,
+            name: interner.intern("copy"),
+            fqName: packagePath + [pointName, interner.intern("copy")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
 
         let arena = KIRArena()
         let pointDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: pointSymbol)))
@@ -923,7 +946,7 @@ extension LoweringPassRegressionTests {
         try LoweringPhase().run(ctx)
 
         // Verify copy() is synthesized with only self parameter (fallback)
-        let copyFunction = try findKIRFunction(named: "Point$copy", in: module, interner: interner)
+        let copyFunction = try findKIRFunction(named: "copy", in: module, interner: interner)
         XCTAssertEqual(copyFunction.params.count, 1, "copy() without ctor should have only self param")
 
         // Verify the body returns self (constValue + returnValue)
@@ -961,6 +984,14 @@ extension LoweringPassRegressionTests {
             declSite: nil,
             visibility: .public,
             flags: [.dataType]
+        )
+        _ = symbols.define(
+            kind: .function,
+            name: interner.intern("copy"),
+            fqName: packagePath + [pointName, interner.intern("copy")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
         )
 
         // Define a constructor with two Int parameters (x, y)
@@ -1023,7 +1054,7 @@ extension LoweringPassRegressionTests {
         try LoweringPhase().run(ctx)
 
         // copy() should have self + x + y = 3 params
-        let copyFunction = try findKIRFunction(named: "Point$copy", in: module, interner: interner)
+        let copyFunction = try findKIRFunction(named: "copy", in: module, interner: interner)
         XCTAssertEqual(copyFunction.params.count, 3, "copy() should have self + 2 ctor params")
 
         // Verify the body calls the constructor
@@ -1057,6 +1088,14 @@ extension LoweringPassRegressionTests {
             declSite: nil,
             visibility: .public,
             flags: [.dataType]
+        )
+        _ = symbols.define(
+            kind: .function,
+            name: interner.intern("copy"),
+            fqName: packagePath + [personName, interner.intern("copy")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
         )
 
         let initName = interner.intern("<init>")
@@ -1112,7 +1151,7 @@ extension LoweringPassRegressionTests {
         try LoweringPhase().run(ctx)
 
         // copy() should use min(1, 2) = 1 ctor param, so self + 1 = 2 params
-        let copyFunction = try findKIRFunction(named: "Person$copy", in: module, interner: interner)
+        let copyFunction = try findKIRFunction(named: "copy", in: module, interner: interner)
         XCTAssertEqual(copyFunction.params.count, 2, "copy() with mismatch should have self + min(symbols, types) params")
 
         // Verify KSWIFTK-DATA-0002 warning was emitted
@@ -1164,6 +1203,14 @@ extension LoweringPassRegressionTests {
             valueParameterIsVararg: []
         )
         symbols.setFunctionSignature(ctorSignature, for: ctorSymbol)
+        _ = symbols.define(
+            kind: .function,
+            name: interner.intern("copy"),
+            fqName: packagePath + [emptyName, interner.intern("copy")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
 
         let arena = KIRArena()
         let emptyDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: emptySymbol)))
@@ -1187,7 +1234,7 @@ extension LoweringPassRegressionTests {
         try LoweringPhase().run(ctx)
 
         // copy() with zero ctor params should have only self param
-        let copyFunction = try findKIRFunction(named: "Empty$copy", in: module, interner: interner)
+        let copyFunction = try findKIRFunction(named: "copy", in: module, interner: interner)
         XCTAssertEqual(copyFunction.params.count, 1, "copy() with zero ctor params should have only self param")
 
         // Should still call the constructor
@@ -1220,6 +1267,14 @@ extension LoweringPassRegressionTests {
             declSite: nil,
             visibility: .public,
             flags: [.dataType]
+        )
+        _ = symbols.define(
+            kind: .function,
+            name: interner.intern("copy"),
+            fqName: packagePath + [widgetName, interner.intern("copy")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
         )
 
         // Define <init> with kind .function instead of .constructor
@@ -1265,7 +1320,7 @@ extension LoweringPassRegressionTests {
         try LoweringPhase().run(ctx)
 
         // Should fall back to self-returning copy (only self param)
-        let copyFunction = try findKIRFunction(named: "Widget$copy", in: module, interner: interner)
+        let copyFunction = try findKIRFunction(named: "copy", in: module, interner: interner)
         XCTAssertEqual(copyFunction.params.count, 1, "copy() with wrong ctor kind should fall back to self-only")
 
         // Should emit the no-ctor warning

@@ -326,6 +326,18 @@
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/suspend_functions.kt`
 
+- [x] STDLIB-CORO-071: async/await完全実装
+  - **仕様**: async/awaitの完全サポート
+  - **実装内容**:
+    - asyncビルダー: async { return value }
+    - await式: val result = asyncFunction()
+    - asyncの例外処理: try-catch in async (kk_kxmini_async_await_throwing)
+    - awaitのキャンセル: awaitのキャンセル対応 (kk_async_task_cancel)
+    - asyncのディスパッチャ指定: async(Dispatchers.Default) (kk_kxmini_async_with_dispatcher)
+  - **関連ファイル**: `RuntimeCoroutine.swift`, `Sources/RuntimeABI/RuntimeABIExterns.swift`
+  - **テストケース**: `Scripts/diff_cases/async_await.kt`
+
+
 - [ ] STDLIB-CORO-070: Job完全実装
   - **仕様**: Jobインターフェースの完全サポート
   - **実装内容**:

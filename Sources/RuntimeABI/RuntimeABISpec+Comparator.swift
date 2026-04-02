@@ -235,5 +235,56 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Comparator"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_compareValues",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Comparator"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_compareValuesBy1",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+                RuntimeABIParameter(name: "selectorFn", type: .intptr),
+                RuntimeABIParameter(name: "selectorClosure", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Comparator"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_compareValuesBy",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+                RuntimeABIParameter(name: "sel1Fn", type: .intptr),
+                RuntimeABIParameter(name: "sel1Closure", type: .intptr),
+                RuntimeABIParameter(name: "sel2Fn", type: .intptr),
+                RuntimeABIParameter(name: "sel2Closure", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Comparator"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_compareValuesBy3",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+                RuntimeABIParameter(name: "sel1Fn", type: .intptr),
+                RuntimeABIParameter(name: "sel1Closure", type: .intptr),
+                RuntimeABIParameter(name: "sel2Fn", type: .intptr),
+                RuntimeABIParameter(name: "sel2Closure", type: .intptr),
+                RuntimeABIParameter(name: "sel3Fn", type: .intptr),
+                RuntimeABIParameter(name: "sel3Closure", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Comparator"
+        ),
     ]
 }

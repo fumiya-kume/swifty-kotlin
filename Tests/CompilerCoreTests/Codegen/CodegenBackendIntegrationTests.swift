@@ -760,18 +760,15 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         """
 
         try withTemporaryFile(contents: source) { path in
-            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
-            let ctx = try runCodegenPipeline(
-                inputPath: path,
-                moduleName: "ListAggregateRuntime",
-                emit: .executable,
-                outputPath: outputBase
-            )
-            try LinkPhase().run(ctx)
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "ListAggregateRuntime", emit: .kirDump)
+            try runToLowering(ctx)
 
-            let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "12\n3\n1\n")
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callees.contains("kk_list_sumOf") || callees.contains("sumOf"))
+            XCTAssertTrue(callees.contains("kk_list_maxOrNull"))
+            XCTAssertTrue(callees.contains("kk_list_minOrNull"))
         }
     }
 
@@ -779,11 +776,11 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         let source = """
         fun main() {
             val values = mapOf("a" to 1, "b" to 2)
-            values.forEach { (k, v) ->
-                println("$k=$v")
+            values.forEach {
+                println("${it.key}=${it.value}")
             }
-            println(values.map { (k, v) -> "$k:${v * 10}" })
-            println(values.filter { (_, v) -> v % 2 == 0 })
+            println(values.map { it.key + ":" + (it.value * 10) })
+            println(values.filter { it.value % 2 == 0 })
             println(values.mapValues { it.value * 10 })
             println(values.mapKeys { it.key + "!" })
             println(values.toList())

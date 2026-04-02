@@ -15,6 +15,8 @@ public enum RuntimeABICType: String, Equatable, Sendable {
     case constRawPointer = "const void *"
     case nullableConstRawPointer = "const void * _Nullable"
     case nullableIntptrPointer = "intptr_t * _Nullable"
+    case float = "float"
+    case double = "double"
     case noreturn = "_Noreturn void"
 }
 
@@ -55,7 +57,7 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
         return "\(returnType.rawValue) \(name)(\(params));"
     }
 
-    /// Parameter types only (no names), for ABI reconciliation with CompilerCore's RuntimeABIExterns.
+    /// Parameter types only (no names), for ABI reconciliation with `RuntimeABIExterns`.
     public var parameterTypeStrings: [String] {
         parameters.map(\.type.rawValue)
     }
@@ -1978,6 +1980,14 @@ public enum RuntimeABISpec {
             name: "kk_kxmini_delay",
             parameters: [
                 RuntimeABIParameter(name: "milliseconds", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_yield",
+            parameters: [
                 RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
@@ -4096,6 +4106,101 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Delegate"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_delegate_get_value",
+            parameters: [
+                RuntimeABIParameter(name: "delegateRaw", type: .intptr),
+                RuntimeABIParameter(name: "thisRef", type: .intptr),
+                RuntimeABIParameter(name: "property", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_delegate_set_value",
+            parameters: [
+                RuntimeABIParameter(name: "delegateRaw", type: .intptr),
+                RuntimeABIParameter(name: "thisRef", type: .intptr),
+                RuntimeABIParameter(name: "property", type: .intptr),
+                RuntimeABIParameter(name: "newValue", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_function_invoke",
+            parameters: [
+                RuntimeABIParameter(name: "functionRaw", type: .intptr),
+                RuntimeABIParameter(name: "arg", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_function_invoke_0",
+            parameters: [
+                RuntimeABIParameter(name: "functionRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_function_invoke_2",
+            parameters: [
+                RuntimeABIParameter(name: "functionRaw", type: .intptr),
+                RuntimeABIParameter(name: "arg1", type: .intptr),
+                RuntimeABIParameter(name: "arg2", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_function_invoke_3",
+            parameters: [
+                RuntimeABIParameter(name: "functionRaw", type: .intptr),
+                RuntimeABIParameter(name: "arg1", type: .intptr),
+                RuntimeABIParameter(name: "arg2", type: .intptr),
+                RuntimeABIParameter(name: "arg3", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_function_create_0",
+            parameters: [
+                RuntimeABIParameter(name: "bodyRaw", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_function_create_1",
+            parameters: [
+                RuntimeABIParameter(name: "bodyRaw", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_function_create_2",
+            parameters: [
+                RuntimeABIParameter(name: "bodyRaw", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
     ]
     /// Bitwise/Shift (P5-103)
     public static let bitwiseFunctions: [RuntimeABIFunctionSpec] = [
@@ -5566,6 +5671,84 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Duration"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_duration_absoluteValue",
+            parameters: [
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_duration_plus",
+            parameters: [
+                RuntimeABIParameter(name: "lhsRaw", type: .intptr),
+                RuntimeABIParameter(name: "rhsRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_duration_minus",
+            parameters: [
+                RuntimeABIParameter(name: "lhsRaw", type: .intptr),
+                RuntimeABIParameter(name: "rhsRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_duration_compareTo",
+            parameters: [
+                RuntimeABIParameter(name: "lhsRaw", type: .intptr),
+                RuntimeABIParameter(name: "rhsRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_measureTimedValue",
+            parameters: [
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_timedvalue_new",
+            parameters: [
+                RuntimeABIParameter(name: "valueRaw", type: .intptr),
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_timedvalue_value",
+            parameters: [
+                RuntimeABIParameter(name: "timedValueRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_timedvalue_duration",
+            parameters: [
+                RuntimeABIParameter(name: "timedValueRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_timedvalue_toString",
+            parameters: [
+                RuntimeABIParameter(name: "timedValueRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
     ]
 
     public static let allFunctions: [RuntimeABIFunctionSpec] = deduplicatedFunctions(
@@ -5573,6 +5756,7 @@ public enum RuntimeABISpec {
             + exceptionFunctions
             + testFunctions
             + stringFunctions
+            + stringBridgeFunctions
             + consolePrintFunctions
             + ioFunctions
             + systemFunctions
@@ -5582,14 +5766,18 @@ public enum RuntimeABISpec {
             + arrayFunctions
             + operatorFunctions
             + primitiveNumericConversionFunctions
+            + numericRuntimeBridgeFunctions
             + rangeFunctions
             + kPropertyStubFunctions + kParameterFunctions + kFunctionFunctions + callableRefFunctions + delegateFunctions
+            + dispatchBridgeFunctions
             + bitwiseFunctions
             + booleanFunctions
             + charFunctions
             + mathFunctions
             + randomFunctions
             + collectionFunctions
+            + collectionBridgeFunctions
+            + runtimeOnlyBridgeFunctions
             + sequenceFunctions
             + regexFunctions
             + hexFormatFunctions
@@ -5601,6 +5789,7 @@ public enum RuntimeABISpec {
             + i18nFunctions
             + uuidFunctions
             + durationFunctions
+            + timeAndPathBridgeFunctions
             + atomicFunctions
             + threadLocalFunctions
             + securityFunctions
