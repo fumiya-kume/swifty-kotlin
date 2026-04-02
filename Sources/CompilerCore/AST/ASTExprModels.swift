@@ -7,8 +7,9 @@ public enum TypeArgRef: Equatable {
 
 public enum TypeRef: Equatable {
     case named(path: [InternedString], args: [TypeArgRef], nullable: Bool)
-    case functionType(receiver: TypeRefID?, params: [TypeRefID], returnType: TypeRefID, isSuspend: Bool, nullable: Bool)
+    case functionType(contextReceivers: [TypeRefID], receiver: TypeRefID?, params: [TypeRefID], returnType: TypeRefID, isSuspend: Bool, nullable: Bool)
     case intersection(parts: [TypeRefID])
+    case annotated(base: TypeRefID, annotations: [AnnotationNode])
 }
 
 public enum BinaryOp: Equatable {
@@ -183,7 +184,7 @@ public enum Expr: Equatable {
     case lambdaLiteral(params: [InternedString], body: ExprID, label: InternedString? = nil, range: SourceRange)
     case objectLiteral(superTypes: [TypeRefID], decl: DeclID?, range: SourceRange)
     case callableRef(receiver: ExprID?, member: InternedString, range: SourceRange)
-    case localFunDecl(name: InternedString, valueParams: [ValueParamDecl], returnType: TypeRefID?, body: FunctionBody, range: SourceRange)
+    case localFunDecl(name: InternedString, valueParams: [ValueParamDecl], returnType: TypeRefID?, body: FunctionBody, isSuspend: Bool, range: SourceRange)
     case blockExpr(statements: [ExprID], trailingExpr: ExprID?, range: SourceRange)
     case superRef(interfaceQualifier: InternedString?, SourceRange)
     case thisRef(label: InternedString?, SourceRange)

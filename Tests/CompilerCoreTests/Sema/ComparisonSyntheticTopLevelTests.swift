@@ -3,6 +3,19 @@ import Foundation
 import XCTest
 
 final class ComparisonSyntheticTopLevelTests: XCTestCase {
+    private func allExprIDs(
+        in ast: ASTModule,
+        where predicate: (ExprID, Expr) -> Bool
+    ) -> [ExprID] {
+        ast.arena.exprs.indices.compactMap { index in
+            let exprID = ExprID(rawValue: Int32(index))
+            guard let expr = ast.arena.expr(exprID), predicate(exprID, expr) else {
+                return nil
+            }
+            return exprID
+        }
+    }
+
     func testMaxOfAndMinOfResolveToSyntheticComparisonFunctions() throws {
         let source = """
         fun sample(): Int {
@@ -161,6 +174,67 @@ final class ComparisonSyntheticTopLevelTests: XCTestCase {
                 XCTAssertEqual(sema.bindings.exprTypes[callExpr], sema.types.doubleType)
                 let kind = sema.bindings.stdlibSpecialCallKind(for: callExpr)
                 XCTAssertEqual(kind, name == "maxOf" ? .maxOfDouble3 : .minOfDouble3)
+            }
+        }
+    }
+
+    func testRemainingMaxOfOverloadsResolveToSyntheticComparisonFunctions() throws {
+        let source = """
+        fun sample() {
+            val generic2 = maxOf("b", "a")
+            val genericVararg = maxOf("d", "b", "a", "c")
+            val comparator3 = maxOf(1, 2, reverseOrder<Int>())
+            val comparatorVararg = maxOf(1, 4, 2, 3, reverseOrder<Int>())
+            val unsigned2 = maxOf(1u, 4000000000u)
+            val unsigned3 = maxOf(1u, 3u, 4000000000u)
+            println(generic2)
+            println(genericVararg)
+            println(comparator3)
+            println(comparatorVararg)
+            println(unsigned2)
+            println(unsigned3)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let interner = ctx.interner
+            let expectedCases: [(argCount: Int, returnType: TypeID)] = [
+                (2, sema.types.stringType),
+                (4, sema.types.stringType),
+                (3, sema.types.intType),
+                (5, sema.types.intType),
+                (2, sema.types.uintType),
+                (3, sema.types.uintType),
+            ]
+
+            for expected in expectedCases {
+                let callExpr = try XCTUnwrap(
+                    firstExprID(in: ast) { exprID, expr in
+                        guard case let .call(calleeExpr, _, args, _) = expr,
+                              case let .nameRef(calleeName, _) = ast.arena.expr(calleeExpr)
+                        else {
+                            return false
+                        }
+                        return interner.resolve(calleeName) == "maxOf"
+                            && args.count == expected.argCount
+                            && sema.bindings.exprTypes[exprID] == expected.returnType
+                    },
+                    "Expected maxOf(\(expected.argCount) args) to resolve"
+                )
+                XCTAssertNil(sema.bindings.stdlibSpecialCallKind(for: callExpr))
+                let chosen = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+                let symbol = try XCTUnwrap(sema.symbols.symbol(chosen))
+                XCTAssertEqual(symbol.fqName, [
+                    interner.intern("kotlin"),
+                    interner.intern("comparisons"),
+                    interner.intern("maxOf"),
+                ])
+                XCTAssertEqual(sema.bindings.exprTypes[callExpr], expected.returnType)
             }
         }
     }

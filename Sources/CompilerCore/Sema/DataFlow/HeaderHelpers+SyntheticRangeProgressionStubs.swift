@@ -85,6 +85,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticULongRangeStub(
+            rangesPackageSymbol: rangesPackageSymbol,
+            rangesFQName: rangesFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         registerSyntheticIntRangeStub(
             rangesPackageSymbol: rangesPackageSymbol,
             rangesFQName: rangesFQName,
@@ -464,6 +471,152 @@ extension DataFlowSemaPhase {
             parameterTypes: [types.uintType, types.uintType],
             parameterNames: ["start", "end"],
             externalLinkName: "kk_uint_rangeTo",
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticULongRangeStub(
+        rangesPackageSymbol: SymbolID,
+        rangesFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let className = interner.intern("ULongRange")
+        let classFQName = rangesFQName + [className]
+        let classSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: classFQName) {
+            classSymbol = existing
+        } else {
+            let created = symbols.define(
+                kind: .class,
+                name: className,
+                fqName: classFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(rangesPackageSymbol, for: created)
+            classSymbol = created
+        }
+
+        let rangeType = types.make(.classType(ClassType(
+            classSymbol: classSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let progressionType = syntheticNominalType(
+            named: "ULongProgression",
+            in: rangesFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let iteratorType = syntheticIteratorType(
+            elementType: types.ulongType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let ulongArrayType = syntheticNominalType(
+            named: "ULongArray",
+            in: [interner.intern("kotlin")],
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        for property in [
+            ("start", "kk_ulong_range_first"),
+            ("endInclusive", "kk_ulong_range_last"),
+            ("first", "kk_ulong_range_first"),
+            ("last", "kk_ulong_range_last"),
+        ] {
+            registerProgressionProperty(
+                named: property.0,
+                ownerSymbol: classSymbol,
+                propertyType: types.ulongType,
+                externalLinkName: property.1,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+        registerProgressionProperty(
+            named: "step",
+            ownerSymbol: classSymbol,
+            propertyType: types.intType,
+            externalLinkName: "kk_ulong_range_step",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerProgressionMethod(
+            named: "contains",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [types.ulongType],
+            returnType: types.booleanType,
+            externalLinkName: "kk_ulong_range_contains",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "isEmpty",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [],
+            returnType: types.booleanType,
+            externalLinkName: "kk_ulong_range_isEmpty",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "iterator",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [],
+            returnType: iteratorType,
+            externalLinkName: "kk_ulong_range_iterator",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "reversed",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [],
+            returnType: progressionType,
+            externalLinkName: "kk_ulong_range_reversed",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "toList",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [],
+            returnType: syntheticListType(elementType: types.ulongType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_ulong_range_toList",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "toULongArray",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [],
+            returnType: ulongArrayType,
+            externalLinkName: "kk_ulong_range_toULongArray",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticConstructor(
+            ownerSymbol: classSymbol,
+            ownerType: rangeType,
+            parameterTypes: [types.ulongType, types.ulongType],
+            parameterNames: ["start", "endInclusive"],
+            externalLinkName: "kk_ulong_rangeTo",
             symbols: symbols,
             interner: interner
         )

@@ -449,7 +449,8 @@ extension BuildASTPhase {
             tokens[...],
             interner: interner,
             astArena: astArena,
-            options: options
+            options: options,
+            diagnostics: diagnostics
         ) else {
             return nil
         }

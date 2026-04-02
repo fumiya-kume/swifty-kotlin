@@ -16,6 +16,41 @@ extension OverloadResolver {
             symbols: symbols,
             count: paramCount
         )
+        func trailingRequiredParameterCount(after paramIndex: Int) -> Int {
+            guard paramIndex + 1 < paramCount else {
+                return 0
+            }
+            var count = 0
+            for index in (paramIndex + 1)..<paramCount {
+                if isVararg[index] {
+                    continue
+                }
+                if boundNonVarargParams.contains(index) {
+                    continue
+                }
+                if hasDefaultValues[index] {
+                    continue
+                }
+                count += 1
+            }
+            return count
+        }
+        func advancePositionalCursor(for argIndex: Int) {
+            while positionalCursor < paramCount {
+                if !isVararg[positionalCursor], boundNonVarargParams.contains(positionalCursor) {
+                    positionalCursor += 1
+                    continue
+                }
+                if isVararg[positionalCursor] {
+                    let trailingRequiredCount = trailingRequiredParameterCount(after: positionalCursor)
+                    if callArgs.count - argIndex <= trailingRequiredCount {
+                        positionalCursor += 1
+                        continue
+                    }
+                }
+                break
+            }
+        }
         var mapping: [Int: Int] = [:]
         var boundNonVarargParams: Set<Int> = []
         var sawNamedArgument = false
@@ -49,12 +84,7 @@ extension OverloadResolver {
                 // In Kotlin, positional arguments after named arguments
                 // are allowed only when they bind to a vararg parameter.
                 // Advance the cursor past already-bound non-vararg params.
-                while positionalCursor < paramCount &&
-                    !isVararg[positionalCursor] &&
-                    boundNonVarargParams.contains(positionalCursor)
-                {
-                    positionalCursor += 1
-                }
+                advancePositionalCursor(for: argIndex)
                 if positionalCursor >= paramCount || !isVararg[positionalCursor] {
                     return nil
                 }
@@ -62,12 +92,7 @@ extension OverloadResolver {
                 continue
             }
 
-            while positionalCursor < paramCount,
-                  !isVararg[positionalCursor],
-                  boundNonVarargParams.contains(positionalCursor)
-            {
-                positionalCursor += 1
-            }
+            advancePositionalCursor(for: argIndex)
             if positionalCursor >= paramCount {
                 return nil
             }
@@ -178,6 +203,11 @@ extension OverloadResolver {
                 }
             }
         case let .functionType(functionType):
+            if functionType.contextReceivers.contains(where: {
+                containsTypeVariable($0, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
+            }) {
+                return true
+            }
             if let receiver = functionType.receiver,
                containsTypeVariable(receiver, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
             {
@@ -372,6 +402,7 @@ extension OverloadResolver {
             let subtypeKind = typeSystem.kind(of: subtype)
             if case let .functionType(subFunc) = subtypeKind,
                subFunc.params.count == superFunc.params.count,
+               subFunc.contextReceivers.count == superFunc.contextReceivers.count,
                subFunc.isSuspend == superFunc.isSuspend,
                subFunc.nullability == superFunc.nullability || superFunc.nullability == .nullable
             {
@@ -415,6 +446,17 @@ extension OverloadResolver {
                     break
                 }
                 var result: [VariableConstraint] = []
+                for (subContextReceiver, superContextReceiver) in zip(subFunc.contextReceivers, superFunc.contextReceivers) {
+                    result.append(contentsOf: decomposeSubtypeConstraintImpl(
+                        subtype: superContextReceiver,
+                        supertype: subContextReceiver,
+                        typeVarBySymbol: typeVarBySymbol,
+                        typeSystem: typeSystem,
+                        blameRange: blameRange,
+                        depth: depth + 1
+                    ))
+                }
+                // Function types are contravariant in parameter types.
                 for (subParam, superParam) in zip(subFunc.params, superFunc.params) {
                     result.append(contentsOf: decomposeSubtypeConstraintImpl(
                         subtype: superParam,

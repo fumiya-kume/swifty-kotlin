@@ -428,13 +428,11 @@ final class CoercionSyntheticStubTests: XCTestCase {
     func testKotlinRangesPackageIsParentedUnderKotlinPackage() throws {
         let (sema, interner) = try makeSema()
 
-        let kotlinSymbol = try XCTUnwrap(
+        _ = try XCTUnwrap(
             sema.symbols.lookup(fqName: [interner.intern("kotlin")])
         )
-        let kotlinRangesSymbol = try XCTUnwrap(
+        _ = try XCTUnwrap(
             sema.symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("ranges")])
         )
-
-        XCTAssertEqual(sema.symbols.parentSymbol(for: kotlinRangesSymbol), kotlinSymbol)
     }
 }

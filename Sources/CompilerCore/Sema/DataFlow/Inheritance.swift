@@ -117,7 +117,7 @@ extension DataFlowSemaPhase {
         case let .named(refPath, refs, _):
             path = refPath
             argRefs = refs
-        case .functionType, .intersection:
+        case .functionType, .intersection, .annotated:
             return nil
         }
         guard !path.isEmpty else {
@@ -241,8 +241,9 @@ extension DataFlowSemaPhase {
                 }
             }
             return nil
-        case let .functionType(receiverRefID, paramRefIDs, returnRefID, isSuspend, nullable):
+        case let .functionType(contextReceiverRefIDs, receiverRefID, paramRefIDs, returnRefID, isSuspend, nullable):
             return resolveFunctionTypeForInheritance(
+                contextReceiverRefIDs: contextReceiverRefIDs,
                 receiverRefID: receiverRefID, paramRefIDs: paramRefIDs, returnRefID: returnRefID, isSuspend: isSuspend, nullable: nullable,
                 currentPackage: currentPackage, ast: ast, symbols: symbols, types: types, interner: interner
             )
@@ -250,10 +251,30 @@ extension DataFlowSemaPhase {
             let partTypes = partRefs.compactMap { resolveTypeRefForInheritance($0, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types, interner: interner) }
             guard partTypes.count == partRefs.count else { return nil }
             return types.make(.intersection(partTypes))
+        case let .annotated(base, annotations):
+            guard let baseType = resolveTypeRefForInheritance(
+                base,
+                currentPackage: currentPackage,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            ) else {
+                return nil
+            }
+            return ExtensionFunctionTypeSupport.normalizeAnnotatedType(
+                baseType: baseType,
+                annotations: annotations,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                diagnostics: nil
+            )
         }
     }
 
     private func resolveFunctionTypeForInheritance(
+        contextReceiverRefIDs: [TypeRefID],
         receiverRefID: TypeRefID?,
         paramRefIDs: [TypeRefID],
         returnRefID: TypeRefID,
@@ -266,6 +287,13 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) -> TypeID? {
         let nullability: Nullability = nullable ? .nullable : .nonNull
+        var contextReceiverTypes: [TypeID] = []
+        for contextReceiverRef in contextReceiverRefIDs {
+            guard let contextReceiverType = resolveTypeRefForInheritance(
+                contextReceiverRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types, interner: interner
+            ) else { return nil }
+            contextReceiverTypes.append(contextReceiverType)
+        }
         var receiverType: TypeID? = nil
         if let receiverRefID {
             guard let resolved = resolveTypeRefForInheritance(
@@ -284,6 +312,7 @@ extension DataFlowSemaPhase {
             returnRefID, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types, interner: interner
         ) else { return nil }
         return types.make(.functionType(FunctionType(
+            contextReceivers: contextReceiverTypes,
             receiver: receiverType, params: paramTypes, returnType: returnType, isSuspend: isSuspend, nullability: nullability
         )))
     }

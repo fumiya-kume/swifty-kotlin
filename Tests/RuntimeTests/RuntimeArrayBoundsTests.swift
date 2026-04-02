@@ -61,4 +61,33 @@ final class RuntimeArrayBoundsTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(outThrown, 0)
         XCTAssertEqual(runtimeListBox(from: list)?.elements, [10, 25, 30])
     }
+
+    func testSharedArrayRuntimePreservesUShortPayloads() {
+        let array = kk_array_new(3)
+        XCTAssertNotEqual(array, 0)
+
+        var outThrown = -1
+        XCTAssertEqual(kk_array_set(array, 0, 0, &outThrown), 0)
+        XCTAssertEqual(outThrown, 0)
+
+        outThrown = -1
+        XCTAssertEqual(kk_array_set(array, 1, 1, &outThrown), 1)
+        XCTAssertEqual(outThrown, 0)
+
+        outThrown = -1
+        XCTAssertEqual(kk_array_set(array, 2, 65535, &outThrown), 65535)
+        XCTAssertEqual(outThrown, 0)
+
+        outThrown = -1
+        XCTAssertEqual(kk_array_get(array, 0, &outThrown), 0)
+        XCTAssertEqual(outThrown, 0)
+
+        outThrown = -1
+        XCTAssertEqual(kk_array_get(array, 1, &outThrown), 1)
+        XCTAssertEqual(outThrown, 0)
+
+        outThrown = -1
+        XCTAssertEqual(kk_array_get(array, 2, &outThrown), 65535)
+        XCTAssertEqual(outThrown, 0)
+    }
 }

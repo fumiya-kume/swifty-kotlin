@@ -137,13 +137,80 @@ final class SymbolTableTests: XCTestCase {
         XCTAssertEqual(symbols.count, 1)
     }
 
-    func testMixedOverloadAndNonOverloadReturnsExisting() {
+    func testFunctionCanCoexistWithNominalTypeUsingSameName() {
         let interner = StringInterner()
         let symbols = SymbolTable()
         let fqName = [interner.intern("x")]
         let id1 = symbols.define(kind: .class, name: interner.intern("x"), fqName: fqName, declSite: nil, visibility: .public)
         let id2 = symbols.define(kind: .function, name: interner.intern("x"), fqName: fqName, declSite: nil, visibility: .public)
-        XCTAssertEqual(id1, id2)
+        XCTAssertNotEqual(id1, id2)
+        XCTAssertEqual(symbols.count, 2)
+    }
+
+    func testExpectAnnotationClassCanCoexistWithActualTypeAlias() throws {
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let fqName = [
+            interner.intern("kotlin"),
+            interner.intern("concurrent"),
+            interner.intern("Volatile")
+        ]
+
+        let expectID = symbols.define(
+            kind: .annotationClass,
+            name: interner.intern("Volatile"),
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.expectDeclaration]
+        )
+        let actualID = symbols.define(
+            kind: .typeAlias,
+            name: interner.intern("Volatile"),
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.actualDeclaration]
+        )
+
+        XCTAssertNotEqual(expectID, actualID)
+        XCTAssertEqual(symbols.count, 2)
+        XCTAssertEqual(symbols.lookupAll(fqName: fqName).count, 2)
+        XCTAssertEqual(try XCTUnwrap(symbols.symbol(expectID)).kind, .annotationClass)
+        XCTAssertEqual(try XCTUnwrap(symbols.symbol(actualID)).kind, .typeAlias)
+    }
+
+    func testActualTypeAliasCanCoexistWithExpectAnnotationClassInReverseOrder() throws {
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let fqName = [
+            interner.intern("kotlin"),
+            interner.intern("concurrent"),
+            interner.intern("Volatile")
+        ]
+
+        let actualID = symbols.define(
+            kind: .typeAlias,
+            name: interner.intern("Volatile"),
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.actualDeclaration]
+        )
+        let expectID = symbols.define(
+            kind: .annotationClass,
+            name: interner.intern("Volatile"),
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.expectDeclaration]
+        )
+
+        XCTAssertNotEqual(expectID, actualID)
+        XCTAssertEqual(symbols.count, 2)
+        XCTAssertEqual(symbols.lookupAll(fqName: fqName).count, 2)
+        XCTAssertEqual(try XCTUnwrap(symbols.symbol(expectID)).kind, .annotationClass)
+        XCTAssertEqual(try XCTUnwrap(symbols.symbol(actualID)).kind, .typeAlias)
     }
 
     // MARK: - Function Signatures

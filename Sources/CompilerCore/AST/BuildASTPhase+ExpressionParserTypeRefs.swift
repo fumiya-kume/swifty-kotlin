@@ -8,7 +8,8 @@ extension BuildASTPhase.ExpressionParser {
             tokens[index...],
             interner: interner,
             astArena: astArena,
-            options: options
+            options: options,
+            diagnostics: diagnostics
         ) else {
             return nil
         }
@@ -46,7 +47,8 @@ extension BuildASTPhase.ExpressionParser {
                 tokens[index...],
                 interner: interner,
                 astArena: astArena,
-                options: options
+                options: options,
+                diagnostics: diagnostics
             ) else {
                 index = savedIndex
                 return nil
@@ -64,7 +66,8 @@ extension BuildASTPhase.ExpressionParser {
             tokens[index...],
             interner: interner,
             astArena: astArena,
-            options: options
+            options: options,
+            diagnostics: diagnostics
         ) else {
             index = savedIndex
             return nil

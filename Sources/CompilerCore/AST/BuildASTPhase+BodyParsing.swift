@@ -403,172 +403,19 @@ extension BuildASTPhase {
                 index += 1
                 continue
             }
-            // We have '@'; the next token(s) form the annotation name.
-            index += 1
-            guard index < tokens.count else { break }
-
-            // Check for use-site target: `@get:`, `@set:`, `@field:`, `@param:`, etc.
-            var useSiteTarget: String?
-            if index + 1 < tokens.count, tokens[index + 1].kind == .symbol(.colon) {
-                let candidate = tokens[index]
-                if let candidateName = tokenText(candidate, interner: interner) {
-                    let knownTargets: Set = [
-                        "get", "set", "field", "param", "setparam",
-                        "delegate", "property", "receiver", "file",
-                    ]
-                    if knownTargets.contains(candidateName) {
-                        useSiteTarget = candidateName
-                        index += 2 // skip target name and colon
-                    }
-                }
-            }
-
-            guard index < tokens.count else { break }
-            // Extract the annotation name (may be qualified: `kotlin.Deprecated`)
-            var nameParts: [String] = []
-            if let firstPart = tokenText(tokens[index], interner: interner) {
-                nameParts.append(firstPart)
-                index += 1
-                // Handle qualified names like `kotlin.jvm.JvmStatic`
-                while index + 1 < tokens.count,
-                      tokens[index].kind == .symbol(.dot),
-                      let nextPart = tokenText(tokens[index + 1], interner: interner)
-                {
-                    nameParts.append(nextPart)
-                    index += 2
-                }
-            } else {
+            guard let parsed = AnnotationParsingSupport.parseAnnotation(
+                from: tokens,
+                start: index,
+                interner: interner,
+                allowUseSiteTarget: true
+            ) else {
                 index += 1
                 continue
             }
-            let annotationName = nameParts.joined(separator: ".")
-
-            // Parse optional argument list: `(arg1, arg2, ...)`
-            var arguments: [String] = []
-            if index < tokens.count, tokens[index].kind == .symbol(.lParen) {
-                index += 1 // skip '('
-                var parenDepth = 1
-                var bracketDepth = 0
-                var braceDepth = 0
-                var currentArg: [String] = []
-                while index < tokens.count, parenDepth > 0 {
-                    let argToken = tokens[index]
-                    if argToken.kind == .symbol(.lParen) {
-                        parenDepth += 1
-                        currentArg.append("(")
-                    } else if argToken.kind == .symbol(.rParen) {
-                        parenDepth -= 1
-                        if parenDepth == 0 {
-                            let trimmed = currentArg.joined().trimmingCharacters(in: .whitespaces)
-                            if !trimmed.isEmpty {
-                                arguments.append(trimmed)
-                            }
-                        } else {
-                            currentArg.append(")")
-                        }
-                    } else if argToken.kind == .symbol(.lBracket) {
-                        bracketDepth += 1
-                        currentArg.append("[")
-                    } else if argToken.kind == .symbol(.rBracket) {
-                        bracketDepth = max(0, bracketDepth - 1)
-                        currentArg.append("]")
-                    } else if argToken.kind == .symbol(.lBrace) {
-                        braceDepth += 1
-                        currentArg.append("{")
-                    } else if argToken.kind == .symbol(.rBrace) {
-                        braceDepth = max(0, braceDepth - 1)
-                        currentArg.append("}")
-                    } else if argToken.kind == .symbol(.comma), parenDepth == 1,
-                              bracketDepth == 0, braceDepth == 0
-                    {
-                        let trimmed = currentArg.joined().trimmingCharacters(in: .whitespaces)
-                        if !trimmed.isEmpty {
-                            arguments.append(trimmed)
-                        }
-                        currentArg = []
-                    } else if let text = tokenText(argToken, interner: interner) {
-                        currentArg.append(text)
-                    } else {
-                        // For string literals and other tokens, extract their raw text
-                        currentArg.append(tokenRawText(argToken, interner: interner))
-                    }
-                    index += 1
-                }
-            }
-
-            annotations.append(AnnotationNode(
-                name: annotationName,
-                arguments: arguments,
-                useSiteTarget: useSiteTarget
-            ))
+            annotations.append(parsed.annotation)
+            index = parsed.nextIndex
         }
         return annotations
-    }
-
-    /// Returns the text representation of a token for annotation parsing.
-    private func tokenText(_ token: Token, interner: StringInterner) -> String? {
-        switch token.kind {
-        case let .identifier(interned):
-            interner.resolve(interned)
-        case let .backtickedIdentifier(interned):
-            interner.resolve(interned)
-        case let .keyword(keyword):
-            keyword.rawValue
-        case let .softKeyword(soft):
-            soft.rawValue
-        default:
-            nil
-        }
-    }
-
-    /// Returns a raw text representation for any token, used for annotation argument parsing.
-    private func tokenRawText(_ token: Token, interner: StringInterner) -> String {
-        switch token.kind {
-        case let .identifier(interned), let .backtickedIdentifier(interned):
-            interner.resolve(interned)
-        case let .keyword(keyword):
-            keyword.rawValue
-        case let .softKeyword(soft):
-            soft.rawValue
-        case let .stringSegment(interned):
-            "\"\(interner.resolve(interned))\""
-        case .stringQuote:
-            "\""
-        case let .multiDollarStringQuote(dollarCount):
-            String(repeating: "$", count: dollarCount) + "\""
-        case let .multiDollarRawStringQuote(dollarCount):
-            String(repeating: "$", count: dollarCount) + "\"\"\""
-        case let .intLiteral(value):
-            "\(value)"
-        case let .longLiteral(value):
-            "\(value)"
-        case let .uintLiteral(value):
-            "\(value)"
-        case let .ulongLiteral(value):
-            "\(value)"
-        case let .floatLiteral(value):
-            "\(value)"
-        case let .doubleLiteral(value):
-            "\(value)"
-        case let .charLiteral(value):
-            "'\(value)'"
-        case .symbol(.assign):
-            "="
-        case .symbol(.dot):
-            "."
-        case .symbol(.comma):
-            ","
-        case .symbol(.lBracket):
-            "["
-        case .symbol(.rBracket):
-            "]"
-        case .symbol(.lBrace):
-            "{"
-        case .symbol(.rBrace):
-            "}"
-        default:
-            ""
-        }
     }
 
     /// Checks if a token represents a declaration start keyword.

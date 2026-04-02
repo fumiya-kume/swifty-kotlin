@@ -321,4 +321,13 @@ final class RuntimeRangeStepTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_range_last(reversed), 1)
         XCTAssertEqual(kk_range_count(reversed), 5)
     }
+
+    func testULongRangeToULongArray() {
+        let range = kk_ulong_step(kk_ulong_rangeTo(1, 7), 3)
+        let array = kk_ulong_range_toULongArray(range)
+        XCTAssertEqual(kk_list_size(array), 3)
+        XCTAssertEqual(kk_list_get(array, 0), 1)
+        XCTAssertEqual(kk_list_get(array, 1), 4)
+        XCTAssertEqual(kk_list_get(array, 2), 7)
+    }
 }

@@ -186,7 +186,7 @@ extension LoweringABIAndPropertyRegressionTests {
             fqName: [interner.intern("Foo"), interner.intern("myProp")],
             declSite: nil,
             visibility: .public,
-            flags: []
+            flags: [.mutable]
         )
         let backingFieldSym = symbols.define(
             kind: .backingField,

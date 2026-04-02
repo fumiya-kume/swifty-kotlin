@@ -321,6 +321,72 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
         }
     }
 
+    func testLibraryMetadataRoundTripsContextFunctionTypeSignatures() throws {
+        let source = """
+        package metaexport
+        class A
+        class B
+        class C
+        class D
+        typealias Handler = context(A, B) C.() -> D
+        val handler: Handler? = null
+        """
+        try withTemporaryFile(contents: source) { path in
+            let libBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let emitCtx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "MetaExportContext",
+                emit: .library,
+                outputPath: libBase
+            )
+            try runToKIR(emitCtx)
+            try LoweringPhase().run(emitCtx)
+            try CodegenPhase().run(emitCtx)
+
+            let metadataPath = libBase + ".kklib/metadata.bin"
+            let metadata = try String(contentsOfFile: metadataPath, encoding: .utf8)
+            XCTAssertTrue(metadata.contains("C2<Lmetaexport/A;,Lmetaexport/B;>"))
+            XCTAssertTrue(metadata.contains("RLmetaexport/C;"))
+            XCTAssertTrue(metadata.contains("Lmetaexport/D;"))
+
+            let appSource = """
+            import metaexport.handler
+            fun use(): Any? = handler
+            """
+            try withTemporaryFile(contents: appSource) { appPath in
+                let importCtx = makeCompilationContext(
+                    inputs: [appPath],
+                    moduleName: "MetaExportContextImport",
+                    emit: .kirDump,
+                    searchPaths: [libBase + ".kklib"]
+                )
+                try runSema(importCtx)
+
+                let sema = try XCTUnwrap(importCtx.sema)
+                let handlerProperty = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+                    importCtx.interner.resolve(symbol.name) == "handler" &&
+                        symbol.kind == .property &&
+                        symbol.flags.contains(.synthetic)
+                }))
+                let propertyType = try XCTUnwrap(sema.symbols.propertyType(for: handlerProperty.id))
+                let nonNullPropertyType = sema.types.makeNonNullable(propertyType)
+
+                guard case let .functionType(functionType) = sema.types.kind(of: nonNullPropertyType) else {
+                    return XCTFail("Expected imported property type to be a function type")
+                }
+
+                XCTAssertEqual(functionType.contextReceivers.count, 2)
+                XCTAssertNotNil(functionType.receiver)
+                let rendered = sema.types.renderType(nonNullPropertyType)
+                XCTAssertTrue(rendered.contains("context("))
+                XCTAssertTrue(rendered.contains("metaexport.A"))
+                XCTAssertTrue(rendered.contains("metaexport.B"))
+                XCTAssertTrue(rendered.contains("metaexport.C."))
+                XCTAssertTrue(rendered.hasSuffix("-> metaexport.D"))
+            }
+        }
+    }
+
     func testPlatformWarningEmittedForImportedMissingSignatureInExplicitNonNullContext() throws {
         let fm = FileManager.default
         let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)

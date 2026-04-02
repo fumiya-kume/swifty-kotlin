@@ -285,6 +285,9 @@ extension DataFlowSemaPhase {
         base: Int32,
         into collected: inout Set<SymbolID>
     ) {
+        for contextReceiver in ft.contextReceivers {
+            collectSyntheticTypeParamsRecursive(contextReceiver, types: types, base: base, into: &collected)
+        }
         if let receiver = ft.receiver {
             collectSyntheticTypeParamsRecursive(receiver, types: types, base: base, into: &collected)
         }

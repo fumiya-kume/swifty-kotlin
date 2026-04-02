@@ -207,7 +207,11 @@ extension DataFlowSemaPhase {
         case let .named(path, typeArgs, _):
             checkNamedTypeVariance(path: path, typeArgs: typeArgs, position: position,
                                    varianceMap: varianceMap, env: env, memberRange: memberRange)
-        case let .functionType(receiverTypeRef, paramTypeRefs, returnTypeRef, _, _):
+        case let .functionType(contextReceiverTypeRefs, receiverTypeRef, paramTypeRefs, returnTypeRef, _, _):
+            for contextReceiverTypeRef in contextReceiverTypeRefs {
+                checkTypeRefVariance(contextReceiverTypeRef, position: position.flipped,
+                                     varianceMap: varianceMap, env: env, memberRange: memberRange)
+            }
             if let receiverTypeRef {
                 checkTypeRefVariance(receiverTypeRef, position: position.flipped,
                                      varianceMap: varianceMap, env: env, memberRange: memberRange)
@@ -220,6 +224,9 @@ extension DataFlowSemaPhase {
                 checkTypeRefVariance(partRef, position: position,
                                      varianceMap: varianceMap, env: env, memberRange: memberRange)
             }
+        case let .annotated(base, _):
+            checkTypeRefVariance(base, position: position,
+                                 varianceMap: varianceMap, env: env, memberRange: memberRange)
         }
     }
 

@@ -244,7 +244,8 @@ extension OverloadResolver {
             signature: signature,
             instantiatedParameterTypes: instantiatedParameterTypes,
             substitutedTypeArguments: substitution,
-            parameterMapping: parameterMapping
+            parameterMapping: parameterMapping,
+            usesVararg: normalizeFlags(signature.valueParameterIsVararg, count: signature.parameterTypes.count).contains(true)
         ))
     }
 
@@ -403,6 +404,7 @@ extension OverloadResolver {
         let instantiatedParameterTypes: [TypeID]
         let substitutedTypeArguments: [TypeVarID: TypeID]
         let parameterMapping: [Int: Int]
+        let usesVararg: Bool
 
         func toResolvedCall() -> ResolvedCall {
             ResolvedCall(
@@ -464,13 +466,30 @@ extension OverloadResolver {
         let paramsEqual = zip(lhs.instantiatedParameterTypes, rhs.instantiatedParameterTypes).allSatisfy {
             typeSystem.isSubtype($0, $1) && typeSystem.isSubtype($1, $0)
         }
-        guard paramsEqual,
-              let lhsReceiver = lhs.signature.receiverType,
-              let rhsReceiver = rhs.signature.receiverType
-        else {
+        guard paramsEqual else {
             return false
         }
-        return typeSystem.isSubtype(lhsReceiver, rhsReceiver)
+        if let lhsReceiver = lhs.signature.receiverType,
+           let rhsReceiver = rhs.signature.receiverType
+        {
+            let lhsReceiverSubRhs = typeSystem.isSubtype(lhsReceiver, rhsReceiver)
+            let rhsReceiverSubLhs = typeSystem.isSubtype(rhsReceiver, lhsReceiver)
+            if lhsReceiverSubRhs && !rhsReceiverSubLhs {
+                return true
+            }
+            if rhsReceiverSubLhs && !lhsReceiverSubRhs {
+                return false
+            }
+        }
+        let lhsOwnTypeParamCount = lhs.signature.typeParameterSymbols.count - lhs.signature.classTypeParameterCount
+        let rhsOwnTypeParamCount = rhs.signature.typeParameterSymbols.count - rhs.signature.classTypeParameterCount
+        if lhsOwnTypeParamCount != rhsOwnTypeParamCount {
+            return lhsOwnTypeParamCount < rhsOwnTypeParamCount
+        }
+        if lhs.usesVararg != rhs.usesVararg {
+            return !lhs.usesVararg && rhs.usesVararg
+        }
+        return false
     }
 
     private func isMoreSpecific(

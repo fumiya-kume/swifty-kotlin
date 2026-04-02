@@ -217,7 +217,7 @@ public final class TypeSystem {
             return make(.typeParam(TypeParamType(symbol: tp.symbol, nullability: nullability)))
         case let .functionType(ft):
             if ft.nullability == nullability { return type }
-            return make(.functionType(FunctionType(receiver: ft.receiver, params: ft.params, returnType: ft.returnType, isSuspend: ft.isSuspend, nullability: nullability)))
+            return make(.functionType(FunctionType(contextReceivers: ft.contextReceivers, receiver: ft.receiver, params: ft.params, returnType: ft.returnType, isSuspend: ft.isSuspend, nullability: nullability)))
         case let .kClassType(kc):
             if kc.nullability == nullability { return type }
             return make(.kClassType(KClassType(argument: kc.argument, nullability: nullability)))
@@ -298,6 +298,9 @@ public final class TypeSystem {
                 }
             }
         case let .functionType(ft):
+            if ft.contextReceivers.contains(where: { typeContainsTypeParam($0, symbol: symbol) }) {
+                return true
+            }
             if let receiver = ft.receiver, typeContainsTypeParam(receiver, symbol: symbol) {
                 return true
             }

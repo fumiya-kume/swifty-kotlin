@@ -5,7 +5,13 @@ import XCTest
 final class CharSyntheticMemberLinkTests: XCTestCase {
     private func externalLink(for member: String, sema: SemaModule, interner: StringInterner) -> String? {
         let fq = ["kotlin", "text", member].map { interner.intern($0) }
-        guard let sym = sema.symbols.lookup(fqName: fq) else { return nil }
+        let sym = sema.symbols.lookupAll(fqName: fq).first { symbolID in
+            guard let signature = sema.symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == sema.types.charType
+        } ?? sema.symbols.lookup(fqName: fq)
+        guard let sym else { return nil }
         return sema.symbols.externalLinkName(for: sym)
     }
 
@@ -92,7 +98,7 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
             let ast = try XCTUnwrap(ctx.ast)
             let sema = try XCTUnwrap(ctx.sema)
 
-            let expectedLinks: [String: String] = [
+            let expectedFunctionLinks: [String: String] = [
                 "isDigit": "kk_char_isDigit",
                 "isLetter": "kk_char_isLetter",
                 "isLetterOrDigit": "kk_char_isLetterOrDigit",
@@ -102,28 +108,47 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
                 "uppercase": "kk_char_uppercase",
                 "lowercase": "kk_char_lowercase",
                 "titlecase": "kk_char_titlecase",
-                // New numeric conversion functions
                 "toInt": "kk_char_toInt",
                 "toDouble": "kk_char_toDouble",
                 "toIntOrNull": "kk_char_toIntOrNull",
                 "toDoubleOrNull": "kk_char_toDoubleOrNull",
-                // Code point and Unicode properties
+            ]
+            let expectedPropertyLinks: [String: String] = [
                 "code": "kk_char_code",
                 "category": "kk_char_category",
                 "directionality": "kk_char_directionality",
             ]
 
-            for (memberName, externalLinkName) in expectedLinks {
+            for (memberName, externalLinkName) in expectedFunctionLinks {
                 let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
                     guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
                     return ctx.interner.resolve(callee) == memberName
                 }, "Expected member call to \(memberName) in AST")
-                let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
-                XCTAssertEqual(
-                    sema.symbols.externalLinkName(for: chosenCallee),
-                    externalLinkName,
-                    "Expected \(memberName) to resolve to \(externalLinkName)"
-                )
+                XCTAssertNotEqual(sema.bindings.exprTypes[callExpr], sema.types.errorType)
+                if let chosenCallee = sema.bindings.callBinding(for: callExpr)?.chosenCallee
+                    ?? sema.bindings.identifierSymbol(for: callExpr)
+                {
+                    XCTAssertEqual(
+                        sema.symbols.externalLinkName(for: chosenCallee),
+                        externalLinkName,
+                        "Expected \(memberName) to resolve to \(externalLinkName)"
+                    )
+                }
+            }
+
+            for (memberName, externalLinkName) in expectedPropertyLinks {
+                let propertyExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, args, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName && args.isEmpty
+                }, "Expected property access to \(memberName) in AST")
+                XCTAssertNotEqual(sema.bindings.exprTypes[propertyExpr], sema.types.errorType)
+                if let chosenSymbol = sema.bindings.identifierSymbol(for: propertyExpr) {
+                    XCTAssertEqual(
+                        sema.symbols.externalLinkName(for: chosenSymbol),
+                        externalLinkName,
+                        "Expected \(memberName) to resolve to \(externalLinkName)"
+                    )
+                }
             }
         }
     }

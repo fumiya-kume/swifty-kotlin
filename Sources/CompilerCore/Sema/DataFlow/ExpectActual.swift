@@ -21,7 +21,13 @@ extension DataFlowSemaPhase {
         for expectSym in expects {
             let candidates = symbols.lookupAll(fqName: expectSym.fqName)
                 .compactMap { symbols.symbol($0) }
-                .filter { $0.kind == expectSym.kind && $0.flags.contains(.actualDeclaration) }
+                .filter { actual in
+                    guard actual.flags.contains(.actualDeclaration) else {
+                        return false
+                    }
+                    return actual.kind == expectSym.kind
+                        || (expectSym.kind == .annotationClass && actual.kind == .typeAlias)
+                }
                 .sorted(by: { $0.id.rawValue < $1.id.rawValue })
 
             let compatibleCandidates = candidates.filter { actual in
@@ -60,6 +66,10 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem
     ) -> Bool {
+        if expect.kind == .annotationClass, actual.kind == .typeAlias {
+            return true
+        }
+
         switch expect.kind {
         case .function, .constructor:
             guard let expectSig = symbols.functionSignature(for: expect.id),
