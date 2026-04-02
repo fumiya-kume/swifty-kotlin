@@ -76,9 +76,9 @@ private let runtimePlatformCpuArchitecture: RuntimePlatformCpuArchitecture = {
 #endif
 }()
 
-private func runtimePlatformEnumValue(_ ordinal: Int) -> Int {
-    kk_box_int(ordinal)
-}
+// Cache boxed ordinals once at startup to avoid heap allocation on every access.
+private let runtimePlatformOsFamilyBoxed: Int = kk_box_int(runtimePlatformOsFamily.rawValue)
+private let runtimePlatformCpuArchitectureBoxed: Int = kk_box_int(runtimePlatformCpuArchitecture.rawValue)
 
 @_cdecl("kk_platform_canAccessUnaligned")
 public func kk_platform_canAccessUnaligned(_ platformRaw: Int) -> Int {
@@ -95,13 +95,13 @@ public func kk_platform_isLittleEndian(_ platformRaw: Int) -> Int {
 @_cdecl("kk_platform_osFamily")
 public func kk_platform_osFamily(_ platformRaw: Int) -> Int {
     _ = platformRaw
-    return runtimePlatformEnumValue(runtimePlatformOsFamily.rawValue)
+    return runtimePlatformOsFamilyBoxed
 }
 
 @_cdecl("kk_platform_cpuArchitecture")
 public func kk_platform_cpuArchitecture(_ platformRaw: Int) -> Int {
     _ = platformRaw
-    return runtimePlatformEnumValue(runtimePlatformCpuArchitecture.rawValue)
+    return runtimePlatformCpuArchitectureBoxed
 }
 
 @_cdecl("kk_platform_getAvailableProcessors")
