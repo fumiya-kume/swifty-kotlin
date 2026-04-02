@@ -31,9 +31,11 @@ enum CodegenSymbolSupport {
     static func cFunctionSymbol(
         for function: KIRFunction,
         interner: StringInterner,
+        symbols: SymbolTable? = nil,
         fileFacadeNamesByFileID: [Int32: String] = [:]
     ) -> String {
-        let rawName = interner.resolve(function.name)
+        let rawName = jvmFunctionName(for: function, interner: interner, symbols: symbols)
+            ?? interner.resolve(function.name)
         let facadePrefix = if let fileID = function.sourceRange?.start.file.rawValue,
                               let facadeName = fileFacadeNamesByFileID[fileID],
                               !facadeName.isEmpty
@@ -45,6 +47,28 @@ enum CodegenSymbolSupport {
         let safeName = sanitizeForCSymbol(rawName)
         let suffix = abs(function.symbol.rawValue)
         return "kk_fn_\(facadePrefix)\(safeName)_\(suffix)"
+    }
+
+    private static func jvmFunctionName(
+        for function: KIRFunction,
+        interner: StringInterner,
+        symbols: SymbolTable?
+    ) -> String? {
+        guard let symbols else {
+            return nil
+        }
+        for annotation in symbols.annotations(for: function.symbol) {
+            guard KnownCompilerAnnotation.jvmName.matches(annotation.annotationFQName),
+                  let firstArgument = annotation.arguments.first
+            else {
+                continue
+            }
+            let trimmed = firstArgument.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+            if !trimmed.isEmpty {
+                return trimmed
+            }
+        }
+        return nil
     }
 
     private static func sanitizeForCSymbol(_ text: String) -> String {
