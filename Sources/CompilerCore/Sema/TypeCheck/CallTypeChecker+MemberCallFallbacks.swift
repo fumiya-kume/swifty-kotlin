@@ -1412,7 +1412,7 @@ extension CallTypeChecker {
                 isSuspend: false,
                 nullability: .nonNull
             )))
-            return (argumentIndex: 0, expectedType: expectedType)
+            return (argumentIndex: 1, expectedType: expectedType)
         }
 
         // List.getOrElse(index, { default }) — lambda takes Int (index), returns element type

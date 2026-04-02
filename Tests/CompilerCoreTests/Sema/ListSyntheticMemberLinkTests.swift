@@ -307,6 +307,39 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testMapGetOrElseAssignsLambdaExpectedTypeToLambdaArgument() throws {
+        let source = """
+        fun useMapDefault(values: Map<String, Int>): Int {
+            return values.getOrElse("z") { 99 }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let callExpr = try XCTUnwrap(
+                firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == "getOrElse"
+                },
+                "Expected member call to getOrElse"
+            )
+            XCTAssertEqual(
+                sema.bindings.exprType(for: callExpr),
+                sema.types.intType,
+                "Expected getOrElse result to be Int"
+            )
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected map getOrElse fallback to resolve without diagnostics, got: \(ctx.diagnostics.diagnostics)"
+            )
+        }
+    }
+
     func testListBinarySearchHasComparableElementUpperBound() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
