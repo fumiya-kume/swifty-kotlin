@@ -381,7 +381,8 @@ enum TypeRefParserCore {
             from: next,
             interner: interner,
             astArena: astArena,
-            options: options
+            options: options,
+            diagnostics: diagnostics
         ) {
             contextReceivers = parsedContext.refs
             next = parsedContext.next
@@ -484,7 +485,8 @@ enum TypeRefParserCore {
         from start: Int,
         interner: StringInterner,
         astArena: ASTArena,
-        options: Options
+        options: Options,
+        diagnostics: DiagnosticEngine?
     ) -> (refs: [TypeRefID], next: Int)? {
         guard start < tokens.count,
               case .softKeyword(.context) = tokens[start].kind,
@@ -513,7 +515,8 @@ enum TypeRefParserCore {
                               from: currentStart,
                               interner: interner,
                               astArena: astArena,
-                              options: options
+                              options: options,
+                              diagnostics: diagnostics
                           ),
                           parsed.next == next
                     else {
@@ -529,7 +532,8 @@ enum TypeRefParserCore {
                           from: currentStart,
                           interner: interner,
                           astArena: astArena,
-                          options: options
+                          options: options,
+                          diagnostics: diagnostics
                       ),
                       parsed.next == next
                 else {

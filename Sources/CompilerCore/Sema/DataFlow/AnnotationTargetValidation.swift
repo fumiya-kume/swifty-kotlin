@@ -694,7 +694,7 @@ private extension DataFlowSemaPhase {
                     break
                 }
             }
-        case let .functionType(receiver, params, returnType, _, _):
+        case let .functionType(contextReceivers, receiver, params, returnType, isSuspend, nullable):
             if let receiver {
                 validateTypeAnnotationTargets(typeRefID: receiver, ownerRange: ownerRange, file: file, ast: ast, symbols: symbols, diagnostics: diagnostics, interner: interner, filesByID: filesByID)
             }
