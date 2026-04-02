@@ -213,6 +213,11 @@ extension DeclTypeChecker {
             return
         }
 
+        validateFunctionHeaderOptInTypes(
+            symbol,
+            ctx: ctx.with(currentDeclSymbol: symbol)
+        )
+
         var locals: LocalBindings = [:]
         for (index, paramSymbol) in signature.valueParameterSymbols.enumerated() {
             guard let param = sema.symbols.symbol(paramSymbol) else {
@@ -242,7 +247,11 @@ extension DeclTypeChecker {
         for typeParameterSymbol in signature.typeParameterSymbols {
             functionScope.insert(typeParameterSymbol)
         }
-        var functionCtx = ctx.copying(scope: functionScope, implicitReceiverType: effectiveReceiverType)
+        var functionCtx = ctx.copying(
+            scope: functionScope,
+            implicitReceiverType: effectiveReceiverType,
+            currentDeclSymbol: symbol
+        )
         // Propagate suppression flag so that individual `return` statements inside
         // functions with inferred return types also skip the platform-type warning.
         functionCtx.suppressPlatformReturnWarning = (function.returnType == nil)

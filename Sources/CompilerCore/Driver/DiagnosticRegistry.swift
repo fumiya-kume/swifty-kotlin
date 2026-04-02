@@ -89,6 +89,7 @@ public enum DiagnosticRegistry {
         "UNCHECKED_CAST": ["KSWIFTK-SEMA-UNCHECKED-CAST"],
         "DEPRECATION": ["KSWIFTK-SEMA-DEPRECATED"],
         "DEPRECATION_ERROR": ["KSWIFTK-SEMA-DEPRECATED"],
+        "OPT_IN_USAGE": ["KSWIFTK-SEMA-OPT-IN"],
         "UNCHECKED_IS": ["KSWIFTK-SEMA-ERASED-TYPE"],
         "ANNOTATION_TARGET": ["KSWIFTK-SEMA-ANNOTATION-TARGET"],
     ]
@@ -348,6 +349,12 @@ public enum DiagnosticRegistry {
             pass: "SEMA",
             defaultSeverity: .warning,
             summary: "Reference to deprecated declaration."
+        ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-OPT-IN",
+            pass: "SEMA",
+            defaultSeverity: .error,
+            summary: "Use of API that requires an explicit opt-in annotation."
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-ANNOTATION-TARGET",

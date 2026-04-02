@@ -97,6 +97,7 @@ final class TypeCheckDriver {
                 exportBlockLocalsForExpr: nil,
                 flowState: DataFlowState(),
                 currentFileID: file.fileID,
+                currentDeclSymbol: nil,
                 enclosingClassSymbol: nil,
                 visibilityChecker: checker,
                 outerReceiverTypes: [],
@@ -116,7 +117,7 @@ final class TypeCheckDriver {
                     declChecker.typeCheckFunctionDecl(
                         function,
                         symbol: declSymbol,
-                        ctx: inferCtx,
+                        ctx: inferCtx.with(currentDeclSymbol: declSymbol),
                         solver: solver,
                         diagnostics: diagnostics
                     )
@@ -126,7 +127,7 @@ final class TypeCheckDriver {
                         property,
                         declID: declID,
                         symbol: declSymbol,
-                        ctx: inferCtx,
+                        ctx: inferCtx.with(currentDeclSymbol: declSymbol),
                         solver: solver,
                         diagnostics: diagnostics
                     )
@@ -135,7 +136,7 @@ final class TypeCheckDriver {
                     declChecker.typeCheckClassDecl(
                         classDecl,
                         symbol: declSymbol,
-                        ctx: inferCtx,
+                        ctx: inferCtx.with(currentDeclSymbol: declSymbol),
                         solver: solver,
                         diagnostics: diagnostics
                     )
@@ -144,7 +145,7 @@ final class TypeCheckDriver {
                     declChecker.typeCheckInterfaceDecl(
                         interfaceDecl,
                         symbol: declSymbol,
-                        ctx: inferCtx,
+                        ctx: inferCtx.with(currentDeclSymbol: declSymbol),
                         solver: solver,
                         diagnostics: diagnostics
                     )
@@ -153,7 +154,7 @@ final class TypeCheckDriver {
                     declChecker.typeCheckObjectDecl(
                         objectDecl,
                         symbol: declSymbol,
-                        ctx: inferCtx,
+                        ctx: inferCtx.with(currentDeclSymbol: declSymbol),
                         solver: solver,
                         diagnostics: diagnostics
                     )

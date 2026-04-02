@@ -5662,6 +5662,12 @@ extension CallTypeChecker {
             range: range,
             diagnostics: ctx.semaCtx.diagnostics
         )
+        driver.helpers.checkOptIn(
+            for: chosen,
+            ctx: ctx,
+            range: range,
+            diagnostics: ctx.semaCtx.diagnostics
+        )
         // P5-112: Prohibit super.foo() calls to abstract members.
         if isSuperCall,
            let chosenSym = sema.symbols.symbol(chosen),

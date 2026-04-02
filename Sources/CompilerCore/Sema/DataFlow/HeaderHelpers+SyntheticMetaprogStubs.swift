@@ -135,6 +135,14 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticJvmAnnotationClass(
+            named: "RequiresOptIn",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticJvmAnnotationClass(
             named: "OptIn",
             packageFQName: kotlinPkg,
             packageSymbol: kotlinPkgSymbol,
@@ -331,6 +339,43 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(retentionSymbol, for: valueSymbol)
             symbols.setPropertyType(retentionType, for: valueSymbol)
             symbols.setConstValueExprKind(.symbolRef(retentionEntrySymbol), for: valueSymbol)
+        }
+
+        if let requiresOptInSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("RequiresOptIn")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
+                ),
+                to: requiresOptInSymbol,
+                symbols: symbols
+            )
+            registerSyntheticRequiresOptInLevelEnum(
+                ownerSymbol: requiresOptInSymbol,
+                ownerFQName: kotlinPkg + [interner.intern("RequiresOptIn")],
+                packageSymbol: kotlinPkgSymbol,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
+
+        if let optInSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("OptIn")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: [
+                        "AnnotationTarget.CLASS",
+                        "AnnotationTarget.PROPERTY",
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.CONSTRUCTOR",
+                        "AnnotationTarget.TYPEALIAS",
+                        "AnnotationTarget.FILE",
+                    ]
+                ),
+                to: optInSymbol,
+                symbols: symbols
+            )
         }
     }
 
@@ -594,6 +639,73 @@ extension DataFlowSemaPhase {
             if symbols.propertyType(for: entrySymbol) == nil {
                 symbols.setPropertyType(enumType, for: entrySymbol)
             }
+        }
+    }
+
+    private func registerSyntheticRequiresOptInLevelEnum(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        packageSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let levelName = interner.intern("Level")
+        let levelFQName = ownerFQName + [levelName]
+        let levelSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: levelFQName) {
+            levelSymbol = existing
+        } else {
+            levelSymbol = symbols.define(
+                kind: .enumClass,
+                name: levelName,
+                fqName: levelFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setParentSymbol(ownerSymbol, for: levelSymbol)
+        if packageSymbol != .invalid {
+            symbols.setSourceFileID(symbols.sourceFileID(for: packageSymbol) ?? FileID(rawValue: 0), for: levelSymbol)
+        }
+
+        let levelType = types.make(.classType(ClassType(
+            classSymbol: levelSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        for entryName in ["WARNING", "ERROR"] {
+            let entry = interner.intern(entryName)
+            let entryFQName = levelFQName + [entry]
+            let entrySymbol: SymbolID
+            if let existing = symbols.lookup(fqName: entryFQName) {
+                entrySymbol = existing
+            } else {
+                entrySymbol = symbols.define(
+                    kind: .field,
+                    name: entry,
+                    fqName: entryFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+            }
+            symbols.setParentSymbol(levelSymbol, for: entrySymbol)
+            symbols.setPropertyType(levelType, for: entrySymbol)
+        }
+    }
+
+    private func appendSyntheticAnnotation(
+        _ annotation: MetadataAnnotationRecord,
+        to symbol: SymbolID,
+        symbols: SymbolTable
+    ) {
+        var annotations = symbols.annotations(for: symbol)
+        if !annotations.contains(annotation) {
+            annotations.append(annotation)
+            symbols.setAnnotations(annotations, for: symbol)
         }
     }
 }

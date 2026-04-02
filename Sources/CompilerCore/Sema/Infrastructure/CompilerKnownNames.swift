@@ -4,6 +4,7 @@ enum KnownCompilerAnnotation {
     case deprecated
     case replaceWith
     case metadata
+    case requiresOptIn
     case target
     case jvmStatic
     case jvmName
@@ -30,6 +31,8 @@ enum KnownCompilerAnnotation {
             "ReplaceWith"
         case .metadata:
             "Metadata"
+        case .requiresOptIn:
+            "RequiresOptIn"
         case .target:
             "Target"
         case .jvmStatic:
@@ -75,6 +78,8 @@ enum KnownCompilerAnnotation {
             "kotlin.ReplaceWith"
         case .metadata:
             "kotlin.Metadata"
+        case .requiresOptIn:
+            "kotlin.RequiresOptIn"
         case .target:
             "kotlin.annotation.Target"
         case .jvmStatic:

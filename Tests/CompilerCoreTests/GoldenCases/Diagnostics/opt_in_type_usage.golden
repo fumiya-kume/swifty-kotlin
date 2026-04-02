@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "opt_in_type_usage.kt",
+      "range": {
+        "start": { "line": 8, "character": 0 },
+        "end": { "line": 8, "character": 53 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalTypeApi' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalTypeApi' or '@OptIn(golden.diagnostics.ExperimentalTypeApi::class)'.",
+      "codeActions": []
+    }
+  ]
+}
