@@ -2291,6 +2291,23 @@ public enum RuntimeABISpec {
             section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_continuation_intercepted",
+            parameters: [
+                RuntimeABIParameter(name: "continuationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_continuation_interceptor_intercept_continuation",
+            parameters: [
+                RuntimeABIParameter(name: "interceptorRaw", type: .intptr),
+                RuntimeABIParameter(name: "continuationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_context_get_name",
             parameters: [
                 RuntimeABIParameter(name: "contextRaw", type: .intptr),

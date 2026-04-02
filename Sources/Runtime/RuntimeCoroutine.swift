@@ -2116,16 +2116,61 @@ public func kk_context_plus(_ leftRaw: Int, _ rightRaw: Int) -> Int {
 /// Returns a dispatcher tag (or 0 if none).
 @_cdecl("kk_context_get_dispatcher")
 public func kk_context_get_dispatcher(_ contextRaw: Int) -> Int {
+    if isDispatcherTag(contextRaw) {
+        return contextRaw
+    }
     if contextRaw != 0,
        let ptr = UnsafeMutableRawPointer(bitPattern: contextRaw),
        let ctx = tryCast(ptr, to: RuntimeCoroutineContext.self)
     {
         return ctx.dispatcher
     }
-    if isDispatcherTag(contextRaw) {
-        return contextRaw
-    }
     return 0
+}
+
+/// Intercept a continuation using its dispatcher-backed context, if any.
+@_cdecl("kk_continuation_intercepted")
+public func kk_continuation_intercepted(_ continuationRaw: Int) -> Int {
+    guard continuationRaw != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: continuationRaw)
+    else {
+        return 0
+    }
+    let object = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
+    guard let continuation = object as? KKContinuation else {
+        return continuationRaw
+    }
+    let intercepted = runtimeInterceptedContinuation(continuation)
+    let interceptedObject = intercepted as AnyObject
+    if interceptedObject === object {
+        return continuationRaw
+    }
+    return runtimeRegisterObject(interceptedObject)
+}
+
+/// Intercept a continuation using an explicit interceptor object.
+@_cdecl("kk_continuation_interceptor_intercept_continuation")
+public func kk_continuation_interceptor_intercept_continuation(
+    _ interceptorRaw: Int,
+    _ continuationRaw: Int
+) -> Int {
+    let dispatcherTag = kk_context_get_dispatcher(interceptorRaw)
+    guard dispatcherTag != 0,
+          continuationRaw != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: continuationRaw)
+    else {
+        return continuationRaw
+    }
+    let object = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
+    guard let continuation = object as? KKContinuation else {
+        return continuationRaw
+    }
+    let intercepted = runtimeInterceptedContinuation(using: dispatcherTag, continuation: continuation)
+    let interceptedObject = intercepted as AnyObject
+    if interceptedObject === object {
+        return continuationRaw
+    }
+    return runtimeRegisterObject(interceptedObject)
 }
 
 /// Extract the CoroutineName from a CoroutineContext.

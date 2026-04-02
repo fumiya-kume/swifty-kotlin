@@ -688,48 +688,25 @@ final class CollectionLiteralLoweringTests: XCTestCase {
     }
 
     func testRangeReversedRewrittenToKkRangeReversed() throws {
-        let interner = StringInterner()
-        let arena = KIRArena()
-        let start = arena.appendExpr(.temporary(0))
-        let end = arena.appendExpr(.temporary(1))
-        let range = arena.appendExpr(.temporary(2))
-        let result = arena.appendExpr(.temporary(3))
-        let fn = KIRFunction(
-            symbol: SymbolID(rawValue: 1),
-            name: interner.intern("main"),
-            params: [],
-            returnType: TypeSystem().unitType,
-            body: [
-                .call(
-                    symbol: nil,
-                    callee: interner.intern("kk_op_rangeTo"),
-                    arguments: [start, end],
-                    result: range,
-                    canThrow: false,
-                    thrownResult: nil
-                ),
-                .call(
-                    symbol: nil,
-                    callee: interner.intern("reversed"),
-                    arguments: [range],
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ),
-                .returnUnit,
-            ],
-            isSuspend: false,
-            isInline: false
-        )
-        let declID = arena.appendDecl(.function(fn))
-        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
-        let ctx = makeKIRContext(interner: interner)
+        let source = """
+        fun main() {
+            val range = 1..10
+            val reversed = range.reversed()
+        }
+        """
 
-        try runPass(module: module, kirCtx: ctx)
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "RangeReversedRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
 
-        let callees = calleesInDecl(declID, module: module, interner: interner)
-        XCTAssertFalse(callees.contains("reversed"), "range.reversed should be rewritten")
-        XCTAssertTrue(callees.contains("kk_range_reversed"), "range.reversed should become kk_range_reversed")
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertFalse(callees.contains("reversed"), "range.reversed should be rewritten")
+            XCTAssertTrue(callees.contains("kk_range_reversed"), "range.reversed should become kk_range_reversed")
+        }
     }
 
     func testRangeAsReversedIsNotRewrittenToKkRangeReversed() throws {
