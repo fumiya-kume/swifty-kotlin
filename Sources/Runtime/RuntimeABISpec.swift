@@ -5004,6 +5004,15 @@ public enum RuntimeABISpec {
             section: "FileIO"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_bytearrayinputstream_new",
+            parameters: [
+                RuntimeABIParameter(name: "bufferRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_input_stream_read",
             parameters: [
                 RuntimeABIParameter(name: "streamRaw", type: .intptr),

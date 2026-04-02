@@ -265,6 +265,22 @@ extension DataFlowSemaPhase {
 
         registerSecurityValueProperty(
             ownerSymbol: keyPairSymbol,
+            propertyName: "public",
+            getterLinkName: "kk_keypair_public",
+            valueType: types.anyType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityValueProperty(
+            ownerSymbol: keyPairSymbol,
+            propertyName: "private",
+            getterLinkName: "kk_keypair_private",
+            valueType: types.anyType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityValueProperty(
+            ownerSymbol: keyPairSymbol,
             propertyName: "publicKey",
             getterLinkName: "kk_keypair_publicKey",
             valueType: types.anyType,
@@ -393,6 +409,21 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+
+        let inputStreamType: TypeID = if let inputStreamSymbol = symbols.lookup(fqName: [
+            interner.intern("java"),
+            interner.intern("io"),
+            interner.intern("InputStream")
+        ]) {
+            types.make(.classType(ClassType(
+                classSymbol: inputStreamSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        } else {
+            types.anyType
+        }
+
         // MARK: Certificate / trust path support (STDLIB-SEC-146)
         let certPathPkg = ensurePackage(path: ["java", "security", "cert"], symbols: symbols, interner: interner)
 
@@ -467,12 +498,24 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(certPathValidatorType, for: certPathValidatorSymbol)
 
         let listIntType = makeSecurityListType(elementType: types.intType, symbols: symbols, types: types, interner: interner)
+        let nullableByteArrayType = types.makeNullable(byteArrayType)
         registerSecurityInstanceMethod(
             name: "generateCertificate",
             externalLinkName: "kk_certificatefactory_generateCertificate",
             ownerSymbol: certFactorySymbol,
             ownerType: certFactoryType,
             parameters: [("data", listIntType)],
+            returnType: x509CertificateType,
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityInstanceMethod(
+            name: "generateCertificate",
+            externalLinkName: "kk_certificatefactory_generateCertificate_inputStream",
+            ownerSymbol: certFactorySymbol,
+            ownerType: certFactoryType,
+            parameters: [("data", inputStreamType)],
             returnType: x509CertificateType,
             canThrow: true,
             symbols: symbols,
@@ -513,6 +556,18 @@ extension DataFlowSemaPhase {
         let listX509CertificateType = makeSecurityListType(elementType: x509CertificateType, symbols: symbols, types: types, interner: interner)
         let listTrustAnchorType = makeSecurityListType(elementType: trustAnchorType, symbols: symbols, types: types, interner: interner)
 
+        registerSecurityInstanceMethod(
+            name: "generateCertPath",
+            externalLinkName: "kk_certificatefactory_generateCertPath",
+            ownerSymbol: certFactorySymbol,
+            ownerType: certFactoryType,
+            parameters: [("certificates", listX509CertificateType)],
+            returnType: certPathType,
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSecurityConstructor(
             externalLinkName: "kk_certpath_new",
             ownerSymbol: certPathSymbol,
@@ -532,12 +587,33 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSecurityConstructor(
+            externalLinkName: "kk_trustanchor_new_with_constraints",
+            ownerSymbol: trustAnchorSymbol,
+            ownerType: trustAnchorType,
+            parameters: [
+                ("certificate", x509CertificateType),
+                ("nameConstraints", nullableByteArrayType),
+            ],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSecurityConstructor(
             externalLinkName: "kk_pkixparameters_new",
             ownerSymbol: pkixParametersSymbol,
             ownerType: pkixParametersType,
             parameters: [("trustAnchors", listTrustAnchorType)],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityConstructor(
+            externalLinkName: "kk_pkixparameters_new_from_set",
+            ownerSymbol: pkixParametersSymbol,
+            ownerType: pkixParametersType,
+            parameters: [("trustAnchors", makeSecuritySetType(elementType: trustAnchorType, symbols: symbols, types: types, interner: interner))],
             canThrow: true,
             symbols: symbols,
             interner: interner
@@ -576,7 +652,7 @@ extension DataFlowSemaPhase {
             ownerSymbol: certPathValidatorSymbol,
             ownerType: certPathValidatorType,
             parameters: [("certPath", certPathType), ("parameters", pkixParametersType)],
-            returnType: boolType,
+            returnType: types.anyType,
             symbols: symbols,
             interner: interner
         )
@@ -913,6 +989,27 @@ extension DataFlowSemaPhase {
         }
         return types.make(.classType(ClassType(
             classSymbol: listSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func makeSecuritySetType(
+        elementType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let setFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Set"),
+        ]
+        guard let setSymbol = symbols.lookup(fqName: setFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: setSymbol,
             args: [.out(elementType)],
             nullability: .nonNull
         )))

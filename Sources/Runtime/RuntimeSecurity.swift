@@ -1021,7 +1021,8 @@ public func kk_ivparameterspec_new(_ ivRaw: Int) -> Int {
 }
 
 @_cdecl("kk_keypairgenerator_getInstance")
-public func kk_keypairgenerator_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_keypairgenerator_getInstance(_ companionRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = companionRaw
     outThrown?.pointee = 0
     let algorithmName = runtimeSecurityString(from: algorithmRaw, caller: #function)
     guard let algorithm = RuntimeCipherAlgorithm(transformationComponent: algorithmName) else {
@@ -1120,7 +1121,8 @@ public func kk_keypair_privateKey(_ keyPairRaw: Int, _ outThrown: UnsafeMutableP
 }
 
 @_cdecl("kk_signature_getInstance")
-public func kk_signature_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_signature_getInstance(_ companionRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = companionRaw
     outThrown?.pointee = 0
     let algorithmName = runtimeSecurityString(from: algorithmRaw, caller: #function)
     guard let algorithm = RuntimeSignatureAlgorithm(name: algorithmName) else {
@@ -1232,7 +1234,8 @@ public func kk_signature_verify(
 }
 
 @_cdecl("kk_cipher_getInstance")
-public func kk_cipher_getInstance(_ transformationRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_cipher_getInstance(_ companionRaw: Int, _ transformationRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = companionRaw
     outThrown?.pointee = 0
     let transformation = runtimeSecurityString(from: transformationRaw, caller: #function)
     guard let parsed = runtimeCipherParseTransformation(transformation) else {
@@ -1405,6 +1408,23 @@ private func runtimeSecurityBytesAsData(from raw: Int, caller: StaticString) -> 
     return Data(base64Encoded: base64)
 }
 
+private func runtimeSecurityInputStreamBytes(from raw: Int) -> Data? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw),
+          let stream = tryCast(ptr, to: RuntimeInputStreamBox.self)
+    else {
+        return nil
+    }
+    var bytes: [UInt8] = []
+    while true {
+        let byte = stream.readByte()
+        if byte < 0 {
+            break
+        }
+        bytes.append(UInt8(truncatingIfNeeded: byte))
+    }
+    return Data(bytes)
+}
+
 private func runtimeSecurityCertificate(from data: Data) -> SecCertificate? {
     SecCertificateCreateWithData(nil, data as CFData)
 }
@@ -1425,7 +1445,8 @@ private func runtimeSecurityCertPathCertificates(from raw: Int, caller: StaticSt
 }
 
 @_cdecl("kk_certificatefactory_getInstance")
-public func kk_certificatefactory_getInstance(_ typeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_certificatefactory_getInstance(_ companionRaw: Int, _ typeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = companionRaw
     outThrown?.pointee = 0
     let typeName = runtimeSecurityString(from: typeRaw, caller: #function)
     guard typeName.uppercased() == "X.509" || typeName.uppercased() == "X509" else {
@@ -1451,6 +1472,31 @@ public func kk_certificatefactory_generateCertificate(
     }
     guard let data = runtimeSecurityBytesAsData(from: dataRaw, caller: #function) else {
         runtimeSetThrown(outThrown, message: "CertificateException: expected ByteArray/List<Int>")
+        return 0
+    }
+    guard let certificate = runtimeSecurityCertificate(from: data) else {
+        runtimeSetThrown(outThrown, message: "CertificateException: invalid certificate data")
+        return 0
+    }
+    return registerRuntimeObject(RuntimeX509CertificateBox(certificate: certificate, encodedBytes: Array(data)))
+}
+
+@_cdecl("kk_certificatefactory_generateCertificate_inputStream")
+public func kk_certificatefactory_generateCertificate_inputStream(
+    _ factoryRaw: Int,
+    _ dataRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let factory = runtimeCertificateFactoryBox(from: factoryRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_certificatefactory_generateCertificate_inputStream received invalid CertificateFactory handle")
+    }
+    guard factory.typeName.uppercased() == "X.509" || factory.typeName.uppercased() == "X509" else {
+        runtimeSetThrown(outThrown, message: "CertificateException: unsupported certificate factory \(factory.typeName)")
+        return 0
+    }
+    guard let data = runtimeSecurityInputStreamBytes(from: dataRaw) else {
+        runtimeSetThrown(outThrown, message: "CertificateException: expected InputStream")
         return 0
     }
     guard let certificate = runtimeSecurityCertificate(from: data) else {
@@ -1493,8 +1539,30 @@ public func kk_certpath_new(_ certificatesRaw: Int, _ outThrown: UnsafeMutablePo
     return registerRuntimeObject(RuntimeCertPathBox(certificatesRaw: certificateRaws))
 }
 
+@_cdecl("kk_certificatefactory_generateCertPath")
+public func kk_certificatefactory_generateCertPath(
+    _ factoryRaw: Int,
+    _ certificatesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let factory = runtimeCertificateFactoryBox(from: factoryRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_certificatefactory_generateCertPath received invalid CertificateFactory handle")
+    }
+    guard factory.typeName.uppercased() == "X.509" || factory.typeName.uppercased() == "X509" else {
+        runtimeSetThrown(outThrown, message: "CertificateException: unsupported certificate factory \(factory.typeName)")
+        return 0
+    }
+    guard let certificateRaws = runtimeSecurityCertPathCertificates(from: certificatesRaw, caller: #function) else {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected List<X509Certificate>")
+        return 0
+    }
+    return registerRuntimeObject(RuntimeCertPathBox(certificatesRaw: certificateRaws))
+}
+
 @_cdecl("kk_certpathvalidator_getInstance")
-public func kk_certpathvalidator_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_certpathvalidator_getInstance(_ companionRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = companionRaw
     outThrown?.pointee = 0
     let algorithmName = runtimeSecurityString(from: algorithmRaw, caller: #function)
     guard algorithmName.uppercased() == "PKIX" else {
@@ -1514,6 +1582,21 @@ public func kk_trustanchor_new(_ certificateRaw: Int, _ outThrown: UnsafeMutable
     return registerRuntimeObject(RuntimeTrustAnchorBox(certificateRaw: certificateRaw))
 }
 
+@_cdecl("kk_trustanchor_new_with_constraints")
+public func kk_trustanchor_new_with_constraints(
+    _ certificateRaw: Int,
+    _ nameConstraintsRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard runtimeX509CertificateBox(from: certificateRaw) != nil else {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected X509Certificate")
+        return 0
+    }
+    _ = nameConstraintsRaw
+    return registerRuntimeObject(RuntimeTrustAnchorBox(certificateRaw: certificateRaw))
+}
+
 @_cdecl("kk_pkixparameters_new")
 public func kk_pkixparameters_new(_ trustAnchorsRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -1523,6 +1606,24 @@ public func kk_pkixparameters_new(_ trustAnchorsRaw: Int, _ outThrown: UnsafeMut
     }
     var anchors: [Int] = []
     for anchorRaw in trustAnchorList.elements {
+        guard runtimeTrustAnchorBox(from: anchorRaw) != nil else {
+            runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected TrustAnchor")
+            return 0
+        }
+        anchors.append(anchorRaw)
+    }
+    return registerRuntimeObject(RuntimePKIXParametersBox(trustAnchorsRaw: anchors))
+}
+
+@_cdecl("kk_pkixparameters_new_from_set")
+public func kk_pkixparameters_new_from_set(_ trustAnchorsRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let trustAnchorSet = runtimeSetBox(from: trustAnchorsRaw) else {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected Set<TrustAnchor>")
+        return 0
+    }
+    var anchors: [Int] = []
+    for anchorRaw in trustAnchorSet.elements {
         guard runtimeTrustAnchorBox(from: anchorRaw) != nil else {
             runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected TrustAnchor")
             return 0
@@ -1629,7 +1730,8 @@ public func kk_ivparameterspec_new(_ ivRaw: Int) -> Int {
 }
 
 @_cdecl("kk_keypairgenerator_getInstance")
-public func kk_keypairgenerator_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_keypairgenerator_getInstance(_ companionRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = companionRaw
     runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
     return 0
 }
@@ -1675,7 +1777,8 @@ public func kk_keypair_privateKey(_ keyPairRaw: Int, _ outThrown: UnsafeMutableP
 }
 
 @_cdecl("kk_signature_getInstance")
-public func kk_signature_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_signature_getInstance(_ companionRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = companionRaw
     runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
     return 0
 }
@@ -1711,7 +1814,8 @@ public func kk_signature_verify(_ signatureRaw: Int, _ sigBytesRaw: Int, _ outTh
 }
 
 @_cdecl("kk_cipher_getInstance")
-public func kk_cipher_getInstance(_ transformationRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_cipher_getInstance(_ companionRaw: Int, _ transformationRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = companionRaw
     runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
     return 0
 }
@@ -1759,7 +1863,8 @@ public func kk_cipher_doFinal_noarg(
 }
 
 @_cdecl("kk_certificatefactory_getInstance")
-public func kk_certificatefactory_getInstance(_ typeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_certificatefactory_getInstance(_ companionRaw: Int, _ typeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = companionRaw
     runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
     return 0
 }
@@ -1789,7 +1894,8 @@ public func kk_certpath_new(_ certificatesRaw: Int, _ outThrown: UnsafeMutablePo
 }
 
 @_cdecl("kk_certpathvalidator_getInstance")
-public func kk_certpathvalidator_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_certpathvalidator_getInstance(_ companionRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = companionRaw
     runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
     return 0
 }

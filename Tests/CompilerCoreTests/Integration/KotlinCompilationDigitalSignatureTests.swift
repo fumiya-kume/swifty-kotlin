@@ -6,11 +6,12 @@ final class KotlinCompilationDigitalSignatureTests: XCTestCase {
         try assertKotlinCompilesToKIR(##"""
         import java.security.KeyPairGenerator
         import java.security.Signature
-        import java.security.cert.CertPath
+        import java.io.ByteArrayInputStream
         import java.security.cert.CertPathValidator
         import java.security.cert.CertificateFactory
         import java.security.cert.PKIXParameters
         import java.security.cert.TrustAnchor
+        import java.security.cert.X509Certificate
 
         fun main() {
             val generator = KeyPairGenerator.getInstance("RSA")
@@ -19,12 +20,12 @@ final class KotlinCompilationDigitalSignatureTests: XCTestCase {
 
             val message = byteArrayOf(1, 2, 3, 4)
             val signer = Signature.getInstance("SHA256withRSA")
-            signer.initSign(keyPair.privateKey)
+            signer.initSign(keyPair.private)
             signer.update(message)
             val sha256Signature = signer.sign()
 
             val verifier = Signature.getInstance("SHA256withRSA")
-            verifier.initVerify(keyPair.publicKey)
+            verifier.initVerify(keyPair.public)
             verifier.update(message)
             val verified = verifier.verify(sha256Signature)
             check(verified) { "SHA256withRSA verification failed" }
@@ -52,13 +53,14 @@ final class KotlinCompilationDigitalSignatureTests: XCTestCase {
             """.trimIndent().toByteArray()
 
             val factory = CertificateFactory.getInstance("X.509")
-            val certificate = factory.generateCertificate(certificatePem)
-            val path = CertPath(listOf(certificate))
-            val trustAnchor = TrustAnchor(certificate)
-            val parameters = PKIXParameters(listOf(trustAnchor))
+            val certificateInput = ByteArrayInputStream(certificatePem)
+            val certificate = factory.generateCertificate(certificateInput) as X509Certificate
+            val path = factory.generateCertPath(listOf(certificate))
+            val trustAnchor = TrustAnchor(certificate, null)
+            val parameters = PKIXParameters(setOf(trustAnchor))
             val validator = CertPathValidator.getInstance("PKIX")
-            val valid = validator.validate(path, parameters)
-            check(valid) { "PKIX validation failed" }
+            val validationResult = validator.validate(path, parameters)
+            check(validationResult != null) { "PKIX validation failed" }
         }
         """##)
     }

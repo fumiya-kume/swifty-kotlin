@@ -617,6 +617,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let byteArrayInputStreamSymbol = ensureClassSymbol(
+            named: "ByteArrayInputStream",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let sequenceInputStreamSymbol = ensureClassSymbol(
             named: "SequenceInputStream",
             in: javaIOPkg,
@@ -631,12 +637,16 @@ extension DataFlowSemaPhase {
         )
         if let javaIOPkgSymbol {
             symbols.setParentSymbol(javaIOPkgSymbol, for: inputStreamSymbol)
+            symbols.setParentSymbol(javaIOPkgSymbol, for: byteArrayInputStreamSymbol)
             symbols.setParentSymbol(javaIOPkgSymbol, for: sequenceInputStreamSymbol)
             symbols.setParentSymbol(javaIOPkgSymbol, for: outputStreamSymbol)
         }
 
         let inputStreamType = types.make(.classType(ClassType(
             classSymbol: inputStreamSymbol, args: [], nullability: .nonNull
+        )))
+        let byteArrayInputStreamType = types.make(.classType(ClassType(
+            classSymbol: byteArrayInputStreamSymbol, args: [], nullability: .nonNull
         )))
         let sequenceInputStreamType = types.make(.classType(ClassType(
             classSymbol: sequenceInputStreamSymbol, args: [], nullability: .nonNull
@@ -645,6 +655,7 @@ extension DataFlowSemaPhase {
             classSymbol: outputStreamSymbol, args: [], nullability: .nonNull
         )))
         symbols.setPropertyType(inputStreamType, for: inputStreamSymbol)
+        symbols.setPropertyType(byteArrayInputStreamType, for: byteArrayInputStreamSymbol)
         symbols.setPropertyType(sequenceInputStreamType, for: sequenceInputStreamSymbol)
         symbols.setPropertyType(outputStreamType, for: outputStreamSymbol)
 
@@ -658,7 +669,18 @@ extension DataFlowSemaPhase {
         }
         symbols.setDirectSupertypes([inputStreamSymbol], for: sequenceInputStreamSymbol)
         types.setNominalDirectSupertypes([inputStreamSymbol], for: sequenceInputStreamSymbol)
+        symbols.setDirectSupertypes([inputStreamSymbol], for: byteArrayInputStreamSymbol)
+        types.setNominalDirectSupertypes([inputStreamSymbol], for: byteArrayInputStreamSymbol)
         let nullableInputStreamType = types.makeNullable(inputStreamType)
+        let listIntType: TypeID = if let listSym = listSymbol {
+            types.make(.classType(ClassType(
+                classSymbol: listSym,
+                args: [.out(types.intType)],
+                nullability: .nonNull
+            )))
+        } else {
+            types.anyType
+        }
 
         registerFileMemberFunction(
             named: "inputStream",
@@ -687,6 +709,15 @@ extension DataFlowSemaPhase {
             ownerType: sequenceInputStreamType,
             parameters: [("first", inputStreamType), ("second", inputStreamType)],
             externalLinkName: "kk_sequence_input_stream_new",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileConstructor(
+            ownerSymbol: byteArrayInputStreamSymbol,
+            ownerType: byteArrayInputStreamType,
+            parameters: [("buffer", listIntType)],
+            externalLinkName: "kk_bytearrayinputstream_new",
             symbols: symbols,
             interner: interner
         )
@@ -1205,4 +1236,5 @@ extension DataFlowSemaPhase {
         symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
         symbols.setPropertyType(returnType, for: propertySymbol)
     }
+
 }
