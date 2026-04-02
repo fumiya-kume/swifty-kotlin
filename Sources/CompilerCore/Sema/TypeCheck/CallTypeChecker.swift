@@ -735,6 +735,7 @@ final class CallTypeChecker {
                 case "LongArray": sema.types.longType
                 case "ShortArray": sema.types.intType
                 case "ByteArray": sema.types.intType
+                case "UByteArray": sema.types.ubyteType
                 case "DoubleArray": sema.types.make(.primitive(.double, .nonNull))
                 case "FloatArray": sema.types.make(.primitive(.float, .nonNull))
                 case "BooleanArray": sema.types.booleanType
@@ -1493,6 +1494,86 @@ final class CallTypeChecker {
                 diagnostics: ctx.semaCtx.diagnostics
             )
             let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+            let adjustedReturnType: TypeID = if let externalLinkName = sema.symbols.externalLinkName(for: chosen) {
+                switch externalLinkName {
+                case "kk_emptyList":
+                    if let expectedType, expectedType != sema.types.errorType,
+                       case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+                       !expectedClassType.args.isEmpty
+                    {
+                        expectedType
+                    } else if let explicitTypeArg = explicitTypeArgs.first,
+                              let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
+                    {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: listSymbol,
+                            args: [.out(explicitTypeArg)],
+                            nullability: .nonNull
+                        )))
+                    } else if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: listSymbol,
+                            args: [.out(sema.types.nothingType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        returnType
+                    }
+
+                case "kk_emptySet":
+                    if let expectedType, expectedType != sema.types.errorType,
+                       case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+                       !expectedClassType.args.isEmpty
+                    {
+                        expectedType
+                    } else if let explicitTypeArg = explicitTypeArgs.first,
+                              let setSymbol = sema.symbols.lookupByShortName(interner.intern("Set")).first
+                    {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: setSymbol,
+                            args: [.out(explicitTypeArg)],
+                            nullability: .nonNull
+                        )))
+                    } else if let setSymbol = sema.symbols.lookupByShortName(interner.intern("Set")).first {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: setSymbol,
+                            args: [.out(sema.types.nothingType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        returnType
+                    }
+
+                case "kk_emptyMap":
+                    if let expectedType, expectedType != sema.types.errorType,
+                       case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+                       expectedClassType.args.count == 2
+                    {
+                        expectedType
+                    } else if explicitTypeArgs.count == 2,
+                              let mapSymbol = sema.symbols.lookupByShortName(interner.intern("Map")).first
+                    {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: mapSymbol,
+                            args: [.invariant(explicitTypeArgs[0]), .out(explicitTypeArgs[1])],
+                            nullability: .nonNull
+                        )))
+                    } else if let mapSymbol = sema.symbols.lookupByShortName(interner.intern("Map")).first {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: mapSymbol,
+                            args: [.invariant(sema.types.nothingType), .out(sema.types.nothingType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        returnType
+                    }
+
+                default:
+                    returnType
+                }
+            } else {
+                returnType
+            }
             if args.count == 2,
                let externalLinkName = sema.symbols.externalLinkName(for: chosen),
                ["kk_require_lazy", "kk_check_lazy", "kk_precondition_assert_lazy"].contains(externalLinkName)
@@ -1530,8 +1611,8 @@ final class CallTypeChecker {
                     sema.bindings.markULongRangeExpr(id)
                 }
             }
-            sema.bindings.bindExprType(id, type: returnType)
-            return returnType
+            sema.bindings.bindExprType(id, type: adjustedReturnType)
+            return adjustedReturnType
         }
 
         var callableTarget: CallableTarget?
@@ -2085,6 +2166,7 @@ final class CallTypeChecker {
                         "longArrayOf": "LongArray",
                         "shortArrayOf": "ShortArray",
                         "byteArrayOf": "ByteArray",
+                        "ubyteArrayOf": "UByteArray",
                         "doubleArrayOf": "DoubleArray",
                         "floatArrayOf": "FloatArray",
                         "booleanArrayOf": "BooleanArray",

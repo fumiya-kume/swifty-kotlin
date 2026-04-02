@@ -49,8 +49,8 @@ public func kk_lateinit_get_or_throw(
         return value
     }
     let name = extractString(from: UnsafeMutableRawPointer(bitPattern: propertyName)) ?? "<unknown>"
-    outThrown?.pointee = runtimeAllocateThrowable(
-        message: "UninitializedPropertyAccessException: lateinit property \(name) has not been initialized"
+    outThrown?.pointee = runtimeAllocateUninitializedPropertyAccessException(
+        message: "lateinit property \(name) has not been initialized"
     )
     return runtimeNullSentinelInt
 }

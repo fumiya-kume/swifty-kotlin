@@ -30,6 +30,11 @@ private func pathMakeStringRaw(_ value: String) -> Int {
     })
 }
 
+/// Split a path string into name components, excluding root "/" and empty segments.
+private func pathComponents(_ pathString: String) -> [String] {
+    pathString.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
+}
+
 // MARK: - Path(pathString: String) constructor
 
 @_cdecl("kk_path_new")
@@ -52,6 +57,18 @@ public func kk_path_name(_ pathRaw: Int) -> Int {
     return pathMakeStringRaw((path.pathString as NSString).lastPathComponent)
 }
 
+@_cdecl("kk_path_fileName")
+public func kk_path_fileName(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_fileName received invalid Path handle")
+    }
+    let lastComponent = (path.pathString as NSString).lastPathComponent
+    if lastComponent.isEmpty || lastComponent == "/" {
+        return runtimeNullSentinelInt
+    }
+    return registerRuntimeObject(RuntimePathBox(lastComponent))
+}
+
 @_cdecl("kk_path_parent")
 public func kk_path_parent(_ pathRaw: Int) -> Int {
     guard let path = runtimePathBox(from: pathRaw) else {
@@ -63,6 +80,26 @@ public func kk_path_parent(_ pathRaw: Int) -> Int {
         return runtimeNullSentinelInt
     }
     return registerRuntimeObject(RuntimePathBox(parent))
+}
+
+@_cdecl("kk_path_root")
+public func kk_path_root(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_root received invalid Path handle")
+    }
+    if path.pathString.hasPrefix("/") {
+        return registerRuntimeObject(RuntimePathBox("/"))
+    }
+    return runtimeNullSentinelInt
+}
+
+@_cdecl("kk_path_nameCount")
+public func kk_path_nameCount(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_nameCount received invalid Path handle")
+    }
+    let components = pathComponents(path.pathString)
+    return kk_box_int(components.count)
 }
 
 // MARK: - Path.toString()
@@ -230,4 +267,215 @@ public func kk_path_listDirectoryEntries(_ pathRaw: Int, _ outThrown: UnsafeMuta
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
         return registerRuntimeObject(RuntimeListBox(elements: []))
     }
+}
+
+// MARK: - Path.relativize(other: Path)
+
+@_cdecl("kk_path_relativize")
+public func kk_path_relativize(_ pathRaw: Int, _ otherRaw: Int) -> Int {
+    guard let base = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_relativize received invalid Path handle")
+    }
+    guard let other = runtimePathBox(from: otherRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_relativize received invalid other Path handle")
+    }
+    let baseComponents = pathComponents(base.pathString)
+    let otherComponents = pathComponents(other.pathString)
+
+    var commonLength = 0
+    while commonLength < baseComponents.count && commonLength < otherComponents.count
+        && baseComponents[commonLength] == otherComponents[commonLength] {
+        commonLength += 1
+    }
+
+    let ups = Array(repeating: "..", count: baseComponents.count - commonLength)
+    let remainder = Array(otherComponents[commonLength...])
+    let relativePath = (ups + remainder).joined(separator: "/")
+    return registerRuntimeObject(RuntimePathBox(relativePath.isEmpty ? "." : relativePath))
+}
+
+// MARK: - Path.normalize()
+
+@_cdecl("kk_path_normalize")
+public func kk_path_normalize(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_normalize received invalid Path handle")
+    }
+    let isAbsolute = path.pathString.hasPrefix("/")
+    var components: [String] = []
+    for part in path.pathString.split(separator: "/", omittingEmptySubsequences: true) {
+        let s = String(part)
+        if s == "." {
+            continue
+        } else if s == ".." {
+            if !components.isEmpty && components.last != ".." {
+                components.removeLast()
+            } else if !isAbsolute {
+                components.append(s)
+            }
+        } else {
+            components.append(s)
+        }
+    }
+    let normalized = (isAbsolute ? "/" : "") + components.joined(separator: "/")
+    return registerRuntimeObject(RuntimePathBox(normalized.isEmpty ? "." : normalized))
+}
+
+// MARK: - Path comparison methods
+
+@_cdecl("kk_path_equals")
+public func kk_path_equals(_ pathRaw: Int, _ otherRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_equals received invalid Path handle")
+    }
+    guard let other = runtimePathBox(from: otherRaw) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(path.pathString == other.pathString ? 1 : 0)
+}
+
+@_cdecl("kk_path_startsWith_path")
+public func kk_path_startsWith_path(_ pathRaw: Int, _ otherRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_startsWith received invalid Path handle")
+    }
+    guard let other = runtimePathBox(from: otherRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_startsWith received invalid other Path handle")
+    }
+    let pathParts = pathComponents(path.pathString)
+    let otherParts = pathComponents(other.pathString)
+    let pathIsAbsolute = path.pathString.hasPrefix("/")
+    let otherIsAbsolute = other.pathString.hasPrefix("/")
+    guard pathIsAbsolute == otherIsAbsolute, otherParts.count <= pathParts.count else {
+        return kk_box_bool(0)
+    }
+    for i in 0..<otherParts.count {
+        if pathParts[i] != otherParts[i] { return kk_box_bool(0) }
+    }
+    return kk_box_bool(1)
+}
+
+@_cdecl("kk_path_startsWith_string")
+public func kk_path_startsWith_string(_ pathRaw: Int, _ otherRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: otherRaw),
+          let otherStr = extractString(from: ptr) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_startsWith_string received invalid string")
+    }
+    let otherPath = registerRuntimeObject(RuntimePathBox(otherStr))
+    return kk_path_startsWith_path(pathRaw, otherPath)
+}
+
+@_cdecl("kk_path_endsWith_path")
+public func kk_path_endsWith_path(_ pathRaw: Int, _ otherRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_endsWith received invalid Path handle")
+    }
+    guard let other = runtimePathBox(from: otherRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_endsWith received invalid other Path handle")
+    }
+    let pathParts = pathComponents(path.pathString)
+    let otherParts = pathComponents(other.pathString)
+    // If other is absolute, it must match from root
+    if other.pathString.hasPrefix("/") {
+        guard path.pathString.hasPrefix("/"), otherParts.count <= pathParts.count else {
+            return kk_box_bool(0)
+        }
+        for i in 0..<otherParts.count {
+            if pathParts[i] != otherParts[i] { return kk_box_bool(0) }
+        }
+        return kk_box_bool(1)
+    }
+    guard otherParts.count <= pathParts.count else {
+        return kk_box_bool(0)
+    }
+    let offset = pathParts.count - otherParts.count
+    for i in 0..<otherParts.count {
+        if pathParts[offset + i] != otherParts[i] { return kk_box_bool(0) }
+    }
+    return kk_box_bool(1)
+}
+
+@_cdecl("kk_path_endsWith_string")
+public func kk_path_endsWith_string(_ pathRaw: Int, _ otherRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: otherRaw),
+          let otherStr = extractString(from: ptr) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_endsWith_string received invalid string")
+    }
+    let otherPath = registerRuntimeObject(RuntimePathBox(otherStr))
+    return kk_path_endsWith_path(pathRaw, otherPath)
+}
+
+// MARK: - Path conversion methods
+
+@_cdecl("kk_path_toFile")
+public func kk_path_toFile(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_toFile received invalid Path handle")
+    }
+    return registerRuntimeObject(RuntimeFileBox(path.pathString))
+}
+
+@_cdecl("kk_path_toUri")
+public func kk_path_toUri(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_toUri received invalid Path handle")
+    }
+    let absolutePath: String
+    if path.pathString.hasPrefix("/") {
+        absolutePath = path.pathString
+    } else {
+        absolutePath = (FileManager.default.currentDirectoryPath as NSString)
+            .appendingPathComponent(path.pathString)
+    }
+    let uriString = "file://" + absolutePath
+    if var components = URLComponents(string: uriString) {
+        components.scheme = "file"
+        return registerRuntimeObject(RuntimeURIBox(components: components))
+    }
+    // Fallback: create from raw string
+    var fallback = URLComponents()
+    fallback.scheme = "file"
+    fallback.path = absolutePath
+    return registerRuntimeObject(RuntimeURIBox(components: fallback))
+}
+
+// MARK: - Path.get() / Paths.get() top-level factory
+
+@_cdecl("kk_path_get")
+public func kk_path_get(_ pathStringRaw: Int) -> Int {
+    return kk_path_new(pathStringRaw)
+}
+
+@_cdecl("kk_path_isAbsolute")
+public func kk_path_isAbsolute(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_isAbsolute received invalid Path handle")
+    }
+    return kk_box_bool(path.pathString.hasPrefix("/") ? 1 : 0)
+}
+
+@_cdecl("kk_path_toAbsolutePath")
+public func kk_path_toAbsolutePath(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_toAbsolutePath received invalid Path handle")
+    }
+    if path.pathString.hasPrefix("/") {
+        return pathRaw
+    }
+    let absolute = (FileManager.default.currentDirectoryPath as NSString)
+        .appendingPathComponent(path.pathString)
+    return registerRuntimeObject(RuntimePathBox(absolute))
+}
+
+@_cdecl("kk_path_getName")
+public func kk_path_getName(_ pathRaw: Int, _ indexRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_getName received invalid Path handle")
+    }
+    let index = kk_unbox_int(indexRaw)
+    let components = pathComponents(path.pathString)
+    guard index >= 0 && index < components.count else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_getName index out of bounds: \(index)")
+    }
+    return registerRuntimeObject(RuntimePathBox(components[index]))
 }

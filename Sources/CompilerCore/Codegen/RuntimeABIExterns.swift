@@ -12,7 +12,7 @@ import Foundation
 /// The build-time ABI reconciliation tests (in RuntimeTests) verify that
 /// these declarations match the Runtime module's `RuntimeABISpec`.
 public enum RuntimeABIExterns {
-    public static let specVersion = "J26"
+    public static let specVersion = "J27"
 
     /// A single extern function declaration for the C preamble.
     public struct ExternDecl: Equatable, Sendable {
@@ -2465,6 +2465,62 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-REFLECT-065: Annotation reflection
+
+    public static let kk_annotation_create = ExternDecl(
+        name: "kk_annotation_create",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_annotation_get_class = ExternDecl(
+        name: "kk_annotation_get_class",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_annotation_get_fqname = ExternDecl(
+        name: "kk_annotation_get_fqname",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_annotation_get_value = ExternDecl(
+        name: "kk_annotation_get_value",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_annotation_get_arg_count = ExternDecl(
+        name: "kk_annotation_get_arg_count",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_annotation_to_string = ExternDecl(
+        name: "kk_annotation_to_string",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_get_annotations = ExternDecl(
+        name: "kk_kclass_get_annotations",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_find_annotation = ExternDecl(
+        name: "kk_kclass_find_annotation",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_register_single_annotation = ExternDecl(
+        name: "kk_kclass_register_single_annotation",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // REFL-005: KClass.isInstance, members, constructors
 
     public static let kk_kclass_isInstance = ExternDecl(
@@ -2534,18 +2590,6 @@ public enum RuntimeABIExterns {
 
     public static let kk_kclass_register_annotation = ExternDecl(
         name: "kk_kclass_register_annotation",
-        parameterTypes: ["intptr_t", "intptr_t"],
-        returnType: "intptr_t"
-    )
-
-    public static let kk_kclass_get_annotations = ExternDecl(
-        name: "kk_kclass_get_annotations",
-        parameterTypes: ["intptr_t"],
-        returnType: "intptr_t"
-    )
-
-    public static let kk_kclass_find_annotation = ExternDecl(
-        name: "kk_kclass_find_annotation",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
@@ -3651,8 +3695,8 @@ public enum RuntimeABIExterns {
     // but if you add or change a parameter type here, update RuntimeABISpec
     // (and vice-versa) to keep both sides in sync.
 
-    private static let intptr = "intptr_t"
-    private static let nullableIntptrPtr = "intptr_t * _Nullable"
+    static let intptr = "intptr_t"
+    static let nullableIntptrPtr = "intptr_t * _Nullable"
 
     public static let kk_file_new = ExternDecl(
         name: "kk_file_new",
@@ -4094,6 +4138,25 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+    // STDLIB-IO-090: Files utility (java.nio.file.Files)
+    public static let kk_files_createFile = ExternDecl(name: "kk_files_createFile", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_delete = ExternDecl(name: "kk_files_delete", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_copy = ExternDecl(name: "kk_files_copy", parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_move = ExternDecl(name: "kk_files_move", parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_createDirectory = ExternDecl(name: "kk_files_createDirectory", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_createDirectories = ExternDecl(name: "kk_files_createDirectories", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_size = ExternDecl(name: "kk_files_size", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_getLastModifiedTime = ExternDecl(name: "kk_files_getLastModifiedTime", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_fileTime_toMillis = ExternDecl(name: "kk_fileTime_toMillis", parameterTypes: [intptr], returnType: intptr)
+    public static let kk_files_isRegularFile = ExternDecl(name: "kk_files_isRegularFile", parameterTypes: [intptr, intptr], returnType: intptr)
+    public static let kk_files_isDirectory = ExternDecl(name: "kk_files_isDirectory", parameterTypes: [intptr, intptr], returnType: intptr)
+    public static let kk_files_exists = ExternDecl(name: "kk_files_exists", parameterTypes: [intptr, intptr], returnType: intptr)
+    public static let kk_files_walk = ExternDecl(name: "kk_files_walk", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_list = ExternDecl(name: "kk_files_list", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_newDirectoryStream = ExternDecl(name: "kk_files_newDirectoryStream", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_createTempFile = ExternDecl(name: "kk_files_createTempFile", parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr], returnType: intptr)
+    public static let kk_files_createTempDirectory = ExternDecl(name: "kk_files_createTempDirectory", parameterTypes: [intptr, intptr, nullableIntptrPtr], returnType: intptr)
+
     public static let fileIOExterns: [ExternDecl] = [
         kk_file_new,
         kk_file_readText,
@@ -4209,6 +4272,24 @@ public enum RuntimeABIExterns {
         kk_cache_put,
         kk_cache_get,
         kk_cache_size,
+        // STDLIB-IO-090: Files utility
+        kk_files_createFile,
+        kk_files_delete,
+        kk_files_copy,
+        kk_files_move,
+        kk_files_createDirectory,
+        kk_files_createDirectories,
+        kk_files_size,
+        kk_files_getLastModifiedTime,
+        kk_fileTime_toMillis,
+        kk_files_isRegularFile,
+        kk_files_isDirectory,
+        kk_files_exists,
+        kk_files_walk,
+        kk_files_list,
+        kk_files_newDirectoryStream,
+        kk_files_createTempFile,
+        kk_files_createTempDirectory,
         kk_resource_bundle_getBundle,
         kk_resource_bundle_getString,
         kk_resource_bundle_getKeys,
@@ -4532,6 +4613,17 @@ public enum RuntimeABIExterns {
             kk_dispatcher_io,
             kk_dispatcher_main,
             kk_with_context,
+            // CoroutineContext elements (STDLIB-CORO-077)
+            kk_coroutine_name_create,
+            kk_coroutine_name_get,
+            kk_exception_handler_create,
+            kk_exception_handler_invoke,
+            kk_context_plus,
+            kk_context_get_dispatcher,
+            kk_context_get_name,
+            kk_context_get_exception_handler,
+            kk_context_release,
+            kk_with_context_full,
             // Channel (CORO-001)
             kk_channel_create,
             kk_channel_send,
@@ -4634,6 +4726,16 @@ public enum RuntimeABIExterns {
             kk_kclass_type_parameters,
             kk_kclass_supertypes,
             kk_kclass_register_metadata_v2,
+            // STDLIB-REFLECT-065: Annotation reflection
+            kk_annotation_create,
+            kk_annotation_get_class,
+            kk_annotation_get_fqname,
+            kk_annotation_get_value,
+            kk_annotation_get_arg_count,
+            kk_annotation_to_string,
+            kk_kclass_get_annotations,
+            kk_kclass_find_annotation,
+            kk_kclass_register_single_annotation,
             // REFL-005: KClass.isInstance, members, constructors, KType, typeOf
             kk_kclass_isInstance,
             kk_kclass_members,
@@ -4648,8 +4750,6 @@ public enum RuntimeABIExterns {
             kk_kclass_declared_member_functions,
             // REFL-006: Annotation reflection
             kk_kclass_register_annotation,
-            kk_kclass_get_annotations,
-            kk_kclass_find_annotation,
             kk_kclass_has_annotation,
             kk_annotation_class_name,
             kk_annotation_simple_class_name,
@@ -4885,6 +4985,7 @@ public enum RuntimeABIExterns {
             kk_instant_until,
         ]
         all += atomicExterns
+        all += threadLocalExterns
         all += securityExterns
         all += parallelExterns
         all += bigIntegerExterns

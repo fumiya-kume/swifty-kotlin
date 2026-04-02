@@ -199,8 +199,10 @@ struct CollectionLiteralLookupTables {
     let kkComparatorReverseOrderTrampolineName: InternedString
     let kkComparatorThenByName: InternedString
     let kkComparatorThenByDescendingName: InternedString
+    let kkComparatorThenComparatorName: InternedString
     let kkComparatorThenByTrampolineName: InternedString
     let kkComparatorThenByDescendingTrampolineName: InternedString
+    let kkComparatorThenComparatorTrampolineName: InternedString
     let kkComparatorNullsFirstName: InternedString
     let kkComparatorNullsLastName: InternedString
     let kkComparatorNullsFirstTrampolineName: InternedString
@@ -868,8 +870,10 @@ struct CollectionLiteralLookupTables {
         kkComparatorReverseOrderTrampolineName = interner.intern("kk_comparator_reverse_order_trampoline")
         kkComparatorThenByName = interner.intern("kk_comparator_then_by")
         kkComparatorThenByDescendingName = interner.intern("kk_comparator_then_by_descending")
+        kkComparatorThenComparatorName = interner.intern("kk_comparator_then_comparator")
         kkComparatorThenByTrampolineName = interner.intern("kk_comparator_then_by_trampoline")
         kkComparatorThenByDescendingTrampolineName = interner.intern("kk_comparator_then_by_descending_trampoline")
+        kkComparatorThenComparatorTrampolineName = interner.intern("kk_comparator_then_comparator_trampoline")
         kkComparatorNullsFirstName = interner.intern("kk_comparator_nulls_first")
         kkComparatorNullsLastName = interner.intern("kk_comparator_nulls_last")
         kkComparatorNullsFirstTrampolineName = interner.intern("kk_comparator_nulls_first_trampoline")

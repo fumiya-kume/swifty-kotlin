@@ -128,6 +128,10 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(RuntimeABISpec.gcFunctions.count, 9)
     }
 
+    func testThreadLocalFunctionCount() {
+        XCTAssertEqual(RuntimeABISpec.threadLocalFunctions.count, 2)
+    }
+
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
         // The current spec surface tracks the shared coroutine ABI subset.
@@ -209,6 +213,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.uuidFunctions,
             RuntimeABISpec.durationFunctions,
             RuntimeABISpec.atomicFunctions,
+            RuntimeABISpec.threadLocalFunctions,
             RuntimeABISpec.securityFunctions,
             RuntimeABISpec.parallelFunctions,
             RuntimeABISpec.bigIntegerFunctions,
@@ -239,6 +244,26 @@ final class ABIMismatchTests: XCTestCase {
         let spec = try requireSpec("kk_gc_collect")
         XCTAssertEqual(spec.returnType, .void)
         XCTAssertEqual(spec.parameters.count, 0)
+    }
+
+    func testKKThreadLocalNewSignature() throws {
+        let spec = try requireSpec("kk_thread_local_new")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 0)
+    }
+
+    func testKKThreadLocalGetOrSetSignature() throws {
+        let spec = try requireSpec("kk_thread_local_getOrSet")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 4)
+        XCTAssertEqual(spec.parameters[0].name, "receiver")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "fnPtr")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "closureRaw")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].name, "outThrown")
+        XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
     }
 
     func testKKWriteBarrierSignature() throws {

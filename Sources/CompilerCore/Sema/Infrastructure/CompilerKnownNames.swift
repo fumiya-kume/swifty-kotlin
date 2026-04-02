@@ -2,6 +2,7 @@ import Foundation
 
 enum KnownCompilerAnnotation {
     case deprecated
+    case target
     case jvmStatic
     case jvmName
     case jvmField
@@ -14,6 +15,8 @@ enum KnownCompilerAnnotation {
         switch self {
         case .deprecated:
             "Deprecated"
+        case .target:
+            "Target"
         case .jvmStatic:
             "JvmStatic"
         case .jvmName:
@@ -35,6 +38,8 @@ enum KnownCompilerAnnotation {
         switch self {
         case .deprecated:
             "kotlin.Deprecated"
+        case .target:
+            "kotlin.annotation.Target"
         case .jvmStatic:
             "kotlin.jvm.JvmStatic"
         case .jvmName:
@@ -99,6 +104,7 @@ struct KnownCompilerNames {
     let longArray: InternedString
     let shortArray: InternedString
     let byteArray: InternedString
+    let ubyteArray: InternedString
     let doubleArray: InternedString
     let floatArray: InternedString
     let booleanArray: InternedString
@@ -164,6 +170,10 @@ struct KnownCompilerNames {
     let functionsName: InternedString
     let memberFunctionsName: InternedString
     let declaredMemberFunctionsName: InternedString
+    // STDLIB-REFLECT-065: Annotation reflection
+    let annotationsName: InternedString
+    let findAnnotationName: InternedString
+    let annotationClassName: InternedString
     let size: InternedString
     let isEmpty: InternedString
     let getValue: InternedString
@@ -258,6 +268,7 @@ struct KnownCompilerNames {
         longArray = interner.intern("LongArray")
         shortArray = interner.intern("ShortArray")
         byteArray = interner.intern("ByteArray")
+        ubyteArray = interner.intern("UByteArray")
         doubleArray = interner.intern("DoubleArray")
         floatArray = interner.intern("FloatArray")
         booleanArray = interner.intern("BooleanArray")
@@ -323,6 +334,10 @@ struct KnownCompilerNames {
         functionsName = interner.intern("functions")
         memberFunctionsName = interner.intern("memberFunctions")
         declaredMemberFunctionsName = interner.intern("declaredMemberFunctions")
+        // STDLIB-REFLECT-065: Annotation reflection
+        annotationsName = interner.intern("annotations")
+        findAnnotationName = interner.intern("findAnnotation")
+        annotationClassName = interner.intern("annotationClass")
         size = interner.intern("size")
         isEmpty = interner.intern("isEmpty")
         getValue = interner.intern("getValue")
@@ -483,6 +498,7 @@ struct KnownCompilerNames {
             || name == longArray
             || name == shortArray
             || name == byteArray
+            || name == ubyteArray
             || name == doubleArray
             || name == floatArray
             || name == booleanArray
@@ -497,6 +513,7 @@ struct KnownCompilerNames {
             || name == longArray
             || name == shortArray
             || name == byteArray
+            || name == ubyteArray
             || name == doubleArray
             || name == floatArray
             || name == booleanArray
@@ -510,6 +527,7 @@ struct KnownCompilerNames {
         "listOf", "mutableListOf", "emptyList",
         "arrayOf", "emptyArray", "intArrayOf", "longArrayOf",
         "shortArrayOf", "byteArrayOf",
+        "ubyteArrayOf",
         "doubleArrayOf", "floatArrayOf", "booleanArrayOf", "charArrayOf",
         "mapOf", "mutableMapOf", "emptyMap",
         "setOf", "mutableSetOf", "emptySet",

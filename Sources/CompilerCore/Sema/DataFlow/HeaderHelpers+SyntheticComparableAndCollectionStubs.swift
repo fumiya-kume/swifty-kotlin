@@ -7154,6 +7154,7 @@ extension DataFlowSemaPhase {
             "CharArray",
             "ByteArray",
             "ShortArray",
+            "UByteArray",
         ]
         for name in primitiveArrayNames {
             let primName = interner.intern(name)
@@ -7198,6 +7199,7 @@ extension DataFlowSemaPhase {
             ("charArrayOf", "CharArray", types.charType),
             ("byteArrayOf", "ByteArray", types.intType),
             ("shortArrayOf", "ShortArray", types.intType),
+            ("ubyteArrayOf", "UByteArray", types.ubyteType),
         ]
         for (factoryName, arrayName, elementType) in primitiveArrayFactoryTypes {
             guard let primitiveArraySymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern(arrayName)]) else {
