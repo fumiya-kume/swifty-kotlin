@@ -135,7 +135,7 @@ final class ABIMismatchTests: XCTestCase {
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
         // The current spec surface tracks the shared coroutine ABI subset.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 92)
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 93)
     }
 
     func testBoxingFunctionCount() {
@@ -376,6 +376,36 @@ final class ABIMismatchTests: XCTestCase {
 
     func testKKLockWithLockSignature() throws {
         let spec = try requireSpec("kk_lock_withLock")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 3)
+        XCTAssertEqual(spec.parameters[0].name, "handle")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "actionFnPtr")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "actionEnvPtr")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+    }
+
+    func testKKReadWriteLockCreateSignature() throws {
+        let spec = try requireSpec("kk_read_write_lock_create")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 0)
+    }
+
+    func testKKReadWriteLockReadSignature() throws {
+        let spec = try requireSpec("kk_read_write_lock_read")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 3)
+        XCTAssertEqual(spec.parameters[0].name, "handle")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "actionFnPtr")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "actionEnvPtr")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+    }
+
+    func testKKReadWriteLockWriteSignature() throws {
+        let spec = try requireSpec("kk_read_write_lock_write")
         XCTAssertEqual(spec.returnType, .intptr)
         XCTAssertEqual(spec.parameters.count, 3)
         XCTAssertEqual(spec.parameters[0].name, "handle")

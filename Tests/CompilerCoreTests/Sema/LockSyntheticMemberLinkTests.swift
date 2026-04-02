@@ -14,18 +14,33 @@ final class LockSyntheticMemberLinkTests: XCTestCase {
     }
 
     private func externalLinks(
-        for member: String,
+        for owner: String,
+        member: String,
         sema: SemaModule,
         interner: StringInterner
     ) -> [String] {
-        let fq = ["kotlin", "concurrent", "Lock", member].map { interner.intern($0) }
+        let fq = ["kotlin", "concurrent", owner, member].map { interner.intern($0) }
         return sema.symbols.lookupAll(fqName: fq).compactMap { sema.symbols.externalLinkName(for: $0) }
     }
 
     func testLockWithLockMemberHasCorrectExternalLink() throws {
         let (sema, interner) = try makeSema()
 
-        let links = externalLinks(for: "withLock", sema: sema, interner: interner)
+        let links = externalLinks(for: "Lock", member: "withLock", sema: sema, interner: interner)
         XCTAssertTrue(links.contains("kk_lock_withLock"), "Lock.withLock() stub missing")
+    }
+
+    func testReadWriteLockMembersHaveCorrectExternalLinks() throws {
+        let (sema, interner) = try makeSema()
+
+        let factoryFq = ["kotlin", "concurrent", "readWriteLock"].map { interner.intern($0) }
+        let factoryLinks = sema.symbols.lookupAll(fqName: factoryFq).compactMap { sema.symbols.externalLinkName(for: $0) }
+        XCTAssertTrue(factoryLinks.contains("kk_read_write_lock_create"), "readWriteLock() stub missing")
+
+        let readLinks = externalLinks(for: "ReentrantReadWriteLock", member: "read", sema: sema, interner: interner)
+        XCTAssertTrue(readLinks.contains("kk_read_write_lock_read"), "ReentrantReadWriteLock.read() stub missing")
+
+        let writeLinks = externalLinks(for: "ReentrantReadWriteLock", member: "write", sema: sema, interner: interner)
+        XCTAssertTrue(writeLinks.contains("kk_read_write_lock_write"), "ReentrantReadWriteLock.write() stub missing")
     }
 }
