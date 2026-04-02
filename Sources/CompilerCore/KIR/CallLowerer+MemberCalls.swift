@@ -4489,7 +4489,9 @@ extension CallLowerer {
             arguments.insert(loweredReceiverID, at: 0)
             return
         }
-        if Self.unresolvedAtomicIntArrayDirectMemberNames.contains(calleeText) {
+        if isAtomicIntArrayReceiverType(receiverType, sema: sema, interner: interner),
+           Self.unresolvedAtomicIntArrayDirectMemberNames.contains(calleeText)
+        {
             arguments.insert(loweredReceiverID, at: 0)
             return
         }
@@ -5152,7 +5154,9 @@ extension CallLowerer {
         interner: StringInterner
     ) -> InternedString? {
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
-        if Self.unresolvedAtomicIntArrayDirectMemberNames.contains(memberName) {
+        if isAtomicIntArrayReceiverType(receiverType, sema: sema, interner: interner),
+           Self.unresolvedAtomicIntArrayDirectMemberNames.contains(memberName)
+        {
             switch memberName {
             case "loadAt":
                 return interner.intern("kk_atomic_int_array_loadAt")

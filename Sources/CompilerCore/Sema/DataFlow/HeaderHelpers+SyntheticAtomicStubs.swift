@@ -226,6 +226,61 @@ extension DataFlowSemaPhase {
             types: types
         )
 
+        // -- AtomicReference<T> in kotlin.concurrent.atomics package --
+        let atomicsAtomicRefSymbol = ensureClassSymbol(
+            named: "AtomicReference",
+            in: atomicsPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let atomicsAtomicRefType = types.make(.classType(ClassType(
+            classSymbol: atomicsAtomicRefSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(atomicsAtomicRefType, for: atomicsAtomicRefSymbol)
+
+        // AtomicReference stores values as Any? at the ABI level.
+        registerAtomicConstructor(
+            ownerSymbol: atomicsAtomicRefSymbol,
+            ownerType: atomicsAtomicRefType,
+            externalLinkName: "kk_atomic_ref_create",
+            parameters: [(name: "initial", type: anyNullableType)],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicProperty(
+            ownerSymbol: atomicsAtomicRefSymbol,
+            ownerType: atomicsAtomicRefType,
+            valueType: anyNullableType,
+            propertyName: "value",
+            getterLinkName: "kk_atomic_ref_load",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicCoreMethods(
+            ownerSymbol: atomicsAtomicRefSymbol,
+            ownerType: atomicsAtomicRefType,
+            valueType: anyNullableType,
+            boolType: boolType,
+            unitType: unitType,
+            prefix: "kk_atomic_ref",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicGetAndUpdateMethods(
+            ownerSymbol: atomicsAtomicRefSymbol,
+            ownerType: atomicsAtomicRefType,
+            valueType: anyNullableType,
+            prefix: "kk_atomic_ref",
+            symbols: symbols,
+            interner: interner,
+            types: types
+        )
+
         // -- AtomicBoolean --
         let atomicBoolSymbol = ensureClassSymbol(
             named: "AtomicBoolean",
