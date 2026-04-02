@@ -20,6 +20,8 @@ private let mapEntryRuntimeTypeID: Int64 = {
     return payload == 0 ? 1 : payload
 }()
 
+private let comparableRuntimeTypeID: Int64 = runtimeStableNominalTypeID(fqName: "kotlin.Comparable")
+
 @inline(__always)
 func runtimeMapEntryNew(key: Int, value: Int) -> Int {
     let raw = kk_pair_new(key, value)
@@ -569,12 +571,36 @@ func runtimeCompareValues(_ lhs: Int, _ rhs: Int) -> Int {
             return lhsValue < rhsValue ? -1 : 1
         }
     }
+    if let comparableResult = runtimeCompareComparableValues(lhs: lhs, rhs: rhs) {
+        return comparableResult
+    }
     let lhsRendered = runtimeElementToString(lhs)
     let rhsRendered = runtimeElementToString(rhs)
     if lhsRendered == rhsRendered {
         return 0
     }
     return lhsRendered < rhsRendered ? -1 : 1
+}
+
+@inline(__always)
+private func runtimeCompareComparableValues(lhs: Int, rhs: Int) -> Int? {
+    guard let lhsTypeID = runtimeObjectTypeID(rawValue: lhs),
+          let rhsTypeID = runtimeObjectTypeID(rawValue: rhs),
+          lhsTypeID == rhsTypeID,
+          runtimeIsAssignable(sourceTypeID: lhsTypeID, targetTypeID: comparableRuntimeTypeID)
+    else {
+        return nil
+    }
+
+    // Comparable has a single compareTo method, so the first interface slot
+    // is enough for direct runtime dispatch when the value's nominal type
+    // implements Comparable.
+    let compareToFnPtr = kk_itable_lookup(lhs, 0, 0)
+    guard compareToFnPtr != 0 else {
+        return nil
+    }
+    let compareToFn = unsafeBitCast(compareToFnPtr, to: (@convention(c) (Int, Int) -> Int).self)
+    return compareToFn(lhs, rhs)
 }
 
 private enum RuntimeComparableScalarValue {
