@@ -2614,7 +2614,7 @@ extension CallTypeChecker {
             let receiverForCheck = safeCall
                 ? sema.types.makeNonNullable(lookupReceiverType)
                 : lookupReceiverType
-            let rhsType = sema.types.makeNonNullable(argTypes[0])
+            let rawRhsType = argTypes[0]
             let isPrimitiveReceiver = receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType || receiverForCheck == ubyteType || receiverForCheck == ushortType
             let isShiftReceiver = receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType
             switch interner.resolve(calleeName) {
@@ -2622,45 +2622,45 @@ extension CallTypeChecker {
                 let resultType: TypeID?
                 switch interner.resolve(calleeName) {
                 case "plus":
-                    if receiverForCheck == charType && rhsType == intType {
+                    if receiverForCheck == charType && rawRhsType == intType {
                         resultType = charType
-                    } else if receiverForCheck == doubleType || rhsType == doubleType {
+                    } else if receiverForCheck == doubleType || rawRhsType == doubleType {
                         resultType = doubleType
-                    } else if receiverForCheck == floatType || rhsType == floatType {
+                    } else if receiverForCheck == floatType || rawRhsType == floatType {
                         resultType = floatType
-                    } else if receiverForCheck == longType || rhsType == longType {
+                    } else if receiverForCheck == longType || rawRhsType == longType {
                         resultType = longType
-                    } else if receiverForCheck == ulongType || rhsType == ulongType {
+                    } else if receiverForCheck == ulongType || rawRhsType == ulongType {
                         resultType = ulongType
-                    } else if receiverForCheck == uintType || rhsType == uintType {
+                    } else if receiverForCheck == uintType || rawRhsType == uintType {
                         resultType = uintType
-                    } else if receiverForCheck == ushortType || rhsType == ushortType {
+                    } else if receiverForCheck == ushortType || rawRhsType == ushortType {
                         resultType = ushortType
-                    } else if receiverForCheck == ubyteType || rhsType == ubyteType {
+                    } else if receiverForCheck == ubyteType || rawRhsType == ubyteType {
                         resultType = ubyteType
-                    } else if receiverForCheck == intType || rhsType == intType || receiverForCheck == charType {
+                    } else if receiverForCheck == intType || rawRhsType == intType || receiverForCheck == charType {
                         resultType = intType
                     } else {
                         resultType = nil
                     }
                 case "minus":
-                    if receiverForCheck == charType && rhsType == charType {
+                    if receiverForCheck == charType && rawRhsType == charType {
                         resultType = intType
-                    } else if receiverForCheck == charType && rhsType == intType {
+                    } else if receiverForCheck == charType && rawRhsType == intType {
                         resultType = charType
-                    } else if receiverForCheck == doubleType || rhsType == doubleType {
+                    } else if receiverForCheck == doubleType || rawRhsType == doubleType {
                         resultType = doubleType
-                    } else if receiverForCheck == floatType || rhsType == floatType {
+                    } else if receiverForCheck == floatType || rawRhsType == floatType {
                         resultType = floatType
-                    } else if receiverForCheck == longType || rhsType == longType {
+                    } else if receiverForCheck == longType || rawRhsType == longType {
                         resultType = longType
-                    } else if receiverForCheck == ulongType || rhsType == ulongType {
+                    } else if receiverForCheck == ulongType || rawRhsType == ulongType {
                         resultType = ulongType
-                    } else if receiverForCheck == uintType || rhsType == uintType {
+                    } else if receiverForCheck == uintType || rawRhsType == uintType {
                         resultType = uintType
-                    } else if receiverForCheck == ushortType || rhsType == ushortType {
+                    } else if receiverForCheck == ushortType || rawRhsType == ushortType {
                         resultType = ushortType
-                    } else if receiverForCheck == ubyteType || rhsType == ubyteType {
+                    } else if receiverForCheck == ubyteType || rawRhsType == ubyteType {
                         resultType = ubyteType
                     } else if receiverForCheck == intType {
                         resultType = intType
@@ -2668,19 +2668,19 @@ extension CallTypeChecker {
                         resultType = nil
                     }
                 default:
-                    if receiverForCheck == doubleType || rhsType == doubleType {
+                    if receiverForCheck == doubleType || rawRhsType == doubleType {
                         resultType = doubleType
-                    } else if receiverForCheck == floatType || rhsType == floatType {
+                    } else if receiverForCheck == floatType || rawRhsType == floatType {
                         resultType = floatType
-                    } else if receiverForCheck == longType || rhsType == longType {
+                    } else if receiverForCheck == longType || rawRhsType == longType {
                         resultType = longType
-                    } else if receiverForCheck == ulongType || rhsType == ulongType {
+                    } else if receiverForCheck == ulongType || rawRhsType == ulongType {
                         resultType = ulongType
-                    } else if receiverForCheck == uintType || rhsType == uintType {
+                    } else if receiverForCheck == uintType || rawRhsType == uintType {
                         resultType = uintType
-                    } else if receiverForCheck == ushortType || rhsType == ushortType {
+                    } else if receiverForCheck == ushortType || rawRhsType == ushortType {
                         resultType = ushortType
-                    } else if receiverForCheck == ubyteType || rhsType == ubyteType {
+                    } else if receiverForCheck == ubyteType || rawRhsType == ubyteType {
                         resultType = ubyteType
                     } else if receiverForCheck == intType {
                         resultType = intType
@@ -2695,7 +2695,7 @@ extension CallTypeChecker {
                 }
             case "and", "or", "xor":
                 if isPrimitiveReceiver,
-                   rhsType == receiverForCheck
+                   rawRhsType == receiverForCheck
                 {
                     let resultType = receiverForCheck
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
@@ -2704,7 +2704,7 @@ extension CallTypeChecker {
                 }
             case "shl", "shr", "ushr":
                 if isShiftReceiver,
-                   rhsType == intType
+                   rawRhsType == intType
                 {
                     // shift amount must be Int; receiver can be Int/Long/UInt/ULong
                     let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck

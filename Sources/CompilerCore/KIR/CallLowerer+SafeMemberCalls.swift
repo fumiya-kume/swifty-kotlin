@@ -114,13 +114,6 @@ extension CallLowerer {
             }
         }
 
-        let loweredArgIDs = args.map { argument in
-            driver.lowerExpr(
-                argument.expr,
-                shared: shared, emit: &instructions
-            )
-        }
-
         // Primitive member function: Int/Long/UInt/ULong.inv() → kk_op_inv (P5-103, TYPE-005)
         if interner.resolve(effectiveCalleeName) == "inv",
            args.isEmpty
@@ -276,8 +269,9 @@ extension CallLowerer {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType || nonNullReceiverType == ubyteType || nonNullReceiverType == ushortType {
-                let rhsType = sema.types.makeNonNullable(sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType)
+                let rawRhsType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
                 let isShiftReceiver = nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType
+                let isUnsignedReceiver = nonNullReceiverType == uintType || nonNullReceiverType == ulongType || nonNullReceiverType == ubyteType || nonNullReceiverType == ushortType
                 let primitiveCallee: InternedString? = switch interner.resolve(effectiveCalleeName) {
                 case "plus":
                     interner.intern("kk_op_add")
@@ -286,36 +280,62 @@ extension CallLowerer {
                 case "times":
                     interner.intern("kk_op_mul")
                 case "div":
-                    interner.intern("kk_op_div")
+                    isUnsignedReceiver ? interner.intern("kk_op_udiv") : interner.intern("kk_op_div")
                 case "rem", "mod":
-                    interner.intern("kk_op_mod")
+                    isUnsignedReceiver ? interner.intern("kk_op_urem") : interner.intern("kk_op_mod")
                 case "and":
-                    rhsType == nonNullReceiverType ? interner.intern("kk_bitwise_and") : nil
+                    rawRhsType == nonNullReceiverType ? interner.intern("kk_bitwise_and") : nil
                 case "or":
-                    rhsType == nonNullReceiverType ? interner.intern("kk_bitwise_or") : nil
+                    rawRhsType == nonNullReceiverType ? interner.intern("kk_bitwise_or") : nil
                 case "xor":
-                    rhsType == nonNullReceiverType ? interner.intern("kk_bitwise_xor") : nil
+                    rawRhsType == nonNullReceiverType ? interner.intern("kk_bitwise_xor") : nil
                 case "shl":
-                    isShiftReceiver && rhsType == intType ? interner.intern("kk_op_shl") : nil
+                    isShiftReceiver && rawRhsType == intType ? interner.intern("kk_op_shl") : nil
                 case "shr":
-                    isShiftReceiver && rhsType == intType ? interner.intern("kk_op_shr") : nil
+                    isShiftReceiver && rawRhsType == intType ? interner.intern("kk_op_shr") : nil
                 case "ushr":
-                    isShiftReceiver && rhsType == intType ? interner.intern("kk_op_ushr") : nil
+                    isShiftReceiver && rawRhsType == intType ? interner.intern("kk_op_ushr") : nil
                 default:
                     nil
                 }
                 if let primitiveCallee {
+                    let nonNullLabel = driver.ctx.makeLoopLabel()
+                    let endLabel = driver.ctx.makeLoopLabel()
+                    instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: nonNullLabel))
+                    let callResultType = sema.types.makeNonNullable(boundType ?? sema.types.anyType)
+                    let nullableResultType = sema.types.makeNullable(callResultType)
+                    let nullValue = arena.appendExpr(.unit, type: nullableResultType)
+                    instructions.append(.constValue(result: nullValue, value: .null))
+                    let nullableResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nullableResultType)
+                    instructions.append(.copy(from: nullValue, to: nullableResult))
+                    instructions.append(.jump(endLabel))
+                    instructions.append(.label(nonNullLabel))
+                    let nonNullResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: callResultType)
+                    let loweredArgID = driver.lowerExpr(
+                        args[0].expr,
+                        shared: shared,
+                        emit: &instructions
+                    )
                     instructions.append(.call(
                         symbol: nil,
                         callee: primitiveCallee,
-                        arguments: [loweredReceiverID, loweredArgIDs[0]],
-                        result: result,
+                        arguments: [loweredReceiverID, loweredArgID],
+                        result: nonNullResult,
                         canThrow: false,
                         thrownResult: nil
                     ))
-                    return result
+                    instructions.append(.copy(from: nonNullResult, to: nullableResult))
+                    instructions.append(.label(endLabel))
+                    return nullableResult
                 }
             }
+        }
+
+        let loweredArgIDs = args.map { argument in
+            driver.lowerExpr(
+                argument.expr,
+                shared: shared, emit: &instructions
+            )
         }
 
         // Primitive member function: Int/Long.toString() → kk_any_to_string

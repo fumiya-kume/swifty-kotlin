@@ -54,6 +54,17 @@ final class UnsignedPrimitiveMemberCallTests: XCTestCase {
         assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
     }
 
+    func testUnsignedMemberCallsRejectNullableRhs() {
+        let source = """
+        fun sample(ub: UByte, rhs: UByte?) {
+            ub.and(rhs)
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+    }
+
     func testUnsignedMemberCallsRejectShiftOnUByte() {
         let source = """
         fun sample(ub: UByte) {
@@ -74,6 +85,20 @@ final class UnsignedPrimitiveMemberCallTests: XCTestCase {
 
         let ctx = runSemaCollectingDiagnostics(source)
         assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+    }
+
+    func testUnsignedSafeInvCallsCompile() throws {
+        let source = """
+        fun sample(ub: UByte?, us: UShort?) {
+            ub?.inv()
+            us?.inv()
+        }
+        """
+
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected unsigned safe inv calls to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
     }
 
     private func runSemaCollectingDiagnostics(_ source: String) -> CompilationContext {
