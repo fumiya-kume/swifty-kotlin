@@ -522,15 +522,31 @@ final class LambdaLowerer {
             callArguments.append(paramExpr)
         }
 
+        let lambdaCanThrow = adapterRequiresThrownChannel(lambdaSymbol: lambdaSymbol, arena: arena)
         let callResult = arena.appendExpr(.temporary(Int32(clamping: arena.expressions.count)), type: lambdaReturnType)
+        let thrownResult = lambdaCanThrow
+            ? arena.appendExpr(
+                .temporary(Int32(clamping: arena.expressions.count)),
+                type: sema.types.nullableAnyType
+            )
+            : nil
         body.append(.call(
             symbol: lambdaSymbol,
             callee: syntheticLambdaName(for: exprID, interner: interner),
             arguments: callArguments,
             result: callResult,
-            canThrow: false,
-            thrownResult: nil
+            canThrow: lambdaCanThrow,
+            thrownResult: thrownResult
         ))
+        if let thrownResult {
+            let continueLabel = driver.ctx.makeLoopLabel()
+            let rethrowLabel = driver.ctx.makeLoopLabel()
+            body.append(.jumpIfNotNull(value: thrownResult, target: rethrowLabel))
+            body.append(.jump(continueLabel))
+            body.append(.label(rethrowLabel))
+            body.append(.rethrow(value: thrownResult))
+            body.append(.label(continueLabel))
+        }
         switch sema.types.kind(of: lambdaReturnType) {
         case .unit, .nothing(.nonNull), .nothing(.nullable):
             body.append(.returnUnit)
@@ -600,6 +616,25 @@ final class LambdaLowerer {
             hasClosureParam: true
         )
         return materializedExpr
+    }
+
+    private func adapterRequiresThrownChannel(lambdaSymbol: SymbolID, arena: KIRArena) -> Bool {
+        guard let function = arena.function(for: lambdaSymbol) else {
+            return false
+        }
+        for instruction in function.body {
+            switch instruction {
+            case let .call(_, _, _, _, canThrow, _, _, _), let .virtualCall(_, _, _, _, _, canThrow, _, _):
+                if canThrow {
+                    return true
+                }
+            case .rethrow:
+                return true
+            default:
+                continue
+            }
+        }
+        return false
     }
 
     private func lowerSamWrapperValue(
