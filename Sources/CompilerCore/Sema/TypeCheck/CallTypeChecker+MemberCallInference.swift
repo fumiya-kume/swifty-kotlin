@@ -2585,8 +2585,19 @@ extension CallTypeChecker {
         // Infer argument types for the normal resolution path (scope functions,
         // collection HOFs, and comparator HOFs infer their lambda args with
         // expected type above and return).
-        let argTypes = args.enumerated().map { _, arg in
-            sema.bindings.exprType(for: arg.expr) ?? driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
+        // Skip lambda literals and callable refs so that their first inference
+        // happens inside prepareCallArguments with a contextual expected type,
+        // preventing a stale no-expectedType binding from poisoning the cache.
+        let argTypes = args.enumerated().map { _, arg -> TypeID in
+            if let expr = ast.arena.expr(arg.expr) {
+                switch expr {
+                case .lambdaLiteral, .callableRef:
+                    return sema.bindings.exprType(for: arg.expr) ?? sema.types.anyType
+                default:
+                    break
+                }
+            }
+            return sema.bindings.exprType(for: arg.expr) ?? driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
         }
 
         let hasLeadingLocaleArgument = calleeName == interner.intern("format")

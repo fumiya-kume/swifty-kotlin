@@ -179,6 +179,19 @@ extension CallTypeChecker {
             return true
         })
 
+        guard !inputOnlyLambdaIndices.isEmpty else {
+            return ctx.resolver.resolveCall(
+                candidates: candidates,
+                call: call,
+                expectedType: expectedType,
+                implicitReceiverType: implicitReceiverType,
+                ctx: ctx.semaCtx
+            )
+        }
+
+        // These ambiguity checks only apply when lambda-return-type overload
+        // resolution is actually attempted (inputOnlyLambdaIndices is non-empty).
+        // Running them earlier would incorrectly reject single-candidate calls.
         if functionParameterArgumentPositions.count > 1, hasRefinementAnnotation {
             return ambiguousCallResult(range: range)
         }
@@ -188,16 +201,6 @@ extension CallTypeChecker {
 
         if blockedLambdaRefinement, hasRefinementAnnotation {
             return ambiguousCallResult(range: range)
-        }
-
-        guard !inputOnlyLambdaIndices.isEmpty else {
-            return ctx.resolver.resolveCall(
-                candidates: candidates,
-                call: call,
-                expectedType: expectedType,
-                implicitReceiverType: implicitReceiverType,
-                ctx: ctx.semaCtx
-            )
         }
 
         let overloadResolutionExpectedType: TypeID? = nil
