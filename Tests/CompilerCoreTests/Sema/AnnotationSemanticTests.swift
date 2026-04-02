@@ -225,6 +225,53 @@ final class AnnotationSemanticTests: XCTestCase {
         )
     }
 
+    func testExperimentalContractsAnnotationIsSyntheticAnnotationClass() throws {
+        let source = """
+        annotation class ExperimentalApi
+        """
+
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let fqName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("contracts"),
+            ctx.interner.intern("ExperimentalContracts"),
+        ]
+        let symbolID = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.visibility, .public)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+        XCTAssertEqual(symbol.kind, .annotationClass)
+
+        let annotations = sema.symbols.annotations(for: symbol.id)
+        XCTAssertTrue(
+            annotations.contains(
+                where: {
+                    $0.annotationFQName == "kotlin.annotation.Target"
+                        && $0.arguments == [
+                            "AnnotationTarget.CLASS",
+                            "AnnotationTarget.FUNCTION",
+                            "AnnotationTarget.PROPERTY",
+                            "AnnotationTarget.TYPEALIAS",
+                        ]
+                }
+            ),
+            "Expected ExperimentalContracts to carry @Target for class/function/property/typealias, got: \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains(
+                where: {
+                    $0.annotationFQName == "kotlin.annotation.Retention"
+                        && $0.arguments == ["AnnotationRetention.BINARY"]
+                }
+            ),
+            "Expected ExperimentalContracts to carry @Retention(AnnotationRetention.BINARY), got: \(annotations)"
+        )
+    }
+
     func testFieldTargetAllowsBackedFieldAndRejectsMissingBackingField() {
         let source = """
         @Target(value = [AnnotationTarget.FIELD])
