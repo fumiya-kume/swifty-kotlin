@@ -35,6 +35,63 @@ final class CallTypeChecker {
         // Must intercept BEFORE eager arg inference so the lambda argument
         // is inferred with the correct implicit receiver type.
         if let calleeName {
+            if interner.resolve(calleeName) == "DeepRecursiveFunction",
+               args.count == 1,
+               explicitTypeArgs.count == 2,
+               locals[calleeName] == nil
+            {
+                let kotlinPkg = [interner.intern("kotlin")]
+                let functionFQName = kotlinPkg + [interner.intern("DeepRecursiveFunction")]
+                let scopeFQName = kotlinPkg + [interner.intern("DeepRecursiveScope")]
+                let ctorFQName = functionFQName + [interner.intern("<init>")]
+                if let functionSymbol = sema.symbols.lookupAll(fqName: functionFQName).first,
+                   let scopeSymbol = sema.symbols.lookupAll(fqName: scopeFQName).first
+                {
+                    let inputType = explicitTypeArgs[0]
+                    let returnType = explicitTypeArgs[1]
+                    let scopeType = sema.types.make(.classType(ClassType(
+                        classSymbol: scopeSymbol,
+                        args: [.invariant(inputType), .invariant(returnType)],
+                        nullability: .nonNull
+                    )))
+                    let functionType = sema.types.make(.classType(ClassType(
+                        classSymbol: functionSymbol,
+                        args: [.invariant(inputType), .invariant(returnType)],
+                        nullability: .nonNull
+                    )))
+                    let blockExpectedType = sema.types.make(.functionType(FunctionType(
+                        receiver: scopeType,
+                        params: [inputType],
+                        returnType: returnType,
+                        isSuspend: true,
+                        nullability: .nonNull
+                    )))
+                    _ = driver.inferExpr(
+                        args[0].expr,
+                        ctx: ctx.with(implicitReceiverType: scopeType),
+                        locals: &locals,
+                        expectedType: blockExpectedType
+                    )
+                    if let ctorSymbol = sema.symbols.lookupAll(fqName: ctorFQName).first(where: { symbolID in
+                        guard let signature = sema.symbols.functionSignature(for: symbolID) else {
+                            return false
+                        }
+                        return signature.parameterTypes.count == 1
+                    }) {
+                        sema.bindings.bindCall(
+                            id,
+                            binding: CallBinding(
+                                chosenCallee: ctorSymbol,
+                                substitutedTypeArguments: explicitTypeArgs,
+                                parameterMapping: [0: 0]
+                            )
+                        )
+                        sema.bindings.bindCallableTarget(id, target: .symbol(ctorSymbol))
+                    }
+                    sema.bindings.bindExprType(id, type: functionType)
+                    return functionType
+                }
+            }
             if let builderKind = builderDSLKind(for: calleeName, interner: interner),
                shouldUseBuilderDSLSpecialHandling(calleeName: calleeName, ctx: ctx, locals: locals)
             {
@@ -1463,6 +1520,65 @@ final class CallTypeChecker {
         } else {
             candidates = []
         }
+
+        if let calleeName,
+           interner.resolve(calleeName) == "callRecursive",
+           args.count == 1,
+           let receiverType = ctx.implicitReceiverType,
+           case let .classType(scopeClass) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+           let scopeSymbol = sema.symbols.symbol(scopeClass.classSymbol),
+           scopeSymbol.fqName.count == 2,
+           interner.resolve(scopeSymbol.fqName[0]) == "kotlin",
+           interner.resolve(scopeSymbol.fqName[1]) == "DeepRecursiveScope",
+           scopeClass.args.count == 2
+        {
+            let inputType: TypeID?
+            let returnType: TypeID?
+            switch (scopeClass.args[0], scopeClass.args[1]) {
+            case let (.invariant(input), .invariant(output)):
+                inputType = input
+                returnType = output
+            case let (.out(input), .out(output)):
+                inputType = input
+                returnType = output
+            case let (.out(input), .invariant(output)):
+                inputType = input
+                returnType = output
+            case let (.invariant(input), .out(output)):
+                inputType = input
+                returnType = output
+            default:
+                inputType = nil
+                returnType = nil
+            }
+            if let inputType, let returnType {
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: inputType)
+                let fqName = [interner.intern("kotlin"), interner.intern("DeepRecursiveScope"), interner.intern("callRecursive")]
+                if let chosen = sema.symbols.lookupAll(fqName: fqName).first(where: { symbolID in
+                    guard let signature = sema.symbols.functionSignature(for: symbolID),
+                          case let .classType(classType) = sema.types.kind(of: signature.receiverType ?? sema.types.errorType),
+                          let symbol = sema.symbols.symbol(classType.classSymbol)
+                    else {
+                        return false
+                    }
+                    return interner.resolve(symbol.name) == "DeepRecursiveScope"
+                }) {
+                    sema.bindings.bindCall(
+                        id,
+                        binding: CallBinding(
+                            chosenCallee: chosen,
+                            substitutedTypeArguments: [inputType, returnType],
+                            parameterMapping: [0: 0]
+                        )
+                    )
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                }
+                sema.bindings.markImplicitReceiverMember(id, name: calleeName)
+                sema.bindings.bindExprType(id, type: returnType)
+                return returnType
+            }
+        }
+
         var inferredNonLambdaArgTypes: [Int: TypeID] = [:]
         for (index, argument) in args.enumerated() {
             guard let argumentExpr = ast.arena.expr(argument.expr) else {
@@ -1520,10 +1636,34 @@ final class CallTypeChecker {
             let expectedTypeCandidates = narrowedCandidates.isEmpty ? candidates : narrowedCandidates
 
             if expectedTypeCandidates.count == 1,
+               let chosenCandidate = sema.symbols.symbol(expectedTypeCandidates[0]),
                let signature = sema.symbols.functionSignature(for: expectedTypeCandidates[0]),
                index < signature.parameterTypes.count
             {
-                return signature.parameterTypes[index]
+                var parameterType = signature.parameterTypes[index]
+                if !explicitTypeArgs.isEmpty {
+                    let isConstructor = chosenCandidate.kind == .constructor
+                    let expectedExplicitTypeArgCount = isConstructor
+                        ? signature.classTypeParameterCount
+                        : signature.typeParameterSymbols.count - signature.classTypeParameterCount
+                    if explicitTypeArgs.count == expectedExplicitTypeArgCount {
+                        let typeArgOffset = isConstructor ? 0 : signature.classTypeParameterCount
+                        let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+                        var substitution: [TypeVarID: TypeID] = [:]
+                        for (explicitIndex, explicitTypeArg) in explicitTypeArgs.enumerated() {
+                            let typeParameterSymbol = signature.typeParameterSymbols[typeArgOffset + explicitIndex]
+                            if let typeVariable = typeVarBySymbol[typeParameterSymbol] {
+                                substitution[typeVariable] = explicitTypeArg
+                            }
+                        }
+                        parameterType = sema.types.substituteTypeParameters(
+                            in: parameterType,
+                            substitution: substitution,
+                            typeVarBySymbol: typeVarBySymbol
+                        )
+                    }
+                }
+                return parameterType
             }
 
             var matchingParameterTypes: [TypeID] = []
@@ -2388,6 +2528,61 @@ final class CallTypeChecker {
         if let calleeName, let receiverType = ctx.implicitReceiverType {
             let nonNullReceiver = sema.types.makeNonNullable(receiverType)
             let name = interner.resolve(calleeName)
+            if name == "callRecursive",
+               args.count == 1,
+               case let .classType(scopeClass) = sema.types.kind(of: nonNullReceiver),
+               let scopeSymbol = sema.symbols.symbol(scopeClass.classSymbol),
+               scopeSymbol.fqName.count == 2,
+               interner.resolve(scopeSymbol.fqName[0]) == "kotlin",
+               interner.resolve(scopeSymbol.fqName[1]) == "DeepRecursiveScope",
+               scopeClass.args.count == 2
+            {
+                let inputType: TypeID?
+                let returnType: TypeID?
+                switch (scopeClass.args[0], scopeClass.args[1]) {
+                case let (.invariant(input), .invariant(output)):
+                    inputType = input
+                    returnType = output
+                case let (.out(input), .out(output)):
+                    inputType = input
+                    returnType = output
+                case let (.out(input), .invariant(output)):
+                    inputType = input
+                    returnType = output
+                case let (.invariant(input), .out(output)):
+                    inputType = input
+                    returnType = output
+                default:
+                    inputType = nil
+                    returnType = nil
+                }
+                if let inputType, let returnType {
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: inputType)
+                    let fqName = [interner.intern("kotlin"), interner.intern("DeepRecursiveScope"), interner.intern("callRecursive")]
+                    if let chosen = sema.symbols.lookupAll(fqName: fqName).first(where: { symbolID in
+                        guard let signature = sema.symbols.functionSignature(for: symbolID),
+                              case let .classType(classType) = sema.types.kind(of: signature.receiverType ?? sema.types.errorType),
+                              let symbol = sema.symbols.symbol(classType.classSymbol)
+                        else {
+                            return false
+                        }
+                        return interner.resolve(symbol.name) == "DeepRecursiveScope"
+                    }) {
+                        sema.bindings.bindCall(
+                            id,
+                            binding: CallBinding(
+                                chosenCallee: chosen,
+                                substitutedTypeArguments: [inputType, returnType],
+                                parameterMapping: [0: 0]
+                            )
+                        )
+                        sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                    }
+                    sema.bindings.markImplicitReceiverMember(id, name: calleeName)
+                    sema.bindings.bindExprType(id, type: returnType)
+                    return returnType
+                }
+            }
 
             // String stdlib methods (STDLIB-006) via implicit receiver
             if sema.types.isSubtype(nonNullReceiver, sema.types.stringType) {

@@ -348,6 +348,23 @@ extension CallTypeChecker {
         }
 
         let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
+        let recoveredReceiverType: TypeID? = if case .any = sema.types.kind(of: sema.types.makeNonNullable(receiverType)) {
+            if let symbol = sema.bindings.identifierSymbol(for: receiverID),
+               let propertyType = sema.symbols.propertyType(for: symbol)
+            {
+                propertyType
+            } else if case let .nameRef(receiverName, _) = ast.arena.expr(receiverID),
+                      let local = locals[receiverName]
+            {
+                sema.symbols.propertyType(for: local.symbol) ?? local.type
+            } else {
+                nil
+            }
+        } else {
+            nil
+        }
+        let effectiveCallRecursiveReceiverType = recoveredReceiverType ?? receiverType
+        let nonNullReceiverType = sema.types.makeNonNullable(effectiveCallRecursiveReceiverType)
 
         if interner.resolve(calleeName) == "callRecursive",
            args.count == 1,

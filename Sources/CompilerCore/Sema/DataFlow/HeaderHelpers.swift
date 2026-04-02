@@ -857,6 +857,7 @@ extension DataFlowSemaPhase {
         registerSyntheticRegexStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticHexFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticResultStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticDeepRecursiveStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticDurationStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticInstantStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticClockStubs(symbols: symbols, types: types, interner: interner)
