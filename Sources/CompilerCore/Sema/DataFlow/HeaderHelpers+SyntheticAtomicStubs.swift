@@ -722,14 +722,16 @@ extension DataFlowSemaPhase {
         guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
         let initName = interner.intern("<init>")
         let ctorFQName = ownerInfo.fqName + [initName]
-        let hasMatch = symbols.lookupAll(fqName: ctorFQName).contains { id in
+        if let existing = symbols.lookupAll(fqName: ctorFQName).first(where: { id in
             guard let sym = symbols.symbol(id),
                   sym.kind == .constructor,
                   let sig = symbols.functionSignature(for: id)
             else { return false }
             return sig.parameterTypes.isEmpty
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
         }
-        guard !hasMatch else { return }
 
         let ctorSymbol = symbols.define(
             kind: .constructor,
