@@ -3032,7 +3032,7 @@ extension CallTypeChecker {
         // as the implicit receiver when resolving the call.
         var companionReceiverType: TypeID?
 
-        let allCandidates: [SymbolID]
+        var allCandidates: [SymbolID]
         if isClassNameReceiver {
             // Class-name receiver: only companion members are valid targets.
             // Skip collectMemberFunctionCandidates which would find instance
@@ -3128,43 +3128,65 @@ extension CallTypeChecker {
                 }
                 allCandidates = memberCandidates
             } else {
-                // Try inner class constructor resolution: outer.Inner() → Inner's <init>
-                let innerCtorCandidates = driver.helpers.collectInnerClassConstructorCandidates(
-                    named: calleeName,
-                    receiverType: memberLookupType,
-                    sema: sema,
-                    interner: interner
-                )
-                if !innerCtorCandidates.isEmpty {
-                    allCandidates = innerCtorCandidates
-                } else {
-                    var scopeCandidates = ctx.cachedScopeLookup(calleeName).filter { candidate in
-                        guard let symbol = ctx.cachedSymbol(candidate),
+                let comparisonExtensionPackages: [[InternedString]] = [[
+                    interner.intern("kotlin"),
+                    interner.intern("comparisons"),
+                ]]
+                var extensionCandidates: [SymbolID] = []
+                for packageFQName in comparisonExtensionPackages {
+                    let extensionFQName = packageFQName + [calleeName]
+                    for candidate in sema.symbols.lookupAll(fqName: extensionFQName) {
+                        guard let symbol = sema.symbols.symbol(candidate),
                               symbol.kind == .function,
-                              let signature = sema.symbols.functionSignature(for: candidate) else { return false }
-                        guard signature.receiverType != nil else { return false }
-                        if isSuperCall, !supertypeSymbols.isEmpty {
-                            return sema.symbols.parentSymbol(for: candidate).map { supertypeSymbols.contains($0) } ?? false
+                              let signature = sema.symbols.functionSignature(for: candidate),
+                              signature.receiverType != nil
+                        else {
+                            continue
                         }
-                        return true
+                        extensionCandidates.append(candidate)
                     }
-                    // Extension functions are excluded from scope by the scope
-                    // builder so they don't shadow top-level calls.  Fall back
-                    // to a direct symbol-table lookup by short name to find
-                    // synthetic extension functions (e.g. Double.pow, roundToInt).
-                    if scopeCandidates.isEmpty {
-                        let nonNullReceiver = sema.types.makeNonNullable(memberLookupType)
-                        scopeCandidates = sema.symbols.lookupByShortName(calleeName).filter { candidate in
-                            guard let symbol = sema.symbols.symbol(candidate),
+                }
+                if !extensionCandidates.isEmpty {
+                    allCandidates = extensionCandidates
+                } else {
+                // Try inner class constructor resolution: outer.Inner() → Inner's <init>
+                    let innerCtorCandidates = driver.helpers.collectInnerClassConstructorCandidates(
+                        named: calleeName,
+                        receiverType: memberLookupType,
+                        sema: sema,
+                        interner: interner
+                    )
+                    if !innerCtorCandidates.isEmpty {
+                        allCandidates = innerCtorCandidates
+                    } else {
+                        var scopeCandidates = ctx.cachedScopeLookup(calleeName).filter { candidate in
+                            guard let symbol = ctx.cachedSymbol(candidate),
                                   symbol.kind == .function,
-                                  symbol.flags.contains(.synthetic),
-                                  let signature = sema.symbols.functionSignature(for: candidate),
-                                  let recvType = signature.receiverType
-                            else { return false }
-                            return sema.types.isSubtype(nonNullReceiver, recvType)
+                                  let signature = sema.symbols.functionSignature(for: candidate) else { return false }
+                            guard signature.receiverType != nil else { return false }
+                            if isSuperCall, !supertypeSymbols.isEmpty {
+                                return sema.symbols.parentSymbol(for: candidate).map { supertypeSymbols.contains($0) } ?? false
+                            }
+                            return true
                         }
+                        // Extension functions are excluded from scope by the scope
+                        // builder so they don't shadow top-level calls.  Fall back
+                        // to a direct symbol-table lookup by short name to find
+                        // synthetic extension functions (e.g. Double.pow, roundToInt).
+                        if scopeCandidates.isEmpty {
+                            let nonNullReceiver = sema.types.makeNonNullable(memberLookupType)
+                            scopeCandidates = sema.symbols.lookupByShortName(calleeName).filter { candidate in
+                                guard let symbol = sema.symbols.symbol(candidate),
+                                      symbol.kind == .function,
+                                      symbol.flags.contains(.synthetic),
+                                      let signature = sema.symbols.functionSignature(for: candidate),
+                                      let recvType = signature.receiverType
+                                else { return false }
+                                return sema.types.isSubtype(nonNullReceiver, recvType)
+                            }
+                        }
+                        allCandidates = scopeCandidates
                     }
-                    allCandidates = scopeCandidates
                 }
             }
         }
@@ -3215,6 +3237,120 @@ extension CallTypeChecker {
                 return finalType
             default:
                 break
+            }
+        }
+
+        do {
+            let comparatorFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Comparator")]
+            if let comparatorSymbol = sema.symbols.lookup(fqName: comparatorFQName),
+               case let .classType(receiverClassType) = sema.types.kind(of: sema.types.makeNonNullable(lookupReceiverType)),
+               receiverClassType.classSymbol == comparatorSymbol,
+               let comparatorArg = receiverClassType.args.first
+            {
+                let elementType: TypeID = switch comparatorArg {
+                case let .invariant(t), let .out(t), let .in(t): t
+                case .star: sema.types.anyType
+                }
+                let comparisonsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("comparisons")]
+                let calleeStr = interner.resolve(calleeName)
+
+                if (calleeStr == "thenBy" || calleeStr == "thenByDescending"), args.count == 1 {
+                    let selectorExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [elementType],
+                        returnType: sema.types.nullableAnyType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                    if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    }
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: selectorExpectedType)
+
+                    let functionFQName = comparisonsPkg + [calleeName]
+                    if let chosen = sema.symbols.lookupAll(fqName: functionFQName).first(where: { candidate in
+                        guard let signature = sema.symbols.functionSignature(for: candidate) else { return false }
+                        return signature.receiverType != nil && signature.parameterTypes.count == 1
+                    }) {
+                        sema.bindings.bindCall(
+                            id,
+                            binding: CallBinding(
+                                chosenCallee: chosen,
+                                substitutedTypeArguments: [elementType],
+                                parameterMapping: [0: 0]
+                            )
+                        )
+                        sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(lookupReceiverType) : lookupReceiverType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+
+                if (calleeStr == "reversed" || calleeStr == "nullsFirst" || calleeStr == "nullsLast"), args.isEmpty {
+                    let functionFQName = comparisonsPkg + [calleeName]
+                    if let chosen = sema.symbols.lookupAll(fqName: functionFQName).first(where: { candidate in
+                        guard let signature = sema.symbols.functionSignature(for: candidate) else { return false }
+                        return signature.receiverType != nil && signature.parameterTypes.isEmpty
+                    }) {
+                        sema.bindings.bindCall(
+                            id,
+                            binding: CallBinding(
+                                chosenCallee: chosen,
+                                substitutedTypeArguments: [elementType],
+                                parameterMapping: [:]
+                            )
+                        )
+                        sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(lookupReceiverType) : lookupReceiverType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
+        }
+        if args.count == 1,
+           interner.resolve(calleeName) == "compareTo",
+           let comparableSymbol = sema.types.comparableInterfaceSymbol
+        {
+            let receiverTypeForCheck = safeCall
+                ? sema.types.makeNonNullable(lookupReceiverType)
+                : lookupReceiverType
+            let comparableElementType = safeCall ? receiverTypeForCheck : argTypes[0]
+            let shouldBypassResolution: Bool = {
+                switch sema.types.kind(of: receiverTypeForCheck) {
+                case .primitive, .typeParam:
+                    return true
+                default:
+                    return sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType)
+                }
+            }()
+            if shouldBypassResolution {
+                let comparableCompareToFQName = [
+                    interner.intern("kotlin"),
+                    interner.intern("Comparable"),
+                    calleeName,
+                ]
+                let comparableReceiverType = sema.types.make(.classType(ClassType(
+                    classSymbol: comparableSymbol,
+                    args: [.in(comparableElementType)],
+                    nullability: .nonNull
+                )))
+                if sema.types.isSubtype(receiverTypeForCheck, comparableReceiverType),
+                   let chosen = sema.symbols.lookup(fqName: comparableCompareToFQName)
+                {
+                    sema.bindings.bindCall(
+                        id,
+                        binding: CallBinding(
+                            chosenCallee: chosen,
+                            substitutedTypeArguments: [comparableElementType],
+                            parameterMapping: [0: 0]
+                        )
+                    )
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                    let finalType = safeCall ? sema.types.makeNullable(sema.types.intType) : sema.types.intType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
             }
         }
 
@@ -3324,6 +3460,41 @@ extension CallTypeChecker {
                 if receiverTypeForCheck == sema.types.charType {
                     let resultType = sema.types.intType
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
+            if args.count == 1,
+               interner.resolve(calleeName) == "compareTo",
+               let comparableSymbol = sema.types.comparableInterfaceSymbol
+            {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                let comparableElementType = safeCall ? receiverTypeForCheck : argTypes[0]
+                let comparableCompareToFQName = [
+                    interner.intern("kotlin"),
+                    interner.intern("Comparable"),
+                    calleeName,
+                ]
+                let comparableReceiverType = sema.types.make(.classType(ClassType(
+                    classSymbol: comparableSymbol,
+                    args: [.in(comparableElementType)],
+                    nullability: .nonNull
+                )))
+                if sema.types.isSubtype(receiverTypeForCheck, comparableReceiverType),
+                   let chosen = sema.symbols.lookup(fqName: comparableCompareToFQName)
+                {
+                    sema.bindings.bindCall(
+                        id,
+                        binding: CallBinding(
+                            chosenCallee: chosen,
+                            substitutedTypeArguments: [comparableElementType],
+                            parameterMapping: [0: 0]
+                        )
+                    )
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                    let finalType = safeCall ? sema.types.makeNullable(sema.types.intType) : sema.types.intType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
                 }

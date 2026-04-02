@@ -121,6 +121,7 @@ extension LocalDeclTypeChecker {
     func inferLocalFunDeclExpr(
         _ id: ExprID,
         name: InternedString,
+        typeParams: [TypeParamDecl],
         valueParams: [ValueParamDecl],
         returnTypeRef: TypeRefID?,
         body: FunctionBody,
@@ -133,6 +134,46 @@ extension LocalDeclTypeChecker {
         let sema = ctx.sema
         let interner = ctx.interner
 
+        let functionScope = FunctionScope(parent: ctx.scope, symbols: sema.symbols)
+        var typeParamSymbols: [SymbolID] = []
+        var typeParamUpperBoundsList: [[TypeID]] = []
+        var reifiedTypeParameterIndices: Set<Int> = []
+        for (index, typeParam) in typeParams.enumerated() {
+            let typeParamSymbol = sema.symbols.define(
+                kind: .typeParameter,
+                name: typeParam.name,
+                fqName: [
+                    interner.intern("__localfun_\(id.rawValue)"),
+                    name,
+                    typeParam.name,
+                ],
+                declSite: range,
+                visibility: .private,
+                flags: []
+            )
+            functionScope.insert(typeParamSymbol)
+            typeParamSymbols.append(typeParamSymbol)
+            if typeParam.isReified {
+                reifiedTypeParameterIndices.insert(index)
+            }
+        }
+        for (index, typeParam) in typeParams.enumerated() {
+            let resolvedBounds = typeParam.upperBounds.map {
+                driver.helpers.resolveTypeRef(
+                    $0,
+                    ast: ast,
+                    sema: sema,
+                    interner: interner,
+                    scope: functionScope,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+            }
+            typeParamUpperBoundsList.append(resolvedBounds)
+            if index < typeParamSymbols.count, !resolvedBounds.isEmpty {
+                sema.symbols.setTypeParameterUpperBounds(resolvedBounds, for: typeParamSymbols[index])
+            }
+        }
+
         var parameterTypes: [TypeID] = []
         var paramSymbols: [SymbolID] = []
         for param in valueParams {
@@ -142,7 +183,7 @@ extension LocalDeclTypeChecker {
                     ast: ast,
                     sema: sema,
                     interner: interner,
-                    scope: ctx.scope,
+                    scope: functionScope,
                     diagnostics: ctx.semaCtx.diagnostics
                 )
             } else {
@@ -170,7 +211,7 @@ extension LocalDeclTypeChecker {
                 ast: ast,
                 sema: sema,
                 interner: interner,
-                scope: ctx.scope,
+                scope: functionScope,
                 diagnostics: ctx.semaCtx.diagnostics
             )
         } else {
@@ -204,7 +245,10 @@ extension LocalDeclTypeChecker {
             isSuspend: isSuspend,
             valueParameterSymbols: paramSymbols,
             valueParameterHasDefaultValues: valueParams.map(\.hasDefaultValue),
-            valueParameterIsVararg: valueParams.map(\.isVararg)
+            valueParameterIsVararg: valueParams.map(\.isVararg),
+            typeParameterSymbols: typeParamSymbols,
+            reifiedTypeParameterIndices: reifiedTypeParameterIndices,
+            typeParameterUpperBoundsList: typeParamUpperBoundsList
         )
         sema.symbols.setFunctionSignature(signature, for: funSymbol)
 
@@ -216,7 +260,7 @@ extension LocalDeclTypeChecker {
         )))
 
         // Local functions introduce a new scope for control flow: reset loop/lambda stacks.
-        var bodyLocals = locals; let bodyCtx = ctx.copying(loopDepth: 0, loopLabelStack: [], lambdaLabelStack: [])
+        var bodyLocals = locals; let bodyCtx = ctx.copying(scope: functionScope, loopDepth: 0, loopLabelStack: [], lambdaLabelStack: [])
         for (i, param) in valueParams.enumerated() {
             bodyLocals[param.name] = (parameterTypes[i], paramSymbols[i], false, true)
         }
@@ -249,7 +293,10 @@ extension LocalDeclTypeChecker {
                 isSuspend: isSuspend,
                 valueParameterSymbols: paramSymbols,
                 valueParameterHasDefaultValues: valueParams.map(\.hasDefaultValue),
-                valueParameterIsVararg: valueParams.map(\.isVararg)
+                valueParameterIsVararg: valueParams.map(\.isVararg),
+                typeParameterSymbols: typeParamSymbols,
+                reifiedTypeParameterIndices: reifiedTypeParameterIndices,
+                typeParameterUpperBoundsList: typeParamUpperBoundsList
             )
             sema.symbols.setFunctionSignature(inferredSignature, for: funSymbol)
         }

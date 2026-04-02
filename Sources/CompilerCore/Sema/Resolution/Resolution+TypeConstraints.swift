@@ -271,6 +271,7 @@ extension OverloadResolver {
             )]
         }
         let supertypeKind = typeSystem.kind(of: supertype)
+        let subtypeKind = typeSystem.kind(of: subtype)
 
         // Case 1: supertype is a direct type parameter → single variable constraint.
         if case let .typeParam(typeParam) = supertypeKind,
@@ -322,7 +323,6 @@ extension OverloadResolver {
            !superClass.args.isEmpty,
            containsTypeVariable(supertype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
         {
-            let subtypeKind = typeSystem.kind(of: subtype)
             if case let .classType(subClass) = subtypeKind,
                let alignedSubtype = alignNominalSubtype(
                    subClass,
@@ -443,14 +443,16 @@ extension OverloadResolver {
         }
 
         // Case 4: subtype contains type variables (e.g. return type T or List<T>).
-        let subtypeKind = typeSystem.kind(of: subtype)
         if case let .typeParam(typeParam) = subtypeKind,
            let variable = typeVarBySymbol[typeParam.symbol]
         {
+            let rightType = typeParam.nullability != .nonNull
+                ? typeSystem.makeNonNullable(supertype)
+                : supertype
             return [VariableConstraint(
                 kind: .subtype,
                 left: .variable(variable),
-                right: .type(supertype),
+                right: .type(rightType),
                 blameRange: blameRange
             )]
         }
