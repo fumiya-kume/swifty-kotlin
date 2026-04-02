@@ -225,6 +225,26 @@ public enum RuntimeABISpec {
             section: "Exception"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_assertions_enabled",
+            parameters: [],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_assertions_set_enabled",
+            parameters: [
+                RuntimeABIParameter(name: "enabled", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_assertions_reset",
+            parameters: [],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_error",
             parameters: [
                 RuntimeABIParameter(name: "message", type: .intptr),

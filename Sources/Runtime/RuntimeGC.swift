@@ -182,6 +182,7 @@ public func kk_runtime_force_reset() {
     runtimeStorage.withLock { state in
         resetRuntimeLocked(state: &state)
     }
+    runtimeResetDebugState()
 }
 
 func performMarkAndSweepLocked(state: inout RuntimeStorageState) {
