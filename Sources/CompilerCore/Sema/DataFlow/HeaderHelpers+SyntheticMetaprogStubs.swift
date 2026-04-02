@@ -134,6 +134,25 @@ extension DataFlowSemaPhase {
             symbols.setAnnotations(annotations, for: targetSymbol)
         }
 
+        registerSyntheticAnnotationClass(
+            named: "Repeatable",
+            packageFQName: kotlinAnnotationPkg,
+            packageSymbol: kotlinAnnotationPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let repeatableSymbol = symbols.lookup(fqName: kotlinAnnotationPkg + [interner.intern("Repeatable")]) {
+            let record = MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
+            )
+            var annotations = symbols.annotations(for: repeatableSymbol)
+            if !annotations.contains(record) {
+                annotations.append(record)
+            }
+            symbols.setAnnotations(annotations, for: repeatableSymbol)
+        }
+
         registerSyntheticAnnotationTargetEnum(
             packageFQName: kotlinAnnotationPkg,
             packageSymbol: kotlinAnnotationPkgSymbol,
