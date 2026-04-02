@@ -1291,6 +1291,62 @@ public func kk_uint_range_toList(_ rangeRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: elements))
 }
 
+@_cdecl("kk_uint_range_iterator")
+public func kk_uint_range_iterator(_ rangeRaw: Int) -> Int {
+    if runtimeIteratorBuilderBox(from: rangeRaw) != nil {
+        return rangeRaw
+    }
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        return 0
+    }
+    return registerRuntimeObject(
+        RuntimeRangeIteratorBox(current: range.first, last: range.last, step: range.step)
+    )
+}
+
+@_cdecl("kk_uint_range_hasNext")
+public func kk_uint_range_hasNext(_ iterRaw: Int) -> Int {
+    if runtimeIteratorBuilderBox(from: iterRaw) != nil {
+        return kk_iterator_builder_hasNext(iterRaw)
+    }
+    guard let iterator = runtimeRangeIteratorBox(from: iterRaw) else {
+        return 0
+    }
+    let current = UInt(bitPattern: iterator.current)
+    let last = UInt(bitPattern: iterator.last)
+    if iterator.step > 0 {
+        return current <= last ? 1 : 0
+    }
+    if iterator.step < 0 {
+        return current >= last ? 1 : 0
+    }
+    return 0
+}
+
+@_cdecl("kk_uint_range_next")
+public func kk_uint_range_next(_ iterRaw: Int) -> Int {
+    if runtimeIteratorBuilderBox(from: iterRaw) != nil {
+        return kk_iterator_builder_next(iterRaw)
+    }
+    guard let iterator = runtimeRangeIteratorBox(from: iterRaw) else {
+        return 0
+    }
+    let current = iterator.current
+    let uCurrent = UInt(bitPattern: current)
+    if iterator.step > 0 {
+        let uStep = UInt(bitPattern: iterator.step)
+        let (next, overflow) = uCurrent.addingReportingOverflow(uStep)
+        iterator.current = overflow ? iterator.last : Int(bitPattern: next)
+        if overflow { iterator.step = 0 }
+    } else if iterator.step < 0 {
+        let uStep = UInt(iterator.step.magnitude)
+        let (next, overflow) = uCurrent.subtractingReportingOverflow(uStep)
+        iterator.current = overflow ? iterator.last : Int(bitPattern: next)
+        if overflow { iterator.step = 0 }
+    }
+    return current
+}
+
 // MARK: - UIntRange properties and HOFs (STDLIB-RANGE-036)
 
 @_cdecl("kk_uint_range_contains")
