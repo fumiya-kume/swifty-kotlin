@@ -271,6 +271,7 @@ extension ABILoweringPass {
             interner.intern("kk_range_isEmpty"),
             interner.intern("kk_range_sum"),
             interner.intern("kk_range_toList"),
+            interner.intern("kk_range_toIntArray"),
             interner.intern("kk_ulong_range_toList"),
             interner.intern("kk_ulong_range_count"),
             interner.intern("kk_ulong_range_iterator"),
