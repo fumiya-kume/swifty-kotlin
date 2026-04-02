@@ -878,6 +878,7 @@ extension DataFlowSemaPhase {
         registerSyntheticCacheStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticResourceBundleStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticLocaleConstructorStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticNumberFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticDateFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticMetaprogStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticBigIntegerStubs(symbols: symbols, types: types, interner: interner)
