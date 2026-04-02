@@ -5472,6 +5472,62 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_url_new",
+            parameters: [
+                RuntimeABIParameter(name: "specRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_url_new_relative",
+            parameters: [
+                RuntimeABIParameter(name: "baseRaw", type: .intptr),
+                RuntimeABIParameter(name: "relativeRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(name: "kk_url_protocol", parameters: [RuntimeABIParameter(name: "urlRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_url_host", parameters: [RuntimeABIParameter(name: "urlRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_url_port", parameters: [RuntimeABIParameter(name: "urlRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_url_path", parameters: [RuntimeABIParameter(name: "urlRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_url_query", parameters: [RuntimeABIParameter(name: "urlRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_url_fragment", parameters: [RuntimeABIParameter(name: "urlRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(
+            name: "kk_url_toURI",
+            parameters: [
+                RuntimeABIParameter(name: "urlRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(name: "kk_url_toExternalForm", parameters: [RuntimeABIParameter(name: "urlRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(
+            name: "kk_url_sameFile",
+            parameters: [
+                RuntimeABIParameter(name: "lhsRaw", type: .intptr),
+                RuntimeABIParameter(name: "rhsRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_url_equals",
+            parameters: [
+                RuntimeABIParameter(name: "lhsRaw", type: .intptr),
+                RuntimeABIParameter(name: "rhsRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(name: "kk_url_hashCode", parameters: [RuntimeABIParameter(name: "urlRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_url_encode", parameters: [RuntimeABIParameter(name: "valueRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_url_decode", parameters: [RuntimeABIParameter(name: "valueRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
         // STDLIB-IO-087: Additional File operations
         RuntimeABIFunctionSpec(
             name: "kk_file_new_parent_child",
