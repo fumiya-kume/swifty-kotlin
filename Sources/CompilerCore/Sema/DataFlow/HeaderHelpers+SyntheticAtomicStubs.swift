@@ -627,7 +627,7 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
         symbols.setExternalLinkName(externalLinkName, for: ctorSymbol)
 
-        let paramName = interner.intern("initial")
+        let paramName = interner.intern("size")
         let paramSymbol = symbols.define(
             kind: .valueParameter,
             name: paramName,
@@ -640,7 +640,6 @@ extension DataFlowSemaPhase {
 
         symbols.setFunctionSignature(
             FunctionSignature(
-                receiverType: ownerType,
                 parameterTypes: [paramType],
                 returnType: ownerType,
                 valueParameterSymbols: [paramSymbol],
