@@ -206,7 +206,7 @@ extension CallTypeChecker {
             return ambiguousCallResult(range: range)
         }
 
-        let overloadResolutionExpectedType: TypeID? = expectedType
+        let overloadResolutionExpectedType: TypeID? = nil
 
         let probe = ctx.resolver.probeCall(
             candidates: candidates,
