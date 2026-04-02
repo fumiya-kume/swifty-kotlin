@@ -50,6 +50,19 @@ extension CallTypeChecker {
         return params.isEmpty
     }
 
+    /// Validates that the expression is a lambda literal with at most `maxParams` explicit parameters.
+    /// Unlike `isValidBuilderLambdaArgument` (which requires zero params for builder DSL blocks),
+    /// this variant is used for lambdas like `DeepRecursiveFunction`'s block which accepts an
+    /// explicit parameter (e.g. `{ n -> callRecursive(n - 1) }`).
+    func isValidLambdaArgument(_ argumentExprID: ExprID, ast: ASTModule, maxParams: Int) -> Bool {
+        guard let argumentExpr = ast.arena.expr(argumentExprID),
+              case let .lambdaLiteral(params, _, _, _) = argumentExpr
+        else {
+            return false
+        }
+        return params.count <= maxParams
+    }
+
     func builderDSLReceiverType(
         kind: BuilderDSLKind,
         lambdaExprID: ExprID,

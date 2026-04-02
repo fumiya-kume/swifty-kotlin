@@ -3896,7 +3896,16 @@ extension CallLowerer {
             symbol: driver.ctx.allocateSyntheticGeneratedSymbol(),
             type: sema.types.intType
         )
-        let valueParams: [KIRParameter] = functionType.params.enumerated().map { index, type in
+        // Build value parameters including the receiver (if present).
+        // For receiver-bearing function types like `DeepRecursiveScope<T,R>.(T) -> R`,
+        // the receiver is stored in `functionType.receiver` and must be forwarded
+        // as an explicit parameter so the adapter's ABI matches the runtime call site.
+        var allValueTypes: [TypeID] = []
+        if let receiverType = functionType.receiver {
+            allValueTypes.append(receiverType)
+        }
+        allValueTypes.append(contentsOf: functionType.params)
+        let valueParams: [KIRParameter] = allValueTypes.enumerated().map { index, type in
             KIRParameter(
                 symbol: SymbolID(rawValue: Int32(clamping: -700_000 - Int64(argExprID.rawValue) * 16 - Int64(index))),
                 type: type
