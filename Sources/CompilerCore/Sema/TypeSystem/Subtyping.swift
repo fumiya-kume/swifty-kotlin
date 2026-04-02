@@ -106,6 +106,41 @@ extension TypeSystem {
             return true
         }
 
+        if case let .classType(leftClass) = lhs,
+           case let .classType(rightClass) = rhs,
+           let comparableSym = comparableInterfaceSymbol,
+           rightClass.classSymbol == comparableSym,
+           nullabilitySubtype(leftClass.nullability, rightClass.nullability),
+           let symbols = symbolTable
+        {
+            let expectedComparableArg: TypeID? = switch rightClass.args.first {
+            case let .in(type)?, let .invariant(type)?, let .out(type)?:
+                type
+            case .star?, nil:
+                nil
+            }
+            if let expectedComparableArg,
+               let leftSymbol = symbols.symbol(leftClass.classSymbol)
+            {
+                let members = symbols.children(ofFQName: leftSymbol.fqName)
+                for memberID in members {
+                    guard let memberSymbol = symbols.symbol(memberID),
+                          memberSymbol.kind == .function,
+                          let signature = symbols.functionSignature(for: memberID),
+                          signature.parameterTypes.count == 1
+                    else {
+                        continue
+                    }
+                    let parameterType = signature.parameterTypes[0]
+                    if isSubtype(expectedComparableArg, parameterType),
+                       isSubtype(parameterType, expectedComparableArg)
+                    {
+                        return true
+                    }
+                }
+            }
+        }
+
         switch (lhs, rhs) {
         case (.any(.nonNull), .any(.nullable)):
             return true

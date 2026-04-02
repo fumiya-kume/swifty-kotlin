@@ -776,7 +776,7 @@ extension ExprLowerer {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case let .localFunDecl(localFunName, localFunValueParams, _, localFunBody, _):
+        case let .localFunDecl(localFunName, _, localFunValueParams, _, localFunBody, _):
             if let symbol = sema.bindings.identifierSymbols[exprID] {
                 let sig = sema.symbols.functionSignature(for: symbol)
                 let funType: TypeID = if let sig {

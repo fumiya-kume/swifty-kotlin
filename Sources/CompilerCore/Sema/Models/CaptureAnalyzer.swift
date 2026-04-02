@@ -178,7 +178,7 @@ struct CaptureAnalyzer {
                     visit(receiver)
                 }
 
-            case let .localFunDecl(_, _, _, body, _):
+            case let .localFunDecl(_, _, _, _, body, _):
                 if !skipNestedClosures {
                     visitBody(body)
                 }

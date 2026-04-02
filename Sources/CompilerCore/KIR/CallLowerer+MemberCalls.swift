@@ -4810,6 +4810,11 @@ extension CallLowerer {
         sema: SemaModule
     ) -> KIRInstruction? {
         guard !isSuperCall, let chosenCallee else { return nil }
+        if let comparableSymbol = sema.types.comparableInterfaceSymbol,
+           sema.symbols.parentSymbol(for: chosenCallee) == comparableSymbol
+        {
+            return nil
+        }
         let hasExternalLink = sema.symbols.externalLinkName(for: chosenCallee)
             .map { !$0.isEmpty } ?? false
         guard !hasExternalLink else { return nil }
@@ -4927,6 +4932,13 @@ extension CallLowerer {
                 interner: interner
             ) {
                 return collectionProperty
+            }
+            if let comparableSymbol = sema.types.comparableInterfaceSymbol,
+               sema.symbols.parentSymbol(for: chosenCallee) == comparableSymbol,
+               let symbol = sema.symbols.symbol(chosenCallee),
+               interner.resolve(symbol.name) == "compareTo"
+            {
+                return interner.intern("kk_compare_any")
             }
             return fallback
         }

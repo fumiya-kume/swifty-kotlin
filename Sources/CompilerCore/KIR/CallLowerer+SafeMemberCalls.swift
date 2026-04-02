@@ -648,6 +648,14 @@ extension CallLowerer {
             shared: shared, emit: &instructions
         )
         var finalArguments = safeNormalized.arguments
+        let isComparableCompareToCall = if let chosen,
+                                           let comparableSymbol = sema.types.comparableInterfaceSymbol
+        {
+            sema.symbols.parentSymbol(for: chosen) == comparableSymbol
+                && interner.resolve(effectiveCalleeName) == "compareTo"
+        } else {
+            false
+        }
         if let chosen,
            let signature = sema.symbols.functionSignature(for: chosen),
            signature.receiverType != nil
@@ -714,6 +722,8 @@ extension CallLowerer {
                                                                  !externalLinkName.isEmpty
                 {
                     interner.intern(externalLinkName)
+                } else if isComparableCompareToCall {
+                    interner.intern("kk_compare_any")
                 } else if chosen == nil, isCoroutineReceiver, args.isEmpty {
                     switch interner.resolve(effectiveCalleeName) {
                     case "await":
@@ -729,7 +739,8 @@ extension CallLowerer {
                     effectiveCalleeName
                 }
                 let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
-                if !isSuperCall,
+                if !isComparableCompareToCall,
+                   !isSuperCall,
                    let chosen,
                    let dispatchKind = resolveVirtualDispatch(callee: chosen, receiverTypeID: receiverTypeForDispatch, sema: sema)
                 {
@@ -812,6 +823,8 @@ extension CallLowerer {
                                                              !externalLinkName.isEmpty
             {
                 interner.intern(externalLinkName)
+            } else if isComparableCompareToCall {
+                interner.intern("kk_compare_any")
             } else if chosen == nil, isCoroutineReceiver, args.isEmpty {
                 switch interner.resolve(effectiveCalleeName) {
                 case "await":
@@ -827,7 +840,8 @@ extension CallLowerer {
                 effectiveCalleeName
             }
             let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
-            if !isSuperCall,
+            if !isComparableCompareToCall,
+               !isSuperCall,
                let chosen,
                let dispatchKind = resolveVirtualDispatch(callee: chosen, receiverTypeID: receiverTypeForDispatch, sema: sema)
             {

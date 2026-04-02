@@ -1319,12 +1319,46 @@ extension ExprTypeChecker {
             guard let receiverType else {
                 return nil
             }
+            let comparatorFQName: [InternedString] = [ctx.interner.intern("kotlin"), ctx.interner.intern("Comparator")]
+            if let comparatorSymbol = sema.symbols.lookup(fqName: comparatorFQName),
+               case let .classType(receiverClassType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+               receiverClassType.classSymbol == comparatorSymbol,
+               index == 0
+            {
+                let calleeNameStr = ctx.interner.resolve(calleeName)
+                if calleeNameStr == "thenBy" || calleeNameStr == "thenByDescending" {
+                    if let firstArg = receiverClassType.args.first {
+                        return switch firstArg {
+                        case let .invariant(t), let .out(t), let .in(t): t
+                        case .star: sema.types.anyType
+                        }
+                    }
+                }
+            }
             argIndex = index
-            candidateSymbols = driver.helpers.collectMemberFunctionCandidates(
+            var memberCandidates = driver.helpers.collectMemberFunctionCandidates(
                 named: calleeName,
                 receiverType: receiverType,
                 sema: sema
             )
+            if let comparatorSymbol = sema.symbols.lookup(fqName: comparatorFQName),
+               case let .classType(receiverClassType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+               receiverClassType.classSymbol == comparatorSymbol
+            {
+                let comparisonsFQName: [InternedString] = [ctx.interner.intern("kotlin"), ctx.interner.intern("comparisons")]
+                let extensionFQName = comparisonsFQName + [calleeName]
+                for candidate in sema.symbols.lookupAll(fqName: extensionFQName) {
+                    guard let symbol = sema.symbols.symbol(candidate),
+                          symbol.kind == .function,
+                          let signature = sema.symbols.functionSignature(for: candidate),
+                          signature.receiverType != nil
+                    else {
+                        continue
+                    }
+                    memberCandidates.append(candidate)
+                }
+            }
+            candidateSymbols = memberCandidates
         }
 
         var inferredParameterTypes: [TypeID] = []

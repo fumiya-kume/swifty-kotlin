@@ -42,6 +42,8 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol,
             comparatorSymbol: comparatorSymbol
         )
 
@@ -49,6 +51,8 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol,
             comparatorSymbol: comparatorSymbol
         )
 
@@ -119,8 +123,11 @@ extension DataFlowSemaPhase {
                 flags: []
             )
         }
+        // Kotlin's Comparator<T> is routinely instantiated with nullable T
+        // (for example compareBy<Int?> { it }.nullsFirst()), so keep the
+        // synthetic type parameter permissive here.
         let tParamType = types.make(.typeParam(TypeParamType(
-            symbol: tParamSymbol, nullability: .nonNull
+            symbol: tParamSymbol, nullability: .platformType
         )))
 
         // compare(a: T, b: T): Int
@@ -185,32 +192,41 @@ extension DataFlowSemaPhase {
         comparisonsPackageSymbol: SymbolID,
         comparatorSymbol: SymbolID
     ) {
-        let comparatorFQName = symbols.symbol(comparatorSymbol)?.fqName ?? comparisonsPkg
-        let tParamName = interner.intern("T")
-        let tParamFQName = comparatorFQName + [tParamName]
-        guard let tParamSymbol = symbols.lookup(fqName: tParamFQName) else { return }
-        let tParamType = types.make(.typeParam(TypeParamType(
-            symbol: tParamSymbol, nullability: .nonNull
-        )))
-
-        let comparatorType = types.make(.classType(ClassType(
-            classSymbol: comparatorSymbol,
-            args: [.invariant(tParamType)],
-            nullability: .nonNull
-        )))
-        let selectorType = types.make(.functionType(FunctionType(
-            params: [tParamType],
-            returnType: types.anyType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-
         for (name, extLink) in [
             ("compareBy", "kk_comparator_from_selector"),
             ("compareByDescending", "kk_comparator_from_selector_descending"),
         ] {
             let functionName = interner.intern(name)
             let functionFQName = comparisonsPkg + [functionName]
+            let tParamName = interner.intern("T")
+            let tParamInternalName = interner.intern("\(name)_T")
+            let tParamFQName = functionFQName + [tParamInternalName]
+            let tParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: tParamFQName) {
+                existing
+            } else {
+                symbols.define(
+                    kind: .typeParameter,
+                    name: tParamName,
+                    fqName: tParamFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+            }
+            let tParamType = types.make(.typeParam(TypeParamType(
+                symbol: tParamSymbol, nullability: .platformType
+            )))
+            let comparatorType = types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.invariant(tParamType)],
+                nullability: .nonNull
+            )))
+            let selectorType = types.make(.functionType(FunctionType(
+                params: [tParamType],
+                returnType: types.nullableAnyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
             if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
                 guard let sig = symbols.functionSignature(for: symbolID) else { return false }
                 return sig.parameterTypes == [selectorType] && sig.returnType == comparatorType
@@ -268,31 +284,40 @@ extension DataFlowSemaPhase {
         comparisonsPackageSymbol: SymbolID,
         comparatorSymbol: SymbolID
     ) {
-        let comparatorFQName = symbols.symbol(comparatorSymbol)?.fqName ?? comparisonsPkg
-        let tParamName = interner.intern("T")
-        let tParamFQName = comparatorFQName + [tParamName]
-        guard let tParamSymbol = symbols.lookup(fqName: tParamFQName) else { return }
-        let tParamType = types.make(.typeParam(TypeParamType(
-            symbol: tParamSymbol, nullability: .nonNull
-        )))
-
-        let comparatorType = types.make(.classType(ClassType(
-            classSymbol: comparatorSymbol,
-            args: [.invariant(tParamType)],
-            nullability: .nonNull
-        )))
-        let selectorType = types.make(.functionType(FunctionType(
-            params: [tParamType],
-            returnType: types.anyType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-
         let functionName = interner.intern("compareBy")
         let functionFQName = comparisonsPkg + [functionName]
 
         // Register 2-selector and 3-selector overloads
         for arity in 2...3 {
+            let tParamName = interner.intern("T")
+            let tParamInternalName = interner.intern("compareBy_T$arity\(arity)")
+            let tParamFQName = functionFQName + [tParamInternalName]
+            let tParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: tParamFQName) {
+                existing
+            } else {
+                symbols.define(
+                    kind: .typeParameter,
+                    name: tParamName,
+                    fqName: tParamFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+            }
+            let tParamType = types.make(.typeParam(TypeParamType(
+                symbol: tParamSymbol, nullability: .platformType
+            )))
+            let comparatorType = types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.invariant(tParamType)],
+                nullability: .nonNull
+            )))
+            let selectorType = types.make(.functionType(FunctionType(
+                params: [tParamType],
+                returnType: types.nullableAnyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
             let paramTypes = Array(repeating: selectorType, count: arity)
 
             // Check if this overload already exists
@@ -358,36 +383,54 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
+        comparisonsPkg: [InternedString],
+        comparisonsPackageSymbol: SymbolID,
         comparatorSymbol: SymbolID
     ) {
-        guard let compInfo = symbols.symbol(comparatorSymbol) else { return }
-        let comparatorFQName = compInfo.fqName
-        let tParamName = interner.intern("T")
-        let tParamFQName = comparatorFQName + [tParamName]
-        guard let tParamSymbol = symbols.lookup(fqName: tParamFQName) else { return }
-        let tParamType = types.make(.typeParam(TypeParamType(
-            symbol: tParamSymbol, nullability: .nonNull
-        )))
-
-        let receiverType = types.make(.classType(ClassType(
-            classSymbol: comparatorSymbol,
-            args: [.invariant(tParamType)],
-            nullability: .nonNull
-        )))
-        let selectorType = types.make(.functionType(FunctionType(
-            params: [tParamType],
-            returnType: types.anyType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-
         for (name, extLink) in [
             ("thenBy", "kk_comparator_then_by"),
             ("thenByDescending", "kk_comparator_then_by_descending"),
         ] {
             let memberName = interner.intern(name)
-            let memberFQName = comparatorFQName + [memberName]
-            if symbols.lookup(fqName: memberFQName) != nil { continue }
+            let memberFQName = comparisonsPkg + [memberName]
+            let tParamName = interner.intern("T")
+            let tParamInternalName = interner.intern("\(name)_T")
+            let tParamFQName = memberFQName + [tParamInternalName]
+            let tParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: tParamFQName) {
+                existing
+            } else {
+                symbols.define(
+                    kind: .typeParameter,
+                    name: tParamName,
+                    fqName: tParamFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+            }
+            let tParamType = types.make(.typeParam(TypeParamType(
+                symbol: tParamSymbol, nullability: .platformType
+            )))
+            let receiverType = types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.invariant(tParamType)],
+                nullability: .nonNull
+            )))
+            let selectorType = types.make(.functionType(FunctionType(
+                params: [tParamType],
+                returnType: types.nullableAnyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            if let existing = symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == receiverType
+                    && signature.parameterTypes == [selectorType]
+                    && signature.returnType == receiverType
+            }) {
+                symbols.setExternalLinkName(extLink, for: existing)
+                continue
+            }
 
             let selectorParamName = interner.intern("selector")
             let selectorParamSymbol = symbols.define(
@@ -406,7 +449,7 @@ extension DataFlowSemaPhase {
                 visibility: .public,
                 flags: [.synthetic, .inlineFunction]
             )
-            symbols.setParentSymbol(comparatorSymbol, for: memberSymbol)
+            symbols.setParentSymbol(comparisonsPackageSymbol, for: memberSymbol)
             symbols.setParentSymbol(memberSymbol, for: selectorParamSymbol)
             symbols.setExternalLinkName(extLink, for: memberSymbol)
             symbols.setFunctionSignature(
@@ -415,15 +458,43 @@ extension DataFlowSemaPhase {
                     parameterTypes: [selectorType],
                     returnType: receiverType,
                     typeParameterSymbols: [tParamSymbol],
-                    classTypeParameterCount: 1
+                    classTypeParameterCount: 0
                 ),
                 for: memberSymbol
             )
         }
 
         let reversedName = interner.intern("reversed")
-        let reversedFQName = comparatorFQName + [reversedName]
-        if symbols.lookup(fqName: reversedFQName) == nil {
+        let reversedFQName = comparisonsPkg + [reversedName]
+        let reversedTypeParamName = interner.intern("T")
+        let reversedTypeParamInternalName = interner.intern("reversed_T")
+        let reversedTypeParamFQName = reversedFQName + [reversedTypeParamInternalName]
+        let reversedTypeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: reversedTypeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: reversedTypeParamName,
+                fqName: reversedTypeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let reversedTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: reversedTypeParamSymbol, nullability: .platformType
+        )))
+        let reversedReceiverType = types.make(.classType(ClassType(
+            classSymbol: comparatorSymbol,
+            args: [.invariant(reversedTypeParamType)],
+            nullability: .nonNull
+        )))
+        if symbols.lookupAll(fqName: reversedFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == reversedReceiverType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == reversedReceiverType
+        }) == nil {
             let memberSymbol = symbols.define(
                 kind: .function,
                 name: reversedName,
@@ -432,15 +503,15 @@ extension DataFlowSemaPhase {
                 visibility: .public,
                 flags: [.synthetic, .inlineFunction]
             )
-            symbols.setParentSymbol(comparatorSymbol, for: memberSymbol)
+            symbols.setParentSymbol(comparisonsPackageSymbol, for: memberSymbol)
             symbols.setExternalLinkName("kk_comparator_reversed", for: memberSymbol)
             symbols.setFunctionSignature(
                 FunctionSignature(
-                    receiverType: receiverType,
+                    receiverType: reversedReceiverType,
                     parameterTypes: [],
-                    returnType: receiverType,
-                    typeParameterSymbols: [tParamSymbol],
-                    classTypeParameterCount: 1
+                    returnType: reversedReceiverType,
+                    typeParameterSymbols: [reversedTypeParamSymbol],
+                    classTypeParameterCount: 0
                 ),
                 for: memberSymbol
             )
@@ -451,30 +522,45 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
+        comparisonsPkg: [InternedString],
+        comparisonsPackageSymbol: SymbolID,
         comparatorSymbol: SymbolID
     ) {
-        guard let compInfo = symbols.symbol(comparatorSymbol) else { return }
-        let comparatorFQName = compInfo.fqName
-        let tParamName = interner.intern("T")
-        let tParamFQName = comparatorFQName + [tParamName]
-        guard let tParamSymbol = symbols.lookup(fqName: tParamFQName) else { return }
-        let tParamType = types.make(.typeParam(TypeParamType(
-            symbol: tParamSymbol, nullability: .nonNull
-        )))
-
-        let receiverType = types.make(.classType(ClassType(
-            classSymbol: comparatorSymbol,
-            args: [.invariant(tParamType)],
-            nullability: .nonNull
-        )))
-
         for (name, extLink) in [
             ("nullsFirst", "kk_comparator_nulls_first"),
             ("nullsLast", "kk_comparator_nulls_last"),
         ] {
             let memberName = interner.intern(name)
-            let memberFQName = comparatorFQName + [memberName]
-            if let existing = symbols.lookup(fqName: memberFQName) {
+            let memberFQName = comparisonsPkg + [memberName]
+            let tParamName = interner.intern("T")
+            let tParamInternalName = interner.intern("\(name)_T")
+            let tParamFQName = memberFQName + [tParamInternalName]
+            let tParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: tParamFQName) {
+                existing
+            } else {
+                symbols.define(
+                    kind: .typeParameter,
+                    name: tParamName,
+                    fqName: tParamFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+            }
+            let tParamType = types.make(.typeParam(TypeParamType(
+                symbol: tParamSymbol, nullability: .platformType
+            )))
+            let receiverType = types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.invariant(tParamType)],
+                nullability: .nonNull
+            )))
+            if let existing = symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == receiverType
+                    && signature.parameterTypes.isEmpty
+                    && signature.returnType == receiverType
+            }) {
                 symbols.setExternalLinkName(extLink, for: existing)
                 continue
             }
@@ -487,7 +573,7 @@ extension DataFlowSemaPhase {
                 visibility: .public,
                 flags: [.synthetic, .inlineFunction]
             )
-            symbols.setParentSymbol(comparatorSymbol, for: memberSymbol)
+            symbols.setParentSymbol(comparisonsPackageSymbol, for: memberSymbol)
             symbols.setExternalLinkName(extLink, for: memberSymbol)
             symbols.setFunctionSignature(
                 FunctionSignature(
@@ -495,7 +581,7 @@ extension DataFlowSemaPhase {
                     parameterTypes: [],
                     returnType: receiverType,
                     typeParameterSymbols: [tParamSymbol],
-                    classTypeParameterCount: 1
+                    classTypeParameterCount: 0
                 ),
                 for: memberSymbol
             )

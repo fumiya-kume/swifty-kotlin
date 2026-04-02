@@ -459,8 +459,8 @@ final class ExprTypeChecker {
             sema.bindings.bindExprType(id, type: resultType)
             return resultType
 
-        case let .localFunDecl(name, valueParams, returnTypeRef, body, range):
-            return driver.localDeclChecker.inferLocalFunDeclExpr(id, name: name, valueParams: valueParams, returnTypeRef: returnTypeRef, body: body, range: range, ctx: ctx, locals: &locals)
+        case let .localFunDecl(name, typeParams, valueParams, returnTypeRef, body, range):
+            return driver.localDeclChecker.inferLocalFunDeclExpr(id, name: name, typeParams: typeParams, valueParams: valueParams, returnTypeRef: returnTypeRef, body: body, range: range, ctx: ctx, locals: &locals)
 
         case let .superRef(interfaceQualifier, range):
             return inferSuperRefExpr(id, interfaceQualifier: interfaceQualifier, range: range, ctx: ctx)

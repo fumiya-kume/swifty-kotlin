@@ -460,7 +460,7 @@ public struct ImportDecl: Sendable {
     public let alias: InternedString?
 }
 
-public struct TypeParamDecl {
+public struct TypeParamDecl: Equatable {
     public let name: InternedString
     public let variance: TypeVariance
     public let isReified: Bool

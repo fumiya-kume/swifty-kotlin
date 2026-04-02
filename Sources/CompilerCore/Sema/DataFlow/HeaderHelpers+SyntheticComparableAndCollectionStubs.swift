@@ -41,6 +41,7 @@ extension DataFlowSemaPhase {
 
         // Store in TypeSystem for use in isSubtype
         types.comparableInterfaceSymbol = comparableSymbol
+        types.setNominalTypeParameterVariances([.in], for: comparableSymbol)
 
         // Define type parameter T for Comparable<in T>.
         let tParamName = interner.intern("T")
