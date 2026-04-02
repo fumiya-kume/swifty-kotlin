@@ -880,6 +880,7 @@ extension DataFlowSemaPhase {
         registerSyntheticLocaleConstructorStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticDateFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticMetaprogStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsInteropStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticBigIntegerStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticThreadLocalStubs(symbols: symbols, types: types, interner: interner)
     }
