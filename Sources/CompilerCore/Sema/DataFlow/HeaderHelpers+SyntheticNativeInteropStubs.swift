@@ -350,6 +350,7 @@ extension DataFlowSemaPhase {
             fqName: cinteropPkg + [interner.intern("CPointerVar")],
             parameterName: "T",
             supertype: cPointedSymbol,
+            supertypeIsGeneric: false,
             symbols: symbols,
             types: types,
             interner: interner
@@ -417,6 +418,7 @@ extension DataFlowSemaPhase {
         fqName: [InternedString],
         parameterName: String,
         supertype: SymbolID?,
+        supertypeIsGeneric: Bool = true,
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
@@ -450,15 +452,11 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterVariances([.invariant], for: ownerSymbol)
 
         if let supertype {
-            let supertypeType = types.make(.classType(ClassType(
-                classSymbol: supertype,
-                args: [.invariant(parameterType)],
-                nullability: .nonNull
-            )))
+            let supertypeTypeArgs: [TypeProjection] = supertypeIsGeneric ? [.invariant(parameterType)] : []
             symbols.setDirectSupertypes([supertype], for: ownerSymbol)
             types.setNominalDirectSupertypes([supertype], for: ownerSymbol)
-            symbols.setSupertypeTypeArgs([.invariant(parameterType)], for: ownerSymbol, supertype: supertype)
-            types.setNominalSupertypeTypeArgs([.invariant(parameterType)], for: ownerSymbol, supertype: supertype)
+            symbols.setSupertypeTypeArgs(supertypeTypeArgs, for: ownerSymbol, supertype: supertype)
+            types.setNominalSupertypeTypeArgs(supertypeTypeArgs, for: ownerSymbol, supertype: supertype)
         }
     }
 }
