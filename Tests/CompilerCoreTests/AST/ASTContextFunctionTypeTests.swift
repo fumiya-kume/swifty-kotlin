@@ -110,6 +110,8 @@ final class ASTContextFunctionTypeTests: XCTestCase {
             return "<invalid>"
         }
         switch typeRef {
+        case let .annotated(base, annotations):
+            return renderTypeRef(base, in: ast, interner: interner)
         case let .named(path, args, nullable):
             let base = path.map(interner.resolve).joined(separator: ".")
             let renderedArgs = if args.isEmpty {
