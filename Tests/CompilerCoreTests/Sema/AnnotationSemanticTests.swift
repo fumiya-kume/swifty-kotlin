@@ -262,7 +262,7 @@ final class AnnotationSemanticTests: XCTestCase {
             KnownCompilerAnnotation.wasExperimental.matches($0.annotationFQName)
         }))
 
-        XCTAssertEqual(annotation.arguments, ["markerClass=ExperimentalApiclass"])
+        XCTAssertEqual(annotation.arguments, ["markerClass=ExperimentalApi::class"])
     }
 
     func testExtensionFunctionTypeResolvesInterfacePropertyAndTypeAlias() throws {
