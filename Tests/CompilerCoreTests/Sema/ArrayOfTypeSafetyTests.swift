@@ -158,6 +158,50 @@ final class ArrayOfTypeSafetyTests: XCTestCase {
         }
     }
 
+    func testUShortArrayConstructorAndGetReturnUShort() throws {
+        let source = """
+        fun main() {
+            val arr = UShortArray(3) { it.toUShort() }
+            val x = arr.get(0)
+            println(x)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+            let mainBody = try XCTUnwrap(findMainBodyStatements(in: ast, interner: ctx.interner))
+
+            var foundUShortArray = false
+            var foundUShortGet = false
+            for exprID in mainBody {
+                guard let expr = ast.arena.expr(exprID),
+                      case let .localDecl(name, _, _, initializer, _, _) = expr,
+                      let initializer,
+                      let boundType = sema.bindings.exprType(for: initializer)
+                else { continue }
+
+                if ctx.interner.resolve(name) == "arr",
+                   case let .classType(classType) = sema.types.kind(of: boundType),
+                   let symbol = sema.symbols.symbol(classType.classSymbol)
+                {
+                    foundUShortArray = ctx.interner.resolve(symbol.name) == "UShortArray"
+                }
+
+                if ctx.interner.resolve(name) == "x" {
+                    foundUShortGet = boundType == sema.types.ushortType
+                }
+            }
+
+            XCTAssertTrue(foundUShortArray, "Expected arr to be typed as UShortArray.")
+            XCTAssertTrue(foundUShortGet, "Expected arr.get(0) to be typed as UShort.")
+        }
+    }
+
     func testUByteArrayConstructorInfersUByteElements() throws {
         let source = """
         fun main() {
@@ -171,6 +215,78 @@ final class ArrayOfTypeSafetyTests: XCTestCase {
             try runSema(ctx)
             assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
             assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+            let mainBody = try XCTUnwrap(findMainBodyStatements(in: ast, interner: ctx.interner))
+
+            var foundUByteArray = false
+            var foundUByteGet = false
+            for exprID in mainBody {
+                guard let expr = ast.arena.expr(exprID),
+                      case let .localDecl(name, _, _, initializer, _, _) = expr,
+                      let initializer,
+                      let boundType = sema.bindings.exprType(for: initializer)
+                else { continue }
+
+                if ctx.interner.resolve(name) == "arr",
+                   case let .classType(classType) = sema.types.kind(of: boundType),
+                   let symbol = sema.symbols.symbol(classType.classSymbol)
+                {
+                    foundUByteArray = ctx.interner.resolve(symbol.name) == "UByteArray"
+                }
+
+                if ctx.interner.resolve(name) == "x" {
+                    foundUByteGet = boundType == sema.types.ubyteType
+                }
+            }
+
+            XCTAssertTrue(foundUByteArray, "Expected arr to be typed as UByteArray.")
+            XCTAssertTrue(foundUByteGet, "Expected arr.get(0) to be typed as UByte.")
+        }
+    }
+
+    func testUShortArrayFactoryReturnsUShortArray() throws {
+        let source = """
+        fun main() {
+            val arr = ushortArrayOf(1.toUShort(), 2.toUShort(), 65535.toUShort())
+            val x = arr[2]
+            println(x)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+            let mainBody = try XCTUnwrap(findMainBodyStatements(in: ast, interner: ctx.interner))
+
+            var foundUShortArray = false
+            var foundIndexedUShort = false
+            for exprID in mainBody {
+                guard let expr = ast.arena.expr(exprID),
+                      case let .localDecl(name, _, _, initializer, _, _) = expr,
+                      let initializer,
+                      let boundType = sema.bindings.exprType(for: initializer)
+                else { continue }
+
+                if ctx.interner.resolve(name) == "arr",
+                   case let .classType(classType) = sema.types.kind(of: boundType),
+                   let symbol = sema.symbols.symbol(classType.classSymbol)
+                {
+                    foundUShortArray = ctx.interner.resolve(symbol.name) == "UShortArray"
+                }
+
+                if ctx.interner.resolve(name) == "x" {
+                    foundIndexedUShort = boundType == sema.types.ushortType
+                }
+            }
+
+            XCTAssertTrue(foundUShortArray, "Expected ushortArrayOf(...) to produce UShortArray.")
+            XCTAssertTrue(foundIndexedUShort, "Expected indexed access to produce UShort.")
         }
     }
 
@@ -187,6 +303,34 @@ final class ArrayOfTypeSafetyTests: XCTestCase {
             try runSema(ctx)
             assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
             assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+            let mainBody = try XCTUnwrap(findMainBodyStatements(in: ast, interner: ctx.interner))
+
+            var foundUByteArray = false
+            var foundIndexedUByte = false
+            for exprID in mainBody {
+                guard let expr = ast.arena.expr(exprID),
+                      case let .localDecl(name, _, _, initializer, _, _) = expr,
+                      let initializer,
+                      let boundType = sema.bindings.exprType(for: initializer)
+                else { continue }
+
+                if ctx.interner.resolve(name) == "arr",
+                   case let .classType(classType) = sema.types.kind(of: boundType),
+                   let symbol = sema.symbols.symbol(classType.classSymbol)
+                {
+                    foundUByteArray = ctx.interner.resolve(symbol.name) == "UByteArray"
+                }
+
+                if ctx.interner.resolve(name) == "x" {
+                    foundIndexedUByte = boundType == sema.types.ubyteType
+                }
+            }
+
+            XCTAssertTrue(foundUByteArray, "Expected ubyteArrayOf(...) to produce UByteArray.")
+            XCTAssertTrue(foundIndexedUByte, "Expected indexed access to produce UByte.")
         }
     }
 }

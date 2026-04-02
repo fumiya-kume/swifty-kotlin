@@ -115,6 +115,7 @@ struct KnownCompilerNames {
     let shortArray: InternedString
     let byteArray: InternedString
     let ubyteArray: InternedString
+    let ushortArray: InternedString
     let doubleArray: InternedString
     let floatArray: InternedString
     let booleanArray: InternedString
@@ -279,6 +280,7 @@ struct KnownCompilerNames {
         shortArray = interner.intern("ShortArray")
         byteArray = interner.intern("ByteArray")
         ubyteArray = interner.intern("UByteArray")
+        ushortArray = interner.intern("UShortArray")
         doubleArray = interner.intern("DoubleArray")
         floatArray = interner.intern("FloatArray")
         booleanArray = interner.intern("BooleanArray")
@@ -509,6 +511,7 @@ struct KnownCompilerNames {
             || name == shortArray
             || name == byteArray
             || name == ubyteArray
+            || name == ushortArray
             || name == doubleArray
             || name == floatArray
             || name == booleanArray
@@ -524,6 +527,7 @@ struct KnownCompilerNames {
             || name == shortArray
             || name == byteArray
             || name == ubyteArray
+            || name == ushortArray
             || name == doubleArray
             || name == floatArray
             || name == booleanArray
@@ -536,8 +540,7 @@ struct KnownCompilerNames {
     static let stdlibCollectionFactoryNames: Set<String> = [
         "listOf", "mutableListOf", "emptyList",
         "arrayOf", "emptyArray", "intArrayOf", "longArrayOf",
-        "shortArrayOf", "byteArrayOf",
-        "ubyteArrayOf",
+        "shortArrayOf", "byteArrayOf", "ubyteArrayOf", "ushortArrayOf",
         "doubleArrayOf", "floatArrayOf", "booleanArrayOf", "charArrayOf",
         "mapOf", "mutableMapOf", "emptyMap",
         "setOf", "mutableSetOf", "emptySet",

@@ -192,6 +192,39 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
     }
 
+    func testMustBeDocumentedAnnotationIsSyntheticAndTargetedToAnnotationClasses() throws {
+        let source = """
+        annotation class ExperimentalApi
+        """
+
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let mustBeDocumentedFQName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("annotation"),
+            ctx.interner.intern("MustBeDocumented"),
+        ]
+        let symbolID = try XCTUnwrap(sema.symbols.lookup(fqName: mustBeDocumentedFQName))
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.visibility, .public)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+        XCTAssertEqual(symbol.kind, .annotationClass)
+
+        let annotations = sema.symbols.annotations(for: symbol.id)
+        XCTAssertTrue(
+            annotations.contains(
+                where: {
+                    $0.annotationFQName == "kotlin.annotation.Target"
+                        && $0.arguments == ["AnnotationTarget.ANNOTATION_CLASS"]
+                }
+            ),
+            "Expected MustBeDocumented to carry @Target(AnnotationTarget.ANNOTATION_CLASS), got: \(annotations)"
+        )
+    }
+
     func testFieldTargetAllowsBackedFieldAndRejectsMissingBackingField() {
         let source = """
         @Target(value = [AnnotationTarget.FIELD])

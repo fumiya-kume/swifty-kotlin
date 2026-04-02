@@ -5,7 +5,7 @@ import Foundation
 /// Registers synthetic `kotlin.jvm.*` annotation classes so that
 /// `@JvmStatic`, `@JvmField`, and `@JvmOverloads` are resolvable during
 /// name-resolution and type-checking without errors.  Also ensures
-/// `kotlin.Suppress` is present as an annotation class so that
+/// `kotlin.Suppress` and `kotlin.annotation.*` metaprogramming stubs are present so that
 /// `@Suppress("...")` suppression records are created correctly even when
 /// no library metadata has been loaded.
 ///
@@ -123,15 +123,56 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         if let targetSymbol = symbols.lookup(fqName: kotlinAnnotationPkg + [interner.intern("Target")]) {
+            addAnnotationTargetMetaAnnotation(to: targetSymbol, symbols: symbols)
+        }
+
+        registerSyntheticAnnotationClass(
+            named: "MustBeDocumented",
+            packageFQName: kotlinAnnotationPkg,
+            packageSymbol: kotlinAnnotationPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let mustBeDocumentedSymbol = symbols.lookup(fqName: kotlinAnnotationPkg + [interner.intern("MustBeDocumented")]) {
+            addAnnotationTargetMetaAnnotation(to: mustBeDocumentedSymbol, symbols: symbols)
+        }
+
+        registerSyntheticAnnotationClass(
+            named: "Repeatable",
+            packageFQName: kotlinAnnotationPkg,
+            packageSymbol: kotlinAnnotationPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let repeatableSymbol = symbols.lookup(fqName: kotlinAnnotationPkg + [interner.intern("Repeatable")]) {
             let record = MetadataAnnotationRecord(
                 annotationFQName: "kotlin.annotation.Target",
                 arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
             )
-            var annotations = symbols.annotations(for: targetSymbol)
+            var annotations = symbols.annotations(for: repeatableSymbol)
             if !annotations.contains(record) {
                 annotations.append(record)
             }
-            symbols.setAnnotations(annotations, for: targetSymbol)
+            symbols.setAnnotations(annotations, for: repeatableSymbol)
+        }
+
+        registerSyntheticAnnotationClass(
+            named: "Retention",
+            packageFQName: kotlinAnnotationPkg,
+            packageSymbol: kotlinAnnotationPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let retentionSymbol = symbols.lookup(fqName: kotlinAnnotationPkg + [interner.intern("Retention")]) {
+            let record = MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
+            )
+            var annotations = symbols.annotations(for: retentionSymbol)
+            if !annotations.contains(record) {
+                annotations.append(record)
+            }
+            symbols.setAnnotations(annotations, for: retentionSymbol)
         }
 
         registerSyntheticAnnotationTargetEnum(
@@ -141,6 +182,59 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticAnnotationRetentionEnum(
+            packageFQName: kotlinAnnotationPkg,
+            packageSymbol: kotlinAnnotationPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        let annotationRetentionName = interner.intern("AnnotationRetention")
+        if let retentionSymbol = symbols.lookup(fqName: kotlinAnnotationPkg + [interner.intern("Retention")]),
+           let annotationRetentionSymbol = symbols.lookup(fqName: kotlinAnnotationPkg + [annotationRetentionName]),
+           let retentionEntrySymbol = symbols.lookup(fqName: kotlinAnnotationPkg + [annotationRetentionName, interner.intern("RUNTIME")])
+        {
+            let retentionType = types.make(.classType(ClassType(
+                classSymbol: annotationRetentionSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let valueName = interner.intern("value")
+            let retentionName = interner.intern("Retention")
+            let valueFQName = kotlinAnnotationPkg + [retentionName, valueName]
+            let valueSymbol: SymbolID
+            if let existing = symbols.lookup(fqName: valueFQName) {
+                valueSymbol = existing
+            } else {
+                valueSymbol = symbols.define(
+                    kind: .property,
+                    name: valueName,
+                    fqName: valueFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .constValue]
+                )
+            }
+            symbols.setParentSymbol(retentionSymbol, for: valueSymbol)
+            symbols.setPropertyType(retentionType, for: valueSymbol)
+            symbols.setConstValueExprKind(.symbolRef(retentionEntrySymbol), for: valueSymbol)
+        }
+    }
+
+    private func addAnnotationTargetMetaAnnotation(
+        to symbol: SymbolID,
+        symbols: SymbolTable
+    ) {
+        let record = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.annotation.Target",
+            arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
+        )
+        var annotations = symbols.annotations(for: symbol)
+        if !annotations.contains(record) {
+            annotations.append(record)
+        }
+        symbols.setAnnotations(annotations, for: symbol)
     }
 
     private func registerSyntheticJvmAnnotationClass(
@@ -311,6 +405,64 @@ extension DataFlowSemaPhase {
         )))
 
         for entryName in ["WARNING", "ERROR", "HIDDEN"] {
+            let entry = interner.intern(entryName)
+            let entryFQName = enumFQName + [entry]
+            let entrySymbol: SymbolID
+            if let existing = symbols.lookup(fqName: entryFQName) {
+                entrySymbol = existing
+            } else {
+                entrySymbol = symbols.define(
+                    kind: .field,
+                    name: entry,
+                    fqName: entryFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+            }
+            symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+            if symbols.propertyType(for: entrySymbol) == nil {
+                symbols.setPropertyType(enumType, for: entrySymbol)
+            }
+        }
+    }
+
+    private func registerSyntheticAnnotationRetentionEnum(
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let enumName = interner.intern("AnnotationRetention")
+        let enumFQName = packageFQName + [enumName]
+        let enumSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: enumFQName) {
+            enumSymbol = existing
+            if packageSymbol != .invalid {
+                symbols.setParentSymbol(packageSymbol, for: existing)
+            }
+        } else {
+            enumSymbol = symbols.define(
+                kind: .enumClass,
+                name: enumName,
+                fqName: enumFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if packageSymbol != .invalid {
+                symbols.setParentSymbol(packageSymbol, for: enumSymbol)
+            }
+        }
+
+        let enumType = types.make(.classType(ClassType(
+            classSymbol: enumSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        for entryName in ["SOURCE", "BINARY", "RUNTIME"] {
             let entry = interner.intern(entryName)
             let entryFQName = enumFQName + [entry]
             let entrySymbol: SymbolID

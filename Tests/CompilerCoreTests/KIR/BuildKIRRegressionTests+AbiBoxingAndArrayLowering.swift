@@ -197,6 +197,34 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    func testUShortArrayLoweringUsesSharedArrayRuntimeCalls() throws {
+        let source = """
+        fun main(): UShort {
+            val arr = UShortArray(2) { (it + 1).toUShort() }
+            arr[0] = 65535.toUShort()
+            return arr[0]
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callNames.contains("kk_array_new"))
+            XCTAssertTrue(callNames.contains("kk_array_set"))
+            XCTAssertTrue(callNames.contains("kk_array_get"))
+
+            let throwFlags = extractThrowFlags(from: body, interner: ctx.interner)
+            XCTAssertEqual(throwFlags["kk_array_new"]?.allSatisfy { $0 == false }, true)
+            XCTAssertEqual(throwFlags["kk_array_set"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_array_get"]?.allSatisfy { $0 == true }, true)
+        }
+    }
+
     func testMapGetValueLoweringMarksRuntimeCallAsThrowing() throws {
         let source = """
         fun main(): Int {

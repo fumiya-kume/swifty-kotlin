@@ -94,6 +94,7 @@ public struct TypeParamType: Hashable, Sendable {
 }
 
 public struct FunctionType: Hashable, Sendable {
+    public let contextReceivers: [TypeID]
     public let receiver: TypeID?
     public let params: [TypeID]
     public let returnType: TypeID
@@ -101,12 +102,14 @@ public struct FunctionType: Hashable, Sendable {
     public let nullability: Nullability
 
     public init(
+        contextReceivers: [TypeID] = [],
         receiver: TypeID? = nil,
         params: [TypeID],
         returnType: TypeID,
         isSuspend: Bool = false,
         nullability: Nullability = .nonNull
     ) {
+        self.contextReceivers = contextReceivers
         self.receiver = receiver
         self.params = params
         self.returnType = returnType

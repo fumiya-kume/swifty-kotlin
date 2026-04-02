@@ -423,8 +423,8 @@ final class IndexedAccessLowerer {
         }
         
         let arrayNames = [
-            "Array", "IntArray", "LongArray", "DoubleArray", 
-            "FloatArray", "BooleanArray", "CharArray"
+            "Array", "IntArray", "LongArray", "DoubleArray",
+            "FloatArray", "BooleanArray", "CharArray", "UShortArray",
         ]
         
         return arrayNames.contains(interner.resolve(symbol.name))

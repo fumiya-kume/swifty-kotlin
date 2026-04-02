@@ -847,6 +847,7 @@ extension DataFlowSemaPhase {
                 }
             }
         case let .functionType(ft):
+            if ft.contextReceivers.contains(where: { typeContainsAnyTypeParam($0, types: types) }) { return true }
             if let receiver = ft.receiver, typeContainsAnyTypeParam(receiver, types: types) { return true }
             if ft.params.contains(where: { typeContainsAnyTypeParam($0, types: types) }) { return true }
             return typeContainsAnyTypeParam(ft.returnType, types: types)

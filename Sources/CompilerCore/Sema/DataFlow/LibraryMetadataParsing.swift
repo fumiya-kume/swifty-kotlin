@@ -457,6 +457,26 @@ extension DataFlowSemaPhase {
                 return nil
             }
 
+            var contextReceivers: [TypeID] = []
+            if consume(character: "C") {
+                guard let contextArity = parseNumber(), consume(character: "<") else {
+                    return nil
+                }
+                contextReceivers.reserveCapacity(contextArity)
+                for index in 0 ..< contextArity {
+                    guard let contextType = parseType() else {
+                        return nil
+                    }
+                    contextReceivers.append(contextType)
+                    if index + 1 < contextArity, !consume(character: ",") {
+                        return nil
+                    }
+                }
+                guard consume(character: ">"), consume(character: ",") else {
+                    return nil
+                }
+            }
+
             var receiver: TypeID?
             if consume(character: "R") {
                 guard let receiverType = parseType(), consume(character: ",") else {
@@ -481,6 +501,7 @@ extension DataFlowSemaPhase {
                 return nil
             }
             return types.make(.functionType(FunctionType(
+                contextReceivers: contextReceivers,
                 receiver: receiver,
                 params: params,
                 returnType: returnType,
@@ -530,6 +551,7 @@ extension DataFlowSemaPhase {
                 types.make(.typeParam(TypeParamType(symbol: typeParam.symbol, nullability: .nullable)))
             case let .functionType(functionType):
                 types.make(.functionType(FunctionType(
+                    contextReceivers: functionType.contextReceivers,
                     receiver: functionType.receiver,
                     params: functionType.params,
                     returnType: functionType.returnType,
