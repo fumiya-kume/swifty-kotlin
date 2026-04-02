@@ -287,8 +287,9 @@ extension ASTModelsTests {
         let arena = ASTArena()
         let paramID = arena.appendTypeRef(.named(path: [], args: [], nullable: false))
         let returnID = arena.appendTypeRef(.named(path: [], args: [], nullable: false))
-        let id = arena.appendTypeRef(.functionType(receiver: nil, params: [paramID], returnType: returnID, isSuspend: false, nullable: false))
-        if case let .functionType(_, params, ret, isSuspend, nullable) = arena.typeRef(id) {
+        let id = arena.appendTypeRef(.functionType(contextReceivers: [], receiver: nil, params: [paramID], returnType: returnID, isSuspend: false, nullable: false))
+        if case let .functionType(contextReceivers, _, params, ret, isSuspend, nullable) = arena.typeRef(id) {
+            XCTAssertTrue(contextReceivers.isEmpty)
             XCTAssertEqual(params.count, 1)
             XCTAssertEqual(ret, returnID)
             XCTAssertFalse(isSuspend)
@@ -301,8 +302,9 @@ extension ASTModelsTests {
     func testTypeRefFunctionTypeSuspendNullable() {
         let arena = ASTArena()
         let returnID = arena.appendTypeRef(.named(path: [], args: [], nullable: false))
-        let id = arena.appendTypeRef(.functionType(receiver: nil, params: [], returnType: returnID, isSuspend: true, nullable: true))
-        if case let .functionType(_, params, _, isSuspend, nullable) = arena.typeRef(id) {
+        let id = arena.appendTypeRef(.functionType(contextReceivers: [], receiver: nil, params: [], returnType: returnID, isSuspend: true, nullable: true))
+        if case let .functionType(contextReceivers, _, params, _, isSuspend, nullable) = arena.typeRef(id) {
+            XCTAssertTrue(contextReceivers.isEmpty)
             XCTAssertTrue(params.isEmpty)
             XCTAssertTrue(isSuspend)
             XCTAssertTrue(nullable)

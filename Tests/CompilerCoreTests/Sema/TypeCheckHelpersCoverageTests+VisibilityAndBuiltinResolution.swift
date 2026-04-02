@@ -195,7 +195,7 @@ extension TypeCheckHelpersCoverageTests {
             .named(path: [fixture.interner.intern("Int")], args: [], nullable: true)
         )
         let fnRef = fixture.astArena.appendTypeRef(
-            .functionType(receiver: nil, params: [intRef], returnType: nullableIntRef, isSuspend: true, nullable: false)
+            .functionType(contextReceivers: [], receiver: nil, params: [intRef], returnType: nullableIntRef, isSuspend: true, nullable: false)
         )
         let intersectionRef = fixture.astArena.appendTypeRef(.intersection(parts: [intRef, nullableIntRef]))
 

@@ -235,6 +235,12 @@ public final class NameMangler {
 
         case let .functionType(functionType):
             var components: [String] = []
+            if !functionType.contextReceivers.isEmpty {
+                let encodedContextReceivers = functionType.contextReceivers.map {
+                    encodeType($0, symbols: symbols, types: types, nameResolver: nameResolver)
+                }.joined(separator: ",")
+                components.append("C\(functionType.contextReceivers.count)<\(encodedContextReceivers)>")
+            }
             if let receiver = functionType.receiver {
                 components.append("R\(encodeType(receiver, symbols: symbols, types: types, nameResolver: nameResolver))")
             }

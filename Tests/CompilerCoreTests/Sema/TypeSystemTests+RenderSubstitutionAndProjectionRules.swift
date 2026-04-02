@@ -84,6 +84,19 @@ extension TypeSystemTests {
         XCTAssertTrue(rendered.contains("String."))
     }
 
+    func testRenderTypeFunctionTypeWithContextReceivers() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let stringType = ts.make(.primitive(.string, .nonNull))
+        let ft = ts.make(.functionType(FunctionType(
+            contextReceivers: [stringType, intType],
+            receiver: stringType,
+            params: [intType],
+            returnType: intType
+        )))
+        XCTAssertEqual(ts.renderType(ft), "context(String, Int) String.(Int) -> Int")
+    }
+
     func testRenderTypeIntersection() {
         let ts = TypeSystem()
         let intType = ts.make(.primitive(.int, .nonNull))
@@ -187,6 +200,36 @@ extension TypeSystemTests {
         )
 
         if case let .functionType(resultFt) = ts.kind(of: result) {
+            XCTAssertEqual(resultFt.params, [intType])
+            XCTAssertEqual(resultFt.returnType, intType)
+        } else {
+            XCTFail("Expected functionType after substitution")
+        }
+    }
+
+    func testSubstituteInFunctionTypeContextReceivers() throws {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let tpSym = SymbolID(rawValue: 0)
+        let tp = ts.make(.typeParam(TypeParamType(symbol: tpSym)))
+
+        let ft = ts.make(.functionType(FunctionType(
+            contextReceivers: [tp],
+            receiver: tp,
+            params: [tp],
+            returnType: tp
+        )))
+        let varMap = ts.makeTypeVarBySymbol([tpSym])
+        let tv = try XCTUnwrap(varMap[tpSym])
+        let result = ts.substituteTypeParameters(
+            in: ft,
+            substitution: [tv: intType],
+            typeVarBySymbol: varMap
+        )
+
+        if case let .functionType(resultFt) = ts.kind(of: result) {
+            XCTAssertEqual(resultFt.contextReceivers, [intType])
+            XCTAssertEqual(resultFt.receiver, intType)
             XCTAssertEqual(resultFt.params, [intType])
             XCTAssertEqual(resultFt.returnType, intType)
         } else {

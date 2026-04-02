@@ -211,6 +211,7 @@ enum TypeRefParserCore {
             if let receiverFnType = parseReceiverFunctionTypeRefSuffix(
                 tokens,
                 from: next + 1,
+                contextReceivers: [],
                 receiver: receiverRef,
                 isSuspend: false,
                 interner: interner,
@@ -314,6 +315,19 @@ enum TypeRefParserCore {
         options: Options
     ) -> (ref: TypeRefID, next: Int)? {
         var next = start
+        var contextReceivers: [TypeRefID] = []
+
+        if let parsedContext = parseContextFunctionTypeParams(
+            tokens,
+            from: next,
+            interner: interner,
+            astArena: astArena,
+            options: options
+        ) {
+            contextReceivers = parsedContext.refs
+            next = parsedContext.next
+        }
+
         var isSuspend = false
 
         if next < tokens.count {
@@ -343,6 +357,7 @@ enum TypeRefParserCore {
                 return parseReceiverFunctionTypeRefSuffix(
                     tokens,
                     from: receiverParse.next + 1,
+                    contextReceivers: contextReceivers,
                     receiver: receiverParse.ref,
                     isSuspend: true,
                     interner: interner,
@@ -391,6 +406,7 @@ enum TypeRefParserCore {
         }
 
         let ref = astArena.appendTypeRef(.functionType(
+            contextReceivers: contextReceivers,
             receiver: nil,
             params: params,
             returnType: returnRef.ref,
@@ -399,6 +415,75 @@ enum TypeRefParserCore {
         ))
 
         return (ref, returnRef.next)
+    }
+
+    private static func parseContextFunctionTypeParams(
+        _ tokens: [Token],
+        from start: Int,
+        interner: StringInterner,
+        astArena: ASTArena,
+        options: Options
+    ) -> (refs: [TypeRefID], next: Int)? {
+        guard start < tokens.count,
+              case .softKeyword(.context) = tokens[start].kind,
+              start + 1 < tokens.count,
+              tokens[start + 1].kind == .symbol(.lParen)
+        else {
+            return nil
+        }
+
+        var next = start + 2
+        var depth = 1
+        var currentStart = next
+        var refs: [TypeRefID] = []
+        var bracketDepth = BuildASTPhase.BracketDepth()
+
+        while next < tokens.count {
+            let token = tokens[next]
+            if token.kind == .symbol(.lParen) {
+                depth += 1
+            } else if token.kind == .symbol(.rParen) {
+                depth -= 1
+                if depth == 0 {
+                    guard currentStart < next,
+                          let parsed = parseTypeRefPrefix(
+                              tokens,
+                              from: currentStart,
+                              interner: interner,
+                              astArena: astArena,
+                              options: options
+                          ),
+                          parsed.next == next
+                    else {
+                        return nil
+                    }
+                    refs.append(parsed.ref)
+                    return refs.isEmpty ? nil : (refs, next + 1)
+                }
+            } else if token.kind == .symbol(.comma), depth == 1, bracketDepth.isAtTopLevel {
+                guard currentStart < next,
+                      let parsed = parseTypeRefPrefix(
+                          tokens,
+                          from: currentStart,
+                          interner: interner,
+                          astArena: astArena,
+                          options: options
+                      ),
+                      parsed.next == next
+                else {
+                    return nil
+                }
+                refs.append(parsed.ref)
+                currentStart = next + 1
+            }
+
+            if depth == 1 {
+                bracketDepth.track(token.kind)
+            }
+            next += 1
+        }
+
+        return nil
     }
 
     private static func parseFunctionParamRefs(
@@ -570,6 +655,7 @@ enum TypeRefParserCore {
     private static func parseReceiverFunctionTypeRefSuffix(
         _ tokens: [Token],
         from parenStart: Int,
+        contextReceivers: [TypeRefID],
         receiver: TypeRefID,
         isSuspend: Bool,
         interner: StringInterner,
@@ -614,6 +700,7 @@ enum TypeRefParserCore {
         }
 
         let ref = astArena.appendTypeRef(.functionType(
+            contextReceivers: contextReceivers,
             receiver: receiver,
             params: params,
             returnType: returnRef.ref,
