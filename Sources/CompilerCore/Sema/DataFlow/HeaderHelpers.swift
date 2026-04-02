@@ -911,6 +911,37 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(contractsPkg, for: builderSymbol)
             symbols.setParentSymbol(contractsPkg, for: effectSymbol)
         }
+
+        let experimentalContractsSymbol = ensureAnnotationClassSymbol(
+            named: "ExperimentalContracts",
+            in: contractsFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        if contractsPkg != .invalid {
+            symbols.setParentSymbol(contractsPkg, for: experimentalContractsSymbol)
+        }
+        let experimentalContractsAnnotations = [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: [
+                    "AnnotationTarget.CLASS",
+                    "AnnotationTarget.FUNCTION",
+                    "AnnotationTarget.PROPERTY",
+                    "AnnotationTarget.TYPEALIAS",
+                ]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Retention",
+                arguments: ["AnnotationRetention.BINARY"]
+            ),
+        ]
+        var existingAnnotations = symbols.annotations(for: experimentalContractsSymbol)
+        for annotation in experimentalContractsAnnotations where !existingAnnotations.contains(annotation) {
+            existingAnnotations.append(annotation)
+        }
+        symbols.setAnnotations(existingAnnotations, for: experimentalContractsSymbol)
+
         let builderType = types.make(.classType(ClassType(classSymbol: builderSymbol, args: [], nullability: .nonNull)))
         let effectType = types.make(.classType(ClassType(classSymbol: effectSymbol, args: [], nullability: .nonNull)))
 
@@ -1116,6 +1147,27 @@ extension DataFlowSemaPhase {
         }
         return symbols.define(
             kind: .class,
+            name: internedName,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+    }
+
+    func ensureAnnotationClassSymbol(
+        named name: String,
+        in pkg: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let internedName = interner.intern(name)
+        let fqName = pkg + [internedName]
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
+        }
+        return symbols.define(
+            kind: .annotationClass,
             name: internedName,
             fqName: fqName,
             declSite: nil,
