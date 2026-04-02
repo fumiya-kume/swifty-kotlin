@@ -2275,7 +2275,7 @@ extension CallTypeChecker {
             }
         }
 
-        // Comparator member HOFs (STDLIB-176): thenBy/thenByDescending/thenComparator.
+        // Comparator member HOFs (STDLIB-176): thenBy/thenByDescending/thenDescending/thenComparator.
         // These need the Comparator<T> receiver type so the lambda gets the correct
         // contextual function signature before the general resolution path runs.
         if args.count == 1 {
@@ -2299,7 +2299,7 @@ extension CallTypeChecker {
                         nullability: .nonNull
                     )))
                     _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
-                case "thenComparator":
+                case "thenComparator", "thenDescending":
                     let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                         params: [comparatorElementType, comparatorElementType],
                         returnType: sema.types.intType,
