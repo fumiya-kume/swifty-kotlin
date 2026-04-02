@@ -5906,6 +5906,82 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Duration"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_source_mark_now",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_source_monotonic_mark_now",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_elapsed_now",
+            parameters: [
+                RuntimeABIParameter(name: "markRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_has_passed_now",
+            parameters: [
+                RuntimeABIParameter(name: "markRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_has_not_passed_now",
+            parameters: [
+                RuntimeABIParameter(name: "markRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_plus_duration",
+            parameters: [
+                RuntimeABIParameter(name: "markRaw", type: .intptr),
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_minus_duration",
+            parameters: [
+                RuntimeABIParameter(name: "markRaw", type: .intptr),
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_minus_mark",
+            parameters: [
+                RuntimeABIParameter(name: "lhsRaw", type: .intptr),
+                RuntimeABIParameter(name: "rhsRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_compare",
+            parameters: [
+                RuntimeABIParameter(name: "lhsRaw", type: .intptr),
+                RuntimeABIParameter(name: "rhsRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
     ]
 
     public static let allFunctions: [RuntimeABIFunctionSpec] = deduplicatedFunctions(
