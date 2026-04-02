@@ -93,7 +93,10 @@ final class RuntimeReadWriteLockTests: XCTestCase {
 
         XCTAssertEqual(runtimeReadWriteLockReadEnteredSemaphore.wait(timeout: .now() + .seconds(2)), .success)
         XCTAssertEqual(runtimeReadWriteLockReadEnteredSemaphore.wait(timeout: .now() + .seconds(2)), .success)
-        XCTAssertGreaterThanOrEqual(runtimeReadWriteLockMaxReaders, 2)
+        runtimeReadWriteLockStateLock.lock()
+        let maxReaders = runtimeReadWriteLockMaxReaders
+        runtimeReadWriteLockStateLock.unlock()
+        XCTAssertGreaterThanOrEqual(maxReaders, 2)
 
         runtimeReadWriteLockReadReleaseSemaphore.signal()
         runtimeReadWriteLockReadReleaseSemaphore.signal()
