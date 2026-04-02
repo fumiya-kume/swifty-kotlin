@@ -141,7 +141,7 @@ extension CallTypeChecker {
             argCount == 0
         case "step":
             argCount == 0 || argCount == 1
-        case "start", "end", "first", "last":
+        case "first", "last":
             argCount == 0 || argCount == 1
         case "contains", "forEach", "map", "mapIndexed", "mapNotNull",
              "filter", "filterIndexed", "filterNot", "reduce", "reduceIndexed",
@@ -228,8 +228,6 @@ extension CallTypeChecker {
             return rangeMemberUIntArrayType(sema: sema, interner: interner)
         case "toULongArray":
             return rangeMemberULongArrayType(sema: sema, interner: interner)
-        case "iterator":
-            return rangeMemberIteratorType(elementType: elementType, sema: sema, interner: interner)
         case "filter", "filterIndexed", "filterNot":
             return rangeMemberListType(elementType: elementType, sema: sema, interner: interner)
         case "map", "mapIndexed", "mapNotNull":
