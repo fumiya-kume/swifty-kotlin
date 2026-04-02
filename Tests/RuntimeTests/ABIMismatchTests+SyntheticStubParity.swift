@@ -76,6 +76,12 @@ extension ABIMismatchTests {
             "kk_thread_local_getOrSet",
             // kotlin.concurrent
             "kk_lock_withLock",
+            "kk_mutex_create",
+            "kk_mutex_lock",
+            "kk_mutex_unlock",
+            "kk_mutex_tryLock",
+            "kk_mutex_isLocked",
+            "kk_mutex_withLock",
             // Symmetric crypto (javax.crypto)
             "kk_secretkeyspec_new",
             "kk_ivparameterspec_new",
