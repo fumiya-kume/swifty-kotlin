@@ -10,6 +10,11 @@ final class FlowLoweringPass: LoweringPass {
         case take = 3
         case onEach = 4
         case distinctUntilChanged = 5
+        case catchHandler = 6
+        case retry = 7
+        case retryWhen = 8
+        case onErrorReturn = 9
+        case onErrorResume = 10
     }
 
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
@@ -19,6 +24,11 @@ final class FlowLoweringPass: LoweringPass {
             ctx.interner.intern("map"),
             ctx.interner.intern("filter"),
             ctx.interner.intern("take"),
+            ctx.interner.intern("catch"),
+            ctx.interner.intern("retry"),
+            ctx.interner.intern("retryWhen"),
+            ctx.interner.intern("onErrorReturn"),
+            ctx.interner.intern("onErrorResume"),
             ctx.interner.intern("collect"),
             ctx.interner.intern("toList"),
             ctx.interner.intern("first"),
@@ -53,6 +63,11 @@ final class FlowLoweringPass: LoweringPass {
         let mapName = interner.intern("map")
         let filterName = interner.intern("filter")
         let takeName = interner.intern("take")
+        let catchName = interner.intern("catch")
+        let retryName = interner.intern("retry")
+        let retryWhenName = interner.intern("retryWhen")
+        let onErrorReturnName = interner.intern("onErrorReturn")
+        let onErrorResumeName = interner.intern("onErrorResume")
         let collectName = interner.intern("collect")
         let toListName = interner.intern("toList")
         let firstName = interner.intern("first")
@@ -171,6 +186,42 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
+                    if (callee == catchName || callee == retryName || callee == retryWhenName ||
+                        callee == onErrorReturnName || callee == onErrorResumeName),
+                       arguments.count == 1,
+                       let flowExpr = activeFlowExpr,
+                       flowExprIDs.contains(flowExpr.rawValue)
+                    {
+                        let tagValue: Int64 = switch callee {
+                        case catchName:
+                            RuntimeFlowTag.catchHandler.rawValue
+                        case retryName:
+                            RuntimeFlowTag.retry.rawValue
+                        case retryWhenName:
+                            RuntimeFlowTag.retryWhen.rawValue
+                        case onErrorReturnName:
+                            RuntimeFlowTag.onErrorReturn.rawValue
+                        case onErrorResumeName:
+                            RuntimeFlowTag.onErrorResume.rawValue
+                        default:
+                            RuntimeFlowTag.map.rawValue
+                        }
+                        let tag = appendIntConstant(tagValue)
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowEmitName,
+                            arguments: [flowExpr, arguments[0], tag],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        if let result {
+                            flowExprIDs.insert(result.rawValue)
+                            activeFlowExpr = result
+                        }
+                        continue
+                    }
+
                     if callee == flowName, arguments.count == 1 {
                         let continuation = appendIntConstant(0)
                         loweredBody.append(.call(
@@ -218,8 +269,12 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
-                    if callee == mapName || callee == filterName || callee == takeName,
-                       arguments.count == 2 || ((callee == mapName || callee == filterName) && arguments.count == 3),
+                    if callee == mapName || callee == filterName || callee == takeName ||
+                        callee == catchName || callee == retryName || callee == retryWhenName ||
+                        callee == onErrorReturnName || callee == onErrorResumeName,
+                       arguments.count == 2 ||
+                        ((callee == mapName || callee == filterName || callee == catchName ||
+                            callee == retryWhenName) && arguments.count == 3),
                        flowExprIDs.contains(arguments[0].rawValue)
                     {
                         let tagValue: Int64 = switch callee {
@@ -227,6 +282,16 @@ final class FlowLoweringPass: LoweringPass {
                             RuntimeFlowTag.map.rawValue
                         case filterName:
                             RuntimeFlowTag.filter.rawValue
+                        case catchName:
+                            RuntimeFlowTag.catchHandler.rawValue
+                        case retryName:
+                            RuntimeFlowTag.retry.rawValue
+                        case retryWhenName:
+                            RuntimeFlowTag.retryWhen.rawValue
+                        case onErrorReturnName:
+                            RuntimeFlowTag.onErrorReturn.rawValue
+                        case onErrorResumeName:
+                            RuntimeFlowTag.onErrorResume.rawValue
                         default:
                             RuntimeFlowTag.take.rawValue
                         }
@@ -313,6 +378,11 @@ final class FlowLoweringPass: LoweringPass {
                         if tag == RuntimeFlowTag.map.rawValue
                             || tag == RuntimeFlowTag.filter.rawValue
                             || tag == RuntimeFlowTag.take.rawValue
+                            || tag == RuntimeFlowTag.catchHandler.rawValue
+                            || tag == RuntimeFlowTag.retry.rawValue
+                            || tag == RuntimeFlowTag.retryWhen.rawValue
+                            || tag == RuntimeFlowTag.onErrorReturn.rawValue
+                            || tag == RuntimeFlowTag.onErrorResume.rawValue
                         {
                             flowExprIDs.insert(result.rawValue)
                             activeFlowExpr = result
@@ -366,7 +436,9 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
-                    if callee == mapName || callee == filterName || callee == takeName,
+                    if callee == mapName || callee == filterName || callee == takeName ||
+                        callee == catchName || callee == retryName || callee == retryWhenName ||
+                        callee == onErrorReturnName || callee == onErrorResumeName,
                        arguments.count == 1,
                        flowExprIDs.contains(receiver.rawValue)
                     {
@@ -375,6 +447,16 @@ final class FlowLoweringPass: LoweringPass {
                             RuntimeFlowTag.map.rawValue
                         case filterName:
                             RuntimeFlowTag.filter.rawValue
+                        case catchName:
+                            RuntimeFlowTag.catchHandler.rawValue
+                        case retryName:
+                            RuntimeFlowTag.retry.rawValue
+                        case retryWhenName:
+                            RuntimeFlowTag.retryWhen.rawValue
+                        case onErrorReturnName:
+                            RuntimeFlowTag.onErrorReturn.rawValue
+                        case onErrorResumeName:
+                            RuntimeFlowTag.onErrorResume.rawValue
                         default:
                             RuntimeFlowTag.take.rawValue
                         }
@@ -458,6 +540,11 @@ final class FlowLoweringPass: LoweringPass {
                         if tag == RuntimeFlowTag.map.rawValue
                             || tag == RuntimeFlowTag.filter.rawValue
                             || tag == RuntimeFlowTag.take.rawValue
+                            || tag == RuntimeFlowTag.catchHandler.rawValue
+                            || tag == RuntimeFlowTag.retry.rawValue
+                            || tag == RuntimeFlowTag.retryWhen.rawValue
+                            || tag == RuntimeFlowTag.onErrorReturn.rawValue
+                            || tag == RuntimeFlowTag.onErrorResume.rawValue
                         {
                             flowExprIDs.insert(result.rawValue)
                             activeFlowExpr = result

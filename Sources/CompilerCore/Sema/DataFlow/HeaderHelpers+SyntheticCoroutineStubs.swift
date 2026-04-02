@@ -152,6 +152,27 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([exceptionSymbol], for: cancellationSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: rootCancellationSymbol)
 
+        registerSyntheticCoroutineMember(
+            ownerSymbol: flowInterfaceSymbol,
+            ownerType: flowRawType,
+            name: "onErrorReturn",
+            externalLinkName: "",
+            returnType: flowRawType,
+            parameters: [(name: "fallback", type: types.anyType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: flowInterfaceSymbol,
+            ownerType: flowRawType,
+            name: "onErrorResume",
+            externalLinkName: "",
+            returnType: flowRawType,
+            parameters: [(name: "fallback", type: flowRawType)],
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticCoroutineTopLevelFunction(
             named: "runBlocking",
             packageFQName: coroutinesPkg,
