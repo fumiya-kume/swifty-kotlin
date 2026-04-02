@@ -2151,12 +2151,29 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Coroutine"
         ),
-        // Flow terminal operators & flowOf (STDLIB-088)
+        // Flow terminal operators & builders (STDLIB-088 / STDLIB-FLOW-178)
         RuntimeABIFunctionSpec(
             name: "kk_flow_of",
             parameters: [
                 RuntimeABIParameter(name: "arrayHandle", type: .intptr),
                 RuntimeABIParameter(name: "count", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_empty",
+            parameters: [
+                RuntimeABIParameter(name: "reserved", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_as_flow",
+            parameters: [
+                RuntimeABIParameter(name: "sourceHandle", type: .intptr),
+                RuntimeABIParameter(name: "reserved", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"

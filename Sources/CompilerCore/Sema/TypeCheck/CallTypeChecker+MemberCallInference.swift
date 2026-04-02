@@ -922,6 +922,34 @@ extension CallTypeChecker {
         let isCollectionHOF = activeCollectionHOFNames.contains(interner.resolve(calleeName))
             && isCollectionReceiver
 
+        if interner.resolve(calleeName) == "asFlow",
+           args.isEmpty,
+           (isCollectionReceiver || isSequenceReceiver)
+        {
+            let elementType = if isCollectionReceiver {
+                resolvedCollectionElementType(
+                    receiverID: receiverID,
+                    receiverType: receiverType,
+                    sema: sema,
+                    interner: interner,
+                    ctx: ctx,
+                    locals: &locals
+                )
+            } else {
+                sema.types.anyType
+            }
+            sema.bindings.markFlowExpr(id)
+            sema.bindings.bindFlowElementType(elementType, forExpr: id)
+            let resultType = driver.helpers.makeFlowType(
+                elementType: elementType,
+                sema: sema,
+                interner: interner
+            ) ?? sema.types.anyType
+            let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
         // filterIsInstance<R>() — reified type parameter, returns List<R> (STDLIB-114)
         if interner.resolve(calleeName) == "filterIsInstance",
            args.isEmpty,

@@ -1976,6 +1976,24 @@ public func kk_flow_of(_ arrayHandle: Int, _ count: Int) -> Int {
     return runtimeRegisterFlowHandle(handle)
 }
 
+/// Create an empty flow (emptyFlow).
+@_cdecl("kk_flow_empty")
+public func kk_flow_empty(_: Int) -> Int {
+    runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: 0, fixedValues: []))
+}
+
+/// Create a Flow from an existing runtime collection/array (asFlow).
+@_cdecl("kk_flow_as_flow")
+public func kk_flow_as_flow(_ sourceHandle: Int, _: Int) -> Int {
+    if let elements = runtimeCollectionElements(from: sourceHandle) {
+        return runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: 0, fixedValues: elements))
+    }
+    if let arrayBox = runtimeArrayBox(from: sourceHandle) {
+        return runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: 0, fixedValues: Array(arrayBox.elements)))
+    }
+    return runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: 0, fixedValues: []))
+}
+
 // MARK: - CoroutineContext Elements (STDLIB-CORO-077)
 
 /// A coroutine context is a keyed collection of context elements.

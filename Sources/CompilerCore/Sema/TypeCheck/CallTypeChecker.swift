@@ -371,8 +371,13 @@ final class CallTypeChecker {
         // `flow { emit(...) }` is treated as a builtin cold stream factory.
         // We infer the lambda with a flow-builder scope so unqualified `emit`
         // resolves in Sema fallback.
+        let flowFactoryNames: Set<InternedString> = [
+            knownNames.flow,
+            interner.intern("channelFlow"),
+            interner.intern("callbackFlow"),
+        ]
         if let calleeName,
-           calleeName == knownNames.flow,
+           flowFactoryNames.contains(calleeName),
            args.count == 1,
            shouldUseBuiltinFlowFactorySpecialHandling(calleeName: calleeName, ctx: ctx, locals: locals)
         {
@@ -417,6 +422,32 @@ final class CallTypeChecker {
             let flowElementType = sema.bindings.flowElementType(forExpr: id) ?? sema.types.anyType
             let flowExprType = driver.helpers.makeFlowType(
                 elementType: flowElementType, sema: sema, interner: interner
+            ) ?? sema.types.anyType
+            sema.bindings.bindExprType(id, type: flowExprType)
+            return flowExprType
+        }
+
+        let fixedFlowFactoryNames: Set<InternedString> = [
+            interner.intern("flowOf"),
+            interner.intern("emptyFlow"),
+        ]
+        if let calleeName,
+           fixedFlowFactoryNames.contains(calleeName),
+           shouldUseBuiltinFlowFactorySpecialHandling(calleeName: calleeName, ctx: ctx, locals: locals)
+        {
+            sema.bindings.markFlowExpr(id)
+            if let explicitElementType = explicitTypeArgs.first {
+                sema.bindings.bindFlowElementType(explicitElementType, forExpr: id)
+            } else if calleeName == interner.intern("flowOf"), !args.isEmpty {
+                let inferredArgTypes = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
+                let lub = sema.types.lub(inferredArgTypes)
+                sema.bindings.bindFlowElementType(lub == sema.types.errorType ? sema.types.anyType : lub, forExpr: id)
+            }
+            let flowElementType = sema.bindings.flowElementType(forExpr: id) ?? sema.types.anyType
+            let flowExprType = driver.helpers.makeFlowType(
+                elementType: flowElementType,
+                sema: sema,
+                interner: interner
             ) ?? sema.types.anyType
             sema.bindings.bindExprType(id, type: flowExprType)
             return flowExprType
@@ -2808,7 +2839,12 @@ final class CallTypeChecker {
             else {
                 return false
             }
-            return symbol.fqName != KnownCompilerNames(interner: ctx.interner).kotlinxCoroutinesFlowFQName
+            let flowPkgPrefix = [
+                ctx.interner.intern("kotlinx"),
+                ctx.interner.intern("coroutines"),
+                ctx.interner.intern("flow"),
+            ]
+            return !symbol.fqName.starts(with: flowPkgPrefix)
         }
         return !hasConflictingUserDefinedCandidate
     }
