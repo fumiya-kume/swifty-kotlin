@@ -19,12 +19,24 @@ extension DataFlowSemaPhase {
         let levelType = types.make(.classType(ClassType(classSymbol: levelSymbol, args: [], nullability: .nonNull)))
         let consoleHandlerType = types.make(.classType(ClassType(classSymbol: consoleHandlerSymbol, args: [], nullability: .nonNull)))
         let fileHandlerType = types.make(.classType(ClassType(classSymbol: fileHandlerSymbol, args: [], nullability: .nonNull)))
+        let throwableFQName = [interner.intern("kotlin"), interner.intern("Throwable")]
+        let throwableType = symbols.lookup(fqName: throwableFQName).map {
+            types.make(.classType(ClassType(classSymbol: $0, args: [], nullability: .nonNull)))
+        } ?? types.anyType
         for (sym, type) in [(loggerSymbol, loggerType), (levelSymbol, levelType), (consoleHandlerSymbol, consoleHandlerType), (fileHandlerSymbol, fileHandlerType)] {
             symbols.setPropertyType(type, for: sym)
         }
 
         registerLoggingTopLevel(packageFQName: loggingPkg, name: "getLogger", parameterTypes: [types.stringType], returnType: loggerType, externalLinkName: "kk_logger_getLogger", symbols: symbols, interner: interner)
-        for (name, link) in [("INFO", "kk_logging_level_info"), ("WARNING", "kk_logging_level_warning"), ("SEVERE", "kk_logging_level_severe")] {
+        for (name, link) in [
+            ("SEVERE", "kk_logging_level_severe"),
+            ("WARNING", "kk_logging_level_warning"),
+            ("INFO", "kk_logging_level_info"),
+            ("CONFIG", "kk_logging_level_config"),
+            ("FINE", "kk_logging_level_fine"),
+            ("FINER", "kk_logging_level_finer"),
+            ("FINEST", "kk_logging_level_finest"),
+        ] {
             let fq = loggingPkg + [interner.intern(name)]
             guard symbols.lookup(fqName: fq) == nil else { continue }
             let prop = symbols.define(kind: .property, name: interner.intern(name), fqName: fq, declSite: nil, visibility: .public, flags: [.synthetic, .static])
@@ -37,6 +49,7 @@ extension DataFlowSemaPhase {
         registerLoggingMember(ownerSymbol: loggerSymbol, ownerType: loggerType, name: "addHandler", parameterTypes: [consoleHandlerType], returnType: types.unitType, externalLinkName: "kk_logger_addHandler", symbols: symbols, interner: interner)
         registerLoggingMember(ownerSymbol: loggerSymbol, ownerType: loggerType, name: "addHandler", parameterTypes: [fileHandlerType], returnType: types.unitType, externalLinkName: "kk_logger_addHandler", symbols: symbols, interner: interner)
         registerLoggingMember(ownerSymbol: loggerSymbol, ownerType: loggerType, name: "log", parameterTypes: [levelType, types.stringType], returnType: types.unitType, externalLinkName: "kk_logger_log", symbols: symbols, interner: interner)
+        registerLoggingMember(ownerSymbol: loggerSymbol, ownerType: loggerType, name: "log", parameterTypes: [levelType, types.stringType, throwableType], returnType: types.unitType, externalLinkName: "kk_logger_log_throwable", symbols: symbols, interner: interner)
         registerLoggingMember(ownerSymbol: loggerSymbol, ownerType: loggerType, name: "info", parameterTypes: [types.stringType], returnType: types.unitType, externalLinkName: "kk_logger_info", symbols: symbols, interner: interner)
         registerLoggingMember(ownerSymbol: loggerSymbol, ownerType: loggerType, name: "warning", parameterTypes: [types.stringType], returnType: types.unitType, externalLinkName: "kk_logger_warning", symbols: symbols, interner: interner)
         registerLoggingMember(ownerSymbol: loggerSymbol, ownerType: loggerType, name: "severe", parameterTypes: [types.stringType], returnType: types.unitType, externalLinkName: "kk_logger_severe", symbols: symbols, interner: interner)
