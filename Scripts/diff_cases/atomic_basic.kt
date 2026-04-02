@@ -4,7 +4,7 @@ import kotlin.concurrent.atomics.AtomicReference
 
 fun main() {
     // AtomicReference basics
-    val ar = AtomicReference<String>("hello")
+    val ar = AtomicReference("hello")
     println(ar.load())              // hello
     ar.store("world")
     println(ar.load())              // world
