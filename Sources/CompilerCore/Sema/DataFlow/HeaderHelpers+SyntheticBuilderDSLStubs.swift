@@ -194,6 +194,16 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic]
             )
             symbols.setParentSymbol(buildListSymbol, for: parameterSymbol)
+            if parameterName == "builderAction" {
+                symbols.setAnnotations(
+                    [
+                        MetadataAnnotationRecord(
+                            annotationFQName: KnownCompilerAnnotation.builderInference.qualifiedName
+                        ),
+                    ],
+                    for: parameterSymbol
+                )
+            }
             valueParameterSymbols.append(parameterSymbol)
         }
 
@@ -275,6 +285,14 @@ extension DataFlowSemaPhase {
             declSite: nil,
             visibility: .private,
             flags: [.synthetic]
+        )
+        symbols.setAnnotations(
+            [
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.builderInference.qualifiedName
+                ),
+            ],
+            for: builderActionSymbol
         )
 
         let buildSetSymbol = symbols.define(
@@ -381,6 +399,14 @@ extension DataFlowSemaPhase {
             declSite: nil,
             visibility: .private,
             flags: [.synthetic]
+        )
+        symbols.setAnnotations(
+            [
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.builderInference.qualifiedName
+                ),
+            ],
+            for: builderActionSymbol
         )
 
         let buildMapSymbol = symbols.define(

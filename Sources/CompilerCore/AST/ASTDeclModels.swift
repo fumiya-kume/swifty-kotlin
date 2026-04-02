@@ -1,5 +1,5 @@
 /// Represents a single annotation usage in Kotlin source code, e.g. `@Suppress("UNCHECKED_CAST")`.
-public struct AnnotationNode {
+public struct AnnotationNode: Equatable {
     /// The simple or qualified name of the annotation (e.g. "Suppress", "kotlin.Deprecated").
     public let name: String
     /// Serialized argument values extracted from the annotation's parenthesized argument list.
@@ -498,6 +498,7 @@ public struct TypeParamDecl {
 public struct ValueParamDecl: Equatable {
     public let name: InternedString
     public let type: TypeRefID?
+    public let annotations: [AnnotationNode]
     /// `true` when the primary constructor parameter is declared as a property
     /// via `val` or `var`.
     public let isProperty: Bool
@@ -510,6 +511,7 @@ public struct ValueParamDecl: Equatable {
     public init(
         name: InternedString,
         type: TypeRefID?,
+        annotations: [AnnotationNode] = [],
         isProperty: Bool = false,
         isMutableProperty: Bool = false,
         hasDefaultValue: Bool = false,
@@ -518,6 +520,7 @@ public struct ValueParamDecl: Equatable {
     ) {
         self.name = name
         self.type = type
+        self.annotations = annotations
         self.isProperty = isProperty
         self.isMutableProperty = isMutableProperty
         self.hasDefaultValue = hasDefaultValue

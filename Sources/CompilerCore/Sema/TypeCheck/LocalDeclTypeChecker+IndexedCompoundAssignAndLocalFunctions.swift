@@ -160,6 +160,16 @@ extension LocalDeclTypeChecker {
                 flags: []
             )
             sema.symbols.setPropertyType(paramType, for: paramSymbol)
+            if !param.annotations.isEmpty {
+                let records = param.annotations.map { annotation in
+                    MetadataAnnotationRecord(
+                        annotationFQName: annotation.name,
+                        arguments: annotation.arguments,
+                        useSiteTarget: annotation.useSiteTarget
+                    )
+                }
+                sema.symbols.setAnnotations(records, for: paramSymbol)
+            }
             paramSymbols.append(paramSymbol)
         }
 

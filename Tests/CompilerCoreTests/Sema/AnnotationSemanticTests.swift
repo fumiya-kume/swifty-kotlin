@@ -173,6 +173,39 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.isEmpty, "Expected ANNOTATION_TARGET suppression alias to suppress annotation-target diagnostics, got: \(ctx.diagnostics.diagnostics)")
     }
 
+    func testBuilderInferenceAnnotationIsRecordedOnValueParameter() throws {
+        let source = """
+        fun <T> build(@BuilderInference block: MutableList<T>.() -> Unit): List<T> = TODO()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected builder inference annotation sample to type-check, got: \(ctx.diagnostics.diagnostics)")
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let buildSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [ctx.interner.intern("build")]))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: buildSymbol))
+        let parameterSymbol = signature.valueParameterSymbols[0]
+        let annotations = sema.symbols.annotations(for: parameterSymbol)
+
+        XCTAssertTrue(
+            annotations.contains(where: { KnownCompilerAnnotation.builderInference.matches($0.annotationFQName) }),
+            "Expected @BuilderInference to be recorded on the value parameter, got: \(annotations)"
+        )
+    }
+
+    func testBuilderInferenceRejectsFunctionTargetUsage() {
+        let source = """
+        @BuilderInference
+        fun bad() {}
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one annotation-target diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
     private func runSemaCollectingDiagnostics(_ source: String) -> CompilationContext {
         let ctx = makeContextFromSource(source)
         do {

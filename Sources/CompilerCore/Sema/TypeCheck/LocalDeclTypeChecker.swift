@@ -36,7 +36,12 @@ final class LocalDeclTypeChecker {
 
         var initializerType: TypeID?
         if let initializer {
-            initializerType = driver.inferExpr(initializer, ctx: ctx, locals: &locals, expectedType: declaredType)
+            initializerType = tryInferExpectedTypeDrivenBuilderInferenceInitializer(
+                initializer,
+                declaredType: declaredType,
+                ctx: ctx,
+                locals: &locals
+            ) ?? driver.inferExpr(initializer, ctx: ctx, locals: &locals, expectedType: declaredType)
         }
 
         let localType: TypeID
@@ -109,6 +114,161 @@ final class LocalDeclTypeChecker {
         }
         sema.bindings.bindExprType(id, type: sema.types.unitType)
         return sema.types.unitType
+    }
+
+    private func tryInferExpectedTypeDrivenBuilderInferenceInitializer(
+        _ initializer: ExprID,
+        declaredType: TypeID?,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let ast = ctx.ast
+        guard let declaredType,
+              let initializerExpr = ast.arena.expr(initializer),
+              case let .call(calleeID, _, args, range) = initializerExpr,
+              let calleeExpr = ast.arena.expr(calleeID),
+              case let .nameRef(calleeName, _) = calleeExpr
+        else {
+            return nil
+        }
+
+        let candidateIDs = ctx.filterByVisibility(
+            ctx.cachedScopeLookup(calleeName).filter { candidate in
+                guard let symbol = ctx.cachedSymbol(candidate) else { return false }
+                return symbol.kind == .function || symbol.kind == .constructor
+            }
+        ).visible
+        guard !candidateIDs.isEmpty else {
+            return nil
+        }
+
+        var inferredNonLambdaArgTypes: [Int: TypeID] = [:]
+        for (index, argument) in args.enumerated() {
+            guard let argumentExpr = ast.arena.expr(argument.expr) else {
+                continue
+            }
+            switch argumentExpr {
+            case .lambdaLiteral, .callableRef:
+                continue
+            default:
+                inferredNonLambdaArgTypes[index] = driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
+            }
+        }
+
+        return driver.callChecker.tryResolveExpectedTypeDrivenBuilderInferenceCall(
+            initializer,
+            candidates: candidateIDs,
+            args: args,
+            inferredNonLambdaArgTypes: inferredNonLambdaArgTypes,
+            range: range,
+            ctx: ctx,
+            locals: &locals,
+            expectedType: declaredType,
+            calleeName: calleeName,
+            explicitTypeArgs: []
+        ) ?? tryInferTypedReceiverLambdaCallInitializer(
+            initializer: initializer,
+            candidates: candidateIDs,
+            args: args,
+            declaredType: declaredType,
+            calleeName: calleeName,
+            range: range,
+            ctx: ctx,
+            locals: &locals
+        )
+    }
+
+    private func tryInferTypedReceiverLambdaCallInitializer(
+        initializer: ExprID,
+        candidates: [SymbolID],
+        args: [CallArgument],
+        declaredType: TypeID,
+        calleeName: InternedString,
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let sema = ctx.sema
+        guard candidates.count == 1,
+              let candidate = candidates.first,
+              let signature = sema.symbols.functionSignature(for: candidate),
+              let lambdaIndex = args.indices.first(where: { index in
+                  guard let argumentExpr = ctx.ast.arena.expr(args[index].expr),
+                        case .lambdaLiteral = argumentExpr,
+                        index < signature.parameterTypes.count
+                  else {
+                      return false
+                  }
+                  let parameterType = sema.types.makeNonNullable(signature.parameterTypes[index])
+                  guard case let .functionType(functionType) = sema.types.kind(of: parameterType) else {
+                      return false
+                  }
+                  return functionType.receiver != nil
+              })
+        else {
+            return nil
+        }
+
+        let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+        let constraints = ctx.resolver.decomposeSubtypeConstraint(
+            subtype: signature.returnType,
+            supertype: declaredType,
+            typeVarBySymbol: typeVarBySymbol,
+            typeSystem: sema.types,
+            blameRange: range
+        )
+        let variables = Array(Set(typeVarBySymbol.values)).sorted(by: { $0.rawValue < $1.rawValue })
+        let solution = ConstraintSolver().solve(
+            vars: variables,
+            constraints: constraints,
+            typeSystem: sema.types
+        )
+        guard solution.isSuccess else {
+            return nil
+        }
+
+        let substitutedLambdaType = sema.types.substituteTypeParameters(
+            in: signature.parameterTypes[lambdaIndex],
+            substitution: solution.substitution,
+            typeVarBySymbol: typeVarBySymbol
+        )
+        _ = driver.inferExpr(
+            args[lambdaIndex].expr,
+            ctx: ctx,
+            locals: &locals,
+            expectedType: substitutedLambdaType
+        )
+
+        let resolvedArgs = args.enumerated().map { index, argument in
+            let argType = sema.bindings.exprType(for: argument.expr) ?? sema.types.anyType
+            return CallArg(label: argument.label, isSpread: argument.isSpread, type: argType)
+        }
+        let call = CallExpr(
+            range: range,
+            calleeName: calleeName,
+            args: resolvedArgs,
+            explicitTypeArgs: []
+        )
+        guard let parameterMapping = ctx.resolver.buildParameterMapping(
+            signature: signature,
+            callArgs: call.args,
+            symbols: sema.symbols
+        ) else {
+            return nil
+        }
+
+        _ = driver.callChecker.bindCallAndResolveReturnType(
+            initializer,
+            chosen: candidate,
+            resolved: ResolvedCall(
+                chosenCallee: candidate,
+                substitutedTypeArguments: solution.substitution,
+                parameterMapping: parameterMapping,
+                diagnostic: nil
+            ),
+            sema: sema
+        )
+        return declaredType
     }
 
     func inferLocalAssignExpr(

@@ -69,12 +69,55 @@ extension BuildASTPhase {
         guard start < tokens.count else {
             return nil
         }
-        let exprTokens = tokens[start...].filter { $0.kind != .symbol(.semicolon) }
+        var exprTokens = Array(tokens[start...].filter { $0.kind != .symbol(.semicolon) })
+        if let trailingLambdaBlockID = propertyTrailingLambdaBlockID(from: nodeID, in: arena) {
+            exprTokens.append(contentsOf: collectTokens(from: trailingLambdaBlockID, in: arena))
+        }
         guard !exprTokens.isEmpty else {
             return nil
         }
         let parser = ExpressionParser(tokens: exprTokens[...], interner: interner, astArena: astArena)
         return parser.parse()
+    }
+
+    private func propertyTrailingLambdaBlockID(
+        from nodeID: NodeID,
+        in arena: SyntaxArena
+    ) -> NodeID? {
+        for child in arena.children(of: nodeID) {
+            guard case let .node(childID) = child,
+                  arena.node(childID).kind == .block,
+                  !propertyBlockContainsAccessorsOrBackingField(childID, in: arena)
+            else {
+                continue
+            }
+            return childID
+        }
+        return nil
+    }
+
+    private func propertyBlockContainsAccessorsOrBackingField(
+        _ blockID: NodeID,
+        in arena: SyntaxArena
+    ) -> Bool {
+        for child in arena.children(of: blockID) {
+            guard case let .node(stmtID) = child,
+                  isStatementLikeKind(arena.node(stmtID).kind)
+            else {
+                continue
+            }
+            let tokens = collectDirectTokens(from: stmtID, in: arena)
+            guard let firstToken = tokens.first else {
+                continue
+            }
+            switch firstToken.kind {
+            case .softKeyword(.get), .softKeyword(.set), .softKeyword(.field):
+                return true
+            default:
+                continue
+            }
+        }
+        return false
     }
 
     func declarationPropertyAccessors(

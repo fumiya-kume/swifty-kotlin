@@ -373,11 +373,48 @@ extension OverloadResolver {
             if case let .functionType(subFunc) = subtypeKind,
                subFunc.params.count == superFunc.params.count,
                subFunc.isSuspend == superFunc.isSuspend,
-               subFunc.nullability == superFunc.nullability || superFunc.nullability == .nullable,
-               subFunc.receiver == superFunc.receiver
+               subFunc.nullability == superFunc.nullability || superFunc.nullability == .nullable
             {
+                switch (subFunc.receiver, superFunc.receiver) {
+                case (.none, .none):
+                    break
+                case let (.some(subReceiver), .some(superReceiver)):
+                    // Extension receivers behave like an additional function parameter,
+                    // so they are contravariant for function subtyping.
+                    var result: [VariableConstraint] = []
+                    result.append(contentsOf: decomposeSubtypeConstraintImpl(
+                        subtype: superReceiver,
+                        supertype: subReceiver,
+                        typeVarBySymbol: typeVarBySymbol,
+                        typeSystem: typeSystem,
+                        blameRange: blameRange,
+                        depth: depth + 1
+                    ))
+                    // Function types are contravariant in parameter types.
+                    for (subParam, superParam) in zip(subFunc.params, superFunc.params) {
+                        result.append(contentsOf: decomposeSubtypeConstraintImpl(
+                            subtype: superParam,
+                            supertype: subParam,
+                            typeVarBySymbol: typeVarBySymbol,
+                            typeSystem: typeSystem,
+                            blameRange: blameRange,
+                            depth: depth + 1
+                        ))
+                    }
+                    // Covariant in return type.
+                    result.append(contentsOf: decomposeSubtypeConstraintImpl(
+                        subtype: subFunc.returnType,
+                        supertype: superFunc.returnType,
+                        typeVarBySymbol: typeVarBySymbol,
+                        typeSystem: typeSystem,
+                        blameRange: blameRange,
+                        depth: depth + 1
+                    ))
+                    return result
+                default:
+                    break
+                }
                 var result: [VariableConstraint] = []
-                // Function types are contravariant in parameter types.
                 for (subParam, superParam) in zip(subFunc.params, superFunc.params) {
                     result.append(contentsOf: decomposeSubtypeConstraintImpl(
                         subtype: superParam,

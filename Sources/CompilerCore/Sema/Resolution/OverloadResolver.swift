@@ -43,6 +43,14 @@ public struct ResolvedCall {
     }
 }
 
+public struct AdditionalCallConstraints {
+    public let byCandidate: [SymbolID: [VariableConstraint]]
+
+    public init(byCandidate: [SymbolID: [VariableConstraint]] = [:]) {
+        self.byCandidate = byCandidate
+    }
+}
+
 public final class OverloadResolver {
     /// Optional sema cache context.  When non-nil the resolver checks the
     /// call-resolution cache before performing full candidate evaluation.

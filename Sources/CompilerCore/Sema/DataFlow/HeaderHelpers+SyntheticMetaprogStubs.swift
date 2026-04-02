@@ -78,6 +78,14 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerSyntheticJvmAnnotationClass(
+            named: "BuilderInference",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // kotlin.annotation package — provides @Target and AnnotationTarget.
         let kotlinAnnotationPkg = ensurePackage(
             path: ["kotlin", "annotation"],
@@ -103,6 +111,18 @@ extension DataFlowSemaPhase {
                 annotations.append(record)
             }
             symbols.setAnnotations(annotations, for: targetSymbol)
+        }
+
+        if let builderInferenceSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("BuilderInference")]) {
+            let record = MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.VALUE_PARAMETER"]
+            )
+            var annotations = symbols.annotations(for: builderInferenceSymbol)
+            if !annotations.contains(record) {
+                annotations.append(record)
+            }
+            symbols.setAnnotations(annotations, for: builderInferenceSymbol)
         }
 
         registerSyntheticAnnotationTargetEnum(

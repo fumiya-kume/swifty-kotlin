@@ -179,6 +179,13 @@ extension DataFlowSemaPhase {
                 ),
                 for: memberSymbol
             )
+            registerValueParameterAnnotations(
+                paramSymbols: params.paramSymbols,
+                paramAnnotations: params.paramAnnotations,
+                declRange: funDecl.range,
+                symbols: symbols,
+                diagnostics: diagnostics
+            )
             checkAndReportJVMErasedCallableConflict(
                 for: memberSymbol,
                 fqName: memberFQName,

@@ -290,6 +290,13 @@ extension DataFlowSemaPhase {
                         ),
                         for: primaryCtorSymbol
                     )
+                    registerValueParameterAnnotations(
+                        paramSymbols: params.paramSymbols,
+                        paramAnnotations: params.paramAnnotations,
+                        declRange: classDecl.range,
+                        symbols: symbols,
+                        diagnostics: diagnostics
+                    )
                 }
             }
 
@@ -327,6 +334,13 @@ extension DataFlowSemaPhase {
                         classTypeParameterCount: classTypeParamSymbols.count
                     ),
                     for: secCtorSymbol
+                )
+                registerValueParameterAnnotations(
+                    paramSymbols: params.paramSymbols,
+                    paramAnnotations: params.paramAnnotations,
+                    declRange: secondaryCtor.range,
+                    symbols: symbols,
+                    diagnostics: diagnostics
                 )
             }
 
@@ -713,6 +727,13 @@ extension DataFlowSemaPhase {
                     typeParameterUpperBoundsList: upperBoundsByTypeParam
                 ),
                 for: symbol
+            )
+            registerValueParameterAnnotations(
+                paramSymbols: params.paramSymbols,
+                paramAnnotations: params.paramAnnotations,
+                declRange: funDecl.range,
+                symbols: symbols,
+                diagnostics: diagnostics
             )
             checkAndReportJVMErasedCallableConflict(
                 for: symbol,

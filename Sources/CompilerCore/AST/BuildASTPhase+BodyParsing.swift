@@ -382,6 +382,13 @@ extension BuildASTPhase {
         from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner
     ) -> [AnnotationNode] {
         let tokens = collectTokens(from: nodeID, in: arena)
+        return declarationAnnotations(from: tokens, interner: interner)
+    }
+
+    func declarationAnnotations(
+        from tokens: [Token],
+        interner: StringInterner
+    ) -> [AnnotationNode] {
         var annotations: [AnnotationNode] = []
         var index = 0
         while index < tokens.count {

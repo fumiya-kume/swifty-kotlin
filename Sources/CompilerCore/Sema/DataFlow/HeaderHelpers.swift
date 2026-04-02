@@ -691,9 +691,16 @@ extension DataFlowSemaPhase {
         localTypeParameters: [InternedString: SymbolID] = [:],
         diagnostics: DiagnosticEngine? = nil,
         fallbackType: TypeID
-    ) -> (paramTypes: [TypeID], paramSymbols: [SymbolID], paramHasDefaultValues: [Bool], paramIsVararg: [Bool]) {
+    ) -> (
+        paramTypes: [TypeID],
+        paramSymbols: [SymbolID],
+        paramAnnotations: [[AnnotationNode]],
+        paramHasDefaultValues: [Bool],
+        paramIsVararg: [Bool]
+    ) {
         var paramTypes: [TypeID] = []
         var paramSymbols: [SymbolID] = []
+        var paramAnnotations: [[AnnotationNode]] = []
         var paramHasDefaultValues: [Bool] = []
         var paramIsVararg: [Bool] = []
         for valueParam in valueParams {
@@ -717,10 +724,32 @@ extension DataFlowSemaPhase {
             ) ?? fallbackType
             paramTypes.append(resolvedType)
             paramSymbols.append(paramSymbol)
+            paramAnnotations.append(valueParam.annotations)
             paramHasDefaultValues.append(valueParam.hasDefaultValue)
             paramIsVararg.append(valueParam.isVararg)
         }
-        return (paramTypes, paramSymbols, paramHasDefaultValues, paramIsVararg)
+        return (paramTypes, paramSymbols, paramAnnotations, paramHasDefaultValues, paramIsVararg)
+    }
+
+    func registerValueParameterAnnotations(
+        paramSymbols: [SymbolID],
+        paramAnnotations: [[AnnotationNode]],
+        declRange: SourceRange?,
+        symbols: SymbolTable,
+        diagnostics: DiagnosticEngine
+    ) {
+        guard paramSymbols.count == paramAnnotations.count else {
+            return
+        }
+        for (paramSymbol, annotations) in zip(paramSymbols, paramAnnotations) where !annotations.isEmpty {
+            registerAnnotations(
+                annotations,
+                symbol: paramSymbol,
+                declRange: declRange,
+                symbols: symbols,
+                diagnostics: diagnostics
+            )
+        }
     }
 
     /// Collects type parameters from a function declaration, defining symbols and resolving

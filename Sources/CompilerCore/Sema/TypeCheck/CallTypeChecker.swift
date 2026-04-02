@@ -1365,6 +1365,22 @@ final class CallTypeChecker {
             }
         }
 
+        if let earlyResolvedType = tryResolveExpectedTypeDrivenBuilderInferenceCall(
+            id,
+            candidates: candidates,
+            args: args,
+            inferredNonLambdaArgTypes: inferredNonLambdaArgTypes,
+            range: range,
+            ctx: ctx,
+            locals: &locals,
+            expectedType: expectedType,
+            calleeName: calleeName,
+            explicitTypeArgs: explicitTypeArgs
+        ) {
+            sema.bindings.bindExprType(id, type: earlyResolvedType)
+            return earlyResolvedType
+        }
+
         let contextualArgExpectedTypes: [TypeID?] = args.enumerated().map { index, argument in
             // STDLIB-CORO-072: Apply expected lambda type to the correct index
             // (0 for standard launch/runBlocking, 1 for launch(dispatcher) { })
@@ -1433,13 +1449,31 @@ final class CallTypeChecker {
             let allSame = matchingParameterTypes.dropFirst().allSatisfy { $0 == firstType }
             return allSame ? firstType : nil
         }
+        let builderInferenceAdditionalConstraints = collectBuilderInferenceAdditionalConstraints(
+            candidates: candidates,
+            args: args,
+            inferredNonLambdaArgTypes: inferredNonLambdaArgTypes,
+            expectedType: expectedType,
+            ctx: ctx,
+            locals: &locals,
+            range: range
+        )
         let argTypes = args.enumerated().map { index, argument in
             if let contextualExpectedType = contextualArgExpectedTypes[index] {
+                let effectiveExpectedType = provisionalBuilderInferenceExpectedType(
+                    candidates: candidates,
+                    args: args,
+                    inferredNonLambdaArgTypes: inferredNonLambdaArgTypes,
+                    argumentIndex: index,
+                    expectedType: expectedType,
+                    ctx: ctx,
+                    range: range
+                ) ?? contextualExpectedType
                 return driver.inferExpr(
                     argument.expr,
                     ctx: ctx,
                     locals: &locals,
-                    expectedType: contextualExpectedType
+                    expectedType: effectiveExpectedType
                 )
             }
             // Reuse already-inferred type for non-lambda args to avoid emitting
@@ -1467,14 +1501,35 @@ final class CallTypeChecker {
                 ),
                 expectedType: expectedType,
                 implicitReceiverType: ctx.implicitReceiverType,
+                additionalConstraints: builderInferenceAdditionalConstraints,
                 ctx: ctx.semaCtx
             )
-            if let diagnostic = resolved.diagnostic {
+            let effectiveResolved: ResolvedCall
+            if resolved.diagnostic != nil,
+               let fallbackResolved = builderInferenceFallbackResolvedCall(
+                   candidates: candidates,
+                   args: args,
+                   inferredNonLambdaArgTypes: inferredNonLambdaArgTypes,
+                   expectedType: expectedType,
+                   additionalConstraints: builderInferenceAdditionalConstraints,
+                   call: CallExpr(
+                       range: range,
+                       calleeName: calleeName ?? InternedString(),
+                       args: resolvedArgs,
+                       explicitTypeArgs: explicitTypeArgs
+                   ),
+                   ctx: ctx
+               ) {
+                effectiveResolved = fallbackResolved
+            } else {
+                effectiveResolved = resolved
+            }
+            if let diagnostic = effectiveResolved.diagnostic {
                 ctx.semaCtx.diagnostics.emit(diagnostic)
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
-            guard let chosen = resolved.chosenCallee else {
+            guard let chosen = effectiveResolved.chosenCallee else {
                 let nameStr = calleeName.map { interner.resolve($0) } ?? "<unknown>"
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0023",
@@ -1492,7 +1547,7 @@ final class CallTypeChecker {
                 range: range,
                 diagnostics: ctx.semaCtx.diagnostics
             )
-            let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+            let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: effectiveResolved, sema: sema)
             if args.count == 2,
                let externalLinkName = sema.symbols.externalLinkName(for: chosen),
                ["kk_require_lazy", "kk_check_lazy", "kk_precondition_assert_lazy"].contains(externalLinkName)

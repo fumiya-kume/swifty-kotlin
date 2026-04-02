@@ -4,10 +4,13 @@ extension OverloadResolver {
         call: CallExpr,
         expectedType: TypeID?,
         implicitReceiverType: TypeID? = nil,
+        additionalConstraints: AdditionalCallConstraints = AdditionalCallConstraints(),
         ctx: SemaModule
     ) -> ResolvedCall {
         // --- cache lookup ---
-        if let cache = cacheContext {
+        if let cache = cacheContext,
+           additionalConstraints.byCandidate.isEmpty
+        {
             let key = SemaCacheContext.makeCallResolutionKey(
                 candidates: candidates,
                 call: call,
@@ -25,6 +28,7 @@ extension OverloadResolver {
                 call: call,
                 expectedType: expectedType,
                 implicitReceiverType: implicitReceiverType,
+                additionalConstraints: additionalConstraints,
                 ctx: ctx
             )
             cache.cacheCallResolution(result, for: key)
@@ -35,6 +39,7 @@ extension OverloadResolver {
             call: call,
             expectedType: expectedType,
             implicitReceiverType: implicitReceiverType,
+            additionalConstraints: additionalConstraints,
             ctx: ctx
         )
     }
@@ -44,6 +49,7 @@ extension OverloadResolver {
         call: CallExpr,
         expectedType: TypeID?,
         implicitReceiverType: TypeID?,
+        additionalConstraints: AdditionalCallConstraints,
         ctx: SemaModule
     ) -> ResolvedCall {
         let solver = ConstraintSolver()
@@ -55,6 +61,7 @@ extension OverloadResolver {
                 call: call,
                 expectedType: expectedType,
                 implicitReceiverType: implicitReceiverType,
+                additionalConstraints: additionalConstraints.byCandidate[candidate] ?? [],
                 solver: solver,
                 ctx: ctx
             )
@@ -80,6 +87,7 @@ extension OverloadResolver {
         call: CallExpr,
         expectedType: TypeID?,
         implicitReceiverType: TypeID?,
+        additionalConstraints: [VariableConstraint],
         solver: ConstraintSolver,
         ctx: SemaModule
     ) -> CandidateEvaluation {
@@ -145,6 +153,8 @@ extension OverloadResolver {
         ) else {
             return .rejected
         }
+
+        constraints.append(contentsOf: additionalConstraints)
 
         // Add equality constraints for explicit type arguments.
         // For constructors, explicit type args bind class type params (offset 0).

@@ -578,6 +578,7 @@ extension BuildASTPhase {
         } else {
             typeRef = nil
         }
+        let annotations = declarationAnnotations(from: withoutDefault, interner: interner)
 
         let isVararg = withoutDefault.contains(where: { token in
             if case .keyword(.vararg) = token.kind {
@@ -600,6 +601,7 @@ extension BuildASTPhase {
         parameters.append(ValueParamDecl(
             name: name,
             type: typeRef,
+            annotations: annotations,
             isProperty: isValProperty || isVarProperty,
             isMutableProperty: isVarProperty,
             hasDefaultValue: hasDefaultValue,

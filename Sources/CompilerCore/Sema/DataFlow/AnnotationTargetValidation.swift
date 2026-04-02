@@ -96,6 +96,20 @@ extension DataFlowSemaPhase {
             )
         }
 
+        if case let .funDecl(funDecl) = decl,
+           let signature = symbols.functionSignature(for: symbolID)
+        {
+            validateValueParameterAnnotationTargets(
+                valueParams: funDecl.valueParams,
+                valueParameterSymbols: signature.valueParameterSymbols,
+                file: file,
+                symbols: symbols,
+                diagnostics: diagnostics,
+                interner: interner,
+                filesByID: filesByID
+            )
+        }
+
         switch decl {
         case let .classDecl(classDecl):
             validateMemberAnnotationTargets(
@@ -451,6 +465,8 @@ extension DataFlowSemaPhase {
             return kind == .annotationClass && allowedTargets.contains("ANNOTATION_CLASS")
         case .function:
             return allowedTargets.contains("FUNCTION")
+        case .valueParameter:
+            return allowedTargets.contains("VALUE_PARAMETER")
         case let .property(explicitUseSiteTarget):
             if allowedTargets.contains("PROPERTY") {
                 return true
@@ -512,6 +528,8 @@ extension DataFlowSemaPhase {
             }
         case .function:
             return "a function"
+        case .valueParameter:
+            return "a value parameter"
         case .property:
             return "a property"
         case .getter:
@@ -579,9 +597,40 @@ extension DataFlowSemaPhase {
         }
     }
 
+    private func validateValueParameterAnnotationTargets(
+        valueParams: [ValueParamDecl],
+        valueParameterSymbols: [SymbolID],
+        file: ASTFile,
+        symbols: SymbolTable,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner,
+        filesByID: [Int32: ASTFile]
+    ) {
+        for (valueParam, symbolID) in zip(valueParams, valueParameterSymbols) {
+            for annotation in valueParam.annotations {
+                guard annotation.useSiteTarget == nil else {
+                    continue
+                }
+                validateAnnotationTarget(
+                    annotation: annotation,
+                    site: .valueParameter,
+                    ownerRange: symbols.symbol(symbolID)?.declSite,
+                    decl: nil,
+                    file: file,
+                    propertySymbol: nil,
+                    symbols: symbols,
+                    diagnostics: diagnostics,
+                    interner: interner,
+                    filesByID: filesByID
+                )
+            }
+        }
+    }
+
     private enum AnnotationUsageSite {
         case classLike(SymbolKind)
         case function
+        case valueParameter
         case property(explicitUseSiteTarget: Bool)
         case getter
         case setter
