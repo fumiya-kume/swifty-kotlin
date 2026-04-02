@@ -5797,6 +5797,7 @@ public enum RuntimeABISpec {
             + bigIntegerFunctions
             + broadcastChannelFunctions
             + serializationFunctions
+            + networkFunctions
             + abiParityFunctions
     )
 
