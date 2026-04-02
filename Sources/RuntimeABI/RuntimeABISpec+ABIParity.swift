@@ -8,6 +8,7 @@ public extension RuntimeABISpec {
                 RuntimeABIParameter(name: "p0", type: .intptr),
                 RuntimeABIParameter(name: "p1", type: .intptr),
                 RuntimeABIParameter(name: "p2", type: .intptr),
+                RuntimeABIParameter(name: "p3", type: .intptr),
             ],
             returnType: .intptr,
             section: "ABIParity"
