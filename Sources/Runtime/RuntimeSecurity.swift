@@ -1894,6 +1894,12 @@ public func kk_certificatefactory_generateCertificate(_ factoryRaw: Int, _ dataR
     return 0
 }
 
+@_cdecl("kk_certificatefactory_generateCertificate_inputStream")
+public func kk_certificatefactory_generateCertificate_inputStream(_ factoryRaw: Int, _ dataRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
+    return 0
+}
+
 @_cdecl("kk_x509certificate_getPublicKey")
 public func kk_x509certificate_getPublicKey(_ certificateRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
@@ -1912,6 +1918,12 @@ public func kk_certpath_new(_ certificatesRaw: Int, _ outThrown: UnsafeMutablePo
     return 0
 }
 
+@_cdecl("kk_certificatefactory_generateCertPath")
+public func kk_certificatefactory_generateCertPath(_ factoryRaw: Int, _ certificatesRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
+    return 0
+}
+
 @_cdecl("kk_certpathvalidator_getInstance")
 public func kk_certpathvalidator_getInstance(_ companionRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     _ = companionRaw
@@ -1925,8 +1937,20 @@ public func kk_trustanchor_new(_ certificateRaw: Int, _ outThrown: UnsafeMutable
     return 0
 }
 
+@_cdecl("kk_trustanchor_new_with_constraints")
+public func kk_trustanchor_new_with_constraints(_ certificateRaw: Int, _ nameConstraintsRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
+    return 0
+}
+
 @_cdecl("kk_pkixparameters_new")
 public func kk_pkixparameters_new(_ trustAnchorsRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
+    return 0
+}
+
+@_cdecl("kk_pkixparameters_new_from_set")
+public func kk_pkixparameters_new_from_set(_ trustAnchorsRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
     return 0
 }
