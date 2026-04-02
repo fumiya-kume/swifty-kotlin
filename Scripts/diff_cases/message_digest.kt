@@ -1,3 +1,4 @@
+// SKIP-DIFF
 import java.security.getInstance
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec

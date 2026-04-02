@@ -1409,10 +1409,12 @@ public func kk_mac_init(_ macRaw: Int, _ keyRaw: Int, _ outThrown: UnsafeMutable
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_mac_init received invalid Mac handle")
     }
     guard let key = runtimeSecretKeySpecBox(from: keyRaw) else {
+        mac.keyBytes = nil
         runtimeSetThrown(outThrown, message: "InvalidKeyException: expected SecretKeySpec")
         return 0
     }
     guard RuntimeMacAlgorithm(name: key.algorithmName) == mac.algorithm else {
+        mac.keyBytes = nil
         runtimeSetThrown(
             outThrown,
             message: "InvalidKeyException: expected \(mac.algorithm.displayName) key, got \(key.algorithmName)"
@@ -2036,7 +2038,7 @@ public func kk_message_digest_digest(_ digestRaw: Int, _ dataRaw: Int, _ outThro
     }
     guard let bytes = runtimeSecurityBytes(from: dataRaw, caller: #function) else {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>")
-        return runtimeMakeByteArrayRaw([])
+        return 0
     }
     let output: [UInt8]
     switch digest.algorithm {
