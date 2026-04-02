@@ -62,7 +62,7 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // kotlin package — ensure @Suppress is present as an annotation class.
+        // kotlin package — ensure built-in metadata annotations are present.
         let kotlinPkg = ensurePackage(
             path: ["kotlin"],
             symbols: symbols,
@@ -75,6 +75,70 @@ extension DataFlowSemaPhase {
             packageFQName: kotlinPkg,
             packageSymbol: kotlinPkgSymbol,
             symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticJvmAnnotationClass(
+            named: "Deprecated",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticJvmAnnotationClass(
+            named: "ReplaceWith",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticDeprecationLevelEnum(
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerSyntheticJvmAnnotationClass(
+            named: "WasExperimental",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // kotlin.annotation package — provides @Target and AnnotationTarget.
+        let kotlinAnnotationPkg = ensurePackage(
+            path: ["kotlin", "annotation"],
+            symbols: symbols,
+            interner: interner
+        )
+        let kotlinAnnotationPkgSymbol = symbols.lookup(fqName: kotlinAnnotationPkg) ?? .invalid
+
+        registerSyntheticAnnotationClass(
+            named: "Target",
+            packageFQName: kotlinAnnotationPkg,
+            packageSymbol: kotlinAnnotationPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let targetSymbol = symbols.lookup(fqName: kotlinAnnotationPkg + [interner.intern("Target")]) {
+            let record = MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
+            )
+            var annotations = symbols.annotations(for: targetSymbol)
+            if !annotations.contains(record) {
+                annotations.append(record)
+            }
+            symbols.setAnnotations(annotations, for: targetSymbol)
+        }
+
+        registerSyntheticAnnotationTargetEnum(
+            packageFQName: kotlinAnnotationPkg,
+            packageSymbol: kotlinAnnotationPkgSymbol,
+            symbols: symbols,
+            types: types,
             interner: interner
         )
     }
@@ -105,6 +169,167 @@ extension DataFlowSemaPhase {
         )
         if packageSymbol != .invalid {
             symbols.setParentSymbol(packageSymbol, for: classSymbol)
+        }
+    }
+
+    private func registerSyntheticAnnotationClass(
+        named name: String,
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let className = interner.intern(name)
+        let classFQName = packageFQName + [className]
+        if let existing = symbols.lookup(fqName: classFQName) {
+            if packageSymbol != .invalid {
+                symbols.setParentSymbol(packageSymbol, for: existing)
+            }
+            return
+        }
+
+        let classSymbol = symbols.define(
+            kind: .annotationClass,
+            name: className,
+            fqName: classFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if packageSymbol != .invalid {
+            symbols.setParentSymbol(packageSymbol, for: classSymbol)
+        }
+    }
+
+    private func registerSyntheticAnnotationTargetEnum(
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let enumName = interner.intern("AnnotationTarget")
+        let enumFQName = packageFQName + [enumName]
+        let enumSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: enumFQName) {
+            enumSymbol = existing
+            if packageSymbol != .invalid {
+                symbols.setParentSymbol(packageSymbol, for: existing)
+            }
+        } else {
+            enumSymbol = symbols.define(
+                kind: .enumClass,
+                name: enumName,
+                fqName: enumFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if packageSymbol != .invalid {
+                symbols.setParentSymbol(packageSymbol, for: enumSymbol)
+            }
+        }
+
+        let enumType = types.make(.classType(ClassType(
+            classSymbol: enumSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        for entryName in [
+            "CLASS",
+            "ANNOTATION_CLASS",
+            "TYPE_PARAMETER",
+            "PROPERTY",
+            "FIELD",
+            "LOCAL_VARIABLE",
+            "VALUE_PARAMETER",
+            "CONSTRUCTOR",
+            "FUNCTION",
+            "PROPERTY_GETTER",
+            "PROPERTY_SETTER",
+            "TYPE",
+            "EXPRESSION",
+            "FILE",
+            "TYPEALIAS",
+        ] {
+            let entry = interner.intern(entryName)
+            let entryFQName = enumFQName + [entry]
+            let entrySymbol: SymbolID
+            if let existing = symbols.lookup(fqName: entryFQName) {
+                entrySymbol = existing
+            } else {
+                entrySymbol = symbols.define(
+                    kind: .field,
+                    name: entry,
+                    fqName: entryFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+            }
+            symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+            if symbols.propertyType(for: entrySymbol) == nil {
+                symbols.setPropertyType(enumType, for: entrySymbol)
+            }
+        }
+    }
+
+    private func registerSyntheticDeprecationLevelEnum(
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let enumName = interner.intern("DeprecationLevel")
+        let enumFQName = packageFQName + [enumName]
+        let enumSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: enumFQName) {
+            enumSymbol = existing
+            if packageSymbol != .invalid {
+                symbols.setParentSymbol(packageSymbol, for: existing)
+            }
+        } else {
+            enumSymbol = symbols.define(
+                kind: .enumClass,
+                name: enumName,
+                fqName: enumFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if packageSymbol != .invalid {
+                symbols.setParentSymbol(packageSymbol, for: enumSymbol)
+            }
+        }
+
+        let enumType = types.make(.classType(ClassType(
+            classSymbol: enumSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        for entryName in ["WARNING", "ERROR", "HIDDEN"] {
+            let entry = interner.intern(entryName)
+            let entryFQName = enumFQName + [entry]
+            let entrySymbol: SymbolID
+            if let existing = symbols.lookup(fqName: entryFQName) {
+                entrySymbol = existing
+            } else {
+                entrySymbol = symbols.define(
+                    kind: .field,
+                    name: entry,
+                    fqName: entryFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+            }
+            symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+            if symbols.propertyType(for: entrySymbol) == nil {
+                symbols.setPropertyType(enumType, for: entrySymbol)
+            }
         }
     }
 }

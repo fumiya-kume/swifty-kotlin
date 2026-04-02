@@ -66,6 +66,11 @@ extension ABIMismatchTests {
             "kk_atomic_ref_exchange",
             "kk_atomic_ref_compareAndSet",
             "kk_atomic_ref_compareAndExchange",
+            // ThreadLocal (java.lang / kotlin.concurrent)
+            "kk_thread_local_new",
+            "kk_thread_local_getOrSet",
+            // kotlin.concurrent
+            "kk_lock_withLock",
             "kk_atomic_array_create",
             "kk_atomic_array_new",
             "kk_atomic_array_ofNulls",

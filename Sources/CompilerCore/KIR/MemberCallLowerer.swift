@@ -308,16 +308,17 @@ final class MemberCallLowerer {
         }
         
         // コンストラクタの呼び出し
+        let ctorCanThrow = sema.symbols.functionSignature(for: chosen)?.canThrow ?? false
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         context.append(.call(
             symbol: chosen,
             callee: interner.intern("<init>"),
             arguments: [allocatedObj] + args,
             result: result,
-            canThrow: false,
+            canThrow: ctorCanThrow,
             thrownResult: nil
         ))
-        
+
         return allocatedObj
     }
     

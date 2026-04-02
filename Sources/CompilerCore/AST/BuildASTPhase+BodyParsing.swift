@@ -440,16 +440,18 @@ extension BuildASTPhase {
             var arguments: [String] = []
             if index < tokens.count, tokens[index].kind == .symbol(.lParen) {
                 index += 1 // skip '('
-                var depth = 1
+                var parenDepth = 1
+                var bracketDepth = 0
+                var braceDepth = 0
                 var currentArg: [String] = []
-                while index < tokens.count, depth > 0 {
+                while index < tokens.count, parenDepth > 0 {
                     let argToken = tokens[index]
                     if argToken.kind == .symbol(.lParen) {
-                        depth += 1
+                        parenDepth += 1
                         currentArg.append("(")
                     } else if argToken.kind == .symbol(.rParen) {
-                        depth -= 1
-                        if depth == 0 {
+                        parenDepth -= 1
+                        if parenDepth == 0 {
                             let trimmed = currentArg.joined().trimmingCharacters(in: .whitespaces)
                             if !trimmed.isEmpty {
                                 arguments.append(trimmed)
@@ -457,7 +459,21 @@ extension BuildASTPhase {
                         } else {
                             currentArg.append(")")
                         }
-                    } else if argToken.kind == .symbol(.comma), depth == 1 {
+                    } else if argToken.kind == .symbol(.lBracket) {
+                        bracketDepth += 1
+                        currentArg.append("[")
+                    } else if argToken.kind == .symbol(.rBracket) {
+                        bracketDepth = max(0, bracketDepth - 1)
+                        currentArg.append("]")
+                    } else if argToken.kind == .symbol(.lBrace) {
+                        braceDepth += 1
+                        currentArg.append("{")
+                    } else if argToken.kind == .symbol(.rBrace) {
+                        braceDepth = max(0, braceDepth - 1)
+                        currentArg.append("}")
+                    } else if argToken.kind == .symbol(.comma), parenDepth == 1,
+                              bracketDepth == 0, braceDepth == 0
+                    {
                         let trimmed = currentArg.joined().trimmingCharacters(in: .whitespaces)
                         if !trimmed.isEmpty {
                             arguments.append(trimmed)
@@ -533,6 +549,16 @@ extension BuildASTPhase {
             "="
         case .symbol(.dot):
             "."
+        case .symbol(.comma):
+            ","
+        case .symbol(.lBracket):
+            "["
+        case .symbol(.rBracket):
+            "]"
+        case .symbol(.lBrace):
+            "{"
+        case .symbol(.rBrace):
+            "}"
         default:
             ""
         }

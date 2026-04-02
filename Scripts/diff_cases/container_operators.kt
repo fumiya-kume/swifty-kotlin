@@ -1,11 +1,3 @@
-// SKIP-DIFF: current compiler still crashes on this case
-class Cursor(private val values: MutableList<Int>) {
-    private var index: Int = 0
-
-    operator fun hasNext(): Boolean = index < values.size
-    operator fun next(): Int = values[index++]
-}
-
 class Bucket(private val values: MutableList<Int>) {
     operator fun get(index: Int): Int = values[index]
 
@@ -14,7 +6,7 @@ class Bucket(private val values: MutableList<Int>) {
     }
 
     operator fun contains(value: Int): Boolean = values.any { it == value }
-    operator fun iterator(): Cursor = Cursor(values)
+    operator fun iterator(): Iterator<Int> = values.iterator()
     operator fun rangeTo(other: Bucket): Int = values.size + other.values.size
 }
 

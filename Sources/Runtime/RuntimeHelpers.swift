@@ -107,6 +107,32 @@ func runtimeAllocateThrowable(message: String, cause: Int = 0) -> Int {
     return Int(bitPattern: ptr)
 }
 
+func runtimeAllocateUninitializedPropertyAccessException(message: String, cause: Int = 0) -> Int {
+    let throwable = RuntimeUninitializedPropertyAccessExceptionBox(message: message, cause: cause)
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+    return Int(bitPattern: ptr)
+}
+
+func runtimeStableNominalTypeID(fqName: String) -> Int64 {
+    var hash: UInt64 = 0xCBF2_9CE4_8422_2325
+    for byte in fqName.utf8 {
+        hash ^= UInt64(byte)
+        hash &*= 0x100_0000_01B3
+    }
+    let payloadMask: Int64 = (1 << 55) - 1
+    let payload = Int64(bitPattern: hash) & payloadMask
+    return payload == 0 ? 1 : payload
+}
+
+func runtimeThrowableMatchesNominalTypeID(_ throwable: RuntimeThrowableBox, targetTypeID: Int64) -> Bool {
+    throwable.exceptionHierarchyFQNames.contains { fqName in
+        runtimeStableNominalTypeID(fqName: fqName) == targetTypeID
+    }
+}
+
 /// Allocates a CancellationException as a RuntimeCancellationBox (CORO-002 / spec.md J17).
 /// The returned opaque pointer can be stored in `outThrown` and later detected via
 /// `kk_is_cancellation_exception`.

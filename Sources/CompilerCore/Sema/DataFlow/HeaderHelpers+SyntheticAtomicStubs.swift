@@ -1,7 +1,7 @@
 import Foundation
 
 /// Synthetic stdlib stubs for kotlin.concurrent.AtomicInt, AtomicLong, AtomicReference,
-/// and kotlin.concurrent.atomics.AtomicArray.
+/// kotlin.concurrent.atomics.AtomicArray, and kotlin.concurrent lock types.
 /// Registers constructors, load/store/exchange/compareAndSet/compareAndExchange methods,
 /// arithmetic methods (AtomicInt/AtomicLong), AtomicArray indexed operations,
 /// and the relevant properties / factory functions.
@@ -89,16 +89,6 @@ extension DataFlowSemaPhase {
             types: types
         )
 
-        registerAtomicGetAndUpdateMethods(
-            ownerSymbol: atomicIntSymbol,
-            ownerType: atomicIntType,
-            valueType: intType,
-            prefix: "kk_atomic_int",
-            symbols: symbols,
-            interner: interner,
-            types: types
-        )
-
         // -- AtomicLong --
         let atomicLongSymbol = ensureClassSymbol(
             named: "AtomicLong",
@@ -150,16 +140,6 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-        registerAtomicGetAndUpdateMethods(
-            ownerSymbol: atomicLongSymbol,
-            ownerType: atomicLongType,
-            valueType: longType,
-            prefix: "kk_atomic_long",
-            symbols: symbols,
-            interner: interner,
-            types: types
-        )
-
         registerAtomicGetAndUpdateMethods(
             ownerSymbol: atomicLongSymbol,
             ownerType: atomicLongType,
@@ -564,6 +544,38 @@ extension DataFlowSemaPhase {
             parameters: [],
             typeParameterSymbols: [atomicArrayTypeParamSymbol],
             classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // -- Lock --
+        let lockSymbol = ensureClassSymbol(
+            named: "Lock",
+            in: concurrentPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let lockType = types.make(.classType(ClassType(
+            classSymbol: lockSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(lockType, for: lockSymbol)
+        registerAtomicMember(
+            ownerSymbol: lockSymbol,
+            ownerType: lockType,
+            name: "withLock",
+            externalLinkName: "kk_lock_withLock",
+            returnType: types.anyType,
+            parameters: [(
+                name: "action",
+                type: types.make(.functionType(FunctionType(
+                    params: [],
+                    returnType: types.anyType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            )],
             symbols: symbols,
             interner: interner
         )

@@ -103,6 +103,7 @@ final class KIRLowererPart2CoverageTests: XCTestCase {
                 valueParams: [],
                 returnType: nil,
                 body: .block([lhs], range),
+                isSuspend: false,
                 range: range
             )
         )
@@ -112,6 +113,7 @@ final class KIRLowererPart2CoverageTests: XCTestCase {
                 valueParams: [],
                 returnType: nil,
                 body: .unit,
+                isSuspend: false,
                 range: range
             )
         )
