@@ -178,9 +178,21 @@ final class RuntimeSemaphoreHandle: @unchecked Sendable {
 /// exclusive writer on blocking threads.
 final class RuntimeReadWriteLockHandle: @unchecked Sendable {
     private var lock = pthread_rwlock_t()
+    /// Mutex protecting the write-owner tracking fields below.
+    private var ownerMutex = pthread_mutex_t()
+    /// The pthread_t of the thread currently holding the write lock, or nil.
+    private var writeOwner: pthread_t?
+    /// How many times the current write-owner has re-entered writeLock().
+    private var writeHoldCount: Int = 0
 
     init() {
         precondition(pthread_rwlock_init(&lock, nil) == 0, "Failed to initialize pthread_rwlock_t")
+        precondition(pthread_mutex_init(&ownerMutex, nil) == 0, "Failed to initialize owner mutex")
+    }
+
+    deinit {
+        pthread_rwlock_destroy(&lock)
+        pthread_mutex_destroy(&ownerMutex)
     }
 
     func readLock() {
@@ -188,10 +200,40 @@ final class RuntimeReadWriteLockHandle: @unchecked Sendable {
     }
 
     func writeLock() {
+        let self_thread = pthread_self()
+        pthread_mutex_lock(&ownerMutex)
+        if let owner = writeOwner, pthread_equal(owner, self_thread) != 0 {
+            // Reentrant write-lock by the same thread – just bump the count.
+            writeHoldCount += 1
+            pthread_mutex_unlock(&ownerMutex)
+            return
+        }
+        pthread_mutex_unlock(&ownerMutex)
+
         precondition(pthread_rwlock_wrlock(&lock) == 0, "Failed to acquire write lock")
+
+        pthread_mutex_lock(&ownerMutex)
+        writeOwner = self_thread
+        writeHoldCount = 1
+        pthread_mutex_unlock(&ownerMutex)
     }
 
     func unlock() {
+        let self_thread = pthread_self()
+        pthread_mutex_lock(&ownerMutex)
+        if let owner = writeOwner, pthread_equal(owner, self_thread) != 0 {
+            writeHoldCount -= 1
+            if writeHoldCount == 0 {
+                writeOwner = nil
+                pthread_mutex_unlock(&ownerMutex)
+                precondition(pthread_rwlock_unlock(&lock) == 0, "Failed to unlock read/write lock")
+            } else {
+                pthread_mutex_unlock(&ownerMutex)
+            }
+            return
+        }
+        pthread_mutex_unlock(&ownerMutex)
+        // Read-lock unlock path (no owner tracking needed).
         precondition(pthread_rwlock_unlock(&lock) == 0, "Failed to unlock read/write lock")
     }
 }
