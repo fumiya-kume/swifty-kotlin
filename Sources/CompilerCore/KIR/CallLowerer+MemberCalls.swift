@@ -199,12 +199,48 @@ extension CallLowerer {
         let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         guard isKPropertyReceiverType(receiverType, sema: sema, interner: interner) else { return nil }
 
+        // Determine the runtime callee based on the member being accessed.
+        let runtimeCallee: String
+        switch calleeStr {
+        case "name":
+            runtimeCallee = "kk_kproperty_stub_name"
+        case "returnType":
+            runtimeCallee = "kk_kproperty_stub_return_type"
+        case "visibility":
+            runtimeCallee = "kk_kproperty_stub_visibility"
+        case "isLateinit":
+            runtimeCallee = "kk_kproperty_stub_is_lateinit"
+        case "isConst":
+            runtimeCallee = "kk_kproperty_stub_is_const"
+        case "getter":
+            runtimeCallee = "kk_kproperty_stub_getter"
+        case "setter":
+            runtimeCallee = "kk_kproperty_stub_setter"
+        case "get":
+            runtimeCallee = "kk_kproperty_stub_get_value"
+        case "set":
+            runtimeCallee = "kk_kproperty_stub_set_value"
+        default:
+            return nil
+        }
+
         // Lower the receiver expression.
         let receiverID = driver.exprLowerer.lowerExpr(
             receiverExpr, ast: ast, sema: sema, arena: arena, interner: interner,
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
+
+        // Build call arguments: receiver first, then any explicit arguments.
+        var callArgs: [KIRExprID] = [receiverID]
+        for arg in args {
+            let argID = driver.exprLowerer.lowerExpr(
+                arg.expr, ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            callArgs.append(argID)
+        }
 
         let resultType = sema.bindings.exprTypes[exprID]
             ?? sema.types.make(.primitive(.string, .nonNull))
@@ -214,8 +250,8 @@ extension CallLowerer {
         )
         instructions.append(.call(
             symbol: nil,
-            callee: interner.intern("kk_kproperty_stub_name"),
-            arguments: [receiverID],
+            callee: interner.intern(runtimeCallee),
+            arguments: callArgs,
             result: result,
             canThrow: false,
             thrownResult: nil

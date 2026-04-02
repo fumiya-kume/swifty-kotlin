@@ -5179,9 +5179,14 @@ private func contextBoxFromHandle(_ handle: Int) -> RuntimeCoroutineContextBox? 
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else { return nil }
     contextBoxStorageLock.lock()
     let known = contextBoxPointers.contains(UInt(bitPattern: ptr))
+    // Dereference while still holding the lock to prevent a concurrent
+    // releaseContextBox from deallocating the box between the membership
+    // check and the Unmanaged dereference (TOCTOU).
+    let box: RuntimeCoroutineContextBox? = known
+        ? Unmanaged<RuntimeCoroutineContextBox>.fromOpaque(ptr).takeUnretainedValue()
+        : nil
     contextBoxStorageLock.unlock()
-    guard known else { return nil }
-    return Unmanaged<RuntimeCoroutineContextBox>.fromOpaque(ptr).takeUnretainedValue()
+    return box
 }
 
 /// Create a RuntimeStringBox handle for a Swift String (registered in objectPointers).
@@ -5318,6 +5323,11 @@ public func kk_with_context_full(_ contextHandle: Int, _ blockFnPtr: Int, _ cont
             contState.exceptionHandler = handler
         }
     }
+
+    // Release the context handle after extracting all elements.
+    // The caller (generated code) is not expected to emit a separate
+    // kk_context_release, so this function consumes the handle.
+    releaseContextBox(contextHandle)
 
     return kk_with_context(dispatcherTag, blockFnPtr, continuation)
 }

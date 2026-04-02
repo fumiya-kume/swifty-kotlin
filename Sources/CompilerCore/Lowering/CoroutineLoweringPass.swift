@@ -317,6 +317,8 @@ final class CoroutineLoweringPass: LoweringPass {
             flowCollectCallee: flowCollectCallee,
             withContextCallee: kxMiniWithContextCallee,
             runtimeWithContextCallee: ctx.interner.intern("kk_with_context"),
+            withContextFullCallee: ctx.interner.intern("kk_with_context_full"),
+            runtimeWithContextFullCallee: ctx.interner.intern("kk_with_context_full"),
             withTimeoutCallee: kxMiniWithTimeoutCallee,
             runtimeWithTimeoutCallee: runtimeWithTimeoutCallee,
             withTimeoutOrNullCallee: kxMiniWithTimeoutOrNullCallee,

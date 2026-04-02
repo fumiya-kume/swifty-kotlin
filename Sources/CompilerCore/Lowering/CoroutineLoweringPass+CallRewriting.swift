@@ -9,6 +9,8 @@ extension CoroutineLoweringPass {
         let flowCollectCallee: InternedString
         let withContextCallee: InternedString
         let runtimeWithContextCallee: InternedString
+        let withContextFullCallee: InternedString
+        let runtimeWithContextFullCallee: InternedString
         let withTimeoutCallee: InternedString
         let runtimeWithTimeoutCallee: InternedString
         let withTimeoutOrNullCallee: InternedString
@@ -206,6 +208,15 @@ extension CoroutineLoweringPass {
                 using: rewrite
             ) {
                 loweredBody.append(contentsOf: withContextInstructions)
+                continue
+            }
+
+            if let withContextFullInstructions = rewriteWithContextFullCall(
+                call: call,
+                symbolByExprRaw: symbolByExprRaw,
+                using: rewrite
+            ) {
+                loweredBody.append(contentsOf: withContextFullInstructions)
                 continue
             }
 
@@ -432,6 +443,101 @@ extension CoroutineLoweringPass {
             symbol: nil,
             callee: rewrite.runtimeWithContextCallee,
             arguments: [dispatcherExpr, entryPointExpr, continuationExpr],
+            result: call.result,
+            canThrow: call.canThrow,
+            thrownResult: call.thrownResult
+        ))
+        return rewritten
+    }
+
+    /// Rewrite a `withContext(CoroutineContext, block)` call that was resolved
+    /// to the `kk_with_context_full` extern (accepts a composed context handle
+    /// instead of a raw dispatcher tag).
+    func rewriteWithContextFullCall(
+        call: CallRewriteInput,
+        symbolByExprRaw: [Int32: SymbolID],
+        using rewrite: SuspendRewriteContext
+    ) -> [KIRInstruction]? {
+        guard call.callee == rewrite.withContextFullCallee,
+              call.arguments.count >= 2,
+              let referencedSymbol = symbolReference(
+                  for: call.arguments[1],
+                  module: rewrite.module,
+                  propagatedSymbols: symbolByExprRaw
+              ),
+              let loweredTarget = rewrite.loweredBySymbol[referencedSymbol]
+        else {
+            return nil
+        }
+
+        let contextExpr = call.arguments[0]
+        let extraArgs = Array(call.arguments.dropFirst(2))
+        let targetArity = rewrite.suspendFunctionArityBySymbol[referencedSymbol] ?? 0
+        guard extraArgs.count == targetArity else {
+            rewrite.ctx.diagnostics.error(
+                "KSWIFTK-CORO-0004",
+                "withContext(CoroutineContext) block capture arity mismatch.",
+                range: nil
+            )
+            return [call.instruction]
+        }
+
+        let entryTarget: LoweredSuspendFunction
+        var rewritten: [KIRInstruction] = []
+        let continuationFunctionID = rewrite.module.arena.appendExpr(
+            .temporary(Int32(rewrite.module.arena.expressions.count)),
+            type: rewrite.intType
+        )
+        let continuationExpr = rewrite.module.arena.appendExpr(
+            .temporary(Int32(rewrite.module.arena.expressions.count)),
+            type: rewrite.continuationTypeByLoweredSymbol[loweredTarget.symbol] ?? rewrite.anyType
+        )
+
+        if extraArgs.isEmpty {
+            entryTarget = loweredTarget
+        } else {
+            guard let thunk = rewrite.launcherThunkByOriginalSymbol[referencedSymbol] else {
+                return [call.instruction]
+            }
+            entryTarget = thunk
+        }
+
+        rewritten.append(.constValue(
+            result: continuationFunctionID,
+            value: .intLiteral(Int64(loweredTarget.symbol.rawValue))
+        ))
+        rewritten.append(.call(
+            symbol: nil,
+            callee: rewrite.continuationFactory,
+            arguments: [continuationFunctionID],
+            result: continuationExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        for (index, argExpr) in extraArgs.enumerated() {
+            let slotExpr = rewrite.module.arena.appendExpr(
+                .intLiteral(Int64(index)),
+                type: rewrite.intType
+            )
+            rewritten.append(.call(
+                symbol: nil,
+                callee: rewrite.launcherArgSetCallee,
+                arguments: [continuationExpr, slotExpr, argExpr],
+                result: nil,
+                canThrow: false,
+                thrownResult: nil
+            ))
+        }
+
+        let entryPointExpr = rewrite.module.arena.appendExpr(
+            .symbolRef(entryTarget.symbol),
+            type: rewrite.intType
+        )
+        rewritten.append(.call(
+            symbol: nil,
+            callee: rewrite.runtimeWithContextFullCallee,
+            arguments: [contextExpr, entryPointExpr, continuationExpr],
             result: call.result,
             canThrow: call.canThrow,
             thrownResult: call.thrownResult
