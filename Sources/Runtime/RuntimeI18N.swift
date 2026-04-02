@@ -112,8 +112,12 @@ private func parseProperties(_ text: String) -> [String: String] {
 
     var logicalLines: [String] = []
     var current = ""
+    var isContinuation = false
     for physicalLine in text.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline) {
-        let line = String(physicalLine)
+        // Per the .properties spec, leading whitespace of a continuation line must be stripped.
+        let line = isContinuation
+            ? String(physicalLine).trimmingCharacters(in: .whitespaces)
+            : String(physicalLine)
         if current.isEmpty {
             current = line
         } else {
@@ -122,11 +126,13 @@ private func parseProperties(_ text: String) -> [String: String] {
 
         if hasUnescapedTrailingBackslash(current) {
             current.removeLast()
+            isContinuation = true
             continue
         }
 
         logicalLines.append(current)
         current = ""
+        isContinuation = false
     }
     if !current.isEmpty {
         logicalLines.append(current)
