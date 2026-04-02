@@ -123,15 +123,18 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         if let targetSymbol = symbols.lookup(fqName: kotlinAnnotationPkg + [interner.intern("Target")]) {
-            let record = MetadataAnnotationRecord(
-                annotationFQName: "kotlin.annotation.Target",
-                arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
-            )
-            var annotations = symbols.annotations(for: targetSymbol)
-            if !annotations.contains(record) {
-                annotations.append(record)
-            }
-            symbols.setAnnotations(annotations, for: targetSymbol)
+            addAnnotationTargetMetaAnnotation(to: targetSymbol, symbols: symbols)
+        }
+
+        registerSyntheticAnnotationClass(
+            named: "MustBeDocumented",
+            packageFQName: kotlinAnnotationPkg,
+            packageSymbol: kotlinAnnotationPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let mustBeDocumentedSymbol = symbols.lookup(fqName: kotlinAnnotationPkg + [interner.intern("MustBeDocumented")]) {
+            addAnnotationTargetMetaAnnotation(to: mustBeDocumentedSymbol, symbols: symbols)
         }
 
         registerSyntheticAnnotationClass(
@@ -160,6 +163,21 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+    }
+
+    private func addAnnotationTargetMetaAnnotation(
+        to symbol: SymbolID,
+        symbols: SymbolTable
+    ) {
+        let record = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.annotation.Target",
+            arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
+        )
+        var annotations = symbols.annotations(for: symbol)
+        if !annotations.contains(record) {
+            annotations.append(record)
+        }
+        symbols.setAnnotations(annotations, for: symbol)
     }
 
     private func registerSyntheticJvmAnnotationClass(
