@@ -69,8 +69,8 @@ private func runtimeInstantFromEpochMilliseconds(_ epochMilliseconds: Double) ->
     }
 
     let totalSeconds = floor(epochMilliseconds / 1_000)
-    let remainingMilliseconds = epochMilliseconds - (totalSeconds * 1_000)
-    let nanos = Int32((remainingMilliseconds * 1_000_000).rounded(.towardZero))
+    let remainingMillis = Int64(epochMilliseconds - (totalSeconds * 1_000))
+    let nanos = Int32(remainingMillis * 1_000_000)
     let clampedSeconds = totalSeconds < Double(Int64.min)
         ? Int64.min
         : (totalSeconds > Double(Int64.max) ? Int64.max : Int64(totalSeconds))
