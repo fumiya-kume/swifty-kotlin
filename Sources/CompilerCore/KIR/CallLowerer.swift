@@ -906,6 +906,18 @@ final class CallLowerer {
                 )
                 instructions.append(.constValue(result: capacityExpr, value: .intLiteral(0)))
                 finalArgIDs.append(capacityExpr)
+            } else if loweredCalleeName == interner.intern("kk_coroutine_cancel_current"),
+                      finalArgIDs.count == 1
+            {
+                // The synthetic one-argument `cancel(message)` overload lowers
+                // to the same runtime ABI as the two-argument overload and
+                // supplies a null cause implicitly.
+                let nullCauseExpr = arena.appendExpr(
+                    .intLiteral(0),
+                    type: sema.types.intType
+                )
+                instructions.append(.constValue(result: nullCauseExpr, value: .intLiteral(0)))
+                finalArgIDs.append(nullCauseExpr)
             }
             let callCanThrow = needsThrownChannel(calleeName: loweredCalleeName, interner: interner)
             let thrownResult = callCanThrow

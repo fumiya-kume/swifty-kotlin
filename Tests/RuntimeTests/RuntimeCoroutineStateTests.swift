@@ -11,6 +11,23 @@ private let runtimeKxMiniCancelFunctionID = 9104
 private let runtimeWithContextFunctionID = 9105
 private let runtimeCoroutineTestState = RuntimeCoroutineTestState()
 
+private func makeRuntimeString(_ value: String) -> Int {
+    let box = RuntimeStringBox(value)
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+    return Int(bitPattern: ptr)
+}
+
+private func runtimeStringValue(_ raw: Int) -> String {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw),
+          let box = tryCast(ptr, to: RuntimeStringBox.self) else {
+        return ""
+    }
+    return box.value
+}
+
 @_cdecl("runtime_test_suspend_with_delay")
 func runtime_test_suspend_with_delay(_ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     let label = kk_coroutine_state_enter(continuation, runtimeKxMiniDelayFunctionID)
@@ -412,6 +429,37 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, 1, "Should return 1 when cancelled")
         XCTAssertNotEqual(outThrown, 0, "outThrown should be set to CancellationException")
         XCTAssertEqual(kk_is_cancellation_exception(outThrown), 1, "Should be a CancellationException")
+    }
+
+    func testCancelCurrentCoroutinePreservesMessageAndCause() {
+        let continuation = kk_coroutine_continuation_new(42)
+        defer { _ = kk_coroutine_state_exit(continuation, 0) }
+
+        let job = RuntimeJobHandle()
+        if let state = runtimeContinuationState(from: continuation) {
+            state.jobHandle = job
+            job.continuationState = state
+        }
+
+        let taskKey = RuntimeCoroutineScopeTaskKey.installFreshKey()
+        defer { RuntimeCoroutineScopeTaskKey.removeKey() }
+        if let state = runtimeContinuationState(from: continuation) {
+            RuntimeContinuationState.installCurrent(state, forTask: taskKey)
+        }
+        defer { RuntimeContinuationState.removeCurrent(forTask: taskKey) }
+
+        let messageRaw = makeRuntimeString("custom stop")
+        let causeRaw = kk_throwable_new(UnsafeMutableRawPointer(bitPattern: makeRuntimeString("root cause")))
+
+        _ = kk_coroutine_cancel_current(messageRaw, Int(bitPattern: causeRaw))
+        XCTAssertTrue(job.cancellationSnapshot(), "Current job should be cancelled")
+
+        var outThrown = 0
+        let thrownRaw = kk_coroutine_check_cancellation(continuation, &outThrown)
+        XCTAssertEqual(thrownRaw, 1, "Cancellation check should report cancellation")
+        XCTAssertNotEqual(outThrown, 0, "Cancellation should materialize a throwable")
+        XCTAssertEqual(runtimeStringValue(kk_throwable_message(outThrown)), "custom stop")
+        XCTAssertEqual(runtimeStringValue(kk_throwable_message(kk_throwable_cause(outThrown))), "root cause")
     }
 
     func testIsCancellationExceptionReturnsFalseForRegularThrowable() {

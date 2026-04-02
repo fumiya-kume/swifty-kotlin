@@ -2960,6 +2960,15 @@ public enum RuntimeABISpec {
             returnType: .void,
             section: "Coroutine"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_cancel_current",
+            parameters: [
+                RuntimeABIParameter(name: "message", type: .intptr),
+                RuntimeABIParameter(name: "causeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
         // Mutex / Semaphore (sync primitives)
         RuntimeABIFunctionSpec(
             name: "kk_mutex_create",

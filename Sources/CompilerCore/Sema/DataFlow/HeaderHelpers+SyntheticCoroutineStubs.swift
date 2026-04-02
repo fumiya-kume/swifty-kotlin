@@ -30,6 +30,11 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cancellationPkg = ensureSyntheticPackage(
+            kotlinCoroutinesPkg + [interner.intern("cancellation")],
+            symbols: symbols,
+            interner: interner
+        )
         let kotlinxPkg = ensureSyntheticPackage(
             [interner.intern("kotlinx")],
             symbols: symbols,
@@ -1257,6 +1262,7 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+<<<<<<< HEAD
         registerSyntheticCoroutineTopLevelProperty(
             named: "COROUTINE_SUSPENDED",
             packageFQName: kotlinCoroutinesIntrinsicsPkg,
@@ -1329,6 +1335,32 @@ extension DataFlowSemaPhase {
                 for: suspendCoroutineSymbol
             )
         }
+=======
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "cancel",
+            packageFQName: cancellationPkg,
+            parameters: [(name: "message", type: types.stringType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_coroutine_cancel_current",
+            isSuspend: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "cancel",
+            packageFQName: cancellationPkg,
+            parameters: [
+                (name: "message", type: types.stringType),
+                (name: "cause", type: types.makeNullable(types.anyType)),
+            ],
+            returnType: types.unitType,
+            externalLinkName: "kk_coroutine_cancel_current",
+            isSuspend: true,
+            symbols: symbols,
+            interner: interner
+        )
+>>>>>>> 39862a03c (implement top-level cancel)
 
         // CoroutineContext.plus(other: CoroutineContext): CoroutineContext
         registerSyntheticCoroutineMember(
@@ -2063,6 +2095,7 @@ extension DataFlowSemaPhase {
         parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
         externalLinkName: String? = nil,
+        isSuspend: Bool = false,
         syntheticTypeParameterNames: [String] = [],
         flags: SymbolFlags = [.synthetic],
         isSuspend: Bool = false,

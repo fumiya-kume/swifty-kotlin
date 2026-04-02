@@ -139,6 +139,8 @@ final class RuntimeContinuationState: @unchecked Sendable {
     var thrownException: Int = 0
     private let stateLock = NSLock()
     private var delayTimers: [ObjectIdentifier: DispatchSourceTimer]
+    private static let taskStateLock = NSLock()
+    nonisolated(unsafe) private static var taskStateMap: [ObjectIdentifier: RuntimeContinuationState] = [:]
 
     /// CORO-004: Continuation-based resume model.
     ///
@@ -180,6 +182,31 @@ final class RuntimeContinuationState: @unchecked Sendable {
             timer.setEventHandler(handler: nil)
             timer.cancel()
         }
+    }
+
+    /// Install the current continuation state for the given task key.
+    static func installCurrent(_ state: RuntimeContinuationState?, forTask key: ObjectIdentifier) {
+        taskStateLock.lock()
+        if let state {
+            taskStateMap[key] = state
+        } else {
+            taskStateMap.removeValue(forKey: key)
+        }
+        taskStateLock.unlock()
+    }
+
+    /// Remove the current continuation state for the given task key.
+    static func removeCurrent(forTask key: ObjectIdentifier) {
+        taskStateLock.lock()
+        taskStateMap.removeValue(forKey: key)
+        taskStateLock.unlock()
+    }
+
+    /// Continuation state for the current task, if any.
+    static var current: RuntimeContinuationState? {
+        taskStateLock.lock()
+        defer { taskStateLock.unlock() }
+        return taskStateMap[RuntimeCoroutineScopeTaskKey.currentTaskKey]
     }
 
     func scheduleDelay(milliseconds: Int) {
@@ -383,14 +410,7 @@ final class RuntimeAsyncTask: @unchecked Sendable {
     func cancel() {
         lock.lock()
         isCancelled = true
-        let wasCompleted = isCompleted
-        if !wasCompleted {
-            isCompleted = true
-        }
         lock.unlock()
-        if !wasCompleted {
-            ready.signal()
-        }
     }
 
     // CORO-004: awaitResult() now supports continuation-based async completion.
@@ -454,6 +474,7 @@ final class RuntimeAsyncTask: @unchecked Sendable {
         }
         return value
     }
+
 }
 
 // MARK: - Structured Concurrency (P5-89)
@@ -5628,6 +5649,21 @@ public func kk_coroutine_cancel(_ continuation: Int) {
     _ = job.cancel()
 }
 
+/// Cancel the currently running coroutine without requiring a continuation handle.
+@_cdecl("kk_coroutine_cancel_current")
+public func kk_coroutine_cancel_current(_ message: Int, _ causeRaw: Int) -> Int {
+    let normalizedCause = (causeRaw == runtimeNullSentinelInt || causeRaw == 0) ? 0 : causeRaw
+    guard let state = RuntimeContinuationState.current else {
+        return 0
+    }
+    if let job = state.jobHandle {
+        _ = job.cancel(cause: normalizedCause)
+    } else if let scope = state.scope {
+        scope.cancel()
+    }
+    return 0
+}
+
 /// Returns 1 if the given throwable raw pointer is a CancellationException, 0 otherwise.
 @_cdecl("kk_is_cancellation_exception")
 public func kk_is_cancellation_exception(_ throwableRaw: Int) -> Int {
@@ -5737,6 +5773,7 @@ func runSuspendEntryLoopWithContinuation(
         let result = entryPoint(continuation, &thrownValue)
         if thrownValue != 0 {
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
+            RuntimeContinuationState.removeCurrent(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
             outThrown?.pointee = thrownValue
             RuntimeJobHandle.current = nil
@@ -5752,6 +5789,7 @@ func runSuspendEntryLoopWithContinuation(
         }
         if result != suspendedToken {
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
+            RuntimeContinuationState.removeCurrent(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
             outThrown?.pointee = 0
             RuntimeJobHandle.current = nil
@@ -5761,6 +5799,7 @@ func runSuspendEntryLoopWithContinuation(
         }
         guard let state = runtimeContinuationState(from: continuation) else {
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
+            RuntimeContinuationState.removeCurrent(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
             outThrown?.pointee = 0
             RuntimeJobHandle.current = nil
@@ -5776,6 +5815,7 @@ func runSuspendEntryLoopWithContinuation(
             // GCD thread.  Re-install the task key so the scope map lookup
             // still works.
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
+            RuntimeContinuationState.removeCurrent(forTask: taskKeyBox.key)
             let freshKey = RuntimeCoroutineScopeTaskKey.installFreshKey()
             taskKeyBox.key = freshKey
             RuntimeCoroutineScope.installScope(state.scope, forTask: freshKey)
