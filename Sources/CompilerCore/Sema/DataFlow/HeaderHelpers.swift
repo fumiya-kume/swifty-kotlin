@@ -883,6 +883,7 @@ extension DataFlowSemaPhase {
         registerSyntheticMetaprogStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticBigIntegerStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticThreadLocalStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticCoroutineCancellationStubs(symbols: symbols, types: types, interner: interner)
     }
 
     func registerSyntheticContractStubs(
