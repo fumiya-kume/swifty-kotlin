@@ -50,6 +50,77 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.contains(where: isWarning), "Expected deprecated warning on companion call, got: \(ctx.diagnostics.diagnostics)")
     }
 
+    func testDeprecatedReplaceWithAddsMessageAndCodeAction() {
+        let source = """
+        @Deprecated("Use replacement", replaceWith = ReplaceWith("newApi()"))
+        fun oldApi(): Int = 1
+
+        fun newApi(): Int = 2
+        fun caller(): Int = oldApi()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-DEPRECATED", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one deprecated diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.contains(where: isWarning), "Expected deprecated warning, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics[0].message.contains("Replace with: newApi()"), "Expected replaceWith message, got: \(diagnostics[0].message)")
+        XCTAssertEqual(diagnostics[0].codeActions.map(\.title), ["Replace with 'newApi()'"])
+    }
+
+    func testDeprecatedReplaceWithNamedExpressionParses() {
+        let source = """
+        @Deprecated(
+            message = "Use replacement",
+            replaceWith = ReplaceWith(expression = "newApi()")
+        )
+        fun oldApi(): Int = 1
+
+        fun newApi(): Int = 2
+        fun caller(): Int = oldApi()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-DEPRECATED", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one deprecated diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics[0].message.contains("Replace with: newApi()"), "Expected replaceWith message, got: \(diagnostics[0].message)")
+        XCTAssertEqual(diagnostics[0].codeActions.map(\.title), ["Replace with 'newApi()'"])
+    }
+
+    func testDeprecatedErrorLevelWithReplaceWithStillEmitsError() {
+        let source = """
+        @Deprecated("Use replacement", replaceWith = ReplaceWith("newApi()"), level = DeprecationLevel.ERROR)
+        fun oldApi(): Int = 1
+
+        fun newApi(): Int = 2
+        fun caller(): Int = oldApi()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-DEPRECATED", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one deprecated diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.contains(where: isError), "Expected deprecated error, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics[0].message.contains("Replace with: newApi()"), "Expected replaceWith message, got: \(diagnostics[0].message)")
+    }
+
+    func testDeprecatedEmptyReplaceWithDoesNotAddSuggestion() {
+        let source = """
+        @Deprecated("Use replacement", replaceWith = ReplaceWith())
+        fun oldApi(): Int = 1
+
+        fun caller(): Int = oldApi()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-DEPRECATED", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one deprecated diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertFalse(diagnostics[0].message.contains("Replace with:"), "Did not expect replaceWith message, got: \(diagnostics[0].message)")
+        XCTAssertTrue(diagnostics[0].codeActions.isEmpty, "Did not expect code actions for empty replaceWith")
+    }
+
     func testSuppressUncheckedCastByKotlinNameSuppressesDiagnostic() {
         let source = """
         @Suppress("UNCHECKED_CAST")
