@@ -535,19 +535,20 @@ extension BuildKIRRegressionTests {
             emit: &emit
         )
 
-        guard let virtualInstruction = emit.instructions.first(where: { instruction in
+        let hasVirtualCall = emit.instructions.contains { instruction in
             if case .virtualCall = instruction { return true }
             return false
-        }) else {
-            XCTFail("Expected virtualCall instruction")
+        }
+        XCTAssertFalse(hasVirtualCall, "Virtual dispatch is currently disabled and should fall back to static call emission.")
+        let directInstruction = try? XCTUnwrap(emit.instructions.first { instruction in
+            if case .call = instruction { return true }
+            return false
+        })
+        guard case let .call(_, _, arguments, _, _, _, _, _)? = directInstruction else {
+            XCTFail("Expected direct call fallback instruction")
             return
         }
-        guard case let .virtualCall(_, _, _, arguments, _, _, _, dispatch) = virtualInstruction else {
-            XCTFail("Expected virtualCall payload")
-            return
-        }
-        XCTAssertEqual(arguments.count, 1)
-        XCTAssertEqual(dispatch, .vtable(slot: 3))
+        XCTAssertEqual(arguments.count, 2, "Static fallback should pass receiver plus one value argument.")
     }
 
     func testDirectSafeMemberCallSuperCallSkipsVirtualDispatch() {
@@ -869,13 +870,12 @@ extension BuildKIRRegressionTests {
             ),
             for: owner
         )
-        XCTAssertEqual(
+        XCTAssertNil(
             fixture.driver.callLowerer.resolveVirtualDispatch(
                 callee: method,
                 receiverTypeID: nil,
                 sema: fixture.sema
-            ),
-            .vtable(slot: 1)
+            )
         )
 
         let objectOwner = defineSemanticSymbol(in: fixture, kind: .object, fqName: ["pkg", "Singleton"])

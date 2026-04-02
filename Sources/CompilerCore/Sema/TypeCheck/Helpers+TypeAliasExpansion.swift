@@ -125,6 +125,9 @@ extension TypeCheckHelpers {
                 classSymbol: clsType.classSymbol, args: newArgs, nullability: clsType.nullability
             )))
         case let .functionType(fnType):
+            let newContextReceivers = fnType.contextReceivers.map {
+                applyAliasSubstitution($0, argSubstitution: argSubstitution, sema: sema)
+            }
             let newReceiver = fnType.receiver.map {
                 applyAliasSubstitution($0, argSubstitution: argSubstitution, sema: sema)
             }
@@ -134,10 +137,15 @@ extension TypeCheckHelpers {
             let newReturn = applyAliasSubstitution(
                 fnType.returnType, argSubstitution: argSubstitution, sema: sema
             )
-            if newReceiver == fnType.receiver, newParams == fnType.params, newReturn == fnType.returnType {
+            if newContextReceivers == fnType.contextReceivers,
+               newReceiver == fnType.receiver,
+               newParams == fnType.params,
+               newReturn == fnType.returnType
+            {
                 return typeID
             }
             return types.make(.functionType(FunctionType(
+                contextReceivers: newContextReceivers,
                 receiver: newReceiver, params: newParams, returnType: newReturn,
                 isSuspend: fnType.isSuspend, nullability: fnType.nullability
             )))

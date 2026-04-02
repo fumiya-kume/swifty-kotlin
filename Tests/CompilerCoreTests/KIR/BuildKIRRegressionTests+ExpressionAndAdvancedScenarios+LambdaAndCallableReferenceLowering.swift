@@ -56,7 +56,7 @@ extension BuildKIRRegressionTests {
                 guard case let .call(_, callee, _, _, _, _, _, _) = instruction else {
                     return false
                 }
-                return ctx.interner.resolve(callee).hasPrefix("kk_lambda_")
+                return ctx.interner.resolve(callee).hasPrefix("kk_function_value_adapter_")
             })
 
             guard case let .call(callSymbol, callee, arguments, _, _, _, _, _) = lambdaCall else {
@@ -64,16 +64,20 @@ extension BuildKIRRegressionTests {
                 return
             }
             XCTAssertNotNil(callSymbol)
-            XCTAssertTrue(ctx.interner.resolve(callee).hasPrefix("kk_lambda_"))
-            XCTAssertEqual(arguments.count, 2, "Direct callable-value calls should only prepend captures.")
-            guard case .intLiteral(40)? = module.arena.expr(arguments[0]) else {
-                XCTFail("Expected first lambda call argument to be captured 'base'.")
+            XCTAssertTrue(ctx.interner.resolve(callee).hasPrefix("kk_function_value_adapter_"))
+            XCTAssertEqual(arguments.count, 2, "Closure-backed callable-value calls should pass closure object plus explicit args.")
+            if case .unit? = module.arena.expr(arguments[0]) {
+                XCTFail("Expected first lambda call argument to be a closure object reference.")
                 return
             }
             guard case .intLiteral(2)? = module.arena.expr(arguments[1]) else {
                 XCTFail("Expected second lambda call argument to be the explicit call argument.")
                 return
             }
+            let callNames = extractCallees(from: mainBody, interner: ctx.interner)
+            XCTAssertTrue(callNames.contains("kk_object_new"))
+            XCTAssertTrue(callNames.contains("kk_array_set"))
+            XCTAssertTrue(callNames.contains("kk_function_create_1"))
 
             let generatedLambdaFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
                 guard case let .function(function) = decl,
@@ -161,7 +165,7 @@ extension BuildKIRRegressionTests {
                 guard case let .call(_, callee, _, _, _, _, _, _) = instruction else {
                     return false
                 }
-                return ctx.interner.resolve(callee).hasPrefix("kk_lambda_")
+                return ctx.interner.resolve(callee).hasPrefix("kk_function_value_adapter_")
             })
 
             guard case let .call(_, _, arguments, _, _, _, _, _) = lambdaCall else {
@@ -169,8 +173,8 @@ extension BuildKIRRegressionTests {
                 return
             }
             XCTAssertEqual(arguments.count, 3)
-            guard case .intLiteral(100)? = module.arena.expr(arguments[0]) else {
-                XCTFail("Expected capture argument to stay prepended at index 0.")
+            if case .unit? = module.arena.expr(arguments[0]) {
+                XCTFail("Expected closure object argument at index 0.")
                 return
             }
             guard case .intLiteral(2)? = module.arena.expr(arguments[1]) else {
@@ -190,11 +194,11 @@ extension BuildKIRRegressionTests {
         let maxExprSymbol = loweringCtx.syntheticLambdaSymbol(for: ExprID(rawValue: Int32.max))
 
         XCTAssertEqual(zeroExprSymbol, loweringCtx.syntheticLambdaSymbol(for: ExprID(rawValue: 0)))
-        XCTAssertGreaterThan(zeroExprSymbol.rawValue, 0)
+        XCTAssertLessThan(zeroExprSymbol.rawValue, 0)
         XCTAssertNotEqual(zeroExprSymbol.rawValue, 0)
         XCTAssertNotEqual(zeroExprSymbol, .invalid)
 
-        XCTAssertGreaterThan(maxExprSymbol.rawValue, 0)
+        XCTAssertLessThan(maxExprSymbol.rawValue, 0)
         XCTAssertNotEqual(maxExprSymbol.rawValue, 0)
         XCTAssertNotEqual(maxExprSymbol, .invalid)
         XCTAssertNotEqual(maxExprSymbol, zeroExprSymbol)

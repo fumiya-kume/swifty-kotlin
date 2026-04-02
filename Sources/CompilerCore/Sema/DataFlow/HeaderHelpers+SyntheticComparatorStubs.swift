@@ -1,7 +1,8 @@
 import Foundation
 
 /// Synthetic stubs for Comparator, compareBy, compareByDescending (STDLIB-175),
-/// thenBy, thenByDescending, reversed (STDLIB-176), naturalOrder, reverseOrder (STDLIB-177).
+/// thenBy, thenByDescending, thenComparator, reversed (STDLIB-176),
+/// naturalOrder, reverseOrder (STDLIB-177).
 extension DataFlowSemaPhase {
     func registerSyntheticComparatorStubs(
         symbols: SymbolTable,
@@ -380,6 +381,12 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
+        let comparisonType = types.make(.functionType(FunctionType(
+            params: [tParamType, tParamType],
+            returnType: types.intType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
 
         for (name, extLink) in [
             ("thenBy", "kk_comparator_then_by"),
@@ -418,6 +425,41 @@ extension DataFlowSemaPhase {
                     classTypeParameterCount: 1
                 ),
                 for: memberSymbol
+            )
+        }
+
+        let comparisonName = interner.intern("thenComparator")
+        let comparisonFQName = comparatorFQName + [comparisonName]
+        if symbols.lookup(fqName: comparisonFQName) == nil {
+            let comparisonParamName = interner.intern("comparison")
+            let comparisonParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: comparisonParamName,
+                fqName: comparisonFQName + [comparisonParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            let comparisonSymbol = symbols.define(
+                kind: .function,
+                name: comparisonName,
+                fqName: comparisonFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(comparatorSymbol, for: comparisonSymbol)
+            symbols.setParentSymbol(comparisonSymbol, for: comparisonParamSymbol)
+            symbols.setExternalLinkName("kk_comparator_then_comparator", for: comparisonSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [comparisonType],
+                    returnType: receiverType,
+                    typeParameterSymbols: [tParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: comparisonSymbol
             )
         }
 

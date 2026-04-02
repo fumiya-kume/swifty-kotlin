@@ -300,6 +300,47 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    func testSuspendLocalFunctionGeneratesSuspendKIRFunction() throws {
+        let source = """
+        suspend fun delayedValue(v: Int): Int = v
+
+        suspend fun outerSuspendHost(value: Int): Int {
+            suspend fun localSuspendBridge(value: Int): Int = delayedValue(value)
+            return localSuspendBridge(value)
+        }
+
+        fun main(): Any? = runBlocking(outerSuspendHost)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Suspend local function should compile into KIR without errors: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let module = try XCTUnwrap(ctx.kir)
+            let allFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case let .function(function) = decl else {
+                    return nil
+                }
+                return function
+            }
+
+            let localSuspendFunction = try XCTUnwrap(allFunctions.first(where: { function in
+                ctx.interner.resolve(function.name) == "localSuspendBridge"
+            }))
+            XCTAssertTrue(localSuspendFunction.isSuspend, "Expected local suspend function KIR node to preserve isSuspend flag.")
+
+            let outerSuspendFunction = try XCTUnwrap(allFunctions.first(where: { function in
+                ctx.interner.resolve(function.name) == "outerSuspendHost"
+            }))
+            let outerCallees = extractCallees(from: outerSuspendFunction.body, interner: ctx.interner)
+            XCTAssertTrue(outerCallees.contains("localSuspendBridge"), "Expected outer suspend function to call the local suspend function before lowering.")
+        }
+    }
+
     func firstExprID(
         in ast: ASTModule,
         where predicate: (ExprID, Expr) -> Bool

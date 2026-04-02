@@ -11,7 +11,34 @@ extension CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
+        let callBinding = sema.bindings.callBindings[exprID]
+        guard let chosenCallee = callBinding?.chosenCallee,
+              chosenCallee != .invalid,
+              let chosenSymbol = sema.symbols.symbol(chosenCallee)
+        else {
+            return nil
+        }
+
+        let isStdlibMaxOfCall = chosenSymbol.fqName.count >= 3
+            && chosenSymbol.fqName[0] == interner.intern("kotlin")
+            && chosenSymbol.fqName[1] == interner.intern("comparisons")
+            && interner.resolve(chosenSymbol.name) == "maxOf"
+
         guard let specialKind = sema.bindings.stdlibSpecialCallKind(for: exprID) else {
+            if isStdlibMaxOfCall {
+                return lowerRemainingMaxOfCallExpr(
+                    exprID,
+                    args: args,
+                    callBinding: callBinding,
+                    chosenCallee: chosenCallee,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
             return nil
         }
 
@@ -64,6 +91,234 @@ extension CallLowerer {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
+        }
+    }
+
+    private func lowerRemainingMaxOfCallExpr(
+        _ exprID: ExprID,
+        args: [CallArgument],
+        callBinding: CallBinding?,
+        chosenCallee: SymbolID,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard let signature = sema.symbols.functionSignature(for: chosenCallee),
+              !args.isEmpty
+        else {
+            return nil
+        }
+
+        let resultType = sema.bindings.exprType(for: exprID)
+            ?? sema.bindings.exprType(for: args[0].expr)
+            ?? sema.types.anyType
+        let boolType = sema.types.booleanType
+        let intType = sema.types.intType
+
+        let isGenericComparableMaxOf = signature.typeParameterUpperBoundsList.contains(where: { upperBounds in
+            upperBounds.contains(where: { bound in
+                isComparableUpperBound(bound, sema: sema)
+            })
+        })
+        let isComparatorMaxOf = !isGenericComparableMaxOf
+            && signature.parameterTypes.contains(where: { paramType in
+                isComparatorType(paramType, sema: sema, interner: interner)
+            })
+        let isUnsignedMaxOf = !isGenericComparableMaxOf
+            && !isComparatorMaxOf
+            && signature.typeParameterSymbols.isEmpty
+            && signature.parameterTypes.allSatisfy({ isUnsignedType($0, sema: sema) })
+
+        guard isGenericComparableMaxOf || isComparatorMaxOf || isUnsignedMaxOf else {
+            return nil
+        }
+
+        let loweredArgIDs = args.map { argument in
+            driver.lowerExpr(
+                argument.expr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+        }
+
+        var comparisonArgIndices = Array(args.indices)
+        let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+        instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+        let falseExpr = arena.appendExpr(.boolLiteral(false), type: boolType)
+        instructions.append(.constValue(result: falseExpr, value: .boolLiteral(false)))
+
+        func selectGreater(lhs: KIRExprID, rhs: KIRExprID, conditionExpr: KIRExprID) -> KIRExprID {
+            let useRightLabel = driver.ctx.makeLoopLabel()
+            let endLabel = driver.ctx.makeLoopLabel()
+            let resultExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+
+            instructions.append(.jumpIfEqual(lhs: conditionExpr, rhs: falseExpr, target: useRightLabel))
+            instructions.append(.copy(from: lhs, to: resultExpr))
+            instructions.append(.jump(endLabel))
+            instructions.append(.label(useRightLabel))
+            instructions.append(.copy(from: rhs, to: resultExpr))
+            instructions.append(.label(endLabel))
+            return resultExpr
+        }
+
+        enum ComparisonStrategy {
+            case unsigned
+            case genericComparable
+            case comparator(comparatorArgIndex: Int, trampolineCallee: InternedString)
+        }
+
+        let comparisonStrategy: ComparisonStrategy
+        if isUnsignedMaxOf {
+            comparisonStrategy = .unsigned
+        } else if isGenericComparableMaxOf {
+            comparisonStrategy = .genericComparable
+        } else {
+            guard let callBinding else {
+                return nil
+            }
+            guard let comparatorParamIndex = signature.parameterTypes.indices.last else {
+                return nil
+            }
+            let comparatorArgIndex = callBinding.parameterMapping.first(where: { $0.value == comparatorParamIndex })?.key
+                ?? (args.count - 1)
+            guard comparatorArgIndex >= 0, comparatorArgIndex < loweredArgIDs.count else {
+                return nil
+            }
+            guard let trampolineName = comparatorTrampolineName(
+                comparatorExprID: args[comparatorArgIndex].expr,
+                loweredComparatorID: loweredArgIDs[comparatorArgIndex],
+                sema: sema,
+                interner: interner,
+                instructions: instructions
+            ) else {
+                return nil
+            }
+            let trampolineCallee = interner.intern(trampolineName)
+            comparisonArgIndices = args.indices.filter { $0 != comparatorArgIndex }
+            comparisonStrategy = .comparator(
+                comparatorArgIndex: comparatorArgIndex,
+                trampolineCallee: trampolineCallee
+            )
+        }
+
+        guard !comparisonArgIndices.isEmpty else {
+            return nil
+        }
+
+        var currentExpr = loweredArgIDs[comparisonArgIndices[0]]
+        guard comparisonArgIndices.count > 1 else {
+            return currentExpr
+        }
+
+        for argIndex in comparisonArgIndices.dropFirst() {
+            let candidateExpr = loweredArgIDs[argIndex]
+            let conditionExpr: KIRExprID
+            switch comparisonStrategy {
+            case .unsigned:
+                conditionExpr = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: boolType
+                )
+                instructions.append(.binary(op: .greaterThan, lhs: candidateExpr, rhs: currentExpr, result: conditionExpr))
+            case .genericComparable:
+                let compareResultExpr = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: intType
+                )
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_compare_any"),
+                    arguments: [candidateExpr, currentExpr],
+                    result: compareResultExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                conditionExpr = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: boolType
+                )
+                instructions.append(.binary(
+                    op: .greaterThan,
+                    lhs: compareResultExpr,
+                    rhs: zeroExpr,
+                    result: conditionExpr
+                ))
+            case let .comparator(comparatorArgIndex, trampolineCallee):
+                let compareResultExpr = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: intType
+                )
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: trampolineCallee,
+                    arguments: [loweredArgIDs[comparatorArgIndex], candidateExpr, currentExpr],
+                    result: compareResultExpr,
+                    canThrow: true,
+                    thrownResult: nil
+                ))
+                conditionExpr = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: boolType
+                )
+                instructions.append(.binary(
+                    op: .greaterThan,
+                    lhs: compareResultExpr,
+                    rhs: zeroExpr,
+                    result: conditionExpr
+                ))
+            }
+            currentExpr = selectGreater(lhs: candidateExpr, rhs: currentExpr, conditionExpr: conditionExpr)
+        }
+        return currentExpr
+    }
+
+    private func isComparableUpperBound(
+        _ type: TypeID,
+        sema: SemaModule
+    ) -> Bool {
+        guard let comparableSymbol = sema.types.comparableInterfaceSymbol else {
+            return false
+        }
+        switch sema.types.kind(of: type) {
+        case let .classType(classType):
+            return classType.classSymbol == comparableSymbol
+        default:
+            return false
+        }
+    }
+
+    private func isComparatorType(
+        _ type: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: type),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return interner.resolve(symbol.name) == "Comparator"
+    }
+
+    private func isUnsignedType(
+        _ type: TypeID,
+        sema: SemaModule
+    ) -> Bool {
+        switch sema.types.kind(of: type) {
+        case .primitive(.ubyte, .nonNull),
+             .primitive(.ushort, .nonNull),
+             .primitive(.uint, .nonNull),
+             .primitive(.ulong, .nonNull):
+            return true
+        default:
+            return false
         }
     }
 

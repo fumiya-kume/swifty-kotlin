@@ -195,4 +195,40 @@ final class MathSyntheticTopLevelLinkTests: XCTestCase {
             }
         }
     }
+
+    func testDoublePowMemberCallResolvesViaMathExtensionStub() throws {
+        let source = """
+        import kotlin.math.*
+
+        fun sample(): Double {
+            return 2.0.pow(3.0)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Expected Double.pow member call to resolve without diagnostics.")
+
+            let callExpr = try XCTUnwrap(
+                firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == "pow"
+                },
+                "Expected pow member call expression"
+            )
+
+            let chosenCallee = try XCTUnwrap(
+                sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                "Expected chosen callee for Double.pow"
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenCallee),
+                "kk_math_pow"
+            )
+        }
+    }
 }

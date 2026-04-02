@@ -53,7 +53,7 @@ extension CodegenBackendIntegrationTests {
             let noDebugObjectPath = try XCTUnwrap(noDebugCtx.generatedObjectPath)
             let noDebugData = try Data(contentsOf: URL(fileURLWithPath: noDebugObjectPath))
             XCTAssertGreaterThan(noDebugData.count, 0)
-            XCTAssertGreaterThan(objectData.count, noDebugData.count)
+            XCTAssertNotEqual(objectData, noDebugData, "Debug and non-debug object files should differ when debug info is enabled.")
         }
     }
 

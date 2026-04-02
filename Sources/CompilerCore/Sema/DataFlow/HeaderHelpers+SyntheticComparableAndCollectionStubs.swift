@@ -1322,7 +1322,7 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
         // At runtime, use kk_iterable_asSequence which handles List, Set, and Array handles.
-        // The corresponding ExternDecl is in RuntimeABIExterns+Collection.swift and
+        // The corresponding ExternDecl is exposed via RuntimeABIExterns and
         // it is registered as non-throwing in ABILoweringPass+NonThrowingCallees.swift.
         symbols.setExternalLinkName("kk_iterable_asSequence", for: memberSymbol)
         symbols.setFunctionSignature(
@@ -7156,6 +7156,8 @@ extension DataFlowSemaPhase {
             "CharArray",
             "ByteArray",
             "ShortArray",
+            "UByteArray",
+            "UShortArray",
         ]
         for name in primitiveArrayNames {
             let primName = interner.intern(name)
@@ -7200,6 +7202,8 @@ extension DataFlowSemaPhase {
             ("charArrayOf", "CharArray", types.charType),
             ("byteArrayOf", "ByteArray", types.intType),
             ("shortArrayOf", "ShortArray", types.intType),
+            ("ubyteArrayOf", "UByteArray", types.ubyteType),
+            ("ushortArrayOf", "UShortArray", types.ushortType),
         ]
         for (factoryName, arrayName, elementType) in primitiveArrayFactoryTypes {
             guard let primitiveArraySymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern(arrayName)]) else {

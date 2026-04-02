@@ -1816,6 +1816,8 @@ extension CallTypeChecker {
             (knownNames.longArray, sema.types.longType),
             (knownNames.shortArray, sema.types.intType),
             (knownNames.byteArray, sema.types.intType),
+            (knownNames.ubyteArray, sema.types.ubyteType),
+            (knownNames.ushortArray, sema.types.ushortType),
             (knownNames.doubleArray, sema.types.doubleType),
             (knownNames.floatArray, sema.types.floatType),
             (knownNames.booleanArray, sema.types.booleanType),

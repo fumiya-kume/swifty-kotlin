@@ -518,6 +518,7 @@ public final class DataFlowAnalyzer {
             )))
         case let .functionType(functionType) where functionType.nullability == .nullable:
             types.make(.functionType(FunctionType(
+                contextReceivers: functionType.contextReceivers,
                 receiver: functionType.receiver,
                 params: functionType.params,
                 returnType: functionType.returnType,

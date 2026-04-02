@@ -226,24 +226,32 @@ struct TypeCheckHelpers {
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID? {
-        let builtinNames = BuiltinTypeNames(interner: interner)
+        let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: arrayType),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
             return nil
         }
         switch symbol.name {
-        case builtinNames.intArray:
+        case knownNames.intArray:
             return sema.types.intType
-        case builtinNames.longArray:
+        case knownNames.longArray:
             return sema.types.longType
-        case builtinNames.doubleArray:
+        case knownNames.shortArray:
+            return sema.types.intType
+        case knownNames.byteArray:
+            return sema.types.intType
+        case knownNames.ubyteArray:
+            return sema.types.ubyteType
+        case knownNames.ushortArray:
+            return sema.types.ushortType
+        case knownNames.doubleArray:
             return sema.types.doubleType
-        case builtinNames.floatArray:
+        case knownNames.floatArray:
             return sema.types.floatType
-        case builtinNames.booleanArray:
+        case knownNames.booleanArray:
             return sema.types.booleanType
-        case builtinNames.charArray:
+        case knownNames.charArray:
             return sema.types.charType
         default:
             // For generic collection types (e.g. List<String?>, MutableList<Int>),
@@ -464,12 +472,16 @@ struct TypeCheckHelpers {
                 return sema.types.errorType
             }
 
-        case let .functionType(receiverRefID, paramRefIDs, returnRefID, isSuspend, nullable):
+        case let .functionType(contextReceiverRefIDs, receiverRefID, paramRefIDs, returnRefID, isSuspend, nullable):
             let nullability: Nullability = nullable ? .nullable : .nonNull
+            let contextReceiverTypes = contextReceiverRefIDs.map {
+                resolveTypeRef($0, ast: ast, sema: sema, interner: interner, scope: scope, diagnostics: diagnostics)
+            }
             let receiverType: TypeID? = receiverRefID.flatMap { resolveTypeRef($0, ast: ast, sema: sema, interner: interner, scope: scope, diagnostics: diagnostics) }
             let paramTypes = paramRefIDs.map { resolveTypeRef($0, ast: ast, sema: sema, interner: interner, scope: scope, diagnostics: diagnostics) }
             let returnType = resolveTypeRef(returnRefID, ast: ast, sema: sema, interner: interner, scope: scope, diagnostics: diagnostics)
             return sema.types.make(.functionType(FunctionType(
+                contextReceivers: contextReceiverTypes,
                 receiver: receiverType,
                 params: paramTypes,
                 returnType: returnType,

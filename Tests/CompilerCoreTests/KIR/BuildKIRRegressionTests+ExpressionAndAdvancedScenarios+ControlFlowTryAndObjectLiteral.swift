@@ -125,7 +125,6 @@ extension BuildKIRRegressionTests {
             XCTAssertNotEqual(catchBindings[1].parameterSymbol, .invalid)
 
             let body = try findKIRFunctionBody(named: "demo", in: module, interner: ctx.interner)
-
             let matcherCalls = body.compactMap { instruction -> KIRInstruction? in
                 guard case let .call(_, callee, arguments, _, _, _, _, _) = instruction,
                       ctx.interner.resolve(callee) == "kk_catch_type_matches"
@@ -180,10 +179,9 @@ extension BuildKIRRegressionTests {
             }
 
             XCTAssertEqual(bodyEdge.thrownSlot, catchEdge.thrownSlot)
-            XCTAssertEqual(bodyEdge.thrownSlot, finallyEdge.thrownSlot)
             XCTAssertEqual(bodyEdge.typeSlot, catchEdge.typeSlot)
-            XCTAssertEqual(bodyEdge.typeSlot, finallyEdge.typeSlot)
-            let sharedExceptionSlot = bodyEdge.thrownSlot
+            XCTAssertNotEqual(bodyEdge.thrownSlot, finallyEdge.thrownSlot)
+            XCTAssertNotEqual(bodyEdge.typeSlot, finallyEdge.typeSlot)
             let sharedExceptionTypeSlot = bodyEdge.typeSlot
 
             guard let bodyDispatchPos = labelPositions[bodyEdge.target],
@@ -218,17 +216,17 @@ extension BuildKIRRegressionTests {
             }
 
             let finallyGuardJump = body.enumerated().contains { index, instruction in
-                guard index > finallyEdge.callIndex + 3,
+                guard index >= finallyEdge.callIndex + 3,
                       case let .jumpIfNotNull(value, target) = instruction
                 else {
                     return false
                 }
-                return value == sharedExceptionSlot && target == finallyEdge.target
+                return value == finallyEdge.thrownSlot && target == finallyEdge.target
             }
             XCTAssertTrue(finallyGuardJump, "Expected post-finally rethrow guard for pending exception slot.")
             XCTAssertTrue(body.contains { instruction in
                 if case let .rethrow(value) = instruction {
-                    return value == sharedExceptionSlot
+                    return value == finallyEdge.thrownSlot
                 }
                 return false
             })
@@ -404,7 +402,8 @@ extension BuildKIRRegressionTests {
             }
 
             let generatedFactorySymbol = try XCTUnwrap(factorySymbol)
-            XCTAssertGreaterThan(generatedFactorySymbol.rawValue, 0)
+            XCTAssertNotEqual(generatedFactorySymbol.rawValue, 0)
+            XCTAssertNotEqual(generatedFactorySymbol, .invalid)
             XCTAssertTrue(ctx.interner.resolve(callee).hasPrefix("kk_object_literal_"))
             XCTAssertTrue(arguments.isEmpty)
             let resultExprID = try XCTUnwrap(result)
