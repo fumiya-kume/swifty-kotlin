@@ -178,6 +178,11 @@ extension OverloadResolver {
                 }
             }
         case let .functionType(functionType):
+            if functionType.contextReceivers.contains(where: {
+                containsTypeVariable($0, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
+            }) {
+                return true
+            }
             if let receiver = functionType.receiver,
                containsTypeVariable(receiver, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
             {
@@ -372,11 +377,22 @@ extension OverloadResolver {
             let subtypeKind = typeSystem.kind(of: subtype)
             if case let .functionType(subFunc) = subtypeKind,
                subFunc.params.count == superFunc.params.count,
+               subFunc.contextReceivers.count == superFunc.contextReceivers.count,
                subFunc.isSuspend == superFunc.isSuspend,
                subFunc.nullability == superFunc.nullability || superFunc.nullability == .nullable,
                subFunc.receiver == superFunc.receiver
             {
                 var result: [VariableConstraint] = []
+                for (subContextReceiver, superContextReceiver) in zip(subFunc.contextReceivers, superFunc.contextReceivers) {
+                    result.append(contentsOf: decomposeSubtypeConstraintImpl(
+                        subtype: superContextReceiver,
+                        supertype: subContextReceiver,
+                        typeVarBySymbol: typeVarBySymbol,
+                        typeSystem: typeSystem,
+                        blameRange: blameRange,
+                        depth: depth + 1
+                    ))
+                }
                 // Function types are contravariant in parameter types.
                 for (subParam, superParam) in zip(subFunc.params, superFunc.params) {
                     result.append(contentsOf: decomposeSubtypeConstraintImpl(

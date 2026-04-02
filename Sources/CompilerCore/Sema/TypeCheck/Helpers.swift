@@ -464,12 +464,16 @@ struct TypeCheckHelpers {
                 return sema.types.errorType
             }
 
-        case let .functionType(receiverRefID, paramRefIDs, returnRefID, isSuspend, nullable):
+        case let .functionType(contextReceiverRefIDs, receiverRefID, paramRefIDs, returnRefID, isSuspend, nullable):
             let nullability: Nullability = nullable ? .nullable : .nonNull
+            let contextReceiverTypes = contextReceiverRefIDs.map {
+                resolveTypeRef($0, ast: ast, sema: sema, interner: interner, scope: scope, diagnostics: diagnostics)
+            }
             let receiverType: TypeID? = receiverRefID.flatMap { resolveTypeRef($0, ast: ast, sema: sema, interner: interner, scope: scope, diagnostics: diagnostics) }
             let paramTypes = paramRefIDs.map { resolveTypeRef($0, ast: ast, sema: sema, interner: interner, scope: scope, diagnostics: diagnostics) }
             let returnType = resolveTypeRef(returnRefID, ast: ast, sema: sema, interner: interner, scope: scope, diagnostics: diagnostics)
             return sema.types.make(.functionType(FunctionType(
+                contextReceivers: contextReceiverTypes,
                 receiver: receiverType,
                 params: paramTypes,
                 returnType: returnType,

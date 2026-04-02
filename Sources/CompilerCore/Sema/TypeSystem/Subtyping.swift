@@ -164,6 +164,9 @@ extension TypeSystem {
             return true
 
         case let (.functionType(leftFunction), .functionType(rightFunction)):
+            guard leftFunction.contextReceivers.count == rightFunction.contextReceivers.count else {
+                return false
+            }
             guard leftFunction.params.count == rightFunction.params.count else {
                 return false
             }
@@ -172,6 +175,11 @@ extension TypeSystem {
             }
             guard nullabilitySubtype(leftFunction.nullability, rightFunction.nullability) else {
                 return false
+            }
+            for (leftContextReceiver, rightContextReceiver) in zip(leftFunction.contextReceivers, rightFunction.contextReceivers) {
+                if !isSubtype(rightContextReceiver, leftContextReceiver) {
+                    return false
+                }
             }
             if let lReceiver = leftFunction.receiver, let rReceiver = rightFunction.receiver {
                 if !isSubtype(rReceiver, lReceiver) {

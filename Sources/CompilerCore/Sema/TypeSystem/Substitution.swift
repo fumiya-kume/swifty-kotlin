@@ -31,6 +31,11 @@ public extension TypeSystem {
         case let .typeParam(typeParam):
             return "T#\(typeParam.symbol.rawValue)\(nullabilitySuffix(typeParam.nullability))"
         case let .functionType(functionType):
+            let contextPrefix = if functionType.contextReceivers.isEmpty {
+                ""
+            } else {
+                "context(" + functionType.contextReceivers.map(renderType).joined(separator: ", ") + ") "
+            }
             let receiverPrefix = if let receiver = functionType.receiver {
                 "\(renderType(receiver))."
             } else {
@@ -40,7 +45,7 @@ public extension TypeSystem {
             let params = functionType.params.map(renderType).joined(separator: ", ")
             let retType = renderType(functionType.returnType)
             let suffix = nullabilitySuffix(functionType.nullability)
-            return "\(suspendPrefix)\(receiverPrefix)(\(params)) -> \(retType)\(suffix)"
+            return "\(contextPrefix)\(suspendPrefix)\(receiverPrefix)(\(params)) -> \(retType)\(suffix)"
         case let .kClassType(kClassType):
             return "KClass<\(renderType(kClassType.argument))>\(nullabilitySuffix(kClassType.nullability))"
         case let .intersection(parts):
@@ -252,13 +257,19 @@ public extension TypeSystem {
         let sub = { [self] (t: TypeID) in
             substituteTypeParameters(in: t, substitution: substitution, typeVarBySymbol: typeVarBySymbol)
         }
+        let newContextReceivers = functionType.contextReceivers.map { sub($0) }
         let newReceiver = functionType.receiver.map { sub($0) }
         let newParams = functionType.params.map { sub($0) }
         let newReturn = sub(functionType.returnType)
-        if newReceiver == functionType.receiver, newParams == functionType.params, newReturn == functionType.returnType {
+        if newContextReceivers == functionType.contextReceivers,
+           newReceiver == functionType.receiver,
+           newParams == functionType.params,
+           newReturn == functionType.returnType
+        {
             return originalType
         }
         return make(.functionType(FunctionType(
+            contextReceivers: newContextReceivers,
             receiver: newReceiver, params: newParams, returnType: newReturn,
             isSuspend: functionType.isSuspend, nullability: functionType.nullability
         )))
