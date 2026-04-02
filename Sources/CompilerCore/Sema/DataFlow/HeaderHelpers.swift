@@ -140,7 +140,16 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) {
         let encoder = MetadataEncoder()
-        let targets = symbols.allSymbols().filter { Self.compilerMetadataAnnotatedKinds.contains($0.kind) }
+        let targets = symbols.allSymbols().filter { symbol in
+            guard Self.compilerMetadataAnnotatedKinds.contains(symbol.kind),
+                  !symbol.flags.contains(.synthetic)
+            else {
+                return false
+            }
+            return !symbols.annotations(for: symbol.id).contains {
+                KnownCompilerAnnotation.metadata.matches($0.annotationFQName)
+            }
+        }
 
         let recordsBySymbol = targets.reduce(into: [SymbolID: MetadataRecord]()) { partial, symbol in
             partial[symbol.id] = encoder.buildRecord(
@@ -157,9 +166,6 @@ extension DataFlowSemaPhase {
                 continue
             }
             var annotations = symbols.annotations(for: symbol.id)
-            if annotations.contains(where: { KnownCompilerAnnotation.metadata.matches($0.annotationFQName) }) {
-                continue
-            }
             annotations.append(encoder.metadataAnnotationRecord(for: record))
             symbols.setAnnotations(annotations, for: symbol.id)
         }
