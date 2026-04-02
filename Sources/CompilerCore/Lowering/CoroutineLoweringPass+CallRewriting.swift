@@ -116,7 +116,7 @@ extension CoroutineLoweringPass {
                 callee: rewrite.runtimeRunBlockingWithContCallee,
                 arguments: [entryPointExpr, continuationExpr],
                 result: callResult,
-                canThrow: false,
+                canThrow: true,
                 thrownResult: nil
             )
         )

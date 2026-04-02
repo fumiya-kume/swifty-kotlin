@@ -945,6 +945,72 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenSuspendCoroutineReturnsResumedValue() throws {
+        let source = """
+        import kotlin.coroutines.*
+
+        suspend fun probe(): Int {
+            return suspendCoroutine<Int> { cont: Continuation<Int> ->
+                cont.resume(42)
+            }
+        }
+
+        fun main() {
+            println(runBlocking(probe))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SuspendCoroutineRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "42\n")
+        }
+    }
+
+    func testCodegenSuspendCoroutinePropagatesResumedException() throws {
+        let source = """
+        import kotlin.coroutines.*
+
+        suspend fun probe(): Int {
+            return suspendCoroutine<Int> { cont: Continuation<Int> ->
+                cont.resumeWithException(IllegalStateException("boom"))
+            }
+        }
+
+        fun main() {
+            try {
+                println(runBlocking(probe))
+            } catch (e: Throwable) {
+                println(e.message ?: "missing")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SuspendCoroutineRuntimeException",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "boom\n")
+        }
+    }
+
     func testCodegenEmitsObjectWhenLlvmBindingsAreRequired() throws {
         let source = "fun main() = 0"
         try withTemporaryFile(contents: source) { path in

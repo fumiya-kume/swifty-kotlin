@@ -31,9 +31,11 @@ extension CoroutineLoweringPass {
         let getSpillCallee = interner.intern("kk_coroutine_state_get_spill")
         let setCompletionCallee = interner.intern("kk_coroutine_state_set_completion")
         let getCompletionCallee = interner.intern("kk_coroutine_state_get_completion")
+        let getThrownExceptionCallee = interner.intern("kk_coroutine_state_get_thrown_exception")
         let suspendedProvider = interner.intern("kk_coroutine_suspended")
         let checkCancellationCallee = interner.intern("kk_coroutine_check_cancellation")
         let sourceDelayCallee = interner.intern("delay")
+        let suspendCoroutineRuntimeCallee = interner.intern("kk_suspend_coroutine")
         let stateBlocks = suspendPlan.stateBlocks
         let transitionsByResumeLabel = suspendPlan.transitionsByResumeLabel
         let spillPlan = suspendPlan.spillPlan
@@ -129,6 +131,29 @@ extension CoroutineLoweringPass {
                     )
                 }
 
+                let thrownExceptionExpr = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: intType
+                )
+                lowered.append(
+                    .call(
+                        symbol: nil,
+                        callee: getThrownExceptionCallee,
+                        arguments: [continuationExpr],
+                        result: thrownExceptionExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    )
+                )
+                let throwLabel = Int32(4000 + block.resumeLabel * 2)
+                let continueLabel = Int32(4000 + block.resumeLabel * 2 + 1)
+                lowered.append(
+                    .jumpIfNotNull(
+                        value: thrownExceptionExpr,
+                        target: throwLabel
+                    )
+                )
+
                 // CORO-002: Check cancellation after resuming from suspension point.
                 // If cancelled, kk_coroutine_check_cancellation writes a
                 // CancellationException into the original call's thrown slot so
@@ -147,6 +172,20 @@ extension CoroutineLoweringPass {
                         thrownResult: transition.suspendingInstructionCallInfo?.thrownResult
                     )
                 )
+                lowered.append(.jump(continueLabel))
+                lowered.append(.label(throwLabel))
+                lowered.append(
+                    .call(
+                        symbol: nil,
+                        callee: exitCallee,
+                        arguments: [continuationExpr, thrownExceptionExpr],
+                        result: nil,
+                        canThrow: false,
+                        thrownResult: nil
+                    )
+                )
+                lowered.append(.rethrow(value: thrownExceptionExpr))
+                lowered.append(.label(continueLabel))
             }
             let nextResumeLabel = stateBlocks.indices.contains(index + 1)
                 ? stateBlocks[index + 1].resumeLabel
@@ -212,6 +251,9 @@ extension CoroutineLoweringPass {
                     let loweredSuspendCallee = suspendCallInfo.callee == sourceDelayCallee ? runtimeDelayCallee : suspendCallInfo.callee
                     var loweredSuspendArguments = suspendCallInfo.arguments
                     if suspendCallInfo.callee == sourceDelayCallee {
+                        loweredSuspendArguments.append(continuationExpr)
+                    }
+                    if suspendCallInfo.callee == suspendCoroutineRuntimeCallee {
                         loweredSuspendArguments.append(continuationExpr)
                     }
                     if suspendCallInfo.isVirtual,

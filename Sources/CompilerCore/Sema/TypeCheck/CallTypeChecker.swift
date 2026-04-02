@@ -367,6 +367,47 @@ final class CallTypeChecker {
             return resultType
         }
 
+        // --- suspendCoroutine(block) ---
+        // Keep this path separate from generic overload resolution so the
+        // lambda parameter can be inferred from the coroutine result type.
+        if let calleeName,
+           calleeName == knownNames.suspendCoroutine,
+           args.count == 1
+        {
+            let resultType = expectedType ?? explicitTypeArgs.first ?? sema.types.anyType
+            let continuationType: TypeID = if let continuationSymbol = sema.symbols.lookup(fqName: knownNames.kotlinContinuationFQName) {
+                sema.types.make(.classType(ClassType(
+                    classSymbol: continuationSymbol,
+                    args: [.invariant(resultType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                sema.types.anyType
+            }
+            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [continuationType],
+                returnType: sema.types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            _ = driver.inferExpr(
+                args[0].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: lambdaExpectedType
+            )
+            sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+            if let suspendCoroutineSymbol = sema.symbols.lookup(fqName: knownNames.kotlinSuspendCoroutineFQName) {
+                sema.bindings.bindCall(id, binding: CallBinding(
+                    chosenCallee: suspendCoroutineSymbol,
+                    substitutedTypeArguments: [resultType],
+                    parameterMapping: [0: 0]
+                ))
+            }
+            sema.bindings.bindExprType(id, type: resultType)
+            return resultType
+        }
+
         // --- Flow builder function (CORO-003) ---
         // `flow { emit(...) }` is treated as a builtin cold stream factory.
         // We infer the lambda with a flow-builder scope so unqualified `emit`
@@ -1415,6 +1456,11 @@ final class CallTypeChecker {
                         callInvisible.append(contentsOf: invis)
                     }
                 }
+            }
+            if candidates.isEmpty,
+               calleeName == knownNames.suspendCoroutine,
+               let suspendCoroutineSymbol = sema.symbols.lookup(fqName: knownNames.kotlinSuspendCoroutineFQName) {
+                candidates = [suspendCoroutineSymbol]
             }
             // --- Typealias constructor calls ---
             // If the callee is a typealias (e.g. `typealias IntPair = Pair<Int, Int>`),

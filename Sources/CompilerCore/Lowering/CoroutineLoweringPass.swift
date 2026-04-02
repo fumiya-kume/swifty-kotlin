@@ -86,7 +86,7 @@ final class CoroutineLoweringPass: LoweringPass {
         let runtimeWithTimeoutCallee = ctx.interner.intern("kk_with_timeout")
         let runtimeWithTimeoutOrNullCallee = ctx.interner.intern("kk_with_timeout_or_null")
         let flowCollectCallee = ctx.interner.intern("kk_flow_collect")
-        let runtimeSuspendCallNames: Set<InternedString> = [kxMiniDelayCallee, runtimeDelayCallee, kxMiniYieldCallee, runtimeYieldCallee]
+        let runtimeSuspendCallNames: Set<InternedString> = [kxMiniDelayCallee, runtimeDelayCallee, kxMiniYieldCallee, runtimeYieldCallee, ctx.interner.intern("kk_suspend_coroutine")]
         let kxMiniLauncherRuntimeCallees: [InternedString: InternedString] = [
             kxMiniRunBlockingCallee: runtimeRunBlockingCallee,
             kxMiniLaunchCallee: runtimeLaunchCallee,
