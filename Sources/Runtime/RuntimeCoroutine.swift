@@ -410,7 +410,14 @@ final class RuntimeAsyncTask: @unchecked Sendable {
     func cancel() {
         lock.lock()
         isCancelled = true
+        let wasCompleted = isCompleted
+        if !wasCompleted {
+            isCompleted = true
+        }
         lock.unlock()
+        if !wasCompleted {
+            ready.signal()
+        }
     }
 
     // CORO-004: awaitResult() now supports continuation-based async completion.
