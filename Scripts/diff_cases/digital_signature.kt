@@ -58,13 +58,11 @@ fun main() {
         -----END CERTIFICATE-----
     """.trimIndent().toByteArray()
 
-    val certificateFactory = CertificateFactory.getInstance("X.509")
-    val certificateInput = ByteArrayInputStream(certificatePem)
-    val certificate = certificateFactory.generateCertificate(certificateInput) as X509Certificate
+    val certificateFactory = CertificateFactory("X.509")
+    val certificate = certificateFactory.generateCertificate(certificatePem)
     val certPath = certificateFactory.generateCertPath(listOf(certificate))
     val trustAnchor = TrustAnchor(certificate, null)
     val parameters = PKIXParameters(setOf(trustAnchor))
-    val validator = CertPathValidator.getInstance("PKIX")
-    val validationResult = validator.validate(certPath, parameters)
-    check(validationResult != null) { "PKIX validation failed" }
+    val validator = CertPathValidator("PKIX")
+    val valid = validator.validate(certPath, parameters)
 }

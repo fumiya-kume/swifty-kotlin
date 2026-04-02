@@ -634,7 +634,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_trustanchor_new",
             ownerSymbol: trustAnchorSymbol,
             ownerType: trustAnchorType,
-            parameters: [("certificate", x509CertificateType)],
+            parameters: [("certificate", x509CertificateType), ("nameConstraints", anyType)],
             symbols: symbols,
             interner: interner
         )

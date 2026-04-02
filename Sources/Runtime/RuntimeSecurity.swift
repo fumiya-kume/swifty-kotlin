@@ -1742,12 +1742,13 @@ public func kk_certpathvalidator_getInstance(_ companionRaw: Int, _ algorithmRaw
 }
 
 @_cdecl("kk_trustanchor_new")
-public func kk_trustanchor_new(_ certificateRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_trustanchor_new(_ certificateRaw: Int, _ nameConstraintsRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     guard runtimeX509CertificateBox(from: certificateRaw) != nil else {
         runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected X509Certificate")
         return 0
     }
+    // nameConstraintsRaw is accepted for Java API compatibility but not enforced.
     return registerRuntimeObject(RuntimeTrustAnchorBox(certificateRaw: certificateRaw))
 }
 
@@ -2113,7 +2114,7 @@ public func kk_trustanchor_new_with_constraints(_ certificateRaw: Int, _ nameCon
 }
 
 @_cdecl("kk_trustanchor_new")
-public func kk_trustanchor_new(_ certificateRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_trustanchor_new(_ certificateRaw: Int, _ nameConstraintsRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
     return 0
 }

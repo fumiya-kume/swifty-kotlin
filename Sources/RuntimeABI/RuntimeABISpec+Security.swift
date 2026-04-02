@@ -295,6 +295,7 @@ public extension RuntimeABISpec {
             name: "kk_trustanchor_new",
             parameters: [
                 RuntimeABIParameter(name: "certificateRaw", type: .intptr),
+                RuntimeABIParameter(name: "nameConstraintsRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
