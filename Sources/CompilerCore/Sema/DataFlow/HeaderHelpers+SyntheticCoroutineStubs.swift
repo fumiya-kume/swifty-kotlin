@@ -1167,7 +1167,8 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(coroutineNameType, for: coroutineNameSymbol)
-        symbols.setDirectSupertypes([coroutineContextElementSymbol], for: coroutineNameSymbol)
+        symbols.setDirectSupertypes([coroutineContextSymbol], for: coroutineNameSymbol)
+        types.setNominalDirectSupertypes([coroutineContextSymbol], for: coroutineNameSymbol)
 
         let coroutineExceptionHandlerSymbol = ensureClassSymbol(
             named: "CoroutineExceptionHandler",
@@ -1181,10 +1182,12 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(coroutineExceptionHandlerType, for: coroutineExceptionHandlerSymbol)
-        symbols.setDirectSupertypes([coroutineContextElementSymbol], for: coroutineExceptionHandlerSymbol)
+        symbols.setDirectSupertypes([coroutineContextSymbol], for: coroutineExceptionHandlerSymbol)
+        types.setNominalDirectSupertypes([coroutineContextSymbol], for: coroutineExceptionHandlerSymbol)
 
-        // Make CoroutineDispatcher a subtype of CoroutineContext.Element
-        symbols.setDirectSupertypes([coroutineContextElementSymbol, continuationInterceptorSymbol], for: dispatcherSymbol)
+        // Make CoroutineDispatcher a subtype of CoroutineContext and ContinuationInterceptor.
+        symbols.setDirectSupertypes([coroutineContextSymbol, continuationInterceptorSymbol], for: dispatcherSymbol)
+        types.setNominalDirectSupertypes([coroutineContextSymbol, continuationInterceptorSymbol], for: dispatcherSymbol)
 
         let flowBuilderLambdaType = types.make(.functionType(FunctionType(
             params: [],

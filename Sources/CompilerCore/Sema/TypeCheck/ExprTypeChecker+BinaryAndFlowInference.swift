@@ -486,6 +486,7 @@ extension ExprTypeChecker {
     }
 
     private func coroutineContextType(sema: SemaModule, interner: StringInterner) -> TypeID? {
+        // CoroutineContext lives in kotlin.coroutines (not kotlinx.coroutines)
         let fqName = [
             interner.intern("kotlin"),
             interner.intern("coroutines"),
@@ -507,11 +508,17 @@ extension ExprTypeChecker {
         else {
             return false
         }
-        let coroutinePackages = [
-            [interner.intern("kotlin"), interner.intern("coroutines")],
-            [interner.intern("kotlinx"), interner.intern("coroutines")],
+        let kotlinxCoroutinesPkg = [
+            interner.intern("kotlinx"),
+            interner.intern("coroutines"),
         ]
-        guard coroutinePackages.contains(where: { symbol.fqName.starts(with: $0) }) else {
+        // CoroutineContext lives in kotlin.coroutines, others in kotlinx.coroutines
+        let kotlinCoroutinesPkg = [
+            interner.intern("kotlin"),
+            interner.intern("coroutines"),
+        ]
+        guard symbol.fqName.starts(with: kotlinxCoroutinesPkg)
+            || symbol.fqName.starts(with: kotlinCoroutinesPkg) else {
             return false
         }
         let typeName = interner.resolve(symbol.name)
