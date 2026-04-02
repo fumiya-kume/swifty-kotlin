@@ -21,7 +21,11 @@ private final class RuntimeThreadLaunchState: @unchecked Sendable {
         condition.lock()
         launchCount += 1
         lastThreadName = thread.name
+        #if canImport(ObjectiveC)
         lastThreadPriority = thread.threadPriority
+        #else
+        lastThreadPriority = nil
+        #endif
         condition.broadcast()
         condition.unlock()
     }
@@ -92,12 +96,14 @@ final class RuntimeThreadTests: IsolatedRuntimeXCTestCase {
         XCTAssertTrue(runtimeThreadLaunchState.waitForLaunch(after: baseline))
         let snapshot = runtimeThreadLaunchState.snapshot()
         XCTAssertEqual(snapshot.launchCount, baseline + 1)
+        #if canImport(ObjectiveC)
         XCTAssertEqual(snapshot.lastThreadName, "worker")
         XCTAssertEqual(
             try XCTUnwrap(snapshot.lastThreadPriority),
             createdThread.threadPriority,
             accuracy: 0.0001
         )
+        #endif
 
         let launchBox = try XCTUnwrap(createdThread.launchBox)
         XCTAssertEqual(launchBox.isDaemon, true)
@@ -134,11 +140,13 @@ final class RuntimeThreadTests: IsolatedRuntimeXCTestCase {
         XCTAssertTrue(runtimeThreadLaunchState.waitForLaunch(after: baseline))
         let snapshot = runtimeThreadLaunchState.snapshot()
         XCTAssertEqual(snapshot.launchCount, baseline + 1)
+        #if canImport(ObjectiveC)
         XCTAssertEqual(snapshot.lastThreadName, "manual")
         XCTAssertEqual(
             try XCTUnwrap(snapshot.lastThreadPriority),
             createdThread.threadPriority,
             accuracy: 0.0001
         )
+        #endif
     }
 }

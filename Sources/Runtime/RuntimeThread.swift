@@ -16,6 +16,7 @@ final class RuntimeThreadLaunchBox: @unchecked Sendable {
     }
 }
 
+#if canImport(ObjectiveC)
 final class RuntimeManagedThread: Thread {
     var launchBox: RuntimeThreadLaunchBox?
     var launch: @Sendable () -> Void = {}
@@ -28,6 +29,25 @@ final class RuntimeManagedThread: Thread {
         launch()
     }
 }
+#else
+/// On Linux, `Foundation.Thread` cannot be subclassed because
+/// swift-corelibs-foundation exposes overridable members that fail to
+/// load at compile time.  We use a plain class with `pthread_create`
+/// instead.
+final class RuntimeManagedThread: @unchecked Sendable {
+    var launchBox: RuntimeThreadLaunchBox?
+    var launch: @Sendable () -> Void = {}
+    var name: String?
+    var threadPriority: Double = 0.5
+
+    func start() {
+        let work = launch
+        Thread.detachNewThread {
+            work()
+        }
+    }
+}
+#endif
 
 @_cdecl("kk_thread_create")
 public func kk_thread_create(
