@@ -443,6 +443,15 @@ extension DataFlowSemaPhase {
                 comparatorSymbol: comparatorSymbol
             )
         }
+
+        registerCompareValuesByVararg(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol,
+            comparatorSymbol: comparatorSymbol
+        )
     }
 
     private func registerCompareValues(
@@ -630,6 +639,106 @@ extension DataFlowSemaPhase {
                 valueParameterSymbols: parameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
                 valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count),
+                typeParameterSymbols: [tParamSymbol],
+                typeParameterUpperBoundsList: [[]]
+            ),
+            for: funcSymbol
+        )
+    }
+
+    private func registerCompareValuesByVararg(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparisonsPkg: [InternedString],
+        comparisonsPackageSymbol: SymbolID,
+        comparatorSymbol: SymbolID
+    ) {
+        let functionName = interner.intern("compareValuesBy")
+        let functionFQName = comparisonsPkg + [functionName]
+        let expectedParameterCount = 3
+        let extLink = "kk_compareValuesBy_vararg"
+
+        guard let comparatorInfo = symbols.symbol(comparatorSymbol) else {
+            return
+        }
+        let comparatorFQName = comparatorInfo.fqName
+        let tParamName = interner.intern("T")
+        let tParamFQName = comparatorFQName + [tParamName]
+        guard let tParamSymbol = symbols.lookup(fqName: tParamFQName) else {
+            return
+        }
+        let tParamType = types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol,
+            nullability: .nonNull
+        )))
+        let selectorType = types.make(.functionType(FunctionType(
+            params: [tParamType],
+            returnType: types.anyType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+            return sig.parameterTypes.count == expectedParameterCount
+                && sig.returnType == types.intType
+                && sig.valueParameterIsVararg == [false, false, true]
+        }) {
+            symbols.setExternalLinkName(extLink, for: existing)
+            return
+        }
+
+        let funcSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(comparisonsPackageSymbol, for: funcSymbol)
+        symbols.setExternalLinkName(extLink, for: funcSymbol)
+
+        let aName = interner.intern("a")
+        let bName = interner.intern("b")
+        let selectorsName = interner.intern("selectors")
+        let aSymbol = symbols.define(
+            kind: .valueParameter,
+            name: aName,
+            fqName: functionFQName + [interner.intern("a_compareValuesBy_vararg")],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let bSymbol = symbols.define(
+            kind: .valueParameter,
+            name: bName,
+            fqName: functionFQName + [interner.intern("b_compareValuesBy_vararg")],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let selectorsSymbol = symbols.define(
+            kind: .valueParameter,
+            name: selectorsName,
+            fqName: functionFQName + [interner.intern("selectors_compareValuesBy_vararg")],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(funcSymbol, for: aSymbol)
+        symbols.setParentSymbol(funcSymbol, for: bSymbol)
+        symbols.setParentSymbol(funcSymbol, for: selectorsSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [tParamType, tParamType, selectorType],
+                returnType: types.intType,
+                isSuspend: false,
+                valueParameterSymbols: [aSymbol, bSymbol, selectorsSymbol],
+                valueParameterHasDefaultValues: [false, false, false],
+                valueParameterIsVararg: [false, false, true],
                 typeParameterSymbols: [tParamSymbol],
                 typeParameterUpperBoundsList: [[]]
             ),

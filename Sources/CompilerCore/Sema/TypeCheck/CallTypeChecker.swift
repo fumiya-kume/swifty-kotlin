@@ -1480,6 +1480,44 @@ final class CallTypeChecker {
             let resolvedArgs: [CallArg] = zip(args, argTypes).map { argument, type in
                 CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
             }
+            if let calleeName,
+               interner.resolve(calleeName) == "compareValuesBy",
+               args.count >= 6,
+               let varargCandidate = candidates.first(where: { candidate in
+                   guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                       return false
+                   }
+                   return signature.parameterTypes.count == 3
+                       && signature.valueParameterIsVararg == [false, false, true]
+               })
+            {
+                // The generic overload resolver struggles with the selector vararg
+                // shape, so bind the synthetic vararg overload directly once the
+                // call has at least four selectors.
+                let selectorElementType = argTypes.first ?? sema.types.anyType
+                let selectorExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [selectorElementType],
+                    returnType: sema.types.anyType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                for index in 2..<args.count {
+                    _ = driver.inferExpr(args[index].expr, ctx: ctx, locals: &locals, expectedType: selectorExpectedType)
+                }
+                var parameterMapping: [Int: Int] = [0: 0, 1: 1]
+                for index in 2..<args.count {
+                    parameterMapping[index] = 2
+                }
+                let resolved = ResolvedCall(
+                    chosenCallee: varargCandidate,
+                    substitutedTypeArguments: [:],
+                    parameterMapping: parameterMapping,
+                    diagnostic: nil
+                )
+                let returnType = bindCallAndResolveReturnType(id, chosen: varargCandidate, resolved: resolved, sema: sema)
+                sema.bindings.bindExprType(id, type: returnType)
+                return returnType
+            }
             let resolved = ctx.resolver.resolveCall(
                 candidates: candidates,
                 call: CallExpr(

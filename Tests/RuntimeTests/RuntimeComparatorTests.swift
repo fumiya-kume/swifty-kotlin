@@ -25,15 +25,21 @@ private let nullsFirstTrampoline: @convention(c) (Int, Int, Int, UnsafeMutablePo
 
 // MARK: - Test lambdas
 
-private let selectIdentity: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+private typealias SelectorFn = @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int
+
+private let selectIdentity: SelectorFn = { _, value, _ in
     value
 }
 
-private let selectModTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+private let selectModTen: SelectorFn = { _, value, _ in
     value % 10
 }
 
-private let throwingSelector: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, outThrown in
+private let selectConstantOne: SelectorFn = { _, _, _ in
+    1
+}
+
+private let throwingSelector: SelectorFn = { _, _, outThrown in
     outThrown?.pointee = 1
     return 0
 }
@@ -65,8 +71,19 @@ private let throwingComparator: @convention(c) (Int, Int, Int, UnsafeMutablePoin
 
 // MARK: - Helpers
 
-private func selectorPtr(_ fn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int) -> Int {
+private func selectorPtr(_ fn: SelectorFn) -> Int {
     unsafeBitCast(fn, to: Int.self)
+}
+
+private func makeSelectorPairsArray(_ selectorPairs: [(fn: SelectorFn, closureRaw: Int)]) -> Int {
+    let elements: [Int] = selectorPairs.flatMap { pair in
+        [selectorPtr(pair.fn), pair.closureRaw]
+    }
+    let box = RuntimeArrayBox(length: elements.count)
+    for (index, element) in elements.enumerated() {
+        box.elements[index] = element
+    }
+    return registerRuntimeObject(box)
 }
 
 private func comparatorPtr(_ fn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int) -> Int {
@@ -290,6 +307,39 @@ final class RuntimeComparatorTests: XCTestCase {
         let result = kk_comparator_from_selector_trampoline(closureRaw, 1, 2, &thrown)
         XCTAssertNotEqual(thrown, 0, "thrown should be set when selector throws")
         XCTAssertEqual(result, 0)
+    }
+
+    func testCompareValuesByVarargUsesLaterSelectorsWhenEarlierOnesTie() {
+        let selectorsRaw = makeSelectorPairsArray([
+            (fn: selectConstantOne, closureRaw: 0),
+            (fn: selectConstantOne, closureRaw: 0),
+            (fn: selectConstantOne, closureRaw: 0),
+            (fn: selectIdentity, closureRaw: 0),
+        ])
+
+        let result = kk_compareValuesBy_vararg(7, 9, selectorsRaw, nil)
+        XCTAssertLessThan(kk_unbox_int(result), 0)
+    }
+
+    func testCompareValuesByVarargShortCircuitsAndPropagatesThrow() {
+        let selectorsRaw = makeSelectorPairsArray([
+            (fn: selectIdentity, closureRaw: 0),
+            (fn: throwingSelector, closureRaw: 0),
+        ])
+
+        var thrown = 0
+        let result = kk_compareValuesBy_vararg(1, 2, selectorsRaw, &thrown)
+        XCTAssertEqual(thrown, 0, "Later selectors should not run when an earlier selector decides ordering")
+        XCTAssertLessThan(kk_unbox_int(result), 0)
+
+        let throwSelectorsRaw = makeSelectorPairsArray([
+            (fn: selectConstantOne, closureRaw: 0),
+            (fn: throwingSelector, closureRaw: 0),
+        ])
+        thrown = 0
+        let throwResult = kk_compareValuesBy_vararg(1, 1, throwSelectorsRaw, &thrown)
+        XCTAssertNotEqual(thrown, 0, "thrown should propagate when a vararg selector throws")
+        XCTAssertEqual(throwResult, 0)
     }
 
     func testChainedComparatorThrowPropagation() {

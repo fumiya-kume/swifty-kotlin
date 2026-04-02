@@ -3577,7 +3577,7 @@ extension CallLowerer {
                       let adapted = makeCollectionHOFCallableAdapter(
                           callableInfo: loweredCallable,
                           loweredArgID: loweredArgID,
-                          argExprID: argExprID,
+                          adapterTag: "\(argExprID.rawValue)",
                           sema: sema,
                           arena: arena,
                           interner: interner
@@ -3875,26 +3875,26 @@ extension CallLowerer {
     private func makeCollectionHOFCallableAdapter(
         callableInfo: KIRCallableValueInfo,
         loweredArgID: KIRExprID,
-        argExprID: ExprID,
+        adapterTag: String,
         sema: SemaModule,
         arena: KIRArena,
         interner: StringInterner
     ) -> KIRCallableValueInfo? {
-        let callableType = arena.exprType(loweredArgID) ?? sema.bindings.exprTypes[argExprID] ?? sema.types.anyType
+        let callableType = arena.exprType(loweredArgID) ?? sema.types.anyType
         let nonNullCallableType = sema.types.makeNonNullable(callableType)
         guard case let .functionType(functionType) = sema.types.kind(of: nonNullCallableType) else {
             return nil
         }
 
         let adapterSymbol = driver.ctx.allocateSyntheticGeneratedSymbol()
-        let adapterName = interner.intern("kk_hof_adapter_\(argExprID.rawValue)_\(adapterSymbol.rawValue)")
+        let adapterName = interner.intern("kk_hof_adapter_\(adapterTag)_\(adapterSymbol.rawValue)")
         let closureParam = KIRParameter(
             symbol: driver.ctx.allocateSyntheticGeneratedSymbol(),
             type: sema.types.intType
         )
         let valueParams: [KIRParameter] = functionType.params.enumerated().map { index, type in
             KIRParameter(
-                symbol: SymbolID(rawValue: Int32(clamping: -700_000 - Int64(argExprID.rawValue) * 16 - Int64(index))),
+                symbol: driver.ctx.allocateSyntheticGeneratedSymbol(),
                 type: type
             )
         }

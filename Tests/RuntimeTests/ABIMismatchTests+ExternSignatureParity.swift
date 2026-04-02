@@ -134,6 +134,7 @@ extension ABIMismatchTests {
 
     func testComparatorNullsAndThenByDescSymbolsPresent() {
         let requiredComparatorSymbols: Set<String> = [
+            "kk_compareValuesBy_vararg",
             "kk_comparator_then_comparator",
             "kk_comparator_then_comparator_trampoline",
             "kk_comparator_then_by_descending",
@@ -159,6 +160,7 @@ extension ABIMismatchTests {
 
     func testComparatorNullsThenBySignaturesMatchExpectedShape() {
         let expectedFunctionTypes: [String: [String]] = [
+            "kk_compareValuesBy_vararg": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.nullableIntptrPointer.rawValue],
             "kk_comparator_then_comparator": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue],
             "kk_comparator_then_by_descending": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue],
             "kk_comparator_nulls_first": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue],

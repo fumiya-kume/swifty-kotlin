@@ -1174,7 +1174,7 @@ final class CallLowerer {
                    let adaptedInfo = makeCollectionHOFCallableAdapter(
                         callableInfo: callableInfo,
                         loweredArgID: loweredSelectorID,
-                        argExprID: originalArgs[i].expr,
+                        adapterTag: "\(originalArgs[i].expr.rawValue)",
                         sema: sema,
                         arena: arena,
                         interner: interner
@@ -1205,26 +1205,26 @@ final class CallLowerer {
     private func makeCollectionHOFCallableAdapter(
         callableInfo: KIRCallableValueInfo,
         loweredArgID: KIRExprID,
-        argExprID: ExprID,
+        adapterTag: String,
         sema: SemaModule,
         arena: KIRArena,
         interner: StringInterner
     ) -> KIRCallableValueInfo? {
-        let callableType = arena.exprType(loweredArgID) ?? sema.bindings.exprTypes[argExprID] ?? sema.types.anyType
+        let callableType = arena.exprType(loweredArgID) ?? sema.types.anyType
         let nonNullCallableType = sema.types.makeNonNullable(callableType)
         guard case let .functionType(functionType) = sema.types.kind(of: nonNullCallableType) else {
             return nil
         }
 
         let adapterSymbol = driver.ctx.allocateSyntheticGeneratedSymbol()
-        let adapterName = interner.intern("kk_compare_values_hof_adapter_\(argExprID.rawValue)_\(adapterSymbol.rawValue)")
+        let adapterName = interner.intern("kk_compare_values_hof_adapter_\(adapterTag)_\(adapterSymbol.rawValue)")
         let closureParam = KIRParameter(
             symbol: driver.ctx.allocateSyntheticGeneratedSymbol(),
             type: sema.types.intType
         )
         let valueParams: [KIRParameter] = functionType.params.enumerated().map { index, type in
             KIRParameter(
-                symbol: SymbolID(rawValue: Int32(clamping: -710_000 - Int64(argExprID.rawValue) * 16 - Int64(index))),
+                symbol: driver.ctx.allocateSyntheticGeneratedSymbol(),
                 type: type
             )
         }

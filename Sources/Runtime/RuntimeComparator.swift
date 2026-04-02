@@ -489,6 +489,37 @@ private func runtimeInvokeCompareValuesSelector(
     runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: value, outThrown: outThrown)
 }
 
+@inline(__always)
+private func runtimeCompareValuesBySelectorPairs(
+    _ a: Int,
+    _ b: Int,
+    selectorPairs: [(fnPtr: Int, closureRaw: Int)],
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    var thrown = 0
+    for pair in selectorPairs {
+        let keyA = runtimeInvokeCompareValuesSelector(
+            fnPtr: pair.fnPtr,
+            closureRaw: pair.closureRaw,
+            value: a,
+            outThrown: &thrown
+        )
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        let keyB = runtimeInvokeCompareValuesSelector(
+            fnPtr: pair.fnPtr,
+            closureRaw: pair.closureRaw,
+            value: b,
+            outThrown: &thrown
+        )
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        let cmp = runtimeCompareNullableValues(keyA, keyB)
+        if cmp != 0 {
+            return kk_box_int(cmp)
+        }
+    }
+    return kk_box_int(0)
+}
+
 /// compareValuesBy(a: T, b: T, selector: (T) -> Comparable<*>?): Int — single selector.
 /// Codegen emits: kk_compareValuesBy1(a, b, selectorFnPtr, selectorClosureRaw, outThrown).
 @_cdecl("kk_compareValuesBy1")
@@ -499,22 +530,12 @@ public func kk_compareValuesBy1(
     _ selectorClosure: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    var thrown = 0
-    let keyA = runtimeInvokeCompareValuesSelector(
-        fnPtr: selectorFn,
-        closureRaw: selectorClosure,
-        value: a,
-        outThrown: &thrown
+    return runtimeCompareValuesBySelectorPairs(
+        a,
+        b,
+        selectorPairs: [(fnPtr: selectorFn, closureRaw: selectorClosure)],
+        outThrown: outThrown
     )
-    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    let keyB = runtimeInvokeCompareValuesSelector(
-        fnPtr: selectorFn,
-        closureRaw: selectorClosure,
-        value: b,
-        outThrown: &thrown
-    )
-    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    return kk_box_int(runtimeCompareNullableValues(keyA, keyB))
 }
 
 /// compareValuesBy(a: T, b: T, selector1, selector2): Int — 2-selector variant.
@@ -530,39 +551,15 @@ public func kk_compareValuesBy(
     _ sel2Closure: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    var thrown = 0
-    let keyA1 = runtimeInvokeCompareValuesSelector(
-        fnPtr: sel1Fn,
-        closureRaw: sel1Closure,
-        value: a,
-        outThrown: &thrown
+    return runtimeCompareValuesBySelectorPairs(
+        a,
+        b,
+        selectorPairs: [
+            (fnPtr: sel1Fn, closureRaw: sel1Closure),
+            (fnPtr: sel2Fn, closureRaw: sel2Closure),
+        ],
+        outThrown: outThrown
     )
-    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    let keyB1 = runtimeInvokeCompareValuesSelector(
-        fnPtr: sel1Fn,
-        closureRaw: sel1Closure,
-        value: b,
-        outThrown: &thrown
-    )
-    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    let cmp1 = runtimeCompareNullableValues(keyA1, keyB1)
-    if cmp1 != 0 { return kk_box_int(cmp1) }
-
-    let keyA2 = runtimeInvokeCompareValuesSelector(
-        fnPtr: sel2Fn,
-        closureRaw: sel2Closure,
-        value: a,
-        outThrown: &thrown
-    )
-    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    let keyB2 = runtimeInvokeCompareValuesSelector(
-        fnPtr: sel2Fn,
-        closureRaw: sel2Closure,
-        value: b,
-        outThrown: &thrown
-    )
-    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    return kk_box_int(runtimeCompareNullableValues(keyA2, keyB2))
 }
 
 /// compareValuesBy(a: T, b: T, selector1, selector2, selector3): Int — 3-selector variant.
@@ -581,54 +578,49 @@ public func kk_compareValuesBy3(
     _ sel3Closure: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    var thrown = 0
-    let keyA1 = runtimeInvokeCompareValuesSelector(
-        fnPtr: sel1Fn,
-        closureRaw: sel1Closure,
-        value: a,
-        outThrown: &thrown
+    return runtimeCompareValuesBySelectorPairs(
+        a,
+        b,
+        selectorPairs: [
+            (fnPtr: sel1Fn, closureRaw: sel1Closure),
+            (fnPtr: sel2Fn, closureRaw: sel2Closure),
+            (fnPtr: sel3Fn, closureRaw: sel3Closure),
+        ],
+        outThrown: outThrown
     )
-    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    let keyB1 = runtimeInvokeCompareValuesSelector(
-        fnPtr: sel1Fn,
-        closureRaw: sel1Closure,
-        value: b,
-        outThrown: &thrown
-    )
-    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    let cmp1 = runtimeCompareNullableValues(keyA1, keyB1)
-    if cmp1 != 0 { return kk_box_int(cmp1) }
+}
 
-    let keyA2 = runtimeInvokeCompareValuesSelector(
-        fnPtr: sel2Fn,
-        closureRaw: sel2Closure,
-        value: a,
-        outThrown: &thrown
-    )
-    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    let keyB2 = runtimeInvokeCompareValuesSelector(
-        fnPtr: sel2Fn,
-        closureRaw: sel2Closure,
-        value: b,
-        outThrown: &thrown
-    )
-    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    let cmp2 = runtimeCompareNullableValues(keyA2, keyB2)
-    if cmp2 != 0 { return kk_box_int(cmp2) }
+/// compareValuesBy(a: T, b: T, selectors...): Int — vararg selector variant.
+/// Codegen emits:
+/// kk_compareValuesBy_vararg(a, b, selectorsRaw, outThrown)
+/// where selectorsRaw is a RuntimeArrayBox containing [fnPtr, closureRaw, ...].
+@_cdecl("kk_compareValuesBy_vararg")
+public func kk_compareValuesBy_vararg(
+    _ a: Int,
+    _ b: Int,
+    _ selectorsRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let arrayBox = runtimeArrayBox(from: selectorsRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid compareValuesBy selector array")
+        return 0
+    }
+    let elements = arrayBox.elements
+    guard !elements.isEmpty, elements.count % 2 == 0 else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: malformed compareValuesBy selector array: expected even element count >= 2, got \(elements.count)")
+    }
 
-    let keyA3 = runtimeInvokeCompareValuesSelector(
-        fnPtr: sel3Fn,
-        closureRaw: sel3Closure,
-        value: a,
-        outThrown: &thrown
+    var selectorPairs: [(fnPtr: Int, closureRaw: Int)] = []
+    selectorPairs.reserveCapacity(elements.count / 2)
+    var index = 0
+    while index < elements.count {
+        selectorPairs.append((fnPtr: elements[index], closureRaw: elements[index + 1]))
+        index += 2
+    }
+    return runtimeCompareValuesBySelectorPairs(
+        a,
+        b,
+        selectorPairs: selectorPairs,
+        outThrown: outThrown
     )
-    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    let keyB3 = runtimeInvokeCompareValuesSelector(
-        fnPtr: sel3Fn,
-        closureRaw: sel3Closure,
-        value: b,
-        outThrown: &thrown
-    )
-    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    return kk_box_int(runtimeCompareNullableValues(keyA3, keyB3))
 }
