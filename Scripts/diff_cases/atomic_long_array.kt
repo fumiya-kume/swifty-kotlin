@@ -1,3 +1,5 @@
+// SKIP-DIFF: kotlin.concurrent.atomics.AtomicLongArray is not available in kotlinc 2.3.10 yet.
+
 @file:OptIn(ExperimentalAtomicApi::class)
 
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
