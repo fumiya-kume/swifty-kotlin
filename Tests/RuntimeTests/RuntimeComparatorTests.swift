@@ -79,6 +79,24 @@ private let throwingComparator: @convention(c) (Int, Int, Int, UnsafeMutablePoin
     return 0
 }
 
+private let comparatorObjectCompare: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { receiver, a, b, _ in
+    guard let receiverPtr = UnsafeMutableRawPointer(bitPattern: receiver) else {
+        return 0
+    }
+    guard let box = tryCast(receiverPtr, to: RuntimeObjectBox.self) else {
+        return 0
+    }
+    let mode = box.elements.first ?? 0
+    if mode == 0 {
+        if a < b { return -1 }
+        if a > b { return 1 }
+        return 0
+    }
+    if a < b { return 1 }
+    if a > b { return -1 }
+    return 0
+}
+
 // MARK: - Helpers
 
 private func selectorPtr(_ fn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int) -> Int {
@@ -102,6 +120,17 @@ private func listElements(_ listRaw: Int) -> [Int] {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: listRaw) else { return [] }
     guard let box = tryCast(ptr, to: RuntimeListBox.self) else { return [] }
     return box.elements
+}
+
+private func withComparatorObject(mode: Int, body: (Int) -> Void) {
+    let object = kk_object_new(1, 0)
+    let payload = UnsafeMutableRawPointer(bitPattern: object)!
+    guard let box = tryCast(payload, to: RuntimeObjectBox.self) else {
+        return
+    }
+    box.elements[0] = mode
+    kk_object_register_itable_method(object, 0, 0, unsafeBitCast(comparatorObjectCompare, to: Int.self))
+    body(object)
 }
 
 // MARK: - Tests
@@ -349,6 +378,20 @@ final class RuntimeComparatorTests: XCTestCase {
             nil
         )
         XCTAssertEqual(listElements(sorted), [8, 5, 4, 3, 1])
+    }
+
+    func testSortedWithComparatorObjectDispatchesThroughVtable() {
+        let source = makeList([5, 3, 8, 1, 4])
+
+        withComparatorObject(mode: 0) { comparatorRaw in
+            let sorted = kk_list_sortedWith(source, comparatorRaw, 0, nil)
+            XCTAssertEqual(listElements(sorted), [1, 3, 4, 5, 8])
+        }
+
+        withComparatorObject(mode: 1) { comparatorRaw in
+            let sorted = kk_list_sortedWith(source, comparatorRaw, 0, nil)
+            XCTAssertEqual(listElements(sorted), [8, 5, 4, 3, 1])
+        }
     }
 
     func testMutableListPrimitiveSortAscending() {

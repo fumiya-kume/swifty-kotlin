@@ -37,6 +37,15 @@ func runtimeArrayBox(from rawValue: Int) -> RuntimeArrayBox? {
     return tryCast(ptr, to: RuntimeArrayBox.self)
 }
 
+func runtimeIsHeapObject(_ rawValue: Int) -> Bool {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return false
+    }
+    return runtimeStorage.withLock { state in
+        state.heapObjects[UInt(bitPattern: ptr)] != nil
+    }
+}
+
 func runtimeRegisterObjectType(rawValue: Int, classID: Int64) {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue), classID != 0 else {
         return

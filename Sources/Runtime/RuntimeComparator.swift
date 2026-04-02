@@ -1,5 +1,13 @@
 import Foundation
 
+@inline(__always)
+private func runtimeRegisterComparatorCompareMethod(
+    _ objectRaw: Int,
+    _ method: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
+) {
+    _ = kk_object_register_itable_method(objectRaw, 0, 0, unsafeBitCast(method, to: Int.self))
+}
+
 // MARK: - Comparator from selector (STDLIB-175)
 
 private final class RuntimePrimitiveComparatorBox {
@@ -33,7 +41,9 @@ private func runtimePrimitiveCompareKind(from raw: Int32) -> RuntimePrimitiveCom
 @_cdecl("kk_comparator_from_selector")
 public func kk_comparator_from_selector(_ selectorFn: Int, _ selectorClosure: Int) -> Int {
     let box = RuntimePairBox(first: selectorFn, second: selectorClosure)
-    return registerRuntimeObject(box)
+    let raw = registerRuntimeObject(box)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_from_selector_trampoline)
+    return raw
 }
 
 /// Trampoline: (closure_raw, a, b, outThrown) -> Int. Used with closure from kk_comparator_from_selector.
@@ -133,7 +143,10 @@ public func kk_comparator_from_selector_descending_trampoline(
 
 @_cdecl("kk_comparator_from_selector_descending")
 public func kk_comparator_from_selector_descending(_ selectorFn: Int, _ selectorClosure: Int) -> Int {
-    kk_comparator_from_selector(selectorFn, selectorClosure)
+    let box = RuntimePairBox(first: selectorFn, second: selectorClosure)
+    let raw = registerRuntimeObject(box)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_from_selector_descending_trampoline)
+    return raw
 }
 
 // MARK: - Multi-selector compareBy (STDLIB-613)
@@ -146,7 +159,9 @@ public func kk_comparator_from_multi_selectors(
     _ sel2Fn: Int, _ sel2Closure: Int
 ) -> Int {
     let box = RuntimeListBox(elements: [sel1Fn, sel1Closure, sel2Fn, sel2Closure])
-    return registerRuntimeObject(box)
+    let raw = registerRuntimeObject(box)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_from_multi_selectors_trampoline)
+    return raw
 }
 
 /// 3-selector variant.
@@ -157,7 +172,9 @@ public func kk_comparator_from_multi_selectors3(
     _ sel3Fn: Int, _ sel3Closure: Int
 ) -> Int {
     let box = RuntimeListBox(elements: [sel1Fn, sel1Closure, sel2Fn, sel2Closure, sel3Fn, sel3Closure])
-    return registerRuntimeObject(box)
+    let raw = registerRuntimeObject(box)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_from_multi_selectors_trampoline)
+    return raw
 }
 
 /// Trampoline for multi-selector compareBy.
@@ -214,7 +231,9 @@ public func kk_comparator_then_by(
     let inner1 = RuntimePairBox(first: c1Fn, second: c1Closure)
     let inner2 = RuntimePairBox(first: selectorFn, second: selectorClosure)
     let outer = RuntimePairBox(first: registerRuntimeObject(inner1), second: registerRuntimeObject(inner2))
-    return registerRuntimeObject(outer)
+    let raw = registerRuntimeObject(outer)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_then_by_trampoline)
+    return raw
 }
 
 @_cdecl("kk_comparator_then_by_descending")
@@ -224,7 +243,12 @@ public func kk_comparator_then_by_descending(
     _ selectorFn: Int,
     _ selectorClosure: Int
 ) -> Int {
-    kk_comparator_then_by(c1Fn, c1Closure, selectorFn, selectorClosure)
+    let inner1 = RuntimePairBox(first: c1Fn, second: c1Closure)
+    let inner2 = RuntimePairBox(first: selectorFn, second: selectorClosure)
+    let outer = RuntimePairBox(first: registerRuntimeObject(inner1), second: registerRuntimeObject(inner2))
+    let raw = registerRuntimeObject(outer)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_then_by_descending_trampoline)
+    return raw
 }
 
 /// thenDescending: first comparator, then comparator for tie-breaker.
@@ -252,7 +276,9 @@ public func kk_comparator_then_comparator(
     let inner1 = RuntimePairBox(first: c1Fn, second: c1Closure)
     let inner2 = RuntimePairBox(first: comparatorFn, second: comparatorClosure)
     let outer = RuntimePairBox(first: registerRuntimeObject(inner1), second: registerRuntimeObject(inner2))
-    return registerRuntimeObject(outer)
+    let raw = registerRuntimeObject(outer)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_then_comparator_trampoline)
+    return raw
 }
 
 /// Trampoline for thenBy.
@@ -439,13 +465,17 @@ public func kk_comparator_then_descending_trampoline(
 @_cdecl("kk_comparator_nulls_first")
 public func kk_comparator_nulls_first(_ cFn: Int, _ cClosure: Int) -> Int {
     let pair = RuntimePairBox(first: cFn, second: cClosure)
-    return registerRuntimeObject(pair)
+    let raw = registerRuntimeObject(pair)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_nulls_first_trampoline)
+    return raw
 }
 
 @_cdecl("kk_comparator_nulls_last")
 public func kk_comparator_nulls_last(_ cFn: Int, _ cClosure: Int) -> Int {
     let pair = RuntimePairBox(first: cFn, second: cClosure)
-    return registerRuntimeObject(pair)
+    let raw = registerRuntimeObject(pair)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_nulls_last_trampoline)
+    return raw
 }
 
 @inline(__always)
@@ -532,7 +562,9 @@ public func kk_comparator_nulls_last_trampoline(
 @_cdecl("kk_comparator_reversed")
 public func kk_comparator_reversed(_ cFn: Int, _ cClosure: Int) -> Int {
     let box = RuntimePairBox(first: cFn, second: cClosure)
-    return registerRuntimeObject(box)
+    let raw = registerRuntimeObject(box)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_reversed_trampoline)
+    return raw
 }
 
 @_cdecl("kk_comparator_reversed_trampoline")

@@ -10,6 +10,9 @@ fun main() {
     val byModThen = compareBy<Int> { it % 10 }.thenBy { it / 10 }
     println(nums.sortedWith(byModThen))
 
+    println("-- direct lambda sortedWith --")
+    println(nums.sortedWith { a, b -> a.compareTo(b) })
+
     println("-- compareByDescending + thenBy --")
     val byModDescendingThen = compareByDescending<Int> { it % 10 }.thenBy { it / 10 }
     println(nums.sortedWith(byModDescendingThen))

@@ -32,6 +32,38 @@ private func invalidContainerPanic(_ caller: StaticString, _ kind: StaticString)
     fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(caller) received invalid \(kind) handle")
 }
 
+@inline(__always)
+private func runtimeSortedWithComparatorInvoke(
+    fnPtr: Int,
+    closureRaw: Int
+) -> (Int, Int, UnsafeMutablePointer<Int>?) -> Int {
+    if closureRaw == 0,
+       let rawPointer = UnsafeMutableRawPointer(bitPattern: fnPtr),
+       runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: rawPointer)) })
+    {
+        let compareFnPtr = kk_itable_lookup(fnPtr, 0, 0)
+        if compareFnPtr != 0 {
+            let compareFn = unsafeBitCast(compareFnPtr, to: RuntimeCollectionLambda2.self)
+            return { lhs, rhs, outThrown in
+                compareFn(fnPtr, maybeUnbox(lhs), maybeUnbox(rhs), outThrown)
+            }
+        }
+
+        if runtimeIsHeapObject(fnPtr) {
+            let vtableCompareFnPtr = kk_vtable_lookup(fnPtr, 0)
+            let vtableCompareFn = unsafeBitCast(vtableCompareFnPtr, to: RuntimeCollectionLambda2.self)
+            return { lhs, rhs, outThrown in
+                vtableCompareFn(fnPtr, maybeUnbox(lhs), maybeUnbox(rhs), outThrown)
+            }
+        }
+    }
+
+    let compareFn = unsafeBitCast(fnPtr, to: RuntimeCollectionLambda2.self)
+    return { lhs, rhs, outThrown in
+        compareFn(maybeUnbox(closureRaw), maybeUnbox(lhs), maybeUnbox(rhs), outThrown)
+    }
+}
+
 // MARK: - Closeable.use {} (STDLIB-250)
 
 /// Calls `close()` on a Closeable resource via vtable dispatch (slot 0).
@@ -2089,17 +2121,19 @@ public func kk_list_sortedWith(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
     guard let list = runtimeListBox(from: listRaw) else {
         invalidContainerPanic(#function, "list")
     }
+    let comparatorInvoke = runtimeSortedWithComparatorInvoke(fnPtr: fnPtr, closureRaw: closureRaw)
     var hadThrow = false
-    let sorted = list.elements.enumerated().sorted { lhs, rhs in
+    var indexed = list.elements.enumerated().map { ($0.offset, $0.element) }
+    indexed.sort { lhs, rhs in
         guard !hadThrow else { return false }
         var thrown = 0
-        let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: lhs.element, rhs: rhs.element, outThrown: &thrown)
+        let result = comparatorInvoke(lhs.1, rhs.1, &thrown)
         if thrown != 0 { _ = handleCollectionLambdaThrow(thrown, outThrown); hadThrow = true; return false }
         if result != 0 { return result < 0 }
-        return lhs.offset < rhs.offset
-    }.map(\.element)
+        return lhs.0 < rhs.0
+    }
     if hadThrow { return registerRuntimeObject(RuntimeListBox(elements: [])) }
-    return registerRuntimeObject(RuntimeListBox(elements: sorted))
+    return registerRuntimeObject(RuntimeListBox(elements: indexed.map(\.1)))
 }
 
 // MARK: - takeWhile / dropWhile / takeLastWhile / dropLastWhile (STDLIB-440)
