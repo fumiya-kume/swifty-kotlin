@@ -96,6 +96,30 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let sharedFlowSymbol = ensureInterfaceSymbol(
+            named: "SharedFlow",
+            in: flowPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let stateFlowSymbol = ensureInterfaceSymbol(
+            named: "StateFlow",
+            in: flowPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let mutableSharedFlowSymbol = ensureClassSymbol(
+            named: "MutableSharedFlow",
+            in: flowPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let mutableStateFlowSymbol = ensureClassSymbol(
+            named: "MutableStateFlow",
+            in: flowPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let dispatcherSymbol = ensureClassSymbol(
             named: "CoroutineDispatcher",
             in: coroutinesPkg,
@@ -144,6 +168,26 @@ extension DataFlowSemaPhase {
         )))
         let flowRawType = types.make(.classType(ClassType(
             classSymbol: flowInterfaceSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let sharedFlowRawType = types.make(.classType(ClassType(
+            classSymbol: sharedFlowSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let stateFlowRawType = types.make(.classType(ClassType(
+            classSymbol: stateFlowSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let mutableSharedFlowType = types.make(.classType(ClassType(
+            classSymbol: mutableSharedFlowSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let mutableStateFlowType = types.make(.classType(ClassType(
+            classSymbol: mutableStateFlowSymbol,
             args: [],
             nullability: .nonNull
         )))
@@ -196,6 +240,10 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(deferredType, for: deferredSymbol)
         symbols.setPropertyType(dispatchersType, for: dispatchersSymbol)
         symbols.setPropertyType(flowRawType, for: flowInterfaceSymbol)
+        symbols.setPropertyType(sharedFlowRawType, for: sharedFlowSymbol)
+        symbols.setPropertyType(stateFlowRawType, for: stateFlowSymbol)
+        symbols.setPropertyType(mutableSharedFlowType, for: mutableSharedFlowSymbol)
+        symbols.setPropertyType(mutableStateFlowType, for: mutableStateFlowSymbol)
         symbols.setPropertyType(dispatcherType, for: dispatcherSymbol)
         symbols.setPropertyType(channelType, for: channelSymbol)
         symbols.setPropertyType(cancellationType, for: cancellationSymbol)
@@ -206,6 +254,10 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([exceptionSymbol], for: rootCancellationSymbol)
         types.setNominalTypeParameterSymbols([continuationTypeParameterSymbol], for: continuationSymbol)
         types.setNominalTypeParameterVariances([.invariant], for: continuationSymbol)
+        symbols.setDirectSupertypes([flowInterfaceSymbol], for: sharedFlowSymbol)
+        symbols.setDirectSupertypes([sharedFlowSymbol], for: stateFlowSymbol)
+        symbols.setDirectSupertypes([sharedFlowSymbol], for: mutableSharedFlowSymbol)
+        symbols.setDirectSupertypes([stateFlowSymbol], for: mutableStateFlowSymbol)
 
         registerSyntheticCoroutineTopLevelFunction(
             named: "runBlocking",
@@ -666,6 +718,128 @@ extension DataFlowSemaPhase {
             name: "await",
             externalLinkName: "kk_kxmini_async_await",
             returnType: types.anyType,
+            symbols: symbols,
+            interner: interner
+        )
+        let listAnyType: TypeID = if let listSymbol = symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("List"),
+        ]) {
+            types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.out(types.anyType)],
+                nullability: .nonNull
+            )))
+        } else {
+            types.anyType
+        }
+        registerSyntheticCoroutineConstructor(
+            ownerSymbol: mutableSharedFlowSymbol,
+            ownerType: mutableSharedFlowType,
+            externalLinkName: "kk_mutable_shared_flow_create",
+            parameters: [(name: "replay", type: types.intType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineConstructor(
+            ownerSymbol: mutableStateFlowSymbol,
+            ownerType: mutableStateFlowType,
+            externalLinkName: "kk_mutable_state_flow_create",
+            parameters: [(name: "initialValue", type: types.anyType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: flowInterfaceSymbol,
+            ownerType: flowRawType,
+            name: "shareIn",
+            externalLinkName: "kk_flow_share_in",
+            returnType: sharedFlowRawType,
+            parameters: [(name: "replay", type: types.intType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: flowInterfaceSymbol,
+            ownerType: flowRawType,
+            name: "stateIn",
+            externalLinkName: "kk_flow_state_in",
+            returnType: stateFlowRawType,
+            parameters: [(name: "initialValue", type: types.anyType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: sharedFlowSymbol,
+            ownerType: sharedFlowRawType,
+            name: "collect",
+            externalLinkName: "kk_shared_flow_collect",
+            returnType: types.unitType,
+            parameters: [(name: "collector", type: types.make(.functionType(FunctionType(
+                params: [types.anyType],
+                returnType: types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            ))))],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticObjectProperty(
+            ownerSymbol: sharedFlowSymbol,
+            ownerType: sharedFlowRawType,
+            name: "replayCache",
+            propertyType: listAnyType,
+            externalLinkName: "kk_shared_flow_replay_cache",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticObjectProperty(
+            ownerSymbol: stateFlowSymbol,
+            ownerType: stateFlowRawType,
+            name: "value",
+            propertyType: types.anyType,
+            externalLinkName: "kk_state_flow_value",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: mutableSharedFlowSymbol,
+            ownerType: mutableSharedFlowType,
+            name: "emit",
+            externalLinkName: "kk_mutable_shared_flow_emit",
+            returnType: types.unitType,
+            parameters: [(name: "value", type: types.anyType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: mutableSharedFlowSymbol,
+            ownerType: mutableSharedFlowType,
+            name: "tryEmit",
+            externalLinkName: "kk_mutable_shared_flow_try_emit",
+            returnType: types.booleanType,
+            parameters: [(name: "value", type: types.anyType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: mutableStateFlowSymbol,
+            ownerType: mutableStateFlowType,
+            name: "emit",
+            externalLinkName: "kk_mutable_state_flow_emit",
+            returnType: types.unitType,
+            parameters: [(name: "value", type: types.anyType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: mutableStateFlowSymbol,
+            ownerType: mutableStateFlowType,
+            name: "tryEmit",
+            externalLinkName: "kk_mutable_state_flow_try_emit",
+            returnType: types.booleanType,
+            parameters: [(name: "value", type: types.anyType)],
             symbols: symbols,
             interner: interner
         )
