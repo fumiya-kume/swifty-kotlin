@@ -17,6 +17,7 @@ extension DataFlowSemaPhase {
     func collectMemberHeaders(
         members: MemberDeclarations,
         owner: OwnerContext,
+        sourceFileID: FileID,
         ast: ASTModule,
         symbols: SymbolTable,
         types: TypeSystem,
@@ -88,6 +89,7 @@ extension DataFlowSemaPhase {
                 visibility: visibility(from: funDecl.modifiers),
                 flags: memberFlags
             )
+            symbols.setSourceFileID(sourceFileID, for: memberSymbol)
             registerAnnotations(
                 for: decl,
                 symbol: memberSymbol,
@@ -270,6 +272,7 @@ extension DataFlowSemaPhase {
                 visibility: visibility(from: propertyDecl.modifiers),
                 flags: propertyFlags
             )
+            symbols.setSourceFileID(sourceFileID, for: memberSymbol)
             registerAnnotations(
                 for: decl,
                 symbol: memberSymbol,
@@ -400,6 +403,7 @@ extension DataFlowSemaPhase {
                 declID: declID,
                 ownerFQName: ownerFQName,
                 ownerSymbol: ownerSymbol,
+                sourceFileID: sourceFileID,
                 ast: ast,
                 symbols: symbols,
                 types: types,
@@ -415,6 +419,7 @@ extension DataFlowSemaPhase {
                 declID: declID,
                 ownerFQName: ownerFQName,
                 ownerSymbol: ownerSymbol,
+                sourceFileID: sourceFileID,
                 ast: ast,
                 symbols: symbols,
                 types: types,
@@ -430,6 +435,7 @@ extension DataFlowSemaPhase {
         declID: DeclID,
         ownerFQName: [InternedString],
         ownerSymbol: SymbolID,
+        sourceFileID: FileID,
         ast: ASTModule,
         symbols: SymbolTable,
         types: TypeSystem,
@@ -462,6 +468,7 @@ extension DataFlowSemaPhase {
                 visibility: visibility(from: nestedClass.modifiers),
                 flags: flags(from: nestedClass.modifiers)
             )
+            symbols.setSourceFileID(sourceFileID, for: nestedSymbol)
             registerAnnotations(
                 for: decl,
                 symbol: nestedSymbol,
@@ -641,6 +648,7 @@ extension DataFlowSemaPhase {
             collectNestedTypeAliases(
                 nestedClass.nestedTypeAliases,
                 ownerFQName: nestedFQName,
+                sourceFileID: sourceFileID,
                 ast: ast,
                 symbols: symbols,
                 types: types,
@@ -655,6 +663,7 @@ extension DataFlowSemaPhase {
                     nestedObjects: nestedClass.nestedObjects
                 ),
                 owner: OwnerContext(fqName: nestedFQName, symbol: nestedSymbol, type: nestedType),
+                sourceFileID: sourceFileID,
                 ast: ast,
                 symbols: symbols,
                 types: types,
@@ -689,6 +698,7 @@ extension DataFlowSemaPhase {
                     ownerFQName: nestedFQName,
                     ownerSymbol: nestedSymbol,
                     ownerType: nestedType,
+                    sourceFileID: sourceFileID,
                     ast: ast,
                     symbols: symbols,
                     types: types,
@@ -720,6 +730,7 @@ extension DataFlowSemaPhase {
                 visibility: visibility(from: nestedInterface.modifiers),
                 flags: nestedFlags
             )
+            symbols.setSourceFileID(sourceFileID, for: nestedSymbol)
             registerAnnotations(
                 for: decl,
                 symbol: nestedSymbol,
@@ -747,6 +758,7 @@ extension DataFlowSemaPhase {
             collectNestedTypeAliases(
                 nestedInterface.nestedTypeAliases,
                 ownerFQName: nestedFQName,
+                sourceFileID: sourceFileID,
                 ast: ast,
                 symbols: symbols,
                 types: types,
@@ -761,6 +773,7 @@ extension DataFlowSemaPhase {
                     nestedObjects: nestedInterface.nestedObjects
                 ),
                 owner: OwnerContext(fqName: nestedFQName, symbol: nestedSymbol, type: nestedType),
+                sourceFileID: sourceFileID,
                 ast: ast,
                 symbols: symbols,
                 types: types,
@@ -775,6 +788,7 @@ extension DataFlowSemaPhase {
                     ownerFQName: nestedFQName,
                     ownerSymbol: nestedSymbol,
                     ownerType: nestedType,
+                    sourceFileID: sourceFileID,
                     ast: ast,
                     symbols: symbols,
                     types: types,
@@ -793,6 +807,7 @@ extension DataFlowSemaPhase {
         declID: DeclID,
         ownerFQName: [InternedString],
         ownerSymbol: SymbolID,
+        sourceFileID: FileID,
         ast: ASTModule,
         symbols: SymbolTable,
         types: TypeSystem,
@@ -823,6 +838,7 @@ extension DataFlowSemaPhase {
             visibility: visibility(from: nestedObject.modifiers),
             flags: flags(from: nestedObject.modifiers)
         )
+        symbols.setSourceFileID(sourceFileID, for: nestedSymbol)
         registerAnnotations(
             for: decl,
             symbol: nestedSymbol,
@@ -844,6 +860,7 @@ extension DataFlowSemaPhase {
         collectNestedTypeAliases(
             nestedObject.nestedTypeAliases,
             ownerFQName: nestedFQName,
+            sourceFileID: sourceFileID,
             ast: ast,
             symbols: symbols,
             types: types,
@@ -858,6 +875,7 @@ extension DataFlowSemaPhase {
                 nestedObjects: nestedObject.nestedObjects
             ),
             owner: OwnerContext(fqName: nestedFQName, symbol: nestedSymbol, type: nestedType),
+            sourceFileID: sourceFileID,
             ast: ast,
             symbols: symbols,
             types: types,

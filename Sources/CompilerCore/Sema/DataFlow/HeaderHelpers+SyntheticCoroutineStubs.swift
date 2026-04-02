@@ -318,6 +318,175 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // STDLIB-CORO-077: CoroutineContext, CoroutineName, CoroutineExceptionHandler
+        let coroutineContextSymbol = ensureClassSymbol(
+            named: "CoroutineContext",
+            in: coroutinesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let coroutineContextType = types.make(.classType(ClassType(
+            classSymbol: coroutineContextSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(coroutineContextType, for: coroutineContextSymbol)
+
+        let coroutineNameSymbol = ensureClassSymbol(
+            named: "CoroutineName",
+            in: coroutinesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let coroutineNameType = types.make(.classType(ClassType(
+            classSymbol: coroutineNameSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(coroutineNameType, for: coroutineNameSymbol)
+        symbols.setDirectSupertypes([coroutineContextSymbol], for: coroutineNameSymbol)
+
+        let coroutineExceptionHandlerSymbol = ensureClassSymbol(
+            named: "CoroutineExceptionHandler",
+            in: coroutinesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let coroutineExceptionHandlerType = types.make(.classType(ClassType(
+            classSymbol: coroutineExceptionHandlerSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(coroutineExceptionHandlerType, for: coroutineExceptionHandlerSymbol)
+        symbols.setDirectSupertypes([coroutineContextSymbol], for: coroutineExceptionHandlerSymbol)
+
+        // Make CoroutineDispatcher a subtype of CoroutineContext
+        symbols.setDirectSupertypes([coroutineContextSymbol], for: dispatcherSymbol)
+
+        // CoroutineName(name: String) constructor
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "CoroutineName",
+            packageFQName: coroutinesPkg,
+            parameters: [(name: "name", type: types.stringType)],
+            returnType: coroutineNameType,
+            externalLinkName: "kk_coroutine_name_create",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineConstructor(
+            ownerSymbol: coroutineNameSymbol,
+            ownerType: coroutineNameType,
+            externalLinkName: "kk_coroutine_name_create",
+            parameters: [(name: "name", type: types.stringType)],
+            symbols: symbols,
+            interner: interner
+        )
+
+        // CoroutineExceptionHandler { context, exception -> } factory
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "CoroutineExceptionHandler",
+            packageFQName: coroutinesPkg,
+            parameters: [(name: "handler", type: types.make(.functionType(FunctionType(
+                params: [coroutineContextType, types.anyType],
+                returnType: types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            ))))],
+            returnType: coroutineExceptionHandlerType,
+            externalLinkName: "kk_exception_handler_create",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineConstructor(
+            ownerSymbol: coroutineExceptionHandlerSymbol,
+            ownerType: coroutineExceptionHandlerType,
+            externalLinkName: "kk_exception_handler_create",
+            parameters: [(name: "handler", type: types.make(.functionType(FunctionType(
+                params: [coroutineContextType, types.anyType],
+                returnType: types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            ))))],
+            symbols: symbols,
+            interner: interner
+        )
+
+        // withContext overload accepting CoroutineContext (not just dispatcher)
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "withContext",
+            packageFQName: coroutinesPkg,
+            parameters: [
+                (name: "context", type: coroutineContextType),
+                (name: "block", type: types.make(.functionType(FunctionType(
+                    params: [],
+                    returnType: types.anyType,
+                    isSuspend: true,
+                    nullability: .nonNull
+                )))),
+            ],
+            returnType: types.anyType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // CoroutineContext.plus(other: CoroutineContext): CoroutineContext
+        registerSyntheticCoroutineMember(
+            ownerSymbol: coroutineContextSymbol,
+            ownerType: coroutineContextType,
+            name: "plus",
+            externalLinkName: "kk_context_plus",
+            returnType: coroutineContextType,
+            parameters: [(name: "context", type: coroutineContextType)],
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: dispatcherSymbol,
+            ownerType: dispatcherType,
+            name: "plus",
+            externalLinkName: "kk_context_plus",
+            returnType: coroutineContextType,
+            parameters: [(name: "context", type: coroutineContextType)],
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: coroutineNameSymbol,
+            ownerType: coroutineNameType,
+            name: "plus",
+            externalLinkName: "kk_context_plus",
+            returnType: coroutineContextType,
+            parameters: [(name: "context", type: coroutineContextType)],
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: coroutineExceptionHandlerSymbol,
+            ownerType: coroutineExceptionHandlerType,
+            name: "plus",
+            externalLinkName: "kk_context_plus",
+            returnType: coroutineContextType,
+            parameters: [(name: "context", type: coroutineContextType)],
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: jobSymbol,
+            ownerType: jobType,
+            name: "plus",
+            externalLinkName: "kk_context_plus",
+            returnType: coroutineContextType,
+            parameters: [(name: "context", type: coroutineContextType)],
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticCoroutineConstructor(
             ownerSymbol: channelSymbol,
             ownerType: channelType,
@@ -691,17 +860,22 @@ extension DataFlowSemaPhase {
     ) {
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
-        // Skip if a function with this FQName and the same parameter count already exists.
-        // Allow multiple overloads with different parameter counts (e.g. launch {} vs launch(ctx) {}).
-        // A nominal type (class/interface) sharing the same FQName is allowed
-        // (Kotlin supports factory functions with the same name as a type).
+        // Skip only true duplicate function signatures. Allow overloads with the
+        // same arity but different parameter types, and allow nominal types to
+        // share the same FQName with factory-style functions.
         let existingSymbols = symbols.lookupAll(fqName: functionFQName)
-        let hasExistingFunctionWithSameArity = existingSymbols.contains { id in
-            guard let sym = symbols.symbol(id), sym.kind == .function else { return false }
-            let sig = symbols.functionSignature(for: id)
-            return sig?.parameterTypes.count == parameters.count
+        let hasExistingFunctionWithSameSignature = existingSymbols.contains { id in
+            guard let sym = symbols.symbol(id),
+                  sym.kind == .function,
+                  let sig = symbols.functionSignature(for: id)
+            else {
+                return false
+            }
+            return sig.receiverType == nil
+                && sig.parameterTypes == parameters.map(\.type)
+                && sig.returnType == returnType
         }
-        guard !hasExistingFunctionWithSameArity else {
+        guard !hasExistingFunctionWithSameSignature else {
             return
         }
         let functionSymbol = symbols.define(
@@ -769,6 +943,7 @@ extension DataFlowSemaPhase {
         externalLinkName: String,
         returnType: TypeID,
         parameters: [(name: String, type: TypeID)] = [],
+        flags: SymbolFlags = [.synthetic],
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -786,7 +961,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
         symbols.setExternalLinkName(externalLinkName, for: memberSymbol)

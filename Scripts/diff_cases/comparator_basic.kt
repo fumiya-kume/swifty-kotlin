@@ -9,6 +9,10 @@ fun main() {
     val byModThenDescending = compareBy<Int> { it % 10 }.thenByDescending { it / 10 }
     println(nums.sortedWith(byModThenDescending))
 
+    println("-- compareBy + thenComparator --")
+    val byModThenComparator = compareBy<Int> { it % 10 }.thenComparator { a, b -> b.compareTo(a) }
+    println(nums.sortedWith(byModThenComparator))
+
     println("-- sortedBy + sortedBy chain --")
     println(nums.sortedBy { it % 10 }.sortedBy { it / 10 })
 
@@ -31,4 +35,8 @@ fun main() {
     println("-- comparator.reversed() chain --")
     val reversedChain = compareBy<Int> { it % 10 }.thenBy { it / 10 }.reversed()
     println(nums.sortedWith(reversedChain))
+
+    println("-- comparator.reversed() after thenComparator --")
+    val reversedThenComparator = compareBy<Int> { it % 10 }.thenComparator { a, b -> b.compareTo(a) }.reversed()
+    println(nums.sortedWith(reversedThenComparator))
 }

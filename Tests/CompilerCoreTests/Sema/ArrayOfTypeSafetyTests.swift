@@ -157,4 +157,36 @@ final class ArrayOfTypeSafetyTests: XCTestCase {
             assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
         }
     }
+
+    func testUByteArrayConstructorInfersUByteElements() throws {
+        let source = """
+        fun main() {
+            val arr = UByteArray(3) { it.toUByte() }
+            val x = arr.get(0)
+            println(x)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+        }
+    }
+
+    func testUByteArrayOfFactoryResolvesWithoutError() throws {
+        let source = """
+        fun main() {
+            val arr = ubyteArrayOf(1.toUByte(), 2.toUByte(), 255.toUByte())
+            val x = arr.get(1)
+            println(x)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+        }
+    }
 }
