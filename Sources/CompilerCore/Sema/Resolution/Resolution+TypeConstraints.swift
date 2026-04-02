@@ -16,6 +16,41 @@ extension OverloadResolver {
             symbols: symbols,
             count: paramCount
         )
+        func trailingRequiredParameterCount(after paramIndex: Int) -> Int {
+            guard paramIndex + 1 < paramCount else {
+                return 0
+            }
+            var count = 0
+            for index in (paramIndex + 1)..<paramCount {
+                if isVararg[index] {
+                    continue
+                }
+                if boundNonVarargParams.contains(index) {
+                    continue
+                }
+                if hasDefaultValues[index] {
+                    continue
+                }
+                count += 1
+            }
+            return count
+        }
+        func advancePositionalCursor(for argIndex: Int) {
+            while positionalCursor < paramCount {
+                if !isVararg[positionalCursor], boundNonVarargParams.contains(positionalCursor) {
+                    positionalCursor += 1
+                    continue
+                }
+                if isVararg[positionalCursor] {
+                    let trailingRequiredCount = trailingRequiredParameterCount(after: positionalCursor)
+                    if callArgs.count - argIndex <= trailingRequiredCount {
+                        positionalCursor += 1
+                        continue
+                    }
+                }
+                break
+            }
+        }
         var mapping: [Int: Int] = [:]
         var boundNonVarargParams: Set<Int> = []
         var sawNamedArgument = false
@@ -49,12 +84,7 @@ extension OverloadResolver {
                 // In Kotlin, positional arguments after named arguments
                 // are allowed only when they bind to a vararg parameter.
                 // Advance the cursor past already-bound non-vararg params.
-                while positionalCursor < paramCount &&
-                    !isVararg[positionalCursor] &&
-                    boundNonVarargParams.contains(positionalCursor)
-                {
-                    positionalCursor += 1
-                }
+                advancePositionalCursor(for: argIndex)
                 if positionalCursor >= paramCount || !isVararg[positionalCursor] {
                     return nil
                 }
@@ -62,12 +92,7 @@ extension OverloadResolver {
                 continue
             }
 
-            while positionalCursor < paramCount,
-                  !isVararg[positionalCursor],
-                  boundNonVarargParams.contains(positionalCursor)
-            {
-                positionalCursor += 1
-            }
+            advancePositionalCursor(for: argIndex)
             if positionalCursor >= paramCount {
                 return nil
             }

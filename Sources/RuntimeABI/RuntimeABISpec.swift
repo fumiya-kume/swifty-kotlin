@@ -2599,6 +2599,16 @@ public enum RuntimeABISpec {
             section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_lock_withLock",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "actionFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "actionEnvPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_semaphore_create",
             parameters: [
                 RuntimeABIParameter(name: "permits", type: .intptr),

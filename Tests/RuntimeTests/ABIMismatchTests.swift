@@ -135,7 +135,7 @@ final class ABIMismatchTests: XCTestCase {
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
         // The current spec surface tracks the shared coroutine ABI subset.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 89)
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 90)
     }
 
     func testBoxingFunctionCount() {
@@ -372,6 +372,18 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters[2].type, .intptr)
         XCTAssertEqual(spec.parameters[3].name, "outThrown")
         XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
+    }
+
+    func testKKLockWithLockSignature() throws {
+        let spec = try requireSpec("kk_lock_withLock")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 3)
+        XCTAssertEqual(spec.parameters[0].name, "handle")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "actionFnPtr")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "actionEnvPtr")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
     }
 
     // MARK: - Collection HOF Scan/Reduce (STDLIB-526..530)

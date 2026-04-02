@@ -192,6 +192,78 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenCompilesUnsignedMaxOfTopLevelCalls() throws {
+        let source = """
+        fun main() {
+            println(maxOf(1u, 4000000000u) == 4000000000u)
+            println(maxOf(1u, 3u, 4000000000u) == 4000000000u)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "UnsignedComparisonMaxOf",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "true\ntrue\n")
+        }
+    }
+
+    func testCodegenCompilesComparatorMaxOfTopLevelCalls() throws {
+        let source = """
+        fun main() {
+            println(maxOf(1, 2, reverseOrder<Int>()) == 1)
+            println(maxOf(1, 4, 2, 3, reverseOrder<Int>()) == 1)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ComparatorComparisonMaxOf",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "true\ntrue\n")
+        }
+    }
+
+    func testCodegenCompilesGenericMaxOfTopLevelCalls() throws {
+        let source = """
+        fun main() {
+            println(maxOf("b", "a") == "b")
+            println(maxOf("d", "b", "a", "c") == "d")
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "GenericComparisonMaxOf",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "true\ntrue\n")
+        }
+    }
+
     func testCodegenGenericComparableTreatsNaNAsGreaterThanFiniteValues() throws {
         let source = """
         fun <T> pickGreater(a: T, b: T): T where T : Comparable<T> = if (a > b) a else b
