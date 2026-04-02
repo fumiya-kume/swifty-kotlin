@@ -1790,6 +1790,38 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "System"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_instant_to_java_instant",
+            parameters: [
+                RuntimeABIParameter(name: "instantRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_instant_to_kotlin_instant",
+            parameters: [
+                RuntimeABIParameter(name: "instantRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_instant_to_js_date",
+            parameters: [
+                RuntimeABIParameter(name: "instantRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_js_date_to_kotlin_instant",
+            parameters: [
+                RuntimeABIParameter(name: "dateRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
     ]
 
     public static let gcFunctions: [RuntimeABIFunctionSpec] = [
@@ -5719,6 +5751,22 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "lhsRaw", type: .intptr),
                 RuntimeABIParameter(name: "rhsRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_duration_to_java_duration",
+            parameters: [
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_duration_to_kotlin_duration",
+            parameters: [
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Duration"
