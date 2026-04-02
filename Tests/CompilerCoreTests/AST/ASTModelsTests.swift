@@ -293,6 +293,7 @@ final class ASTModelsTests: XCTestCase {
             ),
             .localFunDecl(
                 name: name,
+                typeParams: [],
                 valueParams: [],
                 returnType: nil,
                 body: .unit,

@@ -61,6 +61,7 @@ extension DataFlowSemaPhase {
         let tParamType = types.make(.typeParam(TypeParamType(
             symbol: tParamSymbol, nullability: .nonNull
         )))
+        types.setNominalTypeParameterSymbols([tParamSymbol], for: comparableSymbol)
 
         registerComparableCompareToOperator(
             symbols: symbols, types: types, interner: interner,

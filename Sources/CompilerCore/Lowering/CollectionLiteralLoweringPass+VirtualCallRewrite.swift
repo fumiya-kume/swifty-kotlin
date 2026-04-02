@@ -1146,6 +1146,34 @@ extension CollectionLiteralLoweringPass {
                         return .nullsLast(inner: innerExpr)
                     }
                     if let rc = reversedCallee, callee == rc, let innerExpr = arguments.first {
+                        // kk_comparator_reversed(cFn, cClosure) should recurse from the
+                        // comparator payload, not the trampoline function pointer.
+                        if arguments.count >= 2 {
+                            let candidates = [arguments[1], arguments[0]]
+                            if let preferred = candidates.first(where: {
+                                if case .unknown = isComparatorFromCall(
+                                    exprID: $0,
+                                    body: body,
+                                    ascendingCallee: ascendingCallee,
+                                    descendingCallee: descendingCallee,
+                                    multiSelectorCallee: multiSelectorCallee,
+                                    naturalOrderCallee: naturalOrderCallee,
+                                    reverseOrderCallee: reverseOrderCallee,
+                                    thenByCallee: thenByCallee,
+                                    thenByDescendingCallee: thenByDescendingCallee,
+                                    nullsFirstCallee: nullsFirstCallee,
+                                    nullsLastCallee: nullsLastCallee,
+                                    multiSelector3Callee: multiSelector3Callee,
+                                    reversedCallee: reversedCallee
+                                ) {
+                                    return false
+                                }
+                                return true
+                            }) {
+                                return .reversed(inner: preferred)
+                            }
+                            return .reversed(inner: arguments[1])
+                        }
                         return .reversed(inner: innerExpr)
                     }
                     return .unknown
@@ -1342,9 +1370,14 @@ extension CollectionLiteralLoweringPass {
                     innerTrampolineName = lookup.kkComparatorNullsLastTrampolineName
                     innerClosureExpr = innerExpr
                 default:
-                    // Unknown inner comparator -- use selector trampoline as fallback
-                    innerTrampolineName = lookup.kkComparatorFromSelectorTrampolineName
-                    innerClosureExpr = innerExpr
+                    if isComparatorObjectExpr(innerExpr, body: context.functionBody, module: module, sema: context.sema, interner: context.interner) {
+                        innerTrampolineName = lookup.kkComparatorObjectTrampolineName
+                        innerClosureExpr = innerExpr
+                    } else {
+                        // Unknown inner comparator -- use selector trampoline as fallback
+                        innerTrampolineName = lookup.kkComparatorFromSelectorTrampolineName
+                        innerClosureExpr = innerExpr
+                    }
                 }
                 // Emit the inner trampoline function pointer
                 let innerTrampolineExpr = module.arena.appendExpr(
@@ -1367,8 +1400,13 @@ extension CollectionLiteralLoweringPass {
                 ))
                 closureExpr = reversedClosureResult
             default:
-                trampolineName = lookup.kkComparatorFromSelectorTrampolineName
-                closureExpr = comparatorExpr
+                if isComparatorObjectExpr(comparatorExpr, body: context.functionBody, module: module, sema: context.sema, interner: context.interner) {
+                    trampolineName = lookup.kkComparatorObjectTrampolineName
+                    closureExpr = comparatorExpr
+                } else {
+                    trampolineName = lookup.kkComparatorFromSelectorTrampolineName
+                    closureExpr = comparatorExpr
+                }
             }
             let trampolineExpr = module.arena.appendExpr(.externSymbolAddress(trampolineName), type: nil)
             loweredBody.append(.constValue(result: trampolineExpr, value: .externSymbolAddress(trampolineName)))
@@ -1423,8 +1461,13 @@ extension CollectionLiteralLoweringPass {
                 loweredBody.append(.constValue(result: zero, value: .intLiteral(0)))
                 cmpClosureExpr = zero
             default:
-                cmpTrampolineName = lookup.kkComparatorFromSelectorTrampolineName
-                cmpClosureExpr = comparatorExpr
+                if isComparatorObjectExpr(comparatorExpr, body: context.functionBody, module: module, sema: context.sema, interner: context.interner) {
+                    cmpTrampolineName = lookup.kkComparatorObjectTrampolineName
+                    cmpClosureExpr = comparatorExpr
+                } else {
+                    cmpTrampolineName = lookup.kkComparatorFromSelectorTrampolineName
+                    cmpClosureExpr = comparatorExpr
+                }
             }
             let cmpTrampolineExpr = module.arena.appendExpr(.externSymbolAddress(cmpTrampolineName), type: nil)
             loweredBody.append(.constValue(result: cmpTrampolineExpr, value: .externSymbolAddress(cmpTrampolineName)))

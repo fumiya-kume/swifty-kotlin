@@ -672,7 +672,7 @@ final class LambdaLowerer {
         )
         sema.symbols.setParentSymbol(wrapperSymbol, for: methodSymbol)
 
-        let methodParamSymbols: [SymbolID] = samMethod.signature.parameterTypes.enumerated().map { index, type in
+        let methodParamSymbols: [SymbolID] = samMethodParamTypes.enumerated().map { index, type in
             let paramName = interner.intern("$p\(index)")
             let paramSymbol = sema.symbols.define(
                 kind: .valueParameter,
@@ -688,8 +688,8 @@ final class LambdaLowerer {
         sema.symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: wrapperType,
-                parameterTypes: samMethod.signature.parameterTypes,
-                returnType: samMethod.signature.returnType,
+                parameterTypes: samMethodParamTypes,
+                returnType: lambdaReturnType,
                 isSuspend: samMethod.signature.isSuspend,
                 valueParameterSymbols: methodParamSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: methodParamSymbols.count),
@@ -725,7 +725,7 @@ final class LambdaLowerer {
         driver.ctx.setImplicitReceiver(symbol: receiverSymbol, exprID: receiverExpr)
 
         let methodParams = [KIRParameter(symbol: receiverSymbol, type: wrapperType)]
-            + zip(methodParamSymbols, samMethod.signature.parameterTypes).map { KIRParameter(symbol: $0.0, type: $0.1) }
+            + zip(methodParamSymbols, samMethodParamTypes).map { KIRParameter(symbol: $0.0, type: $0.1) }
         var methodBody: [KIRInstruction] = [.beginBlock]
         methodBody.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
 
@@ -749,7 +749,7 @@ final class LambdaLowerer {
             loadedCaptureExprs.append(loadedExpr)
         }
 
-        let loweredMethodParamExprs = zip(methodParamSymbols, samMethod.signature.parameterTypes).map { symbol, type in
+        let loweredMethodParamExprs = zip(methodParamSymbols, samMethodParamTypes).map { symbol, type in
             let expr = arena.appendExpr(.symbolRef(symbol), type: type)
             methodBody.append(.constValue(result: expr, value: .symbolRef(symbol)))
             return expr
@@ -775,7 +775,7 @@ final class LambdaLowerer {
             symbol: methodSymbol,
             name: methodName,
             params: methodParams,
-            returnType: samMethod.signature.returnType,
+            returnType: lambdaReturnType,
             body: methodBody,
             isSuspend: samMethod.signature.isSuspend,
             isInline: false

@@ -101,6 +101,12 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_comparator_object_trampoline = ExternDecl(
+        name: "kk_comparator_object_trampoline",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     static let kk_comparator_natural_order_trampoline = ExternDecl(
         name: "kk_comparator_natural_order_trampoline",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
@@ -167,6 +173,7 @@ public extension RuntimeABIExterns {
         kk_comparator_nulls_last_trampoline,
         kk_comparator_reversed,
         kk_comparator_reversed_trampoline,
+        kk_comparator_object_trampoline,
         kk_comparator_natural_order_trampoline,
         kk_comparator_reverse_order_trampoline,
         kk_comparator_natural_order,

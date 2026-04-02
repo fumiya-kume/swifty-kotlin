@@ -106,6 +106,7 @@ extension CallTypeChecker {
             id,
             calleeName: calleeName,
             argExpr: samArgExpr,
+            explicitTypeArgs: explicitTypeArgs,
             range: range,
             ctx: ctx,
             locals: &locals
@@ -199,6 +200,7 @@ extension CallTypeChecker {
         _ id: ExprID,
         calleeName: InternedString,
         argExpr: ExprID,
+        explicitTypeArgs: [TypeID],
         range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout LocalBindings
@@ -214,9 +216,14 @@ extension CallTypeChecker {
             return nil
         }
         let sema = ctx.sema
+        let interfaceArgs: [TypeArg] = if let firstTypeArg = explicitTypeArgs.first {
+            [.invariant(firstTypeArg)]
+        } else {
+            []
+        }
         let interfaceType = sema.types.make(.classType(ClassType(
             classSymbol: interfaceSymID,
-            args: [],
+            args: interfaceArgs,
             nullability: .nonNull
         )))
         guard let samFT = driver.helpers.samFunctionType(for: interfaceType, sema: sema) else {

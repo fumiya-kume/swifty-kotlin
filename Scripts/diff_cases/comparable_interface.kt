@@ -53,8 +53,9 @@ fun genericConstraintsTest(): Int {
 // null安全な比較のテスト
 fun nullSafeComparisonTest(): Int {
     val a: Int? = 10
-    val b: Int? = 20
-    val c: Int? = null
+    val b = 20
+    val c = 30
+    val nullInt: Int? = null
     
     // 通常の比較（nullを含む場合）
     try {
@@ -63,10 +64,10 @@ fun nullSafeComparisonTest(): Int {
         println("a?.compareTo(b) = $result1")
         
         val result2 = a?.compareTo(c) ?: -1
-        println("a?.compareTo(null) = $result2")
+        println("a?.compareTo(c) = $result2")
         
-        val result3 = c?.compareTo(a) ?: 1
-        println("null?.compareTo(a) = $result3")
+        val result3 = nullInt?.compareTo(b) ?: 1
+        println("nullInt?.compareTo(b) = $result3")
         
     } catch (e: Exception) {
         println("Expected exception for null comparison: ${e.message}")

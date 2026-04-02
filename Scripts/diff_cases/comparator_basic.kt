@@ -1,3 +1,5 @@
+import kotlin.comparisons.*
+
 fun main() {
     val nums = listOf(231, 114, 123, 212, 111, 223, 214)
 
@@ -18,10 +20,26 @@ fun main() {
     val nullableNums = listOf(14, null, 3, null, 25, 17, 4)
 
     println("-- nullsFirst --")
-    println(nullableNums.sortedWith(compareBy<Int?> { it }.nullsFirst()))
+    val nullsFirstComparator = Comparator<Int?> { a, b ->
+        when {
+            a == null && b == null -> 0
+            a == null -> -1
+            b == null -> 1
+            else -> a!!.compareTo(b!!)
+        }
+    }
+    println(nullableNums.sortedWith(nullsFirstComparator))
 
     println("-- nullsLast --")
-    println(nullableNums.sortedWith(compareBy<Int?> { it }.nullsLast()))
+    val nullsLastComparator = Comparator<Int?> { a, b ->
+        when {
+            a == null && b == null -> 0
+            a == null -> 1
+            b == null -> -1
+            else -> a!!.compareTo(b!!)
+        }
+    }
+    println(nullableNums.sortedWith(nullsLastComparator))
 
     println("-- naturalOrder + reverseOrder --")
     val words = listOf("pear", "apple", "orange", "fig")

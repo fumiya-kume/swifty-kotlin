@@ -80,15 +80,6 @@ extension BuildASTPhase.ExpressionParser {
                         ranges.append((groupStart, lastTokenIndex + 1))
                     }
                     groupStart = idx + 1
-                    switch token.kind {
-                    case .symbol(.lParen): parenDepth += 1
-                    case .symbol(.rParen): parenDepth = max(0, parenDepth - 1)
-                    case .symbol(.lBracket): bracketDepth += 1
-                    case .symbol(.rBracket): bracketDepth = max(0, bracketDepth - 1)
-                    case .symbol(.lBrace): braceDepth += 1
-                    case .symbol(.rBrace): braceDepth = max(0, braceDepth - 1)
-                    default: break
-                    }
                     continue
                 }
                 let hasNewline = token.leadingTrivia.contains { piece in

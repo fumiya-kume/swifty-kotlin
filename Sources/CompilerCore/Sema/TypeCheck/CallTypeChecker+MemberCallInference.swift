@@ -3178,7 +3178,6 @@ extension CallTypeChecker {
             let receiverTypeForCheck = safeCall
                 ? sema.types.makeNonNullable(lookupReceiverType)
                 : lookupReceiverType
-            let comparableElementType = safeCall ? receiverTypeForCheck : argTypes[0]
             let shouldBypassResolution: Bool = {
                 switch sema.types.kind(of: receiverTypeForCheck) {
                 case .primitive, .typeParam:
@@ -3193,9 +3192,10 @@ extension CallTypeChecker {
                     interner.intern("Comparable"),
                     calleeName,
                 ]
+                let comparableArgType = sema.types.makeNonNullable(argTypes[0])
                 let comparableReceiverType = sema.types.make(.classType(ClassType(
                     classSymbol: comparableSymbol,
-                    args: [.in(comparableElementType)],
+                    args: [.in(comparableArgType)],
                     nullability: .nonNull
                 )))
                 if sema.types.isSubtype(receiverTypeForCheck, comparableReceiverType),
@@ -3205,7 +3205,7 @@ extension CallTypeChecker {
                         id,
                         binding: CallBinding(
                             chosenCallee: chosen,
-                            substitutedTypeArguments: [comparableElementType],
+                            substitutedTypeArguments: [comparableArgType],
                             parameterMapping: [0: 0]
                         )
                     )
@@ -3334,7 +3334,7 @@ extension CallTypeChecker {
                 let receiverTypeForCheck = safeCall
                     ? sema.types.makeNonNullable(lookupReceiverType)
                     : lookupReceiverType
-                let comparableElementType = safeCall ? receiverTypeForCheck : argTypes[0]
+                let comparableElementType = sema.types.makeNonNullable(argTypes[0])
                 let comparableCompareToFQName = [
                     interner.intern("kotlin"),
                     interner.intern("Comparable"),

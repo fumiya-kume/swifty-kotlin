@@ -79,6 +79,17 @@ extension TypeSystem {
             }
         }
 
+        if case let .typeParam(typeParam) = lhs,
+           let symbolTable
+        {
+            let upperBounds = symbolTable.typeParameterUpperBounds(for: typeParam.symbol)
+            if !upperBounds.isEmpty {
+                for upperBound in upperBounds where isSubtype(upperBound, supertype) {
+                    return true
+                }
+            }
+        }
+
         // primitive <: Comparable<same_primitive>
         // All Kotlin primitive types (Int, Long, Double, Float, Char, Boolean, etc.) implement Comparable<Self>.
         if case let .primitive(_, leftNullability) = lhs,

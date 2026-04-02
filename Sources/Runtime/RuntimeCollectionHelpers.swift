@@ -20,6 +20,17 @@ private let mapEntryRuntimeTypeID: Int64 = {
     return payload == 0 ? 1 : payload
 }()
 
+private let comparableRuntimeTypeID: Int64 = {
+    var hash: UInt64 = 0xCBF2_9CE4_8422_2325
+    for byte in "kotlin.Comparable".utf8 {
+        hash ^= UInt64(byte)
+        hash &*= 0x100_0000_01B3
+    }
+    let payloadMask: Int64 = (1 << 55) - 1
+    let payload = Int64(bitPattern: hash) & payloadMask
+    return payload == 0 ? 1 : payload
+}()
+
 @inline(__always)
 func runtimeMapEntryNew(key: Int, value: Int) -> Int {
     let raw = kk_pair_new(key, value)
@@ -562,12 +573,69 @@ func runtimeCompareValues(_ lhs: Int, _ rhs: Int) -> Int {
             return lhsValue < rhsValue ? -1 : 1
         }
     }
+    if let objectComparable = runtimeComparableObjectValue(from: lhs, rhs: rhs) {
+        return objectComparable
+    }
     let lhsRendered = runtimeElementToString(lhs)
     let rhsRendered = runtimeElementToString(rhs)
     if lhsRendered == rhsRendered {
         return 0
     }
     return lhsRendered < rhsRendered ? -1 : 1
+}
+
+@inline(__always)
+func runtimeComparableObjectValue(from lhs: Int, rhs: Int) -> Int? {
+    guard let lhsPtr = UnsafeMutableRawPointer(bitPattern: lhs),
+          let rhsPtr = UnsafeMutableRawPointer(bitPattern: rhs)
+    else {
+        return nil
+    }
+    let lhsIsObject = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: lhsPtr))
+    }
+    let rhsIsObject = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: rhsPtr))
+    }
+    guard lhsIsObject, rhsIsObject else {
+        return nil
+    }
+    guard let lhsTypeID = runtimeObjectTypeID(rawValue: lhs),
+          let rhsTypeID = runtimeObjectTypeID(rawValue: rhs),
+          lhsTypeID == rhsTypeID,
+          runtimeIsAssignable(sourceTypeID: lhsTypeID, targetTypeID: comparableRuntimeTypeID)
+    else {
+        return nil
+    }
+    let compareFnPtr = runtimeComparableCompareFn(for: lhs) ?? kk_itable_lookup(lhs, 0, 0)
+    guard compareFnPtr != 0 else {
+        return nil
+    }
+    let compareFn = unsafeBitCast(compareFnPtr, to: KKFunctionEntryPoint2.self)
+    return compareFn(lhs, rhs, nil)
+}
+
+@inline(__always)
+func runtimeComparableCompareFn(for raw: Int) -> Int? {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    let objectKey = UInt(bitPattern: pointer)
+    return runtimeStorage.withLock { state in
+        guard let methods = state.objectItableMethods[objectKey] else {
+            return nil
+        }
+        if let exact = methods[0] {
+            return exact
+        }
+        for (dispatchKey, functionRaw) in methods {
+            let methodSlot = dispatchKey & UInt64(UInt32.max)
+            if methodSlot == 0 {
+                return functionRaw
+            }
+        }
+        return nil
+    }
 }
 
 private enum RuntimeComparableScalarValue {

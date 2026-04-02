@@ -1,11 +1,11 @@
 fun main() {
     val left: Int? = 10
-    val right: Int? = 20
+    val right = 20
     val missing: Int? = null
 
     println(left?.compareTo(right) ?: 0)
-    println(left?.compareTo(missing) ?: -1)
-    println(missing?.compareTo(left) ?: 1)
+    println(left?.compareTo(right + 1) ?: -1)
+    println(missing?.compareTo(right) ?: 1)
 
     fun <T> compareItems(items: List<T>, a: T, b: T) where T : Comparable<T> {
         println(items.size)

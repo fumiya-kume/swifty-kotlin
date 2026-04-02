@@ -1603,6 +1603,9 @@ public func kk_compare_any(_ lhsRaw: Int, _ rhsRaw: Int) -> Int {
             return lhs < rhs ? -1 : 1
         }
     }
+    if let objectComparable = runtimeComparableObjectValue(from: lhsRaw, rhs: rhsRaw) {
+        return objectComparable
+    }
 
     return lhsRaw < rhsRaw ? -1 : 1
 }

@@ -165,6 +165,7 @@ final class TypeCheckDelegateCoverageTests: XCTestCase {
         let exprResult = fixture.driver.localDeclChecker.inferLocalFunDeclExpr(
             exprFunID,
             name: fixture.interner.intern("exprFun"),
+            typeParams: [],
             valueParams: [ValueParamDecl(name: fixture.interner.intern("x"), type: intTypeRef)],
             returnTypeRef: intTypeRef,
             body: .expr(bodyExpr, range),
@@ -179,6 +180,7 @@ final class TypeCheckDelegateCoverageTests: XCTestCase {
         let blockResult = fixture.driver.localDeclChecker.inferLocalFunDeclExpr(
             blockFunID,
             name: fixture.interner.intern("blockFun"),
+            typeParams: [],
             valueParams: [ValueParamDecl(name: fixture.interner.intern("x"), type: intTypeRef)],
             returnTypeRef: intTypeRef,
             body: .block([bodyExpr, bodyExpr2], range),
@@ -192,6 +194,7 @@ final class TypeCheckDelegateCoverageTests: XCTestCase {
         let unitResult = fixture.driver.localDeclChecker.inferLocalFunDeclExpr(
             unitFunID,
             name: fixture.interner.intern("unitFun"),
+            typeParams: [],
             valueParams: [],
             returnTypeRef: nil,
             body: .unit,

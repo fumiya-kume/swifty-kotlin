@@ -49,9 +49,33 @@ extension TypeCheckHelpers {
         guard let signature = samMethodSignature(for: classType.classSymbol, sema: sema) else {
             return nil
         }
+        let typeParamSymbols = sema.types.nominalTypeParameterSymbols(for: classType.classSymbol)
+        let typeVarBySymbol = sema.types.makeTypeVarBySymbol(typeParamSymbols)
+        var substitution: [TypeVarID: TypeID] = [:]
+        for (index, typeParamSymbol) in typeParamSymbols.enumerated() {
+            guard index < classType.args.count else {
+                break
+            }
+            let resolvedType: TypeID = switch classType.args[index] {
+            case let .invariant(type), let .out(type), let .in(type):
+                type
+            case .star:
+                sema.types.nullableAnyType
+            }
+            if let typeVar = typeVarBySymbol[typeParamSymbol] {
+                substitution[typeVar] = resolvedType
+            }
+        }
+        let substitute: (TypeID) -> TypeID = { type in
+            sema.types.substituteTypeParameters(
+                in: type,
+                substitution: substitution,
+                typeVarBySymbol: typeVarBySymbol
+            )
+        }
         return FunctionType(
-            params: signature.parameterTypes,
-            returnType: signature.returnType,
+            params: signature.parameterTypes.map(substitute),
+            returnType: substitute(signature.returnType),
             isSuspend: signature.isSuspend,
             nullability: .nonNull
         )

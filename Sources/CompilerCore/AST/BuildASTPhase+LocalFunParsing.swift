@@ -78,9 +78,10 @@ extension BuildASTPhase {
             from: statementTokens, index: &index, interner: interner, astArena: astArena
         )
 
+        let bodyStartIndex = findLocalFunBodyStart(from: index, tokens: statementTokens)
         let body: FunctionBody
-        if index < statementTokens.count, statementTokens[index].kind == .symbol(.assign) {
-            index += 1
+        if let bodyStartIndex, statementTokens[bodyStartIndex].kind == .symbol(.assign) {
+            index = bodyStartIndex + 1
             let exprTokens = Array(statementTokens[index...]).filter { $0.kind != .symbol(.semicolon) }
             let parser = ExpressionParser(tokens: exprTokens, interner: interner, astArena: astArena)
             if let exprID = parser.parse(), let exprRange = astArena.exprRange(exprID) {
@@ -88,7 +89,8 @@ extension BuildASTPhase {
             } else {
                 body = .unit
             }
-        } else if index < statementTokens.count, statementTokens[index].kind == .symbol(.lBrace) {
+        } else if let bodyStartIndex, statementTokens[bodyStartIndex].kind == .symbol(.lBrace) {
+            index = bodyStartIndex
             body = parseBraceBody(
                 from: statementTokens, index: &index, interner: interner, astArena: astArena
             )
@@ -113,6 +115,26 @@ extension BuildASTPhase {
             body: body,
             range: range
         ))
+    }
+
+    private func findLocalFunBodyStart(
+        from startIndex: Int,
+        tokens: [Token]
+    ) -> Int? {
+        guard startIndex < tokens.count else {
+            return nil
+        }
+        var depth = BracketDepth()
+        var index = startIndex
+        while index < tokens.count {
+            let token = tokens[index]
+            if depth.isAtTopLevel, token.kind == .symbol(.lBrace) || token.kind == .symbol(.assign) {
+                return index
+            }
+            depth.track(token.kind)
+            index += 1
+        }
+        return nil
     }
 
     // MARK: - Local Fun Parsing Helpers

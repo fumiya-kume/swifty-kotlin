@@ -197,6 +197,7 @@ struct CollectionLiteralLookupTables {
     let kkComparatorReverseOrderName: InternedString
     let kkComparatorNaturalOrderTrampolineName: InternedString
     let kkComparatorReverseOrderTrampolineName: InternedString
+    let kkComparatorObjectTrampolineName: InternedString
     let kkComparatorThenByName: InternedString
     let kkComparatorThenByDescendingName: InternedString
     let kkComparatorThenByTrampolineName: InternedString
@@ -866,6 +867,7 @@ struct CollectionLiteralLookupTables {
         kkComparatorReverseOrderName = interner.intern("kk_comparator_reverse_order")
         kkComparatorNaturalOrderTrampolineName = interner.intern("kk_comparator_natural_order_trampoline")
         kkComparatorReverseOrderTrampolineName = interner.intern("kk_comparator_reverse_order_trampoline")
+        kkComparatorObjectTrampolineName = interner.intern("kk_comparator_object_trampoline")
         kkComparatorThenByName = interner.intern("kk_comparator_then_by")
         kkComparatorThenByDescendingName = interner.intern("kk_comparator_then_by_descending")
         kkComparatorThenByTrampolineName = interner.intern("kk_comparator_then_by_trampoline")

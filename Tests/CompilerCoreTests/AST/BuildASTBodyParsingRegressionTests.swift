@@ -83,6 +83,57 @@ final class BuildASTBodyParsingRegressionTests: XCTestCase {
         }
     }
 
+    // MARK: - Local generic function with where clause and comparison body
+
+    func testLocalGenericFunctionKeepsTrailingComparisonStatement() throws {
+        let source = """
+        fun main() {
+            fun <T> compareItems(items: List<T>, a: T, b: T) where T : Comparable<T> {
+                println(items.size)
+                println(a.compareTo(b))
+                println(a < b)
+                println(a > b)
+            }
+            compareItems(listOf(1, 2, 3), 10, 20)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runFrontend(ctx)
+            let ast = try XCTUnwrap(ctx.ast)
+
+            let mainDecls = ast.arena.declarations().compactMap { decl -> FunDecl? in
+                guard case let .funDecl(funDecl) = decl else {
+                    return nil
+                }
+                return funDecl
+            }
+            let mainDecl = try XCTUnwrap(mainDecls.first(where: { ctx.interner.resolve($0.name) == "main" }))
+            guard case let .block(bodyExprs, _) = mainDecl.body else {
+                XCTFail("main should have a block body")
+                return
+            }
+
+            let localFunExpr = try XCTUnwrap(bodyExprs.compactMap({ exprID -> ExprID? in
+                guard let expr = ast.arena.expr(exprID),
+                      case .localFunDecl = expr else {
+                    return nil
+                }
+                return exprID
+            }).first)
+
+            guard let expr = ast.arena.expr(localFunExpr),
+                  case let .localFunDecl(_, _, _, _, body, _) = expr,
+                  case let .block(compareBodyExprs, _) = body
+            else {
+                XCTFail("compareItems should keep a block body")
+                return
+            }
+
+            XCTAssertEqual(compareBodyExprs.count, 4, "The trailing `println(a > b)` should remain in the local function body.")
+        }
+    }
+
     // MARK: - Compound assignment operators in body parsing
 
     func testCompoundAssignmentOperatorsInBody() throws {

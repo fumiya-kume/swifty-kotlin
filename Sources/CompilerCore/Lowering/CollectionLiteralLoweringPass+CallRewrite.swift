@@ -124,6 +124,56 @@ extension CollectionLiteralLoweringPass {
         return resolved.fqName.starts(with: javaIOFilePrefix)
     }
 
+    func isComparatorObjectExpr(
+        _ exprID: KIRExprID,
+        body: [KIRInstruction],
+        module: KIRModule,
+        sema: SemaModule?,
+        interner: StringInterner
+    ) -> Bool {
+        guard let sema,
+              let exprType = module.arena.exprType(exprID)
+        else {
+            return false
+        }
+        let nonNullExprType = sema.types.makeNonNullable(exprType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullExprType),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            // Fall through to structural detection below.
+            return _isComparatorObjectExprFromBody(exprID, body: body, module: module, sema: nil, interner: interner)
+        }
+        if symbol.kind == .interface && symbol.flags.contains(.funInterface) {
+            return true
+        }
+        return _isComparatorObjectExprFromBody(exprID, body: body, module: module, sema: nil, interner: interner)
+    }
+
+    private func _isComparatorObjectExprFromBody(
+        _ exprID: KIRExprID,
+        body: [KIRInstruction],
+        module: KIRModule,
+        sema: SemaModule?,
+        interner: StringInterner
+    ) -> Bool {
+        let objectNewName = interner.intern("kk_object_new")
+        for instruction in body {
+            switch instruction {
+            case let .call(_, callee, _, result, _, _, _, _):
+                if let result, result.rawValue == exprID.rawValue, callee == objectNewName {
+                    return true
+                }
+            case let .copy(from: fromID, to: toID):
+                if toID.rawValue == exprID.rawValue {
+                    return _isComparatorObjectExprFromBody(fromID, body: body, module: module, sema: sema, interner: interner)
+                }
+            default:
+                break
+            }
+        }
+        return false
+    }
+
     // swiftlint:disable:next cyclomatic_complexity function_body_length
     func rewriteCalls(module: KIRModule, ctx: KIRContext) throws {
         let lookup = CollectionLiteralLookupTables(interner: ctx.interner)
@@ -3263,9 +3313,34 @@ extension CollectionLiteralLoweringPass {
                                     multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
                                     reversedCallee: lookup.kkComparatorReversedName
                                 )
-                                let trampolineName: InternedString
-                                let closureExpr: KIRExprID
                                 if case .unknown = source {
+                                    if isComparatorObjectExpr(comparatorExpr, body: function.body, module: module, sema: ctx.sema, interner: ctx.interner) {
+                                        let trampolineExpr = module.arena.appendExpr(
+                                            .externSymbolAddress(lookup.kkComparatorObjectTrampolineName),
+                                            type: nil
+                                        )
+                                        loweredBody.append(.constValue(
+                                            result: trampolineExpr,
+                                            value: .externSymbolAddress(lookup.kkComparatorObjectTrampolineName)
+                                        ))
+                                        let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                        loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                        let hofResult = module.arena.appendExpr(
+                                            .temporary(Int32(module.arena.expressions.count)), type: nil
+                                        )
+                                        loweredBody.append(.call(
+                                            symbol: nil,
+                                            callee: kkName,
+                                            arguments: [receiverID, trampolineExpr, comparatorExpr, zeroExpr],
+                                            result: hofResult,
+                                            canThrow: canThrow,
+                                            thrownResult: thrownResult
+                                        ))
+                                        if let result {
+                                            loweredBody.append(.copy(from: hofResult, to: result))
+                                        }
+                                        continue
+                                    } else {
                                     // Direct lambda comparator — pass as fnPtr with closureRaw
                                     let closureRawID: KIRExprID
                                     if arguments.count == 3 {
@@ -3290,7 +3365,10 @@ extension CollectionLiteralLoweringPass {
                                         loweredBody.append(.copy(from: hofResult, to: result))
                                     }
                                     continue
+                                    }
                                 }
+                                let trampolineName: InternedString
+                                let closureExpr: KIRExprID
                                 switch source {
                                 case .descending:
                                     trampolineName = lookup.kkComparatorFromSelectorDescendingTrampolineName
@@ -4144,19 +4222,40 @@ extension CollectionLiteralLoweringPass {
                             reversedCallee: lookup.kkComparatorReversedName
                         )
                         if case .unknown = source {
-                            // Not a recognized comparator factory — likely a direct lambda
-                            // comparator (e.g. sortedWith { a, b -> a - b }).
-                            // Pass it as fnPtr with closureRaw=0.
-                            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
-                            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                            loweredBody.append(.call(
-                                symbol: nil,
-                                callee: lookup.kkListSortedWithName,
-                                arguments: [receiverID, comparatorExpr, zeroExpr, zeroExpr],
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: thrownResult
-                            ))
+                            if isComparatorObjectExpr(comparatorExpr, body: function.body, module: module, sema: ctx.sema, interner: ctx.interner) {
+                                let trampolineExpr = module.arena.appendExpr(
+                                    .externSymbolAddress(lookup.kkComparatorObjectTrampolineName),
+                                    type: nil
+                                )
+                                loweredBody.append(.constValue(
+                                    result: trampolineExpr,
+                                    value: .externSymbolAddress(lookup.kkComparatorObjectTrampolineName)
+                                ))
+                                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: lookup.kkListSortedWithName,
+                                    arguments: [receiverID, trampolineExpr, comparatorExpr, zeroExpr],
+                                    result: result,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                            } else {
+                                // Not a recognized comparator factory — likely a direct lambda
+                                // comparator (e.g. sortedWith { a, b -> a - b }).
+                                // Pass it as fnPtr with closureRaw=0.
+                                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: lookup.kkListSortedWithName,
+                                    arguments: [receiverID, comparatorExpr, zeroExpr, zeroExpr],
+                                    result: result,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                            }
                         } else {
                             let trampolineName: InternedString
                             let closureExpr: KIRExprID

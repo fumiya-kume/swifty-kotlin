@@ -161,8 +161,8 @@ extension ASTModelsTests {
         let bodyID = arena.appendExpr(.intLiteral(1, r))
         let param = ValueParamDecl(name: interner.intern("a"), type: TypeRefID(rawValue: 0))
         let typeRefID = arena.appendTypeRef(.named(path: [interner.intern("Int")], args: [], nullable: false))
-        let localFun = Expr.localFunDecl(name: interner.intern("helper"), valueParams: [param], returnType: typeRefID, body: .expr(bodyID, r), range: r)
-        if case let .localFunDecl(name, params, ret, body, _) = localFun {
+        let localFun = Expr.localFunDecl(name: interner.intern("helper"), typeParams: [], valueParams: [param], returnType: typeRefID, body: .expr(bodyID, r), range: r)
+        if case let .localFunDecl(name, _, params, ret, body, _) = localFun {
             XCTAssertEqual(name, interner.intern("helper"))
             XCTAssertEqual(params.count, 1)
             XCTAssertEqual(ret, typeRefID)

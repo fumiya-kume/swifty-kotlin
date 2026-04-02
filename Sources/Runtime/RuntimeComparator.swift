@@ -361,6 +361,40 @@ public func kk_comparator_reversed_trampoline(
     return result == 0 ? 0 : -result
 }
 
+/// Trampoline for SAM-based Comparator objects.
+@_cdecl("kk_comparator_object_trampoline")
+public func kk_comparator_object_trampoline(
+    _ closureRaw: Int,
+    _ a: Int,
+    _ b: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) })
+    else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator closure")
+        return 0
+    }
+    let compareFnPtr = kk_itable_lookup(closureRaw, 0, 0)
+    guard compareFnPtr != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Comparator object does not implement compare")
+        return 0
+    }
+    var thrown = 0
+    let result = runtimeInvokeCollectionLambda2(
+        fnPtr: compareFnPtr,
+        closureRaw: closureRaw,
+        lhs: a,
+        rhs: b,
+        outThrown: &thrown
+    )
+    if thrown != 0 {
+        outThrown?.pointee = thrown
+        return 0
+    }
+    return result
+}
+
 // MARK: - naturalOrder / reverseOrder (STDLIB-177)
 
 @_cdecl("kk_comparator_natural_order_trampoline")

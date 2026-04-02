@@ -3786,6 +3786,64 @@ extension CallLowerer {
         return comparatorArgs
     }
 
+    private func adaptComparatorReceiverArguments(
+        loweredCallee: InternedString,
+        receiverExpr: ExprID,
+        loweredReceiverID: KIRExprID,
+        finalArguments: [KIRExprID],
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> [KIRExprID] {
+        let comparatorReceiverCallees: Set<InternedString> = [
+            interner.intern("kk_comparator_then_by"),
+            interner.intern("kk_comparator_then_by_descending"),
+            interner.intern("kk_comparator_reversed"),
+            interner.intern("kk_comparator_nulls_first"),
+            interner.intern("kk_comparator_nulls_last"),
+        ]
+        guard comparatorReceiverCallees.contains(loweredCallee),
+              let receiverArg = finalArguments.first
+        else {
+            return finalArguments
+        }
+
+        if let comparatorArgs = makeComparatorTrampolineArgument(
+            comparatorExprID: receiverExpr,
+            loweredComparatorID: receiverArg,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &instructions
+        ) {
+            var adapted = comparatorArgs + Array(finalArguments.dropFirst())
+            let comparatorChainCallees: Set<InternedString> = [
+                interner.intern("kk_comparator_then_by"),
+                interner.intern("kk_comparator_then_by_descending"),
+            ]
+            if comparatorChainCallees.contains(loweredCallee), adapted.count == 3 {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: nil)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                adapted.append(zeroExpr)
+            }
+            return adapted
+        }
+
+        let trampolineExpr = arena.appendExpr(
+            .temporary(Int32(clamping: arena.expressions.count)),
+            type: nil
+        )
+        instructions.append(.constValue(
+            result: trampolineExpr,
+            value: .externSymbolAddress(interner.intern("kk_comparator_object_trampoline"))
+        ))
+        return [
+            trampolineExpr,
+            loweredReceiverID,
+        ] + Array(finalArguments.dropFirst())
+    }
+
     private func adaptComparatorBackedCollectionArguments(
         loweredCallee: InternedString,
         finalArguments: [KIRExprID],
@@ -4560,6 +4618,16 @@ extension CallLowerer {
             loweredCallee: loweredCallee,
             finalArguments: finalArguments,
             sourceArgExprs: sourceArgExprs,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &instructions
+        )
+        finalArguments = adaptComparatorReceiverArguments(
+            loweredCallee: loweredCallee,
+            receiverExpr: receiver.expr,
+            loweredReceiverID: receiver.loweredID,
+            finalArguments: finalArguments,
             sema: sema,
             arena: arena,
             interner: interner,

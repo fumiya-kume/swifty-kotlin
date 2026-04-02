@@ -100,6 +100,7 @@ final class KIRLowererPart2CoverageTests: XCTestCase {
         let localFunExpr = fixture.astArena.appendExpr(
             .localFunDecl(
                 name: fixture.interner.intern("localFun"),
+                typeParams: [],
                 valueParams: [],
                 returnType: nil,
                 body: .block([lhs], range),
@@ -109,6 +110,7 @@ final class KIRLowererPart2CoverageTests: XCTestCase {
         let localFunUnitExpr = fixture.astArena.appendExpr(
             .localFunDecl(
                 name: fixture.interner.intern("localUnit"),
+                typeParams: [],
                 valueParams: [],
                 returnType: nil,
                 body: .unit,
