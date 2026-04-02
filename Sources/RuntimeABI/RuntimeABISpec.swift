@@ -70,7 +70,7 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
 
 // swiftlint:disable:next type_body_length
 public enum RuntimeABISpec {
-    public static let specVersion = "J27"
+    public static let specVersion = "J28"
 
     private static func deduplicatedFunctions(
         _ functions: [RuntimeABIFunctionSpec]
@@ -1786,6 +1786,46 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
                 RuntimeABIParameter(name: "closureRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_platform_canAccessUnaligned",
+            parameters: [
+                RuntimeABIParameter(name: "platformRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_platform_isLittleEndian",
+            parameters: [
+                RuntimeABIParameter(name: "platformRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_platform_osFamily",
+            parameters: [
+                RuntimeABIParameter(name: "platformRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_platform_cpuArchitecture",
+            parameters: [
+                RuntimeABIParameter(name: "platformRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_platform_getAvailableProcessors",
+            parameters: [
+                RuntimeABIParameter(name: "platformRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "System"

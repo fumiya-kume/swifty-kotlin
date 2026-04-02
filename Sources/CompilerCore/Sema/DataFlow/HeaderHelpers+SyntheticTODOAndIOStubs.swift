@@ -275,6 +275,110 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- kotlin.native.Platform (STDLIB-NATIVE-169) ---
+        let kotlinNativePkg = ensureSyntheticPackageHierarchy(
+            fqName: [interner.intern("kotlin"), interner.intern("native")],
+            symbols: symbols
+        )
+        let osFamilySymbol = ensureSyntheticPlatformEnumClass(
+            named: "OsFamily",
+            entries: [
+                "UNKNOWN", "MACOSX", "IOS", "TVOS", "WATCHOS",
+                "LINUX", "WINDOWS", "ANDROID", "WASM",
+            ],
+            in: kotlinNativePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let osFamilyType = types.make(.classType(ClassType(
+            classSymbol: osFamilySymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        setSyntheticPlatformEnumEntryTypes(
+            enumSymbol: osFamilySymbol,
+            enumType: osFamilyType,
+            symbols: symbols
+        )
+
+        let cpuArchitectureSymbol = ensureSyntheticPlatformEnumClass(
+            named: "CpuArchitecture",
+            entries: [
+                "UNKNOWN", "X86", "X64", "ARM32",
+                "ARM64", "MIPS32", "MIPSEL32", "WASM32",
+            ],
+            in: kotlinNativePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let cpuArchitectureType = types.make(.classType(ClassType(
+            classSymbol: cpuArchitectureSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        setSyntheticPlatformEnumEntryTypes(
+            enumSymbol: cpuArchitectureSymbol,
+            enumType: cpuArchitectureType,
+            symbols: symbols
+        )
+
+        let platformSymbol = ensureSyntheticObjectSymbol(
+            named: "Platform",
+            in: kotlinNativePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let platformType = types.make(.classType(ClassType(
+            classSymbol: platformSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let booleanType = types.make(.primitive(.boolean, .nonNull))
+        symbols.setPropertyType(platformType, for: platformSymbol)
+
+        registerSyntheticObjectProperty(
+            ownerSymbol: platformSymbol,
+            name: "canAccessUnaligned",
+            propertyType: booleanType,
+            externalLinkName: "kk_platform_canAccessUnaligned",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticObjectProperty(
+            ownerSymbol: platformSymbol,
+            name: "isLittleEndian",
+            propertyType: booleanType,
+            externalLinkName: "kk_platform_isLittleEndian",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticObjectProperty(
+            ownerSymbol: platformSymbol,
+            name: "osFamily",
+            propertyType: osFamilyType,
+            externalLinkName: "kk_platform_osFamily",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticObjectProperty(
+            ownerSymbol: platformSymbol,
+            name: "cpuArchitecture",
+            propertyType: cpuArchitectureType,
+            externalLinkName: "kk_platform_cpuArchitecture",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticSystemMember(
+            ownerSymbol: platformSymbol,
+            ownerType: platformType,
+            name: "getAvailableProcessors",
+            externalLinkName: "kk_platform_getAvailableProcessors",
+            returnType: types.intType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- kotlin.synchronized (STDLIB-325) ---
         let synchronizedBlockType = types.make(.functionType(FunctionType(
             params: [],
@@ -622,6 +726,101 @@ extension DataFlowSemaPhase {
             visibility: .public,
             flags: [.synthetic]
         )
+    }
+
+    private func registerSyntheticObjectProperty(
+        ownerSymbol: SymbolID,
+        name: String,
+        propertyType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerInfo.fqName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+        }) {
+            symbols.setPropertyType(propertyType, for: existing)
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(propertyType, for: propertySymbol)
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+    }
+
+    private func ensureSyntheticPlatformEnumClass(
+        named name: String,
+        entries: [String],
+        in pkg: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let internedName = interner.intern(name)
+        let fqName = pkg + [internedName]
+        let enumSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: fqName) {
+            enumSymbol = existing
+        } else {
+            let symbol = symbols.define(
+                kind: .enumClass,
+                name: internedName,
+                fqName: fqName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if let pkgSymbol = symbols.lookup(fqName: pkg), pkgSymbol != .invalid {
+                symbols.setParentSymbol(pkgSymbol, for: symbol)
+            }
+            enumSymbol = symbol
+        }
+
+        for entry in entries {
+            let entryName = interner.intern(entry)
+            let entryFQName = fqName + [entryName]
+            if symbols.lookup(fqName: entryFQName) != nil {
+                continue
+            }
+            let entrySymbol = symbols.define(
+                kind: .field,
+                name: entryName,
+                fqName: entryFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+        }
+
+        return enumSymbol
+    }
+
+    private func setSyntheticPlatformEnumEntryTypes(
+        enumSymbol: SymbolID,
+        enumType: TypeID,
+        symbols: SymbolTable
+    ) {
+        guard let enumInfo = symbols.symbol(enumSymbol) else { return }
+        for child in symbols.children(ofFQName: enumInfo.fqName) {
+            guard let childInfo = symbols.symbol(child), childInfo.kind == .field else {
+                continue
+            }
+            symbols.setPropertyType(enumType, for: child)
+        }
     }
 
     private func registerSyntheticSequenceJoinToStringMember(

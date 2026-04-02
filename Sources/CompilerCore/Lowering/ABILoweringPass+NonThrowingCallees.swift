@@ -551,6 +551,11 @@ extension ABILoweringPass {
             interner.intern("kk_system_currentTimeMillis"),
             interner.intern("kk_system_nanoTime"),
             interner.intern("kk_system_process_start_nanos"),
+            interner.intern("kk_platform_canAccessUnaligned"),
+            interner.intern("kk_platform_isLittleEndian"),
+            interner.intern("kk_platform_osFamily"),
+            interner.intern("kk_platform_cpuArchitecture"),
+            interner.intern("kk_platform_getAvailableProcessors"),
             interner.intern("kk_builder_list_addAll"),
             interner.intern("kk_builder_set_addAll"),
             // Instant / Clock (STDLIB-TIME-083/086)
