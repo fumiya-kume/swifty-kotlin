@@ -1077,8 +1077,7 @@ private func runtimeKeyPairGeneratorInitialize(
 }
 
 @_cdecl("kk_secretkeyspec_new")
-public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = 0
+public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int) -> Int {
     let algorithm = runtimeSecurityString(from: algorithmRaw, caller: #function)
     let parsedAlgorithm = RuntimeCipherAlgorithm(transformationComponent: algorithm)
     let parsedMacAlgorithm = RuntimeMacAlgorithm(name: algorithm)
@@ -1087,7 +1086,6 @@ public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int, _ outThrown
         return 0
     }
     guard let keyBytes = runtimeSecurityBytes(from: keyRaw, caller: #function) else {
-        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected ByteArray/List<Int>")
         return 0
     }
     return registerRuntimeObject(RuntimeSecretKeySpecBox(
@@ -1098,10 +1096,8 @@ public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int, _ outThrown
 }
 
 @_cdecl("kk_ivparameterspec_new")
-public func kk_ivparameterspec_new(_ ivRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = 0
+public func kk_ivparameterspec_new(_ ivRaw: Int) -> Int {
     guard let ivBytes = runtimeSecurityBytes(from: ivRaw, caller: #function) else {
-        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected ByteArray/List<Int>")
         return 0
     }
     return registerRuntimeObject(RuntimeIvParameterSpecBox(ivBytes: ivBytes))
@@ -1894,14 +1890,12 @@ private func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, message: 
 }
 
 @_cdecl("kk_secretkeyspec_new")
-public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, message: "UnsupportedOperationException: crypto not available on this platform")
+public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int) -> Int {
     return 0
 }
 
 @_cdecl("kk_ivparameterspec_new")
-public func kk_ivparameterspec_new(_ ivRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, message: "UnsupportedOperationException: crypto not available on this platform")
+public func kk_ivparameterspec_new(_ ivRaw: Int) -> Int {
     return 0
 }
 

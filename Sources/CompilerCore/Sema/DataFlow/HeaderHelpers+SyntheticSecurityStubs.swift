@@ -42,7 +42,7 @@ extension DataFlowSemaPhase {
                 ("key", byteArrayType),
                 ("algorithm", stringType),
             ],
-            canThrow: true,
+            canThrow: false,
             symbols: symbols,
             interner: interner
         )
