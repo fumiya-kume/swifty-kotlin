@@ -268,6 +268,19 @@ extension TypeCheckHelpers {
                 markers.insert(annotationSymbol)
             }
         }
+
+        for annotation in annotations {
+            guard let markerAnnotation = resolveAnnotationClassSymbol(
+                named: annotation.annotationFQName,
+                file: file,
+                ctx: ctx
+            ),
+            let requirement = optInRequirement(forMarkerAnnotation: markerAnnotation, ctx: ctx)
+            else {
+                continue
+            }
+            markers.insert(requirement.markerSymbol)
+        }
     }
 
     private func collectOptInMarkers(
