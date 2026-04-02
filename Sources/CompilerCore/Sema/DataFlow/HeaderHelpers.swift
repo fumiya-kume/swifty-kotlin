@@ -221,6 +221,8 @@ extension DataFlowSemaPhase {
     /// Checks for a duplicate declaration conflict at the given fully-qualified name and
     /// emits the standard KSWIFTK-SEMA-0001 diagnostic when a conflict is detected.
     /// An `expect` and `actual` pair sharing the same FQ name is NOT a conflict.
+    /// This includes the `expect annotation class` + `actual typealias` shape used
+    /// by `kotlin.concurrent.Volatile`.
     func checkAndReportDuplicateDeclaration(
         newKind: SymbolKind,
         fqName: [InternedString],
@@ -238,17 +240,12 @@ extension DataFlowSemaPhase {
             existingByID[symbol.id] = symbol
         }
         let existing = Array(existingByID.values)
-        // Allow expect/actual pair: an expect and an actual with the same FQ name coexist,
-        // but only when exactly one opposite-flag symbol of the same kind exists and no
-        // same-flag duplicate is already present.
         if newFlags.contains(.expectDeclaration) || newFlags.contains(.actualDeclaration) {
-            let isNewExpect = newFlags.contains(.expectDeclaration)
-            let oppositeFlag: SymbolFlags = isNewExpect ? .actualDeclaration : .expectDeclaration
-            let sameFlag: SymbolFlags = isNewExpect ? .expectDeclaration : .actualDeclaration
-            let sameKindExisting = existing.filter { $0.kind == newKind }
-            let hasSameFlagDuplicate = sameKindExisting.contains { $0.flags.contains(sameFlag) }
-            let hasOppositeCounterpart = sameKindExisting.contains { $0.flags.contains(oppositeFlag) }
-            if hasOppositeCounterpart, !hasSameFlagDuplicate {
+            let existingNonPackage = existing.filter { $0.kind != .package }
+            if existingNonPackage.count == 1,
+               let existingSymbol = existingNonPackage.first,
+               isCompatibleExpectActualPair(newKind: newKind, newFlags: newFlags, existing: existingSymbol)
+            {
                 return
             }
         }
@@ -867,6 +864,8 @@ extension DataFlowSemaPhase {
         registerSyntheticTODOAndIOStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCloseableStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticFileIOStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticFilesUtilityStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticPathStubs(symbols: symbols, types: types, interner: interner)
         registerLateListIndexedMembers(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoercionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticEnumStubs(symbols: symbols, types: types, interner: interner)
@@ -882,6 +881,7 @@ extension DataFlowSemaPhase {
         registerSyntheticDateFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticMetaprogStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticBigIntegerStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticThreadLocalStubs(symbols: symbols, types: types, interner: interner)
     }
 
     func registerSyntheticContractStubs(

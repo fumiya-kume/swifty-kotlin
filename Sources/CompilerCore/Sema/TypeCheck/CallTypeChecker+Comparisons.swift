@@ -29,19 +29,25 @@ extension CallTypeChecker {
         }
         let resolvedName = ctx.interner.resolve(calleeName)
         let types = ctx.sema.types
+        let supportedNumericTypes = [types.intType, types.longType, types.doubleType, types.floatType]
+        let numericParamType = resolvedParamType.flatMap { paramType in
+            supportedNumericTypes.first(where: { $0 == paramType })
+        }
+        guard let numericParamType else {
+            return nil
+        }
 
         if argCount == 3 {
-            let paramType = resolvedParamType ?? types.intType
             switch resolvedName {
             case "maxOf":
-                if paramType == types.longType { return .maxOfLong3 }
-                if paramType == types.doubleType { return .maxOfDouble3 }
-                if paramType == types.floatType { return .maxOfFloat3 }
+                if numericParamType == types.longType { return .maxOfLong3 }
+                if numericParamType == types.doubleType { return .maxOfDouble3 }
+                if numericParamType == types.floatType { return .maxOfFloat3 }
                 return .maxOfInt3
             case "minOf":
-                if paramType == types.longType { return .minOfLong3 }
-                if paramType == types.doubleType { return .minOfDouble3 }
-                if paramType == types.floatType { return .minOfFloat3 }
+                if numericParamType == types.longType { return .minOfLong3 }
+                if numericParamType == types.doubleType { return .minOfDouble3 }
+                if numericParamType == types.floatType { return .minOfFloat3 }
                 return .minOfInt3
             default:
                 return nil
@@ -49,17 +55,16 @@ extension CallTypeChecker {
         }
 
         // 2-arg overloads
-        let paramType = resolvedParamType ?? types.intType
         switch resolvedName {
         case "maxOf":
-            if paramType == types.longType { return .maxOfLong }
-            if paramType == types.doubleType { return .maxOfDouble }
-            if paramType == types.floatType { return .maxOfFloat }
+            if numericParamType == types.longType { return .maxOfLong }
+            if numericParamType == types.doubleType { return .maxOfDouble }
+            if numericParamType == types.floatType { return .maxOfFloat }
             return .maxOfInt
         case "minOf":
-            if paramType == types.longType { return .minOfLong }
-            if paramType == types.doubleType { return .minOfDouble }
-            if paramType == types.floatType { return .minOfFloat }
+            if numericParamType == types.longType { return .minOfLong }
+            if numericParamType == types.doubleType { return .minOfDouble }
+            if numericParamType == types.floatType { return .minOfFloat }
             return .minOfInt
         default:
             return nil

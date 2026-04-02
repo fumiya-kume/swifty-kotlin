@@ -1735,7 +1735,7 @@ final class CallLowerer {
     /// queries (`.members`, `.constructors`, etc.) return correct data.
     /// This mirrors `ObjectLiteralLowerer.registerKClassMetadata` but is used
     /// for regular class constructor invocations.
-    private func emitKClassMetadataRegistration(
+    func emitKClassMetadataRegistration(
         objectSymbol: SymbolID,
         typeID: Int64,
         sema: SemaModule,
@@ -1827,5 +1827,64 @@ final class CallLowerer {
             canThrow: false,
             thrownResult: nil
         ))
+
+        // STDLIB-REFLECT-065: Register annotations for this type.
+        emitAnnotationRegistration(
+            objectSymbol: objectSymbol,
+            typeTokenExpr: typeTokenExpr,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &instructions
+        )
+    }
+
+    // MARK: - STDLIB-REFLECT-065: Annotation Registration
+
+    /// Emits calls to register annotation metadata for a nominal type.
+    /// Emits one `kk_kclass_register_single_annotation` call per annotation
+    /// to avoid requiring runtime list construction at the KIR level.
+    func emitAnnotationRegistration(
+        objectSymbol: SymbolID,
+        typeTokenExpr: KIRExprID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) {
+        let annotations = sema.symbols.annotations(for: objectSymbol)
+        guard !annotations.isEmpty else { return }
+
+        let intType = sema.types.intType
+        let stringType = sema.types.stringType
+
+        for annotation in annotations {
+            // Annotation FQ name.
+            let nameInterned = interner.intern(annotation.annotationFQName)
+            let nameExpr = arena.appendExpr(.stringLiteral(nameInterned), type: stringType)
+            instructions.append(.constValue(result: nameExpr, value: .stringLiteral(nameInterned)))
+
+            // Encode arguments as a single pipe-delimited string for simplicity.
+            let argsEncoded = annotation.arguments.joined(separator: "|")
+            let argsInterned = interner.intern(argsEncoded)
+            let argsExpr = arena.appendExpr(.stringLiteral(argsInterned), type: stringType)
+            instructions.append(.constValue(result: argsExpr, value: .stringLiteral(argsInterned)))
+
+            // Argument count.
+            let argCount = Int64(annotation.arguments.count)
+            let argCountExpr = arena.appendExpr(.intLiteral(argCount), type: intType)
+            instructions.append(.constValue(result: argCountExpr, value: .intLiteral(argCount)))
+
+            // Call kk_kclass_register_single_annotation(typeToken, fqName, argsEncoded, argCount).
+            let registerResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_kclass_register_single_annotation"),
+                arguments: [typeTokenExpr, nameExpr, argsExpr, argCountExpr],
+                result: registerResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+        }
     }
 }

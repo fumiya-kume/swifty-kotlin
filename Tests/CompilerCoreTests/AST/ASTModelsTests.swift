@@ -296,6 +296,7 @@ final class ASTModelsTests: XCTestCase {
                 valueParams: [],
                 returnType: nil,
                 body: .unit,
+                isSuspend: false,
                 range: range
             ),
         ]

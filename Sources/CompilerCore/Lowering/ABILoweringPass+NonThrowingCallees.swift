@@ -385,6 +385,7 @@ extension ABILoweringPass {
             interner.intern("kk_atomic_ref_exchange"),
             interner.intern("kk_atomic_ref_compareAndSet"),
             interner.intern("kk_atomic_ref_compareAndExchange"),
+            interner.intern("kk_thread_local_new"),
             interner.intern("kk_atomic_bool_create"),
             interner.intern("kk_atomic_bool_load"),
             interner.intern("kk_atomic_bool_store"),
@@ -795,6 +796,11 @@ extension ABILoweringPass {
             interner.intern("kk_file_mkdirs"),
             interner.intern("kk_file_listFiles"),
             interner.intern("kk_file_walk"),
+            // Files utility (STDLIB-IO-090) — non-throwing subset
+            interner.intern("kk_files_isRegularFile"),
+            interner.intern("kk_files_isDirectory"),
+            interner.intern("kk_files_exists"),
+            interner.intern("kk_fileTime_toMillis"),
             interner.intern("kk_uri_toString"),
             interner.intern("kk_uri_scheme"),
             interner.intern("kk_uri_authority"),
@@ -880,6 +886,16 @@ extension ABILoweringPass {
             interner.intern("kk_kclass_visibility"),
             interner.intern("kk_kclass_type_parameters"),
             interner.intern("kk_kclass_supertypes"),
+            // STDLIB-REFLECT-065: Annotation reflection
+            interner.intern("kk_annotation_create"),
+            interner.intern("kk_annotation_get_class"),
+            interner.intern("kk_annotation_get_fqname"),
+            interner.intern("kk_annotation_get_value"),
+            interner.intern("kk_annotation_get_arg_count"),
+            interner.intern("kk_annotation_to_string"),
+            interner.intern("kk_kclass_get_annotations"),
+            interner.intern("kk_kclass_find_annotation"),
+            interner.intern("kk_kclass_register_single_annotation"),
             // BigInteger non-throwing operations (STDLIB-NUM-129)
             // divide, pow, and fromString are intentionally excluded here — they
             // use outThrown and are marked .throwingFunction in the sema stubs.

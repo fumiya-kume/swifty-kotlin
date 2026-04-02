@@ -106,6 +106,9 @@ extension DataFlowSemaPhase {
             ("exp", "kk_math_exp_float"), ("ln", "kk_math_ln_float"),
             ("log2", "kk_math_log2_float"), ("log10", "kk_math_log10_float"),
             ("sign", "kk_math_sign_float"),
+            // STDLIB-MATH-109: Hyperbolic and cbrt Float overloads
+            ("sinh", "kk_math_sinh_float"), ("cosh", "kk_math_cosh_float"),
+            ("tanh", "kk_math_tanh_float"), ("cbrt", "kk_math_cbrt_float"),
         ] {
             registerSyntheticMathTopLevelFunction(
                 named: name,
@@ -432,6 +435,48 @@ extension DataFlowSemaPhase {
             ],
             returnType: types.doubleType,
             externalLinkName: "kk_math_log",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // STDLIB-MATH-109: Hyperbolic functions and cbrt (Double)
+        registerSyntheticMathTopLevelFunction(
+            named: "sinh",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_sinh",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticMathTopLevelFunction(
+            named: "cosh",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_cosh",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticMathTopLevelFunction(
+            named: "tanh",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_tanh",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticMathTopLevelFunction(
+            named: "cbrt",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_cbrt",
             symbols: symbols,
             interner: interner
         )

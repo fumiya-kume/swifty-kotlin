@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-03-31
+最終更新: 2026-04-01
 
 ## 実装サマリー
 
@@ -287,7 +287,7 @@
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/kconstructor_basic.kt`
 
-- [ ] STDLIB-REFLECT-065: アノテーションリフレクション完全実装
+- [x] STDLIB-REFLECT-065: アノテーションリフレクション完全実装
   - **仕様**: アノテーションのリフレクションアクセス
   - **実装内容**:
     - アノテーション取得: annotations
@@ -295,7 +295,7 @@
     - アノテーションプロパティ: annotationClass
     - アノテーション値の取得
     - 実行時アノテーション: @Retention(RUNTIME)
-  - **現状**: 基本的なアノテーションは実装済み、リフレクションは未実装
+  - **現状**: 実装完了
   - **関連ファイル**: `RuntimeReflection.swift`
   - **テストケース**: `Scripts/diff_cases/annotation_reflection.kt`
 
@@ -374,7 +374,7 @@
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/channel_backpressure.kt`
 
-- [ ] STDLIB-CORO-077: withContext完全実装
+- [x] STDLIB-CORO-077: withContext完全実装
   - **仕様**: withContextの完全サポート
   - **実装内容**:
     - コンテキスト切り替え: withContext(Dispatchers.IO)
@@ -382,7 +382,7 @@
     - コンテキスト要素: Job, CoroutineName, CoroutineExceptionHandler
     - コンテキストの合成: +演算子
     - コンテキストのキャンセル伝播
-  - **現状**: withContextは一部実装済み、ディスパッチャは未実装
+  - **現状**: 完全実装済み (`RuntimeCoroutineContext`, `kk_context_plus`, `kk_with_context_full`, `kk_coroutine_name_create`, `kk_exception_handler_create`)
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/with_context.kt`
 
@@ -424,7 +424,7 @@
   - **関連ファイル**: `RuntimeDuration.swift`
   - **テストケース**: `Scripts/diff_cases/instant_basic.kt`
 
-- [ ] STDLIB-TIME-085: システム時刻完全実装
+- [x] STDLIB-TIME-085: システム時刻完全実装
   - **仕様**: システム時刻アクセスの完全サポート
   - **実装内容**:
     - currentTimeMillis: ミリ秒単位の現在時刻
@@ -432,9 +432,9 @@
     - processStartNanos: プロセス開始時刻
     - 時刻の精度と分解能
     - 時刻のモノトニック性保証
-  - **現状**: currentTimeMillis等は一部実装済み (STDLIB-131/132)、完全な実装は未完了
+  - **現状**: 完全実装済み (STDLIB-TIME-085) - kk_system_process_start_nanos追加、ABI登録完了
   - **関連ファイル**: `RuntimeSystem.swift`
-  - **テストケース**: `Scripts/diff_cases/system_current_time_millis.kt`
+  - **テストケース**: `Scripts/diff_cases/system_current_time_millis.kt`, `Scripts/diff_cases/system_nano_time.kt`, `Scripts/diff_cases/system_process_start_nanos.kt`
 
 - [ ] STDLIB-TIME-086: Clock完全実装
   - **仕様**: Clockインターフェースの完全サポート
@@ -599,7 +599,7 @@
 
 ## 実装計画のまとめ
 
-### 残タスク数: 87件
+### 残タスク数: 88件
 
 ### 実装方針
 
@@ -633,6 +633,19 @@
   - **現状**: buildMapは一部実装済み、他は未実装
   - **関連ファイル**: `HeaderHelpers+SyntheticCollectionStubs.swift`
   - **テストケース**: `Scripts/diff_cases/collection_builders.kt`
+
+- [ ] STDLIB-COL-123: kotlin.collections 主要HOFカバレッジ
+  - **仕様**: kotlin.collections の主要 HOF の回帰カバレッジ維持
+  - **実装内容**:
+    - 変換: map(), filter(), flatMap()
+    - 集約: fold(), reduce()
+    - 判定: any(), all(), none(), count()
+    - 検索: first(), last(), find()
+    - グループ化/並び替え: groupBy(), sortedBy()
+    - 反復: forEach() と capture lambda の parity
+  - **現状**: 主要な collection HOF は実装済み、`stdlib_collection_hof.kt` で kotlinc parity を継続監視する
+  - **関連ファイル**: `RuntimeCollectionHOF.swift`
+  - **テストケース**: `Scripts/diff_cases/stdlib_collection_hof.kt`
 
 #### Phase 4: 高度文字列処理 (低優先度)
 
@@ -1177,6 +1190,6 @@
 
 ### 全体実装計画の最終更新
 
-**残タスク数: 87件**
+**残タスク数: 88件**
 
 Phase 1-3の基盤タスクを優先し、Phase 4-5は段階的に実装します。
