@@ -78,6 +78,14 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerSyntheticJvmAnnotationClass(
+            named: "WasExperimental",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // kotlin.annotation package — provides @Target and AnnotationTarget.
         let kotlinAnnotationPkg = ensurePackage(
             path: ["kotlin", "annotation"],
