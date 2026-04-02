@@ -737,6 +737,7 @@ final class CallTypeChecker {
                 case "ByteArray": sema.types.intType
                 case "UShortArray": sema.types.ushortType
                 case "UByteArray": sema.types.ubyteType
+                case "UIntArray": sema.types.uintType
                 case "DoubleArray": sema.types.make(.primitive(.double, .nonNull))
                 case "FloatArray": sema.types.make(.primitive(.float, .nonNull))
                 case "BooleanArray": sema.types.booleanType
@@ -2278,6 +2279,7 @@ final class CallTypeChecker {
                         "byteArrayOf": "ByteArray",
                         "ushortArrayOf": "UShortArray",
                         "ubyteArrayOf": "UByteArray",
+                        "uintArrayOf": "UIntArray",
                         "doubleArrayOf": "DoubleArray",
                         "floatArrayOf": "FloatArray",
                         "booleanArrayOf": "BooleanArray",
