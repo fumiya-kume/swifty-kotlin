@@ -1131,15 +1131,6 @@ extension DataFlowSemaPhase {
         )))
 
         // CoroutineName(name: String) constructor
-        registerSyntheticCoroutineTopLevelFunction(
-            named: "CoroutineName",
-            packageFQName: coroutinesPkg,
-            parameters: [(name: "name", type: types.stringType)],
-            returnType: coroutineNameType,
-            externalLinkName: "kk_coroutine_name_create",
-            symbols: symbols,
-            interner: interner
-        )
         registerSyntheticCoroutineConstructor(
             ownerSymbol: coroutineNameSymbol,
             ownerType: coroutineNameType,
