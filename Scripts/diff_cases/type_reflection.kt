@@ -24,4 +24,22 @@ fun main() {
     // arguments returns the type argument list (empty for non-generic types)
     val argsList = intType.arguments
     println(argsList)
+
+    // Generic types keep their type arguments and nested projections.
+    val listType = typeOf<List<String>>()
+    println(listType)
+    println(listType.arguments)
+
+    // Array element types are represented as type arguments on Array<T>.
+    val arrayType = typeOf<Array<Int>>()
+    println(arrayType)
+    println(arrayType.arguments)
+
+    val nestedArrayType = typeOf<Array<String?>>()
+    println(nestedArrayType)
+    println(nestedArrayType.arguments)
+
+    val nestedType = typeOf<Map<String, List<Int?>>>()
+    println(nestedType)
+    println(nestedType.arguments)
 }

@@ -17,6 +17,44 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.contains(where: isError), "Expected deprecated(error) diagnostic, got: \(ctx.diagnostics.diagnostics)")
     }
 
+    func testDeprecatedLevelErrorCanBeSuppressedWithDeprecationError() {
+        let source = """
+        @Deprecated("Use replacement", level = DeprecationLevel.ERROR)
+        fun oldApi(): Int = 1
+
+        @Suppress("DEPRECATION_ERROR")
+        fun caller(): Int = oldApi()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-DEPRECATED", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected deprecated(error) diagnostic to be suppressed, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testDeprecatedStdlibApisCanBeSuppressedWithDeprecationError() {
+        let source = """
+        import kotlin.io.createTempDir
+        import kotlin.io.createTempFile
+
+        @Suppress("DEPRECATION_ERROR", "KSWIFTK-SEMA-DEPRECATED")
+        fun caller() {
+            val legacyChar = 65.toChar()
+            println(legacyChar)
+            val legacySlice = "kotlin".subSequence(1, 4)
+            println(legacySlice)
+            val tempDir = createTempDir(prefix = "kswiftk-", suffix = "-dir")
+            val tempFile = createTempFile(prefix = "kswiftk-", suffix = ".tmp", directory = tempDir)
+            println(tempFile)
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-DEPRECATED", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected stdlib deprecation diagnostics to be suppressed, got: \(ctx.diagnostics.diagnostics)")
+    }
+
     func testDeprecatedDefaultEmitsWarningAtCallSite() {
         let source = """
         @Deprecated("Use replacement")
@@ -121,6 +159,47 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics[0].codeActions.isEmpty, "Did not expect code actions for empty replaceWith")
     }
 
+    func testSyntheticDeprecatedToCharEmitsWarning() {
+        let source = """
+        fun caller(): Char = 65.toChar()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-DEPRECATED", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one deprecated diagnostic for toChar(), got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.contains(where: isWarning), "Expected deprecated warning for toChar(), got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics[0].message.contains("toChar"), "Expected toChar() in message, got: \(diagnostics[0].message)")
+    }
+
+    func testSyntheticDeprecatedStringSubSequenceEmitsWarning() {
+        let source = """
+        fun caller(): String = "kotlin".subSequence(1, 4).toString()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-DEPRECATED", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one deprecated diagnostic for subSequence(), got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.contains(where: isWarning), "Expected deprecated warning for subSequence(), got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics[0].message.contains("subSequence"), "Expected subSequence() in message, got: \(diagnostics[0].message)")
+    }
+
+    func testSyntheticDeprecatedCreateTempDirEmitsError() {
+        let source = """
+        import kotlin.io.createTempDir
+
+        fun caller() = createTempDir(prefix = "demo")
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-DEPRECATED", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one deprecated diagnostic for createTempDir(), got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.contains(where: isError), "Expected deprecated error for createTempDir(), got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics[0].message.contains("createTempDir"), "Expected createTempDir() in message, got: \(diagnostics[0].message)")
+    }
+
     func testSuppressUncheckedCastByKotlinNameSuppressesDiagnostic() {
         let source = """
         @Suppress("UNCHECKED_CAST")
@@ -222,6 +301,53 @@ final class AnnotationSemanticTests: XCTestCase {
                 }
             ),
             "Expected MustBeDocumented to carry @Target(AnnotationTarget.ANNOTATION_CLASS), got: \(annotations)"
+        )
+    }
+
+    func testExperimentalContractsAnnotationIsSyntheticAnnotationClass() throws {
+        let source = """
+        annotation class ExperimentalApi
+        """
+
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let fqName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("contracts"),
+            ctx.interner.intern("ExperimentalContracts"),
+        ]
+        let symbolID = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.visibility, .public)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+        XCTAssertEqual(symbol.kind, .annotationClass)
+
+        let annotations = sema.symbols.annotations(for: symbol.id)
+        XCTAssertTrue(
+            annotations.contains(
+                where: {
+                    $0.annotationFQName == "kotlin.annotation.Target"
+                        && $0.arguments == [
+                            "AnnotationTarget.CLASS",
+                            "AnnotationTarget.FUNCTION",
+                            "AnnotationTarget.PROPERTY",
+                            "AnnotationTarget.TYPEALIAS",
+                        ]
+                }
+            ),
+            "Expected ExperimentalContracts to carry @Target for class/function/property/typealias, got: \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains(
+                where: {
+                    $0.annotationFQName == "kotlin.annotation.Retention"
+                        && $0.arguments == ["AnnotationRetention.BINARY"]
+                }
+            ),
+            "Expected ExperimentalContracts to carry @Retention(AnnotationRetention.BINARY), got: \(annotations)"
         )
     }
 

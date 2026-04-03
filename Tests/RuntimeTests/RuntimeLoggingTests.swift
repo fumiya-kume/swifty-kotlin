@@ -26,10 +26,38 @@ final class RuntimeLoggingTests: IsolatedRuntimeXCTestCase {
     }
 
     func testLoggerInfoPrintsExpectedPrefix() {
-        let logger = kk_logger_getLogger(runtimeString("demo"))
+        let logger = kk_logger_getLogger(runtimeString("demo-info"))
         let output = captureStdout {
             _ = kk_logger_info(logger, runtimeString("hello"))
         }
-        XCTAssertEqual(output.trimmingCharacters(in: .whitespacesAndNewlines), "[INFO] demo: hello")
+        XCTAssertEqual(output.trimmingCharacters(in: .whitespacesAndNewlines), "[INFO] demo-info: hello")
+    }
+
+    func testGetLoggerReturnsSameLoggerForSameName() {
+        let first = kk_logger_getLogger(runtimeString("demo-singleton"))
+        let second = kk_logger_getLogger(runtimeString("demo-singleton"))
+        XCTAssertEqual(first, second)
+    }
+
+    func testLoggerSupportsExtendedLevelsAndThrowableFormatting() {
+        let logger = kk_logger_getLogger(runtimeString("demo-levels"))
+        let throwable = runtimeAllocateThrowable(message: "IllegalStateException: boom")
+        let output = captureStdout {
+            _ = kk_logger_log(logger, kk_logging_level_config(), runtimeString("cfg"))
+            _ = kk_logger_log(logger, kk_logging_level_fine(), runtimeString("fine"))
+            _ = kk_logger_log(logger, kk_logging_level_finer(), runtimeString("finer"))
+            _ = kk_logger_log(logger, kk_logging_level_finest(), runtimeString("finest"))
+            _ = kk_logger_log_throwable(logger, kk_logging_level_severe(), runtimeString("failed"), throwable)
+        }
+        XCTAssertEqual(
+            output.split(separator: "\n").map(String.init),
+            [
+                "[CONFIG] demo-levels: cfg",
+                "[FINE] demo-levels: fine",
+                "[FINER] demo-levels: finer",
+                "[FINEST] demo-levels: finest",
+                "[SEVERE] demo-levels: failed | IllegalStateException: boom",
+            ]
+        )
     }
 }

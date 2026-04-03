@@ -215,6 +215,48 @@ enum RuntimeTypeCheckToken {
         }
     }
 
+    /// Returns the fully-qualified Kotlin name for a given `TypeID`, or `nil`
+    /// when the type cannot be represented as a class-like name.
+    static func qualifiedName(of type: TypeID, sema: SemaModule, interner: StringInterner) -> String? {
+        let descriptor = classify(type: type, sema: sema, interner: interner)
+        switch descriptor.category {
+        case .any:
+            return "kotlin.Any"
+        case .string:
+            return "kotlin.String"
+        case .int:
+            return "kotlin.Int"
+        case .boolean:
+            return "kotlin.Boolean"
+        case .null:
+            return "kotlin.Nothing"
+        case .uint:
+            return "kotlin.UInt"
+        case .ulong:
+            return "kotlin.ULong"
+        case .ubyte:
+            return "kotlin.UByte"
+        case .ushort:
+            return "kotlin.UShort"
+        case .long:
+            return "kotlin.Long"
+        case .double:
+            return "kotlin.Double"
+        case .float:
+            return "kotlin.Float"
+        case .char:
+            return "kotlin.Char"
+        case let .nominal(symbolID):
+            guard let symbol = sema.symbols.symbol(symbolID) else {
+                return nil
+            }
+            let fqName = symbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
+            return fqName.isEmpty ? nil : fqName
+        case .unknown:
+            return nil
+        }
+    }
+
     static func stableNominalTypeID(symbol: SymbolID, sema: SemaModule, interner: StringInterner) -> Int64 {
         guard let semanticSymbol = sema.symbols.symbol(symbol) else {
             return 0
