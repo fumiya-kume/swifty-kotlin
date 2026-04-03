@@ -599,6 +599,7 @@ final class RuntimeJobHandle: @unchecked Sendable {
         return isConsumedByUserCode
     }
 
+<<<<<<< HEAD
     private func terminalValueLocked() -> Int {
         switch state {
         case .completed:
@@ -697,6 +698,49 @@ final class RuntimeJobHandle: @unchecked Sendable {
         lock.unlock()
         completionSemaphore.signal()
         return true
+=======
+    func complete(with value: Int) {
+        lock.lock()
+        if isCompleted {
+            lock.unlock()
+            return
+        }
+        if isCancelled {
+            // Cancellation wins over the normal result. The coroutine has now
+            // actually finished, so this is the point where join() may resume.
+            isCompleted = true
+            result = cancelCause
+            lock.unlock()
+            completionSemaphore.signal()
+            return
+        }
+        result = value
+        isCompleted = true
+        lock.unlock()
+        completionSemaphore.signal()
+    }
+
+    func cancel(cause: Int = 0) {
+        lock.lock()
+        if isCompleted {
+            lock.unlock()
+            return
+        }
+        isCancelled = true
+        cancelCause = cause
+        let state = continuationState
+        let shouldCompleteImmediately = state == nil
+        if shouldCompleteImmediately {
+            isCompleted = true
+            result = cancelCause
+        }
+        lock.unlock()
+        // Wake the coroutine from any delay/suspension so it can observe cancellation
+        state?.signalResume()
+        if shouldCompleteImmediately {
+            completionSemaphore.signal()
+        }
+>>>>>>> 6388686ea (fix coroutine cancellation ordering)
     }
 
     // CORO-004: join() now supports continuation-based async completion.
