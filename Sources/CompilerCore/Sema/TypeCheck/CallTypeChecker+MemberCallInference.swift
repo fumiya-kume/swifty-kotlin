@@ -364,11 +364,9 @@ extension CallTypeChecker {
             nil
         }
         let effectiveCallRecursiveReceiverType = recoveredReceiverType ?? receiverType
-        let nonNullReceiverType = sema.types.makeNonNullable(effectiveCallRecursiveReceiverType)
-
         if interner.resolve(calleeName) == "callRecursive",
            args.count == 1,
-           case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+           case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(effectiveCallRecursiveReceiverType)),
            let receiverSymbol = sema.symbols.symbol(classType.classSymbol),
            receiverSymbol.fqName.count == 2,
            interner.resolve(receiverSymbol.fqName[0]) == "kotlin",
