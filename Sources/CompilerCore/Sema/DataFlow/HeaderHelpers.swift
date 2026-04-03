@@ -1266,7 +1266,8 @@ extension DataFlowSemaPhase {
         named name: String,
         in pkg: [InternedString],
         symbols: SymbolTable,
-        interner: StringInterner
+        interner: StringInterner,
+        visibility: Visibility = .public
     ) -> SymbolID {
         let internedName = interner.intern(name)
         let fqName = pkg + [internedName]
@@ -1275,7 +1276,7 @@ extension DataFlowSemaPhase {
         }
         return symbols.define(
             kind: .interface, name: internedName, fqName: fqName,
-            declSite: nil, visibility: .public, flags: [.synthetic]
+            declSite: nil, visibility: visibility, flags: [.synthetic]
         )
     }
 

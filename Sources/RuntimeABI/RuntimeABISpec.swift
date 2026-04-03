@@ -2465,6 +2465,36 @@ public enum RuntimeABISpec {
             section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_context_get",
+            parameters: [
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
+                RuntimeABIParameter(name: "keyRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_context_fold",
+            parameters: [
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
+                RuntimeABIParameter(name: "initial", type: .intptr),
+                RuntimeABIParameter(name: "operationFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_context_minusKey",
+            parameters: [
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
+                RuntimeABIParameter(name: "keyRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_context_get_dispatcher",
             parameters: [
                 RuntimeABIParameter(name: "contextRaw", type: .intptr),
@@ -6363,6 +6393,16 @@ public enum RuntimeABISpec {
             section: "FileIO"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_resource_bundle_getObject",
+            parameters: [
+                RuntimeABIParameter(name: "bundleRaw", type: .intptr),
+                RuntimeABIParameter(name: "keyRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_resource_bundle_getKeys",
             parameters: [RuntimeABIParameter(name: "bundleRaw", type: .intptr)],
             returnType: .intptr,
@@ -6921,6 +6961,7 @@ public enum RuntimeABISpec {
             + stringBridgeFunctions
             + consolePrintFunctions
             + ioFunctions
+            + databaseFunctions
             + systemFunctions
             + gcFunctions
             + coroutineFunctions

@@ -272,6 +272,12 @@ final class NumericBitCountTests: XCTestCase {
             0x5555_5555, Int(Int32(bitPattern: 0xAAAA_AAAA)),
             0x0101_0101, 0x00FF_00FF, 0x8000_0000, 0x0000_0001
         ]
+
+        func assertSingleBitSet(_ value: Int, file: StaticString = #filePath, line: UInt = #line) {
+            let bits = UInt32(bitPattern: Int32(truncatingIfNeeded: value))
+            XCTAssertNotEqual(bits, 0, file: file, line: line)
+            XCTAssertEqual(bits & (bits &- 1), 0, file: file, line: line)
+        }
         
         for value in testValues {
             // Test rotate functions
@@ -291,15 +297,8 @@ final class NumericBitCountTests: XCTestCase {
             let lowest = kk_int_lowestOneBit(value)
 
             if value != 0 {
-                XCTAssertNotEqual(highest, 0, "Highest one bit should be non-zero for non-zero value \(value)")
-                XCTAssertNotEqual(lowest, 0, "Lowest one bit should be non-zero for non-zero value \(value)")
-                
-                // Verify highest is power of two
-                let highestBits = UInt32(bitPattern: Int32(truncatingIfNeeded: highest))
-                XCTAssertEqual(highestBits & (highestBits &- 1), 0, "Highest one bit should be power of two for \(value)")
-                // Verify lowest is power of two
-                let lowestBits = UInt32(bitPattern: Int32(truncatingIfNeeded: lowest))
-                XCTAssertEqual(lowestBits & (lowestBits &- 1), 0, "Lowest one bit should be power of two for \(value)")
+                assertSingleBitSet(highest)
+                assertSingleBitSet(lowest)
             } else {
                 XCTAssertEqual(highest, 0, "Highest one bit should be 0 for zero")
                 XCTAssertEqual(lowest, 0, "Lowest one bit should be 0 for zero")
@@ -331,6 +330,12 @@ final class NumericBitCountTests: XCTestCase {
             Int(bitPattern: 0x5555_5555_5555_5555), Int(bitPattern: 0xAAAA_AAAA_AAAA_AAAA),
             Int(bitPattern: 0x8000_0000_0000_0000), Int(bitPattern: 0x0000_0000_0000_0001)
         ]
+
+        func assertSingleBitSet(_ value: Int, file: StaticString = #filePath, line: UInt = #line) {
+            let bits = UInt(bitPattern: value)
+            XCTAssertNotEqual(bits, 0, file: file, line: line)
+            XCTAssertEqual(bits & (bits &- 1), 0, file: file, line: line)
+        }
         
         for value in testValues {
             // Test rotate functions
@@ -350,15 +355,8 @@ final class NumericBitCountTests: XCTestCase {
             let lowest = kk_long_lowestOneBit(value)
             
             if value != 0 {
-                XCTAssertNotEqual(highest, 0, "Long highest one bit should be non-zero for non-zero value \(value)")
-                XCTAssertNotEqual(lowest, 0, "Long lowest one bit should be non-zero for non-zero value \(value)")
-                
-                // Verify highest is power of two
-                let highestBits = UInt(bitPattern: highest)
-                XCTAssertEqual(highestBits & (highestBits &- 1), 0, "Long highest one bit should be power of two for \(value)")
-                // Verify lowest is power of two
-                let lowestBits = UInt(bitPattern: lowest)
-                XCTAssertEqual(lowestBits & (lowestBits &- 1), 0, "Long lowest one bit should be power of two for \(value)")
+                assertSingleBitSet(highest)
+                assertSingleBitSet(lowest)
             } else {
                 XCTAssertEqual(highest, 0, "Long highest one bit should be 0 for zero")
                 XCTAssertEqual(lowest, 0, "Long lowest one bit should be 0 for zero")

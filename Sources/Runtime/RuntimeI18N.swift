@@ -18,9 +18,20 @@ final class RuntimeLocaleBox {
 
 final class RuntimeResourceBundleBox {
     let values: [String: String]
+    let parent: RuntimeResourceBundleBox?
 
-    init(values: [String: String]) {
+    init(values: [String: String], parent: RuntimeResourceBundleBox? = nil) {
         self.values = values
+        self.parent = parent
+    }
+
+    func value(for key: String) -> String? {
+        values[key] ?? parent?.value(for: key)
+    }
+
+    func allKeys() -> [String] {
+        let inherited = parent?.allKeys() ?? []
+        return Array(Set(values.keys).union(inherited)).sorted()
     }
 }
 
@@ -66,7 +77,6 @@ private func runtimeNumberFormatBox(from raw: Int) -> RuntimeNumberFormatBox? {
     return tryCast(ptr, to: RuntimeNumberFormatBox.self)
 }
 
-
 private func i18nString(from raw: Int, caller: StaticString) -> String {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw),
           let value = extractString(from: ptr)
@@ -84,7 +94,6 @@ private func i18nMakeStringRaw(_ value: String) -> Int {
     })
 }
 
-
 private func resourceRootDirectory() -> URL {
     if let env = ProcessInfo.processInfo.environment["KSWIFTK_RESOURCE_ROOT"], !env.isEmpty {
         return URL(fileURLWithPath: env, isDirectory: true)
@@ -93,13 +102,87 @@ private func resourceRootDirectory() -> URL {
 }
 
 private func parseProperties(_ text: String) -> [String: String] {
+    func hasUnescapedTrailingBackslash(_ line: String) -> Bool {
+        var slashCount = 0
+        for scalar in line.unicodeScalars.reversed() {
+            if scalar == "\\" {
+                slashCount += 1
+            } else {
+                break
+            }
+        }
+        return slashCount % 2 == 1
+    }
+
+    func splitProperty(_ line: String) -> (String, String) {
+        var separatorIndex: String.Index?
+        var sawNonWhitespace = false
+        var escaped = false
+        var index = line.startIndex
+
+        while index < line.endIndex {
+            let ch = line[index]
+            if escaped {
+                escaped = false
+            } else if ch == "\\" {
+                escaped = true
+            } else if ch == "=" || ch == ":" || (ch.isWhitespace && sawNonWhitespace) {
+                separatorIndex = index
+                break
+            } else if !ch.isWhitespace {
+                sawNonWhitespace = true
+            }
+            index = line.index(after: index)
+        }
+
+        guard let separatorIndex else {
+            return (line.trimmingCharacters(in: .whitespaces), "")
+        }
+
+        var valueStart = line.index(after: separatorIndex)
+        while valueStart < line.endIndex, line[valueStart].isWhitespace {
+            valueStart = line.index(after: valueStart)
+        }
+        let key = String(line[..<separatorIndex]).trimmingCharacters(in: .whitespaces)
+        let value = String(line[valueStart...]).trimmingCharacters(in: .whitespaces)
+        return (key, value)
+    }
+
+    var logicalLines: [String] = []
+    var current = ""
+    var isContinuation = false
+    for physicalLine in text.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline) {
+        // Per the .properties spec, leading whitespace of a continuation line must be stripped.
+        let line = isContinuation
+            ? String(physicalLine).trimmingCharacters(in: .whitespaces)
+            : String(physicalLine)
+        if current.isEmpty {
+            current = line
+        } else {
+            current += line
+        }
+
+        if hasUnescapedTrailingBackslash(current) {
+            current.removeLast()
+            isContinuation = true
+            continue
+        }
+
+        logicalLines.append(current)
+        current = ""
+        isContinuation = false
+    }
+    if !current.isEmpty {
+        logicalLines.append(current)
+    }
+
     var result: [String: String] = [:]
-    for line in text.split(whereSeparator: \.isNewline) {
+    for line in logicalLines {
         let trimmed = line.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty, !trimmed.hasPrefix("#"), !trimmed.hasPrefix("!") else { continue }
-        let parts = trimmed.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false).map(String.init)
-        if parts.count == 2 {
-            result[parts[0].trimmingCharacters(in: .whitespaces)] = parts[1].trimmingCharacters(in: .whitespaces)
+        let (key, value) = splitProperty(trimmed)
+        if !key.isEmpty {
+            result[key] = value
         }
     }
     return result
@@ -348,15 +431,42 @@ public func kk_numberformat_formatDouble(_ formatRaw: Int, _ value: Double) -> I
     runtimeNumberFormatString(formatRaw, value: NSNumber(value: value), caller: #function)
 }
 
-private func bundleURL(name: String, localeIdentifier: String?) -> URL? {
+private func bundleURL(name: String, suffix: String?) -> URL? {
     let root = resourceRootDirectory()
-    let localeSuffix = localeIdentifier?.replacingOccurrences(of: "-", with: "_")
-    let candidates = [localeSuffix.map { "\(name)_\($0).properties" }, "\(name).properties"].compactMap { $0 }
-    for candidate in candidates {
-        let url = root.appendingPathComponent(candidate)
-        if FileManager.default.fileExists(atPath: url.path) { return url }
+    let fileName = suffix.map { "\(name)_\($0).properties" } ?? "\(name).properties"
+    let url = root.appendingPathComponent(fileName)
+    return FileManager.default.fileExists(atPath: url.path) ? url : nil
+}
+
+private func bundleCandidateSuffixes(localeIdentifier: String?) -> [String?] {
+    guard let localeIdentifier, !localeIdentifier.isEmpty else { return [nil] }
+
+    let normalized = normalizeLocaleIdentifier(localeIdentifier)
+        .replacingOccurrences(of: "-", with: "_")
+    let parts = normalized.split(separator: "_").map(String.init).filter { !$0.isEmpty }
+    guard !parts.isEmpty else { return [nil] }
+
+    var suffixes: [String?] = []
+    for count in stride(from: parts.count, through: 1, by: -1) {
+        suffixes.append(parts.prefix(count).joined(separator: "_"))
     }
-    return nil
+    suffixes.append(nil)
+    return suffixes
+}
+
+private func loadBundle(name: String, localeIdentifier: String?) -> RuntimeResourceBundleBox? {
+    var loadedBundle: RuntimeResourceBundleBox?
+
+    for suffix in bundleCandidateSuffixes(localeIdentifier: localeIdentifier).reversed() {
+        guard let url = bundleURL(name: name, suffix: suffix),
+              let text = try? String(contentsOf: url, encoding: .utf8)
+        else {
+            continue
+        }
+        loadedBundle = RuntimeResourceBundleBox(values: parseProperties(text), parent: loadedBundle)
+    }
+
+    return loadedBundle
 }
 
 @_cdecl("kk_resource_bundle_getBundle")
@@ -364,13 +474,11 @@ public func kk_resource_bundle_getBundle(_ nameRaw: Int, _ localeRaw: Int, _ out
     outThrown?.pointee = 0
     let name = i18nString(from: nameRaw, caller: #function)
     let localeIdentifier = runtimeLocaleBox(from: localeRaw)?.locale.identifier
-    guard let url = bundleURL(name: name, localeIdentifier: localeIdentifier),
-          let text = try? String(contentsOf: url, encoding: .utf8)
-    else {
+    guard let bundle = loadBundle(name: name, localeIdentifier: localeIdentifier) else {
         outThrown?.pointee = runtimeAllocateThrowable(message: "MissingResourceException: \(name)")
         return 0
     }
-    return registerRuntimeObject(RuntimeResourceBundleBox(values: parseProperties(text)))
+    return registerRuntimeObject(bundle)
 }
 
 @_cdecl("kk_resource_bundle_getString")
@@ -380,11 +488,16 @@ public func kk_resource_bundle_getString(_ bundleRaw: Int, _ keyRaw: Int, _ outT
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_resource_bundle_getString received invalid ResourceBundle handle")
     }
     let key = i18nString(from: keyRaw, caller: #function)
-    guard let value = bundle.values[key] else {
+    guard let value = bundle.value(for: key) else {
         outThrown?.pointee = runtimeAllocateThrowable(message: "MissingResourceException: \(key)")
         return i18nMakeStringRaw("")
     }
     return i18nMakeStringRaw(value)
+}
+
+@_cdecl("kk_resource_bundle_getObject")
+public func kk_resource_bundle_getObject(_ bundleRaw: Int, _ keyRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    kk_resource_bundle_getString(bundleRaw, keyRaw, outThrown)
 }
 
 @_cdecl("kk_resource_bundle_getKeys")
@@ -392,6 +505,6 @@ public func kk_resource_bundle_getKeys(_ bundleRaw: Int) -> Int {
     guard let bundle = runtimeResourceBundleBox(from: bundleRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_resource_bundle_getKeys received invalid ResourceBundle handle")
     }
-    let raws = bundle.values.keys.sorted().map(i18nMakeStringRaw)
+    let raws = bundle.allKeys().map(i18nMakeStringRaw)
     return registerRuntimeObject(RuntimeListBox(elements: raws))
 }
