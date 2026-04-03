@@ -1166,7 +1166,6 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) {
         let functionName = interner.intern("Channel")
-        let functionFQName = packageFQName + [functionName]
         // Use a unique synthetic suffix to distinguish from the no-arg overload.
         let overloadFQName = packageFQName + [interner.intern("Channel$capacity")]
         guard symbols.lookup(fqName: overloadFQName) == nil else {
