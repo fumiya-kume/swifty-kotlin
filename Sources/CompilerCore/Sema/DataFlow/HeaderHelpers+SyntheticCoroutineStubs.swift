@@ -18,6 +18,8 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // Build the synthetic package tree explicitly so the coroutine stubs
+        // stay stable across incremental rebuilds.
         let kotlinxPkg = ensureSyntheticPackage(
             [interner.intern("kotlinx")],
             symbols: symbols,
