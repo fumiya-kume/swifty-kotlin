@@ -17,6 +17,21 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.contains(where: isError), "Expected deprecated(error) diagnostic, got: \(ctx.diagnostics.diagnostics)")
     }
 
+    func testDeprecatedLevelErrorCanBeSuppressedWithDeprecationError() {
+        let source = """
+        @Deprecated("Use replacement", level = DeprecationLevel.ERROR)
+        fun oldApi(): Int = 1
+
+        @Suppress("DEPRECATION_ERROR")
+        fun caller(): Int = oldApi()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-DEPRECATED", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected deprecated(error) diagnostic to be suppressed, got: \(ctx.diagnostics.diagnostics)")
+    }
+
     func testDeprecatedDefaultEmitsWarningAtCallSite() {
         let source = """
         @Deprecated("Use replacement")
