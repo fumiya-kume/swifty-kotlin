@@ -397,6 +397,39 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(snapshot.mapCalls, 2, "Lazy: map should only run for elements before take exhausted.")
     }
 
+    func testEmptyFlowProducesNoValues() {
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_empty(0)
+        _ = kk_flow_collect(flowHandle, collectorPtr, 0)
+
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [], "emptyFlow should emit nothing.")
+    }
+
+    func testAsFlowFromListPreservesElements() {
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let listHandle = registerRuntimeObject(RuntimeListBox(elements: [7, 8, 9]))
+        let flowHandle = kk_flow_as_flow(listHandle, 0)
+
+        _ = kk_flow_collect(flowHandle, collectorPtr, 0)
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [7, 8, 9], "asFlow(list) should emit list elements in order.")
+    }
+
+    func testAsFlowFromArrayPreservesElements() {
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let arrayHandle = kk_array_new(3)
+        kk_array_set(arrayHandle, 0, 11, nil)
+        kk_array_set(arrayHandle, 1, 12, nil)
+        kk_array_set(arrayHandle, 2, 13, nil)
+
+        let flowHandle = kk_flow_as_flow(arrayHandle, 0)
+        _ = kk_flow_collect(flowHandle, collectorPtr, 0)
+
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [11, 12, 13], "asFlow(array) should emit array elements in order.")
+    }
+
     func testFlowFirst() {
         let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
         let flowHandle = kk_flow_create(emitterPtr, 0)
@@ -474,6 +507,53 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
 
         _ = kk_flow_collect(taken, collectorPtr, 0)
         XCTAssertEqual(runtimeFlowTestState.snapshot().values, [], "take(0) should emit nothing.")
+    }
+
+    func testMutableSharedFlowRetainsReplayCacheAndCollectsSnapshot() {
+        let flowHandle = kk_mutable_shared_flow_create(2)
+        _ = kk_mutable_shared_flow_emit(flowHandle, 10)
+        _ = kk_mutable_shared_flow_emit(flowHandle, 20)
+        _ = kk_mutable_shared_flow_emit(flowHandle, 30)
+
+        let replayHandle = kk_shared_flow_replay_cache(flowHandle)
+        let replay = runtimeListBox(from: replayHandle)?.elements ?? []
+        XCTAssertEqual(replay, [20, 30])
+
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+        _ = kk_shared_flow_collect(flowHandle, collectorPtr, 0, nil)
+
+        let snapshot = runtimeFlowTestState.snapshot()
+        XCTAssertEqual(snapshot.values, [20, 30])
+    }
+
+    func testMutableStateFlowTracksLatestValueAndCollectsCurrentSnapshot() {
+        let stateHandle = kk_mutable_state_flow_create(7)
+        XCTAssertEqual(kk_state_flow_value(stateHandle), 7)
+
+        _ = kk_mutable_state_flow_emit(stateHandle, 11)
+        XCTAssertEqual(kk_state_flow_value(stateHandle), 11)
+
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+        _ = kk_shared_flow_collect(stateHandle, collectorPtr, 0, nil)
+
+        let snapshot = runtimeFlowTestState.snapshot()
+        XCTAssertEqual(snapshot.values, [11])
+    }
+
+    func testShareInAndStateInMaterializeFromColdFlowSource() {
+        let valuesArray = registerRuntimeObject(RuntimeArrayBox(length: 3))
+        _ = kk_array_set(valuesArray, 0, 1, nil)
+        _ = kk_array_set(valuesArray, 1, 2, nil)
+        _ = kk_array_set(valuesArray, 2, 3, nil)
+        let coldFlow = kk_flow_of(valuesArray, 3)
+
+        let sharedHandle = kk_flow_share_in(coldFlow, 2)
+        let replayHandle = kk_shared_flow_replay_cache(sharedHandle)
+        let replay = runtimeListBox(from: replayHandle)?.elements ?? []
+        XCTAssertEqual(replay, [2, 3])
+
+        let stateHandle = kk_flow_state_in(coldFlow, 0)
+        XCTAssertEqual(kk_state_flow_value(stateHandle), 3)
     }
 }
 

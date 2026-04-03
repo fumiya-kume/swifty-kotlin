@@ -3,6 +3,19 @@ import Foundation
 import XCTest
 
 final class ComparatorSyntheticMemberLinkTests: XCTestCase {
+    private func allExprIDs(
+        in ast: ASTModule,
+        where predicate: (ExprID, Expr) -> Bool
+    ) -> [ExprID] {
+        ast.arena.exprs.indices.compactMap { index in
+            let exprID = ExprID(rawValue: Int32(index))
+            guard let expr = ast.arena.expr(exprID), predicate(exprID, expr) else {
+                return nil
+            }
+            return exprID
+        }
+    }
+
     func testComparatorThenComparatorUsesRuntimeExternalLink() throws {
         let source = """
         fun render(values: List<Int>) {
@@ -27,6 +40,38 @@ final class ComparatorSyntheticMemberLinkTests: XCTestCase {
                 sema.symbols.externalLinkName(for: chosenCallee),
                 "kk_comparator_then_comparator",
                 "Expected thenComparator to resolve to kk_comparator_then_comparator"
+            )
+        }
+    }
+
+    func testCompareByDescendingUsesRuntimeExternalLink() throws {
+        let source = """
+        fun render(values: List<Int>) {
+            val comparator = compareByDescending<Int> { it % 10 }.thenBy { it / 10 }
+            values.sortedWith(comparator)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let callExpr = try XCTUnwrap(allExprIDs(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(calleeName, _) = ast.arena.expr(callee) else {
+                    return false
+                }
+                return ctx.interner.resolve(calleeName) == "compareByDescending"
+            }.first)
+
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenCallee),
+                "kk_comparator_from_selector_descending",
+                "Expected compareByDescending to resolve to kk_comparator_from_selector_descending"
             )
         }
     }
@@ -83,6 +128,37 @@ final class ComparatorSyntheticMemberLinkTests: XCTestCase {
                 sema.symbols.externalLinkName(for: chosenCallee),
                 "kk_comparator_then_by",
                 "Expected thenBy to resolve to kk_comparator_then_by"
+            )
+        }
+    }
+
+    func testComparatorCompareMemberResolves() throws {
+        let source = """
+        fun render(values: List<Int>) {
+            val comparator = compareBy<Int> { it % 10 }
+            comparator.compare(13, 24)
+            values.sortedWith(comparator)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let callExpr = try XCTUnwrap(allExprIDs(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "compare"
+            }.first)
+
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            let symbol = try XCTUnwrap(sema.symbols.symbol(chosenCallee))
+            XCTAssertEqual(
+                symbol.fqName.map { ctx.interner.resolve($0) },
+                ["kotlin", "Comparator", "compare"],
+                "Expected Comparator.compare to resolve to the synthetic Comparator member"
             )
         }
     }

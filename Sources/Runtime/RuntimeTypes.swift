@@ -920,6 +920,53 @@ final class RuntimeKClassMetadataRegistry: @unchecked Sendable {
 
 let runtimeKClassMetadataRegistry = RuntimeKClassMetadataRegistry()
 
+/// Global registry mapping a `KClass` raw handle to constructor reflection handles.
+final class RuntimeKConstructorRegistry: @unchecked Sendable {
+    private let lock = NSLock()
+    private var constructorsByClassRaw: [Int: [Int]] = [:]
+
+    func register(classRaw: Int, constructorRaw: Int) {
+        guard classRaw != 0, classRaw != runtimeNullSentinelInt,
+              constructorRaw != 0, constructorRaw != runtimeNullSentinelInt
+        else {
+            return
+        }
+        lock.lock()
+        defer { lock.unlock() }
+        constructorsByClassRaw[classRaw, default: []].append(constructorRaw)
+    }
+
+    func constructors(for classRaw: Int) -> [Int] {
+        lock.lock()
+        defer { lock.unlock() }
+        return constructorsByClassRaw[classRaw] ?? []
+    }
+
+    func primaryConstructor(for classRaw: Int) -> Int? {
+        lock.lock()
+        defer { lock.unlock() }
+        let constructors = constructorsByClassRaw[classRaw] ?? []
+        for constructorRaw in constructors {
+            guard let ptr = UnsafeMutableRawPointer(bitPattern: constructorRaw),
+                  let box = tryCast(ptr, to: RuntimeKConstructorBox.self),
+                  box.isPrimary
+            else {
+                continue
+            }
+            return constructorRaw
+        }
+        return constructors.first
+    }
+
+    func reset() {
+        lock.lock()
+        defer { lock.unlock() }
+        constructorsByClassRaw.removeAll()
+    }
+}
+
+let runtimeKConstructorRegistry = RuntimeKConstructorRegistry()
+
 /// Runtime box for `KClass<T>` metadata references produced by `T::class`.
 /// Stores the type token and an optional name-hint pointer so that
 /// `.simpleName` / `.qualifiedName` can be resolved at runtime.

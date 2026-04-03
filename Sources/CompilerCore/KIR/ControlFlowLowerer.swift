@@ -84,6 +84,9 @@ final class ControlFlowLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
+        let nonNullIterableType = sema.types.makeNonNullable(iterableType)
+        let isUIntRangeLike = sema.bindings.isUIntRangeExpr(iterableExpr) || nonNullIterableType == sema.types.uintType
+        let isULongRangeLike = sema.bindings.isULongRangeExpr(iterableExpr) || nonNullIterableType == sema.types.ulongType
 
         // STDLIB-OP-032: Resolve custom operator fun iterator() on the iterable type.
         // If the iterable has a user-defined iterator(), dispatch to it instead of
@@ -116,7 +119,9 @@ final class ControlFlowLowerer {
         } else {
             instructions.append(.call(
                 symbol: nil,
-                callee: interner.intern("kk_range_iterator"),
+                callee: isULongRangeLike
+                    ? interner.intern("kk_ulong_range_iterator")
+                    : (isUIntRangeLike ? interner.intern("kk_uint_range_iterator") : interner.intern("kk_range_iterator")),
                 arguments: [iterableID],
                 result: iteratorID,
                 canThrow: false,
@@ -150,7 +155,9 @@ final class ControlFlowLowerer {
         } else {
             instructions.append(.call(
                 symbol: nil,
-                callee: interner.intern("kk_range_hasNext"),
+                callee: isULongRangeLike
+                    ? interner.intern("kk_ulong_range_hasNext")
+                    : (isUIntRangeLike ? interner.intern("kk_uint_range_hasNext") : interner.intern("kk_range_hasNext")),
                 arguments: [iteratorID],
                 result: hasNextID,
                 canThrow: false,
@@ -185,7 +192,9 @@ final class ControlFlowLowerer {
         } else {
             instructions.append(.call(
                 symbol: nil,
-                callee: interner.intern("kk_range_next"),
+                callee: isULongRangeLike
+                    ? interner.intern("kk_ulong_range_next")
+                    : (isUIntRangeLike ? interner.intern("kk_uint_range_next") : interner.intern("kk_range_next")),
                 arguments: [iteratorID],
                 result: nextValueID,
                 canThrow: false,

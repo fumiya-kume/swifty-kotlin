@@ -160,6 +160,14 @@ public func kk_suspend_function_invoke_0<R>(
     return await f()
 }
 
+@_silgen_name("kk_suspend_function_invoke")
+public func kk_suspend_function_invoke<P1, R>(
+    _ f: @escaping (P1) async -> R,
+    _ p1: P1
+) async -> R {
+    return await f(p1)
+}
+
 // MARK: - ランタイム関数型操作
 
 /// 関数型の合成を行うランタイム関数
