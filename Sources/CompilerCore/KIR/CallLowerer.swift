@@ -74,6 +74,83 @@ final class CallLowerer {
         ))
     }
 
+    func dataClassPropertyNames(
+        ownerSymbol: SymbolID,
+        sema: SemaModule
+    ) -> [InternedString] {
+        guard let owner = sema.symbols.symbol(ownerSymbol),
+              owner.flags.contains(.dataType)
+        else {
+            return []
+        }
+
+        let primaryParameterNames: [InternedString] = sema.symbols.children(ofFQName: owner.fqName)
+            .compactMap { sema.symbols.symbol($0) }
+            .filter { $0.kind == .constructor }
+            .min { lhs, rhs in
+                let lhsOffset = lhs.declSite?.start.offset ?? Int.max
+                let rhsOffset = rhs.declSite?.start.offset ?? Int.max
+                if lhsOffset != rhsOffset {
+                    return lhsOffset < rhsOffset
+                }
+                return lhs.id.rawValue < rhs.id.rawValue
+            }
+            .flatMap { constructor in
+                sema.symbols.functionSignature(for: constructor.id)?.valueParameterSymbols.compactMap { paramID in
+                    sema.symbols.symbol(paramID)?.name
+                }
+            } ?? []
+
+        guard !primaryParameterNames.isEmpty else {
+            return []
+        }
+
+        let propertiesByName = Dictionary(
+            sema.symbols.children(ofFQName: owner.fqName)
+                .compactMap { sema.symbols.symbol($0) }
+                .filter { $0.kind == .property && !$0.flags.contains(.synthetic) }
+                .map { ($0.name, $0.name) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        return primaryParameterNames.compactMap { propertiesByName[$0] }
+    }
+
+    func emitDataClassFieldRegistration(
+        objectSymbol: SymbolID,
+        classID: Int64,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) {
+        let propertyNames = dataClassPropertyNames(ownerSymbol: objectSymbol, sema: sema)
+        guard !propertyNames.isEmpty else {
+            return
+        }
+
+        let intType = sema.types.intType
+        let classIDExpr = arena.appendExpr(.intLiteral(classID), type: intType)
+        instructions.append(.constValue(result: classIDExpr, value: .intLiteral(classID)))
+
+        for (index, propertyName) in propertyNames.enumerated() {
+            let indexExpr = arena.appendExpr(.intLiteral(Int64(index)), type: intType)
+            instructions.append(.constValue(result: indexExpr, value: .intLiteral(Int64(index))))
+
+            let nameExpr = arena.appendExpr(.stringLiteral(propertyName), type: intType)
+            instructions.append(.constValue(result: nameExpr, value: .stringLiteral(propertyName)))
+
+            let registerResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_json_register_data_class_field_name"),
+                arguments: [classIDExpr, indexExpr, nameExpr],
+                result: registerResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+        }
+    }
+
     // swiftlint:disable:next cyclomatic_complexity
     func lowerCallExpr(
         _ exprID: ExprID,
@@ -2168,6 +2245,15 @@ final class CallLowerer {
             canThrow: false,
             thrownResult: nil
         ))
+
+        emitDataClassFieldRegistration(
+            objectSymbol: objectSymbol,
+            classID: typeID,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &instructions
+        )
 
         // STDLIB-REFLECT-065: Register annotations for this type.
         emitAnnotationRegistration(

@@ -6144,6 +6144,20 @@ extension CallLowerer {
                         thrownResult: nil
                     ))
 
+                    let classID = RuntimeTypeCheckToken.stableNominalTypeID(
+                        symbol: classSymbol,
+                        sema: sema,
+                        interner: interner
+                    )
+                    emitDataClassFieldRegistration(
+                        objectSymbol: classSymbol,
+                        classID: classID,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions
+                    )
+
                     // Emit annotation registration.
                     let annotations = sema.symbols.annotations(for: classSymbol)
                     for annotation in annotations {
