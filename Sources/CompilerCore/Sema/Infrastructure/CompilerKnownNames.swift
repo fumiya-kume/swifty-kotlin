@@ -8,10 +8,16 @@ enum KnownCompilerAnnotation {
     case jvmName
     case jvmField
     case jvmOverloads
+    case experimentalJsExport
+    case experimentalJsFileName
+    case experimentalJsStatic
+    case experimentalJsReflectionCreateInstance
+    case experimentalJsCollectionsApi
     case throws_
     case suppress
     case dslMarker
     case wasExperimental
+    case experimentalTypeInference
 
     var simpleName: String {
         switch self {
@@ -29,6 +35,16 @@ enum KnownCompilerAnnotation {
             "JvmField"
         case .jvmOverloads:
             "JvmOverloads"
+        case .experimentalJsExport:
+            "ExperimentalJsExport"
+        case .experimentalJsFileName:
+            "ExperimentalJsFileName"
+        case .experimentalJsStatic:
+            "ExperimentalJsStatic"
+        case .experimentalJsReflectionCreateInstance:
+            "ExperimentalJsReflectionCreateInstance"
+        case .experimentalJsCollectionsApi:
+            "ExperimentalJsCollectionsApi"
         case .throws_:
             "Throws"
         case .suppress:
@@ -37,6 +53,8 @@ enum KnownCompilerAnnotation {
             "DslMarker"
         case .wasExperimental:
             "WasExperimental"
+        case .experimentalTypeInference:
+            "ExperimentalTypeInference"
         }
     }
 
@@ -56,6 +74,16 @@ enum KnownCompilerAnnotation {
             "kotlin.jvm.JvmField"
         case .jvmOverloads:
             "kotlin.jvm.JvmOverloads"
+        case .experimentalJsExport:
+            "kotlin.js.ExperimentalJsExport"
+        case .experimentalJsFileName:
+            "kotlin.js.ExperimentalJsFileName"
+        case .experimentalJsStatic:
+            "kotlin.js.ExperimentalJsStatic"
+        case .experimentalJsReflectionCreateInstance:
+            "kotlin.js.ExperimentalJsReflectionCreateInstance"
+        case .experimentalJsCollectionsApi:
+            "kotlin.js.collections.ExperimentalJsCollectionsApi"
         case .throws_:
             "kotlin.jvm.Throws"
         case .suppress:
@@ -64,6 +92,8 @@ enum KnownCompilerAnnotation {
             "kotlin.DslMarker"
         case .wasExperimental:
             "kotlin.WasExperimental"
+        case .experimentalTypeInference:
+            "kotlin.experimental.ExperimentalTypeInference"
         }
     }
 

@@ -24,6 +24,162 @@ private final class RuntimeRangeIteratorBox {
     }
 }
 
+private func runtimeUnsignedRangeIsEmpty(_ range: RuntimeRangeBox) -> Bool {
+    let first = UInt(bitPattern: range.first)
+    let last = UInt(bitPattern: range.last)
+    if range.step > 0 {
+        return first > last
+    } else if range.step < 0 {
+        return first < last
+    }
+    return true
+}
+
+private func runtimeUnsignedRangeTraverse(
+    _ range: RuntimeRangeBox,
+    _ body: (_ current: UInt, _ index: Int) -> Bool
+) -> Bool {
+    let first = UInt(bitPattern: range.first)
+    let last = UInt(bitPattern: range.last)
+    var index = 0
+    if range.step > 0 {
+        let uStep = UInt(bitPattern: range.step)
+        var current = first
+        while current <= last {
+            if !body(current, index) {
+                return false
+            }
+            let (next, overflow) = current.addingReportingOverflow(uStep)
+            if overflow { break }
+            current = next
+            index &+= 1
+        }
+    } else if range.step < 0 {
+        let uStep = UInt(range.step.magnitude)
+        var current = first
+        while current >= last {
+            if !body(current, index) {
+                return false
+            }
+            let (next, overflow) = current.subtractingReportingOverflow(uStep)
+            if overflow { break }
+            current = next
+            index &+= 1
+        }
+    }
+    return true
+}
+
+private func runtimeUnsignedRangeTraverseReversed(
+    _ range: RuntimeRangeBox,
+    _ body: (_ current: UInt) -> Bool
+) -> Bool {
+    let first = UInt(bitPattern: range.first)
+    let last = UInt(bitPattern: range.last)
+    if range.step > 0 {
+        let uStep = UInt(bitPattern: range.step)
+        var current = last
+        while current >= first {
+            if !body(current) {
+                return false
+            }
+            let (next, overflow) = current.subtractingReportingOverflow(uStep)
+            if overflow { break }
+            current = next
+        }
+    } else if range.step < 0 {
+        let uStep = UInt(range.step.magnitude)
+        var current = last
+        while current <= first {
+            if !body(current) {
+                return false
+            }
+            let (next, overflow) = current.addingReportingOverflow(uStep)
+            if overflow { break }
+            current = next
+        }
+    }
+    return true
+}
+
+private func runtimeUnsignedRangeFirstMatch(
+    _ range: RuntimeRangeBox,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?,
+    orNull: Bool
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var found = false
+    var match = runtimeNullSentinelInt
+    var didThrow = false
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        var thrown = 0
+        let result = lambda(closureRaw, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            didThrow = true
+            return false
+        }
+        if result != 0 {
+            found = true
+            match = Int(bitPattern: current)
+            return false
+        }
+        return true
+    }
+    if found {
+        return match
+    }
+    if didThrow {
+        return orNull ? runtimeNullSentinelInt : 0
+    }
+    if orNull {
+        return runtimeNullSentinelInt
+    }
+    outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchElementException: No element matching the predicate was found.")
+    return 0
+}
+
+private func runtimeUnsignedRangeLastMatch(
+    _ range: RuntimeRangeBox,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?,
+    orNull: Bool
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var found = false
+    var match = runtimeNullSentinelInt
+    var didThrow = false
+    _ = runtimeUnsignedRangeTraverseReversed(range) { current in
+        var thrown = 0
+        let result = lambda(closureRaw, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            didThrow = true
+            return false
+        }
+        if result != 0 {
+            found = true
+            match = Int(bitPattern: current)
+            return false
+        }
+        return true
+    }
+    if found {
+        return match
+    }
+    if didThrow {
+        return orNull ? runtimeNullSentinelInt : 0
+    }
+    if orNull {
+        return runtimeNullSentinelInt
+    }
+    outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchElementException: No element matching the predicate was found.")
+    return 0
+}
+
 @_cdecl("kk_op_notnull")
 public func kk_op_notnull(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -797,6 +953,20 @@ public func kk_range_firstOrNull_predicate(_ rangeRaw: Int, _ fnPtr: Int, _ clos
     return runtimeNullSentinelInt
 }
 
+@_cdecl("kk_range_firstOrNull")
+public func kk_range_firstOrNull(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_firstOrNull")
+    }
+    if range.step == 0 {
+        return runtimeNullSentinelInt
+    }
+    if range.step > 0 {
+        return range.first <= range.last ? range.first : runtimeNullSentinelInt
+    }
+    return range.first >= range.last ? range.first : runtimeNullSentinelInt
+}
+
 @_cdecl("kk_range_last_predicate")
 public func kk_range_last_predicate(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
                          _ outThrown: UnsafeMutablePointer<Int>?) -> Int
@@ -862,6 +1032,20 @@ public func kk_range_lastOrNull_predicate(_ rangeRaw: Int, _ fnPtr: Int, _ closu
         }
     }
     return runtimeNullSentinelInt
+}
+
+@_cdecl("kk_range_lastOrNull")
+public func kk_range_lastOrNull(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_lastOrNull")
+    }
+    if range.step == 0 {
+        return runtimeNullSentinelInt
+    }
+    if range.step > 0 {
+        return range.first <= range.last ? range.last : runtimeNullSentinelInt
+    }
+    return range.first >= range.last ? range.last : runtimeNullSentinelInt
 }
 
 @_cdecl("kk_range_any")
@@ -1561,6 +1745,990 @@ public func kk_uint_range_map(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
         }
     }
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
+@_cdecl("kk_uint_range_mapIndexed")
+public func kk_uint_range_mapIndexed(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                     _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_mapIndexed")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mapped: [Int] = []
+    _ = runtimeUnsignedRangeTraverse(range) { current, index in
+        var thrown = 0
+        let result = lambda(closureRaw, index, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        mapped.append(result)
+        return true
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
+@_cdecl("kk_uint_range_mapNotNull")
+public func kk_uint_range_mapNotNull(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                     _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_mapNotNull")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mapped: [Int] = []
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        var thrown = 0
+        let result = lambda(closureRaw, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        if result != runtimeNullSentinelInt {
+            mapped.append(result)
+        }
+        return true
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
+@_cdecl("kk_uint_range_filter")
+public func kk_uint_range_filter(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                 _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_filter")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var filtered: [Int] = []
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        var thrown = 0
+        let result = lambda(closureRaw, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        if result != 0 {
+            filtered.append(Int(bitPattern: current))
+        }
+        return true
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: filtered))
+}
+
+@_cdecl("kk_uint_range_filterIndexed")
+public func kk_uint_range_filterIndexed(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                        _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_filterIndexed")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var filtered: [Int] = []
+    _ = runtimeUnsignedRangeTraverse(range) { current, index in
+        var thrown = 0
+        let result = lambda(closureRaw, index, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        if result != 0 {
+            filtered.append(Int(bitPattern: current))
+        }
+        return true
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: filtered))
+}
+
+@_cdecl("kk_uint_range_filterNot")
+public func kk_uint_range_filterNot(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                    _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_filterNot")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var filtered: [Int] = []
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        var thrown = 0
+        let result = lambda(closureRaw, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        if result == 0 {
+            filtered.append(Int(bitPattern: current))
+        }
+        return true
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: filtered))
+}
+
+@_cdecl("kk_uint_range_reduce")
+public func kk_uint_range_reduce(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                 _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_reduce")
+    }
+    guard !runtimeUnsignedRangeIsEmpty(range) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Empty collection can't be reduced.")
+        return 0
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var accumulator = 0
+    var hasAccumulator = false
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        let value = Int(bitPattern: current)
+        if !hasAccumulator {
+            accumulator = value
+            hasAccumulator = true
+            return true
+        }
+        var thrown = 0
+        accumulator = lambda(closureRaw, accumulator, value, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        return true
+    }
+    return accumulator
+}
+
+@_cdecl("kk_uint_range_reduceIndexed")
+public func kk_uint_range_reduceIndexed(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                        _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_reduceIndexed")
+    }
+    guard !runtimeUnsignedRangeIsEmpty(range) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Empty collection can't be reduced.")
+        return 0
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var accumulator = 0
+    var hasAccumulator = false
+    _ = runtimeUnsignedRangeTraverse(range) { current, index in
+        let value = Int(bitPattern: current)
+        if !hasAccumulator {
+            accumulator = value
+            hasAccumulator = true
+            return true
+        }
+        var thrown = 0
+        accumulator = lambda(closureRaw, index, accumulator, value, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        return true
+    }
+    return accumulator
+}
+
+@_cdecl("kk_uint_range_fold")
+public func kk_uint_range_fold(_ rangeRaw: Int, _ initialValue: Int, _ fnPtr: Int, _ closureRaw: Int,
+                               _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_fold")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var accumulator = initialValue
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        var thrown = 0
+        accumulator = lambda(closureRaw, accumulator, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        return true
+    }
+    return accumulator
+}
+
+@_cdecl("kk_uint_range_foldIndexed")
+public func kk_uint_range_foldIndexed(_ rangeRaw: Int, _ initialValue: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                      _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_foldIndexed")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var accumulator = initialValue
+    _ = runtimeUnsignedRangeTraverse(range) { current, index in
+        var thrown = 0
+        accumulator = lambda(closureRaw, index, accumulator, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        return true
+    }
+    return accumulator
+}
+
+@_cdecl("kk_uint_range_find")
+public func kk_uint_range_find(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                               _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_find")
+    }
+    return runtimeUnsignedRangeFirstMatch(range, fnPtr, closureRaw, outThrown, orNull: true)
+}
+
+@_cdecl("kk_uint_range_findLast")
+public func kk_uint_range_findLast(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                   _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_findLast")
+    }
+    return runtimeUnsignedRangeLastMatch(range, fnPtr, closureRaw, outThrown, orNull: true)
+}
+
+@_cdecl("kk_uint_range_first_predicate")
+public func kk_uint_range_first_predicate(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                          _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_first_predicate")
+    }
+    return runtimeUnsignedRangeFirstMatch(range, fnPtr, closureRaw, outThrown, orNull: false)
+}
+
+@_cdecl("kk_uint_range_firstOrNull_predicate")
+public func kk_uint_range_firstOrNull_predicate(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                                _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_firstOrNull_predicate")
+    }
+    return runtimeUnsignedRangeFirstMatch(range, fnPtr, closureRaw, outThrown, orNull: true)
+}
+
+@_cdecl("kk_uint_range_firstOrNull")
+public func kk_uint_range_firstOrNull(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_firstOrNull")
+    }
+    if runtimeUnsignedRangeIsEmpty(range) {
+        return runtimeNullSentinelInt
+    }
+    if range.step > 0 {
+        return range.first
+    }
+    return range.first
+}
+
+@_cdecl("kk_uint_range_last_predicate")
+public func kk_uint_range_last_predicate(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                         _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_last_predicate")
+    }
+    return runtimeUnsignedRangeLastMatch(range, fnPtr, closureRaw, outThrown, orNull: false)
+}
+
+@_cdecl("kk_uint_range_lastOrNull_predicate")
+public func kk_uint_range_lastOrNull_predicate(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                               _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_lastOrNull_predicate")
+    }
+    return runtimeUnsignedRangeLastMatch(range, fnPtr, closureRaw, outThrown, orNull: true)
+}
+
+@_cdecl("kk_uint_range_lastOrNull")
+public func kk_uint_range_lastOrNull(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_lastOrNull")
+    }
+    if runtimeUnsignedRangeIsEmpty(range) {
+        return runtimeNullSentinelInt
+    }
+    if range.step > 0 {
+        return range.last
+    }
+    return range.last
+}
+
+@_cdecl("kk_uint_range_any")
+public func kk_uint_range_any(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                               _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_any")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var result = 0
+    var didThrow = false
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        var thrown = 0
+        let value = lambda(closureRaw, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            didThrow = true
+            return false
+        }
+        if value != 0 {
+            result = 1
+            return false
+        }
+        return true
+    }
+    return didThrow ? 0 : result
+}
+
+@_cdecl("kk_uint_range_all")
+public func kk_uint_range_all(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                               _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_all")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var result = 1
+    var didThrow = false
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        var thrown = 0
+        let value = lambda(closureRaw, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            didThrow = true
+            return false
+        }
+        if value == 0 {
+            result = 0
+            return false
+        }
+        return true
+    }
+    return didThrow ? 0 : result
+}
+
+@_cdecl("kk_uint_range_none")
+public func kk_uint_range_none(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_none")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var result = 1
+    var didThrow = false
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        var thrown = 0
+        let value = lambda(closureRaw, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            didThrow = true
+            return false
+        }
+        if value != 0 {
+            result = 0
+            return false
+        }
+        return true
+    }
+    return didThrow ? 0 : result
+}
+
+@_cdecl("kk_uint_range_chunked")
+public func kk_uint_range_chunked(_ rangeRaw: Int, _ size: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_chunked")
+    }
+    guard size > 0 else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let first = UInt(bitPattern: range.first)
+    let last = UInt(bitPattern: range.last)
+    var chunks: [Int] = []
+    var current = first
+    if range.step > 0 {
+        let uStep = UInt(bitPattern: range.step)
+        while current <= last {
+            var chunkElements: [Int] = []
+            var chunkSize = 0
+            while chunkSize < size && current <= last {
+                chunkElements.append(Int(bitPattern: current))
+                let (next, overflow) = current.addingReportingOverflow(uStep)
+                if overflow { break }
+                current = next
+                chunkSize &+= 1
+            }
+            chunks.append(registerRuntimeObject(RuntimeListBox(elements: chunkElements)))
+        }
+    } else if range.step < 0 {
+        let uStep = UInt(range.step.magnitude)
+        while current >= last {
+            var chunkElements: [Int] = []
+            var chunkSize = 0
+            while chunkSize < size && current >= last {
+                chunkElements.append(Int(bitPattern: current))
+                let (next, overflow) = current.subtractingReportingOverflow(uStep)
+                if overflow { break }
+                current = next
+                chunkSize &+= 1
+            }
+            chunks.append(registerRuntimeObject(RuntimeListBox(elements: chunkElements)))
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: chunks))
+}
+
+@_cdecl("kk_uint_range_windowed")
+public func kk_uint_range_windowed(_ rangeRaw: Int, _ size: Int, _ step: Int, _ partialWindows: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_windowed")
+    }
+    guard size > 0, step > 0 else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let first = UInt(bitPattern: range.first)
+    let last = UInt(bitPattern: range.last)
+    var windows: [Int] = []
+    var current = first
+    if range.step > 0 {
+        let uStep = UInt(bitPattern: range.step)
+        let advance = uStep &* UInt(step)
+        while current <= last {
+            var windowElements: [Int] = []
+            var windowCurrent = current
+            var windowSize = 0
+            while windowSize < size && windowCurrent <= last {
+                windowElements.append(Int(bitPattern: windowCurrent))
+                let (next, overflow) = windowCurrent.addingReportingOverflow(uStep)
+                if overflow { break }
+                windowCurrent = next
+                windowSize &+= 1
+            }
+            if windowSize == size || (partialWindows != 0 && windowSize > 0) {
+                windows.append(registerRuntimeObject(RuntimeListBox(elements: windowElements)))
+            }
+            let (next, overflow) = current.addingReportingOverflow(advance)
+            if overflow { break }
+            current = next
+        }
+    } else if range.step < 0 {
+        let uStep = UInt(range.step.magnitude)
+        let advance = uStep &* UInt(step)
+        while current >= last {
+            var windowElements: [Int] = []
+            var windowCurrent = current
+            var windowSize = 0
+            while windowSize < size && windowCurrent >= last {
+                windowElements.append(Int(bitPattern: windowCurrent))
+                let (next, overflow) = windowCurrent.subtractingReportingOverflow(uStep)
+                if overflow { break }
+                windowCurrent = next
+                windowSize &+= 1
+            }
+            if windowSize == size || (partialWindows != 0 && windowSize > 0) {
+                windows.append(registerRuntimeObject(RuntimeListBox(elements: windowElements)))
+            }
+            let (next, overflow) = current.subtractingReportingOverflow(advance)
+            if overflow { break }
+            current = next
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: windows))
+}
+
+@_cdecl("kk_ulong_range_mapIndexed")
+public func kk_ulong_range_mapIndexed(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                      _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_mapIndexed")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mapped: [Int] = []
+    _ = runtimeUnsignedRangeTraverse(range) { current, index in
+        var thrown = 0
+        let result = lambda(closureRaw, index, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        mapped.append(result)
+        return true
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
+@_cdecl("kk_ulong_range_mapNotNull")
+public func kk_ulong_range_mapNotNull(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                      _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_mapNotNull")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mapped: [Int] = []
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        var thrown = 0
+        let result = lambda(closureRaw, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        if result != runtimeNullSentinelInt {
+            mapped.append(result)
+        }
+        return true
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
+@_cdecl("kk_ulong_range_filter")
+public func kk_ulong_range_filter(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                  _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_filter")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var filtered: [Int] = []
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        var thrown = 0
+        let result = lambda(closureRaw, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        if result != 0 {
+            filtered.append(Int(bitPattern: current))
+        }
+        return true
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: filtered))
+}
+
+@_cdecl("kk_ulong_range_filterIndexed")
+public func kk_ulong_range_filterIndexed(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                         _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_filterIndexed")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var filtered: [Int] = []
+    _ = runtimeUnsignedRangeTraverse(range) { current, index in
+        var thrown = 0
+        let result = lambda(closureRaw, index, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        if result != 0 {
+            filtered.append(Int(bitPattern: current))
+        }
+        return true
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: filtered))
+}
+
+@_cdecl("kk_ulong_range_filterNot")
+public func kk_ulong_range_filterNot(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                     _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_filterNot")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var filtered: [Int] = []
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        var thrown = 0
+        let result = lambda(closureRaw, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        if result == 0 {
+            filtered.append(Int(bitPattern: current))
+        }
+        return true
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: filtered))
+}
+
+@_cdecl("kk_ulong_range_reduce")
+public func kk_ulong_range_reduce(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                  _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_reduce")
+    }
+    guard !runtimeUnsignedRangeIsEmpty(range) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Empty collection can't be reduced.")
+        return 0
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var accumulator = 0
+    var hasAccumulator = false
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        let value = Int(bitPattern: current)
+        if !hasAccumulator {
+            accumulator = value
+            hasAccumulator = true
+            return true
+        }
+        var thrown = 0
+        accumulator = lambda(closureRaw, accumulator, value, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        return true
+    }
+    return accumulator
+}
+
+@_cdecl("kk_ulong_range_reduceIndexed")
+public func kk_ulong_range_reduceIndexed(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                         _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_reduceIndexed")
+    }
+    guard !runtimeUnsignedRangeIsEmpty(range) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Empty collection can't be reduced.")
+        return 0
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var accumulator = 0
+    var hasAccumulator = false
+    _ = runtimeUnsignedRangeTraverse(range) { current, index in
+        let value = Int(bitPattern: current)
+        if !hasAccumulator {
+            accumulator = value
+            hasAccumulator = true
+            return true
+        }
+        var thrown = 0
+        accumulator = lambda(closureRaw, index, accumulator, value, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        return true
+    }
+    return accumulator
+}
+
+@_cdecl("kk_ulong_range_fold")
+public func kk_ulong_range_fold(_ rangeRaw: Int, _ initialValue: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_fold")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var accumulator = initialValue
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        var thrown = 0
+        accumulator = lambda(closureRaw, accumulator, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        return true
+    }
+    return accumulator
+}
+
+@_cdecl("kk_ulong_range_foldIndexed")
+public func kk_ulong_range_foldIndexed(_ rangeRaw: Int, _ initialValue: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                       _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_foldIndexed")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var accumulator = initialValue
+    _ = runtimeUnsignedRangeTraverse(range) { current, index in
+        var thrown = 0
+        accumulator = lambda(closureRaw, index, accumulator, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        return true
+    }
+    return accumulator
+}
+
+@_cdecl("kk_ulong_range_find")
+public func kk_ulong_range_find(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_find")
+    }
+    return runtimeUnsignedRangeFirstMatch(range, fnPtr, closureRaw, outThrown, orNull: true)
+}
+
+@_cdecl("kk_ulong_range_findLast")
+public func kk_ulong_range_findLast(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                    _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_findLast")
+    }
+    return runtimeUnsignedRangeLastMatch(range, fnPtr, closureRaw, outThrown, orNull: true)
+}
+
+@_cdecl("kk_ulong_range_first_predicate")
+public func kk_ulong_range_first_predicate(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                           _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_first_predicate")
+    }
+    return runtimeUnsignedRangeFirstMatch(range, fnPtr, closureRaw, outThrown, orNull: false)
+}
+
+@_cdecl("kk_ulong_range_firstOrNull_predicate")
+public func kk_ulong_range_firstOrNull_predicate(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                                 _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_firstOrNull_predicate")
+    }
+    return runtimeUnsignedRangeFirstMatch(range, fnPtr, closureRaw, outThrown, orNull: true)
+}
+
+@_cdecl("kk_ulong_range_firstOrNull")
+public func kk_ulong_range_firstOrNull(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_firstOrNull")
+    }
+    if runtimeUnsignedRangeIsEmpty(range) {
+        return runtimeNullSentinelInt
+    }
+    return range.first
+}
+
+@_cdecl("kk_ulong_range_last_predicate")
+public func kk_ulong_range_last_predicate(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                          _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_last_predicate")
+    }
+    return runtimeUnsignedRangeLastMatch(range, fnPtr, closureRaw, outThrown, orNull: false)
+}
+
+@_cdecl("kk_ulong_range_lastOrNull_predicate")
+public func kk_ulong_range_lastOrNull_predicate(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                                _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_lastOrNull_predicate")
+    }
+    return runtimeUnsignedRangeLastMatch(range, fnPtr, closureRaw, outThrown, orNull: true)
+}
+
+@_cdecl("kk_ulong_range_lastOrNull")
+public func kk_ulong_range_lastOrNull(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_lastOrNull")
+    }
+    if runtimeUnsignedRangeIsEmpty(range) {
+        return runtimeNullSentinelInt
+    }
+    return range.last
+}
+
+@_cdecl("kk_ulong_range_any")
+public func kk_ulong_range_any(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                               _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_any")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var result = 0
+    var didThrow = false
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        var thrown = 0
+        let value = lambda(closureRaw, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            didThrow = true
+            return false
+        }
+        if value != 0 {
+            result = 1
+            return false
+        }
+        return true
+    }
+    return didThrow ? 0 : result
+}
+
+@_cdecl("kk_ulong_range_all")
+public func kk_ulong_range_all(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                               _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_all")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var result = 1
+    var didThrow = false
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        var thrown = 0
+        let value = lambda(closureRaw, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            didThrow = true
+            return false
+        }
+        if value == 0 {
+            result = 0
+            return false
+        }
+        return true
+    }
+    return didThrow ? 0 : result
+}
+
+@_cdecl("kk_ulong_range_none")
+public func kk_ulong_range_none(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_none")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var result = 1
+    var didThrow = false
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        var thrown = 0
+        let value = lambda(closureRaw, Int(bitPattern: current), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            didThrow = true
+            return false
+        }
+        if value != 0 {
+            result = 0
+            return false
+        }
+        return true
+    }
+    return didThrow ? 0 : result
+}
+
+@_cdecl("kk_ulong_range_chunked")
+public func kk_ulong_range_chunked(_ rangeRaw: Int, _ size: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_chunked")
+    }
+    guard size > 0 else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let first = UInt(bitPattern: range.first)
+    let last = UInt(bitPattern: range.last)
+    var chunks: [Int] = []
+    var current = first
+    if range.step > 0 {
+        let uStep = UInt(bitPattern: range.step)
+        while current <= last {
+            var chunkElements: [Int] = []
+            var chunkSize = 0
+            while chunkSize < size && current <= last {
+                chunkElements.append(Int(bitPattern: current))
+                let (next, overflow) = current.addingReportingOverflow(uStep)
+                if overflow { break }
+                current = next
+                chunkSize &+= 1
+            }
+            chunks.append(registerRuntimeObject(RuntimeListBox(elements: chunkElements)))
+        }
+    } else if range.step < 0 {
+        let uStep = UInt(range.step.magnitude)
+        while current >= last {
+            var chunkElements: [Int] = []
+            var chunkSize = 0
+            while chunkSize < size && current >= last {
+                chunkElements.append(Int(bitPattern: current))
+                let (next, overflow) = current.subtractingReportingOverflow(uStep)
+                if overflow { break }
+                current = next
+                chunkSize &+= 1
+            }
+            chunks.append(registerRuntimeObject(RuntimeListBox(elements: chunkElements)))
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: chunks))
+}
+
+@_cdecl("kk_ulong_range_windowed")
+public func kk_ulong_range_windowed(_ rangeRaw: Int, _ size: Int, _ step: Int, _ partialWindows: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_windowed")
+    }
+    guard size > 0, step > 0 else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let first = UInt(bitPattern: range.first)
+    let last = UInt(bitPattern: range.last)
+    var windows: [Int] = []
+    var current = first
+    if range.step > 0 {
+        let uStep = UInt(bitPattern: range.step)
+        let advance = uStep &* UInt(step)
+        while current <= last {
+            var windowElements: [Int] = []
+            var windowCurrent = current
+            var windowSize = 0
+            while windowSize < size && windowCurrent <= last {
+                windowElements.append(Int(bitPattern: windowCurrent))
+                let (next, overflow) = windowCurrent.addingReportingOverflow(uStep)
+                if overflow { break }
+                windowCurrent = next
+                windowSize &+= 1
+            }
+            if windowSize == size || (partialWindows != 0 && windowSize > 0) {
+                windows.append(registerRuntimeObject(RuntimeListBox(elements: windowElements)))
+            }
+            let (next, overflow) = current.addingReportingOverflow(advance)
+            if overflow { break }
+            current = next
+        }
+    } else if range.step < 0 {
+        let uStep = UInt(range.step.magnitude)
+        let advance = uStep &* UInt(step)
+        while current >= last {
+            var windowElements: [Int] = []
+            var windowCurrent = current
+            var windowSize = 0
+            while windowSize < size && windowCurrent >= last {
+                windowElements.append(Int(bitPattern: windowCurrent))
+                let (next, overflow) = windowCurrent.subtractingReportingOverflow(uStep)
+                if overflow { break }
+                windowCurrent = next
+                windowSize &+= 1
+            }
+            if windowSize == size || (partialWindows != 0 && windowSize > 0) {
+                windows.append(registerRuntimeObject(RuntimeListBox(elements: windowElements)))
+            }
+            let (next, overflow) = current.subtractingReportingOverflow(advance)
+            if overflow { break }
+            current = next
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: windows))
 }
 
 // MARK: - ULongProgression operations (STDLIB-RANGE-039)

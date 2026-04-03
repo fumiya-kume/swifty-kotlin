@@ -111,6 +111,21 @@ private func runtimeAnyHashCode(_ value: Int, _ tag: Int32) -> Int {
     if let charBox = tryCast(pointer, to: RuntimeCharBox.self) {
         return charBox.value
     }
+    if let localeBox = tryCast(pointer, to: RuntimeLocaleBox.self) {
+        let value = [localeBox.language, localeBox.country, localeBox.variant]
+            .filter { !$0.isEmpty }
+            .joined(separator: "#")
+        return runtimeStringHashCode(value)
+    }
+    if let durationBox = tryCast(pointer, to: RuntimeDurationBox.self) {
+        let nanoseconds = durationBox.nanoseconds
+        return Int(truncatingIfNeeded: nanoseconds ^ (nanoseconds >> 32))
+    }
+    if let instantBox = tryCast(pointer, to: RuntimeInstantBox.self) {
+        var hash = instantBox.epochSeconds ^ (instantBox.epochSeconds >> 32)
+        hash ^= Int64(instantBox.nanoOfSecond)
+        return Int(truncatingIfNeeded: hash ^ (hash >> 32))
+    }
     return Int(truncatingIfNeeded: UInt(bitPattern: pointer))
 }
 
@@ -147,6 +162,12 @@ private func runtimeAnyKind(_ value: Int, _ tag: Int32) -> Int32 {
     }
     if tryCast(pointer, to: RuntimeCharBox.self) != nil {
         return 7
+    }
+    if tryCast(pointer, to: RuntimeDurationBox.self) != nil {
+        return 8
+    }
+    if tryCast(pointer, to: RuntimeInstantBox.self) != nil {
+        return 9
     }
     return 100
 }

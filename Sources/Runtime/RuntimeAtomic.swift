@@ -648,3 +648,321 @@ public func kk_atomic_ref_updateAndGet(
     }, outThrown: outThrown)
     return result.new
 }
+
+// MARK: - AtomicIntArray
+
+/// Backing storage for kotlin.concurrent.atomics.AtomicIntArray.
+/// All accesses are serialized through the same lock to provide
+/// consistent atomicity and acquire/release visibility between operations.
+final class AtomicIntArrayBox {
+    private var storage: [Int]
+    private let lock = NSLock()
+
+    init(size: Int) {
+        self.storage = Array(repeating: 0, count: max(0, size))
+    }
+
+    func size() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return storage.count
+    }
+
+    func load(at index: Int) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return 0 }
+        return storage[index]
+    }
+
+    func store(at index: Int, value: Int) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return }
+        storage[index] = value
+    }
+
+    func exchange(at index: Int, newValue: Int) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return 0 }
+        let old = storage[index]
+        storage[index] = newValue
+        return old
+    }
+
+    func compareAndSet(at index: Int, expect: Int, update: Int) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return false }
+        if storage[index] == expect {
+            storage[index] = update
+            return true
+        }
+        return false
+    }
+
+    func compareAndExchange(at index: Int, expect: Int, update: Int) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return 0 }
+        let old = storage[index]
+        if old == expect {
+            storage[index] = update
+        }
+        return old
+    }
+
+    func fetchAndAdd(at index: Int, delta: Int) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return 0 }
+        let old = storage[index]
+        storage[index] = old &+ delta
+        return old
+    }
+
+    func addAndFetch(at index: Int, delta: Int) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return 0 }
+        storage[index] = storage[index] &+ delta
+        return storage[index]
+    }
+}
+
+private func atomicIntArrayBox(from raw: Int) -> AtomicIntArrayBox? {
+    guard raw != 0, let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    return Unmanaged<AtomicIntArrayBox>.fromOpaque(ptr).takeUnretainedValue()
+}
+
+@_cdecl("kk_atomic_int_array_create")
+public func kk_atomic_int_array_create(_ size: Int) -> Int {
+    let box = AtomicIntArrayBox(size: size)
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+    return Int(bitPattern: ptr)
+}
+
+@_cdecl("kk_atomic_int_array_size")
+public func kk_atomic_int_array_size(_ receiver: Int) -> Int {
+    guard let box = atomicIntArrayBox(from: receiver) else { return 0 }
+    return box.size()
+}
+
+@_cdecl("kk_atomic_int_array_loadAt")
+public func kk_atomic_int_array_loadAt(_ receiver: Int, _ index: Int) -> Int {
+    guard let box = atomicIntArrayBox(from: receiver) else { return 0 }
+    return box.load(at: index)
+}
+
+@_cdecl("kk_atomic_int_array_storeAt")
+public func kk_atomic_int_array_storeAt(_ receiver: Int, _ index: Int, _ value: Int) -> Int {
+    guard let box = atomicIntArrayBox(from: receiver) else { return 0 }
+    box.store(at: index, value: value)
+    return 0
+}
+
+@_cdecl("kk_atomic_int_array_exchangeAt")
+public func kk_atomic_int_array_exchangeAt(_ receiver: Int, _ index: Int, _ newValue: Int) -> Int {
+    guard let box = atomicIntArrayBox(from: receiver) else { return 0 }
+    return box.exchange(at: index, newValue: newValue)
+}
+
+@_cdecl("kk_atomic_int_array_compareAndSetAt")
+public func kk_atomic_int_array_compareAndSetAt(_ receiver: Int, _ index: Int, _ expect: Int, _ update: Int) -> Int {
+    guard let box = atomicIntArrayBox(from: receiver) else { return 0 }
+    return box.compareAndSet(at: index, expect: expect, update: update) ? 1 : 0
+}
+
+@_cdecl("kk_atomic_int_array_compareAndExchangeAt")
+public func kk_atomic_int_array_compareAndExchangeAt(_ receiver: Int, _ index: Int, _ expect: Int, _ update: Int) -> Int {
+    guard let box = atomicIntArrayBox(from: receiver) else { return 0 }
+    return box.compareAndExchange(at: index, expect: expect, update: update)
+}
+
+@_cdecl("kk_atomic_int_array_fetchAndAddAt")
+public func kk_atomic_int_array_fetchAndAddAt(_ receiver: Int, _ index: Int, _ delta: Int) -> Int {
+    guard let box = atomicIntArrayBox(from: receiver) else { return 0 }
+    return box.fetchAndAdd(at: index, delta: delta)
+}
+
+@_cdecl("kk_atomic_int_array_addAndFetchAt")
+public func kk_atomic_int_array_addAndFetchAt(_ receiver: Int, _ index: Int, _ delta: Int) -> Int {
+    guard let box = atomicIntArrayBox(from: receiver) else { return 0 }
+    return box.addAndFetch(at: index, delta: delta)
+}
+
+@_cdecl("kk_atomic_int_array_incrementAndFetchAt")
+public func kk_atomic_int_array_incrementAndFetchAt(_ receiver: Int, _ index: Int) -> Int {
+    guard let box = atomicIntArrayBox(from: receiver) else { return 0 }
+    return box.addAndFetch(at: index, delta: 1)
+}
+
+@_cdecl("kk_atomic_int_array_decrementAndFetchAt")
+public func kk_atomic_int_array_decrementAndFetchAt(_ receiver: Int, _ index: Int) -> Int {
+    guard let box = atomicIntArrayBox(from: receiver) else { return 0 }
+    return box.addAndFetch(at: index, delta: -1)
+}
+
+// MARK: - AtomicLongArray
+
+/// Backing storage for kotlin.concurrent.atomics.AtomicLongArray.
+final class AtomicLongArrayBox {
+    private var storage: [Int]
+    private let lock = NSLock()
+
+    init(size: Int) {
+        self.storage = Array(repeating: 0, count: max(0, size))
+    }
+
+    func size() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return storage.count
+    }
+
+    func load(at index: Int) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return 0 }
+        return storage[index]
+    }
+
+    func store(at index: Int, value: Int) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return }
+        storage[index] = value
+    }
+
+    func exchange(at index: Int, newValue: Int) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return 0 }
+        let old = storage[index]
+        storage[index] = newValue
+        return old
+    }
+
+    func compareAndSet(at index: Int, expect: Int, update: Int) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return false }
+        if storage[index] == expect {
+            storage[index] = update
+            return true
+        }
+        return false
+    }
+
+    func compareAndExchange(at index: Int, expect: Int, update: Int) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return 0 }
+        let old = storage[index]
+        if old == expect {
+            storage[index] = update
+        }
+        return old
+    }
+
+    func fetchAndAdd(at index: Int, delta: Int) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return 0 }
+        let old = storage[index]
+        storage[index] = old &+ delta
+        return old
+    }
+
+    func addAndFetch(at index: Int, delta: Int) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return 0 }
+        storage[index] = storage[index] &+ delta
+        return storage[index]
+    }
+}
+
+private func atomicLongArrayBox(from raw: Int) -> AtomicLongArrayBox? {
+    guard raw != 0, let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    return Unmanaged<AtomicLongArrayBox>.fromOpaque(ptr).takeUnretainedValue()
+}
+
+@_cdecl("kk_atomic_long_array_create")
+public func kk_atomic_long_array_create(_ size: Int) -> Int {
+    let box = AtomicLongArrayBox(size: size)
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+    return Int(bitPattern: ptr)
+}
+
+@_cdecl("kk_atomic_long_array_size")
+public func kk_atomic_long_array_size(_ receiver: Int) -> Int {
+    guard let box = atomicLongArrayBox(from: receiver) else { return 0 }
+    return box.size()
+}
+
+@_cdecl("kk_atomic_long_array_loadAt")
+public func kk_atomic_long_array_loadAt(_ receiver: Int, _ index: Int) -> Int {
+    guard let box = atomicLongArrayBox(from: receiver) else { return 0 }
+    return box.load(at: index)
+}
+
+@_cdecl("kk_atomic_long_array_storeAt")
+public func kk_atomic_long_array_storeAt(_ receiver: Int, _ index: Int, _ value: Int) -> Int {
+    guard let box = atomicLongArrayBox(from: receiver) else { return 0 }
+    box.store(at: index, value: value)
+    return 0
+}
+
+@_cdecl("kk_atomic_long_array_exchangeAt")
+public func kk_atomic_long_array_exchangeAt(_ receiver: Int, _ index: Int, _ newValue: Int) -> Int {
+    guard let box = atomicLongArrayBox(from: receiver) else { return 0 }
+    return box.exchange(at: index, newValue: newValue)
+}
+
+@_cdecl("kk_atomic_long_array_compareAndSetAt")
+public func kk_atomic_long_array_compareAndSetAt(_ receiver: Int, _ index: Int, _ expect: Int, _ update: Int) -> Int {
+    guard let box = atomicLongArrayBox(from: receiver) else { return 0 }
+    return box.compareAndSet(at: index, expect: expect, update: update) ? 1 : 0
+}
+
+@_cdecl("kk_atomic_long_array_compareAndExchangeAt")
+public func kk_atomic_long_array_compareAndExchangeAt(_ receiver: Int, _ index: Int, _ expect: Int, _ update: Int) -> Int {
+    guard let box = atomicLongArrayBox(from: receiver) else { return 0 }
+    return box.compareAndExchange(at: index, expect: expect, update: update)
+}
+
+@_cdecl("kk_atomic_long_array_fetchAndAddAt")
+public func kk_atomic_long_array_fetchAndAddAt(_ receiver: Int, _ index: Int, _ delta: Int) -> Int {
+    guard let box = atomicLongArrayBox(from: receiver) else { return 0 }
+    return box.fetchAndAdd(at: index, delta: delta)
+}
+
+@_cdecl("kk_atomic_long_array_addAndFetchAt")
+public func kk_atomic_long_array_addAndFetchAt(_ receiver: Int, _ index: Int, _ delta: Int) -> Int {
+    guard let box = atomicLongArrayBox(from: receiver) else { return 0 }
+    return box.addAndFetch(at: index, delta: delta)
+}
+
+@_cdecl("kk_atomic_long_array_incrementAndFetchAt")
+public func kk_atomic_long_array_incrementAndFetchAt(_ receiver: Int, _ index: Int) -> Int {
+    guard let box = atomicLongArrayBox(from: receiver) else { return 0 }
+    return box.addAndFetch(at: index, delta: 1)
+}
+
+@_cdecl("kk_atomic_long_array_decrementAndFetchAt")
+public func kk_atomic_long_array_decrementAndFetchAt(_ receiver: Int, _ index: Int) -> Int {
+    guard let box = atomicLongArrayBox(from: receiver) else { return 0 }
+    return box.addAndFetch(at: index, delta: -1)
+}

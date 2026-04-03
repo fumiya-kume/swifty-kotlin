@@ -280,6 +280,53 @@ final class FlowSemaTests: XCTestCase {
         }
     }
 
+    func testFlowErrorHandlingMembersTypeCheck() throws {
+        let source = """
+        fun failOnTwo(value: Int): Int {
+            if (value == 2) throw RuntimeException("boom")
+            return value
+        }
+
+        fun failAlways(value: Int): Int {
+            throw RuntimeException("retry")
+        }
+
+        fun main() {
+            runBlocking {
+                flow {
+                    emit(1)
+                    emit(2)
+                }.map(::failOnTwo)
+                    .catch { _: Throwable -> println(-1) }
+                    .collect { value: Int -> println(value) }
+
+                val retried = flow {
+                    emit(10)
+                    emit(20)
+                }.map(::failOnTwo)
+                    .retry(1)
+                println(retried.toList())
+
+                val retriedWhen = flow {
+                    emit(7)
+                }.map(::failAlways)
+                    .retryWhen { _: Throwable, attempt: Long -> attempt < 1L }
+                println(retriedWhen.toList())
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0003", in: ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+        }
+    }
+
     func testUserDefinedEmitInsideFlowBuilderShadowsBuiltinEmitFallback() throws {
         let source = """
         fun main() {

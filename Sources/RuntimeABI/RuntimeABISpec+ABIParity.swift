@@ -1558,6 +1558,14 @@ public extension RuntimeABISpec {
             section: "ABIParity"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_instant_elapsed",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_duration_isNegative",
             parameters: [
                 RuntimeABIParameter(name: "p0", type: .intptr),
@@ -1730,6 +1738,54 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "p0", type: .intptr),
                 RuntimeABIParameter(name: "p1", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_instant_to_java_instant",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_instant_to_kotlin_instant",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_duration_to_java_duration",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_duration_to_kotlin_duration",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_instant_to_js_date",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_js_date_to_kotlin_instant",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
             ],
             returnType: .intptr,
             section: "ABIParity"

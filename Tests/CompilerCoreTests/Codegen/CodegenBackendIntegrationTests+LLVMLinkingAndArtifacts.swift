@@ -236,4 +236,41 @@ extension CodegenBackendIntegrationTests {
         )
         XCTAssertTrue(fnName.hasPrefix("kk_fn__1_bad_name_9"))
     }
+
+    func testCodegenFunctionSymbolUsesJvmNameAnnotationForFunction() {
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: interner.intern("originalName"),
+            fqName: [interner.intern("originalName")],
+            declSite: nil,
+            visibility: .public
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(parameterTypes: [], returnType: types.unitType),
+            for: functionSymbol
+        )
+        symbols.setAnnotations(
+            [MetadataAnnotationRecord(annotationFQName: "kotlin.jvm.JvmName", arguments: ["\"renamedForJava\""])],
+            for: functionSymbol
+        )
+
+        let fnName = CodegenSymbolSupport.cFunctionSymbol(
+            for: KIRFunction(
+                symbol: functionSymbol,
+                name: interner.intern("originalName"),
+                params: [],
+                returnType: types.unitType,
+                body: [.returnUnit],
+                isSuspend: false,
+                isInline: false
+            ),
+            interner: interner,
+            symbols: symbols
+        )
+
+        XCTAssertTrue(fnName.hasPrefix("kk_fn_renamedForJava_"))
+    }
 }

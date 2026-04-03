@@ -4,7 +4,7 @@
 /// - `kotlin.time.Instant` class with:
 ///   - Companion factory methods: `now()`, `fromEpochMilliseconds(Long)`
 ///   - Instance properties: `epochSeconds`, `nanoOfSecond`
-///   - Instance methods: `plus(Duration)`, `minus(Duration)`, `until(Instant)`
+///   - Instance methods: `plus(Duration)`, `minus(Duration)`, `until(Instant)`, `elapsed()`
 ///   - Comparison via `compareTo(Instant)`
 /// - `kotlin.time.Clock` interface with:
 ///   - `Clock.System` singleton object with `now()` method
@@ -144,6 +144,18 @@ extension DataFlowSemaPhase {
             ownerSymbol: instantSymbol,
             ownerType: instantType,
             parameters: [(name: "other", type: instantType)],
+            returnType: durationType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // elapsed(): Duration
+        registerClockMemberFunction(
+            named: "elapsed",
+            externalLinkName: "kk_instant_elapsed",
+            ownerSymbol: instantSymbol,
+            ownerType: instantType,
+            parameters: [],
             returnType: durationType,
             symbols: symbols,
             interner: interner

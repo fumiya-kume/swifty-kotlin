@@ -14,257 +14,140 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let atomicsPkg = ensureAtomicPackage(
+            path: ["kotlin", "concurrent", "atomics"],
+            symbols: symbols,
+            interner: interner
+        )
 
         let intType = types.intType
         let longType = types.longType
         let boolType = types.make(.primitive(.boolean, .nonNull))
-        let anyNullableType = types.make(.any(.nullable))
         let unitType = types.unitType
 
-        // -- AtomicInt --
-        let atomicIntSymbol = ensureClassSymbol(
-            named: "AtomicInt",
-            in: concurrentPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        let atomicIntType = types.make(.classType(ClassType(
-            classSymbol: atomicIntSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
-        symbols.setPropertyType(atomicIntType, for: atomicIntSymbol)
-
-        registerAtomicConstructor(
-            ownerSymbol: atomicIntSymbol,
-            ownerType: atomicIntType,
-            externalLinkName: "kk_atomic_int_create",
-            paramType: intType,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicValueProperty(
-            ownerSymbol: atomicIntSymbol,
-            ownerType: atomicIntType,
-            valueType: intType,
-            getterLinkName: "kk_atomic_int_load",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicCoreMethods(
-            ownerSymbol: atomicIntSymbol,
-            ownerType: atomicIntType,
+        registerAtomicScalarFamily(
+            packageFQName: concurrentPkg,
+            className: "AtomicInt",
+            constructorLinkName: "kk_atomic_int_create",
             valueType: intType,
             boolType: boolType,
             unitType: unitType,
             prefix: "kk_atomic_int",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicArithmeticMethods(
-            ownerSymbol: atomicIntSymbol,
-            ownerType: atomicIntType,
-            valueType: intType,
-            prefix: "kk_atomic_int",
-            symbols: symbols,
-            interner: interner
-        )
-        registerAtomicGetAndUpdateMethods(
-            ownerSymbol: atomicIntSymbol,
-            ownerType: atomicIntType,
-            valueType: intType,
-            prefix: "kk_atomic_int",
+            includeArithmetic: true,
+            includeGetAndUpdate: true,
             symbols: symbols,
             interner: interner,
             types: types
         )
 
-        registerAtomicGetAndUpdateMethods(
-            ownerSymbol: atomicIntSymbol,
-            ownerType: atomicIntType,
-            valueType: intType,
-            prefix: "kk_atomic_int",
-            symbols: symbols,
-            interner: interner,
-            types: types
-        )
-
-        // -- AtomicLong --
-        let atomicLongSymbol = ensureClassSymbol(
-            named: "AtomicLong",
-            in: concurrentPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        let atomicLongType = types.make(.classType(ClassType(
-            classSymbol: atomicLongSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
-        symbols.setPropertyType(atomicLongType, for: atomicLongSymbol)
-
-        registerAtomicConstructor(
-            ownerSymbol: atomicLongSymbol,
-            ownerType: atomicLongType,
-            externalLinkName: "kk_atomic_long_create",
-            paramType: longType,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicValueProperty(
-            ownerSymbol: atomicLongSymbol,
-            ownerType: atomicLongType,
-            valueType: longType,
-            getterLinkName: "kk_atomic_long_load",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicCoreMethods(
-            ownerSymbol: atomicLongSymbol,
-            ownerType: atomicLongType,
+        registerAtomicScalarFamily(
+            packageFQName: concurrentPkg,
+            className: "AtomicLong",
+            constructorLinkName: "kk_atomic_long_create",
             valueType: longType,
             boolType: boolType,
             unitType: unitType,
             prefix: "kk_atomic_long",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicArithmeticMethods(
-            ownerSymbol: atomicLongSymbol,
-            ownerType: atomicLongType,
-            valueType: longType,
-            prefix: "kk_atomic_long",
-            symbols: symbols,
-            interner: interner
-        )
-        registerAtomicGetAndUpdateMethods(
-            ownerSymbol: atomicLongSymbol,
-            ownerType: atomicLongType,
-            valueType: longType,
-            prefix: "kk_atomic_long",
+            includeArithmetic: true,
+            includeGetAndUpdate: true,
             symbols: symbols,
             interner: interner,
             types: types
         )
 
-        registerAtomicGetAndUpdateMethods(
-            ownerSymbol: atomicLongSymbol,
-            ownerType: atomicLongType,
-            valueType: longType,
-            prefix: "kk_atomic_long",
-            symbols: symbols,
-            interner: interner,
-            types: types
-        )
-
-        // -- AtomicReference<T> --
-        let atomicRefSymbol = ensureClassSymbol(
-            named: "AtomicReference",
-            in: concurrentPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        let atomicRefType = types.make(.classType(ClassType(
-            classSymbol: atomicRefSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
-        symbols.setPropertyType(atomicRefType, for: atomicRefSymbol)
-
-        // AtomicReference stores values as Any? at the ABI level.
-        registerAtomicConstructor(
-            ownerSymbol: atomicRefSymbol,
-            ownerType: atomicRefType,
-            externalLinkName: "kk_atomic_ref_create",
-            paramType: anyNullableType,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicValueProperty(
-            ownerSymbol: atomicRefSymbol,
-            ownerType: atomicRefType,
-            valueType: anyNullableType,
-            getterLinkName: "kk_atomic_ref_load",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicCoreMethods(
-            ownerSymbol: atomicRefSymbol,
-            ownerType: atomicRefType,
-            valueType: anyNullableType,
+        registerAtomicReferenceFamily(
+            packageFQName: concurrentPkg,
+            constructorLinkName: "kk_atomic_ref_create",
             boolType: boolType,
             unitType: unitType,
             prefix: "kk_atomic_ref",
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            types: types
         )
 
-        registerAtomicGetAndUpdateMethods(
-            ownerSymbol: atomicRefSymbol,
-            ownerType: atomicRefType,
-            valueType: anyNullableType,
-            prefix: "kk_atomic_ref",
+        registerAtomicScalarFamily(
+            packageFQName: concurrentPkg,
+            className: "AtomicBoolean",
+            constructorLinkName: "kk_atomic_bool_create",
+            valueType: boolType,
+            boolType: boolType,
+            unitType: unitType,
+            prefix: "kk_atomic_bool",
+            includeArithmetic: false,
+            includeGetAndUpdate: true,
             symbols: symbols,
             interner: interner,
             types: types
         )
 
-        // -- AtomicBoolean --
-        let atomicBoolSymbol = ensureClassSymbol(
-            named: "AtomicBoolean",
-            in: concurrentPkg,
+        registerSyntheticAtomicAnnotation(
+            named: "ExperimentalAtomicApi",
+            in: atomicsPkg,
             symbols: symbols,
             interner: interner
         )
-        let atomicBoolType = types.make(.classType(ClassType(
-            classSymbol: atomicBoolSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
-        symbols.setPropertyType(atomicBoolType, for: atomicBoolSymbol)
-
-        registerAtomicConstructor(
-            ownerSymbol: atomicBoolSymbol,
-            ownerType: atomicBoolType,
-            externalLinkName: "kk_atomic_bool_create",
-            paramType: boolType,
+        registerAtomicTypeAlias(
+            aliasName: "AtomicInt",
+            aliasPackageFQName: atomicsPkg,
+            targetName: "AtomicInt",
+            targetPackageFQName: concurrentPkg,
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            types: types
+        )
+        registerAtomicTypeAlias(
+            aliasName: "AtomicLong",
+            aliasPackageFQName: atomicsPkg,
+            targetName: "AtomicLong",
+            targetPackageFQName: concurrentPkg,
+            symbols: symbols,
+            interner: interner,
+            types: types
+        )
+        registerAtomicTypeAlias(
+            aliasName: "AtomicBoolean",
+            aliasPackageFQName: atomicsPkg,
+            targetName: "AtomicBoolean",
+            targetPackageFQName: concurrentPkg,
+            symbols: symbols,
+            interner: interner,
+            types: types
+        )
+        registerAtomicTypeAlias(
+            aliasName: "AtomicReference",
+            aliasPackageFQName: atomicsPkg,
+            targetName: "AtomicReference",
+            targetPackageFQName: concurrentPkg,
+            symbols: symbols,
+            interner: interner,
+            types: types,
+            typeParameterNames: ["T"]
         )
 
-        registerAtomicValueProperty(
-            ownerSymbol: atomicBoolSymbol,
-            ownerType: atomicBoolType,
-            valueType: boolType,
-            getterLinkName: "kk_atomic_bool_load",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerAtomicCoreMethods(
-            ownerSymbol: atomicBoolSymbol,
-            ownerType: atomicBoolType,
-            valueType: boolType,
+        registerAtomicArrayFamily(
+            packageFQName: atomicsPkg,
+            className: "AtomicIntArray",
+            constructorLinkName: "kk_atomic_int_array_create",
+            valueType: intType,
             boolType: boolType,
             unitType: unitType,
-            prefix: "kk_atomic_bool",
+            prefix: "kk_atomic_int_array",
+            includeArithmetic: true,
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            types: types
         )
 
-        registerAtomicGetAndUpdateMethods(
-            ownerSymbol: atomicBoolSymbol,
-            ownerType: atomicBoolType,
-            valueType: boolType,
-            prefix: "kk_atomic_bool",
+        registerAtomicArrayFamily(
+            packageFQName: atomicsPkg,
+            className: "AtomicLongArray",
+            constructorLinkName: "kk_atomic_long_array_create",
+            valueType: longType,
+            boolType: boolType,
+            unitType: unitType,
+            prefix: "kk_atomic_long_array",
+            includeArithmetic: true,
             symbols: symbols,
             interner: interner,
             types: types
@@ -305,11 +188,419 @@ extension DataFlowSemaPhase {
 
     // MARK: - Helpers
 
+    private func registerAtomicScalarFamily(
+        packageFQName: [InternedString],
+        className: String,
+        constructorLinkName: String,
+        valueType: TypeID,
+        boolType: TypeID,
+        unitType: TypeID,
+        prefix: String,
+        includeArithmetic: Bool,
+        includeGetAndUpdate: Bool,
+        symbols: SymbolTable,
+        interner: StringInterner,
+        types: TypeSystem
+    ) {
+        let symbol = ensureClassSymbol(
+            named: className,
+            in: packageFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        let ownerType = types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(ownerType, for: symbol)
+
+        registerAtomicConstructor(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            externalLinkName: constructorLinkName,
+            paramType: valueType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicValueProperty(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            valueType: valueType,
+            getterLinkName: "\(prefix)_load",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicCoreMethods(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            valueType: valueType,
+            boolType: boolType,
+            unitType: unitType,
+            prefix: prefix,
+            symbols: symbols,
+            interner: interner
+        )
+
+        if includeArithmetic {
+            registerAtomicArithmeticMethods(
+                ownerSymbol: symbol,
+                ownerType: ownerType,
+                valueType: valueType,
+                prefix: prefix,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        if includeGetAndUpdate {
+            registerAtomicGetAndUpdateMethods(
+                ownerSymbol: symbol,
+                ownerType: ownerType,
+                valueType: valueType,
+                prefix: prefix,
+                symbols: symbols,
+                interner: interner,
+                types: types
+            )
+        }
+    }
+
+    private func registerAtomicReferenceFamily(
+        packageFQName: [InternedString],
+        constructorLinkName: String,
+        boolType: TypeID,
+        unitType: TypeID,
+        prefix: String,
+        symbols: SymbolTable,
+        interner: StringInterner,
+        types: TypeSystem
+    ) {
+        let className = interner.intern("AtomicReference")
+        let symbol = ensureClassSymbol(
+            named: "AtomicReference",
+            in: packageFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = packageFQName + [className, typeParamName]
+        let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) ?? symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let typeParamType = types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: .nullable)))
+        let ownerType = types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(ownerType, for: symbol)
+
+        registerAtomicConstructor(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            externalLinkName: constructorLinkName,
+            paramType: typeParamType,
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicValueProperty(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            valueType: typeParamType,
+            getterLinkName: "\(prefix)_load",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicCoreMethods(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            valueType: typeParamType,
+            boolType: boolType,
+            unitType: unitType,
+            prefix: prefix,
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicGetAndUpdateMethods(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            valueType: typeParamType,
+            prefix: prefix,
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner,
+            types: types
+        )
+    }
+
+    private func registerAtomicArrayFamily(
+        packageFQName: [InternedString],
+        className: String,
+        constructorLinkName: String,
+        valueType: TypeID,
+        boolType: TypeID,
+        unitType: TypeID,
+        prefix: String,
+        includeArithmetic: Bool,
+        symbols: SymbolTable,
+        interner: StringInterner,
+        types: TypeSystem
+    ) {
+        let symbol = ensureClassSymbol(
+            named: className,
+            in: packageFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        let ownerType = types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(ownerType, for: symbol)
+
+        registerAtomicConstructor(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            externalLinkName: constructorLinkName,
+            paramType: types.intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicReadOnlyProperty(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            propertyName: "size",
+            valueType: types.intType,
+            getterLinkName: "\(prefix)_size",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicMember(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            name: "loadAt",
+            externalLinkName: "\(prefix)_loadAt",
+            returnType: valueType,
+            parameters: [(name: "index", type: types.intType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerAtomicMember(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            name: "storeAt",
+            externalLinkName: "\(prefix)_storeAt",
+            returnType: unitType,
+            parameters: [(name: "index", type: types.intType), (name: "value", type: valueType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerAtomicMember(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            name: "get",
+            externalLinkName: "\(prefix)_loadAt",
+            returnType: valueType,
+            parameters: [(name: "index", type: types.intType)],
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerAtomicMember(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            name: "set",
+            externalLinkName: "\(prefix)_storeAt",
+            returnType: unitType,
+            parameters: [(name: "index", type: types.intType), (name: "value", type: valueType)],
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerAtomicMember(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            name: "exchangeAt",
+            externalLinkName: "\(prefix)_exchangeAt",
+            returnType: valueType,
+            parameters: [(name: "index", type: types.intType), (name: "newValue", type: valueType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerAtomicMember(
+                ownerSymbol: symbol,
+                ownerType: ownerType,
+                name: "compareAndSetAt",
+                externalLinkName: "\(prefix)_compareAndSetAt",
+                returnType: boolType,
+                parameters: [
+                (name: "index", type: types.intType),
+                (name: "expect", type: valueType),
+                (name: "update", type: valueType),
+            ],
+            symbols: symbols,
+            interner: interner
+        )
+        registerAtomicMember(
+                ownerSymbol: symbol,
+                ownerType: ownerType,
+                name: "compareAndExchangeAt",
+                externalLinkName: "\(prefix)_compareAndExchangeAt",
+                returnType: valueType,
+                parameters: [
+                (name: "index", type: types.intType),
+                (name: "expect", type: valueType),
+                (name: "update", type: valueType),
+            ],
+            symbols: symbols,
+            interner: interner
+        )
+
+        if includeArithmetic {
+            registerAtomicMember(
+                ownerSymbol: symbol,
+                ownerType: ownerType,
+                name: "fetchAndAddAt",
+                externalLinkName: "\(prefix)_fetchAndAddAt",
+                returnType: valueType,
+                parameters: [(name: "index", type: types.intType), (name: "delta", type: valueType)],
+                symbols: symbols,
+                interner: interner
+            )
+            registerAtomicMember(
+                ownerSymbol: symbol,
+                ownerType: ownerType,
+                name: "addAndFetchAt",
+                externalLinkName: "\(prefix)_addAndFetchAt",
+                returnType: valueType,
+                parameters: [(name: "index", type: types.intType), (name: "delta", type: valueType)],
+                symbols: symbols,
+                interner: interner
+            )
+            registerAtomicMember(
+                ownerSymbol: symbol,
+                ownerType: ownerType,
+                name: "incrementAndFetchAt",
+                externalLinkName: "\(prefix)_incrementAndFetchAt",
+                returnType: valueType,
+                parameters: [(name: "index", type: types.intType)],
+                symbols: symbols,
+                interner: interner
+            )
+            registerAtomicMember(
+                ownerSymbol: symbol,
+                ownerType: ownerType,
+                name: "decrementAndFetchAt",
+                externalLinkName: "\(prefix)_decrementAndFetchAt",
+                returnType: valueType,
+                parameters: [(name: "index", type: types.intType)],
+                symbols: symbols,
+                interner: interner
+            )
+        }
+    }
+
+    private func registerSyntheticAtomicAnnotation(
+        named name: String,
+        in packageFQName: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let annotationName = interner.intern(name)
+        let fqName = packageFQName + [annotationName]
+        guard symbols.lookup(fqName: fqName) == nil else { return }
+
+        _ = symbols.define(
+            kind: .annotationClass,
+            name: annotationName,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+    }
+
+    private func registerAtomicTypeAlias(
+        aliasName: String,
+        aliasPackageFQName: [InternedString],
+        targetName: String,
+        targetPackageFQName: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner,
+        types: TypeSystem,
+        typeParameterNames: [String] = []
+    ) {
+        let aliasInterned = interner.intern(aliasName)
+        let aliasFQName = aliasPackageFQName + [aliasInterned]
+        guard symbols.lookup(fqName: aliasFQName) == nil else { return }
+
+        let targetInterned = interner.intern(targetName)
+        let targetFQName = targetPackageFQName + [targetInterned]
+        guard let targetSymbol = symbols.lookup(fqName: targetFQName) else { return }
+
+        let aliasSymbol = symbols.define(
+            kind: .typeAlias,
+            name: aliasInterned,
+            fqName: aliasFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        let underlyingArgs: [TypeArg]
+        if typeParameterNames.isEmpty {
+            underlyingArgs = []
+        } else {
+            let typeParamSymbols = typeParameterNames.map { paramName in
+                let internedParam = interner.intern(paramName)
+                let typeParamFQName = aliasFQName + [internedParam]
+                return symbols.lookup(fqName: typeParamFQName) ?? symbols.define(
+                    kind: .typeParameter,
+                    name: internedParam,
+                    fqName: typeParamFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+            }
+            symbols.setTypeAliasTypeParameters(typeParamSymbols, for: aliasSymbol)
+            underlyingArgs = typeParamSymbols.map { typeParamSymbol in
+                .invariant(types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: .nullable))))
+            }
+        }
+        let underlyingType = types.make(.classType(ClassType(
+            classSymbol: targetSymbol,
+            args: underlyingArgs,
+            nullability: .nonNull
+        )))
+        symbols.setTypeAliasUnderlyingType(underlyingType, for: aliasSymbol)
+    }
+
     private func registerAtomicConstructor(
         ownerSymbol: SymbolID,
         ownerType: TypeID,
         externalLinkName: String,
         paramType: TypeID,
+        typeParameterSymbols: [SymbolID] = [],
+        classTypeParameterCount: Int = 0,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -336,7 +627,7 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
         symbols.setExternalLinkName(externalLinkName, for: ctorSymbol)
 
-        let paramName = interner.intern("initial")
+        let paramName = interner.intern("size")
         let paramSymbol = symbols.define(
             kind: .valueParameter,
             name: paramName,
@@ -353,7 +644,9 @@ extension DataFlowSemaPhase {
                 returnType: ownerType,
                 valueParameterSymbols: [paramSymbol],
                 valueParameterHasDefaultValues: [false],
-                valueParameterIsVararg: [false]
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: typeParameterSymbols,
+                classTypeParameterCount: classTypeParameterCount
             ),
             for: ctorSymbol
         )
@@ -391,6 +684,39 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(valueType, for: propertySymbol)
     }
 
+    private func registerAtomicReadOnlyProperty(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        propertyName: String,
+        valueType: TypeID,
+        getterLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
+        let propertyName = interner.intern(propertyName)
+        let propertyFQName = ownerInfo.fqName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { id in
+            symbols.symbol(id)?.kind == .property
+        }) {
+            symbols.setExternalLinkName(getterLinkName, for: existing)
+            symbols.setPropertyType(valueType, for: existing)
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setExternalLinkName(getterLinkName, for: propertySymbol)
+        symbols.setPropertyType(valueType, for: propertySymbol)
+    }
+
     private func registerAtomicCoreMethods(
         ownerSymbol: SymbolID,
         ownerType: TypeID,
@@ -398,6 +724,8 @@ extension DataFlowSemaPhase {
         boolType: TypeID,
         unitType: TypeID,
         prefix: String,
+        typeParameterSymbols: [SymbolID] = [],
+        classTypeParameterCount: Int = 0,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -406,6 +734,8 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "load", externalLinkName: "\(prefix)_load",
             returnType: valueType, parameters: [],
+            typeParameterSymbols: typeParameterSymbols,
+            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
         // store(value: T) -> Unit (returns via side effect)
@@ -413,6 +743,8 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "store", externalLinkName: "\(prefix)_store",
             returnType: unitType, parameters: [(name: "value", type: valueType)],
+            typeParameterSymbols: typeParameterSymbols,
+            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
         // exchange(new: T) -> T
@@ -420,6 +752,8 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "exchange", externalLinkName: "\(prefix)_exchange",
             returnType: valueType, parameters: [(name: "new", type: valueType)],
+            typeParameterSymbols: typeParameterSymbols,
+            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
         // compareAndSet(expect: T, update: T) -> Boolean
@@ -431,6 +765,8 @@ extension DataFlowSemaPhase {
                 (name: "expect", type: valueType),
                 (name: "update", type: valueType),
             ],
+            typeParameterSymbols: typeParameterSymbols,
+            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
         // compareAndExchange(expect: T, update: T) -> T
@@ -442,6 +778,8 @@ extension DataFlowSemaPhase {
                 (name: "expect", type: valueType),
                 (name: "update", type: valueType),
             ],
+            typeParameterSymbols: typeParameterSymbols,
+            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
     }
@@ -496,6 +834,8 @@ extension DataFlowSemaPhase {
         ownerType: TypeID,
         valueType: TypeID,
         prefix: String,
+        typeParameterSymbols: [SymbolID] = [],
+        classTypeParameterCount: Int = 0,
         symbols: SymbolTable,
         interner: StringInterner,
         types: TypeSystem
@@ -511,6 +851,8 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "getAndUpdate", externalLinkName: "\(prefix)_getAndUpdate",
             returnType: valueType, parameters: [(name: "transform", type: transformType)],
+            typeParameterSymbols: typeParameterSymbols,
+            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
         // updateAndGet(transform: (T) -> T) -> T
@@ -518,6 +860,8 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "updateAndGet", externalLinkName: "\(prefix)_updateAndGet",
             returnType: valueType, parameters: [(name: "transform", type: transformType)],
+            typeParameterSymbols: typeParameterSymbols,
+            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
     }
@@ -529,6 +873,9 @@ extension DataFlowSemaPhase {
         externalLinkName: String,
         returnType: TypeID,
         parameters: [(name: String, type: TypeID)],
+        typeParameterSymbols: [SymbolID] = [],
+        classTypeParameterCount: Int = 0,
+        flags: SymbolFlags = [.synthetic],
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -547,7 +894,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
         symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
@@ -575,7 +922,9 @@ extension DataFlowSemaPhase {
                 isSuspend: false,
                 valueParameterSymbols: valueParameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
-                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
+                typeParameterSymbols: typeParameterSymbols,
+                classTypeParameterCount: classTypeParameterCount
             ),
             for: memberSymbol
         )
