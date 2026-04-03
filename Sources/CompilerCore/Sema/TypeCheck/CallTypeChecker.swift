@@ -240,6 +240,69 @@ final class CallTypeChecker {
             return refinedReturnType
         }
 
+        // --- produce { ... } builder (STDLIB-CORO-075) ---
+        if let calleeName,
+           calleeName == knownNames.produce,
+           args.count == 1,
+           locals[calleeName] == nil
+        {
+            let argumentExprID = args[0].expr
+            guard isValidBuilderLambdaArgument(argumentExprID, ast: ast) else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0002",
+                    "No viable overload found for call.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+
+            let channelType = produceBuilderChannelType(
+                lambdaExprID: argumentExprID,
+                expectedType: expectedType,
+                ctx: ctx,
+                locals: locals,
+                sema: sema,
+                interner: interner
+            )
+            let receiverType = produceBuilderReceiverType(
+                channelType: channelType,
+                sema: sema,
+                interner: interner
+            )
+            let lambdaExpectedType = sequenceBuilderLambdaType(
+                receiverType: receiverType,
+                sema: sema
+            )
+            _ = driver.inferExpr(
+                argumentExprID,
+                ctx: ctx.with(implicitReceiverType: receiverType),
+                locals: &locals,
+                expectedType: lambdaExpectedType
+            )
+            let refinedChannelType = produceBuilderChannelType(
+                lambdaExprID: argumentExprID,
+                expectedType: expectedType,
+                ctx: ctx,
+                locals: locals,
+                sema: sema,
+                interner: interner
+            )
+            if let chosen = sema.symbols.lookup(fqName: knownNames.kotlinxCoroutinesProduceFQName) {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: chosen,
+                        substitutedTypeArguments: [],
+                        parameterMapping: [0: 0]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+            }
+            sema.bindings.bindExprType(id, type: refinedChannelType)
+            return refinedChannelType
+        }
+
         // --- Scope function: with(receiver, block) (STDLIB-004, STDLIB-061) ---
         // Must intercept BEFORE eager arg inference so the lambda argument
         // is inferred with the correct implicit receiver type.

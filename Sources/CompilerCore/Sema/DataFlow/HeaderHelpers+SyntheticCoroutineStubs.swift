@@ -211,6 +211,13 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticChannelProduceFunction(
+            packageFQName: channelsPkg,
+            channelSymbol: channelSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         registerSyntheticCoroutineTopLevelFunction(
             named: "coroutineScope",
             packageFQName: coroutinesPkg,
