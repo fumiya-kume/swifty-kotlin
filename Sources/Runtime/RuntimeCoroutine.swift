@@ -1323,7 +1323,7 @@ private final class RuntimeFlowCollectContext {
     var processorFailed = false
 }
 
-private final class RuntimeFlowLockedBox<T> {
+private final class RuntimeFlowLockedBox<T>: @unchecked Sendable {
     private let lock = NSLock()
     private var value: T
 
@@ -1348,7 +1348,7 @@ private enum RuntimeFlowProcessorAction {
 /// for every collect to guarantee cold-stream semantics.
 /// When `fixedValues` is non-nil, the flow is backed by flowOf and the emitter
 /// function pointer is ignored.
-private final class RuntimeFlowHandle {
+private final class RuntimeFlowHandle: Sendable {
     let source: RuntimeFlowSource
     let opChain: [RuntimeFlowOp]
     let fixedValues: [Int]?
