@@ -546,7 +546,7 @@ extension CallLowerer {
                                               let symbol = sema.symbols.symbol(classType.classSymbol)
         {
             [
-                "Array", "IntArray", "LongArray", "DoubleArray", "FloatArray", "BooleanArray", "CharArray",
+                "Array", "IntArray", "LongArray", "UIntArray", "DoubleArray", "FloatArray", "BooleanArray", "CharArray",
                 "UShortArray",
             ].contains(interner.resolve(symbol.name))
         } else {

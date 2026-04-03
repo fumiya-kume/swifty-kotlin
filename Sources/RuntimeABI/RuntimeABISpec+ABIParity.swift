@@ -1743,6 +1743,82 @@ public extension RuntimeABISpec {
             section: "ABIParity"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_time_source_mark_now",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_source_monotonic_mark_now",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_elapsed_now",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_has_passed_now",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_has_not_passed_now",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_plus_duration",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+                RuntimeABIParameter(name: "p1", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_minus_duration",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+                RuntimeABIParameter(name: "p1", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_minus_mark",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+                RuntimeABIParameter(name: "p1", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_compare",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+                RuntimeABIParameter(name: "p1", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_singleOrNull",
             parameters: [
                 RuntimeABIParameter(name: "p0", type: .intptr),

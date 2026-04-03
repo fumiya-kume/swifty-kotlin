@@ -11,6 +11,11 @@ enum RuntimeFlowTag: Int64 {
 
 struct FlowLoweringNames {
     let flow: InternedString
+    let channelFlow: InternedString
+    let callbackFlow: InternedString
+    let flowOf: InternedString
+    let emptyFlow: InternedString
+    let asFlow: InternedString
     let emit: InternedString
     let collect: InternedString
     let map: InternedString
@@ -23,6 +28,9 @@ struct FlowLoweringNames {
     let kkFlowCollect: InternedString
     let kkFlowRetain: InternedString
     let kkFlowRelease: InternedString
+    let kkFlowOf: InternedString
+    let kkFlowEmpty: InternedString
+    let kkFlowAsFlow: InternedString
     let kkFlowToList: InternedString
     let kkFlowFirst: InternedString
 }
@@ -33,6 +41,11 @@ extension CoroutineLoweringPass {
     /// `CollectionLiteralLoweringPass`.
     func lowerFlowExpressions(module: KIRModule, ctx: KIRContext) {
         let flowName = ctx.interner.intern("flow")
+        let channelFlowName = ctx.interner.intern("channelFlow")
+        let callbackFlowName = ctx.interner.intern("callbackFlow")
+        let flowOfName = ctx.interner.intern("flowOf")
+        let emptyFlowName = ctx.interner.intern("emptyFlow")
+        let asFlowName = ctx.interner.intern("asFlow")
         let emitName = ctx.interner.intern("emit")
         let collectName = ctx.interner.intern("collect")
         let mapName = ctx.interner.intern("map")
@@ -46,6 +59,9 @@ extension CoroutineLoweringPass {
         let kkFlowCollectName = ctx.interner.intern("kk_flow_collect")
         let kkFlowRetainName = ctx.interner.intern("kk_flow_retain")
         let kkFlowReleaseName = ctx.interner.intern("kk_flow_release")
+        let kkFlowOfName = ctx.interner.intern("kk_flow_of")
+        let kkFlowEmptyName = ctx.interner.intern("kk_flow_empty")
+        let kkFlowAsFlowName = ctx.interner.intern("kk_flow_as_flow")
         let kkFlowToListName = ctx.interner.intern("kk_flow_to_list")
         let kkFlowFirstName = ctx.interner.intern("kk_flow_first")
 
@@ -113,11 +129,18 @@ extension CoroutineLoweringPass {
                 for instruction in function.body {
                     switch instruction {
                     case let .call(symbol, callee, arguments, result, _, _, _, _):
-                        if callee == flowName, arguments.count == 1, symbol == nil {
+                        if (callee == flowName || callee == channelFlowName || callee == callbackFlowName),
+                           arguments.count == 1,
+                           symbol == nil
+                        {
                             if markFlowExpr(result) { changed = true }
                             continue
                         }
                         if callee == kkFlowCreateName, arguments.count == 2 {
+                            if markFlowExpr(result) { changed = true }
+                            continue
+                        }
+                        if callee == flowOfName || callee == kkFlowOfName || callee == emptyFlowName || callee == kkFlowEmptyName {
                             if markFlowExpr(result) { changed = true }
                             continue
                         }
@@ -149,6 +172,12 @@ extension CoroutineLoweringPass {
                             if markFlowExpr(result) { changed = true }
                             continue
                         }
+                        if callee == asFlowName,
+                           arguments.isEmpty
+                        {
+                            if markFlowExpr(result) { changed = true }
+                            continue
+                        }
 
                     case let .virtualCall(_, callee, receiver, arguments, result, _, _, _):
                         if callee == mapName || callee == filterName || callee == takeName,
@@ -161,6 +190,12 @@ extension CoroutineLoweringPass {
                         if callee == collectName,
                            arguments.count == 1,
                            flowExprIDs.contains(receiver.rawValue)
+                        {
+                            if markFlowExpr(result) { changed = true }
+                            continue
+                        }
+                        if callee == asFlowName,
+                           arguments.isEmpty
                         {
                             if markFlowExpr(result) { changed = true }
                             continue
@@ -197,15 +232,18 @@ extension CoroutineLoweringPass {
 
             let hasFlowLikeCalls = function.body.contains { instruction in
                 switch instruction {
-                case let .call(_, callee, _, _, _, _, _, _):
-                    callee == flowName || callee == emitName || callee == collectName ||
+                    case let .call(_, callee, _, _, _, _, _, _):
+                    callee == flowName || callee == channelFlowName || callee == callbackFlowName ||
+                        callee == flowOfName || callee == emptyFlowName ||
+                        callee == emitName || callee == collectName ||
                         callee == mapName || callee == filterName || callee == takeName ||
-                        callee == toListName || callee == firstName ||
+                        callee == asFlowName || callee == toListName || callee == firstName ||
                         callee == kkFlowCreateName || callee == kkFlowEmitName || callee == kkFlowCollectName ||
+                        callee == kkFlowOfName || callee == kkFlowEmptyName || callee == kkFlowAsFlowName ||
                         callee == kkFlowToListName || callee == kkFlowFirstName
                 case let .virtualCall(_, callee, _, _, _, _, _, _):
                     callee == mapName || callee == filterName || callee == takeName || callee == collectName ||
-                        callee == toListName || callee == firstName
+                        callee == asFlowName || callee == toListName || callee == firstName
                 default:
                     false
                 }
@@ -231,6 +269,12 @@ extension CoroutineLoweringPass {
                         markConsume(arguments[0])
                         continue
                     }
+                    if callee == asFlowName,
+                       arguments.count == 1
+                    {
+                        markConsume(arguments[0])
+                        continue
+                    }
                     if callee == collectName || callee == kkFlowCollectName,
                        arguments.count == 2 || arguments.count == 3
                     {
@@ -251,6 +295,9 @@ extension CoroutineLoweringPass {
                     {
                         markConsume(receiver)
                     }
+                    if callee == asFlowName, arguments.isEmpty {
+                        markConsume(receiver)
+                    }
                     if (callee == toListName || callee == firstName), arguments.isEmpty {
                         markConsume(receiver)
                     }
@@ -262,6 +309,11 @@ extension CoroutineLoweringPass {
             // Phase 2: rewrite flow instructions.
             let names = FlowLoweringNames(
                 flow: flowName,
+                channelFlow: channelFlowName,
+                callbackFlow: callbackFlowName,
+                flowOf: flowOfName,
+                emptyFlow: emptyFlowName,
+                asFlow: asFlowName,
                 emit: emitName,
                 collect: collectName,
                 map: mapName,
@@ -274,6 +326,9 @@ extension CoroutineLoweringPass {
                 kkFlowCollect: kkFlowCollectName,
                 kkFlowRetain: kkFlowRetainName,
                 kkFlowRelease: kkFlowReleaseName,
+                kkFlowOf: kkFlowOfName,
+                kkFlowEmpty: kkFlowEmptyName,
+                kkFlowAsFlow: kkFlowAsFlowName,
                 kkFlowToList: kkFlowToListName,
                 kkFlowFirst: kkFlowFirstName
             )

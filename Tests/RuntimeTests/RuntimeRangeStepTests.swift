@@ -268,16 +268,18 @@ final class RuntimeRangeStepTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_list_get(array, 2), 7)
     }
 
-    func testUIntRangeIteratorUsesSharedRangeIterator() {
-        let range = kk_uint_step(kk_uint_rangeTo(1, 5), 2)
-        let iterator = kk_range_iterator(range)
-        XCTAssertEqual(kk_range_hasNext(iterator), 1)
-        XCTAssertEqual(kk_range_next(iterator), 1)
-        XCTAssertEqual(kk_range_hasNext(iterator), 1)
-        XCTAssertEqual(kk_range_next(iterator), 3)
-        XCTAssertEqual(kk_range_hasNext(iterator), 1)
-        XCTAssertEqual(kk_range_next(iterator), 5)
-        XCTAssertEqual(kk_range_hasNext(iterator), 0)
+    func testUIntRangeIteratorUsesUnsignedIterator() {
+        let start = Int(bitPattern: UInt.max - 2)
+        let end = Int(bitPattern: UInt.max)
+        let range = kk_uint_rangeTo(start, end)
+        let iterator = kk_uint_range_iterator(range)
+        XCTAssertEqual(kk_uint_range_hasNext(iterator), 1)
+        XCTAssertEqual(kk_uint_range_next(iterator), start)
+        XCTAssertEqual(kk_uint_range_hasNext(iterator), 1)
+        XCTAssertEqual(kk_uint_range_next(iterator), Int(bitPattern: UInt.max - 1))
+        XCTAssertEqual(kk_uint_range_hasNext(iterator), 1)
+        XCTAssertEqual(kk_uint_range_next(iterator), Int(bitPattern: UInt.max))
+        XCTAssertEqual(kk_uint_range_hasNext(iterator), 0)
     }
 
     func testUIntUntilToList() {

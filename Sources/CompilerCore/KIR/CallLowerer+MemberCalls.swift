@@ -4787,6 +4787,11 @@ extension CallLowerer {
         if loweredCallee == interner.intern("kk_system_currentTimeMillis")
             || loweredCallee == interner.intern("kk_system_nanoTime")
             || loweredCallee == interner.intern("kk_system_process_start_nanos")
+            || loweredCallee == interner.intern("kk_system_gc")
+            || loweredCallee == interner.intern("kk_runtime_getRuntime")
+            || loweredCallee == interner.intern("kk_runtime_totalMemory")
+            || loweredCallee == interner.intern("kk_runtime_freeMemory")
+            || loweredCallee == interner.intern("kk_runtime_maxMemory")
             || loweredCallee == interner.intern("kk_instant_now")
             || loweredCallee == interner.intern("kk_clock_system_now") {
             callArguments = []
@@ -5167,6 +5172,12 @@ extension CallLowerer {
             case "toLongArray":
                 return interner.intern("kk_long_range_toLongArray")
             case "iterator":
+                if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                    return interner.intern("kk_ulong_range_iterator")
+                }
+                if sema.bindings.isUIntRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.uintType {
+                    return interner.intern("kk_uint_range_iterator")
+                }
                 if nonNullReceiverType == sema.types.longType {
                     return interner.intern("kk_long_range_iterator")
                 }
