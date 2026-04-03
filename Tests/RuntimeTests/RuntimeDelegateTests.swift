@@ -1,3 +1,4 @@
+import Dispatch
 import Foundation
 @testable import Runtime
 import XCTest
@@ -104,8 +105,81 @@ private final class DelegateCallbackState: @unchecked Sendable {
     }
 }
 
+private final class LazyPublicationCallbackState: @unchecked Sendable {
+    private let lock = NSLock()
+    private var callCount = 0
+    private var enteredSemaphore = DispatchSemaphore(value: 0)
+    private var releaseSemaphore = DispatchSemaphore(value: 0)
+
+    func reset() {
+        lock.lock()
+        callCount = 0
+        enteredSemaphore = DispatchSemaphore(value: 0)
+        releaseSemaphore = DispatchSemaphore(value: 0)
+        lock.unlock()
+    }
+
+    func recordInitializerEntry() {
+        lock.lock()
+        callCount += 1
+        lock.unlock()
+        enteredSemaphore.signal()
+    }
+
+    func waitForInitializerEntries(_ count: Int) {
+        for _ in 0..<count {
+            enteredSemaphore.wait()
+        }
+    }
+
+    func releaseInitializers(_ count: Int) {
+        for _ in 0..<count {
+            releaseSemaphore.signal()
+        }
+    }
+
+    func waitForRelease() {
+        releaseSemaphore.wait()
+    }
+
+    func callCountSnapshot() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return callCount
+    }
+}
+
+private final class AtomicIntArrayBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage: [Int]
+
+    init(_ value: [Int]) {
+        storage = value
+    }
+
+    var value: [Int] {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return storage
+        }
+        set {
+            lock.lock()
+            defer { lock.unlock() }
+            storage = newValue
+        }
+    }
+
+    func store(_ value: Int, at index: Int) {
+        lock.lock()
+        storage[index] = value
+        lock.unlock()
+    }
+}
+
 /// Global state for callback testing (C function pointers cannot capture context).
 private let gDelegateState = DelegateCallbackState()
+private let gLazyPublicationState = LazyPublicationCallbackState()
 
 private func lazyCountingInit() -> Int {
     gDelegateState.incrementLazyCallCount()
@@ -116,6 +190,15 @@ private let lazyCountingInitCConv: KKThunkEntryPoint = { _ in lazyCountingInit()
 
 private let lazySimple42: KKThunkEntryPoint = { _ in 42 }
 private let lazySimple77: KKThunkEntryPoint = { _ in 77 }
+private let lazyPublicationValue: Int = 123
+
+private func lazyPublicationInit() -> Int {
+    gLazyPublicationState.recordInitializerEntry()
+    gLazyPublicationState.waitForRelease()
+    return lazyPublicationValue
+}
+
+private let lazyPublicationInitCConv: KKThunkEntryPoint = { _ in lazyPublicationInit() }
 
 private let observableNoopCallback: KKDelegateObserverEntryPoint = { _, _, _, _ in 0 }
 private let observableCaptureCallback: KKDelegateObserverEntryPoint = { _, old, new, _ in
@@ -140,6 +223,7 @@ private let vetoableOrderCallback: KKDelegateObserverEntryPoint = { _, _, _, _ i
 final class RuntimeDelegateTests: IsolatedRuntimeXCTestCase {
     override func resetIsolatedRuntimeTestState() {
         gDelegateState.reset()
+        gLazyPublicationState.reset()
     }
 
     // MARK: - Lazy Delegate Tests
@@ -193,6 +277,31 @@ final class RuntimeDelegateTests: IsolatedRuntimeXCTestCase {
 
     func testLazyIsInitializedWithInvalidHandleReturnsZero() {
         XCTAssertEqual(kk_lazy_is_initialized(0), 0)
+    }
+
+    func testLazyPublicationModeAllowsConcurrentInitializationButPublishesOneValue() {
+        let fnPtr = unsafeBitCast(lazyPublicationInitCConv, to: Int.self)
+        let handle = kk_lazy_create(fnPtr, 2) // PUBLICATION
+
+        let group = DispatchGroup()
+        let values = AtomicIntArrayBox(Array(repeating: 0, count: 2))
+
+        for index in 0..<2 {
+            group.enter()
+            DispatchQueue.global().async {
+                let value = kk_lazy_get_value(handle)
+                values.store(value, at: index)
+                group.leave()
+            }
+        }
+
+        gLazyPublicationState.waitForInitializerEntries(2)
+        gLazyPublicationState.releaseInitializers(2)
+        group.wait()
+
+        XCTAssertEqual(values.value, [lazyPublicationValue, lazyPublicationValue])
+        XCTAssertEqual(gLazyPublicationState.callCountSnapshot(), 2)
+        XCTAssertEqual(kk_lazy_is_initialized(handle), 1)
     }
 
     // MARK: - Observable Delegate Tests

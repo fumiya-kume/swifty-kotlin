@@ -262,6 +262,18 @@ final class CompilerOptionsTests: XCTestCase {
         XCTAssertEqual(opts.lazyThreadSafetyMode, .synchronized)
     }
 
+    func testLazyThreadSafetyModePublication() {
+        let opts = CompilerOptions(
+            moduleName: "Test",
+            inputs: [],
+            outputPath: "/out",
+            emit: .kirDump,
+            target: defaultTargetTriple(),
+            frontendFlags: ["lazy-thread-safety=PUBLICATION"]
+        )
+        XCTAssertEqual(opts.lazyThreadSafetyMode, .publication)
+    }
+
     func testLazyThreadSafetyModeIsCaseInsensitive() {
         let opts = CompilerOptions(
             moduleName: "Test",
@@ -329,6 +341,7 @@ final class CompilerOptionsTests: XCTestCase {
     func testLazyDelegateThreadSafetyModeRawValues() {
         XCTAssertEqual(LazyDelegateThreadSafetyMode.synchronized.rawValue, 1)
         XCTAssertEqual(LazyDelegateThreadSafetyMode.none.rawValue, 0)
+        XCTAssertEqual(LazyDelegateThreadSafetyMode.publication.rawValue, 2)
     }
 
     // MARK: - KotlinLanguageVersion

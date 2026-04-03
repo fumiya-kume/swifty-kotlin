@@ -687,13 +687,19 @@ final class RuntimeGroupingBox {
 enum LazyThreadSafetyMode: Int {
     case synchronized = 1
     case none = 0
+    case publication = 2
 }
 
 /// Runtime box for `kotlin.lazy {}` delegate.
 /// Holds an initializer function pointer and caches the computed value.
 final class RuntimeLazyBox {
+    private enum CachedState {
+        case uninitialized
+        case initialized(Int)
+    }
+
     private let initializerFnPtr: Int
-    private var cachedValue: Int?
+    private var cachedState: CachedState = .uninitialized
     private let mode: LazyThreadSafetyMode
     private let lock = NSLock()
 
@@ -707,23 +713,85 @@ final class RuntimeLazyBox {
         case .synchronized:
             lock.lock()
             defer { lock.unlock() }
-            return getValueUnsafe()
+            return getValueLocked()
+        case .publication:
+            return getValuePublication()
         case .none:
             return getValueUnsafe()
         }
     }
 
+    private func getValueLocked() -> Int {
+        switch cachedState {
+        case .initialized(let value):
+            return value
+        case .uninitialized:
+            let value = evaluateInitializer()
+            cachedState = .initialized(value)
+            return value
+        }
+    }
+
     private func getValueUnsafe() -> Int {
-        if let cached = cachedValue {
+        if let cached = cachedValue() {
             return cached
         }
+        let value = evaluateInitializer()
+        cachedState = .initialized(value)
+        return value
+    }
+
+    private func getValuePublication() -> Int {
+        if let cached = cachedValue() {
+            return cached
+        }
+
+        let value = evaluateInitializer()
+        if compareAndSetCachedValue(expected: .uninitialized, update: .initialized(value)) {
+            return value
+        }
+        return cachedValue() ?? value
+    }
+
+    private func cachedValue() -> Int? {
+        lock.lock()
+        defer { lock.unlock() }
+        switch cachedState {
+        case .initialized(let value):
+            return value
+        case .uninitialized:
+            return nil
+        }
+    }
+
+    private func compareAndSetCachedValue(expected: CachedState, update: CachedState) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard cachedStateMatches(expected) else {
+            return false
+        }
+        cachedState = update
+        return true
+    }
+
+    private func cachedStateMatches(_ expected: CachedState) -> Bool {
+        switch (cachedState, expected) {
+        case (.uninitialized, .uninitialized):
+            return true
+        case (.initialized(let current), .initialized(let expected)):
+            return current == expected
+        default:
+            return false
+        }
+    }
+
+    private func evaluateInitializer() -> Int {
         let fnPtr = unsafeBitCast(initializerFnPtr, to: KKThunkEntryPoint.self)
         var thrown = 0
         let value = fnPtr(&thrown)
         if thrown != 0 {
             fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: lazy initializer threw")
         }
-        cachedValue = value
         return value
     }
 
@@ -732,9 +800,20 @@ final class RuntimeLazyBox {
         case .synchronized:
             lock.lock()
             defer { lock.unlock() }
-            return cachedValue != nil
+            return cachedStateIsInitialized()
+        case .publication:
+            return cachedValue() != nil
         case .none:
-            return cachedValue != nil
+            return cachedStateIsInitialized()
+        }
+    }
+
+    private func cachedStateIsInitialized() -> Bool {
+        switch cachedState {
+        case .initialized:
+            return true
+        case .uninitialized:
+            return false
         }
     }
 }

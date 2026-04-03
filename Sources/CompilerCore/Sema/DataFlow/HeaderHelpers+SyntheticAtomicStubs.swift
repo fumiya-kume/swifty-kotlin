@@ -55,17 +55,6 @@ extension DataFlowSemaPhase {
             types: types
         )
 
-        registerAtomicReferenceFamily(
-            packageFQName: concurrentPkg,
-            constructorLinkName: "kk_atomic_ref_create",
-            boolType: boolType,
-            unitType: unitType,
-            prefix: "kk_atomic_ref",
-            symbols: symbols,
-            interner: interner,
-            types: types
-        )
-
         registerAtomicScalarFamily(
             packageFQName: concurrentPkg,
             className: "AtomicBoolean",
@@ -79,6 +68,15 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner,
             types: types
+        )
+
+        registerAtomicReferenceStubs(
+            ownerPackage: concurrentPkg,
+            ownerPackageSymbol: symbols.lookup(fqName: concurrentPkg) ?? .invalid,
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            externalLinkPrefix: "kk_atomic_ref"
         )
 
         registerSyntheticAtomicAnnotation(
@@ -789,6 +787,8 @@ extension DataFlowSemaPhase {
         ownerType: TypeID,
         valueType: TypeID,
         prefix: String,
+        typeParameterSymbols: [SymbolID] = [],
+        classTypeParameterCount: Int = 0,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -797,6 +797,8 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "fetchAndAdd", externalLinkName: "\(prefix)_fetchAndAdd",
             returnType: valueType, parameters: [(name: "delta", type: valueType)],
+            typeParameterSymbols: typeParameterSymbols,
+            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
         // addAndFetch(delta: T) -> T
@@ -804,6 +806,8 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "addAndFetch", externalLinkName: "\(prefix)_addAndFetch",
             returnType: valueType, parameters: [(name: "delta", type: valueType)],
+            typeParameterSymbols: typeParameterSymbols,
+            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
         // fetchAndIncrement() -> T
@@ -811,6 +815,8 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "fetchAndIncrement", externalLinkName: "\(prefix)_fetchAndIncrement",
             returnType: valueType, parameters: [],
+            typeParameterSymbols: typeParameterSymbols,
+            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
         // incrementAndFetch() -> T
@@ -818,6 +824,8 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "incrementAndFetch", externalLinkName: "\(prefix)_incrementAndFetch",
             returnType: valueType, parameters: [],
+            typeParameterSymbols: typeParameterSymbols,
+            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
         // decrementAndFetch() -> T
@@ -825,6 +833,8 @@ extension DataFlowSemaPhase {
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "decrementAndFetch", externalLinkName: "\(prefix)_decrementAndFetch",
             returnType: valueType, parameters: [],
+            typeParameterSymbols: typeParameterSymbols,
+            classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
     }
@@ -863,6 +873,97 @@ extension DataFlowSemaPhase {
             typeParameterSymbols: typeParameterSymbols,
             classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
+        )
+    }
+
+    private func registerAtomicReferenceStubs(
+        ownerPackage: [InternedString],
+        ownerPackageSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        externalLinkPrefix: String
+    ) {
+        let atomicRefSymbol = ensureClassSymbol(
+            named: "AtomicReference",
+            in: ownerPackage,
+            symbols: symbols,
+            interner: interner
+        )
+        if ownerPackageSymbol != .invalid {
+            symbols.setParentSymbol(ownerPackageSymbol, for: atomicRefSymbol)
+        }
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = ownerPackage + [interner.intern("AtomicReference"), typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let atomicRefType = types.make(.classType(ClassType(
+            classSymbol: atomicRefSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: atomicRefSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: atomicRefSymbol)
+        symbols.setPropertyType(atomicRefType, for: atomicRefSymbol)
+
+        registerAtomicConstructor(
+            ownerSymbol: atomicRefSymbol,
+            ownerType: atomicRefType,
+            externalLinkName: "\(externalLinkPrefix)_create",
+            paramType: typeParamType,
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicValueProperty(
+            ownerSymbol: atomicRefSymbol,
+            ownerType: atomicRefType,
+            valueType: typeParamType,
+            getterLinkName: "\(externalLinkPrefix)_load",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicCoreMethods(
+            ownerSymbol: atomicRefSymbol,
+            ownerType: atomicRefType,
+            valueType: typeParamType,
+            boolType: types.make(.primitive(.boolean, .nonNull)),
+            unitType: types.unitType,
+            prefix: externalLinkPrefix,
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerAtomicGetAndUpdateMethods(
+            ownerSymbol: atomicRefSymbol,
+            ownerType: atomicRefType,
+            valueType: typeParamType,
+            prefix: externalLinkPrefix,
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner,
+            types: types
         )
     }
 
@@ -951,5 +1052,34 @@ extension DataFlowSemaPhase {
             }
         }
         return fqName
+    }
+
+    private func registerSyntheticAnnotationClass(
+        named name: String,
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let className = interner.intern(name)
+        let classFQName = packageFQName + [className]
+        if let existing = symbols.lookup(fqName: classFQName) {
+            if packageSymbol != .invalid {
+                symbols.setParentSymbol(packageSymbol, for: existing)
+            }
+            return
+        }
+
+        let classSymbol = symbols.define(
+            kind: .annotationClass,
+            name: className,
+            fqName: classFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if packageSymbol != .invalid {
+            symbols.setParentSymbol(packageSymbol, for: classSymbol)
+        }
     }
 }

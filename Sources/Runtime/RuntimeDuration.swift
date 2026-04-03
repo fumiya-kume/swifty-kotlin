@@ -160,25 +160,6 @@ public func kk_duration_inWholeHours(_ durationRaw: Int) -> Int {
     return Int(box.nanoseconds / Int64(3_600_000_000_000))
 }
 
-/// Format a fractional value with up to 3 decimal places, trimming trailing zeros.
-/// E.g. formatFractional(1, 500_000_000, 1_000_000_000) → "1.5"
-///      formatFractional(1, 1_000_000, 1_000_000_000) → "1.001"
-///      formatFractional(1, 0, 1_000_000_000) → "1"
-private func formatFractional(_ whole: Int64, _ remainder: Int64, _ divisor: Int64) -> String {
-    if remainder == 0 {
-        return "\(whole)"
-    }
-    // Scale remainder to get up to 3 decimal digits
-    let millis = remainder * 1000 / divisor
-    if millis % 100 == 0 {
-        return "\(whole).\(millis / 100)"
-    } else if millis % 10 == 0 {
-        return "\(whole).\(String(format: "%02d", millis / 10))"
-    } else {
-        return "\(whole).\(String(format: "%03d", millis))"
-    }
-}
-
 @_cdecl("kk_duration_toString")
 public func kk_duration_toString(_ durationRaw: Int) -> Int {
     guard let box = runtimeDurationBox(from: durationRaw) else {
@@ -192,62 +173,17 @@ public func kk_duration_toString(_ durationRaw: Int) -> Int {
     } else {
         let isNegative = ns < 0
         let absNs = isNegative ? (ns == Int64.min ? Int64.max : -ns) : ns
-
-        if absNs < 1_000 {
-            // Nanosecond range: 1ns..999ns
-            str = isNegative ? "-\(absNs)ns" : "\(absNs)ns"
-        } else if absNs < 1_000_000 {
-            // Microsecond range: 1us..999.999us
-            let wholeUs = absNs / 1_000
-            let remainderNs = absNs % 1_000
-            let formatted = formatFractional(wholeUs, remainderNs, 1_000)
-            str = isNegative ? "-\(formatted)us" : "\(formatted)us"
-        } else if absNs < 1_000_000_000 {
-            // Millisecond range: 1ms..999.999ms
-            let wholeMs = absNs / 1_000_000
-            let remainderNs = absNs % 1_000_000
-            let formatted = formatFractional(wholeMs, remainderNs, 1_000_000)
-            str = isNegative ? "-\(formatted)ms" : "\(formatted)ms"
+        if absNs % 1_000_000_000 == 0 {
+            let seconds = absNs / 1_000_000_000
+            str = isNegative ? "-\(seconds)s" : "\(seconds)s"
+        } else if absNs % 1_000_000 == 0 {
+            let milliseconds = absNs / 1_000_000
+            str = isNegative ? "-\(milliseconds)ms" : "\(milliseconds)ms"
+        } else if absNs % 1_000 == 0 {
+            let microseconds = absNs / 1_000
+            str = isNegative ? "-\(microseconds)us" : "\(microseconds)us"
         } else {
-            // Seconds and above: decompose into h, m, s components
-            let totalSeconds = absNs / 1_000_000_000
-            let remainderNs = absNs % 1_000_000_000
-
-            let hours = totalSeconds / 3600
-            let minutes = (totalSeconds % 3600) / 60
-            let seconds = totalSeconds % 60
-
-            var parts: [String] = []
-            if hours > 0 {
-                parts.append("\(hours)h")
-            }
-            if minutes > 0 {
-                parts.append("\(minutes)m")
-            }
-            if seconds > 0 || remainderNs > 0 {
-                if remainderNs > 0 {
-                    // Fractional seconds: up to 3 decimal places from the
-                    // sub-second nanosecond remainder.
-                    let formatted = formatFractional(seconds, remainderNs, 1_000_000_000)
-                    parts.append("\(formatted)s")
-                } else {
-                    parts.append("\(seconds)s")
-                }
-            } else if parts.isEmpty {
-                // Should not happen if absNs >= 1_000_000_000, but safety
-                parts.append("0s")
-            }
-
-            let body = parts.joined(separator: " ")
-            if isNegative {
-                if parts.count > 1 {
-                    str = "-(\(body))"
-                } else {
-                    str = "-\(body)"
-                }
-            } else {
-                str = body
-            }
+            str = isNegative ? "-\(absNs)ns" : "\(absNs)ns"
         }
     }
     return Int(bitPattern: str.withCString { cstr in

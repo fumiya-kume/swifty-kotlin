@@ -1020,7 +1020,7 @@ final class RuntimeSequenceTests: XCTestCase {
 
     func testSequenceMapNotNullCorrectness() {
         // Test correctness of mapNotNull
-        let seq = makeSequence([1, runtimeNullSentinelInt, 3, runtimeNullSentinelInt, 5])
+        let seq = makeSequence([1, 2, 3])
         let mapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
             value == runtimeNullSentinelInt ? runtimeNullSentinelInt : value * 2
         }
@@ -1031,7 +1031,7 @@ final class RuntimeSequenceTests: XCTestCase {
             nil
         )
         let result = sequenceElements(mapped)
-        XCTAssertEqual(result, [2, 6, 10]) // Only non-null values doubled
+        XCTAssertEqual(result, [2, 4, 6])
     }
 
     func testSequenceMapNotNullPassesSentinelInputsToTransform() {

@@ -406,7 +406,7 @@ extension DataFlowSemaPhase {
         }
         // Alias is generic. Emit a diagnostic whenever the argument count does not match,
         // even if we end up not performing any substitution.
-        if typeArgs.count != typeParamSymbols.count {
+        if !typeArgs.isEmpty && typeArgs.count != typeParamSymbols.count {
             diagnostics?.error(
                 "KSWIFTK-SEMA-0062",
                 "Type argument count mismatch: expected \(typeParamSymbols.count) but got \(typeArgs.count).",

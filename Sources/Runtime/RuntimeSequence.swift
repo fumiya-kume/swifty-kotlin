@@ -155,14 +155,25 @@ private func runtimeSequenceTransformElement(
             state.stop = true
             return
         }
-        state.takeCounts[stepIndex] = emitted + 1
         runtimeSequenceTransformElement(
             element,
             steps: steps,
             stepIndex: stepIndex + 1,
             state: state,
             outThrown: outThrown,
-            yield: yield
+            yield: { value in
+                let currentCount = state.takeCounts[stepIndex, default: 0]
+                if currentCount >= count {
+                    state.stop = true
+                    return false
+                }
+                state.takeCounts[stepIndex] = currentCount + 1
+                let shouldContinue = yield(value)
+                if state.takeCounts[stepIndex, default: 0] >= count {
+                    state.stop = true
+                }
+                return shouldContinue && !state.stop
+            }
         )
     case let .dropStep(count):
         let skipped = state.dropCounts[stepIndex, default: 0]

@@ -68,6 +68,8 @@ public enum LazyDelegateThreadSafetyMode: Int, Equatable {
     case synchronized = 1
     /// `LazyThreadSafetyMode.NONE` – no synchronization.
     case none = 0
+    /// `LazyThreadSafetyMode.PUBLICATION` – concurrent initializers may race, but only one result is published.
+    case publication = 2
 }
 
 /// Format for diagnostic output.
@@ -151,7 +153,7 @@ public struct CompilerOptions: Equatable {
     }
 
     /// Thread-safety mode for `by lazy { }` delegates, parsed from
-    /// `-Xfrontend lazy-thread-safety=SYNCHRONIZED|NONE`.
+    /// `-Xfrontend lazy-thread-safety=SYNCHRONIZED|PUBLICATION|NONE`.
     /// Defaults to `.synchronized` when the flag is absent.
     public var lazyThreadSafetyMode: LazyDelegateThreadSafetyMode {
         for flag in frontendFlags where flag.hasPrefix("lazy-thread-safety=") {
@@ -162,6 +164,8 @@ public struct CompilerOptions: Equatable {
                 return .none
             case "SYNCHRONIZED":
                 return .synchronized
+            case "PUBLICATION":
+                return .publication
             default:
                 return .synchronized
             }

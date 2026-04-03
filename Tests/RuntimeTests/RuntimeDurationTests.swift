@@ -729,7 +729,8 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
             }
         }
         
-        // Allow some non-monotonic behavior due to system timer resolution
+        // Allow some non-monotonic behavior due to system timer resolution and
+        // scheduler noise on loaded CI hosts.
         let toleranceRatio = Double(nonMonotonicCount) / Double(timestamps.count)
         XCTAssertLessThan(toleranceRatio, 0.35, "Less than 35% of measurements should be non-monotonic")
         

@@ -189,23 +189,42 @@ public final class MetadataEncoder {
             if symbol.kind == .property || symbol.kind == .field,
                symbols.propertyType(for: symbol.id) != nil
             {
-                typeSignature = mangler.mangledSignature(
-                    for: symbol,
-                    symbols: symbols,
-                    types: types,
-                    nameResolver: { interner.resolve($0) }
-                )
+                typeSignature = symbols.propertyType(for: symbol.id).map { propertyType in
+                    metadataTypeSignature(
+                        propertyType,
+                        symbols: symbols,
+                        types: types,
+                        mangler: mangler,
+                        nameResolver: { interner.resolve($0) }
+                    )
+                }
             }
 
             if symbol.kind == .typeAlias,
                symbols.typeAliasUnderlyingType(for: symbol.id) != nil
             {
+                typeSignature = symbols.typeAliasUnderlyingType(for: symbol.id).map { underlyingType in
+                    metadataTypeSignature(
+                        underlyingType,
+                        symbols: symbols,
+                        types: types,
+                        mangler: mangler,
+                        nameResolver: { interner.resolve($0) }
+                    )
+                }
+            }
+
+            if symbol.kind == .function || symbol.kind == .constructor, let signature = symbols.functionSignature(for: symbol.id) {
+                arity = signature.parameterTypes.count
+                isSuspend = signature.isSuspend
+                isInline = symbol.flags.contains(.inlineFunction)
                 typeSignature = mangler.mangledSignature(
                     for: symbol,
                     symbols: symbols,
                     types: types,
                     nameResolver: { interner.resolve($0) }
                 )
+                externalLinkName = functionLinkNames[symbol.id]
             }
 
             var declaredFieldCount: Int?
@@ -313,6 +332,182 @@ public final class MetadataEncoder {
             ))
         }
         return records
+    }
+
+    private func metadataTypeSignature(
+        _ type: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        mangler: NameMangler,
+        nameResolver: ((InternedString) -> String)?
+    ) -> String {
+        let expandedType = expandMetadataTypeAliases(
+            in: type,
+            symbols: symbols,
+            types: types
+        )
+        return mangler.encodeType(
+            expandedType,
+            symbols: symbols,
+            types: types,
+            nameResolver: nameResolver
+        )
+    }
+
+    private func expandMetadataTypeAliases(
+        in type: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        seenAliases: Set<SymbolID> = []
+    ) -> TypeID {
+        switch types.kind(of: type) {
+        case let .classType(classType):
+            guard let symbol = symbols.symbol(classType.classSymbol),
+                  symbol.kind == .typeAlias,
+                  !seenAliases.contains(classType.classSymbol),
+                  let underlying = symbols.typeAliasUnderlyingType(for: classType.classSymbol)
+            else {
+                let expandedArgs = classType.args.map {
+                    expandMetadataTypeAliasArg($0, symbols: symbols, types: types, seenAliases: seenAliases)
+                }
+                if expandedArgs == classType.args {
+                    return type
+                }
+                return types.make(.classType(ClassType(
+                    classSymbol: classType.classSymbol,
+                    args: expandedArgs,
+                    nullability: classType.nullability
+                )))
+            }
+
+            let aliasTypeParams = symbols.typeAliasTypeParameters(for: classType.classSymbol)
+            let typeVarBySymbol = types.makeTypeVarBySymbol(aliasTypeParams)
+            var substitution: [TypeVarID: TypeID] = [:]
+            for (index, typeParamSymbol) in aliasTypeParams.enumerated() {
+                guard index < classType.args.count,
+                      let typeVar = typeVarBySymbol[typeParamSymbol]
+                else {
+                    continue
+                }
+                substitution[typeVar] = expandMetadataTypeAliasValue(
+                    classType.args[index],
+                    symbols: symbols,
+                    types: types,
+                    seenAliases: seenAliases
+                )
+            }
+
+            let substituted = types.substituteTypeParameters(
+                in: underlying,
+                substitution: substitution,
+                typeVarBySymbol: typeVarBySymbol
+            )
+            let expandedUnderlying = expandMetadataTypeAliases(
+                in: substituted,
+                symbols: symbols,
+                types: types,
+                seenAliases: seenAliases.union([classType.classSymbol])
+            )
+            if classType.nullability == .nullable {
+                return types.makeNullable(expandedUnderlying)
+            }
+            return expandedUnderlying
+
+        case let .functionType(functionType):
+            let newContextReceivers = functionType.contextReceivers.map {
+                expandMetadataTypeAliases(in: $0, symbols: symbols, types: types, seenAliases: seenAliases)
+            }
+            let newReceiver = functionType.receiver.map {
+                expandMetadataTypeAliases(in: $0, symbols: symbols, types: types, seenAliases: seenAliases)
+            }
+            let newParams = functionType.params.map {
+                expandMetadataTypeAliases(in: $0, symbols: symbols, types: types, seenAliases: seenAliases)
+            }
+            let newReturn = expandMetadataTypeAliases(
+                in: functionType.returnType,
+                symbols: symbols,
+                types: types,
+                seenAliases: seenAliases
+            )
+            if newContextReceivers == functionType.contextReceivers,
+               newReceiver == functionType.receiver,
+               newParams == functionType.params,
+               newReturn == functionType.returnType
+            {
+                return type
+            }
+            return types.make(.functionType(FunctionType(
+                contextReceivers: newContextReceivers,
+                receiver: newReceiver,
+                params: newParams,
+                returnType: newReturn,
+                isSuspend: functionType.isSuspend,
+                nullability: functionType.nullability
+            )))
+
+        case let .intersection(parts):
+            let expandedParts = parts.map {
+                expandMetadataTypeAliases(in: $0, symbols: symbols, types: types, seenAliases: seenAliases)
+            }
+            if expandedParts == parts {
+                return type
+            }
+            return types.make(.intersection(expandedParts))
+
+        case let .kClassType(kClassType):
+            let expandedArgument = expandMetadataTypeAliases(
+                in: kClassType.argument,
+                symbols: symbols,
+                types: types,
+                seenAliases: seenAliases
+            )
+            if expandedArgument == kClassType.argument {
+                return type
+            }
+            return types.make(.kClassType(KClassType(
+                argument: expandedArgument,
+                nullability: kClassType.nullability
+            )))
+
+        case .typeParam, .primitive, .any, .unit, .nothing, .error:
+            return type
+        }
+    }
+
+    private func expandMetadataTypeAliasArg(
+        _ arg: TypeArg,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        seenAliases: Set<SymbolID>
+    ) -> TypeArg {
+        switch arg {
+        case let .invariant(inner):
+            .invariant(expandMetadataTypeAliases(in: inner, symbols: symbols, types: types, seenAliases: seenAliases))
+        case let .out(inner):
+            .out(expandMetadataTypeAliases(in: inner, symbols: symbols, types: types, seenAliases: seenAliases))
+        case let .in(inner):
+            .in(expandMetadataTypeAliases(in: inner, symbols: symbols, types: types, seenAliases: seenAliases))
+        case .star:
+            .star
+        }
+    }
+
+    private func expandMetadataTypeAliasValue(
+        _ arg: TypeArg,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        seenAliases: Set<SymbolID>
+    ) -> TypeID {
+        switch arg {
+        case let .invariant(inner):
+            expandMetadataTypeAliases(in: inner, symbols: symbols, types: types, seenAliases: seenAliases)
+        case let .out(inner):
+            expandMetadataTypeAliases(in: inner, symbols: symbols, types: types, seenAliases: seenAliases)
+        case let .in(inner):
+            expandMetadataTypeAliases(in: inner, symbols: symbols, types: types, seenAliases: seenAliases)
+        case .star:
+            types.nullableAnyType
+        }
     }
 
     /// Nominal kinds that carry layout information in metadata.

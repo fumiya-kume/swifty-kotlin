@@ -3732,6 +3732,7 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     // to kk_with_context_full which handles context element propagation.
     if !isDispatcherTag(dispatcherRaw), dispatcherRaw != 0,
        let ptr = UnsafeMutableRawPointer(bitPattern: dispatcherRaw),
+       runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
        tryCast(ptr, to: RuntimeCoroutineContext.self) != nil
     {
         return kk_with_context_full(dispatcherRaw, blockFnPtr, continuation)
@@ -3745,14 +3746,13 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     default:
         RuntimeDispatcherTag.defaultDispatcher
     }
+    let dispatcher = runtimeResolveDispatcher(from: resolvedDispatcher)
 
     guard suspendEntryPoint(from: blockFnPtr) != nil else {
         // Clean up the continuation to avoid leaking coroutine state.
         _ = kk_coroutine_state_exit(continuation, 0)
         return 0
     }
-
-    let queue = dispatchQueue(for: resolvedDispatcher)
 
     // Capture the current coroutine scope so child launches inside the block
     // are registered with the correct scope on the target queue's thread.
@@ -3774,10 +3774,13 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     // even calls from a background thread targeting the main queue would hang.
     // We therefore execute inline whenever we are already on the target queue
     // (main-thread case) to avoid the deadlock.
-    if queue === DispatchQueue.main && Thread.isMainThread {
+    if dispatcher.tag == RuntimeDispatcherTag.mainDispatcher && Thread.isMainThread {
         let savedScope = RuntimeCoroutineScope.current
+        let savedDispatcher = RuntimeDispatcher.current
         defer { RuntimeCoroutineScope.current = savedScope }
+        defer { RuntimeDispatcher.current = savedDispatcher }
         RuntimeCoroutineScope.current = parentScope
+        RuntimeDispatcher.current = dispatcher
         return runSuspendEntryLoopWithContinuation(
             entryPointRaw: blockFnPtr,
             continuation: continuation
@@ -3790,7 +3793,7 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     let semaphore = DispatchSemaphore(value: 0)
     let resultBox = WithContextResultBox()
 
-    queue.async {
+    dispatcher.dispatchAsync {
         // Propagate the coroutine scope to the target thread.
         let savedScope = RuntimeCoroutineScope.current
         RuntimeCoroutineScope.current = parentScope

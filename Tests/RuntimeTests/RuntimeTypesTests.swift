@@ -94,9 +94,14 @@ final class RuntimeTypesTests: XCTestCase {
         XCTAssertEqual(LazyThreadSafetyMode.none.rawValue, 0)
     }
 
+    func testLazyThreadSafetyModePublicationRawValueIsTwo() {
+        XCTAssertEqual(LazyThreadSafetyMode.publication.rawValue, 2)
+    }
+
     func testLazyThreadSafetyModeInitFromRawValue() {
         XCTAssertEqual(LazyThreadSafetyMode(rawValue: 1), .synchronized)
         XCTAssertEqual(LazyThreadSafetyMode(rawValue: 0), LazyThreadSafetyMode.none)
+        XCTAssertEqual(LazyThreadSafetyMode(rawValue: 2), .publication)
     }
 
     // MARK: - RuntimeObservableBox

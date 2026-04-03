@@ -300,9 +300,9 @@ extension OverloadResolverTests {
             args: [CallArg(type: intType)]
         )
         let resolved = resolver.resolveCall(candidates: [genericFn, concreteFn], call: call, expectedType: nil, ctx: ctx)
-        // The current tie-break prefers the candidate with fewer own type parameters.
         XCTAssertEqual(resolved.chosenCallee, concreteFn)
         XCTAssertNil(resolved.diagnostic)
+        XCTAssertEqual(resolved.substitutedTypeArguments.count, 0)
     }
 
     /// Most specific selection with incompatible parameter counts yields no winner.
