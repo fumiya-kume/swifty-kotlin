@@ -18,8 +18,9 @@ fun main() = runBlocking {
     println(buffered.receive())
     println(buffered.receive())
 
+    val x = 99
     val produced = produce {
-        send(99)
+        send(x)
     }
     println(produced.receive())
 }

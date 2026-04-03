@@ -2125,6 +2125,7 @@ public enum RuntimeABISpec {
             name: "kk_produce",
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
+                RuntimeABIParameter(name: "capture0", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"

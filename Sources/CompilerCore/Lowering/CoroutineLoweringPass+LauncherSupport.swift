@@ -146,6 +146,7 @@ extension CoroutineLoweringPass {
             return nil
         }
         let produceCallee = rewrite.ctx.interner.intern("produce")
+        let runtimeProduceCallee = rewrite.ctx.interner.intern("kk_produce")
 
         guard call.arguments.count >= 1 else {
             rewrite.ctx.diagnostics.error(
@@ -241,7 +242,7 @@ extension CoroutineLoweringPass {
 
         let targetArity = rewrite.suspendFunctionArityBySymbol[referencedSymbol] ?? 0
         let extraArgs = Array(call.arguments.dropFirst())
-        if call.callee == produceCallee {
+        if call.callee == produceCallee || call.callee == runtimeProduceCallee {
             let expectedExtraArgs = max(0, targetArity - 1)
             guard extraArgs.count == expectedExtraArgs else {
                 rewrite.ctx.diagnostics.error(
