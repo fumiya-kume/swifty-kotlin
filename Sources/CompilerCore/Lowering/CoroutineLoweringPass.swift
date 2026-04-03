@@ -16,6 +16,7 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("runBlocking"),
             ctx.interner.intern("launch"),
             ctx.interner.intern("async"),
+            ctx.interner.intern("createCoroutineUnintercepted"),
             ctx.interner.intern("withContext"),
             ctx.interner.intern("withTimeout"),
             ctx.interner.intern("withTimeoutOrNull"),
@@ -87,6 +88,7 @@ final class CoroutineLoweringPass: LoweringPass {
         let kxMiniSupervisorScopeCallee = ctx.interner.intern("supervisorScope")
         let kxMiniDelayCallee = ctx.interner.intern("delay")
         let kxMiniYieldCallee = ctx.interner.intern("yield")
+        let createCoroutineUninterceptedCallee = ctx.interner.intern("createCoroutineUnintercepted")
         let runtimeRunBlockingCallee = ctx.interner.intern("kk_kxmini_run_blocking")
         let runtimeLaunchCallee = ctx.interner.intern("kk_kxmini_launch")
         let runtimeAsyncCallee = ctx.interner.intern("kk_kxmini_async")
@@ -259,6 +261,7 @@ final class CoroutineLoweringPass: LoweringPass {
         }
         let continuationFactory = ctx.interner.intern("kk_coroutine_continuation_new")
         let launcherArgSetCallee = ctx.interner.intern("kk_coroutine_launcher_arg_set")
+        let stateSetCompletionCallee = ctx.interner.intern("kk_coroutine_state_set_completion")
         let runtimeRunBlockingWithContCallee = ctx.interner.intern("kk_kxmini_run_blocking_with_cont")
         let kxMiniLauncherWithContCallees: [InternedString: InternedString] = [
             kxMiniRunBlockingCallee: ctx.interner.intern("kk_kxmini_run_blocking_with_cont"),
@@ -282,6 +285,8 @@ final class CoroutineLoweringPass: LoweringPass {
             runtimeWithTimeoutOrNullCallee: runtimeWithTimeoutOrNullCallee,
             yieldCallee: kxMiniYieldCallee,
             runtimeYieldCallee: runtimeYieldCallee,
+            createCoroutineUninterceptedCallee: createCoroutineUninterceptedCallee,
+            stateSetCompletionCallee: stateSetCompletionCallee,
             continuationFactory: continuationFactory,
             launcherArgSetCallee: launcherArgSetCallee,
             runtimeRunBlockingWithContCallee: runtimeRunBlockingWithContCallee,

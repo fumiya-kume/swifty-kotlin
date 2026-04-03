@@ -18,6 +18,8 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // Build the synthetic package tree explicitly so the coroutine stubs
+        // stay stable across incremental rebuilds.
         let kotlinCoroutinesPkg = ensureSyntheticPackage(
             kotlinPkg + [interner.intern("coroutines")],
             symbols: symbols,
@@ -220,6 +222,11 @@ extension DataFlowSemaPhase {
             ))))],
             nullability: .nonNull
         )))
+        let continuationOfUnitType = types.make(.classType(ClassType(
+            classSymbol: continuationSymbol,
+            args: [.in(types.unitType)],
+            nullability: .nonNull
+        )))
         let continuationInterceptorType = types.make(.classType(ClassType(
             classSymbol: continuationInterceptorSymbol,
             args: [],
@@ -248,11 +255,32 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([exceptionSymbol], for: cancellationSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: rootCancellationSymbol)
         types.setNominalTypeParameterSymbols([continuationTypeParameterSymbol], for: continuationSymbol)
-        types.setNominalTypeParameterVariances([.invariant], for: continuationSymbol)
+        types.setNominalTypeParameterVariances([.in], for: continuationSymbol)
         symbols.setDirectSupertypes([flowInterfaceSymbol], for: sharedFlowSymbol)
         symbols.setDirectSupertypes([sharedFlowSymbol], for: stateFlowSymbol)
         symbols.setDirectSupertypes([sharedFlowSymbol], for: mutableSharedFlowSymbol)
         symbols.setDirectSupertypes([stateFlowSymbol, mutableSharedFlowSymbol], for: mutableStateFlowSymbol)
+
+        registerSyntheticCoroutineMember(
+            ownerSymbol: flowInterfaceSymbol,
+            ownerType: flowRawType,
+            name: "onErrorReturn",
+            externalLinkName: "",
+            returnType: flowRawType,
+            parameters: [(name: "fallback", type: types.anyType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: flowInterfaceSymbol,
+            ownerType: flowRawType,
+            name: "onErrorResume",
+            externalLinkName: "",
+            returnType: flowRawType,
+            parameters: [(name: "fallback", type: flowRawType)],
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticCoroutineTopLevelFunction(
             named: "runBlocking",
@@ -308,6 +336,68 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_continuation_intercepted",
             typeParameterSymbols: [continuationTypeParameterSymbol],
             classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+        let createCoroutineReceiverTypeParameterName = interner.intern("R")
+        let createCoroutineReceiverTypeParameterSymbol = symbols.define(
+            kind: .typeParameter,
+            name: createCoroutineReceiverTypeParameterName,
+            fqName: kotlinCoroutinesIntrinsicsPkg + [interner.intern("createCoroutineUnintercepted"), interner.intern("$synthetic"), createCoroutineReceiverTypeParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let createCoroutineReceiverTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: createCoroutineReceiverTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let createCoroutineTypeParameterName = interner.intern("T")
+        let createCoroutineTypeParameterSymbol = symbols.define(
+            kind: .typeParameter,
+            name: createCoroutineTypeParameterName,
+            fqName: kotlinCoroutinesIntrinsicsPkg + [interner.intern("createCoroutineUnintercepted"), interner.intern("$synthetic"), createCoroutineTypeParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let createCoroutineTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: createCoroutineTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let createCoroutineNoReceiverFunctionType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: createCoroutineTypeParameterType,
+            isSuspend: true,
+            nullability: .nonNull
+        )))
+        let createCoroutineWithReceiverFunctionType = types.make(.functionType(FunctionType(
+            receiver: createCoroutineReceiverTypeParameterType,
+            params: [],
+            returnType: createCoroutineTypeParameterType,
+            isSuspend: true,
+            nullability: .nonNull
+        )))
+        registerSyntheticCoroutineExtensionFunction(
+            named: "createCoroutineUnintercepted",
+            packageFQName: kotlinCoroutinesIntrinsicsPkg,
+            receiverType: createCoroutineNoReceiverFunctionType,
+            parameters: [(name: "completion", type: continuationType)],
+            returnType: continuationOfUnitType,
+            typeParameterSymbols: [createCoroutineTypeParameterSymbol],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineExtensionFunction(
+            named: "createCoroutineUnintercepted",
+            packageFQName: kotlinCoroutinesIntrinsicsPkg,
+            receiverType: createCoroutineWithReceiverFunctionType,
+            parameters: [
+                (name: "receiver", type: createCoroutineReceiverTypeParameterType),
+                (name: "completion", type: continuationType),
+            ],
+            returnType: continuationOfUnitType,
+            typeParameterSymbols: [createCoroutineReceiverTypeParameterSymbol, createCoroutineTypeParameterSymbol],
             symbols: symbols,
             interner: interner
         )

@@ -15,6 +15,11 @@ private enum RuntimeFlowTag: Int {
     case take = 3
     case onEach = 4
     case distinctUntilChanged = 5
+    case catchHandler = 6
+    case retry = 7
+    case retryWhen = 8
+    case onErrorReturn = 9
+    case onErrorResume = 10
 }
 
 private final class RuntimeFlowTestState: @unchecked Sendable {
@@ -72,6 +77,65 @@ private final class RuntimeFlowTestState: @unchecked Sendable {
 }
 
 private let runtimeFlowTestState = RuntimeFlowTestState()
+
+private final class RuntimeFlowErrorTestState: @unchecked Sendable {
+    private let lock = NSLock()
+    private var catchCallCount = 0
+    private var retryEmitterInvocationCount = 0
+    private var alwaysFailEmitterInvocationCount = 0
+    private var retryWhenAttempts: [Int] = []
+
+    func reset() {
+        lock.lock()
+        catchCallCount = 0
+        retryEmitterInvocationCount = 0
+        alwaysFailEmitterInvocationCount = 0
+        retryWhenAttempts.removeAll(keepingCapacity: true)
+        lock.unlock()
+    }
+
+    func recordCatchCall() {
+        lock.lock()
+        catchCallCount += 1
+        lock.unlock()
+    }
+
+    func recordRetryEmitterInvocation() -> Int {
+        lock.lock()
+        retryEmitterInvocationCount += 1
+        let value = retryEmitterInvocationCount
+        lock.unlock()
+        return value
+    }
+
+    func recordAlwaysFailEmitterInvocation() -> Int {
+        lock.lock()
+        alwaysFailEmitterInvocationCount += 1
+        let value = alwaysFailEmitterInvocationCount
+        lock.unlock()
+        return value
+    }
+
+    func recordRetryWhenAttempt(_ attempt: Int) {
+        lock.lock()
+        retryWhenAttempts.append(attempt)
+        lock.unlock()
+    }
+
+    func snapshot() -> (catchCalls: Int, retryEmitterInvocations: Int, alwaysFailEmitterInvocations: Int, retryWhenAttempts: [Int]) {
+        lock.lock()
+        let snapshot = (
+            catchCalls: catchCallCount,
+            retryEmitterInvocations: retryEmitterInvocationCount,
+            alwaysFailEmitterInvocations: alwaysFailEmitterInvocationCount,
+            retryWhenAttempts: retryWhenAttempts
+        )
+        lock.unlock()
+        return snapshot
+    }
+}
+
+private let runtimeFlowErrorTestState = RuntimeFlowErrorTestState()
 
 @_cdecl("runtime_test_flow_emitter_values_1_2_3_4")
 func runtime_test_flow_emitter_values_1_2_3_4(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
@@ -151,9 +215,57 @@ func runtime_test_flow_filter_reject_all(_: Int, _ value: Int, _ outThrown: Unsa
     return 0
 }
 
+@_cdecl("runtime_test_flow_catch_record")
+func runtime_test_flow_catch_record(_: Int, _: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeFlowErrorTestState.recordCatchCall()
+    outThrown?.pointee = 0
+    return 0
+}
+
+@_cdecl("runtime_test_flow_retry_emitter_fail_once")
+func runtime_test_flow_retry_emitter_fail_once(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    let invocation = runtimeFlowErrorTestState.recordRetryEmitterInvocation()
+    runtimeFlowTestState.recordEmitCall()
+    _ = kk_flow_emit(0, 1, RuntimeFlowTag.emit.rawValue)
+    if invocation == 1 {
+        outThrown?.pointee = 901
+        return 0
+    }
+    runtimeFlowTestState.recordEmitCall()
+    _ = kk_flow_emit(0, 2, RuntimeFlowTag.emit.rawValue)
+    outThrown?.pointee = 0
+    return 0
+}
+
+@_cdecl("runtime_test_flow_retry_emitter_always_fail")
+func runtime_test_flow_retry_emitter_always_fail(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = runtimeFlowErrorTestState.recordAlwaysFailEmitterInvocation()
+    runtimeFlowTestState.recordEmitCall()
+    _ = kk_flow_emit(0, 7, RuntimeFlowTag.emit.rawValue)
+    outThrown?.pointee = 902
+    return 0
+}
+
+@_cdecl("runtime_test_flow_retry_when_allow_once")
+func runtime_test_flow_retry_when_allow_once(_: Int, _ failure: Int, _ attempt: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = failure
+    runtimeFlowErrorTestState.recordRetryWhenAttempt(attempt)
+    outThrown?.pointee = 0
+    return attempt < 1 ? 1 : 0
+}
+
+@_cdecl("runtime_test_flow_emitter_fail_for_fallback")
+func runtime_test_flow_emitter_fail_for_fallback(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeFlowTestState.recordEmitCall()
+    _ = kk_flow_emit(0, 5, RuntimeFlowTag.emit.rawValue)
+    outThrown?.pointee = 903
+    return 0
+}
+
 final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
     override func resetIsolatedRuntimeTestState() {
         runtimeFlowTestState.reset()
+        runtimeFlowErrorTestState.reset()
     }
 
     func testChainedTakeAppliesAllTakeStepsAndResetsPerCollect() {
@@ -554,6 +666,80 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
 
         let stateHandle = kk_flow_state_in(coldFlow, 0)
         XCTAssertEqual(kk_state_flow_value(stateHandle), 3)
+    }
+
+    func testCatchConsumesUpstreamFailure() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
+        let mapPtr = unsafeBitCast(runtime_test_flow_map_throw_on_two as RuntimeFlowUnaryEntry, to: Int.self)
+        let catchPtr = unsafeBitCast(runtime_test_flow_catch_record as RuntimeFlowUnaryEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let mapped = kk_flow_emit(flowHandle, mapPtr, RuntimeFlowTag.map.rawValue)
+        let caught = kk_flow_emit(mapped, catchPtr, RuntimeFlowTag.catchHandler.rawValue)
+
+        _ = kk_flow_collect(caught, collectorPtr, 0)
+
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [1])
+        XCTAssertEqual(runtimeFlowErrorTestState.snapshot().catchCalls, 1)
+    }
+
+    func testRetryRetriesUpstreamAndEventuallySucceeds() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_retry_emitter_fail_once as RuntimeFlowEmitterEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let retried = kk_flow_emit(flowHandle, 1, RuntimeFlowTag.retry.rawValue)
+
+        _ = kk_flow_collect(retried, collectorPtr, 0)
+
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [1, 1, 2])
+        XCTAssertEqual(runtimeFlowErrorTestState.snapshot().retryEmitterInvocations, 2)
+    }
+
+    func testRetryWhenStopsWhenPredicateReturnsFalse() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_retry_emitter_always_fail as RuntimeFlowEmitterEntry, to: Int.self)
+        let retryWhenPtr = unsafeBitCast(runtime_test_flow_retry_when_allow_once as @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let retried = kk_flow_emit(flowHandle, retryWhenPtr, RuntimeFlowTag.retryWhen.rawValue)
+
+        _ = kk_flow_collect(retried, collectorPtr, 0)
+
+        let errorSnapshot = runtimeFlowErrorTestState.snapshot()
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [7, 7])
+        XCTAssertEqual(errorSnapshot.alwaysFailEmitterInvocations, 2)
+        XCTAssertEqual(errorSnapshot.retryWhenAttempts, [0, 1])
+    }
+
+    func testOnErrorReturnEmitsFallbackValue() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_fail_for_fallback as RuntimeFlowEmitterEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let recovered = kk_flow_emit(flowHandle, 99, RuntimeFlowTag.onErrorReturn.rawValue)
+
+        _ = kk_flow_collect(recovered, collectorPtr, 0)
+
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [5, 99])
+    }
+
+    func testOnErrorResumeSwitchesToFallbackFlow() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_fail_for_fallback as RuntimeFlowEmitterEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let arrayHandle = kk_array_new(2)
+        kk_array_set(arrayHandle, 0, 42, nil)
+        kk_array_set(arrayHandle, 1, 43, nil)
+        let fallbackFlow = kk_flow_of(arrayHandle, 2)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let resumed = kk_flow_emit(flowHandle, fallbackFlow, RuntimeFlowTag.onErrorResume.rawValue)
+
+        _ = kk_flow_collect(resumed, collectorPtr, 0)
+
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [5, 42, 43])
     }
 }
 

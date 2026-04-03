@@ -111,6 +111,12 @@ private func runtimeAnyHashCode(_ value: Int, _ tag: Int32) -> Int {
     if let charBox = tryCast(pointer, to: RuntimeCharBox.self) {
         return charBox.value
     }
+    if let localeBox = tryCast(pointer, to: RuntimeLocaleBox.self) {
+        let value = [localeBox.language, localeBox.country, localeBox.variant]
+            .filter { !$0.isEmpty }
+            .joined(separator: "#")
+        return runtimeStringHashCode(value)
+    }
     if let durationBox = tryCast(pointer, to: RuntimeDurationBox.self) {
         let nanoseconds = durationBox.nanoseconds
         return Int(truncatingIfNeeded: nanoseconds ^ (nanoseconds >> 32))

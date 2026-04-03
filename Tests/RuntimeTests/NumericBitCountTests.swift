@@ -282,7 +282,7 @@ final class NumericBitCountTests: XCTestCase {
             0x5555_5555, Int(Int32(bitPattern: 0xAAAA_AAAA)),
             0x0101_0101, 0x00FF_00FF, 0x8000_0000, 0x0000_0001
         ]
-        
+
         for value in testValues {
             // Test rotate functions
             for distance in [0, 1, 7, 15, 31] {
@@ -338,6 +338,12 @@ final class NumericBitCountTests: XCTestCase {
             Int(bitPattern: 0x5555_5555_5555_5555), Int(bitPattern: 0xAAAA_AAAA_AAAA_AAAA),
             Int(bitPattern: 0x8000_0000_0000_0000), Int(bitPattern: 0x0000_0000_0000_0001)
         ]
+
+        func assertSingleBitSet(_ value: Int, file: StaticString = #filePath, line: UInt = #line) {
+            let bits = UInt(bitPattern: value)
+            XCTAssertNotEqual(bits, 0, file: file, line: line)
+            XCTAssertEqual(bits & (bits &- 1), 0, file: file, line: line)
+        }
         
         for value in testValues {
             // Test rotate functions

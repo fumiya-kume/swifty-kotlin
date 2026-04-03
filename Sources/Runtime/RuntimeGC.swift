@@ -318,5 +318,6 @@ func resetRuntimeLocked(state: inout RuntimeStorageState) {
     state.threadLocalValues.removeAll(keepingCapacity: false)
     // REFL-004: Clear the KClass metadata registry on reset.
     runtimeKClassMetadataRegistry.reset()
+    runtimeCompilerPluginRegistry.reset()
     runtimeKConstructorRegistry.reset()
 }

@@ -8,6 +8,8 @@ fun main() {
     // first / last on inline range with step
     println((1UL..10UL step 2).first)
     println((1UL..10UL step 2).last)
+    println((1UL..10UL).firstOrNull())
+    println((1UL..10UL).lastOrNull())
 
     // downTo first / last
     println((10UL downTo 1UL step 3).first)
@@ -35,6 +37,7 @@ fun main() {
 
     // map and toList
     println((1UL..5UL).map { it * 2UL }.toList())
+    println((1UL..5UL).mapIndexed { index, value -> index + value })
 
     // count
     println((1UL..10UL).count())

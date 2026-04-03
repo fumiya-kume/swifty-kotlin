@@ -40,6 +40,12 @@ struct TypeInferenceContext {
     var allowsValPropertyInitialization: Bool = false
     /// Sema cache context for hot-path caching.  `nil` when caching is disabled.
     let semaCacheContext: SemaCacheContext?
+    /// Mirrors Kotlin's `-Xnew-inference`.
+    let useNewInference: Bool
+    /// Mirrors Kotlin's `-Xunrestricted-builder-inference`.
+    let useUnrestrictedBuilderInference: Bool
+    /// Mirrors Kotlin's `ProperTypeInferenceConstraintsProcessing`.
+    let useProperTypeInferenceConstraintsProcessing: Bool
     /// Set of DslMarker annotation FQ names active on the current implicit receiver.
     /// When a nested lambda introduces a receiver whose class carries the same
     /// DslMarker annotation as an outer receiver, the outer receiver is hidden
