@@ -1082,7 +1082,6 @@ public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int) -> Int {
     let parsedAlgorithm = RuntimeCipherAlgorithm(transformationComponent: algorithm)
     let parsedMacAlgorithm = RuntimeMacAlgorithm(name: algorithm)
     guard parsedAlgorithm != nil || parsedMacAlgorithm != nil else {
-        runtimeSetThrown(outThrown, message: "NoSuchAlgorithmException: \(algorithm)")
         return 0
     }
     guard let keyBytes = runtimeSecurityBytes(from: keyRaw, caller: #function) else {

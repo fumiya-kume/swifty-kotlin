@@ -57,7 +57,7 @@ final class RuntimeMessageDigestTests: IsolatedRuntimeXCTestCase {
 
         for (algorithm, expectedHex) in expectedByAlgorithm {
             let mac = kk_mac_getInstance(runtimeString(algorithm), nil)
-            let algoKey = kk_secretkeyspec_new(runtimeBytes(Array("key".utf8)), runtimeString(algorithm), nil)
+            let algoKey = kk_secretkeyspec_new(runtimeBytes(Array("key".utf8)), runtimeString(algorithm))
             XCTAssertNotEqual(algoKey, 0)
             XCTAssertEqual(kk_mac_init(mac, algoKey, nil), 0)
             let output = kk_mac_doFinal(mac, runtimeBytes(Array("abc".utf8)), nil)
