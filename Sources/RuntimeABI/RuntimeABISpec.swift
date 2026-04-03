@@ -4237,6 +4237,25 @@ public enum RuntimeABISpec {
             section: "Delegate"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_suspend_function_invoke",
+            parameters: [
+                RuntimeABIParameter(name: "functionRaw", type: .intptr),
+                RuntimeABIParameter(name: "arg", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_suspend_function_invoke_0",
+            parameters: [
+                RuntimeABIParameter(name: "functionRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_function_invoke_2",
             parameters: [
                 RuntimeABIParameter(name: "functionRaw", type: .intptr),

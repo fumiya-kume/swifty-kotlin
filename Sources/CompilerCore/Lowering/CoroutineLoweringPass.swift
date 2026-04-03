@@ -32,6 +32,8 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("map"),
             ctx.interner.intern("filter"),
             ctx.interner.intern("take"),
+            ctx.interner.intern("kk_suspend_function_invoke_0"),
+            ctx.interner.intern("kk_suspend_function_invoke"),
             ctx.interner.intern("kk_flow_create"),
             ctx.interner.intern("kk_flow_emit"),
             ctx.interner.intern("kk_flow_collect"),
@@ -95,7 +97,14 @@ final class CoroutineLoweringPass: LoweringPass {
         let runtimeWithTimeoutCallee = ctx.interner.intern("kk_with_timeout")
         let runtimeWithTimeoutOrNullCallee = ctx.interner.intern("kk_with_timeout_or_null")
         let flowCollectCallee = ctx.interner.intern("kk_flow_collect")
-        let runtimeSuspendCallNames: Set<InternedString> = [kxMiniDelayCallee, runtimeDelayCallee, kxMiniYieldCallee, runtimeYieldCallee]
+        let runtimeSuspendCallNames: Set<InternedString> = [
+            kxMiniDelayCallee,
+            runtimeDelayCallee,
+            kxMiniYieldCallee,
+            runtimeYieldCallee,
+            ctx.interner.intern("kk_suspend_function_invoke_0"),
+            ctx.interner.intern("kk_suspend_function_invoke"),
+        ]
         let kxMiniLauncherRuntimeCallees: [InternedString: InternedString] = [
             kxMiniRunBlockingCallee: runtimeRunBlockingCallee,
             kxMiniLaunchCallee: runtimeLaunchCallee,

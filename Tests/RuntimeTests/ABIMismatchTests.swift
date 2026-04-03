@@ -346,6 +346,28 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters.count, 0)
     }
 
+    func testKKSuspendFunctionInvokeSignature() throws {
+        let spec = try requireSpec("kk_suspend_function_invoke")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 3)
+        XCTAssertEqual(spec.parameters[0].name, "functionRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "arg")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "outThrown")
+        XCTAssertEqual(spec.parameters[2].type, .nullableIntptrPointer)
+    }
+
+    func testKKSuspendFunctionInvokeZeroAritySignature() throws {
+        let spec = try requireSpec("kk_suspend_function_invoke_0")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 2)
+        XCTAssertEqual(spec.parameters[0].name, "functionRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "outThrown")
+        XCTAssertEqual(spec.parameters[1].type, .nullableIntptrPointer)
+    }
+
     func testKKMutableListAddAtSignature() throws {
         let spec = try requireSpec("kk_mutable_list_add_at")
         XCTAssertEqual(spec.returnType, .intptr)
