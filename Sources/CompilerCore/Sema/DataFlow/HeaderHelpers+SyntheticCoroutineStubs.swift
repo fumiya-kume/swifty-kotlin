@@ -2610,4 +2610,30 @@ extension DataFlowSemaPhase {
         }
         return fqName
     }
+
+    func registerSyntheticCoroutineIntrinsicsStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
+        let kotlinCoroutinesPkg = ensureSyntheticPackage(
+            kotlinPkg + [interner.intern("coroutines")],
+            symbols: symbols,
+            interner: interner
+        )
+        let intrinsicsPkg = ensureSyntheticPackage(
+            kotlinCoroutinesPkg + [interner.intern("intrinsics")],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineTopLevelProperty(
+            named: "COROUTINE_SUSPENDED",
+            packageFQName: intrinsicsPkg,
+            returnType: types.anyType,
+            externalLinkName: "kk_coroutine_suspended",
+            symbols: symbols,
+            interner: interner
+        )
+    }
 }

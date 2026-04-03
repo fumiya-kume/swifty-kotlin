@@ -59,6 +59,7 @@ public struct SymbolFlags: OptionSet, Sendable {
     /// to signal ArithmeticException / NumberFormatException at runtime.
     /// The ABI lowering pass must NOT add this symbol to nonThrowingCallees.
     public static let throwingFunction = SymbolFlags(rawValue: 1 << 20)
+    public static let readOnlyProperty = SymbolFlags(rawValue: 1 << 21)
 }
 
 public struct SemanticSymbol: Sendable {

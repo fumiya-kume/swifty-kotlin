@@ -962,6 +962,7 @@ extension DataFlowSemaPhase {
         registerSyntheticThreadLocalStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticConcurrencyStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoroutineCancellationStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticCoroutineIntrinsicsStubs(symbols: symbols, types: types, interner: interner)
     }
 
     func registerSyntheticContractStubs(

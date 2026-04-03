@@ -65,6 +65,30 @@ final class CoroutineSyntheticStubTests: XCTestCase {
         }
     }
 
+    func testCoroutineSuspendedTopLevelValIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = [
+            "kotlin",
+            "coroutines",
+            "intrinsics",
+            "COROUTINE_SUSPENDED",
+        ].map { interner.intern($0) }
+
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED to be registered"
+        )
+        let semanticSymbol = try XCTUnwrap(sema.symbols.symbol(symbol))
+        XCTAssertEqual(semanticSymbol.kind, .property)
+        XCTAssertEqual(semanticSymbol.visibility, .public)
+        XCTAssertTrue(semanticSymbol.flags.contains(.synthetic))
+        XCTAssertEqual(sema.symbols.propertyType(for: symbol), sema.types.anyType)
+        XCTAssertEqual(
+            sema.symbols.externalLinkName(for: symbol),
+            "kk_coroutine_suspended"
+        )
+    }
+
     func testSuspendCoroutineUninterceptedOrReturnStubIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "coroutines", "intrinsics", "suspendCoroutineUninterceptedOrReturn"].map { interner.intern($0) }

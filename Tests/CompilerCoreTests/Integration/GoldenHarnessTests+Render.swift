@@ -241,6 +241,7 @@ extension GoldenHarnessTests {
         if flags.contains(.funInterface) { names.append("funInterface") }
         if flags.contains(.expectDeclaration) { names.append("expectDeclaration") }
         if flags.contains(.actualDeclaration) { names.append("actualDeclaration") }
+        if flags.contains(.readOnlyProperty) { names.append("readOnlyProperty") }
         return names.joined(separator: "|")
     }
 
