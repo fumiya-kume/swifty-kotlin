@@ -411,6 +411,60 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters[2].type, .intptr)
     }
 
+    func testKKMutexCreateSignature() throws {
+        let spec = try requireSpec("kk_mutex_create")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 0)
+    }
+
+    func testKKMutexLockSignature() throws {
+        let spec = try requireSpec("kk_mutex_lock")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 2)
+        XCTAssertEqual(spec.parameters[0].name, "handle")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "continuation")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+    }
+
+    func testKKMutexUnlockSignature() throws {
+        let spec = try requireSpec("kk_mutex_unlock")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].name, "handle")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+    }
+
+    func testKKMutexTryLockSignature() throws {
+        let spec = try requireSpec("kk_mutex_tryLock")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].name, "handle")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+    }
+
+    func testKKMutexIsLockedSignature() throws {
+        let spec = try requireSpec("kk_mutex_isLocked")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].name, "handle")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+    }
+
+    func testKKMutexWithLockSignature() throws {
+        let spec = try requireSpec("kk_mutex_withLock")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 4)
+        XCTAssertEqual(spec.parameters[0].name, "handle")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "actionFnPtr")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "actionEnvPtr")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].name, "continuation")
+        XCTAssertEqual(spec.parameters[3].type, .intptr)
+    }
+
     // MARK: - Collection HOF Scan/Reduce (STDLIB-526..530)
 
     func testKKListReduceOrNullSignature() throws {

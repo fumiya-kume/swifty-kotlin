@@ -4631,8 +4631,9 @@ extension CallLowerer {
         // kk_mutex_withLock(handle, actionFnPtr, actionEnvPtr, continuation): split the lambda
         // argument at index 1 into a function pointer and environment pointer,
         // following the standard closure-conversion ABI used by collection HOFs.
-        // A zero continuation placeholder is appended as the 4th argument so the
-        // coroutine runtime can suspend and resume the caller when the mutex is contended.
+        // A zero continuation placeholder is appended as the 4th argument because the
+        // current runtime path blocks on contention and keeps the ABI shape aligned
+        // with the suspend-aware mutex entry point.
         if loweredCallee == interner.intern("kk_mutex_withLock"),
            finalArguments.count == 2
         {

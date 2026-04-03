@@ -66,4 +66,41 @@ extension CodegenBackendIntegrationTests {
             XCTAssertEqual(normalizedStdout, "boom\n")
         }
     }
+
+    func testCodegenMutexDoubleUnlockPanicIncludesHelpfulMessage() throws {
+        let source = """
+        import kotlinx.coroutines.*
+        import kotlinx.coroutines.sync.*
+
+        fun main() = runBlocking {
+            val mutex = Mutex()
+            mutex.unlock()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "MutexDoubleUnlock",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            do {
+                _ = try CommandRunner.run(executable: outputBase, arguments: [])
+                XCTFail("Expected Mutex.unlock() to trap on double unlock")
+            } catch let CommandRunnerError.nonZeroExit(failed) {
+                XCTAssertNotEqual(failed.exitCode, 0)
+                XCTAssertTrue(failed.stderr.contains("KSwiftK panic"))
+                XCTAssertTrue(
+                    failed.stderr.contains("Mutex.unlock() called on an unlocked mutex"),
+                    "Expected panic message to mention the unlocked mutex, got: \(failed.stderr)"
+                )
+            } catch {
+                XCTFail("Unexpected error: \(error)")
+            }
+        }
+    }
 }

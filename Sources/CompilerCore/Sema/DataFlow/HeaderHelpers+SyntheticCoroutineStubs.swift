@@ -1084,8 +1084,8 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // Mutex.withLock(action: suspend () -> T): T
-        // Suspend extension that acquires the lock, runs action, then releases.
+        // Mutex.withLock(action: () -> T): T
+        // Suspend-style helper that acquires the lock, runs action, then releases.
         registerSyntheticCoroutineMember(
             ownerSymbol: mutexSymbol,
             ownerType: mutexType,
@@ -1097,7 +1097,7 @@ extension DataFlowSemaPhase {
                 type: types.make(.functionType(FunctionType(
                     params: [],
                     returnType: types.anyType,
-                    isSuspend: true,
+                    isSuspend: false,
                     nullability: .nonNull
                 )))
             )],
