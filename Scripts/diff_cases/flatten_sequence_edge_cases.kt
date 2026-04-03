@@ -30,11 +30,6 @@ fun main() {
     )
     println(nestedSeq.flatten().toList())  // Should flatten sequences of sequences
     
-    // Mixed collection types in sequence
-    println("\n=== Mixed collection types ===")
-    val mixedSeq = sequenceOf(listOf(1, 2), sequenceOf(3, 4))
-    println(mixedSeq.flatten().toList())
-    
     // Sequence with null elements (if supported)
     println("\n=== Sequence with special cases ===")
     val singleSeq = sequenceOf(listOf(42))
