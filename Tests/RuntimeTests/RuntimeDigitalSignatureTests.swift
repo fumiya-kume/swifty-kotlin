@@ -84,7 +84,7 @@ final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(kk_x509certificate_getPublicKey(certificate, nil), 0)
 
         let certPath = kk_certpath_new(runtimeList([certificate]), nil)
-        let trustAnchor = kk_trustanchor_new(certificate, nil)
+        let trustAnchor = kk_trustanchor_new(certificate, 0, nil)
         let parameters = kk_pkixparameters_new(runtimeList([trustAnchor]), nil)
         let validator = kk_certpathvalidator_getInstance(0, runtimeString("PKIX"), nil)
         XCTAssertEqual(
