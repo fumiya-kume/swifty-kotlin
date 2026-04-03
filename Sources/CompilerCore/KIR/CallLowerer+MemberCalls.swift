@@ -7,7 +7,11 @@ struct MemberCallReceiver {
 }
 
 extension CallLowerer {
-    static let unresolvedCoroutineHandleMemberNames: Set<String> = ["await", "join", "cancel", "isActive", "isCompleted", "isCancelled"]
+    static let unresolvedCoroutineHandleMemberNames: Set<String> = [
+        "await", "join", "awaitCompletion",
+        "cancel", "complete", "completeExceptionally",
+        "isActive", "isCompleted", "isCancelled"
+    ]
     private static let unresolvedChannelMemberNames: Set<String> = ["send", "receive", "close", "isClosedForReceive", "isClosedForSend"]
 
     private enum PrimitiveCompareABIKind: Int32 {
@@ -5266,8 +5270,16 @@ extension CallLowerer {
                 return interner.intern("kk_kxmini_async_await")
             case "join":
                 return interner.intern("kk_job_join")
+            case "awaitCompletion":
+                return interner.intern("kk_job_await_completion")
             case "cancel":
-                return interner.intern("kk_job_cancel")
+                return argumentCount > 1
+                    ? interner.intern("kk_job_cancel_with_cause")
+                    : interner.intern("kk_job_cancel")
+            case "complete":
+                return interner.intern("kk_job_complete")
+            case "completeExceptionally":
+                return interner.intern("kk_job_complete_exceptionally")
             case "isActive":
                 return interner.intern("kk_job_is_active")
             case "isCompleted":

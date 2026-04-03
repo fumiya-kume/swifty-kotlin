@@ -2772,6 +2772,14 @@ public enum RuntimeABISpec {
             section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_job_await_completion",
+            parameters: [
+                RuntimeABIParameter(name: "jobHandle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_coroutine_scope_run",
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
@@ -2867,6 +2875,33 @@ public enum RuntimeABISpec {
             name: "kk_job_cancel",
             parameters: [
                 RuntimeABIParameter(name: "jobHandle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_job_cancel_with_cause",
+            parameters: [
+                RuntimeABIParameter(name: "jobHandle", type: .intptr),
+                RuntimeABIParameter(name: "cause", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_job_complete",
+            parameters: [
+                RuntimeABIParameter(name: "jobHandle", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_job_complete_exceptionally",
+            parameters: [
+                RuntimeABIParameter(name: "jobHandle", type: .intptr),
+                RuntimeABIParameter(name: "exception", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
