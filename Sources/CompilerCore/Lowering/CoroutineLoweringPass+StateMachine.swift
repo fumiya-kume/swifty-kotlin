@@ -34,6 +34,7 @@ extension CoroutineLoweringPass {
         let suspendedProvider = interner.intern("kk_coroutine_suspended")
         let checkCancellationCallee = interner.intern("kk_coroutine_check_cancellation")
         let sourceDelayCallee = interner.intern("delay")
+        let suspendCoroutineUninterceptedOrReturnCallee = interner.intern("suspendCoroutineUninterceptedOrReturn")
         let stateBlocks = suspendPlan.stateBlocks
         let transitionsByResumeLabel = suspendPlan.transitionsByResumeLabel
         let spillPlan = suspendPlan.spillPlan
@@ -209,10 +210,21 @@ extension CoroutineLoweringPass {
                         .temporary(Int32(module.arena.expressions.count)),
                         type: continuationType
                     )
-                    let loweredSuspendCallee = suspendCallInfo.callee == sourceDelayCallee ? runtimeDelayCallee : suspendCallInfo.callee
-                    var loweredSuspendArguments = suspendCallInfo.arguments
-                    if suspendCallInfo.callee == sourceDelayCallee {
-                        loweredSuspendArguments.append(continuationExpr)
+                    let loweredSuspendCallee: InternedString
+                    var loweredSuspendArguments: [KIRExprID]
+                    if suspendCallInfo.callee == suspendCoroutineUninterceptedOrReturnCallee {
+                        guard let blockExpr = suspendCallInfo.arguments.first else {
+                            lowered.append(instruction)
+                            continue
+                        }
+                        loweredSuspendCallee = interner.intern("kk_function_invoke")
+                        loweredSuspendArguments = [blockExpr, continuationExpr]
+                    } else {
+                        loweredSuspendCallee = suspendCallInfo.callee == sourceDelayCallee ? runtimeDelayCallee : suspendCallInfo.callee
+                        loweredSuspendArguments = suspendCallInfo.arguments
+                        if suspendCallInfo.callee == sourceDelayCallee {
+                            loweredSuspendArguments.append(continuationExpr)
+                        }
                     }
                     if suspendCallInfo.isVirtual,
                        case let .virtualCall(_, _, receiver, _, _, _, _, dispatch) = suspendCallInfo.originalInstruction

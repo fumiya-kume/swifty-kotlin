@@ -851,6 +851,64 @@ final class CallTypeChecker {
             }
         }
 
+        // --- STDLIB-CORO-INTRINSICS-001: suspendCoroutineUninterceptedOrReturn ---
+        if let calleeName,
+           args.count == 1,
+           calleeName == knownNames.suspendCoroutineUninterceptedOrReturn,
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx),
+           isSyntheticStdlibSymbol(
+               calleeName,
+               fqComponents: ["kotlin", "coroutines", "intrinsics", "suspendCoroutineUninterceptedOrReturn"],
+               ctx: ctx
+           )
+        {
+            let resultType: TypeID = explicitTypeArgs.first ?? expectedType ?? sema.types.anyType
+            let continuationType: TypeID = if let continuationSymbol = sema.symbols.lookup(
+                fqName: knownNames.kotlinCoroutinesContinuationFQName
+            ) {
+                sema.types.make(.classType(ClassType(
+                    classSymbol: continuationSymbol,
+                    args: [.invariant(resultType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                sema.types.anyType
+            }
+            let blockExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [continuationType],
+                returnType: sema.types.nullableAnyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            _ = driver.inferExpr(
+                args[0].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: blockExpectedType
+            )
+
+            if let intrinsicSymbol = ctx.filterByVisibility(ctx.cachedScopeLookup(calleeName)).visible.first(where: { candidate in
+                guard let symbol = ctx.cachedSymbol(candidate) else {
+                    return false
+                }
+                return symbol.flags.contains(.synthetic)
+                    && symbol.fqName == knownNames.kotlinCoroutinesSuspendCoroutineUninterceptedOrReturnFQName
+            }) {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: intrinsicSymbol,
+                        substitutedTypeArguments: [resultType],
+                        parameterMapping: [0: 0]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(intrinsicSymbol))
+            }
+            sema.bindings.markStdlibSpecialCallExpr(id, kind: .suspendCoroutineUninterceptedOrReturn)
+            sema.bindings.bindExprType(id, type: resultType)
+            return resultType
+        }
+
         // --- Stdlib enumValues<T>() / enumValueOf<T>(name) (STDLIB-171) ---
         if let calleeName,
            let enumSpecialKind = enumStdlibSpecialCallKind(

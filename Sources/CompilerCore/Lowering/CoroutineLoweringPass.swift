@@ -22,6 +22,7 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("withTimeoutOrNull"),
             ctx.interner.intern("coroutineScope"),
             ctx.interner.intern("supervisorScope"),
+            ctx.interner.intern("suspendCoroutineUninterceptedOrReturn"),
             ctx.interner.intern("flow"),
             ctx.interner.intern("channelFlow"),
             ctx.interner.intern("callbackFlow"),
@@ -86,6 +87,7 @@ final class CoroutineLoweringPass: LoweringPass {
         let kxMiniWithTimeoutOrNullCallee = ctx.interner.intern("withTimeoutOrNull")
         let kxMiniCoroutineScopeCallee = ctx.interner.intern("coroutineScope")
         let kxMiniSupervisorScopeCallee = ctx.interner.intern("supervisorScope")
+        let suspendCoroutineUninterceptedOrReturnCallee = ctx.interner.intern("suspendCoroutineUninterceptedOrReturn")
         let kxMiniDelayCallee = ctx.interner.intern("delay")
         let kxMiniYieldCallee = ctx.interner.intern("yield")
         let createCoroutineUninterceptedCallee = ctx.interner.intern("createCoroutineUnintercepted")
@@ -104,6 +106,7 @@ final class CoroutineLoweringPass: LoweringPass {
             runtimeDelayCallee,
             kxMiniYieldCallee,
             runtimeYieldCallee,
+            suspendCoroutineUninterceptedOrReturnCallee,
             ctx.interner.intern("kk_suspend_function_invoke_0"),
             ctx.interner.intern("kk_suspend_function_invoke"),
         ]
@@ -287,6 +290,7 @@ final class CoroutineLoweringPass: LoweringPass {
             runtimeYieldCallee: runtimeYieldCallee,
             createCoroutineUninterceptedCallee: createCoroutineUninterceptedCallee,
             stateSetCompletionCallee: stateSetCompletionCallee,
+            suspendCoroutineUninterceptedOrReturnCallee: suspendCoroutineUninterceptedOrReturnCallee,
             continuationFactory: continuationFactory,
             launcherArgSetCallee: launcherArgSetCallee,
             runtimeRunBlockingWithContCallee: runtimeRunBlockingWithContCallee,

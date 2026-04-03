@@ -17,6 +17,7 @@ extension CoroutineLoweringPass {
         let runtimeYieldCallee: InternedString
         let createCoroutineUninterceptedCallee: InternedString
         let stateSetCompletionCallee: InternedString
+        let suspendCoroutineUninterceptedOrReturnCallee: InternedString
         let continuationFactory: InternedString
         let launcherArgSetCallee: InternedString
         let runtimeRunBlockingWithContCallee: InternedString
