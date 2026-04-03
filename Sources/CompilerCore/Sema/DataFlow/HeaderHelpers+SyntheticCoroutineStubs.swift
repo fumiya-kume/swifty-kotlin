@@ -18,6 +18,16 @@ extension DataFlowSemaPhase {
             )
         }
 
+        let kotlinCoroutinesPkg = ensureSyntheticPackage(
+            kotlinPkg + [interner.intern("coroutines")],
+            symbols: symbols,
+            interner: interner
+        )
+        let kotlinCoroutinesIntrinsicsPkg = ensureSyntheticPackage(
+            kotlinCoroutinesPkg + [interner.intern("intrinsics")],
+            symbols: symbols,
+            interner: interner
+        )
         let kotlinxPkg = ensureSyntheticPackage(
             [interner.intern("kotlinx")],
             symbols: symbols,
