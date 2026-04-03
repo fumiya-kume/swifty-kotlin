@@ -28,6 +28,10 @@ extension CallTypeChecker {
         for candidate in candidates {
             guard let signature = ctx.sema.symbols.functionSignature(for: candidate),
                   signature.receiverType == nil,
+                  // Only opt into the experimental path for functions that are
+                  // explicitly annotated. This avoids hijacking stdlib helpers
+                  // like `with` and the existing builder DSL stubs.
+                  hasExperimentalTypeInferenceAnnotation(candidate, sema: ctx.sema),
                   isEligibleExperimentalBuilderCandidate(
                     candidate: candidate,
                     signature: signature,
