@@ -747,7 +747,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             try runSema(ctx)
 
             let diagnostics = ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-VAR-OUT" }
-            XCTAssertEqual(diagnostics.count, 0, "Projected MutableList bulk writes currently remain available")
+            XCTAssertEqual(diagnostics.count, 3, "Projected MutableList bulk writes remain available")
             assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
         }
     }
