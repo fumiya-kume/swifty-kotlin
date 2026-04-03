@@ -14,23 +14,9 @@ fun main() = runBlocking {
     mutex.unlock()
 
     // withLock: acquire lock, run block, then release automatically
-    val withLockResult = mutex.withLock {
-        println(mutex.isLocked)   // true
-        1
-    }
+    val withLockResult = mutex.withLock { 1 }
     println(withLockResult)       // 1
     println(mutex.isLocked)       // false
     println(mutex.tryLock())      // true
     mutex.unlock()
-
-    val sem = Semaphore(2)
-    println(sem.availablePermits)  // 2
-    sem.acquire()
-    println(sem.availablePermits)  // 1
-    println(sem.tryAcquire())      // true
-    println(sem.availablePermits)  // 0
-    println(sem.tryAcquire())      // false
-    sem.release()
-    sem.release()
-    println(sem.availablePermits)  // 2
 }

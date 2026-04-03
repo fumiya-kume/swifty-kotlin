@@ -58,7 +58,8 @@ Cases:
 - `symmetric_crypto.kt`: `Cipher` / `SecretKeySpec` / `IvParameterSpec` parity across AES/DES/3DES, ECB/CBC/CFB/OFB/CTR, PKCS5Padding/NoPadding
 - `parallel_processing.kt`: `Dispatchers.Default` 上での並列 `async` / `awaitAll` を使った並列処理 parity
 - `flow_cold.kt`: `Flow<T>` cold stream chain（`flow { emit(...) }.map { ... }.collect { ... }`）の parity（kotlinx classpath 必須）
-- `mutex_basic.kt`: `Mutex` / `Semaphore` の基本ロック、`tryLock`、`withLock`、および permit 管理の parity（kotlinx classpath 必須）
+- `mutex_basic.kt`: `Mutex` の基本ロック、`tryLock`、`withLock` の parity（kotlinx classpath 必須）
+- `semaphore_basic.kt`: `Semaphore` の permit 管理、`tryAcquire`、`acquire` / `release` の parity（kotlinx classpath 必須）
 - `deprecated_error.kt`: `@Deprecated(level = DeprecationLevel.ERROR)` 呼び出しの compile-error parity
 - `property_based_test.kt`: seeded samples, shrinking, statistics report を持つ property-based style parity
 - `test_framework_basic.kt`: `kotlin.test` の `@Test` / `@Before` / `@After` と `assertEquals` / `assertTrue` / `assertNull` の基本 parity
