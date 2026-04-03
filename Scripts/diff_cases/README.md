@@ -61,5 +61,6 @@ Cases:
 - `deprecated_error.kt`: `@Deprecated(level = DeprecationLevel.ERROR)` 呼び出しの compile-error parity
 - `property_based_test.kt`: seeded samples, shrinking, statistics report を持つ property-based style parity
 - `test_framework_basic.kt`: `kotlin.test` の `@Test` / `@Before` / `@After` と `assertEquals` / `assertTrue` / `assertNull` の基本 parity
+- `assertions.kt`: stdlib `assert(...)` / `assert(...) { ... }` の基本 parity
 
 The set intentionally includes both successful programs and compile-error cases.
