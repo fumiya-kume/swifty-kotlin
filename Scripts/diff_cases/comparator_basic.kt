@@ -1,9 +1,18 @@
 fun main() {
     val nums = listOf(231, 114, 123, 212, 111, 223, 214)
 
+    println("-- compare() direct --")
+    val compareByMod = compareBy<Int> { it % 10 }
+    println(compareByMod.compare(13, 24))
+    println(compareByMod.compare(24, 13))
+
     println("-- compareBy + thenBy --")
     val byModThen = compareBy<Int> { it % 10 }.thenBy { it / 10 }
     println(nums.sortedWith(byModThen))
+
+    println("-- compareByDescending + thenBy --")
+    val byModDescendingThen = compareByDescending<Int> { it % 10 }.thenBy { it / 10 }
+    println(nums.sortedWith(byModDescendingThen))
 
     println("-- compareBy + thenByDescending --")
     val byModThenDescending = compareBy<Int> { it % 10 }.thenByDescending { it / 10 }

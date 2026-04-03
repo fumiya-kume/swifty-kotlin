@@ -41,6 +41,15 @@ extension ABIMismatchTests {
             "kk_system_process_start_nanos",
             "kk_system_measureTimeMillis",
             "kk_system_measureNanoTime",
+            "kk_instant_now",
+            "kk_instant_from_epoch_millis",
+            "kk_instant_epoch_seconds",
+            "kk_instant_nano_of_second",
+            "kk_instant_plus_duration",
+            "kk_instant_minus_duration",
+            "kk_instant_compare",
+            "kk_instant_until",
+            "kk_instant_elapsed",
             "kk_synchronized",
             // Atomic (kotlin.concurrent)
             "kk_atomic_int_create",
@@ -76,6 +85,12 @@ extension ABIMismatchTests {
             "kk_thread_local_getOrSet",
             // kotlin.concurrent
             "kk_lock_withLock",
+            "kk_mutex_create",
+            "kk_mutex_lock",
+            "kk_mutex_unlock",
+            "kk_mutex_tryLock",
+            "kk_mutex_isLocked",
+            "kk_mutex_withLock",
             // Symmetric crypto (javax.crypto)
             "kk_secretkeyspec_new",
             "kk_ivparameterspec_new",
@@ -84,6 +99,9 @@ extension ABIMismatchTests {
             "kk_cipher_init_with_iv",
             "kk_cipher_doFinal",
             "kk_cipher_doFinal_noarg",
+            "kk_mac_getInstance",
+            "kk_mac_init",
+            "kk_mac_doFinal",
             // JSON Serialization (STDLIB-SER-132)
             "kk_json_default",
             "kk_json_encodeToString",
