@@ -15,6 +15,7 @@ final class FlowLoweringPass: LoweringPass {
         case retryWhen = 8
         case onErrorReturn = 9
         case onErrorResume = 10
+        case transform = 11
     }
 
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
@@ -29,6 +30,7 @@ final class FlowLoweringPass: LoweringPass {
             ctx.interner.intern("map"),
             ctx.interner.intern("filter"),
             ctx.interner.intern("take"),
+            ctx.interner.intern("transform"),
             ctx.interner.intern("single"),
             ctx.interner.intern("catch"),
             ctx.interner.intern("retry"),
@@ -74,6 +76,7 @@ final class FlowLoweringPass: LoweringPass {
         let mapName = interner.intern("map")
         let filterName = interner.intern("filter")
         let takeName = interner.intern("take")
+        let transformName = interner.intern("transform")
         let singleName = interner.intern("single")
         let catchName = interner.intern("catch")
         let retryName = interner.intern("retry")
@@ -376,11 +379,12 @@ final class FlowLoweringPass: LoweringPass {
                     }
 
                     if callee == mapName || callee == filterName || callee == takeName ||
+                        callee == transformName ||
                         callee == catchName || callee == retryName || callee == retryWhenName ||
                         callee == onErrorReturnName || callee == onErrorResumeName,
                        arguments.count == 2 ||
                         ((callee == mapName || callee == filterName || callee == catchName ||
-                            callee == retryWhenName) && arguments.count == 3),
+                            callee == retryWhenName || callee == transformName) && arguments.count == 3),
                        flowExprIDs.contains(arguments[0].rawValue)
                     {
                         let tagValue: Int64 = switch callee {
@@ -388,6 +392,8 @@ final class FlowLoweringPass: LoweringPass {
                             RuntimeFlowTag.map.rawValue
                         case filterName:
                             RuntimeFlowTag.filter.rawValue
+                        case transformName:
+                            RuntimeFlowTag.transform.rawValue
                         case catchName:
                             RuntimeFlowTag.catchHandler.rawValue
                         case retryName:
@@ -576,6 +582,7 @@ final class FlowLoweringPass: LoweringPass {
                     }
 
                     if callee == mapName || callee == filterName || callee == takeName ||
+                        callee == transformName ||
                         callee == catchName || callee == retryName || callee == retryWhenName ||
                         callee == onErrorReturnName || callee == onErrorResumeName,
                        arguments.count == 1,
@@ -586,6 +593,8 @@ final class FlowLoweringPass: LoweringPass {
                             RuntimeFlowTag.map.rawValue
                         case filterName:
                             RuntimeFlowTag.filter.rawValue
+                        case transformName:
+                            RuntimeFlowTag.transform.rawValue
                         case catchName:
                             RuntimeFlowTag.catchHandler.rawValue
                         case retryName:
