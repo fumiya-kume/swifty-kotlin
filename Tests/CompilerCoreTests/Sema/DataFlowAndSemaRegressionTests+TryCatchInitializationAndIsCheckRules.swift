@@ -30,6 +30,54 @@ extension DataFlowAndSemaRegressionTests {
         }
     }
 
+    func testReifiedInlineFunctionSupportsUnsafeCastAndBoundedTypeParameter() throws {
+        let source = """
+        inline fun <reified T> castOrThrow(value: Any): T = value as T
+        inline fun <reified T : Comparable<T>> boundedTypeName(): String = T::class.simpleName ?: "unknown"
+
+        fun main() {
+            println(castOrThrow<String>("hello"))
+            println(boundedTypeName<String>())
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let castSymbol = try XCTUnwrap(sema.symbols.allSymbols().first { symbol in
+                ctx.interner.resolve(symbol.name) == "castOrThrow"
+            })
+            let castSignature = try XCTUnwrap(sema.symbols.functionSignature(for: castSymbol.id))
+            XCTAssertEqual(castSignature.reifiedTypeParameterIndices, Set([0]))
+            XCTAssertEqual(castSignature.typeParameterSymbols.count, 1)
+
+            let boundedSymbol = try XCTUnwrap(sema.symbols.allSymbols().first { symbol in
+                ctx.interner.resolve(symbol.name) == "boundedTypeName"
+            })
+            let boundedSignature = try XCTUnwrap(sema.symbols.functionSignature(for: boundedSymbol.id))
+            XCTAssertEqual(boundedSignature.reifiedTypeParameterIndices, Set([0]))
+            XCTAssertEqual(boundedSignature.typeParameterSymbols.count, 1)
+
+            let boundedTypeParameter = try XCTUnwrap(boundedSignature.typeParameterSymbols.first)
+            let upperBounds = sema.symbols.typeParameterUpperBounds(for: boundedTypeParameter)
+            XCTAssertEqual(upperBounds.count, 1)
+            if let upperBound = upperBounds.first {
+                guard case let .classType(classType) = sema.types.kind(of: upperBound) else {
+                    XCTFail("Expected Comparable upper bound")
+                    return
+                }
+                let comparableFQName = [
+                    ctx.interner.intern("kotlin"),
+                    ctx.interner.intern("Comparable"),
+                ]
+                let comparableSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: comparableFQName))
+                XCTAssertEqual(classType.classSymbol, comparableSymbol)
+            }
+        }
+    }
+
     // MARK: - ExprInference: try-catch expression
 
     func testTryCatchExpressionInference() throws {

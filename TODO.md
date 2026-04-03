@@ -94,7 +94,7 @@
   - **現状**: 基本的な範囲操作は実装済み、高階関数は未実装
   - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
   - **テストケース**: `Scripts/diff_cases/range_hof.kt`
-- [ ] STDLIB-OP-030: 算術演算子オーバーロード完全実装
+- [x] STDLIB-OP-030: 算術演算子オーバーロード完全実装
   - **仕様**: カスタムクラスでの算術演算子オーバーロード
   - **実装内容**:
     - 単項演算子: unaryPlus(), unaryMinus(), not()
@@ -155,7 +155,7 @@
   - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
   - **テストケース**: `Scripts/diff_cases/long_range.kt`
 
-- [ ] STDLIB-RANGE-036: UIntRange完全実装
+- [x] STDLIB-RANGE-036: UIntRange完全実装
   - **仕様**: UIntRangeの完全な機能サポート
   - **実装内容**:
     - コンストラクタ: UIntRange(start, end), startU..endU
@@ -212,7 +212,7 @@
 #### Phase 2: ジェネリクスと型システム (中優先度)
 
 
-- [ ] STDLIB-GEN-055: 型制約完全実装
+- [x] STDLIB-GEN-055: 型制約完全実装
   - **仕様**: 型パラメータの制約
   - **実装内容**:
     - 上限制約: <T : Comparable<T>>
@@ -220,7 +220,7 @@
     - where句: fun <T> process(value: T) where T : Comparable<T>
     - 制約の解決とチェック
     - 制約違反のエラーメッセージ
-  - **現状**: 基本的な制約は実装済み、where句は未実装
+  - **現状**: 基本的な制約と where 句は実装済み
   - **関連ファイル**: `HeaderHelpers+SyntheticTODOAndIOStubs.swift`
   - **テストケース**: `Scripts/diff_cases/type_constraints.kt`
 

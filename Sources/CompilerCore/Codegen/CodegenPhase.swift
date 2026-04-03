@@ -358,6 +358,7 @@ public final class CodegenPhase: CompilerPhase {
                 partial[function.symbol] = CodegenSymbolSupport.cFunctionSymbol(
                     for: function,
                     interner: ctx.interner,
+                    symbols: ctx.sema?.symbols,
                     fileFacadeNamesByFileID: facadeNames
                 )
             }
@@ -395,6 +396,7 @@ public final class CodegenPhase: CompilerPhase {
                 partial[function.symbol] = CodegenSymbolSupport.cFunctionSymbol(
                     for: function,
                     interner: ctx.interner,
+                    symbols: ctx.sema?.symbols,
                     fileFacadeNamesByFileID: fileFacadeNamesByFileID
                 )
             }

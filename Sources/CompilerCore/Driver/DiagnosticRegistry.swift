@@ -88,6 +88,7 @@ public enum DiagnosticRegistry {
     private static let suppressionAliases: [String: [String]] = [
         "UNCHECKED_CAST": ["KSWIFTK-SEMA-UNCHECKED-CAST"],
         "DEPRECATION": ["KSWIFTK-SEMA-DEPRECATED"],
+        "DEPRECATION_ERROR": ["KSWIFTK-SEMA-DEPRECATED"],
         "UNCHECKED_IS": ["KSWIFTK-SEMA-ERASED-TYPE"],
         "ANNOTATION_TARGET": ["KSWIFTK-SEMA-ANNOTATION-TARGET"],
     ]

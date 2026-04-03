@@ -286,6 +286,25 @@ final class CompilerOptionsTests: XCTestCase {
         XCTAssertEqual(opts.lazyThreadSafetyMode, .synchronized)
     }
 
+    func testAdvancedTypeInferenceFlagsAreDetected() {
+        let opts = CompilerOptions(
+            moduleName: "Test",
+            inputs: [],
+            outputPath: "/out",
+            emit: .kirDump,
+            target: defaultTargetTriple(),
+            frontendFlags: [
+                "new-inference",
+                "unrestricted-builder-inference",
+                "ProperTypeInferenceConstraintsProcessing",
+            ]
+        )
+
+        XCTAssertTrue(opts.useNewInference)
+        XCTAssertTrue(opts.useUnrestrictedBuilderInference)
+        XCTAssertTrue(opts.useProperTypeInferenceConstraintsProcessing)
+    }
+
     // MARK: - EmitMode
 
     func testEmitModeRawValues() {

@@ -63,7 +63,10 @@ public final class TypeCheckSemaPhase: CompilerPhase {
             dataFlow: dataFlow,
             interner: ctx.interner,
             diagnostics: ctx.diagnostics,
-            semaCacheContext: semaCacheContext
+            semaCacheContext: semaCacheContext,
+            useNewInference: ctx.options.useNewInference,
+            useUnrestrictedBuilderInference: ctx.options.useUnrestrictedBuilderInference,
+            useProperTypeInferenceConstraintsProcessing: ctx.options.useProperTypeInferenceConstraintsProcessing
         )
 
         let fileScopes = driver.scopeBuilder.buildFileScopes(

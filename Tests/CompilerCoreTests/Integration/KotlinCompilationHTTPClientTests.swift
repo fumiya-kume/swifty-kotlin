@@ -2,32 +2,34 @@
 import XCTest
 
 final class KotlinCompilationHTTPClientTests: XCTestCase {
-    func testCompile_httpClientAdvancedUsage() throws {
+    func testCompile_httpClientBasicOperations() throws {
         try assertKotlinCompilesToKIR("""
+        import java.net.URI
         import java.net.http.HttpClient
-        import kotlinx.coroutines.runBlocking
+        import java.net.http.HttpRequest
+        import java.net.http.HttpResponse
 
-        fun main() = runBlocking {
-            val client = HttpClient()
-            client.setConnectTimeoutMillis(1_000)
-            client.setReadTimeoutMillis(2_000)
-            client.setFollowRedirects(true)
-            client.setDefaultHeader("Accept", "application/json")
-            client.setBasicAuth("demo", "secret")
-            client.clearAuthentication()
-            client.setBearerToken("token-123")
+        fun main() {
+            val client = HttpClient.newHttpClient()
+            val getRequest = HttpRequest.newBuilder(URI("https://example.com"))
+                .header("Accept", "text/plain")
+                .GET()
+                .build()
 
-            val syncResponse = client.get("https://example.com")
-            val asyncResponse = client.postAsync("https://example.com/api", "payload")
+            val postRequest = HttpRequest.newBuilder()
+                .uri(URI("https://example.com/post"))
+                .header("Content-Type", "text/plain")
+                .POST(HttpRequest.BodyPublishers.ofString("payload"))
+                .build()
 
-            val code = syncResponse.statusCode
-            val body = syncResponse.body
-            val ok = asyncResponse.isSuccessful
-            val header = asyncResponse.header("content-type")
-            val timedOut = asyncResponse.timedOut
-            val errorMessage = asyncResponse.errorMessage
-            val finalUrl = asyncResponse.url
-            val contentType = asyncResponse.contentType
+            val response = client.send(getRequest, HttpResponse.BodyHandlers.ofString())
+            val status = response.statusCode()
+            val body = response.body()
+            val headers = response.headers()
+            val contentType = headers.firstValue("Content-Type")
+            val headerMap = headers.map()
+            val postResponse = client.send(postRequest, HttpResponse.BodyHandlers.ofString())
+            val postStatus = postResponse.statusCode()
         }
         """)
     }

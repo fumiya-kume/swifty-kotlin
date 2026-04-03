@@ -864,6 +864,15 @@ final class LambdaLowerer {
         let methodSlot = Int64(sema.symbols.nominalLayout(for: interfaceSymbol)?.vtableSlots[samMethod.symbol] ?? 0)
         let ifaceSlotExpr = arena.appendExpr(.intLiteral(ifaceSlot), type: sema.types.intType)
         instructions.append(.constValue(result: ifaceSlotExpr, value: .intLiteral(ifaceSlot)))
+        let registerIfaceResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.intType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_object_register_itable_iface"),
+            arguments: [wrapperValue, interfaceTypeExpr, ifaceSlotExpr],
+            result: registerIfaceResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
         let methodSlotExpr = arena.appendExpr(.intLiteral(methodSlot), type: sema.types.intType)
         instructions.append(.constValue(result: methodSlotExpr, value: .intLiteral(methodSlot)))
         let methodFnExpr = arena.appendExpr(.symbolRef(methodSymbol), type: sema.types.intType)
