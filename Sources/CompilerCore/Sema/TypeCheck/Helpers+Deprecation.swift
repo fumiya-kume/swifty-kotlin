@@ -66,6 +66,51 @@ extension TypeCheckHelpers {
         }
     }
 
+    func checkBuiltinDeprecation(
+        calleeName: InternedString,
+        receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner,
+        range: SourceRange?,
+        diagnostics: DiagnosticEngine
+    ) {
+        let callee = interner.resolve(calleeName)
+        guard callee == "toChar" else {
+            return
+        }
+
+        let receiver = sema.types.makeNonNullable(receiverType)
+        let deprecatedReceiverTypes: Set<TypeID> = [
+            sema.types.intType,
+            sema.types.longType,
+            sema.types.uintType,
+            sema.types.ulongType,
+            sema.types.ubyteType,
+            sema.types.ushortType,
+        ]
+        guard deprecatedReceiverTypes.contains(receiver) else {
+            return
+        }
+
+        let toCharFQName: [InternedString] = [interner.intern("kotlin"), calleeName]
+        guard let symbolID = sema.symbols.lookupAll(fqName: toCharFQName).first(where: { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                return false
+            }
+            return signature.receiverType == receiver
+        }) else {
+            return
+        }
+
+        checkDeprecation(
+            for: symbolID,
+            sema: sema,
+            interner: interner,
+            range: range,
+            diagnostics: diagnostics
+        )
+    }
+
     private func parseDeprecatedArguments(_ arguments: [String]) -> DeprecatedArguments {
         var namedArgs: [String: String] = [:]
         var positionalArgs: [String] = []

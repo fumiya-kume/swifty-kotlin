@@ -13,6 +13,10 @@ private let rangeFoldIndexedSum: @convention(c) (Int, Int, Int, Int, UnsafeMutab
     acc + index + value
 }
 
+private let rangeMapIndexedSum: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
+    index + value
+}
+
 final class RuntimeRangeHOFTests: IsolatedRuntimeXCTestCase {
     func testRangeMapProducesMappedList() {
         let range = kk_op_rangeTo(1, 4)
@@ -30,6 +34,27 @@ final class RuntimeRangeHOFTests: IsolatedRuntimeXCTestCase {
         let range = kk_op_rangeTo(1, 3)
         let result = kk_range_foldIndexed(range, 10, unsafeBitCast(rangeFoldIndexedSum, to: Int.self), 0, nil)
         XCTAssertEqual(result, 19)
+    }
+
+    func testRangeFirstAndLastOrNullWithoutPredicate() {
+        let range = kk_op_rangeTo(1, 4)
+        XCTAssertEqual(kk_range_firstOrNull(range), 1)
+        XCTAssertEqual(kk_range_lastOrNull(range), 4)
+    }
+
+    func testUIntRangeMapIndexedUsesUnsignedLowering() {
+        let range = kk_uint_rangeTo(1, 4)
+        let mapped = kk_uint_range_mapIndexed(range, unsafeBitCast(rangeMapIndexedSum, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(mapped), [1, 3, 5, 7])
+    }
+
+    func testULongRangeNoArgOrIndexedHOFs() {
+        let range = kk_ulong_rangeTo(1, 4)
+        XCTAssertEqual(kk_ulong_range_firstOrNull(range), 1)
+        XCTAssertEqual(kk_ulong_range_lastOrNull(range), 4)
+
+        let mapped = kk_ulong_range_mapIndexed(range, unsafeBitCast(rangeMapIndexedSum, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(mapped), [1, 3, 5, 7])
     }
 
     func testRangeWindowedBuildsNestedLists() {

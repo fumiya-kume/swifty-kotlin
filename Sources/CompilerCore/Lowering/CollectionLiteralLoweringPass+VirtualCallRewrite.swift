@@ -2293,7 +2293,9 @@ extension CollectionLiteralLoweringPass {
         if callee == lookup.forEachName, arguments.count == 1 {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-            let forEachCallee = isCharRange ? lookup.kkCharRangeForEachName : (isUIntRange ? interner.intern("kk_uint_range_forEach") : lookup.kkRangeForEachName)
+            let forEachCallee = isCharRange ? lookup.kkCharRangeForEachName
+                : (isULongRange ? interner.intern("kk_ulong_range_forEach")
+                    : (isUIntRange ? interner.intern("kk_uint_range_forEach") : lookup.kkRangeForEachName))
             _ = emitHOFCall(
                 kkName: forEachCallee, receiver: receiver,
                 arguments: arguments + [zeroExpr],
@@ -2309,7 +2311,9 @@ extension CollectionLiteralLoweringPass {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             let hofResult = emitHOFCall(
-                kkName: isUIntRange ? interner.intern("kk_uint_range_map") : lookup.kkRangeMapName, receiver: receiver,
+                kkName: isULongRange ? interner.intern("kk_ulong_range_map")
+                    : (isUIntRange ? interner.intern("kk_uint_range_map") : lookup.kkRangeMapName),
+                receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -2325,7 +2329,9 @@ extension CollectionLiteralLoweringPass {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             let hofResult = emitHOFCall(
-                kkName: lookup.kkRangeMapIndexedName, receiver: receiver,
+                kkName: isULongRange ? interner.intern("kk_ulong_range_mapIndexed")
+                    : (isUIntRange ? interner.intern("kk_uint_range_mapIndexed") : lookup.kkRangeMapIndexedName),
+                receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -2339,7 +2345,9 @@ extension CollectionLiteralLoweringPass {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             let hofResult = emitHOFCall(
-                kkName: lookup.kkRangeMapNotNullName, receiver: receiver,
+                kkName: isULongRange ? interner.intern("kk_ulong_range_mapNotNull")
+                    : (isUIntRange ? interner.intern("kk_uint_range_mapNotNull") : lookup.kkRangeMapNotNullName),
+                receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -2353,7 +2361,9 @@ extension CollectionLiteralLoweringPass {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             let hofResult = emitHOFCall(
-                kkName: lookup.kkRangeFilterName, receiver: receiver,
+                kkName: isULongRange ? interner.intern("kk_ulong_range_filter")
+                    : (isUIntRange ? interner.intern("kk_uint_range_filter") : lookup.kkRangeFilterName),
+                receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -2367,7 +2377,9 @@ extension CollectionLiteralLoweringPass {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             let hofResult = emitHOFCall(
-                kkName: lookup.kkRangeFilterIndexedName, receiver: receiver,
+                kkName: isULongRange ? interner.intern("kk_ulong_range_filterIndexed")
+                    : (isUIntRange ? interner.intern("kk_uint_range_filterIndexed") : lookup.kkRangeFilterIndexedName),
+                receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -2381,7 +2393,9 @@ extension CollectionLiteralLoweringPass {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             let hofResult = emitHOFCall(
-                kkName: lookup.kkRangeFilterNotName, receiver: receiver,
+                kkName: isULongRange ? interner.intern("kk_ulong_range_filterNot")
+                    : (isUIntRange ? interner.intern("kk_uint_range_filterNot") : lookup.kkRangeFilterNotName),
+                receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -2395,7 +2409,9 @@ extension CollectionLiteralLoweringPass {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(
-                kkName: lookup.kkRangeReduceName, receiver: receiver,
+                kkName: isULongRange ? interner.intern("kk_ulong_range_reduce")
+                    : (isUIntRange ? interner.intern("kk_uint_range_reduce") : lookup.kkRangeReduceName),
+                receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -2407,7 +2423,9 @@ extension CollectionLiteralLoweringPass {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(
-                kkName: lookup.kkRangeReduceIndexedName, receiver: receiver,
+                kkName: isULongRange ? interner.intern("kk_ulong_range_reduceIndexed")
+                    : (isUIntRange ? interner.intern("kk_uint_range_reduceIndexed") : lookup.kkRangeReduceIndexedName),
+                receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -2419,7 +2437,9 @@ extension CollectionLiteralLoweringPass {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(
-                kkName: lookup.kkRangeFoldName, receiver: receiver,
+                kkName: isULongRange ? interner.intern("kk_ulong_range_fold")
+                    : (isUIntRange ? interner.intern("kk_uint_range_fold") : lookup.kkRangeFoldName),
+                receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -2431,7 +2451,9 @@ extension CollectionLiteralLoweringPass {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(
-                kkName: lookup.kkRangeFoldIndexedName, receiver: receiver,
+                kkName: isULongRange ? interner.intern("kk_ulong_range_foldIndexed")
+                    : (isUIntRange ? interner.intern("kk_uint_range_foldIndexed") : lookup.kkRangeFoldIndexedName),
+                receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -2443,7 +2465,9 @@ extension CollectionLiteralLoweringPass {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(
-                kkName: lookup.kkRangeFindName, receiver: receiver,
+                kkName: isULongRange ? interner.intern("kk_ulong_range_find")
+                    : (isUIntRange ? interner.intern("kk_uint_range_find") : lookup.kkRangeFindName),
+                receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -2455,7 +2479,9 @@ extension CollectionLiteralLoweringPass {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(
-                kkName: lookup.kkRangeFindLastName, receiver: receiver,
+                kkName: isULongRange ? interner.intern("kk_ulong_range_findLast")
+                    : (isUIntRange ? interner.intern("kk_uint_range_findLast") : lookup.kkRangeFindLastName),
+                receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -2467,7 +2493,9 @@ extension CollectionLiteralLoweringPass {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(
-                kkName: lookup.kkRangeFirstPredicateName, receiver: receiver,
+                kkName: isULongRange ? interner.intern("kk_ulong_range_first_predicate")
+                    : (isUIntRange ? interner.intern("kk_uint_range_first_predicate") : lookup.kkRangeFirstPredicateName),
+                receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -2475,11 +2503,23 @@ extension CollectionLiteralLoweringPass {
             )
             return true
         }
+        if callee == lookup.firstOrNullName, arguments.isEmpty {
+            let firstOrNullName = isULongRange ? interner.intern("kk_ulong_range_firstOrNull")
+                : (isUIntRange ? interner.intern("kk_uint_range_firstOrNull") : interner.intern("kk_range_firstOrNull"))
+            loweredBody.append(.call(
+                symbol: nil, callee: firstOrNullName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
+            return true
+        }
         if callee == lookup.firstOrNullName, arguments.count == 1 {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(
-                kkName: lookup.kkRangeFirstOrNullPredicateName, receiver: receiver,
+                kkName: isULongRange ? interner.intern("kk_ulong_range_firstOrNull_predicate")
+                    : (isUIntRange ? interner.intern("kk_uint_range_firstOrNull_predicate") : lookup.kkRangeFirstOrNullPredicateName),
+                receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -2491,7 +2531,9 @@ extension CollectionLiteralLoweringPass {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(
-                kkName: lookup.kkRangeLastPredicateName, receiver: receiver,
+                kkName: isULongRange ? interner.intern("kk_ulong_range_last_predicate")
+                    : (isUIntRange ? interner.intern("kk_uint_range_last_predicate") : lookup.kkRangeLastPredicateName),
+                receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -2499,11 +2541,23 @@ extension CollectionLiteralLoweringPass {
             )
             return true
         }
+        if callee == lookup.lastOrNullName, arguments.isEmpty {
+            let lastOrNullName = isULongRange ? interner.intern("kk_ulong_range_lastOrNull")
+                : (isUIntRange ? interner.intern("kk_uint_range_lastOrNull") : interner.intern("kk_range_lastOrNull"))
+            loweredBody.append(.call(
+                symbol: nil, callee: lastOrNullName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
+            return true
+        }
         if callee == lookup.lastOrNullName, arguments.count == 1 {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(
-                kkName: lookup.kkRangeLastOrNullPredicateName, receiver: receiver,
+                kkName: isULongRange ? interner.intern("kk_ulong_range_lastOrNull_predicate")
+                    : (isUIntRange ? interner.intern("kk_uint_range_lastOrNull_predicate") : lookup.kkRangeLastOrNullPredicateName),
+                receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -2515,9 +2569,12 @@ extension CollectionLiteralLoweringPass {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             let kkName: InternedString =
-                callee == lookup.anyName ? lookup.kkRangeAnyName
-                    : callee == lookup.allName ? lookup.kkRangeAllName
-                    : lookup.kkRangeNoneName
+                callee == lookup.anyName ? (isULongRange ? interner.intern("kk_ulong_range_any")
+                    : (isUIntRange ? interner.intern("kk_uint_range_any") : lookup.kkRangeAnyName))
+                    : callee == lookup.allName ? (isULongRange ? interner.intern("kk_ulong_range_all")
+                        : (isUIntRange ? interner.intern("kk_uint_range_all") : lookup.kkRangeAllName))
+                    : (isULongRange ? interner.intern("kk_ulong_range_none")
+                        : (isUIntRange ? interner.intern("kk_uint_range_none") : lookup.kkRangeNoneName))
             _ = emitHOFCall(
                 kkName: kkName, receiver: receiver,
                 arguments: arguments + [zeroExpr],
@@ -2529,7 +2586,8 @@ extension CollectionLiteralLoweringPass {
         }
         if callee == lookup.chunkedName, arguments.count == 1 {
             loweredBody.append(.call(
-                symbol: nil, callee: lookup.kkRangeChunkedName,
+                symbol: nil, callee: isULongRange ? interner.intern("kk_ulong_range_chunked")
+                    : (isUIntRange ? interner.intern("kk_uint_range_chunked") : lookup.kkRangeChunkedName),
                 arguments: [receiver] + arguments, result: result,
                 canThrow: false, thrownResult: nil
             ))
@@ -2538,7 +2596,8 @@ extension CollectionLiteralLoweringPass {
         }
         if callee == lookup.windowedName, arguments.count == 3 {
             loweredBody.append(.call(
-                symbol: nil, callee: lookup.kkRangeWindowedName,
+                symbol: nil, callee: isULongRange ? interner.intern("kk_ulong_range_windowed")
+                    : (isUIntRange ? interner.intern("kk_uint_range_windowed") : lookup.kkRangeWindowedName),
                 arguments: [receiver] + arguments, result: result,
                 canThrow: false, thrownResult: nil
             ))

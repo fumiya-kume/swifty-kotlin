@@ -8,10 +8,16 @@ enum KnownCompilerAnnotation {
     case jvmName
     case jvmField
     case jvmOverloads
+    case experimentalJsExport
+    case experimentalJsFileName
+    case experimentalJsStatic
+    case experimentalJsReflectionCreateInstance
+    case experimentalJsCollectionsApi
     case throws_
     case suppress
     case dslMarker
     case wasExperimental
+    case experimentalTypeInference
 
     var simpleName: String {
         switch self {
@@ -29,6 +35,16 @@ enum KnownCompilerAnnotation {
             "JvmField"
         case .jvmOverloads:
             "JvmOverloads"
+        case .experimentalJsExport:
+            "ExperimentalJsExport"
+        case .experimentalJsFileName:
+            "ExperimentalJsFileName"
+        case .experimentalJsStatic:
+            "ExperimentalJsStatic"
+        case .experimentalJsReflectionCreateInstance:
+            "ExperimentalJsReflectionCreateInstance"
+        case .experimentalJsCollectionsApi:
+            "ExperimentalJsCollectionsApi"
         case .throws_:
             "Throws"
         case .suppress:
@@ -37,6 +53,8 @@ enum KnownCompilerAnnotation {
             "DslMarker"
         case .wasExperimental:
             "WasExperimental"
+        case .experimentalTypeInference:
+            "ExperimentalTypeInference"
         }
     }
 
@@ -56,6 +74,16 @@ enum KnownCompilerAnnotation {
             "kotlin.jvm.JvmField"
         case .jvmOverloads:
             "kotlin.jvm.JvmOverloads"
+        case .experimentalJsExport:
+            "kotlin.js.ExperimentalJsExport"
+        case .experimentalJsFileName:
+            "kotlin.js.ExperimentalJsFileName"
+        case .experimentalJsStatic:
+            "kotlin.js.ExperimentalJsStatic"
+        case .experimentalJsReflectionCreateInstance:
+            "kotlin.js.ExperimentalJsReflectionCreateInstance"
+        case .experimentalJsCollectionsApi:
+            "kotlin.js.collections.ExperimentalJsCollectionsApi"
         case .throws_:
             "kotlin.jvm.Throws"
         case .suppress:
@@ -64,6 +92,8 @@ enum KnownCompilerAnnotation {
             "kotlin.DslMarker"
         case .wasExperimental:
             "kotlin.WasExperimental"
+        case .experimentalTypeInference:
+            "kotlin.experimental.ExperimentalTypeInference"
         }
     }
 
@@ -120,6 +150,7 @@ struct KnownCompilerNames {
     let floatArray: InternedString
     let booleanArray: InternedString
     let charArray: InternedString
+    let uintArray: InternedString
 
     let regex: InternedString
     let stringBuilder: InternedString
@@ -289,6 +320,7 @@ struct KnownCompilerNames {
         floatArray = interner.intern("FloatArray")
         booleanArray = interner.intern("BooleanArray")
         charArray = interner.intern("CharArray")
+        uintArray = interner.intern("UIntArray")
 
         regex = interner.intern("Regex")
         stringBuilder = interner.intern("StringBuilder")
@@ -525,6 +557,7 @@ struct KnownCompilerNames {
             || name == floatArray
             || name == booleanArray
             || name == charArray
+            || name == uintArray
     }
 
     /// Returns true if the name is a primitive array constructor type name
@@ -541,6 +574,7 @@ struct KnownCompilerNames {
             || name == floatArray
             || name == booleanArray
             || name == charArray
+            || name == uintArray
     }
 
     /// The set of stdlib collection factory function names used for marking
@@ -549,7 +583,7 @@ struct KnownCompilerNames {
     static let stdlibCollectionFactoryNames: Set<String> = [
         "listOf", "mutableListOf", "emptyList",
         "arrayOf", "emptyArray", "intArrayOf", "longArrayOf",
-        "shortArrayOf", "byteArrayOf", "ubyteArrayOf", "ushortArrayOf",
+        "shortArrayOf", "byteArrayOf", "ubyteArrayOf", "ushortArrayOf", "uintArrayOf",
         "doubleArrayOf", "floatArrayOf", "booleanArrayOf", "charArrayOf",
         "mapOf", "mutableMapOf", "emptyMap",
         "setOf", "mutableSetOf", "emptySet",

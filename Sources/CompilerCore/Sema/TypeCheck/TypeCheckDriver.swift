@@ -19,6 +19,9 @@ final class TypeCheckDriver {
     let diagnostics: DiagnosticEngine
     /// Sema cache context for hot-path caching.  `nil` when caching is disabled.
     let semaCacheContext: SemaCacheContext?
+    let useNewInference: Bool
+    let useUnrestrictedBuilderInference: Bool
+    let useProperTypeInferenceConstraintsProcessing: Bool
 
     // Delegates (lazy to break initialization ordering; each holds unowned back-reference)
     private(set) lazy var exprChecker = ExprTypeChecker(driver: self)
@@ -44,7 +47,10 @@ final class TypeCheckDriver {
         dataFlow: DataFlowAnalyzer,
         interner: StringInterner,
         diagnostics: DiagnosticEngine,
-        semaCacheContext: SemaCacheContext? = nil
+        semaCacheContext: SemaCacheContext? = nil,
+        useNewInference: Bool = false,
+        useUnrestrictedBuilderInference: Bool = false,
+        useProperTypeInferenceConstraintsProcessing: Bool = false
     ) {
         self.ast = ast
         self.sema = sema
@@ -55,6 +61,9 @@ final class TypeCheckDriver {
         self.interner = interner
         self.diagnostics = diagnostics
         self.semaCacheContext = semaCacheContext
+        self.useNewInference = useNewInference
+        self.useUnrestrictedBuilderInference = useUnrestrictedBuilderInference
+        self.useProperTypeInferenceConstraintsProcessing = useProperTypeInferenceConstraintsProcessing
     }
 
     // MARK: - Main Recursive Dispatch Entry Point
@@ -91,7 +100,10 @@ final class TypeCheckDriver {
                 enclosingClassSymbol: nil,
                 visibilityChecker: checker,
                 outerReceiverTypes: [],
-                semaCacheContext: semaCacheContext
+                semaCacheContext: semaCacheContext,
+                useNewInference: useNewInference,
+                useUnrestrictedBuilderInference: useUnrestrictedBuilderInference,
+                useProperTypeInferenceConstraintsProcessing: useProperTypeInferenceConstraintsProcessing
             )
             for declID in file.topLevelDecls {
                 guard let decl = ast.arena.decl(declID),

@@ -4,14 +4,18 @@ import Foundation
 
 /// Runtime backing for `kotlinx.coroutines.sync.Mutex`.
 ///
-/// A non-reentrant mutual exclusion lock.  `lock()` suspends if the mutex is
-/// already held; `tryLock()` returns immediately.  `unlock()` releases the lock
-/// and resumes one waiter (FIFO order).
+/// A non-reentrant mutual exclusion lock with FIFO waiter ordering.
+/// `lock()` blocks or suspends depending on the caller path, `tryLock()`
+/// returns immediately, and `unlock()` transfers ownership to the oldest
+/// queued waiter.
 final class RuntimeMutexHandle: @unchecked Sendable {
     private let lock = NSLock()
     private var isHeld = false
-    private var waiters: [Int] = []
-    private var blockingWaiters: [DispatchSemaphore] = []
+    private enum Waiter {
+        case blocking(DispatchSemaphore)
+        case coroutine(Int)
+    }
+    private var waiters: [Waiter] = []
 
     var isLocked: Bool {
         lock.lock()
@@ -24,7 +28,7 @@ final class RuntimeMutexHandle: @unchecked Sendable {
     func tryLock() -> Bool {
         lock.lock()
         defer { lock.unlock() }
-        if isHeld {
+        if isHeld || !waiters.isEmpty {
             return false
         }
         isHeld = true
@@ -34,31 +38,30 @@ final class RuntimeMutexHandle: @unchecked Sendable {
     /// Acquire the mutex, blocking the calling thread until it is available.
     /// Used by `kk_mutex_withLock` which runs on a regular (non-coroutine) thread.
     func lockBlocking() {
-        lock.lock()
-        if !isHeld {
-            isHeld = true
-            lock.unlock()
-            return
-        }
-        let sema = DispatchSemaphore(value: 0)
-        blockingWaiters.append(sema)
-        lock.unlock()
-        sema.wait()
+        _ = lockSync(continuation: 0)
     }
 
     /// Acquire the lock synchronously (non-suspend path).
     /// If the lock is free, acquires immediately and returns 0.
-    /// If the lock is held, enqueues the waiter and returns the coroutine
-    /// suspended sentinel so the codegen suspend/resume loop can handle it.
+    /// If the lock is held and `continuation != 0`, enqueues the coroutine
+    /// waiter and returns the coroutine suspended sentinel.
+    /// If the lock is held and `continuation == 0`, the caller is treated as a
+    /// blocking waiter and sleeps until ownership transfers.
     func lockSync(continuation: Int) -> Int {
         lock.lock()
-        if !isHeld {
+        if !isHeld && waiters.isEmpty {
             isHeld = true
             lock.unlock()
             return 0
         }
-        // Already locked — suspend the caller.
-        waiters.append(continuation)
+        if continuation == 0 {
+            let sema = DispatchSemaphore(value: 0)
+            waiters.append(.blocking(sema))
+            lock.unlock()
+            sema.wait()
+            return 0
+        }
+        waiters.append(.coroutine(continuation))
         lock.unlock()
         return Int(bitPattern: kk_coroutine_suspended())
     }
@@ -71,23 +74,23 @@ final class RuntimeMutexHandle: @unchecked Sendable {
             lock.unlock()
             fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: Mutex.unlock() called on an unlocked mutex")
         }
-        // Prefer blocking (thread-based) waiters before coroutine waiters.
-        if !blockingWaiters.isEmpty {
-            let sema = blockingWaiters.removeFirst()
-            // Keep isHeld = true — ownership transfers to the blocking waiter.
-            lock.unlock()
-            sema.signal()
-            return
-        }
-        while let continuation = waiters.first {
-            waiters.removeFirst()
-            if runtimeSyncContinuationIsCancelled(continuation) {
-                continue
+        while !waiters.isEmpty {
+            let waiter = waiters.removeFirst()
+            switch waiter {
+            case let .blocking(sema):
+                // Keep isHeld = true — ownership transfers to the blocking waiter.
+                lock.unlock()
+                sema.signal()
+                return
+            case let .coroutine(continuation):
+                if runtimeSyncContinuationIsCancelled(continuation) {
+                    continue
+                }
+                // Keep the mutex held — ownership transfers to the resumed waiter.
+                lock.unlock()
+                runtimeSyncResume(continuation)
+                return
             }
-            // Keep the mutex held — ownership transfers to the resumed waiter.
-            lock.unlock()
-            runtimeSyncResume(continuation)
-            return
         }
         isHeld = false
         lock.unlock()
@@ -285,11 +288,11 @@ public func kk_semaphore_availablePermits(_ handle: Int) -> Int {
 
 /// Runtime backing for `Mutex.withLock { }`.
 ///
-/// Attempts to acquire the mutex using the coroutine suspension mechanism.
-/// If the mutex is free, acquires it, invokes `action`, releases the mutex,
-/// and returns the action result.  If the mutex is already held, enqueues the
-/// continuation and returns `COROUTINE_SUSPENDED` so the coroutine runtime
-/// can release the thread and resume when the lock becomes available.
+/// Attempts to acquire the mutex, invokes `action`, releases the mutex, and
+/// returns the action result.  The current lowering passes a zero continuation
+/// placeholder, so contended calls block on a regular semaphore; if a real
+/// continuation is supplied, the same FIFO waiter queue can still suspend and
+/// resume the caller.
 /// The action is passed as a Swift function pointer (`actionFnPtr`) and an
 /// opaque environment pointer (`actionEnvPtr`) following the standard closure-
 /// conversion ABI used throughout KSwiftK.

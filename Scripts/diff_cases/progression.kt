@@ -52,6 +52,18 @@ fun main() {
     println(revUInt.last)
     println(revUInt.step)
     println(revUInt.toList())
+
+    val revUIntStep = (1u..10u step 3).reversed()
+    println(revUIntStep.first)
+    println(revUIntStep.last)
+    println(revUIntStep.step)
+    println(revUIntStep.toList())
+
+    val revULongStep = (1UL..10UL step 4).reversed()
+    println(revULongStep.first)
+    println(revULongStep.last)
+    println(revULongStep.step)
+    println(revULongStep.toList())
     
     // Test UInt range operations
     println("\n=== UInt range operations ===")
@@ -69,6 +81,11 @@ fun main() {
     println(uintDown.first)
     println(uintDown.last)
     println(uintDown.toList())
+
+    val uintDownStep = (10u downTo 1u) step 3
+    println(uintDownStep.first)
+    println(uintDownStep.last)
+    println(uintDownStep.toList())
     
     // Test ULong range operations
     println("\n=== ULong range operations ===")
@@ -86,14 +103,27 @@ fun main() {
     println(ulongDown.first)
     println(ulongDown.last)
     println(ulongDown.toList())
-    
+
+    val ulongDownStep = (10UL downTo 1UL) step 3
+    println(ulongDownStep.first)
+    println(ulongDownStep.last)
+    println(ulongDownStep.toList())
+
     // Test empty progressions
     println("\n=== Empty progressions ===")
     val emptyInt = IntProgression.fromClosedRange(10, 1, 1)
     println(emptyInt.isEmpty())
     println(emptyInt.toList())
-    
+
+    val emptyLong = LongProgression.fromClosedRange(10L, 1L, 1)
+    println(emptyLong.isEmpty())
+    println(emptyLong.toList())
+
     val emptyUInt = UIntProgression.fromClosedRange(10u, 1u, 1)
     println(emptyUInt.isEmpty())
     println(emptyUInt.toList())
+
+    val emptyULong = ULongProgression.fromClosedRange(10UL, 1UL, 1)
+    println(emptyULong.isEmpty())
+    println(emptyULong.toList())
 }

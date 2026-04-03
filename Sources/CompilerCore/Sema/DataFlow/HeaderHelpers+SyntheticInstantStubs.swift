@@ -1,7 +1,7 @@
 /// Synthetic stubs for kotlin.time.Instant class (STDLIB-TIME-083).
 /// Registers Instant.now(), Instant.fromEpochMilliseconds() companion factories,
 /// instance properties (epochSeconds, nanoOfSecond), arithmetic operators (+/-Duration),
-/// comparison (compareTo), and until().
+/// comparison (compareTo), until(), and elapsed().
 extension DataFlowSemaPhase {
     func registerSyntheticInstantStubs(
         symbols: SymbolTable,
@@ -138,6 +138,18 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_instant_until",
             returnType: durationType,
             parameters: [(name: "other", type: instantType)],
+            ownerSymbol: instantSymbol,
+            ownerType: instantType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- elapsed(): Duration ---
+        registerInstantInstanceMethod(
+            named: "elapsed",
+            externalLinkName: "kk_instant_elapsed",
+            returnType: durationType,
+            parameters: [],
             ownerSymbol: instantSymbol,
             ownerType: instantType,
             symbols: symbols,

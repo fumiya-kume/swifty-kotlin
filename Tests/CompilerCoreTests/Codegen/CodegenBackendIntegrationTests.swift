@@ -945,6 +945,47 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenCoroutineCancellationExtensionImportWorks() throws {
+        let source = """
+        import kotlin.coroutines.cancellation.cancel
+        import kotlinx.coroutines.*
+        import kotlinx.coroutines.channels.*
+
+        fun main() = runBlocking {
+            val started = Channel<Int>()
+            val job = launch {
+                try {
+                    started.send(1)
+                    repeat(1000) {
+                        delay(10)
+                    }
+                } catch (e: CancellationException) {
+                    println("cancelled")
+                }
+            }
+            started.receive()
+            job.cancel()
+            job.join()
+            println("done")
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "CoroutineCancellationExtensionImportWorks",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "cancelled\ndone\n")
+        }
+    }
+
     func testCodegenEmitsObjectWhenLlvmBindingsAreRequired() throws {
         let source = "fun main() = 0"
         try withTemporaryFile(contents: source) { path in

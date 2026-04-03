@@ -148,6 +148,186 @@ final class TypeCheckDelegateCoverageTests: XCTestCase {
         XCTAssertEqual(fixture.bindings.exprType(for: targetError), fixture.types.errorType)
     }
 
+    func testInferCustomArithmeticOperatorOverloadsResolvesMemberCandidates() {
+        let fixture = makeTypeCheckFixture()
+        let ctx = fixture.makeInferenceContext()
+        var locals: LocalBindings = [:]
+        let range = makeRange()
+
+        let counterClass = fixture.symbols.define(
+            kind: .class,
+            name: fixture.interner.intern("Counter"),
+            fqName: [fixture.interner.intern("Counter")],
+            declSite: nil,
+            visibility: .public
+        )
+        let counterType = fixture.types.make(.classType(ClassType(classSymbol: counterClass, args: [], nullability: .nonNull)))
+
+        func defineCounterOperator(
+            _ name: String,
+            parameterTypes: [TypeID],
+            returnType: TypeID,
+            flags: SymbolFlags = [.operatorFunction]
+        ) -> SymbolID {
+            let symbol = fixture.symbols.define(
+                kind: .function,
+                name: fixture.interner.intern(name),
+                fqName: [fixture.interner.intern("Counter"), fixture.interner.intern(name)],
+                declSite: nil,
+                visibility: .public,
+                flags: flags
+            )
+            fixture.symbols.setParentSymbol(counterClass, for: symbol)
+            fixture.symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: counterType,
+                    parameterTypes: parameterTypes,
+                    returnType: returnType
+                ),
+                for: symbol
+            )
+            return symbol
+        }
+
+        let plusSymbol = defineCounterOperator("plus", parameterTypes: [counterType], returnType: counterType)
+        let minusSymbol = defineCounterOperator("minus", parameterTypes: [counterType], returnType: counterType)
+        let timesSymbol = defineCounterOperator("times", parameterTypes: [counterType], returnType: counterType)
+        let divSymbol = defineCounterOperator("div", parameterTypes: [counterType], returnType: counterType)
+        let remSymbol = defineCounterOperator("rem", parameterTypes: [counterType], returnType: counterType)
+        let unaryPlusSymbol = defineCounterOperator("unaryPlus", parameterTypes: [], returnType: counterType)
+        let unaryMinusSymbol = defineCounterOperator("unaryMinus", parameterTypes: [], returnType: counterType)
+
+        let mutableCounterClass = fixture.symbols.define(
+            kind: .class,
+            name: fixture.interner.intern("MutableCounter"),
+            fqName: [fixture.interner.intern("MutableCounter")],
+            declSite: nil,
+            visibility: .public
+        )
+        let mutableCounterType = fixture.types.make(.classType(ClassType(classSymbol: mutableCounterClass, args: [], nullability: .nonNull)))
+
+        func defineCompoundAssignOperator(_ name: String) -> SymbolID {
+            let symbol = fixture.symbols.define(
+                kind: .function,
+                name: fixture.interner.intern(name),
+                fqName: [fixture.interner.intern("MutableCounter"), fixture.interner.intern(name)],
+                declSite: nil,
+                visibility: .public,
+                flags: [.operatorFunction]
+            )
+            fixture.symbols.setParentSymbol(mutableCounterClass, for: symbol)
+            fixture.symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: mutableCounterType,
+                    parameterTypes: [counterType],
+                    returnType: fixture.types.unitType
+                ),
+                for: symbol
+            )
+            return symbol
+        }
+
+        let plusAssignSymbol = defineCompoundAssignOperator("plusAssign")
+        let minusAssignSymbol = defineCompoundAssignOperator("minusAssign")
+        let timesAssignSymbol = defineCompoundAssignOperator("timesAssign")
+        let divAssignSymbol = defineCompoundAssignOperator("divAssign")
+        let remAssignSymbol = defineCompoundAssignOperator("remAssign")
+
+        let toggleClass = fixture.symbols.define(
+            kind: .class,
+            name: fixture.interner.intern("Toggle"),
+            fqName: [fixture.interner.intern("Toggle")],
+            declSite: nil,
+            visibility: .public
+        )
+        let toggleType = fixture.types.make(.classType(ClassType(classSymbol: toggleClass, args: [], nullability: .nonNull)))
+        let notSymbol = fixture.symbols.define(
+            kind: .function,
+            name: fixture.interner.intern("not"),
+            fqName: [fixture.interner.intern("Toggle"), fixture.interner.intern("not")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.operatorFunction]
+        )
+        fixture.symbols.setParentSymbol(toggleClass, for: notSymbol)
+        fixture.symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: toggleType,
+                parameterTypes: [],
+                returnType: toggleType
+            ),
+            for: notSymbol
+        )
+
+        let counterLocal = fixture.symbols.define(
+            kind: .local,
+            name: fixture.interner.intern("counter"),
+            fqName: [fixture.interner.intern("counter")],
+            declSite: nil,
+            visibility: .private
+        )
+        locals[fixture.interner.intern("counter")] = (counterType, counterLocal, false, true)
+
+        let mutableLocal = fixture.symbols.define(
+            kind: .local,
+            name: fixture.interner.intern("mutable"),
+            fqName: [fixture.interner.intern("mutable")],
+            declSite: nil,
+            visibility: .private
+        )
+        locals[fixture.interner.intern("mutable")] = (mutableCounterType, mutableLocal, true, true)
+
+        let toggleLocal = fixture.symbols.define(
+            kind: .local,
+            name: fixture.interner.intern("toggle"),
+            fqName: [fixture.interner.intern("toggle")],
+            declSite: nil,
+            visibility: .private
+        )
+        locals[fixture.interner.intern("toggle")] = (toggleType, toggleLocal, false, true)
+
+        let counterExpr = fixture.astArena.appendExpr(.nameRef(fixture.interner.intern("counter"), range))
+        let toggleExpr = fixture.astArena.appendExpr(.nameRef(fixture.interner.intern("toggle"), range))
+        let rhsExpr = fixture.astArena.appendExpr(.nameRef(fixture.interner.intern("counter"), range))
+
+        let unaryPlusExpr = fixture.astArena.appendExpr(.unaryExpr(op: .unaryPlus, operand: counterExpr, range: range))
+        let unaryMinusExpr = fixture.astArena.appendExpr(.unaryExpr(op: .unaryMinus, operand: counterExpr, range: range))
+        let plusExpr = fixture.astArena.appendExpr(.binary(op: .add, lhs: counterExpr, rhs: rhsExpr, range: range))
+        let minusExpr = fixture.astArena.appendExpr(.binary(op: .subtract, lhs: counterExpr, rhs: rhsExpr, range: range))
+        let timesExpr = fixture.astArena.appendExpr(.binary(op: .multiply, lhs: counterExpr, rhs: rhsExpr, range: range))
+        let divExpr = fixture.astArena.appendExpr(.binary(op: .divide, lhs: counterExpr, rhs: rhsExpr, range: range))
+        let remExpr = fixture.astArena.appendExpr(.binary(op: .modulo, lhs: counterExpr, rhs: rhsExpr, range: range))
+        let notExpr = fixture.astArena.appendExpr(.unaryExpr(op: .not, operand: toggleExpr, range: range))
+        let plusAssignExpr = fixture.astArena.appendExpr(.compoundAssign(op: .plusAssign, name: fixture.interner.intern("mutable"), value: rhsExpr, range: range))
+        let minusAssignExpr = fixture.astArena.appendExpr(.compoundAssign(op: .minusAssign, name: fixture.interner.intern("mutable"), value: rhsExpr, range: range))
+        let timesAssignExpr = fixture.astArena.appendExpr(.compoundAssign(op: .timesAssign, name: fixture.interner.intern("mutable"), value: rhsExpr, range: range))
+        let divAssignExpr = fixture.astArena.appendExpr(.compoundAssign(op: .divAssign, name: fixture.interner.intern("mutable"), value: rhsExpr, range: range))
+        let remAssignExpr = fixture.astArena.appendExpr(.compoundAssign(op: .modAssign, name: fixture.interner.intern("mutable"), value: rhsExpr, range: range))
+
+        let operatorCases: [(ExprID, SymbolID, String, TypeID)] = [
+            (unaryPlusExpr, unaryPlusSymbol, "unaryPlus", counterType),
+            (unaryMinusExpr, unaryMinusSymbol, "unaryMinus", counterType),
+            (plusExpr, plusSymbol, "plus", counterType),
+            (minusExpr, minusSymbol, "minus", counterType),
+            (timesExpr, timesSymbol, "times", counterType),
+            (divExpr, divSymbol, "div", counterType),
+            (remExpr, remSymbol, "rem", counterType),
+            (notExpr, notSymbol, "not", toggleType),
+            (plusAssignExpr, plusAssignSymbol, "plusAssign", fixture.types.unitType),
+            (minusAssignExpr, minusAssignSymbol, "minusAssign", fixture.types.unitType),
+            (timesAssignExpr, timesAssignSymbol, "timesAssign", fixture.types.unitType),
+            (divAssignExpr, divAssignSymbol, "divAssign", fixture.types.unitType),
+            (remAssignExpr, remAssignSymbol, "remAssign", fixture.types.unitType),
+        ]
+
+        for (exprID, expectedSymbol, expectedName, expectedType) in operatorCases {
+            let inferred = fixture.driver.inferExpr(exprID, ctx: ctx, locals: &locals)
+            XCTAssertEqual(inferred, expectedType, "Unexpected type for \(expectedName)")
+            XCTAssertEqual(fixture.bindings.exprType(for: exprID), expectedType, "Unexpected bound type for \(expectedName)")
+            XCTAssertEqual(fixture.bindings.callBinding(for: exprID)?.chosenCallee, expectedSymbol, "Unexpected callee for \(expectedName)")
+        }
+    }
+
     func testInferLocalFunDeclExprBindsFunctionForAllBodyKinds() {
         let fixture = makeTypeCheckFixture()
         let ctx = fixture.makeInferenceContext()
@@ -440,7 +620,10 @@ private struct TypeCheckFixture {
             enclosingClassSymbol: nil,
             visibilityChecker: VisibilityChecker(symbols: symbols),
             outerReceiverTypes: [],
-            semaCacheContext: nil
+            semaCacheContext: nil,
+            useNewInference: false,
+            useUnrestrictedBuilderInference: false,
+            useProperTypeInferenceConstraintsProcessing: false
         )
     }
 }
