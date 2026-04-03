@@ -2939,6 +2939,16 @@ public enum RuntimeABISpec {
             section: "TypeCheck"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_object_register_itable_iface",
+            parameters: [
+                RuntimeABIParameter(name: "objectRaw", type: .intptr),
+                RuntimeABIParameter(name: "ifaceTypeId", type: .intptr),
+                RuntimeABIParameter(name: "ifaceSlot", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_object_register_itable_method",
             parameters: [
                 RuntimeABIParameter(name: "objectRaw", type: .intptr),

@@ -1173,6 +1173,27 @@ public func kk_type_register_iface(_ childTypeId: Int, _ ifaceTypeId: Int) -> In
     return 0
 }
 
+@_cdecl("kk_object_register_itable_iface")
+public func kk_object_register_itable_iface(
+    _ objectRaw: Int,
+    _ ifaceTypeId: Int,
+    _ ifaceSlot: Int
+) -> Int {
+    guard ifaceTypeId != 0,
+          ifaceSlot >= 0,
+          let objectPtr = UnsafeMutableRawPointer(bitPattern: objectRaw)
+    else {
+        return 0
+    }
+    let objectKey = UInt(bitPattern: objectPtr)
+    runtimeStorage.withLock { state in
+        var slots = state.objectInterfaceSlots[objectKey] ?? [:]
+        slots[Int64(ifaceTypeId)] = ifaceSlot
+        state.objectInterfaceSlots[objectKey] = slots
+    }
+    return 0
+}
+
 @_cdecl("kk_object_register_itable_method")
 public func kk_object_register_itable_method(
     _ objectRaw: Int,

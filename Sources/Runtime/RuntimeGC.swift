@@ -31,6 +31,7 @@ struct RuntimeStorageState {
     var callableRefMetadataByValue: [Int: RuntimeCallableRefMetadata] = [:]
     var objectTypeByPointer: [UInt: Int64] = [:]
     var objectItableMethods: [UInt: [UInt64: Int]] = [:]
+    var objectInterfaceSlots: [UInt: [Int64: Int]] = [:]
     var kClassBoxCache: [KClassCacheKey: Int] = [:]
     var threadLocalBoxes: Set<UInt> = []
     var threadLocalValues: [UInt: [ObjectIdentifier: Int]] = [:]
@@ -305,6 +306,8 @@ func resetRuntimeLocked(state: inout RuntimeStorageState) {
     state.flowRetainCounts.removeAll(keepingCapacity: false)
     state.callableRefMetadataByValue.removeAll(keepingCapacity: false)
     state.objectTypeByPointer.removeAll(keepingCapacity: false)
+    state.objectItableMethods.removeAll(keepingCapacity: false)
+    state.objectInterfaceSlots.removeAll(keepingCapacity: false)
     state.typeParents.removeAll(keepingCapacity: false)
     state.globalRootSlots.removeAll(keepingCapacity: false)
     state.frameMaps.removeAll(keepingCapacity: false)
