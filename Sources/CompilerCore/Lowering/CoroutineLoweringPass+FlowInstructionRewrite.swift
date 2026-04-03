@@ -42,7 +42,20 @@ extension CoroutineLoweringPass {
                   tagValue == RuntimeFlowTag.map.rawValue ||
                   tagValue == RuntimeFlowTag.filter.rawValue ||
                   tagValue == RuntimeFlowTag.take.rawValue ||
-                  tagValue == RuntimeFlowTag.transform.rawValue
+                  tagValue == RuntimeFlowTag.catchHandler.rawValue ||
+                  tagValue == RuntimeFlowTag.retry.rawValue ||
+                  tagValue == RuntimeFlowTag.retryWhen.rawValue ||
+                  tagValue == RuntimeFlowTag.onErrorReturn.rawValue ||
+                  tagValue == RuntimeFlowTag.onErrorResume.rawValue ||
+                  tagValue == RuntimeFlowTag.transform.rawValue ||
+                  tagValue == RuntimeFlowTag.takeWhile.rawValue ||
+                  tagValue == RuntimeFlowTag.dropWhile.rawValue ||
+                  tagValue == RuntimeFlowTag.buffer.rawValue ||
+                  tagValue == RuntimeFlowTag.conflate.rawValue ||
+                  tagValue == RuntimeFlowTag.flowOn.rawValue ||
+                  tagValue == RuntimeFlowTag.debounce.rawValue ||
+                  tagValue == RuntimeFlowTag.sample.rawValue ||
+                  tagValue == RuntimeFlowTag.delayEach.rawValue
             else {
                 return false
             }
@@ -83,7 +96,7 @@ extension CoroutineLoweringPass {
             return (sourceHandle, nil)
         }
 
-        /// Emit a flow transform call (map/filter/take) and track the result as a flow expr.
+        /// Emit a flow transform/error-handling call and track the result as a flow expr.
         func emitFlowTransformCall(
             handleExpr: KIRExprID,
             lambdaExpr: KIRExprID,
@@ -105,6 +118,25 @@ extension CoroutineLoweringPass {
             if let result {
                 flowExprIDs.insert(result.rawValue)
             }
+        }
+
+        func emitFlowRuntimeCall(
+            callee: InternedString,
+            handleExpr: KIRExprID,
+            extraArguments: [KIRExprID],
+            result: KIRExprID?
+        ) {
+            let consume = prepareFlowHandleForConsume(handleExpr)
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: callee,
+                arguments: [consume.callArg] + extraArguments,
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
+            if let result { flowExprIDs.insert(result.rawValue) }
         }
 
         /// Emit a flow collect call.
@@ -162,7 +194,7 @@ extension CoroutineLoweringPass {
                         result: result,
                         canThrow: false,
                         thrownResult: nil,
-                        isSuperCall: false
+                        isSuperCall: isSuperCall
                     ))
                     continue
                 }
@@ -197,6 +229,161 @@ extension CoroutineLoweringPass {
                     continue
                 }
 
+                if callee == names.transform, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: arguments[0], lambdaExpr: arguments[1], tag: .transform, result: result, isSuperCall: isSuperCall)
+                    continue
+                }
+
+                if callee == names.takeWhile, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: arguments[0], lambdaExpr: arguments[1], tag: .takeWhile, result: result, isSuperCall: isSuperCall)
+                    continue
+                }
+
+                if callee == names.dropWhile, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: arguments[0], lambdaExpr: arguments[1], tag: .dropWhile, result: result, isSuperCall: isSuperCall)
+                    continue
+                }
+
+                if callee == names.buffer, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: arguments[0], lambdaExpr: arguments[1], tag: .buffer, result: result, isSuperCall: isSuperCall)
+                    continue
+                }
+
+                if callee == names.flowOn, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: arguments[0], lambdaExpr: arguments[1], tag: .flowOn, result: result, isSuperCall: isSuperCall)
+                    continue
+                }
+
+                if callee == names.debounce, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: arguments[0], lambdaExpr: arguments[1], tag: .debounce, result: result, isSuperCall: isSuperCall)
+                    continue
+                }
+
+                if callee == names.sample, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: arguments[0], lambdaExpr: arguments[1], tag: .sample, result: result, isSuperCall: isSuperCall)
+                    continue
+                }
+
+                if callee == names.delayEach, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: arguments[0], lambdaExpr: arguments[1], tag: .delayEach, result: result, isSuperCall: isSuperCall)
+                    continue
+                }
+
+                if callee == names.conflate, arguments.count == 1, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: arguments[0], lambdaExpr: appendIntConstantInBody(0), tag: .conflate, result: result, isSuperCall: isSuperCall)
+                    continue
+                }
+
+                if callee == names.flatMapConcat, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowRuntimeCall(callee: names.kkFlowFlatMapConcat, handleExpr: arguments[0], extraArguments: [arguments[1]], result: result)
+                    continue
+                }
+
+                if callee == names.flatMapMerge, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowRuntimeCall(callee: names.kkFlowFlatMapMerge, handleExpr: arguments[0], extraArguments: [arguments[1]], result: result)
+                    continue
+                }
+
+                if callee == names.flatMapLatest, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowRuntimeCall(callee: names.kkFlowFlatMapLatest, handleExpr: arguments[0], extraArguments: [arguments[1]], result: result)
+                    continue
+                }
+
+                if callee == names.zip, arguments.count == 3, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowRuntimeCall(callee: names.kkFlowZip, handleExpr: arguments[0], extraArguments: [arguments[1], arguments[2]], result: result)
+                    continue
+                }
+
+                if callee == names.combine, arguments.count == 3, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowRuntimeCall(callee: names.kkFlowCombine, handleExpr: arguments[0], extraArguments: [arguments[1], arguments[2]], result: result)
+                    continue
+                }
+
+                if callee == names.merge, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowRuntimeCall(callee: names.kkFlowMerge, handleExpr: arguments[0], extraArguments: [arguments[1]], result: result)
+                    continue
+                }
+
+                if callee == names.catchHandler, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowTransformCall(
+                        handleExpr: arguments[0], lambdaExpr: arguments[1],
+                        tag: .catchHandler, result: result, isSuperCall: isSuperCall
+                    )
+                    continue
+                }
+
+                if callee == names.retry, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowTransformCall(
+                        handleExpr: arguments[0], lambdaExpr: arguments[1],
+                        tag: .retry, result: result, isSuperCall: isSuperCall
+                    )
+                    continue
+                }
+
+                if callee == names.retryWhen, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowTransformCall(
+                        handleExpr: arguments[0], lambdaExpr: arguments[1],
+                        tag: .retryWhen, result: result, isSuperCall: isSuperCall
+                    )
+                    continue
+                }
+
+                if callee == names.onErrorReturn, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowTransformCall(
+                        handleExpr: arguments[0], lambdaExpr: arguments[1],
+                        tag: .onErrorReturn, result: result, isSuperCall: isSuperCall
+                    )
+                    continue
+                }
+
+                if callee == names.onErrorResume, arguments.count == 2, symbol == nil,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    emitFlowTransformCall(
+                        handleExpr: arguments[0], lambdaExpr: arguments[1],
+                        tag: .onErrorResume, result: result, isSuperCall: isSuperCall
+                    )
+                    continue
+                }
+
                 if callee == names.collect, arguments.count == 2, symbol == nil,
                    flowExprIDs.contains(arguments[0].rawValue)
                 {
@@ -205,7 +392,7 @@ extension CoroutineLoweringPass {
                         handleExpr: arguments[0],
                         arguments: [arguments[0], arguments[1], appendIntConstantInBody(0)],
                         result: result, canThrow: canThrow, thrownResult: thrownResult,
-                        isSuperCall: false
+                        isSuperCall: isSuperCall
                     )
                     continue
                 }
@@ -217,7 +404,7 @@ extension CoroutineLoweringPass {
                         symbol: nil, callee: names.kkFlowCollect,
                         handleExpr: arguments[0], arguments: arguments,
                         result: result, canThrow: canThrow, thrownResult: thrownResult,
-                        isSuperCall: false
+                        isSuperCall: isSuperCall
                     )
                     continue
                 }
@@ -234,7 +421,7 @@ extension CoroutineLoweringPass {
                         result: result,
                         canThrow: false,
                         thrownResult: nil,
-                        isSuperCall: false
+                        isSuperCall: isSuperCall
                     ))
                     if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                     continue
@@ -270,7 +457,7 @@ extension CoroutineLoweringPass {
                         result: result,
                         canThrow: true,
                         thrownResult: nil,
-                        isSuperCall: false
+                        isSuperCall: isSuperCall
                     ))
                     if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                     continue
@@ -306,24 +493,6 @@ extension CoroutineLoweringPass {
                         result: result,
                         canThrow: false,
                         thrownResult: nil,
-                        isSuperCall: isSuperCall
-                    ))
-                    if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
-                    continue
-                }
-
-                if callee == names.kkFlowSingle,
-                   !arguments.isEmpty,
-                   flowExprIDs.contains(arguments[0].rawValue)
-                {
-                    let consume = prepareFlowHandleForConsume(arguments[0])
-                    loweredBody.append(.call(
-                        symbol: symbol,
-                        callee: names.kkFlowSingle,
-                        arguments: [consume.callArg, appendIntConstantInBody(0)],
-                        result: result,
-                        canThrow: true,
-                        thrownResult: thrownResult,
                         isSuperCall: isSuperCall
                     ))
                     if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
@@ -393,9 +562,154 @@ extension CoroutineLoweringPass {
                 if callee == names.transform, arguments.count == 1,
                    flowExprIDs.contains(receiver.rawValue)
                 {
+                    emitFlowTransformCall(handleExpr: receiver, lambdaExpr: arguments[0], tag: .transform, result: result)
+                    continue
+                }
+
+                if callee == names.takeWhile, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: receiver, lambdaExpr: arguments[0], tag: .takeWhile, result: result)
+                    continue
+                }
+
+                if callee == names.dropWhile, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: receiver, lambdaExpr: arguments[0], tag: .dropWhile, result: result)
+                    continue
+                }
+
+                if callee == names.buffer, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: receiver, lambdaExpr: arguments[0], tag: .buffer, result: result)
+                    continue
+                }
+
+                if callee == names.flowOn, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: receiver, lambdaExpr: arguments[0], tag: .flowOn, result: result)
+                    continue
+                }
+
+                if callee == names.debounce, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: receiver, lambdaExpr: arguments[0], tag: .debounce, result: result)
+                    continue
+                }
+
+                if callee == names.sample, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: receiver, lambdaExpr: arguments[0], tag: .sample, result: result)
+                    continue
+                }
+
+                if callee == names.delayEach, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: receiver, lambdaExpr: arguments[0], tag: .delayEach, result: result)
+                    continue
+                }
+
+                if callee == names.conflate, arguments.isEmpty,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowTransformCall(handleExpr: receiver, lambdaExpr: appendIntConstantInBody(0), tag: .conflate, result: result)
+                    continue
+                }
+
+                if callee == names.flatMapConcat, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowRuntimeCall(callee: names.kkFlowFlatMapConcat, handleExpr: receiver, extraArguments: [arguments[0]], result: result)
+                    continue
+                }
+
+                if callee == names.flatMapMerge, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowRuntimeCall(callee: names.kkFlowFlatMapMerge, handleExpr: receiver, extraArguments: [arguments[0]], result: result)
+                    continue
+                }
+
+                if callee == names.flatMapLatest, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowRuntimeCall(callee: names.kkFlowFlatMapLatest, handleExpr: receiver, extraArguments: [arguments[0]], result: result)
+                    continue
+                }
+
+                if callee == names.zip, arguments.count == 2,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowRuntimeCall(callee: names.kkFlowZip, handleExpr: receiver, extraArguments: [arguments[0], arguments[1]], result: result)
+                    continue
+                }
+
+                if callee == names.combine, arguments.count == 2,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowRuntimeCall(callee: names.kkFlowCombine, handleExpr: receiver, extraArguments: [arguments[0], arguments[1]], result: result)
+                    continue
+                }
+
+                if callee == names.merge, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowRuntimeCall(callee: names.kkFlowMerge, handleExpr: receiver, extraArguments: [arguments[0]], result: result)
+                    continue
+                }
+
+                if callee == names.catchHandler, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
                     emitFlowTransformCall(
                         handleExpr: receiver, lambdaExpr: arguments[0],
-                        tag: .transform, result: result
+                        tag: .catchHandler, result: result
+                    )
+                    continue
+                }
+
+                if callee == names.retry, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowTransformCall(
+                        handleExpr: receiver, lambdaExpr: arguments[0],
+                        tag: .retry, result: result
+                    )
+                    continue
+                }
+
+                if callee == names.retryWhen, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowTransformCall(
+                        handleExpr: receiver, lambdaExpr: arguments[0],
+                        tag: .retryWhen, result: result
+                    )
+                    continue
+                }
+
+                if callee == names.onErrorReturn, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowTransformCall(
+                        handleExpr: receiver, lambdaExpr: arguments[0],
+                        tag: .onErrorReturn, result: result
+                    )
+                    continue
+                }
+
+                if callee == names.onErrorResume, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowTransformCall(
+                        handleExpr: receiver, lambdaExpr: arguments[0],
+                        tag: .onErrorResume, result: result
                     )
                     continue
                 }
@@ -454,8 +768,7 @@ extension CoroutineLoweringPass {
                         arguments: [consume.callArg, appendIntConstantInBody(0)],
                         result: result,
                         canThrow: true,
-                        thrownResult: nil,
-                        isSuperCall: false
+                        thrownResult: nil
                     ))
                     if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                     continue

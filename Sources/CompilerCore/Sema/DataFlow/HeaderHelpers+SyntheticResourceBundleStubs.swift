@@ -31,6 +31,7 @@ extension DataFlowSemaPhase {
         registerRBConstructor(ownerSymbol: localeSymbol, ownerType: localeType, parameters: [("identifier", types.stringType)], externalLinkName: "kk_locale_new", symbols: symbols, interner: interner)
         registerRBTopLevelFunction(packageFQName: javaUtilPkg, name: "getBundle", parameterTypes: [types.stringType, localeType], returnType: bundleType, externalLinkName: "kk_resource_bundle_getBundle", symbols: symbols, interner: interner)
         registerRBMemberFunction(ownerSymbol: bundleSymbol, ownerType: bundleType, name: "getString", parameterTypes: [types.stringType], returnType: types.stringType, externalLinkName: "kk_resource_bundle_getString", symbols: symbols, interner: interner)
+        registerRBMemberFunction(ownerSymbol: bundleSymbol, ownerType: bundleType, name: "getObject", parameterTypes: [types.stringType], returnType: types.anyType, externalLinkName: "kk_resource_bundle_getObject", symbols: symbols, interner: interner)
         registerRBMemberFunction(ownerSymbol: bundleSymbol, ownerType: bundleType, name: "getKeys", parameterTypes: [], returnType: listType, externalLinkName: "kk_resource_bundle_getKeys", symbols: symbols, interner: interner)
     }
 

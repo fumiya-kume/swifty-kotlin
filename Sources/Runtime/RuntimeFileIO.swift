@@ -69,6 +69,76 @@ private func fileMakeStringRaw(_ value: String) -> Int {
     })
 }
 
+private func runtimeOptionalFileIOStringArgument(_ raw: Int) -> String? {
+    guard raw != runtimeNullSentinelInt,
+          let ptr = UnsafeMutableRawPointer(bitPattern: raw)
+    else {
+        return nil
+    }
+    return extractString(from: ptr)
+}
+
+private func runtimeOptionalFileBoxArgument(_ raw: Int) -> RuntimeFileBox? {
+    guard raw != runtimeNullSentinelInt else {
+        return nil
+    }
+    return runtimeFileBox(from: raw)
+}
+
+private func runtimeDeprecatedTempRootDirectory(directoryRaw: Int) -> String {
+    if let directory = runtimeOptionalFileBoxArgument(directoryRaw) {
+        return directory.path
+    }
+    return NSTemporaryDirectory()
+}
+
+private func runtimeDeprecatedTempPrefix(_ raw: Int) -> String {
+    runtimeOptionalFileIOStringArgument(raw) ?? "tmp"
+}
+
+private func runtimeDeprecatedTempSuffix(_ raw: Int, default defaultValue: String) -> String {
+    runtimeOptionalFileIOStringArgument(raw) ?? defaultValue
+}
+
+private func runtimeCreateDeprecatedTempFile(
+    prefixRaw: Int,
+    suffixRaw: Int,
+    directoryRaw: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let prefix = runtimeDeprecatedTempPrefix(prefixRaw)
+    let suffix = runtimeDeprecatedTempSuffix(suffixRaw, default: ".tmp")
+    let rootDirectory = runtimeDeprecatedTempRootDirectory(directoryRaw: directoryRaw)
+    let fileName = "\(prefix)\(UUID().uuidString)\(suffix)"
+    let fullPath = (rootDirectory as NSString).appendingPathComponent(fileName)
+    let created = FileManager.default.createFile(atPath: fullPath, contents: nil)
+    if !created {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: Failed to create temp file \(fullPath)")
+    }
+    return registerRuntimeObject(RuntimeFileBox(fullPath))
+}
+
+private func runtimeCreateDeprecatedTempDirectory(
+    prefixRaw: Int,
+    suffixRaw: Int,
+    directoryRaw: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let prefix = runtimeDeprecatedTempPrefix(prefixRaw)
+    let suffix = runtimeDeprecatedTempSuffix(suffixRaw, default: ".tmp")
+    let rootDirectory = runtimeDeprecatedTempRootDirectory(directoryRaw: directoryRaw)
+    let dirName = "\(prefix)\(UUID().uuidString)\(suffix)"
+    let fullPath = (rootDirectory as NSString).appendingPathComponent(dirName)
+    do {
+        try FileManager.default.createDirectory(atPath: fullPath, withIntermediateDirectories: true)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return registerRuntimeObject(RuntimeFileBox(fullPath))
+}
+
 // MARK: - STDLIB-320: File constructor and basic operations
 
 @_cdecl("kk_file_new")
@@ -531,6 +601,16 @@ private func runtimeInputStreamBox(from raw: Int) -> RuntimeInputStreamBox? {
     return tryCast(ptr, to: RuntimeInputStreamBox.self)
 }
 
+private func runtimeByteArrayBytes(from raw: Int) -> [UInt8]? {
+    if let array = runtimeArrayBox(from: raw) {
+        return array.elements.map { UInt8(truncatingIfNeeded: $0) }
+    }
+    if let list = runtimeListBox(from: raw) {
+        return list.elements.map { UInt8(truncatingIfNeeded: $0) }
+    }
+    return nil
+}
+
 private func runtimeOutputStreamBox(from raw: Int) -> RuntimeOutputStreamBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
     return tryCast(ptr, to: RuntimeOutputStreamBox.self)
@@ -692,6 +772,16 @@ public func kk_file_inputStream(_ fileRaw: Int, _ outThrown: UnsafeMutablePointe
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
         return 0
     }
+}
+
+@_cdecl("kk_bytearrayinputstream_new")
+public func kk_bytearrayinputstream_new(_ bufferRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let bytes = runtimeByteArrayBytes(from: bufferRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int> buffer")
+        return 0
+    }
+    return registerRuntimeObject(RuntimeInputStreamBox(data: Data(bytes)))
 }
 
 @_cdecl("kk_file_outputStream")
@@ -1190,4 +1280,84 @@ public func kk_files_createTempDirectory(_ filesRaw: Int, _ prefixRaw: Int, _ ou
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
     }
     return registerRuntimeObject(RuntimePathBox(fullPath))
+}
+
+@_cdecl("kk_io_createTempDir_default")
+public func kk_io_createTempDir_default(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeCreateDeprecatedTempDirectory(
+        prefixRaw: runtimeNullSentinelInt,
+        suffixRaw: runtimeNullSentinelInt,
+        directoryRaw: runtimeNullSentinelInt,
+        outThrown: outThrown
+    )
+}
+
+@_cdecl("kk_io_createTempDir_prefix")
+public func kk_io_createTempDir_prefix(_ prefixRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeCreateDeprecatedTempDirectory(
+        prefixRaw: prefixRaw,
+        suffixRaw: runtimeNullSentinelInt,
+        directoryRaw: runtimeNullSentinelInt,
+        outThrown: outThrown
+    )
+}
+
+@_cdecl("kk_io_createTempDir_prefix_suffix")
+public func kk_io_createTempDir_prefix_suffix(_ prefixRaw: Int, _ suffixRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeCreateDeprecatedTempDirectory(
+        prefixRaw: prefixRaw,
+        suffixRaw: suffixRaw,
+        directoryRaw: runtimeNullSentinelInt,
+        outThrown: outThrown
+    )
+}
+
+@_cdecl("kk_io_createTempDir")
+public func kk_io_createTempDir(_ prefixRaw: Int, _ suffixRaw: Int, _ directoryRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeCreateDeprecatedTempDirectory(
+        prefixRaw: prefixRaw,
+        suffixRaw: suffixRaw,
+        directoryRaw: directoryRaw,
+        outThrown: outThrown
+    )
+}
+
+@_cdecl("kk_io_createTempFile_default")
+public func kk_io_createTempFile_default(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeCreateDeprecatedTempFile(
+        prefixRaw: runtimeNullSentinelInt,
+        suffixRaw: runtimeNullSentinelInt,
+        directoryRaw: runtimeNullSentinelInt,
+        outThrown: outThrown
+    )
+}
+
+@_cdecl("kk_io_createTempFile_prefix")
+public func kk_io_createTempFile_prefix(_ prefixRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeCreateDeprecatedTempFile(
+        prefixRaw: prefixRaw,
+        suffixRaw: runtimeNullSentinelInt,
+        directoryRaw: runtimeNullSentinelInt,
+        outThrown: outThrown
+    )
+}
+
+@_cdecl("kk_io_createTempFile_prefix_suffix")
+public func kk_io_createTempFile_prefix_suffix(_ prefixRaw: Int, _ suffixRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeCreateDeprecatedTempFile(
+        prefixRaw: prefixRaw,
+        suffixRaw: suffixRaw,
+        directoryRaw: runtimeNullSentinelInt,
+        outThrown: outThrown
+    )
+}
+
+@_cdecl("kk_io_createTempFile")
+public func kk_io_createTempFile(_ prefixRaw: Int, _ suffixRaw: Int, _ directoryRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeCreateDeprecatedTempFile(
+        prefixRaw: prefixRaw,
+        suffixRaw: suffixRaw,
+        directoryRaw: directoryRaw,
+        outThrown: outThrown
+    )
 }

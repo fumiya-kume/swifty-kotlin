@@ -68,6 +68,37 @@ extension LoweringPassRegressionTests {
         XCTAssertEqual(throwFlags["kk_coroutine_state_get_completion"]?.allSatisfy { $0 == false }, true)
     }
 
+    func testCoroutineLoweringRewritesSuspendCoroutineIntrinsicToFunctionInvoke() throws {
+        let source = """
+        import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
+        import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
+
+        suspend fun probe(): Int {
+            return suspendCoroutineUninterceptedOrReturn { continuation ->
+                7
+            }
+        }
+
+        fun main(): Any? = runBlocking(probe)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "CoroutineIntrinsicRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let loweredProbe = try findKIRFunction(named: "kk_suspend_probe", in: module, interner: ctx.interner)
+
+            let loweredCalls = extractCallees(from: loweredProbe.body, interner: ctx.interner)
+            XCTAssertTrue(loweredCalls.contains("kk_function_invoke"))
+            XCTAssertFalse(loweredCalls.contains("suspendCoroutineUninterceptedOrReturn"))
+
+            let throwFlags = extractThrowFlags(from: loweredProbe.body, interner: ctx.interner)
+            XCTAssertEqual(throwFlags["kk_function_invoke"]?.allSatisfy { $0 == true }, true)
+        }
+    }
+
     func testCoroutineLoweringSynthesizesContinuationNominalTypeLayoutAndSignature() throws {
         let interner = StringInterner()
         let arena = KIRArena()
@@ -291,5 +322,39 @@ extension LoweringPassRegressionTests {
 
         let leafThrowFlags = extractThrowFlags(from: loweredLeaf.body, interner: interner)
         XCTAssertEqual(leafThrowFlags["external_throwing"]?.allSatisfy { $0 == true }, true)
+    }
+
+    func testSuspendCoroutineLoweringEmitsRuntimeSuspendHelper() throws {
+        let source = """
+        import kotlin.coroutines.*
+
+        suspend fun probe(): Int {
+            return suspendCoroutine<Int> { cont: Continuation<Int> ->
+                cont.resume(42)
+            }
+        }
+
+        fun main(): Any? = runBlocking(probe)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "SuspendCoroutineLowering", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let loweredSuspend = try XCTUnwrap(module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case let .function(function) = decl else {
+                    return nil
+                }
+                let callees = extractCallees(from: function.body, interner: ctx.interner)
+                return callees.contains("kk_suspend_coroutine") ? function : nil
+            }.first)
+
+            let loweredCallees = extractCallees(from: loweredSuspend.body, interner: ctx.interner)
+            XCTAssertTrue(loweredCallees.contains("kk_suspend_coroutine"))
+            XCTAssertTrue(loweredCallees.contains("kk_coroutine_state_enter"))
+            XCTAssertTrue(loweredCallees.contains("kk_coroutine_state_exit"))
+        }
     }
 }

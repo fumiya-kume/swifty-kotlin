@@ -15,6 +15,9 @@ extension CoroutineLoweringPass {
         let runtimeWithTimeoutOrNullCallee: InternedString
         let yieldCallee: InternedString
         let runtimeYieldCallee: InternedString
+        let createCoroutineUninterceptedCallee: InternedString
+        let stateSetCompletionCallee: InternedString
+        let suspendCoroutineUninterceptedOrReturnCallee: InternedString
         let continuationFactory: InternedString
         let launcherArgSetCallee: InternedString
         let runtimeRunBlockingWithContCallee: InternedString
@@ -116,7 +119,7 @@ extension CoroutineLoweringPass {
                 callee: rewrite.runtimeRunBlockingWithContCallee,
                 arguments: [entryPointExpr, continuationExpr],
                 result: callResult,
-                canThrow: false,
+                canThrow: true,
                 thrownResult: nil
             )
         )
@@ -220,6 +223,15 @@ extension CoroutineLoweringPass {
                 using: rewrite
             ) {
                 loweredBody.append(yieldInstruction)
+                continue
+            }
+
+            if let createCoroutineInstructions = rewriteCreateCoroutineUninterceptedCall(
+                call: call,
+                symbolByExprRaw: symbolByExprRaw,
+                using: rewrite
+            ) {
+                loweredBody.append(contentsOf: createCoroutineInstructions)
                 continue
             }
 
@@ -591,6 +603,85 @@ extension CoroutineLoweringPass {
             canThrow: false,
             thrownResult: nil
         )
+    }
+
+    func rewriteCreateCoroutineUninterceptedCall(
+        call: CallRewriteInput,
+        symbolByExprRaw: [Int32: SymbolID],
+        using rewrite: SuspendRewriteContext
+    ) -> [KIRInstruction]? {
+        guard call.callee == rewrite.createCoroutineUninterceptedCallee,
+              call.arguments.count == 2 || call.arguments.count == 3
+        else {
+            return nil
+        }
+
+        guard let referencedSymbol = symbolReference(
+            for: call.arguments[0],
+            module: rewrite.module,
+            propagatedSymbols: symbolByExprRaw
+        ),
+        let loweredTarget = rewrite.loweredBySymbol[referencedSymbol]
+        else {
+            return nil
+        }
+
+        let continuationFunctionID = rewrite.module.arena.appendExpr(
+            .intLiteral(Int64(loweredTarget.symbol.rawValue)),
+            type: rewrite.intType
+        )
+        let continuationExpr = call.result ?? rewrite.module.arena.appendExpr(
+            .temporary(Int32(rewrite.module.arena.expressions.count)),
+            type: rewrite.anyType
+        )
+
+        var rewritten: [KIRInstruction] = [
+            .call(
+                symbol: nil,
+                callee: rewrite.continuationFactory,
+                arguments: [continuationFunctionID],
+                result: continuationExpr,
+                canThrow: false,
+                thrownResult: nil
+            )
+        ]
+
+        if call.arguments.count == 3 {
+            let slotExpr = rewrite.module.arena.appendExpr(.intLiteral(0), type: rewrite.intType)
+            rewritten.append(
+                .call(
+                    symbol: nil,
+                    callee: rewrite.launcherArgSetCallee,
+                    arguments: [continuationExpr, slotExpr, call.arguments[1]],
+                    result: nil,
+                    canThrow: false,
+                    thrownResult: nil
+                )
+            )
+            rewritten.append(
+                .call(
+                    symbol: nil,
+                    callee: rewrite.stateSetCompletionCallee,
+                    arguments: [continuationExpr, call.arguments[2]],
+                    result: nil,
+                    canThrow: false,
+                    thrownResult: nil
+                )
+            )
+        } else {
+            rewritten.append(
+                .call(
+                    symbol: nil,
+                    callee: rewrite.stateSetCompletionCallee,
+                    arguments: [continuationExpr, call.arguments[1]],
+                    result: nil,
+                    canThrow: false,
+                    thrownResult: nil
+                )
+            )
+        }
+
+        return rewritten
     }
 
     func resolveLoweredTarget(

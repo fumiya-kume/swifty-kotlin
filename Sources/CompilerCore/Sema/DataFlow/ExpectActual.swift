@@ -77,10 +77,14 @@ extension DataFlowSemaPhase {
             else {
                 return false
             }
-            return expectSig.receiverType == actualSig.receiverType
-                && expectSig.parameterTypes == actualSig.parameterTypes
-                && expectSig.returnType == actualSig.returnType
-                && expectSig.isSuspend == actualSig.isSuspend
+            return expectActualFunctionSignaturesMatch(
+                expectSig: expectSig,
+                expectSymbol: expect,
+                actualSig: actualSig,
+                actualSymbol: actual,
+                symbols: symbols,
+                types: types
+            )
 
         case .property, .field:
             guard let expectType = symbols.propertyType(for: expect.id),
@@ -88,13 +92,27 @@ extension DataFlowSemaPhase {
             else {
                 return false
             }
-            return expectType == actualType
+            let typeParamMapping = makeOwnerTypeParameterMapping(
+                expect: expect,
+                actual: actual,
+                symbols: symbols,
+                types: types
+            )
+            return expect.flags.contains(.mutable) == actual.flags.contains(.mutable)
+                && expectActualTypesMatch(
+                    expectType,
+                    actualType,
+                    typeParamMapping: typeParamMapping,
+                    symbols: symbols,
+                    types: types
+                )
 
         case .class, .interface, .object, .enumClass, .annotationClass:
             // Check type parameter count matches
             let expectTPs = types.nominalTypeParameterSymbols(for: expect.id)
             let actualTPs = types.nominalTypeParameterSymbols(for: actual.id)
             guard expectTPs.count == actualTPs.count else { return false }
+            let typeParamMapping = Dictionary(uniqueKeysWithValues: zip(expectTPs, actualTPs))
             // Check each type parameter's variance and upper bounds match
             let expectVariances = types.nominalTypeParameterVariances(for: expect.id)
             let actualVariances = types.nominalTypeParameterVariances(for: actual.id)
@@ -102,15 +120,68 @@ extension DataFlowSemaPhase {
                 let eVar = index < expectVariances.count ? expectVariances[index] : TypeVariance.invariant
                 let aVar = index < actualVariances.count ? actualVariances[index] : TypeVariance.invariant
                 guard eVar == aVar else { return false }
-                guard symbols.typeParameterUpperBounds(for: eTP) == symbols.typeParameterUpperBounds(for: aTP) else {
+                guard expectActualTypeListsMatch(
+                    symbols.typeParameterUpperBounds(for: eTP),
+                    symbols.typeParameterUpperBounds(for: aTP),
+                    typeParamMapping: typeParamMapping,
+                    symbols: symbols,
+                    types: types
+                ) else {
                     return false
                 }
             }
-            return true
+            let expectSupertypes = symbols.directSupertypes(for: expect.id)
+            let actualSupertypes = symbols.directSupertypes(for: actual.id)
+            guard expectSupertypes.count == actualSupertypes.count else {
+                return false
+            }
+            for (expectSuper, actualSuper) in zip(expectSupertypes, actualSupertypes) {
+                guard expectActualNominalSymbolsMatch(expectSuper, actualSuper, symbols: symbols) else {
+                    return false
+                }
+                let expectArgs = types.nominalSupertypeTypeArgs(for: expect.id, supertype: expectSuper)
+                let actualArgs = types.nominalSupertypeTypeArgs(for: actual.id, supertype: actualSuper)
+                guard expectActualTypeArgsMatch(
+                    expectArgs,
+                    actualArgs,
+                    typeParamMapping: typeParamMapping,
+                    symbols: symbols,
+                    types: types
+                ) else {
+                    return false
+                }
+            }
+            return expect.flags.contains(.valueType) == actual.flags.contains(.valueType)
 
         case .typeAlias:
             // Check underlying types match
-            return symbols.typeAliasUnderlyingType(for: expect.id) == symbols.typeAliasUnderlyingType(for: actual.id)
+            let expectTPs = symbols.typeAliasTypeParameters(for: expect.id)
+            let actualTPs = symbols.typeAliasTypeParameters(for: actual.id)
+            guard expectTPs.count == actualTPs.count else {
+                return false
+            }
+            let typeParamMapping = Dictionary(uniqueKeysWithValues: zip(expectTPs, actualTPs))
+            guard expectActualTypeBoundListsMatch(
+                expectTPs.map { symbols.typeParameterUpperBounds(for: $0) },
+                actualTPs.map { symbols.typeParameterUpperBounds(for: $0) },
+                typeParamMapping: typeParamMapping,
+                symbols: symbols,
+                types: types
+            ) else {
+                return false
+            }
+            guard let expectUnderlying = symbols.typeAliasUnderlyingType(for: expect.id),
+                  let actualUnderlying = symbols.typeAliasUnderlyingType(for: actual.id)
+            else {
+                return false
+            }
+            return expectActualTypesMatch(
+                expectUnderlying,
+                actualUnderlying,
+                typeParamMapping: typeParamMapping,
+                symbols: symbols,
+                types: types
+            )
 
         case .package:
             return true
@@ -122,5 +193,332 @@ extension DataFlowSemaPhase {
             // These symbol kinds are not meaningful as expect/actual declarations.
             return false
         }
+    }
+
+    private func expectActualFunctionSignaturesMatch(
+        expectSig: FunctionSignature,
+        expectSymbol: SemanticSymbol,
+        actualSig: FunctionSignature,
+        actualSymbol: SemanticSymbol,
+        symbols: SymbolTable,
+        types: TypeSystem
+    ) -> Bool {
+        guard expectSig.parameterTypes.count == actualSig.parameterTypes.count,
+              expectSig.isSuspend == actualSig.isSuspend,
+              expectSig.valueParameterIsVararg == actualSig.valueParameterIsVararg,
+              expectSig.reifiedTypeParameterIndices == actualSig.reifiedTypeParameterIndices,
+              expectSig.classTypeParameterCount == actualSig.classTypeParameterCount
+        else {
+            return false
+        }
+
+        var typeParamMapping = makeOwnerTypeParameterMapping(
+            expect: expectSymbol,
+            actual: actualSymbol,
+            symbols: symbols,
+            types: types
+        )
+
+        guard expectSig.typeParameterSymbols.count == actualSig.typeParameterSymbols.count else {
+            return false
+        }
+        for (expectTP, actualTP) in zip(expectSig.typeParameterSymbols, actualSig.typeParameterSymbols) {
+            typeParamMapping[expectTP] = actualTP
+        }
+
+        guard expectActualOptionalTypeListsMatch(
+            expectSig.typeParameterUpperBounds,
+            actualSig.typeParameterUpperBounds,
+            typeParamMapping: typeParamMapping,
+            symbols: symbols,
+            types: types
+        ), expectActualTypeBoundListsMatch(
+            expectSig.typeParameterUpperBoundsList,
+            actualSig.typeParameterUpperBoundsList,
+            typeParamMapping: typeParamMapping,
+            symbols: symbols,
+            types: types
+        ) else {
+            return false
+        }
+
+        guard expectActualOptionalTypeMatch(
+            expectSig.receiverType,
+            actualSig.receiverType,
+            typeParamMapping: typeParamMapping,
+            symbols: symbols,
+            types: types
+        ), expectActualTypeListsMatch(
+            expectSig.parameterTypes,
+            actualSig.parameterTypes,
+            typeParamMapping: typeParamMapping,
+            symbols: symbols,
+            types: types
+        ) else {
+            return false
+        }
+
+        return expectActualTypesMatch(
+            expectSig.returnType,
+            actualSig.returnType,
+            typeParamMapping: typeParamMapping,
+            symbols: symbols,
+            types: types
+        )
+    }
+
+    private func makeOwnerTypeParameterMapping(
+        expect: SemanticSymbol,
+        actual: SemanticSymbol,
+        symbols: SymbolTable,
+        types: TypeSystem
+    ) -> [SymbolID: SymbolID] {
+        guard let expectOwner = symbols.parentSymbol(for: expect.id),
+              let actualOwner = symbols.parentSymbol(for: actual.id),
+              expectActualNominalSymbolsMatch(expectOwner, actualOwner, symbols: symbols)
+        else {
+            return [:]
+        }
+
+        let expectParams = types.nominalTypeParameterSymbols(for: expectOwner)
+        let actualParams = types.nominalTypeParameterSymbols(for: actualOwner)
+        guard expectParams.count == actualParams.count else {
+            return [:]
+        }
+        return Dictionary(uniqueKeysWithValues: zip(expectParams, actualParams))
+    }
+
+    private func expectActualTypeListsMatch(
+        _ expectTypes: [TypeID],
+        _ actualTypes: [TypeID],
+        typeParamMapping: [SymbolID: SymbolID],
+        symbols: SymbolTable,
+        types: TypeSystem
+    ) -> Bool {
+        guard expectTypes.count == actualTypes.count else {
+            return false
+        }
+        for (expectType, actualType) in zip(expectTypes, actualTypes) {
+            guard expectActualTypesMatch(
+                expectType,
+                actualType,
+                typeParamMapping: typeParamMapping,
+                symbols: symbols,
+                types: types
+            ) else {
+                return false
+            }
+        }
+        return true
+    }
+
+    private func expectActualTypeBoundListsMatch(
+        _ expectBounds: [[TypeID]],
+        _ actualBounds: [[TypeID]],
+        typeParamMapping: [SymbolID: SymbolID],
+        symbols: SymbolTable,
+        types: TypeSystem
+    ) -> Bool {
+        guard expectBounds.count == actualBounds.count else {
+            return false
+        }
+        for (expectList, actualList) in zip(expectBounds, actualBounds) {
+            guard expectActualTypeListsMatch(
+                expectList,
+                actualList,
+                typeParamMapping: typeParamMapping,
+                symbols: symbols,
+                types: types
+            ) else {
+                return false
+            }
+        }
+        return true
+    }
+
+    private func expectActualOptionalTypeListsMatch(
+        _ expectTypes: [TypeID?],
+        _ actualTypes: [TypeID?],
+        typeParamMapping: [SymbolID: SymbolID],
+        symbols: SymbolTable,
+        types: TypeSystem
+    ) -> Bool {
+        guard expectTypes.count == actualTypes.count else {
+            return false
+        }
+        for (expectType, actualType) in zip(expectTypes, actualTypes) {
+            guard expectActualOptionalTypeMatch(
+                expectType,
+                actualType,
+                typeParamMapping: typeParamMapping,
+                symbols: symbols,
+                types: types
+            ) else {
+                return false
+            }
+        }
+        return true
+    }
+
+    private func expectActualOptionalTypeMatch(
+        _ expectType: TypeID?,
+        _ actualType: TypeID?,
+        typeParamMapping: [SymbolID: SymbolID],
+        symbols: SymbolTable,
+        types: TypeSystem
+    ) -> Bool {
+        switch (expectType, actualType) {
+        case (.none, .none):
+            true
+        case let (.some(expectType), .some(actualType)):
+            expectActualTypesMatch(
+                expectType,
+                actualType,
+                typeParamMapping: typeParamMapping,
+                symbols: symbols,
+                types: types
+            )
+        default:
+            false
+        }
+    }
+
+    private func expectActualTypeArgsMatch(
+        _ expectArgs: [TypeArg],
+        _ actualArgs: [TypeArg],
+        typeParamMapping: [SymbolID: SymbolID],
+        symbols: SymbolTable,
+        types: TypeSystem
+    ) -> Bool {
+        guard expectArgs.count == actualArgs.count else {
+            return false
+        }
+
+        for (expectArg, actualArg) in zip(expectArgs, actualArgs) {
+            switch (expectArg, actualArg) {
+            case (.star, .star):
+                continue
+            case let (.invariant(expectType), .invariant(actualType)),
+                 let (.out(expectType), .out(actualType)),
+                 let (.in(expectType), .in(actualType)):
+                guard expectActualTypesMatch(
+                    expectType,
+                    actualType,
+                    typeParamMapping: typeParamMapping,
+                    symbols: symbols,
+                    types: types
+                ) else {
+                    return false
+                }
+            default:
+                return false
+            }
+        }
+
+        return true
+    }
+
+    private func expectActualTypesMatch(
+        _ expectType: TypeID,
+        _ actualType: TypeID,
+        typeParamMapping: [SymbolID: SymbolID],
+        symbols: SymbolTable,
+        types: TypeSystem
+    ) -> Bool {
+        switch (types.kind(of: expectType), types.kind(of: actualType)) {
+        case (.error, .error), (.unit, .unit):
+            return true
+
+        case let (.nothing(expectNullability), .nothing(actualNullability)):
+            return expectNullability == actualNullability
+
+        case let (.any(expectNullability), .any(actualNullability)):
+            return expectNullability == actualNullability
+
+        case let (.primitive(expectPrimitive, expectNullability), .primitive(actualPrimitive, actualNullability)):
+            return expectPrimitive == actualPrimitive && expectNullability == actualNullability
+
+        case let (.typeParam(expectParam), .typeParam(actualParam)):
+            let mapped = typeParamMapping[expectParam.symbol] ?? expectParam.symbol
+            return mapped == actualParam.symbol && expectParam.nullability == actualParam.nullability
+
+        case let (.classType(expectClass), .classType(actualClass)):
+            return expectClass.nullability == actualClass.nullability
+                && expectActualNominalSymbolsMatch(expectClass.classSymbol, actualClass.classSymbol, symbols: symbols)
+                && expectActualTypeArgsMatch(
+                    expectClass.args,
+                    actualClass.args,
+                    typeParamMapping: typeParamMapping,
+                    symbols: symbols,
+                    types: types
+                )
+
+        case let (.functionType(expectFunction), .functionType(actualFunction)):
+            return expectFunction.isSuspend == actualFunction.isSuspend
+                && expectFunction.nullability == actualFunction.nullability
+                && expectActualTypeListsMatch(
+                    expectFunction.contextReceivers,
+                    actualFunction.contextReceivers,
+                    typeParamMapping: typeParamMapping,
+                    symbols: symbols,
+                    types: types
+                )
+                && expectActualOptionalTypeMatch(
+                    expectFunction.receiver,
+                    actualFunction.receiver,
+                    typeParamMapping: typeParamMapping,
+                    symbols: symbols,
+                    types: types
+                )
+                && expectActualTypeListsMatch(
+                    expectFunction.params,
+                    actualFunction.params,
+                    typeParamMapping: typeParamMapping,
+                    symbols: symbols,
+                    types: types
+                )
+                && expectActualTypesMatch(
+                    expectFunction.returnType,
+                    actualFunction.returnType,
+                    typeParamMapping: typeParamMapping,
+                    symbols: symbols,
+                    types: types
+                )
+
+        case let (.kClassType(expectKClass), .kClassType(actualKClass)):
+            return expectKClass.nullability == actualKClass.nullability
+                && expectActualTypesMatch(
+                    expectKClass.argument,
+                    actualKClass.argument,
+                    typeParamMapping: typeParamMapping,
+                    symbols: symbols,
+                    types: types
+                )
+
+        case let (.intersection(expectParts), .intersection(actualParts)):
+            return expectActualTypeListsMatch(
+                expectParts,
+                actualParts,
+                typeParamMapping: typeParamMapping,
+                symbols: symbols,
+                types: types
+            )
+
+        default:
+            return false
+        }
+    }
+
+    private func expectActualNominalSymbolsMatch(
+        _ expectSymbolID: SymbolID,
+        _ actualSymbolID: SymbolID,
+        symbols: SymbolTable
+    ) -> Bool {
+        guard let expectSymbol = symbols.symbol(expectSymbolID),
+              let actualSymbol = symbols.symbol(actualSymbolID)
+        else {
+            return false
+        }
+        return expectSymbol.kind == actualSymbol.kind && expectSymbol.fqName == actualSymbol.fqName
     }
 }

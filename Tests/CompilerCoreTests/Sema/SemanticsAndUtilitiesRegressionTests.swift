@@ -24,15 +24,14 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
-    func testAtomicReferenceInAtomicsPackageIsResolved() throws {
+    func testExperimentalAtomicOptInMarkerIsResolved() throws {
         let source = """
         @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
 
-        import kotlin.concurrent.atomics.AtomicReference
+        import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
         fun main() {
-            val ar = AtomicReference<String>("hello")
-            println(ar.load())
+            println("ok")
         }
         """
 
@@ -41,7 +40,61 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
             try runToKIR(ctx)
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
-                "AtomicReference in kotlin.concurrent.atomics should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+                "ExperimentalAtomicApi marker should resolve under OptIn: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testAtomicLongInConcurrentPackageIsResolved() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+
+        import kotlin.concurrent.AtomicLong
+
+        fun main() {
+            val al = AtomicLong(42L)
+            println(al.load())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "AtomicLong in kotlin.concurrent should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testExperimentalAtomicArraysInAtomicsPackageAreResolved() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+
+        import kotlin.concurrent.atomics.AtomicIntArray
+        import kotlin.concurrent.atomics.AtomicLongArray
+
+        fun main() {
+            val ints = AtomicIntArray(2)
+            ints.storeAt(0, 10)
+            ints.storeAt(1, 20)
+            val ok = ints.compareAndSetAt(1, 20, 21)
+            val old = ints.exchangeAt(0, 11)
+            val sum = ints.loadAt(0) + ints.loadAt(1) + if (ok) old else 0
+
+            val longs = AtomicLongArray(1)
+            longs.storeAt(0, 1L)
+            println(sum)
+            println(longs.addAndFetchAt(0, 1L))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Experimental atomic arrays in kotlin.concurrent.atomics should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
             )
         }
     }

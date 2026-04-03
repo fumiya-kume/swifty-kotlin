@@ -1264,6 +1264,15 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_mutable_list_sortDescending_primitive",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "kindRaw", type: .int32),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_mutable_set_add",
             parameters: [
                 RuntimeABIParameter(name: "setRaw", type: .intptr),
@@ -1621,6 +1630,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let sortedPrimitiveSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_sorted_primitive",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "kindRaw", type: .int32),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         let distinctSpec = RuntimeABIFunctionSpec(
             name: "kk_list_distinct",
             parameters: [
@@ -1663,9 +1681,26 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let sortedByPrimitiveSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_sortedBy_primitive",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "kindRaw", type: .int32),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         return before.map { hofSpec($0) }
             + [filterNotNullSpec, foldSpec]
-            + genericAfter.map { hofSpec($0) }
+            + genericAfter.flatMap { name in
+                if name == "kk_list_sortedBy" {
+                    return [hofSpec(name), sortedByPrimitiveSpec]
+                }
+                return [hofSpec(name)]
+            }
             + [reduceOrNullSpec, scanSpec, runningFoldSpec, runningReduceSpec, scanReduceSpec]
             + [
                 associateBySpec, associateWithSpec, associateSpec,
@@ -1721,6 +1756,7 @@ public extension RuntimeABISpec {
                 zipSpec, zipWithNextSpec, zipWithNextTransformSpec, unzipSpec, withIndexSpec, forEachIndexedSpec, mapIndexedSpec,
                 sumOfSpec, maxOrNullSpec, minOrNullSpec,
                 takeSpec, dropSpec, sumSpec, reversedSpec, asReversedSpec, sortedSpec, distinctSpec,
+                sortedPrimitiveSpec,
                 shuffledSpec, shuffledRandomSpec, randomSpec, randomOrNullSpec,
                 RuntimeABIFunctionSpec(
                     name: "kk_list_flatten",
@@ -1819,7 +1855,33 @@ public extension RuntimeABISpec {
                     returnType: .intptr,
                     section: "Collection"
                 ),
-                hofSpec("kk_list_sortedByDescending"),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_sortedDescending_primitive",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "kindRaw", type: .int32),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_sortedByDescending",
+                    parameters: hofLambdaParams,
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_sortedByDescending_primitive",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                        RuntimeABIParameter(name: "kindRaw", type: .int32),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
                 hofSpec("kk_list_sortedWith"),
                 hofSpec("kk_list_partition"),
                 hofSpec("kk_list_takeWhile"),

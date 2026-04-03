@@ -336,6 +336,13 @@ func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
         }
         return true
     }
+    if let lhsLocale = tryCast(lhsPtr, to: RuntimeLocaleBox.self),
+       let rhsLocale = tryCast(rhsPtr, to: RuntimeLocaleBox.self)
+    {
+        return lhsLocale.language == rhsLocale.language &&
+            lhsLocale.country == rhsLocale.country &&
+            lhsLocale.variant == rhsLocale.variant
+    }
     // Data class / user-defined object structural equality: compare classID and elements.
     if let lhsObj = tryCast(lhsPtr, to: RuntimeObjectBox.self),
        let rhsObj = tryCast(rhsPtr, to: RuntimeObjectBox.self)
@@ -614,6 +621,17 @@ private func runtimeCompareComparableValues(lhs: Int, rhs: Int) -> Int? {
     return compareToFn(lhs, rhs)
 }
 
+enum RuntimePrimitiveCompareKind {
+    case int
+    case long
+    case uint
+    case ulong
+    case boolean
+    case char
+    case float
+    case double
+}
+
 private enum RuntimeComparableScalarValue {
     case integer(Int)
     case floating(Double)
@@ -664,6 +682,73 @@ private func runtimeComparableScalarValue(from raw: Int) -> RuntimeComparableSca
         return .integer(charBox.value)
     }
     return nil
+}
+
+@inline(__always)
+private func runtimePrimitiveIntValue(_ raw: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return raw
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: pointer))
+    }
+    guard isObjectPointer else {
+        return raw
+    }
+    if let intBox = tryCast(pointer, to: RuntimeIntBox.self) {
+        return intBox.value
+    }
+    if let longBox = tryCast(pointer, to: RuntimeLongBox.self) {
+        return longBox.value
+    }
+    if let boolBox = tryCast(pointer, to: RuntimeBoolBox.self) {
+        return boolBox.value ? 1 : 0
+    }
+    if let charBox = tryCast(pointer, to: RuntimeCharBox.self) {
+        return charBox.value
+    }
+    return raw
+}
+
+@inline(__always)
+private func runtimePrimitiveFloatValue(_ raw: Int, kind: RuntimePrimitiveCompareKind) -> Double {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return kind == .float ? Double(kk_bits_to_float(raw)) : kk_bits_to_double(raw)
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: pointer))
+    }
+    guard isObjectPointer else {
+        return kind == .float ? Double(kk_bits_to_float(raw)) : kk_bits_to_double(raw)
+    }
+    if let floatBox = tryCast(pointer, to: RuntimeFloatBox.self) {
+        return Double(floatBox.value)
+    }
+    if let doubleBox = tryCast(pointer, to: RuntimeDoubleBox.self) {
+        return doubleBox.value
+    }
+    return kind == .float ? Double(kk_bits_to_float(raw)) : kk_bits_to_double(raw)
+}
+
+@inline(__always)
+func runtimeComparePrimitiveValues(_ lhs: Int, _ rhs: Int, kind: RuntimePrimitiveCompareKind) -> Int {
+    switch kind {
+    case .int, .long, .boolean, .char:
+        let lhsValue = runtimePrimitiveIntValue(lhs)
+        let rhsValue = runtimePrimitiveIntValue(rhs)
+        if lhsValue == rhsValue { return 0 }
+        return lhsValue < rhsValue ? -1 : 1
+    case .uint, .ulong:
+        let lhsValue = UInt(bitPattern: runtimePrimitiveIntValue(lhs))
+        let rhsValue = UInt(bitPattern: runtimePrimitiveIntValue(rhs))
+        if lhsValue == rhsValue { return 0 }
+        return lhsValue < rhsValue ? -1 : 1
+    case .float, .double:
+        return runtimeCompareFloatingValues(
+            runtimePrimitiveFloatValue(lhs, kind: kind),
+            runtimePrimitiveFloatValue(rhs, kind: kind)
+        )
+    }
 }
 
 private func runtimeStringFromRawValue(_ raw: Int) -> String? {

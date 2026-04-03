@@ -620,7 +620,10 @@ private struct TypeCheckFixture {
             enclosingClassSymbol: nil,
             visibilityChecker: VisibilityChecker(symbols: symbols),
             outerReceiverTypes: [],
-            semaCacheContext: nil
+            semaCacheContext: nil,
+            useNewInference: false,
+            useUnrestrictedBuilderInference: false,
+            useProperTypeInferenceConstraintsProcessing: false
         )
     }
 }

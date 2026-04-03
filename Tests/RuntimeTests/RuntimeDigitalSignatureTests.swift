@@ -28,7 +28,7 @@ final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
     }
 
     private func makeKeyPair() -> Int {
-        let generator = kk_keypairgenerator_getInstance(runtimeString("RSA"), nil)
+        let generator = kk_keypairgenerator_getInstance(0, runtimeString("RSA"), nil)
         _ = kk_keypairgenerator_initialize(generator, 2048, nil)
         return kk_keypairgenerator_generateKeyPair(generator, nil)
     }
@@ -38,12 +38,12 @@ final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
         let publicKey = kk_keypair_publicKey(keyPair, nil)
         let privateKey = kk_keypair_privateKey(keyPair, nil)
 
-        let signer = kk_signature_getInstance(runtimeString(algorithm), nil)
+        let signer = kk_signature_getInstance(0, runtimeString(algorithm), nil)
         _ = kk_signature_initSign(signer, privateKey, nil)
         _ = kk_signature_update(signer, runtimeBytes(message), nil)
         let signatureBytes = kk_signature_sign(signer, nil)
 
-        let verifier = kk_signature_getInstance(runtimeString(algorithm), nil)
+        let verifier = kk_signature_getInstance(0, runtimeString(algorithm), nil)
         _ = kk_signature_initVerify(verifier, publicKey, nil)
         _ = kk_signature_update(verifier, runtimeBytes(message), nil)
         return kk_unbox_bool(kk_signature_verify(verifier, signatureBytes, nil)) == 1
@@ -78,7 +78,7 @@ final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
         -----END CERTIFICATE-----
         """
 
-        let factory = kk_certificatefactory_getInstance(runtimeString("X.509"), nil)
+        let factory = kk_certificatefactory_getInstance(0, runtimeString("X.509"), nil)
         let certificate = kk_certificatefactory_generateCertificate(factory, runtimeBytes(Array(certPem.utf8)), nil)
         XCTAssertGreaterThan(byteArray(from: kk_x509certificate_getEncoded(certificate, nil)).count, 0)
         XCTAssertNotEqual(kk_x509certificate_getPublicKey(certificate, nil), 0)
@@ -86,7 +86,7 @@ final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
         let certPath = kk_certpath_new(runtimeList([certificate]), nil)
         let trustAnchor = kk_trustanchor_new(certificate, nil)
         let parameters = kk_pkixparameters_new(runtimeList([trustAnchor]), nil)
-        let validator = kk_certpathvalidator_getInstance(runtimeString("PKIX"), nil)
+        let validator = kk_certpathvalidator_getInstance(0, runtimeString("PKIX"), nil)
         XCTAssertEqual(
             kk_unbox_bool(kk_certpathvalidator_validate(validator, certPath, parameters, nil)),
             1

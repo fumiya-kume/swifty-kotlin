@@ -1,11 +1,12 @@
 // SKIP-DIFF: uses JDK security stubs (KeyPairGenerator, Signature, etc.) that kswiftc provides natively but kotlinc rejects due to protected/abstract constructors
 import java.security.KeyPairGenerator
 import java.security.Signature
-import java.security.cert.CertPath
+import java.io.ByteArrayInputStream
 import java.security.cert.CertPathValidator
 import java.security.cert.CertificateFactory
 import java.security.cert.PKIXParameters
 import java.security.cert.TrustAnchor
+import java.security.cert.X509Certificate
 
 fun main() {
     val generator = KeyPairGenerator("RSA")
@@ -13,25 +14,27 @@ fun main() {
     val keyPair = generator.generateKeyPair()
 
     val message = byteArrayOf(1, 2, 3, 4, 5, 6)
-    val signerSha1 = Signature("SHA1withRSA")
-    signerSha1.initSign(keyPair.privateKey)
+    val signerSha1 = Signature.getInstance("SHA1withRSA")
+    signerSha1.initSign(keyPair.private)
     signerSha1.update(message)
     val signatureSha1 = signerSha1.sign()
 
-    val verifierSha1 = Signature("SHA1withRSA")
-    verifierSha1.initVerify(keyPair.publicKey)
+    val verifierSha1 = Signature.getInstance("SHA1withRSA")
+    verifierSha1.initVerify(keyPair.public)
     verifierSha1.update(message)
     val verifiedSha1 = verifierSha1.verify(signatureSha1)
+    check(verifiedSha1) { "SHA1withRSA verification failed" }
 
-    val signerSha256 = Signature("SHA256withRSA")
-    signerSha256.initSign(keyPair.privateKey)
+    val signerSha256 = Signature.getInstance("SHA256withRSA")
+    signerSha256.initSign(keyPair.private)
     signerSha256.update(message)
     val signatureSha256 = signerSha256.sign()
 
-    val verifierSha256 = Signature("SHA256withRSA")
-    verifierSha256.initVerify(keyPair.publicKey)
+    val verifierSha256 = Signature.getInstance("SHA256withRSA")
+    verifierSha256.initVerify(keyPair.public)
     verifierSha256.update(message)
     val verifiedSha256 = verifierSha256.verify(signatureSha256)
+    check(verifiedSha256) { "SHA256withRSA verification failed" }
 
     val certificatePem = """
         -----BEGIN CERTIFICATE-----
@@ -55,11 +58,13 @@ fun main() {
         -----END CERTIFICATE-----
     """.trimIndent().toByteArray()
 
-    val certificateFactory = CertificateFactory("X.509")
-    val certificate = certificateFactory.generateCertificate(certificatePem)
-    val certPath = CertPath(listOf(certificate))
-    val trustAnchor = TrustAnchor(certificate)
-    val parameters = PKIXParameters(listOf(trustAnchor))
-    val validator = CertPathValidator("PKIX")
-    val valid = validator.validate(certPath, parameters)
+    val certificateFactory = CertificateFactory.getInstance("X.509")
+    val certificateInput = ByteArrayInputStream(certificatePem)
+    val certificate = certificateFactory.generateCertificate(certificateInput) as X509Certificate
+    val certPath = certificateFactory.generateCertPath(listOf(certificate))
+    val trustAnchor = TrustAnchor(certificate, null)
+    val parameters = PKIXParameters(setOf(trustAnchor))
+    val validator = CertPathValidator.getInstance("PKIX")
+    val validationResult = validator.validate(certPath, parameters)
+    check(validationResult != null) { "PKIX validation failed" }
 }
