@@ -815,13 +815,15 @@ final class CallLowerer {
                 chosenInfo.fqName == knownNames.kotlinxCoroutinesRunBlockingFQName
                     || chosenInfo.fqName == knownNames.kotlinxCoroutinesLaunchFQName
                     || chosenInfo.fqName == knownNames.kotlinxCoroutinesAsyncFQName
+                    || chosenInfo.fqName == knownNames.kotlinxCoroutinesProduceFQName
             } else {
                 true
             }
             if isSyntheticCoroutineLauncher,
                sourceCalleeName == knownNames.runBlocking
                || sourceCalleeName == knownNames.launch
-               || sourceCalleeName == knownNames.async,
+               || sourceCalleeName == knownNames.async
+               || sourceCalleeName == knownNames.produce,
                let firstArg = finalArgIDs.first,
                let callableInfo = driver.ctx.callableValueInfo(for: firstArg),
                !callableInfo.captureArguments.isEmpty

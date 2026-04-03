@@ -234,6 +234,7 @@ struct KnownCompilerNames {
     let runBlocking: InternedString
     let launch: InternedString
     let async: InternedString
+    let produce: InternedString
 
     // Scope function names (STDLIB-004 / STDLIB-250)
     let letFn: InternedString
@@ -283,6 +284,7 @@ struct KnownCompilerNames {
     let kotlinxCoroutinesDeferredFQName: [InternedString]
     let kotlinxCoroutinesChannelFQName: [InternedString]
     let kotlinxCoroutinesFlowFQName: [InternedString]
+    let kotlinxCoroutinesProduceFQName: [InternedString]
     let kotlinxCoroutinesRunBlockingFQName: [InternedString]
     let kotlinxCoroutinesLaunchFQName: [InternedString]
     let kotlinxCoroutinesAsyncFQName: [InternedString]
@@ -416,6 +418,7 @@ struct KnownCompilerNames {
         runBlocking = interner.intern("runBlocking")
         launch = interner.intern("launch")
         async = interner.intern("async")
+        produce = interner.intern("produce")
 
         // Scope function names (STDLIB-004 / STDLIB-250)
         letFn = interner.intern("let")
@@ -476,6 +479,7 @@ struct KnownCompilerNames {
         kotlinxCoroutinesDeferredFQName = [kotlinx, coroutines, deferred]
         kotlinxCoroutinesChannelFQName = [kotlinx, coroutines, channels, channel]
         kotlinxCoroutinesFlowFQName = [kotlinx, coroutines, flowPkg, flow]
+        kotlinxCoroutinesProduceFQName = [kotlinx, coroutines, channels, produce]
         kotlinxCoroutinesRunBlockingFQName = [kotlinx, coroutines, runBlocking]
         kotlinxCoroutinesLaunchFQName = [kotlinx, coroutines, launch]
         kotlinxCoroutinesAsyncFQName = [kotlinx, coroutines, async]

@@ -58,7 +58,8 @@ final class CoroutineLowerer {
         // runBlocking, launch, async の処理
         if calleeName == knownNames.runBlocking ||
            calleeName == knownNames.launch ||
-           calleeName == knownNames.async {
+           calleeName == knownNames.async ||
+           calleeName == knownNames.produce {
             return lowerCoroutineLauncherCall(
                 calleeName: calleeName,
                 args: args,
@@ -102,12 +103,21 @@ final class CoroutineLowerer {
         
         if let runtimeName {
             let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
+            var finalArgs = [receiverID] + args
+            if runtimeName == "kk_channel_send" || runtimeName == "kk_channel_receive" {
+                let continuationExpr = arena.appendExpr(
+                    .intLiteral(0),
+                    type: sema.types.intType
+                )
+                context.append(.constValue(result: continuationExpr, value: .intLiteral(0)))
+                finalArgs.append(continuationExpr)
+            }
             
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
             context.append(.call(
                 symbol: nil,
                 callee: interner.intern(runtimeName),
-                arguments: [receiverID] + args,
+                arguments: finalArgs,
                 result: result,
                 canThrow: true,
                 thrownResult: nil
@@ -144,6 +154,15 @@ final class CoroutineLowerer {
         
         if let runtimeName {
             let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
+            var finalArgs = [receiverID] + args
+            if runtimeName == "kk_channel_send" || runtimeName == "kk_channel_receive" {
+                let continuationExpr = arena.appendExpr(
+                    .intLiteral(0),
+                    type: sema.types.intType
+                )
+                context.append(.constValue(result: continuationExpr, value: .intLiteral(0)))
+                finalArgs.append(continuationExpr)
+            }
 
             let resultType: TypeID = switch calleeStr {
             case "isClosedForReceive", "isClosedForSend":
@@ -161,7 +180,7 @@ final class CoroutineLowerer {
             context.append(.call(
                 symbol: nil,
                 callee: interner.intern(runtimeName),
-                arguments: [receiverID] + args,
+                arguments: finalArgs,
                 result: result,
                 canThrow: operationCanThrow,
                 thrownResult: nil

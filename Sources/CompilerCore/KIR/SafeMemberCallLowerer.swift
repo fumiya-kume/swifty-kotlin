@@ -667,6 +667,17 @@ final class SafeMemberCallLowerer {
                 } else {
                     effectiveCalleeName
                 }
+
+                if loweredCalleeName == interner.intern("kk_channel_send")
+                    || loweredCalleeName == interner.intern("kk_channel_receive")
+                {
+                    let continuationExpr = arena.appendExpr(
+                        .intLiteral(0),
+                        type: sema.types.intType
+                    )
+                    instructions.append(.constValue(result: continuationExpr, value: .intLiteral(0)))
+                    finalArguments.append(continuationExpr)
+                }
                 
                 instructions.append(.call(
                     symbol: chosen,

@@ -256,6 +256,12 @@ func runtimeInterceptedContinuation(using dispatcherTag: Int, continuation: KKCo
     )
 }
 
+public extension KKContinuation {
+    func intercepted() -> KKContinuation {
+        runtimeInterceptedContinuation(self)
+    }
+}
+
 public final class KKDispatchContinuation: KKContinuation {
     public let context: UnsafeMutableRawPointer?
     private let callback: (UnsafeMutableRawPointer?) -> Void
@@ -267,12 +273,6 @@ public final class KKDispatchContinuation: KKContinuation {
 
     public func resumeWith(_ result: UnsafeMutableRawPointer?) {
         callback(result)
-    }
-}
-
-public extension KKContinuation {
-    func intercepted() -> KKContinuation {
-        runtimeInterceptedContinuation(self)
     }
 }
 

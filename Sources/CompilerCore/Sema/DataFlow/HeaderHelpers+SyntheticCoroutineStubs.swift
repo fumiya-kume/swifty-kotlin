@@ -657,6 +657,72 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        // STDLIB-CORO-075: `produce { ... }` returns a `Channel<T>` and runs the
+        // block with a `Channel<T>` receiver so channel sends resolve correctly.
+        let functionName = interner.intern("produce")
+        let functionFQName = channelsPkg + [functionName]
+        if symbols.lookup(fqName: functionFQName) == nil {
+            let typeParamName = interner.intern("T")
+            let typeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: functionFQName + [interner.intern("$synthetic"), typeParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            let typeParamType = types.make(.typeParam(TypeParamType(
+                symbol: typeParamSymbol,
+                nullability: .nonNull
+            )))
+            let produceChannelType = types.make(.classType(ClassType(
+                classSymbol: channelSymbol,
+                args: [.invariant(typeParamType)],
+                nullability: .nonNull
+            )))
+            let blockType = types.make(.functionType(FunctionType(
+                receiver: produceChannelType,
+                params: [],
+                returnType: types.unitType,
+                isSuspend: true,
+                nullability: .nonNull
+            )))
+            let functionSymbol = symbols.define(
+                kind: .function,
+                name: functionName,
+                fqName: functionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if let packageSymbol = symbols.lookup(fqName: channelsPkg) {
+                symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+            }
+            symbols.setParentSymbol(functionSymbol, for: typeParamSymbol)
+            let paramName = interner.intern("block")
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: paramName,
+                fqName: functionFQName + [paramName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: paramSymbol)
+            symbols.setExternalLinkName("kk_produce", for: functionSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    parameterTypes: [blockType],
+                    returnType: produceChannelType,
+                    isSuspend: false,
+                    valueParameterSymbols: [paramSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [typeParamSymbol]
+                ),
+                for: functionSymbol
+            )
+        }
         registerSyntheticCoroutineTopLevelFunction(
             named: "coroutineScope",
             packageFQName: coroutinesPkg,

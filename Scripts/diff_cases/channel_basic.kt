@@ -34,4 +34,11 @@ fun main() = runBlocking {
     for (v in ch4) {
         println(v)
     }
+
+    // Test 5: produce {}
+    val x = 99
+    val produced = produce {
+        send(x)
+    }
+    println(produced.receive())
 }

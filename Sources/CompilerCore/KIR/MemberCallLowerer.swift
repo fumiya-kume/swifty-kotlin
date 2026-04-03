@@ -67,6 +67,7 @@ final class MemberCallLowerer {
         // 一般的なメンバーコールの処理
         return handleGeneralMemberCall(
             exprID: exprID,
+            receiverExpr: receiverExpr,
             receiverID: loweredReceiverID,
             calleeName: calleeName,
             args: args,
@@ -87,10 +88,10 @@ final class MemberCallLowerer {
         let sema = context.sema
         let arena = context.arena
         let interner = context.interner
+        let calleeStr = interner.resolve(calleeName)
         let boundType = sema.bindings.exprTypes[exprID]
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         
-        let calleeStr = interner.resolve(calleeName)
         let runtimeName: String? = switch calleeStr {
         case "await": "kk_coro_await"
         case "join": "kk_coro_join"
@@ -102,11 +103,12 @@ final class MemberCallLowerer {
             let loweredArgs = args.map { arg in
                 context.lowerSubExpr(arg.expr, driver: coordinator.driver)
             }
-            
+            var finalArguments = [receiverID] + loweredArgs
+
             context.append(.call(
                 symbol: nil,
                 callee: interner.intern(runtimeName),
-                arguments: [receiverID] + loweredArgs,
+                arguments: finalArguments,
                 result: result,
                 canThrow: true,
                 thrownResult: nil
@@ -117,6 +119,7 @@ final class MemberCallLowerer {
         // フォールバック: 一般的なメンバーコールとして処理
         return handleGeneralMemberCall(
             exprID: exprID,
+            receiverExpr: exprID,
             receiverID: receiverID,
             calleeName: calleeName,
             args: args,
@@ -135,10 +138,10 @@ final class MemberCallLowerer {
         let sema = context.sema
         let arena = context.arena
         let interner = context.interner
+        let calleeStr = interner.resolve(calleeName)
         let boundType = sema.bindings.exprTypes[exprID]
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         
-        let calleeStr = interner.resolve(calleeName)
         let runtimeName: String? = switch calleeStr {
         case "send": "kk_channel_send"
         case "receive": "kk_channel_receive"
@@ -150,11 +153,20 @@ final class MemberCallLowerer {
             let loweredArgs = args.map { arg in
                 context.lowerSubExpr(arg.expr, driver: coordinator.driver)
             }
+            var finalArguments = [receiverID] + loweredArgs
+            if runtimeName == "kk_channel_send" || runtimeName == "kk_channel_receive" {
+                let continuationExpr = arena.appendExpr(
+                    .intLiteral(0),
+                    type: sema.types.intType
+                )
+                context.append(.constValue(result: continuationExpr, value: .intLiteral(0)))
+                finalArguments.append(continuationExpr)
+            }
             
             context.append(.call(
                 symbol: nil,
                 callee: interner.intern(runtimeName),
-                arguments: [receiverID] + loweredArgs,
+                arguments: finalArguments,
                 result: result,
                 canThrow: true,
                 thrownResult: nil
@@ -165,6 +177,7 @@ final class MemberCallLowerer {
         // フォールバック: 一般的なメンバーコールとして処理
         return handleGeneralMemberCall(
             exprID: exprID,
+            receiverExpr: exprID,
             receiverID: receiverID,
             calleeName: calleeName,
             args: args,
@@ -175,6 +188,7 @@ final class MemberCallLowerer {
     /// 一般的なメンバーコールを処理
     private func handleGeneralMemberCall(
         exprID: ExprID,
+        receiverExpr: ExprID,
         receiverID: KIRExprID,
         calleeName: InternedString,
         args: [CallArgument],
@@ -183,6 +197,7 @@ final class MemberCallLowerer {
         let sema = context.sema
         let arena = context.arena
         let interner = context.interner
+        let calleeStr = interner.resolve(calleeName)
         let boundType = sema.bindings.exprTypes[exprID]
         
         // 引数のローワーリング
@@ -225,6 +240,15 @@ final class MemberCallLowerer {
             
             var finalArguments = normalizedResult.arguments
             finalArguments.insert(receiverID, at: 0)
+            if calleeStr == "send" || calleeStr == "receive"
+            {
+                let continuationExpr = arena.appendExpr(
+                    .intLiteral(0),
+                    type: sema.types.intType
+                )
+                context.append(.constValue(result: continuationExpr, value: .intLiteral(0)))
+                finalArguments.append(continuationExpr)
+            }
             
             emitMemberCallInstruction(
                 normalized: normalizedResult,
@@ -560,7 +584,6 @@ final class MemberCallLowerer {
     ) {
         let sema = context.sema
         let interner = context.interner
-        let intType = sema.types.make(.primitive(.int, .nonNull))
         
         var finalArguments = arguments
         
