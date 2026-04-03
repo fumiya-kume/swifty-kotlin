@@ -55,6 +55,9 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        if let packageSymbol = symbols.lookup(fqName: kotlinCoroutinesPkg) {
+            symbols.setParentSymbol(packageSymbol, for: continuationSymbol)
+        }
         let continuationInterceptorSymbol = ensureInterfaceSymbol(
             named: "ContinuationInterceptor",
             in: kotlinCoroutinesPkg,
@@ -202,15 +205,6 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterSymbols([continuationTypeParameterSymbol], for: continuationSymbol)
         types.setNominalTypeParameterVariances([.invariant], for: continuationSymbol)
 
-        let continuationSymbol = ensureInterfaceSymbol(
-            named: "Continuation",
-            in: kotlinCoroutinesPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        if let packageSymbol = symbols.lookup(fqName: kotlinCoroutinesPkg) {
-            symbols.setParentSymbol(packageSymbol, for: continuationSymbol)
-        }
         let suspendIntrinsicName = interner.intern("suspendCoroutineUninterceptedOrReturn")
         let suspendIntrinsicFQName = kotlinCoroutinesIntrinsicsPkg + [suspendIntrinsicName]
         if symbols.lookup(fqName: suspendIntrinsicFQName) == nil {
