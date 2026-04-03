@@ -34,6 +34,7 @@ Cases:
 - `val_reassign_error.kt`: local `val` 再代入の compile-error parity
 - `zero_null_print.kt`: `println(0)` と `println(null)` の表示分離
 - `type_error.kt`: compile-error parity case
+- `type_constraints.kt`: type parameter upper bounds and `where` clause parity
 - `invoke_operator.kt`: `operator fun invoke` による `obj(args)` 呼び出し（top-level property / object / 式結果）
 - `char_escape.kt`: Char escape / Unicode escape の runtime parity（`'\n'`, `'\t'`, `'\\'`, `'\u0041'`）
 - `nothing_return_throw.kt`: `Nothing` 分岐の parity（`if` 内 `throw` / `return` による分岐合流）
