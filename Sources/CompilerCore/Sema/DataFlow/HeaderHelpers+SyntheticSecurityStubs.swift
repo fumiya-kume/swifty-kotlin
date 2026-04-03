@@ -1,6 +1,6 @@
 import Foundation
 
-/// Synthetic stubs for `javax.crypto.Cipher`, `SecretKeySpec`, `IvParameterSpec`, and `java.security.MessageDigest`.
+/// Synthetic stubs for `javax.crypto.Cipher`, `SecretKeySpec`, `IvParameterSpec`, `Mac`, and `java.security.MessageDigest`.
 extension DataFlowSemaPhase {
     func registerSyntheticSecurityStubs(
         symbols: SymbolTable,
@@ -192,6 +192,63 @@ extension DataFlowSemaPhase {
             ownerSymbol: cipherSymbol,
             ownerType: cipherType,
             parameters: [],
+            returnType: byteArrayType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        let macSymbol = ensureClassSymbol(
+            named: "Mac",
+            in: cryptoPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let macType = types.make(.classType(ClassType(
+            classSymbol: macSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(macType, for: macSymbol)
+
+        let macCompanionFQName = ensureCipherCompanionSymbol(
+            ownerSymbol: macSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityCompanionFactory(
+            name: "getInstance",
+            externalLinkName: "kk_mac_getInstance",
+            companionFQName: macCompanionFQName,
+            parameters: [("algorithm", stringType)],
+            returnType: macType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityStaticMethod(
+            name: "getInstance",
+            externalLinkName: "kk_mac_getInstance",
+            ownerSymbol: macSymbol,
+            parameters: [("algorithm", stringType)],
+            returnType: macType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityInstanceMethod(
+            name: "init",
+            externalLinkName: "kk_mac_init",
+            ownerSymbol: macSymbol,
+            ownerType: macType,
+            parameters: [("key", secretKeySpecType)],
+            returnType: unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSecurityInstanceMethod(
+            name: "doFinal",
+            externalLinkName: "kk_mac_doFinal",
+            ownerSymbol: macSymbol,
+            ownerType: macType,
+            parameters: [("data", byteArrayType)],
             returnType: byteArrayType,
             symbols: symbols,
             interner: interner
@@ -614,9 +671,7 @@ extension DataFlowSemaPhase {
         let digestSymbol = ensureClassSymbol(named: "MessageDigest", in: securityPkg, symbols: symbols, interner: interner)
         if let securityPkgSymbol { symbols.setParentSymbol(securityPkgSymbol, for: digestSymbol) }
         let digestType = types.make(.classType(ClassType(classSymbol: digestSymbol, args: [], nullability: .nonNull)))
-        let digestByteArrayType: TypeID = if let listSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("collections"), interner.intern("List")]) {
-            types.make(.classType(ClassType(classSymbol: listSymbol, args: [.out(types.intType)], nullability: .nonNull)))
-        } else { types.anyType }
+        let digestByteArrayType = byteArrayType
         symbols.setPropertyType(digestType, for: digestSymbol)
 
         registerDigestTopLevel(packageFQName: securityPkg, name: "getInstance", parameterTypes: [types.stringType], returnType: digestType, externalLinkName: "kk_message_digest_getInstance", symbols: symbols, interner: interner)

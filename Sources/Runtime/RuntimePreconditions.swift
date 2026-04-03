@@ -60,8 +60,11 @@ public func kk_check_lazy(
 @_cdecl("kk_precondition_assert")
 public func kk_precondition_assert(_ condition: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
+    guard runtimeAreAssertionsEnabled() else {
+        return 0
+    }
     if condition == 0 {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "AssertionError: Assertion failed.")
+        outThrown?.pointee = runtimeAllocateThrowable(message: runtimeAssertionErrorMessage())
         return 0
     }
     return 0
@@ -74,13 +77,30 @@ public func kk_precondition_assert_lazy(
     _ closureRaw: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    return preconditionWithLazyMessage(
-        condition,
-        fnPtr,
-        closureRaw,
-        outThrown,
-        defaultMessage: "AssertionError: Assertion failed."
-    )
+    outThrown?.pointee = 0
+    guard runtimeAreAssertionsEnabled() else {
+        return 0
+    }
+    guard condition == 0 else {
+        return 0
+    }
+    guard fnPtr != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: runtimeAssertionErrorMessage())
+        return 0
+    }
+
+    var lazyThrown = 0
+    let rawMessage = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: closureRaw, outThrown: &lazyThrown)
+    if lazyThrown != 0 {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: runtimeAssertionErrorMessage(),
+            cause: lazyThrown
+        )
+        return 0
+    }
+
+    outThrown?.pointee = runtimeAllocateThrowable(message: runtimeAssertionErrorMessage(rawMessage))
+    return 0
 }
 
 @_cdecl("kk_error")
@@ -147,7 +167,7 @@ private func preconditionWithLazyMessage(
     return 0
 }
 
-private func runtimePreconditionMessage(from rawValue: Int) -> String {
+func runtimePreconditionMessage(from rawValue: Int) -> String {
     if let message = extractString(from: UnsafeMutableRawPointer(bitPattern: rawValue)) {
         return message
     }

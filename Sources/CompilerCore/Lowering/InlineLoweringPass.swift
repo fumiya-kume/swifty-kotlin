@@ -185,7 +185,7 @@ final class InlineLoweringPass: LoweringPass {
             }
 
             let resolvedArguments = arguments.map { resolveAlias(of: $0, aliases: aliases) }
-            if ["kk_function_invoke", "kk_function_invoke_0", "kk_function_invoke_2", "kk_function_invoke_3"].contains(ctx.interner.resolve(callee)),
+            if ["kk_function_invoke", "kk_function_invoke_0", "kk_function_invoke_2", "kk_function_invoke_3", "kk_suspend_function_invoke", "kk_suspend_function_invoke_0"].contains(ctx.interner.resolve(callee)),
                let callableExpr = resolvedArguments.first,
                let lambdaFunction = resolveLambdaFunction(
                    argExpr: callableExpr,
@@ -558,7 +558,7 @@ final class InlineLoweringPass: LoweringPass {
                     let resolvedArgs = args.map { resolveAlias(of: $0, aliases: localExprMap) }
                     let captureArgs = module.arena.lambdaCaptureArgsBySymbol[lambdaFunction.symbol] ?? []
                     let valueArgs: [KIRExprID]
-                    if ["kk_function_invoke", "kk_function_invoke_0", "kk_function_invoke_2", "kk_function_invoke_3"]
+                    if ["kk_function_invoke", "kk_function_invoke_0", "kk_function_invoke_2", "kk_function_invoke_3", "kk_suspend_function_invoke", "kk_suspend_function_invoke_0"]
                         .contains(ctx.interner.resolve(callee))
                     {
                         valueArgs = Array(resolvedArgs.dropFirst())
@@ -592,7 +592,7 @@ final class InlineLoweringPass: LoweringPass {
                 // local alias map, inline its body here as well so returned
                 // function values preserve their captures.
                 let resolvedArgs = args.map { resolveAlias(of: $0, aliases: localExprMap) }
-                if ["kk_function_invoke", "kk_function_invoke_0", "kk_function_invoke_2", "kk_function_invoke_3"].contains(ctx.interner.resolve(callee)),
+                if ["kk_function_invoke", "kk_function_invoke_0", "kk_function_invoke_2", "kk_function_invoke_3", "kk_suspend_function_invoke", "kk_suspend_function_invoke_0"].contains(ctx.interner.resolve(callee)),
                    let callableExpr = resolvedArgs.first,
                    let lambdaFunction = resolveLambdaFunction(
                        argExpr: callableExpr,
@@ -949,7 +949,7 @@ final class InlineLoweringPass: LoweringPass {
 
             case let .call(symbol, callee, args, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
                 let resolvedArgs = args.map { resolveAlias(of: $0, aliases: localExprMap) }
-                if ["kk_function_invoke", "kk_function_invoke_0", "kk_function_invoke_2", "kk_function_invoke_3"].contains(ctx.interner.resolve(callee)),
+                if ["kk_function_invoke", "kk_function_invoke_0", "kk_function_invoke_2", "kk_function_invoke_3", "kk_suspend_function_invoke", "kk_suspend_function_invoke_0"].contains(ctx.interner.resolve(callee)),
                    let callableExpr = resolvedArgs.first,
                    let nestedLambdaFunction = resolveLambdaFunction(
                        argExpr: callableExpr,
