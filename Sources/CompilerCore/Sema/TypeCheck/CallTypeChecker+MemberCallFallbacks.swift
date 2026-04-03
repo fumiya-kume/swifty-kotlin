@@ -1238,6 +1238,46 @@ extension CallTypeChecker {
             )))
         }
 
+        // unzip(): for List<Pair<A,B>>, returns Pair<List<A>, List<B>>
+        if memberName == interner.intern("unzip"),
+           let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first,
+           let pairSymbol = sema.symbols.lookupByShortName(interner.intern("Pair")).first
+        {
+            // receiverElementType should be Pair<A, B>; extract A and B
+            let aType: TypeID
+            let bType: TypeID
+            if case let .classType(pairClassType) = sema.types.kind(of: receiverElementType),
+               pairClassType.args.count >= 2
+            {
+                aType = switch pairClassType.args[0] {
+                case let .invariant(t), let .out(t), let .in(t): t
+                case .star: sema.types.anyType
+                }
+                bType = switch pairClassType.args[1] {
+                case let .invariant(t), let .out(t), let .in(t): t
+                case .star: sema.types.anyType
+                }
+            } else {
+                aType = sema.types.anyType
+                bType = sema.types.anyType
+            }
+            let listAType = sema.types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.invariant(aType)],
+                nullability: .nonNull
+            )))
+            let listBType = sema.types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.invariant(bType)],
+                nullability: .nonNull
+            )))
+            return sema.types.make(.classType(ClassType(
+                classSymbol: pairSymbol,
+                args: [.out(listAType), .out(listBType)],
+                nullability: .nonNull
+            )))
+        }
+
         // iterator(): returns Iterator<E>
         if memberName == interner.intern("iterator"),
            let iteratorSymbol = sema.symbols.lookup(fqName: [
