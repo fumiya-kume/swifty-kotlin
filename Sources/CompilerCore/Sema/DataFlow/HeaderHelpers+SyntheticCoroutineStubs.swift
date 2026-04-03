@@ -1337,8 +1337,6 @@ extension DataFlowSemaPhase {
         if let packageSymbol = symbols.lookup(fqName: packageFQName) {
             symbols.setParentSymbol(packageSymbol, for: functionSymbol)
         }
-        symbols.setExternalLinkName("kk_produce", for: functionSymbol)
-
         let typeParamName = interner.intern("T")
         let typeParamSymbol = symbols.define(
             kind: .typeParameter,

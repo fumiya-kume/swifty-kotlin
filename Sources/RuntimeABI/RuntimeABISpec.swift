@@ -1972,7 +1972,6 @@ public enum RuntimeABISpec {
             name: "kk_kxmini_produce_with_cont",
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"

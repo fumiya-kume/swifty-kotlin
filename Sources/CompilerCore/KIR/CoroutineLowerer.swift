@@ -202,7 +202,6 @@ final class CoroutineLowerer {
         case knownNames.runBlocking: "kk_run_blocking"
         case knownNames.launch: "kk_launch"
         case knownNames.async: "kk_async"
-        case knownNames.produce: "kk_produce"
         default: calleeStr
         }
         

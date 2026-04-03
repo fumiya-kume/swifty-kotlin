@@ -1003,34 +1003,19 @@ public func kk_kxmini_async_with_cont(_ entryPointRaw: Int, _ continuation: Int)
 }
 
 @_cdecl("kk_kxmini_produce_with_cont")
-public func kk_kxmini_produce_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
+public func kk_kxmini_produce_with_cont(_ entryPointRaw: Int) -> Int {
     let channelHandle = kk_channel_create(0)
-
-    let job = RuntimeJobHandle()
-    let callerScope = RuntimeCoroutineScope.current
-    if let callerScope {
-        let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
-        runtimeStorage.withLock { state in
-            state.objectPointers.insert(UInt(bitPattern: jobPtr))
-        }
-        callerScope.registerChild(Int(bitPattern: jobPtr))
-    }
+    let continuation = kk_coroutine_continuation_new(entryPointRaw)
     if let contState = runtimeContinuationState(from: continuation) {
-        job.continuationState = contState
-        contState.jobHandle = job
-        contState.scope = callerScope
         contState.launcherArgs[0] = Int64(channelHandle)
     }
 
     KxMiniRuntime.launch {
-        RuntimeCoroutineScope.current = callerScope
-        let result = runSuspendEntryLoopWithContinuation(
+        _ = runSuspendEntryLoopWithContinuation(
             entryPointRaw: entryPointRaw,
             continuation: continuation
         )
-        RuntimeCoroutineScope.current = nil
         _ = kk_channel_close(channelHandle)
-        job.complete(with: result)
     }
     return channelHandle
 }

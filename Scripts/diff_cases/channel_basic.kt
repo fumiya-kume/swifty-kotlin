@@ -36,7 +36,7 @@ fun main() = runBlocking {
     }
 
     // Test 5: produce {}
-    val produced = produce {
+    val produced = produce<Int> {
         send(99)
     }
     println(produced.receive())
