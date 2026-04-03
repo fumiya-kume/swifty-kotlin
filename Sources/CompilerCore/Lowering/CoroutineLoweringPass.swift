@@ -113,6 +113,7 @@ final class CoroutineLoweringPass: LoweringPass {
             kxMiniLaunchCallee: runtimeLaunchCallee,
             kxMiniAsyncCallee: runtimeAsyncCallee,
             kxMiniProduceCallee: runtimeProduceCallee,
+            runtimeProduceCallee: runtimeProduceCallee,
             kxMiniCoroutineScopeCallee: runtimeCoroutineScopeRunCallee,
             kxMiniSupervisorScopeCallee: runtimeSupervisorScopeRunCallee,
         ]
@@ -269,6 +270,7 @@ final class CoroutineLoweringPass: LoweringPass {
             kxMiniLaunchCallee: ctx.interner.intern("kk_kxmini_launch_with_cont"),
             kxMiniAsyncCallee: ctx.interner.intern("kk_kxmini_async_with_cont"),
             kxMiniProduceCallee: ctx.interner.intern("kk_kxmini_produce_with_cont"),
+            runtimeProduceCallee: ctx.interner.intern("kk_kxmini_produce_with_cont"),
             kxMiniCoroutineScopeCallee: ctx.interner.intern("kk_coroutine_scope_run_with_cont"),
             kxMiniSupervisorScopeCallee: ctx.interner.intern("kk_supervisor_scope_run_with_cont"),
         ]

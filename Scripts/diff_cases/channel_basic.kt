@@ -36,8 +36,9 @@ fun main() = runBlocking {
     }
 
     // Test 5: produce {}
+    val x = 99
     val produced = produce {
-        send(99)
+        send(x)
     }
     println(produced.receive())
 }

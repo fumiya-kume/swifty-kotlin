@@ -154,6 +154,15 @@ final class CoroutineLowerer {
         
         if let runtimeName {
             let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
+            var finalArgs = [receiverID] + args
+            if runtimeName == "kk_channel_send" || runtimeName == "kk_channel_receive" {
+                let continuationExpr = arena.appendExpr(
+                    .intLiteral(0),
+                    type: sema.types.intType
+                )
+                context.append(.constValue(result: continuationExpr, value: .intLiteral(0)))
+                finalArgs.append(continuationExpr)
+            }
 
             let resultType: TypeID = switch calleeStr {
             case "isClosedForReceive", "isClosedForSend":
@@ -171,7 +180,7 @@ final class CoroutineLowerer {
             context.append(.call(
                 symbol: nil,
                 callee: interner.intern(runtimeName),
-                arguments: [receiverID] + args,
+                arguments: finalArgs,
                 result: result,
                 canThrow: operationCanThrow,
                 thrownResult: nil
