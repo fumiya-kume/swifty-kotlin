@@ -3896,7 +3896,16 @@ extension CallLowerer {
             symbol: driver.ctx.allocateSyntheticGeneratedSymbol(),
             type: sema.types.intType
         )
-        let valueParams: [KIRParameter] = functionType.params.enumerated().map { index, type in
+        // Build value parameters including the receiver (if present).
+        // For receiver-bearing function types like `DeepRecursiveScope<T,R>.(T) -> R`,
+        // the receiver is stored in `functionType.receiver` and must be forwarded
+        // as an explicit parameter so the adapter's ABI matches the runtime call site.
+        var allValueTypes: [TypeID] = []
+        if let receiverType = functionType.receiver {
+            allValueTypes.append(receiverType)
+        }
+        allValueTypes.append(contentsOf: functionType.params)
+        let valueParams: [KIRParameter] = allValueTypes.enumerated().map { index, type in
             KIRParameter(
                 symbol: SymbolID(rawValue: Int32(clamping: -700_000 - Int64(argExprID.rawValue) * 16 - Int64(index))),
                 type: type
@@ -4622,8 +4631,9 @@ extension CallLowerer {
         // kk_mutex_withLock(handle, actionFnPtr, actionEnvPtr, continuation): split the lambda
         // argument at index 1 into a function pointer and environment pointer,
         // following the standard closure-conversion ABI used by collection HOFs.
-        // A zero continuation placeholder is appended as the 4th argument so the
-        // coroutine runtime can suspend and resume the caller when the mutex is contended.
+        // A zero continuation placeholder is appended as the 4th argument because the
+        // current runtime path blocks on contention and keeps the ABI shape aligned
+        // with the suspend-aware mutex entry point.
         if loweredCallee == interner.intern("kk_mutex_withLock"),
            finalArguments.count == 2
         {
@@ -4778,6 +4788,11 @@ extension CallLowerer {
         if loweredCallee == interner.intern("kk_system_currentTimeMillis")
             || loweredCallee == interner.intern("kk_system_nanoTime")
             || loweredCallee == interner.intern("kk_system_process_start_nanos")
+            || loweredCallee == interner.intern("kk_system_gc")
+            || loweredCallee == interner.intern("kk_runtime_getRuntime")
+            || loweredCallee == interner.intern("kk_runtime_totalMemory")
+            || loweredCallee == interner.intern("kk_runtime_freeMemory")
+            || loweredCallee == interner.intern("kk_runtime_maxMemory")
             || loweredCallee == interner.intern("kk_instant_now")
             || loweredCallee == interner.intern("kk_clock_system_now") {
             callArguments = []
@@ -5158,6 +5173,12 @@ extension CallLowerer {
             case "toLongArray":
                 return interner.intern("kk_long_range_toLongArray")
             case "iterator":
+                if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                    return interner.intern("kk_ulong_range_iterator")
+                }
+                if sema.bindings.isUIntRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.uintType {
+                    return interner.intern("kk_uint_range_iterator")
+                }
                 if nonNullReceiverType == sema.types.longType {
                     return interner.intern("kk_long_range_iterator")
                 }

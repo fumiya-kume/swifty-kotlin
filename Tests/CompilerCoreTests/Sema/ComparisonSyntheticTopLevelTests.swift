@@ -59,6 +59,56 @@ final class ComparisonSyntheticTopLevelTests: XCTestCase {
         }
     }
 
+    func testCompareByAndCompareByDescendingResolveToSyntheticComparisonFunctions() throws {
+        let source = """
+        fun sample() {
+            val ascending = compareBy<Int> { it % 10 }
+            val descending = compareByDescending<Int> { it % 10 }
+            println(listOf(231, 114, 123).sortedWith(ascending))
+            println(listOf(231, 114, 123).sortedWith(descending))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let interner = ctx.interner
+
+            for (name, expectedLink) in [
+                ("compareBy", "kk_comparator_from_selector"),
+                ("compareByDescending", "kk_comparator_from_selector_descending"),
+            ] {
+                let callExpr = try XCTUnwrap(
+                    firstExprID(in: ast) { _, expr in
+                        guard case let .call(calleeExpr, _, _, _) = expr,
+                              case let .nameRef(calleeName, _) = ast.arena.expr(calleeExpr)
+                        else {
+                            return false
+                        }
+                        return interner.resolve(calleeName) == name
+                    },
+                    "Expected call to \(name)"
+                )
+
+                let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+                let symbol = try XCTUnwrap(sema.symbols.symbol(chosenCallee))
+                XCTAssertEqual(
+                    symbol.fqName.map { interner.resolve($0) },
+                    ["kotlin", "comparisons", name],
+                    "Expected \(name) to resolve to kotlin.comparisons.\(name)"
+                )
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    expectedLink,
+                    "Expected \(name) to link to \(expectedLink)"
+                )
+            }
+        }
+    }
+
     // STDLIB-614: 3-arg minOf / maxOf overloads
     func testThreeArgMaxOfMinOfResolveToSyntheticComparisonFunctions() throws {
         let source = """

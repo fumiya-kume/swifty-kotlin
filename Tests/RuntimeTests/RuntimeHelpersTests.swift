@@ -128,6 +128,82 @@ final class RuntimeHelpersTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(receivedResult, resultPtr)
     }
 
+    func testContinuationInterceptedReturnsSelfWhenContextHasNoDispatcher() {
+        let continuation = KKDispatchContinuation(context: nil) { _ in }
+        let intercepted = continuation.intercepted()
+
+        XCTAssertTrue(
+            (intercepted as AnyObject) === (continuation as AnyObject),
+            "Continuation without a dispatcher should not be wrapped"
+        )
+    }
+
+    func testContinuationInterceptedDispatchesThroughDispatcherContext() async {
+        let expectation = expectation(description: "intercepted continuation dispatched")
+        let dispatcherContext = UnsafeMutableRawPointer(bitPattern: kk_dispatcher_default())
+        var receivedResult: UnsafeMutableRawPointer?
+        let continuation = KKDispatchContinuation(context: dispatcherContext) { result in
+            receivedResult = result
+            expectation.fulfill()
+        }
+
+        let intercepted = continuation.intercepted()
+
+        XCTAssertFalse(
+            (intercepted as AnyObject) === (continuation as AnyObject),
+            "Continuation with a dispatcher should be wrapped"
+        )
+
+        let resultPtr = UnsafeMutableRawPointer.allocate(
+            byteCount: MemoryLayout<Int>.size,
+            alignment: MemoryLayout<Int>.alignment
+        )
+        defer { resultPtr.deallocate() }
+        resultPtr.storeBytes(of: 123, as: Int.self)
+
+        intercepted.resumeWith(resultPtr)
+        await fulfillment(of: [expectation], timeout: 2.0)
+        XCTAssertEqual(receivedResult, resultPtr)
+    }
+
+    func testExplicitContinuationInterceptorBridgeDispatchesContinuation() async {
+        let expectation = expectation(description: "explicit interceptor dispatched")
+        var receivedResult: UnsafeMutableRawPointer?
+        let continuation = KKDispatchContinuation(context: nil) { result in
+            receivedResult = result
+            expectation.fulfill()
+        }
+        let continuationRaw = Int(bitPattern: Unmanaged.passUnretained(continuation as AnyObject).toOpaque())
+        let interceptedRaw = kk_continuation_interceptor_intercept_continuation(kk_dispatcher_default(), continuationRaw)
+
+        XCTAssertNotEqual(
+            interceptedRaw,
+            continuationRaw,
+            "Explicit interceptor bridge should wrap the continuation when a dispatcher is available"
+        )
+
+        guard let interceptedPtr = UnsafeMutableRawPointer(bitPattern: interceptedRaw) else {
+            XCTFail("Expected wrapped continuation pointer")
+            return
+        }
+        let interceptedObject = Unmanaged<AnyObject>.fromOpaque(interceptedPtr).takeUnretainedValue()
+        guard let intercepted = interceptedObject as? KKContinuation else {
+            XCTFail("Expected wrapped object to be a KKContinuation")
+            return
+        }
+
+        let resultPtr = UnsafeMutableRawPointer.allocate(
+            byteCount: MemoryLayout<Int>.size,
+            alignment: MemoryLayout<Int>.alignment
+        )
+        defer { resultPtr.deallocate() }
+        resultPtr.storeBytes(of: 456, as: Int.self)
+
+        intercepted.resumeWith(resultPtr)
+        await fulfillment(of: [expectation], timeout: 2.0)
+        XCTAssertEqual(receivedResult, resultPtr)
+    }
+
     // MARK: - KxMiniRuntime.runBlocking
 
     func testRunBlockingBlocksUntilCallbackInvoked() {

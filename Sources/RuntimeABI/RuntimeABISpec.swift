@@ -70,7 +70,7 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
 
 // swiftlint:disable:next type_body_length
 public enum RuntimeABISpec {
-    public static let specVersion = "J28"
+    public static let specVersion = "J29"
 
     private static func deduplicatedFunctions(
         _ functions: [RuntimeABIFunctionSpec]
@@ -221,6 +221,26 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "closureRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_assertions_enabled",
+            parameters: [],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_assertions_set_enabled",
+            parameters: [
+                RuntimeABIParameter(name: "enabled", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_assertions_reset",
+            parameters: [],
             returnType: .intptr,
             section: "Exception"
         ),
@@ -1743,145 +1763,6 @@ public enum RuntimeABISpec {
         ),
     ]
 
-    public static let databaseFunctions: [RuntimeABIFunctionSpec] = [
-        RuntimeABIFunctionSpec(
-            name: "kk_driver_manager_getConnection",
-            parameters: [
-                RuntimeABIParameter(name: "urlRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Database"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_connection_getAutoCommit",
-            parameters: [
-                RuntimeABIParameter(name: "connectionRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Database"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_connection_setAutoCommit",
-            parameters: [
-                RuntimeABIParameter(name: "connectionRaw", type: .intptr),
-                RuntimeABIParameter(name: "valueRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Database"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_connection_commit",
-            parameters: [
-                RuntimeABIParameter(name: "connectionRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Database"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_connection_rollback",
-            parameters: [
-                RuntimeABIParameter(name: "connectionRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Database"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_connection_setSavepoint",
-            parameters: [
-                RuntimeABIParameter(name: "connectionRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Database"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_connection_setSavepoint_named",
-            parameters: [
-                RuntimeABIParameter(name: "connectionRaw", type: .intptr),
-                RuntimeABIParameter(name: "nameRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Database"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_connection_rollback_to_savepoint",
-            parameters: [
-                RuntimeABIParameter(name: "connectionRaw", type: .intptr),
-                RuntimeABIParameter(name: "savepointRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Database"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_connection_releaseSavepoint",
-            parameters: [
-                RuntimeABIParameter(name: "connectionRaw", type: .intptr),
-                RuntimeABIParameter(name: "savepointRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Database"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_connection_getTransactionIsolation",
-            parameters: [
-                RuntimeABIParameter(name: "connectionRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Database"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_connection_setTransactionIsolation",
-            parameters: [
-                RuntimeABIParameter(name: "connectionRaw", type: .intptr),
-                RuntimeABIParameter(name: "levelRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Database"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_connection_close",
-            parameters: [
-                RuntimeABIParameter(name: "connectionRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Database"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_connection_isClosed",
-            parameters: [
-                RuntimeABIParameter(name: "connectionRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Database"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_savepoint_getSavepointId",
-            parameters: [
-                RuntimeABIParameter(name: "savepointRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Database"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_savepoint_getSavepointName",
-            parameters: [
-                RuntimeABIParameter(name: "savepointRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Database"
-        ),
-    ]
-
     public static let systemFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
             name: "kk_system_exitProcess",
@@ -1925,6 +1806,68 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
                 RuntimeABIParameter(name: "closureRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_system_gc",
+            parameters: [],
+            returnType: .void,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_runtime_getRuntime",
+            parameters: [],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_runtime_totalMemory",
+            parameters: [],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_runtime_freeMemory",
+            parameters: [],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_runtime_maxMemory",
+            parameters: [],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_instant_to_java_instant",
+            parameters: [
+                RuntimeABIParameter(name: "instantRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_instant_to_kotlin_instant",
+            parameters: [
+                RuntimeABIParameter(name: "instantRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_instant_to_js_date",
+            parameters: [
+                RuntimeABIParameter(name: "instantRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_js_date_to_kotlin_instant",
+            parameters: [
+                RuntimeABIParameter(name: "dateRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "System"
@@ -2290,12 +2233,29 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Coroutine"
         ),
-        // Flow terminal operators & flowOf (STDLIB-088)
+        // Flow terminal operators & builders (STDLIB-088 / STDLIB-FLOW-178)
         RuntimeABIFunctionSpec(
             name: "kk_flow_of",
             parameters: [
                 RuntimeABIParameter(name: "arrayHandle", type: .intptr),
                 RuntimeABIParameter(name: "count", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_empty",
+            parameters: [
+                RuntimeABIParameter(name: "reserved", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_as_flow",
+            parameters: [
+                RuntimeABIParameter(name: "sourceHandle", type: .intptr),
+                RuntimeABIParameter(name: "reserved", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2425,6 +2385,23 @@ public enum RuntimeABISpec {
             name: "kk_context_get_dispatcher",
             parameters: [
                 RuntimeABIParameter(name: "contextRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_continuation_intercepted",
+            parameters: [
+                RuntimeABIParameter(name: "continuationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_continuation_interceptor_intercept_continuation",
+            parameters: [
+                RuntimeABIParameter(name: "interceptorRaw", type: .intptr),
+                RuntimeABIParameter(name: "continuationRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2989,6 +2966,16 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "childTypeId", type: .intptr),
                 RuntimeABIParameter(name: "ifaceTypeId", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_object_register_itable_iface",
+            parameters: [
+                RuntimeABIParameter(name: "objectRaw", type: .intptr),
+                RuntimeABIParameter(name: "ifaceTypeId", type: .intptr),
+                RuntimeABIParameter(name: "ifaceSlot", type: .intptr),
             ],
             returnType: .intptr,
             section: "TypeCheck"
@@ -4050,6 +4037,30 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Range"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uint_range_iterator",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uint_range_hasNext",
+            parameters: [
+                RuntimeABIParameter(name: "iterRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uint_range_next",
+            parameters: [
+                RuntimeABIParameter(name: "iterRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
         // ULongProgression operations (STDLIB-RANGE-039)
         RuntimeABIFunctionSpec(
             name: "kk_ulong_rangeTo",
@@ -4286,6 +4297,25 @@ public enum RuntimeABISpec {
             ],
             returnType: .intptr,
             section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_suspend_function_invoke",
+            parameters: [
+                RuntimeABIParameter(name: "functionRaw", type: .intptr),
+                RuntimeABIParameter(name: "arg", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_suspend_function_invoke_0",
+            parameters: [
+                RuntimeABIParameter(name: "functionRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(
             name: "kk_function_invoke_2",
@@ -5526,17 +5556,25 @@ public enum RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(name: "kk_logger_getLogger", parameters: [RuntimeABIParameter(name: "nameRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_logging_level_info", parameters: [], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_logging_level_config", parameters: [], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_logging_level_fine", parameters: [], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_logging_level_finer", parameters: [], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_logging_level_finest", parameters: [], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_logging_level_warning", parameters: [], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_logging_level_severe", parameters: [], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_console_handler_new", parameters: [], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_file_handler_new", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_logger_addHandler", parameters: [RuntimeABIParameter(name: "loggerRaw", type: .intptr), RuntimeABIParameter(name: "handlerRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_logger_log", parameters: [RuntimeABIParameter(name: "loggerRaw", type: .intptr), RuntimeABIParameter(name: "levelRaw", type: .intptr), RuntimeABIParameter(name: "messageRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_logger_log_throwable", parameters: [RuntimeABIParameter(name: "loggerRaw", type: .intptr), RuntimeABIParameter(name: "levelRaw", type: .intptr), RuntimeABIParameter(name: "messageRaw", type: .intptr), RuntimeABIParameter(name: "throwableRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_logger_info", parameters: [RuntimeABIParameter(name: "loggerRaw", type: .intptr), RuntimeABIParameter(name: "messageRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_logger_warning", parameters: [RuntimeABIParameter(name: "loggerRaw", type: .intptr), RuntimeABIParameter(name: "messageRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_logger_severe", parameters: [RuntimeABIParameter(name: "loggerRaw", type: .intptr), RuntimeABIParameter(name: "messageRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_message_digest_getInstance", parameters: [RuntimeABIParameter(name: "algorithmRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_message_digest_digest", parameters: [RuntimeABIParameter(name: "digestRaw", type: .intptr), RuntimeABIParameter(name: "dataRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_mac_getInstance", parameters: [RuntimeABIParameter(name: "algorithmRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_mac_init", parameters: [RuntimeABIParameter(name: "macRaw", type: .intptr), RuntimeABIParameter(name: "keyRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(name: "kk_mac_doFinal", parameters: [RuntimeABIParameter(name: "macRaw", type: .intptr), RuntimeABIParameter(name: "dataRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_cache_new", parameters: [RuntimeABIParameter(name: "capacityRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_cache_put", parameters: [RuntimeABIParameter(name: "cacheRaw", type: .intptr), RuntimeABIParameter(name: "keyRaw", type: .intptr), RuntimeABIParameter(name: "valueRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_cache_get", parameters: [RuntimeABIParameter(name: "cacheRaw", type: .intptr), RuntimeABIParameter(name: "keyRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
@@ -5572,12 +5610,142 @@ public enum RuntimeABISpec {
     // MARK: - I18N (STDLIB-I18N-153)
 
     public static let i18nFunctions: [RuntimeABIFunctionSpec] = [
+        // STDLIB-I18N-152: NumberFormat
+        RuntimeABIFunctionSpec(
+            name: "kk_numberformat_getIntegerInstance",
+            parameters: [
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_numberformat_getNumberInstance",
+            parameters: [
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_numberformat_getCurrencyInstance",
+            parameters: [
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_numberformat_getPercentInstance",
+            parameters: [
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_numberformat_formatInt",
+            parameters: [
+                RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_numberformat_formatLong",
+            parameters: [
+                RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_numberformat_formatFloat",
+            parameters: [
+                RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .float),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_numberformat_formatDouble",
+            parameters: [
+                RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .double),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
         // STDLIB-I18N-153: DateFormat
         RuntimeABIFunctionSpec(
             name: "kk_dateformat_ofPattern",
             parameters: [
                 RuntimeABIParameter(name: "patternRaw", type: .intptr),
                 RuntimeABIParameter(name: "localeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_dateformat_ofPatternWithTimeZone",
+            parameters: [
+                RuntimeABIParameter(name: "patternRaw", type: .intptr),
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+                RuntimeABIParameter(name: "timeZoneRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_dateformat_getDateInstance",
+            parameters: [
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_dateformat_getDateInstanceWithTimeZone",
+            parameters: [
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+                RuntimeABIParameter(name: "timeZoneRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_dateformat_getTimeInstance",
+            parameters: [
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_dateformat_getTimeInstanceWithTimeZone",
+            parameters: [
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+                RuntimeABIParameter(name: "timeZoneRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_dateformat_getDateTimeInstance",
+            parameters: [
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_dateformat_getDateTimeInstanceWithTimeZone",
+            parameters: [
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+                RuntimeABIParameter(name: "timeZoneRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "I18N"
@@ -5846,6 +6014,22 @@ public enum RuntimeABISpec {
             section: "Duration"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_duration_to_java_duration",
+            parameters: [
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_duration_to_kotlin_duration",
+            parameters: [
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_measureTimedValue",
             parameters: [
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
@@ -5888,6 +6072,82 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Duration"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_source_mark_now",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_source_monotonic_mark_now",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_elapsed_now",
+            parameters: [
+                RuntimeABIParameter(name: "markRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_has_passed_now",
+            parameters: [
+                RuntimeABIParameter(name: "markRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_has_not_passed_now",
+            parameters: [
+                RuntimeABIParameter(name: "markRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_plus_duration",
+            parameters: [
+                RuntimeABIParameter(name: "markRaw", type: .intptr),
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_minus_duration",
+            parameters: [
+                RuntimeABIParameter(name: "markRaw", type: .intptr),
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_minus_mark",
+            parameters: [
+                RuntimeABIParameter(name: "lhsRaw", type: .intptr),
+                RuntimeABIParameter(name: "rhsRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_time_mark_compare",
+            parameters: [
+                RuntimeABIParameter(name: "lhsRaw", type: .intptr),
+                RuntimeABIParameter(name: "rhsRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
     ]
 
     public static let allFunctions: [RuntimeABIFunctionSpec] = deduplicatedFunctions(
@@ -5923,6 +6183,7 @@ public enum RuntimeABISpec {
             + hexFormatFunctions
             + comparatorFunctions
             + resultFunctions
+            + deepRecursiveFunctions
             + stringBuilderFunctions
             + fileIOFunctions
             + pathFunctions
@@ -5933,6 +6194,7 @@ public enum RuntimeABISpec {
             + atomicFunctions
             + threadLocalFunctions
             + securityFunctions
+            + databaseFunctions
             + parallelFunctions
             + bigIntegerFunctions
             + broadcastChannelFunctions
