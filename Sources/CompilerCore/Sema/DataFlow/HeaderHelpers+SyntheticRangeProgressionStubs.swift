@@ -431,7 +431,7 @@ extension DataFlowSemaPhase {
             receiverType: rangeType,
             parameterTypes: [],
             returnType: iteratorType,
-            externalLinkName: "kk_range_iterator",
+            externalLinkName: "kk_uint_range_iterator",
             symbols: symbols,
             interner: interner
         )

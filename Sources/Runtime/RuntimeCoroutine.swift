@@ -2023,6 +2023,24 @@ public func kk_flow_of(_ arrayHandle: Int, _ count: Int) -> Int {
     return runtimeRegisterFlowHandle(handle)
 }
 
+/// Create an empty flow (emptyFlow).
+@_cdecl("kk_flow_empty")
+public func kk_flow_empty(_: Int) -> Int {
+    runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: 0, fixedValues: []))
+}
+
+/// Create a Flow from an existing runtime collection/array (asFlow).
+@_cdecl("kk_flow_as_flow")
+public func kk_flow_as_flow(_ sourceHandle: Int, _: Int) -> Int {
+    if let elements = runtimeCollectionElements(from: sourceHandle) {
+        return runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: 0, fixedValues: elements))
+    }
+    if let arrayBox = runtimeArrayBox(from: sourceHandle) {
+        return runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: 0, fixedValues: Array(arrayBox.elements)))
+    }
+    return runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: 0, fixedValues: []))
+}
+
 // MARK: - SharedFlow / StateFlow Runtime (STDLIB-FLOW-177)
 
 private class RuntimeSharedFlowHandle: @unchecked Sendable {
@@ -2220,7 +2238,7 @@ public func kk_flow_share_in(_ flowHandle: Int, _ replay: Int) -> Int {
     var takeCounters = runtimeFlowInitTakeCounters(ops)
     var lastValues: [Int: Int] = [:]
     if !runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
-        for rawValue in sourceValues {
+        emitLoop: for rawValue in sourceValues {
             let result = runtimeFlowApplyOpsLazy(
                 rawValue, ops: ops,
                 takeCounters: &takeCounters,
@@ -2230,12 +2248,12 @@ public func kk_flow_share_in(_ flowHandle: Int, _ replay: Int) -> Int {
             case .emit(let value):
                 shared.emit(value)
                 if runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
-                    break
+                    break emitLoop
                 }
             case .filtered:
                 continue
             case .thrown, .done:
-                break
+                break emitLoop
             }
         }
     }
@@ -2252,7 +2270,7 @@ public func kk_flow_state_in(_ flowHandle: Int, _ initialValue: Int) -> Int {
         var takeCounters = runtimeFlowInitTakeCounters(ops)
         var lastValues: [Int: Int] = [:]
         if !runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
-            for rawValue in sourceValues {
+            emitLoop: for rawValue in sourceValues {
                 let result = runtimeFlowApplyOpsLazy(
                     rawValue, ops: ops,
                     takeCounters: &takeCounters,
@@ -2262,12 +2280,12 @@ public func kk_flow_state_in(_ flowHandle: Int, _ initialValue: Int) -> Int {
                 case .emit(let value):
                     state.emit(value)
                     if runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
-                        break
+                        break emitLoop
                     }
                 case .filtered:
                     continue
                 case .thrown, .done:
-                    break
+                    break emitLoop
                 }
             }
         }
