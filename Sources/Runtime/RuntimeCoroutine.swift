@@ -628,9 +628,15 @@ final class RuntimeJobHandle: @unchecked Sendable {
                 state = .failed
             }
             return true
+        case .cancelling:
+            // The coroutine body has finished executing (including catch/finally blocks)
+            // after observing cancellation. Transition to fully cancelled so that
+            // join() can return. The cancelCause is preserved from when cancel() was called.
+            state = .cancelled
+            return true
         case .completed, .cancelled, .failed:
             return false
-        case .completing, .cancelling:
+        case .completing:
             return false
         }
     }
@@ -659,19 +665,29 @@ final class RuntimeJobHandle: @unchecked Sendable {
         let resolvedCause = cause != 0 ? cause : runtimeAllocateCancellationException()
         var childrenToCancel: [Int] = []
         var stateToResume: RuntimeContinuationState?
-        var shouldSignal = false
         lock.lock()
         switch state {
         case .completed, .cancelled, .failed:
             lock.unlock()
             return false
-        case .new, .active, .completing, .cancelling:
+        case .cancelling:
+            // Already cancelling, just update cause if not set
+            if cancelCause == 0 {
+                cancelCause = resolvedCause
+            }
+            lock.unlock()
+            return false
+        case .new, .active, .completing:
+            // Transition to cancelling but do NOT signal completionSemaphore here.
+            // join() must wait until the coroutine body has fully finished executing
+            // (including catch/finally blocks). The semaphore is only signalled when
+            // complete(with:) is called from the launch closure after
+            // runSuspendEntryLoopWithContinuation returns. This matches Kotlin's
+            // join() semantics where join() waits for complete termination.
             state = .cancelling
             cancelCause = resolvedCause
             result = 0
             failure = 0
-            state = .cancelled
-            shouldSignal = true
             stateToResume = continuationState
             childrenToCancel = childJobHandles
         }
@@ -680,9 +696,6 @@ final class RuntimeJobHandle: @unchecked Sendable {
         stateToResume?.signalResume()
         for child in childrenToCancel {
             runtimeCancelChild(child)
-        }
-        if shouldSignal {
-            completionSemaphore.signal()
         }
         return true
     }
