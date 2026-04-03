@@ -165,10 +165,10 @@ enum RuntimeCipherKeyHandle {
     case publicKey(RuntimePublicKeyBox)
     case privateKey(RuntimePrivateKeyBox)
 
-    var algorithm: RuntimeCipherAlgorithm {
+    var cipherAlgorithm: RuntimeCipherAlgorithm? {
         switch self {
         case let .secret(box):
-            box.algorithm
+            box.cipherAlgorithm
         case let .publicKey(box):
             box.algorithm
         case let .privateKey(box):
@@ -296,10 +296,75 @@ enum RuntimeSignatureAlgorithm {
 
 final class RuntimeSecretKeySpecBox {
     let keyBytes: [UInt8]
-    let algorithm: RuntimeCipherAlgorithm
+    let algorithmName: String
+    let cipherAlgorithm: RuntimeCipherAlgorithm?
 
-    init(keyBytes: [UInt8], algorithm: RuntimeCipherAlgorithm) {
+    init(keyBytes: [UInt8], algorithmName: String, cipherAlgorithm: RuntimeCipherAlgorithm?) {
         self.keyBytes = keyBytes
+        self.algorithmName = algorithmName
+        self.cipherAlgorithm = cipherAlgorithm
+    }
+}
+
+enum RuntimeMacAlgorithm: String {
+    case hmacMD5 = "HMACMD5"
+    case hmacSHA1 = "HMACSHA1"
+    case hmacSHA256 = "HMACSHA256"
+    case hmacSHA512 = "HMACSHA512"
+
+    init?(name rawValue: String) {
+        let normalized = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "-", with: "")
+            .replacingOccurrences(of: "_", with: "")
+            .uppercased()
+        self.init(rawValue: normalized)
+    }
+
+    var displayName: String {
+        switch self {
+        case .hmacMD5:
+            "HmacMD5"
+        case .hmacSHA1:
+            "HmacSHA1"
+        case .hmacSHA256:
+            "HmacSHA256"
+        case .hmacSHA512:
+            "HmacSHA512"
+        }
+    }
+
+    var ccAlgorithm: CCHmacAlgorithm {
+        switch self {
+        case .hmacMD5:
+            CCHmacAlgorithm(kCCHmacAlgMD5)
+        case .hmacSHA1:
+            CCHmacAlgorithm(kCCHmacAlgSHA1)
+        case .hmacSHA256:
+            CCHmacAlgorithm(kCCHmacAlgSHA256)
+        case .hmacSHA512:
+            CCHmacAlgorithm(kCCHmacAlgSHA512)
+        }
+    }
+
+    var digestLength: Int {
+        switch self {
+        case .hmacMD5:
+            Int(CC_MD5_DIGEST_LENGTH)
+        case .hmacSHA1:
+            Int(CC_SHA1_DIGEST_LENGTH)
+        case .hmacSHA256:
+            Int(CC_SHA256_DIGEST_LENGTH)
+        case .hmacSHA512:
+            Int(CC_SHA512_DIGEST_LENGTH)
+        }
+    }
+}
+
+final class RuntimeMacBox {
+    let algorithm: RuntimeMacAlgorithm
+    var keyBytes: [UInt8]?
+
+    init(algorithm: RuntimeMacAlgorithm) {
         self.algorithm = algorithm
     }
 }
@@ -386,6 +451,13 @@ private func runtimeCipherBox(from raw: Int) -> RuntimeCipherBox? {
         return nil
     }
     return tryCast(ptr, to: RuntimeCipherBox.self)
+}
+
+private func runtimeMacBox(from raw: Int) -> RuntimeMacBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeMacBox.self)
 }
 
 private func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, message: String) {
@@ -609,7 +681,7 @@ private func runtimeCipherTransformRSA(
         runtimeSetThrown(outThrown, message: "IllegalStateException: Cipher has not been initialized")
         return nil
     }
-    guard keyHandle.algorithm == .rsa else {
+    guard keyHandle.cipherAlgorithm == .rsa else {
         runtimeSetThrown(outThrown, message: "InvalidKeyException: expected RSA key")
         return nil
     }
@@ -935,10 +1007,14 @@ private func runtimeCipherInitialize(
         runtimeSetThrown(outThrown, message: "InvalidKeyException: expected Key/SecretKeySpec/PublicKey/PrivateKey")
         return 0
     }
-    guard runtimeCipherKeyAlgorithmMatches(cipher.algorithm, keyAlgorithm: keyHandle.algorithm) else {
+    guard let keyAlgorithm = keyHandle.cipherAlgorithm else {
+        runtimeSetThrown(outThrown, message: "InvalidKeyException: expected \(cipher.algorithm.displayName) key")
+        return 0
+    }
+    guard runtimeCipherKeyAlgorithmMatches(cipher.algorithm, keyAlgorithm: keyAlgorithm) else {
         runtimeSetThrown(
             outThrown,
-            message: "InvalidKeyException: expected \(cipher.algorithm.displayName) key, got \(keyHandle.algorithm.displayName)"
+            message: "InvalidKeyException: expected \(cipher.algorithm.displayName) key, got \(keyAlgorithm.displayName)"
         )
         return 0
     }
@@ -1004,7 +1080,9 @@ private func runtimeKeyPairGeneratorInitialize(
 public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     let algorithm = runtimeSecurityString(from: algorithmRaw, caller: #function)
-    guard let parsedAlgorithm = RuntimeCipherAlgorithm(transformationComponent: algorithm) else {
+    let parsedAlgorithm = RuntimeCipherAlgorithm(transformationComponent: algorithm)
+    let parsedMacAlgorithm = RuntimeMacAlgorithm(name: algorithm)
+    guard parsedAlgorithm != nil || parsedMacAlgorithm != nil else {
         runtimeSetThrown(outThrown, message: "NoSuchAlgorithmException: \(algorithm)")
         return 0
     }
@@ -1012,7 +1090,11 @@ public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int, _ outThrown
         runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected ByteArray/List<Int>")
         return 0
     }
-    return registerRuntimeObject(RuntimeSecretKeySpecBox(keyBytes: keyBytes, algorithm: parsedAlgorithm))
+    return registerRuntimeObject(RuntimeSecretKeySpecBox(
+        keyBytes: keyBytes,
+        algorithmName: parsedAlgorithm?.displayName ?? parsedMacAlgorithm?.displayName ?? algorithm,
+        cipherAlgorithm: parsedAlgorithm
+    ))
 }
 
 @_cdecl("kk_ivparameterspec_new")
@@ -1305,6 +1387,71 @@ public func kk_cipher_doFinal_noarg(
     }
     guard let output = runtimeCipherTransform(cipher: cipher, inputBytes: [], outThrown: outThrown) else {
         return 0
+    }
+    return runtimeMakeByteArrayRaw(output)
+}
+
+@_cdecl("kk_mac_getInstance")
+public func kk_mac_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let algorithmName = runtimeSecurityString(from: algorithmRaw, caller: #function)
+    guard let algorithm = RuntimeMacAlgorithm(name: algorithmName) else {
+        runtimeSetThrown(outThrown, message: "NoSuchAlgorithmException: \(algorithmName)")
+        return 0
+    }
+    return registerRuntimeObject(RuntimeMacBox(algorithm: algorithm))
+}
+
+@_cdecl("kk_mac_init")
+public func kk_mac_init(_ macRaw: Int, _ keyRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let mac = runtimeMacBox(from: macRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_mac_init received invalid Mac handle")
+    }
+    guard let key = runtimeSecretKeySpecBox(from: keyRaw) else {
+        mac.keyBytes = nil
+        runtimeSetThrown(outThrown, message: "InvalidKeyException: expected SecretKeySpec")
+        return 0
+    }
+    guard RuntimeMacAlgorithm(name: key.algorithmName) == mac.algorithm else {
+        mac.keyBytes = nil
+        runtimeSetThrown(
+            outThrown,
+            message: "InvalidKeyException: expected \(mac.algorithm.displayName) key, got \(key.algorithmName)"
+        )
+        return 0
+    }
+    mac.keyBytes = key.keyBytes
+    return 0
+}
+
+@_cdecl("kk_mac_doFinal")
+public func kk_mac_doFinal(_ macRaw: Int, _ dataRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let mac = runtimeMacBox(from: macRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_mac_doFinal received invalid Mac handle")
+    }
+    guard let keyBytes = mac.keyBytes else {
+        runtimeSetThrown(outThrown, message: "IllegalStateException: Mac not initialized")
+        return 0
+    }
+    guard let inputBytes = runtimeSecurityBytes(from: dataRaw, caller: #function) else {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: expected ByteArray/List<Int>")
+        return 0
+    }
+
+    var output = [UInt8](repeating: 0, count: mac.algorithm.digestLength)
+    keyBytes.withUnsafeBytes { keyBuffer in
+        inputBytes.withUnsafeBytes { inputBuffer in
+            CCHmac(
+                mac.algorithm.ccAlgorithm,
+                keyBuffer.baseAddress,
+                keyBytes.count,
+                inputBuffer.baseAddress,
+                inputBytes.count,
+                &output
+            )
+        }
     }
     return runtimeMakeByteArrayRaw(output)
 }
@@ -1765,6 +1912,24 @@ public func kk_cipher_doFinal_noarg(
     return 0
 }
 
+@_cdecl("kk_mac_getInstance")
+public func kk_mac_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
+    return 0
+}
+
+@_cdecl("kk_mac_init")
+public func kk_mac_init(_ macRaw: Int, _ keyRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
+    return 0
+}
+
+@_cdecl("kk_mac_doFinal")
+public func kk_mac_doFinal(_ macRaw: Int, _ dataRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
+    return 0
+}
+
 @_cdecl("kk_certificatefactory_getInstance")
 public func kk_certificatefactory_getInstance(_ typeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
@@ -1853,11 +2018,6 @@ private func securityString(from raw: Int, caller: StaticString) -> String {
     return value
 }
 
-private func bytesFromListRaw(_ raw: Int) -> [UInt8]? {
-    guard let list = runtimeListBox(from: raw) else { return nil }
-    return list.elements.map { UInt8(truncatingIfNeeded: $0) }
-}
-
 @_cdecl("kk_message_digest_getInstance")
 public func kk_message_digest_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -1876,9 +2036,9 @@ public func kk_message_digest_digest(_ digestRaw: Int, _ dataRaw: Int, _ outThro
     guard let digest = runtimeMessageDigestBox(from: digestRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_message_digest_digest received invalid MessageDigest handle")
     }
-    guard let bytes = bytesFromListRaw(dataRaw) else {
+    guard let bytes = runtimeSecurityBytes(from: dataRaw, caller: #function) else {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int>")
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        return 0
     }
     let output: [UInt8]
     switch digest.algorithm {
@@ -1893,7 +2053,7 @@ public func kk_message_digest_digest(_ digestRaw: Int, _ dataRaw: Int, _ outThro
     default:
         output = []
     }
-    return registerRuntimeObject(RuntimeListBox(elements: output.map { Int(Int8(bitPattern: $0)) }))
+    return runtimeMakeByteArrayRaw(output)
 }
 #else
 // MARK: - Platform stubs: CryptoKit not available on Linux

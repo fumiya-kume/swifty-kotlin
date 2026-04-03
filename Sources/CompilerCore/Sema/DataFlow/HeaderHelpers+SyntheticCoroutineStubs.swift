@@ -91,6 +91,30 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let sharedFlowSymbol = ensureInterfaceSymbol(
+            named: "SharedFlow",
+            in: flowPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let stateFlowSymbol = ensureInterfaceSymbol(
+            named: "StateFlow",
+            in: flowPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let mutableSharedFlowSymbol = ensureClassSymbol(
+            named: "MutableSharedFlow",
+            in: flowPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let mutableStateFlowSymbol = ensureClassSymbol(
+            named: "MutableStateFlow",
+            in: flowPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let dispatcherSymbol = ensureClassSymbol(
             named: "CoroutineDispatcher",
             in: coroutinesPkg,
@@ -142,6 +166,26 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+        let sharedFlowRawType = types.make(.classType(ClassType(
+            classSymbol: sharedFlowSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let stateFlowRawType = types.make(.classType(ClassType(
+            classSymbol: stateFlowSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let mutableSharedFlowType = types.make(.classType(ClassType(
+            classSymbol: mutableSharedFlowSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let mutableStateFlowType = types.make(.classType(ClassType(
+            classSymbol: mutableStateFlowSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
         let dispatcherType = types.make(.classType(ClassType(
             classSymbol: dispatcherSymbol,
             args: [],
@@ -176,6 +220,11 @@ extension DataFlowSemaPhase {
             ))))],
             nullability: .nonNull
         )))
+        let continuationOfUnitType = types.make(.classType(ClassType(
+            classSymbol: continuationSymbol,
+            args: [.in(types.unitType)],
+            nullability: .nonNull
+        )))
         let continuationInterceptorType = types.make(.classType(ClassType(
             classSymbol: continuationInterceptorSymbol,
             args: [],
@@ -191,6 +240,10 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(deferredType, for: deferredSymbol)
         symbols.setPropertyType(dispatchersType, for: dispatchersSymbol)
         symbols.setPropertyType(flowRawType, for: flowInterfaceSymbol)
+        symbols.setPropertyType(sharedFlowRawType, for: sharedFlowSymbol)
+        symbols.setPropertyType(stateFlowRawType, for: stateFlowSymbol)
+        symbols.setPropertyType(mutableSharedFlowType, for: mutableSharedFlowSymbol)
+        symbols.setPropertyType(mutableStateFlowType, for: mutableStateFlowSymbol)
         symbols.setPropertyType(dispatcherType, for: dispatcherSymbol)
         symbols.setPropertyType(channelType, for: channelSymbol)
         symbols.setPropertyType(cancellationType, for: cancellationSymbol)
@@ -200,7 +253,32 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([exceptionSymbol], for: cancellationSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: rootCancellationSymbol)
         types.setNominalTypeParameterSymbols([continuationTypeParameterSymbol], for: continuationSymbol)
-        types.setNominalTypeParameterVariances([.invariant], for: continuationSymbol)
+        types.setNominalTypeParameterVariances([.in], for: continuationSymbol)
+        symbols.setDirectSupertypes([flowInterfaceSymbol], for: sharedFlowSymbol)
+        symbols.setDirectSupertypes([sharedFlowSymbol], for: stateFlowSymbol)
+        symbols.setDirectSupertypes([sharedFlowSymbol], for: mutableSharedFlowSymbol)
+        symbols.setDirectSupertypes([stateFlowSymbol, mutableSharedFlowSymbol], for: mutableStateFlowSymbol)
+
+        registerSyntheticCoroutineMember(
+            ownerSymbol: flowInterfaceSymbol,
+            ownerType: flowRawType,
+            name: "onErrorReturn",
+            externalLinkName: "",
+            returnType: flowRawType,
+            parameters: [(name: "fallback", type: types.anyType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: flowInterfaceSymbol,
+            ownerType: flowRawType,
+            name: "onErrorResume",
+            externalLinkName: "",
+            returnType: flowRawType,
+            parameters: [(name: "fallback", type: flowRawType)],
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticCoroutineTopLevelFunction(
             named: "runBlocking",
@@ -256,6 +334,68 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_continuation_intercepted",
             typeParameterSymbols: [continuationTypeParameterSymbol],
             classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+        let createCoroutineReceiverTypeParameterName = interner.intern("R")
+        let createCoroutineReceiverTypeParameterSymbol = symbols.define(
+            kind: .typeParameter,
+            name: createCoroutineReceiverTypeParameterName,
+            fqName: kotlinCoroutinesIntrinsicsPkg + [interner.intern("createCoroutineUnintercepted"), interner.intern("$synthetic"), createCoroutineReceiverTypeParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let createCoroutineReceiverTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: createCoroutineReceiverTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let createCoroutineTypeParameterName = interner.intern("T")
+        let createCoroutineTypeParameterSymbol = symbols.define(
+            kind: .typeParameter,
+            name: createCoroutineTypeParameterName,
+            fqName: kotlinCoroutinesIntrinsicsPkg + [interner.intern("createCoroutineUnintercepted"), interner.intern("$synthetic"), createCoroutineTypeParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let createCoroutineTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: createCoroutineTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let createCoroutineNoReceiverFunctionType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: createCoroutineTypeParameterType,
+            isSuspend: true,
+            nullability: .nonNull
+        )))
+        let createCoroutineWithReceiverFunctionType = types.make(.functionType(FunctionType(
+            receiver: createCoroutineReceiverTypeParameterType,
+            params: [],
+            returnType: createCoroutineTypeParameterType,
+            isSuspend: true,
+            nullability: .nonNull
+        )))
+        registerSyntheticCoroutineExtensionFunction(
+            named: "createCoroutineUnintercepted",
+            packageFQName: kotlinCoroutinesIntrinsicsPkg,
+            receiverType: createCoroutineNoReceiverFunctionType,
+            parameters: [(name: "completion", type: continuationType)],
+            returnType: continuationOfUnitType,
+            typeParameterSymbols: [createCoroutineTypeParameterSymbol],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineExtensionFunction(
+            named: "createCoroutineUnintercepted",
+            packageFQName: kotlinCoroutinesIntrinsicsPkg,
+            receiverType: createCoroutineWithReceiverFunctionType,
+            parameters: [
+                (name: "receiver", type: createCoroutineReceiverTypeParameterType),
+                (name: "completion", type: continuationType),
+            ],
+            returnType: continuationOfUnitType,
+            typeParameterSymbols: [createCoroutineReceiverTypeParameterSymbol, createCoroutineTypeParameterSymbol],
             symbols: symbols,
             interner: interner
         )
@@ -658,6 +798,13 @@ extension DataFlowSemaPhase {
         // Make CoroutineDispatcher a subtype of CoroutineContext.Element
         symbols.setDirectSupertypes([coroutineContextElementSymbol], for: dispatcherSymbol)
 
+        let flowBuilderLambdaType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: types.unitType,
+            isSuspend: true,
+            nullability: .nonNull
+        )))
+
         // CoroutineName(name: String) constructor
         registerSyntheticCoroutineTopLevelFunction(
             named: "CoroutineName",
@@ -702,6 +849,68 @@ extension DataFlowSemaPhase {
                 isSuspend: false,
                 nullability: .nonNull
             ))))],
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Flow builders
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "flow",
+            packageFQName: flowPkg,
+            parameters: [(name: "block", type: flowBuilderLambdaType)],
+            returnType: flowRawType,
+            externalLinkName: "kk_flow_create",
+            syntheticTypeParameterNames: ["T"],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "channelFlow",
+            packageFQName: flowPkg,
+            parameters: [(name: "block", type: flowBuilderLambdaType)],
+            returnType: flowRawType,
+            externalLinkName: "kk_flow_create",
+            syntheticTypeParameterNames: ["T"],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "callbackFlow",
+            packageFQName: flowPkg,
+            parameters: [(name: "block", type: flowBuilderLambdaType)],
+            returnType: flowRawType,
+            externalLinkName: "kk_flow_create",
+            syntheticTypeParameterNames: ["T"],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "flowOf",
+            packageFQName: flowPkg,
+            parameters: [(name: "values", type: types.anyType)],
+            returnType: flowRawType,
+            externalLinkName: "kk_flow_of",
+            syntheticTypeParameterNames: ["T"],
+            syntheticVarargParameterIndices: [0],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "emptyFlow",
+            packageFQName: flowPkg,
+            parameters: [],
+            returnType: flowRawType,
+            externalLinkName: "kk_flow_empty",
+            syntheticTypeParameterNames: ["T"],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: flowInterfaceSymbol,
+            ownerType: flowRawType,
+            name: "asFlow",
+            externalLinkName: "kk_flow_as_flow",
+            returnType: flowRawType,
             symbols: symbols,
             interner: interner
         )
@@ -885,6 +1094,128 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let listAnyType: TypeID = if let listSymbol = symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("List"),
+        ]) {
+            types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.out(types.anyType)],
+                nullability: .nonNull
+            )))
+        } else {
+            types.anyType
+        }
+        registerSyntheticCoroutineConstructor(
+            ownerSymbol: mutableSharedFlowSymbol,
+            ownerType: mutableSharedFlowType,
+            externalLinkName: "kk_mutable_shared_flow_create",
+            parameters: [(name: "replay", type: types.intType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineConstructor(
+            ownerSymbol: mutableStateFlowSymbol,
+            ownerType: mutableStateFlowType,
+            externalLinkName: "kk_mutable_state_flow_create",
+            parameters: [(name: "initialValue", type: types.anyType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: flowInterfaceSymbol,
+            ownerType: flowRawType,
+            name: "shareIn",
+            externalLinkName: "kk_flow_share_in",
+            returnType: sharedFlowRawType,
+            parameters: [(name: "replay", type: types.intType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: flowInterfaceSymbol,
+            ownerType: flowRawType,
+            name: "stateIn",
+            externalLinkName: "kk_flow_state_in",
+            returnType: stateFlowRawType,
+            parameters: [(name: "initialValue", type: types.anyType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: sharedFlowSymbol,
+            ownerType: sharedFlowRawType,
+            name: "collect",
+            externalLinkName: "kk_shared_flow_collect",
+            returnType: types.unitType,
+            parameters: [(name: "collector", type: types.make(.functionType(FunctionType(
+                params: [types.anyType],
+                returnType: types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            ))))],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticObjectProperty(
+            ownerSymbol: sharedFlowSymbol,
+            ownerType: sharedFlowRawType,
+            name: "replayCache",
+            propertyType: listAnyType,
+            externalLinkName: "kk_shared_flow_replay_cache",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticObjectProperty(
+            ownerSymbol: stateFlowSymbol,
+            ownerType: stateFlowRawType,
+            name: "value",
+            propertyType: types.anyType,
+            externalLinkName: "kk_state_flow_value",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: mutableSharedFlowSymbol,
+            ownerType: mutableSharedFlowType,
+            name: "emit",
+            externalLinkName: "kk_mutable_shared_flow_emit",
+            returnType: types.unitType,
+            parameters: [(name: "value", type: types.anyType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: mutableSharedFlowSymbol,
+            ownerType: mutableSharedFlowType,
+            name: "tryEmit",
+            externalLinkName: "kk_mutable_shared_flow_try_emit",
+            returnType: types.booleanType,
+            parameters: [(name: "value", type: types.anyType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: mutableStateFlowSymbol,
+            ownerType: mutableStateFlowType,
+            name: "emit",
+            externalLinkName: "kk_mutable_state_flow_emit",
+            returnType: types.unitType,
+            parameters: [(name: "value", type: types.anyType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: mutableStateFlowSymbol,
+            ownerType: mutableStateFlowType,
+            name: "tryEmit",
+            externalLinkName: "kk_mutable_state_flow_try_emit",
+            returnType: types.booleanType,
+            parameters: [(name: "value", type: types.anyType)],
+            symbols: symbols,
+            interner: interner
+        )
         registerSyntheticCoroutineMember(
             ownerSymbol: channelSymbol,
             ownerType: channelType,
@@ -1062,8 +1393,8 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // Mutex.withLock(action: suspend () -> T): T
-        // Suspend extension that acquires the lock, runs action, then releases.
+        // Mutex.withLock(action: () -> T): T
+        // Suspend-style helper that acquires the lock, runs action, then releases.
         registerSyntheticCoroutineMember(
             ownerSymbol: mutexSymbol,
             ownerType: mutexType,
@@ -1075,7 +1406,7 @@ extension DataFlowSemaPhase {
                 type: types.make(.functionType(FunctionType(
                     params: [],
                     returnType: types.anyType,
-                    isSuspend: true,
+                    isSuspend: false,
                     nullability: .nonNull
                 )))
             )],
@@ -1152,6 +1483,41 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+    }
+
+    func registerSyntheticCoroutineCancellationStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let jobFQName: [InternedString] = [interner.intern("kotlinx"), interner.intern("coroutines"), interner.intern("Job")]
+        guard let jobSymbol = symbols.lookup(fqName: jobFQName) else {
+            return
+        }
+        let jobType = types.make(.classType(ClassType(
+            classSymbol: jobSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let cancellationPkg = ensureSyntheticPackage(
+            ensurePackage(
+                path: ["kotlin", "coroutines", "cancellation"],
+                symbols: symbols,
+                interner: interner
+            ),
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticCoroutineExtensionFunction(
+            named: "cancel",
+            packageFQName: cancellationPkg,
+            receiverType: jobType,
+            externalLinkName: "kk_job_cancel",
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func registerSyntheticCoroutineTopLevelFunction(
@@ -1274,6 +1640,7 @@ extension DataFlowSemaPhase {
         returnType: TypeID,
         externalLinkName: String? = nil,
         syntheticTypeParameterNames: [String] = [],
+        syntheticVarargParameterIndices: Set<Int> = [],
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -1348,8 +1715,54 @@ extension DataFlowSemaPhase {
                 isSuspend: false,
                 valueParameterSymbols: valueParameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
-                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: parameters.indices.map { syntheticVarargParameterIndices.contains($0) },
                 typeParameterSymbols: typeParameterSymbols
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerSyntheticCoroutineExtensionFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        externalLinkName: String,
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        let existingSymbols = symbols.lookupAll(fqName: functionFQName)
+        if let existing = existingSymbols.first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType
             ),
             for: functionSymbol
         )
@@ -1589,7 +2002,6 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) {
         let functionName = interner.intern("Channel")
-        let functionFQName = packageFQName + [functionName]
         // Use a unique synthetic suffix to distinguish from the no-arg overload.
         let overloadFQName = packageFQName + [interner.intern("Channel$capacity")]
         guard symbols.lookup(fqName: overloadFQName) == nil else {

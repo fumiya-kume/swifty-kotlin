@@ -146,8 +146,6 @@ extension KIRLoweringDriver {
     ) {
         let ast = shared.ast
         let sema = shared.sema
-        let arena = shared.arena
-        var lastValue: KIRExprID?
         var terminatedByReturn = false
         for exprID in exprIDs {
             if let expr = ast.arena.expr(exprID), case let .returnExpr(value, _, _) = expr {
@@ -165,18 +163,14 @@ extension KIRLoweringDriver {
                 terminatedByReturn = true
                 break
             }
-            lastValue = lowerExpr(exprID, shared: shared, emit: &body)
-            if let lastValue, controlFlowLowerer.isTerminatedExpr(lastValue, arena: arena, sema: sema) {
+            let lowered = lowerExpr(exprID, shared: shared, emit: &body)
+            if controlFlowLowerer.isTerminatedExpr(lowered, arena: shared.arena, sema: sema) {
                 terminatedByReturn = true
                 break
             }
         }
         if !terminatedByReturn {
-            if let lastValue {
-                body.append(.returnValue(lastValue))
-            } else {
-                body.append(.returnUnit)
-            }
+            body.append(.returnUnit)
         }
     }
 

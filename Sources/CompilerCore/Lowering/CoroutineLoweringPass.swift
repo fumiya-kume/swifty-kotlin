@@ -16,26 +16,38 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("runBlocking"),
             ctx.interner.intern("launch"),
             ctx.interner.intern("async"),
+            ctx.interner.intern("createCoroutineUnintercepted"),
             ctx.interner.intern("withContext"),
             ctx.interner.intern("withTimeout"),
             ctx.interner.intern("withTimeoutOrNull"),
             ctx.interner.intern("coroutineScope"),
             ctx.interner.intern("supervisorScope"),
             ctx.interner.intern("flow"),
+            ctx.interner.intern("channelFlow"),
+            ctx.interner.intern("callbackFlow"),
+            ctx.interner.intern("flowOf"),
+            ctx.interner.intern("emptyFlow"),
             ctx.interner.intern("emit"),
+            ctx.interner.intern("asFlow"),
             ctx.interner.intern("collect"),
             ctx.interner.intern("map"),
             ctx.interner.intern("filter"),
             ctx.interner.intern("take"),
+            ctx.interner.intern("kk_suspend_function_invoke_0"),
+            ctx.interner.intern("kk_suspend_function_invoke"),
             ctx.interner.intern("kk_flow_create"),
             ctx.interner.intern("kk_flow_emit"),
             ctx.interner.intern("kk_flow_collect"),
+            ctx.interner.intern("kk_flow_of"),
+            ctx.interner.intern("kk_flow_empty"),
+            ctx.interner.intern("kk_flow_as_flow"),
         ]
         let virtualCallees: Set<InternedString> = [
             ctx.interner.intern("collect"),
             ctx.interner.intern("map"),
             ctx.interner.intern("filter"),
             ctx.interner.intern("take"),
+            ctx.interner.intern("asFlow"),
         ]
         for decl in module.arena.declarations {
             if case let .function(function) = decl {
@@ -76,6 +88,7 @@ final class CoroutineLoweringPass: LoweringPass {
         let kxMiniSupervisorScopeCallee = ctx.interner.intern("supervisorScope")
         let kxMiniDelayCallee = ctx.interner.intern("delay")
         let kxMiniYieldCallee = ctx.interner.intern("yield")
+        let createCoroutineUninterceptedCallee = ctx.interner.intern("createCoroutineUnintercepted")
         let runtimeRunBlockingCallee = ctx.interner.intern("kk_kxmini_run_blocking")
         let runtimeLaunchCallee = ctx.interner.intern("kk_kxmini_launch")
         let runtimeAsyncCallee = ctx.interner.intern("kk_kxmini_async")
@@ -86,7 +99,14 @@ final class CoroutineLoweringPass: LoweringPass {
         let runtimeWithTimeoutCallee = ctx.interner.intern("kk_with_timeout")
         let runtimeWithTimeoutOrNullCallee = ctx.interner.intern("kk_with_timeout_or_null")
         let flowCollectCallee = ctx.interner.intern("kk_flow_collect")
-        let runtimeSuspendCallNames: Set<InternedString> = [kxMiniDelayCallee, runtimeDelayCallee, kxMiniYieldCallee, runtimeYieldCallee]
+        let runtimeSuspendCallNames: Set<InternedString> = [
+            kxMiniDelayCallee,
+            runtimeDelayCallee,
+            kxMiniYieldCallee,
+            runtimeYieldCallee,
+            ctx.interner.intern("kk_suspend_function_invoke_0"),
+            ctx.interner.intern("kk_suspend_function_invoke"),
+        ]
         let kxMiniLauncherRuntimeCallees: [InternedString: InternedString] = [
             kxMiniRunBlockingCallee: runtimeRunBlockingCallee,
             kxMiniLaunchCallee: runtimeLaunchCallee,
@@ -241,6 +261,7 @@ final class CoroutineLoweringPass: LoweringPass {
         }
         let continuationFactory = ctx.interner.intern("kk_coroutine_continuation_new")
         let launcherArgSetCallee = ctx.interner.intern("kk_coroutine_launcher_arg_set")
+        let stateSetCompletionCallee = ctx.interner.intern("kk_coroutine_state_set_completion")
         let runtimeRunBlockingWithContCallee = ctx.interner.intern("kk_kxmini_run_blocking_with_cont")
         let kxMiniLauncherWithContCallees: [InternedString: InternedString] = [
             kxMiniRunBlockingCallee: ctx.interner.intern("kk_kxmini_run_blocking_with_cont"),
@@ -264,6 +285,8 @@ final class CoroutineLoweringPass: LoweringPass {
             runtimeWithTimeoutOrNullCallee: runtimeWithTimeoutOrNullCallee,
             yieldCallee: kxMiniYieldCallee,
             runtimeYieldCallee: runtimeYieldCallee,
+            createCoroutineUninterceptedCallee: createCoroutineUninterceptedCallee,
+            stateSetCompletionCallee: stateSetCompletionCallee,
             continuationFactory: continuationFactory,
             launcherArgSetCallee: launcherArgSetCallee,
             runtimeRunBlockingWithContCallee: runtimeRunBlockingWithContCallee,

@@ -15,6 +15,8 @@ fun main() {
     // UIntRange properties
     println((1u..5u).first)
     println((1u..5u).last)
+    println((1u..5u).firstOrNull())
+    println((1u..5u).lastOrNull())
 
     // UIntProgression with step
     println((1u..10u step 2).first)
@@ -33,6 +35,7 @@ fun main() {
     (1u..5u).forEach { print("$it ") }
     println()
     println((1u..5u).map { it * 2u })
+    println((1u..5u).mapIndexed { index, value -> index + value })
 
     // for loop
     for (i in 1u..5u) print("$i ")

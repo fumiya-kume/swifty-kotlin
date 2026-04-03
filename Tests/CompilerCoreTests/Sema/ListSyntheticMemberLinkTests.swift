@@ -147,6 +147,44 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testComparableSyntheticStubUsesContravariantTypeParameter() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let comparableSymbol = try XCTUnwrap(
+                sema.types.comparableInterfaceSymbol,
+                "Expected synthetic Comparable interface to be registered"
+            )
+            XCTAssertEqual(
+                sema.types.nominalTypeParameterVariances(for: comparableSymbol),
+                [.in],
+                "Expected Comparable to be declared as Comparable<in T>"
+            )
+
+            let comparableAny = sema.types.make(.classType(ClassType(
+                classSymbol: comparableSymbol,
+                args: [.invariant(sema.types.anyType)],
+                nullability: .nonNull
+            )))
+            let comparableString = sema.types.make(.classType(ClassType(
+                classSymbol: comparableSymbol,
+                args: [.invariant(sema.types.stringType)],
+                nullability: .nonNull
+            )))
+
+            XCTAssertTrue(
+                sema.types.isSubtype(comparableAny, comparableString),
+                "Expected Comparable<Any> to be a subtype of Comparable<String>"
+            )
+            XCTAssertFalse(
+                sema.types.isSubtype(comparableString, comparableAny),
+                "Expected Comparable<String> not to be a subtype of Comparable<Any>"
+            )
+        }
+    }
+
     func testCollectionFallbackRejectsListOnlyIndexedLookupsOnAbstractCollection() throws {
         let source = """
         fun firstValue(values: Collection<Int>): Int? = values.firstOrNull()

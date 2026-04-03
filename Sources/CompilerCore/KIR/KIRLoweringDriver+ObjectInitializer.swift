@@ -103,6 +103,24 @@ extension KIRLoweringDriver {
                 for interfaceSymbol in interfaceSupertypes {
                     guard let interfaceLayout = sema.symbols.nominalLayout(for: interfaceSymbol) else { continue }
                     let ifaceSlot = Int64(objectLayout.itableSlots[interfaceSymbol] ?? 0)
+                    let interfaceTypeID = RuntimeTypeCheckToken.stableNominalTypeID(
+                        symbol: interfaceSymbol,
+                        sema: sema,
+                        interner: interner
+                    )
+                    let interfaceTypeExpr = arena.appendExpr(.intLiteral(interfaceTypeID), type: intType)
+                    body.append(.constValue(result: interfaceTypeExpr, value: .intLiteral(interfaceTypeID)))
+                    let ifaceSlotExpr = arena.appendExpr(.intLiteral(ifaceSlot), type: intType)
+                    body.append(.constValue(result: ifaceSlotExpr, value: .intLiteral(ifaceSlot)))
+                    let registerIfaceResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                    body.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_object_register_itable_iface"),
+                        arguments: [allocatedObj, interfaceTypeExpr, ifaceSlotExpr],
+                        result: registerIfaceResult,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
 
                     // Walk the interface's vtableSlots to find each method that needs registration.
                     for (methodSymbol, methodSlotInt) in interfaceLayout.vtableSlots {
@@ -114,9 +132,6 @@ extension KIRLoweringDriver {
                             sema: sema,
                             interner: interner
                         ) ?? methodSymbol
-
-                        let ifaceSlotExpr = arena.appendExpr(.intLiteral(ifaceSlot), type: intType)
-                        body.append(.constValue(result: ifaceSlotExpr, value: .intLiteral(ifaceSlot)))
                         let methodSlotExpr = arena.appendExpr(.intLiteral(methodSlot), type: intType)
                         body.append(.constValue(result: methodSlotExpr, value: .intLiteral(methodSlot)))
                         let methodFnExpr = arena.appendExpr(.symbolRef(implementationSymbol), type: intType)

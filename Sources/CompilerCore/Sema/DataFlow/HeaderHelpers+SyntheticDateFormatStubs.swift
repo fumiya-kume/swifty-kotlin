@@ -27,6 +27,69 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerDateFormatTopLevel(
+            packageFQName: javaTextPkg,
+            name: "ofPattern",
+            parameterTypes: [types.stringType, types.stringType, types.stringType],
+            returnType: dateFormatType,
+            externalLinkName: "kk_dateformat_ofPatternWithTimeZone",
+            symbols: symbols,
+            interner: interner
+        )
+        registerDateFormatTopLevel(
+            packageFQName: javaTextPkg,
+            name: "getDateInstance",
+            parameterTypes: [types.stringType],
+            returnType: dateFormatType,
+            externalLinkName: "kk_dateformat_getDateInstance",
+            symbols: symbols,
+            interner: interner
+        )
+        registerDateFormatTopLevel(
+            packageFQName: javaTextPkg,
+            name: "getDateInstance",
+            parameterTypes: [types.stringType, types.stringType],
+            returnType: dateFormatType,
+            externalLinkName: "kk_dateformat_getDateInstanceWithTimeZone",
+            symbols: symbols,
+            interner: interner
+        )
+        registerDateFormatTopLevel(
+            packageFQName: javaTextPkg,
+            name: "getTimeInstance",
+            parameterTypes: [types.stringType],
+            returnType: dateFormatType,
+            externalLinkName: "kk_dateformat_getTimeInstance",
+            symbols: symbols,
+            interner: interner
+        )
+        registerDateFormatTopLevel(
+            packageFQName: javaTextPkg,
+            name: "getTimeInstance",
+            parameterTypes: [types.stringType, types.stringType],
+            returnType: dateFormatType,
+            externalLinkName: "kk_dateformat_getTimeInstanceWithTimeZone",
+            symbols: symbols,
+            interner: interner
+        )
+        registerDateFormatTopLevel(
+            packageFQName: javaTextPkg,
+            name: "getDateTimeInstance",
+            parameterTypes: [types.stringType],
+            returnType: dateFormatType,
+            externalLinkName: "kk_dateformat_getDateTimeInstance",
+            symbols: symbols,
+            interner: interner
+        )
+        registerDateFormatTopLevel(
+            packageFQName: javaTextPkg,
+            name: "getDateTimeInstance",
+            parameterTypes: [types.stringType, types.stringType],
+            returnType: dateFormatType,
+            externalLinkName: "kk_dateformat_getDateTimeInstanceWithTimeZone",
+            symbols: symbols,
+            interner: interner
+        )
         registerDateFormatMember(
             ownerSymbol: dateFormatSymbol,
             ownerType: dateFormatType,
@@ -42,7 +105,7 @@ extension DataFlowSemaPhase {
     private func registerDateFormatTopLevel(packageFQName: [InternedString], name: String, parameterTypes: [TypeID], returnType: TypeID, externalLinkName: String, symbols: SymbolTable, interner: StringInterner) {
         let functionName = interner.intern(name)
         let fqName = packageFQName + [functionName]
-        guard symbols.lookupAll(fqName: fqName).isEmpty else { return }
+        guard symbols.lookupAll(fqName: fqName).first(where: { symbols.functionSignature(for: $0)?.parameterTypes == parameterTypes }) == nil else { return }
         let function = symbols.define(kind: .function, name: functionName, fqName: fqName, declSite: nil, visibility: .public, flags: [.synthetic])
         if let pkg = symbols.lookup(fqName: packageFQName) { symbols.setParentSymbol(pkg, for: function) }
         symbols.setExternalLinkName(externalLinkName, for: function)
@@ -53,7 +116,7 @@ extension DataFlowSemaPhase {
         guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
         let functionName = interner.intern(name)
         let fqName = ownerInfo.fqName + [functionName]
-        guard symbols.lookupAll(fqName: fqName).isEmpty else { return }
+        guard symbols.lookupAll(fqName: fqName).first(where: { symbols.functionSignature(for: $0)?.parameterTypes == parameterTypes }) == nil else { return }
         let function = symbols.define(kind: .function, name: functionName, fqName: fqName, declSite: nil, visibility: .public, flags: [.synthetic])
         symbols.setParentSymbol(ownerSymbol, for: function)
         symbols.setExternalLinkName(externalLinkName, for: function)

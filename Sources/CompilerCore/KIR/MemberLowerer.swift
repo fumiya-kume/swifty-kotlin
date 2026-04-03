@@ -335,7 +335,6 @@ final class MemberLowerer {
         bindFunctionParameterLocals(params: params, body: &body, arena: arena)
         switch function.body {
         case let .block(exprIDs, _):
-            var lastValue: KIRExprID?
             var terminatedByReturn = false
             for exprID in exprIDs {
                 if let expr = ast.arena.expr(exprID), case let .returnExpr(value, _, _) = expr {
@@ -348,10 +347,14 @@ final class MemberLowerer {
                     terminatedByReturn = true
                     break
                 }
-                lastValue = driver.lowerExpr(exprID, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &body)
+                let lowered = driver.lowerExpr(exprID, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &body)
+                if driver.controlFlowLowerer.isTerminatedExpr(lowered, arena: arena, sema: sema) {
+                    terminatedByReturn = true
+                    break
+                }
             }
             if !terminatedByReturn {
-                if let lastValue { body.append(.returnValue(lastValue)) } else { body.append(.returnUnit) }
+                body.append(.returnUnit)
             }
         case let .expr(exprID, _):
             let value = driver.lowerExpr(exprID, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &body)

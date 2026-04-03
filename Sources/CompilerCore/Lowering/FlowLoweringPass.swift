@@ -10,15 +10,30 @@ final class FlowLoweringPass: LoweringPass {
         case take = 3
         case onEach = 4
         case distinctUntilChanged = 5
+        case catchHandler = 6
+        case retry = 7
+        case retryWhen = 8
+        case onErrorReturn = 9
+        case onErrorResume = 10
     }
 
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
         let calleeNames: Set<InternedString> = [
             ctx.interner.intern("flow"),
+            ctx.interner.intern("channelFlow"),
+            ctx.interner.intern("callbackFlow"),
+            ctx.interner.intern("flowOf"),
+            ctx.interner.intern("emptyFlow"),
+            ctx.interner.intern("asFlow"),
             ctx.interner.intern("emit"),
             ctx.interner.intern("map"),
             ctx.interner.intern("filter"),
             ctx.interner.intern("take"),
+            ctx.interner.intern("catch"),
+            ctx.interner.intern("retry"),
+            ctx.interner.intern("retryWhen"),
+            ctx.interner.intern("onErrorReturn"),
+            ctx.interner.intern("onErrorResume"),
             ctx.interner.intern("collect"),
             ctx.interner.intern("toList"),
             ctx.interner.intern("first"),
@@ -49,10 +64,20 @@ final class FlowLoweringPass: LoweringPass {
     func run(module: KIRModule, ctx: KIRContext) throws {
         let interner = ctx.interner
         let flowName = interner.intern("flow")
+        let channelFlowName = interner.intern("channelFlow")
+        let callbackFlowName = interner.intern("callbackFlow")
+        let flowOfName = interner.intern("flowOf")
+        let emptyFlowName = interner.intern("emptyFlow")
+        let asFlowName = interner.intern("asFlow")
         let emitName = interner.intern("emit")
         let mapName = interner.intern("map")
         let filterName = interner.intern("filter")
         let takeName = interner.intern("take")
+        let catchName = interner.intern("catch")
+        let retryName = interner.intern("retry")
+        let retryWhenName = interner.intern("retryWhen")
+        let onErrorReturnName = interner.intern("onErrorReturn")
+        let onErrorResumeName = interner.intern("onErrorResume")
         let collectName = interner.intern("collect")
         let toListName = interner.intern("toList")
         let firstName = interner.intern("first")
@@ -60,8 +85,13 @@ final class FlowLoweringPass: LoweringPass {
         let kkFlowCreateName = interner.intern("kk_flow_create")
         let kkFlowEmitName = interner.intern("kk_flow_emit")
         let kkFlowCollectName = interner.intern("kk_flow_collect")
+        let kkFlowOfName = interner.intern("kk_flow_of")
+        let kkFlowEmptyName = interner.intern("kk_flow_empty")
+        let kkFlowAsFlowName = interner.intern("kk_flow_as_flow")
         let kkFlowToListName = interner.intern("kk_flow_to_list")
         let kkFlowFirstName = interner.intern("kk_flow_first")
+        let kkArrayNewName = interner.intern("kk_array_new")
+        let kkArraySetName = interner.intern("kk_array_set")
 
         let intType = ctx.sema?.types.intType
 
@@ -88,7 +118,9 @@ final class FlowLoweringPass: LoweringPass {
             for instruction in function.body {
                 switch instruction {
                 case let .call(_, callee, arguments, _, _, _, _, _):
-                    guard callee == flowName, arguments.count == 1 else {
+                    guard (callee == flowName || callee == channelFlowName || callee == callbackFlowName),
+                          arguments.count == 1
+                    else {
                         continue
                     }
                     let lambdaArg = arguments[0]
@@ -102,7 +134,9 @@ final class FlowLoweringPass: LoweringPass {
                     let fallbackLambdaName = interner.intern("kk_lambda_\(lambdaArg.rawValue)")
                     flowBuilderFunctionNames.insert(fallbackLambdaName)
                 case let .virtualCall(_, callee, _, arguments, _, _, _, _):
-                    guard callee == flowName, arguments.count == 1 else {
+                    guard (callee == flowName || callee == channelFlowName || callee == callbackFlowName),
+                          arguments.count == 1
+                    else {
                         continue
                     }
                     let lambdaArg = arguments[0]
@@ -141,6 +175,49 @@ final class FlowLoweringPass: LoweringPass {
                 return expr
             }
 
+            func appendFlowOfCall(arguments: [KIRExprID], result: KIRExprID?) {
+                let countExpr = appendIntConstant(Int64(arguments.count))
+                let arrayExpr = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: nil
+                )
+                loweredBody.append(.call(
+                    symbol: nil,
+                    callee: kkArrayNewName,
+                    arguments: [countExpr],
+                    result: arrayExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                for (index, arg) in arguments.enumerated() {
+                    let indexExpr = appendIntConstant(Int64(index))
+                    let setResult = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: nil
+                    )
+                    loweredBody.append(.call(
+                        symbol: nil,
+                        callee: kkArraySetName,
+                        arguments: [arrayExpr, indexExpr, arg],
+                        result: setResult,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                }
+                loweredBody.append(.call(
+                    symbol: nil,
+                    callee: kkFlowOfName,
+                    arguments: [arrayExpr, countExpr],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                if let result {
+                    flowExprIDs.insert(result.rawValue)
+                    activeFlowExpr = result
+                }
+            }
+
             for instruction in function.body {
                 switch instruction {
                 case let .copy(from, to):
@@ -171,12 +248,71 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
-                    if callee == flowName, arguments.count == 1 {
+                    if (callee == flowName || callee == channelFlowName || callee == callbackFlowName),
+                       arguments.count == 1
+                    {
                         let continuation = appendIntConstant(0)
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowCreateName,
                             arguments: [arguments[0], continuation],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        if let result {
+                            flowExprIDs.insert(result.rawValue)
+                            activeFlowExpr = result
+                        }
+                        continue
+                    }
+
+                    if (callee == catchName || callee == retryName || callee == retryWhenName ||
+                        callee == onErrorReturnName || callee == onErrorResumeName),
+                       arguments.count == 1,
+                       let flowExpr = activeFlowExpr,
+                       flowExprIDs.contains(flowExpr.rawValue)
+                    {
+                        let tagValue: Int64 = switch callee {
+                        case catchName:
+                            RuntimeFlowTag.catchHandler.rawValue
+                        case retryName:
+                            RuntimeFlowTag.retry.rawValue
+                        case retryWhenName:
+                            RuntimeFlowTag.retryWhen.rawValue
+                        case onErrorReturnName:
+                            RuntimeFlowTag.onErrorReturn.rawValue
+                        case onErrorResumeName:
+                            RuntimeFlowTag.onErrorResume.rawValue
+                        default:
+                            RuntimeFlowTag.map.rawValue
+                        }
+                        let tag = appendIntConstant(tagValue)
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowEmitName,
+                            arguments: [flowExpr, arguments[0], tag],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        if let result {
+                            flowExprIDs.insert(result.rawValue)
+                            activeFlowExpr = result
+                        }
+                        continue
+                    }
+
+                    if callee == flowOfName {
+                        appendFlowOfCall(arguments: arguments, result: result)
+                        continue
+                    }
+
+                    if callee == emptyFlowName, arguments.isEmpty {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowEmptyName,
+                            arguments: [appendIntConstant(0)],
                             result: result,
                             canThrow: false,
                             thrownResult: nil
@@ -218,8 +354,30 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
-                    if callee == mapName || callee == filterName || callee == takeName,
-                       arguments.count == 2 || ((callee == mapName || callee == filterName) && arguments.count == 3),
+                    if callee == asFlowName,
+                       arguments.count == 1
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowAsFlowName,
+                            arguments: [arguments[0], appendIntConstant(0)],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        if let result {
+                            flowExprIDs.insert(result.rawValue)
+                            activeFlowExpr = result
+                        }
+                        continue
+                    }
+
+                    if callee == mapName || callee == filterName || callee == takeName ||
+                        callee == catchName || callee == retryName || callee == retryWhenName ||
+                        callee == onErrorReturnName || callee == onErrorResumeName,
+                       arguments.count == 2 ||
+                        ((callee == mapName || callee == filterName || callee == catchName ||
+                            callee == retryWhenName) && arguments.count == 3),
                        flowExprIDs.contains(arguments[0].rawValue)
                     {
                         let tagValue: Int64 = switch callee {
@@ -227,6 +385,16 @@ final class FlowLoweringPass: LoweringPass {
                             RuntimeFlowTag.map.rawValue
                         case filterName:
                             RuntimeFlowTag.filter.rawValue
+                        case catchName:
+                            RuntimeFlowTag.catchHandler.rawValue
+                        case retryName:
+                            RuntimeFlowTag.retry.rawValue
+                        case retryWhenName:
+                            RuntimeFlowTag.retryWhen.rawValue
+                        case onErrorReturnName:
+                            RuntimeFlowTag.onErrorReturn.rawValue
+                        case onErrorResumeName:
+                            RuntimeFlowTag.onErrorResume.rawValue
                         default:
                             RuntimeFlowTag.take.rawValue
                         }
@@ -299,7 +467,7 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
-                    if callee == kkFlowCreateName,
+                    if callee == kkFlowCreateName || callee == kkFlowOfName || callee == kkFlowEmptyName || callee == kkFlowAsFlowName,
                        let result
                     {
                         flowExprIDs.insert(result.rawValue)
@@ -313,6 +481,11 @@ final class FlowLoweringPass: LoweringPass {
                         if tag == RuntimeFlowTag.map.rawValue
                             || tag == RuntimeFlowTag.filter.rawValue
                             || tag == RuntimeFlowTag.take.rawValue
+                            || tag == RuntimeFlowTag.catchHandler.rawValue
+                            || tag == RuntimeFlowTag.retry.rawValue
+                            || tag == RuntimeFlowTag.retryWhen.rawValue
+                            || tag == RuntimeFlowTag.onErrorReturn.rawValue
+                            || tag == RuntimeFlowTag.onErrorResume.rawValue
                         {
                             flowExprIDs.insert(result.rawValue)
                             activeFlowExpr = result
@@ -366,7 +539,27 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
-                    if callee == mapName || callee == filterName || callee == takeName,
+                    if callee == asFlowName,
+                       arguments.isEmpty
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowAsFlowName,
+                            arguments: [receiver, appendIntConstant(0)],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        if let result {
+                            flowExprIDs.insert(result.rawValue)
+                            activeFlowExpr = result
+                        }
+                        continue
+                    }
+
+                    if callee == mapName || callee == filterName || callee == takeName ||
+                        callee == catchName || callee == retryName || callee == retryWhenName ||
+                        callee == onErrorReturnName || callee == onErrorResumeName,
                        arguments.count == 1,
                        flowExprIDs.contains(receiver.rawValue)
                     {
@@ -375,6 +568,16 @@ final class FlowLoweringPass: LoweringPass {
                             RuntimeFlowTag.map.rawValue
                         case filterName:
                             RuntimeFlowTag.filter.rawValue
+                        case catchName:
+                            RuntimeFlowTag.catchHandler.rawValue
+                        case retryName:
+                            RuntimeFlowTag.retry.rawValue
+                        case retryWhenName:
+                            RuntimeFlowTag.retryWhen.rawValue
+                        case onErrorReturnName:
+                            RuntimeFlowTag.onErrorReturn.rawValue
+                        case onErrorResumeName:
+                            RuntimeFlowTag.onErrorResume.rawValue
                         default:
                             RuntimeFlowTag.take.rawValue
                         }
@@ -444,7 +647,7 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
-                    if callee == kkFlowCreateName,
+                    if callee == kkFlowCreateName || callee == kkFlowOfName || callee == kkFlowEmptyName || callee == kkFlowAsFlowName,
                        let result
                     {
                         flowExprIDs.insert(result.rawValue)
@@ -458,6 +661,11 @@ final class FlowLoweringPass: LoweringPass {
                         if tag == RuntimeFlowTag.map.rawValue
                             || tag == RuntimeFlowTag.filter.rawValue
                             || tag == RuntimeFlowTag.take.rawValue
+                            || tag == RuntimeFlowTag.catchHandler.rawValue
+                            || tag == RuntimeFlowTag.retry.rawValue
+                            || tag == RuntimeFlowTag.retryWhen.rawValue
+                            || tag == RuntimeFlowTag.onErrorReturn.rawValue
+                            || tag == RuntimeFlowTag.onErrorResume.rawValue
                         {
                             flowExprIDs.insert(result.rawValue)
                             activeFlowExpr = result

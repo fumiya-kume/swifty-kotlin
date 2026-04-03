@@ -26,6 +26,9 @@ fun main() {
     println(epoch <= epoch) // true
     println(epoch >= epoch) // true
     println(epoch == epoch) // true
+    val epoch2 = Instant.fromEpochMilliseconds(0L)
+    println(epoch == epoch2) // true
+    println(epoch.elapsed().inWholeSeconds > 0) // true
 
     // until() — duration between two Instants
     val t1 = Instant.fromEpochMilliseconds(1000L)

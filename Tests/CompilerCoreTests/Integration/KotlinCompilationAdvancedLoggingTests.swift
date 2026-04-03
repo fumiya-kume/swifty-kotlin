@@ -14,6 +14,7 @@ final class KotlinCompilationAdvancedLoggingTests: XCTestCase {
             logger.addHandler(ConsoleHandler())
             logger.addHandler(FileHandler("demo.log"))
             logger.log(INFO, "hello")
+            logger.log(INFO, "failed", IllegalStateException("boom"))
         }
         """)
     }
