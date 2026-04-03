@@ -564,6 +564,7 @@ extension ABILoweringPass {
             interner.intern("kk_instant_minus_duration"),
             interner.intern("kk_instant_compare"),
             interner.intern("kk_instant_until"),
+            interner.intern("kk_instant_elapsed"),
             interner.intern("kk_mutable_set_clear"),
             interner.intern("kk_mutable_set_addAll"),
             interner.intern("kk_mutable_set_removeAll"),

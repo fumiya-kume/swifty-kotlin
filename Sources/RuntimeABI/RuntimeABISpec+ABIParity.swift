@@ -1558,6 +1558,14 @@ public extension RuntimeABISpec {
             section: "ABIParity"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_instant_elapsed",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_duration_isNegative",
             parameters: [
                 RuntimeABIParameter(name: "p0", type: .intptr),

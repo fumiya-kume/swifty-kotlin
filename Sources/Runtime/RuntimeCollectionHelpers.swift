@@ -283,6 +283,17 @@ func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
     {
         return lhsChar.value == rhsChar.value
     }
+    if let lhsDuration = tryCast(lhsPtr, to: RuntimeDurationBox.self),
+       let rhsDuration = tryCast(rhsPtr, to: RuntimeDurationBox.self)
+    {
+        return lhsDuration.nanoseconds == rhsDuration.nanoseconds
+    }
+    if let lhsInstant = tryCast(lhsPtr, to: RuntimeInstantBox.self),
+       let rhsInstant = tryCast(rhsPtr, to: RuntimeInstantBox.self)
+    {
+        return lhsInstant.epochSeconds == rhsInstant.epochSeconds
+            && lhsInstant.nanoOfSecond == rhsInstant.nanoOfSecond
+    }
     if let lhsList = tryCast(lhsPtr, to: RuntimeListBox.self),
        let rhsList = tryCast(rhsPtr, to: RuntimeListBox.self)
     {
