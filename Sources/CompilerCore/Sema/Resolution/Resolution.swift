@@ -130,7 +130,8 @@ extension OverloadResolver {
         guard let parameterMapping = buildParameterMapping(
             signature: signature,
             callArgs: call.args,
-            symbols: ctx.symbols
+            symbols: ctx.symbols,
+            typeSystem: ctx.types
         ) else {
             return .rejected
         }

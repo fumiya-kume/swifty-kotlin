@@ -299,7 +299,7 @@ final class NumericBitCountTests: XCTestCase {
             // Test highest/lowest one bit
             let highest = kk_int_highestOneBit(value)
             let lowest = kk_int_lowestOneBit(value)
-            
+
             if value != 0 {
                 XCTAssertNotEqual(highest, 0, "Highest one bit should be non-zero for non-zero value \(value)")
                 XCTAssertNotEqual(lowest, 0, "Lowest one bit should be non-zero for non-zero value \(value)")

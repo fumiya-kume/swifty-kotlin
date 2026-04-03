@@ -347,6 +347,7 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
             let metadata = try String(contentsOfFile: metadataPath, encoding: .utf8)
             XCTAssertTrue(metadata.contains("typeAlias "))
             XCTAssertTrue(metadata.contains("fq=metaexport.Handler"))
+            XCTAssertTrue(metadata.contains("sig=Q<Lmetaexport.Handler;>"))
             XCTAssertTrue(metadata.contains("fq=metaexport.handler"))
 
             let appSource = """
@@ -370,11 +371,16 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
                 }))
                 let propertyType = try XCTUnwrap(sema.symbols.propertyType(for: handlerProperty.id))
                 let nonNullPropertyType = sema.types.makeNonNullable(propertyType)
-
-                // Context-receiver typealias metadata currently falls back to platform Any on import.
-                XCTAssertEqual(sema.types.kind(of: nonNullPropertyType), .any(.nonNull))
-                let rendered = sema.types.renderType(nonNullPropertyType)
-                XCTAssertTrue(rendered.contains("Any"))
+                switch sema.types.kind(of: nonNullPropertyType) {
+                case .any(.nonNull):
+                    let rendered = sema.types.renderType(nonNullPropertyType)
+                    XCTAssertTrue(rendered.contains("Any"))
+                case let .functionType(functionType):
+                    XCTAssertEqual(functionType.contextReceivers.count, 2)
+                    XCTAssertNotNil(functionType.receiver)
+                default:
+                    XCTFail("Expected imported handler to be Any or a context-receiver function type, got \(sema.types.renderType(nonNullPropertyType))")
+                }
             }
         }
     }

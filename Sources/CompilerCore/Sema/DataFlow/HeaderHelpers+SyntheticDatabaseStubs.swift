@@ -4,461 +4,310 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner
     ) {
-        let sqlPkg = ensurePackage(path: ["java", "sql"], symbols: symbols, interner: interner)
-        let sqlPkgSymbol = symbols.lookup(fqName: sqlPkg)
+        let javaSQLPkg = ensurePackage(path: ["java", "sql"], symbols: symbols, interner: interner)
+        let javaSQLPkgSymbol = symbols.lookup(fqName: javaSQLPkg)
+        let javaIOCloseable = symbols.lookup(fqName: ensurePackage(path: ["java", "io"], symbols: symbols, interner: interner) + [interner.intern("Closeable")])
 
-        let stringType = types.stringType
-        let intType = types.intType
-        let boolType = types.booleanType
-        let unitType = types.unitType
-
-        let connectionSymbol = ensureClassSymbol(
-            named: "Connection",
-            in: sqlPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        if let sqlPkgSymbol {
-            symbols.setParentSymbol(sqlPkgSymbol, for: connectionSymbol)
+        let driverManagerSymbol = ensureDatabaseObjectSymbol(named: "DriverManager", in: javaSQLPkg, symbols: symbols, interner: interner)
+        if let javaSQLPkgSymbol {
+            symbols.setParentSymbol(javaSQLPkgSymbol, for: driverManagerSymbol)
         }
-        let connectionType = types.make(.classType(ClassType(
-            classSymbol: connectionSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
-        symbols.setPropertyType(connectionType, for: connectionSymbol)
-
-        let savepointSymbol = ensureClassSymbol(
-            named: "Savepoint",
-            in: sqlPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        if let sqlPkgSymbol {
-            symbols.setParentSymbol(sqlPkgSymbol, for: savepointSymbol)
-        }
-        let savepointType = types.make(.classType(ClassType(
-            classSymbol: savepointSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
-        symbols.setPropertyType(savepointType, for: savepointSymbol)
-
-        let driverManagerSymbol = ensureClassSymbol(
-            named: "DriverManager",
-            in: sqlPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        if let sqlPkgSymbol {
-            symbols.setParentSymbol(sqlPkgSymbol, for: driverManagerSymbol)
-        }
-        let driverManagerType = types.make(.classType(ClassType(
-            classSymbol: driverManagerSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
+        let driverManagerType = types.make(.classType(ClassType(classSymbol: driverManagerSymbol, args: [], nullability: .nonNull)))
         symbols.setPropertyType(driverManagerType, for: driverManagerSymbol)
 
-        let connectionCompanionFQName = ensureDatabaseCompanionSymbol(
-            ownerSymbol: connectionSymbol,
-            symbols: symbols,
-            interner: interner
-        )
-        registerDatabaseConstant(
-            name: "TRANSACTION_READ_UNCOMMITTED",
-            value: 1,
-            ownerFQName: connectionCompanionFQName,
-            ownerSymbol: connectionSymbol,
-            intType: intType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerDatabaseConstant(
-            name: "TRANSACTION_READ_COMMITTED",
-            value: 2,
-            ownerFQName: connectionCompanionFQName,
-            ownerSymbol: connectionSymbol,
-            intType: intType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerDatabaseConstant(
-            name: "TRANSACTION_REPEATABLE_READ",
-            value: 4,
-            ownerFQName: connectionCompanionFQName,
-            ownerSymbol: connectionSymbol,
-            intType: intType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerDatabaseConstant(
-            name: "TRANSACTION_SERIALIZABLE",
-            value: 8,
-            ownerFQName: connectionCompanionFQName,
-            ownerSymbol: connectionSymbol,
-            intType: intType,
-            symbols: symbols,
-            interner: interner
-        )
+        let connectionSymbol = ensureClassSymbol(named: "Connection", in: javaSQLPkg, symbols: symbols, interner: interner)
+        let statementSymbol = ensureClassSymbol(named: "Statement", in: javaSQLPkg, symbols: symbols, interner: interner)
+        let preparedStatementSymbol = ensureClassSymbol(named: "PreparedStatement", in: javaSQLPkg, symbols: symbols, interner: interner)
+        let resultSetSymbol = ensureClassSymbol(named: "ResultSet", in: javaSQLPkg, symbols: symbols, interner: interner)
 
-        let driverManagerCompanionFQName = ensureDatabaseCompanionSymbol(
+        for symbol in [connectionSymbol, statementSymbol, preparedStatementSymbol, resultSetSymbol] {
+            if let javaSQLPkgSymbol {
+                symbols.setParentSymbol(javaSQLPkgSymbol, for: symbol)
+            }
+        }
+
+        let connectionType = types.make(.classType(ClassType(classSymbol: connectionSymbol, args: [], nullability: .nonNull)))
+        let statementType = types.make(.classType(ClassType(classSymbol: statementSymbol, args: [], nullability: .nonNull)))
+        let preparedStatementType = types.make(.classType(ClassType(classSymbol: preparedStatementSymbol, args: [], nullability: .nonNull)))
+        let resultSetType = types.make(.classType(ClassType(classSymbol: resultSetSymbol, args: [], nullability: .nonNull)))
+
+        if let closeableSymbol = javaIOCloseable {
+            symbols.setDirectSupertypes([closeableSymbol], for: connectionSymbol)
+            types.setNominalDirectSupertypes([closeableSymbol], for: connectionSymbol)
+            symbols.setDirectSupertypes([closeableSymbol], for: statementSymbol)
+            types.setNominalDirectSupertypes([closeableSymbol], for: statementSymbol)
+            symbols.setDirectSupertypes([statementSymbol, closeableSymbol], for: preparedStatementSymbol)
+            types.setNominalDirectSupertypes([statementSymbol, closeableSymbol], for: preparedStatementSymbol)
+            symbols.setDirectSupertypes([closeableSymbol], for: resultSetSymbol)
+            types.setNominalDirectSupertypes([closeableSymbol], for: resultSetSymbol)
+        } else {
+            symbols.setDirectSupertypes([statementSymbol], for: preparedStatementSymbol)
+            types.setNominalDirectSupertypes([statementSymbol], for: preparedStatementSymbol)
+        }
+
+        registerInstanceFunction(
             ownerSymbol: driverManagerSymbol,
-            symbols: symbols,
-            interner: interner
-        )
-        registerDatabaseCompanionMethod(
-            name: "getConnection",
-            externalLinkName: "kk_driver_manager_getConnection",
-            companionFQName: driverManagerCompanionFQName,
-            parameters: [("url", stringType)],
+            ownerType: driverManagerType,
+            parameters: [("url", types.stringType)],
             returnType: connectionType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerDatabaseStaticMethod(
-            name: "getConnection",
-            externalLinkName: "kk_driver_manager_getConnection",
-            ownerSymbol: driverManagerSymbol,
-            parameters: [("url", stringType)],
-            returnType: connectionType,
+            externalLinkName: "kk_jdbc_driver_manager_getConnection",
+            named: "getConnection",
             symbols: symbols,
             interner: interner
         )
 
-        registerDatabaseMemberMethod(
+        registerInstanceFunction(
             ownerSymbol: connectionSymbol,
             ownerType: connectionType,
-            name: "getAutoCommit",
-            externalLinkName: "kk_connection_getAutoCommit",
             parameters: [],
-            returnType: boolType,
+            returnType: statementType,
+            externalLinkName: "kk_jdbc_connection_createStatement",
+            named: "createStatement",
             symbols: symbols,
             interner: interner
         )
-        registerDatabaseMemberMethod(
+        registerInstanceFunction(
             ownerSymbol: connectionSymbol,
             ownerType: connectionType,
-            name: "setAutoCommit",
-            externalLinkName: "kk_connection_setAutoCommit",
-            parameters: [("autoCommit", boolType)],
-            returnType: unitType,
+            parameters: [("sql", types.stringType)],
+            returnType: preparedStatementType,
+            externalLinkName: "kk_jdbc_connection_prepareStatement",
+            named: "prepareStatement",
             symbols: symbols,
             interner: interner
         )
-        registerDatabaseMemberMethod(
+        registerInstanceFunction(
             ownerSymbol: connectionSymbol,
             ownerType: connectionType,
-            name: "commit",
-            externalLinkName: "kk_connection_commit",
             parameters: [],
-            returnType: unitType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerDatabaseMemberMethod(
-            ownerSymbol: connectionSymbol,
-            ownerType: connectionType,
-            name: "rollback",
-            externalLinkName: "kk_connection_rollback",
-            parameters: [],
-            returnType: unitType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerDatabaseMemberMethod(
-            ownerSymbol: connectionSymbol,
-            ownerType: connectionType,
-            name: "rollback",
-            externalLinkName: "kk_connection_rollback_to_savepoint",
-            parameters: [("savepoint", savepointType)],
-            returnType: unitType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerDatabaseMemberMethod(
-            ownerSymbol: connectionSymbol,
-            ownerType: connectionType,
-            name: "setSavepoint",
-            externalLinkName: "kk_connection_setSavepoint",
-            parameters: [],
-            returnType: savepointType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerDatabaseMemberMethod(
-            ownerSymbol: connectionSymbol,
-            ownerType: connectionType,
-            name: "setSavepoint",
-            externalLinkName: "kk_connection_setSavepoint_named",
-            parameters: [("name", stringType)],
-            returnType: savepointType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerDatabaseMemberMethod(
-            ownerSymbol: connectionSymbol,
-            ownerType: connectionType,
-            name: "releaseSavepoint",
-            externalLinkName: "kk_connection_releaseSavepoint",
-            parameters: [("savepoint", savepointType)],
-            returnType: unitType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerDatabaseMemberMethod(
-            ownerSymbol: connectionSymbol,
-            ownerType: connectionType,
-            name: "getTransactionIsolation",
-            externalLinkName: "kk_connection_getTransactionIsolation",
-            parameters: [],
-            returnType: intType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerDatabaseMemberMethod(
-            ownerSymbol: connectionSymbol,
-            ownerType: connectionType,
-            name: "setTransactionIsolation",
-            externalLinkName: "kk_connection_setTransactionIsolation",
-            parameters: [("level", intType)],
-            returnType: unitType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerDatabaseMemberMethod(
-            ownerSymbol: connectionSymbol,
-            ownerType: connectionType,
-            name: "close",
-            externalLinkName: "kk_connection_close",
-            parameters: [],
-            returnType: unitType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerDatabaseMemberMethod(
-            ownerSymbol: connectionSymbol,
-            ownerType: connectionType,
-            name: "isClosed",
-            externalLinkName: "kk_connection_isClosed",
-            parameters: [],
-            returnType: boolType,
+            returnType: types.unitType,
+            externalLinkName: "kk_jdbc_connection_close",
+            named: "close",
             symbols: symbols,
             interner: interner
         )
 
-        registerDatabaseMemberMethod(
-            ownerSymbol: savepointSymbol,
-            ownerType: savepointType,
-            name: "getSavepointId",
-            externalLinkName: "kk_savepoint_getSavepointId",
-            parameters: [],
-            returnType: intType,
+        registerInstanceFunction(
+            ownerSymbol: statementSymbol,
+            ownerType: statementType,
+            parameters: [("sql", types.stringType)],
+            returnType: resultSetType,
+            externalLinkName: "kk_jdbc_statement_executeQuery",
+            named: "executeQuery",
             symbols: symbols,
             interner: interner
         )
-        registerDatabaseMemberMethod(
-            ownerSymbol: savepointSymbol,
-            ownerType: savepointType,
-            name: "getSavepointName",
-            externalLinkName: "kk_savepoint_getSavepointName",
+        registerInstanceFunction(
+            ownerSymbol: statementSymbol,
+            ownerType: statementType,
+            parameters: [("sql", types.stringType)],
+            returnType: types.intType,
+            externalLinkName: "kk_jdbc_statement_executeUpdate",
+            named: "executeUpdate",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: statementSymbol,
+            ownerType: statementType,
             parameters: [],
-            returnType: stringType,
+            returnType: types.unitType,
+            externalLinkName: "kk_jdbc_statement_close",
+            named: "close",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerInstanceFunction(
+            ownerSymbol: preparedStatementSymbol,
+            ownerType: preparedStatementType,
+            parameters: [("parameterIndex", types.intType), ("value", types.intType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_jdbc_prepared_statement_setInt",
+            named: "setInt",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: preparedStatementSymbol,
+            ownerType: preparedStatementType,
+            parameters: [("parameterIndex", types.intType), ("value", types.stringType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_jdbc_prepared_statement_setString",
+            named: "setString",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: preparedStatementSymbol,
+            ownerType: preparedStatementType,
+            parameters: [],
+            returnType: resultSetType,
+            externalLinkName: "kk_jdbc_prepared_statement_executeQuery",
+            named: "executeQuery",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: preparedStatementSymbol,
+            ownerType: preparedStatementType,
+            parameters: [],
+            returnType: types.intType,
+            externalLinkName: "kk_jdbc_prepared_statement_executeUpdate",
+            named: "executeUpdate",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: preparedStatementSymbol,
+            ownerType: preparedStatementType,
+            parameters: [],
+            returnType: types.unitType,
+            externalLinkName: "kk_jdbc_prepared_statement_close",
+            named: "close",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerInstanceFunction(
+            ownerSymbol: resultSetSymbol,
+            ownerType: resultSetType,
+            parameters: [],
+            returnType: types.booleanType,
+            externalLinkName: "kk_jdbc_result_set_next",
+            named: "next",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: resultSetSymbol,
+            ownerType: resultSetType,
+            parameters: [("columnIndex", types.intType)],
+            returnType: types.intType,
+            externalLinkName: "kk_jdbc_result_set_getInt",
+            named: "getInt",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: resultSetSymbol,
+            ownerType: resultSetType,
+            parameters: [("columnLabel", types.stringType)],
+            returnType: types.intType,
+            externalLinkName: "kk_jdbc_result_set_getIntByLabel",
+            named: "getInt",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: resultSetSymbol,
+            ownerType: resultSetType,
+            parameters: [("columnIndex", types.intType)],
+            returnType: types.stringType,
+            externalLinkName: "kk_jdbc_result_set_getString",
+            named: "getString",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: resultSetSymbol,
+            ownerType: resultSetType,
+            parameters: [("columnLabel", types.stringType)],
+            returnType: types.stringType,
+            externalLinkName: "kk_jdbc_result_set_getStringByLabel",
+            named: "getString",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: resultSetSymbol,
+            ownerType: resultSetType,
+            parameters: [],
+            returnType: types.unitType,
+            externalLinkName: "kk_jdbc_result_set_close",
+            named: "close",
             symbols: symbols,
             interner: interner
         )
     }
 
-    private func ensureDatabaseCompanionSymbol(
-        ownerSymbol: SymbolID,
+    private func ensureDatabaseObjectSymbol(
+        named name: String,
+        in pkg: [InternedString],
         symbols: SymbolTable,
         interner: StringInterner
-    ) -> [InternedString] {
-        if let existingCompanion = symbols.companionObjectSymbol(for: ownerSymbol),
-           let companionInfo = symbols.symbol(existingCompanion)
-        {
-            return companionInfo.fqName
+    ) -> SymbolID {
+        let internedName = interner.intern(name)
+        let fqName = pkg + [internedName]
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
         }
-        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
-            return []
-        }
-        let companionName = interner.intern("Companion")
-        let companionFQName = ownerInfo.fqName + [companionName]
-        let companionSymbol = symbols.define(
+        return symbols.define(
             kind: .object,
-            name: companionName,
-            fqName: companionFQName,
+            name: internedName,
+            fqName: fqName,
             declSite: nil,
             visibility: .public,
             flags: [.synthetic, .static]
         )
-        symbols.setParentSymbol(ownerSymbol, for: companionSymbol)
-        symbols.setCompanionObjectSymbol(companionSymbol, for: ownerSymbol)
-        return companionFQName
     }
 
-    private func registerDatabaseConstant(
-        name: String,
-        value: Int,
-        ownerFQName: [InternedString],
-        ownerSymbol: SymbolID,
-        intType: TypeID,
-        symbols: SymbolTable,
-        interner: StringInterner
-    ) {
-        let constName = interner.intern(name)
-        let constFQName = ownerFQName + [constName]
-        guard symbols.lookupAll(fqName: constFQName).first(where: { symbols.symbol($0)?.kind == .property }) == nil else {
-            return
-        }
-        let symbol = symbols.define(
-            kind: .property,
-            name: constName,
-            fqName: constFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic, .constValue]
-        )
-        let parentSymbol = symbols.lookup(fqName: ownerFQName) ?? ownerSymbol
-        symbols.setParentSymbol(parentSymbol, for: symbol)
-        symbols.setPropertyType(intType, for: symbol)
-        symbols.setConstValueExprKind(.intLiteral(Int64(value)), for: symbol)
-    }
-
-    private func registerDatabaseCompanionMethod(
-        name: String,
-        externalLinkName: String,
-        companionFQName: [InternedString],
-        parameters: [(name: String, type: TypeID)],
-        returnType: TypeID,
-        symbols: SymbolTable,
-        interner: StringInterner
-    ) {
-        guard let companionSymbol = symbols.lookup(fqName: companionFQName) else {
-            return
-        }
-        registerDatabaseFunction(
-            ownerSymbol: companionSymbol,
-            ownerType: nil,
-            flags: [.synthetic, .static],
-            name: name,
-            externalLinkName: externalLinkName,
-            parameters: parameters,
-            returnType: returnType,
-            symbols: symbols,
-            interner: interner
-        )
-    }
-
-    private func registerDatabaseStaticMethod(
-        name: String,
-        externalLinkName: String,
-        ownerSymbol: SymbolID,
-        parameters: [(name: String, type: TypeID)],
-        returnType: TypeID,
-        symbols: SymbolTable,
-        interner: StringInterner
-    ) {
-        registerDatabaseFunction(
-            ownerSymbol: ownerSymbol,
-            ownerType: nil,
-            flags: [.synthetic, .static],
-            name: name,
-            externalLinkName: externalLinkName,
-            parameters: parameters,
-            returnType: returnType,
-            symbols: symbols,
-            interner: interner
-        )
-    }
-
-    private func registerDatabaseMemberMethod(
+    private func registerInstanceFunction(
         ownerSymbol: SymbolID,
         ownerType: TypeID,
-        name: String,
-        externalLinkName: String,
-        parameters: [(name: String, type: TypeID)],
+        parameters: [(String, TypeID)],
         returnType: TypeID,
+        externalLinkName: String,
+        named name: String,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
-        registerDatabaseFunction(
-            ownerSymbol: ownerSymbol,
-            ownerType: ownerType,
-            flags: [.synthetic],
-            name: name,
-            externalLinkName: externalLinkName,
-            parameters: parameters,
-            returnType: returnType,
-            symbols: symbols,
-            interner: interner
-        )
-    }
-
-    private func registerDatabaseFunction(
-        ownerSymbol: SymbolID,
-        ownerType: TypeID?,
-        flags: SymbolFlags,
-        name: String,
-        externalLinkName: String,
-        parameters: [(name: String, type: TypeID)],
-        returnType: TypeID,
-        symbols: SymbolTable,
-        interner: StringInterner
-    ) {
-        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
-            return
-        }
-        let functionName = interner.intern(name)
-        let functionFQName = ownerInfo.fqName + [functionName]
-        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
-            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
-                return false
-            }
-            return existingSignature.receiverType == ownerType &&
-                existingSignature.parameterTypes == parameters.map(\.type)
-        }) {
-            symbols.setExternalLinkName(externalLinkName, for: existing)
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
+        let memberName = interner.intern(name)
+        let fqName = ownerInfo.fqName + [memberName]
+        guard symbols.lookupAll(fqName: fqName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == ownerType && signature.parameterTypes == parameters.map(\.1)
+        }) == nil else {
             return
         }
 
-        let functionSymbol = symbols.define(
+        let fn = symbols.define(
             kind: .function,
-            name: functionName,
-            fqName: functionFQName,
+            name: memberName,
+            fqName: fqName,
             declSite: nil,
             visibility: .public,
-            flags: flags
+            flags: [.synthetic]
         )
-        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
-        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        symbols.setParentSymbol(ownerSymbol, for: fn)
+        symbols.setExternalLinkName(externalLinkName, for: fn)
 
-        var valueParameterSymbols: [SymbolID] = []
+        var valueSymbols: [SymbolID] = []
         for parameter in parameters {
-            let parameterName = interner.intern(parameter.name)
-            let parameterSymbol = symbols.define(
+            let paramName = interner.intern(parameter.0)
+            let param = symbols.define(
                 kind: .valueParameter,
-                name: parameterName,
-                fqName: functionFQName + [parameterName],
+                name: paramName,
+                fqName: fqName + [paramName],
                 declSite: nil,
                 visibility: .private,
                 flags: [.synthetic]
             )
-            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
-            valueParameterSymbols.append(parameterSymbol)
+            symbols.setParentSymbol(fn, for: param)
+            valueSymbols.append(param)
         }
 
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: ownerType,
-                parameterTypes: parameters.map(\.type),
+                parameterTypes: parameters.map(\.1),
                 returnType: returnType,
-                isSuspend: false,
-                valueParameterSymbols: valueParameterSymbols,
-                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
-                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+                valueParameterSymbols: valueSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueSymbols.count)
             ),
-            for: functionSymbol
+            for: fn
         )
     }
 }

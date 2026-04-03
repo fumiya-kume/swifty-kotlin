@@ -20,6 +20,15 @@ private enum RuntimeFlowTag: Int {
     case retryWhen = 8
     case onErrorReturn = 9
     case onErrorResume = 10
+    case transform = 11
+    case takeWhile = 12
+    case dropWhile = 13
+    case buffer = 14
+    case conflate = 15
+    case flowOn = 16
+    case debounce = 17
+    case sample = 18
+    case delayEach = 19
 }
 
 private final class RuntimeFlowTestState: @unchecked Sendable {
@@ -212,6 +221,26 @@ func runtime_test_flow_emitter_large_source(_ outThrown: UnsafeMutablePointer<In
 func runtime_test_flow_filter_reject_all(_: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     runtimeFlowTestState.recordFilterCall()
     outThrown?.pointee = 0
+    return 0
+}
+
+@_cdecl("runtime_test_flow_emitter_burst_1_2_3")
+func runtime_test_flow_emitter_burst_1_2_3(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    for value in 1 ... 3 {
+        _ = kk_flow_emit(0, value, RuntimeFlowTag.emit.rawValue)
+    }
+    return 0
+}
+
+@_cdecl("runtime_test_flow_emitter_spaced_1_2_3")
+func runtime_test_flow_emitter_spaced_1_2_3(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    _ = kk_flow_emit(0, 1, RuntimeFlowTag.emit.rawValue)
+    usleep(1_500)
+    _ = kk_flow_emit(0, 2, RuntimeFlowTag.emit.rawValue)
+    usleep(1_500)
+    _ = kk_flow_emit(0, 3, RuntimeFlowTag.emit.rawValue)
     return 0
 }
 
@@ -619,6 +648,54 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
 
         _ = kk_flow_collect(taken, collectorPtr, 0)
         XCTAssertEqual(runtimeFlowTestState.snapshot().values, [], "take(0) should emit nothing.")
+    }
+
+    func testDebounceKeepsLatestValueInBurst() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_burst_1_2_3 as RuntimeFlowEmitterEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let debounced = kk_flow_emit(flowHandle, 1, RuntimeFlowTag.debounce.rawValue)
+
+        _ = kk_flow_collect(debounced, collectorPtr, 0)
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [3], "debounce should keep only the last value in a tight burst.")
+    }
+
+    func testSamplePicksLatestValuePerTick() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_spaced_1_2_3 as RuntimeFlowEmitterEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let sampled = kk_flow_emit(flowHandle, 1, RuntimeFlowTag.sample.rawValue)
+
+        _ = kk_flow_collect(sampled, collectorPtr, 0)
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [1, 2, 3], "sample should emit the latest value available at each sampling tick.")
+    }
+
+    func testConflateCollapsesSameTimestampBurst() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_burst_1_2_3 as RuntimeFlowEmitterEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let conflated = kk_flow_emit(flowHandle, 0, RuntimeFlowTag.conflate.rawValue)
+
+        _ = kk_flow_collect(conflated, collectorPtr, 0)
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [3], "conflate should keep the latest value from a same-timestamp burst.")
+    }
+
+    func testDelayEachDelaysDeliveryButPreservesValues() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_burst_1_2_3 as RuntimeFlowEmitterEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let delayed = kk_flow_emit(flowHandle, 1, RuntimeFlowTag.delayEach.rawValue)
+
+        let startedAt = Date()
+        _ = kk_flow_collect(delayed, collectorPtr, 0)
+        let elapsedMs = Date().timeIntervalSince(startedAt) * 1_000.0
+
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [1, 2, 3], "delayEach should preserve values.")
+        XCTAssertGreaterThanOrEqual(elapsedMs, 1.0, "delayEach should delay collection by at least the requested interval.")
     }
 
     func testMutableSharedFlowRetainsReplayCacheAndCollectsSnapshot() {

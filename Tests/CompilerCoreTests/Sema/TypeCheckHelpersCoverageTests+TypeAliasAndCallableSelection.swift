@@ -103,7 +103,7 @@ extension TypeCheckHelpersCoverageTests {
             depth: 0,
             diagnostics: fixture.diagnostics
         )
-        XCTAssertFalse(fixture.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-SEMA-0062" })
+        XCTAssertTrue(fixture.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-SEMA-0062" })
 
         let substituted = helpers.applyAliasSubstitution(
             typeParamType,

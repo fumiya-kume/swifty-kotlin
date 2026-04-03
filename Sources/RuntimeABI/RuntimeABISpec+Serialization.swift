@@ -59,6 +59,16 @@ public extension RuntimeABISpec {
             section: "Serialization"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_json_register_data_class_field_name",
+            parameters: [
+                RuntimeABIParameter(name: "classID", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .intptr),
+                RuntimeABIParameter(name: "nameRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Serialization"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_json_registerSerializer",
             parameters: [
                 RuntimeABIParameter(name: "jsonRaw", type: .intptr),

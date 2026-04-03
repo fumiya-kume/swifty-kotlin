@@ -357,6 +357,13 @@ final class OperatorLoweringPass: LoweringPass {
         switch types.kind(of: typeID) {
         case let .classType(ct):
             guard let sym = types.symbolTable?.symbol(ct.classSymbol) else { return false }
+            let coroutinePackages = [
+                [interner.intern("kotlin"), interner.intern("coroutines")],
+                [interner.intern("kotlinx"), interner.intern("coroutines")],
+            ]
+            guard coroutinePackages.contains(where: { sym.fqName.starts(with: $0) }) else {
+                return false
+            }
             let name = interner.resolve(sym.name)
             return name == "CoroutineContext" || name == "CoroutineDispatcher"
                 || name == "CoroutineName" || name == "CoroutineExceptionHandler"
