@@ -5,7 +5,7 @@ import XCTest
 final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
     func testAtomicStoreExpressionIsTypedAsUnit() throws {
         let source = """
-        import kotlin.concurrent.AtomicInt
+        import kotlin.concurrent.atomics.AtomicInt
 
         fun main() {
             val ai = AtomicInt(1)
@@ -24,6 +24,26 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testLegacyAtomicTypeAliasStillResolves() throws {
+        let source = """
+        import kotlin.concurrent.AtomicInt
+
+        fun main() {
+            val ai = AtomicInt(1)
+            println(ai.load())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Legacy kotlin.concurrent.AtomicInt alias should still resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testExperimentalAtomicOptInMarkerIsResolved() throws {
         let source = """
         @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
@@ -32,6 +52,28 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
 
         fun main() {
             println("ok")
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "ExperimentalAtomicApi marker should resolve under OptIn: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testAtomicReferenceInAtomicsPackageIsResolved() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+
+        import kotlin.concurrent.atomics.ExperimentalAtomicApi
+
+        fun main() {
+            val ar = AtomicReference("hello")
+            println(ar.load())
         }
         """
 
@@ -95,6 +137,26 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
                 "Experimental atomic arrays in kotlin.concurrent.atomics should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testMemoryOrderInAtomicsPackageIsResolved() throws {
+        let source = """
+        import kotlin.concurrent.atomics.MemoryOrder
+
+        fun main() {
+            val order = MemoryOrder.SEQUENTIALLY_CONSISTENT
+            println(order)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "MemoryOrder in kotlin.concurrent.atomics should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
             )
         }
     }

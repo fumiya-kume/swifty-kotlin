@@ -958,6 +958,11 @@ extension ABILoweringPass {
             interner.intern("kk_json_encodeToString"),
             interner.intern("kk_json_encodeMapToString"),
             interner.intern("kk_json_default"),
+            // Security constructors (STDLIB-SEC-144) — no outThrown parameter
+            interner.intern("kk_secretkeyspec_new"),
+            interner.intern("kk_ivparameterspec_new"),
+            interner.intern("kk_keypair_public"),
+            interner.intern("kk_keypair_private"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }
