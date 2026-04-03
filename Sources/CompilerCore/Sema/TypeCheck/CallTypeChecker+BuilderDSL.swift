@@ -6,6 +6,116 @@ extension CallTypeChecker {
         case keyed([(key: TypeID, value: TypeID)])
     }
 
+    func inferExperimentalBuilderCallExpr(
+        _ id: ExprID,
+        calleeName: InternedString?,
+        args: [CallArgument],
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings,
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID]
+    ) -> TypeID? {
+        guard let calleeName,
+              !args.isEmpty
+        else {
+            return nil
+        }
+
+        let candidates = ctx.filterByVisibility(ctx.cachedScopeLookup(calleeName)).visible
+        var matches: [(symbol: SymbolID, returnType: TypeID, substitutedTypeArguments: [TypeID], parameterMapping: [Int: Int])] = []
+
+        for candidate in candidates {
+            guard let signature = ctx.sema.symbols.functionSignature(for: candidate),
+                  signature.receiverType == nil,
+                  // Only opt into the experimental path for functions that are
+                  // explicitly annotated. This avoids hijacking stdlib helpers
+                  // like `with` and the existing builder DSL stubs.
+                  hasExperimentalTypeInferenceAnnotation(candidate, sema: ctx.sema),
+                  isEligibleExperimentalBuilderCandidate(
+                    candidate: candidate,
+                    signature: signature,
+                    args: args,
+                    ctx: ctx,
+                    explicitTypeArgs: explicitTypeArgs
+                  )
+            else {
+                continue
+            }
+            guard let parameterMapping = ctx.resolver.buildParameterMapping(
+                signature: signature,
+                callArgs: args.map { CallArg(label: $0.label, isSpread: $0.isSpread, type: ctx.sema.types.anyType) },
+                symbols: ctx.sema.symbols
+            ) else {
+                continue
+            }
+            guard let lambdaIndex = singleBuilderLambdaArgumentIndex(
+                args: args,
+                parameterMapping: parameterMapping,
+                signature: signature,
+                sema: ctx.sema
+            ) else {
+                continue
+            }
+
+            let substitution = inferExperimentalBuilderSubstitution(
+                signature: signature,
+                lambdaExprID: args[lambdaIndex].expr,
+                expectedType: expectedType,
+                explicitTypeArgs: explicitTypeArgs,
+                ctx: ctx,
+                locals: locals,
+                parameterMapping: parameterMapping
+            )
+            let substitutedParameterType = ctx.sema.types.substituteTypeParameters(
+                in: signature.parameterTypes[parameterMapping[lambdaIndex] ?? 0],
+                substitution: substitution,
+                typeVarBySymbol: ctx.sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+            )
+            guard case let .functionType(functionType) = ctx.sema.types.kind(of: substitutedParameterType),
+                  let receiverType = functionType.receiver
+            else {
+                continue
+            }
+
+            _ = driver.inferExpr(
+                args[lambdaIndex].expr,
+                ctx: ctx.with(implicitReceiverType: receiverType),
+                locals: &locals,
+                expectedType: substitutedParameterType
+            )
+
+            let substitutedReturnType = ctx.sema.types.substituteTypeParameters(
+                in: signature.returnType,
+                substitution: substitution,
+                typeVarBySymbol: ctx.sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+            )
+            let substitutedTypeArguments = signature.typeParameterSymbols.compactMap { symbol -> TypeID? in
+                guard let typeVar = ctx.sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)[symbol] else {
+                    return nil
+                }
+                return substitution[typeVar]
+            }
+            matches.append((candidate, substitutedReturnType, substitutedTypeArguments, parameterMapping))
+        }
+
+        guard matches.count == 1 else {
+            return nil
+        }
+        let match = matches[0]
+        ctx.sema.bindings.bindCall(
+            id,
+            binding: CallBinding(
+                chosenCallee: match.symbol,
+                substitutedTypeArguments: match.substitutedTypeArguments,
+                parameterMapping: match.parameterMapping
+            )
+        )
+        ctx.sema.bindings.bindCallableTarget(id, target: .symbol(match.symbol))
+        ctx.sema.bindings.bindExprType(id, type: match.returnType)
+        return match.returnType
+    }
+
     func builderDSLKind(for name: InternedString, interner: StringInterner) -> BuilderDSLKind? {
         let knownNames = KnownCompilerNames(interner: interner)
         switch name {
@@ -48,6 +158,19 @@ extension CallTypeChecker {
             return false
         }
         return params.isEmpty
+    }
+
+    /// Validates that the expression is a lambda literal with at most `maxParams` explicit parameters.
+    /// Unlike `isValidBuilderLambdaArgument` (which requires zero params for builder DSL blocks),
+    /// this variant is used for lambdas like `DeepRecursiveFunction`'s block which accepts an
+    /// explicit parameter (e.g. `{ n -> callRecursive(n - 1) }`).
+    func isValidLambdaArgument(_ argumentExprID: ExprID, ast: ASTModule, maxParams: Int) -> Bool {
+        guard let argumentExpr = ast.arena.expr(argumentExprID),
+              case let .lambdaLiteral(params, _, _, _) = argumentExpr
+        else {
+            return false
+        }
+        return params.count <= maxParams
     }
 
     func builderDSLReceiverType(
@@ -349,6 +472,259 @@ extension CallTypeChecker {
             }
             return .keyed(pairs)
         }
+    }
+
+    private func hasExperimentalTypeInferenceAnnotation(_ symbol: SymbolID, sema: SemaModule) -> Bool {
+        sema.symbols.annotations(for: symbol).contains {
+            KnownCompilerAnnotation.experimentalTypeInference.matches($0.annotationFQName)
+        }
+    }
+
+    private func isEligibleExperimentalBuilderCandidate(
+        candidate: SymbolID,
+        signature: FunctionSignature,
+        args: [CallArgument],
+        ctx: TypeInferenceContext,
+        explicitTypeArgs: [TypeID]
+    ) -> Bool {
+        guard signature.typeParameterSymbols.count >= explicitTypeArgs.count
+        else {
+            return false
+        }
+        return singleBuilderLambdaArgumentIndex(
+            args: args,
+            parameterMapping: ctx.resolver.buildParameterMapping(
+                signature: signature,
+                callArgs: args.map { CallArg(label: $0.label, isSpread: $0.isSpread, type: ctx.sema.types.anyType) },
+                symbols: ctx.sema.symbols
+            ) ?? [:],
+            signature: signature,
+            sema: ctx.sema
+        ) != nil
+    }
+
+    private func singleBuilderLambdaArgumentIndex(
+        args: [CallArgument],
+        parameterMapping: [Int: Int],
+        signature: FunctionSignature,
+        sema: SemaModule
+    ) -> Int? {
+        let indices = args.indices.filter { argIndex in
+            guard let paramIndex = parameterMapping[argIndex],
+                  paramIndex < signature.parameterTypes.count
+            else {
+                return false
+            }
+            guard case let .functionType(functionType) = sema.types.kind(of: sema.types.makeNonNullable(signature.parameterTypes[paramIndex])) else {
+                return false
+            }
+            return functionType.receiver != nil
+        }
+        guard indices.count == 1 else {
+            return nil
+        }
+        return indices[0]
+    }
+
+    private func inferExperimentalBuilderSubstitution(
+        signature: FunctionSignature,
+        lambdaExprID: ExprID,
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID],
+        ctx: TypeInferenceContext,
+        locals: LocalBindings,
+        parameterMapping: [Int: Int]
+    ) -> [TypeVarID: TypeID] {
+        let sema = ctx.sema
+        let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+        var substitution: [TypeVarID: TypeID] = [:]
+        var constraints: [VariableConstraint] = []
+
+        if let expectedType, ctx.useProperTypeInferenceConstraintsProcessing || ctx.useNewInference {
+            constraints.append(contentsOf: ctx.resolver.decomposeSubtypeConstraint(
+                subtype: signature.returnType,
+                supertype: expectedType,
+                typeVarBySymbol: typeVarBySymbol,
+                typeSystem: sema.types,
+                blameRange: nil
+            ))
+        }
+
+        for (index, explicitTypeArg) in explicitTypeArgs.enumerated() where index < signature.typeParameterSymbols.count {
+            let symbol = signature.typeParameterSymbols[index]
+            if let typeVar = typeVarBySymbol[symbol] {
+                substitution[typeVar] = explicitTypeArg
+            }
+        }
+
+        if !constraints.isEmpty {
+            let solver = ConstraintSolver()
+            let vars = ctx.resolver.usedTypeVariables(from: constraints)
+            let result = solver.solve(vars: vars, constraints: constraints, typeSystem: sema.types)
+            if result.isSuccess {
+                for (typeVar, typeID) in result.substitution where typeID != sema.types.errorType {
+                    substitution[typeVar] = typeID
+                }
+            }
+        }
+
+        guard let parameterIndex = parameterMapping.values.first(where: { index in
+            guard index < signature.parameterTypes.count else { return false }
+            guard case let .functionType(functionType) = sema.types.kind(of: sema.types.makeNonNullable(signature.parameterTypes[index])) else {
+                return false
+            }
+            return functionType.receiver != nil
+        }),
+            parameterIndex < signature.parameterTypes.count,
+            case let .functionType(functionType) = sema.types.kind(of: sema.types.makeNonNullable(signature.parameterTypes[parameterIndex])),
+            let receiverType = functionType.receiver
+        else {
+            return substitution
+        }
+
+        let substitutedReceiver = sema.types.substituteTypeParameters(
+            in: receiverType,
+            substitution: substitution,
+            typeVarBySymbol: typeVarBySymbol
+        )
+        mergeExperimentalBuilderReceiverInference(
+            from: substitutedReceiver,
+            originalReceiverType: receiverType,
+            lambdaExprID: lambdaExprID,
+            ctx: ctx,
+            locals: locals,
+            typeVarBySymbol: typeVarBySymbol,
+            into: &substitution
+        )
+        return substitution
+    }
+
+    private func mergeExperimentalBuilderReceiverInference(
+        from receiverType: TypeID,
+        originalReceiverType: TypeID,
+        lambdaExprID: ExprID,
+        ctx: TypeInferenceContext,
+        locals: LocalBindings,
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        into substitution: inout [TypeVarID: TypeID]
+    ) {
+        let sema = ctx.sema
+        let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullReceiver),
+              let symbol = sema.symbols.symbol(classType.classSymbol),
+              let simpleName = symbol.fqName.last
+        else {
+            return
+        }
+
+        switch ctx.interner.resolve(simpleName) {
+        case "MutableList":
+            let elementType = builderDSLListElementType(
+                lambdaExprID: lambdaExprID,
+                expectedType: nil,
+                ctx: ctx,
+                locals: locals,
+                sema: sema,
+                interner: ctx.interner
+            )
+            bindExperimentalTypeVariables(
+                originalArg: firstTypeArgument(of: originalReceiverType, sema: sema),
+                inferredType: elementType,
+                typeVarBySymbol: typeVarBySymbol,
+                into: &substitution
+            )
+        case "MutableSet":
+            let elementType = builderDSLSetElementType(
+                lambdaExprID: lambdaExprID,
+                expectedType: nil,
+                ctx: ctx,
+                locals: locals,
+                sema: sema,
+                interner: ctx.interner
+            )
+            bindExperimentalTypeVariables(
+                originalArg: firstTypeArgument(of: originalReceiverType, sema: sema),
+                inferredType: elementType,
+                typeVarBySymbol: typeVarBySymbol,
+                into: &substitution
+            )
+        case "MutableMap":
+            let (keyType, valueType) = builderDSLMapElementTypes(
+                lambdaExprID: lambdaExprID,
+                expectedType: nil,
+                ctx: ctx,
+                locals: locals,
+                sema: sema,
+                interner: ctx.interner
+            )
+            let args = typeArguments(of: originalReceiverType, sema: sema)
+            if args.count >= 2 {
+                bindExperimentalTypeVariables(
+                    originalArg: args[0],
+                    inferredType: keyType,
+                    typeVarBySymbol: typeVarBySymbol,
+                    into: &substitution
+                )
+                bindExperimentalTypeVariables(
+                    originalArg: args[1],
+                    inferredType: valueType,
+                    typeVarBySymbol: typeVarBySymbol,
+                    into: &substitution
+                )
+            }
+        case "SequenceScope":
+            let elementType = sequenceBuilderElementType(
+                lambdaExprID: lambdaExprID,
+                expectedType: nil,
+                ctx: ctx,
+                locals: locals,
+                sema: sema,
+                interner: ctx.interner
+            )
+            bindExperimentalTypeVariables(
+                originalArg: firstTypeArgument(of: originalReceiverType, sema: sema),
+                inferredType: elementType,
+                typeVarBySymbol: typeVarBySymbol,
+                into: &substitution
+            )
+        default:
+            break
+        }
+    }
+
+    private func typeArguments(of type: TypeID, sema: SemaModule) -> [TypeArg] {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(type)) else {
+            return []
+        }
+        return classType.args
+    }
+
+    private func firstTypeArgument(of type: TypeID, sema: SemaModule) -> TypeArg? {
+        typeArguments(of: type, sema: sema).first
+    }
+
+    private func bindExperimentalTypeVariables(
+        originalArg: TypeArg?,
+        inferredType: TypeID,
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        into substitution: inout [TypeVarID: TypeID]
+    ) {
+        guard let originalArg, inferredType != .invalid else {
+            return
+        }
+        let innerType: TypeID
+        switch originalArg {
+        case let .invariant(type), let .out(type), let .in(type):
+            innerType = type
+        case .star:
+            return
+        }
+        guard case let .typeParam(typeParam) = driver.sema.types.kind(of: innerType),
+              let typeVar = typeVarBySymbol[typeParam.symbol]
+        else {
+            return
+        }
+        substitution[typeVar] = inferredType
     }
 
     // swiftlint:disable:next cyclomatic_complexity
@@ -783,12 +1159,13 @@ extension CallTypeChecker {
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID? {
-        let knownNames = KnownCompilerNames(interner: interner)
-        guard let expectedType else {
+        guard let expectedType,
+              case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(expectedType))
+        else {
             return nil
         }
-        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(expectedType)),
-              let symbol = sema.symbols.symbol(classType.classSymbol),
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard let symbol = sema.symbols.symbol(classType.classSymbol),
               symbol.fqName == knownNames.kotlinxCoroutinesChannelFQName,
               let firstArg = classType.args.first
         else {
@@ -847,19 +1224,9 @@ extension CallTypeChecker {
             {
                 sendArgumentExprs.append(first.expr)
             }
-            collectProduceBuilderSendExprs(
-                in: callee,
-                ast: ast,
-                interner: interner,
-                sendArgumentExprs: &sendArgumentExprs
-            )
+            collectProduceBuilderSendExprs(in: callee, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
             for argument in args {
-                collectProduceBuilderSendExprs(
-                    in: argument.expr,
-                    ast: ast,
-                    interner: interner,
-                    sendArgumentExprs: &sendArgumentExprs
-                )
+                collectProduceBuilderSendExprs(in: argument.expr, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
             }
         case let .memberCall(receiver, callee, _, args, _):
             if interner.resolve(callee) == "send",
@@ -867,179 +1234,77 @@ extension CallTypeChecker {
             {
                 sendArgumentExprs.append(first.expr)
             }
-            collectProduceBuilderSendExprs(
-                in: receiver,
-                ast: ast,
-                interner: interner,
-                sendArgumentExprs: &sendArgumentExprs
-            )
+            collectProduceBuilderSendExprs(in: receiver, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
             for argument in args {
-                collectProduceBuilderSendExprs(
-                    in: argument.expr,
-                    ast: ast,
-                    interner: interner,
-                    sendArgumentExprs: &sendArgumentExprs
-                )
-            }
-        case let .safeMemberCall(receiver, _, _, args, _):
-            collectProduceBuilderSendExprs(
-                in: receiver,
-                ast: ast,
-                interner: interner,
-                sendArgumentExprs: &sendArgumentExprs
-            )
-            for argument in args {
-                collectProduceBuilderSendExprs(
-                    in: argument.expr,
-                    ast: ast,
-                    interner: interner,
-                    sendArgumentExprs: &sendArgumentExprs
-                )
+                collectProduceBuilderSendExprs(in: argument.expr, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
             }
         case let .blockExpr(statements, trailingExpr, _):
-            for statement in statements {
-                collectProduceBuilderSendExprs(
-                    in: statement,
-                    ast: ast,
-                    interner: interner,
-                    sendArgumentExprs: &sendArgumentExprs
-                )
+            for statementExprID in statements {
+                collectProduceBuilderSendExprs(in: statementExprID, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
             }
             if let trailingExpr {
-                collectProduceBuilderSendExprs(
-                    in: trailingExpr,
-                    ast: ast,
-                    interner: interner,
-                    sendArgumentExprs: &sendArgumentExprs
-                )
+                collectProduceBuilderSendExprs(in: trailingExpr, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
             }
         case let .ifExpr(condition, thenExpr, elseExpr, _):
-            collectProduceBuilderSendExprs(
-                in: condition,
-                ast: ast,
-                interner: interner,
-                sendArgumentExprs: &sendArgumentExprs
-            )
-            collectProduceBuilderSendExprs(
-                in: thenExpr,
-                ast: ast,
-                interner: interner,
-                sendArgumentExprs: &sendArgumentExprs
-            )
+            collectProduceBuilderSendExprs(in: condition, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
+            collectProduceBuilderSendExprs(in: thenExpr, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
             if let elseExpr {
-                collectProduceBuilderSendExprs(
-                    in: elseExpr,
-                    ast: ast,
-                    interner: interner,
-                    sendArgumentExprs: &sendArgumentExprs
-                )
+                collectProduceBuilderSendExprs(in: elseExpr, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
             }
-        case let .whenExpr(subject, branches, elseExpr, _):
+        case let .whenExpr(subject, branches, elseBody, _):
             if let subject {
-                collectProduceBuilderSendExprs(
-                    in: subject,
-                    ast: ast,
-                    interner: interner,
-                    sendArgumentExprs: &sendArgumentExprs
-                )
+                collectProduceBuilderSendExprs(in: subject, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
             }
             for branch in branches {
                 for condition in branch.conditions {
-                    collectProduceBuilderSendExprs(
-                        in: condition,
-                        ast: ast,
-                        interner: interner,
-                        sendArgumentExprs: &sendArgumentExprs
-                    )
+                    collectProduceBuilderSendExprs(in: condition, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
                 }
-                if let guardExpr = branch.guard_ {
-                    collectProduceBuilderSendExprs(
-                        in: guardExpr,
-                        ast: ast,
-                        interner: interner,
-                        sendArgumentExprs: &sendArgumentExprs
-                    )
+                if let branchGuard = branch.guard_ {
+                    collectProduceBuilderSendExprs(in: branchGuard, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
                 }
-                collectProduceBuilderSendExprs(
-                    in: branch.body,
-                    ast: ast,
-                    interner: interner,
-                    sendArgumentExprs: &sendArgumentExprs
-                )
+                collectProduceBuilderSendExprs(in: branch.body, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
             }
-            if let elseExpr {
-                collectProduceBuilderSendExprs(
-                    in: elseExpr,
-                    ast: ast,
-                    interner: interner,
-                    sendArgumentExprs: &sendArgumentExprs
-                )
+            if let elseBody {
+                collectProduceBuilderSendExprs(in: elseBody, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
             }
-        case let .tryExpr(body, catchClauses, finallyExpr, _):
-            collectProduceBuilderSendExprs(
-                in: body,
-                ast: ast,
-                interner: interner,
-                sendArgumentExprs: &sendArgumentExprs
-            )
-            for catchClause in catchClauses {
-                collectProduceBuilderSendExprs(
-                    in: catchClause.body,
-                    ast: ast,
-                    interner: interner,
-                    sendArgumentExprs: &sendArgumentExprs
-                )
+        case let .forExpr(_, iterableExpr, bodyExpr, _, _),
+            let .forDestructuringExpr(_, iterableExpr, bodyExpr, _):
+            collectProduceBuilderSendExprs(in: iterableExpr, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
+            collectProduceBuilderSendExprs(in: bodyExpr, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
+        case let .returnExpr(value, _, _):
+            if let value {
+                collectProduceBuilderSendExprs(in: value, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
             }
-            if let finallyExpr {
-                collectProduceBuilderSendExprs(
-                    in: finallyExpr,
-                    ast: ast,
-                    interner: interner,
-                    sendArgumentExprs: &sendArgumentExprs
-                )
+        case let .tryExpr(body, catchClauses, finallyBody, _):
+            collectProduceBuilderSendExprs(in: body, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
+            for clause in catchClauses {
+                collectProduceBuilderSendExprs(in: clause.body, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
             }
-        case let .binary(_, lhs, rhs, _),
-             let .inExpr(lhs, rhs, _),
-             let .notInExpr(lhs, rhs, _):
-            collectProduceBuilderSendExprs(
-                in: lhs,
-                ast: ast,
-                interner: interner,
-                sendArgumentExprs: &sendArgumentExprs
-            )
-            collectProduceBuilderSendExprs(
-                in: rhs,
-                ast: ast,
-                interner: interner,
-                sendArgumentExprs: &sendArgumentExprs
-            )
-        case let .unaryExpr(_, operand, _),
-             let .nullAssert(operand, _),
-             let .throwExpr(operand, _),
-             let .returnExpr(operand?, _, _):
-            collectProduceBuilderSendExprs(
-                in: operand,
-                ast: ast,
-                interner: interner,
-                sendArgumentExprs: &sendArgumentExprs
-            )
+            if let finallyBody {
+                collectProduceBuilderSendExprs(in: finallyBody, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
+            }
+        case let .lambdaLiteral(_, bodyExpr, _, _):
+            collectProduceBuilderSendExprs(in: bodyExpr, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
+        case let .indexedAccess(receiver, indices, _):
+            collectProduceBuilderSendExprs(in: receiver, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
+            for indexExpr in indices {
+                collectProduceBuilderSendExprs(in: indexExpr, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
+            }
+        case let .stringTemplate(parts, _):
+            for part in parts {
+                switch part {
+                case let .expression(exprID):
+                    collectProduceBuilderSendExprs(in: exprID, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
+                default:
+                    break
+                }
+            }
         case let .localDecl(_, _, _, initializer, _, _):
             if let initializer {
-                collectProduceBuilderSendExprs(
-                    in: initializer,
-                    ast: ast,
-                    interner: interner,
-                    sendArgumentExprs: &sendArgumentExprs
-                )
+                collectProduceBuilderSendExprs(in: initializer, ast: ast, interner: interner, sendArgumentExprs: &sendArgumentExprs)
             }
-        case let .localAssign(_, value, _),
-             let .memberAssign(_, _, value, _):
-            collectProduceBuilderSendExprs(
-                in: value,
-                ast: ast,
-                interner: interner,
-                sendArgumentExprs: &sendArgumentExprs
-            )
+        case .localAssign, .compoundAssign, .memberAssign, .indexedAssign, .indexedCompoundAssign:
+            break
         default:
             break
         }

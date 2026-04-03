@@ -519,6 +519,7 @@ extension CoroutineLoweringPass {
             ),
         ]
 
+        // Slot 0 is reserved for the produced channel receiver.
         for (index, argExpr) in extraArgs.enumerated() {
             let slotExpr = rewrite.module.arena.appendExpr(
                 .intLiteral(Int64(index + 1)),

@@ -710,6 +710,7 @@ final class CallLowerer {
                 chosenInfo.fqName == knownNames.kotlinxCoroutinesRunBlockingFQName
                     || chosenInfo.fqName == knownNames.kotlinxCoroutinesLaunchFQName
                     || chosenInfo.fqName == knownNames.kotlinxCoroutinesAsyncFQName
+                    || chosenInfo.fqName == knownNames.kotlinxCoroutinesProduceFQName
             } else {
                 true
             }

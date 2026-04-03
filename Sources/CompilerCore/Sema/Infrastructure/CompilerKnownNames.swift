@@ -245,6 +245,7 @@ struct KnownCompilerNames {
     let kotlinxCoroutinesRunBlockingFQName: [InternedString]
     let kotlinxCoroutinesLaunchFQName: [InternedString]
     let kotlinxCoroutinesAsyncFQName: [InternedString]
+    let kotlinxCoroutinesProduceFQName: [InternedString]
     let kotlinResultFQName: [InternedString]
     let kotlinRunCatchingFQName: [InternedString]
 
@@ -421,6 +422,7 @@ struct KnownCompilerNames {
         kotlinxCoroutinesRunBlockingFQName = [kotlinx, coroutines, runBlocking]
         kotlinxCoroutinesLaunchFQName = [kotlinx, coroutines, launch]
         kotlinxCoroutinesAsyncFQName = [kotlinx, coroutines, async]
+        kotlinxCoroutinesProduceFQName = [kotlinx, coroutines, channels, produce]
 
         let resultName = interner.intern("Result")
         kotlinResultFQName = [kotlin, resultName]

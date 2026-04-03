@@ -111,7 +111,7 @@ final class MemberCallLowerer {
                 context.append(.constValue(result: continuationExpr, value: .intLiteral(0)))
                 finalArguments.append(continuationExpr)
             }
-            
+
             context.append(.call(
                 symbol: nil,
                 callee: interner.intern(runtimeName),
@@ -443,6 +443,24 @@ final class MemberCallLowerer {
                 }
                 
                 let ifaceSlot = Int64(objectLayout.itableSlots[interfaceSymbol] ?? 0)
+                let interfaceTypeID = RuntimeTypeCheckToken.stableNominalTypeID(
+                    symbol: interfaceSymbol,
+                    sema: sema,
+                    interner: interner
+                )
+                let interfaceTypeExpr = arena.appendExpr(.intLiteral(interfaceTypeID), type: intType)
+                context.append(.constValue(result: interfaceTypeExpr, value: .intLiteral(interfaceTypeID)))
+                let ifaceSlotExpr = arena.appendExpr(.intLiteral(ifaceSlot), type: intType)
+                context.append(.constValue(result: ifaceSlotExpr, value: .intLiteral(ifaceSlot)))
+                let registerIfaceResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                context.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_object_register_itable_iface"),
+                    arguments: [allocatedObj, interfaceTypeExpr, ifaceSlotExpr],
+                    result: registerIfaceResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
                 for (methodSymbol, methodSlotInt) in interfaceLayout.vtableSlots {
                     let methodSlot = Int64(methodSlotInt)
                     let implementationSymbol = findImplementationSymbol(
@@ -451,10 +469,6 @@ final class MemberCallLowerer {
                         interfaceSymbol: interfaceSymbol,
                         sema: sema
                     )
-                    
-                    let ifaceSlotExpr = arena.appendExpr(.intLiteral(ifaceSlot), type: intType)
-                    context.append(.constValue(result: ifaceSlotExpr, value: .intLiteral(ifaceSlot)))
-                    
                     let methodSlotExpr = arena.appendExpr(.intLiteral(methodSlot), type: intType)
                     context.append(.constValue(result: methodSlotExpr, value: .intLiteral(methodSlot)))
                     
