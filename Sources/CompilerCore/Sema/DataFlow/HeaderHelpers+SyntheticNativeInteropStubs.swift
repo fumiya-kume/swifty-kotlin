@@ -452,7 +452,7 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterVariances([.invariant], for: ownerSymbol)
 
         if let supertype {
-            let supertypeTypeArgs: [TypeProjection] = supertypeIsGeneric ? [.invariant(parameterType)] : []
+            let supertypeTypeArgs: [TypeArg] = supertypeIsGeneric ? [.invariant(parameterType)] : []
             symbols.setDirectSupertypes([supertype], for: ownerSymbol)
             types.setNominalDirectSupertypes([supertype], for: ownerSymbol)
             symbols.setSupertypeTypeArgs(supertypeTypeArgs, for: ownerSymbol, supertype: supertype)
