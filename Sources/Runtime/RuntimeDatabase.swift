@@ -367,6 +367,7 @@ public func kk_savepoint_getSavepointName(_ savepointRaw: Int, _ outThrown: Unsa
     }
 }
 
+
 // MARK: - Database Connection Pool (STDLIB-DB-142)
 
 private extension NSCondition {

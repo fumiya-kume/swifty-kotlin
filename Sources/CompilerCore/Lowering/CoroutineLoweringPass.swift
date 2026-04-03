@@ -16,7 +16,6 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("runBlocking"),
             ctx.interner.intern("launch"),
             ctx.interner.intern("async"),
-            ctx.interner.intern("createCoroutineUnintercepted"),
             ctx.interner.intern("withContext"),
             ctx.interner.intern("withTimeout"),
             ctx.interner.intern("withTimeoutOrNull"),
@@ -34,6 +33,21 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("map"),
             ctx.interner.intern("filter"),
             ctx.interner.intern("take"),
+            ctx.interner.intern("transform"),
+            ctx.interner.intern("takeWhile"),
+            ctx.interner.intern("dropWhile"),
+            ctx.interner.intern("flatMapConcat"),
+            ctx.interner.intern("flatMapMerge"),
+            ctx.interner.intern("flatMapLatest"),
+            ctx.interner.intern("combine"),
+            ctx.interner.intern("zip"),
+            ctx.interner.intern("merge"),
+            ctx.interner.intern("buffer"),
+            ctx.interner.intern("conflate"),
+            ctx.interner.intern("flowOn"),
+            ctx.interner.intern("debounce"),
+            ctx.interner.intern("sample"),
+            ctx.interner.intern("delayEach"),
             ctx.interner.intern("kk_suspend_function_invoke_0"),
             ctx.interner.intern("kk_suspend_function_invoke"),
             ctx.interner.intern("kk_flow_create"),
@@ -48,6 +62,18 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("map"),
             ctx.interner.intern("filter"),
             ctx.interner.intern("take"),
+            ctx.interner.intern("transform"),
+            ctx.interner.intern("takeWhile"),
+            ctx.interner.intern("dropWhile"),
+            ctx.interner.intern("flatMapConcat"),
+            ctx.interner.intern("flatMapMerge"),
+            ctx.interner.intern("flatMapLatest"),
+            ctx.interner.intern("buffer"),
+            ctx.interner.intern("conflate"),
+            ctx.interner.intern("flowOn"),
+            ctx.interner.intern("debounce"),
+            ctx.interner.intern("sample"),
+            ctx.interner.intern("delayEach"),
             ctx.interner.intern("asFlow"),
         ]
         for decl in module.arena.declarations {
@@ -73,7 +99,7 @@ final class CoroutineLoweringPass: LoweringPass {
     }
 
     func run(module: KIRModule, ctx: KIRContext) throws {
-        // Lower flow { }, emit, map, filter, take, collect before suspend-function lowering.
+        // Lower Flow builder/operators before suspend-function lowering.
         lowerFlowExpressions(module: module, ctx: ctx)
 
         let anyType = ctx.sema?.types.nullableAnyType ?? ctx.sema?.types.anyType

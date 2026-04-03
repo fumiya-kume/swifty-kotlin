@@ -2402,6 +2402,62 @@ public enum RuntimeABISpec {
             section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_flow_zip",
+            parameters: [
+                RuntimeABIParameter(name: "lhsHandle", type: .intptr),
+                RuntimeABIParameter(name: "rhsHandle", type: .intptr),
+                RuntimeABIParameter(name: "transformFnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_combine",
+            parameters: [
+                RuntimeABIParameter(name: "lhsHandle", type: .intptr),
+                RuntimeABIParameter(name: "rhsHandle", type: .intptr),
+                RuntimeABIParameter(name: "transformFnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_merge",
+            parameters: [
+                RuntimeABIParameter(name: "lhsHandle", type: .intptr),
+                RuntimeABIParameter(name: "rhsHandle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_flat_map_concat",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "transformFnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_flat_map_merge",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "transformFnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_flat_map_latest",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "transformFnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_flow_count",
             parameters: [
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
