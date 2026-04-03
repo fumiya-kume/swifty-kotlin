@@ -466,31 +466,19 @@ extension CallTypeChecker {
             argCount: args.count,
             sema: sema
         ) {
-            // Check variance projection constraints before binding the call.
-            // When the receiver has an out-projection (e.g. MutableList<out Number>),
-            // mutation members like addAll/removeAll/retainAll use the element type
-            // in an 'in' position and must be rejected.
-            let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
-            let callRange = ctx.ast.arena.exprRange(id) ?? ctx.ast.arena.exprRange(receiverID)
-            if let callRange,
-               let projectionDiagnostic = makeProjectionViolationDiagnostic(
-                candidates: [fallbackCallee],
-                receiverType: receiverType,
-                calleeName: calleeName,
-                range: callRange,
+            let parameterMapping = buildCollectionFallbackParameterMapping(
+                memberName: calleeName,
+                args: args,
+                fallbackCallee: fallbackCallee,
                 sema: sema,
                 interner: interner
-            ) {
-                ctx.semaCtx.diagnostics.emit(projectionDiagnostic)
-                return driver.helpers.bindAndReturnErrorType(id, sema: sema)
-            }
-
+            )
             sema.bindings.bindCall(
                 id,
                 binding: CallBinding(
                     chosenCallee: fallbackCallee,
                     substitutedTypeArguments: [],
-                    parameterMapping: [:]
+                    parameterMapping: parameterMapping
                 )
             )
             sema.bindings.bindCallableTarget(id, target: .symbol(fallbackCallee))
@@ -501,6 +489,7 @@ extension CallTypeChecker {
             receiverElementType: receiverElementType,
             isMapReceiver: isMapReceiver,
             isSetReceiver: isSetReceiver,
+            isSequenceReceiver: isSequenceReceiver,
             args: args,
             sema: sema,
             interner: interner
@@ -522,6 +511,57 @@ extension CallTypeChecker {
         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
+    }
+
+    private func buildCollectionFallbackParameterMapping(
+        memberName: InternedString,
+        args: [CallArgument],
+        fallbackCallee: SymbolID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> [Int: Int] {
+        // Build a parameter mapping so that user-provided arguments are correctly
+        // assigned to the right parameter slots. Without this, normalizedCallArguments
+        // treats all parameters with hasDefault=true as using their default values,
+        // ignoring user-provided args entirely.
+        guard !args.isEmpty else {
+            return [:]
+        }
+        guard let signature = sema.symbols.functionSignature(for: fallbackCallee) else {
+            return [:]
+        }
+        let paramCount = signature.parameterTypes.count
+        // Build a name->index map from the parameter symbols.
+        var paramNameToIndex: [InternedString: Int] = [:]
+        for (paramIndex, paramSymbol) in signature.valueParameterSymbols.enumerated() {
+            if let paramSymbolInfo = sema.symbols.symbol(paramSymbol) {
+                let paramName = paramSymbolInfo.name
+                if paramName != .invalid {
+                    paramNameToIndex[paramName] = paramIndex
+                }
+            }
+        }
+        var mapping: [Int: Int] = [:]
+        var positionalParamIndex = 0
+        for (argIndex, arg) in args.enumerated() {
+            if let label = arg.label, let paramIndex = paramNameToIndex[label] {
+                // Named argument: map to the named parameter
+                mapping[argIndex] = paramIndex
+            } else {
+                // Positional argument: advance to next unoccupied parameter index
+                // (skip any params that are already claimed by named args)
+                while positionalParamIndex < paramCount
+                    && mapping.values.contains(positionalParamIndex)
+                {
+                    positionalParamIndex += 1
+                }
+                if positionalParamIndex < paramCount {
+                    mapping[argIndex] = positionalParamIndex
+                    positionalParamIndex += 1
+                }
+            }
+        }
+        return mapping
     }
 
     private func resolveCollectionFallbackCallee(
@@ -863,6 +903,7 @@ extension CallTypeChecker {
         receiverElementType: TypeID,
         isMapReceiver: Bool,
         isSetReceiver: Bool,
+        isSequenceReceiver: Bool = false,
         args: [CallArgument],
         sema: SemaModule,
         interner: StringInterner
@@ -1111,6 +1152,103 @@ extension CallTypeChecker {
             return sema.types.make(.classType(ClassType(
                 classSymbol: iterableSymbol,
                 args: [.out(indexedValueType)],
+                nullability: .nonNull
+            )))
+        }
+
+        // sorted(), sortedDescending(), sortedWith(), sorted(comparator): return List<E>
+        // reversed(), asReversed(), distinct(), distinctBy(): return List<E>
+        let listPreservingMembers: Set = [
+            interner.intern("sorted"),
+            interner.intern("sortedDescending"),
+            interner.intern("sortedWith"),
+            interner.intern("reversed"),
+            interner.intern("asReversed"),
+            interner.intern("distinct"),
+            interner.intern("distinctBy"),
+        ]
+        if listPreservingMembers.contains(memberName),
+           let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.invariant(receiverElementType)],
+                nullability: .nonNull
+            )))
+        }
+
+        // flatten(): for List<List<E>>, returns List<E> (element type of the outer list elements).
+        // Skip this for sequence receivers — the existing sequence HOF logic handles them,
+        // and mixed-type sequence flatten should fail gracefully (matching kotlinc).
+        if memberName == interner.intern("flatten"),
+           !isSequenceReceiver,
+           let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
+        {
+            // The receiverElementType is List<E> (the inner list). Extract E from it.
+            let innerElementType: TypeID
+            if case let .classType(innerListType) = sema.types.kind(of: receiverElementType),
+               let firstArg = innerListType.args.first
+            {
+                innerElementType = switch firstArg {
+                case let .invariant(t), let .out(t), let .in(t): t
+                case .star: sema.types.anyType
+                }
+            } else {
+                innerElementType = sema.types.anyType
+            }
+            return sema.types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.invariant(innerElementType)],
+                nullability: .nonNull
+            )))
+        }
+
+        // zip(other): returns List<Pair<A,B>> where A is receiver element type and B is other element type
+        if memberName == interner.intern("zip"),
+           !args.isEmpty,
+           let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first,
+           let pairSymbol = sema.symbols.lookupByShortName(interner.intern("Pair")).first
+        {
+            // Try to get the element type of the other list from the first argument
+            let otherElementType: TypeID
+            if let otherListType = sema.bindings.exprTypes[args[0].expr] {
+                let nonNullOther = sema.types.makeNonNullable(otherListType)
+                if case let .classType(classType) = sema.types.kind(of: nonNullOther),
+                   let firstArg = classType.args.first
+                {
+                    otherElementType = switch firstArg {
+                    case let .invariant(t), let .out(t), let .in(t): t
+                    case .star: sema.types.anyType
+                    }
+                } else {
+                    otherElementType = sema.types.anyType
+                }
+            } else {
+                otherElementType = sema.types.anyType
+            }
+            let pairType = sema.types.make(.classType(ClassType(
+                classSymbol: pairSymbol,
+                args: [.invariant(receiverElementType), .invariant(otherElementType)],
+                nullability: .nonNull
+            )))
+            return sema.types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.invariant(pairType)],
+                nullability: .nonNull
+            )))
+        }
+
+        // iterator(): returns Iterator<E>
+        if memberName == interner.intern("iterator"),
+           let iteratorSymbol = sema.symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("collections"),
+               interner.intern("Iterator"),
+           ])
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: iteratorSymbol,
+                args: [.out(receiverElementType)],
                 nullability: .nonNull
             )))
         }
