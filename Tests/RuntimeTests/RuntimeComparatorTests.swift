@@ -31,6 +31,10 @@ private let primitiveComparatorTrampoline: @convention(c) (Int, Int, Int, Unsafe
     kk_comparator_from_selector_primitive_trampoline(closureRaw, a, b, outThrown)
 }
 
+private let selectorComparatorTrampoline: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { closureRaw, a, b, outThrown in
+    kk_comparator_from_selector_trampoline(closureRaw, a, b, outThrown)
+}
+
 private let primitiveComparatorDescendingTrampoline: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { closureRaw, a, b, outThrown in
     kk_comparator_from_selector_primitive_descending_trampoline(closureRaw, a, b, outThrown)
 }
@@ -240,6 +244,18 @@ final class RuntimeComparatorTests: XCTestCase {
         // reversed: 7 vs 3 should be negative
         let result2 = kk_comparator_reversed_trampoline(closureRaw, 7, 3, nil)
         XCTAssertLessThan(result2, 0)
+    }
+
+    func testPrimitiveComparatorReversed() {
+        let primitiveClosureRaw = kk_comparator_from_selector_primitive(selectorPtr(selectIdentity), 0, 0)
+        let closureRaw = kk_comparator_reversed(
+            primitiveComparatorPtr(selectorComparatorTrampoline),
+            primitiveClosureRaw
+        )
+
+        XCTAssertGreaterThan(kk_comparator_reversed_trampoline(closureRaw, 3, 7, nil), 0)
+        XCTAssertLessThan(kk_comparator_reversed_trampoline(closureRaw, 7, 3, nil), 0)
+        XCTAssertEqual(kk_comparator_reversed_trampoline(closureRaw, 5, 5, nil), 0)
     }
 
     // MARK: - naturalOrder / reverseOrder

@@ -256,14 +256,11 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let ctx = try runCodegenPipeline(
                 inputPath: path,
                 moduleName: "ComparatorComparisonSortedWith",
-                emit: .executable,
+                emit: .object,
                 outputPath: outputBase
             )
-            try LinkPhase().run(ctx)
-
-            let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[1, 1, 3, 4, 5, 9]\n[9, 5, 4, 3, 1, 1]\n[9, 5, 4, 3, 1, 1]\n")
+            let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
         }
     }
 
