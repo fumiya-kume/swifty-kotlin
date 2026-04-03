@@ -240,6 +240,33 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenCompilesComparatorSortedWithTopLevelCalls() throws {
+        let source = """
+        fun main() {
+            val list = listOf(3, 1, 4, 1, 5, 9)
+            println(list.sortedWith(naturalOrder()))
+            println(list.sortedWith(reverseOrder()))
+            val comparator = compareBy<Int> { it }
+            println(list.sortedWith(comparator.reversed()))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ComparatorComparisonSortedWith",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 1, 3, 4, 5, 9]\n[9, 5, 4, 3, 1, 1]\n[9, 5, 4, 3, 1, 1]\n")
+        }
+    }
+
     func testCodegenCompilesGenericMaxOfTopLevelCalls() throws {
         let source = """
         fun main() {

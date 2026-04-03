@@ -1418,10 +1418,19 @@ extension CallLowerer {
             if isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner),
                !isComparatorLambdaArg
             {
+                let sortedWithArguments = adaptComparatorBackedCollectionArguments(
+                    loweredCallee: interner.intern("kk_list_sortedWith"),
+                    finalArguments: [loweredReceiverID] + normalizedArgIDs,
+                    sourceArgExprs: args.map(\.expr),
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern("kk_list_sortedWith"),
-                    arguments: [loweredReceiverID] + normalizedArgIDs,
+                    arguments: sortedWithArguments,
                     result: result,
                     canThrow: true,
                     thrownResult: arena.appendExpr(
@@ -4772,6 +4781,7 @@ extension CallLowerer {
             interner.intern("kk_list_maxWithOrNull"),
             interner.intern("kk_list_minWith"),
             interner.intern("kk_list_minWithOrNull"),
+            interner.intern("kk_list_sortedWith"),
         ]
         if comparatorOnlyCallees.contains(loweredCallee),
            finalArguments.count == 2,
