@@ -300,11 +300,12 @@ final class RuntimeContinuationState: @unchecked Sendable {
     }
 
     func makeContinuationContext() -> RuntimeCoroutineContext {
-        RuntimeCoroutineContext(
+        let jobRaw: Int = jobHandle.map { Int(bitPattern: UnsafeMutableRawPointer(Unmanaged.passUnretained($0).toOpaque())) } ?? 0
+        return RuntimeCoroutineContext(
             dispatcher: 0,
             name: scope?.name,
             exceptionHandler: nil,
-            jobHandle: jobHandle
+            jobHandleRaw: jobRaw
         )
     }
 
@@ -3854,10 +3855,10 @@ private func runtimeCoroutineContextElementHandle(for keyRaw: Int, in ctx: Runti
     }
     if keyRaw != 0,
        let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
-       let job = tryCast(ptr, to: RuntimeJobHandle.self)
+       tryCast(ptr, to: RuntimeJobHandle.self) != nil
     {
-        guard let ctxJob = ctx.jobHandle, ctxJob === job else { return nil }
-        return Int(bitPattern: UnsafeMutableRawPointer(Unmanaged.passUnretained(job).toOpaque()))
+        guard ctx.jobHandleRaw == keyRaw else { return nil }
+        return keyRaw
     }
     return nil
 }
@@ -3874,8 +3875,8 @@ private func runtimeCoroutineContextElementHandles(in ctx: RuntimeCoroutineConte
     if let handler = ctx.exceptionHandler {
         handles.append(Int(bitPattern: UnsafeMutableRawPointer(Unmanaged.passUnretained(handler).toOpaque())))
     }
-    if let job = ctx.jobHandle {
-        handles.append(Int(bitPattern: UnsafeMutableRawPointer(Unmanaged.passUnretained(job).toOpaque())))
+    if ctx.jobHandleRaw != 0 {
+        handles.append(ctx.jobHandleRaw)
     }
     return handles
 }
@@ -3886,7 +3887,7 @@ private func runtimeCoroutineContextRemovingElement(for keyRaw: Int, from ctx: R
         dispatcher: ctx.dispatcher,
         name: ctx.name,
         exceptionHandler: ctx.exceptionHandler,
-        jobHandle: ctx.jobHandle
+        jobHandleRaw: ctx.jobHandleRaw
     )
     if keyRaw != 0,
        let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
@@ -3923,10 +3924,10 @@ private func runtimeCoroutineContextRemovingElement(for keyRaw: Int, from ctx: R
     }
     if keyRaw != 0,
        let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
-       let job = tryCast(ptr, to: RuntimeJobHandle.self)
+       tryCast(ptr, to: RuntimeJobHandle.self) != nil
     {
-        if next.jobHandle === job {
-            next.jobHandle = nil
+        if next.jobHandleRaw == keyRaw {
+            next.jobHandleRaw = 0
         }
         return next
     }
@@ -4042,7 +4043,7 @@ private func resolveToCoroutineContext(_ raw: Int) -> RuntimeCoroutineContext {
     if let handler = tryCast(ptr, to: RuntimeExceptionHandlerBox.self) {
         return RuntimeCoroutineContext(exceptionHandler: handler)
     }
-    if let job = tryCast(ptr, to: RuntimeJobHandle.self) {
+    if tryCast(ptr, to: RuntimeJobHandle.self) != nil {
         return RuntimeCoroutineContext(jobHandleRaw: raw)
     }
     if tryCast(ptr, to: RuntimeAsyncTask.self) != nil {
