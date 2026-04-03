@@ -2,7 +2,8 @@ extension OverloadResolver {
     func buildParameterMapping(
         signature: FunctionSignature,
         callArgs: [CallArg],
-        symbols: SymbolTable
+        symbols: SymbolTable,
+        typeSystem: TypeSystem
     ) -> [Int: Int]? {
         let paramCount = signature.parameterTypes.count
         if paramCount == 0 {
@@ -16,6 +17,42 @@ extension OverloadResolver {
             symbols: symbols,
             count: paramCount
         )
+        func isCallableLike(_ type: TypeID) -> Bool {
+            if case .functionType = typeSystem.kind(of: type) {
+                return true
+            }
+            return false
+        }
+        func trailingLambdaParameterIndex(for argIndex: Int) -> Int? {
+            guard argIndex == callArgs.count - 1,
+                  isCallableLike(callArgs[argIndex].type)
+            else {
+                return nil
+            }
+            let remainingIndices = positionalCursor..<paramCount
+            for paramIndex in remainingIndices.reversed() {
+                guard isCallableLike(signature.parameterTypes[paramIndex]) else {
+                    continue
+                }
+                if isVararg[paramIndex] || boundNonVarargParams.contains(paramIndex) {
+                    continue
+                }
+                var satisfiesTrailingRequirements = true
+                if paramIndex + 1 < paramCount {
+                    for index in (paramIndex + 1)..<paramCount {
+                        if isVararg[index] || boundNonVarargParams.contains(index) || hasDefaultValues[index] {
+                            continue
+                        }
+                        satisfiesTrailingRequirements = false
+                        break
+                    }
+                }
+                if satisfiesTrailingRequirements {
+                    return paramIndex
+                }
+            }
+            return nil
+        }
         func trailingRequiredParameterCount(after paramIndex: Int) -> Int {
             guard paramIndex + 1 < paramCount else {
                 return 0
@@ -83,6 +120,19 @@ extension OverloadResolver {
             if sawNamedArgument {
                 // In Kotlin, positional arguments after named arguments
                 // are allowed only when they bind to a vararg parameter.
+                // Trailing lambdas are also allowed after named arguments when
+                // they map to the final function-typed parameter.
+                if let trailingLambdaParamIndex = trailingLambdaParameterIndex(for: argIndex) {
+                    if boundNonVarargParams.contains(trailingLambdaParamIndex) {
+                        return nil
+                    }
+                    boundNonVarargParams.insert(trailingLambdaParamIndex)
+                    mapping[argIndex] = trailingLambdaParamIndex
+                    if trailingLambdaParamIndex == positionalCursor {
+                        positionalCursor += 1
+                    }
+                    continue
+                }
                 // Advance the cursor past already-bound non-vararg params.
                 advancePositionalCursor(for: argIndex)
                 if positionalCursor >= paramCount || !isVararg[positionalCursor] {
