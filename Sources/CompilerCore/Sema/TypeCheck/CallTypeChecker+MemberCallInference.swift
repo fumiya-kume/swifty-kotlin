@@ -753,14 +753,14 @@ extension CallTypeChecker {
         }
 
         // --- Result member functions (STDLIB-590) ---
-        // Result<T>.onSuccess/onFailure/getOrElse/map/fold/recover
+        // Result<T>.onSuccess/onFailure/getOrElse/getOrDefault/map/fold/recover
         // These require special handling because the generic type parameter T
         // needs to be extracted from the receiver's Result<out T> type and used
         // to construct the expected lambda parameter types.
         if args.count >= 1, args.count <= 2 {
             let calleeStr = interner.resolve(calleeName)
             let resultMemberNames: Set = [
-                "onSuccess", "onFailure", "getOrElse", "map", "fold", "recover",
+                "onSuccess", "onFailure", "getOrElse", "getOrDefault", "map", "fold", "recover",
             ]
             if resultMemberNames.contains(calleeStr),
                let resultElementType = extractResultElementType(receiverType, sema: sema, interner: interner)
@@ -818,6 +818,21 @@ extension CallTypeChecker {
                     if let getOrElseSymbol = lookupResultMember("getOrElse", sema: sema, interner: interner) {
                         sema.bindings.bindCall(id, binding: CallBinding(
                             chosenCallee: getOrElseSymbol,
+                            substitutedTypeArguments: [resultElementType],
+                            parameterMapping: [0: 0]
+                        ))
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(resultElementType) : resultElementType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+
+                case "getOrDefault" where args.count == 1:
+                    // getOrDefault(defaultValue: T): T
+                    let defaultExpectedType = resultElementType
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: defaultExpectedType)
+                    if let getOrDefaultSymbol = lookupResultMember("getOrDefault", sema: sema, interner: interner) {
+                        sema.bindings.bindCall(id, binding: CallBinding(
+                            chosenCallee: getOrDefaultSymbol,
                             substitutedTypeArguments: [resultElementType],
                             parameterMapping: [0: 0]
                         ))
