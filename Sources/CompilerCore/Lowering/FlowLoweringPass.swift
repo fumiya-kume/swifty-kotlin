@@ -10,6 +10,7 @@ final class FlowLoweringPass: LoweringPass {
         case take = 3
         case onEach = 4
         case distinctUntilChanged = 5
+        case transform = 6
     }
 
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
@@ -24,6 +25,8 @@ final class FlowLoweringPass: LoweringPass {
             ctx.interner.intern("map"),
             ctx.interner.intern("filter"),
             ctx.interner.intern("take"),
+            ctx.interner.intern("transform"),
+            ctx.interner.intern("single"),
             ctx.interner.intern("collect"),
             ctx.interner.intern("toList"),
             ctx.interner.intern("first"),
@@ -63,6 +66,8 @@ final class FlowLoweringPass: LoweringPass {
         let mapName = interner.intern("map")
         let filterName = interner.intern("filter")
         let takeName = interner.intern("take")
+        let transformName = interner.intern("transform")
+        let singleName = interner.intern("single")
         let collectName = interner.intern("collect")
         let toListName = interner.intern("toList")
         let firstName = interner.intern("first")
@@ -75,6 +80,7 @@ final class FlowLoweringPass: LoweringPass {
         let kkFlowAsFlowName = interner.intern("kk_flow_as_flow")
         let kkFlowToListName = interner.intern("kk_flow_to_list")
         let kkFlowFirstName = interner.intern("kk_flow_first")
+        let kkFlowSingleName = interner.intern("kk_flow_single")
         let kkArrayNewName = interner.intern("kk_array_new")
         let kkArraySetName = interner.intern("kk_array_set")
 
@@ -321,7 +327,7 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
-                    if callee == mapName || callee == filterName || callee == takeName,
+                    if callee == mapName || callee == filterName || callee == takeName || callee == transformName,
                        arguments.count == 2 || ((callee == mapName || callee == filterName) && arguments.count == 3),
                        flowExprIDs.contains(arguments[0].rawValue)
                     {
@@ -330,6 +336,8 @@ final class FlowLoweringPass: LoweringPass {
                             RuntimeFlowTag.map.rawValue
                         case filterName:
                             RuntimeFlowTag.filter.rawValue
+                        case transformName:
+                            RuntimeFlowTag.transform.rawValue
                         default:
                             RuntimeFlowTag.take.rawValue
                         }
@@ -402,6 +410,21 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
+                    if callee == singleName,
+                       arguments.count == 1,
+                       flowExprIDs.contains(arguments[0].rawValue)
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowSingleName,
+                            arguments: [arguments[0], appendIntConstant(0)],
+                            result: result,
+                            canThrow: true,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
                     if callee == kkFlowCreateName || callee == kkFlowOfName || callee == kkFlowEmptyName || callee == kkFlowAsFlowName,
                        let result
                     {
@@ -416,6 +439,7 @@ final class FlowLoweringPass: LoweringPass {
                         if tag == RuntimeFlowTag.map.rawValue
                             || tag == RuntimeFlowTag.filter.rawValue
                             || tag == RuntimeFlowTag.take.rawValue
+                            || tag == RuntimeFlowTag.transform.rawValue
                         {
                             flowExprIDs.insert(result.rawValue)
                             activeFlowExpr = result
@@ -487,7 +511,7 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
-                    if callee == mapName || callee == filterName || callee == takeName,
+                    if callee == mapName || callee == filterName || callee == takeName || callee == transformName,
                        arguments.count == 1,
                        flowExprIDs.contains(receiver.rawValue)
                     {
@@ -496,6 +520,8 @@ final class FlowLoweringPass: LoweringPass {
                             RuntimeFlowTag.map.rawValue
                         case filterName:
                             RuntimeFlowTag.filter.rawValue
+                        case transformName:
+                            RuntimeFlowTag.transform.rawValue
                         default:
                             RuntimeFlowTag.take.rawValue
                         }
@@ -565,6 +591,21 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
+                    if callee == singleName,
+                       arguments.isEmpty,
+                       flowExprIDs.contains(receiver.rawValue)
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowSingleName,
+                            arguments: [receiver, appendIntConstant(0)],
+                            result: result,
+                            canThrow: true,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
                     if callee == kkFlowCreateName || callee == kkFlowOfName || callee == kkFlowEmptyName || callee == kkFlowAsFlowName,
                        let result
                     {
@@ -579,6 +620,7 @@ final class FlowLoweringPass: LoweringPass {
                         if tag == RuntimeFlowTag.map.rawValue
                             || tag == RuntimeFlowTag.filter.rawValue
                             || tag == RuntimeFlowTag.take.rawValue
+                            || tag == RuntimeFlowTag.transform.rawValue
                         {
                             flowExprIDs.insert(result.rawValue)
                             activeFlowExpr = result

@@ -23,4 +23,17 @@ fun main() = runBlocking {
     val f = flow { emit(42); emit(99) }
         .first()
     println(f)
+
+    // flow + transform + collect
+    flow { emit(1); emit(2) }
+        .transform {
+            emit(it * 10)
+            emit(it * 10 + 1)
+        }
+        .collect { println(it) }
+
+    // flow + single
+    val only = flow { emit(7) }
+        .single()
+    println(only)
 }

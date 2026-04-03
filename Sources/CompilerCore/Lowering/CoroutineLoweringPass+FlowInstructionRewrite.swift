@@ -41,7 +41,8 @@ extension CoroutineLoweringPass {
                   case let .intLiteral(tagValue) = tagExpr,
                   tagValue == RuntimeFlowTag.map.rawValue ||
                   tagValue == RuntimeFlowTag.filter.rawValue ||
-                  tagValue == RuntimeFlowTag.take.rawValue
+                  tagValue == RuntimeFlowTag.take.rawValue ||
+                  tagValue == RuntimeFlowTag.transform.rawValue
             else {
                 return false
             }
@@ -161,7 +162,7 @@ extension CoroutineLoweringPass {
                         result: result,
                         canThrow: false,
                         thrownResult: nil,
-                        isSuperCall: isSuperCall
+                        isSuperCall: false
                     ))
                     continue
                 }
@@ -204,7 +205,7 @@ extension CoroutineLoweringPass {
                         handleExpr: arguments[0],
                         arguments: [arguments[0], arguments[1], appendIntConstantInBody(0)],
                         result: result, canThrow: canThrow, thrownResult: thrownResult,
-                        isSuperCall: isSuperCall
+                        isSuperCall: false
                     )
                     continue
                 }
@@ -216,7 +217,7 @@ extension CoroutineLoweringPass {
                         symbol: nil, callee: names.kkFlowCollect,
                         handleExpr: arguments[0], arguments: arguments,
                         result: result, canThrow: canThrow, thrownResult: thrownResult,
-                        isSuperCall: isSuperCall
+                        isSuperCall: false
                     )
                     continue
                 }
@@ -233,7 +234,7 @@ extension CoroutineLoweringPass {
                         result: result,
                         canThrow: false,
                         thrownResult: nil,
-                        isSuperCall: isSuperCall
+                        isSuperCall: false
                     ))
                     if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                     continue
@@ -252,6 +253,24 @@ extension CoroutineLoweringPass {
                         canThrow: false,
                         thrownResult: nil,
                         isSuperCall: isSuperCall
+                    ))
+                    if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
+                    continue
+                }
+
+                if callee == names.single, symbol == nil,
+                   arguments.count == 1,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    let consume = prepareFlowHandleForConsume(arguments[0])
+                    loweredBody.append(.call(
+                        symbol: nil,
+                        callee: names.kkFlowSingle,
+                        arguments: [consume.callArg, appendIntConstantInBody(0)],
+                        result: result,
+                        canThrow: true,
+                        thrownResult: nil,
+                        isSuperCall: false
                     ))
                     if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                     continue
@@ -287,6 +306,24 @@ extension CoroutineLoweringPass {
                         result: result,
                         canThrow: false,
                         thrownResult: nil,
+                        isSuperCall: isSuperCall
+                    ))
+                    if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
+                    continue
+                }
+
+                if callee == names.kkFlowSingle,
+                   !arguments.isEmpty,
+                   flowExprIDs.contains(arguments[0].rawValue)
+                {
+                    let consume = prepareFlowHandleForConsume(arguments[0])
+                    loweredBody.append(.call(
+                        symbol: symbol,
+                        callee: names.kkFlowSingle,
+                        arguments: [consume.callArg, appendIntConstantInBody(0)],
+                        result: result,
+                        canThrow: true,
+                        thrownResult: thrownResult,
                         isSuperCall: isSuperCall
                     ))
                     if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
@@ -353,6 +390,16 @@ extension CoroutineLoweringPass {
                     continue
                 }
 
+                if callee == names.transform, arguments.count == 1,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    emitFlowTransformCall(
+                        handleExpr: receiver, lambdaExpr: arguments[0],
+                        tag: .transform, result: result
+                    )
+                    continue
+                }
+
                 if callee == names.collect, arguments.count == 1,
                    flowExprIDs.contains(receiver.rawValue)
                 {
@@ -392,6 +439,23 @@ extension CoroutineLoweringPass {
                         result: result,
                         canThrow: false,
                         thrownResult: nil
+                    ))
+                    if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
+                    continue
+                }
+
+                if callee == names.single, arguments.isEmpty,
+                   flowExprIDs.contains(receiver.rawValue)
+                {
+                    let consume = prepareFlowHandleForConsume(receiver)
+                    loweredBody.append(.call(
+                        symbol: nil,
+                        callee: names.kkFlowSingle,
+                        arguments: [consume.callArg, appendIntConstantInBody(0)],
+                        result: result,
+                        canThrow: true,
+                        thrownResult: nil,
+                        isSuperCall: false
                     ))
                     if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                     continue

@@ -10,8 +10,15 @@ extension LoweringPassRegressionTests {
                 flow {
                     emit(1)
                     emit(2)
-                }.map { it * 2 }
+                }.transform {
+                    emit(it * 2)
+                    emit(it * 2 + 1)
+                }
                     .collect { println(it) }
+                val only = flow {
+                    emit(7)
+                }.single()
+                println(only)
             }
         }
         """
@@ -33,10 +40,12 @@ extension LoweringPassRegressionTests {
             XCTAssertTrue(allCallees.contains("kk_flow_create"))
             XCTAssertTrue(allCallees.contains("kk_flow_emit"))
             XCTAssertTrue(allCallees.contains("kk_flow_collect"))
+            XCTAssertTrue(allCallees.contains("kk_flow_single"))
             XCTAssertFalse(allCallees.contains("flow"))
-            XCTAssertFalse(allCallees.contains("map"))
+            XCTAssertFalse(allCallees.contains("transform"))
             XCTAssertFalse(allCallees.contains("collect"))
             XCTAssertFalse(allCallees.contains("emit"))
+            XCTAssertFalse(allCallees.contains("single"))
         }
     }
 

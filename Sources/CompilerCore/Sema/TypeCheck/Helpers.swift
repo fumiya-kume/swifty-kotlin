@@ -358,6 +358,9 @@ struct TypeCheckHelpers {
         case interner.intern("first"):
             guard argumentCount == 0 || argumentCount == 1 else { return nil }
             return sema.types.anyType
+        case interner.intern("single"):
+            guard argumentCount == 0 || argumentCount == 1 else { return nil }
+            return sema.types.anyType
         default:
             return nil
         }

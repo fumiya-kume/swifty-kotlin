@@ -32,6 +32,8 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("map"),
             ctx.interner.intern("filter"),
             ctx.interner.intern("take"),
+            ctx.interner.intern("transform"),
+            ctx.interner.intern("single"),
             ctx.interner.intern("kk_suspend_function_invoke_0"),
             ctx.interner.intern("kk_suspend_function_invoke"),
             ctx.interner.intern("kk_flow_create"),
@@ -40,12 +42,15 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("kk_flow_of"),
             ctx.interner.intern("kk_flow_empty"),
             ctx.interner.intern("kk_flow_as_flow"),
+            ctx.interner.intern("kk_flow_single"),
         ]
         let virtualCallees: Set<InternedString> = [
             ctx.interner.intern("collect"),
             ctx.interner.intern("map"),
             ctx.interner.intern("filter"),
             ctx.interner.intern("take"),
+            ctx.interner.intern("transform"),
+            ctx.interner.intern("single"),
             ctx.interner.intern("asFlow"),
         ]
         for decl in module.arena.declarations {

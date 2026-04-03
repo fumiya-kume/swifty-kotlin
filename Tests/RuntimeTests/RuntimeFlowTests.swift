@@ -7,6 +7,8 @@ private typealias RuntimeFlowEmitterEntry = @convention(c) (UnsafeMutablePointer
 private typealias RuntimeFlowCollectorEntry = @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int
 /// Map/filter ABI: (closureRaw, elem, outThrown)
 private typealias RuntimeFlowUnaryEntry = @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int
+/// Flow transform ABI: (value, outThrown)
+private typealias RuntimeFlowTransformEntry = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
 
 private enum RuntimeFlowTag: Int {
     case emit = 0
@@ -15,6 +17,7 @@ private enum RuntimeFlowTag: Int {
     case take = 3
     case onEach = 4
     case distinctUntilChanged = 5
+    case transform = 6
 }
 
 private final class RuntimeFlowTestState: @unchecked Sendable {
@@ -148,6 +151,27 @@ func runtime_test_flow_emitter_large_source(_ outThrown: UnsafeMutablePointer<In
 func runtime_test_flow_filter_reject_all(_: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     runtimeFlowTestState.recordFilterCall()
     outThrown?.pointee = 0
+    return 0
+}
+
+@_cdecl("runtime_test_flow_transform_double_emit")
+func runtime_test_flow_transform_double_emit(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    _ = kk_flow_emit(0, value * 10, RuntimeFlowTag.emit.rawValue)
+    _ = kk_flow_emit(0, value * 10 + 1, RuntimeFlowTag.emit.rawValue)
+    return 0
+}
+
+@_cdecl("runtime_test_flow_emitter_empty")
+func runtime_test_flow_emitter_empty(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    return 0
+}
+
+@_cdecl("runtime_test_flow_emitter_single_value")
+func runtime_test_flow_emitter_single_value(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    _ = kk_flow_emit(0, 7, RuntimeFlowTag.emit.rawValue)
     return 0
 }
 
@@ -341,6 +365,35 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
         // onEach runs the action but does not change the value.
         XCTAssertEqual(snapshot.values, [1, 2, 3, 4], "onEach should not transform values.")
         XCTAssertEqual(snapshot.mapCalls, 4, "onEach action should run for all elements.")
+    }
+
+    func testTransformCanEmitMultipleValuesPerInput() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
+        let transformPtr = unsafeBitCast(runtime_test_flow_transform_double_emit as RuntimeFlowTransformEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let transformed = kk_flow_emit(flowHandle, transformPtr, RuntimeFlowTag.transform.rawValue)
+
+        _ = kk_flow_collect(transformed, collectorPtr, 0)
+
+        let snapshot = runtimeFlowTestState.snapshot()
+        XCTAssertEqual(snapshot.values, [10, 11, 20, 21, 30, 31, 40, 41], "transform should emit multiple downstream values per input.")
+        XCTAssertEqual(snapshot.emitCalls, 4)
+    }
+
+    func testSingleReturnsTheOnlyElement() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_single_value as RuntimeFlowEmitterEntry, to: Int.self)
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        XCTAssertEqual(kk_flow_single(flowHandle, 0, nil), 7)
+    }
+
+    func testSingleThrowsOnEmptyFlow() {
+        let emptyFlow = kk_flow_empty(0)
+        var thrown = 0
+        let result = kk_flow_single(emptyFlow, 0, &thrown)
+        XCTAssertEqual(result, 0)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     func testDistinctUntilChangedFiltersConsecutiveDuplicates() {

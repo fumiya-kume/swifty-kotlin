@@ -2279,6 +2279,16 @@ public enum RuntimeABISpec {
             section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_flow_single",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_flow_count",
             parameters: [
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),

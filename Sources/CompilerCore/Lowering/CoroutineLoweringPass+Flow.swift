@@ -7,6 +7,7 @@ enum RuntimeFlowTag: Int64 {
     case take = 3
     case onEach = 4
     case distinctUntilChanged = 5
+    case transform = 6
 }
 
 struct FlowLoweringNames {
@@ -21,8 +22,10 @@ struct FlowLoweringNames {
     let map: InternedString
     let filter: InternedString
     let take: InternedString
+    let transform: InternedString
     let toList: InternedString
     let first: InternedString
+    let single: InternedString
     let kkFlowCreate: InternedString
     let kkFlowEmit: InternedString
     let kkFlowCollect: InternedString
@@ -33,6 +36,7 @@ struct FlowLoweringNames {
     let kkFlowAsFlow: InternedString
     let kkFlowToList: InternedString
     let kkFlowFirst: InternedString
+    let kkFlowSingle: InternedString
 }
 
 extension CoroutineLoweringPass {
@@ -51,8 +55,10 @@ extension CoroutineLoweringPass {
         let mapName = ctx.interner.intern("map")
         let filterName = ctx.interner.intern("filter")
         let takeName = ctx.interner.intern("take")
+        let transformName = ctx.interner.intern("transform")
         let toListName = ctx.interner.intern("toList")
         let firstName = ctx.interner.intern("first")
+        let singleName = ctx.interner.intern("single")
 
         let kkFlowCreateName = ctx.interner.intern("kk_flow_create")
         let kkFlowEmitName = ctx.interner.intern("kk_flow_emit")
@@ -64,6 +70,7 @@ extension CoroutineLoweringPass {
         let kkFlowAsFlowName = ctx.interner.intern("kk_flow_as_flow")
         let kkFlowToListName = ctx.interner.intern("kk_flow_to_list")
         let kkFlowFirstName = ctx.interner.intern("kk_flow_first")
+        let kkFlowSingleName = ctx.interner.intern("kk_flow_single")
 
         func transformFunction(_ function: KIRFunction) -> KIRFunction {
             var updated: KIRFunction = function
@@ -115,7 +122,8 @@ extension CoroutineLoweringPass {
                       case let .intLiteral(tagValue) = tagExpr,
                       tagValue == RuntimeFlowTag.map.rawValue ||
                       tagValue == RuntimeFlowTag.filter.rawValue ||
-                      tagValue == RuntimeFlowTag.take.rawValue
+                      tagValue == RuntimeFlowTag.take.rawValue ||
+                      tagValue == RuntimeFlowTag.transform.rawValue
                 else {
                     return false
                 }
@@ -148,7 +156,7 @@ extension CoroutineLoweringPass {
                             if markFlowExpr(result) { changed = true }
                             continue
                         }
-                        if callee == mapName || callee == filterName || callee == takeName,
+                        if callee == mapName || callee == filterName || callee == takeName || callee == transformName,
                            arguments.count == 2 || ((callee == mapName || callee == filterName) && arguments.count == 3),
                            let flowHandleArg = arguments.first,
                            flowExprIDs.contains(flowHandleArg.rawValue)
@@ -180,7 +188,7 @@ extension CoroutineLoweringPass {
                         }
 
                     case let .virtualCall(_, callee, receiver, arguments, result, _, _, _):
-                        if callee == mapName || callee == filterName || callee == takeName,
+                        if callee == mapName || callee == filterName || callee == takeName || callee == transformName,
                            arguments.count == 1,
                            flowExprIDs.contains(receiver.rawValue)
                         {
@@ -236,14 +244,16 @@ extension CoroutineLoweringPass {
                     callee == flowName || callee == channelFlowName || callee == callbackFlowName ||
                         callee == flowOfName || callee == emptyFlowName ||
                         callee == emitName || callee == collectName ||
-                        callee == mapName || callee == filterName || callee == takeName ||
+                        callee == mapName || callee == filterName || callee == takeName || callee == transformName ||
                         callee == asFlowName || callee == toListName || callee == firstName ||
+                        callee == singleName ||
                         callee == kkFlowCreateName || callee == kkFlowEmitName || callee == kkFlowCollectName ||
                         callee == kkFlowOfName || callee == kkFlowEmptyName || callee == kkFlowAsFlowName ||
-                        callee == kkFlowToListName || callee == kkFlowFirstName
+                        callee == kkFlowToListName || callee == kkFlowFirstName || callee == kkFlowSingleName
                 case let .virtualCall(_, callee, _, _, _, _, _, _):
                     callee == mapName || callee == filterName || callee == takeName || callee == collectName ||
-                        callee == asFlowName || callee == toListName || callee == firstName
+                        callee == asFlowName || callee == toListName || callee == firstName ||
+                        callee == transformName || callee == singleName
                 default:
                     false
                 }
@@ -263,7 +273,7 @@ extension CoroutineLoweringPass {
             for instruction in function.body {
                 switch instruction {
                 case let .call(_, callee, arguments, _, _, _, _, _):
-                    if callee == mapName || callee == filterName || callee == takeName,
+                    if callee == mapName || callee == filterName || callee == takeName || callee == transformName,
                        arguments.count == 2 || ((callee == mapName || callee == filterName) && arguments.count == 3)
                     {
                         markConsume(arguments[0])
@@ -281,8 +291,8 @@ extension CoroutineLoweringPass {
                         markConsume(arguments[0])
                         continue
                     }
-                    if (callee == toListName || callee == firstName ||
-                        callee == kkFlowToListName || callee == kkFlowFirstName), !arguments.isEmpty {
+                    if (callee == toListName || callee == firstName || callee == singleName ||
+                        callee == kkFlowToListName || callee == kkFlowFirstName || callee == kkFlowSingleName), !arguments.isEmpty {
                         markConsume(arguments[0])
                         continue
                     }
@@ -290,7 +300,7 @@ extension CoroutineLoweringPass {
                         markConsume(arguments[0])
                     }
                 case let .virtualCall(_, callee, receiver, arguments, _, _, _, _):
-                    if callee == mapName || callee == filterName || callee == takeName || callee == collectName,
+                    if callee == mapName || callee == filterName || callee == takeName || callee == transformName || callee == collectName,
                        arguments.count == 1
                     {
                         markConsume(receiver)
@@ -298,7 +308,7 @@ extension CoroutineLoweringPass {
                     if callee == asFlowName, arguments.isEmpty {
                         markConsume(receiver)
                     }
-                    if (callee == toListName || callee == firstName), arguments.isEmpty {
+                    if (callee == toListName || callee == firstName || callee == singleName), arguments.isEmpty {
                         markConsume(receiver)
                     }
                 default:
@@ -319,8 +329,10 @@ extension CoroutineLoweringPass {
                 map: mapName,
                 filter: filterName,
                 take: takeName,
+                transform: transformName,
                 toList: toListName,
                 first: firstName,
+                single: singleName,
                 kkFlowCreate: kkFlowCreateName,
                 kkFlowEmit: kkFlowEmitName,
                 kkFlowCollect: kkFlowCollectName,
@@ -330,7 +342,8 @@ extension CoroutineLoweringPass {
                 kkFlowEmpty: kkFlowEmptyName,
                 kkFlowAsFlow: kkFlowAsFlowName,
                 kkFlowToList: kkFlowToListName,
-                kkFlowFirst: kkFlowFirstName
+                kkFlowFirst: kkFlowFirstName,
+                kkFlowSingle: kkFlowSingleName
             )
             let loweredBody = rewriteFlowInstructions(
                 originalBody: function.body,

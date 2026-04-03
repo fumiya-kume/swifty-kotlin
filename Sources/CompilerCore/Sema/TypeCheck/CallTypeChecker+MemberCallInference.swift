@@ -22,7 +22,7 @@ extension CallTypeChecker {
         locals: inout LocalBindings
     ) -> TypeID? {
         let memberName = ctx.interner.resolve(calleeName)
-        let flowMembers: Set = ["map", "filter", "take", "collect", "toList", "first"]
+        let flowMembers: Set = ["map", "filter", "take", "transform", "collect", "toList", "first", "single"]
         guard flowMembers.contains(memberName) else {
             return nil
         }
@@ -57,6 +57,16 @@ extension CallTypeChecker {
             sema.bindings.bindExprType(id, type: finalType)
             return finalType
 
+        case "single":
+            // Flow.single() — returns the only emitted value.
+            guard args.isEmpty else {
+                return nil
+            }
+            let singleType = receiverElementType
+            let finalType = safeCall ? sema.types.makeNullable(singleType) : singleType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+
         case "take":
             guard args.count == 1 else {
                 return nil
@@ -76,7 +86,7 @@ extension CallTypeChecker {
             sema.bindings.bindExprType(id, type: resultType)
             return resultType
 
-        case "map", "filter", "collect":
+        case "map", "filter", "collect", "transform":
             guard args.count == 1 else {
                 return nil
             }
@@ -91,6 +101,8 @@ extension CallTypeChecker {
                 sema.types.booleanType
             case "collect":
                 sema.types.unitType
+            case "transform":
+                sema.types.unitType
             default:
                 sema.types.anyType
             }
@@ -101,12 +113,20 @@ extension CallTypeChecker {
                 nullability: .nonNull
             )))
             if expectsLambdaTypeConstraint {
-                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                var lambdaCtx = ctx
+                if memberName == "transform" {
+                    lambdaCtx.isFlowBuilderLambdaScope = true
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: lambdaCtx, locals: &locals, expectedType: lambdaExpectedType)
             } else {
-                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                var lambdaCtx = ctx
+                if memberName == "transform" {
+                    lambdaCtx.isFlowBuilderLambdaScope = true
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: lambdaCtx, locals: &locals)
             }
 
-            if memberName == "map" || memberName == "filter" {
+            if memberName == "map" || memberName == "filter" || memberName == "transform" {
                 sema.bindings.markFlowExpr(id)
                 let resultElementType: TypeID = if memberName == "map",
                                                    case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr),
@@ -4668,10 +4688,12 @@ extension CallTypeChecker {
             // only when receiver provenance is known as Flow.
             if !isClassNameReceiver, isFlowReceiver {
                 let memberName = interner.resolve(calleeName)
-                let flowMembers: Set = ["map", "filter", "take", "collect"]
+                let flowMembers: Set = ["map", "filter", "take", "transform", "collect", "toList", "first", "single"]
                 if flowMembers.contains(memberName) {
-                    let acceptsArity = args.count == 1
-                    if acceptsArity, memberName == "map" || memberName == "filter" || memberName == "collect" {
+                    let acceptsArity = (memberName == "toList" || memberName == "first" || memberName == "single")
+                        ? args.isEmpty
+                        : args.count == 1
+                    if acceptsArity, memberName == "map" || memberName == "filter" || memberName == "collect" || memberName == "transform" {
                         let expectsLambdaTypeConstraint = switch ast.arena.expr(args[0].expr) {
                         case .callableRef:
                             false
@@ -4683,6 +4705,8 @@ extension CallTypeChecker {
                             sema.types.make(.primitive(.boolean, .nonNull))
                         case "collect":
                             sema.types.unitType
+                        case "transform":
+                            sema.types.unitType
                         default:
                             sema.types.anyType
                         }
@@ -4693,14 +4717,22 @@ extension CallTypeChecker {
                             nullability: .nonNull
                         )))
                         if expectsLambdaTypeConstraint {
-                            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                            var lambdaCtx = ctx
+                            if memberName == "transform" {
+                                lambdaCtx.isFlowBuilderLambdaScope = true
+                            }
+                            _ = driver.inferExpr(args[0].expr, ctx: lambdaCtx, locals: &locals, expectedType: lambdaExpectedType)
                         } else {
-                            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                            var lambdaCtx = ctx
+                            if memberName == "transform" {
+                                lambdaCtx.isFlowBuilderLambdaScope = true
+                            }
+                            _ = driver.inferExpr(args[0].expr, ctx: lambdaCtx, locals: &locals)
                         }
                     }
 
                     if acceptsArity {
-                        if memberName == "map" || memberName == "filter" || memberName == "take" {
+                        if memberName == "map" || memberName == "filter" || memberName == "take" || memberName == "transform" {
                             sema.bindings.markFlowExpr(id)
                             let resultElementType: TypeID = switch memberName {
                             case "map":
@@ -4711,7 +4743,7 @@ extension CallTypeChecker {
                                 } else {
                                     sema.types.anyType
                                 }
-                            case "filter", "take":
+                            case "filter", "take", "transform":
                                 flowElementType
                             default:
                                 sema.types.anyType
@@ -4721,6 +4753,19 @@ extension CallTypeChecker {
                         let resultType: TypeID
                         if memberName == "collect" {
                             resultType = sema.types.unitType
+                        } else if memberName == "toList" {
+                            let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner)
+                            if let listSymbol {
+                                resultType = sema.types.make(.classType(ClassType(
+                                    classSymbol: listSymbol,
+                                    args: [.invariant(flowElementType)],
+                                    nullability: .nonNull
+                                )))
+                            } else {
+                                resultType = sema.types.anyType
+                            }
+                        } else if memberName == "first" || memberName == "single" {
+                            resultType = flowElementType
                         } else {
                             let resultElement = sema.bindings.flowElementType(forExpr: id) ?? flowElementType
                             resultType = driver.helpers.makeFlowType(
