@@ -3515,5 +3515,5 @@ expr e66 memberCall recv=e65 callee=length args=[] type=Int call=s630 map=[] tar
 expr e67 int(3) type=Int
 expr e68 binary(greaterThan) lhs=e66 rhs=e67 type=Boolean
 expr e69 lambda params=[] body=e68 label=partition type=(String) -> Boolean
-expr e70 memberCall recv=e60 callee=partition args=[_:e69] type=Class#75<Class#123<String>, Class#123<String>>
+expr e70 memberCall recv=e60 callee=partition args=[_:e69] type=Class#73<Class#121<String>, Class#121<String>>
 expr e71 destructuringDecl names=[matching,rest] mutable=0 init=e70 type=Unit

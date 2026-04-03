@@ -3459,7 +3459,7 @@ expr e16 binary(modulo) lhs=e14 rhs=e15 type=Int
 expr e17 int(0) type=Int
 expr e18 binary(equal) lhs=e16 rhs=e17 type=Boolean
 expr e19 lambda params=[] body=e18 label=partition type=(Int) -> Boolean
-expr e20 memberCall recv=e8 callee=partition args=[_:e19] type=Class#75<Class#123<Int>, Class#123<Int>>
+expr e20 memberCall recv=e8 callee=partition args=[_:e19] type=Class#73<Class#121<Int>, Class#121<Int>>
 expr e21 destructuringDecl names=[evens,odds] mutable=0 init=e20 type=Unit
 expr e22 name(println) type=_
 expr e23 name(evens) type=T#76 ref=s3437

@@ -3447,7 +3447,7 @@ expr e4 name(it) type=Int ref=s-1001792
 expr e5 int(0) type=Int
 expr e6 binary(greaterThan) lhs=e4 rhs=e5 type=Boolean
 expr e7 lambda params=[] body=e6 label=filter type=(Int) -> Boolean
-expr e8 memberCall recv=e0 callee=filter args=[_:e7] type=Class#123<Int>
+expr e8 memberCall recv=e0 callee=filter args=[_:e7] type=Class#121<Int>
 expr e9 name(i) type=_
 expr e10 name(v) type=_
 expr e11 binary(add) lhs=e9 rhs=e10 type=_
@@ -3455,7 +3455,7 @@ expr e12 name(i) type=Int ref=s-1003840
 expr e13 name(v) type=Int ref=s-1003841
 expr e14 binary(add) lhs=e12 rhs=e13 type=Int
 expr e15 lambda params=[i,v] body=e14 label=mapIndexed type=(Int, Int) -> Any
-expr e16 memberCall recv=e8 callee=mapIndexed args=[_:e15] type=Class#123<Int>
+expr e16 memberCall recv=e8 callee=mapIndexed args=[_:e15] type=Class#121<Int>
 expr e17 name(listOf) type=_
 expr e18 name(it) type=_
 expr e19 name(it) type=_
@@ -3467,9 +3467,9 @@ expr e24 name(it) type=Int ref=s-1007424
 expr e25 name(it) type=Int ref=s-1007424
 expr e26 int(2) type=Int
 expr e27 binary(multiply) lhs=e25 rhs=e26 type=Int
-expr e28 call callee=e23 args=[_:e24,_:e27] type=Class#123<out Int>
+expr e28 call callee=e23 args=[_:e24,_:e27] type=Class#121<out Int>
 expr e29 lambda params=[] body=e28 label=flatMap type=(Int) -> Any
-expr e30 memberCall recv=e16 callee=flatMap args=[_:e29] type=Class#123<Int>
+expr e30 memberCall recv=e16 callee=flatMap args=[_:e29] type=Class#121<Int>
 expr e31 name(it) type=_
 expr e32 memberCall recv=e31 callee=toString args=[] type=_
 expr e33 name(it) type=Int ref=s-1008960
