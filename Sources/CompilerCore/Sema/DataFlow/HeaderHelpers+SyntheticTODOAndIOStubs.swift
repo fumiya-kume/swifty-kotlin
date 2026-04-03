@@ -391,6 +391,123 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(fileType, for: fileSymbol)
 
+        let deprecatedCreateTempDirAnnotations = [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: [
+                    "message = \"Avoid creating temporary directories in the default temp location with this function due to too wide permissions on the newly created directory. Use kotlin.io.path.createTempDirectory instead.\"",
+                    "replaceWith = ReplaceWith(\"kotlin.io.path.createTempDirectory(prefix)\")",
+                    "level = DeprecationLevel.ERROR",
+                ]
+            ),
+        ]
+        let deprecatedCreateTempFileAnnotations = [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: [
+                    "message = \"Avoid creating temporary files in the default temp location with this function due to too wide permissions on the newly created file. Use kotlin.io.path.createTempFile instead or resort to java.io.File.createTempFile.\"",
+                    "replaceWith = ReplaceWith(\"kotlin.io.path.createTempFile(prefix, suffix)\")",
+                    "level = DeprecationLevel.ERROR",
+                ]
+            ),
+        ]
+
+        registerSyntheticTopLevelFunction(
+            named: "createTempDir",
+            packageFQName: kotlinIOPkg,
+            parameters: [],
+            returnType: fileType,
+            externalLinkName: "kk_io_createTempDir_default",
+            annotations: deprecatedCreateTempDirAnnotations,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticTopLevelFunction(
+            named: "createTempDir",
+            packageFQName: kotlinIOPkg,
+            parameters: [(name: "prefix", type: types.stringType)],
+            returnType: fileType,
+            externalLinkName: "kk_io_createTempDir_prefix",
+            annotations: deprecatedCreateTempDirAnnotations,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticTopLevelFunction(
+            named: "createTempDir",
+            packageFQName: kotlinIOPkg,
+            parameters: [
+                (name: "prefix", type: types.stringType),
+                (name: "suffix", type: types.makeNullable(types.stringType)),
+            ],
+            returnType: fileType,
+            externalLinkName: "kk_io_createTempDir_prefix_suffix",
+            annotations: deprecatedCreateTempDirAnnotations,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticTopLevelFunction(
+            named: "createTempDir",
+            packageFQName: kotlinIOPkg,
+            parameters: [
+                (name: "prefix", type: types.stringType),
+                (name: "suffix", type: types.makeNullable(types.stringType)),
+                (name: "directory", type: types.makeNullable(fileType)),
+            ],
+            returnType: fileType,
+            externalLinkName: "kk_io_createTempDir",
+            annotations: deprecatedCreateTempDirAnnotations,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticTopLevelFunction(
+            named: "createTempFile",
+            packageFQName: kotlinIOPkg,
+            parameters: [],
+            returnType: fileType,
+            externalLinkName: "kk_io_createTempFile_default",
+            annotations: deprecatedCreateTempFileAnnotations,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticTopLevelFunction(
+            named: "createTempFile",
+            packageFQName: kotlinIOPkg,
+            parameters: [(name: "prefix", type: types.stringType)],
+            returnType: fileType,
+            externalLinkName: "kk_io_createTempFile_prefix",
+            annotations: deprecatedCreateTempFileAnnotations,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticTopLevelFunction(
+            named: "createTempFile",
+            packageFQName: kotlinIOPkg,
+            parameters: [
+                (name: "prefix", type: types.stringType),
+                (name: "suffix", type: types.makeNullable(types.stringType)),
+            ],
+            returnType: fileType,
+            externalLinkName: "kk_io_createTempFile_prefix_suffix",
+            annotations: deprecatedCreateTempFileAnnotations,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticTopLevelFunction(
+            named: "createTempFile",
+            packageFQName: kotlinIOPkg,
+            parameters: [
+                (name: "prefix", type: types.stringType),
+                (name: "suffix", type: types.makeNullable(types.stringType)),
+                (name: "directory", type: types.makeNullable(fileType)),
+            ],
+            returnType: fileType,
+            externalLinkName: "kk_io_createTempFile",
+            annotations: deprecatedCreateTempFileAnnotations,
+            symbols: symbols,
+            interner: interner
+        )
+
         // File(path: String) constructor
         registerSyntheticConstructor(
             ownerSymbol: fileSymbol,
@@ -1265,6 +1382,7 @@ extension DataFlowSemaPhase {
         parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
         externalLinkName: String,
+        annotations: [MetadataAnnotationRecord] = [],
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -1278,6 +1396,9 @@ extension DataFlowSemaPhase {
                 && existingSignature.returnType == returnType
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
+            if !annotations.isEmpty {
+                symbols.setAnnotations(annotations, for: existing)
+            }
             return
         }
 
@@ -1293,6 +1414,9 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(packageSymbol, for: functionSymbol)
         }
         symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        if !annotations.isEmpty {
+            symbols.setAnnotations(annotations, for: functionSymbol)
+        }
 
         var valueParameterSymbols: [SymbolID] = []
         for parameter in parameters {

@@ -32,6 +32,21 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             diagnostics: diagnostics
         )
+
+        guard let declRange else {
+            return
+        }
+        guard let suppressionRange = suppressionRange(for: decl, declRange: declRange) else {
+            return
+        }
+        for ann in declarationAnnotations(for: decl) where KnownCompilerAnnotation.suppress.matches(ann.name) {
+            for arg in ann.arguments {
+                let code = arg.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+                if !code.isEmpty {
+                    diagnostics.addSuppression(code: code, range: suppressionRange)
+                }
+            }
+        }
     }
 
     func registerAnnotations(
@@ -66,6 +81,56 @@ extension DataFlowSemaPhase {
                 }
             }
         }
+    }
+
+    private func suppressionRange(for decl: Decl, declRange: SourceRange?) -> SourceRange? {
+        guard let declRange else {
+            return nil
+        }
+
+        let bodyRange: SourceRange? = switch decl {
+        case let .funDecl(funDecl):
+            switch funDecl.body {
+            case let .block(_, range), let .expr(_, range):
+                range
+            case .unit:
+                nil
+            }
+        case let .propertyDecl(propertyDecl):
+            switch (propertyDecl.getter?.body, propertyDecl.setter?.body) {
+            case (let getterBody?, _):
+                switch getterBody {
+                case let .block(_, range), let .expr(_, range):
+                    range
+                case .unit:
+                    nil
+                }
+            case (_, let setterBody?):
+                switch setterBody {
+                case let .block(_, range), let .expr(_, range):
+                    range
+                case .unit:
+                    nil
+                }
+            default:
+                nil
+            }
+        case let .classDecl(classDecl):
+            classDecl.range
+        case let .interfaceDecl(interfaceDecl):
+            interfaceDecl.range
+        case let .objectDecl(objectDecl):
+            objectDecl.range
+        case let .typeAliasDecl(typeAliasDecl):
+            typeAliasDecl.range
+        case let .enumEntryDecl(enumEntryDecl):
+            enumEntryDecl.range
+        }
+
+        guard let bodyRange else {
+            return declRange
+        }
+        return SourceRange(start: declRange.start, end: bodyRange.end)
     }
 
     /// Base value for synthetic type parameter symbol IDs used in metadata encoding.
@@ -862,10 +927,12 @@ extension DataFlowSemaPhase {
         registerSyntheticClockStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticDeepRecursiveStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExperimentalTimeStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticPlatformTimeConversionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticStringBuilderStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticTODOAndIOStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCloseableStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticFileIOStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticDatabaseStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticFilesUtilityStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticPathStubs(symbols: symbols, types: types, interner: interner)
         registerLateListIndexedMembers(symbols: symbols, types: types, interner: interner)
@@ -875,6 +942,8 @@ extension DataFlowSemaPhase {
         registerSyntheticUuidStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticSerializationStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticURIStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticURLStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticNetworkStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticLoggingStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticSecurityStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCacheStubs(symbols: symbols, types: types, interner: interner)
@@ -883,6 +952,7 @@ extension DataFlowSemaPhase {
         registerSyntheticNumberFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticDateFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticMetaprogStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsInteropStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticKSPStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticBigIntegerStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticThreadLocalStubs(symbols: symbols, types: types, interner: interner)
@@ -967,6 +1037,42 @@ extension DataFlowSemaPhase {
             existingAnnotations.append(annotation)
         }
         symbols.setAnnotations(existingAnnotations, for: experimentalContractsSymbol)
+
+        let experimentalFQName = ensurePackage(
+            path: ["kotlin", "experimental"],
+            symbols: symbols,
+            interner: interner
+        )
+        let experimentalPkg = symbols.lookup(fqName: experimentalFQName) ?? SymbolID.invalid
+        let experimentalTypeInferenceSymbol = ensureAnnotationClassSymbol(
+            named: "ExperimentalTypeInference",
+            in: experimentalFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        if experimentalPkg != SymbolID.invalid {
+            symbols.setParentSymbol(experimentalPkg, for: experimentalTypeInferenceSymbol)
+        }
+        let experimentalTypeInferenceAnnotations = [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: [
+                    "AnnotationTarget.CLASS",
+                    "AnnotationTarget.FUNCTION",
+                    "AnnotationTarget.TYPE",
+                    "AnnotationTarget.TYPEALIAS",
+                ]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Retention",
+                arguments: ["AnnotationRetention.BINARY"]
+            ),
+        ]
+        var experimentalTypeInferenceExisting = symbols.annotations(for: experimentalTypeInferenceSymbol)
+        for annotation in experimentalTypeInferenceAnnotations where !experimentalTypeInferenceExisting.contains(annotation) {
+            experimentalTypeInferenceExisting.append(annotation)
+        }
+        symbols.setAnnotations(experimentalTypeInferenceExisting, for: experimentalTypeInferenceSymbol)
 
         let builderType = types.make(.classType(ClassType(classSymbol: builderSymbol, args: [], nullability: .nonNull)))
         let contractEffectType = types.make(.classType(ClassType(classSymbol: contractEffectSymbol, args: [], nullability: .nonNull)))

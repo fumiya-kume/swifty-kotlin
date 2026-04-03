@@ -24,6 +24,11 @@ enum CLIParser {
       -l <name>              Link library
       --target <triple>      Target triple (arch-vendor-os[-version])
       -Xfrontend <flag>      Frontend feature flag (e.g. time-phases)
+      -Xnew-inference        Enable the new type inference pipeline
+      -Xunrestricted-builder-inference
+                             Enable unrestricted builder inference
+      -Xproper-type-inference-constraints-processing
+                             Enable proper type inference constraints processing
       -Xir <flag>            IR/lowering feature flag (e.g. trace-lowering)
       -Xruntime <flag>       Runtime feature flag
       -Xdiagnostics <format> Diagnostic output format (text|json)
@@ -84,6 +89,12 @@ enum CLIParser {
                 target = parsed
             case "-Xfrontend":
                 try frontendFlags.append(requireValue(option: arg, args: args, index: &index))
+            case "-Xnew-inference":
+                frontendFlags.append("new-inference")
+            case "-Xunrestricted-builder-inference":
+                frontendFlags.append("unrestricted-builder-inference")
+            case "-Xproper-type-inference-constraints-processing":
+                frontendFlags.append("ProperTypeInferenceConstraintsProcessing")
             case "-Xir":
                 try irFlags.append(requireValue(option: arg, args: args, index: &index))
             case "-Xruntime":

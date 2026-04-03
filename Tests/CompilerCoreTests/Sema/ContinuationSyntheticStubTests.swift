@@ -25,7 +25,7 @@ final class ContinuationSyntheticStubTests: XCTestCase {
 
         let continuationTypeParameters = sema.types.nominalTypeParameterSymbols(for: continuationSymbol)
         XCTAssertEqual(continuationTypeParameters.count, 1)
-        XCTAssertEqual(sema.types.nominalTypeParameterVariances(for: continuationSymbol), [.invariant])
+        XCTAssertEqual(sema.types.nominalTypeParameterVariances(for: continuationSymbol), [.in])
 
         let continuationTypeParamSymbol = try XCTUnwrap(continuationTypeParameters.first)
         let continuationTypeParamType = sema.types.make(.typeParam(TypeParamType(
@@ -83,6 +83,20 @@ final class ContinuationSyntheticStubTests: XCTestCase {
         XCTAssertEqual(interceptContinuationSignature.parameterTypes, [continuationType])
         XCTAssertEqual(interceptContinuationSignature.returnType, continuationType)
         XCTAssertEqual(interceptContinuationSignature.typeParameterSymbols, [continuationTypeParamSymbol])
+    }
+
+    func testCreateCoroutineUninterceptedOverloadsAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let createCoroutineFQName = ["kotlin", "coroutines", "intrinsics", "createCoroutineUnintercepted"].map { interner.intern($0) }
+        let createCoroutineSymbols = sema.symbols.lookupAll(fqName: createCoroutineFQName)
+        XCTAssertEqual(createCoroutineSymbols.count, 2)
+
+        let signatures = createCoroutineSymbols.compactMap { sema.symbols.functionSignature(for: $0) }
+        XCTAssertEqual(signatures.count, 2)
+        XCTAssertTrue(signatures.allSatisfy { $0.receiverType != nil })
+        XCTAssertTrue(signatures.contains(where: { $0.parameterTypes.count == 1 && $0.typeParameterSymbols.count == 1 }))
+        XCTAssertTrue(signatures.contains(where: { $0.parameterTypes.count == 2 && $0.typeParameterSymbols.count == 2 }))
     }
 
     func testContinuationInterceptedResolvesInSource() throws {

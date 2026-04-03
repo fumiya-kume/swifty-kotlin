@@ -1277,14 +1277,18 @@ extension DataFlowSemaPhase {
     ) {
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
+        let deprecatedAnnotations = syntheticDeprecatedAnnotationsForCoercion(name: name)
 
         // Check if already registered with same signature
-        if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
             guard let signature = symbols.functionSignature(for: symbolID) else { return false }
             return signature.receiverType == receiverType
                 && signature.parameterTypes == parameters.map(\.type)
                 && signature.returnType == returnType
         }) {
+            if !deprecatedAnnotations.isEmpty {
+                symbols.setAnnotations(deprecatedAnnotations, for: existing)
+            }
             return
         }
 
@@ -1298,6 +1302,9 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(packageSymbol, for: functionSymbol)
         symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        if !deprecatedAnnotations.isEmpty {
+            symbols.setAnnotations(deprecatedAnnotations, for: functionSymbol)
+        }
 
         var valueParameterSymbols: [SymbolID] = []
         for param in parameters {
@@ -1326,5 +1333,24 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+    }
+
+    private func syntheticDeprecatedAnnotationsForCoercion(
+        name: String
+    ) -> [MetadataAnnotationRecord] {
+        guard name == "toChar" else {
+            return []
+        }
+        let deprecatedMessage = "Use toInt().toChar() or Char(code) instead."
+        let deprecatedArguments = [
+            "message = \"\(deprecatedMessage)\"",
+            "replaceWith = ReplaceWith(\"toInt().toChar()\")",
+        ]
+        return [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: deprecatedArguments
+            ),
+        ]
     }
 }

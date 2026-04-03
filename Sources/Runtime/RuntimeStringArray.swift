@@ -563,7 +563,7 @@ public func kk_type_token_qualified_name(_ typeToken: Int, _ nameHint: Int) -> I
     return kk_type_token_simple_name(typeToken, nameHint)
 }
 
-private func runtimeKClassBox(from raw: Int) -> RuntimeKClassBox? {
+func runtimeKClassBox(from raw: Int) -> RuntimeKClassBox? {
     guard raw != 0, raw != runtimeNullSentinelInt,
           let ptr = UnsafeMutableRawPointer(bitPattern: raw)
     else {
@@ -921,7 +921,10 @@ public func kk_kclass_constructors(_ kclassRaw: Int) -> Int {
     guard let box = runtimeKClassBox(from: kclassRaw) else {
         return registerRuntimeObject(RuntimeListBox(elements: []))
     }
-    // Return a list with `constructorCount` placeholder elements so that .size is correct.
+    let constructors = runtimeKConstructorRegistry.constructors(for: kclassRaw)
+    if !constructors.isEmpty {
+        return registerRuntimeObject(RuntimeListBox(elements: constructors))
+    }
     let count = box.metadata?.constructorCount ?? 0
     let placeholders = (0..<max(count, 0)).map { _ in 0 }
     return registerRuntimeObject(RuntimeListBox(elements: placeholders))
@@ -934,9 +937,7 @@ public func kk_kclass_primary_constructor(_ kclassRaw: Int) -> Int {
     guard runtimeKClassBox(from: kclassRaw) != nil else {
         return runtimeNullSentinelInt
     }
-    // The primary constructor metadata is populated via kk_kconstructor_create
-    // during the metadata emission pass. If not available, return null.
-    return runtimeNullSentinelInt
+    return runtimeKConstructorRegistry.primaryConstructor(for: kclassRaw) ?? runtimeNullSentinelInt
 }
 
 // MARK: - STDLIB-REFLECT-061: KClass member access (properties, functions, etc.)
@@ -1170,6 +1171,27 @@ public func kk_type_register_super(_ childTypeId: Int, _ superTypeId: Int) -> In
 @_cdecl("kk_type_register_iface")
 public func kk_type_register_iface(_ childTypeId: Int, _ ifaceTypeId: Int) -> Int {
     runtimeRegisterTypeEdge(childTypeID: Int64(childTypeId), parentTypeID: Int64(ifaceTypeId))
+    return 0
+}
+
+@_cdecl("kk_object_register_itable_iface")
+public func kk_object_register_itable_iface(
+    _ objectRaw: Int,
+    _ ifaceTypeId: Int,
+    _ ifaceSlot: Int
+) -> Int {
+    guard ifaceTypeId != 0,
+          ifaceSlot >= 0,
+          let objectPtr = UnsafeMutableRawPointer(bitPattern: objectRaw)
+    else {
+        return 0
+    }
+    let objectKey = UInt(bitPattern: objectPtr)
+    runtimeStorage.withLock { state in
+        var slots = state.objectInterfaceSlots[objectKey] ?? [:]
+        slots[Int64(ifaceTypeId)] = ifaceSlot
+        state.objectInterfaceSlots[objectKey] = slots
+    }
     return 0
 }
 

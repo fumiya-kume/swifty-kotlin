@@ -15,7 +15,8 @@ enum CodegenSymbolSupport {
 
     static func fileFacadeName(for file: ASTFile) -> String? {
         for annotation in file.annotations where annotation.useSiteTarget == "file" {
-            guard KnownCompilerAnnotation.jvmName.matches(annotation.name),
+            guard KnownCompilerAnnotation.jvmName.matches(annotation.name)
+                    || KnownCompilerAnnotation.experimentalJsFileName.matches(annotation.name),
                   let firstArgument = annotation.arguments.first
             else {
                 continue

@@ -145,8 +145,10 @@ extension CallTypeChecker {
             argCount == 0 || argCount == 1
         case "contains", "forEach", "map", "mapIndexed", "mapNotNull",
              "filter", "filterIndexed", "filterNot", "reduce", "reduceIndexed",
-             "find", "findLast", "firstOrNull", "lastOrNull", "any", "all", "none":
+             "find", "findLast", "any", "all", "none":
             argCount == 1
+        case "firstOrNull", "lastOrNull":
+            argCount == 0 || argCount == 1
         case "fold", "foldIndexed":
             argCount == 2
         case "chunked":
