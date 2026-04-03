@@ -27,6 +27,26 @@ final class RuntimeResourceBundleBox {
     }
 }
 
+final class RuntimeNumberFormatBox {
+    let formatter: NumberFormatter
+
+    init(style: NumberFormatter.Style, locale: Locale?) {
+        let formatter = NumberFormatter()
+        formatter.locale = locale ?? Locale.current
+        formatter.numberStyle = style
+        if style == .decimal {
+            formatter.generatesDecimalNumbers = true
+        }
+        if style == .none {
+            formatter.numberStyle = .decimal
+            formatter.maximumFractionDigits = 0
+            formatter.minimumFractionDigits = 0
+            formatter.generatesDecimalNumbers = false
+        }
+        self.formatter = formatter
+    }
+}
+
 func runtimeLocaleBox(from raw: Int) -> RuntimeLocaleBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
     return tryCast(ptr, to: RuntimeLocaleBox.self)
@@ -37,6 +57,10 @@ private func runtimeResourceBundleBox(from raw: Int) -> RuntimeResourceBundleBox
     return tryCast(ptr, to: RuntimeResourceBundleBox.self)
 }
 
+private func runtimeNumberFormatBox(from raw: Int) -> RuntimeNumberFormatBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeNumberFormatBox.self)
+}
 
 private func i18nString(from raw: Int, caller: StaticString) -> String {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw),
@@ -54,7 +78,6 @@ private func i18nMakeStringRaw(_ value: String) -> Int {
         }
     })
 }
-
 
 private func resourceRootDirectory() -> URL {
     if let env = ProcessInfo.processInfo.environment["KSWIFTK_RESOURCE_ROOT"], !env.isEmpty {
@@ -162,6 +185,69 @@ public func kk_locale_new(_ identifierRaw: Int) -> Int {
     let identifier = i18nString(from: identifierRaw, caller: #function)
         .replacingOccurrences(of: "_", with: "-")
     return registerRuntimeObject(RuntimeLocaleBox(locale: Locale(identifier: identifier)))
+}
+
+private func runtimeNumberFormatterLocale(from raw: Int) -> Locale? {
+    runtimeLocaleBox(from: raw)?.locale
+}
+
+private func runtimeNumberFormatCreate(style: NumberFormatter.Style, localeRaw: Int) -> Int {
+    registerRuntimeObject(
+        RuntimeNumberFormatBox(
+            style: style,
+            locale: runtimeNumberFormatterLocale(from: localeRaw)
+        )
+    )
+}
+
+private func runtimeNumberFormatString(_ formatterRaw: Int, value: NSNumber, caller: StaticString) -> Int {
+    guard let box = runtimeNumberFormatBox(from: formatterRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(caller) received invalid NumberFormat handle")
+    }
+    guard let formatted = box.formatter.string(from: value) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(caller) failed to format number")
+    }
+    return i18nMakeStringRaw(formatted)
+}
+
+@_cdecl("kk_numberformat_getIntegerInstance")
+public func kk_numberformat_getIntegerInstance(_ localeRaw: Int) -> Int {
+    runtimeNumberFormatCreate(style: .none, localeRaw: localeRaw)
+}
+
+@_cdecl("kk_numberformat_getNumberInstance")
+public func kk_numberformat_getNumberInstance(_ localeRaw: Int) -> Int {
+    runtimeNumberFormatCreate(style: .decimal, localeRaw: localeRaw)
+}
+
+@_cdecl("kk_numberformat_getCurrencyInstance")
+public func kk_numberformat_getCurrencyInstance(_ localeRaw: Int) -> Int {
+    runtimeNumberFormatCreate(style: .currency, localeRaw: localeRaw)
+}
+
+@_cdecl("kk_numberformat_getPercentInstance")
+public func kk_numberformat_getPercentInstance(_ localeRaw: Int) -> Int {
+    runtimeNumberFormatCreate(style: .percent, localeRaw: localeRaw)
+}
+
+@_cdecl("kk_numberformat_formatInt")
+public func kk_numberformat_formatInt(_ formatRaw: Int, _ value: Int) -> Int {
+    runtimeNumberFormatString(formatRaw, value: NSNumber(value: value), caller: #function)
+}
+
+@_cdecl("kk_numberformat_formatLong")
+public func kk_numberformat_formatLong(_ formatRaw: Int, _ value: Int) -> Int {
+    runtimeNumberFormatString(formatRaw, value: NSNumber(value: Int64(value)), caller: #function)
+}
+
+@_cdecl("kk_numberformat_formatFloat")
+public func kk_numberformat_formatFloat(_ formatRaw: Int, _ value: Float) -> Int {
+    runtimeNumberFormatString(formatRaw, value: NSNumber(value: value), caller: #function)
+}
+
+@_cdecl("kk_numberformat_formatDouble")
+public func kk_numberformat_formatDouble(_ formatRaw: Int, _ value: Double) -> Int {
+    runtimeNumberFormatString(formatRaw, value: NSNumber(value: value), caller: #function)
 }
 
 private func bundleURL(name: String, suffix: String?) -> URL? {

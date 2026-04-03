@@ -22,7 +22,7 @@ extension CallTypeChecker {
         locals: inout LocalBindings
     ) -> TypeID? {
         let memberName = ctx.interner.resolve(calleeName)
-        let flowMembers: Set = ["map", "filter", "take", "collect", "toList", "first"]
+        let flowMembers: Set = ["map", "filter", "take", "collect", "toList", "first", "catch", "retry", "retryWhen"]
         guard flowMembers.contains(memberName) else {
             return nil
         }
@@ -76,7 +76,26 @@ extension CallTypeChecker {
             sema.bindings.bindExprType(id, type: resultType)
             return resultType
 
-        case "map", "filter", "collect":
+        case "retry":
+            guard args.count == 1 else {
+                return nil
+            }
+            _ = driver.inferExpr(
+                args[0].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: sema.types.intType
+            )
+            sema.bindings.markFlowExpr(id)
+            sema.bindings.bindFlowElementType(receiverElementType, forExpr: id)
+            let flowType = driver.helpers.makeFlowType(
+                elementType: receiverElementType, sema: sema, interner: ctx.interner
+            ) ?? sema.types.anyType
+            let resultType = safeCall ? sema.types.makeNullable(flowType) : flowType
+            sema.bindings.bindExprType(id, type: resultType)
+            return resultType
+
+        case "map", "filter", "collect", "catch", "retryWhen":
             guard args.count == 1 else {
                 return nil
             }
@@ -91,11 +110,23 @@ extension CallTypeChecker {
                 sema.types.booleanType
             case "collect":
                 sema.types.unitType
+            case "catch":
+                sema.types.unitType
+            case "retryWhen":
+                sema.types.booleanType
             default:
                 sema.types.anyType
             }
+            let lambdaParameterTypes: [TypeID] = switch memberName {
+            case "catch":
+                [sema.types.anyType]
+            case "retryWhen":
+                [sema.types.anyType, sema.types.longType]
+            default:
+                [receiverElementType]
+            }
             let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
-                params: [receiverElementType],
+                params: lambdaParameterTypes,
                 returnType: lambdaReturnType,
                 isSuspend: memberName == "collect",
                 nullability: .nonNull
@@ -106,7 +137,7 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             }
 
-            if memberName == "map" || memberName == "filter" {
+            if memberName == "map" || memberName == "filter" || memberName == "catch" || memberName == "retryWhen" {
                 sema.bindings.markFlowExpr(id)
                 let resultElementType: TypeID = if memberName == "map",
                                                    case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr),
@@ -348,6 +379,54 @@ extension CallTypeChecker {
         }
 
         let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
+
+        if interner.resolve(calleeName) == "callRecursive",
+           args.count == 1,
+           case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+           let receiverSymbol = sema.symbols.symbol(classType.classSymbol),
+           receiverSymbol.fqName.count == 2,
+           interner.resolve(receiverSymbol.fqName[0]) == "kotlin",
+           interner.resolve(receiverSymbol.fqName[1]) == "DeepRecursiveFunction"
+        {
+            let parameterType: TypeID = if let firstArg = classType.args.first {
+                switch firstArg {
+                case let .invariant(type), let .in(type), let .out(type):
+                    type
+                case .star:
+                    sema.types.anyType
+                }
+            } else {
+                sema.types.anyType
+            }
+            let returnType: TypeID = if classType.args.count > 1 {
+                switch classType.args[1] {
+                case let .invariant(type), let .in(type), let .out(type):
+                    type
+                case .star:
+                    sema.types.anyType
+                }
+            } else {
+                sema.types.anyType
+            }
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: parameterType)
+            if let memberSymbol = sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("DeepRecursiveFunction"),
+                interner.intern("callRecursive"),
+            ]) {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: memberSymbol,
+                        substitutedTypeArguments: [parameterType, returnType],
+                        parameterMapping: [0: 0]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(memberSymbol))
+            }
+            sema.bindings.bindExprType(id, type: returnType)
+            return returnType
+        }
 
         if case .kClassType = sema.types.kind(of: sema.types.makeNonNullable(receiverType)) {
             if calleeName == knownNames.isInstanceName, args.count == 1 {
@@ -921,6 +1000,34 @@ extension CallTypeChecker {
         }
         let isCollectionHOF = activeCollectionHOFNames.contains(interner.resolve(calleeName))
             && isCollectionReceiver
+
+        if interner.resolve(calleeName) == "asFlow",
+           args.isEmpty,
+           (isCollectionReceiver || isSequenceReceiver)
+        {
+            let elementType = if isCollectionReceiver {
+                resolvedCollectionElementType(
+                    receiverID: receiverID,
+                    receiverType: receiverType,
+                    sema: sema,
+                    interner: interner,
+                    ctx: ctx,
+                    locals: &locals
+                )
+            } else {
+                sema.types.anyType
+            }
+            sema.bindings.markFlowExpr(id)
+            sema.bindings.bindFlowElementType(elementType, forExpr: id)
+            let resultType = driver.helpers.makeFlowType(
+                elementType: elementType,
+                sema: sema,
+                interner: interner
+            ) ?? sema.types.anyType
+            let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
 
         // filterIsInstance<R>() — reified type parameter, returns List<R> (STDLIB-114)
         if interner.resolve(calleeName) == "filterIsInstance",
@@ -2655,6 +2762,14 @@ extension CallTypeChecker {
             }
             if matches {
                 let finalType = safeCall ? sema.types.makeNullable(targetType) : targetType
+                driver.helpers.checkBuiltinDeprecation(
+                    calleeName: calleeName,
+                    receiverType: receiverForCheck,
+                    sema: sema,
+                    interner: interner,
+                    range: range,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
                 sema.bindings.bindExprType(id, type: finalType)
                 return finalType
             }
@@ -4592,10 +4707,13 @@ extension CallTypeChecker {
             // only when receiver provenance is known as Flow.
             if !isClassNameReceiver, isFlowReceiver {
                 let memberName = interner.resolve(calleeName)
-                let flowMembers: Set = ["map", "filter", "take", "collect"]
+                let flowMembers: Set = ["map", "filter", "take", "collect", "catch", "retry", "retryWhen"]
                 if flowMembers.contains(memberName) {
                     let acceptsArity = args.count == 1
-                    if acceptsArity, memberName == "map" || memberName == "filter" || memberName == "collect" {
+                    if acceptsArity,
+                       memberName == "map" || memberName == "filter" || memberName == "collect" ||
+                        memberName == "catch" || memberName == "retryWhen"
+                    {
                         let expectsLambdaTypeConstraint = switch ast.arena.expr(args[0].expr) {
                         case .callableRef:
                             false
@@ -4607,11 +4725,23 @@ extension CallTypeChecker {
                             sema.types.make(.primitive(.boolean, .nonNull))
                         case "collect":
                             sema.types.unitType
+                        case "catch":
+                            sema.types.unitType
+                        case "retryWhen":
+                            sema.types.booleanType
                         default:
                             sema.types.anyType
                         }
+                        let lambdaParameterTypes: [TypeID] = switch memberName {
+                        case "catch":
+                            [sema.types.anyType]
+                        case "retryWhen":
+                            [sema.types.anyType, sema.types.longType]
+                        default:
+                            [flowElementType]
+                        }
                         let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
-                            params: [flowElementType],
+                            params: lambdaParameterTypes,
                             returnType: lambdaReturnType,
                             isSuspend: memberName == "collect",
                             nullability: .nonNull
@@ -4624,7 +4754,9 @@ extension CallTypeChecker {
                     }
 
                     if acceptsArity {
-                        if memberName == "map" || memberName == "filter" || memberName == "take" {
+                        if memberName == "map" || memberName == "filter" || memberName == "take" ||
+                            memberName == "catch" || memberName == "retry" || memberName == "retryWhen"
+                        {
                             sema.bindings.markFlowExpr(id)
                             let resultElementType: TypeID = switch memberName {
                             case "map":
@@ -4635,7 +4767,7 @@ extension CallTypeChecker {
                                 } else {
                                     sema.types.anyType
                                 }
-                            case "filter", "take":
+                            case "filter", "take", "catch", "retry", "retryWhen":
                                 flowElementType
                             default:
                                 sema.types.anyType

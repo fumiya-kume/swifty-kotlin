@@ -37,7 +37,7 @@ extension OverloadResolver {
                 return Diagnostic(
                     severity: .error,
                     code: "KSWIFTK-SEMA-INFER",
-                    message: "Cannot infer type argument; provide explicit type arguments.",
+                    message: "Cannot infer type argument from the call arguments and expected type; provide explicit type arguments or an explicit expected type.",
                     primaryRange: range,
                     secondaryRanges: []
                 )
