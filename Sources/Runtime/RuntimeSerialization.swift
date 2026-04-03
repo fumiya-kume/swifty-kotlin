@@ -250,6 +250,9 @@ private func runtimeValueToJSON(_ rawValue: Int) -> Any {
     if let box = tryCast(ptr, to: RuntimeListBox.self) {
         return box.elements.map { runtimeValueToJSON($0) }
     }
+    if let box = tryCast(ptr, to: RuntimeSetBox.self) {
+        return box.elements.map { runtimeValueToJSON($0) }
+    }
     if let box = tryCast(ptr, to: RuntimeMapBox.self) {
         var dict: [String: Any] = [:]
         for index in 0 ..< box.keys.count {
@@ -263,14 +266,24 @@ private func runtimeValueToJSON(_ rawValue: Int) -> Any {
     if let box = tryCast(ptr, to: RuntimePairBox.self) {
         return [runtimeValueToJSON(box.first), runtimeValueToJSON(box.second)]
     }
+    if let box = tryCast(ptr, to: RuntimeTripleBox.self) {
+        return [
+            runtimeValueToJSON(box.first),
+            runtimeValueToJSON(box.second),
+            runtimeValueToJSON(box.third),
+        ]
+    }
     if let box = tryCast(ptr, to: RuntimeObjectBox.self) {
         return box.elements.map { runtimeValueToJSON($0) }
     }
     if let box = tryCast(ptr, to: RuntimeArrayBox.self) {
         return box.elements.map { runtimeValueToJSON($0) }
     }
+    if let box = tryCast(ptr, to: RuntimeArrayDequeBox.self) {
+        return box.elements.map { runtimeValueToJSON($0) }
+    }
 
-    return rawValue
+    return runtimeElementToString(rawValue)
 }
 
 private func jsonToRuntimeValue(_ value: Any) -> Int {
