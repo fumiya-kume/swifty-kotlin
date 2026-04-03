@@ -31,6 +31,18 @@ final class CallTypeChecker {
         } else {
             nil
         }
+        if let customBuilderType = inferExperimentalBuilderCallExpr(
+            id,
+            calleeName: calleeName,
+            args: args,
+            range: range,
+            ctx: ctx,
+            locals: &locals,
+            expectedType: expectedType,
+            explicitTypeArgs: explicitTypeArgs
+        ) {
+            return customBuilderType
+        }
         // --- Builder DSL functions (STDLIB-002) ---
         // Must intercept BEFORE eager arg inference so the lambda argument
         // is inferred with the correct implicit receiver type.
@@ -371,8 +383,13 @@ final class CallTypeChecker {
         // `flow { emit(...) }` is treated as a builtin cold stream factory.
         // We infer the lambda with a flow-builder scope so unqualified `emit`
         // resolves in Sema fallback.
+        let flowFactoryNames: Set<InternedString> = [
+            knownNames.flow,
+            interner.intern("channelFlow"),
+            interner.intern("callbackFlow"),
+        ]
         if let calleeName,
-           calleeName == knownNames.flow,
+           flowFactoryNames.contains(calleeName),
            args.count == 1,
            shouldUseBuiltinFlowFactorySpecialHandling(calleeName: calleeName, ctx: ctx, locals: locals)
         {
@@ -417,6 +434,32 @@ final class CallTypeChecker {
             let flowElementType = sema.bindings.flowElementType(forExpr: id) ?? sema.types.anyType
             let flowExprType = driver.helpers.makeFlowType(
                 elementType: flowElementType, sema: sema, interner: interner
+            ) ?? sema.types.anyType
+            sema.bindings.bindExprType(id, type: flowExprType)
+            return flowExprType
+        }
+
+        let fixedFlowFactoryNames: Set<InternedString> = [
+            interner.intern("flowOf"),
+            interner.intern("emptyFlow"),
+        ]
+        if let calleeName,
+           fixedFlowFactoryNames.contains(calleeName),
+           shouldUseBuiltinFlowFactorySpecialHandling(calleeName: calleeName, ctx: ctx, locals: locals)
+        {
+            sema.bindings.markFlowExpr(id)
+            if let explicitElementType = explicitTypeArgs.first {
+                sema.bindings.bindFlowElementType(explicitElementType, forExpr: id)
+            } else if calleeName == interner.intern("flowOf"), !args.isEmpty {
+                let inferredArgTypes = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
+                let lub = sema.types.lub(inferredArgTypes)
+                sema.bindings.bindFlowElementType(lub == sema.types.errorType ? sema.types.anyType : lub, forExpr: id)
+            }
+            let flowElementType = sema.bindings.flowElementType(forExpr: id) ?? sema.types.anyType
+            let flowExprType = driver.helpers.makeFlowType(
+                elementType: flowElementType,
+                sema: sema,
+                interner: interner
             ) ?? sema.types.anyType
             sema.bindings.bindExprType(id, type: flowExprType)
             return flowExprType
@@ -737,6 +780,7 @@ final class CallTypeChecker {
                 case "ByteArray": sema.types.intType
                 case "UShortArray": sema.types.ushortType
                 case "UByteArray": sema.types.ubyteType
+                case "UIntArray": sema.types.uintType
                 case "DoubleArray": sema.types.make(.primitive(.double, .nonNull))
                 case "FloatArray": sema.types.make(.primitive(.float, .nonNull))
                 case "BooleanArray": sema.types.booleanType
@@ -994,6 +1038,94 @@ final class CallTypeChecker {
             )
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
+        }
+
+        // --- kotlin.DeepRecursiveFunction<T, R> { ... } ---
+        // Infer the block with a DeepRecursiveScope<T, R> implicit receiver so
+        // unqualified callRecursive(...) resolves inside the lambda body.
+        if let calleeName,
+           interner.resolve(calleeName) == "DeepRecursiveFunction",
+           args.count == 1
+        {
+            let functionFQName = [interner.intern("kotlin"), interner.intern("DeepRecursiveFunction")]
+            let scopeFQName = [interner.intern("kotlin"), interner.intern("DeepRecursiveScope")]
+            let inferredTypeArgs: [TypeID]?
+            if explicitTypeArgs.count == 2 {
+                inferredTypeArgs = explicitTypeArgs
+            } else if let expectedType,
+                      case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(expectedType)),
+                      sema.symbols.symbol(classType.classSymbol)?.fqName == functionFQName,
+                      classType.args.count == 2
+            {
+                let unpacked = classType.args.compactMap { arg -> TypeID? in
+                    switch arg {
+                    case let .invariant(type), let .in(type), let .out(type):
+                        type
+                    case .star:
+                        nil
+                    }
+                }
+                inferredTypeArgs = unpacked.count == 2 ? unpacked : nil
+            } else {
+                inferredTypeArgs = nil
+            }
+
+            let functionSymbol = sema.symbols.lookup(fqName: functionFQName)
+            let scopeSymbol = sema.symbols.lookup(fqName: scopeFQName)
+            let ctorSymbol = sema.symbols.lookup(fqName: functionFQName + [interner.intern("<init>")])
+
+            if let typeArgs = inferredTypeArgs,
+               let functionSymbol,
+               let scopeSymbol,
+               let ctorSymbol
+            {
+                let argumentExprID = args[0].expr
+                // DeepRecursiveFunction's block has signature DeepRecursiveScope<T,R>.(T) -> R,
+                // so the lambda may declare 0 params (implicit `it`) or 1 explicit param.
+                guard isValidLambdaArgument(argumentExprID, ast: ast, maxParams: 1) else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0002",
+                        "No viable overload found for call.",
+                        range: range
+                    )
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
+
+                let scopeType = sema.types.make(.classType(ClassType(
+                    classSymbol: scopeSymbol,
+                    args: [.invariant(typeArgs[0]), .invariant(typeArgs[1])],
+                    nullability: .nonNull
+                )))
+                let resultType = sema.types.make(.classType(ClassType(
+                    classSymbol: functionSymbol,
+                    args: [.invariant(typeArgs[0]), .invariant(typeArgs[1])],
+                    nullability: .nonNull
+                )))
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    receiver: scopeType,
+                    params: [typeArgs[0]],
+                    returnType: typeArgs[1],
+                    nullability: .nonNull
+                )))
+                _ = driver.inferExpr(
+                    argumentExprID,
+                    ctx: ctx.with(implicitReceiverType: scopeType),
+                    locals: &locals,
+                    expectedType: lambdaExpectedType
+                )
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: ctorSymbol,
+                        substitutedTypeArguments: typeArgs,
+                        parameterMapping: [0: 0]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(ctorSymbol))
+                sema.bindings.bindExprType(id, type: resultType)
+                return resultType
+            }
         }
 
         // --- Comparator factory functions: compareBy, compareByDescending (STDLIB-649) ---
@@ -2211,6 +2343,7 @@ final class CallTypeChecker {
                         "byteArrayOf": "ByteArray",
                         "ushortArrayOf": "UShortArray",
                         "ubyteArrayOf": "UByteArray",
+                        "uintArrayOf": "UIntArray",
                         "doubleArrayOf": "DoubleArray",
                         "floatArrayOf": "FloatArray",
                         "booleanArrayOf": "BooleanArray",
@@ -2829,7 +2962,12 @@ final class CallTypeChecker {
             else {
                 return false
             }
-            return symbol.fqName != KnownCompilerNames(interner: ctx.interner).kotlinxCoroutinesFlowFQName
+            let flowPkgPrefix = [
+                ctx.interner.intern("kotlinx"),
+                ctx.interner.intern("coroutines"),
+                ctx.interner.intern("flow"),
+            ]
+            return !symbol.fqName.starts(with: flowPkgPrefix)
         }
         return !hasConflictingUserDefinedCandidate
     }

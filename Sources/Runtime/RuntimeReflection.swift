@@ -47,7 +47,31 @@ private extension RuntimeKClassBox {
             return metadata.qualifiedName
         }
         let raw = kk_type_token_qualified_name(typeToken, nameHint)
-        return extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? reflectionSimpleName
+        let qualifiedName = extractString(from: UnsafeMutableRawPointer(bitPattern: raw))
+        if let qualifiedName, qualifiedName.contains(".") {
+            return qualifiedName
+        }
+        let simpleName = reflectionSimpleName
+        if let qualifiedName, !qualifiedName.isEmpty, qualifiedName != simpleName {
+            return qualifiedName
+        }
+        if let stdlibQualifiedName = runtimeReflectionStdlibQualifiedName(for: simpleName) {
+            return stdlibQualifiedName
+        }
+        return simpleName
+    }
+}
+
+private func runtimeReflectionStdlibQualifiedName(for simpleName: String) -> String? {
+    switch simpleName {
+    case "Array":
+        return "kotlin.Array"
+    case "Iterable", "Collection", "MutableCollection", "List", "MutableList", "Set", "MutableSet", "Map", "MutableMap":
+        return "kotlin.collections.\(simpleName)"
+    case "Iterator", "MutableIterator":
+        return "kotlin.collections.\(simpleName)"
+    default:
+        return nil
     }
 }
 
@@ -751,6 +775,54 @@ public func kk_kfunction_call_vararg(
 
 // MARK: - STDLIB-REFLECT-066: KType toString
 
+func runtimeKTypeProjectionToString(_ box: RuntimeKTypeProjectionBox) -> String {
+    if box.variance == nil {
+        return "*"
+    }
+    let typeString: String
+    if box.typeRaw == 0 || box.typeRaw == runtimeNullSentinelInt {
+        typeString = "kotlin.Any"
+    } else {
+        typeString = runtimeKTypeToString(raw: box.typeRaw)
+    }
+    switch box.variance {
+    case .in:
+        return "in \(typeString)"
+    case .out:
+        return "out \(typeString)"
+    case .invariant:
+        return typeString
+    case nil:
+        return "*"
+    }
+}
+
+private func runtimeKTypeArgumentsToString(_ argumentRaws: [Int]) -> String {
+    guard !argumentRaws.isEmpty else {
+        return ""
+    }
+    let renderedArguments = argumentRaws.map { raw -> String in
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: raw),
+              runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
+              let box = tryCast(ptr, to: RuntimeKTypeProjectionBox.self)
+        else {
+            return "*"
+        }
+        return runtimeKTypeProjectionToString(box)
+    }
+    return "<\(renderedArguments.joined(separator: ", "))>"
+}
+
+private func runtimeKTypeToString(raw ktypeRaw: Int) -> String {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: ktypeRaw),
+          runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let box = tryCast(ptr, to: RuntimeKTypeBox.self)
+    else {
+        return "kotlin.Any"
+    }
+    return runtimeKTypeToString(box)
+}
+
 /// Internal helper to render a KTypeBox as a human-readable string.
 func runtimeKTypeToString(_ box: RuntimeKTypeBox) -> String {
     var baseName = "kotlin.Any"
@@ -770,7 +842,9 @@ func runtimeKTypeToString(_ box: RuntimeKTypeBox) -> String {
             }
         }
     }
-    return box.isMarkedNullable ? baseName + "?" : baseName
+    let arguments = runtimeKTypeArgumentsToString(box.argumentRaws)
+    let nullableSuffix = box.isMarkedNullable ? "?" : ""
+    return baseName + arguments + nullableSuffix
 }
 
 /// Returns a human-readable string for a KType, e.g. "kotlin.String" or "kotlin.String?".
@@ -845,7 +919,7 @@ public func kk_kproperty_set(
 
 // MARK: - KConstructor (STDLIB-REFLECT-064)
 
-private func runtimeKConstructorBox(from raw: Int) -> RuntimeKConstructorBox? {
+func runtimeKConstructorBox(from raw: Int) -> RuntimeKConstructorBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
         return nil
     }
@@ -886,7 +960,9 @@ public func kk_kconstructor_create(
         visibilityRaw: visibilityRaw,
         declaringClassRaw: declaringClassRaw
     )
-    return registerRuntimeObject(box)
+    let raw = registerRuntimeObject(box)
+    runtimeKConstructorRegistry.register(classRaw: declaringClassRaw, constructorRaw: raw)
+    return raw
 }
 
 @_cdecl("kk_kconstructor_get_name")

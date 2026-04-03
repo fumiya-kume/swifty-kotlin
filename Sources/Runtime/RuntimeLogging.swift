@@ -9,6 +9,24 @@ final class RuntimeLoggerBox {
     }
 }
 
+final class RuntimeLoggerRegistryBox: @unchecked Sendable {
+    static let shared = RuntimeLoggerRegistryBox()
+
+    private let lock = NSLock()
+    private var loggers: [String: Int] = [:]
+
+    func loggerRaw(named name: String) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        if let existing = loggers[name] {
+            return existing
+        }
+        let raw = registerRuntimeObject(RuntimeLoggerBox(name: name))
+        loggers[name] = raw
+        return raw
+    }
+}
+
 enum RuntimeLogHandlerKind {
     case console
     case file(path: String)
@@ -49,12 +67,39 @@ private func loggingMakeStringRaw(_ value: String) -> Int {
     })
 }
 
-private func renderLogLine(level: String, loggerName: String, message: String) -> String {
-    "[\(level)] \(loggerName): \(message)"
+private func loggingThrowableMessage(from raw: Int, caller: StaticString) -> String {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw),
+          let throwable = tryCast(ptr, to: RuntimeThrowableBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(caller) received invalid Throwable handle")
+    }
+    return throwable.message
 }
 
-private func publishLog(_ logger: RuntimeLoggerBox, level: String, message: String) {
-    let line = renderLogLine(level: level, loggerName: logger.name, message: message)
+private func renderLogLine(
+    level: String,
+    loggerName: String,
+    message: String,
+    throwableMessage: String? = nil
+) -> String {
+    if let throwableMessage {
+        return "[\(level)] \(loggerName): \(message) | \(throwableMessage)"
+    }
+    return "[\(level)] \(loggerName): \(message)"
+}
+
+private func publishLog(
+    _ logger: RuntimeLoggerBox,
+    level: String,
+    message: String,
+    throwableMessage: String? = nil
+) {
+    let line = renderLogLine(
+        level: level,
+        loggerName: logger.name,
+        message: message,
+        throwableMessage: throwableMessage
+    )
     if logger.handlers.isEmpty {
         print(line)
         return
@@ -83,11 +128,23 @@ private func publishLog(_ logger: RuntimeLoggerBox, level: String, message: Stri
 
 @_cdecl("kk_logger_getLogger")
 public func kk_logger_getLogger(_ nameRaw: Int) -> Int {
-    registerRuntimeObject(RuntimeLoggerBox(name: loggingString(from: nameRaw, caller: #function)))
+    RuntimeLoggerRegistryBox.shared.loggerRaw(named: loggingString(from: nameRaw, caller: #function))
 }
 
 @_cdecl("kk_logging_level_info")
 public func kk_logging_level_info() -> Int { loggingMakeStringRaw("INFO") }
+
+@_cdecl("kk_logging_level_config")
+public func kk_logging_level_config() -> Int { loggingMakeStringRaw("CONFIG") }
+
+@_cdecl("kk_logging_level_fine")
+public func kk_logging_level_fine() -> Int { loggingMakeStringRaw("FINE") }
+
+@_cdecl("kk_logging_level_finer")
+public func kk_logging_level_finer() -> Int { loggingMakeStringRaw("FINER") }
+
+@_cdecl("kk_logging_level_finest")
+public func kk_logging_level_finest() -> Int { loggingMakeStringRaw("FINEST") }
 
 @_cdecl("kk_logging_level_warning")
 public func kk_logging_level_warning() -> Int { loggingMakeStringRaw("WARNING") }
@@ -121,7 +178,30 @@ public func kk_logger_log(_ loggerRaw: Int, _ levelRaw: Int, _ messageRaw: Int) 
     guard let logger = runtimeLoggerBox(from: loggerRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_logger_log received invalid Logger handle")
     }
-    publishLog(logger, level: loggingString(from: levelRaw, caller: #function), message: loggingString(from: messageRaw, caller: #function))
+    publishLog(
+        logger,
+        level: loggingString(from: levelRaw, caller: #function),
+        message: loggingString(from: messageRaw, caller: #function)
+    )
+    return 0
+}
+
+@_cdecl("kk_logger_log_throwable")
+public func kk_logger_log_throwable(
+    _ loggerRaw: Int,
+    _ levelRaw: Int,
+    _ messageRaw: Int,
+    _ throwableRaw: Int
+) -> Int {
+    guard let logger = runtimeLoggerBox(from: loggerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_logger_log_throwable received invalid Logger handle")
+    }
+    publishLog(
+        logger,
+        level: loggingString(from: levelRaw, caller: #function),
+        message: loggingString(from: messageRaw, caller: #function),
+        throwableMessage: loggingThrowableMessage(from: throwableRaw, caller: #function)
+    )
     return 0
 }
 

@@ -54,6 +54,14 @@ private func runtimeStringValue(_ raw: Int) -> String {
     extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? ""
 }
 
+private func runtimeStringRaw(_ value: String) -> Int {
+    value.withCString { cstr in
+        cstr.withMemoryRebound(to: UInt8.self, capacity: max(1, value.utf8.count)) { ptr in
+            Int(bitPattern: kk_string_from_utf8(ptr, Int32(value.utf8.count)))
+        }
+    }
+}
+
 private let flatMapPair: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     let array = kk_array_new(2)
     var thrown = 0
@@ -124,6 +132,10 @@ private let findEqualTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) 
 
 private let groupByParity: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     value % 2
+}
+
+private let groupingByStringKey: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    runtimeStringRaw(value % 2 == 0 ? "even" : "odd")
 }
 
 // Lambda that returns value * 10 (for associateWithTo tests)
@@ -401,6 +413,26 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(mapKeys(grouped), [1, 0])
         XCTAssertEqual(listElements(kk_map_get(grouped, 1)), [3, 1, 5])
         XCTAssertEqual(listElements(kk_map_get(grouped, 0)), [4, 2])
+    }
+
+    func testGroupingByEachCountPreservesKeyOrderAndCounts() {
+        let source = makeList([3, 1, 4, 2, 5])
+        let grouping = kk_list_groupingBy(source, unsafeBitCast(groupByParity, to: Int.self), 0)
+        let counts = kk_grouping_eachCount(grouping, nil)
+
+        XCTAssertEqual(mapKeys(counts), [1, 0])
+        XCTAssertEqual(kk_unbox_int(kk_map_get(counts, 1)), 3)
+        XCTAssertEqual(kk_unbox_int(kk_map_get(counts, 0)), 2)
+    }
+
+    func testGroupingByEachCountUsesValueEqualityForStringKeys() {
+        let source = makeList([1, 2, 3, 4])
+        let grouping = kk_list_groupingBy(source, unsafeBitCast(groupingByStringKey, to: Int.self), 0)
+        let counts = kk_grouping_eachCount(grouping, nil)
+
+        XCTAssertEqual(mapKeys(counts).map(runtimeStringValue), ["odd", "even"])
+        XCTAssertEqual(kk_unbox_int(kk_map_get(counts, runtimeStringRaw("odd"))), 2)
+        XCTAssertEqual(kk_unbox_int(kk_map_get(counts, runtimeStringRaw("even"))), 2)
     }
 
     func testMapForEachFilterAndMapUsePairEntries() {
@@ -830,4 +862,5 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
         XCTAssertNotEqual(thrown, 0)
     }
+
 }

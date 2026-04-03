@@ -2912,7 +2912,7 @@ public func kk_grouping_eachCount(_ groupingRaw: Int, _ outThrown: UnsafeMutable
     }
     var keys: [Int] = []
     var counts: [Int] = []
-    var keyIndex: [Int: Int] = [:]  // normalizedKey -> index (O(1) lookup for immediate values)
+    var keyIndex: [RuntimeElementKey: Int] = [:]  // normalizedKey -> index (value-based lookup)
     for elem in grouping.sourceElements {
         var thrown = 0
         let key = runtimeInvokeCollectionLambda1(
@@ -2920,17 +2920,13 @@ public func kk_grouping_eachCount(_ groupingRaw: Int, _ outThrown: UnsafeMutable
             value: elem, outThrown: &thrown
         )
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
-        let normalizedKey = maybeUnbox(key)
+        let normalizedKey = RuntimeElementKey(value: maybeUnbox(key))
         if let idx = keyIndex[normalizedKey] {
-            counts[idx] += 1
-        } else if let idx = keys.firstIndex(where: { runtimeValuesEqual($0, normalizedKey) }) {
-            // Fallback: hash collision or boxed value — linear scan
-            keyIndex[normalizedKey] = idx
             counts[idx] += 1
         } else {
             let newIdx = keys.count
             keyIndex[normalizedKey] = newIdx
-            keys.append(normalizedKey)
+            keys.append(normalizedKey.value)
             counts.append(1)
         }
     }
@@ -2949,7 +2945,7 @@ public func kk_grouping_fold(
     }
     var keys: [Int] = []
     var accumulators: [Int] = []
-    var keyIndex: [Int: Int] = [:]  // normalizedKey -> index (O(1) lookup for immediate values)
+    var keyIndex: [RuntimeElementKey: Int] = [:]  // normalizedKey -> index (value-based lookup)
     for elem in grouping.sourceElements {
         var thrown = 0
         let key = runtimeInvokeCollectionLambda1(
@@ -2957,7 +2953,7 @@ public func kk_grouping_fold(
             value: elem, outThrown: &thrown
         )
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
-        let normalizedKey = maybeUnbox(key)
+        let normalizedKey = RuntimeElementKey(value: maybeUnbox(key))
         if let idx = keyIndex[normalizedKey] {
             var thrown2 = 0
             accumulators[idx] = maybeUnbox(runtimeInvokeCollectionLambda2(
@@ -2968,7 +2964,7 @@ public func kk_grouping_fold(
         } else {
             let newIdx = keys.count
             keyIndex[normalizedKey] = newIdx
-            keys.append(normalizedKey)
+            keys.append(normalizedKey.value)
             var thrown2 = 0
             let foldResult = maybeUnbox(runtimeInvokeCollectionLambda2(
                 fnPtr: fnPtr, closureRaw: closureRaw,
@@ -2995,7 +2991,7 @@ public func kk_grouping_reduce(
     }
     var keys: [Int] = []
     var accumulators: [Int] = []
-    var keyIndex: [Int: Int] = [:]  // normalizedKey -> index (O(1) lookup per element)
+    var keyIndex: [RuntimeElementKey: Int] = [:]  // normalizedKey -> index (value-based lookup)
     for elem in grouping.sourceElements {
         var thrown = 0
         let key = runtimeInvokeCollectionLambda1(
@@ -3003,7 +2999,7 @@ public func kk_grouping_reduce(
             value: elem, outThrown: &thrown
         )
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
-        let normalizedKey = maybeUnbox(key)
+        let normalizedKey = RuntimeElementKey(value: maybeUnbox(key))
         if let idx = keyIndex[normalizedKey] {
             var thrown2 = 0
             accumulators[idx] = maybeUnbox(runtimeInvokeCollectionLambda2(
@@ -3014,7 +3010,7 @@ public func kk_grouping_reduce(
         } else {
             let newIdx = keys.count
             keyIndex[normalizedKey] = newIdx
-            keys.append(normalizedKey)
+            keys.append(normalizedKey.value)
             accumulators.append(elem)
         }
     }

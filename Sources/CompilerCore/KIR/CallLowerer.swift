@@ -624,6 +624,24 @@ final class CallLowerer {
                             continue
                         }
                         let ifaceSlot = Int64(objectLayout.itableSlots[interfaceSymbol] ?? 0)
+                        let interfaceTypeID = RuntimeTypeCheckToken.stableNominalTypeID(
+                            symbol: interfaceSymbol,
+                            sema: sema,
+                            interner: interner
+                        )
+                        let interfaceTypeExpr = arena.appendExpr(.intLiteral(interfaceTypeID), type: intType)
+                        instructions.append(.constValue(result: interfaceTypeExpr, value: .intLiteral(interfaceTypeID)))
+                        let ifaceSlotExpr = arena.appendExpr(.intLiteral(ifaceSlot), type: intType)
+                        instructions.append(.constValue(result: ifaceSlotExpr, value: .intLiteral(ifaceSlot)))
+                        let registerIfaceResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: interner.intern("kk_object_register_itable_iface"),
+                            arguments: [allocatedObj, interfaceTypeExpr, ifaceSlotExpr],
+                            result: registerIfaceResult,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
                         for (methodSymbol, methodSlotInt) in interfaceLayout.vtableSlots {
                             let methodSlot = Int64(methodSlotInt)
                             let implementationSymbol: SymbolID = {
@@ -644,9 +662,6 @@ final class CallLowerer {
                                 }
                                 return methodSymbol
                             }()
-
-                            let ifaceSlotExpr = arena.appendExpr(.intLiteral(ifaceSlot), type: intType)
-                            instructions.append(.constValue(result: ifaceSlotExpr, value: .intLiteral(ifaceSlot)))
                             let methodSlotExpr = arena.appendExpr(.intLiteral(methodSlot), type: intType)
                             instructions.append(.constValue(result: methodSlotExpr, value: .intLiteral(methodSlot)))
                             let methodFnExpr = arena.appendExpr(.symbolRef(implementationSymbol), type: intType)
@@ -1145,6 +1160,108 @@ final class CallLowerer {
             return finalArgs
         }
 
+        // kotlin.DeepRecursiveFunction { block } — expand the callable argument
+        // to (fnPtr, closureRaw) so runtime can retain both the entry point and
+        // the captured environment. Multi-capture lambdas are packed into a
+        // closure object, reusing the same adapter strategy as collection HOFs.
+        if externalLinkName == "kk_deep_recursive_function_new", loweredArguments.count == 1 {
+            let lambdaID = loweredArguments[0]
+            var loweredCallableID = lambdaID
+            var callableInfo = driver.ctx.callableValueInfo(for: lambdaID)
+
+            if let originalCallableInfo = callableInfo,
+               !originalCallableInfo.hasClosureParam,
+               !originalCallableInfo.captureArguments.isEmpty,
+               let adapted = makeCollectionHOFCallableAdapter(
+                    callableInfo: originalCallableInfo,
+                    loweredArgID: lambdaID,
+                    argExprID: originalArgs[0].expr,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner
+               )
+            {
+                let adaptedExpr = arena.appendExpr(
+                    .symbolRef(adapted.symbol),
+                    type: arena.exprType(lambdaID) ?? sema.types.anyType
+                )
+                instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adapted.symbol)))
+                loweredCallableID = adaptedExpr
+                callableInfo = adapted
+            }
+
+            var finalArgs: [KIRExprID] = [loweredCallableID]
+            if let callableInfo {
+                if callableInfo.captureArguments.count >= 2 {
+                    let intType = sema.types.intType
+                    let anyType = sema.types.anyType
+                    let kkObjectNew = interner.intern("kk_object_new")
+                    let kkArraySet = interner.intern("kk_array_set")
+
+                    let slotCountExpr = arena.appendExpr(
+                        .intLiteral(Int64(2 + callableInfo.captureArguments.count)),
+                        type: intType
+                    )
+                    instructions.append(.constValue(
+                        result: slotCountExpr,
+                        value: .intLiteral(Int64(2 + callableInfo.captureArguments.count))
+                    ))
+
+                    let classIDExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                    instructions.append(.constValue(result: classIDExpr, value: .intLiteral(0)))
+
+                    let closureObjExpr = arena.appendExpr(
+                        .temporary(Int32(clamping: arena.expressions.count)),
+                        type: anyType
+                    )
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: kkObjectNew,
+                        arguments: [slotCountExpr, classIDExpr],
+                        result: closureObjExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+
+                    for (captureIndex, captureArg) in callableInfo.captureArguments.enumerated() {
+                        let offsetExpr = arena.appendExpr(
+                            .intLiteral(Int64(captureIndex + 2)),
+                            type: intType
+                        )
+                        instructions.append(.constValue(
+                            result: offsetExpr,
+                            value: .intLiteral(Int64(captureIndex + 2))
+                        ))
+                        let unusedResult = arena.appendExpr(
+                            .temporary(Int32(clamping: arena.expressions.count)),
+                            type: anyType
+                        )
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: kkArraySet,
+                            arguments: [closureObjExpr, offsetExpr, captureArg],
+                            result: unusedResult,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                    }
+
+                    finalArgs.append(closureObjExpr)
+                } else if let closureRaw = callableInfo.captureArguments.first {
+                    finalArgs.append(closureRaw)
+                } else {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    finalArgs.append(zeroExpr)
+                }
+            } else {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArgs.append(zeroExpr)
+            }
+            return finalArgs
+        }
+
         if (externalLinkName == "kk_comparator_from_selector_primitive"
             || externalLinkName == "kk_comparator_from_selector_primitive_descending"),
            loweredArguments.count == 1
@@ -1298,7 +1415,16 @@ final class CallLowerer {
             symbol: driver.ctx.allocateSyntheticGeneratedSymbol(),
             type: sema.types.intType
         )
-        let valueParams: [KIRParameter] = functionType.params.enumerated().map { index, type in
+        // Build value parameters including the receiver (if present).
+        // For receiver-bearing function types like `DeepRecursiveScope<T,R>.(T) -> R`,
+        // the receiver is stored in `functionType.receiver` and must be forwarded
+        // as an explicit parameter so the adapter's ABI matches the runtime call site.
+        var allValueTypes: [TypeID] = []
+        if let receiverType = functionType.receiver {
+            allValueTypes.append(receiverType)
+        }
+        allValueTypes.append(contentsOf: functionType.params)
+        let valueParams: [KIRParameter] = allValueTypes.enumerated().map { index, type in
             KIRParameter(
                 symbol: SymbolID(rawValue: Int32(clamping: -710_000 - Int64(argExprID.rawValue) * 16 - Int64(index))),
                 type: type
@@ -1895,7 +2021,7 @@ final class CallLowerer {
         }
 
         func makeNameHintExpr(for type: TypeID) -> KIRExprID {
-            if let name = RuntimeTypeCheckToken.simpleName(of: type, sema: sema, interner: interner) {
+            if let name = RuntimeTypeCheckToken.qualifiedName(of: type, sema: sema, interner: interner) {
                 let internedName = interner.intern(name)
                 let nameHintExpr = arena.appendExpr(.stringLiteral(internedName), type: stringType)
                 instructions.append(.constValue(result: nameHintExpr, value: .stringLiteral(internedName)))

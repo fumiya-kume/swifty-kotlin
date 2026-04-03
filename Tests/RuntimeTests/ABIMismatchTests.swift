@@ -79,8 +79,10 @@ final class ABIMismatchTests: XCTestCase {
     func testExceptionFunctionCount() {
         // kk_throwable_new, kk_throwable_is_cancellation, kk_panic, kk_abort_unreachable,
         // kk_require, kk_check, kk_require_lazy, kk_check_lazy,
+        // kk_precondition_assert, kk_precondition_assert_lazy,
+        // kk_assertions_enabled, kk_assertions_set_enabled, kk_assertions_reset,
         // kk_error, kk_todo, kk_todo_noarg, kk_dispatch_error
-        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 22)
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 25)
     }
 
     func testTestFrameworkFunctionCount() {
@@ -89,7 +91,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 144)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 154)
     }
 
     func testRegexFunctionCount() {
@@ -135,7 +137,7 @@ final class ABIMismatchTests: XCTestCase {
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
         // The current spec surface tracks the shared coroutine ABI subset.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 90)
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 92)
     }
 
     func testBoxingFunctionCount() {
@@ -222,6 +224,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.atomicFunctions,
             RuntimeABISpec.threadLocalFunctions,
             RuntimeABISpec.securityFunctions,
+            RuntimeABISpec.databaseFunctions,
             RuntimeABISpec.parallelFunctions,
             RuntimeABISpec.bigIntegerFunctions,
             RuntimeABISpec.broadcastChannelFunctions,
@@ -346,6 +349,28 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters.count, 0)
     }
 
+    func testKKSuspendFunctionInvokeSignature() throws {
+        let spec = try requireSpec("kk_suspend_function_invoke")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 3)
+        XCTAssertEqual(spec.parameters[0].name, "functionRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "arg")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "outThrown")
+        XCTAssertEqual(spec.parameters[2].type, .nullableIntptrPointer)
+    }
+
+    func testKKSuspendFunctionInvokeZeroAritySignature() throws {
+        let spec = try requireSpec("kk_suspend_function_invoke_0")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 2)
+        XCTAssertEqual(spec.parameters[0].name, "functionRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "outThrown")
+        XCTAssertEqual(spec.parameters[1].type, .nullableIntptrPointer)
+    }
+
     func testKKMutableListAddAtSignature() throws {
         let spec = try requireSpec("kk_mutable_list_add_at")
         XCTAssertEqual(spec.returnType, .intptr)
@@ -453,6 +478,60 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters[1].type, .intptr)
         XCTAssertEqual(spec.parameters[2].name, "actionEnvPtr")
         XCTAssertEqual(spec.parameters[2].type, .intptr)
+    }
+
+    func testKKMutexCreateSignature() throws {
+        let spec = try requireSpec("kk_mutex_create")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 0)
+    }
+
+    func testKKMutexLockSignature() throws {
+        let spec = try requireSpec("kk_mutex_lock")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 2)
+        XCTAssertEqual(spec.parameters[0].name, "handle")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "continuation")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+    }
+
+    func testKKMutexUnlockSignature() throws {
+        let spec = try requireSpec("kk_mutex_unlock")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].name, "handle")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+    }
+
+    func testKKMutexTryLockSignature() throws {
+        let spec = try requireSpec("kk_mutex_tryLock")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].name, "handle")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+    }
+
+    func testKKMutexIsLockedSignature() throws {
+        let spec = try requireSpec("kk_mutex_isLocked")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].name, "handle")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+    }
+
+    func testKKMutexWithLockSignature() throws {
+        let spec = try requireSpec("kk_mutex_withLock")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 4)
+        XCTAssertEqual(spec.parameters[0].name, "handle")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "actionFnPtr")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "actionEnvPtr")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].name, "continuation")
+        XCTAssertEqual(spec.parameters[3].type, .intptr)
     }
 
     // MARK: - Collection HOF Scan/Reduce (STDLIB-526..530)

@@ -431,7 +431,7 @@ extension DataFlowSemaPhase {
             receiverType: rangeType,
             parameterTypes: [],
             returnType: iteratorType,
-            externalLinkName: "kk_range_iterator",
+            externalLinkName: "kk_uint_range_iterator",
             symbols: symbols,
             interner: interner
         )
@@ -462,6 +462,26 @@ extension DataFlowSemaPhase {
             parameterTypes: [],
             returnType: uintArrayType,
             externalLinkName: "kk_uint_range_toUIntArray",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "firstOrNull",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [],
+            returnType: types.makeNullable(types.uintType),
+            externalLinkName: "kk_uint_range_firstOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "lastOrNull",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [],
+            returnType: types.makeNullable(types.uintType),
+            externalLinkName: "kk_uint_range_lastOrNull",
             symbols: symbols,
             interner: interner
         )
@@ -608,6 +628,26 @@ extension DataFlowSemaPhase {
             parameterTypes: [],
             returnType: ulongArrayType,
             externalLinkName: "kk_ulong_range_toULongArray",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "firstOrNull",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [],
+            returnType: types.makeNullable(types.ulongType),
+            externalLinkName: "kk_ulong_range_firstOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "lastOrNull",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [],
+            returnType: types.makeNullable(types.ulongType),
+            externalLinkName: "kk_ulong_range_lastOrNull",
             symbols: symbols,
             interner: interner
         )
@@ -887,6 +927,28 @@ extension DataFlowSemaPhase {
             returnType: syntheticIteratorType(elementType: types.intType, symbols: symbols, types: types, interner: interner),
             externalLinkName: "kk_range_iterator",
             flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticIntRangeMethod(
+            named: "firstOrNull",
+            ownerSymbol: classSymbol,
+            classFQName: classFQName,
+            receiverType: intRangeType,
+            parameterTypes: [],
+            returnType: types.makeNullable(types.intType),
+            externalLinkName: "kk_range_firstOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticIntRangeMethod(
+            named: "lastOrNull",
+            ownerSymbol: classSymbol,
+            classFQName: classFQName,
+            receiverType: intRangeType,
+            parameterTypes: [],
+            returnType: types.makeNullable(types.intType),
+            externalLinkName: "kk_range_lastOrNull",
             symbols: symbols,
             interner: interner
         )

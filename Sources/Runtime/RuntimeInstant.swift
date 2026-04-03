@@ -33,7 +33,7 @@ final class RuntimeInstantBox {
             // so the remainder lands in [0, 999_999_999].
             carry = (nano64 - 999_999_999) / 1_000_000_000
         }
-        self.epochSeconds = epochSeconds + carry
+        self.epochSeconds = saturatingAdd(epochSeconds, carry)
         self.nanoOfSecond = Int32(nano64 - carry * 1_000_000_000)
     }
 }
@@ -67,8 +67,9 @@ private func saturatingAdd(_ a: Int64, _ b: Int64) -> Int64 {
 @_cdecl("kk_instant_now")
 public func kk_instant_now() -> Int {
     let now = Date()
-    let epochSec = Int64(now.timeIntervalSince1970)
-    let fracSec = now.timeIntervalSince1970 - Double(epochSec)
+    let interval = now.timeIntervalSince1970
+    let epochSec = Int64(interval)
+    let fracSec = interval - Double(epochSec)
     let nano = Int32(fracSec * 1_000_000_000)
     let box = RuntimeInstantBox(epochSeconds: epochSec, nanoOfSecond: nano)
     return registerRuntimeObject(box)
@@ -210,4 +211,27 @@ public func kk_instant_until(_ fromRaw: Int, _ toRaw: Int) -> Int {
     let totalNs = saturatingAdd(secNs, nanoDiff)
     let durationBox = RuntimeDurationBox(nanoseconds: totalNs)
     return registerRuntimeObject(durationBox)
+}
+
+// MARK: - elapsed() — Duration from Instant to now
+
+/// Returns the Duration from this Instant until the current wall-clock time.
+///
+/// Kotlin: instant.elapsed()
+@_cdecl("kk_instant_elapsed")
+public func kk_instant_elapsed(_ instantRaw: Int) -> Int {
+    guard let instantBox = runtimeInstantBox(from: instantRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_instant_elapsed received invalid Instant handle")
+    }
+    let now = Date()
+    let interval = now.timeIntervalSince1970
+    let nowEpochSec = Int64(interval)
+    let nowFracSec = interval - Double(nowEpochSec)
+    let nowNano = Int32(nowFracSec * 1_000_000_000)
+    let nowBox = RuntimeInstantBox(epochSeconds: nowEpochSec, nanoOfSecond: nowNano)
+    let secDiff = saturatingAdd(nowBox.epochSeconds, -instantBox.epochSeconds)
+    let nanoDiff = Int64(nowBox.nanoOfSecond) - Int64(instantBox.nanoOfSecond)
+    let secNs = saturatingMultiply(secDiff, 1_000_000_000)
+    let totalNs = saturatingAdd(secNs, nanoDiff)
+    return registerRuntimeObject(RuntimeDurationBox(nanoseconds: totalNs))
 }

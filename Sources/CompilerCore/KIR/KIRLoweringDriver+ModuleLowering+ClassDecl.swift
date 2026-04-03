@@ -40,6 +40,12 @@ extension KIRLoweringDriver {
             ownerSymbol: symbol,
             shared: shared
         ))
+        declIDs.append(contentsOf: synthesizeConstructorReflectionInitializer(
+            classDecl: classDecl,
+            ownerSymbol: symbol,
+            shared: shared,
+            compilationCtx: compilationCtx
+        ))
 
         let ctorFQName = (sema.symbols.symbol(symbol)?.fqName ?? []) + [compilationCtx.interner.intern("<init>")]
         let ctorSymbols = sema.symbols.lookupAll(
@@ -96,6 +102,12 @@ extension KIRLoweringDriver {
                         compilationCtx: compilationCtx
                     ))
                 }
+                declIDs.append(contentsOf: synthesizeConstructorReflectionInitializer(
+                    classDecl: nestedClass,
+                    ownerSymbol: nestedSymbol,
+                    shared: shared,
+                    compilationCtx: compilationCtx
+                ))
                 // Recurse into further nested classes.
                 lowerNestedClassConstructors(
                     nestedClasses: nestedClass.nestedClasses,
