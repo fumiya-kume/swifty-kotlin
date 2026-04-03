@@ -2,6 +2,32 @@ import Foundation
 
 // MARK: - Comparator from selector (STDLIB-175)
 
+private final class RuntimePrimitiveComparatorBox {
+    let fnPtr: Int
+    let closureRaw: Int
+    let kind: RuntimePrimitiveCompareKind
+
+    init(fnPtr: Int, closureRaw: Int, kind: RuntimePrimitiveCompareKind) {
+        self.fnPtr = fnPtr
+        self.closureRaw = closureRaw
+        self.kind = kind
+    }
+}
+
+@inline(__always)
+private func runtimePrimitiveCompareKind(from raw: Int32) -> RuntimePrimitiveCompareKind {
+    switch raw {
+    case 1: return .long
+    case 2: return .uint
+    case 3: return .ulong
+    case 4: return .boolean
+    case 5: return .char
+    case 6: return .float
+    case 7: return .double
+    default: return .int
+    }
+}
+
 /// Creates a comparator closure from a selector. Returns closure_raw to be paired with
 /// kk_comparator_from_selector_trampoline (ascending) or kk_comparator_from_selector_descending_trampoline.
 @_cdecl("kk_comparator_from_selector")
@@ -40,6 +66,56 @@ public func kk_comparator_from_selector_trampoline(
         return 0
     }
     return runtimeCompareValues(keyA, keyB)
+}
+
+@_cdecl("kk_comparator_from_selector_primitive")
+public func kk_comparator_from_selector_primitive(_ selectorFn: Int, _ selectorClosure: Int, _ kindRaw: Int32) -> Int {
+    let box = RuntimePrimitiveComparatorBox(
+        fnPtr: selectorFn,
+        closureRaw: selectorClosure,
+        kind: runtimePrimitiveCompareKind(from: kindRaw)
+    )
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_comparator_from_selector_primitive_trampoline")
+public func kk_comparator_from_selector_primitive_trampoline(
+    _ closureRaw: Int,
+    _ a: Int,
+    _ b: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let box = tryCast(ptr, to: RuntimePrimitiveComparatorBox.self)
+    else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator closure")
+        return 0
+    }
+    var thrown = 0
+    let keyA = runtimeInvokeCollectionLambda1(fnPtr: box.fnPtr, closureRaw: box.closureRaw, value: a, outThrown: &thrown)
+    if thrown != 0 {
+        outThrown?.pointee = thrown
+        return 0
+    }
+    let keyB = runtimeInvokeCollectionLambda1(fnPtr: box.fnPtr, closureRaw: box.closureRaw, value: b, outThrown: &thrown)
+    if thrown != 0 {
+        outThrown?.pointee = thrown
+        return 0
+    }
+    return runtimeComparePrimitiveValues(keyA, keyB, kind: box.kind)
+}
+
+@_cdecl("kk_comparator_from_selector_primitive_descending_trampoline")
+public func kk_comparator_from_selector_primitive_descending_trampoline(
+    _ closureRaw: Int,
+    _ a: Int,
+    _ b: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let result = kk_comparator_from_selector_primitive_trampoline(closureRaw, a, b, outThrown)
+    if outThrown?.pointee != 0 { return 0 }
+    return result == 0 ? 0 : -result
 }
 
 /// Trampoline for compareByDescending: negates the comparison result.
@@ -467,13 +543,73 @@ public func kk_comparator_reversed_trampoline(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
-          let pairBox = tryCast(ptr, to: RuntimePairBox.self)
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) })
     else {
         // Return 0 instead of panic for invalid/null comparator closure
         outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator closure")
         return 0
     }
+
+    if let primitiveBox = tryCast(ptr, to: RuntimePrimitiveComparatorBox.self) {
+        var thrown = 0
+        let keyA = runtimeInvokeCollectionLambda1(
+            fnPtr: primitiveBox.fnPtr,
+            closureRaw: primitiveBox.closureRaw,
+            value: a,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        let keyB = runtimeInvokeCollectionLambda1(
+            fnPtr: primitiveBox.fnPtr,
+            closureRaw: primitiveBox.closureRaw,
+            value: b,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        let result = runtimeComparePrimitiveValues(keyA, keyB, kind: primitiveBox.kind)
+        return result == 0 ? 0 : -result
+    }
+
+    guard let pairBox = tryCast(ptr, to: RuntimePairBox.self) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator closure")
+        return 0
+    }
+
+    if let primitivePtr = UnsafeMutableRawPointer(bitPattern: pairBox.second),
+       runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: primitivePtr)) }),
+       let primitiveBox = tryCast(primitivePtr, to: RuntimePrimitiveComparatorBox.self)
+    {
+        var thrown = 0
+        let keyA = runtimeInvokeCollectionLambda1(
+            fnPtr: primitiveBox.fnPtr,
+            closureRaw: primitiveBox.closureRaw,
+            value: a,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        let keyB = runtimeInvokeCollectionLambda1(
+            fnPtr: primitiveBox.fnPtr,
+            closureRaw: primitiveBox.closureRaw,
+            value: b,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        let result = runtimeComparePrimitiveValues(keyA, keyB, kind: primitiveBox.kind)
+        return result == 0 ? 0 : -result
+    }
+
     var thrown = 0
     let result = runtimeInvokeCollectionLambda2(fnPtr: pairBox.first, closureRaw: pairBox.second, lhs: a, rhs: b, outThrown: &thrown)
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }

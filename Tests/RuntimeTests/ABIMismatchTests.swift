@@ -399,6 +399,75 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
     }
 
+    func testKKComparatorFromSelectorPrimitiveSignature() throws {
+        let spec = try requireSpec("kk_comparator_from_selector_primitive")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 3)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].type, .int32)
+    }
+
+    func testKKListSortedPrimitiveSignature() throws {
+        let spec = try requireSpec("kk_list_sorted_primitive")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 2)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .int32)
+    }
+
+    func testKKListSortedByPrimitiveSignature() throws {
+        let spec = try requireSpec("kk_list_sortedBy_primitive")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 5)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].type, .int32)
+        XCTAssertEqual(spec.parameters[4].type, .nullableIntptrPointer)
+    }
+
+    func testKKListSortedByDescendingPrimitiveSignature() throws {
+        let spec = try requireSpec("kk_list_sortedByDescending_primitive")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 5)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].type, .int32)
+        XCTAssertEqual(spec.parameters[4].type, .nullableIntptrPointer)
+    }
+
+    func testKKMutableListSortPrimitiveSignature() throws {
+        let spec = try requireSpec("kk_mutable_list_sort_primitive")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 2)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .int32)
+    }
+
+    func testKKMutableListSortByPrimitiveSignature() throws {
+        let spec = try requireSpec("kk_mutable_list_sortBy_primitive")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 5)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].type, .int32)
+        XCTAssertEqual(spec.parameters[4].type, .nullableIntptrPointer)
+    }
+
+    func testKKMutableListSortByDescendingPrimitiveSignature() throws {
+        let spec = try requireSpec("kk_mutable_list_sortByDescending_primitive")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 5)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].type, .int32)
+        XCTAssertEqual(spec.parameters[4].type, .nullableIntptrPointer)
+    }
+
     func testKKLockWithLockSignature() throws {
         let spec = try requireSpec("kk_lock_withLock")
         XCTAssertEqual(spec.returnType, .intptr)

@@ -27,6 +27,18 @@ private let nullsFirstTrampoline: @convention(c) (Int, Int, Int, UnsafeMutablePo
     kk_comparator_nulls_first_trampoline(closureRaw, a, b, outThrown)
 }
 
+private let primitiveComparatorTrampoline: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { closureRaw, a, b, outThrown in
+    kk_comparator_from_selector_primitive_trampoline(closureRaw, a, b, outThrown)
+}
+
+private let selectorComparatorTrampoline: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { closureRaw, a, b, outThrown in
+    kk_comparator_from_selector_trampoline(closureRaw, a, b, outThrown)
+}
+
+private let primitiveComparatorDescendingTrampoline: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { closureRaw, a, b, outThrown in
+    kk_comparator_from_selector_primitive_descending_trampoline(closureRaw, a, b, outThrown)
+}
+
 // MARK: - Test lambdas
 
 private let selectIdentity: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
@@ -74,6 +86,10 @@ private func selectorPtr(_ fn: @convention(c) (Int, Int, UnsafeMutablePointer<In
 }
 
 private func comparatorPtr(_ fn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int) -> Int {
+    unsafeBitCast(fn, to: Int.self)
+}
+
+private func primitiveComparatorPtr(_ fn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int) -> Int {
     unsafeBitCast(fn, to: Int.self)
 }
 
@@ -131,6 +147,28 @@ final class RuntimeComparatorTests: XCTestCase {
         // equal stays zero
         let result3 = kk_comparator_from_selector_descending_trampoline(closureRaw, 5, 5, &thrown)
         XCTAssertEqual(result3, 0)
+    }
+
+    func testPrimitiveComparatorFromSelectorAscending() {
+        let closureRaw = kk_comparator_from_selector_primitive(selectorPtr(selectIdentity), 0, 0)
+        let result = kk_comparator_from_selector_primitive_trampoline(closureRaw, 3, 7, nil)
+        XCTAssertLessThan(result, 0)
+        XCTAssertGreaterThan(kk_comparator_from_selector_primitive_trampoline(closureRaw, 7, 3, nil), 0)
+        XCTAssertEqual(kk_comparator_from_selector_primitive_trampoline(closureRaw, 5, 5, nil), 0)
+    }
+
+    func testPrimitiveComparatorFromSelectorDescending() {
+        let closureRaw = kk_comparator_from_selector_primitive(selectorPtr(selectIdentity), 0, 0)
+        var thrown = 0
+        XCTAssertGreaterThan(
+            kk_comparator_from_selector_primitive_descending_trampoline(closureRaw, 3, 7, &thrown),
+            0
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertLessThan(
+            kk_comparator_from_selector_primitive_descending_trampoline(closureRaw, 7, 3, &thrown),
+            0
+        )
     }
 
     // MARK: - thenBy
@@ -208,6 +246,18 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertLessThan(result2, 0)
     }
 
+    func testPrimitiveComparatorReversed() {
+        let primitiveClosureRaw = kk_comparator_from_selector_primitive(selectorPtr(selectIdentity), 0, 0)
+        let closureRaw = kk_comparator_reversed(
+            primitiveComparatorPtr(selectorComparatorTrampoline),
+            primitiveClosureRaw
+        )
+
+        XCTAssertGreaterThan(kk_comparator_reversed_trampoline(closureRaw, 3, 7, nil), 0)
+        XCTAssertLessThan(kk_comparator_reversed_trampoline(closureRaw, 7, 3, nil), 0)
+        XCTAssertEqual(kk_comparator_reversed_trampoline(closureRaw, 5, 5, nil), 0)
+    }
+
     // MARK: - naturalOrder / reverseOrder
 
     func testNaturalOrderTrampoline() {
@@ -235,6 +285,61 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertEqual(listElements(sorted), [1, 3, 4, 5, 8])
     }
 
+    func testPrimitiveListSortedAscending() {
+        let source = makeList([5, 3, 8, 1, 4])
+        let sorted = kk_list_sorted_primitive(source, 0)
+        XCTAssertEqual(listElements(sorted), [1, 3, 4, 5, 8])
+    }
+
+    func testPrimitiveListSortedDescending() {
+        let source = makeList([5, 3, 8, 1, 4])
+        let sorted = kk_list_sortedDescending_primitive(source, 0)
+        XCTAssertEqual(listElements(sorted), [8, 5, 4, 3, 1])
+    }
+
+    func testPrimitiveListSortedByAscending() {
+        let source = makeList([22, 12, 21, 11])
+        let sorted = kk_list_sortedBy_primitive(source, selectorPtr(selectModTen), 0, 0, nil)
+        XCTAssertEqual(listElements(sorted), [21, 11, 22, 12])
+    }
+
+    func testPrimitiveListSortedByDescending() {
+        let source = makeList([22, 12, 21, 11])
+        let sorted = kk_list_sortedByDescending_primitive(source, selectorPtr(selectModTen), 0, 0, nil)
+        XCTAssertEqual(listElements(sorted), [22, 12, 21, 11])
+    }
+
+    func testPrimitiveListSortedStability() {
+        let source = makeList([2, 1, 2, 1, 2])
+        let sorted = kk_list_sorted_primitive(source, 0)
+        XCTAssertEqual(listElements(sorted), [1, 1, 2, 2, 2])
+    }
+
+    func testPrimitiveListSortedFloatAndDouble() {
+        let floatValues = [
+            kk_box_float(Int(truncatingIfNeeded: Float(3.0).bitPattern)),
+            kk_box_float(Int(truncatingIfNeeded: Float(1.5).bitPattern)),
+            kk_box_float(Int(truncatingIfNeeded: Float(2.0).bitPattern)),
+        ]
+        let doubleValues = [
+            kk_box_double(Int(truncatingIfNeeded: Double(3.0).bitPattern)),
+            kk_box_double(Int(truncatingIfNeeded: Double(1.5).bitPattern)),
+            kk_box_double(Int(truncatingIfNeeded: Double(2.0).bitPattern)),
+        ]
+
+        let floatSorted = kk_list_sorted_primitive(makeList(floatValues), 6)
+        let doubleSorted = kk_list_sorted_primitive(makeList(doubleValues), 7)
+
+        XCTAssertEqual(
+            listElements(floatSorted).map { kk_unbox_float($0) },
+            [Float(1.5).bitPattern, Float(2.0).bitPattern, Float(3.0).bitPattern].map { Int(truncatingIfNeeded: $0) }
+        )
+        XCTAssertEqual(
+            listElements(doubleSorted).map { kk_unbox_double($0) },
+            [Double(1.5).bitPattern, Double(2.0).bitPattern, Double(3.0).bitPattern].map { Int(truncatingIfNeeded: $0) }
+        )
+    }
+
     func testSortedWithReversedComparator() {
         let source = makeList([5, 3, 8, 1, 4])
         let sorted = kk_list_sortedWith(
@@ -244,6 +349,30 @@ final class RuntimeComparatorTests: XCTestCase {
             nil
         )
         XCTAssertEqual(listElements(sorted), [8, 5, 4, 3, 1])
+    }
+
+    func testMutableListPrimitiveSortAscending() {
+        let source = makeList([5, 3, 8, 1, 4])
+        XCTAssertEqual(kk_mutable_list_sort_primitive(source, 0), 0)
+        XCTAssertEqual(listElements(source), [1, 3, 4, 5, 8])
+    }
+
+    func testMutableListPrimitiveSortDescending() {
+        let source = makeList([5, 3, 8, 1, 4])
+        XCTAssertEqual(kk_mutable_list_sortDescending_primitive(source, 0), 0)
+        XCTAssertEqual(listElements(source), [8, 5, 4, 3, 1])
+    }
+
+    func testMutableListPrimitiveSortByAscending() {
+        let source = makeList([22, 12, 21, 11])
+        XCTAssertEqual(kk_mutable_list_sortBy_primitive(source, selectorPtr(selectModTen), 0, 0, nil), 0)
+        XCTAssertEqual(listElements(source), [21, 11, 22, 12])
+    }
+
+    func testMutableListPrimitiveSortByDescending() {
+        let source = makeList([22, 12, 21, 11])
+        XCTAssertEqual(kk_mutable_list_sortByDescending_primitive(source, selectorPtr(selectModTen), 0, 0, nil), 0)
+        XCTAssertEqual(listElements(source), [22, 12, 21, 11])
     }
 
     func testSortedWithThenByComparator() {

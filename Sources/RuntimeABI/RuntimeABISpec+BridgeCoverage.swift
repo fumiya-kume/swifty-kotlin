@@ -48,6 +48,8 @@ private let listClosureBridgeNames = [
     "kk_list_reduceIndexed",
     "kk_list_reduceIndexedOrNull",
     "kk_list_runningReduceIndexed",
+    "kk_list_sortedBy_primitive",
+    "kk_list_sortedByDescending_primitive",
 ]
 
 private let listClosureBridgeFunctions = listClosureBridgeNames.map {
@@ -148,19 +150,47 @@ private let mapBridgeFunctions = [
 private let mutableListBridgeFunctions: [RuntimeABIFunctionSpec] =
     [bridgeSpec("kk_mutable_list_sort", section: "Collection", params: ["listRaw"])]
     + [
+        "kk_mutable_list_sort_primitive",
         "kk_mutable_list_sortBy",
+        "kk_mutable_list_sortBy_primitive",
         "kk_mutable_list_sortByDescending",
+        "kk_mutable_list_sortByDescending_primitive",
+        "kk_mutable_list_sortDescending_primitive",
     ].map {
-        bridgeSpec(
-            $0,
-            section: "Collection",
-            typedParams: [
-                ("listRaw", .intptr),
-                ("fnPtr", .intptr),
-                ("closureRaw", .intptr),
-                ("outThrown", .nullableIntptrPointer),
-            ]
-        )
+        switch $0 {
+        case "kk_mutable_list_sort_primitive", "kk_mutable_list_sortDescending_primitive":
+            return bridgeSpec(
+                $0,
+                section: "Collection",
+                typedParams: [
+                    ("listRaw", .intptr),
+                    ("kindRaw", .int32),
+                ]
+            )
+        case "kk_mutable_list_sortBy_primitive", "kk_mutable_list_sortByDescending_primitive":
+            return bridgeSpec(
+                $0,
+                section: "Collection",
+                typedParams: [
+                    ("listRaw", .intptr),
+                    ("fnPtr", .intptr),
+                    ("closureRaw", .intptr),
+                    ("kindRaw", .int32),
+                    ("outThrown", .nullableIntptrPointer),
+                ]
+            )
+        default:
+            return bridgeSpec(
+                $0,
+                section: "Collection",
+                typedParams: [
+                    ("listRaw", .intptr),
+                    ("fnPtr", .intptr),
+                    ("closureRaw", .intptr),
+                    ("outThrown", .nullableIntptrPointer),
+                ]
+            )
+        }
     }
 
 private let sequenceAndSetBridgeFunctions: [RuntimeABIFunctionSpec] = [

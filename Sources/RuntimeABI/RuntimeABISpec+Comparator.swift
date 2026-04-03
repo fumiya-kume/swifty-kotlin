@@ -19,6 +19,16 @@ public extension RuntimeABISpec {
             section: "Comparator"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_comparator_from_selector_primitive",
+            parameters: [
+                RuntimeABIParameter(name: "selectorFn", type: .intptr),
+                RuntimeABIParameter(name: "selectorClosure", type: .intptr),
+                RuntimeABIParameter(name: "kindRaw", type: .int32),
+            ],
+            returnType: .intptr,
+            section: "Comparator"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_comparator_from_selector_trampoline",
             parameters: [
                 RuntimeABIParameter(name: "closureRaw", type: .intptr),
@@ -31,6 +41,28 @@ public extension RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: "kk_comparator_from_selector_descending_trampoline",
+            parameters: [
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Comparator"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_comparator_from_selector_primitive_trampoline",
+            parameters: [
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Comparator"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_comparator_from_selector_primitive_descending_trampoline",
             parameters: [
                 RuntimeABIParameter(name: "closureRaw", type: .intptr),
                 RuntimeABIParameter(name: "a", type: .intptr),

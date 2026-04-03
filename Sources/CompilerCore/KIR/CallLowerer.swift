@@ -1339,6 +1339,82 @@ final class CallLowerer {
             return finalArgs
         }
 
+        if (externalLinkName == "kk_comparator_from_selector_primitive"
+            || externalLinkName == "kk_comparator_from_selector_primitive_descending"),
+           loweredArguments.count == 1
+        {
+            var lambdaID = loweredArguments[0]
+            var resolvedCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)
+            if let callableInfo = resolvedCallableInfo,
+               !callableInfo.hasClosureParam,
+               let adaptedInfo = makeClosureThunkCallableAdapter(
+                   callableInfo: callableInfo,
+                   loweredArgID: lambdaID,
+                   argExprID: originalArgs[0].expr,
+                   sema: sema,
+                   arena: arena,
+                   interner: interner,
+                   instructions: &instructions
+                )
+            {
+                let adaptedExpr = arena.appendExpr(
+                    .symbolRef(adaptedInfo.symbol),
+                    type: arena.exprType(lambdaID) ?? sema.types.anyType
+                )
+                instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
+                lambdaID = adaptedExpr
+                resolvedCallableInfo = adaptedInfo
+            }
+
+            var finalArgs: [KIRExprID] = []
+            if let callableInfo = resolvedCallableInfo {
+                let fnPtrExpr = arena.appendExpr(.symbolRef(callableInfo.symbol), type: sema.types.intType)
+                instructions.append(.constValue(result: fnPtrExpr, value: .symbolRef(callableInfo.symbol)))
+                finalArgs.append(fnPtrExpr)
+            } else {
+                finalArgs.append(lambdaID)
+            }
+            if let callableInfo = resolvedCallableInfo,
+               let closureRaw = callableInfo.captureArguments.first
+            {
+                finalArgs.append(closureRaw)
+            } else {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArgs.append(zeroExpr)
+            }
+            let selectorType = sema.bindings.exprType(for: originalArgs[0].expr) ?? sema.types.anyType
+            let primitiveKindRaw: Int32 = switch sema.types.kind(of: sema.types.makeNonNullable(selectorType)) {
+            case let .functionType(functionType):
+                switch sema.types.kind(of: sema.types.makeNonNullable(functionType.returnType)) {
+                case .primitive(.int, _), .primitive(.ubyte, _), .primitive(.ushort, _):
+                    0
+                case .primitive(.long, _):
+                    1
+                case .primitive(.uint, _):
+                    2
+                case .primitive(.ulong, _):
+                    3
+                case .primitive(.boolean, _):
+                    4
+                case .primitive(.char, _):
+                    5
+                case .primitive(.float, _):
+                    6
+                case .primitive(.double, _):
+                    7
+                default:
+                    0
+                }
+            default:
+                0
+            }
+            let kindExpr = arena.appendExpr(.intLiteral(Int64(primitiveKindRaw)), type: sema.types.intType)
+            instructions.append(.constValue(result: kindExpr, value: .intLiteral(Int64(primitiveKindRaw))))
+            finalArgs.append(kindExpr)
+            return finalArgs
+        }
+
         // compareValuesBy: expand selector lambda args to (fnPtr, closureRaw) pairs.
         // kk_compareValuesBy1(a, b, selector) → (a, b, selectorFn, selectorClosureRaw)
         // kk_compareValuesBy(a, b, sel1, sel2) → (a, b, sel1Fn, sel1Closure, sel2Fn, sel2Closure)

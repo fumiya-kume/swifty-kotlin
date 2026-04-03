@@ -10,6 +10,40 @@ extension CallLowerer {
     static let unresolvedCoroutineHandleMemberNames: Set<String> = ["await", "join", "cancel", "isActive", "isCompleted", "isCancelled"]
     private static let unresolvedChannelMemberNames: Set<String> = ["send", "receive", "close", "isClosedForReceive", "isClosedForSend"]
 
+    private enum PrimitiveCompareABIKind: Int32 {
+        case int = 0
+        case long = 1
+        case uint = 2
+        case ulong = 3
+        case boolean = 4
+        case char = 5
+        case float = 6
+        case double = 7
+    }
+
+    private func primitiveCompareABIKind(for type: TypeID, sema: SemaModule) -> PrimitiveCompareABIKind? {
+        switch sema.types.kind(of: sema.types.makeNonNullable(type)) {
+        case .primitive(.int, _), .primitive(.ubyte, _), .primitive(.ushort, _):
+            return .int
+        case .primitive(.long, _):
+            return .long
+        case .primitive(.uint, _):
+            return .uint
+        case .primitive(.ulong, _):
+            return .ulong
+        case .primitive(.boolean, _):
+            return .boolean
+        case .primitive(.char, _):
+            return .char
+        case .primitive(.float, _):
+            return .float
+        case .primitive(.double, _):
+            return .double
+        default:
+            return nil
+        }
+    }
+
     func anyFallbackTag(for type: TypeID, sema: SemaModule) -> Int64 {
         switch sema.types.kind(of: sema.types.makeNonNullable(type)) {
         case .primitive(.boolean, _):
@@ -1115,6 +1149,41 @@ extension CallLowerer {
         return knownNames.isConcreteListLikeSymbol(symbol)
     }
 
+    private func collectionElementPrimitiveCompareKind(
+        of receiverType: TypeID,
+        sema: SemaModule
+    ) -> PrimitiveCompareABIKind? {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let firstArg = classType.args.first
+        else {
+            return nil
+        }
+        let elementType: TypeID = switch firstArg {
+        case let .invariant(type), let .out(type), let .in(type):
+            type
+        case .star:
+            sema.types.anyType
+        }
+        return primitiveCompareABIKind(for: elementType, sema: sema)
+    }
+
+    private func collectionSelectorPrimitiveCompareKind(
+        of selectorExpr: ExprID?,
+        sema: SemaModule
+    ) -> PrimitiveCompareABIKind? {
+        guard let selectorExpr,
+              let selectorType = sema.bindings.exprTypes[selectorExpr]
+        else {
+            return nil
+        }
+        switch sema.types.kind(of: sema.types.makeNonNullable(selectorType)) {
+        case let .functionType(functionType):
+            return primitiveCompareABIKind(for: functionType.returnType, sema: sema)
+        default:
+            return nil
+        }
+    }
+
     private func isMutableListLikeType(
         _ receiverType: TypeID,
         sema: SemaModule,
@@ -1349,10 +1418,19 @@ extension CallLowerer {
             if isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner),
                !isComparatorLambdaArg
             {
+                let sortedWithArguments = adaptComparatorBackedCollectionArguments(
+                    loweredCallee: interner.intern("kk_list_sortedWith"),
+                    finalArguments: [loweredReceiverID] + normalizedArgIDs,
+                    sourceArgExprs: args.map(\.expr),
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern("kk_list_sortedWith"),
-                    arguments: [loweredReceiverID] + normalizedArgIDs,
+                    arguments: sortedWithArguments,
                     result: result,
                     canThrow: true,
                     thrownResult: arena.appendExpr(
@@ -2971,11 +3049,12 @@ extension CallLowerer {
             }
             if isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
                 let calleeStr = interner.resolve(calleeName)
+                let primitiveSelectorKind = collectionSelectorPrimitiveCompareKind(of: args.first?.expr, sema: sema)
                 let runtimeCallee: String? = switch calleeStr {
                 case "sortedBy":
-                    "kk_list_sortedBy"
+                    primitiveSelectorKind != nil ? "kk_list_sortedBy_primitive" : "kk_list_sortedBy"
                 case "sortedByDescending":
-                    "kk_list_sortedByDescending"
+                    primitiveSelectorKind != nil ? "kk_list_sortedByDescending_primitive" : "kk_list_sortedByDescending"
                 case "sortedWith":
                     "kk_list_sortedWith"
                 case "maxOf":
@@ -3016,10 +3095,18 @@ extension CallLowerer {
                     nil
                 }
                 if let runtimeCallee {
+                    var callArguments = [loweredReceiverID] + normalizedArgIDs
+                    if let primitiveSelectorKind,
+                       runtimeCallee == "kk_list_sortedBy_primitive" || runtimeCallee == "kk_list_sortedByDescending_primitive"
+                    {
+                        let kindExpr = arena.appendExpr(.intLiteral(Int64(primitiveSelectorKind.rawValue)), type: sema.types.intType)
+                        instructions.append(.constValue(result: kindExpr, value: .intLiteral(Int64(primitiveSelectorKind.rawValue))))
+                        callArguments.append(kindExpr)
+                    }
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
-                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        arguments: callArguments,
                         result: result,
                         canThrow: false,
                         thrownResult: nil
@@ -3660,12 +3747,45 @@ extension CallLowerer {
         interner: StringInterner,
         instructions: [KIRInstruction]
     ) -> String? {
+        func primitiveCompareKind(
+            for comparatorExprID: ExprID?,
+            loweredComparatorID: KIRExprID
+        ) -> PrimitiveCompareABIKind? {
+            func comparatorElementType(from type: TypeID) -> TypeID? {
+                let nonNullType = sema.types.makeNonNullable(type)
+                guard case let .classType(classType) = sema.types.kind(of: nonNullType),
+                      let symbol = sema.symbols.symbol(classType.classSymbol),
+                      interner.resolve(symbol.name) == "Comparator",
+                      let firstArg = classType.args.first
+                else {
+                    return nil
+                }
+                switch firstArg {
+                case let .invariant(type), let .out(type), let .in(type):
+                    return type
+                case .star:
+                    return sema.types.anyType
+                }
+            }
+
+            if let comparatorExprID,
+               let exprType = sema.bindings.exprType(for: comparatorExprID),
+               let elementType = comparatorElementType(from: exprType),
+               let kind = primitiveCompareABIKind(for: elementType, sema: sema)
+            {
+                return kind
+            }
+            return nil
+        }
+
         func trampolineName(for externalLinkName: String) -> String? {
             switch externalLinkName {
             case "kk_comparator_from_selector":
                 return "kk_comparator_from_selector_trampoline"
             case "kk_comparator_from_selector_descending":
                 return "kk_comparator_from_selector_descending_trampoline"
+            case "kk_comparator_from_selector_primitive":
+                return "kk_comparator_from_selector_primitive_trampoline"
             case "kk_comparator_from_multi_selectors",
                  "kk_comparator_from_multi_selectors3":
                 return "kk_comparator_from_multi_selectors_trampoline"
@@ -3699,8 +3819,12 @@ extension CallLowerer {
             switch interner.resolve(symbol.name) {
             case "compareBy":
                 return "kk_comparator_from_selector_trampoline"
+            case "compareByPrimitive":
+                return "kk_comparator_from_selector_primitive_trampoline"
             case "compareByDescending":
                 return "kk_comparator_from_selector_descending_trampoline"
+            case "compareByDescendingPrimitive":
+                return "kk_comparator_from_selector_primitive_descending_trampoline"
             case "thenBy":
                 return "kk_comparator_then_by_trampoline"
             case "thenByDescending":
@@ -3727,6 +3851,33 @@ extension CallLowerer {
         if let comparatorExprID,
            let chosenCallee = sema.bindings.callBinding(for: comparatorExprID)?.chosenCallee
         {
+            if let primitiveKind = primitiveCompareKind(
+                for: comparatorExprID,
+                loweredComparatorID: loweredComparatorID
+            ) {
+                if let symbol = sema.symbols.symbol(chosenCallee) {
+                    switch interner.resolve(symbol.name) {
+                    case "compareBy":
+                        return "kk_comparator_from_selector_primitive_trampoline"
+                    case "compareByDescending":
+                        return "kk_comparator_from_selector_primitive_descending_trampoline"
+                    default:
+                        break
+                    }
+                }
+                if let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee) {
+                    switch externalLinkName {
+                    case "kk_comparator_from_selector":
+                        _ = primitiveKind
+                        return "kk_comparator_from_selector_primitive_trampoline"
+                    case "kk_comparator_from_selector_descending":
+                        _ = primitiveKind
+                        return "kk_comparator_from_selector_primitive_descending_trampoline"
+                    default:
+                        break
+                    }
+                }
+            }
             if let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
                let trampolineName = trampolineName(for: externalLinkName)
             {
@@ -4579,7 +4730,7 @@ extension CallLowerer {
         )
 
         let hasHOFLambdaArg = sourceArgExprs.contains { sema.bindings.isCollectionHOFLambdaExpr($0) }
-        let loweredCallee = loweredMemberCalleeName(
+        var loweredCallee = loweredMemberCalleeName(
             chosenCallee: chosenCallee,
             fallback: calleeName,
             receiverExpr: receiver.expr,
@@ -4588,6 +4739,25 @@ extension CallLowerer {
             sema: sema,
             interner: interner
         )
+        if let primitiveSelectorKind = collectionSelectorPrimitiveCompareKind(of: sourceArgExprs.first, sema: sema),
+           finalArguments.count >= 3
+        {
+            switch loweredCallee {
+            case interner.intern("kk_mutable_list_sortBy"):
+                loweredCallee = interner.intern("kk_mutable_list_sortBy_primitive")
+            case interner.intern("kk_mutable_list_sortByDescending"):
+                loweredCallee = interner.intern("kk_mutable_list_sortByDescending_primitive")
+            default:
+                break
+            }
+            if loweredCallee == interner.intern("kk_mutable_list_sortBy_primitive")
+                || loweredCallee == interner.intern("kk_mutable_list_sortByDescending_primitive")
+            {
+                let kindExpr = arena.appendExpr(.intLiteral(Int64(primitiveSelectorKind.rawValue)), type: sema.types.intType)
+                instructions.append(.constValue(result: kindExpr, value: .intLiteral(Int64(primitiveSelectorKind.rawValue))))
+                finalArguments.append(kindExpr)
+            }
+        }
         finalArguments = adaptComparatorBackedCollectionArguments(
             loweredCallee: loweredCallee,
             finalArguments: finalArguments,
@@ -4597,11 +4767,30 @@ extension CallLowerer {
             interner: interner,
             instructions: &instructions
         )
+        if let primitiveKind = collectionElementPrimitiveCompareKind(
+            of: sema.bindings.exprTypes[receiver.expr] ?? sema.types.anyType,
+            sema: sema
+        ) {
+            let primitiveSortCallees: Set<InternedString> = [
+                interner.intern("kk_list_sorted_primitive"),
+                interner.intern("kk_list_sortedDescending_primitive"),
+                interner.intern("kk_mutable_list_sort_primitive"),
+                interner.intern("kk_mutable_list_sortDescending_primitive"),
+            ]
+            if primitiveSortCallees.contains(loweredCallee),
+               finalArguments.count == 1
+            {
+                let kindExpr = arena.appendExpr(.intLiteral(Int64(primitiveKind.rawValue)), type: sema.types.intType)
+                instructions.append(.constValue(result: kindExpr, value: .intLiteral(Int64(primitiveKind.rawValue))))
+                finalArguments.append(kindExpr)
+            }
+        }
         let comparatorOnlyCallees: Set<InternedString> = [
             interner.intern("kk_list_maxWith"),
             interner.intern("kk_list_maxWithOrNull"),
             interner.intern("kk_list_minWith"),
             interner.intern("kk_list_minWithOrNull"),
+            interner.intern("kk_list_sortedWith"),
         ]
         if comparatorOnlyCallees.contains(loweredCallee),
            finalArguments.count == 2,
@@ -5528,8 +5717,14 @@ extension CallLowerer {
         if isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
             switch memberName {
             case "sorted":
+                if collectionElementPrimitiveCompareKind(of: nonNullReceiverType, sema: sema) != nil {
+                    return interner.intern("kk_list_sorted_primitive")
+                }
                 return interner.intern("kk_list_sorted")
             case "sortedDescending":
+                if collectionElementPrimitiveCompareKind(of: nonNullReceiverType, sema: sema) != nil {
+                    return interner.intern("kk_list_sortedDescending_primitive")
+                }
                 return interner.intern("kk_list_sortedDescending")
             case "sortedBy":
                 return interner.intern("kk_list_sortedBy")
@@ -5626,12 +5821,18 @@ extension CallLowerer {
         if isMutableListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
             switch memberName {
             case "sort":
+                if collectionElementPrimitiveCompareKind(of: nonNullReceiverType, sema: sema) != nil {
+                    return interner.intern("kk_mutable_list_sort_primitive")
+                }
                 return interner.intern("kk_mutable_list_sort")
             case "sortBy":
                 return interner.intern("kk_mutable_list_sortBy")
             case "sortByDescending":
                 return interner.intern("kk_mutable_list_sortByDescending")
             case "sortDescending":
+                if collectionElementPrimitiveCompareKind(of: nonNullReceiverType, sema: sema) != nil {
+                    return interner.intern("kk_mutable_list_sortDescending_primitive")
+                }
                 return interner.intern("kk_mutable_list_sortDescending")
             case "add" where argumentCount == 1:
                 return interner.intern("kk_mutable_list_add")

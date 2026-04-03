@@ -1177,7 +1177,28 @@ final class CallTypeChecker {
                 // Bind to the synthetic function symbol
                 let comparisonsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("comparisons")]
                 let funcFQName = comparisonsPkg + [calleeName]
-                if let chosen = sema.symbols.lookupAll(fqName: funcFQName).first(where: { candidate in
+                let primitiveCalleeName = calleeNameStr == "compareBy"
+                    ? interner.intern("compareByPrimitive")
+                    : interner.intern("compareByDescendingPrimitive")
+                let primitiveFQName = comparisonsPkg + [primitiveCalleeName]
+                let primitiveCompareKind: Bool = {
+                    switch sema.types.kind(of: sema.types.makeNonNullable(elementType)) {
+                    case .primitive(.int, _), .primitive(.ubyte, _), .primitive(.ushort, _),
+                         .primitive(.long, _), .primitive(.uint, _), .primitive(.ulong, _),
+                         .primitive(.boolean, _), .primitive(.char, _),
+                         .primitive(.float, _), .primitive(.double, _):
+                        return true
+                    default:
+                        return false
+                    }
+                }()
+                if let chosen = (primitiveCompareKind
+                    ? sema.symbols.lookupAll(fqName: primitiveFQName).first(where: { candidate in
+                        guard let sig = sema.symbols.functionSignature(for: candidate) else { return false }
+                        return sig.parameterTypes.count == 1
+                    })
+                    : nil)
+                    ?? sema.symbols.lookupAll(fqName: funcFQName).first(where: { candidate in
                     guard let sig = sema.symbols.functionSignature(for: candidate) else { return false }
                     return sig.parameterTypes.count == 1
                 }) {
