@@ -257,6 +257,29 @@ final class FlowSemaTests: XCTestCase {
         }
     }
 
+    func testAdditionalFlowBuildersTypeCheck() throws {
+        let source = """
+        fun main() {
+            runBlocking {
+                flowOf(1, 2, 3).collect { println(it) }
+                emptyFlow<Int>().collect { println(it) }
+                listOf(1, 2, 3).asFlow().collect { println(it) }
+                channelFlow<Int> { emit(1); emit(2) }.collect { println(it) }
+                callbackFlow<Int> { emit(3); emit(4) }.collect { println(it) }
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            assertNoDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+        }
+    }
+
     func testFlowErrorHandlingMembersTypeCheck() throws {
         let source = """
         fun failOnTwo(value: Int): Int {

@@ -275,6 +275,88 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- java.lang.System / Runtime memory management (STDLIB-PERF-154) ---
+        let javaLangPkg = ensureSyntheticPackageHierarchy(
+            fqName: [interner.intern("java"), interner.intern("lang")],
+            symbols: symbols
+        )
+
+        let javaSystemSymbol = ensureSyntheticObjectSymbol(
+            named: "System",
+            in: javaLangPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let javaSystemType = types.make(.classType(ClassType(
+            classSymbol: javaSystemSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(javaSystemType, for: javaSystemSymbol)
+        registerSyntheticSystemMember(
+            ownerSymbol: javaSystemSymbol,
+            ownerType: javaSystemType,
+            name: "gc",
+            externalLinkName: "kk_system_gc",
+            returnType: types.unitType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+
+        let runtimeSymbol = ensureSyntheticObjectSymbol(
+            named: "Runtime",
+            in: javaLangPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let runtimeType = types.make(.classType(ClassType(
+            classSymbol: runtimeSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(runtimeType, for: runtimeSymbol)
+        registerSyntheticSystemMember(
+            ownerSymbol: runtimeSymbol,
+            ownerType: runtimeType,
+            name: "getRuntime",
+            externalLinkName: "kk_runtime_getRuntime",
+            returnType: runtimeType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticSystemMember(
+            ownerSymbol: runtimeSymbol,
+            ownerType: runtimeType,
+            name: "totalMemory",
+            externalLinkName: "kk_runtime_totalMemory",
+            returnType: types.longType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticSystemMember(
+            ownerSymbol: runtimeSymbol,
+            ownerType: runtimeType,
+            name: "freeMemory",
+            externalLinkName: "kk_runtime_freeMemory",
+            returnType: types.longType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticSystemMember(
+            ownerSymbol: runtimeSymbol,
+            ownerType: runtimeType,
+            name: "maxMemory",
+            externalLinkName: "kk_runtime_maxMemory",
+            returnType: types.longType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- kotlin.synchronized (STDLIB-325) ---
         let synchronizedBlockType = types.make(.functionType(FunctionType(
             params: [],

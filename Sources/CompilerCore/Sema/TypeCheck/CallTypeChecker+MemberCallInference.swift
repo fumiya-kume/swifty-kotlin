@@ -380,6 +380,54 @@ extension CallTypeChecker {
 
         let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
 
+        if interner.resolve(calleeName) == "callRecursive",
+           args.count == 1,
+           case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+           let receiverSymbol = sema.symbols.symbol(classType.classSymbol),
+           receiverSymbol.fqName.count == 2,
+           interner.resolve(receiverSymbol.fqName[0]) == "kotlin",
+           interner.resolve(receiverSymbol.fqName[1]) == "DeepRecursiveFunction"
+        {
+            let parameterType: TypeID = if let firstArg = classType.args.first {
+                switch firstArg {
+                case let .invariant(type), let .in(type), let .out(type):
+                    type
+                case .star:
+                    sema.types.anyType
+                }
+            } else {
+                sema.types.anyType
+            }
+            let returnType: TypeID = if classType.args.count > 1 {
+                switch classType.args[1] {
+                case let .invariant(type), let .in(type), let .out(type):
+                    type
+                case .star:
+                    sema.types.anyType
+                }
+            } else {
+                sema.types.anyType
+            }
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: parameterType)
+            if let memberSymbol = sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("DeepRecursiveFunction"),
+                interner.intern("callRecursive"),
+            ]) {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: memberSymbol,
+                        substitutedTypeArguments: [parameterType, returnType],
+                        parameterMapping: [0: 0]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(memberSymbol))
+            }
+            sema.bindings.bindExprType(id, type: returnType)
+            return returnType
+        }
+
         if case .kClassType = sema.types.kind(of: sema.types.makeNonNullable(receiverType)) {
             if calleeName == knownNames.isInstanceName, args.count == 1 {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
@@ -952,6 +1000,34 @@ extension CallTypeChecker {
         }
         let isCollectionHOF = activeCollectionHOFNames.contains(interner.resolve(calleeName))
             && isCollectionReceiver
+
+        if interner.resolve(calleeName) == "asFlow",
+           args.isEmpty,
+           (isCollectionReceiver || isSequenceReceiver)
+        {
+            let elementType = if isCollectionReceiver {
+                resolvedCollectionElementType(
+                    receiverID: receiverID,
+                    receiverType: receiverType,
+                    sema: sema,
+                    interner: interner,
+                    ctx: ctx,
+                    locals: &locals
+                )
+            } else {
+                sema.types.anyType
+            }
+            sema.bindings.markFlowExpr(id)
+            sema.bindings.bindFlowElementType(elementType, forExpr: id)
+            let resultType = driver.helpers.makeFlowType(
+                elementType: elementType,
+                sema: sema,
+                interner: interner
+            ) ?? sema.types.anyType
+            let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
 
         // filterIsInstance<R>() — reified type parameter, returns List<R> (STDLIB-114)
         if interner.resolve(calleeName) == "filterIsInstance",

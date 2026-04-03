@@ -94,7 +94,7 @@
   - **現状**: 基本的な範囲操作は実装済み、高階関数は未実装
   - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
   - **テストケース**: `Scripts/diff_cases/range_hof.kt`
-- [ ] STDLIB-OP-030: 算術演算子オーバーロード完全実装
+- [x] STDLIB-OP-030: 算術演算子オーバーロード完全実装
   - **仕様**: カスタムクラスでの算術演算子オーバーロード
   - **実装内容**:
     - 単項演算子: unaryPlus(), unaryMinus(), not()
@@ -155,7 +155,7 @@
   - **関連ファイル**: `RuntimeRangeAndDispatch.swift`
   - **テストケース**: `Scripts/diff_cases/long_range.kt`
 
-- [ ] STDLIB-RANGE-036: UIntRange完全実装
+- [x] STDLIB-RANGE-036: UIntRange完全実装
   - **仕様**: UIntRangeの完全な機能サポート
   - **実装内容**:
     - コンストラクタ: UIntRange(start, end), startU..endU

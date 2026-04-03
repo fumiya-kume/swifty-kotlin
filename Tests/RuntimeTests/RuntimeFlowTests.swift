@@ -509,6 +509,39 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(snapshot.mapCalls, 2, "Lazy: map should only run for elements before take exhausted.")
     }
 
+    func testEmptyFlowProducesNoValues() {
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_empty(0)
+        _ = kk_flow_collect(flowHandle, collectorPtr, 0)
+
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [], "emptyFlow should emit nothing.")
+    }
+
+    func testAsFlowFromListPreservesElements() {
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let listHandle = registerRuntimeObject(RuntimeListBox(elements: [7, 8, 9]))
+        let flowHandle = kk_flow_as_flow(listHandle, 0)
+
+        _ = kk_flow_collect(flowHandle, collectorPtr, 0)
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [7, 8, 9], "asFlow(list) should emit list elements in order.")
+    }
+
+    func testAsFlowFromArrayPreservesElements() {
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let arrayHandle = kk_array_new(3)
+        kk_array_set(arrayHandle, 0, 11, nil)
+        kk_array_set(arrayHandle, 1, 12, nil)
+        kk_array_set(arrayHandle, 2, 13, nil)
+
+        let flowHandle = kk_flow_as_flow(arrayHandle, 0)
+        _ = kk_flow_collect(flowHandle, collectorPtr, 0)
+
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [11, 12, 13], "asFlow(array) should emit array elements in order.")
+    }
+
     func testFlowFirst() {
         let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
         let flowHandle = kk_flow_create(emitterPtr, 0)

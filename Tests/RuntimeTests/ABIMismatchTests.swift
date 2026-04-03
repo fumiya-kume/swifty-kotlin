@@ -135,7 +135,7 @@ final class ABIMismatchTests: XCTestCase {
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
         // The current spec surface tracks the shared coroutine ABI subset.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 90)
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 92)
     }
 
     func testBoxingFunctionCount() {

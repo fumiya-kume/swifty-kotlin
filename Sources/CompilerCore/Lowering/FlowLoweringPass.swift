@@ -20,6 +20,11 @@ final class FlowLoweringPass: LoweringPass {
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
         let calleeNames: Set<InternedString> = [
             ctx.interner.intern("flow"),
+            ctx.interner.intern("channelFlow"),
+            ctx.interner.intern("callbackFlow"),
+            ctx.interner.intern("flowOf"),
+            ctx.interner.intern("emptyFlow"),
+            ctx.interner.intern("asFlow"),
             ctx.interner.intern("emit"),
             ctx.interner.intern("map"),
             ctx.interner.intern("filter"),
@@ -59,6 +64,11 @@ final class FlowLoweringPass: LoweringPass {
     func run(module: KIRModule, ctx: KIRContext) throws {
         let interner = ctx.interner
         let flowName = interner.intern("flow")
+        let channelFlowName = interner.intern("channelFlow")
+        let callbackFlowName = interner.intern("callbackFlow")
+        let flowOfName = interner.intern("flowOf")
+        let emptyFlowName = interner.intern("emptyFlow")
+        let asFlowName = interner.intern("asFlow")
         let emitName = interner.intern("emit")
         let mapName = interner.intern("map")
         let filterName = interner.intern("filter")
@@ -75,8 +85,13 @@ final class FlowLoweringPass: LoweringPass {
         let kkFlowCreateName = interner.intern("kk_flow_create")
         let kkFlowEmitName = interner.intern("kk_flow_emit")
         let kkFlowCollectName = interner.intern("kk_flow_collect")
+        let kkFlowOfName = interner.intern("kk_flow_of")
+        let kkFlowEmptyName = interner.intern("kk_flow_empty")
+        let kkFlowAsFlowName = interner.intern("kk_flow_as_flow")
         let kkFlowToListName = interner.intern("kk_flow_to_list")
         let kkFlowFirstName = interner.intern("kk_flow_first")
+        let kkArrayNewName = interner.intern("kk_array_new")
+        let kkArraySetName = interner.intern("kk_array_set")
 
         let intType = ctx.sema?.types.intType
 
@@ -103,7 +118,9 @@ final class FlowLoweringPass: LoweringPass {
             for instruction in function.body {
                 switch instruction {
                 case let .call(_, callee, arguments, _, _, _, _, _):
-                    guard callee == flowName, arguments.count == 1 else {
+                    guard (callee == flowName || callee == channelFlowName || callee == callbackFlowName),
+                          arguments.count == 1
+                    else {
                         continue
                     }
                     let lambdaArg = arguments[0]
@@ -117,7 +134,9 @@ final class FlowLoweringPass: LoweringPass {
                     let fallbackLambdaName = interner.intern("kk_lambda_\(lambdaArg.rawValue)")
                     flowBuilderFunctionNames.insert(fallbackLambdaName)
                 case let .virtualCall(_, callee, _, arguments, _, _, _, _):
-                    guard callee == flowName, arguments.count == 1 else {
+                    guard (callee == flowName || callee == channelFlowName || callee == callbackFlowName),
+                          arguments.count == 1
+                    else {
                         continue
                     }
                     let lambdaArg = arguments[0]
@@ -156,6 +175,49 @@ final class FlowLoweringPass: LoweringPass {
                 return expr
             }
 
+            func appendFlowOfCall(arguments: [KIRExprID], result: KIRExprID?) {
+                let countExpr = appendIntConstant(Int64(arguments.count))
+                let arrayExpr = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: nil
+                )
+                loweredBody.append(.call(
+                    symbol: nil,
+                    callee: kkArrayNewName,
+                    arguments: [countExpr],
+                    result: arrayExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                for (index, arg) in arguments.enumerated() {
+                    let indexExpr = appendIntConstant(Int64(index))
+                    let setResult = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: nil
+                    )
+                    loweredBody.append(.call(
+                        symbol: nil,
+                        callee: kkArraySetName,
+                        arguments: [arrayExpr, indexExpr, arg],
+                        result: setResult,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                }
+                loweredBody.append(.call(
+                    symbol: nil,
+                    callee: kkFlowOfName,
+                    arguments: [arrayExpr, countExpr],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                if let result {
+                    flowExprIDs.insert(result.rawValue)
+                    activeFlowExpr = result
+                }
+            }
+
             for instruction in function.body {
                 switch instruction {
                 case let .copy(from, to):
@@ -183,6 +245,25 @@ final class FlowLoweringPass: LoweringPass {
                             canThrow: false,
                             thrownResult: nil
                         ))
+                        continue
+                    }
+
+                    if (callee == flowName || callee == channelFlowName || callee == callbackFlowName),
+                       arguments.count == 1
+                    {
+                        let continuation = appendIntConstant(0)
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowCreateName,
+                            arguments: [arguments[0], continuation],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        if let result {
+                            flowExprIDs.insert(result.rawValue)
+                            activeFlowExpr = result
+                        }
                         continue
                     }
 
@@ -222,12 +303,16 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
-                    if callee == flowName, arguments.count == 1 {
-                        let continuation = appendIntConstant(0)
+                    if callee == flowOfName {
+                        appendFlowOfCall(arguments: arguments, result: result)
+                        continue
+                    }
+
+                    if callee == emptyFlowName, arguments.isEmpty {
                         loweredBody.append(.call(
                             symbol: nil,
-                            callee: kkFlowCreateName,
-                            arguments: [arguments[0], continuation],
+                            callee: kkFlowEmptyName,
+                            arguments: [appendIntConstant(0)],
                             result: result,
                             canThrow: false,
                             thrownResult: nil
@@ -264,6 +349,24 @@ final class FlowLoweringPass: LoweringPass {
                             thrownResult: nil
                         ))
                         if let result {
+                            activeFlowExpr = result
+                        }
+                        continue
+                    }
+
+                    if callee == asFlowName,
+                       arguments.count == 1
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowAsFlowName,
+                            arguments: [arguments[0], appendIntConstant(0)],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        if let result {
+                            flowExprIDs.insert(result.rawValue)
                             activeFlowExpr = result
                         }
                         continue
@@ -364,7 +467,7 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
-                    if callee == kkFlowCreateName,
+                    if callee == kkFlowCreateName || callee == kkFlowOfName || callee == kkFlowEmptyName || callee == kkFlowAsFlowName,
                        let result
                     {
                         flowExprIDs.insert(result.rawValue)
@@ -431,6 +534,24 @@ final class FlowLoweringPass: LoweringPass {
                             thrownResult: nil
                         ))
                         if let result {
+                            activeFlowExpr = result
+                        }
+                        continue
+                    }
+
+                    if callee == asFlowName,
+                       arguments.isEmpty
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowAsFlowName,
+                            arguments: [receiver, appendIntConstant(0)],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        if let result {
+                            flowExprIDs.insert(result.rawValue)
                             activeFlowExpr = result
                         }
                         continue
@@ -526,7 +647,7 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
-                    if callee == kkFlowCreateName,
+                    if callee == kkFlowCreateName || callee == kkFlowOfName || callee == kkFlowEmptyName || callee == kkFlowAsFlowName,
                        let result
                     {
                         flowExprIDs.insert(result.rawValue)

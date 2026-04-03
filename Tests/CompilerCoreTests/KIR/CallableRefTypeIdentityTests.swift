@@ -179,8 +179,9 @@ final class CallableRefTypeIdentityTests: XCTestCase {
                 return
             }
 
-            // arguments[0] = callable value, arguments[1] = name, arguments[2] = arity
-            XCTAssertEqual(arguments.count, 3)
+            // arguments[0] = callable value, arguments[1] = name, arguments[2] = arity,
+            // arguments[3] = isSuspend flag.
+            XCTAssertEqual(arguments.count, 4)
 
             // Verify the name argument is the string "add".
             if let nameExpr = module.arena.expr(arguments[1]),
@@ -198,6 +199,15 @@ final class CallableRefTypeIdentityTests: XCTestCase {
                 XCTAssertEqual(arityValue, 2, "::add has arity 2 (a, b).")
             } else {
                 XCTFail("Third argument to tag call should be int literal for arity.")
+            }
+
+            // Non-suspend callable refs should emit an isSuspend flag of 0.
+            if let suspendExpr = module.arena.expr(arguments[3]),
+               case let .intLiteral(isSuspendValue) = suspendExpr
+            {
+                XCTAssertEqual(isSuspendValue, 0, "::add is not a suspend function.")
+            } else {
+                XCTFail("Fourth argument to tag call should be int literal for isSuspend.")
             }
         }
     }
