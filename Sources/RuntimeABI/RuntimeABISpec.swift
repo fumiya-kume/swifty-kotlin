@@ -6921,6 +6921,7 @@ public enum RuntimeABISpec {
             + stringBridgeFunctions
             + consolePrintFunctions
             + ioFunctions
+            + databaseFunctions
             + systemFunctions
             + gcFunctions
             + coroutineFunctions

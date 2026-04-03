@@ -1,5 +1,372 @@
 import Foundation
 
+// MARK: - Database Runtime (STDLIB-DB-140/141)
+
+enum RuntimeDatabaseIsolationLevel: Int {
+    case readUncommitted = 1
+    case readCommitted = 2
+    case repeatableRead = 4
+    case serializable = 8
+}
+
+final class RuntimeSQLExceptionBox: RuntimeThrowableBox {
+    override var exceptionFQName: String {
+        "java.sql.SQLException"
+    }
+
+    override var exceptionHierarchyFQNames: [String] {
+        [
+            "java.sql.SQLException",
+            "kotlin.Exception",
+            "kotlin.Throwable",
+        ]
+    }
+
+    override var renderedMessage: String {
+        "SQLException: \(message)"
+    }
+}
+
+final class RuntimeSavepointBox {
+    let identifier: Int
+    let name: String?
+    weak var connection: RuntimeConnectionBox?
+
+    init(identifier: Int, name: String?, connection: RuntimeConnectionBox) {
+        self.identifier = identifier
+        self.name = name
+        self.connection = connection
+    }
+}
+
+final class RuntimeConnectionBox {
+    let url: String
+    var autoCommit = true
+    var closed = false
+    var transactionIsolation = RuntimeDatabaseIsolationLevel.readCommitted
+    var nextSavepointIdentifier = 1
+    var savepoints: [RuntimeSavepointBox] = []
+
+    init(url: String) {
+        self.url = url
+    }
+
+    func ensureOpen() throws {
+        if closed {
+            throw DatabaseRuntimeError.sql("Connection is closed")
+        }
+    }
+
+    func ensureTransactionalContext() throws {
+        try ensureOpen()
+        if autoCommit {
+            throw DatabaseRuntimeError.sql("Operation requires autoCommit=false")
+        }
+    }
+
+    func createSavepoint(name: String?) throws -> RuntimeSavepointBox {
+        try ensureTransactionalContext()
+        let savepoint = RuntimeSavepointBox(
+            identifier: nextSavepointIdentifier,
+            name: name,
+            connection: self
+        )
+        nextSavepointIdentifier += 1
+        savepoints.append(savepoint)
+        return savepoint
+    }
+
+    func rollback(to savepoint: RuntimeSavepointBox?) throws {
+        try ensureTransactionalContext()
+        guard let savepoint else {
+            savepoints.removeAll()
+            return
+        }
+        guard savepoint.connection === self else {
+            throw DatabaseRuntimeError.sql("Savepoint does not belong to this connection")
+        }
+        guard let index = savepoints.firstIndex(where: { $0 === savepoint }) else {
+            throw DatabaseRuntimeError.sql("Savepoint is no longer active")
+        }
+        savepoints = Array(savepoints.prefix(index + 1))
+    }
+
+    func release(_ savepoint: RuntimeSavepointBox) throws {
+        try ensureTransactionalContext()
+        guard savepoint.connection === self else {
+            throw DatabaseRuntimeError.sql("Savepoint does not belong to this connection")
+        }
+        guard let index = savepoints.firstIndex(where: { $0 === savepoint }) else {
+            throw DatabaseRuntimeError.sql("Savepoint is no longer active")
+        }
+        savepoints.remove(at: index)
+    }
+
+    func commit() throws {
+        try ensureTransactionalContext()
+        savepoints.removeAll()
+    }
+
+    func rollback() throws {
+        try rollback(to: nil)
+    }
+
+    func setAutoCommit(_ newValue: Bool) throws {
+        try ensureOpen()
+        if autoCommit == newValue {
+            return
+        }
+        autoCommit = newValue
+        savepoints.removeAll()
+    }
+
+    func setIsolation(_ rawValue: Int) throws {
+        try ensureOpen()
+        guard let level = RuntimeDatabaseIsolationLevel(rawValue: rawValue) else {
+            throw DatabaseRuntimeError.sql("Unsupported transaction isolation level: \(rawValue)")
+        }
+        transactionIsolation = level
+    }
+
+    func close() {
+        closed = true
+        autoCommit = true
+        savepoints.removeAll()
+    }
+}
+
+enum DatabaseRuntimeError: Error {
+    case sql(String)
+    case invalidHandle(String)
+}
+
+private func runtimeAllocateSQLException(message: String) -> Int {
+    let throwable = RuntimeSQLExceptionBox(message: message)
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+    return Int(bitPattern: ptr)
+}
+
+private func databaseThrowable(from error: any Error) -> Int {
+    if let dbError = error as? DatabaseRuntimeError {
+        switch dbError {
+        case let .sql(message):
+            return runtimeAllocateSQLException(message: message)
+        case let .invalidHandle(message):
+            return runtimeAllocateThrowable(message: message)
+        }
+    }
+    return runtimeAllocateThrowable(message: "\(error)")
+}
+
+private func runtimeDatabaseMakeStringRaw(_ value: String) -> Int {
+    Int(bitPattern: value.withCString { cstr in
+        cstr.withMemoryRebound(to: UInt8.self, capacity: value.utf8.count) { pointer in
+            kk_string_from_utf8(pointer, Int32(value.utf8.count))
+        }
+    })
+}
+
+private func runtimeConnectionBox(from raw: Int) -> RuntimeConnectionBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeConnectionBox.self)
+}
+
+private func runtimeSavepointBox(from raw: Int) -> RuntimeSavepointBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeSavepointBox.self)
+}
+
+private func withDatabaseFailure(
+    outThrown: UnsafeMutablePointer<Int>?,
+    fallback: Int,
+    _ body: () throws -> Int
+) -> Int {
+    outThrown?.pointee = 0
+    do {
+        return try body()
+    } catch {
+        outThrown?.pointee = databaseThrowable(from: error)
+        return fallback
+    }
+}
+
+@_cdecl("kk_driver_manager_getConnection")
+public func kk_driver_manager_getConnection(_ urlRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    withDatabaseFailure(outThrown: outThrown, fallback: runtimeNullSentinelInt) {
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: urlRaw),
+              let url = extractString(from: ptr),
+              !url.isEmpty
+        else {
+            throw DatabaseRuntimeError.sql("JDBC URL must not be empty")
+        }
+        return registerRuntimeObject(RuntimeConnectionBox(url: url))
+    }
+}
+
+@_cdecl("kk_connection_getAutoCommit")
+public func kk_connection_getAutoCommit(_ connectionRaw: Int) -> Int {
+    guard let connection = runtimeConnectionBox(from: connectionRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_connection_getAutoCommit received invalid Connection handle")
+    }
+    return kk_box_bool(connection.autoCommit ? 1 : 0)
+}
+
+@_cdecl("kk_connection_setAutoCommit")
+public func kk_connection_setAutoCommit(_ connectionRaw: Int, _ valueRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    withDatabaseFailure(outThrown: outThrown, fallback: 0) {
+        guard let connection = runtimeConnectionBox(from: connectionRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_connection_setAutoCommit received invalid Connection handle")
+        }
+        try connection.setAutoCommit(valueRaw != 0)
+        return 0
+    }
+}
+
+@_cdecl("kk_connection_commit")
+public func kk_connection_commit(_ connectionRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    withDatabaseFailure(outThrown: outThrown, fallback: 0) {
+        guard let connection = runtimeConnectionBox(from: connectionRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_connection_commit received invalid Connection handle")
+        }
+        try connection.commit()
+        return 0
+    }
+}
+
+@_cdecl("kk_connection_rollback")
+public func kk_connection_rollback(_ connectionRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    withDatabaseFailure(outThrown: outThrown, fallback: 0) {
+        guard let connection = runtimeConnectionBox(from: connectionRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_connection_rollback received invalid Connection handle")
+        }
+        try connection.rollback()
+        return 0
+    }
+}
+
+@_cdecl("kk_connection_setSavepoint")
+public func kk_connection_setSavepoint(_ connectionRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    withDatabaseFailure(outThrown: outThrown, fallback: runtimeNullSentinelInt) {
+        guard let connection = runtimeConnectionBox(from: connectionRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_connection_setSavepoint received invalid Connection handle")
+        }
+        return registerRuntimeObject(try connection.createSavepoint(name: nil))
+    }
+}
+
+@_cdecl("kk_connection_setSavepoint_named")
+public func kk_connection_setSavepoint_named(_ connectionRaw: Int, _ nameRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    withDatabaseFailure(outThrown: outThrown, fallback: runtimeNullSentinelInt) {
+        guard let connection = runtimeConnectionBox(from: connectionRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_connection_setSavepoint_named received invalid Connection handle")
+        }
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: nameRaw),
+              let name = extractString(from: ptr),
+              !name.isEmpty
+        else {
+            throw DatabaseRuntimeError.sql("Savepoint name must not be empty")
+        }
+        return registerRuntimeObject(try connection.createSavepoint(name: name))
+    }
+}
+
+@_cdecl("kk_connection_rollback_to_savepoint")
+public func kk_connection_rollback_to_savepoint(_ connectionRaw: Int, _ savepointRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    withDatabaseFailure(outThrown: outThrown, fallback: 0) {
+        guard let connection = runtimeConnectionBox(from: connectionRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_connection_rollback_to_savepoint received invalid Connection handle")
+        }
+        guard let savepoint = runtimeSavepointBox(from: savepointRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_connection_rollback_to_savepoint received invalid Savepoint handle")
+        }
+        try connection.rollback(to: savepoint)
+        return 0
+    }
+}
+
+@_cdecl("kk_connection_releaseSavepoint")
+public func kk_connection_releaseSavepoint(_ connectionRaw: Int, _ savepointRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    withDatabaseFailure(outThrown: outThrown, fallback: 0) {
+        guard let connection = runtimeConnectionBox(from: connectionRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_connection_releaseSavepoint received invalid Connection handle")
+        }
+        guard let savepoint = runtimeSavepointBox(from: savepointRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_connection_releaseSavepoint received invalid Savepoint handle")
+        }
+        try connection.release(savepoint)
+        return 0
+    }
+}
+
+@_cdecl("kk_connection_getTransactionIsolation")
+public func kk_connection_getTransactionIsolation(_ connectionRaw: Int) -> Int {
+    guard let connection = runtimeConnectionBox(from: connectionRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_connection_getTransactionIsolation received invalid Connection handle")
+    }
+    return connection.transactionIsolation.rawValue
+}
+
+@_cdecl("kk_connection_setTransactionIsolation")
+public func kk_connection_setTransactionIsolation(_ connectionRaw: Int, _ levelRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    withDatabaseFailure(outThrown: outThrown, fallback: 0) {
+        guard let connection = runtimeConnectionBox(from: connectionRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_connection_setTransactionIsolation received invalid Connection handle")
+        }
+        try connection.setIsolation(levelRaw)
+        return 0
+    }
+}
+
+@_cdecl("kk_connection_close")
+public func kk_connection_close(_ connectionRaw: Int) -> Int {
+    guard let connection = runtimeConnectionBox(from: connectionRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_connection_close received invalid Connection handle")
+    }
+    connection.close()
+    return 0
+}
+
+@_cdecl("kk_connection_isClosed")
+public func kk_connection_isClosed(_ connectionRaw: Int) -> Int {
+    guard let connection = runtimeConnectionBox(from: connectionRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_connection_isClosed received invalid Connection handle")
+    }
+    return kk_box_bool(connection.closed ? 1 : 0)
+}
+
+@_cdecl("kk_savepoint_getSavepointId")
+public func kk_savepoint_getSavepointId(_ savepointRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    withDatabaseFailure(outThrown: outThrown, fallback: 0) {
+        guard let savepoint = runtimeSavepointBox(from: savepointRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_savepoint_getSavepointId received invalid Savepoint handle")
+        }
+        guard savepoint.name == nil else {
+            throw DatabaseRuntimeError.sql("Named savepoints do not expose an integer identifier")
+        }
+        return savepoint.identifier
+    }
+}
+
+@_cdecl("kk_savepoint_getSavepointName")
+public func kk_savepoint_getSavepointName(_ savepointRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    withDatabaseFailure(outThrown: outThrown, fallback: runtimeNullSentinelInt) {
+        guard let savepoint = runtimeSavepointBox(from: savepointRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_savepoint_getSavepointName received invalid Savepoint handle")
+        }
+        guard let name = savepoint.name else {
+            throw DatabaseRuntimeError.sql("Unnamed savepoints do not expose a name")
+        }
+        return runtimeDatabaseMakeStringRaw(name)
+    }
+}
+
 // MARK: - Database Connection Pool (STDLIB-DB-142)
 
 private extension NSCondition {
