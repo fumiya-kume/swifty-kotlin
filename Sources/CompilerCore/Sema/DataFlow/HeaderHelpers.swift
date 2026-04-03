@@ -876,6 +876,7 @@ extension DataFlowSemaPhase {
         registerSyntheticUuidStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticSerializationStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticURIStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticNetworkStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticLoggingStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticSecurityStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCacheStubs(symbols: symbols, types: types, interner: interner)
