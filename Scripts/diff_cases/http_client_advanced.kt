@@ -1,3 +1,4 @@
+// SKIP-DIFF: kswiftc's native HTTP client runtime is intentionally not part of kotlinc parity.
 import java.net.http.HttpClient
 import kotlinx.coroutines.runBlocking
 
