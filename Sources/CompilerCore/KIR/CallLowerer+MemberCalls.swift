@@ -513,8 +513,10 @@ extension CallLowerer {
                     shared: shared,
                     emit: &instructions
                 )
-                let tagExpr = arena.appendExpr(.intLiteral(6), type: sema.types.intType)
-                instructions.append(.constValue(result: tagExpr, value: .intLiteral(6)))
+                // RuntimeFlowTag.transform = 11
+                let transformTag: Int64 = 11
+                let tagExpr = arena.appendExpr(.intLiteral(transformTag), type: sema.types.intType)
+                instructions.append(.constValue(result: tagExpr, value: .intLiteral(transformTag)))
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern("kk_flow_emit"),
