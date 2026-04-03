@@ -40,6 +40,11 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let kotlinCoroutinesCancellationPkg = ensureSyntheticPackage(
+            kotlinCoroutinesPkg + [interner.intern("cancellation")],
+            symbols: symbols,
+            interner: interner
+        )
         let channelsPkg = ensureSyntheticPackage(
             coroutinesPkg + [interner.intern("channels")],
             symbols: symbols,
@@ -168,7 +173,12 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
 
-
+        let throwableSymbol = ensureClassSymbol(
+            named: "Throwable",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let exceptionSymbol = ensureClassSymbol(
             named: "Exception",
             in: kotlinPkg,
@@ -240,9 +250,10 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cancellationName = interner.intern("CancellationException")
         let cancellationSymbol = ensureClassSymbol(
             named: "CancellationException",
-            in: coroutinesPkg,
+            in: kotlinCoroutinesCancellationPkg,
             symbols: symbols,
             interner: interner
         )
@@ -511,6 +522,28 @@ extension DataFlowSemaPhase {
                 ),
                 for: suspendIntrinsicSymbol
             )
+        }
+
+        registerSyntheticExceptionConstructors(
+            ownerSymbol: cancellationSymbol,
+            ownerType: cancellationType,
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            includeMessageOverload: true,
+            throwableSymbol: throwableSymbol
+        )
+
+        if symbols.lookup(fqName: coroutinesPkg + [cancellationName]) == nil {
+            let kotlinxCancellationSymbol = symbols.define(
+                kind: .typeAlias,
+                name: cancellationName,
+                fqName: coroutinesPkg + [cancellationName],
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setTypeAliasUnderlyingType(cancellationType, for: kotlinxCancellationSymbol)
         }
 
         registerSyntheticCoroutineTopLevelFunction(

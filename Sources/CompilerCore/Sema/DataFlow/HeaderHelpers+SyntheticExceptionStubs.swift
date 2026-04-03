@@ -43,12 +43,52 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-        let cancellationSymbol = ensureClassSymbol(
-            named: "CancellationException",
-            in: kotlinPkg,
-            symbols: symbols,
-            interner: interner
-        )
+        let cancellationName = interner.intern("CancellationException")
+        let canonicalCancellationFQName = [
+            interner.intern("kotlin"),
+            interner.intern("coroutines"),
+            interner.intern("cancellation"),
+            cancellationName,
+        ]
+        let rootCancellationFQName = kotlinPkg + [cancellationName]
+        if let canonicalCancellationSymbol = symbols.lookup(fqName: canonicalCancellationFQName) {
+            if symbols.lookup(fqName: rootCancellationFQName) == nil {
+                let rootCancellationSymbol = symbols.define(
+                    kind: .typeAlias,
+                    name: cancellationName,
+                    fqName: rootCancellationFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                let canonicalCancellationType = types.make(.classType(ClassType(
+                    classSymbol: canonicalCancellationSymbol, args: [], nullability: .nonNull
+                )))
+                symbols.setTypeAliasUnderlyingType(canonicalCancellationType, for: rootCancellationSymbol)
+            }
+        } else {
+            let cancellationSymbol = ensureClassSymbol(
+                named: "CancellationException",
+                in: kotlinPkg,
+                symbols: symbols,
+                interner: interner
+            )
+            symbols.setDirectSupertypes([exceptionSymbol], for: cancellationSymbol)
+            types.setNominalDirectSupertypes([exceptionSymbol], for: cancellationSymbol)
+            let cancellationType = types.make(.classType(ClassType(
+                classSymbol: cancellationSymbol, args: [], nullability: .nonNull
+            )))
+            symbols.setPropertyType(cancellationType, for: cancellationSymbol)
+            registerSyntheticExceptionConstructors(
+                ownerSymbol: cancellationSymbol,
+                ownerType: cancellationType,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                includeMessageOverload: true,
+                throwableSymbol: throwableSymbol
+            )
+        }
         let illegalArgumentSymbol = ensureClassSymbol(
             named: "IllegalArgumentException",
             in: kotlinPkg,
@@ -97,7 +137,6 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: uninitializedSymbol)
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: nullPointerSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: numberFormatSymbol)
-        symbols.setDirectSupertypes([exceptionSymbol], for: cancellationSymbol)
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: illegalArgumentSymbol)
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: illegalStateSymbol)
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: indexOutOfBoundsSymbol)
@@ -112,7 +151,6 @@ extension DataFlowSemaPhase {
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: uninitializedSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: nullPointerSymbol)
         types.setNominalDirectSupertypes([exceptionSymbol], for: numberFormatSymbol)
-        types.setNominalDirectSupertypes([exceptionSymbol], for: cancellationSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: illegalArgumentSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: illegalStateSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: indexOutOfBoundsSymbol)
@@ -128,7 +166,6 @@ extension DataFlowSemaPhase {
             uninitializedSymbol,
             nullPointerSymbol,
             numberFormatSymbol,
-            cancellationSymbol,
             illegalArgumentSymbol,
             illegalStateSymbol,
             indexOutOfBoundsSymbol,
@@ -180,15 +217,6 @@ extension DataFlowSemaPhase {
         registerSyntheticExceptionConstructors(
             ownerSymbol: numberFormatSymbol,
             ownerType: types.make(.classType(ClassType(classSymbol: numberFormatSymbol, args: [], nullability: .nonNull))),
-            symbols: symbols,
-            types: types,
-            interner: interner,
-            includeMessageOverload: true,
-            throwableSymbol: throwableSymbol
-        )
-        registerSyntheticExceptionConstructors(
-            ownerSymbol: cancellationSymbol,
-            ownerType: types.make(.classType(ClassType(classSymbol: cancellationSymbol, args: [], nullability: .nonNull))),
             symbols: symbols,
             types: types,
             interner: interner,
@@ -422,7 +450,7 @@ extension DataFlowSemaPhase {
         )))
     }
 
-    private func registerSyntheticExceptionConstructors(
+    func registerSyntheticExceptionConstructors(
         ownerSymbol: SymbolID,
         ownerType: TypeID,
         symbols: SymbolTable,
@@ -465,7 +493,7 @@ extension DataFlowSemaPhase {
         }
     }
 
-    private func registerSyntheticExceptionConstructor(
+    func registerSyntheticExceptionConstructor(
         ownerSymbol: SymbolID,
         ownerType: TypeID,
         parameters: [(name: String, type: TypeID)],
