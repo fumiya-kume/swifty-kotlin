@@ -189,6 +189,94 @@ extension CallTypeChecker {
         }
     }
 
+    private func tryContinuationSyntheticMemberCall(
+        _ id: ExprID,
+        calleeName: InternedString,
+        receiverType: TypeID,
+        args: [CallArgument],
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let knownNames = KnownCompilerNames(interner: ctx.interner)
+        guard calleeName == knownNames.resume || calleeName == knownNames.resumeWith || calleeName == knownNames.resumeWithException else {
+            return nil
+        }
+        guard let continuationSymbol = ctx.sema.symbols.lookup(fqName: knownNames.kotlinContinuationFQName),
+              case let .classType(classType) = ctx.sema.types.kind(of: ctx.sema.types.makeNonNullable(receiverType)),
+              classType.classSymbol == continuationSymbol
+        else {
+            return nil
+        }
+        guard args.count == 1 else {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0024",
+                "No viable overload found for call.",
+                range: range
+            )
+            return driver.helpers.bindAndReturnErrorType(id, sema: ctx.sema)
+        }
+
+        var expectedArgType: TypeID = ctx.sema.types.anyType
+        if calleeName == knownNames.resume,
+           case let .classType(classType) = ctx.sema.types.kind(of: ctx.sema.types.makeNonNullable(receiverType)),
+           let continuationArg = classType.args.first
+        {
+            switch continuationArg {
+            case let .invariant(type), let .out(type), let .in(type):
+                expectedArgType = type
+            case .star:
+                expectedArgType = ctx.sema.types.anyType
+            }
+        } else if calleeName == knownNames.resumeWith,
+                  case let .classType(classType) = ctx.sema.types.kind(of: ctx.sema.types.makeNonNullable(receiverType)),
+                  let continuationArg = classType.args.first,
+                  let resultSymbol = ctx.sema.symbols.lookup(fqName: [ctx.interner.intern("kotlin"), ctx.interner.intern("Result")])
+        {
+            let innerType: TypeID
+            switch continuationArg {
+            case let .invariant(type), let .out(type), let .in(type):
+                innerType = type
+            case .star:
+                innerType = ctx.sema.types.anyType
+            }
+            expectedArgType = ctx.sema.types.make(.classType(ClassType(
+                classSymbol: resultSymbol,
+                args: [.out(innerType)],
+                nullability: .nonNull
+            )))
+        }
+
+        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: expectedArgType)
+
+        let expectedExternalLinkName = if calleeName == knownNames.resume {
+            "kk_coroutine_continuation_resume"
+        } else if calleeName == knownNames.resumeWith {
+            "kk_coroutine_continuation_resume_with"
+        } else {
+            "kk_coroutine_continuation_resume_with_exception"
+        }
+        let functionSymbol = ctx.sema.symbols.lookupByShortName(calleeName).first(where: { candidate in
+            guard let symbol = ctx.sema.symbols.symbol(candidate),
+                  symbol.kind == .function
+            else {
+                return false
+            }
+            return ctx.sema.symbols.externalLinkName(for: candidate) == expectedExternalLinkName
+        })
+        if let functionSymbol {
+            ctx.sema.bindings.bindCall(id, binding: CallBinding(
+                chosenCallee: functionSymbol,
+                substitutedTypeArguments: [],
+                parameterMapping: [0: 0]
+            ))
+            ctx.sema.bindings.bindIdentifier(id, symbol: functionSymbol)
+            ctx.sema.bindings.bindExprType(id, type: ctx.sema.types.unitType)
+            return ctx.sema.types.unitType
+        }
+        return nil
+    }
+
     private func isCoroutineHandleReceiverType(
         _ receiverType: TypeID,
         sema: SemaModule,
@@ -464,6 +552,18 @@ extension CallTypeChecker {
             return returnType
         }
 
+        if let boundContinuationCall = tryContinuationSyntheticMemberCall(
+            id,
+            calleeName: calleeName,
+            receiverType: receiverType,
+            args: args,
+            range: range,
+            ctx: ctx,
+            locals: &locals
+        ) {
+            return boundContinuationCall
+        }
+
         if case .kClassType = sema.types.kind(of: sema.types.makeNonNullable(receiverType)) {
             if calleeName == knownNames.isInstanceName, args.count == 1 {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
@@ -720,14 +820,14 @@ extension CallTypeChecker {
         }
 
         // --- Result member functions (STDLIB-590) ---
-        // Result<T>.onSuccess/onFailure/getOrElse/map/fold/recover
+        // Result<T>.onSuccess/onFailure/getOrElse/getOrDefault/map/fold/recover
         // These require special handling because the generic type parameter T
         // needs to be extracted from the receiver's Result<out T> type and used
         // to construct the expected lambda parameter types.
         if args.count >= 1, args.count <= 2 {
             let calleeStr = interner.resolve(calleeName)
             let resultMemberNames: Set = [
-                "onSuccess", "onFailure", "getOrElse", "map", "fold", "recover",
+                "onSuccess", "onFailure", "getOrElse", "getOrDefault", "map", "fold", "recover",
             ]
             if resultMemberNames.contains(calleeStr),
                let resultElementType = extractResultElementType(receiverType, sema: sema, interner: interner)
@@ -785,6 +885,21 @@ extension CallTypeChecker {
                     if let getOrElseSymbol = lookupResultMember("getOrElse", sema: sema, interner: interner) {
                         sema.bindings.bindCall(id, binding: CallBinding(
                             chosenCallee: getOrElseSymbol,
+                            substitutedTypeArguments: [resultElementType],
+                            parameterMapping: [0: 0]
+                        ))
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(resultElementType) : resultElementType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+
+                case "getOrDefault" where args.count == 1:
+                    // getOrDefault(defaultValue: T): T
+                    let defaultExpectedType = resultElementType
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: defaultExpectedType)
+                    if let getOrDefaultSymbol = lookupResultMember("getOrDefault", sema: sema, interner: interner) {
+                        sema.bindings.bindCall(id, binding: CallBinding(
+                            chosenCallee: getOrDefaultSymbol,
                             substitutedTypeArguments: [resultElementType],
                             parameterMapping: [0: 0]
                         ))

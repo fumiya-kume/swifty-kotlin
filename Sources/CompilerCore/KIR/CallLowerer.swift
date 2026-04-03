@@ -1109,6 +1109,49 @@ final class CallLowerer {
             return loweredArguments
         }
 
+        if externalLinkName == "kk_suspend_coroutine", loweredArguments.count == 1 {
+            var lambdaID = loweredArguments[0]
+            var resolvedCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)
+            if let callableInfo = resolvedCallableInfo,
+               !callableInfo.hasClosureParam,
+               let adaptedInfo = makeClosureThunkCallableAdapter(
+                   callableInfo: callableInfo,
+                   loweredArgID: lambdaID,
+                   argExprID: originalArgs[0].expr,
+                   sema: sema,
+                   arena: arena,
+                   interner: interner,
+                   instructions: &instructions
+               )
+            {
+                let adaptedExpr = arena.appendExpr(
+                    .symbolRef(adaptedInfo.symbol),
+                    type: arena.exprType(lambdaID) ?? sema.types.anyType
+                )
+                instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
+                lambdaID = adaptedExpr
+                resolvedCallableInfo = adaptedInfo
+            }
+            var finalArgs: [KIRExprID] = []
+            if let callableInfo = resolvedCallableInfo {
+                let fnPtrExpr = arena.appendExpr(.symbolRef(callableInfo.symbol), type: sema.types.intType)
+                instructions.append(.constValue(result: fnPtrExpr, value: .symbolRef(callableInfo.symbol)))
+                finalArgs.append(fnPtrExpr)
+            } else {
+                finalArgs.append(lambdaID)
+            }
+            if let callableInfo = resolvedCallableInfo,
+               let closureRaw = callableInfo.captureArguments.first
+            {
+                finalArgs.append(closureRaw)
+            } else {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArgs.append(zeroExpr)
+            }
+            return finalArgs
+        }
+
         let legacyNames: Set = ["kk_require_lazy", "kk_check_lazy", "kk_precondition_assert_lazy", "kk_sequence_generate"]
         if legacyNames.contains(externalLinkName), loweredArguments.count == 2 {
             var seedArgument = loweredArguments[0]

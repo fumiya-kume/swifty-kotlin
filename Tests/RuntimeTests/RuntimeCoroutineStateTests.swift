@@ -125,7 +125,7 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
             runtime_test_suspend_with_delay as RuntimeTestSuspendEntry,
             to: Int.self
         )
-        let result = kk_kxmini_run_blocking(entryRaw, runtimeKxMiniDelayFunctionID)
+        let result = kk_kxmini_run_blocking(entryRaw, runtimeKxMiniDelayFunctionID, nil)
         XCTAssertEqual(result, 42)
     }
 
@@ -185,7 +185,7 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
             runtime_test_suspend_with_arg as RuntimeTestSuspendEntry,
             to: Int.self
         )
-        let result = kk_kxmini_run_blocking_with_cont(entryRaw, continuation)
+        let result = kk_kxmini_run_blocking_with_cont(entryRaw, continuation, nil)
         XCTAssertEqual(result, 42)
     }
 
@@ -226,7 +226,7 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
     func testRunBlockingWithContInvalidEntryDoesNotCrash() {
         let continuation = kk_coroutine_continuation_new(5005)
         _ = kk_coroutine_launcher_arg_set(continuation, 0, 123)
-        _ = kk_kxmini_run_blocking_with_cont(0, continuation)
+        _ = kk_kxmini_run_blocking_with_cont(0, continuation, nil)
     }
 
     func testLaunchWithContInvalidEntryDoesNotCrash() {
@@ -278,7 +278,7 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
             to: Int.self
         )
         // kk_coroutine_scope_run creates scope, runs block, waits for children
-        let result = kk_coroutine_scope_run(entryRaw, runtimeKxMiniDelayFunctionID)
+        let result = kk_coroutine_scope_run(entryRaw, runtimeKxMiniDelayFunctionID, nil)
         XCTAssertEqual(result, 42)
     }
 

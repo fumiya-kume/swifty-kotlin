@@ -156,6 +156,12 @@ struct KnownCompilerNames {
     let stringBuilder: InternedString
     let sequence: InternedString
     let grouping: InternedString
+    let coroutineContext: InternedString
+    let continuation: InternedString
+    let suspendCoroutine: InternedString
+    let resume: InternedString
+    let resumeWith: InternedString
+    let resumeWithException: InternedString
     let channel: InternedString
     let job: InternedString
     let deferred: InternedString
@@ -259,6 +265,9 @@ struct KnownCompilerNames {
     let kotlinRegexFQName: [InternedString]
     let kotlinStringBuilderFQName: [InternedString]
     let kotlinSequenceFQName: [InternedString]
+    let kotlinCoroutineContextFQName: [InternedString]
+    let kotlinContinuationFQName: [InternedString]
+    let kotlinSuspendCoroutineFQName: [InternedString]
     let kotlinCollectionsGroupingFQName: [InternedString]
     let kotlinCollectionsListFQName: [InternedString]
     let kotlinCollectionsMutableListFQName: [InternedString]
@@ -329,6 +338,12 @@ struct KnownCompilerNames {
         stringBuilder = interner.intern("StringBuilder")
         sequence = interner.intern("Sequence")
         grouping = interner.intern("Grouping")
+        coroutineContext = interner.intern("CoroutineContext")
+        continuation = interner.intern("Continuation")
+        suspendCoroutine = interner.intern("suspendCoroutine")
+        resume = interner.intern("resume")
+        resumeWith = interner.intern("resumeWith")
+        resumeWithException = interner.intern("resumeWithException")
         channel = interner.intern("Channel")
         job = interner.intern("Job")
         deferred = interner.intern("Deferred")
@@ -431,6 +446,7 @@ struct KnownCompilerNames {
 
         let kotlin = interner.intern("kotlin")
         let kotlinText = interner.intern("text")
+        let kotlinCoroutines = interner.intern("coroutines")
         let kotlinCollections = interner.intern("collections")
         let kotlinSequences = interner.intern("sequences")
         let kotlinx = interner.intern("kotlinx")
@@ -446,6 +462,9 @@ struct KnownCompilerNames {
         kotlinRegexFQName = [kotlin, kotlinText, regex]
         kotlinStringBuilderFQName = [kotlin, kotlinText, stringBuilder]
         kotlinSequenceFQName = [kotlin, kotlinSequences, sequence]
+        kotlinCoroutineContextFQName = [kotlin, kotlinCoroutines, coroutineContext]
+        kotlinContinuationFQName = [kotlin, kotlinCoroutines, continuation]
+        kotlinSuspendCoroutineFQName = [kotlin, kotlinCoroutines, suspendCoroutine]
         kotlinCollectionsGroupingFQName = [kotlin, kotlinCollections, grouping]
         kotlinCollectionsListFQName = [kotlin, kotlinCollections, list]
         kotlinCollectionsMutableListFQName = [kotlin, kotlinCollections, mutableList]

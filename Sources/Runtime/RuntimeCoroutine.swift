@@ -256,6 +256,31 @@ final class RuntimeContinuationState: @unchecked Sendable {
         stateLock.unlock()
     }
 
+    func resume(with value: Int) {
+        stateLock.lock()
+        completion = Int64(value)
+        thrownException = 0
+        stateLock.unlock()
+        signalResume()
+    }
+
+    func resume(withException exception: Int) {
+        stateLock.lock()
+        completion = 0
+        thrownException = exception
+        stateLock.unlock()
+        signalResume()
+    }
+
+    func makeContinuationContext() -> RuntimeCoroutineContext {
+        RuntimeCoroutineContext(
+            dispatcher: 0,
+            name: scope?.name,
+            exceptionHandler: nil,
+            jobHandle: jobHandle
+        )
+    }
+
     /// Reset resume state for the next suspend point.  Called after the
     /// coroutine loop resumes to prepare for the next potential suspension.
     func resetResumeState() {
@@ -777,6 +802,7 @@ public func kk_coroutine_state_enter(_ continuation: Int, _ functionID: Int) -> 
         state.functionID = functionIDValue
         state.label = 0
         state.completion = 0
+        state.thrownException = 0
         state.spillSlots.removeAll(keepingCapacity: false)
     }
     return Int(state.label)
@@ -848,9 +874,75 @@ public func kk_coroutine_state_get_completion(_ continuation: Int) -> Int {
     return Int(state.completion)
 }
 
+@_cdecl("kk_coroutine_state_get_thrown_exception")
+public func kk_coroutine_state_get_thrown_exception(_ continuation: Int) -> Int {
+    guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_state_get_thrown_exception received invalid continuation handle")
+    }
+    let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
+    return state.thrownException
+}
+
+@_cdecl("kk_coroutine_continuation_context")
+public func kk_coroutine_continuation_context(_ continuation: Int) -> Int {
+    guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_continuation_context received invalid continuation handle")
+    }
+    let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
+    return runtimeRegisterObject(state.makeContinuationContext())
+}
+
+@_cdecl("kk_coroutine_continuation_resume_with")
+public func kk_coroutine_continuation_resume_with(_ continuation: Int, _ resultRaw: Int) {
+    guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_continuation_resume_with received invalid continuation handle")
+    }
+    let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
+
+    if resultRaw != 0,
+       let resultPtr = UnsafeMutableRawPointer(bitPattern: resultRaw),
+       let resultBox = tryCast(resultPtr, to: RuntimeResultBox.self)
+    {
+        if resultBox.isSuccess {
+            state.resume(with: resultBox.value)
+        } else {
+            state.resume(withException: resultBox.exception)
+        }
+        return
+    }
+
+    state.resume(with: resultRaw)
+}
+
+@_cdecl("kk_coroutine_continuation_resume")
+public func kk_coroutine_continuation_resume(_ continuation: Int, _ value: Int) {
+    guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_continuation_resume received invalid continuation handle")
+    }
+    let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
+    state.resume(with: value)
+}
+
+@_cdecl("kk_coroutine_continuation_resume_with_exception")
+public func kk_coroutine_continuation_resume_with_exception(_ continuation: Int, _ exception: Int) {
+    guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_continuation_resume_with_exception received invalid continuation handle")
+    }
+    let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
+    state.resume(withException: exception)
+}
+
 @_cdecl("kk_kxmini_run_blocking")
-public func kk_kxmini_run_blocking(_ entryPointRaw: Int, _ functionID: Int) -> Int {
-    runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID)
+public func kk_kxmini_run_blocking(
+    _ entryPointRaw: Int,
+    _ functionID: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    return runSuspendEntryLoop(
+        entryPointRaw: entryPointRaw,
+        functionID: functionID,
+        outThrown: outThrown
+    )
 }
 
 @_cdecl("kk_kxmini_launch")
@@ -939,8 +1031,30 @@ public func kk_coroutine_launcher_arg_get(_ continuation: Int, _ index: Int64) -
 }
 
 @_cdecl("kk_kxmini_run_blocking_with_cont")
-public func kk_kxmini_run_blocking_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
-    runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+public func kk_kxmini_run_blocking_with_cont(
+    _ entryPointRaw: Int,
+    _ continuation: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let result = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+    return result
+}
+
+@_cdecl("kk_suspend_coroutine")
+public func kk_suspend_coroutine(_ fnPtr: Int, _ closureRaw: Int, _ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    var thrown = 0
+    _ = runtimeInvokeCollectionLambda1(
+        fnPtr: fnPtr,
+        closureRaw: closureRaw,
+        value: continuation,
+        outThrown: &thrown
+    )
+    if thrown != 0 {
+        outThrown?.pointee = thrown
+        return 0
+    }
+    return Int(bitPattern: kk_coroutine_suspended())
 }
 
 @_cdecl("kk_kxmini_launch_with_cont")
@@ -4686,7 +4800,11 @@ public func kk_job_join(_ jobHandle: Int) -> Int {
 /// Convenience: creates a scope, runs the block synchronously, waits for all children.
 /// Used as the lowering target for `coroutineScope { }` blocks.
 @_cdecl("kk_coroutine_scope_run")
-public func kk_coroutine_scope_run(_ entryPointRaw: Int, _ functionID: Int) -> Int {
+public func kk_coroutine_scope_run(
+    _ entryPointRaw: Int,
+    _ functionID: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
     let scopeHandle = kk_coroutine_scope_new()
     // CORO-003: Create continuation externally and propagate the new scope into it
     // so that runSuspendEntryLoopWithContinuation installs it under the fresh task key.
@@ -4701,12 +4819,20 @@ public func kk_coroutine_scope_run(_ entryPointRaw: Int, _ functionID: Int) -> I
         entryPointRaw: entryPointRaw, continuation: continuation
     )
     let firstFailure = kk_coroutine_scope_wait(scopeHandle)
-    return firstFailure != 0 ? firstFailure : result
+    if firstFailure != 0 {
+        outThrown?.pointee = firstFailure
+        return 0
+    }
+    return result
 }
 
 /// Convenience with pre-built continuation.
 @_cdecl("kk_coroutine_scope_run_with_cont")
-public func kk_coroutine_scope_run_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
+public func kk_coroutine_scope_run_with_cont(
+    _ entryPointRaw: Int,
+    _ continuation: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
     let scopeHandle = kk_coroutine_scope_new()
     // CORO-003: Propagate the new scope into the continuation so it is visible
     // inside the entry loop (avoids task key overwrite orphaning the scope).
@@ -4718,14 +4844,22 @@ public func kk_coroutine_scope_run_with_cont(_ entryPointRaw: Int, _ continuatio
     }
     let result = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
     let firstFailure = kk_coroutine_scope_wait(scopeHandle)
-    return firstFailure != 0 ? firstFailure : result
+    if firstFailure != 0 {
+        outThrown?.pointee = firstFailure
+        return 0
+    }
+    return result
 }
 
 /// Creates a supervisor scope, runs the block synchronously, waits for all children.
 /// Unlike `coroutineScope`, child failures do not cancel siblings (SupervisorJob semantics).
 /// Used as the lowering target for `supervisorScope { }` blocks.
 @_cdecl("kk_supervisor_scope_run")
-public func kk_supervisor_scope_run(_ entryPointRaw: Int, _ functionID: Int) -> Int {
+public func kk_supervisor_scope_run(
+    _ entryPointRaw: Int,
+    _ functionID: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
     let scopeHandle = kk_supervisor_scope_new()
     let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(
         UnsafeMutableRawPointer(bitPattern: scopeHandle)!
@@ -4738,12 +4872,20 @@ public func kk_supervisor_scope_run(_ entryPointRaw: Int, _ functionID: Int) -> 
         entryPointRaw: entryPointRaw, continuation: continuation
     )
     let firstFailure = kk_coroutine_scope_wait(scopeHandle)
-    return firstFailure != 0 ? firstFailure : result
+    if firstFailure != 0 {
+        outThrown?.pointee = firstFailure
+        return 0
+    }
+    return result
 }
 
 /// Supervisor scope variant with pre-built continuation.
 @_cdecl("kk_supervisor_scope_run_with_cont")
-public func kk_supervisor_scope_run_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
+public func kk_supervisor_scope_run_with_cont(
+    _ entryPointRaw: Int,
+    _ continuation: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
     let scopeHandle = kk_supervisor_scope_new()
     let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(
         UnsafeMutableRawPointer(bitPattern: scopeHandle)!
@@ -4753,7 +4895,11 @@ public func kk_supervisor_scope_run_with_cont(_ entryPointRaw: Int, _ continuati
     }
     let result = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
     let firstFailure = kk_coroutine_scope_wait(scopeHandle)
-    return firstFailure != 0 ? firstFailure : result
+    if firstFailure != 0 {
+        outThrown?.pointee = firstFailure
+        return 0
+    }
+    return result
 }
 
 // MARK: - Coroutine yield()
@@ -4980,7 +5126,12 @@ public func kk_is_cancellation_exception(_ throwableRaw: Int) -> Int {
 
 // MARK: - Suspend Entry Loop
 
-func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int, jobHandle: RuntimeJobHandle? = nil) -> Int {
+func runSuspendEntryLoop(
+    entryPointRaw: Int,
+    functionID: Int,
+    jobHandle: RuntimeJobHandle? = nil,
+    outThrown: UnsafeMutablePointer<Int>? = nil
+) -> Int {
     guard suspendEntryPoint(from: entryPointRaw) != nil else {
         return 0
     }
@@ -4989,11 +5140,20 @@ func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int, jobHandle: Runtime
         jobHandle.continuationState = state
         state.jobHandle = jobHandle
     }
-    return runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+    return runSuspendEntryLoopWithContinuation(
+        entryPointRaw: entryPointRaw,
+        continuation: continuation,
+        outThrown: outThrown
+    )
 }
 
-func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) -> Int {
+func runSuspendEntryLoopWithContinuation(
+    entryPointRaw: Int,
+    continuation: Int,
+    outThrown: UnsafeMutablePointer<Int>? = nil
+) -> Int {
     guard let entryPoint = suspendEntryPoint(from: entryPointRaw) else {
+        outThrown?.pointee = 0
         _ = kk_coroutine_state_exit(continuation, 0)
         return 0
     }
@@ -5051,24 +5211,26 @@ func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) 
     let taskKeyBox = TaskKeyBox(key: currentTaskKey)
 
     loopBodyBox.body = {
-        var outThrown = 0
-        let result = entryPoint(continuation, &outThrown)
-        if outThrown != 0 {
+        var thrownValue = 0
+        let result = entryPoint(continuation, &thrownValue)
+        if thrownValue != 0 {
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
+            outThrown?.pointee = thrownValue
             _ = kk_coroutine_state_exit(continuation, 0)
             // Record the thrown exception in the continuation state so callers
             // such as kk_kxmini_launch_with_exception_handler can reliably
             // distinguish a thrown exception from a normal (possibly non-zero)
             // return value without inspecting the object-pointer registry.
-            contState?.thrownException = outThrown
-            resultBox.value = outThrown
+            contState?.thrownException = thrownValue
+            resultBox.value = 0
             completionGate.signal()
             return
         }
         if result != suspendedToken {
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
+            outThrown?.pointee = 0
             resultBox.value = result
             completionGate.signal()
             return
@@ -5076,6 +5238,7 @@ func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) 
         guard let state = runtimeContinuationState(from: continuation) else {
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
+            outThrown?.pointee = 0
             resultBox.value = 0
             completionGate.signal()
             return

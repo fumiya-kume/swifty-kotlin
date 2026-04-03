@@ -135,6 +135,7 @@ final class CoroutineLoweringPass: LoweringPass {
             suspendCoroutineUninterceptedOrReturnCallee,
             ctx.interner.intern("kk_suspend_function_invoke_0"),
             ctx.interner.intern("kk_suspend_function_invoke"),
+            ctx.interner.intern("kk_suspend_coroutine")
         ]
         let kxMiniLauncherRuntimeCallees: [InternedString: InternedString] = [
             kxMiniRunBlockingCallee: runtimeRunBlockingCallee,
