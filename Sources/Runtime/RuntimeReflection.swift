@@ -919,7 +919,7 @@ public func kk_kproperty_set(
 
 // MARK: - KConstructor (STDLIB-REFLECT-064)
 
-private func runtimeKConstructorBox(from raw: Int) -> RuntimeKConstructorBox? {
+func runtimeKConstructorBox(from raw: Int) -> RuntimeKConstructorBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
         return nil
     }
@@ -960,7 +960,9 @@ public func kk_kconstructor_create(
         visibilityRaw: visibilityRaw,
         declaringClassRaw: declaringClassRaw
     )
-    return registerRuntimeObject(box)
+    let raw = registerRuntimeObject(box)
+    runtimeKConstructorRegistry.register(classRaw: declaringClassRaw, constructorRaw: raw)
+    return raw
 }
 
 @_cdecl("kk_kconstructor_get_name")

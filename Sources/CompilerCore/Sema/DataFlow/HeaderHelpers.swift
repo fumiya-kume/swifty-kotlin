@@ -884,6 +884,7 @@ extension DataFlowSemaPhase {
         registerSyntheticNumberFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticDateFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticMetaprogStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsInteropStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticKSPStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticBigIntegerStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticThreadLocalStubs(symbols: symbols, types: types, interner: interner)
