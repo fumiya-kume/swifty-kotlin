@@ -1894,6 +1894,46 @@ public enum RuntimeABISpec {
             section: "System"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_platform_canAccessUnaligned",
+            parameters: [
+                RuntimeABIParameter(name: "platformRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_platform_isLittleEndian",
+            parameters: [
+                RuntimeABIParameter(name: "platformRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_platform_osFamily",
+            parameters: [
+                RuntimeABIParameter(name: "platformRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_platform_cpuArchitecture",
+            parameters: [
+                RuntimeABIParameter(name: "platformRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_platform_getAvailableProcessors",
+            parameters: [
+                RuntimeABIParameter(name: "platformRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_system_gc",
             parameters: [],
             returnType: .void,
