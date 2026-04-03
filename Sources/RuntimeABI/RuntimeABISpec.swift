@@ -6363,6 +6363,16 @@ public enum RuntimeABISpec {
             section: "FileIO"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_resource_bundle_getObject",
+            parameters: [
+                RuntimeABIParameter(name: "bundleRaw", type: .intptr),
+                RuntimeABIParameter(name: "keyRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_resource_bundle_getKeys",
             parameters: [RuntimeABIParameter(name: "bundleRaw", type: .intptr)],
             returnType: .intptr,
