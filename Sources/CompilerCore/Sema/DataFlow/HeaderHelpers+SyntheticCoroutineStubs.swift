@@ -223,11 +223,6 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(continuationType, for: continuationSymbol)
         let coroutineSuspendedType = types.nullableAnyType
 
-        types.setNominalTypeParameterSymbols([continuationTypeParamSymbol], for: continuationSymbol)
-        symbols.setParentSymbol(continuationSymbol, for: continuationTypeParamSymbol)
-        symbols.setPropertyType(continuationType, for: continuationSymbol)
-        let coroutineSuspendedType = types.nullableAnyType
-
         symbols.setPropertyType(jobType, for: jobSymbol)
         symbols.setPropertyType(deferredType, for: deferredSymbol)
         symbols.setPropertyType(dispatchersType, for: dispatchersSymbol)
