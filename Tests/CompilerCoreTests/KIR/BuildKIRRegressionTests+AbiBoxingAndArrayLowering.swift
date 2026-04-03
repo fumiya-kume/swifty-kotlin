@@ -251,6 +251,46 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    func testUIntArrayAccessAndFactoriesLowerToRuntimeCallsAndResolveUIntArrayType() throws {
+        let source = """
+        fun make() = uintArrayOf(1u, 2u)
+        fun main(): Any? {
+            val arr = UIntArray(2) { (it + 1).toUInt() }
+            arr[0] = 7u
+            val fromFactory = make()
+            return arr[0].toInt() + fromFactory[1].toInt()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let makeSymbol = try XCTUnwrap(sema.symbols.lookupByShortName(ctx.interner.intern("make")).first)
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: makeSymbol))
+            guard case let .classType(classType) = sema.types.kind(of: signature.returnType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                XCTFail("Expected make() to return a nominal UIntArray type.")
+                return
+            }
+            XCTAssertEqual(ctx.interner.resolve(symbol.name), "UIntArray")
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callNames.contains("kk_array_new"))
+            XCTAssertTrue(callNames.contains("kk_array_set"))
+            XCTAssertTrue(callNames.contains("kk_array_get"))
+
+            let makeBody = try findKIRFunctionBody(named: "make", in: module, interner: ctx.interner)
+            let makeCallNames = extractCallees(from: makeBody, interner: ctx.interner)
+            XCTAssertTrue(makeCallNames.contains("kk_array_of"))
+        }
+    }
+
     func testMapGetValueLoweringMarksRuntimeCallAsThrowing() throws {
         let source = """
         fun main(): Int {

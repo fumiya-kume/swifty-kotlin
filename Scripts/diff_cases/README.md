@@ -34,6 +34,7 @@ Cases:
 - `val_reassign_error.kt`: local `val` 再代入の compile-error parity
 - `zero_null_print.kt`: `println(0)` と `println(null)` の表示分離
 - `type_error.kt`: compile-error parity case
+- `type_constraints.kt`: type parameter upper bounds and `where` clause parity
 - `invoke_operator.kt`: `operator fun invoke` による `obj(args)` 呼び出し（top-level property / object / 式結果）
 - `char_escape.kt`: Char escape / Unicode escape の runtime parity（`'\n'`, `'\t'`, `'\\'`, `'\u0041'`）
 - `nothing_return_throw.kt`: `Nothing` 分岐の parity（`if` 内 `throw` / `return` による分岐合流）
@@ -41,6 +42,7 @@ Cases:
 - `star_projection.kt`: use-site star projection（`Box<*>`）の型解決 parity
 - `generic_typealias.kt`: 循環 typealias（`A = B`, `B = A`）の compile-error parity
 - `cast_operators.kt`: `as` / `as?` キャストと null 結果の parity
+- `reified_generics.kt`: `reified` inline 関数の `is` / `as` / `as?` / `T::class` と bounded type parameter の parity
 - `is_type_check.kt`: `is` / `!is` と `&&` / `||` の smart-cast 伝播 parity
 - `is_type_check_non_reified_error.kt`: non-reified 型パラメータへの `is` チェック compile-error parity
 - `try_expression.kt`: `try` 式（multi-catch / partial catch / `finally` 実行順）の parity
@@ -52,14 +54,18 @@ Cases:
 - `builder_dsl_shadowing.kt`: user-defined `buildString` / `buildList` / `buildMap` が DSL 特別扱いに奪われないことの parity
 - `value_classes.kt`: `@JvmInline` / `inline class` / `value class` の value class 基本動作 parity
 - `mock_objects.kt`: mock / spy パターン（stubbing, verification, any/eq matcher）の parity
+- `comparator_basic.kt`: Comparator 合成（compareBy / compareByDescending / thenBy / thenByDescending / thenComparator / nullsFirst / nullsLast / naturalOrder / reverseOrder / reversed）の parity
 - `sequence_lazy.kt`: `Sequence<T>` lazy evaluation chain（`asSequence` → `map` → `filter` → `toList`）の parity
 - `stdlib_collection_hof.kt`: collection HOF（map/filter/flatMap/fold/reduce/any/all/none/groupBy/sortedBy/find/count/first/last）と capture lambda の parity
 - `stdlib_string_ops.kt`: String stdlib parity（`trim/split/replace/startsWith/endsWith/contains/toInt/toDouble/format/substring/lowercase/uppercase/toIntOrNull/toDoubleOrNull/indexOf/lastIndexOf/padStart/padEnd/repeat/reversed/toList/toCharArray/drop/take/dropLast/takeLast`）
 - `symmetric_crypto.kt`: `Cipher` / `SecretKeySpec` / `IvParameterSpec` parity across AES/DES/3DES, ECB/CBC/CFB/OFB/CTR, PKCS5Padding/NoPadding
 - `parallel_processing.kt`: `Dispatchers.Default` 上での並列 `async` / `awaitAll` を使った並列処理 parity
 - `flow_cold.kt`: `Flow<T>` cold stream chain（`flow { emit(...) }.map { ... }.collect { ... }`）の parity（kotlinx classpath 必須）
+- `mutex_basic.kt`: `Mutex` の基本ロック、`tryLock`、`withLock` の parity（kotlinx classpath 必須）
+- `semaphore_basic.kt`: `Semaphore` の permit 管理、`tryAcquire`、`acquire` / `release` の parity（kotlinx classpath 必須）
 - `deprecated_error.kt`: `@Deprecated(level = DeprecationLevel.ERROR)` 呼び出しの compile-error parity
 - `property_based_test.kt`: seeded samples, shrinking, statistics report を持つ property-based style parity
 - `test_framework_basic.kt`: `kotlin.test` の `@Test` / `@Before` / `@After` と `assertEquals` / `assertTrue` / `assertNull` の基本 parity
+- `assertions.kt`: stdlib `assert(...)` / `assert(...) { ... }` の基本 parity
 
 The set intentionally includes both successful programs and compile-error cases.

@@ -175,4 +175,24 @@ public struct CompilerOptions: Equatable {
     public var includeNonPublicReflectionMetadata: Bool {
         runtimeFlags.contains("reflection-metadata=all")
     }
+
+    /// Kotlin's new inference mode. Accepts either the raw compiler argument
+    /// spelling (`-Xnew-inference`) or the normalized frontend flag
+    /// (`new-inference`) for compatibility with direct tests and CLI parsing.
+    public var useNewInference: Bool {
+        frontendFlags.contains("-Xnew-inference") || frontendFlags.contains("new-inference")
+    }
+
+    /// Enables unrestricted builder inference. Accepts either the raw compiler
+    /// argument spelling or the normalized frontend flag.
+    public var useUnrestrictedBuilderInference: Bool {
+        frontendFlags.contains("-Xunrestricted-builder-inference")
+            || frontendFlags.contains("unrestricted-builder-inference")
+    }
+
+    /// Enables proper type inference constraints processing.
+    public var useProperTypeInferenceConstraintsProcessing: Bool {
+        frontendFlags.contains("ProperTypeInferenceConstraintsProcessing")
+            || frontendFlags.contains("proper-type-inference-constraints-processing")
+    }
 }

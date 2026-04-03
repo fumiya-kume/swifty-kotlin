@@ -19,7 +19,7 @@ LAST_ARTIFACT_DIR=""
 ARTIFACT_ROOT="${DIFF_ARTIFACT_ROOT:-$ROOT_DIR/.artifacts/diff_kotlinc}"
 FORCE_RUN_SKIPPED=0
 CLEAN_RUNTIME_CACHE=0
-COMPILE_TIMEOUT="${DIFF_COMPILE_TIMEOUT:-30}"
+COMPILE_TIMEOUT="${DIFF_COMPILE_TIMEOUT:-120}"
 RUN_TIMEOUT="${DIFF_RUN_TIMEOUT:-10}"
 TIMEOUT_CMD="${TIMEOUT:-timeout}"
 LLDB_BIN="${LLDB_BIN:-lldb}"
@@ -285,6 +285,12 @@ if [[ -n "$KOTLINC_CLASSPATH" ]] && ! command -v unzip >/dev/null 2>&1; then
   exit 1
 fi
 
+warm_kotlinc() {
+  local warm_timeout
+  warm_timeout=$(( COMPILE_TIMEOUT > 10 ? COMPILE_TIMEOUT : 10 ))
+  "$TIMEOUT_CMD" "$warm_timeout" "$KOTLINC" -version >/dev/null 2>&1 || true
+}
+
 detect_workers() {
   local detected
 
@@ -346,6 +352,10 @@ echo "Force run skipped: $FORCE_RUN_SKIPPED"
 echo "Clean runtime cache: $CLEAN_RUNTIME_CACHE"
 echo "Target: $TARGET"
 echo "=================================="
+
+# Warm up the JVM/daemon once so per-case compile timeouts measure compilation,
+# not the first kotlinc startup cost.
+warm_kotlinc
 
 collect_cases() {
   local path="$1"

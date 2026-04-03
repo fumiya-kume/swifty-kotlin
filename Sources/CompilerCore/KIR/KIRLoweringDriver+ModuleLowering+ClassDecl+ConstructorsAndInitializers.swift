@@ -479,4 +479,113 @@ extension KIRLoweringDriver {
         ))
         return provideDelegateResult
     }
+
+    func synthesizeConstructorReflectionInitializer(
+        classDecl: ClassDecl,
+        ownerSymbol: SymbolID,
+        shared: KIRLoweringSharedContext,
+        compilationCtx: CompilationContext
+    ) -> [KIRDeclID] {
+        let sema = shared.sema
+        let arena = shared.arena
+        let interner = shared.interner
+        guard let ownerInfo = sema.symbols.symbol(ownerSymbol) else {
+            return []
+        }
+
+        let ctorFQName = ownerInfo.fqName + [interner.intern("<init>")]
+        let ctorSymbols = sema.symbols.lookupAll(fqName: ctorFQName)
+        guard !ctorSymbols.isEmpty else {
+            return []
+        }
+
+        let initializerSymbol = ctx.allocateSyntheticGeneratedSymbol()
+        let initializerName = interner.intern("__ctor_reflect_init_\(ownerSymbol.rawValue)")
+        let intType = sema.types.intType
+
+        var body: KIRLoweringEmitContext = [.beginBlock]
+
+        let typeToken = RuntimeTypeCheckToken.stableNominalTypeID(
+            symbol: ownerSymbol,
+            sema: sema,
+            interner: interner
+        )
+        let encodedToken = RuntimeTypeCheckToken.encode(
+            base: RuntimeTypeCheckToken.nominalBase,
+            nullable: false,
+            payload: typeToken
+        )
+        let typeTokenExpr = arena.appendExpr(.intLiteral(encodedToken), type: intType)
+        body.append(.constValue(result: typeTokenExpr, value: .intLiteral(encodedToken)))
+
+        let simpleNameInterned = interner.intern(interner.resolve(classDecl.name))
+        let simpleNameExpr = arena.appendExpr(.stringLiteral(simpleNameInterned), type: intType)
+        body.append(.constValue(result: simpleNameExpr, value: .stringLiteral(simpleNameInterned)))
+
+        let kclassExpr = arena.appendExpr(
+            .temporary(Int32(arena.expressions.count)),
+            type: sema.types.makeKClassType(argument: sema.types.anyType)
+        )
+        body.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_kclass_create"),
+            arguments: [typeTokenExpr, simpleNameExpr],
+            result: kclassExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        let ctorNameInterned = interner.intern("<init>")
+        let ctorNameExpr = arena.appendExpr(.stringLiteral(ctorNameInterned), type: intType)
+        body.append(.constValue(result: ctorNameExpr, value: .stringLiteral(ctorNameInterned)))
+
+        let returnTypeExpr = arena.appendExpr(.stringLiteral(simpleNameInterned), type: intType)
+        body.append(.constValue(result: returnTypeExpr, value: .stringLiteral(simpleNameInterned)))
+
+        let visibilityExpr = arena.appendExpr(.intLiteral(0), type: intType)
+        body.append(.constValue(result: visibilityExpr, value: .intLiteral(0)))
+
+        for ctorSymbol in ctorSymbols {
+            guard let signature = sema.symbols.functionSignature(for: ctorSymbol) else {
+                continue
+            }
+            let arityExpr = arena.appendExpr(.intLiteral(Int64(signature.parameterTypes.count)), type: intType)
+            body.append(.constValue(result: arityExpr, value: .intLiteral(Int64(signature.parameterTypes.count))))
+
+            let fnPtrExpr = arena.appendExpr(.symbolRef(ctorSymbol), type: intType)
+            body.append(.constValue(result: fnPtrExpr, value: .symbolRef(ctorSymbol)))
+
+            let isPrimary = sema.symbols.symbol(ctorSymbol)?.declSite == classDecl.range ? 1 : 0
+            let isPrimaryExpr = arena.appendExpr(.intLiteral(Int64(isPrimary)), type: intType)
+            body.append(.constValue(result: isPrimaryExpr, value: .intLiteral(Int64(isPrimary))))
+
+            let registrationResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_kconstructor_create"),
+                arguments: [ctorNameExpr, arityExpr, returnTypeExpr, fnPtrExpr, isPrimaryExpr, visibilityExpr, kclassExpr],
+                result: registrationResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+        }
+
+        body.append(.returnUnit)
+        body.append(.endBlock)
+
+        let declID = arena.appendDecl(
+            .function(KIRFunction(
+                symbol: initializerSymbol,
+                name: initializerName,
+                params: [],
+                returnType: sema.types.unitType,
+                body: body,
+                isSuspend: false,
+                isInline: false,
+                sourceRange: classDecl.range
+            ))
+        )
+        ctx.registerCompanionInitializer(symbol: initializerSymbol, name: initializerName)
+        return [declID]
+    }
 }
