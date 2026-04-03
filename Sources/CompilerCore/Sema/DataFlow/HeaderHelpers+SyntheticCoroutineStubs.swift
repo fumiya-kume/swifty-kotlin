@@ -48,7 +48,6 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-
         let continuationSymbol = ensureInterfaceSymbol(
             named: "Continuation",
             in: kotlinCoroutinesPkg,
@@ -189,6 +188,40 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+        let continuationSymbol = ensureInterfaceSymbol(
+            named: "Continuation",
+            in: kotlinCoroutinesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let continuationTypeParamName = interner.intern("T")
+        let continuationTypeParamFQName = kotlinCoroutinesPkg + [interner.intern("Continuation"), continuationTypeParamName]
+        let continuationTypeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: continuationTypeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: continuationTypeParamName,
+                fqName: continuationTypeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let continuationTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: continuationTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let continuationType = types.make(.classType(ClassType(
+            classSymbol: continuationSymbol,
+            args: [.invariant(continuationTypeParamType)],
+            nullability: .nonNull
+        )))
+
+        types.setNominalTypeParameterSymbols([continuationTypeParamSymbol], for: continuationSymbol)
+        symbols.setParentSymbol(continuationSymbol, for: continuationTypeParamSymbol)
+        symbols.setPropertyType(continuationType, for: continuationSymbol)
+        let coroutineSuspendedType = types.nullableAnyType
 
         types.setNominalTypeParameterSymbols([continuationTypeParamSymbol], for: continuationSymbol)
         symbols.setParentSymbol(continuationSymbol, for: continuationTypeParamSymbol)
@@ -202,7 +235,6 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(dispatcherType, for: dispatcherSymbol)
         symbols.setPropertyType(channelType, for: channelSymbol)
         symbols.setPropertyType(cancellationType, for: cancellationSymbol)
-        symbols.setPropertyType(continuationType, for: continuationSymbol)
         symbols.setPropertyType(continuationInterceptorType, for: continuationInterceptorSymbol)
         symbols.setPropertyType(rootCancellationType, for: rootCancellationSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: cancellationSymbol)
@@ -334,20 +366,6 @@ extension DataFlowSemaPhase {
             packageFQName: coroutinesPkg,
             parameters: [],
             returnType: types.unitType,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSyntheticCoroutineTopLevelFunction(
-            named: "coroutineScope",
-            packageFQName: coroutinesPkg,
-            parameterName: "block",
-            parameterType: types.make(.functionType(FunctionType(
-                params: [],
-                returnType: types.anyType,
-                isSuspend: true,
-                nullability: .nonNull
-            ))),
-            returnType: types.anyType,
             symbols: symbols,
             interner: interner
         )
