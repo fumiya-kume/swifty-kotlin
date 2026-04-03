@@ -141,7 +141,8 @@ final class ABIMismatchTests: XCTestCase {
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
         // STDLIB-CORO-070 adds Job.complete/completeExceptionally/cancel(cause)/awaitCompletion.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 94)
+        // read-write lock adds kk_read_write_lock_create/read/write.
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 113)
     }
 
     func testBoxingFunctionCount() {
@@ -235,6 +236,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.bigIntegerFunctions,
             RuntimeABISpec.broadcastChannelFunctions,
             RuntimeABISpec.serializationFunctions,
+            RuntimeABISpec.networkFunctions,
             RuntimeABISpec.abiParityFunctions,
         ]
         XCTAssertEqual(
