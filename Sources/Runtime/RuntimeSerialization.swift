@@ -37,6 +37,37 @@ final class RuntimeJsonDecoderBox {
     }
 }
 
+final class RuntimeDataClassFieldRegistry: @unchecked Sendable {
+    private let lock = NSLock()
+    private var entries: [Int64: [String]] = [:]
+
+    func register(classID: Int64, index: Int, name: String) {
+        guard index >= 0 else { return }
+        lock.lock()
+        defer { lock.unlock() }
+
+        var names = entries[classID] ?? []
+        if names.count <= index {
+            names.append(contentsOf: repeatElement("", count: index - names.count + 1))
+        }
+        names[index] = name
+        entries[classID] = names
+    }
+
+    func fieldNames(for classID: Int64) -> [String]? {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let names = entries[classID],
+              names.contains(where: { !$0.isEmpty })
+        else {
+            return nil
+        }
+        return names
+    }
+}
+
+private let runtimeDataClassFieldRegistry = RuntimeDataClassFieldRegistry()
+
 // MARK: - Helpers
 
 private func jsonMakeStringRaw(_ value: String) -> Int {
@@ -63,6 +94,20 @@ private func jsonExtractString(from rawValue: Int) -> String? {
         return nil
     }
     return tryCast(ptr, to: RuntimeStringBox.self)?.value
+}
+
+private func dataClassJSONObject(elements: [Int], classID: Int64) -> [String: Any]? {
+    guard let fieldNames = runtimeDataClassFieldRegistry.fieldNames(for: classID) else {
+        return nil
+    }
+
+    var object: [String: Any] = [:]
+    for index in 0..<elements.count {
+        let rawFieldName = index < fieldNames.count ? fieldNames[index] : ""
+        let fieldName = rawFieldName.isEmpty ? "field\(index)" : rawFieldName
+        object[fieldName] = runtimeValueToJSON(elements[index])
+    }
+    return object
 }
 
 private func runtimeMapKeyToJSONString(_ rawValue: Int) -> String {
@@ -294,6 +339,9 @@ private func runtimeValueToJSON(_ rawValue: Int) -> Any {
         ]
     }
     if let box = tryCast(ptr, to: RuntimeObjectBox.self) {
+        if let object = dataClassJSONObject(elements: box.elements, classID: box.classID) {
+            return object
+        }
         return box.elements.map { runtimeValueToJSON($0) }
     }
     if let box = tryCast(ptr, to: RuntimeArrayBox.self) {
@@ -348,6 +396,22 @@ private func jsonToRuntimeValue(_ value: Any) -> Int {
         return registerRuntimeObject(RuntimeMapBox(keys: keys, values: values))
     }
     return runtimeNullSentinelInt
+}
+
+// MARK: - Json object constructor
+
+@_cdecl("kk_json_default")
+public func kk_json_default() -> Int {
+    registerRuntimeObject(RuntimeJsonBox(prettyPrint: false))
+}
+
+@_cdecl("kk_json_register_data_class_field_name")
+public func kk_json_register_data_class_field_name(_ classID: Int, _ index: Int, _ nameRaw: Int) -> Int {
+    guard let fieldName = jsonExtractString(from: nameRaw) else {
+        return 0
+    }
+    runtimeDataClassFieldRegistry.register(classID: Int64(classID), index: index, name: fieldName)
+    return 0
 }
 
 private func encodeJSONString(from valueRaw: Int, jsonBox: RuntimeJsonBox?) -> Int {
@@ -435,13 +499,6 @@ private func parseJSONString(_ stringRaw: Int, outThrown: UnsafeMutablePointer<I
         )
         return runtimeNullSentinelInt
     }
-}
-
-// MARK: - Json object constructor
-
-@_cdecl("kk_json_default")
-public func kk_json_default() -> Int {
-    registerRuntimeObject(RuntimeJsonBox(prettyPrint: false))
 }
 
 // MARK: - Json.encodeToString(value)

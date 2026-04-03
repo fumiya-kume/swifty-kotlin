@@ -11,7 +11,8 @@ extension CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
-        guard sema.bindings.stdlibSpecialCallKind(for: exprID) == .suspendCoroutineUninterceptedOrReturn,
+        guard let specialKind = sema.bindings.stdlibSpecialCallKind(for: exprID),
+              specialKind == .suspendCoroutineUninterceptedOrReturn,
               args.count == 1
         else {
             return nil

@@ -134,6 +134,94 @@ final class RuntimeDatabaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertTrue(try XCTUnwrap(throwableBox(from: thrown)).message.contains("not currently checked out"))
     }
 
+    func testStatementExecuteUpdateAndQueryRoundTrip() {
+        var thrown = 0
+        let connection = kk_jdbc_driver_manager_getConnection(runtimeString("jdbc:sqlite::memory:"), &thrown)
+        XCTAssertEqual(thrown, 0)
+
+        let statement = kk_jdbc_connection_createStatement(connection, &thrown)
+        XCTAssertEqual(thrown, 0)
+
+        XCTAssertEqual(
+            kk_jdbc_statement_executeUpdate(statement, runtimeString("create table users(id integer, name text)"), &thrown),
+            0
+        )
+        XCTAssertEqual(thrown, 0)
+
+        XCTAssertEqual(
+            kk_jdbc_statement_executeUpdate(statement, runtimeString("insert into users(id, name) values (1, 'Ada')"), &thrown),
+            1
+        )
+        XCTAssertEqual(thrown, 0)
+
+        let resultSet = kk_jdbc_statement_executeQuery(statement, runtimeString("select id, name from users"), &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_unbox_bool(kk_jdbc_result_set_next(resultSet, &thrown)), 1)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_jdbc_result_set_getInt(resultSet, 1, &thrown), 1)
+        XCTAssertEqual(stringValue(kk_jdbc_result_set_getString(resultSet, 2, &thrown)), "Ada")
+        XCTAssertEqual(kk_unbox_bool(kk_jdbc_result_set_next(resultSet, &thrown)), 0)
+
+        XCTAssertEqual(kk_jdbc_result_set_close(resultSet, &thrown), 0)
+        XCTAssertEqual(kk_jdbc_statement_close(statement, &thrown), 0)
+        XCTAssertEqual(kk_jdbc_connection_close(connection, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testPreparedStatementBindsAndColumnLabelLookup() {
+        var thrown = 0
+        let connection = kk_jdbc_driver_manager_getConnection(runtimeString("jdbc:sqlite::memory:"), &thrown)
+        XCTAssertEqual(thrown, 0)
+        let statement = kk_jdbc_connection_createStatement(connection, &thrown)
+        XCTAssertEqual(
+            kk_jdbc_statement_executeUpdate(statement, runtimeString("create table items(id integer, title text)"), &thrown),
+            0
+        )
+        XCTAssertEqual(thrown, 0)
+
+        let prepared = kk_jdbc_connection_prepareStatement(
+            connection,
+            runtimeString("insert into items(id, title) values (?, ?)"),
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_jdbc_prepared_statement_setInt(prepared, 1, 7, &thrown), 0)
+        XCTAssertEqual(kk_jdbc_prepared_statement_setString(prepared, 2, runtimeString("Notebook"), &thrown), 0)
+        XCTAssertEqual(kk_jdbc_prepared_statement_executeUpdate(prepared, &thrown), 1)
+        XCTAssertEqual(thrown, 0)
+
+        let query = kk_jdbc_statement_executeQuery(statement, runtimeString("select id, title from items"), &thrown)
+        XCTAssertEqual(kk_unbox_bool(kk_jdbc_result_set_next(query, &thrown)), 1)
+        XCTAssertEqual(kk_jdbc_result_set_getIntByLabel(query, runtimeString("id"), &thrown), 7)
+        XCTAssertEqual(stringValue(kk_jdbc_result_set_getStringByLabel(query, runtimeString("title"), &thrown)), "Notebook")
+
+        XCTAssertEqual(kk_jdbc_result_set_close(query, &thrown), 0)
+        XCTAssertEqual(kk_jdbc_prepared_statement_close(prepared, &thrown), 0)
+        XCTAssertEqual(kk_jdbc_statement_close(statement, &thrown), 0)
+        XCTAssertEqual(kk_jdbc_connection_close(connection, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testUnsupportedURLProducesThrowable() {
+        var thrown = 0
+        let connection = kk_jdbc_driver_manager_getConnection(runtimeString("jdbc:mysql://localhost/test"), &thrown)
+        XCTAssertEqual(connection, 0)
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertTrue((extractString(from: UnsafeMutableRawPointer(bitPattern: kk_throwable_message(thrown))) ?? "").contains("unsupported JDBC URL"))
+    }
+
+    private func runtimeString(_ text: String) -> Int {
+        text.withCString { cstr in
+            cstr.withMemoryRebound(to: UInt8.self, capacity: text.utf8.count) { ptr in
+                Int(bitPattern: kk_string_from_utf8(ptr, Int32(text.utf8.count)))
+            }
+        }
+    }
+
+    private func stringValue(_ raw: Int) -> String? {
+        extractString(from: UnsafeMutableRawPointer(bitPattern: raw))
+    }
+
     private func waitForCondition(timeout: TimeInterval, pollInterval: TimeInterval = 0.01, _ body: () -> Bool) -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {

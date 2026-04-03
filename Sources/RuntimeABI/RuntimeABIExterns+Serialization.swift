@@ -8,6 +8,7 @@ public extension RuntimeABIExterns {
         kk_json_decodeFromString,
         kk_json_decodeWithSerializer,
         kk_json_encodeMapToString,
+        kk_json_register_data_class_field_name,
         kk_json_registerSerializer,
         kk_json_getRegisteredSerializer,
         kk_json_encoder_context,
@@ -58,6 +59,12 @@ public extension RuntimeABIExterns {
     static let kk_json_encodeMapToString = ExternDecl(
         name: "kk_json_encodeMapToString",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_json_register_data_class_field_name = ExternDecl(
+        name: "kk_json_register_data_class_field_name",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 

@@ -24,6 +24,9 @@ let package = Package(
         .systemLibrary(
             name: "CLLVM"
         ),
+        .systemLibrary(
+            name: "CSQLite"
+        ),
         .target(
             name: "RuntimeABI"
         ),
@@ -36,7 +39,8 @@ let package = Package(
             dependencies: ["CompilerCore"]
         ),
         .target(
-            name: "Runtime"
+            name: "Runtime",
+            dependencies: ["CSQLite"]
         ),
         .testTarget(
             name: "CompilerCoreTests",

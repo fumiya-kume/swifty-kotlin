@@ -922,6 +922,7 @@ extension DataFlowSemaPhase {
         registerSyntheticRegexStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticHexFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticResultStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticDeepRecursiveStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticDurationStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticInstantStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticClockStubs(symbols: symbols, types: types, interner: interner)
@@ -931,6 +932,7 @@ extension DataFlowSemaPhase {
         registerSyntheticStringBuilderStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticTODOAndIOStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCloseableStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticDatabaseStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticFileIOStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticDatabaseStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticFilesUtilityStubs(symbols: symbols, types: types, interner: interner)
@@ -944,6 +946,7 @@ extension DataFlowSemaPhase {
         registerSyntheticURIStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticURLStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticNetworkStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticAdvancedNetworkStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticLoggingStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticSecurityStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCacheStubs(symbols: symbols, types: types, interner: interner)
@@ -956,6 +959,7 @@ extension DataFlowSemaPhase {
         registerSyntheticKSPStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticBigIntegerStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticThreadLocalStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticConcurrencyStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoroutineCancellationStubs(symbols: symbols, types: types, interner: interner)
     }
 
@@ -1265,7 +1269,8 @@ extension DataFlowSemaPhase {
         named name: String,
         in pkg: [InternedString],
         symbols: SymbolTable,
-        interner: StringInterner
+        interner: StringInterner,
+        visibility: Visibility = .public
     ) -> SymbolID {
         let internedName = interner.intern(name)
         let fqName = pkg + [internedName]
@@ -1274,7 +1279,7 @@ extension DataFlowSemaPhase {
         }
         return symbols.define(
             kind: .interface, name: internedName, fqName: fqName,
-            declSite: nil, visibility: .public, flags: [.synthetic]
+            declSite: nil, visibility: visibility, flags: [.synthetic]
         )
     }
 

@@ -22,7 +22,12 @@ extension CallTypeChecker {
         locals: inout LocalBindings
     ) -> TypeID? {
         let memberName = ctx.interner.resolve(calleeName)
-        let flowMembers: Set = ["map", "filter", "take", "collect", "toList", "first", "catch", "retry", "retryWhen"]
+        let flowMembers: Set = [
+            "map", "filter", "take", "collect", "toList", "first",
+            "transform", "takeWhile", "dropWhile", "flatMapConcat", "flatMapMerge", "flatMapLatest",
+            "buffer", "conflate", "flowOn", "debounce", "sample", "delayEach",
+            "catch", "retry", "retryWhen", "onErrorReturn", "onErrorResume",
+        ]
         guard flowMembers.contains(memberName) else {
             return nil
         }
@@ -57,16 +62,25 @@ extension CallTypeChecker {
             sema.bindings.bindExprType(id, type: finalType)
             return finalType
 
-        case "take":
+        case "take", "buffer", "debounce", "sample", "delayEach", "flowOn":
             guard args.count == 1 else {
                 return nil
             }
-            _ = driver.inferExpr(
-                args[0].expr,
-                ctx: ctx,
-                locals: &locals,
-                expectedType: sema.types.intType
-            )
+            let expectedArgType: TypeID = memberName == "flowOn" ? sema.types.anyType : sema.types.intType
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: expectedArgType)
+            sema.bindings.markFlowExpr(id)
+            sema.bindings.bindFlowElementType(receiverElementType, forExpr: id)
+            let flowType = driver.helpers.makeFlowType(
+                elementType: receiverElementType, sema: sema, interner: ctx.interner
+            ) ?? sema.types.anyType
+            let resultType = safeCall ? sema.types.makeNullable(flowType) : flowType
+            sema.bindings.bindExprType(id, type: resultType)
+            return resultType
+
+        case "conflate":
+            guard args.isEmpty else {
+                return nil
+            }
             sema.bindings.markFlowExpr(id)
             sema.bindings.bindFlowElementType(receiverElementType, forExpr: id)
             let flowType = driver.helpers.makeFlowType(
@@ -91,11 +105,14 @@ extension CallTypeChecker {
             let flowType = driver.helpers.makeFlowType(
                 elementType: receiverElementType, sema: sema, interner: ctx.interner
             ) ?? sema.types.anyType
+            let finalType = safeCall ? sema.types.makeNullable(flowType) : flowType
             let resultType = safeCall ? sema.types.makeNullable(flowType) : flowType
             sema.bindings.bindExprType(id, type: resultType)
             return resultType
 
-        case "map", "filter", "collect", "catch", "retryWhen":
+        case "map", "filter", "collect", "transform", "takeWhile", "dropWhile",
+             "flatMapConcat", "flatMapMerge", "flatMapLatest",
+             "catch", "retryWhen", "onErrorReturn", "onErrorResume":
             guard args.count == 1 else {
                 return nil
             }
@@ -110,6 +127,8 @@ extension CallTypeChecker {
                 sema.types.booleanType
             case "collect":
                 sema.types.unitType
+            case "takeWhile", "dropWhile":
+                sema.types.unitType
             case "catch":
                 sema.types.unitType
             case "retryWhen":
@@ -118,7 +137,7 @@ extension CallTypeChecker {
                 sema.types.anyType
             }
             let lambdaParameterTypes: [TypeID] = switch memberName {
-            case "catch":
+            case "catch", "onErrorResume":
                 [sema.types.anyType]
             case "retryWhen":
                 [sema.types.anyType, sema.types.longType]
@@ -137,13 +156,15 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             }
 
-            if memberName == "map" || memberName == "filter" || memberName == "catch" || memberName == "retryWhen" {
+            if memberName != "collect" {
                 sema.bindings.markFlowExpr(id)
-                let resultElementType: TypeID = if memberName == "map",
+                let resultElementType: TypeID = if memberName == "map" || memberName == "transform",
                                                    case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr),
                                                    let mappedType = sema.bindings.exprType(for: bodyExpr)
                 {
                     mappedType
+                } else if memberName == "flatMapConcat" || memberName == "flatMapMerge" || memberName == "flatMapLatest" {
+                    sema.types.anyType
                 } else {
                     receiverElementType
                 }
@@ -166,6 +187,94 @@ extension CallTypeChecker {
         default:
             return nil
         }
+    }
+
+    private func tryContinuationSyntheticMemberCall(
+        _ id: ExprID,
+        calleeName: InternedString,
+        receiverType: TypeID,
+        args: [CallArgument],
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let knownNames = KnownCompilerNames(interner: ctx.interner)
+        guard calleeName == knownNames.resume || calleeName == knownNames.resumeWith || calleeName == knownNames.resumeWithException else {
+            return nil
+        }
+        guard let continuationSymbol = ctx.sema.symbols.lookup(fqName: knownNames.kotlinContinuationFQName),
+              case let .classType(classType) = ctx.sema.types.kind(of: ctx.sema.types.makeNonNullable(receiverType)),
+              classType.classSymbol == continuationSymbol
+        else {
+            return nil
+        }
+        guard args.count == 1 else {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0024",
+                "No viable overload found for call.",
+                range: range
+            )
+            return driver.helpers.bindAndReturnErrorType(id, sema: ctx.sema)
+        }
+
+        var expectedArgType: TypeID = ctx.sema.types.anyType
+        if calleeName == knownNames.resume,
+           case let .classType(classType) = ctx.sema.types.kind(of: ctx.sema.types.makeNonNullable(receiverType)),
+           let continuationArg = classType.args.first
+        {
+            switch continuationArg {
+            case let .invariant(type), let .out(type), let .in(type):
+                expectedArgType = type
+            case .star:
+                expectedArgType = ctx.sema.types.anyType
+            }
+        } else if calleeName == knownNames.resumeWith,
+                  case let .classType(classType) = ctx.sema.types.kind(of: ctx.sema.types.makeNonNullable(receiverType)),
+                  let continuationArg = classType.args.first,
+                  let resultSymbol = ctx.sema.symbols.lookup(fqName: [ctx.interner.intern("kotlin"), ctx.interner.intern("Result")])
+        {
+            let innerType: TypeID
+            switch continuationArg {
+            case let .invariant(type), let .out(type), let .in(type):
+                innerType = type
+            case .star:
+                innerType = ctx.sema.types.anyType
+            }
+            expectedArgType = ctx.sema.types.make(.classType(ClassType(
+                classSymbol: resultSymbol,
+                args: [.out(innerType)],
+                nullability: .nonNull
+            )))
+        }
+
+        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: expectedArgType)
+
+        let expectedExternalLinkName = if calleeName == knownNames.resume {
+            "kk_coroutine_continuation_resume"
+        } else if calleeName == knownNames.resumeWith {
+            "kk_coroutine_continuation_resume_with"
+        } else {
+            "kk_coroutine_continuation_resume_with_exception"
+        }
+        let functionSymbol = ctx.sema.symbols.lookupByShortName(calleeName).first(where: { candidate in
+            guard let symbol = ctx.sema.symbols.symbol(candidate),
+                  symbol.kind == .function
+            else {
+                return false
+            }
+            return ctx.sema.symbols.externalLinkName(for: candidate) == expectedExternalLinkName
+        })
+        if let functionSymbol {
+            ctx.sema.bindings.bindCall(id, binding: CallBinding(
+                chosenCallee: functionSymbol,
+                substitutedTypeArguments: [],
+                parameterMapping: [0: 0]
+            ))
+            ctx.sema.bindings.bindIdentifier(id, symbol: functionSymbol)
+            ctx.sema.bindings.bindExprType(id, type: ctx.sema.types.unitType)
+            return ctx.sema.types.unitType
+        }
+        return nil
     }
 
     private func isCoroutineHandleReceiverType(
@@ -379,10 +488,25 @@ extension CallTypeChecker {
         }
 
         let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
-
+        let recoveredReceiverType: TypeID? = if case .any = sema.types.kind(of: sema.types.makeNonNullable(receiverType)) {
+            if let symbol = sema.bindings.identifierSymbol(for: receiverID),
+               let propertyType = sema.symbols.propertyType(for: symbol)
+            {
+                propertyType
+            } else if case let .nameRef(receiverName, _) = ast.arena.expr(receiverID),
+                      let local = locals[receiverName]
+            {
+                sema.symbols.propertyType(for: local.symbol) ?? local.type
+            } else {
+                nil
+            }
+        } else {
+            nil
+        }
+        let effectiveCallRecursiveReceiverType = recoveredReceiverType ?? receiverType
         if interner.resolve(calleeName) == "callRecursive",
            args.count == 1,
-           case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+           case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(effectiveCallRecursiveReceiverType)),
            let receiverSymbol = sema.symbols.symbol(classType.classSymbol),
            receiverSymbol.fqName.count == 2,
            interner.resolve(receiverSymbol.fqName[0]) == "kotlin",
@@ -426,6 +550,18 @@ extension CallTypeChecker {
             }
             sema.bindings.bindExprType(id, type: returnType)
             return returnType
+        }
+
+        if let boundContinuationCall = tryContinuationSyntheticMemberCall(
+            id,
+            calleeName: calleeName,
+            receiverType: receiverType,
+            args: args,
+            range: range,
+            ctx: ctx,
+            locals: &locals
+        ) {
+            return boundContinuationCall
         }
 
         if case .kClassType = sema.types.kind(of: sema.types.makeNonNullable(receiverType)) {
@@ -684,14 +820,14 @@ extension CallTypeChecker {
         }
 
         // --- Result member functions (STDLIB-590) ---
-        // Result<T>.onSuccess/onFailure/getOrElse/map/fold/recover
+        // Result<T>.onSuccess/onFailure/getOrElse/getOrDefault/map/fold/recover
         // These require special handling because the generic type parameter T
         // needs to be extracted from the receiver's Result<out T> type and used
         // to construct the expected lambda parameter types.
         if args.count >= 1, args.count <= 2 {
             let calleeStr = interner.resolve(calleeName)
             let resultMemberNames: Set = [
-                "onSuccess", "onFailure", "getOrElse", "map", "fold", "recover",
+                "onSuccess", "onFailure", "getOrElse", "getOrDefault", "map", "fold", "recover",
             ]
             if resultMemberNames.contains(calleeStr),
                let resultElementType = extractResultElementType(receiverType, sema: sema, interner: interner)
@@ -749,6 +885,21 @@ extension CallTypeChecker {
                     if let getOrElseSymbol = lookupResultMember("getOrElse", sema: sema, interner: interner) {
                         sema.bindings.bindCall(id, binding: CallBinding(
                             chosenCallee: getOrElseSymbol,
+                            substitutedTypeArguments: [resultElementType],
+                            parameterMapping: [0: 0]
+                        ))
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(resultElementType) : resultElementType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+
+                case "getOrDefault" where args.count == 1:
+                    // getOrDefault(defaultValue: T): T
+                    let defaultExpectedType = resultElementType
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: defaultExpectedType)
+                    if let getOrDefaultSymbol = lookupResultMember("getOrDefault", sema: sema, interner: interner) {
+                        sema.bindings.bindCall(id, binding: CallBinding(
+                            chosenCallee: getOrDefaultSymbol,
                             substitutedTypeArguments: [resultElementType],
                             parameterMapping: [0: 0]
                         ))

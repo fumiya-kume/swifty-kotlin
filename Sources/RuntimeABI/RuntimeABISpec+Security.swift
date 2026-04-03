@@ -24,6 +24,7 @@ public extension RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_cipher_getInstance",
             parameters: [
+                RuntimeABIParameter(name: "companionRef", type: .intptr),
                 RuntimeABIParameter(name: "transformationRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
@@ -75,6 +76,7 @@ public extension RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_keypairgenerator_getInstance",
             parameters: [
+                RuntimeABIParameter(name: "companionRef", type: .intptr),
                 RuntimeABIParameter(name: "algorithmRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
@@ -147,6 +149,7 @@ public extension RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_signature_getInstance",
             parameters: [
+                RuntimeABIParameter(name: "companionRef", type: .intptr),
                 RuntimeABIParameter(name: "algorithmRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
@@ -205,6 +208,7 @@ public extension RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_certificatefactory_getInstance",
             parameters: [
+                RuntimeABIParameter(name: "companionRef", type: .intptr),
                 RuntimeABIParameter(name: "typeRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
@@ -213,6 +217,16 @@ public extension RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: "kk_certificatefactory_generateCertificate",
+            parameters: [
+                RuntimeABIParameter(name: "factoryRaw", type: .intptr),
+                RuntimeABIParameter(name: "dataRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Security"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_certificatefactory_generateCertificate_inputStream",
             parameters: [
                 RuntimeABIParameter(name: "factoryRaw", type: .intptr),
                 RuntimeABIParameter(name: "dataRaw", type: .intptr),
@@ -249,8 +263,19 @@ public extension RuntimeABISpec {
             section: "Security"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_certificatefactory_generateCertPath",
+            parameters: [
+                RuntimeABIParameter(name: "factoryRaw", type: .intptr),
+                RuntimeABIParameter(name: "certificatesRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Security"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_certpathvalidator_getInstance",
             parameters: [
+                RuntimeABIParameter(name: "companionRef", type: .intptr),
                 RuntimeABIParameter(name: "algorithmRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
@@ -278,7 +303,26 @@ public extension RuntimeABISpec {
             section: "Security"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_trustanchor_new_with_constraints",
+            parameters: [
+                RuntimeABIParameter(name: "certificateRaw", type: .intptr),
+                RuntimeABIParameter(name: "nameConstraintsRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Security"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_pkixparameters_new",
+            parameters: [
+                RuntimeABIParameter(name: "trustAnchorsRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Security"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_pkixparameters_new_from_set",
             parameters: [
                 RuntimeABIParameter(name: "trustAnchorsRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),

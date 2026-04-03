@@ -46,6 +46,7 @@ final class BuildKIRRegressionTests: XCTestCase {
                 "PropertyLowering",
                 "StdlibDelegateLowering",
                 "JvmStaticLowering",
+                "JvmOverloadsLowering",
                 "DataEnumSealedSynthesis",
                 "EnumEntriesLowering",
                 "EnumNameAccessLowering",
