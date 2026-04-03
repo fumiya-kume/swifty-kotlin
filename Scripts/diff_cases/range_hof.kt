@@ -24,8 +24,10 @@ fun main() {
     println((1..10).find { it % 3 == 0 })
     println((1..10).findLast { it % 3 == 0 })
     println((1..10).first { it % 3 == 0 })
+    println((1..10).firstOrNull())
     println((1..10).firstOrNull { it > 10 })
     println((1..10).last { it % 3 == 0 })
+    println((1..10).lastOrNull())
     println((1..10).lastOrNull { it > 10 })
 
     println("=== Predicate HOFs ===")

@@ -12,6 +12,7 @@ final class KotlinCompilationResourceBundleTests: XCTestCase {
             val locale = Locale("ja_JP")
             val bundle = getBundle("messages", locale)
             val greeting = bundle.getString("greeting")
+            val obj = bundle.getObject("greeting")
             val keys = bundle.getKeys()
         }
         """)
