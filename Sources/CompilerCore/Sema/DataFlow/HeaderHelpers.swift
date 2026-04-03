@@ -32,6 +32,21 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             diagnostics: diagnostics
         )
+
+        guard let declRange else {
+            return
+        }
+        guard let suppressionRange = suppressionRange(for: decl, declRange: declRange) else {
+            return
+        }
+        for ann in declarationAnnotations(for: decl) where KnownCompilerAnnotation.suppress.matches(ann.name) {
+            for arg in ann.arguments {
+                let code = arg.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+                if !code.isEmpty {
+                    diagnostics.addSuppression(code: code, range: suppressionRange)
+                }
+            }
+        }
     }
 
     func registerAnnotations(
@@ -66,6 +81,56 @@ extension DataFlowSemaPhase {
                 }
             }
         }
+    }
+
+    private func suppressionRange(for decl: Decl, declRange: SourceRange?) -> SourceRange? {
+        guard let declRange else {
+            return nil
+        }
+
+        let bodyRange: SourceRange? = switch decl {
+        case let .funDecl(funDecl):
+            switch funDecl.body {
+            case let .block(_, range), let .expr(_, range):
+                range
+            case .unit:
+                nil
+            }
+        case let .propertyDecl(propertyDecl):
+            switch (propertyDecl.getter?.body, propertyDecl.setter?.body) {
+            case (let getterBody?, _):
+                switch getterBody {
+                case let .block(_, range), let .expr(_, range):
+                    range
+                case .unit:
+                    nil
+                }
+            case (_, let setterBody?):
+                switch setterBody {
+                case let .block(_, range), let .expr(_, range):
+                    range
+                case .unit:
+                    nil
+                }
+            default:
+                nil
+            }
+        case let .classDecl(classDecl):
+            classDecl.range
+        case let .interfaceDecl(interfaceDecl):
+            interfaceDecl.range
+        case let .objectDecl(objectDecl):
+            objectDecl.range
+        case let .typeAliasDecl(typeAliasDecl):
+            typeAliasDecl.range
+        case let .enumEntryDecl(enumEntryDecl):
+            enumEntryDecl.range
+        }
+
+        guard let bodyRange else {
+            return declRange
+        }
+        return SourceRange(start: declRange.start, end: bodyRange.end)
     }
 
     /// Base value for synthetic type parameter symbol IDs used in metadata encoding.
@@ -861,10 +926,13 @@ extension DataFlowSemaPhase {
         registerSyntheticInstantStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticClockStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticDeepRecursiveStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticExperimentalTimeStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticPlatformTimeConversionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticStringBuilderStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticTODOAndIOStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCloseableStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticFileIOStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticDatabaseStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticFilesUtilityStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticPathStubs(symbols: symbols, types: types, interner: interner)
         registerLateListIndexedMembers(symbols: symbols, types: types, interner: interner)
@@ -874,15 +942,21 @@ extension DataFlowSemaPhase {
         registerSyntheticUuidStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticSerializationStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticURIStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticURLStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticNetworkStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticLoggingStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticSecurityStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCacheStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticResourceBundleStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticLocaleConstructorStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticNumberFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticDateFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticMetaprogStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsInteropStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticKSPStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticBigIntegerStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticThreadLocalStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticCoroutineCancellationStubs(symbols: symbols, types: types, interner: interner)
     }
 
     func registerSyntheticContractStubs(
@@ -902,15 +976,36 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-        let effectSymbol = ensureClassSymbol(
+        let contractEffectSymbol = ensureInterfaceSymbol(
             named: "ContractEffect",
+            in: contractsFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        let effectSymbol = ensureInterfaceSymbol(
+            named: "Effect",
+            in: contractsFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        let simpleEffectSymbol = ensureInterfaceSymbol(
+            named: "SimpleEffect",
+            in: contractsFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        let conditionalEffectSymbol = ensureInterfaceSymbol(
+            named: "ConditionalEffect",
             in: contractsFQName,
             symbols: symbols,
             interner: interner
         )
         if contractsPkg != .invalid {
             symbols.setParentSymbol(contractsPkg, for: builderSymbol)
+            symbols.setParentSymbol(contractsPkg, for: contractEffectSymbol)
             symbols.setParentSymbol(contractsPkg, for: effectSymbol)
+            symbols.setParentSymbol(contractsPkg, for: simpleEffectSymbol)
+            symbols.setParentSymbol(contractsPkg, for: conditionalEffectSymbol)
         }
 
         let experimentalContractsSymbol = ensureAnnotationClassSymbol(
@@ -943,8 +1038,56 @@ extension DataFlowSemaPhase {
         }
         symbols.setAnnotations(existingAnnotations, for: experimentalContractsSymbol)
 
+        let experimentalFQName = ensurePackage(
+            path: ["kotlin", "experimental"],
+            symbols: symbols,
+            interner: interner
+        )
+        let experimentalPkg = symbols.lookup(fqName: experimentalFQName) ?? SymbolID.invalid
+        let experimentalTypeInferenceSymbol = ensureAnnotationClassSymbol(
+            named: "ExperimentalTypeInference",
+            in: experimentalFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        if experimentalPkg != SymbolID.invalid {
+            symbols.setParentSymbol(experimentalPkg, for: experimentalTypeInferenceSymbol)
+        }
+        let experimentalTypeInferenceAnnotations = [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: [
+                    "AnnotationTarget.CLASS",
+                    "AnnotationTarget.FUNCTION",
+                    "AnnotationTarget.TYPE",
+                    "AnnotationTarget.TYPEALIAS",
+                ]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Retention",
+                arguments: ["AnnotationRetention.BINARY"]
+            ),
+        ]
+        var experimentalTypeInferenceExisting = symbols.annotations(for: experimentalTypeInferenceSymbol)
+        for annotation in experimentalTypeInferenceAnnotations where !experimentalTypeInferenceExisting.contains(annotation) {
+            experimentalTypeInferenceExisting.append(annotation)
+        }
+        symbols.setAnnotations(experimentalTypeInferenceExisting, for: experimentalTypeInferenceSymbol)
+
         let builderType = types.make(.classType(ClassType(classSymbol: builderSymbol, args: [], nullability: .nonNull)))
+        let contractEffectType = types.make(.classType(ClassType(classSymbol: contractEffectSymbol, args: [], nullability: .nonNull)))
         let effectType = types.make(.classType(ClassType(classSymbol: effectSymbol, args: [], nullability: .nonNull)))
+        let simpleEffectType = types.make(.classType(ClassType(classSymbol: simpleEffectSymbol, args: [], nullability: .nonNull)))
+        let conditionalEffectType = types.make(.classType(ClassType(classSymbol: conditionalEffectSymbol, args: [], nullability: .nonNull)))
+
+        symbols.setPropertyType(contractEffectType, for: contractEffectSymbol)
+        symbols.setPropertyType(effectType, for: effectSymbol)
+        symbols.setPropertyType(simpleEffectType, for: simpleEffectSymbol)
+        symbols.setPropertyType(conditionalEffectType, for: conditionalEffectSymbol)
+
+        symbols.setDirectSupertypes([contractEffectSymbol], for: effectSymbol)
+        symbols.setDirectSupertypes([effectSymbol], for: simpleEffectSymbol)
+        symbols.setDirectSupertypes([effectSymbol], for: conditionalEffectSymbol)
 
         let contractName = interner.intern("contract")
         let contractFQName = contractsFQName + [contractName]
@@ -1015,7 +1158,7 @@ extension DataFlowSemaPhase {
             name: "returns",
             receiverType: builderType,
             params: [],
-            returnType: effectType
+            returnType: simpleEffectType
         )
         ensureMember(
             owner: builderSymbol,
@@ -1023,15 +1166,15 @@ extension DataFlowSemaPhase {
             name: "returns",
             receiverType: builderType,
             params: [types.booleanType],
-            returnType: effectType
+            returnType: simpleEffectType
         )
         ensureMember(
-            owner: effectSymbol,
-            ownerFQName: contractsFQName + [interner.intern("ContractEffect")],
+            owner: simpleEffectSymbol,
+            ownerFQName: contractsFQName + [interner.intern("SimpleEffect")],
             name: "implies",
-            receiverType: effectType,
+            receiverType: simpleEffectType,
             params: [types.booleanType],
-            returnType: types.unitType
+            returnType: conditionalEffectType
         )
         // STDLIB-593 stub: `ContractBuilder.returnsNotNull()` -- forward declaration
         // so that user code containing `contract { returnsNotNull() }` resolves.
@@ -1041,7 +1184,7 @@ extension DataFlowSemaPhase {
             name: "returnsNotNull",
             receiverType: builderType,
             params: [],
-            returnType: effectType
+            returnType: simpleEffectType
         )
 
         // STDLIB-592: InvocationKind enum class stub
@@ -1122,7 +1265,8 @@ extension DataFlowSemaPhase {
         named name: String,
         in pkg: [InternedString],
         symbols: SymbolTable,
-        interner: StringInterner
+        interner: StringInterner,
+        visibility: Visibility = .public
     ) -> SymbolID {
         let internedName = interner.intern(name)
         let fqName = pkg + [internedName]
@@ -1131,7 +1275,7 @@ extension DataFlowSemaPhase {
         }
         return symbols.define(
             kind: .interface, name: internedName, fqName: fqName,
-            declSite: nil, visibility: .public, flags: [.synthetic]
+            declSite: nil, visibility: visibility, flags: [.synthetic]
         )
     }
 

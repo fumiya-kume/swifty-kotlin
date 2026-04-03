@@ -164,6 +164,16 @@ public func kk_string_substring(
     return runtimeMakeStringRaw(result)
 }
 
+@_cdecl("kk_string_subSequence")
+public func kk_string_subSequence(
+    _ strRaw: Int,
+    _ startRaw: Int,
+    _ endRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_string_substring(strRaw, startRaw, endRaw, 1, outThrown)
+}
+
 /// Unicode code point for space (U+0020), the default pad character in Kotlin.
 private let kDefaultPadCharRaw: Int = 0x20
 

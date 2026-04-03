@@ -1,25 +1,44 @@
 import Foundation
+import CoreFoundation
 
-// MARK: - JSON Serialization Runtime Support (STDLIB-SER-132)
-// Implements kotlinx.serialization.json.Json.encodeToString() and Json.decodeFromString()
-// using Swift Foundation's JSONSerialization.
+// MARK: - JSON Serialization Runtime Support
 
-// MARK: - Internal Box
+private let runtimeKSerializerTypeID = runtimeStableNominalTypeID(fqName: "kotlinx.serialization.KSerializer")
+private let runtimeKSerializerSerializeSlot = 0
+private let runtimeKSerializerDeserializeSlot = 1
 
-/// Internal box holding the Json encoder/decoder singleton.
-/// This corresponds to the `Json` object in Kotlin's kotlinx.serialization.json.
 final class RuntimeJsonBox {
-    // Default configuration: pretty-print off, ignore unknown keys on.
     let prettyPrint: Bool
+    var registeredSerializers: [Int: Int]
 
-    init(prettyPrint: Bool = false) {
+    init(prettyPrint: Bool = false, registeredSerializers: [Int: Int] = [:]) {
         self.prettyPrint = prettyPrint
+        self.registeredSerializers = registeredSerializers
+    }
+}
+
+final class RuntimeJsonEncoderBox {
+    let jsonRaw: Int
+    var encodedValueRaw: Int = runtimeNullSentinelInt
+    var hasEncodedValue = false
+
+    init(jsonRaw: Int) {
+        self.jsonRaw = jsonRaw
+    }
+}
+
+final class RuntimeJsonDecoderBox {
+    let jsonRaw: Int
+    let decodedValueRaw: Int
+
+    init(jsonRaw: Int, decodedValueRaw: Int) {
+        self.jsonRaw = jsonRaw
+        self.decodedValueRaw = decodedValueRaw
     }
 }
 
 // MARK: - Helpers
 
-/// Make a runtime string Int from a Swift String.
 private func jsonMakeStringRaw(_ value: String) -> Int {
     let utf8 = Array(value.utf8)
     if utf8.isEmpty {
@@ -33,7 +52,6 @@ private func jsonMakeStringRaw(_ value: String) -> Int {
     }
 }
 
-/// Extract a Swift String from a runtime raw value.
 private func jsonExtractString(from rawValue: Int) -> String? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
@@ -47,9 +65,172 @@ private func jsonExtractString(from rawValue: Int) -> String? {
     return tryCast(ptr, to: RuntimeStringBox.self)?.value
 }
 
-/// Convert a runtime value (opaque Int) to a Swift Any suitable for JSONSerialization.
+private func runtimeMapKeyToJSONString(_ rawValue: Int) -> String {
+    let jsonValue = runtimeValueToJSON(rawValue)
+
+    switch jsonValue {
+    case is NSNull:
+        return "null"
+    case let string as String:
+        return string
+    case let bool as Bool:
+        return bool ? "true" : "false"
+    case let number as NSNumber:
+        return number.stringValue
+    default:
+        return String(describing: jsonValue)
+    }
+}
+
+private func runtimeJsonBox(from rawValue: Int) -> RuntimeJsonBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeJsonBox.self)
+}
+
+private func runtimeJsonEncoderBox(from rawValue: Int) -> RuntimeJsonEncoderBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeJsonEncoderBox.self)
+}
+
+private func runtimeJsonDecoderBox(from rawValue: Int) -> RuntimeJsonDecoderBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeJsonDecoderBox.self)
+}
+
+private func runtimeKClassBoxLocal(from rawValue: Int) -> RuntimeKClassBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeKClassBox.self)
+}
+
+private func runtimeRegisteredInterfaceSlot(objectRaw: Int, interfaceTypeID: Int64) -> Int? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: objectRaw) else {
+        return nil
+    }
+    let objectKey = UInt(bitPattern: ptr)
+    return runtimeStorage.withLock { state in
+        state.objectInterfaceSlots[objectKey]?[interfaceTypeID]
+    }
+}
+
+private func runtimeInvokeInterfaceMethod1(
+    receiverRaw: Int,
+    interfaceTypeID: Int64,
+    methodSlot: Int,
+    arg: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let ifaceSlot = runtimeRegisteredInterfaceSlot(objectRaw: receiverRaw, interfaceTypeID: interfaceTypeID) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "SerializationException: Interface slot lookup failed for receiver \(receiverRaw)."
+        )
+        return runtimeNullSentinelInt
+    }
+    let functionRaw = kk_itable_lookup(receiverRaw, ifaceSlot, methodSlot)
+    guard functionRaw != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "SerializationException: Interface method lookup failed for receiver \(receiverRaw)."
+        )
+        return runtimeNullSentinelInt
+    }
+    let function = unsafeBitCast(functionRaw, to: KKFunctionEntryPoint2.self)
+    return function(receiverRaw, arg, outThrown)
+}
+
+private func runtimeInvokeInterfaceMethod2(
+    receiverRaw: Int,
+    interfaceTypeID: Int64,
+    methodSlot: Int,
+    arg1: Int,
+    arg2: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let ifaceSlot = runtimeRegisteredInterfaceSlot(objectRaw: receiverRaw, interfaceTypeID: interfaceTypeID) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "SerializationException: Interface slot lookup failed for receiver \(receiverRaw)."
+        )
+        return runtimeNullSentinelInt
+    }
+    let functionRaw = kk_itable_lookup(receiverRaw, ifaceSlot, methodSlot)
+    guard functionRaw != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "SerializationException: Interface method lookup failed for receiver \(receiverRaw)."
+        )
+        return runtimeNullSentinelInt
+    }
+    let function = unsafeBitCast(functionRaw, to: KKFunctionEntryPoint3.self)
+    return function(receiverRaw, arg1, arg2, outThrown)
+}
+
+private func runtimeInvokeSerializerSerialize(
+    serializerRaw: Int,
+    encoderRaw: Int,
+    valueRaw: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) {
+    _ = runtimeInvokeInterfaceMethod2(
+        receiverRaw: serializerRaw,
+        interfaceTypeID: runtimeKSerializerTypeID,
+        methodSlot: runtimeKSerializerSerializeSlot,
+        arg1: encoderRaw,
+        arg2: valueRaw,
+        outThrown: outThrown
+    )
+}
+
+private func runtimeInvokeSerializerDeserialize(
+    serializerRaw: Int,
+    decoderRaw: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeInvokeInterfaceMethod1(
+        receiverRaw: serializerRaw,
+        interfaceTypeID: runtimeKSerializerTypeID,
+        methodSlot: runtimeKSerializerDeserializeSlot,
+        arg: decoderRaw,
+        outThrown: outThrown
+    )
+}
+
+private func jsonRegisteredSerializer(for valueRaw: Int, in jsonBox: RuntimeJsonBox) -> Int? {
+    guard let typeID = runtimeObjectTypeID(rawValue: valueRaw) else {
+        return nil
+    }
+    return jsonBox.registeredSerializers[Int(typeID)]
+}
+
 private func runtimeValueToJSON(_ rawValue: Int) -> Any {
-    // Null sentinel
     if rawValue == runtimeNullSentinelInt || rawValue == 0 {
         return NSNull()
     }
@@ -63,88 +244,68 @@ private func runtimeValueToJSON(_ rawValue: Int) -> Any {
     }
 
     guard isObjectPointer else {
-        // Raw integer (unboxed Int/Long/Bool/Char)
         return rawValue
     }
 
-    // String
     if let box = tryCast(ptr, to: RuntimeStringBox.self) {
         return box.value
     }
-
-    // Int box
     if let box = tryCast(ptr, to: RuntimeIntBox.self) {
         return box.value
     }
-
-    // Long box
     if let box = tryCast(ptr, to: RuntimeLongBox.self) {
         return box.value
     }
-
-    // Bool box
     if let box = tryCast(ptr, to: RuntimeBoolBox.self) {
         return box.value
     }
-
-    // Double box
     if let box = tryCast(ptr, to: RuntimeDoubleBox.self) {
         return box.value
     }
-
-    // Float box
     if let box = tryCast(ptr, to: RuntimeFloatBox.self) {
         return Double(box.value)
     }
-
-    // List
     if let box = tryCast(ptr, to: RuntimeListBox.self) {
         return box.elements.map { runtimeValueToJSON($0) }
     }
-
-    // Map
+    if let box = tryCast(ptr, to: RuntimeSetBox.self) {
+        return box.elements.map { runtimeValueToJSON($0) }
+    }
     if let box = tryCast(ptr, to: RuntimeMapBox.self) {
         var dict: [String: Any] = [:]
-        for index in 0..<box.keys.count {
+        for index in 0 ..< box.keys.count {
             let keyRaw = box.keys[index]
             let valueRaw = box.values[index]
-            let key: String
-            if let k = jsonExtractString(from: keyRaw) {
-                key = k
-            } else {
-                key = "\(keyRaw)"
-            }
-            dict[key] = runtimeValueToJSON(valueRaw)
+            dict[runtimeMapKeyToJSONString(keyRaw)] = runtimeValueToJSON(valueRaw)
         }
         return dict
     }
-
-    // Pair -> 2-element array
+    if let box = tryCast(ptr, to: RuntimeSetBox.self) {
+        return box.elements.map { runtimeValueToJSON($0) }
+    }
     if let box = tryCast(ptr, to: RuntimePairBox.self) {
         return [runtimeValueToJSON(box.first), runtimeValueToJSON(box.second)]
     }
-
-    // RuntimeObjectBox: serialize fields array as array
+    if let box = tryCast(ptr, to: RuntimeTripleBox.self) {
+        return [
+            runtimeValueToJSON(box.first),
+            runtimeValueToJSON(box.second),
+            runtimeValueToJSON(box.third),
+        ]
+    }
     if let box = tryCast(ptr, to: RuntimeObjectBox.self) {
         return box.elements.map { runtimeValueToJSON($0) }
     }
-
-    // RuntimeArrayBox: generic array
     if let box = tryCast(ptr, to: RuntimeArrayBox.self) {
         return box.elements.map { runtimeValueToJSON($0) }
     }
+    if let box = tryCast(ptr, to: RuntimeArrayDequeBox.self) {
+        return box.elements.map { runtimeValueToJSON($0) }
+    }
 
-    // Fallback: treat raw pointer as integer
-    return rawValue
+    return runtimeElementToString(rawValue)
 }
 
-/// Convert a JSONSerialization-parsed Any into a runtime raw value.
-/// Strings → RuntimeStringBox (intptr_t)
-/// Numbers → boxed Int/RuntimeDoubleBox (integer 0 is boxed to avoid null confusion)
-/// Booleans → RuntimeBoolBox (boxed to distinguish false from null)
-/// Arrays → RuntimeListBox
-/// Dicts → RuntimeMapBox
-/// Null → runtimeNullSentinelInt
 private func jsonToRuntimeValue(_ value: Any) -> Int {
     if value is NSNull {
         return runtimeNullSentinelInt
@@ -153,32 +314,29 @@ private func jsonToRuntimeValue(_ value: Any) -> Int {
         return jsonMakeStringRaw(str)
     }
     if let bool = value as? Bool {
-        // Box booleans so that false (raw 0) is distinguishable from null (raw 0).
-        let box = RuntimeBoolBox(bool)
-        return registerRuntimeObject(box)
+        return registerRuntimeObject(RuntimeBoolBox(bool))
+    }
+    if let num = value as? NSNumber, CFGetTypeID(num) == CFBooleanGetTypeID() {
+        return registerRuntimeObject(RuntimeBoolBox(num.boolValue))
     }
     if let num = value as? Int {
-        // Box integer 0 so it is distinguishable from the null sentinel (raw 0).
-        let box = RuntimeIntBox(num)
-        return registerRuntimeObject(box)
+        return registerRuntimeObject(RuntimeIntBox(num))
     }
     if let num = value as? Double {
-        let box = RuntimeDoubleBox(num)
-        return registerRuntimeObject(box)
+        return registerRuntimeObject(RuntimeDoubleBox(num))
     }
     if let num = value as? NSNumber {
-        // Could be int or double depending on JSON value
-        if num.doubleValue == Double(num.intValue) {
-            let box = RuntimeIntBox(num.intValue)
-            return registerRuntimeObject(box)
+        let doubleValue = num.doubleValue
+        if doubleValue.rounded(.towardZero) == doubleValue,
+           doubleValue >= Double(Int.min),
+           doubleValue <= Double(Int.max)
+        {
+            return registerRuntimeObject(RuntimeIntBox(Int(doubleValue)))
         }
-        let box = RuntimeDoubleBox(num.doubleValue)
-        return registerRuntimeObject(box)
+        return registerRuntimeObject(RuntimeDoubleBox(doubleValue))
     }
     if let array = value as? [Any] {
-        let elements = array.map { jsonToRuntimeValue($0) }
-        let list = RuntimeListBox(elements: elements)
-        return registerRuntimeObject(list)
+        return registerRuntimeObject(RuntimeListBox(elements: array.map { jsonToRuntimeValue($0) }))
     }
     if let dict = value as? [String: Any] {
         var keys: [Int] = []
@@ -187,88 +345,61 @@ private func jsonToRuntimeValue(_ value: Any) -> Int {
             keys.append(jsonMakeStringRaw(key))
             values.append(jsonToRuntimeValue(val))
         }
-        let map = RuntimeMapBox(keys: keys, values: values)
-        return registerRuntimeObject(map)
+        return registerRuntimeObject(RuntimeMapBox(keys: keys, values: values))
     }
     return runtimeNullSentinelInt
 }
 
-// MARK: - Json object constructor
-
-/// Create and return the default Json instance (singleton-like).
-@_cdecl("kk_json_default")
-public func kk_json_default() -> Int {
-    let box = RuntimeJsonBox(prettyPrint: false)
-    return registerRuntimeObject(box)
-}
-
-// MARK: - Json.encodeToString(value)
-
-/// Encode any Kotlin runtime value to a JSON string.
-/// Corresponds to Json.encodeToString(serializer, value) with auto-detection.
-@_cdecl("kk_json_encodeToString")
-public func kk_json_encodeToString(_ jsonRaw: Int, _ valueRaw: Int) -> Int {
+private func encodeJSONString(from valueRaw: Int, jsonBox: RuntimeJsonBox?) -> Int {
     let jsonifiable = runtimeValueToJSON(valueRaw)
 
-    guard JSONSerialization.isValidJSONObject(jsonifiable) ||
-          jsonifiable is String ||
-          jsonifiable is NSNumber ||
-          jsonifiable is Bool ||
-          jsonifiable is NSNull
+    guard JSONSerialization.isValidJSONObject(jsonifiable)
+        || jsonifiable is String
+        || jsonifiable is NSNumber
+        || jsonifiable is Bool
+        || jsonifiable is NSNull
     else {
         return jsonMakeStringRaw("null")
     }
 
-    // Wrap primitives in an array for JSONSerialization, then unwrap
     let isTopLevelPrimitive = !(jsonifiable is [Any]) && !(jsonifiable is [String: Any])
-
     let jsonData: Data
+
     if isTopLevelPrimitive {
-        // For primitives, produce the JSON representation directly
         if let str = jsonifiable as? String {
-            // Produce JSON-encoded string with quotes
             do {
                 var strOptions: JSONSerialization.WritingOptions = []
                 if #available(macOS 10.15, *) {
                     strOptions.insert(.withoutEscapingSlashes)
                 }
                 let data = try JSONSerialization.data(withJSONObject: [str], options: strOptions)
-                // data is ["value"], strip brackets and unwrap
-                if var str = String(data: data, encoding: .utf8) {
-                    str = String(str.dropFirst().dropLast())
-                    return jsonMakeStringRaw(str)
+                if var rendered = String(data: data, encoding: .utf8) {
+                    rendered = String(rendered.dropFirst().dropLast())
+                    return jsonMakeStringRaw(rendered)
                 }
             } catch {}
             return jsonMakeStringRaw("\"\"")
-        } else if jsonifiable is NSNull {
-            return jsonMakeStringRaw("null")
-        } else if let boolVal = jsonifiable as? Bool {
-            return jsonMakeStringRaw(boolVal ? "true" : "false")
-        } else if let num = jsonifiable as? NSNumber {
-            return jsonMakeStringRaw("\(num)")
-        } else {
-            return jsonMakeStringRaw("\(jsonifiable)")
         }
+        if jsonifiable is NSNull {
+            return jsonMakeStringRaw("null")
+        }
+        if let boolVal = jsonifiable as? Bool {
+            return jsonMakeStringRaw(boolVal ? "true" : "false")
+        }
+        if let num = jsonifiable as? NSNumber {
+            return jsonMakeStringRaw("\(num)")
+        }
+        return jsonMakeStringRaw("\(jsonifiable)")
     }
 
     do {
-        let box = runtimeStorage.withLock { state -> RuntimeJsonBox? in
-            guard let ptr = UnsafeMutableRawPointer(bitPattern: jsonRaw),
-                  state.objectPointers.contains(UInt(bitPattern: ptr))
-            else {
-                return nil
-            }
-            return tryCast(ptr, to: RuntimeJsonBox.self)
-        }
-
         var options: JSONSerialization.WritingOptions = []
-        if box?.prettyPrint == true {
+        if jsonBox?.prettyPrint == true {
             options.insert(.prettyPrinted)
         }
         if #available(macOS 10.15, *) {
             options.insert(.withoutEscapingSlashes)
         }
-
         jsonData = try JSONSerialization.data(withJSONObject: jsonifiable, options: options)
     } catch {
         return jsonMakeStringRaw("null")
@@ -278,21 +409,7 @@ public func kk_json_encodeToString(_ jsonRaw: Int, _ valueRaw: Int) -> Int {
     return jsonMakeStringRaw(jsonString)
 }
 
-// MARK: - Json.decodeFromString(string)
-
-/// Decode a JSON string into a Kotlin runtime value.
-/// Strings → RuntimeStringBox
-/// Objects → RuntimeMapBox<String, Any>
-/// Arrays → RuntimeListBox
-/// Numbers → Int (integers) or RuntimeDoubleBox (floats)
-/// Booleans → 1/0
-/// Null → runtimeNullSentinelInt
-@_cdecl("kk_json_decodeFromString")
-public func kk_json_decodeFromString(
-    _ jsonRaw: Int,
-    _ stringRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
+private func parseJSONString(_ stringRaw: Int, outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
 
     guard let jsonString = jsonExtractString(from: stringRaw) else {
@@ -309,24 +426,230 @@ public func kk_json_decodeFromString(
         return runtimeNullSentinelInt
     }
 
-    let parsed: Any
     do {
-        parsed = try JSONSerialization.jsonObject(with: data, options: [.allowFragments])
+        let parsed = try JSONSerialization.jsonObject(with: data, options: [.allowFragments])
+        return jsonToRuntimeValue(parsed)
     } catch {
         outThrown?.pointee = runtimeAllocateThrowable(
             message: "SerializationException: \(error.localizedDescription)"
         )
         return runtimeNullSentinelInt
     }
+}
 
-    return jsonToRuntimeValue(parsed)
+// MARK: - Json object constructor
+
+@_cdecl("kk_json_default")
+public func kk_json_default() -> Int {
+    registerRuntimeObject(RuntimeJsonBox(prettyPrint: false))
+}
+
+// MARK: - Json.encodeToString(value)
+
+@_cdecl("kk_json_encodeToString")
+public func kk_json_encodeToString(_ jsonRaw: Int, _ valueRaw: Int) -> Int {
+    if let jsonBox = runtimeJsonBox(from: jsonRaw),
+       let serializerRaw = jsonRegisteredSerializer(for: valueRaw, in: jsonBox)
+    {
+        var thrown = 0
+        let encoded = kk_json_encodeWithSerializer(jsonRaw, serializerRaw, valueRaw, &thrown)
+        if thrown == 0 {
+            return encoded
+        }
+    }
+    return encodeJSONString(from: valueRaw, jsonBox: runtimeJsonBox(from: jsonRaw))
+}
+
+@_cdecl("kk_json_encodeWithSerializer")
+public func kk_json_encodeWithSerializer(
+    _ jsonRaw: Int,
+    _ serializerRaw: Int,
+    _ valueRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let encoderRaw = registerRuntimeObject(RuntimeJsonEncoderBox(jsonRaw: jsonRaw))
+    runtimeInvokeSerializerSerialize(
+        serializerRaw: serializerRaw,
+        encoderRaw: encoderRaw,
+        valueRaw: valueRaw,
+        outThrown: outThrown
+    )
+    if outThrown?.pointee != 0 {
+        return jsonMakeStringRaw("null")
+    }
+    guard let encoder = runtimeJsonEncoderBox(from: encoderRaw), encoder.hasEncodedValue else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "SerializationException: Serializer did not encode a value."
+        )
+        return jsonMakeStringRaw("null")
+    }
+    return encodeJSONString(from: encoder.encodedValueRaw, jsonBox: runtimeJsonBox(from: jsonRaw))
+}
+
+// MARK: - Json.decodeFromString(string)
+
+@_cdecl("kk_json_decodeFromString")
+public func kk_json_decodeFromString(
+    _ jsonRaw: Int,
+    _ stringRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    _ = jsonRaw
+    return parseJSONString(stringRaw, outThrown: outThrown)
+}
+
+@_cdecl("kk_json_decodeWithSerializer")
+public func kk_json_decodeWithSerializer(
+    _ jsonRaw: Int,
+    _ serializerRaw: Int,
+    _ stringRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let decodedRaw = parseJSONString(stringRaw, outThrown: outThrown)
+    if outThrown?.pointee != 0 {
+        return runtimeNullSentinelInt
+    }
+    let decoderRaw = registerRuntimeObject(RuntimeJsonDecoderBox(jsonRaw: jsonRaw, decodedValueRaw: decodedRaw))
+    return runtimeInvokeSerializerDeserialize(
+        serializerRaw: serializerRaw,
+        decoderRaw: decoderRaw,
+        outThrown: outThrown
+    )
+}
+
+// MARK: - Json serializer registry
+
+@_cdecl("kk_json_registerSerializer")
+public func kk_json_registerSerializer(
+    _ jsonRaw: Int,
+    _ kclassRaw: Int,
+    _ serializerRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let jsonBox = runtimeJsonBox(from: jsonRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "SerializationException: Invalid Json instance.")
+        return jsonRaw
+    }
+    guard let kclass = runtimeKClassBoxLocal(from: kclassRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "SerializationException: Invalid KClass handle.")
+        return jsonRaw
+    }
+    jsonBox.registeredSerializers[kclass.typeToken] = serializerRaw
+    return jsonRaw
+}
+
+@_cdecl("kk_json_getRegisteredSerializer")
+public func kk_json_getRegisteredSerializer(_ jsonRaw: Int, _ kclassRaw: Int) -> Int {
+    guard let jsonBox = runtimeJsonBox(from: jsonRaw),
+          let kclass = runtimeKClassBoxLocal(from: kclassRaw)
+    else {
+        return runtimeNullSentinelInt
+    }
+    return jsonBox.registeredSerializers[kclass.typeToken] ?? runtimeNullSentinelInt
+}
+
+// MARK: - Encoder / Decoder low-level API
+
+@_cdecl("kk_json_encoder_context")
+public func kk_json_encoder_context(_ encoderRaw: Int) -> Int {
+    runtimeJsonEncoderBox(from: encoderRaw)?.jsonRaw ?? runtimeNullSentinelInt
+}
+
+@_cdecl("kk_json_encoder_encodeString")
+public func kk_json_encoder_encodeString(_ encoderRaw: Int, _ valueRaw: Int) -> Int {
+    guard let encoder = runtimeJsonEncoderBox(from: encoderRaw) else {
+        return 0
+    }
+    encoder.encodedValueRaw = valueRaw
+    encoder.hasEncodedValue = true
+    return 0
+}
+
+@_cdecl("kk_json_encoder_encodeInt")
+public func kk_json_encoder_encodeInt(_ encoderRaw: Int, _ valueRaw: Int) -> Int {
+    guard let encoder = runtimeJsonEncoderBox(from: encoderRaw) else {
+        return 0
+    }
+    encoder.encodedValueRaw = valueRaw
+    encoder.hasEncodedValue = true
+    return 0
+}
+
+@_cdecl("kk_json_encoder_encodeBoolean")
+public func kk_json_encoder_encodeBoolean(_ encoderRaw: Int, _ valueRaw: Int) -> Int {
+    guard let encoder = runtimeJsonEncoderBox(from: encoderRaw) else {
+        return 0
+    }
+    encoder.encodedValueRaw = valueRaw
+    encoder.hasEncodedValue = true
+    return 0
+}
+
+@_cdecl("kk_json_encoder_encodeDouble")
+public func kk_json_encoder_encodeDouble(_ encoderRaw: Int, _ valueRaw: Int) -> Int {
+    guard let encoder = runtimeJsonEncoderBox(from: encoderRaw) else {
+        return 0
+    }
+    encoder.encodedValueRaw = valueRaw
+    encoder.hasEncodedValue = true
+    return 0
+}
+
+@_cdecl("kk_json_encoder_encodeNull")
+public func kk_json_encoder_encodeNull(_ encoderRaw: Int) -> Int {
+    guard let encoder = runtimeJsonEncoderBox(from: encoderRaw) else {
+        return 0
+    }
+    encoder.encodedValueRaw = runtimeNullSentinelInt
+    encoder.hasEncodedValue = true
+    return 0
+}
+
+@_cdecl("kk_json_encoder_encodeValue")
+public func kk_json_encoder_encodeValue(_ encoderRaw: Int, _ valueRaw: Int) -> Int {
+    guard let encoder = runtimeJsonEncoderBox(from: encoderRaw) else {
+        return 0
+    }
+    encoder.encodedValueRaw = valueRaw
+    encoder.hasEncodedValue = true
+    return 0
+}
+
+@_cdecl("kk_json_decoder_context")
+public func kk_json_decoder_context(_ decoderRaw: Int) -> Int {
+    runtimeJsonDecoderBox(from: decoderRaw)?.jsonRaw ?? runtimeNullSentinelInt
+}
+
+@_cdecl("kk_json_decoder_decodeString")
+public func kk_json_decoder_decodeString(_ decoderRaw: Int) -> Int {
+    runtimeJsonDecoderBox(from: decoderRaw)?.decodedValueRaw ?? runtimeNullSentinelInt
+}
+
+@_cdecl("kk_json_decoder_decodeInt")
+public func kk_json_decoder_decodeInt(_ decoderRaw: Int) -> Int {
+    runtimeJsonDecoderBox(from: decoderRaw)?.decodedValueRaw ?? 0
+}
+
+@_cdecl("kk_json_decoder_decodeBoolean")
+public func kk_json_decoder_decodeBoolean(_ decoderRaw: Int) -> Int {
+    runtimeJsonDecoderBox(from: decoderRaw)?.decodedValueRaw ?? 0
+}
+
+@_cdecl("kk_json_decoder_decodeDouble")
+public func kk_json_decoder_decodeDouble(_ decoderRaw: Int) -> Int {
+    runtimeJsonDecoderBox(from: decoderRaw)?.decodedValueRaw ?? 0
+}
+
+@_cdecl("kk_json_decoder_decodeValue")
+public func kk_json_decoder_decodeValue(_ decoderRaw: Int) -> Int {
+    runtimeJsonDecoderBox(from: decoderRaw)?.decodedValueRaw ?? runtimeNullSentinelInt
 }
 
 // MARK: - Json.encodeToString(map) convenience
 
-/// Encode a Kotlin Map to a JSON string.
-/// This is a thin wrapper used when the user passes a Map directly.
 @_cdecl("kk_json_encodeMapToString")
 public func kk_json_encodeMapToString(_ jsonRaw: Int, _ mapRaw: Int) -> Int {
-    return kk_json_encodeToString(jsonRaw, mapRaw)
+    kk_json_encodeToString(jsonRaw, mapRaw)
 }

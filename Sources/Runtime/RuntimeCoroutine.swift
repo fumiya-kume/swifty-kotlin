@@ -1391,11 +1391,34 @@ private enum RuntimeFlowTag: Int {
     case take = 3
     case onEach = 4
     case distinctUntilChanged = 5
+    case catchHandler = 6
+    case retry = 7
+    case retryWhen = 8
+    case onErrorReturn = 9
+    case onErrorResume = 10
 }
 
 private struct RuntimeFlowOp {
     let kind: RuntimeFlowTag
     let argument: Int
+}
+
+private enum RuntimeFlowErrorHandlerKind {
+    case catchHandler(Int)
+    case retry(Int)
+    case retryWhen(Int)
+    case onErrorReturn(Int)
+    case onErrorResume(Int)
+}
+
+private struct RuntimeFlowStage {
+    let normalOps: [RuntimeFlowOp]
+    let handler: RuntimeFlowErrorHandlerKind?
+}
+
+private struct RuntimeFlowExecutionResult {
+    var values: [Int]
+    var failure: Int?
 }
 
 /// Collect context tracks the lazy pipeline state for a single collect call.
@@ -1407,6 +1430,7 @@ private struct RuntimeFlowOp {
 private final class RuntimeFlowCollectContext {
     var emittedValues: [Int] = []
     var cancelled = false
+    var emitHandler: ((Int) -> Int)?
 }
 
 /// Opaque flow handle. Immutable operation chain; source emitter is re-executed
@@ -1502,9 +1526,46 @@ private enum FlowOpResult {
     /// Value was filtered out; skip delivery.
     case filtered
     /// An exception was thrown during an operator; abort the flow.
-    case thrown
+    case thrown(Int)
     /// A short-circuiting op (e.g. take) signalled that collection is done.
     case done
+}
+
+private func runtimeFlowErrorHandler(for op: RuntimeFlowOp) -> RuntimeFlowErrorHandlerKind? {
+    switch op.kind {
+    case .catchHandler:
+        return .catchHandler(op.argument)
+    case .retry:
+        return .retry(op.argument)
+    case .retryWhen:
+        return .retryWhen(op.argument)
+    case .onErrorReturn:
+        return .onErrorReturn(op.argument)
+    case .onErrorResume:
+        return .onErrorResume(op.argument)
+    default:
+        return nil
+    }
+}
+
+private func runtimeFlowBuildStages(_ ops: [RuntimeFlowOp]) -> [RuntimeFlowStage] {
+    var stages: [RuntimeFlowStage] = []
+    var pendingNormalOps: [RuntimeFlowOp] = []
+
+    for op in ops {
+        if let handler = runtimeFlowErrorHandler(for: op) {
+            stages.append(RuntimeFlowStage(normalOps: pendingNormalOps, handler: handler))
+            pendingNormalOps.removeAll(keepingCapacity: true)
+        } else {
+            pendingNormalOps.append(op)
+        }
+    }
+
+    if !pendingNormalOps.isEmpty || stages.isEmpty {
+        stages.append(RuntimeFlowStage(normalOps: pendingNormalOps, handler: nil))
+    }
+
+    return stages
 }
 
 /// Apply the operator chain to a single emitted value (lazy, per-element).
@@ -1534,7 +1595,7 @@ private func runtimeFlowApplyOpsLazy(
             var thrown = 0
             let transformed = transform(0, current, &thrown)
             if thrown != 0 {
-                return .thrown
+                return .thrown(thrown)
             }
             current = runtimeFlowMaybeUnbox(transformed)
 
@@ -1549,7 +1610,7 @@ private func runtimeFlowApplyOpsLazy(
             var thrown = 0
             let decision = predicate(0, current, &thrown)
             if thrown != 0 {
-                return .thrown
+                return .thrown(thrown)
             }
             if runtimeFlowMaybeUnbox(decision) == 0 {
                 return .filtered
@@ -1579,7 +1640,7 @@ private func runtimeFlowApplyOpsLazy(
             var thrown = 0
             _ = action(0, current, &thrown)
             if thrown != 0 {
-                return .thrown
+                return .thrown(thrown)
             }
             // onEach does not transform the value; pass it through.
 
@@ -1588,6 +1649,9 @@ private func runtimeFlowApplyOpsLazy(
                 return .filtered
             }
             lastValues[index] = current
+
+        case .catchHandler, .retry, .retryWhen, .onErrorReturn, .onErrorResume:
+            continue
         }
     }
     return .emit(current)
@@ -1608,36 +1672,294 @@ private func runtimeFlowTakeExhausted(
     return false
 }
 
-/// Cold-stream collect: re-execute the source emitter and push each emitted
-/// value through the operator chain lazily, one at a time.
-///
-/// TODO: `runtimeFlowSourceValues` materializes the entire emitter output into
-/// an array before operators are applied. This means the source is eagerly
-/// collected even though downstream processing is lazy (per-element). A truly
-/// lazy implementation would interleave emitter execution with operator
-/// application, e.g. via coroutine-style yielding. This is acceptable for now
-/// because emitters are synchronous and finite, but should be revisited when
-/// suspend-emitter support lands.
+private func runtimeFlowRunNormalStage(
+    _ input: RuntimeFlowExecutionResult,
+    ops: [RuntimeFlowOp]
+) -> RuntimeFlowExecutionResult {
+    var takeCounters = runtimeFlowInitTakeCounters(ops)
+    var lastValues: [Int: Int] = [:]
+    var emitted: [Int] = []
+
+    if runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
+        return RuntimeFlowExecutionResult(values: [], failure: nil)
+    }
+
+    for rawValue in input.values {
+        let result = runtimeFlowApplyOpsLazy(
+            rawValue,
+            ops: ops,
+            takeCounters: &takeCounters,
+            lastValues: &lastValues
+        )
+
+        switch result {
+        case .emit(let value):
+            emitted.append(value)
+            if runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
+                return RuntimeFlowExecutionResult(values: emitted, failure: nil)
+            }
+        case .filtered:
+            continue
+        case .thrown(let failure):
+            return RuntimeFlowExecutionResult(values: emitted, failure: failure)
+        case .done:
+            return RuntimeFlowExecutionResult(values: emitted, failure: nil)
+        }
+    }
+
+    return RuntimeFlowExecutionResult(values: emitted, failure: input.failure)
+}
+
+private func runtimeFlowRunSourceStage(
+    _ flow: RuntimeFlowHandle,
+    ops: [RuntimeFlowOp]
+) -> RuntimeFlowExecutionResult {
+    var takeCounters = runtimeFlowInitTakeCounters(ops)
+    var lastValues: [Int: Int] = [:]
+    var emitted: [Int] = []
+    var failure: Int?
+
+    if runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
+        return RuntimeFlowExecutionResult(values: [], failure: nil)
+    }
+
+    let processValue: (Int) -> Int = { rawValue in
+        let result = runtimeFlowApplyOpsLazy(
+            rawValue,
+            ops: ops,
+            takeCounters: &takeCounters,
+            lastValues: &lastValues
+        )
+
+        switch result {
+        case .emit(let value):
+            emitted.append(value)
+            return runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) ? runtimeFlowStopSentinel : value
+        case .filtered:
+            return rawValue
+        case .thrown(let thrown):
+            failure = thrown
+            return runtimeFlowStopSentinel
+        case .done:
+            return runtimeFlowStopSentinel
+        }
+    }
+
+    if let fixedValues = flow.fixedValues {
+        for value in fixedValues {
+            if processValue(value) == runtimeFlowStopSentinel {
+                break
+            }
+        }
+        return RuntimeFlowExecutionResult(values: emitted, failure: failure)
+    }
+
+    guard flow.emitterFnPtr != 0 else {
+        return RuntimeFlowExecutionResult(values: emitted, failure: failure)
+    }
+
+    let context = RuntimeFlowCollectContext()
+    context.emitHandler = processValue
+    runtimeFlowPushCollectContext(context)
+
+    let emitter = unsafeBitCast(
+        flow.emitterFnPtr,
+        to: (@convention(c) (UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    var outThrown = 0
+    _ = emitter(&outThrown)
+    runtimeFlowPopCollectContext()
+
+    if failure == nil, outThrown != 0 {
+        failure = outThrown
+    }
+    return RuntimeFlowExecutionResult(values: emitted, failure: failure)
+}
+
+private func runtimeFlowHasErrorHandlers(_ ops: [RuntimeFlowOp]) -> Bool {
+    ops.contains { runtimeFlowErrorHandler(for: $0) != nil }
+}
+
+private func runtimeFlowInvokeCatchHandler(_ handlerFnPtr: Int, failure: Int) -> Int? {
+    guard handlerFnPtr != 0 else {
+        return nil
+    }
+    let handler = unsafeBitCast(
+        handlerFnPtr,
+        to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    var thrown = 0
+    _ = handler(0, failure, &thrown)
+    return thrown == 0 ? nil : thrown
+}
+
+private func runtimeFlowInvokeRetryWhenPredicate(
+    _ predicateFnPtr: Int,
+    failure: Int,
+    attempt: Int
+) -> (shouldRetry: Bool, failure: Int?) {
+    guard predicateFnPtr != 0 else {
+        return (false, failure)
+    }
+    let predicate = unsafeBitCast(
+        predicateFnPtr,
+        to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    var thrown = 0
+    let decision = predicate(0, failure, attempt, &thrown)
+    if thrown != 0 {
+        return (false, thrown)
+    }
+    return (runtimeFlowMaybeUnbox(decision) != 0, nil)
+}
+
+private func runtimeFlowApplyErrorHandler(
+    _ current: RuntimeFlowExecutionResult,
+    handler: RuntimeFlowErrorHandlerKind,
+    attemptProvider: () -> RuntimeFlowExecutionResult,
+    stageOps: [RuntimeFlowOp]
+) -> RuntimeFlowExecutionResult {
+    guard let initialFailure = current.failure else {
+        return current
+    }
+
+    switch handler {
+    case .catchHandler(let handlerFnPtr):
+        return RuntimeFlowExecutionResult(
+            values: current.values,
+            failure: runtimeFlowInvokeCatchHandler(handlerFnPtr, failure: initialFailure)
+        )
+
+    case .onErrorReturn(let fallbackValue):
+        var values = current.values
+        values.append(runtimeFlowMaybeUnbox(fallbackValue))
+        return RuntimeFlowExecutionResult(values: values, failure: nil)
+
+    case .onErrorResume(let fallbackFlowHandle):
+        var values = current.values
+        guard let fallbackFlow = runtimeFlowHandle(from: fallbackFlowHandle) else {
+            return current
+        }
+        let resumed = runtimeFlowEvaluate(flow: fallbackFlow)
+        values.append(contentsOf: resumed.values)
+        return RuntimeFlowExecutionResult(values: values, failure: resumed.failure)
+
+    case .retry(let retryCountRaw):
+        let retryCount = max(0, runtimeFlowMaybeUnbox(retryCountRaw))
+        var aggregate = current.values
+        var failure: Int? = initialFailure
+        var attempt = 0
+
+        while failure != nil, attempt < retryCount {
+            let retried = runtimeFlowRunNormalStage(attemptProvider(), ops: stageOps)
+            aggregate.append(contentsOf: retried.values)
+            failure = retried.failure
+            attempt += 1
+        }
+
+        return RuntimeFlowExecutionResult(values: aggregate, failure: failure)
+
+    case .retryWhen(let predicateFnPtr):
+        var aggregate = current.values
+        var failure: Int? = initialFailure
+        var attempt = 0
+
+        while let currentFailure = failure {
+            let decision = runtimeFlowInvokeRetryWhenPredicate(
+                predicateFnPtr,
+                failure: currentFailure,
+                attempt: attempt
+            )
+            if let predicateFailure = decision.failure {
+                return RuntimeFlowExecutionResult(values: aggregate, failure: predicateFailure)
+            }
+            guard decision.shouldRetry else {
+                return RuntimeFlowExecutionResult(values: aggregate, failure: currentFailure)
+            }
+
+            let retried = runtimeFlowRunNormalStage(attemptProvider(), ops: stageOps)
+            aggregate.append(contentsOf: retried.values)
+            failure = retried.failure
+            attempt += 1
+        }
+
+        return RuntimeFlowExecutionResult(values: aggregate, failure: nil)
+    }
+}
+
+private func runtimeFlowExecuteStages(
+    flow: RuntimeFlowHandle,
+    stages: [RuntimeFlowStage],
+) -> RuntimeFlowExecutionResult {
+    var current = RuntimeFlowExecutionResult(values: [], failure: nil)
+    var stageAttemptProvider: () -> RuntimeFlowExecutionResult = { RuntimeFlowExecutionResult(values: [], failure: nil) }
+
+    for (index, stage) in stages.enumerated() {
+        if index == 0 {
+            current = runtimeFlowRunSourceStage(flow, ops: stage.normalOps)
+            stageAttemptProvider = { runtimeFlowRunSourceStage(flow, ops: stage.normalOps) }
+        } else {
+            current = runtimeFlowRunNormalStage(current, ops: stage.normalOps)
+        }
+        if let handler = stage.handler {
+            current = runtimeFlowApplyErrorHandler(
+                current,
+                handler: handler,
+                attemptProvider: stageAttemptProvider,
+                stageOps: stage.normalOps
+            )
+        }
+        let snapshot = current
+        if index != 0 {
+            stageAttemptProvider = { snapshot }
+        }
+    }
+
+    return current
+}
+
+private func runtimeFlowEvaluate(flow: RuntimeFlowHandle) -> RuntimeFlowExecutionResult {
+    runtimeFlowExecuteStages(flow: flow, stages: runtimeFlowBuildStages(flow.opChain))
+}
+
+/// Cold-stream collect: re-execute the source emitter, apply the operator chain,
+/// then deliver the resulting values to the collector.
 private func runtimeFlowCollectLazy(
     _ flow: RuntimeFlowHandle,
     collectorFnPtr: Int,
     continuation: Int
 ) -> Int {
-    guard let sourceValues = runtimeFlowSourceValues(flow) else {
-        return 0
+    if !runtimeFlowHasErrorHandlers(flow.opChain) {
+        return runtimeFlowCollectStreaming(flow, collectorFnPtr: collectorFnPtr, continuation: continuation)
     }
+    let result = runtimeFlowEvaluate(flow: flow)
+    for value in result.values {
+        let delivered = runtimeFlowDeliverValue(
+            value,
+            collectorFnPtr: collectorFnPtr,
+            continuation: continuation
+        )
+        if !delivered {
+            return 0
+        }
+    }
+    return 0
+}
 
-    // Now process each emitted value through the lazy operator chain.
+private func runtimeFlowCollectStreaming(
+    _ flow: RuntimeFlowHandle,
+    collectorFnPtr: Int,
+    continuation: Int
+) -> Int {
     let ops = flow.opChain
     var takeCounters = runtimeFlowInitTakeCounters(ops)
     var lastValues: [Int: Int] = [:]
 
-    // Check if a take(0) already exhausts everything before any emission.
     if runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
         return 0
     }
 
-    for rawValue in sourceValues {
+    let processValue: (Int) -> Int = { rawValue in
         let result = runtimeFlowApplyOpsLazy(
             rawValue,
             ops: ops,
@@ -1652,22 +1974,41 @@ private func runtimeFlowCollectLazy(
                 collectorFnPtr: collectorFnPtr,
                 continuation: continuation
             )
-            if !delivered {
-                return 0
+            if !delivered || runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
+                return runtimeFlowStopSentinel
             }
-            // After successful delivery, check if take is exhausted.
-            if runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
-                return 0
-            }
-
+            return value
         case .filtered:
-            continue
-
+            return rawValue
         case .thrown, .done:
-            return 0
+            return runtimeFlowStopSentinel
         }
     }
 
+    if let fixedValues = flow.fixedValues {
+        for value in fixedValues {
+            if processValue(value) == runtimeFlowStopSentinel {
+                break
+            }
+        }
+        return 0
+    }
+
+    guard flow.emitterFnPtr != 0 else {
+        return 0
+    }
+
+    let context = RuntimeFlowCollectContext()
+    context.emitHandler = processValue
+    runtimeFlowPushCollectContext(context)
+
+    let emitter = unsafeBitCast(
+        flow.emitterFnPtr,
+        to: (@convention(c) (UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    var outThrown = 0
+    _ = emitter(&outThrown)
+    runtimeFlowPopCollectContext()
     return 0
 }
 
@@ -1756,6 +2097,9 @@ public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ tag: Int) -> Int {
     if tag == RuntimeFlowTag.emit.rawValue {
         let context = runtimeFlowCurrentCollectContext()
         if let context, !context.cancelled {
+            if let emitHandler = context.emitHandler {
+                return emitHandler(runtimeFlowMaybeUnbox(value))
+            }
             context.emittedValues.append(runtimeFlowMaybeUnbox(value))
         }
         return value
@@ -1826,19 +2170,18 @@ public func kk_flow_release(_ flowHandle: Int) -> Int {
 
 // MARK: - Flow Terminal Operators (STDLIB-088)
 
-/// Collect all emitted values into an array and return the array handle.
-/// Obtain source values from a flow handle (handles both emitter-based and
-/// fixedValues-based flows). Returns nil on emitter error.
-private func runtimeFlowSourceValues(_ flow: RuntimeFlowHandle) -> [Int]? {
+/// Collect source emissions for one cold-flow attempt, preserving any failure
+/// that happens after partial emission.
+private func runtimeFlowSourceResult(_ flow: RuntimeFlowHandle) -> RuntimeFlowExecutionResult {
     if let fixed = flow.fixedValues {
-        return fixed
+        return RuntimeFlowExecutionResult(values: fixed, failure: nil)
     }
     let context = RuntimeFlowCollectContext()
     runtimeFlowPushCollectContext(context)
 
     guard flow.emitterFnPtr != 0 else {
         runtimeFlowPopCollectContext()
-        return []
+        return RuntimeFlowExecutionResult(values: [], failure: nil)
     }
 
     let emitter = unsafeBitCast(
@@ -1848,11 +2191,10 @@ private func runtimeFlowSourceValues(_ flow: RuntimeFlowHandle) -> [Int]? {
     var outThrown = 0
     _ = emitter(&outThrown)
     runtimeFlowPopCollectContext()
-
-    if outThrown != 0 {
-        return nil
-    }
-    return context.emittedValues
+    return RuntimeFlowExecutionResult(
+        values: context.emittedValues,
+        failure: outThrown == 0 ? nil : outThrown
+    )
 }
 
 /// Prepare take counters for the given op chain.
@@ -1867,115 +2209,35 @@ private func runtimeFlowInitTakeCounters(_ ops: [RuntimeFlowOp]) -> [Int: Int] {
 /// Collect all emitted values into a list and return the list handle.
 @_cdecl("kk_flow_to_list")
 public func kk_flow_to_list(_ flowHandle: Int, _: Int) -> Int {
-    guard let flow = runtimeFlowHandle(from: flowHandle),
-          let sourceValues = runtimeFlowSourceValues(flow)
-    else {
+    guard let flow = runtimeFlowHandle(from: flowHandle) else {
         return registerRuntimeObject(RuntimeListBox(elements: []))
     }
-
-    let ops = flow.opChain
-    var takeCounters = runtimeFlowInitTakeCounters(ops)
-    var lastValues: [Int: Int] = [:]
-
-    var collected: [Int] = []
-    if runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
-        return registerRuntimeObject(RuntimeListBox(elements: collected))
-    }
-
-    for rawValue in sourceValues {
-        let result = runtimeFlowApplyOpsLazy(
-            rawValue, ops: ops,
-            takeCounters: &takeCounters,
-            lastValues: &lastValues
-        )
-        switch result {
-        case .emit(let value):
-            collected.append(value)
-            if runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
-                return registerRuntimeObject(RuntimeListBox(elements: collected))
-            }
-        case .filtered:
-            continue
-        case .thrown, .done:
-            return registerRuntimeObject(RuntimeListBox(elements: collected))
-        }
-    }
-    return registerRuntimeObject(RuntimeListBox(elements: collected))
+    return registerRuntimeObject(RuntimeListBox(elements: runtimeFlowEvaluate(flow: flow).values))
 }
 
 /// Return the first emitted value after applying the operator chain, or 0 if empty.
 @_cdecl("kk_flow_first")
 public func kk_flow_first(_ flowHandle: Int, _: Int) -> Int {
-    guard let flow = runtimeFlowHandle(from: flowHandle),
-          let sourceValues = runtimeFlowSourceValues(flow)
-    else {
+    guard let flow = runtimeFlowHandle(from: flowHandle) else {
         return 0
     }
-
-    let ops = flow.opChain
-    var takeCounters = runtimeFlowInitTakeCounters(ops)
-    var lastValues: [Int: Int] = [:]
-
-    for rawValue in sourceValues {
-        let result = runtimeFlowApplyOpsLazy(
-            rawValue, ops: ops,
-            takeCounters: &takeCounters,
-            lastValues: &lastValues
-        )
-        switch result {
-        case .emit(let value):
-            return value
-        case .filtered:
-            continue
-        case .thrown, .done:
-            return 0
-        }
-    }
-    return 0
+    return runtimeFlowEvaluate(flow: flow).values.first ?? 0
 }
 
 /// Count the number of elements emitted after applying the operator chain.
 @_cdecl("kk_flow_count")
 public func kk_flow_count(_ flowHandle: Int, _: Int) -> Int {
-    guard let flow = runtimeFlowHandle(from: flowHandle),
-          let sourceValues = runtimeFlowSourceValues(flow)
-    else {
+    guard let flow = runtimeFlowHandle(from: flowHandle) else {
         return 0
     }
-
-    let ops = flow.opChain
-    var takeCounters = runtimeFlowInitTakeCounters(ops)
-    var lastValues: [Int: Int] = [:]
-
-    var count = 0
-    for rawValue in sourceValues {
-        let result = runtimeFlowApplyOpsLazy(
-            rawValue, ops: ops,
-            takeCounters: &takeCounters,
-            lastValues: &lastValues
-        )
-        switch result {
-        case .emit:
-            count += 1
-            if runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
-                return count
-            }
-        case .filtered:
-            continue
-        case .thrown, .done:
-            return count
-        }
-    }
-    return count
+    return runtimeFlowEvaluate(flow: flow).values.count
 }
 
 /// Fold: accumulate values with an initial value and an operation.
 /// operation ABI: (closureRaw, accumulator, value, outThrown) -> newAccumulator
 @_cdecl("kk_flow_fold")
 public func kk_flow_fold(_ flowHandle: Int, _ initial: Int, _ operationFnPtr: Int, _: Int) -> Int {
-    guard let flow = runtimeFlowHandle(from: flowHandle),
-          let sourceValues = runtimeFlowSourceValues(flow)
-    else {
+    guard let flow = runtimeFlowHandle(from: flowHandle) else {
         return initial
     }
 
@@ -1987,30 +2249,11 @@ public func kk_flow_fold(_ flowHandle: Int, _ initial: Int, _ operationFnPtr: In
         to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
     )
 
-    let ops = flow.opChain
-    var takeCounters = runtimeFlowInitTakeCounters(ops)
-    var lastValues: [Int: Int] = [:]
-
     var accumulator = initial
-    for rawValue in sourceValues {
-        let result = runtimeFlowApplyOpsLazy(
-            rawValue, ops: ops,
-            takeCounters: &takeCounters,
-            lastValues: &lastValues
-        )
-        switch result {
-        case .emit(let value):
-            var thrown = 0
-            accumulator = runtimeFlowMaybeUnbox(operation(0, accumulator, value, &thrown))
-            if thrown != 0 {
-                return accumulator
-            }
-            if runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
-                return accumulator
-            }
-        case .filtered:
-            continue
-        case .thrown, .done:
+    for value in runtimeFlowEvaluate(flow: flow).values {
+        var thrown = 0
+        accumulator = runtimeFlowMaybeUnbox(operation(0, accumulator, value, &thrown))
+        if thrown != 0 {
             return accumulator
         }
     }
@@ -2021,9 +2264,7 @@ public func kk_flow_fold(_ flowHandle: Int, _ initial: Int, _ operationFnPtr: In
 /// operation ABI: (closureRaw, accumulator, value, outThrown) -> newAccumulator
 @_cdecl("kk_flow_reduce")
 public func kk_flow_reduce(_ flowHandle: Int, _ operationFnPtr: Int, _: Int) -> Int {
-    guard let flow = runtimeFlowHandle(from: flowHandle),
-          let sourceValues = runtimeFlowSourceValues(flow)
-    else {
+    guard let flow = runtimeFlowHandle(from: flowHandle) else {
         return 0
     }
 
@@ -2035,36 +2276,16 @@ public func kk_flow_reduce(_ flowHandle: Int, _ operationFnPtr: Int, _: Int) -> 
         to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
     )
 
-    let ops = flow.opChain
-    var takeCounters = runtimeFlowInitTakeCounters(ops)
-    var lastValues: [Int: Int] = [:]
+    let values = runtimeFlowEvaluate(flow: flow).values
+    guard let first = values.first else {
+        return 0
+    }
 
-    var accumulator = 0
-    var hasFirst = false
-    for rawValue in sourceValues {
-        let result = runtimeFlowApplyOpsLazy(
-            rawValue, ops: ops,
-            takeCounters: &takeCounters,
-            lastValues: &lastValues
-        )
-        switch result {
-        case .emit(let value):
-            if !hasFirst {
-                accumulator = value
-                hasFirst = true
-            } else {
-                var thrown = 0
-                accumulator = runtimeFlowMaybeUnbox(operation(0, accumulator, value, &thrown))
-                if thrown != 0 {
-                    return accumulator
-                }
-            }
-            if runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
-                return accumulator
-            }
-        case .filtered:
-            continue
-        case .thrown, .done:
+    var accumulator = first
+    for value in values.dropFirst() {
+        var thrown = 0
+        accumulator = runtimeFlowMaybeUnbox(operation(0, accumulator, value, &thrown))
+        if thrown != 0 {
             return accumulator
         }
     }
@@ -2088,6 +2309,232 @@ public func kk_flow_of(_ arrayHandle: Int, _ count: Int) -> Int {
 
     let handle = RuntimeFlowHandle(emitterFnPtr: 0, fixedValues: values)
     return runtimeRegisterFlowHandle(handle)
+}
+
+/// Create an empty flow (emptyFlow).
+@_cdecl("kk_flow_empty")
+public func kk_flow_empty(_: Int) -> Int {
+    runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: 0, fixedValues: []))
+}
+
+/// Create a Flow from an existing runtime collection/array (asFlow).
+@_cdecl("kk_flow_as_flow")
+public func kk_flow_as_flow(_ sourceHandle: Int, _: Int) -> Int {
+    if let elements = runtimeCollectionElements(from: sourceHandle) {
+        return runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: 0, fixedValues: elements))
+    }
+    if let arrayBox = runtimeArrayBox(from: sourceHandle) {
+        return runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: 0, fixedValues: Array(arrayBox.elements)))
+    }
+    return runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: 0, fixedValues: []))
+}
+
+// MARK: - SharedFlow / StateFlow Runtime (STDLIB-FLOW-177)
+
+private class RuntimeSharedFlowHandle: @unchecked Sendable {
+    private let lock = NSLock()
+    fileprivate let replay: Int
+    fileprivate var replayValues: [Int]
+
+    init(replay: Int, initialValues: [Int] = []) {
+        self.replay = max(0, replay)
+        if replay > 0, initialValues.count > replay {
+            self.replayValues = Array(initialValues.suffix(replay))
+        } else if replay <= 0 {
+            self.replayValues = []
+        } else {
+            self.replayValues = initialValues
+        }
+    }
+
+    func emit(_ value: Int) {
+        lock.lock()
+        if replay > 0 {
+            replayValues.append(value)
+            if replayValues.count > replay {
+                replayValues.removeFirst(replayValues.count - replay)
+            }
+        }
+        lock.unlock()
+    }
+
+    func snapshotReplayValues() -> [Int] {
+        lock.lock()
+        let snapshot = replayValues
+        lock.unlock()
+        return snapshot
+    }
+}
+
+private final class RuntimeStateFlowHandle: RuntimeSharedFlowHandle, @unchecked Sendable {
+    private let stateLock = NSLock()
+    private var currentValue: Int
+
+    init(initialValue: Int) {
+        self.currentValue = initialValue
+        super.init(replay: 1, initialValues: [initialValue])
+    }
+
+    override func emit(_ value: Int) {
+        stateLock.lock()
+        currentValue = value
+        stateLock.unlock()
+        super.emit(value)
+    }
+
+    func valueSnapshot() -> Int {
+        stateLock.lock()
+        let snapshot = currentValue
+        stateLock.unlock()
+        return snapshot
+    }
+}
+
+private func runtimeSharedFlowHandle(from rawValue: Int) -> RuntimeSharedFlowHandle? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    return Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue() as? RuntimeSharedFlowHandle
+}
+
+private func runtimeStateFlowHandle(from rawValue: Int) -> RuntimeStateFlowHandle? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    return Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue() as? RuntimeStateFlowHandle
+}
+
+private func runtimeSharedFlowReplayCacheHandle(_ handle: RuntimeSharedFlowHandle) -> Int {
+    registerRuntimeObject(RuntimeListBox(elements: handle.snapshotReplayValues()))
+}
+
+private func runtimeSharedFlowCollectSnapshot(
+    _ handle: RuntimeSharedFlowHandle,
+    collectorFnPtr: Int,
+    closureRaw: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard collectorFnPtr != 0 else {
+        return 0
+    }
+    let collector = unsafeBitCast(
+        collectorFnPtr,
+        to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    for value in handle.snapshotReplayValues() {
+        var thrown = 0
+        _ = collector(closureRaw, value, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+    }
+    return 0
+}
+
+@_cdecl("kk_mutable_shared_flow_create")
+public func kk_mutable_shared_flow_create(_ replay: Int) -> Int {
+    runtimeRegisterObject(RuntimeSharedFlowHandle(replay: replay))
+}
+
+@_cdecl("kk_mutable_shared_flow_emit")
+public func kk_mutable_shared_flow_emit(_ handle: Int, _ value: Int) -> Int {
+    guard let flow = runtimeSharedFlowHandle(from: handle) else {
+        return 0
+    }
+    flow.emit(value)
+    return 0
+}
+
+@_cdecl("kk_mutable_shared_flow_try_emit")
+public func kk_mutable_shared_flow_try_emit(_ handle: Int, _ value: Int) -> Int {
+    guard let flow = runtimeSharedFlowHandle(from: handle) else {
+        return 0
+    }
+    flow.emit(value)
+    return 1
+}
+
+@_cdecl("kk_shared_flow_collect")
+public func kk_shared_flow_collect(
+    _ handle: Int,
+    _ collectorFnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let flow = runtimeSharedFlowHandle(from: handle) else {
+        outThrown?.pointee = 0
+        return 0
+    }
+    return runtimeSharedFlowCollectSnapshot(
+        flow,
+        collectorFnPtr: collectorFnPtr,
+        closureRaw: closureRaw,
+        outThrown: outThrown
+    )
+}
+
+@_cdecl("kk_shared_flow_replay_cache")
+public func kk_shared_flow_replay_cache(_ handle: Int) -> Int {
+    guard let flow = runtimeSharedFlowHandle(from: handle) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    return runtimeSharedFlowReplayCacheHandle(flow)
+}
+
+@_cdecl("kk_mutable_state_flow_create")
+public func kk_mutable_state_flow_create(_ initialValue: Int) -> Int {
+    runtimeRegisterObject(RuntimeStateFlowHandle(initialValue: initialValue))
+}
+
+@_cdecl("kk_mutable_state_flow_emit")
+public func kk_mutable_state_flow_emit(_ handle: Int, _ value: Int) -> Int {
+    guard let flow = runtimeStateFlowHandle(from: handle) else {
+        return 0
+    }
+    flow.emit(value)
+    return 0
+}
+
+@_cdecl("kk_mutable_state_flow_try_emit")
+public func kk_mutable_state_flow_try_emit(_ handle: Int, _ value: Int) -> Int {
+    guard let flow = runtimeStateFlowHandle(from: handle) else {
+        return 0
+    }
+    flow.emit(value)
+    return 1
+}
+
+@_cdecl("kk_state_flow_value")
+public func kk_state_flow_value(_ handle: Int) -> Int {
+    guard let flow = runtimeStateFlowHandle(from: handle) else {
+        return 0
+    }
+    return flow.valueSnapshot()
+}
+
+@_cdecl("kk_flow_share_in")
+public func kk_flow_share_in(_ flowHandle: Int, _ replay: Int) -> Int {
+    guard let flow = runtimeFlowHandle(from: flowHandle) else {
+        return runtimeRegisterObject(RuntimeSharedFlowHandle(replay: replay))
+    }
+    let shared = RuntimeSharedFlowHandle(replay: replay)
+    for value in runtimeFlowEvaluate(flow: flow).values {
+        shared.emit(value)
+    }
+    return runtimeRegisterObject(shared)
+}
+
+@_cdecl("kk_flow_state_in")
+public func kk_flow_state_in(_ flowHandle: Int, _ initialValue: Int) -> Int {
+    let state = RuntimeStateFlowHandle(initialValue: initialValue)
+    if let flow = runtimeFlowHandle(from: flowHandle) {
+        for value in runtimeFlowEvaluate(flow: flow).values {
+            state.emit(value)
+        }
+    }
+    return runtimeRegisterObject(state)
 }
 
 // MARK: - CoroutineContext Elements (STDLIB-CORO-077)
@@ -2226,6 +2673,49 @@ public func kk_context_plus(_ leftRaw: Int, _ rightRaw: Int) -> Int {
     return runtimeRegisterObject(merged)
 }
 
+/// Fetch a context element by key.
+/// The current runtime recognizes the closed set of coroutine element handles
+/// already modeled in RuntimeCoroutineContext.
+@_cdecl("kk_context_get")
+public func kk_context_get(_ contextRaw: Int, _ keyRaw: Int) -> Int {
+    let ctx = resolveToCoroutineContext(contextRaw)
+    if let match = runtimeCoroutineContextElementHandle(for: keyRaw, in: ctx) {
+        return match
+    }
+    return 0
+}
+
+/// Fold the known coroutine context elements from left to right.
+@_cdecl("kk_context_fold")
+public func kk_context_fold(
+    _ contextRaw: Int,
+    _ initial: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    let ctx = resolveToCoroutineContext(contextRaw)
+    var acc = initial
+    for elementRaw in runtimeCoroutineContextElementHandles(in: ctx) {
+        var thrown = 0
+        acc = maybeUnbox(lambda(closureRaw, acc, elementRaw, &thrown))
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return initial
+        }
+    }
+    return acc
+}
+
+/// Remove a context element by key.
+@_cdecl("kk_context_minusKey")
+public func kk_context_minusKey(_ contextRaw: Int, _ keyRaw: Int) -> Int {
+    let resolved = resolveToCoroutineContext(contextRaw)
+    let reduced = runtimeCoroutineContextRemovingElement(for: keyRaw, from: resolved)
+    return runtimeRegisterObject(reduced)
+}
+
 /// Extract the dispatcher from a CoroutineContext.
 /// Returns a dispatcher tag (or 0 if none).
 @_cdecl("kk_context_get_dispatcher")
@@ -2285,6 +2775,110 @@ public func kk_continuation_interceptor_intercept_continuation(
         return continuationRaw
     }
     return runtimeRegisterObject(interceptedObject)
+}
+
+/// Return the raw handle for a known context element matching the supplied key.
+private func runtimeCoroutineContextElementHandle(for keyRaw: Int, in ctx: RuntimeCoroutineContext) -> Int? {
+    if keyRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
+       let dispatcher = tryCast(ptr, to: RuntimeDispatcher.self)
+    {
+        return ctx.dispatcher == dispatcher.tag ? ctx.dispatcher : nil
+    }
+    if isDispatcherTag(keyRaw) {
+        return ctx.dispatcher == keyRaw ? ctx.dispatcher : nil
+    }
+    if keyRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
+       let nameBox = tryCast(ptr, to: RuntimeCoroutineNameBox.self)
+    {
+        return ctx.name == nameBox.name ? runtimeRegisterObject(RuntimeCoroutineNameBox(name: nameBox.name)) : nil
+    }
+    if keyRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
+       tryCast(ptr, to: RuntimeExceptionHandlerBox.self) != nil
+    {
+        return ctx.exceptionHandler.map { Int(bitPattern: UnsafeMutableRawPointer(Unmanaged.passUnretained($0).toOpaque())) }
+    }
+    if keyRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
+       let job = tryCast(ptr, to: RuntimeJobHandle.self)
+    {
+        guard let ctxJob = ctx.jobHandle, ctxJob === job else { return nil }
+        return Int(bitPattern: UnsafeMutableRawPointer(Unmanaged.passUnretained(job).toOpaque()))
+    }
+    return nil
+}
+
+/// Return the raw handles for the known elements stored in the context.
+private func runtimeCoroutineContextElementHandles(in ctx: RuntimeCoroutineContext) -> [Int] {
+    var handles: [Int] = []
+    if ctx.dispatcher != 0 {
+        handles.append(ctx.dispatcher)
+    }
+    if let name = ctx.name {
+        handles.append(runtimeRegisterObject(RuntimeCoroutineNameBox(name: name)))
+    }
+    if let handler = ctx.exceptionHandler {
+        handles.append(Int(bitPattern: UnsafeMutableRawPointer(Unmanaged.passUnretained(handler).toOpaque())))
+    }
+    if let job = ctx.jobHandle {
+        handles.append(Int(bitPattern: UnsafeMutableRawPointer(Unmanaged.passUnretained(job).toOpaque())))
+    }
+    return handles
+}
+
+/// Remove any known element that matches the supplied key handle.
+private func runtimeCoroutineContextRemovingElement(for keyRaw: Int, from ctx: RuntimeCoroutineContext) -> RuntimeCoroutineContext {
+    let next = RuntimeCoroutineContext(
+        dispatcher: ctx.dispatcher,
+        name: ctx.name,
+        exceptionHandler: ctx.exceptionHandler,
+        jobHandle: ctx.jobHandle
+    )
+    if keyRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
+       let dispatcher = tryCast(ptr, to: RuntimeDispatcher.self)
+    {
+        if next.dispatcher == dispatcher.tag {
+            next.dispatcher = 0
+        }
+        return next
+    }
+    if isDispatcherTag(keyRaw) {
+        if next.dispatcher == keyRaw {
+            next.dispatcher = 0
+        }
+        return next
+    }
+    if keyRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
+       let nameBox = tryCast(ptr, to: RuntimeCoroutineNameBox.self)
+    {
+        if next.name == nameBox.name {
+            next.name = nil
+        }
+        return next
+    }
+    if keyRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
+       let handler = tryCast(ptr, to: RuntimeExceptionHandlerBox.self)
+    {
+        if next.exceptionHandler === handler {
+            next.exceptionHandler = nil
+        }
+        return next
+    }
+    if keyRaw != 0,
+       let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
+       let job = tryCast(ptr, to: RuntimeJobHandle.self)
+    {
+        if next.jobHandle === job {
+            next.jobHandle = nil
+        }
+        return next
+    }
+    return next
 }
 
 /// Extract the CoroutineName from a CoroutineContext.
@@ -2369,6 +2963,9 @@ private func resolveToCoroutineContext(_ raw: Int) -> RuntimeCoroutineContext {
     }
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
         return RuntimeCoroutineContext()
+    }
+    guard runtimeIsRegisteredObjectPointer(raw) else {
+        return RuntimeCoroutineContext(dispatcher: raw)
     }
     if let ctx = tryCast(ptr, to: RuntimeCoroutineContext.self) {
         return ctx
@@ -2546,6 +3143,7 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     // STDLIB-CORO-077: If dispatcherRaw is a RuntimeCoroutineContext, delegate
     // to kk_with_context_full which handles context element propagation.
     if !isDispatcherTag(dispatcherRaw), dispatcherRaw != 0,
+       runtimeIsRegisteredObjectPointer(dispatcherRaw),
        let ptr = UnsafeMutableRawPointer(bitPattern: dispatcherRaw),
        tryCast(ptr, to: RuntimeCoroutineContext.self) != nil
     {
@@ -2560,14 +3158,13 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     default:
         RuntimeDispatcherTag.defaultDispatcher
     }
+    let runtimeDispatcher = runtimeResolveDispatcher(from: resolvedDispatcher)
 
     guard suspendEntryPoint(from: blockFnPtr) != nil else {
         // Clean up the continuation to avoid leaking coroutine state.
         _ = kk_coroutine_state_exit(continuation, 0)
         return 0
     }
-
-    let queue = dispatchQueue(for: resolvedDispatcher)
 
     // Capture the current coroutine scope so child launches inside the block
     // are registered with the correct scope on the target queue's thread.
@@ -2589,9 +3186,14 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     // even calls from a background thread targeting the main queue would hang.
     // We therefore execute inline whenever we are already on the target queue
     // (main-thread case) to avoid the deadlock.
-    if queue === DispatchQueue.main && Thread.isMainThread {
+    if runtimeDispatcher.queue === DispatchQueue.main && Thread.isMainThread {
         let savedScope = RuntimeCoroutineScope.current
-        defer { RuntimeCoroutineScope.current = savedScope }
+        let savedDispatcher = RuntimeDispatcher.current
+        defer {
+            RuntimeCoroutineScope.current = savedScope
+            RuntimeDispatcher.current = savedDispatcher
+        }
+        RuntimeDispatcher.current = runtimeDispatcher
         RuntimeCoroutineScope.current = parentScope
         return runSuspendEntryLoopWithContinuation(
             entryPointRaw: blockFnPtr,
@@ -2605,11 +3207,16 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     let semaphore = DispatchSemaphore(value: 0)
     let resultBox = WithContextResultBox()
 
-    queue.async {
+    runtimeDispatcher.queue.async {
         // Propagate the coroutine scope to the target thread.
         let savedScope = RuntimeCoroutineScope.current
+        let savedDispatcher = RuntimeDispatcher.current
+        RuntimeDispatcher.current = runtimeDispatcher
         RuntimeCoroutineScope.current = parentScope
-        defer { RuntimeCoroutineScope.current = savedScope }
+        defer {
+            RuntimeCoroutineScope.current = savedScope
+            RuntimeDispatcher.current = savedDispatcher
+        }
 
         resultBox.value = runSuspendEntryLoopWithContinuation(
             entryPointRaw: blockFnPtr,
