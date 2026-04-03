@@ -63,6 +63,18 @@ private final class RuntimeCoroutineExceptionHandlerBox: @unchecked Sendable {
     init(_ handler: @escaping (Error) -> Void) { self.handler = handler }
 }
 
+private func runtimeInterceptedContinuation(_ continuation: KKContinuation) -> KKContinuation {
+    continuation
+}
+
+private func runtimeInterceptedContinuation(
+    using dispatcherTag: Int,
+    continuation: KKContinuation
+) -> KKContinuation {
+    let _ = dispatcherTag
+    return continuation
+}
+
 // MARK: - CORO-004 Migration Plan: DispatchSemaphore -> Continuation Model
 //
 // The suspend-entry loop (`runSuspendEntryLoopWithContinuation`) has already
