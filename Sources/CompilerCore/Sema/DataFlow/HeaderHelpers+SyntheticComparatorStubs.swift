@@ -258,6 +258,58 @@ extension DataFlowSemaPhase {
                 for: funcSymbol
             )
         }
+
+        for (name, extLink) in [
+            ("compareByPrimitive", "kk_comparator_from_selector_primitive"),
+            ("compareByDescendingPrimitive", "kk_comparator_from_selector_primitive"),
+        ] {
+            let functionName = interner.intern(name)
+            let functionFQName = comparisonsPkg + [functionName]
+            let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                return sig.parameterTypes == [selectorType] && sig.returnType == comparatorType
+            })
+            if let existing {
+                symbols.setExternalLinkName(extLink, for: existing)
+                continue
+            }
+
+            let funcSymbol = symbols.define(
+                kind: .function,
+                name: functionName,
+                fqName: functionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(comparisonsPackageSymbol, for: funcSymbol)
+            symbols.setExternalLinkName(extLink, for: funcSymbol)
+
+            let selectorParamName = interner.intern("selector")
+            let selectorParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: selectorParamName,
+                fqName: functionFQName + [selectorParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(funcSymbol, for: selectorParamSymbol)
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    parameterTypes: [selectorType],
+                    returnType: comparatorType,
+                    isSuspend: false,
+                    valueParameterSymbols: [selectorParamSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [tParamSymbol],
+                    typeParameterUpperBoundsList: [[]]
+                ),
+                for: funcSymbol
+            )
+        }
     }
 
     /// Register compareBy overloads that take 2 or 3 selectors (STDLIB-613).

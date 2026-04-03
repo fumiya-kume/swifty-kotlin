@@ -295,7 +295,7 @@ final class NumericBitCountTests: XCTestCase {
             // Test highest/lowest one bit
             let highest = kk_int_highestOneBit(value)
             let lowest = kk_int_lowestOneBit(value)
-            
+
             if value != 0 {
                 assertSingleBitSet(highest)
                 assertSingleBitSet(lowest)

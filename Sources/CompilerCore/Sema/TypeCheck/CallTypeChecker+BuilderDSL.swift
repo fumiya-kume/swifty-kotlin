@@ -45,7 +45,8 @@ extension CallTypeChecker {
             guard let parameterMapping = ctx.resolver.buildParameterMapping(
                 signature: signature,
                 callArgs: args.map { CallArg(label: $0.label, isSpread: $0.isSpread, type: ctx.sema.types.anyType) },
-                symbols: ctx.sema.symbols
+                symbols: ctx.sema.symbols,
+                typeSystem: ctx.sema.types
             ) else {
                 continue
             }
@@ -496,7 +497,8 @@ extension CallTypeChecker {
             parameterMapping: ctx.resolver.buildParameterMapping(
                 signature: signature,
                 callArgs: args.map { CallArg(label: $0.label, isSpread: $0.isSpread, type: ctx.sema.types.anyType) },
-                symbols: ctx.sema.symbols
+                symbols: ctx.sema.symbols,
+                typeSystem: ctx.sema.types
             ) ?? [:],
             signature: signature,
             sema: ctx.sema

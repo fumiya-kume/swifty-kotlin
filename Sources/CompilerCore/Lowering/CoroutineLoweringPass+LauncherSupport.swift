@@ -406,6 +406,11 @@ extension CoroutineLoweringPass {
         call: CallRewriteInput,
         using rewrite: SuspendRewriteContext
     ) -> [KIRInstruction] {
+        let structuredBlockingRuntimes: Set<InternedString> = [
+            rewrite.ctx.interner.intern("kk_kxmini_run_blocking"),
+            rewrite.ctx.interner.intern("kk_coroutine_scope_run"),
+            rewrite.ctx.interner.intern("kk_supervisor_scope_run"),
+        ]
         let entryPointExpr = rewrite.module.arena.appendExpr(
             .temporary(Int32(rewrite.module.arena.expressions.count)),
             type: rewrite.intType
@@ -423,7 +428,7 @@ extension CoroutineLoweringPass {
                 callee: runtimeLauncherCallee,
                 arguments: [entryPointExpr, entryFunctionID],
                 result: call.result,
-                canThrow: call.canThrow,
+                canThrow: call.canThrow || structuredBlockingRuntimes.contains(runtimeLauncherCallee),
                 thrownResult: call.thrownResult
             ),
         ]
@@ -437,6 +442,11 @@ extension CoroutineLoweringPass {
         call: CallRewriteInput,
         using rewrite: SuspendRewriteContext
     ) -> [KIRInstruction] {
+        let structuredBlockingRuntimes: Set<InternedString> = [
+            rewrite.ctx.interner.intern("kk_kxmini_run_blocking_with_cont"),
+            rewrite.ctx.interner.intern("kk_coroutine_scope_run_with_cont"),
+            rewrite.ctx.interner.intern("kk_supervisor_scope_run_with_cont"),
+        ]
         let loweredFunctionIDExpr = rewrite.module.arena.appendExpr(
             .intLiteral(Int64(loweredTarget.symbol.rawValue)),
             type: rewrite.intType
@@ -485,7 +495,7 @@ extension CoroutineLoweringPass {
                 callee: runtimeWithContCallee,
                 arguments: [thunkRefExpr, continuationExpr],
                 result: call.result,
-                canThrow: call.canThrow,
+                canThrow: call.canThrow || structuredBlockingRuntimes.contains(runtimeWithContCallee),
                 thrownResult: nil
             )
         )

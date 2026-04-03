@@ -70,7 +70,7 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
 
 // swiftlint:disable:next type_body_length
 public enum RuntimeABISpec {
-    public static let specVersion = "J29"
+    public static let specVersion = "J30"
 
     private static func deduplicatedFunctions(
         _ functions: [RuntimeABIFunctionSpec]
@@ -1894,6 +1894,46 @@ public enum RuntimeABISpec {
             section: "System"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_platform_canAccessUnaligned",
+            parameters: [
+                RuntimeABIParameter(name: "platformRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_platform_isLittleEndian",
+            parameters: [
+                RuntimeABIParameter(name: "platformRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_platform_osFamily",
+            parameters: [
+                RuntimeABIParameter(name: "platformRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_platform_cpuArchitecture",
+            parameters: [
+                RuntimeABIParameter(name: "platformRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_platform_getAvailableProcessors",
+            parameters: [
+                RuntimeABIParameter(name: "platformRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_system_gc",
             parameters: [],
             returnType: .void,
@@ -2107,10 +2147,19 @@ public enum RuntimeABISpec {
             section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_coroutine_state_get_thrown_exception",
+            parameters: [
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_kxmini_run_blocking",
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
                 RuntimeABIParameter(name: "functionID", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2182,6 +2231,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
                 RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2375,6 +2425,62 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
                 RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_zip",
+            parameters: [
+                RuntimeABIParameter(name: "lhsHandle", type: .intptr),
+                RuntimeABIParameter(name: "rhsHandle", type: .intptr),
+                RuntimeABIParameter(name: "transformFnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_combine",
+            parameters: [
+                RuntimeABIParameter(name: "lhsHandle", type: .intptr),
+                RuntimeABIParameter(name: "rhsHandle", type: .intptr),
+                RuntimeABIParameter(name: "transformFnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_merge",
+            parameters: [
+                RuntimeABIParameter(name: "lhsHandle", type: .intptr),
+                RuntimeABIParameter(name: "rhsHandle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_flat_map_concat",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "transformFnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_flat_map_merge",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "transformFnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_flat_map_latest",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "transformFnPtr", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2670,6 +2776,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
                 RuntimeABIParameter(name: "functionID", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2679,6 +2786,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
                 RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2688,6 +2796,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
                 RuntimeABIParameter(name: "functionID", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2697,6 +2806,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
                 RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -6043,6 +6153,15 @@ public enum RuntimeABISpec {
             section: "FileIO"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_bytearrayinputstream_new",
+            parameters: [
+                RuntimeABIParameter(name: "bufferRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_input_stream_read",
             parameters: [
                 RuntimeABIParameter(name: "streamRaw", type: .intptr),
@@ -7014,12 +7133,14 @@ public enum RuntimeABISpec {
             + timeAndPathBridgeFunctions
             + atomicFunctions
             + threadLocalFunctions
+            + threadFunctions
             + securityFunctions
             + databaseFunctions
             + parallelFunctions
             + bigIntegerFunctions
             + broadcastChannelFunctions
             + serializationFunctions
+            + networkFunctions
             + abiParityFunctions
     )
 

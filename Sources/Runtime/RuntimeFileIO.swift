@@ -601,6 +601,16 @@ private func runtimeInputStreamBox(from raw: Int) -> RuntimeInputStreamBox? {
     return tryCast(ptr, to: RuntimeInputStreamBox.self)
 }
 
+private func runtimeByteArrayBytes(from raw: Int) -> [UInt8]? {
+    if let array = runtimeArrayBox(from: raw) {
+        return array.elements.map { UInt8(truncatingIfNeeded: $0) }
+    }
+    if let list = runtimeListBox(from: raw) {
+        return list.elements.map { UInt8(truncatingIfNeeded: $0) }
+    }
+    return nil
+}
+
 private func runtimeOutputStreamBox(from raw: Int) -> RuntimeOutputStreamBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
     return tryCast(ptr, to: RuntimeOutputStreamBox.self)
@@ -762,6 +772,16 @@ public func kk_file_inputStream(_ fileRaw: Int, _ outThrown: UnsafeMutablePointe
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
         return 0
     }
+}
+
+@_cdecl("kk_bytearrayinputstream_new")
+public func kk_bytearrayinputstream_new(_ bufferRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let bytes = runtimeByteArrayBytes(from: bufferRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int> buffer")
+        return 0
+    }
+    return registerRuntimeObject(RuntimeInputStreamBox(data: Data(bytes)))
 }
 
 @_cdecl("kk_file_outputStream")

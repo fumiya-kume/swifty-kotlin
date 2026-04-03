@@ -47,6 +47,16 @@ extension CoroutineLoweringPass {
             )
         )
 
+        let kotlinPkg = interner.intern("kotlin")
+        let coroutinesPkg = interner.intern("coroutines")
+        let continuationName = interner.intern("Continuation")
+        if let continuationInterfaceSymbol = sema.symbols.lookup(fqName: [kotlinPkg, coroutinesPkg, continuationName]) {
+            sema.symbols.setDirectSupertypes([continuationInterfaceSymbol], for: typeSymbol)
+            sema.symbols.setSupertypeTypeArgs([.invariant(original.returnType)], for: typeSymbol, supertype: continuationInterfaceSymbol)
+            sema.types.setNominalDirectSupertypes([continuationInterfaceSymbol], for: typeSymbol)
+            sema.types.setNominalSupertypeTypeArgs([.invariant(original.returnType)], for: typeSymbol, supertype: continuationInterfaceSymbol)
+        }
+
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let anyNullableType = sema.types.nullableAnyType
 
