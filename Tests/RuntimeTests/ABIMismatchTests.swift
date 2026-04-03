@@ -140,7 +140,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
-        // The current spec surface tracks the shared coroutine ABI subset.
+        // STDLIB-CORO-070 adds Job.complete/completeExceptionally/cancel(cause)/awaitCompletion.
         XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 94)
     }
 

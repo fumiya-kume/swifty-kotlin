@@ -1408,9 +1408,48 @@ extension DataFlowSemaPhase {
         registerSyntheticCoroutineMember(
             ownerSymbol: jobSymbol,
             ownerType: jobType,
+            name: "cancel",
+            externalLinkName: "kk_job_cancel_with_cause",
+            returnType: types.unitType,
+            parameters: [(name: "cause", type: types.nullableAnyType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: jobSymbol,
+            ownerType: jobType,
             name: "join",
             externalLinkName: "kk_job_join",
             returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: jobSymbol,
+            ownerType: jobType,
+            name: "awaitCompletion",
+            externalLinkName: "kk_job_await_completion",
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: jobSymbol,
+            ownerType: jobType,
+            name: "complete",
+            externalLinkName: "kk_job_complete",
+            returnType: types.booleanType,
+            parameters: [(name: "value", type: types.anyType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: jobSymbol,
+            ownerType: jobType,
+            name: "completeExceptionally",
+            externalLinkName: "kk_job_complete_exceptionally",
+            returnType: types.booleanType,
+            parameters: [(name: "exception", type: types.nullableAnyType)],
             symbols: symbols,
             interner: interner
         )

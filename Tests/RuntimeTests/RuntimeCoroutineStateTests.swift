@@ -465,6 +465,60 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_job_join(jobHandle), 7)
     }
 
+    func testJobStateMachineTransitionsAndAwaitCompletion() {
+        let job = RuntimeJobHandle()
+        XCTAssertFalse(job.isActiveSnapshot())
+        XCTAssertFalse(job.completedSnapshot())
+        XCTAssertFalse(job.cancellationSnapshot())
+
+        job.markStarted()
+        XCTAssertTrue(job.isActiveSnapshot())
+
+        XCTAssertTrue(job.complete(with: 41))
+        XCTAssertTrue(job.completedSnapshot())
+        XCTAssertFalse(job.cancellationSnapshot())
+        XCTAssertEqual(job.awaitCompletion(), 41)
+        XCTAssertEqual(job.join(), 41)
+    }
+
+    func testJobCompleteExceptionallyStoresFailureCause() {
+        let job = RuntimeJobHandle()
+        job.markStarted()
+        let throwable = runtimeAllocateThrowable(message: "boom")
+
+        XCTAssertTrue(job.completeExceptionally(with: throwable))
+        XCTAssertTrue(job.completedSnapshot())
+        XCTAssertTrue(job.isFailedSnapshot())
+        XCTAssertFalse(job.cancellationSnapshot())
+        XCTAssertEqual(job.join(), throwable)
+    }
+
+    func testJobCancelPropagatesToRegisteredChildren() {
+        let parent = RuntimeJobHandle()
+        let child = RuntimeJobHandle()
+        parent.markStarted()
+        child.markStarted()
+
+        let childHandle = Int(bitPattern: Unmanaged.passUnretained(child).toOpaque())
+        parent.registerChild(childHandle)
+
+        XCTAssertTrue(parent.cancel())
+        XCTAssertTrue(parent.cancellationSnapshot())
+        XCTAssertTrue(parent.completedSnapshot())
+        XCTAssertTrue(child.cancellationSnapshot())
+        XCTAssertTrue(child.completedSnapshot())
+    }
+
+    func testJobCancelWithCausePreservesCauseValue() {
+        let job = RuntimeJobHandle()
+        job.markStarted()
+        let cause = runtimeAllocateThrowable(message: "cancel cause")
+
+        XCTAssertTrue(job.cancel(cause: cause))
+        XCTAssertTrue(job.cancellationSnapshot())
+        XCTAssertEqual(job.join(), cause)
+    }
+
     // MARK: - STDLIB-250: withContext async context switching
 
     func testWithContextDefaultDispatcherReturnsBlockResult() {

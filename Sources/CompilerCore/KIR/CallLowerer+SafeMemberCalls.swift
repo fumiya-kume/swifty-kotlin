@@ -655,7 +655,7 @@ extension CallLowerer {
             finalArguments.insert(loweredReceiverID, at: 0)
         } else if chosen == nil {
             let calleeStr = interner.resolve(effectiveCalleeName)
-            if Self.unresolvedCoroutineHandleMemberNames.contains(calleeStr), isCoroutineReceiver, args.isEmpty {
+            if Self.unresolvedCoroutineHandleMemberNames.contains(calleeStr), isCoroutineReceiver {
                 finalArguments.insert(loweredReceiverID, at: 0)
             }
         }
@@ -714,14 +714,22 @@ extension CallLowerer {
                                                                  !externalLinkName.isEmpty
                 {
                     interner.intern(externalLinkName)
-                } else if chosen == nil, isCoroutineReceiver, args.isEmpty {
+                } else if chosen == nil, isCoroutineReceiver {
                     switch interner.resolve(effectiveCalleeName) {
                     case "await":
                         interner.intern("kk_kxmini_async_await")
                     case "join":
                         interner.intern("kk_job_join")
+                    case "awaitCompletion":
+                        interner.intern("kk_job_await_completion")
                     case "cancel":
-                        interner.intern("kk_job_cancel")
+                        args.isEmpty
+                            ? interner.intern("kk_job_cancel")
+                            : interner.intern("kk_job_cancel_with_cause")
+                    case "complete":
+                        interner.intern("kk_job_complete")
+                    case "completeExceptionally":
+                        interner.intern("kk_job_complete_exceptionally")
                     default:
                         effectiveCalleeName
                     }
@@ -812,14 +820,22 @@ extension CallLowerer {
                                                              !externalLinkName.isEmpty
             {
                 interner.intern(externalLinkName)
-            } else if chosen == nil, isCoroutineReceiver, args.isEmpty {
+            } else if chosen == nil, isCoroutineReceiver {
                 switch interner.resolve(effectiveCalleeName) {
                 case "await":
                     interner.intern("kk_kxmini_async_await")
                 case "join":
                     interner.intern("kk_job_join")
+                case "awaitCompletion":
+                    interner.intern("kk_job_await_completion")
                 case "cancel":
-                    interner.intern("kk_job_cancel")
+                    args.isEmpty
+                        ? interner.intern("kk_job_cancel")
+                        : interner.intern("kk_job_cancel_with_cause")
+                case "complete":
+                    interner.intern("kk_job_complete")
+                case "completeExceptionally":
+                    interner.intern("kk_job_complete_exceptionally")
                 default:
                     effectiveCalleeName
                 }
