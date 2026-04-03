@@ -387,6 +387,11 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        let resultOfContinuationTType = types.make(.classType(ClassType(
+            classSymbol: kotlinResultSymbol,
+            args: [.out(continuationTType)],
+            nullability: .nonNull
+        )))
         registerSyntheticCoroutineMember(
             ownerSymbol: continuationSymbol,
             ownerType: continuationType,
@@ -395,8 +400,9 @@ extension DataFlowSemaPhase {
             returnType: types.unitType,
             parameters: [(
                 name: "result",
-                type: kotlinResultType
+                type: resultOfContinuationTType
             )],
+            typeParameterSymbols: [continuationTypeParameterSymbol],
             classTypeParameterCount: 1,
             symbols: symbols,
             interner: interner
@@ -490,9 +496,6 @@ extension DataFlowSemaPhase {
                 args: [.invariant(functionTypeParameterType)],
                 nullability: .nonNull
             )))
-            types.setNominalTypeParameterSymbols([functionTypeParameterSymbol], for: continuationSymbol)
-            types.setNominalTypeParameterVariances([.invariant], for: continuationSymbol)
-            symbols.setPropertyType(continuationType, for: continuationSymbol)
 
             let blockParameterSymbol = symbols.define(
                 kind: .valueParameter,
@@ -1084,63 +1087,6 @@ extension DataFlowSemaPhase {
                 symbols.setExternalLinkName("kk_context_minusKey", for: functionSymbol)
             }
         }
-
-        let continuationTypeParamName = interner.intern("T")
-        let continuationTypeParamFQName = kotlinCoroutinesPkg + [interner.intern("Continuation"), continuationTypeParamName]
-        let continuationTypeParamSymbol: SymbolID
-        if let existing = symbols.lookup(fqName: continuationTypeParamFQName) {
-            continuationTypeParamSymbol = existing
-        } else {
-            let symbol = symbols.define(
-                kind: .typeParameter,
-                name: continuationTypeParamName,
-                fqName: continuationTypeParamFQName,
-                declSite: nil,
-                visibility: .private,
-                flags: []
-            )
-            symbols.setParentSymbol(continuationSymbol, for: symbol)
-            continuationTypeParamSymbol = symbol
-        }
-        let continuationTypeParamType = types.make(.typeParam(TypeParamType(
-            symbol: continuationTypeParamSymbol,
-            nullability: .nonNull
-        )))
-        let resultTypeSymbol = ensureClassSymbol(
-            named: "Result",
-            in: kotlinPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        let resultOfContinuationTType = types.make(.classType(ClassType(
-            classSymbol: resultTypeSymbol,
-            args: [.out(continuationTypeParamType)],
-            nullability: .nonNull
-        )))
-        types.setNominalTypeParameterSymbols([continuationTypeParamSymbol], for: continuationSymbol)
-        types.setNominalTypeParameterVariances([.in], for: continuationSymbol)
-
-        registerSyntheticCoroutineMember(
-            ownerSymbol: continuationSymbol,
-            ownerType: continuationType,
-            name: "resumeWith",
-            externalLinkName: nil,
-            returnType: types.unitType,
-            parameters: [(name: "result", type: resultOfContinuationTType)],
-            typeParameterSymbols: [continuationTypeParamSymbol],
-            classTypeParameterCount: 1,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerSyntheticObjectProperty(
-            ownerSymbol: continuationSymbol,
-            ownerType: continuationType,
-            name: "context",
-            propertyType: coroutineContextType,
-            symbols: symbols,
-            interner: interner
-        )
 
         let coroutineNameSymbol = ensureClassSymbol(
             named: "CoroutineName",

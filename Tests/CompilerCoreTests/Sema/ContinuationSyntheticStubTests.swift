@@ -35,7 +35,7 @@ final class ContinuationSyntheticStubTests: XCTestCase {
         )))
         let continuationType = sema.types.make(.classType(ClassType(
             classSymbol: continuationSymbol,
-            args: [],
+            args: [.invariant(continuationTType)],
             nullability: .nonNull
         )))
 
