@@ -33,11 +33,6 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-        let kotlinCoroutinesPkg = ensureSyntheticPackage(
-            kotlinPkg + [interner.intern("coroutines")],
-            symbols: symbols,
-            interner: interner
-        )
         let coroutinesPkg = ensureSyntheticPackage(
             kotlinxPkg + [interner.intern("coroutines")],
             symbols: symbols,
@@ -142,6 +137,13 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterSymbols([continuationTypeParamSymbol], for: continuationSymbol)
         types.setNominalTypeParameterVariances([], for: continuationSymbol)
         symbols.setPropertyType(continuationType, for: continuationSymbol)
+        let continuationTypeParameterSymbol = continuationTypeParamSymbol
+        let continuationInterceptorType = types.make(.classType(ClassType(
+            classSymbol: continuationInterceptorSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(continuationInterceptorType, for: continuationInterceptorSymbol)
 
         let suspendCoroutineTypeParamName = interner.intern("T")
         let suspendCoroutineTypeParamFQName = kotlinCoroutinesPkg + [interner.intern("suspendCoroutine"), suspendCoroutineTypeParamName]
@@ -264,51 +266,6 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
-        let continuationTypeParameterName = interner.intern("T")
-        let continuationTypeParameterSymbol = symbols.lookup(fqName: kotlinCoroutinesPkg + [interner.intern("Continuation"), continuationTypeParameterName])
-            ?? symbols.define(
-                kind: .typeParameter,
-                name: continuationTypeParameterName,
-                fqName: kotlinCoroutinesPkg + [interner.intern("Continuation"), continuationTypeParameterName],
-                declSite: nil,
-                visibility: .private,
-                flags: [.synthetic]
-            )
-        symbols.setParentSymbol(continuationSymbol, for: continuationTypeParameterSymbol)
-        let continuationType = types.make(.classType(ClassType(
-            classSymbol: continuationSymbol,
-            args: [.invariant(types.make(.typeParam(TypeParamType(
-                symbol: continuationTypeParameterSymbol,
-                nullability: .nonNull
-            ))))],
-            nullability: .nonNull
-        )))
-        let continuationInterceptorType = types.make(.classType(ClassType(
-            classSymbol: continuationInterceptorSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
-        let rootCancellationType = types.make(.classType(ClassType(
-            classSymbol: rootCancellationSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
-
-        symbols.setPropertyType(jobType, for: jobSymbol)
-        symbols.setPropertyType(deferredType, for: deferredSymbol)
-        symbols.setPropertyType(dispatchersType, for: dispatchersSymbol)
-        symbols.setPropertyType(flowRawType, for: flowInterfaceSymbol)
-        symbols.setPropertyType(dispatcherType, for: dispatcherSymbol)
-        symbols.setPropertyType(channelType, for: channelSymbol)
-        symbols.setPropertyType(cancellationType, for: cancellationSymbol)
-        symbols.setPropertyType(continuationType, for: continuationSymbol)
-        symbols.setPropertyType(continuationInterceptorType, for: continuationInterceptorSymbol)
-        symbols.setPropertyType(rootCancellationType, for: rootCancellationSymbol)
-        symbols.setDirectSupertypes([exceptionSymbol], for: cancellationSymbol)
-        symbols.setDirectSupertypes([exceptionSymbol], for: rootCancellationSymbol)
-        types.setNominalTypeParameterSymbols([continuationTypeParameterSymbol], for: continuationSymbol)
-        types.setNominalTypeParameterVariances([.invariant], for: continuationSymbol)
-
         registerSyntheticCoroutineTopLevelFunction(
             named: "suspendCoroutine",
             packageFQName: kotlinCoroutinesPkg,
@@ -920,22 +877,6 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-
-        // kotlin.coroutines compatibility shim for EmptyCoroutineContext
-        let kotlinCoroutineContextSymbol = ensureInterfaceSymbol(
-            named: "CoroutineContext",
-            in: kotlinCoroutinesPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        let kotlinCoroutineContextType = types.make(.classType(ClassType(
-            classSymbol: kotlinCoroutineContextSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
-        symbols.setPropertyType(kotlinCoroutineContextType, for: kotlinCoroutineContextSymbol)
-        symbols.setDirectSupertypes([coroutineContextSymbol], for: kotlinCoroutineContextSymbol)
-        types.setNominalDirectSupertypes([coroutineContextSymbol], for: kotlinCoroutineContextSymbol)
 
         let emptyCoroutineContextSymbol = ensureObjectSymbol(
             named: "EmptyCoroutineContext",
