@@ -1,3 +1,4 @@
+// SKIP-DIFF: ResourceBundle support is implemented in kswiftc but not available in kotlinc parity checks.
 import java.util.Locale
 import java.util.getBundle
 
