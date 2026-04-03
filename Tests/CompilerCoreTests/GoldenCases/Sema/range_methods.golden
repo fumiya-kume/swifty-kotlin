@@ -3467,7 +3467,7 @@ expr e16 memberCall recv=e14 callee=contains args=[_:e15] type=Boolean
 expr e17 int(1) type=Int
 expr e18 int(5) type=Int
 expr e19 binary(rangeTo) lhs=e17 rhs=e18 type=Int
-expr e20 memberCall recv=e19 callee=toList args=[] type=Class#123<out Int>
+expr e20 memberCall recv=e19 callee=toList args=[] type=Class#121<out Int>
 expr e21 int(1) type=Int
 expr e22 int(5) type=Int
 expr e23 binary(rangeTo) lhs=e21 rhs=e22 type=Int

@@ -3457,4 +3457,4 @@ expr e15 int(2) type=Int
 expr e16 call callee=e14 args=[_:e15] type=Unit
 expr e17 blockExpr stmts=[e13] trailing=e16 type=Unit
 expr e18 lambda params=[] body=e17 label=buildList type=() -> Unit
-expr e19 call callee=e10 args=[_:e18] type=Class#123<out Int>
+expr e19 call callee=e10 args=[_:e18] type=Class#121<out Int>
