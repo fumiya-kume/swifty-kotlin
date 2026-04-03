@@ -190,6 +190,43 @@ final class LoweringPassRegressionTests: XCTestCase {
         }
     }
 
+    func testCoroutineLoweringRewritesSuspendFunctionTypeInvokeCalls() throws {
+        let source = """
+        import kotlinx.coroutines.*
+
+        suspend fun invokeZero(block: suspend () -> Int): Int = block()
+
+        suspend fun invokeOne(block: suspend (Int) -> Int): Int = block(41)
+
+        fun main() = runBlocking {
+            val zero = invokeZero { 7 }
+            val one = invokeOne { value -> value + 1 }
+            println(zero)
+            println(one)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "SuspendInvokeRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let allCallees = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case let .function(function) = decl else {
+                    return nil
+                }
+                return function
+            }.flatMap { function in
+                extractCallees(from: function.body, interner: ctx.interner)
+            }
+            let diagnostics = ctx.diagnostics.diagnostics.map { "\($0.severity): \($0.message)" }
+
+            XCTAssertTrue(allCallees.contains("kk_suspend_function_invoke_0"), "Callees: \(allCallees)")
+            XCTAssertTrue(allCallees.contains("kk_suspend_function_invoke"), "Callees: \(allCallees)")
+            XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.severity == .error }, "Diagnostics: \(diagnostics)")
+        }
+    }
+
     func testKxMiniRunBlockingDelayExecutableReturnsExpectedExitCode() throws {
         let source = """
         suspend fun delayedValue(): Int {

@@ -202,6 +202,51 @@ func normalizeNullableRuntimePointer(_ ptr: UnsafeMutableRawPointer?) -> UnsafeM
     return ptr
 }
 
+private final class KKInterceptedContinuation: KKContinuation, @unchecked Sendable {
+    public let context: UnsafeMutableRawPointer?
+    private let continuation: KKContinuation
+    private let dispatcher: RuntimeDispatcher
+
+    init(
+        context: UnsafeMutableRawPointer?,
+        continuation: KKContinuation,
+        dispatcher: RuntimeDispatcher
+    ) {
+        self.context = context
+        self.continuation = continuation
+        self.dispatcher = dispatcher
+    }
+
+    func resumeWith(_ result: UnsafeMutableRawPointer?) {
+        let resultRaw = Int(bitPattern: result)
+        dispatcher.dispatchAsync {
+            self.continuation.resumeWith(UnsafeMutableRawPointer(bitPattern: resultRaw))
+        }
+    }
+}
+
+func runtimeInterceptedContinuation(_ continuation: KKContinuation) -> KKContinuation {
+    guard let context = continuation.context else {
+        return continuation
+    }
+    let dispatcherTag = kk_context_get_dispatcher(Int(bitPattern: context))
+    return runtimeInterceptedContinuation(using: dispatcherTag, continuation: continuation)
+}
+
+func runtimeInterceptedContinuation(using dispatcherTag: Int, continuation: KKContinuation) -> KKContinuation {
+    guard dispatcherTag != 0 else {
+        return continuation
+    }
+    if continuation is KKInterceptedContinuation {
+        return continuation
+    }
+    return KKInterceptedContinuation(
+        context: continuation.context,
+        continuation: continuation,
+        dispatcher: runtimeResolveDispatcher(from: dispatcherTag)
+    )
+}
+
 public final class KKDispatchContinuation: KKContinuation {
     public let context: UnsafeMutableRawPointer?
     private let callback: (UnsafeMutableRawPointer?) -> Void
@@ -213,6 +258,12 @@ public final class KKDispatchContinuation: KKContinuation {
 
     public func resumeWith(_ result: UnsafeMutableRawPointer?) {
         callback(result)
+    }
+}
+
+public extension KKContinuation {
+    func intercepted() -> KKContinuation {
+        runtimeInterceptedContinuation(self)
     }
 }
 

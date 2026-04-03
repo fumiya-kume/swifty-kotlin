@@ -135,7 +135,7 @@ final class ABIMismatchTests: XCTestCase {
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
         // The current spec surface tracks the shared coroutine ABI subset.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 90)
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 92)
     }
 
     func testBoxingFunctionCount() {
@@ -344,6 +344,28 @@ final class ABIMismatchTests: XCTestCase {
         let spec = try requireSpec("kk_coroutine_suspended")
         XCTAssertEqual(spec.returnType, .opaquePointer)
         XCTAssertEqual(spec.parameters.count, 0)
+    }
+
+    func testKKSuspendFunctionInvokeSignature() throws {
+        let spec = try requireSpec("kk_suspend_function_invoke")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 3)
+        XCTAssertEqual(spec.parameters[0].name, "functionRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "arg")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "outThrown")
+        XCTAssertEqual(spec.parameters[2].type, .nullableIntptrPointer)
+    }
+
+    func testKKSuspendFunctionInvokeZeroAritySignature() throws {
+        let spec = try requireSpec("kk_suspend_function_invoke_0")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 2)
+        XCTAssertEqual(spec.parameters[0].name, "functionRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "outThrown")
+        XCTAssertEqual(spec.parameters[1].type, .nullableIntptrPointer)
     }
 
     func testKKMutableListAddAtSignature() throws {
