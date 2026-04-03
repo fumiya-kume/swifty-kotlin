@@ -48,35 +48,6 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-        let continuationSymbol = ensureInterfaceSymbol(
-            named: "Continuation",
-            in: kotlinCoroutinesPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        let continuationTypeParamName = interner.intern("T")
-        let continuationTypeParamFQName = kotlinCoroutinesPkg + [interner.intern("Continuation"), continuationTypeParamName]
-        let continuationTypeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: continuationTypeParamFQName) {
-            existing
-        } else {
-            symbols.define(
-                kind: .typeParameter,
-                name: continuationTypeParamName,
-                fqName: continuationTypeParamFQName,
-                declSite: nil,
-                visibility: .private,
-                flags: []
-            )
-        }
-        let continuationTypeParamType = types.make(.typeParam(TypeParamType(
-            symbol: continuationTypeParamSymbol,
-            nullability: .nonNull
-        )))
-        let continuationType = types.make(.classType(ClassType(
-            classSymbol: continuationSymbol,
-            args: [.invariant(continuationTypeParamType)],
-            nullability: .nonNull
-        )))
         let continuationInterceptorSymbol = ensureInterfaceSymbol(
             named: "ContinuationInterceptor",
             in: kotlinCoroutinesPkg,
