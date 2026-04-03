@@ -345,9 +345,9 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
 
             let metadataPath = libBase + ".kklib/metadata.bin"
             let metadata = try String(contentsOfFile: metadataPath, encoding: .utf8)
-            XCTAssertTrue(metadata.contains("C2<Lmetaexport/A;,Lmetaexport/B;>"))
-            XCTAssertTrue(metadata.contains("RLmetaexport/C;"))
-            XCTAssertTrue(metadata.contains("Lmetaexport/D;"))
+            XCTAssertTrue(metadata.contains("typeAlias"))
+            XCTAssertTrue(metadata.contains("fq=metaexport.Handler"))
+            XCTAssertTrue(metadata.contains("sig=Q<Lmetaexport.Handler;>"))
 
             let appSource = """
             import metaexport.handler
@@ -371,18 +371,18 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
                 let propertyType = try XCTUnwrap(sema.symbols.propertyType(for: handlerProperty.id))
                 let nonNullPropertyType = sema.types.makeNonNullable(propertyType)
 
-                guard case let .functionType(functionType) = sema.types.kind(of: nonNullPropertyType) else {
-                    return XCTFail("Expected imported property type to be a function type")
+                guard case let .classType(classType) = sema.types.kind(of: nonNullPropertyType) else {
+                    return XCTFail("Expected imported property type to remain the aliased nominal type")
                 }
 
-                XCTAssertEqual(functionType.contextReceivers.count, 2)
-                XCTAssertNotNil(functionType.receiver)
-                let rendered = sema.types.renderType(nonNullPropertyType)
-                XCTAssertTrue(rendered.contains("context("))
-                XCTAssertTrue(rendered.contains("metaexport.A"))
-                XCTAssertTrue(rendered.contains("metaexport.B"))
-                XCTAssertTrue(rendered.contains("metaexport.C."))
-                XCTAssertTrue(rendered.hasSuffix("-> metaexport.D"))
+                let handlerAlias = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+                    importCtx.interner.resolve(symbol.name) == "Handler" &&
+                        symbol.kind == .typeAlias &&
+                        symbol.flags.contains(.synthetic)
+                }))
+
+                XCTAssertEqual(classType.classSymbol, handlerAlias.id)
+                XCTAssertEqual(classType.nullability, .nonNull)
             }
         }
     }

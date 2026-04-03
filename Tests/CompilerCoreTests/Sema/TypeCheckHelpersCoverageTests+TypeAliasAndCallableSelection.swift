@@ -95,8 +95,17 @@ extension TypeCheckHelpersCoverageTests {
         XCTAssertNil(overDepth)
         XCTAssertTrue(fixture.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-SEMA-ALIAS-DEPTH" })
 
+        let plainAlias = fixture.symbols.define(
+            kind: .typeAlias,
+            name: fixture.interner.intern("PlainAlias"),
+            fqName: [fixture.interner.intern("PlainAlias")],
+            declSite: nil,
+            visibility: .public
+        )
+        fixture.symbols.setTypeAliasUnderlyingType(fixture.types.intType, for: plainAlias)
+
         _ = helpers.expandTypeAlias(
-            aliasSymbol,
+            plainAlias,
             typeArgs: [],
             sema: fixture.sema,
             visited: [],

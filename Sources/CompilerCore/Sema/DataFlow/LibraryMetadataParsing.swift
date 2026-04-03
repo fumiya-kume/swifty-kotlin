@@ -412,7 +412,7 @@ extension DataFlowSemaPhase {
                 .compactMap { symbols.symbol($0) }
                 .filter { symbol in
                     switch symbol.kind {
-                    case .class, .interface, .object, .enumClass, .annotationClass:
+                    case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
                         true
                     default:
                         false
@@ -426,6 +426,12 @@ extension DataFlowSemaPhase {
                     range: nil
                 )
                 return types.anyType
+            }
+            if let symbol = symbols.symbol(classSymbol),
+               symbol.kind == .typeAlias,
+               let underlyingType = symbols.typeAliasUnderlyingType(for: classSymbol)
+            {
+                return underlyingType
             }
             return types.make(.classType(ClassType(classSymbol: classSymbol, args: args, nullability: .nonNull)))
         }

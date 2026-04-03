@@ -95,7 +95,20 @@ extension DataFlowSemaPhase {
             }
         }
 
-        for binding in importedBindings {
+        for binding in importedBindings where binding.record.kind == .typeAlias {
+            applyImportedBinding(
+                binding,
+                symbols: symbols,
+                types: types,
+                diagnostics: diagnostics,
+                interner: interner,
+                importedInlineFunctions: &importedInlineFunctions,
+                pendingSupertypeEdges: &pendingSupertypeEdges,
+                cache: cache
+            )
+        }
+
+        for binding in importedBindings where binding.record.kind != .typeAlias {
             applyImportedBinding(
                 binding,
                 symbols: symbols,

@@ -729,7 +729,7 @@ final class CollectionLiteralLoweringTests: XCTestCase {
 
         let callees = calleesInDecl(declID, module: module, interner: interner)
         XCTAssertFalse(callees.contains("reversed"), "range.reversed should be rewritten")
-        XCTAssertTrue(callees.contains("kk_range_reversed"), "range.reversed should become kk_range_reversed")
+        XCTAssertTrue(callees.contains("kk_uint_range_reversed"), "range.reversed should become kk_uint_range_reversed")
     }
 
     func testRangeAsReversedIsNotRewrittenToKkRangeReversed() throws {

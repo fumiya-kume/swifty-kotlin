@@ -2198,6 +2198,16 @@ private func isDispatcherTag(_ raw: Int) -> Bool {
     raw == RuntimeDispatcherTag.mainDispatcher
 }
 
+/// Returns true if the raw value is a registered heap object pointer owned by the runtime.
+private func isRegisteredRuntimeObjectPointer(_ raw: Int) -> Bool {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return false
+    }
+    return runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+}
+
 /// Convert any context-like raw value to a RuntimeCoroutineContext.
 /// Handles: RuntimeCoroutineContext, dispatcher tags, RuntimeCoroutineNameBox,
 /// RuntimeExceptionHandlerBox.
@@ -2208,7 +2218,8 @@ private func resolveToCoroutineContext(_ raw: Int) -> RuntimeCoroutineContext {
     if isDispatcherTag(raw) {
         return RuntimeCoroutineContext(dispatcher: raw)
     }
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+    guard isRegisteredRuntimeObjectPointer(raw),
+          let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
         return RuntimeCoroutineContext()
     }
     if let ctx = tryCast(ptr, to: RuntimeCoroutineContext.self) {
@@ -2387,6 +2398,7 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     // STDLIB-CORO-077: If dispatcherRaw is a RuntimeCoroutineContext, delegate
     // to kk_with_context_full which handles context element propagation.
     if !isDispatcherTag(dispatcherRaw), dispatcherRaw != 0,
+       isRegisteredRuntimeObjectPointer(dispatcherRaw),
        let ptr = UnsafeMutableRawPointer(bitPattern: dispatcherRaw),
        tryCast(ptr, to: RuntimeCoroutineContext.self) != nil
     {

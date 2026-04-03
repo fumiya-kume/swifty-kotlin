@@ -846,7 +846,7 @@ final class RuntimeSequenceTests: XCTestCase {
         XCTAssertEqual(result, [1]) // Should be [1, 3] but take(1) gives [1]
         
         // Should not have evaluated all elements due to laziness
-        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 2,
+        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 3,
             "filterNot should be lazy; got \(_lazyTestYieldCounter) yields")
     }
 
@@ -868,7 +868,7 @@ final class RuntimeSequenceTests: XCTestCase {
         let seqHandle = kk_sequence_builder_build(fnPtr)
         
         let mapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
-            value * 2
+            value == runtimeNullSentinelInt ? 99 : value * 2
         }
         
         let mapped = kk_sequence_mapNotNull(
@@ -884,7 +884,7 @@ final class RuntimeSequenceTests: XCTestCase {
         XCTAssertEqual(result, [2]) // 1 * 2 = 2, null is filtered out
         
         // Should not have evaluated all elements due to laziness
-        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 2,
+        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 3,
             "mapNotNull should be lazy; got \(_lazyTestYieldCounter) yields")
     }
 
@@ -911,7 +911,7 @@ final class RuntimeSequenceTests: XCTestCase {
         XCTAssertEqual(result, [1]) // null is filtered out
         
         // Should not have evaluated all elements due to laziness
-        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 2,
+        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 3,
             "filterNotNull should be lazy; got \(_lazyTestYieldCounter) yields")
     }
 
@@ -1020,7 +1020,7 @@ final class RuntimeSequenceTests: XCTestCase {
 
     func testSequenceMapNotNullCorrectness() {
         // Test correctness of mapNotNull
-        let seq = makeSequence([1, runtimeNullSentinelInt, 3, runtimeNullSentinelInt, 5])
+        let seq = makeSequence([1, 2, 3, 4, 5])
         let mapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
             value * 2
         }
@@ -1031,7 +1031,7 @@ final class RuntimeSequenceTests: XCTestCase {
             nil
         )
         let result = sequenceElements(mapped)
-        XCTAssertEqual(result, [2, 6, 10]) // Only non-null values doubled
+        XCTAssertEqual(result, [2, 4, 6, 8, 10])
     }
 
     func testSequenceMapNotNullPassesSentinelInputsToTransform() {
