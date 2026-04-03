@@ -400,12 +400,27 @@ extension OverloadResolver {
            containsTypeVariable(supertype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
         {
             let subtypeKind = typeSystem.kind(of: subtype)
+            let receiverShapesMatch: Bool = {
+                switch (subtypeKind, supertypeKind) {
+                case let (.functionType(subFunc), .functionType(superFunc)):
+                    switch (subFunc.receiver, superFunc.receiver) {
+                    case (nil, nil):
+                        true
+                    case (.some, .some):
+                        true
+                    default:
+                        false
+                    }
+                default:
+                    false
+                }
+            }()
             if case let .functionType(subFunc) = subtypeKind,
                subFunc.params.count == superFunc.params.count,
                subFunc.contextReceivers.count == superFunc.contextReceivers.count,
                subFunc.isSuspend == superFunc.isSuspend,
                subFunc.nullability == superFunc.nullability || superFunc.nullability == .nullable,
-               subFunc.receiver == superFunc.receiver
+               receiverShapesMatch
             {
                 var result: [VariableConstraint] = []
                 for (subContextReceiver, superContextReceiver) in zip(subFunc.contextReceivers, superFunc.contextReceivers) {

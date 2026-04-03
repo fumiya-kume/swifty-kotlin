@@ -122,6 +122,9 @@ final class ASTContextFunctionTypeTests: XCTestCase {
                 "<" + args.map { renderTypeArgRef($0, in: ast, interner: interner) }.joined(separator: ", ") + ">"
             }
             return base + renderedArgs + (nullable ? "?" : "")
+        case let .annotated(base, annotations):
+            let renderedAnnotations = annotations.map { "@\($0.name)" }.joined(separator: " ")
+            return renderedAnnotations + (renderedAnnotations.isEmpty ? "" : " ") + renderTypeRef(base, in: ast, interner: interner)
         case let .functionType(contextReceivers, receiver, params, returnType, isSuspend, nullable):
             let contextPrefix = if contextReceivers.isEmpty {
                 ""

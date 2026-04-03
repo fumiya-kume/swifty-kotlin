@@ -400,10 +400,25 @@ extension CallTypeChecker {
         }
 
         let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
-
+        let recoveredReceiverType: TypeID? = if case .any = sema.types.kind(of: sema.types.makeNonNullable(receiverType)) {
+            if let symbol = sema.bindings.identifierSymbol(for: receiverID),
+               let propertyType = sema.symbols.propertyType(for: symbol)
+            {
+                propertyType
+            } else if case let .nameRef(receiverName, _) = ast.arena.expr(receiverID),
+                      let local = locals[receiverName]
+            {
+                sema.symbols.propertyType(for: local.symbol) ?? local.type
+            } else {
+                nil
+            }
+        } else {
+            nil
+        }
+        let effectiveCallRecursiveReceiverType = recoveredReceiverType ?? receiverType
         if interner.resolve(calleeName) == "callRecursive",
            args.count == 1,
-           case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+           case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(effectiveCallRecursiveReceiverType)),
            let receiverSymbol = sema.symbols.symbol(classType.classSymbol),
            receiverSymbol.fqName.count == 2,
            interner.resolve(receiverSymbol.fqName[0]) == "kotlin",
