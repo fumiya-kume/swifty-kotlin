@@ -298,6 +298,14 @@ struct TypeCheckHelpers {
                 sema: sema,
                 interner: interner
             ) ?? sema.types.anyType
+        case knownNames.produce:
+            guard argumentCount >= 1 else { return nil }
+            return syntheticCoroutineNominalType(
+                packageName: [interner.intern("kotlinx"), interner.intern("coroutines"), interner.intern("channels")],
+                shortName: "Channel",
+                sema: sema,
+                interner: interner
+            ) ?? sema.types.anyType
         case interner.intern("delay"):
             guard argumentCount == 1 else { return nil }
             return sema.types.unitType

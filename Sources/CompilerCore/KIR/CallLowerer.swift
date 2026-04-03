@@ -716,7 +716,8 @@ final class CallLowerer {
             if isSyntheticCoroutineLauncher,
                sourceCalleeName == knownNames.runBlocking
                || sourceCalleeName == knownNames.launch
-               || sourceCalleeName == knownNames.async,
+               || sourceCalleeName == knownNames.async
+               || sourceCalleeName == knownNames.produce,
                let firstArg = finalArgIDs.first,
                let callableInfo = driver.ctx.callableValueInfo(for: firstArg),
                !callableInfo.captureArguments.isEmpty

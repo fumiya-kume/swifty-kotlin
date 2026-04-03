@@ -58,7 +58,8 @@ final class CoroutineLowerer {
         // runBlocking, launch, async の処理
         if calleeName == knownNames.runBlocking ||
            calleeName == knownNames.launch ||
-           calleeName == knownNames.async {
+           calleeName == knownNames.async ||
+           calleeName == knownNames.produce {
             return lowerCoroutineLauncherCall(
                 calleeName: calleeName,
                 args: args,
@@ -201,6 +202,7 @@ final class CoroutineLowerer {
         case knownNames.runBlocking: "kk_run_blocking"
         case knownNames.launch: "kk_launch"
         case knownNames.async: "kk_async"
+        case knownNames.produce: "kk_produce"
         default: calleeStr
         }
         

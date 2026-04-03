@@ -509,6 +509,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticChannelProduceFunction(
+            packageFQName: channelsPkg,
+            channelSymbol: channelSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         registerSyntheticObjectProperty(
             ownerSymbol: dispatchersSymbol,
@@ -846,6 +853,84 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+    }
+
+    private func registerSyntheticCoroutineTopLevelFunctionWithReceiver(
+        named name: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        externalLinkName: String? = nil,
+        syntheticTypeParameterNames: [String] = [],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        let existingSymbols = symbols.lookupAll(fqName: functionFQName)
+        let hasExistingFunctionWithSameSignature = existingSymbols.contains { id in
+            guard let sym = symbols.symbol(id),
+                  sym.kind == .function,
+                  let sig = symbols.functionSignature(for: id)
+            else {
+                return false
+            }
+            return sig.receiverType == receiverType
+                && sig.parameterTypes == parameters.map(\.type)
+                && sig.returnType == returnType
+        }
+        guard !hasExistingFunctionWithSameSignature else {
+            return
+        }
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        if let externalLinkName, !externalLinkName.isEmpty {
+            symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        }
+
+        var typeParameterSymbols: [SymbolID] = []
+        if !syntheticTypeParameterNames.isEmpty {
+            let localNamespaceFQName = functionFQName + [interner.intern("$synthetic")]
+            for typeParamName in syntheticTypeParameterNames {
+                let internedTypeParamName = interner.intern(typeParamName)
+                let typeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: internedTypeParamName,
+                    fqName: localNamespaceFQName + [internedTypeParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                typeParameterSymbols.append(typeParamSymbol)
+            }
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: typeParameterSymbols
+            ),
+            for: functionSymbol
+        )
+
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
     }
 
     private func registerSyntheticCoroutineTopLevelFunction(
@@ -1220,6 +1305,81 @@ extension DataFlowSemaPhase {
                 parameterTypes: [types.intType],
                 returnType: returnType,
                 valueParameterSymbols: [capacityParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [typeParamSymbol]
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerSyntheticChannelProduceFunction(
+        packageFQName: [InternedString],
+        channelSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("produce")
+        let functionFQName = packageFQName + [functionName]
+        guard symbols.lookup(fqName: functionFQName) == nil else {
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName("kk_produce", for: functionSymbol)
+
+        let typeParamName = interner.intern("T")
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: functionFQName + [interner.intern("$synthetic"), typeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let channelType = types.make(.classType(ClassType(
+            classSymbol: channelSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let blockType = types.make(.functionType(FunctionType(
+            receiver: channelType,
+            params: [],
+            returnType: types.unitType,
+            isSuspend: true,
+            nullability: .nonNull
+        )))
+        let blockParamName = interner.intern("block")
+        let blockParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: blockParamName,
+            fqName: functionFQName + [blockParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: blockParamSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [blockType],
+                returnType: channelType,
+                valueParameterSymbols: [blockParamSymbol],
                 valueParameterHasDefaultValues: [false],
                 valueParameterIsVararg: [false],
                 typeParameterSymbols: [typeParamSymbol]

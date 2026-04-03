@@ -1002,6 +1002,39 @@ public func kk_kxmini_async_with_cont(_ entryPointRaw: Int, _ continuation: Int)
     return Int(bitPattern: taskPtr)
 }
 
+@_cdecl("kk_kxmini_produce_with_cont")
+public func kk_kxmini_produce_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
+    let channelHandle = kk_channel_create(0)
+
+    let job = RuntimeJobHandle()
+    let callerScope = RuntimeCoroutineScope.current
+    if let callerScope {
+        let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
+        runtimeStorage.withLock { state in
+            state.objectPointers.insert(UInt(bitPattern: jobPtr))
+        }
+        callerScope.registerChild(Int(bitPattern: jobPtr))
+    }
+    if let contState = runtimeContinuationState(from: continuation) {
+        job.continuationState = contState
+        contState.jobHandle = job
+        contState.scope = callerScope
+        contState.launcherArgs[0] = Int64(channelHandle)
+    }
+
+    KxMiniRuntime.launch {
+        RuntimeCoroutineScope.current = callerScope
+        let result = runSuspendEntryLoopWithContinuation(
+            entryPointRaw: entryPointRaw,
+            continuation: continuation
+        )
+        RuntimeCoroutineScope.current = nil
+        _ = kk_channel_close(channelHandle)
+        job.complete(with: result)
+    }
+    return channelHandle
+}
+
 // MARK: - Dispatcher-aware launch (STDLIB-CORO-072)
 
 /// Launch a coroutine on a specific dispatcher (fire-and-forget).

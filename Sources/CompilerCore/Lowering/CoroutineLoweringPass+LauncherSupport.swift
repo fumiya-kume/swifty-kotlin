@@ -145,6 +145,7 @@ extension CoroutineLoweringPass {
         else {
             return nil
         }
+        let produceCallee = rewrite.ctx.interner.intern("produce")
 
         guard call.arguments.count >= 1 else {
             rewrite.ctx.diagnostics.error(
@@ -240,6 +241,33 @@ extension CoroutineLoweringPass {
 
         let targetArity = rewrite.suspendFunctionArityBySymbol[referencedSymbol] ?? 0
         let extraArgs = Array(call.arguments.dropFirst())
+        if call.callee == produceCallee {
+            let expectedExtraArgs = max(0, targetArity - 1)
+            guard extraArgs.count == expectedExtraArgs else {
+                rewrite.ctx.diagnostics.error(
+                    "KSWIFTK-CORO-0003",
+                    "Coroutine launcher 'produce' passed \(extraArgs.count) argument(s) but referenced suspend function expects \(expectedExtraArgs) after reserving the produced channel receiver.",
+                    range: nil
+                )
+                return [call.instruction]
+            }
+
+            guard let thunk = rewrite.launcherThunkByOriginalSymbol[referencedSymbol],
+                  let runtimeWithContCallee = rewrite.kxMiniLauncherWithContCallees[call.callee]
+            else {
+                assertionFailure("Internal compiler error: launcher thunk or _with_cont callee missing for '\(rewrite.ctx.interner.resolve(call.callee))'")
+                return [call.instruction]
+            }
+
+            return rewriteProduceLauncherCall(
+                runtimeWithContCallee: runtimeWithContCallee,
+                loweredTarget: loweredTarget,
+                thunk: thunk,
+                extraArgs: extraArgs,
+                call: call,
+                using: rewrite
+            )
+        }
         guard extraArgs.count == targetArity else {
             rewrite.ctx.diagnostics.error(
                 "KSWIFTK-CORO-0003",
@@ -458,6 +486,69 @@ extension CoroutineLoweringPass {
                 result: call.result,
                 canThrow: call.canThrow,
                 thrownResult: nil
+            )
+        )
+        return rewritten
+    }
+
+    func rewriteProduceLauncherCall(
+        runtimeWithContCallee: InternedString,
+        loweredTarget: LoweredSuspendFunction,
+        thunk: LoweredSuspendFunction,
+        extraArgs: [KIRExprID],
+        call: CallRewriteInput,
+        using rewrite: SuspendRewriteContext
+    ) -> [KIRInstruction] {
+        let loweredFunctionIDExpr = rewrite.module.arena.appendExpr(
+            .intLiteral(Int64(loweredTarget.symbol.rawValue)),
+            type: rewrite.intType
+        )
+        let continuationExpr = rewrite.module.arena.appendExpr(
+            .temporary(Int32(rewrite.module.arena.expressions.count)),
+            type: rewrite.intType
+        )
+
+        var rewritten: [KIRInstruction] = [
+            .call(
+                symbol: nil,
+                callee: rewrite.continuationFactory,
+                arguments: [loweredFunctionIDExpr],
+                result: continuationExpr,
+                canThrow: false,
+                thrownResult: nil
+            ),
+        ]
+
+        for (index, argExpr) in extraArgs.enumerated() {
+            let slotExpr = rewrite.module.arena.appendExpr(
+                .intLiteral(Int64(index + 1)),
+                type: rewrite.intType
+            )
+            rewritten.append(
+                .call(
+                    symbol: nil,
+                    callee: rewrite.launcherArgSetCallee,
+                    arguments: [continuationExpr, slotExpr, argExpr],
+                    result: nil,
+                    canThrow: false,
+                    thrownResult: nil
+                )
+            )
+        }
+
+        let thunkRefExpr = rewrite.module.arena.appendExpr(
+            .temporary(Int32(rewrite.module.arena.expressions.count)),
+            type: rewrite.intType
+        )
+        rewritten.append(.constValue(result: thunkRefExpr, value: .symbolRef(thunk.symbol)))
+        rewritten.append(
+            .call(
+                symbol: nil,
+                callee: runtimeWithContCallee,
+                arguments: [thunkRefExpr, continuationExpr],
+                result: call.result,
+                canThrow: call.canThrow,
+                thrownResult: call.thrownResult
             )
         )
         return rewritten
