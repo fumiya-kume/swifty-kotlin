@@ -127,6 +127,215 @@ private func networkStringRaw(_ value: String) -> Int {
     })
 }
 
+final class RuntimeURLBox {
+    let url: URL
+    let components: URLComponents
+
+    init(url: URL, components: URLComponents) {
+        self.url = url
+        self.components = components
+    }
+}
+
+private func runtimeURLBox(from raw: Int) -> RuntimeURLBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeURLBox.self)
+}
+
+private func boxURL(_ url: URL) -> Int {
+    let resolvedURL = url.absoluteURL
+    let components = URLComponents(url: resolvedURL, resolvingAgainstBaseURL: true)
+        ?? URLComponents(string: resolvedURL.absoluteString)
+        ?? URLComponents()
+    return registerRuntimeObject(RuntimeURLBox(url: resolvedURL, components: components))
+}
+
+private func runtimeURL(from spec: String) -> URL? {
+    URL(string: spec)
+}
+
+private func runtimeURLRelative(baseRaw: Int, relativeRaw: Int) -> URL? {
+    guard let base = runtimeURLBox(from: baseRaw) else { return nil }
+    let relative = networkString(from: relativeRaw, caller: #function)
+    return URL(string: relative, relativeTo: base.url)?.absoluteURL
+}
+
+private func runtimeURLComponents(from raw: Int, caller: StaticString) -> RuntimeURLBox {
+    guard let box = runtimeURLBox(from: raw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(caller) received invalid URL handle")
+    }
+    return box
+}
+
+private func runtimeURLPort(_ box: RuntimeURLBox) -> Int {
+    box.components.port ?? -1
+}
+
+private func runtimeURLPath(_ box: RuntimeURLBox) -> String {
+    let path = box.components.percentEncodedPath.isEmpty ? box.url.path : box.components.path
+    return path.isEmpty ? "/" : path
+}
+
+private func runtimeURLHost(_ box: RuntimeURLBox) -> String {
+    box.components.host ?? ""
+}
+
+private func runtimeURLProtocol(_ box: RuntimeURLBox) -> String {
+    box.components.scheme ?? ""
+}
+
+private func runtimeURLExternalForm(_ box: RuntimeURLBox) -> String {
+    box.url.absoluteString
+}
+
+private func runtimeURLCanonicalEqualityKey(_ box: RuntimeURLBox) -> String {
+    let scheme = runtimeURLProtocol(box).lowercased()
+    let host = runtimeURLHost(box).lowercased()
+    let port = runtimeURLPort(box)
+    let path = runtimeURLPath(box)
+    let query = box.components.percentEncodedQuery ?? ""
+    let fragment = box.components.percentEncodedFragment ?? ""
+    return "\(scheme)|\(host)|\(port)|\(path)|\(query)|\(fragment)"
+}
+
+private func runtimeURLSameFileKey(_ box: RuntimeURLBox) -> String {
+    let scheme = runtimeURLProtocol(box).lowercased()
+    let host = runtimeURLHost(box).lowercased()
+    let port = runtimeURLPort(box)
+    let path = runtimeURLPath(box)
+    let query = box.components.percentEncodedQuery ?? ""
+    return "\(scheme)|\(host)|\(port)|\(path)|\(query)"
+}
+
+private func runtimeURLHash(_ text: String) -> Int {
+    var hasher = Hasher()
+    hasher.combine(text)
+    return hasher.finalize()
+}
+
+private func runtimePercentEncode(_ text: String) -> String {
+    var allowed = CharacterSet.urlQueryAllowed
+    allowed.remove(charactersIn: "+&=?")
+    return text.addingPercentEncoding(withAllowedCharacters: allowed) ?? text
+}
+
+private func runtimePercentDecode(_ text: String) -> String {
+    text.removingPercentEncoding ?? text
+}
+
+@_cdecl("kk_url_new")
+public func kk_url_new(_ specRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let spec = networkString(from: specRaw, caller: #function)
+    guard let url = runtimeURL(from: spec) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "MalformedURLException: \(spec)")
+        return 0
+    }
+    return boxURL(url)
+}
+
+@_cdecl("kk_url_new_relative")
+public func kk_url_new_relative(_ baseRaw: Int, _ relativeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard runtimeURLBox(from: baseRaw) != nil else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_url_new_relative received invalid base URL handle")
+    }
+    let relative = networkString(from: relativeRaw, caller: #function)
+    guard let url = runtimeURLRelative(baseRaw: baseRaw, relativeRaw: relativeRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "MalformedURLException: \(relative)")
+        return 0
+    }
+    return boxURL(url)
+}
+
+@_cdecl("kk_url_protocol")
+public func kk_url_protocol(_ urlRaw: Int) -> Int {
+    networkStringRaw(runtimeURLProtocol(runtimeURLComponents(from: urlRaw, caller: #function)))
+}
+
+@_cdecl("kk_url_host")
+public func kk_url_host(_ urlRaw: Int) -> Int {
+    networkStringRaw(runtimeURLHost(runtimeURLComponents(from: urlRaw, caller: #function)))
+}
+
+@_cdecl("kk_url_port")
+public func kk_url_port(_ urlRaw: Int) -> Int {
+    runtimeURLPort(runtimeURLComponents(from: urlRaw, caller: #function))
+}
+
+@_cdecl("kk_url_path")
+public func kk_url_path(_ urlRaw: Int) -> Int {
+    networkStringRaw(runtimeURLPath(runtimeURLComponents(from: urlRaw, caller: #function)))
+}
+
+@_cdecl("kk_url_query")
+public func kk_url_query(_ urlRaw: Int) -> Int {
+    let box = runtimeURLComponents(from: urlRaw, caller: #function)
+    guard let query = box.components.percentEncodedQuery else { return runtimeNullSentinelInt }
+    return networkStringRaw(runtimePercentDecode(query))
+}
+
+@_cdecl("kk_url_fragment")
+public func kk_url_fragment(_ urlRaw: Int) -> Int {
+    let box = runtimeURLComponents(from: urlRaw, caller: #function)
+    guard let fragment = box.components.percentEncodedFragment else { return runtimeNullSentinelInt }
+    return networkStringRaw(runtimePercentDecode(fragment))
+}
+
+@_cdecl("kk_url_toURI")
+public func kk_url_toURI(_ urlRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let box = runtimeURLComponents(from: urlRaw, caller: #function)
+    guard let components = URLComponents(url: box.url, resolvingAgainstBaseURL: true) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "URISyntaxException: \(box.url.absoluteString)")
+        return 0
+    }
+    return registerRuntimeObject(RuntimeURIBox(components: components))
+}
+
+@_cdecl("kk_url_toExternalForm")
+public func kk_url_toExternalForm(_ urlRaw: Int) -> Int {
+    networkStringRaw(runtimeURLExternalForm(runtimeURLComponents(from: urlRaw, caller: #function)))
+}
+
+@_cdecl("kk_url_sameFile")
+public func kk_url_sameFile(_ lhsRaw: Int, _ rhsRaw: Int) -> Int {
+    let lhs = runtimeURLComponents(from: lhsRaw, caller: #function)
+    let rhs = runtimeURLComponents(from: rhsRaw, caller: #function)
+    return kk_box_bool(runtimeURLSameFileKey(lhs) == runtimeURLSameFileKey(rhs) ? 1 : 0)
+}
+
+@_cdecl("kk_url_equals")
+public func kk_url_equals(_ lhsRaw: Int, _ rhsRaw: Int) -> Int {
+    guard let lhs = runtimeURLBox(from: lhsRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_url_equals received invalid URL handle")
+    }
+    guard rhsRaw != runtimeNullSentinelInt else {
+        return kk_box_bool(0)
+    }
+    guard let rhs = runtimeURLBox(from: rhsRaw) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(runtimeURLCanonicalEqualityKey(lhs) == runtimeURLCanonicalEqualityKey(rhs) ? 1 : 0)
+}
+
+@_cdecl("kk_url_hashCode")
+public func kk_url_hashCode(_ urlRaw: Int) -> Int {
+    runtimeURLHash(runtimeURLCanonicalEqualityKey(runtimeURLComponents(from: urlRaw, caller: #function)))
+}
+
+@_cdecl("kk_url_encode")
+public func kk_url_encode(_ valueRaw: Int) -> Int {
+    let value = networkString(from: valueRaw, caller: #function)
+    return networkStringRaw(runtimePercentEncode(value))
+}
+
+@_cdecl("kk_url_decode")
+public func kk_url_decode(_ valueRaw: Int) -> Int {
+    let value = networkString(from: valueRaw, caller: #function)
+    return networkStringRaw(runtimePercentDecode(value))
+}
+
 private func networkURL(from uriRaw: Int) -> URL? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: uriRaw),
           let uriBox = tryCast(ptr, to: RuntimeURIBox.self)

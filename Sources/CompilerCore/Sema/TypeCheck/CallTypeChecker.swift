@@ -31,6 +31,18 @@ final class CallTypeChecker {
         } else {
             nil
         }
+        if let customBuilderType = inferExperimentalBuilderCallExpr(
+            id,
+            calleeName: calleeName,
+            args: args,
+            range: range,
+            ctx: ctx,
+            locals: &locals,
+            expectedType: expectedType,
+            explicitTypeArgs: explicitTypeArgs
+        ) {
+            return customBuilderType
+        }
         // --- Builder DSL functions (STDLIB-002) ---
         // Must intercept BEFORE eager arg inference so the lambda argument
         // is inferred with the correct implicit receiver type.

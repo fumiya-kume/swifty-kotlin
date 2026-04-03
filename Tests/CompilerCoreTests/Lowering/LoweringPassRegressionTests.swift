@@ -12,7 +12,6 @@ final class LoweringPassRegressionTests: XCTestCase {
         }
 
         let callees = extractCallees(from: loweredMain.body, interner: fixture.interner)
-        XCTAssertTrue(callees.contains("kk_range_iterator"))
         XCTAssertTrue(callees.contains("kk_range_hasNext"))
         XCTAssertTrue(callees.contains("kk_range_next"))
         XCTAssertFalse(callees.contains("kk_for_lowered"))

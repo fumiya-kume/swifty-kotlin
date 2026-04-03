@@ -7,7 +7,12 @@ enum RuntimeFlowTag: Int64 {
     case take = 3
     case onEach = 4
     case distinctUntilChanged = 5
-    case transform = 6
+    case catchHandler = 6
+    case retry = 7
+    case retryWhen = 8
+    case onErrorReturn = 9
+    case onErrorResume = 10
+    case transform = 11
 }
 
 struct FlowLoweringNames {
@@ -22,6 +27,11 @@ struct FlowLoweringNames {
     let map: InternedString
     let filter: InternedString
     let take: InternedString
+    let catchHandler: InternedString
+    let retry: InternedString
+    let retryWhen: InternedString
+    let onErrorReturn: InternedString
+    let onErrorResume: InternedString
     let transform: InternedString
     let toList: InternedString
     let first: InternedString
@@ -55,6 +65,11 @@ extension CoroutineLoweringPass {
         let mapName = ctx.interner.intern("map")
         let filterName = ctx.interner.intern("filter")
         let takeName = ctx.interner.intern("take")
+        let catchName = ctx.interner.intern("catch")
+        let retryName = ctx.interner.intern("retry")
+        let retryWhenName = ctx.interner.intern("retryWhen")
+        let onErrorReturnName = ctx.interner.intern("onErrorReturn")
+        let onErrorResumeName = ctx.interner.intern("onErrorResume")
         let transformName = ctx.interner.intern("transform")
         let toListName = ctx.interner.intern("toList")
         let firstName = ctx.interner.intern("first")
@@ -123,6 +138,11 @@ extension CoroutineLoweringPass {
                       tagValue == RuntimeFlowTag.map.rawValue ||
                       tagValue == RuntimeFlowTag.filter.rawValue ||
                       tagValue == RuntimeFlowTag.take.rawValue ||
+                      tagValue == RuntimeFlowTag.catchHandler.rawValue ||
+                      tagValue == RuntimeFlowTag.retry.rawValue ||
+                      tagValue == RuntimeFlowTag.retryWhen.rawValue ||
+                      tagValue == RuntimeFlowTag.onErrorReturn.rawValue ||
+                      tagValue == RuntimeFlowTag.onErrorResume.rawValue ||
                       tagValue == RuntimeFlowTag.transform.rawValue
                 else {
                     return false
@@ -156,8 +176,13 @@ extension CoroutineLoweringPass {
                             if markFlowExpr(result) { changed = true }
                             continue
                         }
-                        if callee == mapName || callee == filterName || callee == takeName || callee == transformName,
-                           arguments.count == 2 || ((callee == mapName || callee == filterName) && arguments.count == 3),
+                        if callee == mapName || callee == filterName || callee == takeName ||
+                            callee == catchName || callee == retryName || callee == retryWhenName ||
+                            callee == onErrorReturnName || callee == onErrorResumeName ||
+                            callee == transformName,
+                           arguments.count == 2 ||
+                            ((callee == mapName || callee == filterName || callee == catchName ||
+                                callee == retryWhenName) && arguments.count == 3),
                            let flowHandleArg = arguments.first,
                            flowExprIDs.contains(flowHandleArg.rawValue)
                         {
@@ -188,7 +213,10 @@ extension CoroutineLoweringPass {
                         }
 
                     case let .virtualCall(_, callee, receiver, arguments, result, _, _, _):
-                        if callee == mapName || callee == filterName || callee == takeName || callee == transformName,
+                        if callee == mapName || callee == filterName || callee == takeName ||
+                            callee == catchName || callee == retryName || callee == retryWhenName ||
+                            callee == onErrorReturnName || callee == onErrorResumeName ||
+                            callee == transformName,
                            arguments.count == 1,
                            flowExprIDs.contains(receiver.rawValue)
                         {
@@ -240,18 +268,23 @@ extension CoroutineLoweringPass {
 
             let hasFlowLikeCalls = function.body.contains { instruction in
                 switch instruction {
-                    case let .call(_, callee, _, _, _, _, _, _):
-                    callee == flowName || callee == channelFlowName || callee == callbackFlowName ||
-                        callee == flowOfName || callee == emptyFlowName ||
-                        callee == emitName || callee == collectName ||
-                        callee == mapName || callee == filterName || callee == takeName || callee == transformName ||
-                        callee == asFlowName || callee == toListName || callee == firstName ||
-                        callee == singleName ||
-                        callee == kkFlowCreateName || callee == kkFlowEmitName || callee == kkFlowCollectName ||
-                        callee == kkFlowOfName || callee == kkFlowEmptyName || callee == kkFlowAsFlowName ||
-                        callee == kkFlowToListName || callee == kkFlowFirstName || callee == kkFlowSingleName
+                case let .call(_, callee, _, _, _, _, _, _):
+                callee == flowName || callee == channelFlowName || callee == callbackFlowName ||
+                    callee == flowOfName || callee == emptyFlowName ||
+                    callee == emitName || callee == collectName ||
+                    callee == mapName || callee == filterName || callee == takeName ||
+                    callee == catchName || callee == retryName || callee == retryWhenName ||
+                    callee == onErrorReturnName || callee == onErrorResumeName ||
+                    callee == transformName ||
+                    callee == asFlowName || callee == toListName || callee == firstName ||
+                    callee == singleName ||
+                    callee == kkFlowCreateName || callee == kkFlowEmitName || callee == kkFlowCollectName ||
+                    callee == kkFlowOfName || callee == kkFlowEmptyName || callee == kkFlowAsFlowName ||
+                    callee == kkFlowToListName || callee == kkFlowFirstName || callee == kkFlowSingleName
                 case let .virtualCall(_, callee, _, _, _, _, _, _):
                     callee == mapName || callee == filterName || callee == takeName || callee == collectName ||
+                        callee == catchName || callee == retryName || callee == retryWhenName ||
+                        callee == onErrorReturnName || callee == onErrorResumeName ||
                         callee == asFlowName || callee == toListName || callee == firstName ||
                         callee == transformName || callee == singleName
                 default:
@@ -273,8 +306,13 @@ extension CoroutineLoweringPass {
             for instruction in function.body {
                 switch instruction {
                 case let .call(_, callee, arguments, _, _, _, _, _):
-                    if callee == mapName || callee == filterName || callee == takeName || callee == transformName,
-                       arguments.count == 2 || ((callee == mapName || callee == filterName) && arguments.count == 3)
+                    if callee == mapName || callee == filterName || callee == takeName ||
+                        callee == catchName || callee == retryName || callee == retryWhenName ||
+                        callee == onErrorReturnName || callee == onErrorResumeName ||
+                        callee == transformName,
+                       arguments.count == 2 ||
+                        ((callee == mapName || callee == filterName || callee == catchName ||
+                            callee == retryWhenName) && arguments.count == 3)
                     {
                         markConsume(arguments[0])
                         continue
@@ -300,7 +338,10 @@ extension CoroutineLoweringPass {
                         markConsume(arguments[0])
                     }
                 case let .virtualCall(_, callee, receiver, arguments, _, _, _, _):
-                    if callee == mapName || callee == filterName || callee == takeName || callee == transformName || callee == collectName,
+                    if callee == mapName || callee == filterName || callee == takeName ||
+                        callee == catchName || callee == retryName || callee == retryWhenName ||
+                        callee == onErrorReturnName || callee == onErrorResumeName ||
+                        callee == transformName || callee == collectName,
                        arguments.count == 1
                     {
                         markConsume(receiver)
@@ -329,6 +370,11 @@ extension CoroutineLoweringPass {
                 map: mapName,
                 filter: filterName,
                 take: takeName,
+                catchHandler: catchName,
+                retry: retryName,
+                retryWhen: retryWhenName,
+                onErrorReturn: onErrorReturnName,
+                onErrorResume: onErrorResumeName,
                 transform: transformName,
                 toList: toListName,
                 first: firstName,

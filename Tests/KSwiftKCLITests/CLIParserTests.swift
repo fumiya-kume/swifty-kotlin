@@ -57,6 +57,19 @@ final class CLIParserTests: XCTestCase {
         XCTAssertTrue(options.includeNonPublicReflectionMetadata)
     }
 
+    func testParsesAdvancedTypeInferenceFlags() throws {
+        let options = try CLIParser.parse(args: [
+            "-Xnew-inference",
+            "-Xunrestricted-builder-inference",
+            "-Xproper-type-inference-constraints-processing",
+            "main.kt",
+        ])
+
+        XCTAssertTrue(options.useNewInference)
+        XCTAssertTrue(options.useUnrestrictedBuilderInference)
+        XCTAssertTrue(options.useProperTypeInferenceConstraintsProcessing)
+    }
+
     func testThrowsMissingValue() {
         XCTAssertThrowsError(try CLIParser.parse(args: ["-o"])) { error in
             XCTAssertEqual(error as? CLIParseError, .missingValue("-o"))

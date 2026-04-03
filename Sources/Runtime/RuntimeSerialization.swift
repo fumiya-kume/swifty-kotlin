@@ -1,4 +1,5 @@
 import Foundation
+import CoreFoundation
 
 // MARK: - JSON Serialization Runtime Support
 
@@ -62,6 +63,23 @@ private func jsonExtractString(from rawValue: Int) -> String? {
         return nil
     }
     return tryCast(ptr, to: RuntimeStringBox.self)?.value
+}
+
+private func runtimeMapKeyToJSONString(_ rawValue: Int) -> String {
+    let jsonValue = runtimeValueToJSON(rawValue)
+
+    switch jsonValue {
+    case is NSNull:
+        return "null"
+    case let string as String:
+        return string
+    case let bool as Bool:
+        return bool ? "true" : "false"
+    case let number as NSNumber:
+        return number.stringValue
+    default:
+        return String(describing: jsonValue)
+    }
 }
 
 private func runtimeJsonBox(from rawValue: Int) -> RuntimeJsonBox? {
@@ -250,18 +268,30 @@ private func runtimeValueToJSON(_ rawValue: Int) -> Any {
     if let box = tryCast(ptr, to: RuntimeListBox.self) {
         return box.elements.map { runtimeValueToJSON($0) }
     }
+    if let box = tryCast(ptr, to: RuntimeSetBox.self) {
+        return box.elements.map { runtimeValueToJSON($0) }
+    }
     if let box = tryCast(ptr, to: RuntimeMapBox.self) {
         var dict: [String: Any] = [:]
         for index in 0 ..< box.keys.count {
             let keyRaw = box.keys[index]
             let valueRaw = box.values[index]
-            let key = jsonExtractString(from: keyRaw) ?? "\(keyRaw)"
-            dict[key] = runtimeValueToJSON(valueRaw)
+            dict[runtimeMapKeyToJSONString(keyRaw)] = runtimeValueToJSON(valueRaw)
         }
         return dict
     }
+    if let box = tryCast(ptr, to: RuntimeSetBox.self) {
+        return box.elements.map { runtimeValueToJSON($0) }
+    }
     if let box = tryCast(ptr, to: RuntimePairBox.self) {
         return [runtimeValueToJSON(box.first), runtimeValueToJSON(box.second)]
+    }
+    if let box = tryCast(ptr, to: RuntimeTripleBox.self) {
+        return [
+            runtimeValueToJSON(box.first),
+            runtimeValueToJSON(box.second),
+            runtimeValueToJSON(box.third),
+        ]
     }
     if let box = tryCast(ptr, to: RuntimeObjectBox.self) {
         return box.elements.map { runtimeValueToJSON($0) }
@@ -269,8 +299,11 @@ private func runtimeValueToJSON(_ rawValue: Int) -> Any {
     if let box = tryCast(ptr, to: RuntimeArrayBox.self) {
         return box.elements.map { runtimeValueToJSON($0) }
     }
+    if let box = tryCast(ptr, to: RuntimeArrayDequeBox.self) {
+        return box.elements.map { runtimeValueToJSON($0) }
+    }
 
-    return rawValue
+    return runtimeElementToString(rawValue)
 }
 
 private func jsonToRuntimeValue(_ value: Any) -> Int {
@@ -283,6 +316,9 @@ private func jsonToRuntimeValue(_ value: Any) -> Int {
     if let bool = value as? Bool {
         return registerRuntimeObject(RuntimeBoolBox(bool))
     }
+    if let num = value as? NSNumber, CFGetTypeID(num) == CFBooleanGetTypeID() {
+        return registerRuntimeObject(RuntimeBoolBox(num.boolValue))
+    }
     if let num = value as? Int {
         return registerRuntimeObject(RuntimeIntBox(num))
     }
@@ -290,10 +326,14 @@ private func jsonToRuntimeValue(_ value: Any) -> Int {
         return registerRuntimeObject(RuntimeDoubleBox(num))
     }
     if let num = value as? NSNumber {
-        if num.doubleValue == Double(num.intValue) {
-            return registerRuntimeObject(RuntimeIntBox(num.intValue))
+        let doubleValue = num.doubleValue
+        if doubleValue.rounded(.towardZero) == doubleValue,
+           doubleValue >= Double(Int.min),
+           doubleValue <= Double(Int.max)
+        {
+            return registerRuntimeObject(RuntimeIntBox(Int(doubleValue)))
         }
-        return registerRuntimeObject(RuntimeDoubleBox(num.doubleValue))
+        return registerRuntimeObject(RuntimeDoubleBox(doubleValue))
     }
     if let array = value as? [Any] {
         return registerRuntimeObject(RuntimeListBox(elements: array.map { jsonToRuntimeValue($0) }))

@@ -388,6 +388,29 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticStringExtensionFunction(
+            named: "subSequence",
+            externalLinkName: "kk_string_subSequence",
+            receiverType: stringType,
+            parameters: [
+                ("startIndex", intType, false, false),
+                ("endIndex", intType, false, false),
+            ],
+            returnType: stringType,
+            annotations: [
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.Deprecated",
+                    arguments: [
+                        "message = \"Use substring(startIndex, endIndex) instead.\"",
+                        "replaceWith = ReplaceWith(\"substring(startIndex, endIndex)\")",
+                    ]
+                ),
+            ],
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
             named: "substring",
             externalLinkName: "kk_string_substring",
             receiverType: stringType,
@@ -2189,6 +2212,7 @@ extension DataFlowSemaPhase {
         receiverType: TypeID,
         parameters: [(name: String, type: TypeID, hasDefault: Bool, isVararg: Bool)],
         returnType: TypeID,
+        annotations: [MetadataAnnotationRecord] = [],
         flags: SymbolFlags = [.synthetic],
         packageFQName: [InternedString],
         symbols: SymbolTable,
@@ -2204,6 +2228,9 @@ extension DataFlowSemaPhase {
                 && existingSignature.parameterTypes == parameters.map(\.type)
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
+            if !annotations.isEmpty {
+                symbols.setAnnotations(annotations, for: existing)
+            }
             return
         }
 
@@ -2219,6 +2246,9 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(packageSymbol, for: functionSymbol)
         }
         symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        if !annotations.isEmpty {
+            symbols.setAnnotations(annotations, for: functionSymbol)
+        }
 
         var parameterTypes: [TypeID] = []
         var parameterSymbols: [SymbolID] = []

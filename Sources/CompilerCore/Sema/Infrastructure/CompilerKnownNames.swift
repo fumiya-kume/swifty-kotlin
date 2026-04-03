@@ -17,6 +17,7 @@ enum KnownCompilerAnnotation {
     case suppress
     case dslMarker
     case wasExperimental
+    case experimentalTypeInference
 
     var simpleName: String {
         switch self {
@@ -52,6 +53,8 @@ enum KnownCompilerAnnotation {
             "DslMarker"
         case .wasExperimental:
             "WasExperimental"
+        case .experimentalTypeInference:
+            "ExperimentalTypeInference"
         }
     }
 
@@ -89,6 +92,8 @@ enum KnownCompilerAnnotation {
             "kotlin.DslMarker"
         case .wasExperimental:
             "kotlin.WasExperimental"
+        case .experimentalTypeInference:
+            "kotlin.experimental.ExperimentalTypeInference"
         }
     }
 

@@ -336,6 +336,13 @@ func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
         }
         return true
     }
+    if let lhsLocale = tryCast(lhsPtr, to: RuntimeLocaleBox.self),
+       let rhsLocale = tryCast(rhsPtr, to: RuntimeLocaleBox.self)
+    {
+        return lhsLocale.language == rhsLocale.language &&
+            lhsLocale.country == rhsLocale.country &&
+            lhsLocale.variant == rhsLocale.variant
+    }
     // Data class / user-defined object structural equality: compare classID and elements.
     if let lhsObj = tryCast(lhsPtr, to: RuntimeObjectBox.self),
        let rhsObj = tryCast(rhsPtr, to: RuntimeObjectBox.self)
