@@ -387,6 +387,11 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        let resultOfContinuationTType = types.make(.classType(ClassType(
+            classSymbol: kotlinResultSymbol,
+            args: [.out(continuationTType)],
+            nullability: .nonNull
+        )))
         registerSyntheticCoroutineMember(
             ownerSymbol: continuationSymbol,
             ownerType: continuationType,
@@ -395,8 +400,9 @@ extension DataFlowSemaPhase {
             returnType: types.unitType,
             parameters: [(
                 name: "result",
-                type: kotlinResultType
+                type: resultOfContinuationTType
             )],
+            typeParameterSymbols: [continuationTypeParameterSymbol],
             classTypeParameterCount: 1,
             symbols: symbols,
             interner: interner
@@ -490,9 +496,6 @@ extension DataFlowSemaPhase {
                 args: [.invariant(functionTypeParameterType)],
                 nullability: .nonNull
             )))
-            types.setNominalTypeParameterSymbols([functionTypeParameterSymbol], for: continuationSymbol)
-            types.setNominalTypeParameterVariances([.invariant], for: continuationSymbol)
-            symbols.setPropertyType(continuationType, for: continuationSymbol)
 
             let blockParameterSymbol = symbols.define(
                 kind: .valueParameter,
@@ -1097,7 +1100,8 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(coroutineNameType, for: coroutineNameSymbol)
-        symbols.setDirectSupertypes([coroutineContextElementSymbol], for: coroutineNameSymbol)
+        symbols.setDirectSupertypes([coroutineContextSymbol], for: coroutineNameSymbol)
+        types.setNominalDirectSupertypes([coroutineContextSymbol], for: coroutineNameSymbol)
 
         let coroutineExceptionHandlerSymbol = ensureClassSymbol(
             named: "CoroutineExceptionHandler",
@@ -1111,10 +1115,12 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(coroutineExceptionHandlerType, for: coroutineExceptionHandlerSymbol)
-        symbols.setDirectSupertypes([coroutineContextElementSymbol], for: coroutineExceptionHandlerSymbol)
+        symbols.setDirectSupertypes([coroutineContextSymbol], for: coroutineExceptionHandlerSymbol)
+        types.setNominalDirectSupertypes([coroutineContextSymbol], for: coroutineExceptionHandlerSymbol)
 
-        // Make CoroutineDispatcher a subtype of CoroutineContext.Element
-        symbols.setDirectSupertypes([coroutineContextElementSymbol, continuationInterceptorSymbol], for: dispatcherSymbol)
+        // Make CoroutineDispatcher a subtype of CoroutineContext and ContinuationInterceptor.
+        symbols.setDirectSupertypes([coroutineContextSymbol, continuationInterceptorSymbol], for: dispatcherSymbol)
+        types.setNominalDirectSupertypes([coroutineContextSymbol, continuationInterceptorSymbol], for: dispatcherSymbol)
 
         let flowBuilderLambdaType = types.make(.functionType(FunctionType(
             params: [],
@@ -2232,7 +2238,7 @@ extension DataFlowSemaPhase {
         ownerSymbol: SymbolID,
         ownerType: TypeID,
         name: String,
-        externalLinkName: String,
+        externalLinkName: String? = nil,
         returnType: TypeID,
         parameters: [(name: String, type: TypeID)] = [],
         flags: SymbolFlags = [.synthetic],
@@ -2258,7 +2264,9 @@ extension DataFlowSemaPhase {
             flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
-        symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+        if let externalLinkName {
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+        }
         var valueParameterSymbols: [SymbolID] = []
         for parameter in parameters {
             let parameterName = interner.intern(parameter.name)

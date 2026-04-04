@@ -13,7 +13,7 @@ final class ContinuationSyntheticStubTests: XCTestCase {
         return try XCTUnwrap(result)
     }
 
-    func testContinuationSymbolsAreRegistered() throws {
+    func testContinuationAndCoroutineContextStubsAreRegistered() throws {
         let (sema, interner) = try makeSema()
 
         let continuationFQName = ["kotlin", "coroutines", "Continuation"].map { interner.intern($0) }
@@ -22,17 +22,74 @@ final class ContinuationSyntheticStubTests: XCTestCase {
             "Expected kotlin.coroutines.Continuation to be registered"
         )
         XCTAssertEqual(sema.symbols.symbol(continuationSymbol)?.kind, .interface)
+        XCTAssertTrue(sema.symbols.symbol(continuationSymbol)?.flags.contains(.synthetic) == true)
 
-        let continuationTypeParameters = sema.types.nominalTypeParameterSymbols(for: continuationSymbol)
-        XCTAssertEqual(continuationTypeParameters.count, 1)
-        XCTAssertEqual(sema.types.nominalTypeParameterVariances(for: continuationSymbol), [.invariant])
+        let continuationTypeParameterSymbols = sema.types.nominalTypeParameterSymbols(for: continuationSymbol)
+        XCTAssertEqual(continuationTypeParameterSymbols.count, 1)
+        XCTAssertEqual(sema.types.nominalTypeParameterVariances(for: continuationSymbol), [.in])
 
-        _ = try XCTUnwrap(continuationTypeParameters.first)
-        guard case let .classType(continuationType) = sema.types.kind(of: try XCTUnwrap(sema.symbols.propertyType(for: continuationSymbol))) else {
-            return XCTFail("Expected Continuation to have a class type")
-        }
-        XCTAssertEqual(continuationType.classSymbol, continuationSymbol)
-        XCTAssertEqual(continuationType.args.count, 1)
+        let continuationTParamSymbol = try XCTUnwrap(continuationTypeParameterSymbols.first)
+        let continuationTType = sema.types.make(.typeParam(TypeParamType(
+            symbol: continuationTParamSymbol,
+            nullability: .nonNull
+        )))
+        let continuationType = sema.types.make(.classType(ClassType(
+            classSymbol: continuationSymbol,
+            args: [.invariant(continuationTType)],
+            nullability: .nonNull
+        )))
+
+        let coroutineContextFQName = ["kotlin", "coroutines", "CoroutineContext"].map { interner.intern($0) }
+        let coroutineContextSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: coroutineContextFQName),
+            "Expected kotlin.coroutines.CoroutineContext to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(coroutineContextSymbol)?.kind, .interface)
+        XCTAssertTrue(sema.symbols.symbol(coroutineContextSymbol)?.flags.contains(.synthetic) == true)
+        let coroutineContextType = sema.types.make(.classType(ClassType(
+            classSymbol: coroutineContextSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let resultFQName = ["kotlin", "Result"].map { interner.intern($0) }
+        let resultSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: resultFQName),
+            "Expected kotlin.Result to be registered"
+        )
+        let resultOfContinuationTType = sema.types.make(.classType(ClassType(
+            classSymbol: resultSymbol,
+            args: [.out(continuationTType)],
+            nullability: .nonNull
+        )))
+
+        let contextSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: continuationFQName + [interner.intern("context")]),
+            "Expected Continuation.context to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(contextSymbol)?.kind, .property)
+        XCTAssertEqual(sema.symbols.propertyType(for: contextSymbol), coroutineContextType)
+
+        let resumeWithSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: continuationFQName + [interner.intern("resumeWith")]),
+            "Expected Continuation.resumeWith to be registered"
+        )
+        let resumeWithSignature = try XCTUnwrap(sema.symbols.functionSignature(for: resumeWithSymbol))
+        XCTAssertEqual(resumeWithSignature.receiverType, continuationType)
+        XCTAssertEqual(resumeWithSignature.parameterTypes, [resultOfContinuationTType])
+        XCTAssertEqual(resumeWithSignature.returnType, sema.types.unitType)
+        XCTAssertEqual(resumeWithSignature.typeParameterSymbols, [continuationTParamSymbol])
+        XCTAssertEqual(resumeWithSignature.classTypeParameterCount, 1)
+
+        // Sanity-check the Result<T> shape used by the parameter type.
+        XCTAssertEqual(
+            resultOfContinuationTType,
+            sema.types.make(.classType(ClassType(
+                classSymbol: resultSymbol,
+                args: [.out(continuationTType)],
+                nullability: .nonNull
+            )))
+        )
 
         let interceptorFQName = ["kotlin", "coroutines", "ContinuationInterceptor"].map { interner.intern($0) }
         let interceptorSymbol = try XCTUnwrap(
@@ -57,17 +114,9 @@ final class ContinuationSyntheticStubTests: XCTestCase {
         )
         let interceptedSignature = try XCTUnwrap(sema.symbols.functionSignature(for: interceptedSymbol))
         XCTAssertEqual(sema.symbols.externalLinkName(for: interceptedSymbol), "kk_continuation_intercepted")
-        guard case let .classType(interceptedReceiverType) = sema.types.kind(of: try XCTUnwrap(interceptedSignature.receiverType)) else {
-            return XCTFail("Expected intercepted receiver to be Continuation<T>")
-        }
-        XCTAssertEqual(interceptedReceiverType.classSymbol, continuationSymbol)
-        XCTAssertEqual(interceptedReceiverType.args.count, 1)
-        guard case let .classType(interceptedReturnType) = sema.types.kind(of: interceptedSignature.returnType) else {
-            return XCTFail("Expected intercepted return type to be Continuation<T>")
-        }
-        XCTAssertEqual(interceptedReturnType.classSymbol, continuationSymbol)
-        XCTAssertEqual(interceptedReturnType.args.count, 1)
-        XCTAssertEqual(interceptedSignature.typeParameterSymbols.count, 1)
+        XCTAssertEqual(interceptedSignature.receiverType, continuationType)
+        XCTAssertEqual(interceptedSignature.returnType, continuationType)
+        XCTAssertEqual(interceptedSignature.typeParameterSymbols, [continuationTParamSymbol])
         XCTAssertEqual(interceptedSignature.classTypeParameterCount, 1)
 
         let interceptContinuationFQName = ["kotlin", "coroutines", "ContinuationInterceptor", "interceptContinuation"].map { interner.intern($0) }
@@ -77,22 +126,15 @@ final class ContinuationSyntheticStubTests: XCTestCase {
         )
         let interceptContinuationSignature = try XCTUnwrap(sema.symbols.functionSignature(for: interceptContinuationSymbol))
         XCTAssertEqual(sema.symbols.externalLinkName(for: interceptContinuationSymbol), "kk_continuation_interceptor_intercept_continuation")
-        guard case let .classType(interceptContinuationReceiverType) = sema.types.kind(of: try XCTUnwrap(interceptContinuationSignature.receiverType)) else {
-            return XCTFail("Expected interceptContinuation receiver to be ContinuationInterceptor")
-        }
-        XCTAssertEqual(interceptContinuationReceiverType.classSymbol, interceptorSymbol)
-        XCTAssertTrue(interceptContinuationReceiverType.args.isEmpty)
-        guard case let .classType(interceptContinuationParamType) = sema.types.kind(of: try XCTUnwrap(interceptContinuationSignature.parameterTypes.first)) else {
-            return XCTFail("Expected interceptContinuation parameter to be Continuation<T>")
-        }
-        XCTAssertEqual(interceptContinuationParamType.classSymbol, continuationSymbol)
-        XCTAssertEqual(interceptContinuationParamType.args.count, 1)
-        guard case let .classType(interceptContinuationReturnType) = sema.types.kind(of: interceptContinuationSignature.returnType) else {
-            return XCTFail("Expected interceptContinuation return type to be Continuation<T>")
-        }
-        XCTAssertEqual(interceptContinuationReturnType.classSymbol, continuationSymbol)
-        XCTAssertEqual(interceptContinuationReturnType.args.count, 1)
-        XCTAssertEqual(interceptContinuationSignature.typeParameterSymbols.count, 1)
+        let interceptorType = sema.types.make(.classType(ClassType(
+            classSymbol: interceptorSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        XCTAssertEqual(interceptContinuationSignature.receiverType, interceptorType)
+        XCTAssertEqual(interceptContinuationSignature.parameterTypes, [continuationType])
+        XCTAssertEqual(interceptContinuationSignature.returnType, continuationType)
+        XCTAssertEqual(interceptContinuationSignature.typeParameterSymbols, [continuationTParamSymbol])
     }
 
     func testCreateCoroutineUninterceptedOverloadsAreRegistered() throws {
