@@ -90,6 +90,54 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         try assertDeterministicCodegenOutput(source: source, emit: .object)
     }
 
+    func testCodegenDataClassSynthesizesCorrectToStringAndEqualityWithoutExplicitSuperclass() throws {
+        let source = """
+        data class Person(val name: String, val age: Int)
+        fun main() {
+            val p = Person("Alice", 30)
+            println(p.toString())
+            println(p.hashCode() != 0)
+            val p2 = Person("Alice", 30)
+            println(p == p2)
+            println(p.equals(p2))
+            val (name, age) = p
+            println("$name is $age")
+            println(p.component1())
+            println(p.component2())
+            val p3 = p.copy(age = 31)
+            println(p3)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "DataClassToString",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                Person(name=Alice, age=30)
+                true
+                true
+                true
+                Alice is 30
+                Alice
+                30
+                Person(name=Alice, age=31)
+
+                """
+            )
+        }
+    }
+
     func testCodegenCompilesStringStdlibMixedThrowCalls() throws {
         let source = """
         fun main() {

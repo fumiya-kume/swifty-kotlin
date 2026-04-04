@@ -17,6 +17,7 @@ public struct BuiltinTypeNames {
     public let number: InternedString
     public let unit: InternedString
     public let nothing: InternedString
+    public let annotation: InternedString
     public let null: InternedString
     public let intArray: InternedString
     public let longArray: InternedString
@@ -42,6 +43,7 @@ public struct BuiltinTypeNames {
         self.number = interner.intern("Number")
         self.unit = interner.intern("Unit")
         self.nothing = interner.intern("Nothing")
+        self.annotation = interner.intern("Annotation")
         self.null = interner.intern("null")
         self.intArray = interner.intern("IntArray")
         self.longArray = interner.intern("LongArray")
@@ -82,6 +84,11 @@ public struct BuiltinTypeNames {
         }
         if name == unit { return types.unitType }
         if name == nothing { return nullability == .nullable ? types.nullableNothingType : types.nothingType }
+        if name == annotation {
+            if let symbol = types.annotationInterfaceSymbol {
+                return types.make(.classType(ClassType(classSymbol: symbol, nullability: nullability)))
+            }
+        }
         return nil
     }
 }

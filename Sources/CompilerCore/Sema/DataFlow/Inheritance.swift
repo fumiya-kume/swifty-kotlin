@@ -76,6 +76,39 @@ extension DataFlowSemaPhase {
                 }
             }
         }
+
+        // Annotation classes ALWAYS implicitly extend kotlin.Annotation,
+        // regardless of other explicit supertypes (e.g. interfaces).
+        // Classes/objects/enums without an explicit class supertype get kotlin.Any.
+        let annotationFQName = [interner.intern("kotlin"), interner.intern("Annotation")]
+        let anyFQName = [interner.intern("kotlin"), interner.intern("Any")]
+        if let symbolInfo = symbols.symbol(symbol) {
+            if symbolInfo.kind == .annotationClass,
+               let annotationSymbol = types.annotationInterfaceSymbol ?? symbols.lookup(fqName: annotationFQName),
+               symbol != annotationSymbol,
+               !superSymbols.contains(annotationSymbol)
+            {
+                superSymbols.append(annotationSymbol)
+            }
+            // Add implicit kotlin.Any for classes/objects/enums that have no
+            // class supertype yet (they may still implement interfaces).
+            if symbolInfo.kind == .class || symbolInfo.kind == .object
+                || symbolInfo.kind == .enumClass || symbolInfo.kind == .annotationClass
+            {
+                let hasClassSupertype = superSymbols.contains { superSym in
+                    guard let info = symbols.symbol(superSym) else { return false }
+                    return info.kind == .class || info.kind == .enumClass || info.kind == .annotationClass
+                }
+                if !hasClassSupertype,
+                   let anySymbol = symbols.lookup(fqName: anyFQName),
+                   symbol != anySymbol,
+                   !superSymbols.contains(anySymbol)
+                {
+                    superSymbols.append(anySymbol)
+                }
+            }
+        }
+
         let uniqueSuperSymbols = Array(Set(superSymbols)).sorted(by: { $0.rawValue < $1.rawValue })
         symbols.setDirectSupertypes(uniqueSuperSymbols, for: symbol)
         types.setNominalDirectSupertypes(uniqueSuperSymbols, for: symbol)

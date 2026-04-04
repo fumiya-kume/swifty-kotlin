@@ -2589,7 +2589,9 @@ extension CallTypeChecker {
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
             let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
-            if lookupReceiverType == intType || lookupReceiverType == longType || lookupReceiverType == uintType || lookupReceiverType == ulongType {
+            let ubyteType = sema.types.make(.primitive(.ubyte, .nonNull))
+            let ushortType = sema.types.make(.primitive(.ushort, .nonNull))
+            if lookupReceiverType == intType || lookupReceiverType == longType || lookupReceiverType == uintType || lookupReceiverType == ulongType || lookupReceiverType == ubyteType || lookupReceiverType == ushortType {
                 let resultType = lookupReceiverType
                 let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                 sema.bindings.bindExprType(id, type: finalType)
@@ -2612,79 +2614,112 @@ extension CallTypeChecker {
             let receiverForCheck = safeCall
                 ? sema.types.makeNonNullable(lookupReceiverType)
                 : lookupReceiverType
-            let rhsType = sema.types.makeNonNullable(argTypes[0])
-            let isPrimitiveReceiver = receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType
-            let isIntegerRhs = rhsType == intType || rhsType == longType || rhsType == uintType || rhsType == ulongType
+            let rawRhsType = argTypes[0]
+            let isPrimitiveReceiver = receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType || receiverForCheck == ubyteType || receiverForCheck == ushortType
+            let isShiftReceiver = receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType
+            // Helper: whether a type is a small unsigned type (UByte/UShort).
+            // In Kotlin stdlib, small unsigned types promote to UInt for most
+            // arithmetic (plus/minus/times/div/rem).  `mod` keeps the operand type.
+            let isSmallUnsigned = { (t: TypeID) -> Bool in t == ubyteType || t == ushortType }
+            // Use non-nullable RHS for arithmetic promotion checks
+            let rhsType = sema.types.makeNonNullable(rawRhsType)
             switch interner.resolve(calleeName) {
-            case "plus", "minus", "times", "div", "rem", "mod":
+            case "plus":
                 let resultType: TypeID?
-                switch interner.resolve(calleeName) {
-                case "plus":
-                    if receiverForCheck == charType && rhsType == intType {
-                        resultType = charType
-                    } else if receiverForCheck == doubleType || rhsType == doubleType {
-                        resultType = doubleType
-                    } else if receiverForCheck == floatType || rhsType == floatType {
-                        resultType = floatType
-                    } else if receiverForCheck == longType || rhsType == longType {
-                        resultType = longType
-                    } else if receiverForCheck == ulongType || rhsType == ulongType {
-                        resultType = ulongType
-                    } else if receiverForCheck == uintType || rhsType == uintType {
-                        resultType = uintType
-                    } else if receiverForCheck == ushortType || rhsType == ushortType {
-                        resultType = ushortType
-                    } else if receiverForCheck == ubyteType || rhsType == ubyteType {
-                        resultType = ubyteType
-                    } else if receiverForCheck == intType || rhsType == intType || receiverForCheck == charType {
-                        resultType = intType
-                    } else {
-                        resultType = nil
-                    }
-                case "minus":
-                    if receiverForCheck == charType && rhsType == charType {
-                        resultType = intType
-                    } else if receiverForCheck == charType && rhsType == intType {
-                        resultType = charType
-                    } else if receiverForCheck == doubleType || rhsType == doubleType {
-                        resultType = doubleType
-                    } else if receiverForCheck == floatType || rhsType == floatType {
-                        resultType = floatType
-                    } else if receiverForCheck == longType || rhsType == longType {
-                        resultType = longType
-                    } else if receiverForCheck == ulongType || rhsType == ulongType {
-                        resultType = ulongType
-                    } else if receiverForCheck == uintType || rhsType == uintType {
-                        resultType = uintType
-                    } else if receiverForCheck == ushortType || rhsType == ushortType {
-                        resultType = ushortType
-                    } else if receiverForCheck == ubyteType || rhsType == ubyteType {
-                        resultType = ubyteType
-                    } else if receiverForCheck == intType {
-                        resultType = intType
-                    } else {
-                        resultType = nil
-                    }
-                default:
-                    if receiverForCheck == doubleType || rhsType == doubleType {
-                        resultType = doubleType
-                    } else if receiverForCheck == floatType || rhsType == floatType {
-                        resultType = floatType
-                    } else if receiverForCheck == longType || rhsType == longType {
-                        resultType = longType
-                    } else if receiverForCheck == ulongType || rhsType == ulongType {
-                        resultType = ulongType
-                    } else if receiverForCheck == uintType || rhsType == uintType {
-                        resultType = uintType
-                    } else if receiverForCheck == ushortType || rhsType == ushortType {
-                        resultType = ushortType
-                    } else if receiverForCheck == ubyteType || rhsType == ubyteType {
-                        resultType = ubyteType
-                    } else if receiverForCheck == intType {
-                        resultType = intType
-                    } else {
-                        resultType = nil
-                    }
+                if receiverForCheck == charType && rawRhsType == intType {
+                    resultType = charType
+                } else if receiverForCheck == doubleType || rhsType == doubleType {
+                    resultType = doubleType
+                } else if receiverForCheck == floatType || rhsType == floatType {
+                    resultType = floatType
+                } else if receiverForCheck == longType || rhsType == longType {
+                    resultType = longType
+                } else if receiverForCheck == ulongType || rhsType == ulongType {
+                    resultType = ulongType
+                } else if receiverForCheck == uintType || rhsType == uintType || isSmallUnsigned(receiverForCheck) || isSmallUnsigned(rhsType) {
+                    // UByte/UShort arithmetic promotes to UInt in Kotlin stdlib
+                    resultType = uintType
+                } else if receiverForCheck == intType || rhsType == intType || receiverForCheck == charType {
+                    resultType = intType
+                } else {
+                    resultType = nil
+                }
+                if let resultType {
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            case "minus":
+                let resultType: TypeID?
+                if receiverForCheck == charType && rawRhsType == charType {
+                    resultType = intType
+                } else if receiverForCheck == charType && rawRhsType == intType {
+                    resultType = charType
+                } else if receiverForCheck == doubleType || rhsType == doubleType {
+                    resultType = doubleType
+                } else if receiverForCheck == floatType || rhsType == floatType {
+                    resultType = floatType
+                } else if receiverForCheck == longType || rhsType == longType {
+                    resultType = longType
+                } else if receiverForCheck == ulongType || rhsType == ulongType {
+                    resultType = ulongType
+                } else if receiverForCheck == uintType || rhsType == uintType || isSmallUnsigned(receiverForCheck) || isSmallUnsigned(rhsType) {
+                    resultType = uintType
+                } else if receiverForCheck == intType {
+                    resultType = intType
+                } else {
+                    resultType = nil
+                }
+                if let resultType {
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            case "times", "div", "rem":
+                // times/div/rem: small unsigned types promote to UInt (Kotlin stdlib)
+                let resultType: TypeID?
+                if receiverForCheck == doubleType || rhsType == doubleType {
+                    resultType = doubleType
+                } else if receiverForCheck == floatType || rhsType == floatType {
+                    resultType = floatType
+                } else if receiverForCheck == longType || rhsType == longType {
+                    resultType = longType
+                } else if receiverForCheck == ulongType || rhsType == ulongType {
+                    resultType = ulongType
+                } else if receiverForCheck == uintType || rhsType == uintType || isSmallUnsigned(receiverForCheck) || isSmallUnsigned(rhsType) {
+                    resultType = uintType
+                } else if receiverForCheck == intType {
+                    resultType = intType
+                } else {
+                    resultType = nil
+                }
+                if let resultType {
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            case "mod":
+                // mod: keeps the operand type for small unsigned (UByte.mod(UByte) -> UByte)
+                let resultType: TypeID?
+                if receiverForCheck == doubleType || rhsType == doubleType {
+                    resultType = doubleType
+                } else if receiverForCheck == floatType || rhsType == floatType {
+                    resultType = floatType
+                } else if receiverForCheck == longType || rhsType == longType {
+                    resultType = longType
+                } else if receiverForCheck == ulongType || rhsType == ulongType {
+                    resultType = ulongType
+                } else if receiverForCheck == uintType || rhsType == uintType {
+                    resultType = uintType
+                } else if isSmallUnsigned(receiverForCheck) && isSmallUnsigned(rhsType) {
+                    // mod keeps the receiver type for same-width small unsigned
+                    resultType = receiverForCheck
+                } else if isSmallUnsigned(receiverForCheck) || isSmallUnsigned(rhsType) {
+                    resultType = uintType
+                } else if receiverForCheck == intType {
+                    resultType = intType
+                } else {
+                    resultType = nil
                 }
                 if let resultType {
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
@@ -2693,19 +2728,16 @@ extension CallTypeChecker {
                 }
             case "and", "or", "xor":
                 if isPrimitiveReceiver,
-                   isIntegerRhs
+                   rawRhsType == receiverForCheck
                 {
-                    let resultType: TypeID = (receiverForCheck == longType || rhsType == longType) ? longType
-                        : (receiverForCheck == ulongType || rhsType == ulongType) ? ulongType
-                        : (receiverForCheck == uintType || rhsType == uintType) ? uintType
-                        : intType
+                    let resultType = receiverForCheck
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
                 }
             case "shl", "shr", "ushr":
-                if isPrimitiveReceiver,
-                   rhsType == intType
+                if isShiftReceiver,
+                   rawRhsType == intType
                 {
                     // shift amount must be Int; receiver can be Int/Long/UInt/ULong
                     let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck

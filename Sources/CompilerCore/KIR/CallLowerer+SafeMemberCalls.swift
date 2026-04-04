@@ -114,14 +114,7 @@ extension CallLowerer {
             }
         }
 
-        let loweredArgIDs = args.map { argument in
-            driver.lowerExpr(
-                argument.expr,
-                shared: shared, emit: &instructions
-            )
-        }
-
-        // Primitive member function: Int/Long/UInt/ULong.inv() → kk_op_inv (P5-103, TYPE-005)
+        // Primitive member function: Int/Long/UInt/ULong/UByte/UShort.inv() → kk_op_inv (P5-103, TYPE-005)
         if interner.resolve(effectiveCalleeName) == "inv",
            args.isEmpty
         {
@@ -129,18 +122,34 @@ extension CallLowerer {
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
             let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
+            let ubyteType = sema.types.make(.primitive(.ubyte, .nonNull))
+            let ushortType = sema.types.make(.primitive(.ushort, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
-            if nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType {
+            if nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType || nonNullReceiverType == ubyteType || nonNullReceiverType == ushortType {
+                let nonNullLabel = driver.ctx.makeLoopLabel()
+                let endLabel = driver.ctx.makeLoopLabel()
+                instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: nonNullLabel))
+                let callResultType = sema.types.makeNonNullable(boundType ?? sema.types.anyType)
+                let nullableResultType = sema.types.makeNullable(callResultType)
+                let nullValue = arena.appendExpr(.unit, type: nullableResultType)
+                instructions.append(.constValue(result: nullValue, value: .null))
+                let nullableResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nullableResultType)
+                instructions.append(.copy(from: nullValue, to: nullableResult))
+                instructions.append(.jump(endLabel))
+                instructions.append(.label(nonNullLabel))
+                let nonNullResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: callResultType)
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern("kk_op_inv"),
                     arguments: [loweredReceiverID],
-                    result: result,
+                    result: nonNullResult,
                     canThrow: false,
                     thrownResult: nil
                 ))
-                return result
+                instructions.append(.copy(from: nonNullResult, to: nullableResult))
+                instructions.append(.label(endLabel))
+                return nullableResult
             }
         }
 
@@ -271,11 +280,14 @@ extension CallLowerer {
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
             let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
+            let ubyteType = sema.types.make(.primitive(.ubyte, .nonNull))
+            let ushortType = sema.types.make(.primitive(.ushort, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
-            if nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType {
-                let rhsType = sema.types.makeNonNullable(sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType)
-                let isIntegerRhs = rhsType == intType || rhsType == longType || rhsType == uintType || rhsType == ulongType
+            if nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType || nonNullReceiverType == ubyteType || nonNullReceiverType == ushortType {
+                let rawRhsType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+                let isShiftReceiver = nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType
+                let isUnsignedReceiver = nonNullReceiverType == uintType || nonNullReceiverType == ulongType || nonNullReceiverType == ubyteType || nonNullReceiverType == ushortType
                 let primitiveCallee: InternedString? = switch interner.resolve(effectiveCalleeName) {
                 case "plus":
                     interner.intern("kk_op_add")
@@ -284,37 +296,61 @@ extension CallLowerer {
                 case "times":
                     interner.intern("kk_op_mul")
                 case "div":
-                    interner.intern("kk_op_div")
+                    isUnsignedReceiver ? interner.intern("kk_op_udiv") : interner.intern("kk_op_div")
                 case "rem", "mod":
-                    interner.intern("kk_op_mod")
+                    isUnsignedReceiver ? interner.intern("kk_op_urem") : interner.intern("kk_op_mod")
                 case "and":
-                    isIntegerRhs ? interner.intern("kk_bitwise_and") : nil
+                    rawRhsType == nonNullReceiverType ? interner.intern("kk_bitwise_and") : nil
                 case "or":
-                    isIntegerRhs ? interner.intern("kk_bitwise_or") : nil
+                    rawRhsType == nonNullReceiverType ? interner.intern("kk_bitwise_or") : nil
                 case "xor":
-                    isIntegerRhs ? interner.intern("kk_bitwise_xor") : nil
+                    rawRhsType == nonNullReceiverType ? interner.intern("kk_bitwise_xor") : nil
                 case "shl":
-                    rhsType == intType ? interner.intern("kk_op_shl") : nil
+                    isShiftReceiver && rawRhsType == intType ? interner.intern("kk_op_shl") : nil
                 case "shr":
-                    rhsType == intType ? interner.intern("kk_op_shr") : nil
+                    isShiftReceiver && rawRhsType == intType ? interner.intern("kk_op_shr") : nil
                 case "ushr":
-                    rhsType == intType ? interner.intern("kk_op_ushr") : nil
+                    isShiftReceiver && rawRhsType == intType ? interner.intern("kk_op_ushr") : nil
                 default:
                     nil
                 }
                 if let primitiveCallee {
+                    let nonNullLabel = driver.ctx.makeLoopLabel()
+                    let endLabel = driver.ctx.makeLoopLabel()
+                    instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: nonNullLabel))
+                    let callResultType = sema.types.makeNonNullable(boundType ?? sema.types.anyType)
+                    let nullableResultType = sema.types.makeNullable(callResultType)
+                    let nullValue = arena.appendExpr(.unit, type: nullableResultType)
+                    instructions.append(.constValue(result: nullValue, value: .null))
+                    let nullableResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nullableResultType)
+                    instructions.append(.copy(from: nullValue, to: nullableResult))
+                    instructions.append(.jump(endLabel))
+                    instructions.append(.label(nonNullLabel))
+                    let nonNullResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: callResultType)
+                    let loweredArgID = driver.lowerExpr(
+                        args[0].expr,
+                        shared: shared,
+                        emit: &instructions
+                    )
                     instructions.append(.call(
                         symbol: nil,
                         callee: primitiveCallee,
-                        arguments: [loweredReceiverID, loweredArgIDs[0]],
-                        result: result,
+                        arguments: [loweredReceiverID, loweredArgID],
+                        result: nonNullResult,
                         canThrow: false,
                         thrownResult: nil
                     ))
-                    return result
+                    instructions.append(.copy(from: nonNullResult, to: nullableResult))
+                    instructions.append(.label(endLabel))
+                    return nullableResult
                 }
             }
         }
+
+        // NOTE: Arguments are intentionally NOT lowered here. Each path
+        // below must lower arguments only after the receiver null check so
+        // that `receiver?.f(sideEffect())` does not evaluate sideEffect()
+        // when receiver is null.
 
         // Primitive member function: Int/Long.toString() → kk_any_to_string
         // and Int/Long.toString(radix: Int) → kk_int_toString_radix (EXPR-003)
@@ -326,6 +362,14 @@ extension CallLowerer {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if nonNullReceiverType == intType || nonNullReceiverType == longType {
+                let callLabel = driver.ctx.makeLoopLabel()
+                let endLabel = driver.ctx.makeLoopLabel()
+                let nullExpr = arena.appendExpr(.null, type: boundType ?? sema.types.nullableAnyType)
+                instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: callLabel))
+                instructions.append(.constValue(result: nullExpr, value: .null))
+                instructions.append(.copy(from: nullExpr, to: result))
+                instructions.append(.jump(endLabel))
+                instructions.append(.label(callLabel))
                 if args.isEmpty {
                     let tagID = arena.appendExpr(.intLiteral(1), type: intType)
                     instructions.append(.constValue(result: tagID, value: .intLiteral(1)))
@@ -338,15 +382,20 @@ extension CallLowerer {
                         thrownResult: nil
                     ))
                 } else {
+                    let loweredRadixArg = driver.lowerExpr(
+                        args[0].expr,
+                        shared: shared, emit: &instructions
+                    )
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern("kk_int_toString_radix"),
-                        arguments: [loweredReceiverID, loweredArgIDs[0]],
+                        arguments: [loweredReceiverID, loweredRadixArg],
                         result: result,
                         canThrow: false,
                         thrownResult: nil
                     ))
                 }
+                instructions.append(.label(endLabel))
                 return result
             }
         }
@@ -429,6 +478,10 @@ extension CallLowerer {
             instructions.append(.copy(from: nullExpr, to: result))
             instructions.append(.jump(endLabel))
             instructions.append(.label(callLabel))
+            let loweredEqualsArg = driver.lowerExpr(
+                args[0].expr,
+                shared: shared, emit: &instructions
+            )
             let receiverTag = anyFallbackTag(for: anyFallbackReceiverType, sema: sema)
             let argType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
             let argTag = anyFallbackTag(for: argType, sema: sema)
@@ -439,7 +492,7 @@ extension CallLowerer {
             instructions.append(.call(
                 symbol: nil,
                 callee: interner.intern("kk_any_equals"),
-                arguments: [loweredReceiverID, receiverTagID, loweredArgIDs[0], argTagID],
+                arguments: [loweredReceiverID, receiverTagID, loweredEqualsArg, argTagID],
                 result: result,
                 canThrow: false,
                 thrownResult: nil
@@ -452,14 +505,29 @@ extension CallLowerer {
         if args.count == 2, interner.resolve(effectiveCalleeName) == "coerceIn" {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
+                let callLabel = driver.ctx.makeLoopLabel()
+                let endLabel = driver.ctx.makeLoopLabel()
+                let nullExpr = arena.appendExpr(.null, type: boundType ?? sema.types.nullableAnyType)
+                instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: callLabel))
+                instructions.append(.constValue(result: nullExpr, value: .null))
+                instructions.append(.copy(from: nullExpr, to: result))
+                instructions.append(.jump(endLabel))
+                instructions.append(.label(callLabel))
+                let loweredCoerceArg0 = driver.lowerExpr(
+                    args[0].expr, shared: shared, emit: &instructions
+                )
+                let loweredCoerceArg1 = driver.lowerExpr(
+                    args[1].expr, shared: shared, emit: &instructions
+                )
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern(prefix + "_coerceIn"),
-                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    arguments: [loweredReceiverID, loweredCoerceArg0, loweredCoerceArg1],
                     result: result,
                     canThrow: false,
                     thrownResult: nil
                 ))
+                instructions.append(.label(endLabel))
                 return result
             }
         }
@@ -482,11 +550,14 @@ extension CallLowerer {
                     instructions.append(.copy(from: nullExpr, to: result))
                     instructions.append(.jump(endLabel))
                     instructions.append(.label(callLabel))
+                    let loweredRangeArg = driver.lowerExpr(
+                        args[0].expr, shared: shared, emit: &instructions
+                    )
                     emitCoerceInRange(
                         prefix: prefix,
                         receiverType: receiverType,
                         loweredReceiverID: loweredReceiverID,
-                        loweredRangeArgID: loweredArgIDs[0],
+                        loweredRangeArgID: loweredRangeArg,
                         result: result,
                         sema: sema,
                         arena: arena,
@@ -508,28 +579,52 @@ extension CallLowerer {
                         let argExprID = args[0].expr
                         if sema.bindings.isRangeExpr(argExprID) {
                             // Use range-based coercion functions
+                            let callLabel = driver.ctx.makeLoopLabel()
+                            let endLabel = driver.ctx.makeLoopLabel()
+                            let nullExpr = arena.appendExpr(.null, type: boundType ?? sema.types.nullableAnyType)
+                            instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: callLabel))
+                            instructions.append(.constValue(result: nullExpr, value: .null))
+                            instructions.append(.copy(from: nullExpr, to: result))
+                            instructions.append(.jump(endLabel))
+                            instructions.append(.label(callLabel))
+                            let loweredRangeArg = driver.lowerExpr(
+                                args[0].expr, shared: shared, emit: &instructions
+                            )
                             let suffix = calleeStr == "coerceAtLeast" ? "_coerceAtLeast_range" : "_coerceAtMost_range"
                             instructions.append(.call(
                                 symbol: nil,
                                 callee: interner.intern(prefix + suffix),
-                                arguments: [loweredReceiverID, loweredArgIDs[0]],
+                                arguments: [loweredReceiverID, loweredRangeArg],
                                 result: result,
                                 canThrow: false,
                                 thrownResult: nil
                             ))
+                            instructions.append(.label(endLabel))
                             return result
                         }
                     }
                     // Fallback to single-value coercion
+                    let callLabel = driver.ctx.makeLoopLabel()
+                    let endLabel = driver.ctx.makeLoopLabel()
+                    let nullExpr = arena.appendExpr(.null, type: boundType ?? sema.types.nullableAnyType)
+                    instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: callLabel))
+                    instructions.append(.constValue(result: nullExpr, value: .null))
+                    instructions.append(.copy(from: nullExpr, to: result))
+                    instructions.append(.jump(endLabel))
+                    instructions.append(.label(callLabel))
+                    let loweredCoerceArg = driver.lowerExpr(
+                        args[0].expr, shared: shared, emit: &instructions
+                    )
                     let suffix = calleeStr == "coerceAtLeast" ? "_coerceAtLeast" : "_coerceAtMost"
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(prefix + suffix),
-                        arguments: [loweredReceiverID, loweredArgIDs[0]],
+                        arguments: [loweredReceiverID, loweredCoerceArg],
                         result: result,
                         canThrow: false,
                         thrownResult: nil
                     ))
+                    instructions.append(.label(endLabel))
                     return result
                 }
             }
@@ -640,6 +735,26 @@ extension CallLowerer {
         let isSuperCall = sema.bindings.isSuperCallExpr(exprID)
         let callBinding = sema.bindings.callBindings[exprID]
         let chosen = callBinding?.chosenCallee
+
+        // Emit null-check BEFORE lowering arguments so that
+        // receiver?.f(sideEffect()) does not evaluate sideEffect()
+        // when receiver is null.
+        let callLabel = driver.ctx.makeLoopLabel()
+        let endLabel = driver.ctx.makeLoopLabel()
+        let nullExpr = arena.appendExpr(.null, type: boundType ?? sema.types.nullableAnyType)
+        instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: callLabel))
+        instructions.append(.constValue(result: nullExpr, value: .null))
+        instructions.append(.copy(from: nullExpr, to: result))
+        instructions.append(.jump(endLabel))
+        instructions.append(.label(callLabel))
+
+        // Lower arguments only on the non-null path.
+        let loweredArgIDs = args.map { argument in
+            driver.lowerExpr(
+                argument.expr,
+                shared: shared, emit: &instructions
+            )
+        }
         let safeNormalized = driver.callSupportLowerer.normalizedCallArguments(
             providedArguments: loweredArgIDs,
             callBinding: callBinding,
@@ -658,120 +773,6 @@ extension CallLowerer {
             if Self.unresolvedCoroutineHandleMemberNames.contains(calleeStr), isCoroutineReceiver {
                 finalArguments.insert(loweredReceiverID, at: 0)
             }
-        }
-        if args.isEmpty {
-            let callLabel = driver.ctx.makeLoopLabel()
-            let endLabel = driver.ctx.makeLoopLabel()
-            let nullExpr = arena.appendExpr(.null, type: boundType ?? sema.types.nullableAnyType)
-            instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: callLabel))
-            instructions.append(.constValue(result: nullExpr, value: .null))
-            instructions.append(.copy(from: nullExpr, to: result))
-            instructions.append(.jump(endLabel))
-            instructions.append(.label(callLabel))
-            if safeNormalized.defaultMask != 0,
-               let chosen,
-               sema.symbols.externalLinkName(for: chosen)?.isEmpty ?? true
-            {
-                appendReifiedTypeTokens(
-                    chosenCallee: chosen,
-                    callBinding: callBinding,
-                    sema: sema,
-                    interner: interner,
-                    arena: arena,
-                    instructions: &instructions.instructions,
-                    arguments: &finalArguments
-                )
-                appendDefaultMaskArgument(
-                    safeNormalized.defaultMask,
-                    sema: sema,
-                    arena: arena,
-                    instructions: &instructions.instructions,
-                    arguments: &finalArguments
-                )
-                let stubName = interner.intern(interner.resolve(effectiveCalleeName) + "$default")
-                let stubSym = driver.callSupportLowerer.defaultStubSymbol(for: chosen)
-                instructions.append(.call(
-                    symbol: stubSym,
-                    callee: stubName,
-                    arguments: finalArguments,
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil,
-                    isSuperCall: isSuperCall
-                ))
-            } else {
-                appendReifiedTypeTokens(
-                    chosenCallee: chosen,
-                    callBinding: callBinding,
-                    sema: sema,
-                    interner: interner,
-                    arena: arena,
-                    instructions: &instructions.instructions,
-                    arguments: &finalArguments
-                )
-                let loweredMemberCalleeName: InternedString = if let chosen,
-                                                                 let externalLinkName = sema.symbols.externalLinkName(for: chosen),
-                                                                 !externalLinkName.isEmpty
-                {
-                    interner.intern(externalLinkName)
-                } else if chosen == nil, isCoroutineReceiver {
-                    switch interner.resolve(effectiveCalleeName) {
-                    case "await":
-                        interner.intern("kk_kxmini_async_await")
-                    case "join":
-                        interner.intern("kk_job_join")
-                    case "awaitCompletion":
-                        interner.intern("kk_job_await_completion")
-                    case "cancel":
-                        args.isEmpty
-                            ? interner.intern("kk_job_cancel")
-                            : interner.intern("kk_job_cancel_with_cause")
-                    case "complete":
-                        interner.intern("kk_job_complete")
-                    case "completeExceptionally":
-                        interner.intern("kk_job_complete_exceptionally")
-                    default:
-                        effectiveCalleeName
-                    }
-                } else {
-                    effectiveCalleeName
-                }
-                let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
-                if !isSuperCall,
-                   let chosen,
-                   let dispatchKind = resolveVirtualDispatch(callee: chosen, receiverTypeID: receiverTypeForDispatch, sema: sema)
-                {
-                    var vcArguments = finalArguments
-                    if let signature = sema.symbols.functionSignature(for: chosen),
-                       signature.receiverType != nil,
-                       !vcArguments.isEmpty
-                    {
-                        vcArguments.removeFirst()
-                    }
-                    instructions.append(.virtualCall(
-                        symbol: chosen,
-                        callee: loweredMemberCalleeName,
-                        receiver: loweredReceiverID,
-                        arguments: vcArguments,
-                        result: result,
-                        canThrow: false,
-                        thrownResult: nil,
-                        dispatch: dispatchKind
-                    ))
-                } else {
-                    instructions.append(.call(
-                        symbol: chosen,
-                        callee: loweredMemberCalleeName,
-                        arguments: finalArguments,
-                        result: result,
-                        canThrow: false,
-                        thrownResult: nil,
-                        isSuperCall: isSuperCall
-                    ))
-                }
-            }
-            instructions.append(.label(endLabel))
-            return result
         }
 
         if safeNormalized.defaultMask != 0,
@@ -876,6 +877,7 @@ extension CallLowerer {
                 ))
             }
         }
+        instructions.append(.label(endLabel))
         return result
     }
 

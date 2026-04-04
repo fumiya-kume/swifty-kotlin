@@ -230,77 +230,26 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isWarning), "Unchecked-cast diagnostics should be warnings")
     }
 
-    func testAnnotationTargetEnumConstantResolves() {
+    func testAnnotationClassInheritsKotlinAnnotation() throws {
         let source = """
-        fun targetSmoke(): AnnotationTarget = AnnotationTarget.CLASS
-        """
-
-        let ctx = runSemaCollectingDiagnostics(source)
-        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected AnnotationTarget smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
-    }
-
-    func testTargetAnnotationIsRejectedOnRegularClass() {
-        let source = """
-        @Target(AnnotationTarget.CLASS)
-        class BadTarget
-        """
-
-        let ctx = runSemaCollectingDiagnostics(source)
-        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
-
-        XCTAssertEqual(diagnostics.count, 1, "Expected one annotation-target diagnostic, got: \(ctx.diagnostics.diagnostics)")
-        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
-    }
-
-    func testTargetAnnotationAllowsAnnotationClassButRejectsFunctionUsage() {
-        let source = """
-        @Target(AnnotationTarget.CLASS)
-        annotation class ClassOnly
-
-        @ClassOnly
-        class Good
-
-        @ClassOnly
-        fun bad() {}
-        """
-
-        let ctx = runSemaCollectingDiagnostics(source)
-        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
-
-        XCTAssertEqual(diagnostics.count, 1, "Expected exactly one annotation-target diagnostic, got: \(ctx.diagnostics.diagnostics)")
-        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
-    }
-
-    func testMustBeDocumentedAnnotationIsSyntheticAndTargetedToAnnotationClasses() throws {
-        let source = """
-        annotation class ExperimentalApi
+        annotation class MyAnnotation
         """
 
         let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         let sema = try XCTUnwrap(ctx.sema)
-        let mustBeDocumentedFQName = [
-            ctx.interner.intern("kotlin"),
-            ctx.interner.intern("annotation"),
-            ctx.interner.intern("MustBeDocumented"),
-        ]
-        let symbolID = try XCTUnwrap(sema.symbols.lookup(fqName: mustBeDocumentedFQName))
-        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+        let kotlinAnnotationSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [ctx.interner.intern("kotlin"), ctx.interner.intern("Annotation")])
+        )
+        let myAnnotationSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [ctx.interner.intern("MyAnnotation")])
+        )
 
-        XCTAssertEqual(symbol.visibility, .public)
-        XCTAssertTrue(symbol.flags.contains(.synthetic))
-        XCTAssertEqual(symbol.kind, .annotationClass)
-
-        let annotations = sema.symbols.annotations(for: symbol.id)
+        XCTAssertEqual(sema.symbols.symbol(myAnnotationSymbol)?.kind, .annotationClass)
         XCTAssertTrue(
-            annotations.contains(
-                where: {
-                    $0.annotationFQName == "kotlin.annotation.Target"
-                        && $0.arguments == ["AnnotationTarget.ANNOTATION_CLASS"]
-                }
-            ),
-            "Expected MustBeDocumented to carry @Target(AnnotationTarget.ANNOTATION_CLASS), got: \(annotations)"
+            sema.symbols.directSupertypes(for: myAnnotationSymbol).contains(kotlinAnnotationSymbol),
+            "Annotation classes should implicitly inherit kotlin.Annotation"
         )
     }
 

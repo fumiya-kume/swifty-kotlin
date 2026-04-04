@@ -1802,8 +1802,13 @@ extension CallLowerer {
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
             let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
-            let rhsType = sema.types.makeNonNullable(sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType)
-            let isIntegerRhs = rhsType == intType || rhsType == longType || rhsType == uintType || rhsType == ulongType
+            let ubyteType = sema.types.make(.primitive(.ubyte, .nonNull))
+            let ushortType = sema.types.make(.primitive(.ushort, .nonNull))
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let rawRhsType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+            let isShiftReceiver = nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType
+            let isUnsignedReceiver = nonNullReceiverType == uintType || nonNullReceiverType == ulongType || nonNullReceiverType == ubyteType || nonNullReceiverType == ushortType
             let primitiveCallee: InternedString? = switch interner.resolve(calleeName) {
             case "plus":
                 interner.intern("kk_op_add")
@@ -1812,21 +1817,21 @@ extension CallLowerer {
             case "times":
                 interner.intern("kk_op_mul")
             case "div":
-                interner.intern("kk_op_div")
+                isUnsignedReceiver ? interner.intern("kk_op_udiv") : interner.intern("kk_op_div")
             case "rem", "mod":
-                interner.intern("kk_op_mod")
+                isUnsignedReceiver ? interner.intern("kk_op_urem") : interner.intern("kk_op_mod")
             case "and":
-                isIntegerRhs ? interner.intern("kk_bitwise_and") : nil
+                rawRhsType == nonNullReceiverType ? interner.intern("kk_bitwise_and") : nil
             case "or":
-                isIntegerRhs ? interner.intern("kk_bitwise_or") : nil
+                rawRhsType == nonNullReceiverType ? interner.intern("kk_bitwise_or") : nil
             case "xor":
-                isIntegerRhs ? interner.intern("kk_bitwise_xor") : nil
+                rawRhsType == nonNullReceiverType ? interner.intern("kk_bitwise_xor") : nil
             case "shl":
-                rhsType == intType ? interner.intern("kk_op_shl") : nil
+                isShiftReceiver && rawRhsType == intType ? interner.intern("kk_op_shl") : nil
             case "shr":
-                rhsType == intType ? interner.intern("kk_op_shr") : nil
+                isShiftReceiver && rawRhsType == intType ? interner.intern("kk_op_shr") : nil
             case "ushr":
-                rhsType == intType ? interner.intern("kk_op_ushr") : nil
+                isShiftReceiver && rawRhsType == intType ? interner.intern("kk_op_ushr") : nil
             default:
                 nil
             }
@@ -4568,11 +4573,13 @@ extension CallLowerer {
         let longType = sema.types.make(.primitive(.long, .nonNull))
         let uintType = sema.types.make(.primitive(.uint, .nonNull))
         let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
+        let ubyteType = sema.types.make(.primitive(.ubyte, .nonNull))
+        let ushortType = sema.types.make(.primitive(.ushort, .nonNull))
         var receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         if nullableReceiverAllowed {
             receiverType = sema.types.makeNonNullable(receiverType)
         }
-        return receiverType == intType || receiverType == longType || receiverType == uintType || receiverType == ulongType
+        return receiverType == intType || receiverType == longType || receiverType == uintType || receiverType == ulongType || receiverType == ubyteType || receiverType == ushortType
     }
 
     private func appendReceiverToMemberArguments(
