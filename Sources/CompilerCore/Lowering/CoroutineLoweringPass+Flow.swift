@@ -36,6 +36,7 @@ struct FlowLoweringNames {
     let filter: InternedString
     let take: InternedString
     let transform: InternedString
+    let single: InternedString
     let takeWhile: InternedString
     let dropWhile: InternedString
     let flatMapConcat: InternedString
@@ -67,6 +68,7 @@ struct FlowLoweringNames {
     let kkFlowAsFlow: InternedString
     let kkFlowToList: InternedString
     let kkFlowFirst: InternedString
+    let kkFlowSingle: InternedString
     let kkFlowZip: InternedString
     let kkFlowCombine: InternedString
     let kkFlowMerge: InternedString
@@ -92,6 +94,7 @@ extension CoroutineLoweringPass {
         let filterName = ctx.interner.intern("filter")
         let takeName = ctx.interner.intern("take")
         let transformName = ctx.interner.intern("transform")
+        let singleName = ctx.interner.intern("single")
         let takeWhileName = ctx.interner.intern("takeWhile")
         let dropWhileName = ctx.interner.intern("dropWhile")
         let flatMapConcatName = ctx.interner.intern("flatMapConcat")
@@ -124,6 +127,7 @@ extension CoroutineLoweringPass {
         let kkFlowAsFlowName = ctx.interner.intern("kk_flow_as_flow")
         let kkFlowToListName = ctx.interner.intern("kk_flow_to_list")
         let kkFlowFirstName = ctx.interner.intern("kk_flow_first")
+        let kkFlowSingleName = ctx.interner.intern("kk_flow_single")
         let kkFlowZipName = ctx.interner.intern("kk_flow_zip")
         let kkFlowCombineName = ctx.interner.intern("kk_flow_combine")
         let kkFlowMergeName = ctx.interner.intern("kk_flow_merge")
@@ -228,6 +232,14 @@ extension CoroutineLoweringPass {
                             if markFlowExpr(result) { changed = true }
                             continue
                         }
+                        if callee == singleName,
+                           arguments.isEmpty,
+                           let flowHandleArg = arguments.first,
+                           flowExprIDs.contains(flowHandleArg.rawValue)
+                        {
+                            if markFlowExpr(result) { changed = true }
+                            continue
+                        }
                         if callee == mapName || callee == filterName || callee == takeName ||
                             callee == catchName || callee == retryName || callee == retryWhenName ||
                             callee == onErrorReturnName || callee == onErrorResumeName,
@@ -262,6 +274,15 @@ extension CoroutineLoweringPass {
                         }
                         if callee == collectName || callee == kkFlowCollectName,
                            arguments.count == 2 || arguments.count == 3,
+                           let flowHandleArg = arguments.first
+                        {
+                            if flowExprIDs.insert(flowHandleArg.rawValue).inserted {
+                                changed = true
+                            }
+                            continue
+                        }
+                        if callee == singleName,
+                           arguments.isEmpty,
                            let flowHandleArg = arguments.first
                         {
                             if flowExprIDs.insert(flowHandleArg.rawValue).inserted {
@@ -362,10 +383,10 @@ extension CoroutineLoweringPass {
                         callee == combineName || callee == zipName || callee == mergeName ||
                         callee == bufferName || callee == conflateName || callee == flowOnName ||
                         callee == debounceName || callee == sampleName || callee == delayEachName ||
-                        callee == asFlowName || callee == toListName || callee == firstName ||
+                        callee == asFlowName || callee == toListName || callee == firstName || callee == singleName ||
                         callee == kkFlowCreateName || callee == kkFlowEmitName || callee == kkFlowCollectName ||
                         callee == kkFlowOfName || callee == kkFlowEmptyName || callee == kkFlowAsFlowName ||
-                        callee == kkFlowToListName || callee == kkFlowFirstName
+                        callee == kkFlowToListName || callee == kkFlowFirstName || callee == kkFlowSingleName
                 case let .virtualCall(_, callee, _, _, _, _, _, _):
                     callee == mapName || callee == filterName || callee == takeName || callee == collectName ||
                         callee == transformName || callee == takeWhileName || callee == dropWhileName ||
@@ -374,7 +395,7 @@ extension CoroutineLoweringPass {
                         callee == debounceName || callee == sampleName || callee == delayEachName ||
                         callee == catchName || callee == retryName || callee == retryWhenName ||
                         callee == onErrorReturnName || callee == onErrorResumeName ||
-                        callee == asFlowName || callee == toListName || callee == firstName
+                        callee == asFlowName || callee == toListName || callee == firstName || callee == singleName
                 default:
                     false
                 }
@@ -416,8 +437,9 @@ extension CoroutineLoweringPass {
                         markConsume(arguments[0])
                         continue
                     }
-                    if (callee == toListName || callee == firstName ||
-                        callee == kkFlowToListName || callee == kkFlowFirstName), !arguments.isEmpty {
+                    if (callee == toListName || callee == firstName || callee == singleName ||
+                        callee == kkFlowToListName || callee == kkFlowFirstName || callee == kkFlowSingleName),
+                       !arguments.isEmpty {
                         markConsume(arguments[0])
                         continue
                     }
@@ -435,7 +457,7 @@ extension CoroutineLoweringPass {
                     if callee == asFlowName, arguments.isEmpty {
                         markConsume(receiver)
                     }
-                    if (callee == toListName || callee == firstName), arguments.isEmpty {
+                    if (callee == toListName || callee == firstName || callee == singleName), arguments.isEmpty {
                         markConsume(receiver)
                     }
                 default:
@@ -457,6 +479,7 @@ extension CoroutineLoweringPass {
                 filter: filterName,
                 take: takeName,
                 transform: transformName,
+                single: singleName,
                 takeWhile: takeWhileName,
                 dropWhile: dropWhileName,
                 flatMapConcat: flatMapConcatName,
@@ -488,6 +511,7 @@ extension CoroutineLoweringPass {
                 kkFlowAsFlow: kkFlowAsFlowName,
                 kkFlowToList: kkFlowToListName,
                 kkFlowFirst: kkFlowFirstName,
+                kkFlowSingle: kkFlowSingleName,
                 kkFlowZip: kkFlowZipName,
                 kkFlowCombine: kkFlowCombineName,
                 kkFlowMerge: kkFlowMergeName,

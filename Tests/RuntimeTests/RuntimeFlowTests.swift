@@ -7,6 +7,8 @@ private typealias RuntimeFlowEmitterEntry = @convention(c) (UnsafeMutablePointer
 private typealias RuntimeFlowCollectorEntry = @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int
 /// Map/filter ABI: (closureRaw, elem, outThrown)
 private typealias RuntimeFlowUnaryEntry = @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int
+/// Transform ABI: (value, outThrown)
+private typealias RuntimeFlowTransformEntry = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
 
 private enum RuntimeFlowTag: Int {
     case emit = 0
@@ -221,6 +223,27 @@ func runtime_test_flow_emitter_large_source(_ outThrown: UnsafeMutablePointer<In
 func runtime_test_flow_filter_reject_all(_: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     runtimeFlowTestState.recordFilterCall()
     outThrown?.pointee = 0
+    return 0
+}
+
+@_cdecl("runtime_test_flow_transform_double_emit")
+func runtime_test_flow_transform_double_emit(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    _ = kk_flow_emit(0, value * 10, RuntimeFlowTag.emit.rawValue)
+    _ = kk_flow_emit(0, value * 10 + 1, RuntimeFlowTag.emit.rawValue)
+    return 0
+}
+
+@_cdecl("runtime_test_flow_emitter_empty")
+func runtime_test_flow_emitter_empty(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    return 0
+}
+
+@_cdecl("runtime_test_flow_emitter_single_value")
+func runtime_test_flow_emitter_single_value(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    _ = kk_flow_emit(0, 7, RuntimeFlowTag.emit.rawValue)
     return 0
 }
 

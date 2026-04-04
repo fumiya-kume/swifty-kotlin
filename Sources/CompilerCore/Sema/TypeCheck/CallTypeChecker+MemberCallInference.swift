@@ -24,6 +24,7 @@ extension CallTypeChecker {
         let memberName = ctx.interner.resolve(calleeName)
         let flowMembers: Set = [
             "map", "filter", "take", "collect", "toList", "first",
+            "single",
             "transform", "takeWhile", "dropWhile", "flatMapConcat", "flatMapMerge", "flatMapLatest",
             "buffer", "conflate", "flowOn", "debounce", "sample", "delayEach",
             "catch", "retry", "retryWhen", "onErrorReturn", "onErrorResume",
@@ -59,6 +60,16 @@ extension CallTypeChecker {
             }
             let firstType = receiverElementType
             let finalType = safeCall ? sema.types.makeNullable(firstType) : firstType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+
+        case "single":
+            // Flow.single() — returns the only emitted value.
+            guard args.isEmpty else {
+                return nil
+            }
+            let singleType = receiverElementType
+            let finalType = safeCall ? sema.types.makeNullable(singleType) : singleType
             sema.bindings.bindExprType(id, type: finalType)
             return finalType
 
@@ -4890,9 +4901,14 @@ extension CallTypeChecker {
             // only when receiver provenance is known as Flow.
             if !isClassNameReceiver, isFlowReceiver {
                 let memberName = interner.resolve(calleeName)
-                let flowMembers: Set = ["map", "filter", "take", "collect", "catch", "retry", "retryWhen"]
+                let flowMembers: Set = ["map", "filter", "take", "collect", "single", "catch", "retry", "retryWhen"]
                 if flowMembers.contains(memberName) {
-                    let acceptsArity = args.count == 1
+                    let acceptsArity = memberName == "single" ? args.isEmpty : args.count == 1
+                    if memberName == "single", acceptsArity {
+                        let resultType = safeCall ? sema.types.makeNullable(flowElementType) : flowElementType
+                        sema.bindings.bindExprType(id, type: resultType)
+                        return resultType
+                    }
                     if acceptsArity,
                        memberName == "map" || memberName == "filter" || memberName == "collect" ||
                         memberName == "catch" || memberName == "retryWhen"

@@ -2400,16 +2400,34 @@ private func runtimeFlowApplyOpsLazy(
             guard op.argument != 0 else {
                 return .filtered
             }
-            let transform = unsafeBitCast(
+            // transform blocks have ABI (value, outThrown) — two args, not three.
+            // Push a temporary collect context so that emit() calls inside the
+            // transform block are captured rather than leaking to the outer context.
+            let transformFn = unsafeBitCast(
                 op.argument,
-                to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+                to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
             )
+            let transformCtx = RuntimeFlowCollectContext()
+            var transformedValues: [Int] = []
+            transformCtx.emitHandler = { v in
+                transformedValues.append(runtimeFlowMaybeUnbox(v))
+                return v
+            }
+            runtimeFlowPushCollectContext(transformCtx)
             var thrown = 0
-            let transformed = transform(0, current, &thrown)
+            _ = transformFn(current, &thrown)
+            runtimeFlowPopCollectContext()
             if thrown != 0 {
                 return .thrown(thrown)
             }
-            current = runtimeFlowMaybeUnbox(transformed)
+            // Use the first emitted value as `current` for the remainder of
+            // the op chain.  Additional values are lost in this single-element
+            // path; the multi-value case is handled by
+            // runtimeFlowCollectStreamingWithTransform.
+            guard let first = transformedValues.first else {
+                return .filtered
+            }
+            current = first
 
         case .takeWhile:
             guard op.argument != 0 else {
@@ -2856,8 +2874,86 @@ private func runtimeFlowCollectStreaming(
         return 0
     }
 
+    // If the op chain contains a transform op, use a specialised path that
+    // correctly fans out the 1-to-many transform semantics.
+    let hasTransformOp = ops.contains(where: { $0.kind == .transform })
+
     let context = RuntimeFlowCollectContext()
     context.emitHandler = { rawValue in
+        if hasTransformOp {
+            // Locate the first transform op and split the chain.
+            guard let transformIdx = ops.firstIndex(where: { $0.kind == .transform }) else {
+                return rawValue
+            }
+            let preOps  = Array(ops[..<transformIdx])
+            let postOps = Array(ops[(transformIdx + 1)...])
+            let transformFnPtr = ops[transformIdx].argument
+
+            // Apply ops before the transform to filter/map the raw value.
+            var preTakeCounters = runtimeFlowInitTakeCounters(preOps)
+            var preLastValues: [Int: Int] = [:]
+            let preResult = runtimeFlowApplyOpsLazy(
+                rawValue, ops: preOps,
+                takeCounters: &preTakeCounters,
+                lastValues: &preLastValues
+            )
+            guard case .emit(let preValue) = preResult else {
+                switch preResult {
+                case .filtered: return rawValue
+                case .thrown(let e): return e  // propagate
+                case .done: return runtimeFlowStopSentinel
+                case .emit: break
+                }
+                return rawValue
+            }
+
+            // Call the transform block with the correct 2-arg ABI and collect
+            // all values it emits.
+            guard transformFnPtr != 0 else { return rawValue }
+            let transformFn = unsafeBitCast(
+                transformFnPtr,
+                to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
+            )
+            var transformedValues: [Int] = []
+            let transformCtx = RuntimeFlowCollectContext()
+            transformCtx.emitHandler = { v in
+                transformedValues.append(runtimeFlowMaybeUnbox(v))
+                return v
+            }
+            runtimeFlowPushCollectContext(transformCtx)
+            var thrown = 0
+            _ = transformFn(preValue, &thrown)
+            runtimeFlowPopCollectContext()
+
+            if thrown != 0 { return thrown }  // propagate exception
+
+            // Apply post-transform ops to each emitted value and deliver.
+            var stop = false
+            for tv in transformedValues {
+                let result = runtimeFlowApplyOpsLazy(
+                    tv, ops: postOps,
+                    takeCounters: &takeCounters,
+                    lastValues: &lastValues
+                )
+                switch result {
+                case .emit(let value):
+                    let delivered = runtimeFlowDeliverValue(
+                        value, collectorFnPtr: collectorFnPtr, continuation: continuation
+                    )
+                    if !delivered || runtimeFlowTakeExhausted(ops: ops, takeCounters: takeCounters) {
+                        stop = true
+                        break
+                    }
+                case .filtered:
+                    continue
+                case .thrown, .done:
+                    stop = true
+                    break
+                }
+            }
+            return stop ? runtimeFlowStopSentinel : rawValue
+        }
+
         let result = runtimeFlowApplyOpsLazy(
             rawValue,
             ops: ops,
@@ -3107,6 +3203,21 @@ public func kk_flow_first(_ flowHandle: Int, _: Int) -> Int {
         return 0
     }
     return runtimeFlowEvaluate(flow: flow).values.first ?? 0
+}
+
+@_cdecl("kk_flow_single")
+public func kk_flow_single(_ flowHandle: Int, _: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let flow = runtimeFlowHandle(from: flowHandle) else {
+        return 0
+    }
+    let values = runtimeFlowEvaluate(flow: flow).values
+    guard values.count == 1 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "NoSuchElementException: Flow does not contain exactly one element."
+        )
+        return 0
+    }
+    return values[0]
 }
 
 /// Count the number of elements emitted after applying the operator chain.

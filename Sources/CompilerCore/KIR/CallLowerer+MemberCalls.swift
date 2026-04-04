@@ -487,6 +487,75 @@ extension CallLowerer {
             return kFunctionCallResult
         }
 
+        let callee = interner.resolve(calleeName)
+        let isFlowReceiver = if sema.bindings.isFlowExpr(receiverExpr) {
+            true
+        } else if sema.bindings.flowElementType(forExpr: receiverExpr) != nil {
+            true
+        } else if case .nameRef = ast.arena.expr(receiverExpr),
+                  let receiverSymbol = sema.bindings.identifierSymbol(for: receiverExpr),
+                  sema.bindings.flowElementType(forSymbol: receiverSymbol) != nil
+        {
+            true
+        } else {
+            false
+        }
+        if isFlowReceiver {
+            if callee == "transform", args.count == 1 {
+                let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+                let result = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: boundType
+                )
+                let loweredReceiver = driver.lowerExpr(
+                    receiverExpr,
+                    shared: shared,
+                    emit: &instructions
+                )
+                let loweredLambda = driver.lowerExpr(
+                    args[0].expr,
+                    shared: shared,
+                    emit: &instructions
+                )
+                // RuntimeFlowTag.transform = 11
+                let transformTag: Int64 = 11
+                let tagExpr = arena.appendExpr(.intLiteral(transformTag), type: sema.types.intType)
+                instructions.append(.constValue(result: tagExpr, value: .intLiteral(transformTag)))
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_flow_emit"),
+                    arguments: [loweredReceiver, loweredLambda, tagExpr],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+            if callee == "single", args.isEmpty {
+                let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+                let result = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: boundType
+                )
+                let loweredReceiver = driver.lowerExpr(
+                    receiverExpr,
+                    shared: shared,
+                    emit: &instructions
+                )
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_flow_single"),
+                    arguments: [loweredReceiver, zeroExpr],
+                    result: result,
+                    canThrow: true,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         // ── T::class.simpleName / T::class.qualifiedName ──────────────
         if case let .callableRef(classRefReceiver, refMember, _) = ast.arena.expr(receiverExpr),
            refMember == KnownCompilerNames(interner: interner).className,
