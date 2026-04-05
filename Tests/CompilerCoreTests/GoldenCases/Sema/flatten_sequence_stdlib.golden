@@ -3463,7 +3463,7 @@ expr e17 name(listOf) type=_
 expr e18 call callee=e17 args=[] type=Any
 expr e19 name(listOf) type=_
 expr e20 int(1) type=Int
-expr e21 call callee=e19 args=[_:e20] type=Class#121<out Int>
+expr e21 call callee=e19 args=[_:e20] type=Class#123<out Int>
 expr e22 name(listOf) type=_
 expr e23 call callee=e22 args=[] type=Any
 expr e24 call callee=e16 args=[_:e18,_:e21,_:e23] type=Class#114<out Any?> call=s1661 map=[0->0,1->0,2->0] targs=[Any?]
@@ -3547,7 +3547,7 @@ expr e98 name(sequenceOf) type=_
 expr e99 name(listOf) type=_
 expr e100 int(1) type=Int
 expr e101 int(2) type=Int
-expr e102 call callee=e99 args=[_:e100,_:e101] type=Class#121<out Int>
+expr e102 call callee=e99 args=[_:e100,_:e101] type=Class#123<out Int>
 expr e103 name(sequenceOf) type=_
 expr e104 int(3) type=Int
 expr e105 int(4) type=Int

@@ -3442,7 +3442,7 @@ expr e1 name(listOf) type=_
 expr e2 name(listOf) type=_
 expr e3 int(1) type=Int
 expr e4 int(2) type=Int
-expr e5 call callee=e2 args=[_:e3,_:e4] type=Class#121<out Int>
+expr e5 call callee=e2 args=[_:e3,_:e4] type=Class#123<out Int>
 expr e6 name(listOf) type=_
 expr e7 int(3) type=Int
 expr e8 int(4) type=Int
@@ -3477,7 +3477,7 @@ expr e36 name(listOf) type=_
 expr e37 call callee=e36 args=[] type=Any
 expr e38 name(listOf) type=_
 expr e39 int(1) type=Int
-expr e40 call callee=e38 args=[_:e39] type=Class#121<out Int>
+expr e40 call callee=e38 args=[_:e39] type=Class#123<out Int>
 expr e41 name(listOf) type=_
 expr e42 call callee=e41 args=[] type=Any
 expr e43 call callee=e35 args=[_:e37,_:e40,_:e42] type=Class#123<out Any?>
@@ -3496,7 +3496,7 @@ expr e55 name(listOf) type=_
 expr e56 name(listOf) type=_
 expr e57 string(a) type=String
 expr e58 string(b) type=String
-expr e59 call callee=e56 args=[_:e57,_:e58] type=Class#121<out String>
+expr e59 call callee=e56 args=[_:e57,_:e58] type=Class#123<out String>
 expr e60 name(listOf) type=_
 expr e61 string(c) type=String
 expr e62 call callee=e60 args=[_:e61] type=Class#123<out String>
@@ -3521,7 +3521,7 @@ expr e80 name(it) type=_
 expr e81 call callee=e79 args=[_:e80] type=_
 expr e82 name(listOf) type=_
 expr e83 name(it) type=Int ref=s-1021760
-expr e84 call callee=e82 args=[_:e83] type=Class#121<out Int>
+expr e84 call callee=e82 args=[_:e83] type=Class#123<out Int>
 expr e85 lambda params=[] body=e84 label=map type=(Int) -> Any
 expr e86 memberCall recv=e78 callee=map args=[_:e85] type=Class#123<out Any>
 expr e87 localDecl large mutable=0 type=_ init=e86 type=Unit ref=s3436
