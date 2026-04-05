@@ -3440,7 +3440,7 @@ file f0 package=golden.sema
   decl d1 fun main suspend=0 inline=0 sym=s3436
 expr e0 name(Delegates) type=Class#35 ref=s35
 expr e1 string(initial) type=String
-expr e2 memberCall recv=e0 callee=observable args=[_:e1] type=Class#4 call=s34 map=[0->0] targs=[]
+expr e2 memberCall recv=e0 callee=observable args=[_:e1] type=Class#6 call=s36 map=[0->0] targs=[]
 expr e3 name(prop) type=_
 expr e4 name(println) type=_
 expr e5 name(name) type=String ref=s3435

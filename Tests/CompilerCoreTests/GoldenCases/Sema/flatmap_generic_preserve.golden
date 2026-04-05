@@ -3482,7 +3482,7 @@ expr e38 name(it) type=String ref=s-1011008
 expr e39 memberCall recv=e38 callee=length args=[] type=Int call=s630 map=[] targs=[]
 expr e40 int(2) type=Int
 expr e41 binary(multiply) lhs=e39 rhs=e40 type=Int
-expr e42 call callee=e35 args=[_:e37,_:e41] type=Class#121<out Int>
+expr e42 call callee=e35 args=[_:e37,_:e41] type=Class#123<out Int>
 expr e43 lambda params=[] body=e42 label=flatMap type=(String) -> Any
 expr e44 memberCall recv=e26 callee=flatMap args=[_:e43] type=Class#123<Int>
 expr e45 localDecl doubled mutable=0 type=_ init=e44 type=Unit ref=s3439

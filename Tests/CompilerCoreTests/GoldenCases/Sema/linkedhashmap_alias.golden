@@ -3556,7 +3556,7 @@ expr e109 name(mutable) type=Class#287<Int, String> ref=s3438
 expr e110 name(mapOf) type=_
 expr e111 int(4) type=Int
 expr e112 string(four) type=String
-expr e113 memberCall recv=e111 callee=to args=[_:e112] type=Class#73<Int, String>
+expr e113 memberCall recv=e111 callee=to args=[_:e112] type=Class#75<Int, String>
 expr e114 int(5) type=Int
 expr e115 string(five) type=String
 expr e116 memberCall recv=e114 callee=to args=[_:e115] type=Class#75<Int, String>

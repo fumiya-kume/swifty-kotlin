@@ -3448,28 +3448,28 @@ expr e0 name(Triple) type=_
 expr e1 int(1) type=Int
 expr e2 string(a) type=String
 expr e3 bool(true) type=Boolean
-expr e4 call callee=e0 args=[_:e1,_:e2,_:e3] type=Class#85<out Int, out String, out Boolean> call=s89 map=[0->0,1->1,2->2] targs=[Int,String,Boolean]
+expr e4 call callee=e0 args=[_:e1,_:e2,_:e3] type=Class#87<out Int, out String, out Boolean> call=s91 map=[0->0,1->1,2->2] targs=[Int,String,Boolean]
 expr e5 name(Triple) type=_
 expr e6 int(1) type=Int
 expr e7 string(a) type=String
 expr e8 bool(true) type=Boolean
-expr e9 call callee=e5 args=[_:e6,_:e7,_:e8] type=Class#85<out Int, out String, out Boolean> call=s89 map=[0->0,1->1,2->2] targs=[Int,String,Boolean]
-expr e10 memberCall recv=e9 callee=first args=[] type=T#86 ref=s96
+expr e9 call callee=e5 args=[_:e6,_:e7,_:e8] type=Class#87<out Int, out String, out Boolean> call=s91 map=[0->0,1->1,2->2] targs=[Int,String,Boolean]
+expr e10 memberCall recv=e9 callee=first args=[] type=T#88 ref=s98
 expr e11 name(Triple) type=_
 expr e12 int(1) type=Int
 expr e13 string(a) type=String
 expr e14 bool(true) type=Boolean
-expr e15 call callee=e11 args=[_:e12,_:e13,_:e14] type=Class#85<out Int, out String, out Boolean> call=s89 map=[0->0,1->1,2->2] targs=[Int,String,Boolean]
-expr e16 memberCall recv=e15 callee=second args=[] type=T#87 ref=s97
+expr e15 call callee=e11 args=[_:e12,_:e13,_:e14] type=Class#87<out Int, out String, out Boolean> call=s91 map=[0->0,1->1,2->2] targs=[Int,String,Boolean]
+expr e16 memberCall recv=e15 callee=second args=[] type=T#89 ref=s99
 expr e17 name(Triple) type=_
 expr e18 int(1) type=Int
 expr e19 string(a) type=String
 expr e20 bool(true) type=Boolean
-expr e21 call callee=e17 args=[_:e18,_:e19,_:e20] type=Class#85<out Int, out String, out Boolean> call=s89 map=[0->0,1->1,2->2] targs=[Int,String,Boolean]
-expr e22 memberCall recv=e21 callee=third args=[] type=T#88 ref=s98
+expr e21 call callee=e17 args=[_:e18,_:e19,_:e20] type=Class#87<out Int, out String, out Boolean> call=s91 map=[0->0,1->1,2->2] targs=[Int,String,Boolean]
+expr e22 memberCall recv=e21 callee=third args=[] type=T#90 ref=s100
 expr e23 name(Triple) type=_
 expr e24 int(1) type=Int
 expr e25 string(a) type=String
 expr e26 bool(true) type=Boolean
-expr e27 call callee=e23 args=[_:e24,_:e25,_:e26] type=Class#85<out Int, out String, out Boolean> call=s89 map=[0->0,1->1,2->2] targs=[Int,String,Boolean]
-expr e28 memberCall recv=e27 callee=toString args=[] type=String call=s99 map=[] targs=[Int,String,Boolean]
+expr e27 call callee=e23 args=[_:e24,_:e25,_:e26] type=Class#87<out Int, out String, out Boolean> call=s91 map=[0->0,1->1,2->2] targs=[Int,String,Boolean]
+expr e28 memberCall recv=e27 callee=toString args=[] type=String call=s101 map=[] targs=[Int,String,Boolean]
