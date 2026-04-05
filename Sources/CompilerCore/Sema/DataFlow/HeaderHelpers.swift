@@ -964,6 +964,7 @@ extension DataFlowSemaPhase {
         registerSyntheticConcurrencyStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoroutineCancellationStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoroutineIntrinsicsStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticReadWriteLockStubs(symbols: symbols, types: types, interner: interner)
     }
 
     /// Register the synthetic `kotlin.Any` and `kotlin.Annotation` built-in stubs.

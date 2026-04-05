@@ -32,7 +32,7 @@ let package = Package(
         ),
         .target(
             name: "CompilerCore",
-            dependencies: ["CLLVM"]
+            dependencies: ["CLLVM", "RuntimeABI"]
         ),
         .executableTarget(
             name: "KSwiftKCLI",
