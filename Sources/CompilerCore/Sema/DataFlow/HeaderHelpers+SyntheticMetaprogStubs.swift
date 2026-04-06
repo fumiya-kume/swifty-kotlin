@@ -320,33 +320,6 @@ extension DataFlowSemaPhase {
         }
 
         attachAnnotationIfNeeded(
-            MetadataAnnotationRecord(
-                annotationFQName: "kotlin.annotation.Target",
-                arguments: [[
-                    "AnnotationTarget.CLASS",
-                    "AnnotationTarget.PROPERTY",
-                    "AnnotationTarget.LOCAL_VARIABLE",
-                    "AnnotationTarget.VALUE_PARAMETER",
-                    "AnnotationTarget.CONSTRUCTOR",
-                    "AnnotationTarget.FUNCTION",
-                    "AnnotationTarget.TYPE",
-                    "AnnotationTarget.EXPRESSION",
-                    "AnnotationTarget.FILE",
-                    "AnnotationTarget.TYPEALIAS",
-                ].joined(separator: ", ").wrappedInBrackets]
-            ),
-            to: kotlinPkg + [interner.intern("OptIn")],
-            symbols: symbols
-        )
-        attachAnnotationIfNeeded(
-            MetadataAnnotationRecord(
-                annotationFQName: "kotlin.annotation.Target",
-                arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
-            ),
-            to: kotlinPkg + [interner.intern("RequiresOptIn")],
-            symbols: symbols
-        )
-        attachAnnotationIfNeeded(
             MetadataAnnotationRecord(annotationFQName: "kotlin.RequiresOptIn"),
             to: kotlinPkg + [interner.intern("ExperimentalStdlibApi")],
             symbols: symbols
@@ -424,10 +397,14 @@ extension DataFlowSemaPhase {
                     arguments: [
                         "AnnotationTarget.CLASS",
                         "AnnotationTarget.PROPERTY",
-                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.LOCAL_VARIABLE",
+                        "AnnotationTarget.VALUE_PARAMETER",
                         "AnnotationTarget.CONSTRUCTOR",
-                        "AnnotationTarget.TYPEALIAS",
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.TYPE",
+                        "AnnotationTarget.EXPRESSION",
                         "AnnotationTarget.FILE",
+                        "AnnotationTarget.TYPEALIAS",
                     ]
                 ),
                 to: optInSymbol,
