@@ -65,6 +65,15 @@ bash Scripts/swift_test.sh
 bash Scripts/diff_kotlinc.sh Scripts/diff_cases
 ```
 
+### Golden stability (after harness / concurrency changes)
+
+Golden tests run each case in a dedicated worker process so `swift test --parallel` can fan them out safely. To sanity-check flakiness after harness changes, run the filter twice (or more):
+
+```bash
+bash Scripts/swift_test.sh --filter Golden
+bash Scripts/swift_test.sh --filter Golden
+```
+
 ## kotlinc diff workflow
 
 Run one case:

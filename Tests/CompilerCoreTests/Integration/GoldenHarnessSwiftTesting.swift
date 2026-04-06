@@ -1,78 +1,66 @@
 #if canImport(Testing)
-@testable import CompilerCore
 import Foundation
+import GoldenHarnessSupport
 import Testing
 
 private enum GoldenHarnessStaticCases {
-    static let lexer: [GoldenHarnessCaseFile] = loadCasesOrCrash(suite: .lexer)
-    static let parser: [GoldenHarnessCaseFile] = loadCasesOrCrash(suite: .parser)
-    static let sema: [GoldenHarnessCaseFile] = loadCasesOrCrash(suite: .sema)
-    static let diagnostics: [GoldenHarnessCaseFile] = loadCasesOrCrash(suite: .diagnostics)
-
-    private static func loadCasesOrCrash(suite: GoldenHarnessGoldenSuite) -> [GoldenHarnessCaseFile] {
-        do {
-            return try GoldenHarnessCaseDiscovery.loadCases(suite: suite)
-        } catch {
-            preconditionFailure("GoldenHarness case discovery failed for \(suite.rawValue): \(error)")
-        }
-    }
+    static let lexer = GoldenHarness.loadCasesOrCrash(suiteName: "Lexer")
+    static let parser = GoldenHarness.loadCasesOrCrash(suiteName: "Parser")
+    static let sema = GoldenHarness.loadCasesOrCrash(suiteName: "Sema")
+    static let diagnostics = GoldenHarness.loadCasesOrCrash(suiteName: "Diagnostics")
 }
 
-@MainActor
-@Suite("Golden.Lexer", .serialized)
+@Suite("Golden.Lexer")
 struct GoldenLexerGoldenTests {
     @Test(arguments: GoldenHarnessStaticCases.lexer)
-    func matchesGolden(caseFile: GoldenHarnessCaseFile) throws {
-        let actual = try GoldenHarnessDump.dumpLexer(sourcePath: caseFile.sourcePath)
-        if try GoldenHarnessGoldenFileIO.persistIfUpdating(caseFile: caseFile, actual: actual) {
+    func matchesGolden(caseFile: GoldenHarnessCase) throws {
+        let actual = try GoldenHarness.renderInSubprocess(suiteName: "Lexer", sourcePath: caseFile.sourcePath)
+        if try GoldenHarness.persistIfUpdating(sourcePath: caseFile.sourcePath, actual: actual) {
             return
         }
-        let expected = try GoldenHarnessGoldenFileIO.loadExpectedGolden(caseFile: caseFile)
+        let expected = try GoldenHarness.loadExpectedGolden(sourcePath: caseFile.sourcePath)
         let basename = caseFile.basename
         #expect(actual == expected, Comment(rawValue: "Golden mismatch: \(basename)"))
     }
 }
 
-@MainActor
-@Suite("Golden.Parser", .serialized)
+@Suite("Golden.Parser")
 struct GoldenParserGoldenTests {
     @Test(arguments: GoldenHarnessStaticCases.parser)
-    func matchesGolden(caseFile: GoldenHarnessCaseFile) throws {
-        let actual = try GoldenHarnessDump.dumpParser(sourcePath: caseFile.sourcePath)
-        if try GoldenHarnessGoldenFileIO.persistIfUpdating(caseFile: caseFile, actual: actual) {
+    func matchesGolden(caseFile: GoldenHarnessCase) throws {
+        let actual = try GoldenHarness.renderInSubprocess(suiteName: "Parser", sourcePath: caseFile.sourcePath)
+        if try GoldenHarness.persistIfUpdating(sourcePath: caseFile.sourcePath, actual: actual) {
             return
         }
-        let expected = try GoldenHarnessGoldenFileIO.loadExpectedGolden(caseFile: caseFile)
+        let expected = try GoldenHarness.loadExpectedGolden(sourcePath: caseFile.sourcePath)
         let basename = caseFile.basename
         #expect(actual == expected, Comment(rawValue: "Golden mismatch: \(basename)"))
     }
 }
 
-@MainActor
-@Suite("Golden.Sema", .serialized)
+@Suite("Golden.Sema")
 struct GoldenSemaGoldenTests {
     @Test(arguments: GoldenHarnessStaticCases.sema)
-    func matchesGolden(caseFile: GoldenHarnessCaseFile) throws {
-        let actual = try GoldenHarnessDump.dumpSema(sourcePath: caseFile.sourcePath)
-        if try GoldenHarnessGoldenFileIO.persistIfUpdating(caseFile: caseFile, actual: actual) {
+    func matchesGolden(caseFile: GoldenHarnessCase) throws {
+        let actual = try GoldenHarness.renderInSubprocess(suiteName: "Sema", sourcePath: caseFile.sourcePath)
+        if try GoldenHarness.persistIfUpdating(sourcePath: caseFile.sourcePath, actual: actual) {
             return
         }
-        let expected = try GoldenHarnessGoldenFileIO.loadExpectedGolden(caseFile: caseFile)
+        let expected = try GoldenHarness.loadExpectedGolden(sourcePath: caseFile.sourcePath)
         let basename = caseFile.basename
         #expect(actual == expected, Comment(rawValue: "Golden mismatch: \(basename)"))
     }
 }
 
-@MainActor
-@Suite("Golden.Diagnostics", .serialized)
+@Suite("Golden.Diagnostics")
 struct GoldenDiagnosticsGoldenTests {
     @Test(arguments: GoldenHarnessStaticCases.diagnostics)
-    func matchesGolden(caseFile: GoldenHarnessCaseFile) throws {
-        let actual = try GoldenHarnessDump.dumpDiagnostics(sourcePath: caseFile.sourcePath)
-        if try GoldenHarnessGoldenFileIO.persistIfUpdating(caseFile: caseFile, actual: actual) {
+    func matchesGolden(caseFile: GoldenHarnessCase) throws {
+        let actual = try GoldenHarness.renderInSubprocess(suiteName: "Diagnostics", sourcePath: caseFile.sourcePath)
+        if try GoldenHarness.persistIfUpdating(sourcePath: caseFile.sourcePath, actual: actual) {
             return
         }
-        let expected = try GoldenHarnessGoldenFileIO.loadExpectedGolden(caseFile: caseFile)
+        let expected = try GoldenHarness.loadExpectedGolden(sourcePath: caseFile.sourcePath)
         let basename = caseFile.basename
         #expect(actual == expected, Comment(rawValue: "Golden mismatch: \(basename)"))
     }
