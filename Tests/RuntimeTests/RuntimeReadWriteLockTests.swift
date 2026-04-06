@@ -3,11 +3,37 @@ import Foundation
 import XCTest
 
 private let runtimeReadWriteLockStateLock = NSLock()
-private var runtimeReadWriteLockActiveReaders = 0
-private var runtimeReadWriteLockMaxReaders = 0
+private var _runtimeReadWriteLockActiveReaders = 0
+private var _runtimeReadWriteLockMaxReaders = 0
 private var runtimeReadWriteLockReadEnteredSemaphore = DispatchSemaphore(value: 0)
 private var runtimeReadWriteLockReadReleaseSemaphore = DispatchSemaphore(value: 0)
 private var runtimeReadWriteLockWriterEnteredSemaphore = DispatchSemaphore(value: 0)
+
+private var runtimeReadWriteLockActiveReaders: Int {
+    get {
+        runtimeReadWriteLockStateLock.lock()
+        defer { runtimeReadWriteLockStateLock.unlock() }
+        return _runtimeReadWriteLockActiveReaders
+    }
+    set {
+        runtimeReadWriteLockStateLock.lock()
+        defer { runtimeReadWriteLockStateLock.unlock() }
+        _runtimeReadWriteLockActiveReaders = newValue
+    }
+}
+
+private var runtimeReadWriteLockMaxReaders: Int {
+    get {
+        runtimeReadWriteLockStateLock.lock()
+        defer { runtimeReadWriteLockStateLock.unlock() }
+        return _runtimeReadWriteLockMaxReaders
+    }
+    set {
+        runtimeReadWriteLockStateLock.lock()
+        defer { runtimeReadWriteLockStateLock.unlock() }
+        _runtimeReadWriteLockMaxReaders = newValue
+    }
+}
 
 @_cdecl("runtime_read_write_lock_passthrough")
 private func runtime_read_write_lock_passthrough(

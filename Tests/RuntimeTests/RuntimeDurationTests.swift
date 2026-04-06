@@ -21,7 +21,21 @@ private let sleep50msThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> 
 
 /// Global to capture closureRaw value passed to the thunk.
 /// Access is single-threaded in tests; disable concurrency-safety check.
-private var capturedClosureRaw: Int = 0
+private let capturedClosureRawLock = NSLock()
+private var _capturedClosureRaw: Int = 0
+
+private var capturedClosureRaw: Int {
+    get {
+        capturedClosureRawLock.lock()
+        defer { capturedClosureRawLock.unlock() }
+        return _capturedClosureRaw
+    }
+    set {
+        capturedClosureRawLock.lock()
+        defer { capturedClosureRawLock.unlock() }
+        _capturedClosureRaw = newValue
+    }
+}
 
 /// A closure thunk that captures its closureRaw value into a global for verification.
 private let captureClosureRawThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { closureRaw, _ in
