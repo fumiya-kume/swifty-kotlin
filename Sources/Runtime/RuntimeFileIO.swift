@@ -132,7 +132,7 @@ private func runtimeCreateDeprecatedTempDirectory(
     let dirName = "\(prefix)\(UUID().uuidString)\(suffix)"
     let fullPath = (rootDirectory as NSString).appendingPathComponent(dirName)
     do {
-        try FileManager.default.createDirectory(atPath: fullPath, withIntermediateDirectories: true)
+        _ = try FileManager.default.createDirectory(atPath: fullPath, withIntermediateDirectories: true)
     } catch {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
     }
@@ -1098,7 +1098,7 @@ public func kk_files_createDirectory(_ filesRaw: Int, _ pathRaw: Int, _ outThrow
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_createDirectory received invalid Path handle")
     }
     do {
-        try FileManager.default.createDirectory(atPath: path.pathString, withIntermediateDirectories: false)
+        _ = try FileManager.default.createDirectory(atPath: path.pathString, withIntermediateDirectories: false)
     } catch {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
     }
@@ -1114,7 +1114,7 @@ public func kk_files_createDirectories(_ filesRaw: Int, _ pathRaw: Int, _ outThr
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_files_createDirectories received invalid Path handle")
     }
     do {
-        try FileManager.default.createDirectory(atPath: path.pathString, withIntermediateDirectories: true)
+        _ = try FileManager.default.createDirectory(atPath: path.pathString, withIntermediateDirectories: true)
     } catch {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
     }
@@ -1275,7 +1275,7 @@ public func kk_files_createTempDirectory(_ filesRaw: Int, _ prefixRaw: Int, _ ou
     let dirName = "\(prefix)\(UUID().uuidString)"
     let fullPath = (tmpDir as NSString).appendingPathComponent(dirName)
     do {
-        try FileManager.default.createDirectory(atPath: fullPath, withIntermediateDirectories: true)
+        _ = try FileManager.default.createDirectory(atPath: fullPath, withIntermediateDirectories: true)
     } catch {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
     }

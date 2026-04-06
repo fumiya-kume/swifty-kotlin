@@ -231,7 +231,7 @@ public func kk_path_createDirectories(_ pathRaw: Int, _ outThrown: UnsafeMutable
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_createDirectories received invalid Path handle")
     }
     do {
-        try FileManager.default.createDirectory(atPath: path.pathString, withIntermediateDirectories: true)
+        _ = try FileManager.default.createDirectory(atPath: path.pathString, withIntermediateDirectories: true)
     } catch {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
     }
