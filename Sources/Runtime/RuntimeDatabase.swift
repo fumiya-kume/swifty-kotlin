@@ -815,7 +815,7 @@ public func kk_db_pool_set_max_lifetime(_ poolRaw: Int, _ seconds: Int, _ outThr
 
 // MARK: - JDBC Runtime (STDLIB-DB-140)
 
-private enum RuntimeJDBCError: Error {
+enum RuntimeJDBCError: Error {
     case invalidHandle(String)
     case unsupportedURL(String)
     case sqlite(String)
@@ -825,9 +825,26 @@ private enum RuntimeJDBCError: Error {
     case connectionClosed
 }
 
-private final class RuntimeJDBCConnectionBox {
+final class RuntimeJDBCSavepointBox {
+    let identifier: Int
+    let name: String?
+    weak var connection: RuntimeJDBCConnectionBox?
+
+    init(identifier: Int, name: String?, connection: RuntimeJDBCConnectionBox) {
+        self.identifier = identifier
+        self.name = name
+        self.connection = connection
+    }
+}
+
+final class RuntimeJDBCConnectionBox {
     private(set) var db: OpaquePointer?
     var closed = false
+    var autoCommit = true
+    /// Raw JDBC transaction isolation constant (TRANSACTION_READ_COMMITTED = 2 by default).
+    var transactionIsolation = 2
+    private var nextSavepointID = 1
+    private var savepoints: [RuntimeJDBCSavepointBox] = []
 
     init(db: OpaquePointer) {
         self.db = db
@@ -838,6 +855,74 @@ private final class RuntimeJDBCConnectionBox {
             throw RuntimeJDBCError.connectionClosed
         }
         return db
+    }
+
+    func commit() throws {
+        let db = try requireDB()
+        if !autoCommit {
+            let rc = sqlite3_exec(db, "COMMIT", nil, nil, nil)
+            guard rc == SQLITE_OK else {
+                throw RuntimeJDBCError.sqlite(sqliteMessage(from: db))
+            }
+            savepoints.removeAll()
+        }
+    }
+
+    func rollback() throws {
+        let db = try requireDB()
+        if !autoCommit {
+            let rc = sqlite3_exec(db, "ROLLBACK", nil, nil, nil)
+            guard rc == SQLITE_OK else {
+                throw RuntimeJDBCError.sqlite(sqliteMessage(from: db))
+            }
+            savepoints.removeAll()
+        }
+    }
+
+    func rollback(to savepoint: RuntimeJDBCSavepointBox) throws {
+        guard savepoint.connection === self else {
+            throw RuntimeJDBCError.sqlite("Savepoint does not belong to this connection")
+        }
+        let db = try requireDB()
+        let spName = savepoint.name ?? "sp_\(savepoint.identifier)"
+        let rc = sqlite3_exec(db, "ROLLBACK TO SAVEPOINT \(spName)", nil, nil, nil)
+        guard rc == SQLITE_OK else {
+            throw RuntimeJDBCError.sqlite(sqliteMessage(from: db))
+        }
+        if let index = savepoints.firstIndex(where: { $0 === savepoint }) {
+            savepoints = Array(savepoints.prefix(through: index))
+        }
+    }
+
+    func createSavepoint(name: String?) throws -> RuntimeJDBCSavepointBox {
+        let db = try requireDB()
+        let sp = RuntimeJDBCSavepointBox(identifier: nextSavepointID, name: name, connection: self)
+        nextSavepointID += 1
+        let spName = name ?? "sp_\(sp.identifier)"
+        let rc = sqlite3_exec(db, "SAVEPOINT \(spName)", nil, nil, nil)
+        guard rc == SQLITE_OK else {
+            throw RuntimeJDBCError.sqlite(sqliteMessage(from: db))
+        }
+        savepoints.append(sp)
+        return sp
+    }
+
+    func releaseSavepoint(_ savepoint: RuntimeJDBCSavepointBox) throws {
+        guard savepoint.connection === self else {
+            throw RuntimeJDBCError.sqlite("Savepoint does not belong to this connection")
+        }
+        let db = try requireDB()
+        let spName = savepoint.name ?? "sp_\(savepoint.identifier)"
+        let rc = sqlite3_exec(db, "RELEASE SAVEPOINT \(spName)", nil, nil, nil)
+        guard rc == SQLITE_OK else {
+            throw RuntimeJDBCError.sqlite(sqliteMessage(from: db))
+        }
+        savepoints.removeAll(where: { $0 === savepoint })
+    }
+
+    func setAutoCommit(_ newValue: Bool) throws {
+        _ = try requireDB()
+        autoCommit = newValue
     }
 
     func close() throws {
@@ -854,7 +939,7 @@ private final class RuntimeJDBCConnectionBox {
     }
 }
 
-private final class RuntimeJDBCStatementBox {
+final class RuntimeJDBCStatementBox {
     let connection: RuntimeJDBCConnectionBox
     var closed = false
 
@@ -874,7 +959,7 @@ private final class RuntimeJDBCStatementBox {
     }
 }
 
-private final class RuntimeJDBCPreparedStatementBox {
+final class RuntimeJDBCPreparedStatementBox {
     let connection: RuntimeJDBCConnectionBox
     private(set) var statement: OpaquePointer?
     var closed = false
@@ -1023,7 +1108,7 @@ private func jdbcAsciiSqlDouble(_ value: Double) -> String {
     return String(format: "%.17g", value)
 }
 
-private final class RuntimeJDBCResultSetBox {
+final class RuntimeJDBCResultSetBox {
     enum Ownership {
         case ownedStatement(OpaquePointer)
         case borrowedPreparedStatement(RuntimeJDBCPreparedStatementBox)
@@ -1035,6 +1120,8 @@ private final class RuntimeJDBCResultSetBox {
     var lastStepWasRow = false
     var lastColumnWasNull = false
     var columnCount = 0
+    /// 1-based row counter; 0 means positioned before the first row.
+    var currentRow = 0
 
     init(statement: OpaquePointer, ownership: Ownership) {
         self.statement = statement
@@ -1081,7 +1168,7 @@ private func sqliteMessage(from db: OpaquePointer?) -> String {
     return "unknown sqlite error"
 }
 
-private func jdbcStringRaw(_ value: String) -> Int {
+func jdbcStringRaw(_ value: String) -> Int {
     Int(bitPattern: value.withCString { cstr in
         cstr.withMemoryRebound(to: UInt8.self, capacity: value.utf8.count) { pointer in
             kk_string_from_utf8(pointer, Int32(value.utf8.count))
@@ -1089,7 +1176,7 @@ private func jdbcStringRaw(_ value: String) -> Int {
     })
 }
 
-private func jdbcErrorThrowable(_ error: Error) -> Int {
+func jdbcErrorThrowable(_ error: Error) -> Int {
     let message: String
     switch error {
     case let RuntimeJDBCError.invalidHandle(kind):
@@ -1112,27 +1199,32 @@ private func jdbcErrorThrowable(_ error: Error) -> Int {
     return runtimeAllocateThrowable(message: message)
 }
 
-private func jdbcConnectionBox(from raw: Int) -> RuntimeJDBCConnectionBox? {
+func jdbcConnectionBox(from raw: Int) -> RuntimeJDBCConnectionBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
     return tryCast(ptr, to: RuntimeJDBCConnectionBox.self)
 }
 
-private func jdbcStatementBox(from raw: Int) -> RuntimeJDBCStatementBox? {
+private func jdbcSavepointBox(from raw: Int) -> RuntimeJDBCSavepointBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeJDBCSavepointBox.self)
+}
+
+func jdbcStatementBox(from raw: Int) -> RuntimeJDBCStatementBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
     return tryCast(ptr, to: RuntimeJDBCStatementBox.self)
 }
 
-private func jdbcPreparedStatementBox(from raw: Int) -> RuntimeJDBCPreparedStatementBox? {
+func jdbcPreparedStatementBox(from raw: Int) -> RuntimeJDBCPreparedStatementBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
     return tryCast(ptr, to: RuntimeJDBCPreparedStatementBox.self)
 }
 
-private func jdbcResultSetBox(from raw: Int) -> RuntimeJDBCResultSetBox? {
+func jdbcResultSetBox(from raw: Int) -> RuntimeJDBCResultSetBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
     return tryCast(ptr, to: RuntimeJDBCResultSetBox.self)
 }
 
-private func jdbcExtractString(_ raw: Int) throws -> String {
+func jdbcExtractString(_ raw: Int) throws -> String {
     guard let value = extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) else {
         throw RuntimeJDBCError.invalidHandle("string")
     }
@@ -1693,6 +1785,7 @@ public func kk_jdbc_result_set_next(_ resultSetRaw: Int, _ outThrown: UnsafeMuta
         switch rc {
         case SQLITE_ROW:
             resultSet.lastStepWasRow = true
+            resultSet.currentRow += 1
             return kk_box_bool(1)
         case SQLITE_DONE:
             resultSet.lastStepWasRow = false
