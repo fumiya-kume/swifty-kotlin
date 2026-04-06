@@ -2546,6 +2546,36 @@ public func kk_set_flatMap(_ setRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
     return registerRuntimeObject(RuntimeListBox(elements: result))
 }
 
+@_cdecl("kk_set_maxOrNull")
+public func kk_set_maxOrNull(_ setRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        invalidContainerPanic(#function, "set")
+    }
+    guard let first = set.elements.first else {
+        return runtimeNullSentinelInt
+    }
+    var best = first
+    for elem in set.elements.dropFirst() where runtimeCompareValues(elem, best) > 0 {
+        best = elem
+    }
+    return best
+}
+
+@_cdecl("kk_set_minOrNull")
+public func kk_set_minOrNull(_ setRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        invalidContainerPanic(#function, "set")
+    }
+    guard let first = set.elements.first else {
+        return runtimeNullSentinelInt
+    }
+    var best = first
+    for elem in set.elements.dropFirst() where runtimeCompareValues(elem, best) < 0 {
+        best = elem
+    }
+    return best
+}
+
 // MARK: - Array higher-order functions (STDLIB-088)
 
 @_cdecl("kk_array_map")

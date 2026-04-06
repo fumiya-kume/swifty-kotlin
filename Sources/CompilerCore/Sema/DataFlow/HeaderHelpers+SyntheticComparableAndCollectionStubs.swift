@@ -4826,6 +4826,56 @@ extension DataFlowSemaPhase {
             typeParamType: typeParamType
         )
 
+        // Set.minOrNull / Set.maxOrNull with T : Comparable<T> bound
+        do {
+            let nullableElementType = types.makeNullable(typeParamType)
+            if types.comparableInterfaceSymbol == nil {
+                registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
+            }
+            let comparableElementBounds: [TypeID] = if let comparableSymbol = types.comparableInterfaceSymbol {
+                [types.make(.classType(ClassType(
+                    classSymbol: comparableSymbol,
+                    args: [.invariant(typeParamType)],
+                    nullability: .nonNull
+                )))]
+            } else {
+                []
+            }
+            let setReceiverType = types.make(.classType(ClassType(
+                classSymbol: setInterfaceSymbol,
+                args: [.out(typeParamType)],
+                nullability: .nonNull
+            )))
+            func registerSetComparableMember(name: String, externalLinkName: String) {
+                let memberName = interner.intern(name)
+                let memberFQName = setFQName + [memberName]
+                guard symbols.lookup(fqName: memberFQName) == nil else { return }
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: memberName,
+                    fqName: memberFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(setInterfaceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: setReceiverType,
+                        parameterTypes: [],
+                        returnType: nullableElementType,
+                        typeParameterSymbols: [typeParamSymbol],
+                        typeParameterUpperBoundsList: [comparableElementBounds],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+            registerSetComparableMember(name: "maxOrNull", externalLinkName: "kk_set_maxOrNull")
+            registerSetComparableMember(name: "minOrNull", externalLinkName: "kk_set_minOrNull")
+        }
+
         return setInterfaceSymbol
     }
 
