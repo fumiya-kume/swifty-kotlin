@@ -1817,6 +1817,7 @@ private enum RuntimeFlowTag: Int {
     case debounce = 17
     case sample = 18
     case delayEach = 19
+    case onCompletion = 20
 }
 
 private struct RuntimeFlowEvent {
