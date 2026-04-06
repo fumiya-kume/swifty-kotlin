@@ -964,6 +964,7 @@ extension DataFlowSemaPhase {
         registerSyntheticConcurrencyStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoroutineCancellationStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoroutineIntrinsicsStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticReadWriteLockStubs(symbols: symbols, types: types, interner: interner)
     }
 
     /// Register the synthetic `kotlin.Any` and `kotlin.Annotation` built-in stubs.
@@ -1258,45 +1259,65 @@ extension DataFlowSemaPhase {
         }
 
         // STDLIB-592: callsInPlace overloads on ContractBuilder.
-        // We use the lambda parameter type `() -> Any` as a stand-in for `Function<*>`.
-        let anyFunctionType = types.make(.functionType(FunctionType(
-            params: [],
-            returnType: types.anyType
-        )))
         let callsInPlaceName = interner.intern("callsInPlace")
         let callsInPlaceFQBase = contractsFQName + [interner.intern("ContractBuilder"), callsInPlaceName]
+        func registerCallsInPlaceOverload(
+            extraParameterTypes: [TypeID] = []
+        ) {
+            let parameterCount = extraParameterTypes.count + 1
+            let alreadyDefined = symbols.lookupAll(fqName: callsInPlaceFQBase).contains { symbolID in
+                guard let symbol = symbols.symbol(symbolID),
+                      symbol.kind == .function,
+                      let signature = symbols.functionSignature(for: symbolID)
+                else {
+                    return false
+                }
+                return signature.receiverType == builderType
+                    && signature.parameterTypes.count == parameterCount
+                    && signature.returnType == effectType
+            }
+            guard !alreadyDefined else {
+                return
+            }
+
+            let typeParamName = interner.intern("P")
+            let typeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: callsInPlaceFQBase + [typeParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            let typeParamType = types.make(.typeParam(TypeParamType(
+                symbol: typeParamSymbol,
+                nullability: .nonNull
+            )))
+            let parameterTypes = [typeParamType] + extraParameterTypes
+            let symbol = symbols.define(
+                kind: .function,
+                name: callsInPlaceName,
+                fqName: callsInPlaceFQBase,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(builderSymbol, for: symbol)
+            symbols.setParentSymbol(symbol, for: typeParamSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: builderType,
+                    parameterTypes: parameterTypes,
+                    returnType: effectType,
+                    typeParameterSymbols: [typeParamSymbol]
+                ),
+                for: symbol
+            )
+        }
         // Single-arg: callsInPlace(lambda)
-        do {
-            let symbol = symbols.define(
-                kind: .function,
-                name: callsInPlaceName,
-                fqName: callsInPlaceFQBase,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-            symbols.setFunctionSignature(
-                FunctionSignature(receiverType: builderType, parameterTypes: [anyFunctionType], returnType: effectType),
-                for: symbol
-            )
-            symbols.setParentSymbol(builderSymbol, for: symbol)
-        }
+        registerCallsInPlaceOverload()
         // Two-arg: callsInPlace(lambda, kind)
-        do {
-            let symbol = symbols.define(
-                kind: .function,
-                name: callsInPlaceName,
-                fqName: callsInPlaceFQBase,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-            symbols.setFunctionSignature(
-                FunctionSignature(receiverType: builderType, parameterTypes: [anyFunctionType, invocationKindType], returnType: effectType),
-                for: symbol
-            )
-            symbols.setParentSymbol(builderSymbol, for: symbol)
-        }
+        registerCallsInPlaceOverload(extraParameterTypes: [invocationKindType])
     }
 
     /// Look up or define a synthetic interface symbol in the given package.

@@ -141,8 +141,8 @@ func runtimeThrowableMatchesNominalTypeID(_ throwable: RuntimeThrowableBox, targ
 /// Allocates a CancellationException as a RuntimeCancellationBox (CORO-002 / spec.md J17).
 /// The returned opaque pointer can be stored in `outThrown` and later detected via
 /// `kk_is_cancellation_exception`.
-func runtimeAllocateCancellationException() -> Int {
-    let cancellation = RuntimeCancellationBox()
+func runtimeAllocateCancellationException(message: String = "CancellationException", cause: Int = 0) -> Int {
+    let cancellation = RuntimeCancellationBox(message: message, cause: cause)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(cancellation).toOpaque())
     runtimeStorage.withLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))

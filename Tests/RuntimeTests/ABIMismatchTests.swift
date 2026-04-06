@@ -81,8 +81,9 @@ final class ABIMismatchTests: XCTestCase {
         // kk_require, kk_check, kk_require_lazy, kk_check_lazy,
         // kk_precondition_assert, kk_precondition_assert_lazy,
         // kk_assertions_enabled, kk_assertions_set_enabled, kk_assertions_reset,
+        // kk_reentrant_read_write_lock_read,
         // kk_error, kk_todo, kk_todo_noarg, kk_dispatch_error
-        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 25)
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 26)
     }
 
     func testTestFrameworkFunctionCount() {
@@ -142,7 +143,7 @@ final class ABIMismatchTests: XCTestCase {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
         // STDLIB-CORO-070 adds Job.complete/completeExceptionally/cancel(cause)/awaitCompletion.
         // read-write lock adds kk_read_write_lock_create/read/write.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 113)
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 115)
     }
 
     func testBoxingFunctionCount() {

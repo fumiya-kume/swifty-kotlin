@@ -165,6 +165,8 @@ final class RuntimeContinuationState: @unchecked Sendable {
     var thrownException: Int = 0
     private let stateLock = NSLock()
     private var delayTimers: [ObjectIdentifier: DispatchSourceTimer]
+    private static let taskStateLock = NSLock()
+    nonisolated(unsafe) private static var taskStateMap: [ObjectIdentifier: RuntimeContinuationState] = [:]
 
     /// CORO-004: Continuation-based resume model.
     ///
@@ -260,6 +262,31 @@ final class RuntimeContinuationState: @unchecked Sendable {
             timer.setEventHandler(handler: nil)
             timer.cancel()
         }
+    }
+
+    /// Install the current continuation state for the given task key.
+    static func installCurrent(_ state: RuntimeContinuationState?, forTask key: ObjectIdentifier) {
+        taskStateLock.lock()
+        if let state {
+            taskStateMap[key] = state
+        } else {
+            taskStateMap.removeValue(forKey: key)
+        }
+        taskStateLock.unlock()
+    }
+
+    /// Remove the current continuation state for the given task key.
+    static func removeCurrent(forTask key: ObjectIdentifier) {
+        taskStateLock.lock()
+        taskStateMap.removeValue(forKey: key)
+        taskStateLock.unlock()
+    }
+
+    /// Continuation state for the current task, if any.
+    static var current: RuntimeContinuationState? {
+        taskStateLock.lock()
+        defer { taskStateLock.unlock() }
+        return taskStateMap[RuntimeCoroutineScopeTaskKey.currentTaskKey]
     }
 
     func scheduleDelay(milliseconds: Int) {
@@ -534,6 +561,7 @@ final class RuntimeAsyncTask: @unchecked Sendable {
         }
         return value
     }
+
 }
 
 // MARK: - Structured Concurrency (P5-89)
@@ -860,6 +888,10 @@ final class RuntimeCoroutineScope: @unchecked Sendable {
     private let lock = NSLock()
     private var children: [Int] = [] // opaque handles (RuntimeJobHandle or RuntimeAsyncTask)
     private(set) var isCancelled = false
+    /// Cancellation message stored when cancel(message:cause:) is called on this scope.
+    private(set) var cancellationMessage: String = "CancellationException"
+    /// Cancellation cause stored when cancel(message:cause:) is called on this scope.
+    private(set) var cancellationCause: Int = 0
     let isSupervisor: Bool
     fileprivate var parent: RuntimeCoroutineScope?
     /// Optional debug name assigned via CoroutineName context element (STDLIB-CORO-077).
@@ -948,6 +980,22 @@ final class RuntimeCoroutineScope: @unchecked Sendable {
 
     func cancel() {
         lock.lock()
+        isCancelled = true
+        let currentChildren = children
+        lock.unlock()
+        for child in currentChildren {
+            runtimeCancelChild(child)
+        }
+    }
+
+    /// Cancel with a specific message and cause so that a materialised
+    /// CancellationException carries the correct values.
+    func cancel(message: String, cause: Int) {
+        lock.lock()
+        if !isCancelled {
+            cancellationMessage = message
+            cancellationCause = cause
+        }
         isCancelled = true
         let currentChildren = children
         lock.unlock()
@@ -1227,9 +1275,16 @@ public func kk_kxmini_run_blocking(
     _ functionID: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
+    // Create a job handle for runBlocking so that cancellation is observable
+    // via kk_coroutine_check_cancellation, which requires state.jobHandle to
+    // be non-nil.  Without this, calling cancel() inside runBlocking would
+    // silently succeed but subsequent suspension points (e.g. delay()) would
+    // never observe the cancellation.
+    let job = RuntimeJobHandle()
     return runSuspendEntryLoop(
         entryPointRaw: entryPointRaw,
         functionID: functionID,
+        jobHandle: job,
         outThrown: outThrown
     )
 }
@@ -5702,15 +5757,24 @@ public func kk_job_is_failed(_ jobHandle: Int) -> Int {
 /// and returns 1. Otherwise returns 0 with outThrown untouched.
 @_cdecl("kk_coroutine_check_cancellation")
 public func kk_coroutine_check_cancellation(_ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let state = runtimeContinuationState(from: continuation),
-          let job = state.jobHandle,
-          job.cancellationSnapshot()
-    else {
+    guard let state = runtimeContinuationState(from: continuation) else {
         return 0
     }
-    let cancellation = runtimeAllocateCancellationException()
-    outThrown?.pointee = cancellation
-    return 1
+    if let job = state.jobHandle, job.cancellationSnapshot() {
+        let cancellation = runtimeAllocateCancellationException()
+        outThrown?.pointee = cancellation
+        return 1
+    }
+    // Fallback: if there is no job handle but the scope has been cancelled
+    // (e.g. via scope.cancel()), still observe the cancellation.  This
+    // provides a safety net for execution contexts that lack a job handle.
+    if state.jobHandle == nil, let scope = state.scope, scope.isCancelled {
+        let cancellation = runtimeAllocateCancellationException(
+            message: scope.cancellationMessage, cause: scope.cancellationCause)
+        outThrown?.pointee = cancellation
+        return 1
+    }
+    return 0
 }
 
 /// Directly cancel a continuation (sets isCancelled on its linked job handle).
@@ -5722,6 +5786,22 @@ public func kk_coroutine_cancel(_ continuation: Int) {
         return
     }
     _ = job.cancel()
+}
+
+/// Cancel the currently running coroutine without requiring a continuation handle.
+@_cdecl("kk_coroutine_cancel_current")
+public func kk_coroutine_cancel_current(_ message: Int, _ causeRaw: Int) -> Int {
+    let text = extractString(from: UnsafeMutableRawPointer(bitPattern: message)) ?? "CancellationException"
+    let normalizedCause = (causeRaw == runtimeNullSentinelInt || causeRaw == 0) ? 0 : causeRaw
+    guard let state = RuntimeContinuationState.current else {
+        return 0
+    }
+    if let job = state.jobHandle {
+        _ = job.cancel(cause: normalizedCause)
+    } else if let scope = state.scope {
+        scope.cancel(message: text, cause: normalizedCause)
+    }
+    return 0
 }
 
 /// Returns 1 if the given throwable raw pointer is a CancellationException, 0 otherwise.
@@ -5834,7 +5914,7 @@ func runSuspendEntryLoopWithContinuation(
         let result = entryPoint(continuation, &thrownValue)
         if thrownValue != 0 {
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
-            RuntimeContinuationState.removeState(forTask: taskKeyBox.key)
+            RuntimeContinuationState.removeCurrent(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
             outThrown?.pointee = thrownValue
             RuntimeJobHandle.current = nil
@@ -5850,7 +5930,7 @@ func runSuspendEntryLoopWithContinuation(
         }
         if result != suspendedToken {
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
-            RuntimeContinuationState.removeState(forTask: taskKeyBox.key)
+            RuntimeContinuationState.removeCurrent(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
             outThrown?.pointee = 0
             RuntimeJobHandle.current = nil
@@ -5860,7 +5940,7 @@ func runSuspendEntryLoopWithContinuation(
         }
         guard let state = runtimeContinuationState(from: continuation) else {
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
-            RuntimeContinuationState.removeState(forTask: taskKeyBox.key)
+            RuntimeContinuationState.removeCurrent(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
             outThrown?.pointee = 0
             RuntimeJobHandle.current = nil
@@ -5876,7 +5956,7 @@ func runSuspendEntryLoopWithContinuation(
             // GCD thread.  Re-install the task key so the scope map lookup
             // still works.
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
-            RuntimeContinuationState.removeState(forTask: taskKeyBox.key)
+            RuntimeContinuationState.removeCurrent(forTask: taskKeyBox.key)
             let freshKey = RuntimeCoroutineScopeTaskKey.installFreshKey()
             taskKeyBox.key = freshKey
             RuntimeCoroutineScope.installScope(state.scope, forTask: freshKey)

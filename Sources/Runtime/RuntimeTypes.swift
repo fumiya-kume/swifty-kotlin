@@ -108,11 +108,27 @@ final class RuntimeUninitializedPropertyAccessExceptionBox: RuntimeThrowableBox 
 /// Distinct type used to identify CancellationException at runtime.
 /// The runtime checks `is RuntimeCancellationBox` to distinguish cancellation from
 /// regular throwables (CORO-002 / spec.md J17).
-final class RuntimeCancellationBox {
-    let message: String
+final class RuntimeCancellationBox: RuntimeThrowableBox {
+    override var exceptionFQName: String {
+        "kotlin.CancellationException"
+    }
 
-    init(message: String = "CancellationException") {
-        self.message = message
+    override var exceptionHierarchyFQNames: [String] {
+        [
+            "kotlin.CancellationException",
+            "kotlinx.coroutines.CancellationException",
+            "CancellationException",
+            "kotlin.Exception",
+            "kotlin.Throwable",
+        ]
+    }
+
+    override var renderedMessage: String {
+        message
+    }
+
+    override init(message: String, cause: Int = 0) {
+        super.init(message: message, cause: cause)
     }
 }
 
