@@ -50,10 +50,7 @@ public enum GoldenHarness {
 
     public static func renderInSubprocess(suiteName: String, sourcePath: String) throws -> String {
         let process = Process()
-        let stdout = Pipe()
-        let stderr = Pipe()
-        let stdoutHandle = stdout.fileHandleForReading
-        let stderrHandle = stderr.fileHandleForReading
+        let stdout = Pipe(), stderr = Pipe()
 
         process.executableURL = try workerExecutableURL()
         process.arguments = [suiteName, sourcePath]
@@ -64,13 +61,11 @@ public enum GoldenHarness {
         try process.run()
         process.waitUntilExit()
         
-        // Read data synchronously after process completes
-        let stdoutData = stdoutHandle.readDataToEndOfFile()
-        let stderrData = stderrHandle.readDataToEndOfFile()
+        let stdoutData = stdout.fileHandleForReading.readDataToEndOfFile()
+        let stderrData = stderr.fileHandleForReading.readDataToEndOfFile()
         
         guard process.terminationStatus == 0 else {
-            let stderrText = String(data: stderrData, encoding: .utf8)?
-                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let stderrText = String(data: stderrData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             throw GoldenHarnessAPIError.workerFailed(process.terminationStatus, stderrText)
         }
         return String(decoding: stdoutData, as: UTF8.self)
