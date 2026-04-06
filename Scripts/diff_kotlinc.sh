@@ -34,7 +34,7 @@ Options:
   --kotlinc-classpath <path>
                      Additional classpath for kotlinc and java (default: \$KOTLINC_CLASSPATH)
   --java <path>      Path to java command (default: java)
-  --parallel [0|1]   Enable (or disable) parallel execution (default: env DIFF_PARALLEL)
+  --parallel [0|1]   Enable (or disable) parallel execution (default: 1)
   --no-parallel      Disable parallel execution
   --jobs <n>         Number of parallel workers (default: env DIFF_WORKERS, default: 4, clipped by CPU)
   --compile-timeout <seconds>

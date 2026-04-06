@@ -50,5 +50,45 @@ fun main() {
     // toString()
     println("toString: ${small.toString()}")
 
+    // New BigInteger functions
+    println("=== New Functions ===")
+
+    // or()
+    val orResult = a.or(b)
+    println("or: ${orResult.toString()}")
+
+    // xor()
+    val xorResult = a.xor(b)
+    println("xor: ${xorResult.toString()}")
+
+    // not()
+    val notResult = a.not()
+    println("not: ${notResult.toString()}")
+
+    // shiftLeft()
+    val shiftLeftResult = a.shiftLeft(3)
+    println("shiftLeft: ${shiftLeftResult.toString()}")
+
+    // shiftRight()
+    val shiftRightResult = b.shiftRight(2)
+    println("shiftRight: ${shiftRightResult.toString()}")
+
+    // modInverse()
+    val modInvBase = BigInteger("3")
+    val modInvMod = BigInteger("11")
+    val modInvResult = modInvBase.modInverse(modInvMod)
+    println("modInverse: ${modInvResult.toString()}")
+
+    // modPow()
+    val modPowBase = BigInteger("3")
+    val modPowExp = BigInteger("4")
+    val modPowMod = BigInteger("7")
+    val modPowResult = modPowBase.modPow(modPowExp, modPowMod)
+    println("modPow: ${modPowResult.toString()}")
+
+    // toByteArray()
+    val bytes = small.toByteArray()
+    println("toByteArray: ${bytes.contentToString()}")
+
     println("OK")
 }
