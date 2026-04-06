@@ -1,3 +1,4 @@
+// SKIP-DIFF: kotlin.native.* and kotlinx.cinterop.* are Kotlin/Native-only APIs not available in JVM kotlinc
 package golden.sema
 
 import kotlin.experimental.ExperimentalNativeApi
