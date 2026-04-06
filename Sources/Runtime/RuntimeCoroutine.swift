@@ -2891,6 +2891,28 @@ private func runtimeFlowApplyErrorHandler(
     }
 }
 
+private func runtimeFlowRunAdvancedSource(
+    _ flow: RuntimeFlowHandle,
+    ops: [RuntimeFlowOp]
+) -> RuntimeFlowExecutionResult? {
+    switch flow.source {
+    case .flatMapConcat(let srcHandle, let mapperFnPtr):
+        return runtimeFlowEvaluateFlatMapConcat(sourceHandle: srcHandle, mapperFnPtr: mapperFnPtr, ops: ops)
+    case .flatMapMerge(let srcHandle, let mapperFnPtr):
+        return runtimeFlowEvaluateFlatMapMerge(sourceHandle: srcHandle, mapperFnPtr: mapperFnPtr, ops: ops)
+    case .flatMapLatest(let srcHandle, let mapperFnPtr):
+        return runtimeFlowEvaluateFlatMapLatest(sourceHandle: srcHandle, mapperFnPtr: mapperFnPtr, ops: ops)
+    case .merge(let handles):
+        return runtimeFlowEvaluateMerge(flowHandles: handles, ops: ops)
+    case .zip(let left, let right, let combiner):
+        return runtimeFlowEvaluateZip(leftHandle: left, rightHandle: right, combinerFnPtr: combiner, ops: ops)
+    case .combine(let left, let right, let combiner):
+        return runtimeFlowEvaluateCombine(leftHandle: left, rightHandle: right, combinerFnPtr: combiner, ops: ops)
+    default:
+        return nil
+    }
+}
+
 private func runtimeFlowExecuteStages(
     flow: RuntimeFlowHandle,
     stages: [RuntimeFlowStage],
@@ -2900,8 +2922,18 @@ private func runtimeFlowExecuteStages(
 
     for (index, stage) in stages.enumerated() {
         if index == 0 {
-            current = runtimeFlowRunSourceStage(flow, ops: stage.normalOps)
-            stageAttemptProvider = { runtimeFlowRunSourceStage(flow, ops: stage.normalOps) }
+            if let advancedResult = runtimeFlowRunAdvancedSource(flow, ops: stage.normalOps) {
+                current = advancedResult
+            } else {
+                current = runtimeFlowRunSourceStage(flow, ops: stage.normalOps)
+            }
+            stageAttemptProvider = { [weak flow] in
+                guard let flow else { return RuntimeFlowExecutionResult(values: [], failure: nil) }
+                if let advanced = runtimeFlowRunAdvancedSource(flow, ops: stage.normalOps) {
+                    return advanced
+                }
+                return runtimeFlowRunSourceStage(flow, ops: stage.normalOps)
+            }
         } else {
             current = runtimeFlowRunNormalStage(current, ops: stage.normalOps)
         }
@@ -3559,6 +3591,85 @@ public func kk_flow_as_flow(_ sourceHandle: Int, _: Int) -> Int {
         return runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: 0, fixedValues: Array(arrayBox.elements)))
     }
     return runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: 0, fixedValues: []))
+}
+
+// MARK: - Flow Builders (STDLIB-FLOW-178)
+
+/// Create a channelFlow from an emitter function pointer.
+/// channelFlow { } allows emitting values from multiple coroutines via a channel.
+/// In this runtime, it is modelled identically to `flow { }` — the emitter
+/// function is re-executed synchronously on each `collect` call (cold semantics),
+/// and `send` calls inside the block are bridged to the same `kk_flow_emit` path.
+@_cdecl("kk_channel_flow_create")
+public func kk_channel_flow_create(_ emitterFnPtr: Int, _: Int) -> Int {
+    runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: emitterFnPtr))
+}
+
+/// Create a callbackFlow from an emitter function pointer.
+/// callbackFlow { } is typically used to bridge callback-based APIs to flows.
+/// This runtime models it identically to `flow { }` — the emitter is a
+/// synchronous function pointer whose `awaitClose` / `trySend` calls are
+/// treated as plain emit operations (cold-stream semantics).
+@_cdecl("kk_callback_flow_create")
+public func kk_callback_flow_create(_ emitterFnPtr: Int, _: Int) -> Int {
+    runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: emitterFnPtr))
+}
+
+/// ProducerScope / SendChannel stub used by channelFlow and callbackFlow blocks.
+/// `trySend` delegates to the active flow collect context, mirroring `emit`.
+/// Returns a ChannelResult.success sentinel (non-zero = success).
+@_cdecl("kk_channel_flow_send")
+public func kk_channel_flow_send(_ channelRaw: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let context = runtimeFlowCurrentCollectContext()
+    guard let context, !context.cancelled else {
+        return 0
+    }
+    let unboxed = runtimeFlowMaybeUnbox(value)
+    let timestamp = DispatchTime.now().uptimeNanoseconds - context.startedAt
+    context.emittedValues.append(unboxed)
+    context.emittedEvents.append(RuntimeFlowEvent(value: unboxed, timestamp: timestamp))
+    if let emitHandler = context.emitHandler {
+        let result = emitHandler(unboxed)
+        return result == runtimeFlowStopSentinel ? 0 : 1
+    }
+    return 1
+}
+
+/// `trySend` for channelFlow/callbackFlow — non-throwing variant of `send`.
+/// Returns 1 (ChannelResult.success) on success, 0 if the flow is cancelled.
+@_cdecl("kk_channel_flow_try_send")
+public func kk_channel_flow_try_send(_ channelRaw: Int, _ value: Int) -> Int {
+    let context = runtimeFlowCurrentCollectContext()
+    guard let context, !context.cancelled else {
+        return 0
+    }
+    let unboxed = runtimeFlowMaybeUnbox(value)
+    let timestamp = DispatchTime.now().uptimeNanoseconds - context.startedAt
+    context.emittedValues.append(unboxed)
+    context.emittedEvents.append(RuntimeFlowEvent(value: unboxed, timestamp: timestamp))
+    if let emitHandler = context.emitHandler {
+        let result = emitHandler(unboxed)
+        return result == runtimeFlowStopSentinel ? 0 : 1
+    }
+    return 1
+}
+
+/// `awaitClose` stub for callbackFlow.
+/// In this synchronous runtime, callbacks are not truly async, so awaitClose
+/// is a no-op — it simply returns immediately after the emitter body finishes.
+@_cdecl("kk_callback_flow_await_close")
+public func kk_callback_flow_await_close(_ channelRaw: Int, _ closeHandlerFnPtr: Int) -> Int {
+    // If a close handler was registered, invoke it now.
+    if closeHandlerFnPtr != 0 {
+        let handler = unsafeBitCast(
+            closeHandlerFnPtr,
+            to: (@convention(c) (UnsafeMutablePointer<Int>?) -> Int).self
+        )
+        var thrown = 0
+        _ = handler(&thrown)
+    }
+    return 0
 }
 
 // MARK: - SharedFlow / StateFlow Runtime (STDLIB-FLOW-177)
@@ -6167,6 +6278,254 @@ public func kk_suspend_function_invoke_0(
     }
     
     return Int(continuationState.completion)
+}
+
+// MARK: - Advanced Flow Operators (STDLIB-FLOW-176)
+
+// ---------------------------------------------------------------------------
+// Helpers for advanced source evaluation (flatMapConcat, flatMapMerge,
+// flatMapLatest, merge, zip, combine).  These are called from
+// runtimeFlowRunSourceStage when the flow source is one of the advanced types.
+// ---------------------------------------------------------------------------
+
+private func runtimeFlowEvaluateFlatMapConcat(
+    sourceHandle: Int,
+    mapperFnPtr: Int,
+    ops: [RuntimeFlowOp]
+) -> RuntimeFlowExecutionResult {
+    guard let sourceFlow = runtimeFlowHandle(from: sourceHandle) else {
+        return RuntimeFlowExecutionResult(values: [], failure: nil)
+    }
+    guard mapperFnPtr != 0 else {
+        return runtimeFlowEvaluate(flow: sourceFlow)
+    }
+    let mapper = unsafeBitCast(
+        mapperFnPtr,
+        to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    let sourceResult = runtimeFlowEvaluate(flow: sourceFlow)
+    if let failure = sourceResult.failure {
+        return RuntimeFlowExecutionResult(values: [], failure: failure)
+    }
+    var all: [Int] = []
+    for value in sourceResult.values {
+        var thrown = 0
+        let innerHandle = mapper(0, value, &thrown)
+        if thrown != 0 {
+            return RuntimeFlowExecutionResult(values: all, failure: thrown)
+        }
+        if let innerFlow = runtimeFlowHandle(from: innerHandle) {
+            let inner = runtimeFlowEvaluate(flow: innerFlow)
+            all.append(contentsOf: inner.values)
+            if let f = inner.failure {
+                return RuntimeFlowExecutionResult(values: all, failure: f)
+            }
+        }
+    }
+    return runtimeFlowRunNormalStage(RuntimeFlowExecutionResult(values: all, failure: nil), ops: ops)
+}
+
+private func runtimeFlowEvaluateFlatMapMerge(
+    sourceHandle: Int,
+    mapperFnPtr: Int,
+    ops: [RuntimeFlowOp]
+) -> RuntimeFlowExecutionResult {
+    // In the synchronous cold-stream model, merge degenerates to concat.
+    runtimeFlowEvaluateFlatMapConcat(sourceHandle: sourceHandle, mapperFnPtr: mapperFnPtr, ops: ops)
+}
+
+private func runtimeFlowEvaluateFlatMapLatest(
+    sourceHandle: Int,
+    mapperFnPtr: Int,
+    ops: [RuntimeFlowOp]
+) -> RuntimeFlowExecutionResult {
+    guard let sourceFlow = runtimeFlowHandle(from: sourceHandle) else {
+        return RuntimeFlowExecutionResult(values: [], failure: nil)
+    }
+    guard mapperFnPtr != 0 else {
+        return runtimeFlowEvaluate(flow: sourceFlow)
+    }
+    let mapper = unsafeBitCast(
+        mapperFnPtr,
+        to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    let sourceResult = runtimeFlowEvaluate(flow: sourceFlow)
+    if let failure = sourceResult.failure {
+        return RuntimeFlowExecutionResult(values: [], failure: failure)
+    }
+    var lastInnerHandle: Int = 0
+    for value in sourceResult.values {
+        var thrown = 0
+        let innerHandle = mapper(0, value, &thrown)
+        if thrown != 0 {
+            return RuntimeFlowExecutionResult(values: [], failure: thrown)
+        }
+        lastInnerHandle = innerHandle
+    }
+    guard lastInnerHandle != 0, let lastFlow = runtimeFlowHandle(from: lastInnerHandle) else {
+        return RuntimeFlowExecutionResult(values: [], failure: nil)
+    }
+    let inner = runtimeFlowEvaluate(flow: lastFlow)
+    return runtimeFlowRunNormalStage(inner, ops: ops)
+}
+
+private func runtimeFlowEvaluateMerge(
+    flowHandles: [Int],
+    ops: [RuntimeFlowOp]
+) -> RuntimeFlowExecutionResult {
+    var all: [Int] = []
+    for handle in flowHandles {
+        guard let flow = runtimeFlowHandle(from: handle) else { continue }
+        let result = runtimeFlowEvaluate(flow: flow)
+        all.append(contentsOf: result.values)
+        if let f = result.failure {
+            return runtimeFlowRunNormalStage(RuntimeFlowExecutionResult(values: all, failure: f), ops: ops)
+        }
+    }
+    return runtimeFlowRunNormalStage(RuntimeFlowExecutionResult(values: all, failure: nil), ops: ops)
+}
+
+private func runtimeFlowEvaluateZip(
+    leftHandle: Int,
+    rightHandle: Int,
+    combinerFnPtr: Int,
+    ops: [RuntimeFlowOp]
+) -> RuntimeFlowExecutionResult {
+    guard let leftFlow = runtimeFlowHandle(from: leftHandle),
+          let rightFlow = runtimeFlowHandle(from: rightHandle) else {
+        return RuntimeFlowExecutionResult(values: [], failure: nil)
+    }
+    let leftResult  = runtimeFlowEvaluate(flow: leftFlow)
+    let rightResult = runtimeFlowEvaluate(flow: rightFlow)
+    if let f = leftResult.failure  { return RuntimeFlowExecutionResult(values: [], failure: f) }
+    if let f = rightResult.failure { return RuntimeFlowExecutionResult(values: [], failure: f) }
+    guard combinerFnPtr != 0 else { return runtimeFlowRunNormalStage(leftResult, ops: ops) }
+    let combiner = unsafeBitCast(
+        combinerFnPtr,
+        to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    let count = min(leftResult.values.count, rightResult.values.count)
+    var all: [Int] = []
+    all.reserveCapacity(count)
+    for i in 0 ..< count {
+        var thrown = 0
+        let combined = combiner(0, leftResult.values[i], rightResult.values[i], &thrown)
+        if thrown != 0 {
+            return RuntimeFlowExecutionResult(values: all, failure: thrown)
+        }
+        all.append(runtimeFlowMaybeUnbox(combined))
+    }
+    return runtimeFlowRunNormalStage(RuntimeFlowExecutionResult(values: all, failure: nil), ops: ops)
+}
+
+private func runtimeFlowEvaluateCombine(
+    leftHandle: Int,
+    rightHandle: Int,
+    combinerFnPtr: Int,
+    ops: [RuntimeFlowOp]
+) -> RuntimeFlowExecutionResult {
+    guard let leftFlow = runtimeFlowHandle(from: leftHandle),
+          let rightFlow = runtimeFlowHandle(from: rightHandle) else {
+        return RuntimeFlowExecutionResult(values: [], failure: nil)
+    }
+    let leftResult  = runtimeFlowEvaluate(flow: leftFlow)
+    let rightResult = runtimeFlowEvaluate(flow: rightFlow)
+    if let f = leftResult.failure  { return RuntimeFlowExecutionResult(values: [], failure: f) }
+    if let f = rightResult.failure { return RuntimeFlowExecutionResult(values: [], failure: f) }
+    guard combinerFnPtr != 0 else { return runtimeFlowRunNormalStage(leftResult, ops: ops) }
+    guard !leftResult.values.isEmpty, !rightResult.values.isEmpty else {
+        return RuntimeFlowExecutionResult(values: [], failure: nil)
+    }
+    let combiner = unsafeBitCast(
+        combinerFnPtr,
+        to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    let count = max(leftResult.values.count, rightResult.values.count)
+    var all: [Int] = []
+    all.reserveCapacity(count)
+    for i in 0 ..< count {
+        let lv = leftResult.values[min(i, leftResult.values.count - 1)]
+        let rv = rightResult.values[min(i, rightResult.values.count - 1)]
+        var thrown = 0
+        let combined = combiner(0, lv, rv, &thrown)
+        if thrown != 0 {
+            return RuntimeFlowExecutionResult(values: all, failure: thrown)
+        }
+        all.append(runtimeFlowMaybeUnbox(combined))
+    }
+    return runtimeFlowRunNormalStage(RuntimeFlowExecutionResult(values: all, failure: nil), ops: ops)
+}
+
+// MARK: @_cdecl exports
+
+/// Create a flow that represents flatMapConcat applied to an existing flow.
+/// mapperFnPtr: (closureRaw, value, outThrown) -> innerFlowHandle
+@_cdecl("kk_flow_flat_map_concat")
+public func kk_flow_flat_map_concat(_ flowHandle: Int, _ mapperFnPtr: Int, _: Int) -> Int {
+    let derived = RuntimeFlowHandle(
+        source: .flatMapConcat(flowHandle, mapperFnPtr),
+        opChain: []
+    )
+    return runtimeRegisterFlowHandle(derived)
+}
+
+/// Create a flow that represents flatMapMerge applied to an existing flow.
+@_cdecl("kk_flow_flat_map_merge")
+public func kk_flow_flat_map_merge(_ flowHandle: Int, _ mapperFnPtr: Int, _: Int) -> Int {
+    let derived = RuntimeFlowHandle(
+        source: .flatMapMerge(flowHandle, mapperFnPtr),
+        opChain: []
+    )
+    return runtimeRegisterFlowHandle(derived)
+}
+
+/// Create a flow that represents flatMapLatest applied to an existing flow.
+@_cdecl("kk_flow_flat_map_latest")
+public func kk_flow_flat_map_latest(_ flowHandle: Int, _ mapperFnPtr: Int, _: Int) -> Int {
+    let derived = RuntimeFlowHandle(
+        source: .flatMapLatest(flowHandle, mapperFnPtr),
+        opChain: []
+    )
+    return runtimeRegisterFlowHandle(derived)
+}
+
+/// Create a flow that merges N independent flows.
+/// flowArrayHandle: handle to an array of flow handles; count: element count.
+@_cdecl("kk_flow_merge")
+public func kk_flow_merge(_ flowArrayHandle: Int, _ count: Int, _: Int) -> Int {
+    var handles: [Int] = []
+    handles.reserveCapacity(count)
+    for i in 0 ..< count {
+        let h = runtimeReadArrayElement(arrayRaw: flowArrayHandle, index: i)
+        if h != 0 { handles.append(h) }
+    }
+    let derived = RuntimeFlowHandle(
+        source: .merge(handles),
+        opChain: []
+    )
+    return runtimeRegisterFlowHandle(derived)
+}
+
+/// zip two flows together with a combining function.
+/// combinerFnPtr: (closureRaw, lhs, rhs, outThrown) -> result
+@_cdecl("kk_flow_zip")
+public func kk_flow_zip(_ leftHandle: Int, _ rightHandle: Int, _ combinerFnPtr: Int, _: Int) -> Int {
+    let derived = RuntimeFlowHandle(
+        source: .zip(leftHandle, rightHandle, combinerFnPtr),
+        opChain: []
+    )
+    return runtimeRegisterFlowHandle(derived)
+}
+
+/// combine two flows with a combining function.
+/// combinerFnPtr: (closureRaw, lhs, rhs, outThrown) -> result
+@_cdecl("kk_flow_combine")
+public func kk_flow_combine(_ leftHandle: Int, _ rightHandle: Int, _ combinerFnPtr: Int, _: Int) -> Int {
+    let derived = RuntimeFlowHandle(
+        source: .combine(leftHandle, rightHandle, combinerFnPtr),
+        opChain: []
+    )
+    return runtimeRegisterFlowHandle(derived)
 }
 
 /// Invoke a suspend function with 1 argument using continuation-passing style.
