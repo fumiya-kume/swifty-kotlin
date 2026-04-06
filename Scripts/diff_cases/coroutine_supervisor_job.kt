@@ -1,4 +1,3 @@
-// SKIP-DIFF
 import kotlinx.coroutines.*
 
 // TEST-CORO-003: SupervisorJob — child failure does not cancel siblings;

@@ -1,4 +1,3 @@
-// SKIP-DIFF
 import kotlinx.coroutines.*
 
 // TEST-CORO-003: Exception handling in coroutines — CoroutineExceptionHandler,
