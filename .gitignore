@@ -11,3 +11,7 @@ firebase-debug.log
 .claude/settings.local.json
 .runnerctl/
 *.profraw
+
+# IDE / editor local
+.idea/
+.windsurf/
