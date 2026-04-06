@@ -117,6 +117,32 @@ private final class RuntimeCoroutineExceptionHandlerBox: @unchecked Sendable {
 // Priority order: Channel > withContext > awaitResult/join > sequence builders
 // (Channels are most likely to exhaust GCD thread pools under load.)
 
+/// Per-task key for the current continuation state. Mirrors the scope task-key bridge.
+enum RuntimeContinuationStateTaskKey {
+    private static let pthreadKey: pthread_key_t = makePthreadKey()
+
+    private final class Token {}
+
+    static var currentTaskKey: ObjectIdentifier {
+        if let existing: Token = pthreadGetValue(pthreadKey) {
+            return ObjectIdentifier(existing)
+        }
+        let token = Token()
+        pthreadSetValue(pthreadKey, token)
+        return ObjectIdentifier(token)
+    }
+
+    static func installFreshKey() -> ObjectIdentifier {
+        let token = Token()
+        pthreadSetValue(pthreadKey, token)
+        return ObjectIdentifier(token)
+    }
+
+    static func removeKey() {
+        pthreadSetValue(pthreadKey, nil as Token?)
+    }
+}
+
 final class RuntimeContinuationState: @unchecked Sendable {
     var functionID: Int64
     var label: Int64
@@ -157,6 +183,60 @@ final class RuntimeContinuationState: @unchecked Sendable {
     /// True if signalResume() was called before any continuation or wait was
     /// installed (edge case: timer fires immediately).
     private var resumeSignalPending = false
+
+    // CORO-003: Task-local continuation state registry (replaces TLS).
+    // Maps an opaque task token (assigned by the suspend-entry loop on entry) to
+    // the continuation state that is current for that execution context. This allows
+    // `RuntimeContinuationState.current` to work from code that runs inside a
+    // suspend-entry loop without an explicit continuation handle.
+    private static let taskStateLock = NSLock()
+    // Protected by taskStateLock — all accesses go through installState/removeState/stateForTask.
+    nonisolated(unsafe) private static var taskStateMap: [ObjectIdentifier: RuntimeContinuationState] = [:]
+
+    /// Install continuation state for the given task key. Called at the top of the
+    /// suspend-entry loop so that suspend function calls can discover the current state.
+    static func installState(_ state: RuntimeContinuationState?, forTask key: ObjectIdentifier) {
+        taskStateLock.lock()
+        if let state {
+            taskStateMap[key] = state
+        } else {
+            taskStateMap.removeValue(forKey: key)
+        }
+        taskStateLock.unlock()
+    }
+
+    /// Remove the task-state mapping when a suspend-entry loop finishes.
+    static func removeState(forTask key: ObjectIdentifier) {
+        taskStateLock.lock()
+        taskStateMap.removeValue(forKey: key)
+        taskStateLock.unlock()
+    }
+
+    /// Look up the continuation state installed for the current GCD dispatch work-item.
+    /// Falls back to nil if the current thread is not inside a suspend-entry loop.
+    static func stateForTask(_ key: ObjectIdentifier) -> RuntimeContinuationState? {
+        taskStateLock.lock()
+        defer { taskStateLock.unlock() }
+        return taskStateMap[key]
+    }
+
+    /// Convenience accessor used by suspend function invocations when they don't have a
+    /// continuation handle. Uses the thread-level task key installed by the
+    /// nearest enclosing suspend-entry loop.
+    ///
+    /// NOTE: This is *not* TLS for the state itself -- the state lives on the
+    /// continuation. The task key is only used to *find* which continuation's
+    /// state is active on this thread right now.
+    static var current: RuntimeContinuationState? {
+        get {
+            let key = RuntimeContinuationStateTaskKey.currentTaskKey
+            return stateForTask(key)
+        }
+        set {
+            let key = RuntimeContinuationStateTaskKey.currentTaskKey
+            installState(newValue, forTask: key)
+        }
+    }
 
     init(
         functionID: Int64,
@@ -5600,6 +5680,22 @@ public func kk_job_is_cancelled(_ jobHandle: Int) -> Int {
     return 0
 }
 
+/// Returns 1 if the job has failed with an exception.
+/// ABI backing for `job.isFailed` in Kotlin (kswiftc extension).
+@_cdecl("kk_job_is_failed")
+public func kk_job_is_failed(_ jobHandle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: jobHandle) else {
+        return 0 // invalid handle → treat as not failed
+    }
+    let obj = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
+    if let job = obj as? RuntimeJobHandle {
+        return job.isFailedSnapshot() ? 1 : 0
+    } else if let task = obj as? RuntimeAsyncTask {
+        return task.thrownException != 0 ? 1 : 0
+    }
+    return 0
+}
+
 
 /// Check if the coroutine associated with `continuation` has been cancelled.
 /// If cancelled, allocates a CancellationException, writes it to `outThrown`,
@@ -5711,6 +5807,7 @@ func runSuspendEntryLoopWithContinuation(
     let contState = runtimeContinuationState(from: continuation)
     let currentTaskKey = RuntimeCoroutineScopeTaskKey.installFreshKey()
     RuntimeCoroutineScope.installScope(contState?.scope, forTask: currentTaskKey)
+    RuntimeContinuationState.installState(contState, forTask: currentTaskKey)
     RuntimeJobHandle.current = contState?.jobHandle
 
     let suspendedToken = Int(bitPattern: kk_coroutine_suspended())
@@ -5737,6 +5834,7 @@ func runSuspendEntryLoopWithContinuation(
         let result = entryPoint(continuation, &thrownValue)
         if thrownValue != 0 {
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
+            RuntimeContinuationState.removeState(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
             outThrown?.pointee = thrownValue
             RuntimeJobHandle.current = nil
@@ -5752,6 +5850,7 @@ func runSuspendEntryLoopWithContinuation(
         }
         if result != suspendedToken {
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
+            RuntimeContinuationState.removeState(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
             outThrown?.pointee = 0
             RuntimeJobHandle.current = nil
@@ -5761,6 +5860,7 @@ func runSuspendEntryLoopWithContinuation(
         }
         guard let state = runtimeContinuationState(from: continuation) else {
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
+            RuntimeContinuationState.removeState(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
             outThrown?.pointee = 0
             RuntimeJobHandle.current = nil
@@ -5776,9 +5876,11 @@ func runSuspendEntryLoopWithContinuation(
             // GCD thread.  Re-install the task key so the scope map lookup
             // still works.
             RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
+            RuntimeContinuationState.removeState(forTask: taskKeyBox.key)
             let freshKey = RuntimeCoroutineScopeTaskKey.installFreshKey()
             taskKeyBox.key = freshKey
             RuntimeCoroutineScope.installScope(state.scope, forTask: freshKey)
+            RuntimeContinuationState.installState(state, forTask: freshKey)
             RuntimeJobHandle.current = state.jobHandle
             // Reset stale resume state from the previous cycle before
             // re-entering the loop.  Must happen here (not before
@@ -5798,7 +5900,119 @@ func runSuspendEntryLoopWithContinuation(
 
     // Break the strong reference cycle: loopBodyBox -> closure -> loopBodyBox
     loopBodyBox.body = nil
+    RuntimeCoroutineScope.removeScope(forTask: currentTaskKey)
+    RuntimeContinuationState.removeState(forTask: currentTaskKey)
+    RuntimeCoroutineScopeTaskKey.removeKey()
     RuntimeJobHandle.current = nil
 
     return resultBox.value
+}
+
+// MARK: - STDLIB-CORO-068: Suspend Function Invocation
+
+/// Invoke a suspend function with 0 arguments using continuation-passing style.
+/// This is the runtime implementation for `kk_suspend_function_invoke_0`.
+@_silgen_name("kk_suspend_function_invoke_0")
+public func kk_suspend_function_invoke_0(
+    _ functionRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let continuationState = RuntimeContinuationState.current else {
+        // Not in a suspend context - this shouldn't happen for proper suspend functions
+        outThrown?.pointee = 0
+        return 0
+    }
+    
+    // Install continuation for the suspend point
+    var result: Int = 0
+    var thrownException: Int = 0
+    
+    continuationState.installResumeContinuation {
+        // When resumed, execute the suspend function
+        let functionPtr = UnsafeMutableRawPointer(bitPattern: functionRaw)
+        let callResult: Int
+        let thrownException: Int
+        if let functionPtr {
+            // Call the suspend function (this will be a generated function that takes continuation)
+            typealias SuspendFunctionType = @convention(c) (Int) -> Int
+            let suspendFunction = unsafeBitCast(functionPtr, to: SuspendFunctionType.self)
+            callResult = suspendFunction(Int(bitPattern: Unmanaged.passUnretained(continuationState).toOpaque()))
+            thrownException = 0
+        } else {
+            callResult = 0
+            thrownException = runtimeAllocateThrowable(message: "NullPointerException")
+        }
+        
+        // Store results in continuation state
+        continuationState.resume(with: callResult)
+        if thrownException != 0 {
+            continuationState.resume(withException: thrownException)
+        }
+    }
+    
+    // Suspend until the function completes
+    continuationState.waitForResumeSignal()
+    
+    // Extract results
+    thrownException = continuationState.thrownException
+    if thrownException != 0 {
+        outThrown?.pointee = thrownException
+        return 0
+    }
+    
+    return Int(continuationState.completion)
+}
+
+/// Invoke a suspend function with 1 argument using continuation-passing style.
+/// This is the runtime implementation for `kk_suspend_function_invoke`.
+@_silgen_name("kk_suspend_function_invoke")
+public func kk_suspend_function_invoke(
+    _ functionRaw: Int,
+    _ arg: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let continuationState = RuntimeContinuationState.current else {
+        // Not in a suspend context - this shouldn't happen for proper suspend functions
+        outThrown?.pointee = 0
+        return 0
+    }
+    
+    // Install continuation for the suspend point
+    var result: Int = 0
+    var thrownException: Int = 0
+    
+    continuationState.installResumeContinuation {
+        // When resumed, execute the suspend function
+        let functionPtr = UnsafeMutableRawPointer(bitPattern: functionRaw)
+        let callResult: Int
+        let thrownException: Int
+        if let functionPtr {
+            // Call the suspend function (this will be a generated function that takes continuation)
+            typealias SuspendFunctionType = @convention(c) (Int, Int) -> Int
+            let suspendFunction = unsafeBitCast(functionPtr, to: SuspendFunctionType.self)
+            callResult = suspendFunction(arg, Int(bitPattern: Unmanaged.passUnretained(continuationState).toOpaque()))
+            thrownException = 0
+        } else {
+            callResult = 0
+            thrownException = runtimeAllocateThrowable(message: "NullPointerException")
+        }
+        
+        // Store results in continuation state
+        continuationState.resume(with: callResult)
+        if thrownException != 0 {
+            continuationState.resume(withException: thrownException)
+        }
+    }
+    
+    // Suspend until the function completes
+    continuationState.waitForResumeSignal()
+    
+    // Extract results
+    thrownException = continuationState.thrownException
+    if thrownException != 0 {
+        outThrown?.pointee = thrownException
+        return 0
+    }
+    
+    return Int(continuationState.completion)
 }
