@@ -1497,7 +1497,7 @@ public func kk_kxmini_produce_with_cont(_ entryPointRaw: Int, _ continuation: In
         )
         RuntimeCoroutineScope.current = nil
         _ = kk_channel_close(channelHandle)
-        job.complete(with: result)
+        _ = job.complete(with: result)
     }
     return channelHandle
 }
@@ -2292,17 +2292,18 @@ private func runtimeFlowApplyStreamOps(
             
             // 遅延がある場合は実際に待機する
             if intervalMs > 0 {
-                let group = DispatchGroup()
+                var finalDelayed: [RuntimeFlowEvent] = []
+                
+                // 同期的に各イベントの遅延を計算
                 for (index, event) in currentEvents.enumerated() {
-                    group.enter()
-                    DispatchQueue.global().asyncAfter(deadline: .now() + .milliseconds(intervalMs * index)) {
-                        delayed.append(RuntimeFlowEvent(value: event.value, timestamp: event.timestamp + intervalNs * UInt64(index + 1)))
-                        group.leave()
-                    }
+                    let delayedEvent = RuntimeFlowEvent(
+                        value: event.value, 
+                        timestamp: event.timestamp + intervalNs * UInt64(index + 1)
+                    )
+                    finalDelayed.append(delayedEvent)
                 }
-                group.wait()
-            } else {
-                // 遅延がない場合はタイムスタンプのみ操作
+                delayed = finalDelayed
+            } else {  // 遅延がない場合はタイムスタンプのみ操作
                 for event in currentEvents {
                     delayed.append(RuntimeFlowEvent(value: event.value, timestamp: event.timestamp + intervalNs))
                 }
