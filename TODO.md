@@ -169,43 +169,47 @@ Phase は **依存関係**順（難易度ではない）。
     - Phase 1 配下の `STDLIB-002` 〜 `STDLIB-005` がすべて完了している
     - ギャップ表の対象行について、少なくとも `×` が残らず、未対応分は `KSWIFTK-*` で明示的に落ちる
     - 追加した diff/golden ケースがこの Phase の責務であると追跡できる
-  - [ ] STDLIB-002: スコープ関数 (`let` / `run` / `with` / `apply` / `also` / `takeIf` / `takeUnless`) の境界条件を詰める
-    - **A**: nullability・receiver あり/なし・ラムダ戻り値・ネスト時の解決順を公式 API に合わせる
-    - **B**: `StdlibFunctionLowerer.swift` / call lowering で inline 展開時の receiver 評価順と副作用 1 回性を固定する
-    - **C**: inline で落とせない経路がある場合に備え、必要な `kk_*` フォールバック有無を明示する
-    - **テスト**: `Scripts/diff_cases/scope_functions.kt`, `takeif_takeunless.kt`, `takeif_takeunless_advanced.kt`, `lambda_with_receiver.kt`
-    - **完了条件**:
-      - 対象 API について receiver が 1 回だけ評価されるケースを diff で確認できる
-      - nullable receiver, nested call, labeled return を含む少なくとも 1 件ずつのケースがある
-      - inline 展開で処理する API と runtime fallback に逃がす API の境界がコード上で明確である
-      - 未対応 overload があるなら `TODO.md` に残タスクとして分離されている
-  - [ ] STDLIB-003: `Char` 系 API の未整備領域を埋める
-    - **A**: `isDigit` / `isLetter` / `digitToInt` / case conversion / escape 表現の宣言と診断を整合させる
-    - **B**: [`HeaderHelpers+SyntheticCharStubs.swift`](Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticCharStubs.swift) の `CharCategory` / `CharDirectionality` TODO を解消する
-    - **C**: [`RuntimeStringArray.swift`](Sources/Runtime/RuntimeStringArray.swift) と `RuntimeChar` 系の ABI 公開面を `RuntimeABISpec` と照合する
-    - **テスト**: `Scripts/diff_cases/char_operations.kt`, `char_predicates.kt`, `char_digit_to_int.kt`, `char_case.kt`, `char_escape.kt`, `char_int_conversion.kt`, `char_arithmetic.kt`
-    - **完了条件**:
-      - `CharCategory` / `CharDirectionality` の扱いが stub TODO ではなく明示実装または明示非対応になっている
-      - 正常系に加えて invalid radix / invalid char の失敗系が診断または例外として固定されている
-      - `Char` API 追加分が `RuntimeABISpec` と runtime tests の両方で追えている
-  - [ ] STDLIB-004: `Array` / primitive array の生成・変換・インデックス境界を整理する
-    - **A**: `arrayOf` / コンストラクタ / primitive array / 変換 API の宣言網羅を確認する
-    - **B**: 配列 special-case lowering と vararg 展開の整合を確認する
-    - **C**: `kk_array_*` の in-bounds / out-of-bounds / boxing 経路を ABI テストと揃える
-    - **テスト**: `Scripts/diff_cases/array_of.kt`, `array_constructor.kt`, `array_conversions.kt`, `array_primitive_types.kt`, `array_index.kt`, `test_empty_array.kt`
-    - **完了条件**:
-      - 空配列、単要素、多要素、primitive array、boxing を少なくとも 1 件ずつ diff で通す
-      - out-of-bounds と type safety の失敗ケースが golden または runtime test で固定される
-      - vararg 展開と array constructor の lowering 差分が回帰しない形でテスト化されている
-  - [ ] STDLIB-005: `kotlin.text` の文字列変換・分割・置換の端ケースを揃える
-    - **A**: `lines` / `lineSequence` / `substringBefore*` / `replaceFirstChar` / encoding 変換の common 範囲を確認する
-    - **B**: lowering で String intrinsic と通常 call の分岐があれば差分を洗う
-    - **C**: 既存 `RuntimeStringArray` 実装の例外メッセージと `KSWIFTK-*` 診断の責務境界を明確にする
-    - **テスト**: `Scripts/diff_cases/string_lines.kt`, `string_linesequence.kt`, `string_linesequence_lazy.kt`, `string_substring_before_after.kt`, `string_replace_first_char.kt`, `string_replace_first_range.kt`, `string_encode_charset.kt`, `string_tobytearray_charset.kt`, `bytearray_decode_charset.kt`
-    - **完了条件**:
-      - eager (`lines`) と lazy (`lineSequence`) の違いが観測できるケースを保持する
-      - 空文字列、区切り未存在、先頭/末尾一致、非 ASCII 文字列を含むケースを最低 1 件ずつ持つ
-      - encoding 変換で成功系と失敗系の責務が runtime exception か compile diagnostics か整理されている
+
+- [ ] STDLIB-002: スコープ関数 (`let` / `run` / `with` / `apply` / `also` / `takeIf` / `takeUnless`) の境界条件を詰める
+  - **A**: nullability・receiver あり/なし・ラムダ戻り値・ネスト時の解決順を公式 API に合わせる
+  - **B**: `StdlibFunctionLowerer.swift` / call lowering で inline 展開時の receiver 評価順と副作用 1 回性を固定する
+  - **C**: inline で落とせない経路がある場合に備え、必要な `kk_*` フォールバック有無を明示する
+  - **テスト**: `Scripts/diff_cases/scope_functions.kt`, `takeif_takeunless.kt`, `takeif_takeunless_advanced.kt`, `lambda_with_receiver.kt`
+  - **完了条件**:
+    - 対象 API について receiver が 1 回だけ評価されるケースを diff で確認できる
+    - nullable receiver, nested call, labeled return を含む少なくとも 1 件ずつのケースがある
+    - inline 展開で処理する API と runtime fallback に逃がす API の境界がコード上で明確である
+    - 未対応 overload があるなら `TODO.md` に残タスクとして分離されている
+
+- [ ] STDLIB-003: `Char` 系 API の未整備領域を埋める
+  - **A**: `isDigit` / `isLetter` / `digitToInt` / case conversion / escape 表現の宣言と診断を整合させる
+  - **B**: [`HeaderHelpers+SyntheticCharStubs.swift`](Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticCharStubs.swift) の `CharCategory` / `CharDirectionality` TODO を解消する
+  - **C**: [`RuntimeStringArray.swift`](Sources/Runtime/RuntimeStringArray.swift) と `RuntimeChar` 系の ABI 公開面を `RuntimeABISpec` と照合する
+  - **テスト**: `Scripts/diff_cases/char_operations.kt`, `char_predicates.kt`, `char_digit_to_int.kt`, `char_case.kt`, `char_escape.kt`, `char_int_conversion.kt`, `char_arithmetic.kt`
+  - **完了条件**:
+    - `CharCategory` / `CharDirectionality` の扱いが stub TODO ではなく明示実装または明示非対応になっている
+    - 正常系に加えて invalid radix / invalid char の失敗系が診断または例外として固定されている
+    - `Char` API 追加分が `RuntimeABISpec` と runtime tests の両方で追えている
+
+- [ ] STDLIB-004: `Array` / primitive array の生成・変換・インデックス境界を整理する
+  - **A**: `arrayOf` / コンストラクタ / primitive array / 変換 API の宣言網羅を確認する
+  - **B**: 配列 special-case lowering と vararg 展開の整合を確認する
+  - **C**: `kk_array_*` の in-bounds / out-of-bounds / boxing 経路を ABI テストと揃える
+  - **テスト**: `Scripts/diff_cases/array_of.kt`, `array_constructor.kt`, `array_conversions.kt`, `array_primitive_types.kt`, `array_index.kt`, `test_empty_array.kt`
+  - **完了条件**:
+    - 空配列、単要素、多要素、primitive array、boxing を少なくとも 1 件ずつ diff で通す
+    - out-of-bounds と type safety の失敗ケースが golden または runtime test で固定される
+    - vararg 展開と array constructor の lowering 差分が回帰しない形でテスト化されている
+
+- [ ] STDLIB-005: `kotlin.text` の文字列変換・分割・置換の端ケースを揃える
+  - **A**: `lines` / `lineSequence` / `substringBefore*` / `replaceFirstChar` / encoding 変換の common 範囲を確認する
+  - **B**: lowering で String intrinsic と通常 call の分岐があれば差分を洗う
+  - **C**: 既存 `RuntimeStringArray` 実装の例外メッセージと `KSWIFTK-*` 診断の責務境界を明確にする
+  - **テスト**: `Scripts/diff_cases/string_lines.kt`, `string_linesequence.kt`, `string_linesequence_lazy.kt`, `string_substring_before_after.kt`, `string_replace_first_char.kt`, `string_replace_first_range.kt`, `string_encode_charset.kt`, `string_tobytearray_charset.kt`, `bytearray_decode_charset.kt`
+  - **完了条件**:
+    - eager (`lines`) と lazy (`lineSequence`) の違いが観測できるケースを保持する
+    - 空文字列、区切り未存在、先頭/末尾一致、非 ASCII 文字列を含むケースを最低 1 件ずつ持つ
+    - encoding 変換で成功系と失敗系の責務が runtime exception か compile diagnostics か整理されている
 
 ### Phase 2: コレクション・Sequence・Range
 
@@ -214,43 +218,47 @@ Phase は **依存関係**順（難易度ではない）。
     - Phase 2 配下の `STDLIB-020` 〜 `STDLIB-023` がすべて完了している
     - collection / sequence / range の各行で、未対応がある場合は残 task が個別に切られている
     - lazy 性、mutation、境界条件の 3 軸で回帰テストがある
-  - [ ] STDLIB-020: `Sequence` の lazy 性と builder 系 API の評価順を固定する
-    - **A**: `sequenceOf` / `generateSequence` / `yield` / `yieldAll` / iterator builder の宣言差分を洗う
-    - **B**: `CollectionLiteralLoweringPass` と sequence lowering の plus/minus・builder rewrite の重複 TODO を解消する
-    - **C**: [`RuntimeSequence.swift`](Sources/Runtime/RuntimeSequence.swift) の iterator 例外・invalid handle・Pair/Map 変換経路を ABI 仕様に合わせる
-    - **テスト**: `Scripts/diff_cases/sequence_lazy.kt`, `sequence_lazy_eval.kt`, `sequence_of_generate.kt`, `sequence_takewhile_dropwhile.kt`, `sequence_drop_distinct_zip.kt`, `sequence_fold_reduce_indexed.kt`, `sequence_forEach_flatMap.kt`, `sequence_join_to_string.kt`
-    - **完了条件**:
-      - lazy evaluation が副作用カウンタなどで可視化されたケースを最低 2 件持つ
-      - builder (`yield` / `yieldAll`) と generator (`generateSequence`) の両系統がカバーされる
-      - plus/minus rewrite の重複 TODO が消えているか、残すなら独立 task になっている
-      - iterator の失敗系が runtime tests で拘束されている
-  - [ ] STDLIB-021: mutable collection 変換 API と destination variant の差分を潰す
-    - **A**: `associate*` / `zip` / `unzip` / `binarySearch` / `shuffle` / `sort` / `putAll` / `removeAll` / `retainAll` を公式宣言と突き合わせる
-    - **B**: collection helper lowering の overload 解決と comparator 伝播を確認する
-    - **C**: [`RuntimeCollections.swift`](Sources/Runtime/RuntimeCollections.swift) の mutation 後整合性・順序保証・比較器保持を点検する
-    - **テスト**: `Scripts/diff_cases/list_associate_by.kt`, `list_associate_with.kt`, `list_zip.kt`, `list_unzip.kt`, `list_binary_search.kt`, `mutable_list_sort.kt`, `mutable_list_shuffle_reverse.kt`, `mutable_map_putall.kt`, `mutable_set_removeall_retainall.kt`
-    - **完了条件**:
-      - 破壊的更新 API と非破壊 API を取り違えていないことを diff で確認する
-      - 順序保証が重要な API で LinkedHash 系の期待順序をテスト化する
-      - comparator あり/なし両方の経路が最低 1 件ずつある
-  - [ ] STDLIB-022: range / progression / unsigned range の網羅性を上げる
-    - **A**: `until` / `downTo` / `step` / `coerce*` / `UIntRange` / `ULongRange` / empty progression を整理する
-    - **B**: range lowering と compare/intrinsic 展開が signed/unsigned で一貫するようにする
-    - **C**: Range 系 `kk_*` の invalid handle panic とユーザー向け診断の境界を見直す
-    - **テスト**: `Scripts/diff_cases/range_basic.kt`, `range_properties.kt`, `long_range.kt`, `unsigned_integers.kt`, `coercein.kt`, `coerce_long.kt`, `numeric_coercion.kt`
-    - **完了条件**:
-      - increasing / decreasing / empty progression をそれぞれ最低 1 件持つ
-      - signed / unsigned で同名 API を使うケースを並べて差分確認できる
-      - `coerce*` は境界内、下限超過、上限超過をすべて持つ
-  - [ ] STDLIB-023: `kotlin.enums` の `entries` / `enumEntries<T>()` 周辺を固める
-    - **A**: `EnumEntries` / `enumValues<T>()` / `enumValueOf<T>()` の宣言と inline reified 制約を確認する
-    - **B**: [`HeaderHelpers+SyntheticEnumStubs.swift`](Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticEnumStubs.swift) と lowering で generic helper が正しく選ばれるようにする
-    - **C**: ランタイム側で `name` / `ordinal` / `entries` の安定順序を保証する
-    - **テスト**: `Scripts/diff_cases/enum_basic.kt`, `enum_entries.kt`, `enum_entries_function.kt`, `enum_values.kt`, `enum_value_of.kt`, `enum_name_ordinal.kt`, `enum_edge_cases.kt`, `enum_init_order.kt`
-    - **完了条件**:
-      - `entries`, `enumValues<T>()`, `enumValueOf<T>()` の 3 系統がすべて通る
-      - invalid name の失敗系と初期化順序が golden または diff で固定される
-      - enum helper の generic / reified 解決が sema 側でも確認できる
+
+- [ ] STDLIB-020: `Sequence` の lazy 性と builder 系 API の評価順を固定する
+  - **A**: `sequenceOf` / `generateSequence` / `yield` / `yieldAll` / iterator builder の宣言差分を洗う
+  - **B**: `CollectionLiteralLoweringPass` と sequence lowering の plus/minus・builder rewrite の重複 TODO を解消する
+  - **C**: [`RuntimeSequence.swift`](Sources/Runtime/RuntimeSequence.swift) の iterator 例外・invalid handle・Pair/Map 変換経路を ABI 仕様に合わせる
+  - **テスト**: `Scripts/diff_cases/sequence_lazy.kt`, `sequence_lazy_eval.kt`, `sequence_of_generate.kt`, `sequence_takewhile_dropwhile.kt`, `sequence_drop_distinct_zip.kt`, `sequence_fold_reduce_indexed.kt`, `sequence_forEach_flatMap.kt`, `sequence_join_to_string.kt`
+  - **完了条件**:
+    - lazy evaluation が副作用カウンタなどで可視化されたケースを最低 2 件持つ
+    - builder (`yield` / `yieldAll`) と generator (`generateSequence`) の両系統がカバーされる
+    - plus/minus rewrite の重複 TODO が消えているか、残すなら独立 task になっている
+    - iterator の失敗系が runtime tests で拘束されている
+
+- [ ] STDLIB-021: mutable collection 変換 API と destination variant の差分を潰す
+  - **A**: `associate*` / `zip` / `unzip` / `binarySearch` / `shuffle` / `sort` / `putAll` / `removeAll` / `retainAll` を公式宣言と突き合わせる
+  - **B**: collection helper lowering の overload 解決と comparator 伝播を確認する
+  - **C**: [`RuntimeCollections.swift`](Sources/Runtime/RuntimeCollections.swift) の mutation 後整合性・順序保証・比較器保持を点検する
+  - **テスト**: `Scripts/diff_cases/list_associate_by.kt`, `list_associate_with.kt`, `list_zip.kt`, `list_unzip.kt`, `list_binary_search.kt`, `mutable_list_sort.kt`, `mutable_list_shuffle_reverse.kt`, `mutable_map_putall.kt`, `mutable_set_removeall_retainall.kt`
+  - **完了条件**:
+    - 破壊的更新 API と非破壊 API を取り違えていないことを diff で確認する
+    - 順序保証が重要な API で LinkedHash 系の期待順序をテスト化する
+    - comparator あり/なし両方の経路が最低 1 件ずつある
+
+- [ ] STDLIB-022: range / progression / unsigned range の網羅性を上げる
+  - **A**: `until` / `downTo` / `step` / `coerce*` / `UIntRange` / `ULongRange` / empty progression を整理する
+  - **B**: range lowering と compare/intrinsic 展開が signed/unsigned で一貫するようにする
+  - **C**: Range 系 `kk_*` の invalid handle panic とユーザー向け診断の境界を見直す
+  - **テスト**: `Scripts/diff_cases/range_basic.kt`, `range_properties.kt`, `long_range.kt`, `unsigned_integers.kt`, `coercein.kt`, `coerce_long.kt`, `numeric_coercion.kt`
+  - **完了条件**:
+    - increasing / decreasing / empty progression をそれぞれ最低 1 件持つ
+    - signed / unsigned で同名 API を使うケースを並べて差分確認できる
+    - `coerce*` は境界内、下限超過、上限超過をすべて持つ
+
+- [ ] STDLIB-023: `kotlin.enums` の `entries` / `enumEntries<T>()` 周辺を固める
+  - **A**: `EnumEntries` / `enumValues<T>()` / `enumValueOf<T>()` の宣言と inline reified 制約を確認する
+  - **B**: [`HeaderHelpers+SyntheticEnumStubs.swift`](Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticEnumStubs.swift) と lowering で generic helper が正しく選ばれるようにする
+  - **C**: ランタイム側で `name` / `ordinal` / `entries` の安定順序を保証する
+  - **テスト**: `Scripts/diff_cases/enum_basic.kt`, `enum_entries.kt`, `enum_entries_function.kt`, `enum_values.kt`, `enum_value_of.kt`, `enum_name_ordinal.kt`, `enum_edge_cases.kt`, `enum_init_order.kt`
+  - **完了条件**:
+    - `entries`, `enumValues<T>()`, `enumValueOf<T>()` の 3 系統がすべて通る
+    - invalid name の失敗系と初期化順序が golden または diff で固定される
+    - enum helper の generic / reified 解決が sema 側でも確認できる
 
 ### Phase 3: I/O・パス・時間・並行（common 範囲）
 
@@ -259,47 +267,183 @@ Phase は **依存関係**順（難易度ではない）。
     - Phase 3 配下の `STDLIB-030` 〜 `STDLIB-033` がすべて完了している
     - file/time/concurrency それぞれで happy path と failure path の両方がある
     - ABI 追加がある場合は `RuntimeABISpec.specVersion` 更新要否を判断済みである
-  - [ ] STDLIB-030: `kotlin.io` common 範囲の file / buffered / `use` を仕様単位で締める
-    - **A**: common と Native で意味のある `File`, buffered reader/writer, temp file/dir, `use` の対象 API を棚卸しする
-    - **B**: [`HeaderHelpers+SyntheticTODOAndIOStubs.swift`](Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticTODOAndIOStubs.swift) と [`HeaderHelpers+SyntheticFileIOStubs.swift`](Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticFileIOStubs.swift) の宣言を実装と一致させる
-    - **C**: [`RuntimeFileIO.swift`](Sources/Runtime/RuntimeFileIO.swift) の close 保障、例外経路、テンポラリ生成、存在確認 API を ABI テストで拘束する
-    - **テスト**: `Scripts/diff_cases/file_basic.kt`, `file_exists.kt`, `file_props.kt`, `file_walk.kt`, `buffered_io.kt`, `closeable_use.kt`
-    - **完了条件**:
-      - open/read/write/close/use の主要ライフサイクルが一連で通る
-      - close 時例外、存在しないパス、テンポラリ生成、walk の少なくとも 1 件ずつがある
-      - resource leak を防ぐ観点で `use` の正常系と例外系が固定されている
-  - [ ] STDLIB-031: `kotlin.io.encoding`（Base64 / `HexFormat`）を独立に前進させる
-    - **A**: 公式 API の common / Native 対応範囲を確認し、対象宣言を `TODO.md` 上で明文化する
-    - **B**: 合成スタブ未整備なら専用 `Synthetic*` 追加、既存 string/bytearray helper で賄うならその方針を固定する
-    - **C**: 専用 `kk_*` を導入するか既存 ABI を再利用するか決め、`RuntimeABISpec` で section を起こす
-    - **テスト**: `Scripts/diff_cases/hexformat_basic.kt`, `string_encode_charset.kt`, `bytearray_decode_charset.kt`
-    - **完了条件**:
-      - Base64 と `HexFormat` のどちらをこの task の対象に含めるかを本文に明記する
-      - encode/decode の往復成功ケースと不正入力失敗ケースを最低 1 件ずつ持つ
-      - 専用 ABI を増やした場合は section 名と parity test が追加される
-  - [ ] STDLIB-032: `kotlin.time` の stable API と experimental API の境界を整理する
-    - **A**: `Duration`, `Instant`, `measureTime*`, `Clock.System`, `TimeSource`, `TimeMark` のどこまでを stable 扱いで追うか確定する
-    - **B**: [`HeaderHelpers+SyntheticExperimentalTimeStubs.swift`](Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticExperimentalTimeStubs.swift) / [`HeaderHelpers+SyntheticPlatformTimeConversionStubs.swift`](Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticPlatformTimeConversionStubs.swift) の生成宣言を監査する
-    - **C**: [`RuntimeDuration.swift`](Sources/Runtime/RuntimeDuration.swift), [`RuntimeInstant.swift`](Sources/Runtime/RuntimeInstant.swift), [`RuntimeTime.swift`](Sources/Runtime/RuntimeTime.swift) の ABI と invalid handle 振る舞いを揃える
-    - **テスト**: `Scripts/diff_cases/measure_time.kt`, `measure_timed_value.kt`, `measure_time_duration.kt`, `duration_long_factory.kt`, `instant_basic.kt`, `clock_basic.kt`, `experimental_time.kt`, `platform_time_conversion.kt`, `system_nano_time.kt`
-    - **完了条件**:
-      - stable 範囲と experimental 範囲が task 内で明文化され、未対応が混在しない
-      - `Duration`, `Instant`, `measureTime*` の 3 系統に最低 1 件ずつの diff または runtime test がある
-      - invalid handle / overflow / negative duration などの境界が runtime tests で固定される
-  - [ ] STDLIB-033: `kotlin.concurrent` / `kotlin.concurrent.atomics` / Native concurrent の parity を上げる
-    - **A**: `synchronized`, `Atomic*`, `AtomicReference`, experimental/native concurrent の対象 API を切り分ける
-    - **B**: sema / lowering で typealias・generic atomics・cancellation 連携が破綻しないことを確認する
-    - **C**: [`RuntimeAtomic.swift`](Sources/Runtime/RuntimeAtomic.swift) と coroutine state runtime の例外・CAS・update 系整合を詰める
-    - **テスト**: `Scripts/diff_cases/atomic_basic.kt`, `experimental_atomic.kt`, `mutex_basic.kt`, `coroutine_cancellation.kt`
-    - **完了条件**:
-      - scalar atomics と `AtomicReference` 系が別ケースで確認できる
-      - CAS / exchange / updateAndGet / getAndUpdate の主要更新 API が少なくとも 1 回ずつ使われる
-      - cancellation と atomics の組み合わせで回帰しないことを runtime or diff で確認する
+
+- [ ] STDLIB-030: `kotlin.io` common 範囲の file / buffered / `use` を仕様単位で締める
+  - **A**: common と Native で意味のある `File`, buffered reader/writer, temp file/dir, `use` の対象 API を棚卸しする
+  - **B**: [`HeaderHelpers+SyntheticTODOAndIOStubs.swift`](Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticTODOAndIOStubs.swift) と [`HeaderHelpers+SyntheticFileIOStubs.swift`](Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticFileIOStubs.swift) の宣言を実装と一致させる
+  - **C**: [`RuntimeFileIO.swift`](Sources/Runtime/RuntimeFileIO.swift) の close 保障、例外経路、テンポラリ生成、存在確認 API を ABI テストで拘束する
+  - **テスト**: `Scripts/diff_cases/file_basic.kt`, `file_exists.kt`, `file_props.kt`, `file_walk.kt`, `buffered_io.kt`, `closeable_use.kt`
+  - **完了条件**:
+    - open/read/write/close/use の主要ライフサイクルが一連で通る
+    - close 時例外、存在しないパス、テンポラリ生成、walk の少なくとも 1 件ずつがある
+    - resource leak を防ぐ観点で `use` の正常系と例外系が固定されている
+
+- [ ] STDLIB-031: `kotlin.io.encoding`（Base64 / `HexFormat`）を独立に前進させる
+  - **A**: 公式 API の common / Native 対応範囲を確認し、対象宣言を `TODO.md` 上で明文化する
+  - **B**: 合成スタブ未整備なら専用 `Synthetic*` 追加、既存 string/bytearray helper で賄うならその方針を固定する
+  - **C**: 専用 `kk_*` を導入するか既存 ABI を再利用するか決め、`RuntimeABISpec` で section を起こす
+  - **テスト**: `Scripts/diff_cases/hexformat_basic.kt`, `string_encode_charset.kt`, `bytearray_decode_charset.kt`
+  - **完了条件**:
+    - Base64 と `HexFormat` のどちらをこの task の対象に含めるかを本文に明記する
+    - encode/decode の往復成功ケースと不正入力失敗ケースを最低 1 件ずつ持つ
+    - 専用 ABI を増やした場合は section 名と parity test が追加される
+
+- [ ] STDLIB-032: `kotlin.time` の stable API と experimental API の境界を整理する
+  - **A**: `Duration`, `Instant`, `measureTime*`, `Clock.System`, `TimeSource`, `TimeMark` のどこまでを stable 扱いで追うか確定する
+  - **B**: [`HeaderHelpers+SyntheticExperimentalTimeStubs.swift`](Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticExperimentalTimeStubs.swift) / [`HeaderHelpers+SyntheticPlatformTimeConversionStubs.swift`](Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticPlatformTimeConversionStubs.swift) の生成宣言を監査する
+  - **C**: [`RuntimeDuration.swift`](Sources/Runtime/RuntimeDuration.swift), [`RuntimeInstant.swift`](Sources/Runtime/RuntimeInstant.swift), [`RuntimeTime.swift`](Sources/Runtime/RuntimeTime.swift) の ABI と invalid handle 振る舞いを揃える
+  - **テスト**: `Scripts/diff_cases/measure_time.kt`, `measure_timed_value.kt`, `measure_time_duration.kt`, `duration_long_factory.kt`, `instant_basic.kt`, `clock_basic.kt`, `experimental_time.kt`, `platform_time_conversion.kt`, `system_nano_time.kt`
+  - **完了条件**:
+    - stable 範囲と experimental 範囲が task 内で明文化され、未対応が混在しない
+    - `Duration`, `Instant`, `measureTime*` の 3 系統に最低 1 件ずつの diff または runtime test がある
+    - invalid handle / overflow / negative duration などの境界が runtime tests で固定される
+
+- [ ] STDLIB-033: `kotlin.concurrent` / `kotlin.concurrent.atomics` / Native concurrent の parity を上げる
+  - **A**: `synchronized`, `Atomic*`, `AtomicReference`, experimental/native concurrent の対象 API を切り分ける
+  - **B**: sema / lowering で typealias・generic atomics・cancellation 連携が破綻しないことを確認する
+  - **C**: [`RuntimeAtomic.swift`](Sources/Runtime/RuntimeAtomic.swift) と coroutine state runtime の例外・CAS・update 系整合を詰める
+  - **テスト**: `Scripts/diff_cases/atomic_basic.kt`, `experimental_atomic.kt`, `mutex_basic.kt`, `coroutine_cancellation.kt`
+  - **完了条件**:
+    - scalar atomics と `AtomicReference` 系が別ケースで確認できる
+    - CAS / exchange / updateAndGet / getAndUpdate の主要更新 API が少なくとも 1 回ずつ使われる
+    - cancellation と atomics の組み合わせで回帰しないことを runtime or diff で確認する
 
 ### Phase 4: リフレクション・数値・テキスト・その他 stdlib
 
+- [ ] STDLIB-GAP-PH4: ギャップ表で `kotlin.math` / `kotlin.random` / `kotlin.reflect` / `kotlin.comparisons` / `kotlin.annotation` / `kotlin.system` / `kotlin.uuid` / `kotlin.native` 周辺の **部分** を潰す
+  - **完了条件**:
+    - Phase 4 配下の未完了 `STDLIB-*` がすべて完了している
+    - ギャップ表の Phase 4 対象行について、「部分」の理由が task 本文で説明できるか、もしくは `○` まで引き上がっている
+    - Phase 1〜4 完了時点で、対象スコープ内の未対応は独立 task か `KSWIFTK-*` 診断として追跡できる
+
 - [x] STDLIB-REFLECT-066: 型リフレクション（`KType` / `KTypeProjection` 等）
   - **関連**: [`RuntimeReflection.swift`](Sources/Runtime/RuntimeReflection.swift), `Scripts/diff_cases/type_reflection.kt`
+- [ ] STDLIB-REFLECT-067: `KClass` / metadata / メンバ introspection の残差を詰める
+  - **A**: `KClass` の kind 判定、qualified name、members、supertype 表現の対象範囲を固める
+  - **B**: codegen の reflection metadata emitter と sema で見える synthetic symbol が一致するようにする
+  - **C**: [`RuntimeReflection.swift`](Sources/Runtime/RuntimeReflection.swift) と `kk_kclass_*` ABI を runtime metadata tests / ABI parity で拘束する
+  - **テスト**: `Scripts/diff_cases/kclass_ktype_basic.kt`, `kclass_type_model.kt`, `type_reflection.kt`
+  - **完了条件**:
+    - `KType` だけでなく `KClass` 側の主要問い合わせ API が diff または runtime tests で観測できる
+    - metadata emitter / decoder / runtime accessor の 3 層が同じ前提で動く
+    - unsupported member reflection がある場合は silent failure ではなく task または診断で残る
+- [ ] STDLIB-MATH-001: `kotlin.math` の対象 API 一覧を固定する
+  - **A**: `abs`, `pow`, `sqrt`, 三角関数、対数、`PI` / `E`、丸め系 overload を対象群ごとに整理する
+  - **B**: overload ごとの型 (`Float` / `Double` / 整数系) を task 本文で明文化する
+  - **C**: 未対応 API は独立 task か診断方針へ落とす
+  - **テスト**: 既存 `math_*.kt` を参照
+  - **完了条件**:
+    - 定数・単項関数・二項関数・丸め系の 4 群が整理されている
+    - 無言欠落が残らない
+- [ ] STDLIB-MATH-002: `kotlin.math` の sema / lowering を overload 単位で整える
+  - **A**: [`HeaderHelpers+SyntheticMathStubs.swift`](Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticMathStubs.swift) の external link と宣言集合を見直す
+  - **B**: lowering で Float/Double/Int/Long の型選択が正しいことを確認する
+  - **C**: 未対応 overload は誤った別 overload に落ちないようにする
+  - **テスト**: `Scripts/diff_cases/math_float_overloads_edge.kt`, `math_extended.kt`
+  - **完了条件**:
+    - Float と Double の overload 差分が少なくとも 1 件ずつ見える
+    - 誤った overload 解決が golden または diff で回帰しない
+- [ ] STDLIB-MATH-003: `kotlin.math` の runtime / ABI と境界値を固定する
+  - **A**: [`RuntimeMath.swift`](Sources/Runtime/RuntimeMath.swift) の NaN/Infinity/負値/丸め境界を整理する
+  - **B**: 必要な `kk_math_*` ABI と parity を確認する
+  - **C**: rounding mode 系の振る舞いを runtime tests で拘束する
+  - **テスト**: `Scripts/diff_cases/math_advanced.kt`, `math_rounding_functions.kt`, `math_constants.kt`
+  - **完了条件**:
+    - NaN / Infinity / 負値 / 境界丸めのケースを含む
+    - ABI parity と runtime tests の両方で追える
+
+- [ ] STDLIB-RANDOM-001: `kotlin.random` の対象 API 一覧を固定する
+  - **A**: default random、seeded random、範囲指定 API、byte 配列充填、secure random の対象を整理する
+  - **B**: object API と instance API の境界を明文化する
+  - **C**: 未対応 API は独立 task か診断方針へ落とす
+  - **テスト**: 既存 `random_*.kt` を参照
+  - **完了条件**:
+    - default / seeded / secure の 3 系統が TODO から辿れる
+    - 無言欠落が残らない
+- [ ] STDLIB-RANDOM-002: `kotlin.random` の sema / lowering を整える
+  - **A**: `Random` object と拡張/メンバ呼び出しの解決を固定する
+  - **B**: range 引数や overload 選択が誤らないことを確認する
+  - **C**: unsupported API は誤って default random へ落ちないようにする
+  - **テスト**: `Scripts/diff_cases/random_extended.kt`, `random_seed.kt`
+  - **完了条件**:
+    - object 呼び出しと instance 呼び出しが別ケースで確認できる
+    - 範囲 API の型選択が回帰しない
+- [ ] STDLIB-RANDOM-003: `kotlin.random` の runtime / seed / 境界値を固定する
+  - **A**: [`RuntimeRandom.swift`](Sources/Runtime/RuntimeRandom.swift) の seed 再現性、範囲境界、secure random フォールバックを整理する
+  - **B**: 必要な ABI parity を確認する
+  - **C**: 不正引数の失敗系を runtime or diff で固定する
+  - **テスト**: `Scripts/diff_cases/random_seed.kt`, `secure_random.kt`, `random_extended.kt`
+  - **完了条件**:
+    - seeded 経路で再現性があるケースを最低 1 件持つ
+    - default random と secure random を別ケースで検証する
+    - 範囲境界と不正引数の失敗系を固定する
+
+- [ ] STDLIB-COMP-001: `kotlin.comparisons` helper の対象 API 一覧を固定する
+  - **A**: `compareValues`, `compareBy`, `thenBy`, `nullsFirst` / `nullsLast`, `maxBy*` / `minBy*` の対象を整理する
+  - **B**: selector 合成 helper と ordering helper を分けて整理する
+  - **C**: 未対応 helper は独立 task か診断方針へ落とす
+  - **テスト**: 既存 comparator 系 case を参照
+  - **完了条件**:
+    - helper 群の責務が分かれている
+    - 無言欠落が残らない
+- [ ] STDLIB-COMP-002: `Comparator` 合成の sema / lowering を整える
+  - **A**: comparator 合成が lowering 上で selector 順序を保つことを確認する
+  - **B**: null ordering helper が正しく解決されることを確認する
+  - **C**: comparator 合成順序が崩れたときに回帰検知できるようにする
+  - **テスト**: `Scripts/diff_cases/compareby_multi.kt`, `compare_values.kt`, `comparator_basic.kt`
+  - **完了条件**:
+    - selector 1 個と複数 selector の両方がある
+    - null ordering を伴う比較が少なくとも 1 件ある
+- [ ] STDLIB-COMP-003: `Comparator` runtime 表現と failure path を固定する
+  - **A**: comparator runtime の multi-selector 表現を整理する
+  - **B**: invalid comparator の失敗系を runtime tests で拘束する
+  - **C**: max/min helper が comparator と整合することを確認する
+  - **テスト**: `Scripts/diff_cases/list_maxby_minby.kt`, `list_max_min_with.kt`, runtime comparator tests
+  - **完了条件**:
+    - comparator 合成順序が変わると壊れるケースを回帰として保持する
+    - failure path が silent failure にならない
+
+- [ ] STDLIB-ANNO-001: `kotlin.annotation` / Native annotation の対象一覧を固定する
+  - **A**: annotation target、retention、repeatable / mustBeDocumented、Native 系 marker の対象範囲を整理する
+  - **B**: runtime 実装不要な annotation と runtime 露出が必要な annotation を分離する
+  - **C**: 未対応 annotation は独立 task か診断方針へ落とす
+  - **テスト**: 既存 annotation 系 case を参照
+  - **完了条件**:
+    - target/retention/Native marker の 3 群が整理されている
+    - 無言欠落が残らない
+- [ ] STDLIB-ANNO-002: annotation sema / diagnostics を整える
+  - **A**: annotation class と use-site / target 制約の診断を整える
+  - **B**: retention / target の成功系と失敗系を固定する
+  - **C**: Native marker の可視性条件が一貫するようにする
+  - **テスト**: `Scripts/diff_cases/annotation_basic.kt`, `deprecated_error.kt`, `native_annotations.kt`
+  - **完了条件**:
+    - target/retention の成功系と失敗系が最低 1 件ずつある
+    - annotation 由来診断が `KSWIFTK-*` で固定される
+
+- [ ] STDLIB-REGEX-001: `kotlin.text.Regex` の対象 API 一覧を固定する
+  - **A**: `Regex`, `RegexOption`, match / replace / split / named group の対象宣言を整理する
+  - **B**: compile-time に見える API と runtime 実装必須 API を分離する
+  - **C**: 未対応 API は独立 task か診断方針へ落とす
+  - **テスト**: 既存 regex 系 case を参照
+  - **完了条件**:
+    - compile / match / replace / split / named group の各群が TODO から辿れる
+    - 無言欠落が残らない
+- [ ] STDLIB-REGEX-002: `Regex` の sema / lowering を整える
+  - **A**: [`HeaderHelpers+SyntheticRegexStubs.swift`](Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticRegexStubs.swift) と lowering の解決経路を確認する
+  - **B**: option 組み合わせと helper 解決が正しいことを確認する
+  - **C**: unsupported API が誤った runtime helper に落ちないようにする
+  - **テスト**: `Scripts/diff_cases/regex_basic.kt`, `regex_options.kt`
+  - **完了条件**:
+    - option 組み合わせのケースがある
+    - 誤った helper 解決が回帰しない
+- [ ] STDLIB-REGEX-003: `Regex` runtime / ABI と failure path を固定する
+  - **A**: [`RuntimeRegex.swift`](Sources/Runtime/RuntimeRegex.swift) と `kk_regex_*` ABI の option 伝播、anchor、named group を整理する
+  - **B**: invalid pattern や unsupported replacement の失敗系を拘束する
+  - **C**: runtime tests / parity tests を追加する
+  - **テスト**: `Scripts/diff_cases/regex_option_dotmatchesall.kt`, runtime regex tests
+  - **完了条件**:
+    - named group と anchor のケースがある
+    - invalid pattern や unsupported replacement の失敗系が固定される
 - [ ] STDLIB-ASSERT-001: `assert` / `check` / `require`
   - **A**: lazy message 付き overload、smart cast を伴う contracts、`assert` 無効化時の評価抑止まで定義どおりに揃える
   - **B**: `contract { returns() implies ... }` を使う built-in 前提が sema に反映されるかを確認する
@@ -345,6 +489,15 @@ Phase は **依存関係**順（難易度ではない）。
     - intrinsics の対象/非対象が本文で区別されている
     - timeout, explicit cancel, regular exception の 3 経路が別テストで見える
     - cancellation exception 判定 API が runtime tests で拘束される
+- [ ] STDLIB-CORO-BASE-001: `kotlin.coroutines` 基盤 (`Continuation` / suspend primitive) の残差を詰める
+  - **A**: `Continuation`, `CoroutineContext`, suspend primitive として最低限必要な宣言を整理する
+  - **B**: coroutine lowering が suspend call / resume / throw channel を正しく下ろすことを確認する
+  - **C**: `RuntimeCoroutine` と周辺 ABI が continuation state machine と整合することを runtime / integration tests で拘束する
+  - **テスト**: `Scripts/diff_cases/suspend_functions.kt`, `coro_withcontext.kt`, `coroutine_launch_join.kt`
+  - **完了条件**:
+    - suspend 関数の正常終了、例外終了、resume 経路が別ケースで見える
+    - `Continuation` ベースの最小動作が diff または integration test で確認できる
+    - cancellation / intrinsics task と責務重複がない
 - [ ] STDLIB-CONTRACT-001: `kotlin.contracts` の effect model を整理する
   - **A**: smart cast に効く built-in contracts と、ユーザー定義 contract DSL のどこまでを通すかを明記する
   - **B**: sema の data-flow 反映と diagnostics を golden で固定する
@@ -354,15 +507,180 @@ Phase は **依存関係**順（難易度ではない）。
     - built-in contracts と user-defined DSL の扱いが明文化されている
     - smart cast 成功ケース、smart cast 不成立ケース、unsupported contract の診断ケースがある
     - runtime に依存しない task であることが TODO 上で分かる
-- [ ] STDLIB-NATIVE-REF-001: `kotlin.native.ref` / `kotlin.native.runtime` の対象 API を切り分ける
-  - **A**: Native で意味があるが現状未対応な宣言と、別計画送りにする API を分類する
-  - **B**: [`HeaderHelpers+SyntheticNativeInteropStubs.swift`](Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticNativeInteropStubs.swift) で露出している範囲を精査する
-  - **C**: 実行時サポートが必要なものだけ `RuntimeABISpec` に section を追加し、不要なものは `KSWIFTK-*` で明示的に落とす
+- [ ] STDLIB-NATIVE-REF-001: `kotlin.native.ref` / `kotlin.native.runtime` の API 棚卸しを固定する
+  - **A**: 対象 API、非対象 API、別計画 API の一覧を task 本文で明文化する
+  - **B**: [`HeaderHelpers+SyntheticNativeInteropStubs.swift`](Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticNativeInteropStubs.swift) で今見えている宣言との対応を取る
+  - **C**: runtime 実装が不要なものは ABI 対象外であることを明示する
   - **テスト**: `Scripts/diff_cases/platform_info.kt`, `kmp_common.kt`, `native_annotations.kt`
   - **完了条件**:
-    - 対象 API、非対象 API、別計画 API の 3 区分が本文に書かれている
-    - sema で見せるだけの API と runtime 実装が必要な API が分離されている
-    - 非対象 API は無言欠落ではなく、バックログまたは診断で辿れる
+    - API ごとの扱いが「対応」「診断で落とす」「別計画」に分類されている
+    - 無言欠落が残らない
+- [ ] STDLIB-NATIVE-REF-002: `kotlin.native.ref` / `kotlin.native.runtime` の sema 露出を整える
+  - **A**: 対応対象 API が sema から見えること、非対応 API が明示的に落ちることを確認する
+  - **B**: synthetic stub の型・可視性・annotation が対象定義と一致するようにする
+  - **C**: lowering が未対応 API を誤って runtime 呼び出しに落とさないことを確認する
+  - **テスト**: 専用 diff case 追加、または既存 Native 系 case に失敗系を追加
+  - **完了条件**:
+    - 見える API と見えない API の境界が golden で確認できる
+    - 非対応 API は `KSWIFTK-*` で落ちる
+- [ ] STDLIB-NATIVE-REF-003: `kotlin.native.ref` / `kotlin.native.runtime` で本当に必要な runtime / ABI だけを実装する
+  - **A**: `001` で「対応」とした API のうち runtime 実装が必要なものだけを対象にする
+  - **B**: 必要な `kk_*` と `RuntimeABISpec` section を追加する
+  - **C**: ABI parity と runtime tests で拘束する
+  - **テスト**: 対応対象 API ごとの runtime test
+  - **完了条件**:
+    - 追加した runtime API が parity test を通る
+    - sema だけで足りる API を過剰に ABI 化していない
+- [ ] STDLIB-SYSTEM-001: `kotlin.system` の対象 API 一覧を固定する
+  - **A**: `measureTimeMillis`, `measureNanoTime`, 現行 time helper との責務境界を整理する
+  - **B**: inline helper と runtime call のどちらで扱うかを API ごとに決める
+  - **C**: 未対応 API は独立 task か診断方針へ落とす
+  - **テスト**: 既存 system/time 系 case を参照
+  - **完了条件**:
+    - milli / nano の両系統が TODO から辿れる
+    - `kotlin.time` 系 task と責務重複しない
+- [ ] STDLIB-SYSTEM-002: `kotlin.system` の sema / lowering を整える
+  - **A**: system helper の解決経路を固定する
+  - **B**: inline 展開か runtime helper かの境界を明文化する
+  - **C**: time 系別 task と誤って混線しないことを確認する
+  - **テスト**: `Scripts/diff_cases/measure_time.kt`, `system_current_time_millis.kt`
+  - **完了条件**:
+    - system helper の呼び出し経路が回帰しない
+    - time 系 task と責務境界が明確である
+- [ ] STDLIB-SYSTEM-003: `kotlin.system` の runtime / 計測系テストを固定する
+  - **A**: duration/time runtime と重複しない最小 ABI で system time helper を拘束する
+  - **B**: 精度差を前提に brittle でないテストを作る
+  - **C**: milli/nano 両方の runtime 振る舞いを固定する
+  - **テスト**: `Scripts/diff_cases/system_nano_time.kt`, runtime system/time tests
+  - **完了条件**:
+    - 戻り値の精度差を前提にしたテストが brittle にならない
+    - runtime / parity の両方で追える
+
+- [ ] STDLIB-UUID-001: `kotlin.uuid` の対象 API 一覧を固定する
+  - **A**: parse / format / random / name-based UUID の対象宣言を公式 API と照合する
+  - **B**: companion helper と instance method の対象を分けて整理する
+  - **C**: 未対応 API は独立 task か診断方針へ落とす
+  - **テスト**: 既存 UUID 系 case を参照
+  - **完了条件**:
+    - parse / format / random / name-based の 4 群が TODO から辿れる
+    - 無言欠落が残らない
+- [ ] STDLIB-UUID-002: `kotlin.uuid` の sema / lowering を整える
+  - **A**: companion helper と instance method の解決を確認する
+  - **B**: parse/format helper が誤って別経路に落ちないことを確認する
+  - **C**: unsupported API が silent failure にならないようにする
+  - **テスト**: `Scripts/diff_cases/uuid_basic.kt`
+  - **完了条件**:
+    - companion と instance の両経路が確認できる
+    - helper 解決の回帰が検知できる
+- [ ] STDLIB-UUID-003: `kotlin.uuid` の runtime / canonical form / failure path を固定する
+  - **A**: canonical string、比較、hash、name-based deterministic 生成を拘束する
+  - **B**: parse failure などの失敗系を固定する
+  - **C**: runtime tests と parity 対象を整理する
+  - **テスト**: UUID runtime tests, `Scripts/diff_cases/uuid_basic.kt`
+  - **完了条件**:
+    - 文字列表現の往復が通る
+    - random 系と deterministic name-based 系が別ケースである
+    - equality / hashCode / parse failure のいずれかが runtime test で固定される
+- [ ] STDLIB-NATIVE-PLATFORM-001: `kotlin.native` の platform info 残差を詰める
+  - **A**: 既存完了項目 `STDLIB-NATIVE-169` で covered でない問い合わせ API を明文化する
+  - **B**: [`RuntimePlatform.swift`](Sources/Runtime/RuntimePlatform.swift) と synthetic 宣言の露出面を一致させる
+  - **C**: platform info の最低限の問い合わせ API を diff で固定する
+  - **テスト**: `Scripts/diff_cases/platform_info.kt`
+  - **完了条件**:
+    - platform info の残差だけを対象にしている
+    - 既存完了項目と責務重複しない
+- [ ] STDLIB-NATIVE-PLATFORM-002: common source set から見える Native bridge を整理する
+  - **A**: `kmp_common.kt` などで見える common/Native bridge の対象宣言を整理する
+  - **B**: common から使える宣言と Native 限定宣言の境界を sema で固定する
+  - **C**: 境界違反時の診断または非露出を明示する
+  - **テスト**: `Scripts/diff_cases/kmp_common.kt`
+  - **完了条件**:
+    - common から見えるもの/見えないものが golden or diff で確認できる
+    - Native 専用宣言が common に漏れない
+- [ ] STDLIB-NATIVE-CONCURRENT-001: `kotlin.native.concurrent` の対象 API 一覧を固定する
+  - **A**: Native concurrent 専用 API のうち追うもの、追わないもの、別計画のものを列挙する
+  - **B**: `kotlin.concurrent.atomics` と責務が重なるものを整理する
+  - **C**: 実装対象と除外対象が TODO から辿れるようにする
+  - **テスト**: `Scripts/diff_cases/experimental_atomic.kt`
+  - **完了条件**:
+    - package 境界と対象 API が本文で読める
+    - 無言欠落が残らない
+- [ ] STDLIB-NATIVE-CONCURRENT-002: `kotlin.native.concurrent` の sema / diagnostics を整える
+  - **A**: 対応対象 API が見えること、非対応 API が診断で落ちることを確認する
+  - **B**: experimental / opt-in 条件が必要ならそこで固定する
+  - **C**: lowering が誤って atomics 側の runtime を再利用しないことを確認する
+  - **テスト**: `experimental_atomic.kt` に成功系/失敗系を追加
+  - **完了条件**:
+    - success path と diagnostic path の両方がある
+    - `kotlin.concurrent.atomics` と混線しない
+- [ ] STDLIB-NATIVE-CONCURRENT-003: `kotlin.native.concurrent` で必要最小限の runtime / ABI を実装する
+  - **A**: `001` で対応対象とした API のうち runtime が必要なものだけを対象にする
+  - **B**: 必要な `kk_*` と `RuntimeABISpec` section を追加する
+  - **C**: runtime / parity tests を追加する
+  - **テスト**: Native concurrent 対応 API ごとの runtime test
+  - **完了条件**:
+    - ABI parity が通る
+    - 過剰な runtime 実装を増やしていない
+- [ ] STDLIB-EXPERIMENTAL-001: `kotlin.experimental` に残る marker 一覧を固定する
+  - **A**: `kotlin.experimental` 名前空間に残る marker / annotation の一覧を作る
+  - **B**: それぞれを「見えるだけ」「opt-in 必須」「別計画」に分類する
+  - **C**: 関連 task (`time`, `atomics`, `native annotation`) への参照を持たせる
+  - **テスト**: 既存関連 case 参照
+  - **完了条件**:
+    - marker ごとの扱いが TODO から辿れる
+    - task 間の責務重複が減る
+- [ ] STDLIB-EXPERIMENTAL-002: `kotlin.experimental` の opt-in / diagnostics を整える
+  - **A**: opt-in 必須 marker の sema 診断を固定する
+  - **B**: annotation 解決と use-site ルールが一貫するようにする
+  - **C**: runtime 不要なものは ABI 対象外であることを確認する
+  - **テスト**: `Scripts/diff_cases/experimental_time.kt`, `experimental_atomic.kt`, `native_annotations.kt`
+  - **完了条件**:
+    - marker が見えるケースと opt-in 不足ケースの両方がある
+    - runtime 不要領域を ABI 化していない
+
+### ギャップ表と TODO の対応
+
+ギャップ表の各行は、最低でも次の todo で追跡できる状態を目標にする。
+
+- `kotlin`（スコープ関数）: `STDLIB-GAP-PH1`, `STDLIB-002`
+- `kotlin`（`synchronized` / 比較・演算子基盤）: `STDLIB-GAP-PH3`, `STDLIB-033`, `STDLIB-COMP-001`
+- `kotlin.collections`: `STDLIB-GAP-PH2`, `STDLIB-021`
+- `kotlin.sequences`: `STDLIB-GAP-PH2`, `STDLIB-020`
+- `kotlin.ranges`: `STDLIB-GAP-PH2`, `STDLIB-022`
+- `kotlin.text` / `Char`: `STDLIB-GAP-PH1`, `STDLIB-003`, `STDLIB-005`
+- `kotlin.text.Regex`: `STDLIB-REGEX-001`〜`003`
+- `kotlin.io`: `STDLIB-GAP-PH3`, `STDLIB-030`
+- `kotlin.io.encoding`: `STDLIB-GAP-PH3`, `STDLIB-031`
+- `kotlin.math`: `STDLIB-GAP-PH4`, `STDLIB-MATH-001`〜`003`
+- `kotlin.random`: `STDLIB-GAP-PH4`, `STDLIB-RANDOM-001`〜`003`
+- `kotlin.concurrent`: `STDLIB-GAP-PH3`, `STDLIB-033`
+- `kotlin.concurrent.atomics`: `STDLIB-GAP-PH3`, `STDLIB-033`, `STDLIB-NATIVE-CONCURRENT-001`〜`003`
+- `kotlin.reflect`: `STDLIB-GAP-PH4`, `STDLIB-REFLECT-066`, `STDLIB-REFLECT-067`
+- `kotlin.time`: `STDLIB-GAP-PH3`, `STDLIB-032`, `STDLIB-TIME-EXP-001`, `STDLIB-SYSTEM-001`
+- `kotlin.properties`: `STDLIB-PROP-001`
+- `kotlin.coroutines`: `STDLIB-CORO-BASE-001`
+- `kotlin.coroutines.cancellation`: `STDLIB-CORO-001`
+- `kotlin.coroutines.intrinsics`: `STDLIB-CORO-001`
+- `kotlin.annotation`: `STDLIB-ANNO-001`, `STDLIB-ANNO-002`
+- `kotlin.comparisons`: `STDLIB-COMP-001`〜`003`
+- `kotlin.enums`: `STDLIB-GAP-PH2`, `STDLIB-023`
+- `kotlin.contracts`: `STDLIB-CONTRACT-001`, `STDLIB-ASSERT-001`
+- `kotlin.experimental`: `STDLIB-EXPERIMENTAL-001`, `STDLIB-EXPERIMENTAL-002`
+- `kotlin.system`: `STDLIB-SYSTEM-001`〜`003`
+- `kotlin.uuid`: `STDLIB-UUID-001`〜`003`
+- `kotlin.native`: `STDLIB-NATIVE-PLATFORM-001`, `STDLIB-NATIVE-PLATFORM-002`, `STDLIB-NATIVE-169`
+- `kotlin.native.concurrent`: `STDLIB-NATIVE-CONCURRENT-001`〜`003`
+- `kotlin.native.ref` / `kotlin.native.runtime`: `STDLIB-NATIVE-REF-001`〜`003`
+
+### stdlib 完了条件
+
+このセクションを「KSwiftK が対象とする stdlib 実装完了」とみなす条件は次のとおり。
+
+1. パッケージ単位チェックリストで、対象外を除く対象 package がすべて `[x]` になる
+2. ギャップ表で、対象内の行に `未` / `未〜部分` が残らない
+3. `部分` が残る行は、その理由が「対象外の一部」または独立 backlog として説明できる
+4. 各 todo が A/B/C と diff/golden/runtime/ABI parity で検証済みになる
+5. ターゲット外バックログへ送った項目と、対象内の未実装項目が混ざっていない
 
 ### 完了済み（参照）
 
