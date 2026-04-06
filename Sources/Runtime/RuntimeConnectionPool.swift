@@ -37,12 +37,22 @@ private final class PooledEntry {
     /// Monotonic time (in milliseconds) when the entry became idle.
     var idleSince: Int64
     /// Monotonic time (in milliseconds) when this entry was created.
+    /// Preserved across `release()` calls so `maxLifetime` is measured from
+    /// first creation, not from the last return to the pool.
     let createdAt: Int64
 
+    /// Designated initialiser: called once when a brand-new connection is
+    /// wrapped for the first time.
     init(connection: RuntimeConnectionBox, now: Int64) {
         self.connection = connection
         self.idleSince = now
         self.createdAt = now
+    }
+
+    /// Re-pool an existing entry, updating only `idleSince`.
+    /// `createdAt` is intentionally left unchanged.
+    func refreshIdle(now: Int64) {
+        idleSince = now
     }
 }
 
@@ -60,10 +70,18 @@ final class RuntimeConnectionPoolBox: @unchecked Sendable {
     private let url: String
     /// Connections that are currently idle and available.
     private var idle: [PooledEntry] = []
+    /// All `PooledEntry` objects ever created by this pool (idle + active).
+    /// Used to verify ownership in `release()`.
+    private var allEntries: [ObjectIdentifier: PooledEntry] = [:]
     /// Total number of connections currently managed (idle + active).
     private var totalCount: Int = 0
     /// Waiters blocked in `acquire()` waiting for a connection.
+    /// Each waiter owns a slot in `pendingGifts` keyed by its semaphore.
     private var waiters: [DispatchSemaphore] = []
+    /// Direct hand-off slots: when `release()` picks a waiter, it places the
+    /// entry here *before* signalling the semaphore, so the waiter can always
+    /// retrieve the connection without racing against other threads.
+    private var pendingGifts: [ObjectIdentifier: PooledEntry] = [:]
     private var closed: Bool = false
 
     init(url: String, config: RuntimeConnectionPoolConfig) {
@@ -74,7 +92,9 @@ final class RuntimeConnectionPoolBox: @unchecked Sendable {
         let warmup = min(config.minIdle, config.maxPoolSize)
         for _ in 0..<warmup {
             let conn = RuntimeConnectionBox(url: url)
-            idle.append(PooledEntry(connection: conn, now: now))
+            let entry = PooledEntry(connection: conn, now: now)
+            idle.append(entry)
+            allEntries[ObjectIdentifier(conn)] = entry
             totalCount += 1
         }
     }
@@ -107,6 +127,8 @@ final class RuntimeConnectionPoolBox: @unchecked Sendable {
         // Create a new connection if within pool size limit.
         if totalCount < config.maxPoolSize {
             let conn = RuntimeConnectionBox(url: url)
+            let entry = PooledEntry(connection: conn, now: now)
+            allEntries[ObjectIdentifier(conn)] = entry
             totalCount += 1
             lock.unlock()
             return conn
@@ -114,30 +136,35 @@ final class RuntimeConnectionPoolBox: @unchecked Sendable {
 
         // Pool exhausted — wait for a release.
         let sema = DispatchSemaphore(value: 0)
+        let semaID = ObjectIdentifier(sema)
         waiters.append(sema)
         lock.unlock()
 
         let timeoutNS = Int64(config.connectionTimeout) * 1_000_000
         let result = sema.wait(timeout: .now() + .nanoseconds(Int(timeoutNS)))
         if result == .timedOut {
-            // Remove ourselves from the waiter list if still present.
+            // Remove ourselves from the waiter list if still present and
+            // clean up any pending gift that arrived after the timeout.
             lock.lock()
             waiters.removeAll { $0 === sema }
+            pendingGifts.removeValue(forKey: semaID)
             lock.unlock()
             return nil
         }
 
-        // We were signalled — the releasing thread already handed us
-        // a connection via `pendingGift`.  Re-enter to collect it.
+        // We were signalled — the releasing thread placed our connection in
+        // `pendingGifts` *before* calling signal(), so it is guaranteed to
+        // be present here without any race.
         lock.lock()
-        let entry = idle.popLast()
+        let entry = pendingGifts.removeValue(forKey: semaID)
         lock.unlock()
         return entry?.connection
     }
 
     /// Return a connection to the pool.
     ///
-    /// If waiters are queued, the first one is woken immediately.
+    /// If waiters are queued, the first one is woken immediately via the
+    /// direct hand-off mechanism (pendingGifts) to avoid races.
     /// Otherwise the connection is added to the idle list (or discarded if
     /// the pool is over capacity or the connection is closed/invalid).
     func release(_ connection: RuntimeConnectionBox) {
@@ -149,32 +176,67 @@ final class RuntimeConnectionPoolBox: @unchecked Sendable {
             return
         }
 
-        // Discard connections that have exceeded maxLifetime.
-        // (maxLifetime == 0 means unlimited.)
         let now = monotonicMillis()
-        // If connection is closed, decrement total and discard.
+
+        // If the returned connection is already closed we decrement the total.
+        // We then try to create a fresh replacement for any waiting caller so
+        // the waiter is never signalled with nothing to receive (Issue 2).
         if connection.closed {
             totalCount = max(0, totalCount - 1)
-            wakeWaiterIfNeeded()
-            lock.unlock()
+            // Attempt to satisfy a waiter with a brand-new connection.
+            if let sema = waiters.first, totalCount < config.maxPoolSize {
+                waiters.removeFirst()
+                let newConn = RuntimeConnectionBox(url: url)
+                let newEntry = PooledEntry(connection: newConn, now: now)
+                allEntries[ObjectIdentifier(newConn)] = newEntry
+                totalCount += 1
+                let semaID = ObjectIdentifier(sema)
+                pendingGifts[semaID] = newEntry
+                lock.unlock()
+                sema.signal()
+            } else {
+                // Cannot create a new connection — do NOT signal the waiter,
+                // as that would wake it with no connection available.
+                lock.unlock()
+            }
             return
         }
 
-        // Hand off directly to a waiting caller.
+        // Retrieve the original PooledEntry so we preserve `createdAt`
+        // (Issue 4). If somehow not found, create a new one.
+        let entry: PooledEntry
+        if let existing = allEntries[ObjectIdentifier(connection)] {
+            existing.refreshIdle(now: now)
+            entry = existing
+        } else {
+            let newEntry = PooledEntry(connection: connection, now: now)
+            allEntries[ObjectIdentifier(connection)] = newEntry
+            entry = newEntry
+        }
+
+        // Direct hand-off to a waiting caller (Issue 1).
+        // Place the entry in `pendingGifts` BEFORE signalling so the waiter
+        // always finds its connection regardless of scheduling order.
         if let sema = waiters.first {
             waiters.removeFirst()
-            let entry = PooledEntry(connection: connection, now: now)
-            idle.append(entry)
+            let semaID = ObjectIdentifier(sema)
+            pendingGifts[semaID] = entry
             lock.unlock()
             sema.signal()
             return
         }
 
         // No waiters — return to idle list.
-        let entry = PooledEntry(connection: connection, now: now)
         idle.append(entry)
         evictStaleEntries(now: now)
         lock.unlock()
+    }
+
+    /// Returns `true` if `connection` was issued by this pool (Issue 5).
+    func owns(_ connection: RuntimeConnectionBox) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return allEntries[ObjectIdentifier(connection)] != nil
     }
 
     /// Validate a connection within `timeout` milliseconds.
@@ -191,6 +253,8 @@ final class RuntimeConnectionPoolBox: @unchecked Sendable {
         closed = true
         let snapshot = idle
         idle.removeAll()
+        allEntries.removeAll()
+        pendingGifts.removeAll()
         totalCount = 0
         let pending = waiters
         waiters.removeAll()
@@ -232,27 +296,30 @@ final class RuntimeConnectionPoolBox: @unchecked Sendable {
 
     /// Evict connections that have been idle longer than `idleTimeout` or have
     /// exceeded `maxLifetime`.  Must be called with `lock` held.
+    ///
+    /// The maximum number of entries that may be evicted is pre-computed so
+    /// the idle list never drops below `minIdle` regardless of how many
+    /// stale entries are encountered (Issue 3).
     private func evictStaleEntries(now: Int64) {
         guard idle.count > config.minIdle else { return }
 
+        // Pre-compute the maximum number we are allowed to remove.
+        var evictBudget = idle.count - config.minIdle
+
         idle.removeAll { entry in
+            guard evictBudget > 0 else { return false }
             let idleTooLong = config.idleTimeout > 0
                 && (now - entry.idleSince) >= Int64(config.idleTimeout)
             let tooOld = config.maxLifetime > 0
                 && (now - entry.createdAt) >= Int64(config.maxLifetime)
-            if (idleTooLong || tooOld) && idle.count > config.minIdle {
+            if idleTooLong || tooOld {
+                evictBudget -= 1
                 entry.connection.close()
+                allEntries.removeValue(forKey: ObjectIdentifier(entry.connection))
                 totalCount = max(0, totalCount - 1)
                 return true
             }
             return false
-        }
-    }
-
-    private func wakeWaiterIfNeeded() {
-        if let sema = waiters.first {
-            waiters.removeFirst()
-            sema.signal()
         }
     }
 
@@ -353,6 +420,10 @@ public func kk_connection_pool_acquire(_ poolRaw: Int) -> Int {
 }
 
 /// Release a connection back to the pool.
+///
+/// The connection handle must have been issued by this pool (ownership
+/// check). Passing a handle from a different pool or an arbitrary pointer
+/// is a programming error and returns 0 without releasing.
 @_cdecl("kk_connection_pool_release")
 public func kk_connection_pool_release(_ poolRaw: Int, _ connRaw: Int) -> Int {
     guard let pool = runtimeConnectionPoolBox(from: poolRaw) else {
@@ -361,6 +432,10 @@ public func kk_connection_pool_release(_ poolRaw: Int, _ connRaw: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: connRaw),
           let conn = tryCast(ptr, to: RuntimeConnectionBox.self)
     else {
+        return 0
+    }
+    // Ownership check: reject connections not issued by this pool (Issue 5).
+    guard pool.owns(conn) else {
         return 0
     }
     pool.release(conn)
