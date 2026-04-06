@@ -2140,9 +2140,6 @@ private func runtimeFlowApplyElementOp(
             state.dropWhileFinished[index] = true
         case .catchHandler, .retry, .retryWhen, .onErrorReturn, .onErrorResume:
             continue
-        case .onCompletion:
-            // onCompletion is a completion-only handler; pass elements through unchanged.
-            continue
         }
     }
     if runtimeFlowElementStateHasExhaustedTake(state) {
