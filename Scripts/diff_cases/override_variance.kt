@@ -46,7 +46,7 @@ open class NumberContainer {
     open fun getValue(): Number = 42
 }
 
-open class IntContainer : NumberContainer {
+open class IntContainer : NumberContainer() {
     // Valid: return type covariance (Int is subtype of Number)
     override fun getValue(): Int = 123
 }

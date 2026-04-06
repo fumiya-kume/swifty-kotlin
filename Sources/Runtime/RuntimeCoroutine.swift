@@ -5984,11 +5984,10 @@ public func kk_suspend_function_invoke_0(
         outThrown?.pointee = 0
         return 0
     }
-    
+
     // Install continuation for the suspend point
-    var result: Int = 0
     var thrownException: Int = 0
-    
+
     continuationState.installResumeContinuation {
         // When resumed, execute the suspend function
         let functionPtr = UnsafeMutableRawPointer(bitPattern: functionRaw)
@@ -6004,7 +6003,7 @@ public func kk_suspend_function_invoke_0(
             callResult = 0
             thrownException = runtimeAllocateThrowable(message: "NullPointerException")
         }
-        
+
         // Store results in continuation state
         continuationState.resume(with: callResult)
         if thrownException != 0 {
@@ -6041,11 +6040,10 @@ public func kk_suspend_function_invoke(
         outThrown?.pointee = 0
         return 0
     }
-    
+
     // Install continuation for the suspend point
-    var result: Int = 0
     var thrownException: Int = 0
-    
+
     continuationState.installResumeContinuation {
         // When resumed, execute the suspend function
         let functionPtr = UnsafeMutableRawPointer(bitPattern: functionRaw)
@@ -6061,7 +6059,7 @@ public func kk_suspend_function_invoke(
             callResult = 0
             thrownException = runtimeAllocateThrowable(message: "NullPointerException")
         }
-        
+
         // Store results in continuation state
         continuationState.resume(with: callResult)
         if thrownException != 0 {

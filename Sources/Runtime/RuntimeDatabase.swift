@@ -544,9 +544,15 @@ final class RuntimeDatabasePoolBox {
     }
     
     private func validateConnection(_ connection: RuntimeDatabaseConnectionBox) -> Bool {
-        // Simple validation - in a real implementation this would execute query
-        // For now, we'll simulate validation by checking if connection is still valid
-        return connection.isOpen && !connection.isInUse
+        // Idle hand-outs are always `!isInUse` here; `testOnBorrow`/`testOnReturn` need a real
+        // probe (e.g. run `validationQuery` against the open sqlite/db handle). This stub pool
+        // box does not carry a DB pointer, so we only assert structural health.
+        guard connection.isOpen, !connection.isInUse else { return false }
+        if let query = validationQuery, !query.isEmpty {
+            _ = query
+            // TODO(STDLIB-DB): execute `query` when connection exposes `sqlite3*`.
+        }
+        return true
     }
     
     func setValidationQuery(_ query: String?) {
@@ -957,20 +963,42 @@ private final class RuntimeJDBCPreparedStatementBox {
     func generateBatchSQL(with parameters: [Any?]) -> String {
         var result = originalSQL
         let paramCount = min(parameters.count, Int(parameterCount))
-        
+
         for i in 0..<paramCount {
             let value = parameters[i]
             let stringValue: String
-            
-            if let value = value {
+
+            if let value {
                 switch parameterTypes[i] {
                 case SQLITE_TEXT:
-                    let escapedValue = String(describing: value).replacingOccurrences(of: "'", with: "''")
-                    stringValue = "'\(escapedValue)'"
+                    let raw: String
+                    if let s = value as? String {
+                        raw = s
+                    } else if let ns = value as? NSString {
+                        raw = ns as String
+                    } else {
+                        raw = String(describing: value)
+                    }
+                    let escaped = raw.replacingOccurrences(of: "'", with: "''")
+                    stringValue = "'\(escaped)'"
                 case SQLITE_INTEGER:
-                    stringValue = String(describing: value)
+                    if let n = value as? Int {
+                        stringValue = String(n)
+                    } else if let n64 = value as? Int64 {
+                        stringValue = String(n64)
+                    } else if let n32 = value as? Int32 {
+                        stringValue = String(n32)
+                    } else {
+                        stringValue = String(describing: value)
+                    }
                 case SQLITE_FLOAT:
-                    stringValue = String(describing: value)
+                    if let d = value as? Double {
+                        stringValue = jdbcAsciiSqlDouble(d)
+                    } else if let f = value as? Float {
+                        stringValue = jdbcAsciiSqlDouble(Double(f))
+                    } else {
+                        stringValue = String(describing: value)
+                    }
                 case SQLITE_NULL:
                     stringValue = "NULL"
                 default:
@@ -979,14 +1007,20 @@ private final class RuntimeJDBCPreparedStatementBox {
             } else {
                 stringValue = "NULL"
             }
-            
+
             if let range = result.range(of: "?") {
                 result.replaceSubrange(range, with: stringValue)
             }
         }
-        
+
         return result
     }
+}
+
+/// ASCII SQL literal for floating point (finite only; avoids locale-dependent formatting).
+private func jdbcAsciiSqlDouble(_ value: Double) -> String {
+    guard value.isFinite else { return "NULL" }
+    return String(format: "%.17g", value)
 }
 
 private final class RuntimeJDBCResultSetBox {
@@ -1202,12 +1236,26 @@ private func jdbcColumnBoolean(statement: OpaquePointer, index: Int32, resultSet
 }
 
 final class RuntimeJDBCResultSetMetaDataBox {
-    private let statement: OpaquePointer
+    /// Snapshot at construction so metadata stays valid after the ResultSet/statement is closed.
     private let columnCount: Int
-    
+    private let columnNames: [String]
+    private let columnDeclTypesUppercased: [String]
+
     init(statement: OpaquePointer) {
-        self.statement = statement
-        self.columnCount = Int(sqlite3_column_count(statement))
+        let cc = Int(sqlite3_column_count(statement))
+        self.columnCount = cc
+        var names: [String] = []
+        var decls: [String] = []
+        names.reserveCapacity(cc)
+        decls.reserveCapacity(cc)
+        for i in 0..<cc {
+            let namePtr = sqlite3_column_name(statement, Int32(i))
+            names.append(namePtr.map { String(cString: $0) } ?? "")
+            let declPtr = sqlite3_column_decltype(statement, Int32(i))
+            decls.append(declPtr.map { String(cString: $0).uppercased() } ?? "")
+        }
+        self.columnNames = names
+        self.columnDeclTypesUppercased = decls
     }
     
     func getColumnCount() -> Int {
@@ -1216,7 +1264,8 @@ final class RuntimeJDBCResultSetMetaDataBox {
     
     func getColumnName(_ index: Int) -> String? {
         guard index >= 1 && index <= columnCount else { return nil }
-        return String(cString: sqlite3_column_name(statement, Int32(index - 1)))
+        let name = columnNames[index - 1]
+        return name.isEmpty ? nil : name
     }
     
     func getColumnLabel(_ index: Int) -> String? {
@@ -1225,17 +1274,14 @@ final class RuntimeJDBCResultSetMetaDataBox {
     
     func getColumnType(_ index: Int) -> Int32 {
         guard index >= 1 && index <= columnCount else { return 0 }
-        let idx = Int32(index - 1)
-        if let declC = sqlite3_column_decltype(statement, idx) {
-            let decl = String(cString: declC).uppercased()
-            if decl.contains("INT") { return SQLITE_INTEGER }
-            if decl.contains("TEXT") || decl.contains("CLOB") || decl.contains("CHAR") || decl.contains("STR") {
-                return SQLITE_TEXT
-            }
-            if decl.contains("BLOB") { return SQLITE_BLOB }
-            if decl.contains("REAL") || decl.contains("FLOA") || decl.contains("DOUB") { return SQLITE_FLOAT }
+        let decl = columnDeclTypesUppercased[index - 1]
+        if decl.contains("INT") { return SQLITE_INTEGER }
+        if decl.contains("TEXT") || decl.contains("CLOB") || decl.contains("CHAR") || decl.contains("STR") {
+            return SQLITE_TEXT
         }
-        return sqlite3_column_type(statement, idx)
+        if decl.contains("BLOB") { return SQLITE_BLOB }
+        if decl.contains("REAL") || decl.contains("FLOA") || decl.contains("DOUB") { return SQLITE_FLOAT }
+        return SQLITE_NULL
     }
     
     func getColumnTypeName(_ index: Int) -> String {

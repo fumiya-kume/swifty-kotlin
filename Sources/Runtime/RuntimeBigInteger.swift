@@ -625,7 +625,14 @@ struct BigIntValue: Equatable {
                 result[targetIdx + 1] |= UInt8((value >> 8) & 0xFF)
             }
         }
-        
+
+        // Drop redundant LSB zero bytes (big-endian twos-complement); avoids e.g. [8,0] → 2048.
+        while result.count > 1,
+              result[result.count - 1] == 0,
+              (result[result.count - 2] & 0x80) == 0 {
+            result.removeLast()
+        }
+
         return BigIntValue.fromTwosComplementBytes(result)
     }
 
@@ -661,17 +668,13 @@ struct BigIntValue: Equatable {
             
             result[targetIdx] = UInt8(value & 0xFF)
         }
-        
-        if isNegative && !result.isEmpty {
-            let signExtend: UInt8 = 0xFF
-            for i in stride(from: result.count - 1, through: 0, by: -1) {
-                if result[i] & 0x80 != 0 {
-                    break
-                }
-                result[i] |= signExtend
-            }
+
+        // Arithmetic right shift: set the top `bitShift` bits of the MSB to 1 for negative values.
+        if isNegative, !result.isEmpty, bitShift > 0 {
+            let mask = UInt8(truncatingIfNeeded: (0xFF << (8 - bitShift)) & 0xFF)
+            result[0] |= mask
         }
-        
+
         return BigIntValue.fromTwosComplementBytes(result)
     }
 
