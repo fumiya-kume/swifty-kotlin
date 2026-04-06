@@ -618,7 +618,7 @@ struct BigIntValue: Equatable {
             let sourceIdx = i
             let targetIdx = i + byteShift
             
-            var value = UInt16(bytes[sourceIdx]) << UInt16(bitShift)
+            let value = UInt16(bytes[sourceIdx]) << UInt16(bitShift)
             result[targetIdx] |= UInt8(value & 0xFF)
             
             if bitShift > 0 && targetIdx + 1 < result.count {

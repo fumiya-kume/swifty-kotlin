@@ -919,7 +919,7 @@ private final class RuntimeJDBCPreparedStatementBox {
     }
     
     func addBatch() {
-        if let statement = statement {
+        if statement != nil {
             let currentParameters = captureCurrentParameters()
             let batchSQL = generateBatchSQL(with: currentParameters)
             batchCommands.append(batchSQL)
