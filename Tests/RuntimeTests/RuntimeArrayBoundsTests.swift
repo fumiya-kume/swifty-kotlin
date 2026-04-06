@@ -18,7 +18,7 @@ final class RuntimeArrayBoundsTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(array, 0)
 
         var outThrown = -1
-        XCTAssertEqual(_ = kk_array_set(array, 1, 42, &outThrown), 42)
+        XCTAssertEqual(kk_array_set(array, 1, 42, &outThrown), 42)
         XCTAssertEqual(outThrown, 0)
 
         outThrown = -1
@@ -68,15 +68,15 @@ final class RuntimeArrayBoundsTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(array, 0)
 
         var outThrown = -1
-        XCTAssertEqual(_ = kk_array_set(array, 0, 0, &outThrown), 0)
+        XCTAssertEqual(kk_array_set(array, 0, 0, &outThrown), 0)
         XCTAssertEqual(outThrown, 0)
 
         outThrown = -1
-        XCTAssertEqual(_ = kk_array_set(array, 1, 1, &outThrown), 1)
+        XCTAssertEqual(kk_array_set(array, 1, 1, &outThrown), 1)
         XCTAssertEqual(outThrown, 0)
 
         outThrown = -1
-        XCTAssertEqual(_ = kk_array_set(array, 2, 65535, &outThrown), 65535)
+        XCTAssertEqual(kk_array_set(array, 2, 65535, &outThrown), 65535)
         XCTAssertEqual(outThrown, 0)
 
         outThrown = -1
