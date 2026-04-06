@@ -9,6 +9,7 @@ extension DataFlowSemaPhase {
         let kotlinTextPkg = ensureKotlinTextPackage(symbols: symbols, interner: interner)
         let stringType = types.stringType
         let boolType = types.make(.primitive(.boolean, .nonNull))
+        let nullableBoolType = types.make(.primitive(.boolean, .nullable))
         let intType = types.intType
         let longType = types.make(.primitive(.long, .nonNull))
         let charType = types.make(.primitive(.char, .nonNull))
@@ -1416,6 +1417,61 @@ extension DataFlowSemaPhase {
             receiverType: stringType,
             parameters: [],
             returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toBooleanStrictOrNull",
+            externalLinkName: "kk_string_toBooleanStrictOrNull",
+            receiverType: stringType,
+            parameters: [],
+            returnType: nullableBoolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toShort",
+            externalLinkName: "kk_string_toShort",
+            receiverType: stringType,
+            parameters: [],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toShortOrNull",
+            externalLinkName: "kk_string_toShortOrNull",
+            receiverType: stringType,
+            parameters: [],
+            returnType: nullableIntType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toByte",
+            externalLinkName: "kk_string_toByte",
+            receiverType: stringType,
+            parameters: [],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toByteOrNull",
+            externalLinkName: "kk_string_toByteOrNull",
+            receiverType: stringType,
+            parameters: [],
+            returnType: nullableIntType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner

@@ -3957,6 +3957,12 @@ extension CallTypeChecker {
                         charArrayType
                     case "toBoolean", "toBooleanStrict":
                         sema.types.make(.primitive(.boolean, .nonNull))
+                    case "toBooleanStrictOrNull":
+                        sema.types.make(.primitive(.boolean, .nullable))
+                    case "toShort", "toByte":
+                        sema.types.intType
+                    case "toShortOrNull", "toByteOrNull":
+                        sema.types.make(.primitive(.int, .nullable))
                     case "isEmpty", "isNotEmpty", "isBlank", "isNotBlank":
                         sema.types.make(.primitive(.boolean, .nonNull))
                     case "first", "last", "single":
