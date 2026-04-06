@@ -34,7 +34,7 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
 
         // Receive on a background thread (will suspend until a sender pairs).
         DispatchQueue.global().async {
-            receivedValue.set(kk_channel_receive(channelHandle, 0)
+            receivedValue.set(kk_channel_receive(channelHandle, 0))
             expectation.fulfill()
         }
 
@@ -42,8 +42,8 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         Thread.sleep(forTimeInterval: 0.05)
 
         // Send on the main thread -- should wake the receiver.
-        let sendResult.set(kk_channel_send(channelHandle, 42, 0)
-        XCTAssertEqual(sendResult.get(), 42, "send should return the sent value")
+        let sendResult = kk_channel_send(channelHandle, 42, 0)
+        XCTAssertEqual(sendResult, 42, "send should return the sent value")
 
         wait(for: [expectation], timeout: 2.0)
         XCTAssertEqual(receivedValue.get(), 42, "receiver should get the sent value")
@@ -147,7 +147,7 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         let receivedValue = ThreadSafeInt()
 
         DispatchQueue.global().async {
-            receivedValue.set(kk_channel_receive(channelHandle, 0)
+            receivedValue.set(kk_channel_receive(channelHandle, 0))
             receiveDone.fulfill()
         }
 
@@ -158,7 +158,7 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
 
         wait(for: [receiveDone], timeout: 2.0)
         XCTAssertEqual(
-            kk_channel_is_closed_token(receivedValue), 1,
+            kk_channel_is_closed_token(receivedValue.get()), 1,
             "Receiver should get the closed sentinel when channel closes with empty buffer"
         )
     }
@@ -170,7 +170,7 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         let sendResult = ThreadSafeInt()
 
         DispatchQueue.global().async {
-            sendResult.set(kk_channel_send(channelHandle, 77, 0)
+            sendResult.set(kk_channel_send(channelHandle, 77, 0))
             sendDone.fulfill()
         }
 
@@ -181,7 +181,7 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
 
         wait(for: [sendDone], timeout: 2.0)
         XCTAssertEqual(
-            kk_channel_is_closed_token(sendResult), 1,
+            kk_channel_is_closed_token(sendResult.get()), 1,
             "Sender should get the closed sentinel when channel closes"
         )
     }
@@ -274,7 +274,7 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
 
             // Sender suspends on rendezvous channel.
             DispatchQueue.global().async {
-                sendResult.set(kk_channel_send(ch, 77, 0)
+                sendResult.set(kk_channel_send(ch, 77, 0))
                 sendDone.fulfill()
             }
             Thread.sleep(forTimeInterval: 0.01)
@@ -289,7 +289,7 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
             wait(for: [sendDone], timeout: 2.0)
             XCTAssertEqual(sendResult.get(), 77,
                            "Sender must report success (value) when receiver accepted, even if close() races")
-            XCTAssertEqual(kk_channel_is_closed_token(sendResult), 0,
+            XCTAssertEqual(kk_channel_is_closed_token(sendResult.get()), 0,
                            "Send result must NOT be the closed sentinel when receiver accepted the value")
         }
     }
@@ -338,12 +338,12 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         let received2 = ThreadSafeInt()
 
         DispatchQueue.global().async {
-            received1.set(kk_channel_receive(channelHandle, 0)
+            received1.set(kk_channel_receive(channelHandle, 0))
             recv1Done.fulfill()
         }
         Thread.sleep(forTimeInterval: 0.02)
         DispatchQueue.global().async {
-            received2.set(kk_channel_receive(channelHandle, 0)
+            received2.set(kk_channel_receive(channelHandle, 0))
             recv2Done.fulfill()
         }
         Thread.sleep(forTimeInterval: 0.02)
@@ -354,7 +354,7 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
 
         wait(for: [recv1Done, recv2Done], timeout: 2.0)
 
-        let values = Set([received1, received2])
+        let values = Set([received1.get(), received2.get()])
         XCTAssertEqual(values, Set([10, 20]), "Each receiver should get exactly one distinct value")
 
         _ = kk_channel_close(channelHandle)
@@ -470,7 +470,7 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
 
         // Send on background thread - will suspend waiting for receiver
         DispatchQueue.global().async {
-            sendResult.set(kk_channel_send(ch, 42, contInt)
+            sendResult.set(kk_channel_send(ch, 42, contInt))
             sendDone.fulfill()
         }
 
@@ -483,7 +483,7 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         // Now add a receiver - the rendezvous completes before cancellation can
         // affect the next suspension point, so the send still succeeds.
         DispatchQueue.global().async {
-            receivedValue.set(kk_channel_receive(ch, 0)
+            receivedValue.set(kk_channel_receive(ch, 0))
             receiveDone.fulfill()
         }
 
@@ -592,7 +592,7 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
 
         // Second send should suspend
         DispatchQueue.global().async {
-            sendResult.set(ch.send)(2)
+            sendResult.set(ch.send(2))
             sendDone.fulfill()
         }
 
@@ -613,7 +613,7 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         let sendResult = ThreadSafeInt()
 
         DispatchQueue.global().async {
-            sendResult.set(ch.send)(42)
+            sendResult.set(ch.send(42))
             sendDone.fulfill()
         }
 
@@ -625,7 +625,7 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
 
         wait(for: [sendDone], timeout: 2.0)
         XCTAssertEqual(
-            kk_channel_is_closed_token(sendResult), 1,
+            kk_channel_is_closed_token(sendResult.get()), 1,
             "Cancelled sender should get the closed sentinel"
         )
     }
@@ -642,7 +642,7 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         let sendResult = ThreadSafeInt()
 
         DispatchQueue.global().async {
-            sendResult.set(kk_channel_send(ch, 42, 0) // no continuation - fallback to semaphore
+            sendResult.set(kk_channel_send(ch, 42, 0)) // no continuation - fallback to semaphore
             sendDone.fulfill()
         }
 
@@ -687,7 +687,7 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         let recvResult = ThreadSafeInt()
 
         DispatchQueue.global().async {
-            recvResult.set(ch.receive)()
+            recvResult.set(ch.receive())
             recvDone.fulfill()
         }
 
@@ -699,7 +699,7 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
 
         wait(for: [recvDone], timeout: 2.0)
         XCTAssertEqual(
-            kk_channel_is_closed_token(recvResult), 1,
+            kk_channel_is_closed_token(recvResult.get()), 1,
             "Cancelled receiver should get the closed sentinel"
         )
     }
