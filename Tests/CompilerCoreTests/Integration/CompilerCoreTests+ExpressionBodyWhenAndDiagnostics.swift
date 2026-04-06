@@ -11,19 +11,13 @@ extension CompilerCoreTests {
         let outputBase = missingDir.appendingPathComponent("result").path
 
         try withTemporaryFile(contents: source) { tempSourcePath in
-            let options = CompilerOptions(
+            let options = makeTestOptions(
                 moduleName: "PipelineFailure",
                 inputs: [tempSourcePath],
                 outputPath: outputBase,
-                emit: .kirDump,
-                target: defaultTargetTriple()
+                emit: .kirDump
             )
-            let driver = CompilerDriver(
-                version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
-                kotlinVersion: .v2_3_10
-            )
-
-            let result = driver.runForTesting(options: options)
+            let result = makeTestDriver().runForTesting(options: options)
             XCTAssertEqual(result.exitCode, 1)
             XCTAssertTrue(result.diagnostics.contains { $0.code == "KSWIFTK-PIPELINE-0003" })
             XCTAssertFalse(result.diagnostics.contains { $0.code == "KSWIFTK-ICE-0001" })
@@ -364,23 +358,4 @@ extension CompilerCoreTests {
         assertHasDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
     }
 
-    func topLevelFunction(
-        named name: String,
-        in ast: ASTModule,
-        interner: StringInterner
-    ) -> FunDecl? {
-        for file in ast.files {
-            for declID in file.topLevelDecls {
-                guard let decl = ast.arena.decl(declID),
-                      case let .funDecl(function) = decl
-                else {
-                    continue
-                }
-                if interner.resolve(function.name) == name {
-                    return function
-                }
-            }
-        }
-        return nil
-    }
 }

@@ -1,5 +1,4 @@
 @testable import CompilerCore
-import Foundation
 import XCTest
 
 final class BoxingIntegrationTests: XCTestCase {
@@ -11,30 +10,12 @@ final class BoxingIntegrationTests: XCTestCase {
             val p2 = 4 to "four"
         }
         """
-        
-        let ctx = makeCompilationContext(
-            inputs: ["test.kt"],
-            moduleName: "Test",
-            emit: .kirDump
-        )
-        ctx.sourceManager.addFile(path: "test.kt", contents: source.data(using: .utf8)!)
-        
-        // Run full pipeline up to lowerings
-        try LoadSourcesPhase().run(ctx)
-        try LexPhase().run(ctx)
-        try ParsePhase().run(ctx)
-        try BuildASTPhase().run(ctx)
-        try SemaPhase().run(ctx)
-        try BuildKIRPhase().run(ctx)
-        try LoweringPhase().run(ctx)
-        
+
+        let ctx = makeContextFromSource(source)
+        try runToLowering(ctx)
+
         let module: KIRModule = try XCTUnwrap(ctx.kir)
-        let testFunc: KIRFunction = try XCTUnwrap(module.arena.declarations.compactMap { decl -> KIRFunction? in
-            if case let .function(fn) = decl, ctx.interner.resolve(fn.name) == "test" {
-                return fn
-            }
-            return nil
-        }.first)
+        let testFunc: KIRFunction = try findKIRFunction(named: "test", in: module, interner: ctx.interner)
         
         let boxingCalls = testFunc.body.filter { instruction in
             if case let .call(_, callee, _, _, _, _, _, _) = instruction {
@@ -53,29 +34,12 @@ final class BoxingIntegrationTests: XCTestCase {
             list.add(1)
         }
         """
-        
-        let ctx = makeCompilationContext(
-            inputs: ["test.kt"],
-            moduleName: "Test",
-            emit: .kirDump
-        )
-        ctx.sourceManager.addFile(path: "test.kt", contents: source.data(using: .utf8)!)
-        
-        try LoadSourcesPhase().run(ctx)
-        try LexPhase().run(ctx)
-        try ParsePhase().run(ctx)
-        try BuildASTPhase().run(ctx)
-        try SemaPhase().run(ctx)
-        try BuildKIRPhase().run(ctx)
-        try LoweringPhase().run(ctx)
-        
+
+        let ctx = makeContextFromSource(source)
+        try runToLowering(ctx)
+
         let module: KIRModule = try XCTUnwrap(ctx.kir)
-        let testFunc: KIRFunction = try XCTUnwrap(module.arena.declarations.compactMap { decl -> KIRFunction? in
-            if case let .function(fn) = decl, ctx.interner.resolve(fn.name) == "test" {
-                return fn
-            }
-            return nil
-        }.first)
+        let testFunc: KIRFunction = try findKIRFunction(named: "test", in: module, interner: ctx.interner)
         
         let boxingCalls = testFunc.body.filter { instruction in
             if case let .call(_, callee, _, _, _, _, _, _) = instruction {
