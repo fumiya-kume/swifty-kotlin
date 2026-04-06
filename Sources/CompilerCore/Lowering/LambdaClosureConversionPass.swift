@@ -347,7 +347,7 @@ final class LambdaClosureConversionPass: LoweringPass {
 
         // Nominal marker type for the closure object. The runtime payload is
         // stored in the array box allocated by `kk_object_new`.
-        let nominalName = interner.intern("kk_closure_obj_\(lambdaSymbolRaw)")
+        _ = interner.intern("kk_closure_obj_\(lambdaSymbolRaw)")
         let nominalSymbol = SymbolID(rawValue: Int32(clamping: -(41_000_000 + Int64(lambdaSymbolRaw))))
         let nominalDecl = KIRDecl.nominalType(KIRNominalType(symbol: nominalSymbol))
 

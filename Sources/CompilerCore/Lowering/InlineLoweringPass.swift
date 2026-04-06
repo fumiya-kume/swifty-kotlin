@@ -537,7 +537,7 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
-            case let .call(symbol, callee, args, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
+            case let .call(symbol, callee, args, result, canThrow, thrownResult, isSuperCall, _):
                 // Attempt to inline a lambda argument passed to this inline function.
                 let resolvedLambdaParamSymbol: SymbolID? = if let symbol, lambdaParamSymbols.contains(symbol) {
                     symbol
@@ -947,7 +947,7 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
-            case let .call(symbol, callee, args, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType):
+            case let .call(symbol, callee, args, result, canThrow, thrownResult, isSuperCall, _):
                 let resolvedArgs = args.map { resolveAlias(of: $0, aliases: localExprMap) }
                 if ["kk_function_invoke", "kk_function_invoke_0", "kk_function_invoke_2", "kk_function_invoke_3", "kk_suspend_function_invoke", "kk_suspend_function_invoke_0"].contains(ctx.interner.resolve(callee)),
                    let callableExpr = resolvedArgs.first,
