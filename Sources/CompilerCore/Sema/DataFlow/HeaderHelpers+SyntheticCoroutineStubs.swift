@@ -30,6 +30,11 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cancellationPkg = ensureSyntheticPackage(
+            kotlinCoroutinesPkg + [interner.intern("cancellation")],
+            symbols: symbols,
+            interner: interner
+        )
         let kotlinxPkg = ensureSyntheticPackage(
             [interner.intern("kotlinx")],
             symbols: symbols,
@@ -342,8 +347,8 @@ extension DataFlowSemaPhase {
             )],
             returnType: suspendCoroutineTType,
             externalLinkName: "kk_suspend_coroutine",
-            flags: [.synthetic, .inlineFunction],
             isSuspend: true,
+            flags: [.synthetic, .inlineFunction],
             explicitTypeParameterSymbols: [suspendCoroutineTypeParamSymbol],
             symbols: symbols,
             interner: interner
@@ -1330,6 +1335,31 @@ extension DataFlowSemaPhase {
             )
         }
 
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "cancel",
+            packageFQName: cancellationPkg,
+            parameters: [(name: "message", type: types.stringType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_coroutine_cancel_current",
+            isSuspend: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "cancel",
+            packageFQName: cancellationPkg,
+            parameters: [
+                (name: "message", type: types.stringType),
+                (name: "cause", type: types.makeNullable(types.anyType)),
+            ],
+            returnType: types.unitType,
+            externalLinkName: "kk_coroutine_cancel_current",
+            isSuspend: true,
+            symbols: symbols,
+            interner: interner
+        )
+
         // CoroutineContext.plus(other: CoroutineContext): CoroutineContext
         registerSyntheticCoroutineMember(
             ownerSymbol: coroutineContextSymbol,
@@ -1956,8 +1986,8 @@ extension DataFlowSemaPhase {
             packageFQName: packageFQName,
             parameters: [(name: parameterName, type: parameterType)],
             returnType: returnType,
-            flags: flags,
             isSuspend: isSuspend,
+            flags: flags,
             symbols: symbols,
             interner: interner
         )
@@ -2063,9 +2093,9 @@ extension DataFlowSemaPhase {
         parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
         externalLinkName: String? = nil,
+        isSuspend: Bool = false,
         syntheticTypeParameterNames: [String] = [],
         flags: SymbolFlags = [.synthetic],
-        isSuspend: Bool = false,
         explicitTypeParameterSymbols: [SymbolID]? = nil,
         syntheticVarargParameterIndices: Set<Int> = [],
         symbols: SymbolTable,
