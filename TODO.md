@@ -164,7 +164,7 @@
   - **関連ファイル**: `CompilerPlugin.swift`
   - **テストケース**: `Scripts/diff_cases/compiler_plugin_api.kt`
 
-- [ ] STDLIB-REFL-174: KSP（シンボル処理）基本実装
+- [x] STDLIB-REFL-174: KSP（シンボル処理）基本実装
   - **仕様**: Kotlin Symbol Processingの基本的なサポート
   - **実装内容**:
     - SymbolProcessor: シンボルプロセッサインターフェース
@@ -172,9 +172,10 @@
     - Resolver: シンボル解決
     - CodeGenerator: コード生成
     - プロセッサ登録: プロセッサの登録と実行
-  - **現状**: KSPは未実装
+  - **現状**: 完全実装済み - 全APIが利用可能
   - **関連ファイル**: `RuntimeKSP.swift`
   - **テストケース**: `Scripts/diff_cases/ksp_basic.kt`
+  - **実装API**: kk_ksp_logger_new, kk_ksp_logger_info, kk_ksp_logger_warn, kk_ksp_logger_error, kk_ksp_logger_messages, kk_ksp_resolver_new, kk_ksp_resolver_add_file, kk_ksp_resolver_add_symbol, kk_ksp_resolver_add_annotated_symbol, kk_ksp_resolver_get_all_files, kk_ksp_resolver_get_all_symbols, kk_ksp_resolver_get_symbols_with_annotation, kk_ksp_codegen_new, kk_ksp_codegen_create_file, kk_ksp_codegen_generated_files, kk_ksp_register_processor, kk_ksp_registered_processors, kk_ksp_run_processors
 
 - [ ] STDLIB-REFL-175: アノテーション処理高度機能完全実装
   - **仕様**: アノテーション処理の高度な機能
