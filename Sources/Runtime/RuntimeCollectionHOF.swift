@@ -1733,6 +1733,36 @@ public func kk_list_sum(_ listRaw: Int) -> Int {
     return total
 }
 
+@_cdecl("kk_list_average")
+public func kk_list_average(_ listRaw: Int) -> Int {
+    guard let listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = listBox.elements
+    guard !elements.isEmpty else { return kk_double_to_bits(Double.nan) }
+    var sum: Double = 0.0
+    for raw in elements {
+        if let ptr = UnsafeMutableRawPointer(bitPattern: raw) {
+            let isObj = runtimeStorage.withLock { state in
+                state.objectPointers.contains(UInt(bitPattern: ptr))
+            }
+            if isObj {
+                if let doubleBox = tryCast(ptr, to: RuntimeDoubleBox.self) {
+                    sum += doubleBox.value
+                } else if let floatBox = tryCast(ptr, to: RuntimeFloatBox.self) {
+                    sum += Double(floatBox.value)
+                } else if let longBox = tryCast(ptr, to: RuntimeLongBox.self) {
+                    sum += Double(longBox.value)
+                } else if let intBox = tryCast(ptr, to: RuntimeIntBox.self) {
+                    sum += Double(intBox.value)
+                }
+                continue
+            }
+        }
+        // Unboxed raw integer (plain Int list element)
+        sum += Double(raw)
+    }
+    return kk_double_to_bits(sum / Double(elements.count))
+}
+
 @_cdecl("kk_list_reversed")
 public func kk_list_reversed(_ listRaw: Int) -> Int {
     guard let listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
