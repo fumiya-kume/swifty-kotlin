@@ -25,13 +25,13 @@ public func assert(_ value: Bool, _ lazyMessage: () -> Any) {
     guard runtimeAreAssertionsEnabled() else {
         return
     }
-    
+
     guard value else {
         let message = lazyMessage()
+        let messageString = String(describing: message)
         var thrown = 0
-        _ = kk_precondition_assert_lazy(0, 0, 0, &thrown)
-        // For now, use default message since we can't easily create custom message thunks
-        // This matches the behavior when no lambda is provided
+        thrown = runtimeAllocateThrowable(message: "AssertionError: \(messageString)")
+        _ = thrown
         return
     }
 }
