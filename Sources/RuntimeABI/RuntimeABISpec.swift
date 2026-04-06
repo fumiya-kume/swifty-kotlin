@@ -6813,10 +6813,28 @@ public enum RuntimeABISpec {
             section: "I18N"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_dateformat_ofPatternDefaultLocale",
+            parameters: [
+                RuntimeABIParameter(name: "patternRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_dateformat_format",
             parameters: [
                 RuntimeABIParameter(name: "formatRaw", type: .intptr),
                 RuntimeABIParameter(name: "epochMillis", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "I18N"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_dateformat_parse",
+            parameters: [
+                RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "stringRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "I18N"

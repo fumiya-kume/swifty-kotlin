@@ -90,6 +90,15 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerDateFormatTopLevel(
+            packageFQName: javaTextPkg,
+            name: "ofPattern",
+            parameterTypes: [types.stringType],
+            returnType: dateFormatType,
+            externalLinkName: "kk_dateformat_ofPatternDefaultLocale",
+            symbols: symbols,
+            interner: interner
+        )
         registerDateFormatMember(
             ownerSymbol: dateFormatSymbol,
             ownerType: dateFormatType,
@@ -97,6 +106,16 @@ extension DataFlowSemaPhase {
             parameterTypes: [types.longType],
             returnType: types.stringType,
             externalLinkName: "kk_dateformat_format",
+            symbols: symbols,
+            interner: interner
+        )
+        registerDateFormatMember(
+            ownerSymbol: dateFormatSymbol,
+            ownerType: dateFormatType,
+            name: "parse",
+            parameterTypes: [types.stringType],
+            returnType: types.longType,
+            externalLinkName: "kk_dateformat_parse",
             symbols: symbols,
             interner: interner
         )

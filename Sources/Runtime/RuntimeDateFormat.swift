@@ -128,6 +128,12 @@ public func kk_dateformat_getDateTimeInstanceWithTimeZone(_ localeRaw: Int, _ ti
     dateFormatStyleBox(dateStyle: .medium, timeStyle: .medium, localeRaw: localeRaw, timeZoneRaw: timeZoneRaw, caller: #function)
 }
 
+@_cdecl("kk_dateformat_ofPatternDefaultLocale")
+public func kk_dateformat_ofPatternDefaultLocale(_ patternRaw: Int) -> Int {
+    let pattern = dateFormatString(from: patternRaw, caller: #function)
+    return registerRuntimeObject(RuntimeDateFormatBox(pattern: pattern, localeIdentifier: Locale.current.identifier))
+}
+
 @_cdecl("kk_dateformat_format")
 public func kk_dateformat_format(_ formatRaw: Int, _ epochMillis: Int) -> Int {
     guard let box = runtimeDateFormatBox(from: formatRaw) else {
@@ -135,4 +141,19 @@ public func kk_dateformat_format(_ formatRaw: Int, _ epochMillis: Int) -> Int {
     }
     let date = Date(timeIntervalSince1970: Double(epochMillis) / 1000.0)
     return dateFormatMakeStringRaw(box.formatter.string(from: date))
+}
+
+@_cdecl("kk_dateformat_parse")
+public func kk_dateformat_parse(_ formatRaw: Int, _ stringRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let box = runtimeDateFormatBox(from: formatRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_dateformat_parse received invalid DateFormat handle")
+    }
+    let text = dateFormatString(from: stringRaw, caller: #function)
+    guard let date = box.formatter.date(from: text) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ParseException: Unparseable date: \"\(text)\"")
+        return 0
+    }
+    let epochMillis = Int(date.timeIntervalSince1970 * 1000.0)
+    return epochMillis
 }
