@@ -2289,11 +2289,23 @@ private func runtimeFlowApplyStreamOps(
             let intervalNs = UInt64(intervalMs) * 1_000_000
             var delayed: [RuntimeFlowEvent] = []
             delayed.reserveCapacity(currentEvents.count)
-            for event in currentEvents {
-                if intervalMs > 0 {
-                    usleep(useconds_t(intervalMs * 1000))
+            
+            // 遅延がある場合は実際に待機する
+            if intervalMs > 0 {
+                let group = DispatchGroup()
+                for (index, event) in currentEvents.enumerated() {
+                    group.enter()
+                    DispatchQueue.global().asyncAfter(deadline: .now() + .milliseconds(intervalMs * index)) {
+                        delayed.append(RuntimeFlowEvent(value: event.value, timestamp: event.timestamp + intervalNs * UInt64(index + 1)))
+                        group.leave()
+                    }
                 }
-                delayed.append(RuntimeFlowEvent(value: event.value, timestamp: event.timestamp + intervalNs))
+                group.wait()
+            } else {
+                // 遅延がない場合はタイムスタンプのみ操作
+                for event in currentEvents {
+                    delayed.append(RuntimeFlowEvent(value: event.value, timestamp: event.timestamp + intervalNs))
+                }
             }
             currentEvents = delayed
         case .buffer, .flowOn, .emit:
@@ -3214,6 +3226,23 @@ public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ tag: Int) -> Int {
         fixedValues: flow.fixedValues
     )
     return runtimeRegisterFlowHandle(derived)
+}
+
+@_cdecl("kk_flow_emit_with_timestamp")
+public func kk_flow_emit_with_timestamp(_ flowHandle: Int, _ value: Int, _ tag: Int, _ timestamp: UInt64) -> Int {
+    if tag == RuntimeFlowTag.emit.rawValue {
+        let context = runtimeFlowCurrentCollectContext()
+        if let context, !context.cancelled {
+            let unboxed = runtimeFlowMaybeUnbox(value)
+            context.emittedValues.append(unboxed)
+            context.emittedEvents.append(RuntimeFlowEvent(value: unboxed, timestamp: timestamp))
+            if let emitHandler = context.emitHandler {
+                return emitHandler(unboxed)
+            }
+        }
+        return value
+    }
+    return kk_flow_emit(flowHandle, value, tag)
 }
 
 @_cdecl("kk_flow_collect")

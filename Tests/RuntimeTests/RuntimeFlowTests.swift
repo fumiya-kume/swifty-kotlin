@@ -259,11 +259,10 @@ func runtime_test_flow_emitter_burst_1_2_3(_ outThrown: UnsafeMutablePointer<Int
 @_cdecl("runtime_test_flow_emitter_spaced_1_2_3")
 func runtime_test_flow_emitter_spaced_1_2_3(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    _ = kk_flow_emit(0, 1, RuntimeFlowTag.emit.rawValue)
-    usleep(1_500)
-    _ = kk_flow_emit(0, 2, RuntimeFlowTag.emit.rawValue)
-    usleep(1_500)
-    _ = kk_flow_emit(0, 3, RuntimeFlowTag.emit.rawValue)
+    let now = DispatchTime.now().uptimeNanoseconds
+    _ = kk_flow_emit_with_timestamp(0, 1, RuntimeFlowTag.emit.rawValue, now)
+    _ = kk_flow_emit_with_timestamp(0, 2, RuntimeFlowTag.emit.rawValue, now + 1_500_000)
+    _ = kk_flow_emit_with_timestamp(0, 3, RuntimeFlowTag.emit.rawValue, now + 3_000_000)
     return 0
 }
 
