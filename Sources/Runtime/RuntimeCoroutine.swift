@@ -3657,7 +3657,8 @@ public func kk_channel_flow_try_send(_ channelRaw: Int, _ value: Int) -> Int {
 /// In this synchronous runtime, callbacks are not truly async, so awaitClose
 /// is a no-op — it simply returns immediately after the emitter body finishes.
 @_cdecl("kk_callback_flow_await_close")
-public func kk_callback_flow_await_close(_ channelRaw: Int, _ closeHandlerFnPtr: Int) -> Int {
+public func kk_callback_flow_await_close(_ channelRaw: Int, _ closeHandlerFnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
     // If a close handler was registered, invoke it now.
     if closeHandlerFnPtr != 0 {
         let handler = unsafeBitCast(
@@ -3666,6 +3667,10 @@ public func kk_callback_flow_await_close(_ channelRaw: Int, _ closeHandlerFnPtr:
         )
         var thrown = 0
         _ = handler(&thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
     }
     return 0
 }
