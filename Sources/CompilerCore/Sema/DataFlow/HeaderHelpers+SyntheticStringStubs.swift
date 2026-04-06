@@ -1889,6 +1889,28 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- String.partition ---
+        let pairStringStringType: TypeID
+        if let pairSymbol = symbols.lookup(fqName: pairFQName) {
+            pairStringStringType = types.make(.classType(ClassType(
+                classSymbol: pairSymbol,
+                args: [.out(stringType), .out(stringType)],
+                nullability: .nonNull
+            )))
+        } else {
+            pairStringStringType = types.anyType
+        }
+        registerSyntheticStringExtensionFunction(
+            named: "partition",
+            externalLinkName: "kk_string_partition",
+            receiverType: stringType,
+            parameters: [("predicate", charToBoolType, false, false)],
+            returnType: pairStringStringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-317: String.asSequence / asIterable ---
 
         let sequenceCharType = makeSequenceType(

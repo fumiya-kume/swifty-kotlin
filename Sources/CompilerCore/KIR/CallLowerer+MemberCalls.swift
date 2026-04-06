@@ -2718,6 +2718,8 @@ extension CallLowerer {
                     ("kk_string_find", [loweredReceiverID] + normalizedArgIDs)
                 case "findLast":
                     ("kk_string_findLast", [loweredReceiverID] + normalizedArgIDs)
+                case "partition":
+                    ("kk_string_partition", [loweredReceiverID] + normalizedArgIDs)
                 case "take":
                     ("kk_string_take", [loweredReceiverID, loweredArgIDs[0]])
                 case "drop":
@@ -2762,13 +2764,24 @@ extension CallLowerer {
                     nil
                 }
                 if let runtimeCall {
+                    let stringHOFCanThrow = calleeStr == "repeat"
+                        || calleeStr == "replaceFirstChar"
+                        || calleeStr == "indexOfFirst"
+                        || calleeStr == "indexOfLast"
+                        || calleeStr == "partition"
+                    let stringHOFThrownResult = stringHOFCanThrow
+                        ? arena.appendExpr(
+                            .temporary(Int32(arena.expressions.count)),
+                            type: sema.types.nullableAnyType
+                        )
+                        : nil
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCall.callee),
                         arguments: runtimeCall.arguments,
                         result: result,
-                        canThrow: calleeStr == "repeat" || calleeStr == "replaceFirstChar" || calleeStr == "indexOfFirst" || calleeStr == "indexOfLast",
-                        thrownResult: nil
+                        canThrow: stringHOFCanThrow,
+                        thrownResult: stringHOFThrownResult
                     ))
                     return result
                 }

@@ -2485,3 +2485,41 @@ public func kk_string_findLast(
     }
     return runtimeNullSentinelInt
 }
+
+// MARK: - STDLIB-partition: String.partition(predicate)
+
+@_cdecl("kk_string_partition")
+public func kk_string_partition(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard fnPtr != 0 else {
+        let first = runtimeMakeStringRaw(runtimeStringFromRawOrPanic(strRaw, caller: #function))
+        let second = runtimeMakeStringRaw("")
+        return kk_pair_new(first, second)
+    }
+    var matched: [UnicodeScalar] = []
+    var unmatched: [UnicodeScalar] = []
+    for scalar in scalars {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: Int(scalar.value),
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return kk_pair_new(runtimeMakeStringRaw(""), runtimeMakeStringRaw(""))
+        }
+        if maybeUnbox(result) != 0 {
+            matched.append(scalar)
+        } else {
+            unmatched.append(scalar)
+        }
+    }
+    let first = runtimeMakeStringRaw(runtimeStringFromScalars(matched))
+    let second = runtimeMakeStringRaw(runtimeStringFromScalars(unmatched))
+    return kk_pair_new(first, second)
+}
