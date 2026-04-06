@@ -1,3 +1,6 @@
+// SKIP-DIFF: uses kotlin.coroutines.cancellation.cancel import which is not available
+// in kotlinc without a special classpath; the diff harness does not yet include
+// kotlinx-coroutines-core.jar so the reference compiler always rejects this file.
 // NOTE: Requires kotlinx-coroutines on classpath.
 // diff_kotlinc.sh must be extended to include kotlinx-coroutines-core.jar
 // before this template can be used with the diff harness.

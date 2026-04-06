@@ -93,6 +93,31 @@ extension CallLowerer {
         return knownNames.isChannelSymbol(symbol)
     }
 
+    func isCoroutineContextReceiverType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        guard interner.resolve(symbol.name) == "CoroutineContext" else {
+            return false
+        }
+        let kotlinxCoroutinesPkg: [InternedString] = [
+            interner.intern("kotlinx"),
+            interner.intern("coroutines"),
+        ]
+        let kotlinCoroutinesPkg: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("coroutines"),
+        ]
+        return symbol.fqName.starts(with: kotlinxCoroutinesPkg)
+            || symbol.fqName.starts(with: kotlinCoroutinesPkg)
+    }
+
     private func wrapLateinitReadIfNeeded(
         _ valueExpr: KIRExprID,
         symbol: SymbolID,
@@ -554,6 +579,49 @@ extension CallLowerer {
                 ))
                 return result
             }
+        }
+
+        // `CoroutineContext.cancel()` is a context-wide cancellation entrypoint
+        // and must lower directly to the dedicated runtime ABI.
+        if callee == "cancel",
+           let receiverType = sema.bindings.exprTypes[receiverExpr],
+           isCoroutineContextReceiverType(receiverType, sema: sema, interner: interner)
+        {
+            let receiverID = driver.lowerExpr(
+                receiverExpr,
+                shared: shared,
+                emit: &instructions
+            )
+            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.unitType
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: resultType
+            )
+            let loweredArgs: [KIRExprID]
+            switch args.count {
+            case 0:
+                loweredArgs = []
+            case 1:
+                loweredArgs = [
+                    driver.lowerExpr(
+                        args[0].expr,
+                        shared: shared,
+                        emit: &instructions
+                    ),
+                ]
+            default:
+                loweredArgs = []
+            }
+            let runtimeCallee = interner.intern(args.isEmpty ? "kk_context_cancel_no_cause" : "kk_context_cancel")
+            instructions.append(.call(
+                symbol: nil,
+                callee: runtimeCallee,
+                arguments: [receiverID] + loweredArgs,
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
         }
 
         // ── T::class.simpleName / T::class.qualifiedName ──────────────

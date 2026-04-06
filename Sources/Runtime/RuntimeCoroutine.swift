@@ -344,11 +344,12 @@ final class RuntimeContinuationState: @unchecked Sendable {
     }
 
     func makeContinuationContext() -> RuntimeCoroutineContext {
-        RuntimeCoroutineContext(
+        let jobRaw: Int = jobHandle.map { Int(bitPattern: UnsafeMutableRawPointer(Unmanaged.passUnretained($0).toOpaque())) } ?? 0
+        return RuntimeCoroutineContext(
             dispatcher: 0,
             name: scope?.name,
             exceptionHandler: nil,
-            jobHandle: jobHandle
+            jobHandleRaw: jobRaw
         )
     }
 
@@ -3717,18 +3718,18 @@ final class RuntimeCoroutineContext: @unchecked Sendable {
     var dispatcher: Int  // 0 means "inherit from parent"
     var name: String?
     var exceptionHandler: RuntimeExceptionHandlerBox?
-    var jobHandle: RuntimeJobHandle?
+    var jobHandleRaw: Int
 
     init(
         dispatcher: Int = 0,
         name: String? = nil,
         exceptionHandler: RuntimeExceptionHandlerBox? = nil,
-        jobHandle: RuntimeJobHandle? = nil
+        jobHandleRaw: Int = 0
     ) {
         self.dispatcher = dispatcher
         self.name = name
         self.exceptionHandler = exceptionHandler
-        self.jobHandle = jobHandle
+        self.jobHandleRaw = jobHandleRaw
     }
 
     /// Merge another context into this one. Right-hand side wins for duplicate keys.
@@ -3737,7 +3738,7 @@ final class RuntimeCoroutineContext: @unchecked Sendable {
             dispatcher: other.dispatcher != 0 ? other.dispatcher : self.dispatcher,
             name: other.name ?? self.name,
             exceptionHandler: other.exceptionHandler ?? self.exceptionHandler,
-            jobHandle: other.jobHandle ?? self.jobHandle
+            jobHandleRaw: other.jobHandleRaw != 0 ? other.jobHandleRaw : self.jobHandleRaw
         )
     }
 }
@@ -3974,10 +3975,10 @@ private func runtimeCoroutineContextElementHandle(for keyRaw: Int, in ctx: Runti
     }
     if keyRaw != 0,
        let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
-       let job = tryCast(ptr, to: RuntimeJobHandle.self)
+       tryCast(ptr, to: RuntimeJobHandle.self) != nil
     {
-        guard let ctxJob = ctx.jobHandle, ctxJob === job else { return nil }
-        return Int(bitPattern: UnsafeMutableRawPointer(Unmanaged.passUnretained(job).toOpaque()))
+        guard ctx.jobHandleRaw == keyRaw else { return nil }
+        return keyRaw
     }
     return nil
 }
@@ -3994,8 +3995,8 @@ private func runtimeCoroutineContextElementHandles(in ctx: RuntimeCoroutineConte
     if let handler = ctx.exceptionHandler {
         handles.append(Int(bitPattern: UnsafeMutableRawPointer(Unmanaged.passUnretained(handler).toOpaque())))
     }
-    if let job = ctx.jobHandle {
-        handles.append(Int(bitPattern: UnsafeMutableRawPointer(Unmanaged.passUnretained(job).toOpaque())))
+    if ctx.jobHandleRaw != 0 {
+        handles.append(ctx.jobHandleRaw)
     }
     return handles
 }
@@ -4006,7 +4007,7 @@ private func runtimeCoroutineContextRemovingElement(for keyRaw: Int, from ctx: R
         dispatcher: ctx.dispatcher,
         name: ctx.name,
         exceptionHandler: ctx.exceptionHandler,
-        jobHandle: ctx.jobHandle
+        jobHandleRaw: ctx.jobHandleRaw
     )
     if keyRaw != 0,
        let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
@@ -4043,10 +4044,10 @@ private func runtimeCoroutineContextRemovingElement(for keyRaw: Int, from ctx: R
     }
     if keyRaw != 0,
        let ptr = UnsafeMutableRawPointer(bitPattern: keyRaw),
-       let job = tryCast(ptr, to: RuntimeJobHandle.self)
+       tryCast(ptr, to: RuntimeJobHandle.self) != nil
     {
-        if next.jobHandle === job {
-            next.jobHandle = nil
+        if next.jobHandleRaw == keyRaw {
+            next.jobHandleRaw = 0
         }
         return next
     }
@@ -4162,8 +4163,11 @@ private func resolveToCoroutineContext(_ raw: Int) -> RuntimeCoroutineContext {
     if let handler = tryCast(ptr, to: RuntimeExceptionHandlerBox.self) {
         return RuntimeCoroutineContext(exceptionHandler: handler)
     }
-    if let job = tryCast(ptr, to: RuntimeJobHandle.self) {
-        return RuntimeCoroutineContext(jobHandle: job)
+    if tryCast(ptr, to: RuntimeJobHandle.self) != nil {
+        return RuntimeCoroutineContext(jobHandleRaw: raw)
+    }
+    if tryCast(ptr, to: RuntimeAsyncTask.self) != nil {
+        return RuntimeCoroutineContext(jobHandleRaw: raw)
     }
     return RuntimeCoroutineContext(dispatcher: raw)
 }
@@ -5688,6 +5692,26 @@ public func kk_job_cancel_with_cause(_ jobHandle: Int, _ cause: Int) -> Int {
         task.cancel()
     }
     return 0
+}
+
+/// Cancel any `CoroutineContext`-like raw value by finding its Job and cancelling it.
+/// The optional cause is accepted for API compatibility, but the current runtime
+/// cancellation model is flag-based and does not preserve a custom cause.
+@_cdecl("kk_context_cancel")
+public func kk_context_cancel(_ contextRaw: Int, _ causeRaw: Int) -> Int {
+    _ = causeRaw
+    _ = kk_job_cancel(contextRaw)
+    let context = resolveToCoroutineContext(contextRaw)
+    if context.jobHandleRaw != 0 && context.jobHandleRaw != contextRaw {
+        _ = kk_job_cancel(context.jobHandleRaw)
+    }
+    return 0
+}
+
+/// Convenience overload for `CoroutineContext.cancel()` calls that omit a cause.
+@_cdecl("kk_context_cancel_no_cause")
+public func kk_context_cancel_no_cause(_ contextRaw: Int) -> Int {
+    kk_context_cancel(contextRaw, 0)
 }
 
 /// Mark a job as completed with a result. Returns 1 if the transition succeeded.

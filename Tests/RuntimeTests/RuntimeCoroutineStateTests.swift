@@ -498,6 +498,31 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
         XCTAssertLessThan(elapsed, 2.0, "Coroutine should stop promptly after cancel")
     }
 
+    func testContextCancelStopsLaunchedCoroutine() {
+        let entryRaw = unsafeBitCast(
+            runtime_test_suspend_cancel_loop as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        let jobHandle = kk_kxmini_launch(entryRaw, runtimeKxMiniCancelFunctionID)
+        XCTAssertNotEqual(jobHandle, 0, "Launch should return a job handle")
+
+        let contextHandle = kk_context_plus(jobHandle, kk_dispatcher_default())
+        defer { kk_context_release(contextHandle) }
+
+        XCTAssertTrue(
+            runtimeCoroutineTestState.waitForCancelLoopIterations(atLeast: 1, timeout: 2.0),
+            "Coroutine should have started"
+        )
+
+        _ = kk_context_cancel(contextHandle, 0)
+        XCTAssertEqual(kk_job_is_cancelled(jobHandle), 1)
+
+        let startTime = DispatchTime.now()
+        _ = kk_job_join(jobHandle)
+        let elapsed = Double(DispatchTime.now().uptimeNanoseconds - startTime.uptimeNanoseconds) / 1_000_000_000
+        XCTAssertLessThan(elapsed, 2.0, "Coroutine should stop promptly after context cancel")
+    }
+
     func testLaunchReturnsJobHandle() {
         let launchBaseline = runtimeCoroutineTestState.launchEventCountSnapshot()
         let entryRaw = unsafeBitCast(

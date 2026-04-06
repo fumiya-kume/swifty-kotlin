@@ -1093,6 +1093,30 @@ extension DataFlowSemaPhase {
             }
         }
 
+        // CoroutineContext.cancel() and CoroutineContext.cancel(cause)
+        registerSyntheticCoroutineMember(
+            ownerSymbol: coroutineContextSymbol,
+            ownerType: coroutineContextType,
+            name: "cancel",
+            externalLinkName: "kk_context_cancel_no_cause",
+            returnType: types.unitType,
+            parameters: [],
+            flags: [.synthetic],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineMember(
+            ownerSymbol: coroutineContextSymbol,
+            ownerType: coroutineContextType,
+            name: "cancel",
+            externalLinkName: "kk_context_cancel",
+            returnType: types.unitType,
+            parameters: [(name: "cause", type: types.makeNullable(rootCancellationType))],
+            flags: [.synthetic],
+            symbols: symbols,
+            interner: interner
+        )
+
         let coroutineNameSymbol = ensureClassSymbol(
             named: "CoroutineName",
             in: coroutinesPkg,
@@ -1158,7 +1182,7 @@ extension DataFlowSemaPhase {
             named: "CoroutineExceptionHandler",
             packageFQName: coroutinesPkg,
             parameters: [(name: "handler", type: types.make(.functionType(FunctionType(
-                params: [coroutineContextType, types.anyType],
+                params: [kotlinCoroutineContextType, types.anyType],
                 returnType: types.unitType,
                 isSuspend: false,
                 nullability: .nonNull
@@ -1173,7 +1197,7 @@ extension DataFlowSemaPhase {
             ownerType: coroutineExceptionHandlerType,
             externalLinkName: "kk_exception_handler_create",
             parameters: [(name: "handler", type: types.make(.functionType(FunctionType(
-                params: [coroutineContextType, types.anyType],
+                params: [kotlinCoroutineContextType, types.anyType],
                 returnType: types.unitType,
                 isSuspend: false,
                 nullability: .nonNull
@@ -1249,7 +1273,7 @@ extension DataFlowSemaPhase {
             named: "withContext",
             packageFQName: coroutinesPkg,
             parameters: [
-                (name: "context", type: coroutineContextType),
+                (name: "context", type: kotlinCoroutineContextType),
                 (name: "block", type: types.make(.functionType(FunctionType(
                     params: [],
                     returnType: types.anyType,
@@ -1366,8 +1390,8 @@ extension DataFlowSemaPhase {
             ownerType: coroutineContextType,
             name: "plus",
             externalLinkName: "kk_context_plus",
-            returnType: coroutineContextType,
-            parameters: [(name: "context", type: coroutineContextType)],
+            returnType: kotlinCoroutineContextType,
+            parameters: [(name: "context", type: kotlinCoroutineContextType)],
             flags: [.synthetic, .operatorFunction],
             symbols: symbols,
             interner: interner
@@ -1377,8 +1401,8 @@ extension DataFlowSemaPhase {
             ownerType: dispatcherType,
             name: "plus",
             externalLinkName: "kk_context_plus",
-            returnType: coroutineContextType,
-            parameters: [(name: "context", type: coroutineContextType)],
+            returnType: kotlinCoroutineContextType,
+            parameters: [(name: "context", type: kotlinCoroutineContextType)],
             flags: [.synthetic, .operatorFunction],
             symbols: symbols,
             interner: interner
@@ -1388,8 +1412,8 @@ extension DataFlowSemaPhase {
             ownerType: coroutineNameType,
             name: "plus",
             externalLinkName: "kk_context_plus",
-            returnType: coroutineContextType,
-            parameters: [(name: "context", type: coroutineContextType)],
+            returnType: kotlinCoroutineContextType,
+            parameters: [(name: "context", type: kotlinCoroutineContextType)],
             flags: [.synthetic, .operatorFunction],
             symbols: symbols,
             interner: interner
@@ -1399,8 +1423,8 @@ extension DataFlowSemaPhase {
             ownerType: coroutineExceptionHandlerType,
             name: "plus",
             externalLinkName: "kk_context_plus",
-            returnType: coroutineContextType,
-            parameters: [(name: "context", type: coroutineContextType)],
+            returnType: kotlinCoroutineContextType,
+            parameters: [(name: "context", type: kotlinCoroutineContextType)],
             flags: [.synthetic, .operatorFunction],
             symbols: symbols,
             interner: interner
@@ -1410,8 +1434,8 @@ extension DataFlowSemaPhase {
             ownerType: jobType,
             name: "plus",
             externalLinkName: "kk_context_plus",
-            returnType: coroutineContextType,
-            parameters: [(name: "context", type: coroutineContextType)],
+            returnType: kotlinCoroutineContextType,
+            parameters: [(name: "context", type: kotlinCoroutineContextType)],
             flags: [.synthetic, .operatorFunction],
             symbols: symbols,
             interner: interner
@@ -1929,6 +1953,17 @@ extension DataFlowSemaPhase {
             name: "availablePermits",
             propertyType: types.intType,
             externalLinkName: "kk_semaphore_availablePermits",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticCoroutineExtensionFunction(
+            named: "cancel",
+            packageFQName: kotlinCoroutinesCancellationPkg,
+            receiverType: kotlinCoroutineContextType,
+            externalLinkName: "kk_context_cancel",
+            returnType: types.unitType,
+            parameters: [(name: "cause", type: types.makeNullable(rootCancellationType))],
             symbols: symbols,
             interner: interner
         )

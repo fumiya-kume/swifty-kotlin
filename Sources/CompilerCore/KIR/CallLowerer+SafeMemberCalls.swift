@@ -61,6 +61,48 @@ extension CallLowerer {
             calleeName
         }
 
+        if interner.resolve(effectiveCalleeName) == "cancel",
+           isCoroutineContextReceiverType(nonNullSafeReceiverType, sema: sema, interner: interner)
+        {
+            let nonNullLabel = driver.ctx.makeLoopLabel()
+            let endLabel = driver.ctx.makeLoopLabel()
+            instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: nonNullLabel))
+            let nullableUnitType = sema.types.makeNullable(sema.types.unitType)
+            let nullValue = arena.appendExpr(.unit, type: nullableUnitType)
+            instructions.append(.constValue(result: nullValue, value: .null))
+            let nullableResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nullableUnitType)
+            instructions.append(.copy(from: nullValue, to: nullableResult))
+            instructions.append(.jump(endLabel))
+            instructions.append(.label(nonNullLabel))
+            let nonNullResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.unitType)
+            let loweredArgIDs: [KIRExprID]
+            switch args.count {
+            case 0:
+                loweredArgIDs = []
+            case 1:
+                loweredArgIDs = [
+                    driver.lowerExpr(
+                        args[0].expr,
+                        shared: shared, emit: &instructions
+                    ),
+                ]
+            default:
+                loweredArgIDs = []
+            }
+            let runtimeCallee = interner.intern(args.isEmpty ? "kk_context_cancel_no_cause" : "kk_context_cancel")
+            instructions.append(.call(
+                symbol: nil,
+                callee: runtimeCallee,
+                arguments: [loweredReceiverID] + loweredArgIDs,
+                result: nonNullResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            instructions.append(.copy(from: nonNullResult, to: nullableResult))
+            instructions.append(.label(endLabel))
+            return nullableResult
+        }
+
         // Boolean safe calls: return null on null receiver and only evaluate
         // arguments on the non-null path.
         if sema.types.isSubtype(nonNullSafeReceiverType, sema.types.booleanType) {

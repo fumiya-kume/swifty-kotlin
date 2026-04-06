@@ -981,6 +981,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         let source = """
         import kotlinx.coroutines.*
         import kotlinx.coroutines.channels.*
+        import kotlin.coroutines.cancellation.cancel
 
         fun main() = runBlocking {
             val started = Channel<Int>()
@@ -994,8 +995,9 @@ final class CodegenBackendIntegrationTests: XCTestCase {
                     println("cancelled")
                 }
             }
+            val jobContext = job + Dispatchers.Default
             started.receive()
-            job.cancel()
+            jobContext.cancel()
             job.join()
             println("done")
         }

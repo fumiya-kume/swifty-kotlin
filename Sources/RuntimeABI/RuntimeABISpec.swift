@@ -2910,6 +2910,23 @@ public enum RuntimeABISpec {
             section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_context_cancel",
+            parameters: [
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
+                RuntimeABIParameter(name: "causeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_context_cancel_no_cause",
+            parameters: [
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_job_complete",
             parameters: [
                 RuntimeABIParameter(name: "jobHandle", type: .intptr),
