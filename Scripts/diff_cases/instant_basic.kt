@@ -1,8 +1,7 @@
 import kotlin.time.*
 
 fun main() {
-    // Instant.now() / fromEpochMilliseconds
-    val now = Instant.now()
+    // fromEpochMilliseconds
     val epoch = Instant.fromEpochMilliseconds(0L)
 
     // epochSeconds and nanoOfSecond properties
@@ -21,14 +20,11 @@ fun main() {
     println(earlier.nanoOfSecond) // 0
 
     // comparisons
-    println(epoch < now)    // true
-    println(now > epoch)    // true
     println(epoch <= epoch) // true
     println(epoch >= epoch) // true
     println(epoch == epoch) // true
     val epoch2 = Instant.fromEpochMilliseconds(0L)
     println(epoch == epoch2) // true
-    println(epoch.elapsed().inWholeSeconds > 0) // true
 
     // until() — duration between two Instants
     val t1 = Instant.fromEpochMilliseconds(1000L)
