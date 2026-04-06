@@ -2576,6 +2576,66 @@ public func kk_set_minOrNull(_ setRaw: Int) -> Int {
     return best
 }
 
+// MARK: - Set predicate higher-order functions (STDLIB-SET-PRED)
+
+@_cdecl("kk_set_any")
+public func kk_set_any(_ setRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else { invalidContainerPanic(#function, "set") }
+    if fnPtr == 0 {
+        return set.elements.isEmpty ? 0 : 1
+    }
+    for elem in set.elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if maybeUnbox(result) != 0 { return 1 }
+    }
+    return 0
+}
+
+@_cdecl("kk_set_none")
+public func kk_set_none(_ setRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else { invalidContainerPanic(#function, "set") }
+    if fnPtr == 0 {
+        return set.elements.isEmpty ? 1 : 0
+    }
+    for elem in set.elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if maybeUnbox(result) != 0 { return 0 }
+    }
+    return 1
+}
+
+@_cdecl("kk_set_all")
+public func kk_set_all(_ setRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else { invalidContainerPanic(#function, "set") }
+    for elem in set.elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if maybeUnbox(result) == 0 { return 0 }
+    }
+    return 1
+}
+
+@_cdecl("kk_set_count_predicate")
+public func kk_set_count_predicate(_ setRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else { invalidContainerPanic(#function, "set") }
+    if fnPtr == 0 {
+        return set.elements.count
+    }
+    var count = 0
+    for elem in set.elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if maybeUnbox(result) != 0 { count += 1 }
+    }
+    return count
+}
+
 // MARK: - Array higher-order functions (STDLIB-088)
 
 @_cdecl("kk_array_map")

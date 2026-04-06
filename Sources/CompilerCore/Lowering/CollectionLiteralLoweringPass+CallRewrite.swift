@@ -2592,7 +2592,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.filterNotName || callee == lookup.mapNotNullName || callee == lookup.forEachName || callee == lookup.onEachName
                         || callee == lookup.flatMapName || callee == lookup.anyName || callee == lookup.noneName
                         || callee == lookup.allName || callee == lookup.mapValuesName || callee == lookup.mapKeysName
-                        || callee == lookup.toListName
+                        || callee == lookup.toListName || callee == lookup.countName
                     {
                         if callee == lookup.toListName, arguments.count == 1 {
                             let receiverID = arguments[0]
@@ -2844,6 +2844,10 @@ extension CollectionLiteralLoweringPass {
                                || callee == lookup.filterNotName
                                || callee == lookup.mapNotNullName
                                || callee == lookup.flatMapName
+                               || callee == lookup.anyName
+                               || callee == lookup.noneName
+                               || callee == lookup.allName
+                               || callee == lookup.countName
                             {
                                 let closureRawID: KIRExprID
                                 if arguments.count == 3 {
@@ -2860,6 +2864,10 @@ extension CollectionLiteralLoweringPass {
                                 case lookup.filterNotName: lookup.kkSetFilterNotName
                                 case lookup.mapNotNullName: lookup.kkSetMapNotNullName
                                 case lookup.flatMapName: lookup.kkSetFlatMapName
+                                case lookup.anyName: lookup.kkSetAnyName
+                                case lookup.noneName: lookup.kkSetNoneName
+                                case lookup.allName: lookup.kkSetAllName
+                                case lookup.countName: lookup.kkSetCountPredicateName
                                 default: callee
                                 }
                                 let needsListTag = callee == lookup.mapName || callee == lookup.filterName
