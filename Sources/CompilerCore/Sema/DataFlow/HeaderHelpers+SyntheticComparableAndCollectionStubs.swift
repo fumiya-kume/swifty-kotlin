@@ -69,6 +69,39 @@ extension DataFlowSemaPhase {
             tParamSymbol: tParamSymbol,
             tParamType: tParamType
         )
+        
+        // Set up primitive types to implement Comparable<Self>
+        setupPrimitiveComparableImplementations(symbols: symbols, types: types, interner: interner, comparableSymbol: comparableSymbol)
+    }
+
+    /// Set up primitive types to implement Comparable<Self>
+    private func setupPrimitiveComparableImplementations(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparableSymbol: SymbolID
+    ) {
+        // Set up primitive types to implement Comparable<Self>
+        let kotlinPkg = [interner.intern("kotlin")]
+        
+        let primitiveTypeNames = ["Int", "Long", "Double", "Float", "Char", "Boolean", "UInt", "ULong", "UByte", "UShort"]
+        
+        for typeName in primitiveTypeNames {
+            let primitiveSymbol = ensureClassSymbol(named: typeName, in: kotlinPkg, symbols: symbols, interner: interner)
+            
+            // Set up Comparable<Self> as a supertype
+            let primitiveType = types.make(.classType(ClassType(
+                classSymbol: primitiveSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            
+            // Set direct supertypes for member resolution
+            symbols.setDirectSupertypes([comparableSymbol], for: primitiveSymbol)
+            types.setNominalDirectSupertypes([comparableSymbol], for: primitiveSymbol)
+            symbols.setSupertypeTypeArgs([.in(primitiveType)], for: primitiveSymbol, supertype: comparableSymbol)
+            types.setNominalSupertypeTypeArgs([.in(primitiveType)], for: primitiveSymbol, supertype: comparableSymbol)
+        }
     }
 
     /// Register `operator fun compareTo(other: T): Int` on the Comparable interface with null-safe comparison support.
@@ -84,11 +117,7 @@ extension DataFlowSemaPhase {
         let compareToName = interner.intern("compareTo")
         let compareToFQName = comparableFQName + [compareToName]
         guard symbols.lookup(fqName: compareToFQName) == nil else { return }
-        let receiverType = types.make(.classType(ClassType(
-            classSymbol: comparableSymbol,
-            args: [.in(tParamType)],
-            nullability: .nonNull
-        )))
+        let receiverType = tParamType
         let compareToSymbol = symbols.define(
             kind: .function,
             name: compareToName,
@@ -6735,7 +6764,7 @@ extension DataFlowSemaPhase {
         let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
         let comparableRBounds: [TypeID] = [types.make(.classType(ClassType(
             classSymbol: comparableSymbol,
-            args: [.invariant(rType)],
+            args: [.in(rType)],
             nullability: .nonNull
         )))]
         return (rSymbol, rType, comparableRBounds)

@@ -67,7 +67,20 @@ extension DataFlowSemaPhase {
         types: TypeSystem
     ) -> Bool {
         if expect.kind == .annotationClass, actual.kind == .typeAlias {
-            return true
+            // Check if the typealias's underlying type points to an annotation class
+            guard let underlyingType = symbols.typeAliasUnderlyingType(for: actual.id) else {
+                return false
+            }
+            
+            // The underlying type should be a class type pointing to an annotation class
+            if case let .classType(classType) = types.kind(of: underlyingType) {
+                guard let underlyingSymbol = symbols.symbol(classType.classSymbol) else {
+                    return false
+                }
+                // The underlying symbol should be an annotation class
+                return underlyingSymbol.kind == .annotationClass
+            }
+            return false
         }
 
         switch expect.kind {
