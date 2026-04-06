@@ -113,8 +113,6 @@ jobs:
         env:
           DIFF_REPORT: ${{ runner.temp }}/diff_kotlinc_report.tsv
           DIFF_ARTIFACT_ROOT: ${{ runner.temp }}/diff_kotlinc_artifacts
-          DIFF_PARALLEL: "$(nproc)"
-          DIFF_WORKERS: "$(nproc)"
           DIFF_COMPILE_TIMEOUT: "180"
           DIFF_RUN_TIMEOUT: "30"
           DIFF_LOG_PASS: "0"
