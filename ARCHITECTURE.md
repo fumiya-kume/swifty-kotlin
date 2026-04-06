@@ -133,7 +133,7 @@ Tests/
  |    +-- Lowering/       # LoweringPassRegressionTests, VirtualDispatchTests, ...
  |    +-- Codegen/        # CodegenBackendIntegrationTests, LinkPhaseIntegrationTests, NameManglerTests
  |    +-- Driver/         # DriverTests, DiagnosticEngineTests, SourceLocationTests, ...
- |    +-- Integration/    # SmokeTests, CompilerCoreTests, GoldenHarnessTests, DeepPhasePipelineIntegrationTests
+ |    +-- Integration/    # SmokeTests, GoldenHarnessSwiftTesting, DeepPhasePipelineIntegrationTests
  |    +-- GoldenCases/    # .kt スナップショットフィクスチャ (Lexer/, Parser/, Sema/)
  +-- RuntimeTests/        # ランタイムユニットテスト
 ```
@@ -143,8 +143,8 @@ Tests/
 ```bash
 bash Scripts/swift_test.sh                               # 全テスト (並列)
 bash Scripts/swift_test.sh --filter SmokeTests           # スモークテスト
-bash Scripts/swift_test.sh --filter GoldenHarnessTests   # ゴールデンテスト
-UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter GoldenHarnessTests  # フィクスチャ更新
+bash Scripts/swift_test.sh --filter Golden   # ゴールデンテスト（Swift Testing）
+UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden  # フィクスチャ更新
 bash Scripts/diff_kotlinc.sh Scripts/diff_cases           # kotlinc 差分回帰テスト
 ```
 
@@ -314,7 +314,7 @@ Swift + LLVM のセットアップは [`.github/actions/setup-swift-llvm`](.gith
 | テスト種別 | 場所 | 実行方法 |
 |---|---|---|
 | フェーズ単体テスト | `Tests/CompilerCoreTests/{Phase}/` | `bash Scripts/swift_test.sh --filter {TestClass}` |
-| ゴールデンテスト | `Tests/CompilerCoreTests/GoldenCases/` | `bash Scripts/swift_test.sh --filter GoldenHarnessTests` |
+| ゴールデンテスト | `Tests/CompilerCoreTests/GoldenCases/` | `bash Scripts/swift_test.sh --filter Golden` |
 | kotlinc 回帰テスト | `Scripts/diff_cases/*.kt` | `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` |
 | E2E スモークテスト | `Tests/CompilerCoreTests/Integration/SmokeTests.swift` | `bash Scripts/swift_test.sh --filter SmokeTests` |
 

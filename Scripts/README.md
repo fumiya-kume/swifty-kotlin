@@ -36,7 +36,7 @@ bash Scripts/swift_lint.sh --update-baseline
 1. Run golden tests without updating fixtures:
 
 ```bash
-bash Scripts/swift_test.sh --filter GoldenHarnessTests
+bash Scripts/swift_test.sh --filter Golden
 ```
 
 2. Review differences:
@@ -48,7 +48,7 @@ git diff -- Tests/CompilerCoreTests/GoldenCases
 3. If the parser/sema/lowering change is intentional, update fixtures:
 
 ```bash
-UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter GoldenHarnessTests
+UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden
 ```
 
 4. Re-review fixture changes and ensure only intended files changed:

@@ -117,32 +117,6 @@ private final class RuntimeCoroutineExceptionHandlerBox: @unchecked Sendable {
 // Priority order: Channel > withContext > awaitResult/join > sequence builders
 // (Channels are most likely to exhaust GCD thread pools under load.)
 
-/// Per-task key for the current continuation state. Mirrors the scope task-key bridge.
-enum RuntimeContinuationStateTaskKey {
-    private static let pthreadKey: pthread_key_t = makePthreadKey()
-
-    private final class Token {}
-
-    static var currentTaskKey: ObjectIdentifier {
-        if let existing: Token = pthreadGetValue(pthreadKey) {
-            return ObjectIdentifier(existing)
-        }
-        let token = Token()
-        pthreadSetValue(pthreadKey, token)
-        return ObjectIdentifier(token)
-    }
-
-    static func installFreshKey() -> ObjectIdentifier {
-        let token = Token()
-        pthreadSetValue(pthreadKey, token)
-        return ObjectIdentifier(token)
-    }
-
-    static func removeKey() {
-        pthreadSetValue(pthreadKey, nil as Token?)
-    }
-}
-
 final class RuntimeContinuationState: @unchecked Sendable {
     var functionID: Int64
     var label: Int64
@@ -191,9 +165,6 @@ final class RuntimeContinuationState: @unchecked Sendable {
     // the continuation state that is current for that execution context. This allows
     // `RuntimeContinuationState.current` to work from code that runs inside a
     // suspend-entry loop without an explicit continuation handle.
-    private static let taskStateLock = NSLock()
-    // Protected by taskStateLock — all accesses go through installState/removeState/stateForTask.
-    nonisolated(unsafe) private static var taskStateMap: [ObjectIdentifier: RuntimeContinuationState] = [:]
 
     /// Install continuation state for the given task key. Called at the top of the
     /// suspend-entry loop so that suspend function calls can discover the current state.
@@ -231,11 +202,11 @@ final class RuntimeContinuationState: @unchecked Sendable {
     /// state is active on this thread right now.
     static var current: RuntimeContinuationState? {
         get {
-            let key = RuntimeContinuationStateTaskKey.currentTaskKey
+            let key = RuntimeCoroutineScopeTaskKey.currentTaskKey
             return stateForTask(key)
         }
         set {
-            let key = RuntimeContinuationStateTaskKey.currentTaskKey
+            let key = RuntimeCoroutineScopeTaskKey.currentTaskKey
             installState(newValue, forTask: key)
         }
     }
@@ -280,13 +251,6 @@ final class RuntimeContinuationState: @unchecked Sendable {
         taskStateLock.lock()
         taskStateMap.removeValue(forKey: key)
         taskStateLock.unlock()
-    }
-
-    /// Continuation state for the current task, if any.
-    static var current: RuntimeContinuationState? {
-        taskStateLock.lock()
-        defer { taskStateLock.unlock() }
-        return taskStateMap[RuntimeCoroutineScopeTaskKey.currentTaskKey]
     }
 
     func scheduleDelay(milliseconds: Int) {
@@ -460,6 +424,13 @@ final class RuntimeAsyncTask: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         return !isCompleted && !isCancelled
+    }
+
+    /// Thread-safe snapshot for `kk_job_is_failed` (aligned with `RuntimeJobHandle.isFailedSnapshot`).
+    func isFailedSnapshot() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return isCompleted && thrownException != 0
     }
 
     func complete(with result: Int) {
@@ -5746,7 +5717,7 @@ public func kk_job_is_failed(_ jobHandle: Int) -> Int {
     if let job = obj as? RuntimeJobHandle {
         return job.isFailedSnapshot() ? 1 : 0
     } else if let task = obj as? RuntimeAsyncTask {
-        return task.thrownException != 0 ? 1 : 0
+        return task.isFailedSnapshot() ? 1 : 0
     }
     return 0
 }
@@ -6029,7 +6000,10 @@ public func kk_suspend_function_invoke_0(
             continuationState.resume(withException: thrownException)
         }
     }
-    
+
+    // Kick the async body: otherwise waitForResumeSignal blocks with nothing to run the closure.
+    continuationState.signalResume()
+
     // Suspend until the function completes
     continuationState.waitForResumeSignal()
     
@@ -6083,7 +6057,9 @@ public func kk_suspend_function_invoke(
             continuationState.resume(withException: thrownException)
         }
     }
-    
+
+    continuationState.signalResume()
+
     // Suspend until the function completes
     continuationState.waitForResumeSignal()
     

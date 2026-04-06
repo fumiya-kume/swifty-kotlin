@@ -74,7 +74,9 @@ extension DataFlowSemaPhase {
             
             // The underlying type should be a class type pointing to an annotation class
             if case let .classType(classType) = types.kind(of: underlyingType) {
-                guard let underlyingSymbol = symbols.symbol(classType.classSymbol) else {
+                guard classType.nullability == .nonNull,
+                      let underlyingSymbol = symbols.symbol(classType.classSymbol)
+                else {
                     return false
                 }
                 // The underlying symbol should be an annotation class

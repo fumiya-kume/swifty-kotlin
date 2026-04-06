@@ -521,7 +521,11 @@ struct BigIntValue: Equatable {
 
     func modPow(_ exponent: BigIntValue, _ modulus: BigIntValue) throws -> BigIntValue {
         guard modulus.stringValue != "0" else {
-            fatalError("ArithmeticException: Modulus must be non-zero")
+            throw NSError(
+                domain: "ArithmeticException",
+                code: 0,
+                userInfo: [NSLocalizedDescriptionKey: "Modulus must be non-zero"]
+            )
         }
         
         if exponent.stringValue == "0" {

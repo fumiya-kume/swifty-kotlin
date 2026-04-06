@@ -2,6 +2,9 @@
 import Foundation
 import XCTest
 
+// CI 時間の観点: `LinkPhase().run` と `emit: .executable` は CodegenBackendIntegrationTests+*.swift と
+// Lowering/Delegate KIR テストにも多数ある。リンクが本質でないケースは `.object` / `.llvmIR` への置き換えを検討。
+
 final class LinkPhaseIntegrationTests: XCTestCase {
     func testLinkPhaseAutoLinksKotlinLibraryObjectForCrossModuleCall() throws {
         let librarySource = """

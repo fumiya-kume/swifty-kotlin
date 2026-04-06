@@ -1120,6 +1120,7 @@ extension CallTypeChecker {
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
             "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile", "distinctBy", "zipWithNext",
+            "flatten",
             "sort", "sortBy", "sortByDescending",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
@@ -2013,6 +2014,33 @@ extension CallTypeChecker {
                     resultType = sema.types.anyType
                 }
 
+            case "flatten":
+                // Sequence<Iterable<T>> / List<List<T>> etc.: one-level flatten → element type T
+                guard args.isEmpty else {
+                    sema.bindings.bindExprType(id, type: sema.types.anyType)
+                    return sema.types.anyType
+                }
+                let extractedInner = getCollectionElementType(collectionElementType, sema: sema, interner: interner)
+                let flattenedElementType = extractedInner != sema.types.anyType
+                    ? extractedInner
+                    : collectionElementType
+                if isSequenceReceiver {
+                    resultType = makeSyntheticSequenceType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: flattenedElementType
+                    )
+                } else if let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner) {
+                    resultType = sema.types.make(.classType(ClassType(
+                        classSymbol: listSymbol,
+                        args: [.invariant(flattenedElementType)],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    resultType = sema.types.anyType
+                }
+
             case "zipWithNext":
                 if args.isEmpty {
                     guard explicitTypeArgs.isEmpty else {
@@ -2368,7 +2396,7 @@ extension CallTypeChecker {
 
             let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
             if isSyntheticSequenceReceiver,
-               ["map", "filter", "flatMap", "sortedBy", "sortedByDescending", "takeWhile", "dropWhile", "onEach", "onEachIndexed", "distinctBy"].contains(calleeStr)
+               ["map", "filter", "flatMap", "flatten", "sortedBy", "sortedByDescending", "takeWhile", "dropWhile", "onEach", "onEachIndexed", "distinctBy"].contains(calleeStr)
             {
                 sema.bindings.markCollectionExpr(id)
             }

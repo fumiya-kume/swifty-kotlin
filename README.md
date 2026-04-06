@@ -32,9 +32,9 @@ swift build -c release         # リリースビルド
 
 bash Scripts/swift_test.sh                             # 全テスト（並列）
 bash Scripts/swift_test.sh --filter SmokeTests         # スモークテストのみ
-bash Scripts/swift_test.sh --filter GoldenHarnessTests # ゴールデンテストのみ
+bash Scripts/swift_test.sh --filter Golden # ゴールデンテストのみ（Swift Testing）
 
-UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter GoldenHarnessTests  # ゴールデン更新
+UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden  # ゴールデン更新
 bash Scripts/diff_kotlinc.sh Scripts/diff_cases        # kotlinc との差分回帰テスト
 ```
 

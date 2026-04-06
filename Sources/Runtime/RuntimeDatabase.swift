@@ -386,6 +386,8 @@ final class RuntimeDatabaseConnectionBox {
     var rawHandle: Int = 0
     fileprivate var isOpen = true
     fileprivate var isInUse = false
+    /// Wall-clock time when this pool connection object was created (for `maxLifetime`).
+    fileprivate let createdAt = Date()
     fileprivate var lastCheckoutAt: Date?
     fileprivate var lastReturnAt: Date?
 
@@ -511,13 +513,11 @@ final class RuntimeDatabasePoolBox {
                 continue
             }
             
-            // Check if connection has exceeded maximum lifetime
-            if let createdAt = connection.lastCheckoutAt {
-                let age = Date().timeIntervalSince(createdAt)
-                if age > maxLifetime {
-                    connection.isOpen = false
-                    continue
-                }
+            // Check if connection has exceeded maximum lifetime (from creation, not last checkout)
+            let age = Date().timeIntervalSince(connection.createdAt)
+            if age > maxLifetime {
+                connection.isOpen = false
+                continue
             }
             
             // Check if connection has been idle too long
@@ -583,11 +583,8 @@ final class RuntimeDatabasePoolBox {
         return condition.withLock {
             guard connection.isOpen else { return false }
             
-            // Check if connection has exceeded maximum lifetime
-            if let createdAt = connection.lastCheckoutAt {
-                let age = Date().timeIntervalSince(createdAt)
-                if age > maxLifetime { return false }
-            }
+            let age = Date().timeIntervalSince(connection.createdAt)
+            if age > maxLifetime { return false }
             
             // Check if connection has been idle too long
             if let lastReturn = connection.lastReturnAt {
@@ -1159,10 +1156,6 @@ private func jdbcResolveColumnIndex(statement: OpaquePointer, label: String) thr
     throw RuntimeJDBCError.columnNotFound(label)
 }
 
-private func jdbcColumnInt(statement: OpaquePointer, index: Int32) -> Int {
-    Int(sqlite3_column_int64(statement, index))
-}
-
 private func jdbcColumnInt(statement: OpaquePointer, index: Int32, resultSet: RuntimeJDBCResultSetBox) -> Int {
     resultSet.lastColumnWasNull = sqlite3_column_type(statement, index) == SQLITE_NULL
     return Int(sqlite3_column_int64(statement, index))
@@ -1232,7 +1225,17 @@ final class RuntimeJDBCResultSetMetaDataBox {
     
     func getColumnType(_ index: Int) -> Int32 {
         guard index >= 1 && index <= columnCount else { return 0 }
-        return sqlite3_column_type(statement, Int32(index - 1))
+        let idx = Int32(index - 1)
+        if let declC = sqlite3_column_decltype(statement, idx) {
+            let decl = String(cString: declC).uppercased()
+            if decl.contains("INT") { return SQLITE_INTEGER }
+            if decl.contains("TEXT") || decl.contains("CLOB") || decl.contains("CHAR") || decl.contains("STR") {
+                return SQLITE_TEXT
+            }
+            if decl.contains("BLOB") { return SQLITE_BLOB }
+            if decl.contains("REAL") || decl.contains("FLOA") || decl.contains("DOUB") { return SQLITE_FLOAT }
+        }
+        return sqlite3_column_type(statement, idx)
     }
     
     func getColumnTypeName(_ index: Int) -> String {
@@ -1666,7 +1669,7 @@ public func kk_jdbc_result_set_getInt(_ resultSetRaw: Int, _ index: Int, _ outTh
             throw RuntimeJDBCError.invalidHandle("result set")
         }
         let statement = try resultSet.requireStatement()
-        return jdbcColumnInt(statement: statement, index: Int32(index - 1))
+        return jdbcColumnInt(statement: statement, index: Int32(index - 1), resultSet: resultSet)
     } catch {
         outThrown?.pointee = jdbcErrorThrowable(error)
         return 0
@@ -1683,7 +1686,7 @@ public func kk_jdbc_result_set_getIntByLabel(_ resultSetRaw: Int, _ labelRaw: In
         let statement = try resultSet.requireStatement()
         let label = try jdbcExtractString(labelRaw)
         let index = try jdbcResolveColumnIndex(statement: statement, label: label)
-        return jdbcColumnInt(statement: statement, index: index)
+        return jdbcColumnInt(statement: statement, index: index, resultSet: resultSet)
     } catch {
         outThrown?.pointee = jdbcErrorThrowable(error)
         return 0
@@ -1698,7 +1701,7 @@ public func kk_jdbc_result_set_getString(_ resultSetRaw: Int, _ index: Int, _ ou
             throw RuntimeJDBCError.invalidHandle("result set")
         }
         let statement = try resultSet.requireStatement()
-        return jdbcColumnString(statement: statement, index: Int32(index - 1))
+        return jdbcColumnString(statement: statement, index: Int32(index - 1), resultSet: resultSet)
     } catch {
         outThrown?.pointee = jdbcErrorThrowable(error)
         return runtimeNullSentinelInt
@@ -1715,7 +1718,7 @@ public func kk_jdbc_result_set_getStringByLabel(_ resultSetRaw: Int, _ labelRaw:
         let statement = try resultSet.requireStatement()
         let label = try jdbcExtractString(labelRaw)
         let index = try jdbcResolveColumnIndex(statement: statement, label: label)
-        return jdbcColumnString(statement: statement, index: index)
+        return jdbcColumnString(statement: statement, index: index, resultSet: resultSet)
     } catch {
         outThrown?.pointee = jdbcErrorThrowable(error)
         return runtimeNullSentinelInt

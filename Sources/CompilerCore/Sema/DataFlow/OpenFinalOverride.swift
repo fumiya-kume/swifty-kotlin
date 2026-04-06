@@ -723,13 +723,10 @@ extension DataFlowSemaPhase {
         ctx: OpenFinalOverrideContext
     ) {
         guard let parentSignature = ctx.symbols.functionSignature(for: parentSymbol.id),
-              let childSymbol = getMemberSymbol(named: memberName, in: ownerSymbol, ctx: ctx),
+              let childSymbol = getFunctionMemberMatching(parentSignature, named: memberName, in: ownerSymbol, ctx: ctx),
               let childSignature = ctx.symbols.functionSignature(for: childSymbol) else {
             return
         }
-
-        let parentExceptions = parentSignature.canThrow
-        let childExceptions = childSignature.canThrow
 
         // Skip check if this member is overloaded in the parent hierarchy
         let allParentMembers = findAllInheritedMembers(
@@ -740,6 +737,9 @@ extension DataFlowSemaPhase {
         guard allParentMembers.count == 1 else {
             return
         }
+
+        let parentExceptions = parentSignature.canThrow
+        let childExceptions = childSignature.canThrow
 
         // Exception covariance check: child cannot throw more exceptions than parent
         if parentExceptions && !childExceptions {
@@ -756,6 +756,10 @@ extension DataFlowSemaPhase {
                 range: memberRange
             )
         }
+        
+        // Note: Currently the FunctionSignature only tracks canThrow boolean, not specific exception types
+        // When exception type information is added to FunctionSignature, we should enhance this check
+        // to verify that child exception types are subtypes of parent exception types
     }
 
     // MARK: - Helper: generic return type covariance
@@ -827,11 +831,43 @@ extension DataFlowSemaPhase {
         ctx: OpenFinalOverrideContext
     ) -> SymbolID? {
         guard let ownerSym = ctx.symbols.symbol(ownerSymbol) else { return nil }
-        
+
         return ctx.symbols.children(ofFQName: ownerSym.fqName).first { childID in
             guard let child = ctx.symbols.symbol(childID) else { return false }
             return child.name == memberName && (child.kind == .function || child.kind == .property)
         }
+    }
+
+    /// Child functions named `memberName` in `ownerSymbol` (overload set).
+    private func childFunctions(
+        named memberName: InternedString,
+        in ownerSymbol: SymbolID,
+        ctx: OpenFinalOverrideContext
+    ) -> [SymbolID] {
+        guard let ownerSym = ctx.symbols.symbol(ownerSymbol) else { return [] }
+        return ctx.symbols.children(ofFQName: ownerSym.fqName).compactMap { childID -> SymbolID? in
+            guard let child = ctx.symbols.symbol(childID),
+                  child.name == memberName,
+                  child.kind == .function
+            else { return nil }
+            return childID
+        }
+    }
+
+    /// Pick the overriding overload in the child that matches the parent signature (Kotlin override rules).
+    private func getFunctionMemberMatching(
+        _ parentSignature: FunctionSignature,
+        named memberName: InternedString,
+        in ownerSymbol: SymbolID,
+        ctx: OpenFinalOverrideContext
+    ) -> SymbolID? {
+        for childID in childFunctions(named: memberName, in: ownerSymbol, ctx: ctx) {
+            guard let childSig = ctx.symbols.functionSignature(for: childID) else { continue }
+            if signaturesMatch(child: childSig, parent: parentSignature, ctx: ctx) {
+                return childID
+            }
+        }
+        return nil
     }
 
     // MARK: - Check 2b: visibility expansion
@@ -965,17 +1001,20 @@ extension DataFlowSemaPhase {
             let interfaceParents = overridableParents.filter { $0.ownerIsInterface }
             if !interfaceParents.isEmpty {
                 // Check if any interface parent has matching signature
-                guard let childSymbol = getMemberSymbol(named: memberName, in: ownerSymbol, ctx: ctx),
-                      let childSig = ctx.symbols.functionSignature(for: childSymbol) else { return }
-                
+                let childOverloads = childFunctions(named: memberName, in: ownerSymbol, ctx: ctx)
+                guard !childOverloads.isEmpty else { return }
+
                 let hasMatchingSignature = interfaceParents.contains { parent in
-                    guard let parentSym = ctx.symbols.symbol(parent.memberID),
+                    guard ctx.symbols.symbol(parent.memberID) != nil,
                           let parentSig = ctx.symbols.functionSignature(for: parent.memberID) else {
                         return false
                     }
-                    return signaturesMatch(child: childSig, parent: parentSig, ctx: ctx)
+                    return childOverloads.contains { childID in
+                        guard let childSig = ctx.symbols.functionSignature(for: childID) else { return false }
+                        return signaturesMatch(child: childSig, parent: parentSig, ctx: ctx)
+                    }
                 }
-                
+
                 if hasMatchingSignature {
                     // For interface implementations with matching signature, require override modifier
                     ctx.diagnostics.error(
@@ -990,19 +1029,35 @@ extension DataFlowSemaPhase {
         
         // For class inheritance, check if this actually overrides a parent member
         // Use improved signature matching to avoid false positives with overloads
-        if actuallyOverridesParentMember(
-            memberName: memberName,
-            ownerSymbol: ownerSymbol,
-            parentMembers: overridableParents,
-            ctx: ctx
-        ) {
-            let parentName = ctx.interner.resolve(overridableParents.first!.ownerName)
-            ctx.diagnostics.error(
-                "KSWIFTK-SEMA-OVERRIDE",
-                "'\(name)' hides member of supertype '\(parentName)' "
-                    + "and needs 'override' modifier.",
-                range: memberRange
-            )
+        if let ownerSym = ctx.symbols.symbol(ownerSymbol), ownerSym.kind == .class {
+            let classParents = overridableParents.filter { !$0.ownerIsInterface }
+            if !classParents.isEmpty {
+                // Check if any class parent has matching signature
+                let childOverloads = childFunctions(named: memberName, in: ownerSymbol, ctx: ctx)
+                guard !childOverloads.isEmpty else { return }
+
+                let hasMatchingSignature = classParents.contains { parent in
+                    guard ctx.symbols.symbol(parent.memberID) != nil,
+                          let parentSig = ctx.symbols.functionSignature(for: parent.memberID) else {
+                        return false
+                    }
+                    return childOverloads.contains { childID in
+                        guard let childSig = ctx.symbols.functionSignature(for: childID) else { return false }
+                        return signaturesMatch(child: childSig, parent: parentSig, ctx: ctx)
+                    }
+                }
+
+                if hasMatchingSignature {
+                    let parentName = ctx.interner.resolve(classParents.first!.ownerName)
+                    ctx.diagnostics.error(
+                        "KSWIFTK-SEMA-OVERRIDE",
+                        "'\(name)' hides member of supertype '\(parentName)' "
+                            + "and needs 'override' modifier.",
+                        range: memberRange
+                    )
+                    return
+                }
+            }
         }
     }
     
@@ -1012,40 +1067,38 @@ extension DataFlowSemaPhase {
         parentMembers: [OFOInheritedMember],
         ctx: OpenFinalOverrideContext
     ) -> Bool {
-        // Get the current member's signature
-        guard let currentMemberSymbol = getMemberSymbol(named: memberName, in: ownerSymbol, ctx: ctx),
-              let currentSignature = ctx.symbols.functionSignature(for: currentMemberSymbol) else {
-            return false
-        }
-        
-        // Check against each parent member for signature compatibility
-        for parent in parentMembers {
-            guard let parentSignature = ctx.symbols.functionSignature(for: parent.memberID) else {
-                continue
-            }
-            
-            // Basic signature compatibility check
+        let childOverloads = childFunctions(named: memberName, in: ownerSymbol, ctx: ctx)
+
+        for childID in childOverloads {
+            guard let currentSignature = ctx.symbols.functionSignature(for: childID) else { continue }
             let currentFuncType = ctx.types.make(.functionType(FunctionType(
                 params: currentSignature.parameterTypes,
                 returnType: currentSignature.returnType,
                 isSuspend: currentSignature.isSuspend,
                 nullability: .nonNull
             )))
-            let parentFuncType = ctx.types.make(.functionType(FunctionType(
-                params: parentSignature.parameterTypes,
-                returnType: parentSignature.returnType,
-                isSuspend: parentSignature.isSuspend,
-                nullability: .nonNull
-            )))
-            guard case let .functionType(currentFunctionType) = ctx.types.kind(of: currentFuncType),
-                  case let .functionType(parentFunctionType) = ctx.types.kind(of: parentFuncType) else {
+            guard case let .functionType(currentFunctionType) = ctx.types.kind(of: currentFuncType) else {
                 continue
             }
-            if areSignaturesCompatible(current: currentFunctionType, parent: parentFunctionType, ctx: ctx) {
-                return true
+            for parent in parentMembers {
+                guard let parentSignature = ctx.symbols.functionSignature(for: parent.memberID) else {
+                    continue
+                }
+                let parentFuncType = ctx.types.make(.functionType(FunctionType(
+                    params: parentSignature.parameterTypes,
+                    returnType: parentSignature.returnType,
+                    isSuspend: parentSignature.isSuspend,
+                    nullability: .nonNull
+                )))
+                guard case let .functionType(parentFunctionType) = ctx.types.kind(of: parentFuncType) else {
+                    continue
+                }
+                if areSignaturesCompatible(current: currentFunctionType, parent: parentFunctionType, ctx: ctx) {
+                    return true
+                }
             }
         }
-        
+
         return false
     }
     
@@ -1071,9 +1124,9 @@ extension DataFlowSemaPhase {
         // Check parameter count
         guard current.params.count == parent.params.count else { return false }
         
-        // Check parameter types (invariant for parameters)
+        // Parameter types: Kotlin override uses contravariance in the declared parameter types.
         for (currentParam, parentParam) in zip(current.params, parent.params) {
-            if currentParam != parentParam {
+            if !ctx.types.isSubtype(parentParam, currentParam) {
                 return false
             }
         }

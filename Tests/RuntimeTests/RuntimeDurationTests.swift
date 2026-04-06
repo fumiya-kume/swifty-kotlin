@@ -2,6 +2,10 @@ import Dispatch
 @testable import Runtime
 import XCTest
 
+// Runtime テストの下限時間（短縮候補・フレークに注意）: 本ファイルの ~50ms sleep（measureTime）、
+// RuntimeFlowTests の usleep、RuntimeChannelTests / RuntimeMutexTests の期待待ち 2s 前後、
+// RuntimeReadWriteLockTests のセマフォ待ち 2s など。
+
 // MARK: - C-callable thunks for kk_measureTime tests
 
 /// A no-op closure thunk that returns 0 immediately.
