@@ -3,8 +3,8 @@ import Foundation
 import XCTest
 
 private let runtimeReadWriteLockStateLock = NSLock()
-private var _runtimeReadWriteLockActiveReaders = 0
-private var _runtimeReadWriteLockMaxReaders = 0
+nonisolated(unsafe) private var _runtimeReadWriteLockActiveReaders = 0
+nonisolated(unsafe) private var _runtimeReadWriteLockMaxReaders = 0
 private var runtimeReadWriteLockReadEnteredSemaphore = DispatchSemaphore(value: 0)
 private var runtimeReadWriteLockReadReleaseSemaphore = DispatchSemaphore(value: 0)
 private var runtimeReadWriteLockWriterEnteredSemaphore = DispatchSemaphore(value: 0)

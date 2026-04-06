@@ -2,7 +2,7 @@
 import XCTest
 
 private let synchronizedCapturedClosureRawLock = NSLock()
-private var _synchronizedCapturedClosureRaw = 0
+nonisolated(unsafe) private var _synchronizedCapturedClosureRaw = 0
 
 private var synchronizedCapturedClosureRaw: Int {
     get {
@@ -18,7 +18,7 @@ private var synchronizedCapturedClosureRaw: Int {
 }
 
 private let synchronizedNestedFnPtrLock = NSLock()
-private var _synchronizedNestedFnPtr = 0
+nonisolated(unsafe) private var _synchronizedNestedFnPtr = 0
 
 private var synchronizedNestedFnPtr: Int {
     get {
@@ -34,7 +34,7 @@ private var synchronizedNestedFnPtr: Int {
 }
 
 private let synchronizedNestedClosureRawLock = NSLock()
-private var _synchronizedNestedClosureRaw = 0
+nonisolated(unsafe) private var _synchronizedNestedClosureRaw = 0
 
 private var synchronizedNestedClosureRaw: Int {
     get {

@@ -3,13 +3,13 @@ import Foundation
 import XCTest
 
 /// STDLIB-563: Global counter used by laziness verification tests.
-/// Tracks how many times the yield side-effects in the builder thunk execute.
+/// Tracks how many times to yield side-effects in builder thunk execute.
 /// Must be global (not a class property) because `@convention(c)` closures
 /// cannot capture context.
-/// Access is safe because the tests run sequentially and the counter is only
+/// Access is safe because tests run sequentially and counter is only
 /// mutated from one thread at a time (the producer thread).
 private let lazyTestYieldCounterLock = NSLock()
-private var __lazyTestYieldCounter = 0
+nonisolated(unsafe) private var __lazyTestYieldCounter = 0
 
 private var _lazyTestYieldCounter: Int {
     get {

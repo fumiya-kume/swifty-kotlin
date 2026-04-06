@@ -26,7 +26,7 @@ private final class RuntimeMutexTestState: @unchecked Sendable {
 }
 
 private let runtimeMutexTestStateLock = NSLock()
-private var _runtimeMutexTestState = RuntimeMutexTestState()
+nonisolated(unsafe) private var _runtimeMutexTestState = RuntimeMutexTestState()
 
 private var runtimeMutexTestState: RuntimeMutexTestState {
     get {
@@ -42,7 +42,7 @@ private var runtimeMutexTestState: RuntimeMutexTestState {
 }
 
 private let runtimeMutexWithLockObservedLockedInsideLock = NSLock()
-private var _runtimeMutexWithLockObservedLockedInside = false
+nonisolated(unsafe) private var _runtimeMutexWithLockObservedLockedInside = false
 
 private var runtimeMutexWithLockObservedLockedInside: Bool {
     get {

@@ -8,7 +8,7 @@ import XCTest
 final class RuntimeHTTPClientTests: IsolatedRuntimeXCTestCase {
     private final class MockURLProtocol: URLProtocol {
         private static let handlerLock = NSLock()
-        private static var _handler: ((URLRequest) -> (HTTPURLResponse, Data?, TimeInterval)?)?
+        nonisolated(unsafe) private static var _handler: ((URLRequest) -> (HTTPURLResponse, Data?, TimeInterval)?)?
         
         static var handler: ((URLRequest) -> (HTTPURLResponse, Data?, TimeInterval)?)? {
             get {
