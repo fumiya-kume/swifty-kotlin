@@ -6403,10 +6403,14 @@ extension CallLowerer {
             return interner.intern("kk_map_plus")
         case "minus":
             return interner.intern("kk_map_minus")
+        case "filterNot":
+            return interner.intern("kk_map_filterNot")
         case "filterKeys":
             return interner.intern("kk_map_filterKeys")
         case "filterValues":
             return interner.intern("kk_map_filterValues")
+        case "mapNotNull":
+            return interner.intern("kk_map_mapNotNull")
         case "getOrPut":
             guard knownNames.isMutableMapSymbol(symbol) else {
                 return nil

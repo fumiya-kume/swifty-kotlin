@@ -5699,6 +5699,37 @@ extension DataFlowSemaPhase {
                 typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol, rSymbol],
                 flags: [.synthetic, .inlineFunction]
             )
+
+            // mapNotNull: (Map.Entry<K,V>) -> R? → List<R>
+            let mapNotNullRName = interner.intern("R")
+            let mapNotNullRSymbol = symbols.define(
+                kind: .typeParameter,
+                name: mapNotNullRName,
+                fqName: mapFQName + [interner.intern("mapNotNull"), mapNotNullRName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let mapNotNullRType = types.make(.typeParam(TypeParamType(symbol: mapNotNullRSymbol, nullability: .nonNull)))
+            let mapNotNullLambdaType = types.make(.functionType(FunctionType(
+                params: [entryType],
+                returnType: types.make(.typeParam(TypeParamType(symbol: mapNotNullRSymbol, nullability: .nullable))),
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let listMapNotNullRType = types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.out(mapNotNullRType)],
+                nullability: .nonNull
+            )))
+            registerMember(
+                name: "mapNotNull",
+                externalLinkName: "kk_map_mapNotNull",
+                parameterTypes: [mapNotNullLambdaType],
+                returnType: listMapNotNullRType,
+                typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol, mapNotNullRSymbol],
+                flags: [.synthetic, .inlineFunction]
+            )
         }
 
         let mapValuesName = interner.intern("mapValues")
@@ -5790,6 +5821,14 @@ extension DataFlowSemaPhase {
         registerMember(
             name: "filter",
             externalLinkName: "kk_map_filter",
+            parameterTypes: [filterLambdaType],
+            returnType: receiverType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+        registerMember(
+            name: "filterNot",
+            externalLinkName: "kk_map_filterNot",
             parameterTypes: [filterLambdaType],
             returnType: receiverType,
             typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
