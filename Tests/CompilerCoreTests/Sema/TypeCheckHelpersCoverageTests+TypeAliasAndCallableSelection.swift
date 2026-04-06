@@ -293,7 +293,8 @@ extension TypeCheckHelpersCoverageTests {
         let candidates = helpers.collectMemberFunctionCandidates(
             named: fixture.interner.intern("m"),
             receiverType: receiverType,
-            sema: fixture.sema
+            sema: fixture.sema,
+            interner: fixture.interner
         )
         XCTAssertEqual(candidates, [memberFn])
 

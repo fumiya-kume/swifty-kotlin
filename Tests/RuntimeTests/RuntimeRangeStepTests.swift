@@ -332,4 +332,90 @@ final class RuntimeRangeStepTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_list_get(array, 1), 4)
         XCTAssertEqual(kk_list_get(array, 2), 7)
     }
+
+    // MARK: - IntRange Additional Features (STDLIB-RANGE-034)
+
+    func testRangeContains() {
+        let range = kk_op_rangeTo(1, 10)
+        XCTAssertEqual(kk_range_contains(range, 5), 1)
+        XCTAssertEqual(kk_range_contains(range, 1), 1)
+        XCTAssertEqual(kk_range_contains(range, 10), 1)
+        XCTAssertEqual(kk_range_contains(range, 0), 0)
+        XCTAssertEqual(kk_range_contains(range, 11), 0)
+    }
+
+    func testRangeContainsWithStep() {
+        let range = kk_op_step(kk_op_rangeTo(1, 10), 3)
+        XCTAssertEqual(kk_range_contains(range, 1), 1)
+        XCTAssertEqual(kk_range_contains(range, 4), 1)
+        XCTAssertEqual(kk_range_contains(range, 7), 1)
+        XCTAssertEqual(kk_range_contains(range, 10), 1)
+        XCTAssertEqual(kk_range_contains(range, 2), 0)
+        XCTAssertEqual(kk_range_contains(range, 5), 0)
+    }
+
+    func testRangeContainsNegativeStep() {
+        let range = kk_op_downTo(10, 1)
+        XCTAssertEqual(kk_range_contains(range, 10), 1)
+        XCTAssertEqual(kk_range_contains(range, 5), 1)
+        XCTAssertEqual(kk_range_contains(range, 1), 1)
+        XCTAssertEqual(kk_range_contains(range, 0), 0)
+        XCTAssertEqual(kk_range_contains(range, 11), 0)
+    }
+
+    func testRangeContainsWithNegativeStep() {
+        let range = kk_op_step(kk_op_downTo(10, 1), 3)
+        XCTAssertEqual(kk_range_contains(range, 10), 1)
+        XCTAssertEqual(kk_range_contains(range, 7), 1)
+        XCTAssertEqual(kk_range_contains(range, 4), 1)
+        XCTAssertEqual(kk_range_contains(range, 1), 1)
+        XCTAssertEqual(kk_range_contains(range, 9), 0)
+        XCTAssertEqual(kk_range_contains(range, 6), 0)
+    }
+
+    func testRangeStartEnd() {
+        let range = kk_op_rangeTo(2, 8)
+        XCTAssertEqual(kk_range_start(range), 2)
+        XCTAssertEqual(kk_range_end(range), 8)
+        XCTAssertEqual(kk_range_start(range), kk_range_first(range))
+        XCTAssertEqual(kk_range_end(range), kk_range_last(range))
+    }
+
+    func testRangeStartEndWithDownTo() {
+        let range = kk_op_downTo(8, 2)
+        XCTAssertEqual(kk_range_start(range), 8)
+        XCTAssertEqual(kk_range_end(range), 2)
+        XCTAssertEqual(kk_range_start(range), kk_range_first(range))
+        XCTAssertEqual(kk_range_end(range), kk_range_last(range))
+    }
+
+    func testRangeReversedWithStep() {
+        let range = kk_op_step(kk_op_rangeTo(1, 10), 3)
+        let reversed = kk_range_reversed(range)
+        XCTAssertEqual(kk_range_first(reversed), 10)
+        XCTAssertEqual(kk_range_last(reversed), 1)
+        XCTAssertEqual(kk_range_count(reversed), 4)
+        
+        let list = kk_range_toList(reversed)
+        XCTAssertEqual(kk_list_size(list), 4)
+        XCTAssertEqual(kk_list_get(list, 0), 10)
+        XCTAssertEqual(kk_list_get(list, 1), 7)
+        XCTAssertEqual(kk_list_get(list, 2), 4)
+        XCTAssertEqual(kk_list_get(list, 3), 1)
+    }
+
+    func testRangeReversedWithNegativeStep() {
+        let range = kk_op_step(kk_op_downTo(10, 1), 3)
+        let reversed = kk_range_reversed(range)
+        XCTAssertEqual(kk_range_first(reversed), 1)
+        XCTAssertEqual(kk_range_last(reversed), 10)
+        XCTAssertEqual(kk_range_count(reversed), 4)
+        
+        let list = kk_range_toList(reversed)
+        XCTAssertEqual(kk_list_size(list), 4)
+        XCTAssertEqual(kk_list_get(list, 0), 1)
+        XCTAssertEqual(kk_list_get(list, 1), 4)
+        XCTAssertEqual(kk_list_get(list, 2), 7)
+        XCTAssertEqual(kk_list_get(list, 3), 10)
+    }
 }
