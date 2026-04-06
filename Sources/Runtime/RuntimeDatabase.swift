@@ -1521,6 +1521,199 @@ public func kk_jdbc_connection_close(_ connectionRaw: Int, _ outThrown: UnsafeMu
     return 0
 }
 
+@_cdecl("kk_jdbc_connection_isClosed")
+public func kk_jdbc_connection_isClosed(_ connectionRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let connection = jdbcConnectionBox(from: connectionRaw) else {
+        outThrown?.pointee = jdbcErrorThrowable(RuntimeJDBCError.invalidHandle("connection"))
+        return kk_box_bool(1)
+    }
+    return kk_box_bool(connection.closed ? 1 : 0)
+}
+
+@_cdecl("kk_jdbc_connection_getAutoCommit")
+public func kk_jdbc_connection_getAutoCommit(_ connectionRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let connection = jdbcConnectionBox(from: connectionRaw) else {
+        outThrown?.pointee = jdbcErrorThrowable(RuntimeJDBCError.invalidHandle("connection"))
+        return kk_box_bool(1)
+    }
+    return kk_box_bool(connection.autoCommit ? 1 : 0)
+}
+
+@_cdecl("kk_jdbc_connection_setAutoCommit")
+public func kk_jdbc_connection_setAutoCommit(_ connectionRaw: Int, _ valueRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let connection = jdbcConnectionBox(from: connectionRaw) else {
+            throw RuntimeJDBCError.invalidHandle("connection")
+        }
+        let autoCommitValue = valueRaw != 0
+        try connection.setAutoCommit(autoCommitValue)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+    }
+    return 0
+}
+
+@_cdecl("kk_jdbc_connection_getTransactionIsolation")
+public func kk_jdbc_connection_getTransactionIsolation(_ connectionRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let connection = jdbcConnectionBox(from: connectionRaw) else {
+        outThrown?.pointee = jdbcErrorThrowable(RuntimeJDBCError.invalidHandle("connection"))
+        return 2
+    }
+    return connection.transactionIsolation
+}
+
+@_cdecl("kk_jdbc_connection_setTransactionIsolation")
+public func kk_jdbc_connection_setTransactionIsolation(_ connectionRaw: Int, _ levelRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let connection = jdbcConnectionBox(from: connectionRaw) else {
+            throw RuntimeJDBCError.invalidHandle("connection")
+        }
+        guard connection.closed == false else {
+            throw RuntimeJDBCError.connectionClosed
+        }
+        let validLevels = [1, 2, 4, 8]
+        guard validLevels.contains(levelRaw) else {
+            throw RuntimeJDBCError.sqlite("Unsupported transaction isolation level: \(levelRaw)")
+        }
+        connection.transactionIsolation = levelRaw
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+    }
+    return 0
+}
+
+@_cdecl("kk_jdbc_connection_commit")
+public func kk_jdbc_connection_commit(_ connectionRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let connection = jdbcConnectionBox(from: connectionRaw) else {
+            throw RuntimeJDBCError.invalidHandle("connection")
+        }
+        try connection.commit()
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+    }
+    return 0
+}
+
+@_cdecl("kk_jdbc_connection_rollback")
+public func kk_jdbc_connection_rollback(_ connectionRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let connection = jdbcConnectionBox(from: connectionRaw) else {
+            throw RuntimeJDBCError.invalidHandle("connection")
+        }
+        try connection.rollback()
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+    }
+    return 0
+}
+
+@_cdecl("kk_jdbc_connection_rollback_savepoint")
+public func kk_jdbc_connection_rollback_savepoint(_ connectionRaw: Int, _ savepointRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let connection = jdbcConnectionBox(from: connectionRaw) else {
+            throw RuntimeJDBCError.invalidHandle("connection")
+        }
+        guard let savepoint = jdbcSavepointBox(from: savepointRaw) else {
+            throw RuntimeJDBCError.invalidHandle("savepoint")
+        }
+        try connection.rollback(to: savepoint)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+    }
+    return 0
+}
+
+@_cdecl("kk_jdbc_connection_setSavepoint")
+public func kk_jdbc_connection_setSavepoint(_ connectionRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let connection = jdbcConnectionBox(from: connectionRaw) else {
+            throw RuntimeJDBCError.invalidHandle("connection")
+        }
+        let savepoint = try connection.createSavepoint(name: nil)
+        return registerRuntimeObject(savepoint)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+        return 0
+    }
+}
+
+@_cdecl("kk_jdbc_connection_setSavepointNamed")
+public func kk_jdbc_connection_setSavepointNamed(_ connectionRaw: Int, _ nameRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let connection = jdbcConnectionBox(from: connectionRaw) else {
+            throw RuntimeJDBCError.invalidHandle("connection")
+        }
+        let name = try jdbcExtractString(nameRaw)
+        let savepoint = try connection.createSavepoint(name: name)
+        return registerRuntimeObject(savepoint)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+        return 0
+    }
+}
+
+@_cdecl("kk_jdbc_connection_releaseSavepoint")
+public func kk_jdbc_connection_releaseSavepoint(_ connectionRaw: Int, _ savepointRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let connection = jdbcConnectionBox(from: connectionRaw) else {
+            throw RuntimeJDBCError.invalidHandle("connection")
+        }
+        guard let savepoint = jdbcSavepointBox(from: savepointRaw) else {
+            throw RuntimeJDBCError.invalidHandle("savepoint")
+        }
+        try connection.releaseSavepoint(savepoint)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+    }
+    return 0
+}
+
+@_cdecl("kk_jdbc_savepoint_getSavepointId")
+public func kk_jdbc_savepoint_getSavepointId(_ savepointRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let savepoint = jdbcSavepointBox(from: savepointRaw) else {
+            throw RuntimeJDBCError.invalidHandle("savepoint")
+        }
+        guard savepoint.name == nil else {
+            throw RuntimeJDBCError.sqlite("Named savepoints do not expose an integer identifier")
+        }
+        return savepoint.identifier
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+        return 0
+    }
+}
+
+@_cdecl("kk_jdbc_savepoint_getSavepointName")
+public func kk_jdbc_savepoint_getSavepointName(_ savepointRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let savepoint = jdbcSavepointBox(from: savepointRaw) else {
+            throw RuntimeJDBCError.invalidHandle("savepoint")
+        }
+        guard let name = savepoint.name else {
+            throw RuntimeJDBCError.sqlite("Unnamed savepoints do not expose a name")
+        }
+        return jdbcStringRaw(name)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+        return 0
+    }
+}
+
 @_cdecl("kk_jdbc_statement_executeQuery")
 public func kk_jdbc_statement_executeQuery(_ statementRaw: Int, _ sqlRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
