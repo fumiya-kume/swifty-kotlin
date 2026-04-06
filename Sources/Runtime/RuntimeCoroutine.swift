@@ -1817,6 +1817,7 @@ private enum RuntimeFlowTag: Int {
     case debounce = 17
     case sample = 18
     case delayEach = 19
+    case onCompletion = 20
 }
 
 private struct RuntimeFlowEvent {
@@ -2085,7 +2086,7 @@ private func runtimeFlowApplyElementOp(
     var current = event
     for (index, op) in ops.enumerated() {
         switch op.kind {
-        case .emit, .buffer, .conflate, .flowOn, .debounce, .sample, .delayEach:
+        case .emit, .buffer, .conflate, .flowOn, .debounce, .sample, .delayEach, .onCompletion:
             continue
         case .map, .transform:
             let result = runtimeFlowCallUnary(op.argument, value: current.value)
@@ -2138,6 +2139,9 @@ private func runtimeFlowApplyElementOp(
             }
             state.dropWhileFinished[index] = true
         case .catchHandler, .retry, .retryWhen, .onErrorReturn, .onErrorResume:
+            continue
+        case .onCompletion:
+            // onCompletion is a completion-only handler; pass elements through unchanged.
             continue
         }
     }
@@ -2625,6 +2629,10 @@ private func runtimeFlowApplyOpsLazy(
         case .catchHandler, .retry, .retryWhen, .onErrorReturn, .onErrorResume:
             continue
 
+        case .onCompletion:
+            // onCompletion is a completion-only handler; pass elements through unchanged.
+            continue
+
         case .buffer, .conflate, .flowOn, .debounce, .sample, .delayEach:
             continue
         }
@@ -2752,7 +2760,21 @@ private func runtimeFlowRunSourceStage(
 }
 
 private func runtimeFlowHasErrorHandlers(_ ops: [RuntimeFlowOp]) -> Bool {
-    ops.contains { runtimeFlowErrorHandler(for: $0) != nil }
+    ops.contains { runtimeFlowErrorHandler(for: $0) != nil || $0.kind == .onCompletion }
+}
+
+/// Invoke all onCompletion handlers in the op chain.
+/// `failure`: nil on success, non-zero exception pointer on error.
+private func runtimeFlowFireCompletionHandlers(_ ops: [RuntimeFlowOp], failure: Int?) {
+    for op in ops where op.kind == .onCompletion {
+        guard op.argument != 0 else { continue }
+        let handler = unsafeBitCast(
+            op.argument,
+            to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+        )
+        var thrown = 0
+        _ = handler(0, failure ?? 0, &thrown)
+    }
 }
 
 private func runtimeFlowInvokeCatchHandler(_ handlerFnPtr: Int, failure: Int) -> Int? {
@@ -2904,8 +2926,13 @@ private func runtimeFlowCollectLazy(
     collectorFnPtr: Int,
     continuation: Int
 ) -> Int {
+    let hasOnCompletion = flow.opChain.contains { $0.kind == .onCompletion }
     if !runtimeFlowHasErrorHandlers(flow.opChain) {
-        return runtimeFlowCollectStreaming(flow, collectorFnPtr: collectorFnPtr, continuation: continuation)
+        let retVal = runtimeFlowCollectStreaming(flow, collectorFnPtr: collectorFnPtr, continuation: continuation)
+        if hasOnCompletion {
+            runtimeFlowFireCompletionHandlers(flow.opChain, failure: nil)
+        }
+        return retVal
     }
     let result = runtimeFlowEvaluate(flow: flow)
     for value in result.values {
@@ -2915,8 +2942,14 @@ private func runtimeFlowCollectLazy(
             continuation: continuation
         )
         if !delivered {
+            if hasOnCompletion {
+                runtimeFlowFireCompletionHandlers(flow.opChain, failure: result.failure)
+            }
             return 0
         }
+    }
+    if hasOnCompletion {
+        runtimeFlowFireCompletionHandlers(flow.opChain, failure: result.failure)
     }
     return 0
 }
