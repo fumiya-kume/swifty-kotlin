@@ -784,6 +784,9 @@ extension CallTypeChecker {
         if memberName == knownNames.getOrElse {
             return isListReceiver || isMapReceiver
         }
+        if memberName == interner.intern("elementAtOrElse") {
+            return isListReceiver
+        }
         if mapOnlyMembers.contains(memberName) {
             return isMapReceiver
         }
@@ -899,6 +902,8 @@ extension CallTypeChecker {
         case knownNames.getOrDefault:
             return isMapReceiver && argCount == 2
         case knownNames.getOrElse:
+            return isMapReceiver ? argCount == 1 : argCount == 2
+        case interner.intern("elementAtOrElse"):
             return argCount == 2
         case knownNames.getOrPut:
             return isMutableMapReceiver && argCount == 2
@@ -1022,6 +1027,10 @@ extension CallTypeChecker {
         }
 
         if memberName == knownNames.getOrElse, !isMapReceiver {
+            return receiverElementType
+        }
+
+        if memberName == interner.intern("elementAtOrElse") {
             return receiverElementType
         }
 
@@ -1712,6 +1721,17 @@ extension CallTypeChecker {
 
         // List.getOrElse(index, { default }) — lambda takes Int (index), returns element type
         if memberName == knownNames.getOrElse, !isMapReceiver, argCount == 2 {
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [sema.types.intType],
+                returnType: receiverElementType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 1, expectedType: expectedType)
+        }
+
+        // List.elementAtOrElse(index, { default }) — same as getOrElse
+        if memberName == interner.intern("elementAtOrElse"), argCount == 2 {
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [sema.types.intType],
                 returnType: receiverElementType,

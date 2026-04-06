@@ -168,7 +168,7 @@ extension CallLowerer {
         "groupBy", "groupingBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
         "eachCount",
         "withIndex", "forEachIndexed", "mapIndexed", "filterIndexed", "mapValues", "mapKeys", "filterKeys", "filterValues",
-        "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull",
+        "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull", "elementAt", "elementAtOrElse",
         "putAll", "addAll",
         "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
         "plus", "minus",
@@ -3256,6 +3256,10 @@ extension CallLowerer {
                     "kk_list_getOrNull"
                 case "elementAtOrNull":
                     "kk_list_elementAtOrNull"
+                case "elementAt":
+                    "kk_list_elementAt"
+                case "elementAtOrElse":
+                    "kk_list_elementAtOrElse"
                 case "containsAll":
                     "kk_list_containsAll"
                 default:
@@ -3780,7 +3784,7 @@ extension CallLowerer {
             "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate",
             "forEachIndexed", "mapIndexed", "filterIndexed", "sumOf", "mapValues", "mapKeys", "filterKeys", "filterValues",
-            "getOrElse", "getOrPut",
+            "getOrElse", "elementAtOrElse", "getOrPut",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
@@ -5160,6 +5164,7 @@ extension CallLowerer {
     private static func throwingMemberCalleeNames(interner: StringInterner) -> Set<InternedString> {
         Set([
             interner.intern("kk_list_random"),
+            interner.intern("kk_list_elementAt"),
             interner.intern("kk_list_maxOf"),
             interner.intern("kk_list_minOf"),
             interner.intern("kk_list_maxWith"),
@@ -5996,6 +6001,10 @@ extension CallLowerer {
                 return interner.intern("kk_list_getOrNull")
             case "elementAtOrNull":
                 return interner.intern("kk_list_elementAtOrNull")
+            case "elementAt":
+                return interner.intern("kk_list_elementAt")
+            case "elementAtOrElse":
+                return interner.intern("kk_list_elementAtOrElse")
             case "getOrElse":
                 return interner.intern("kk_list_getOrElse")
             case "subList":
@@ -6208,6 +6217,10 @@ extension CallLowerer {
             return interner.intern("kk_list_getOrNull")
         case "elementAtOrNull":
             return interner.intern("kk_list_elementAtOrNull")
+        case "elementAt":
+            return interner.intern("kk_list_elementAt")
+        case "elementAtOrElse":
+            return interner.intern("kk_list_elementAtOrElse")
         case "getOrElse":
             return interner.intern("kk_list_getOrElse")
         case "containsAll":

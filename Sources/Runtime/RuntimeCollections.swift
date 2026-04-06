@@ -411,6 +411,23 @@ public func kk_list_elementAtOrNull(_ listRaw: Int, _ index: Int) -> Int {
     kk_list_getOrNull(listRaw, index)
 }
 
+// MARK: - List elementAt (STDLIB-212)
+
+@_cdecl("kk_list_elementAt")
+public func kk_list_elementAt(_ listRaw: Int, _ index: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let list = runtimeListBox(from: listRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_list_elementAt received invalid list handle")
+    }
+    guard list.elements.indices.contains(index) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IndexOutOfBoundsException: Index \(index) out of bounds for length \(list.elements.count)"
+        )
+        return 0
+    }
+    return list.elements[index]
+}
+
 // MARK: - STDLIB-210: List.firstOrNull() / lastOrNull()
 
 @_cdecl("kk_list_firstOrNull")
