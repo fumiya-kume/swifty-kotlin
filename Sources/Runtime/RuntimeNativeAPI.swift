@@ -126,6 +126,11 @@ final class RuntimeMemScopeBox: @unchecked Sendable {
         allocations.removeAll(keepingCapacity: false)
         lock.unlock()
 
+        for key in keys {
+            if let ptr = UnsafeMutableRawPointer(bitPattern: key) {
+                Unmanaged<RuntimeNativeHeapAllocationBox>.fromOpaque(ptr).release()
+            }
+        }
         runtimeStorage.withLock { state in
             for key in keys {
                 state.objectPointers.remove(key)
@@ -159,11 +164,12 @@ public func kk_mem_scope_exit(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
-    let box = Unmanaged<RuntimeMemScopeBox>.fromOpaque(ptr).takeUnretainedValue()
-    box.freeAll()
+    let scopeUnmanaged = Unmanaged<RuntimeMemScopeBox>.fromOpaque(ptr)
+    scopeUnmanaged.takeUnretainedValue().freeAll()
     runtimeStorage.withLock { state in
         state.objectPointers.remove(UInt(bitPattern: ptr))
     }
+    scopeUnmanaged.release()
     return 0
 }
 
@@ -203,7 +209,8 @@ public func kk_unpin_object(_ pinnedHandle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: pinnedHandle) else {
         return 0
     }
-    let box = Unmanaged<RuntimePinnedBox>.fromOpaque(ptr).takeUnretainedValue()
+    let pinUnmanaged = Unmanaged<RuntimePinnedBox>.fromOpaque(ptr)
+    let box = pinUnmanaged.takeUnretainedValue()
     // Release the extra retain we added in kk_pin_object.
     if let objPtr = UnsafeMutableRawPointer(bitPattern: box.objectRaw) {
         let isManaged = runtimeStorage.withLock { state in
@@ -216,6 +223,7 @@ public func kk_unpin_object(_ pinnedHandle: Int) -> Int {
     runtimeStorage.withLock { state in
         state.objectPointers.remove(UInt(bitPattern: ptr))
     }
+    pinUnmanaged.release()
     return box.objectRaw
 }
 
