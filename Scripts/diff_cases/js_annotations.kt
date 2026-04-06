@@ -1,3 +1,4 @@
+// SKIP-DIFF: kotlin.js.* APIs are Kotlin/JS-only and not available in JVM kotlinc
 @file:OptIn(
     kotlin.js.ExperimentalJsFileName::class,
     kotlin.js.ExperimentalJsReflectionCreateInstance::class,
