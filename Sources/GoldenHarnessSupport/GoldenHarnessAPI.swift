@@ -52,11 +52,8 @@ public enum GoldenHarness {
         let process = Process()
         let stdout = Pipe()
         let stderr = Pipe()
-        let group = DispatchGroup()
         let stdoutHandle = stdout.fileHandleForReading
         let stderrHandle = stderr.fileHandleForReading
-        var stdoutData = Data()
-        var stderrData = Data()
 
         process.executableURL = try workerExecutableURL()
         process.arguments = [suiteName, sourcePath]
@@ -64,21 +61,13 @@ public enum GoldenHarness {
         process.standardOutput = stdout
         process.standardError = stderr
 
-        group.enter()
-        DispatchQueue.global(qos: .userInitiated).async {
-            defer { group.leave() }
-            stdoutData = stdoutHandle.readDataToEndOfFile()
-        }
-
-        group.enter()
-        DispatchQueue.global(qos: .userInitiated).async {
-            defer { group.leave() }
-            stderrData = stderrHandle.readDataToEndOfFile()
-        }
-
         try process.run()
         process.waitUntilExit()
-        group.wait()
+        
+        // Read data synchronously after process completes
+        let stdoutData = stdoutHandle.readDataToEndOfFile()
+        let stderrData = stderrHandle.readDataToEndOfFile()
+        
         guard process.terminationStatus == 0 else {
             let stderrText = String(data: stderrData, encoding: .utf8)?
                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
