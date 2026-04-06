@@ -126,3 +126,19 @@ public func kk_long_max_value() -> Int {
 public func kk_long_min_value() -> Int {
     return Int(truncatingIfNeeded: Int64.min)
 }
+
+// MARK: - Math constants (kotlin.math.PI, kotlin.math.E)
+
+/// Returns the mathematical constant π (pi).
+/// Kotlin: kotlin.math.PI
+@_cdecl("kk_math_pi")
+public func kk_math_pi() -> Int {
+    kk_double_to_bits(Double.pi)
+}
+
+/// Returns the mathematical constant e (Euler's number).
+/// Kotlin: kotlin.math.E
+@_cdecl("kk_math_e")
+public func kk_math_e() -> Int {
+    kk_double_to_bits(Double(M_E))
+}
