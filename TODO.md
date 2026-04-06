@@ -237,7 +237,7 @@
 
 #### Phase 5: 高度リフレクションとメタプログラミング (低優先度)
 
-- [ ] STDLIB-REFL-172: メタデータAPI完全実装
+- [x] STDLIB-REFL-172: メタデータAPI完全実装
   - **仕様**: kotlinx-metadata互換のメタデータAPI
   - **実装内容**:
     - KmFunction: 関数メタデータ
@@ -245,7 +245,7 @@
     - KmAnnotation: アノテーションメタデータ
     - compilerPluginMetadata: コンパイラプラグインメタデータ
     - メタデータシリアライズ: メタデータのシリアライズ/デシリアライズ
-  - **現状**: メタデータAPIは未実装
+  - **現状**: 完全実装済み - KmFunction/KmConstructor/KmAnnotation/KmCompilerPluginMetadata/RuntimeMetadataCodec全API利用可能
   - **関連ファイル**: `RuntimeMetadata.swift`
   - **テストケース**: `Scripts/diff_cases/metadata_api.kt`
 
