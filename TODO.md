@@ -191,15 +191,15 @@
 
 #### Phase 5: 高度Flowとコルーチン (低優先度)
 
-- [ ] STDLIB-FLOW-176: Flow高度演算子完全実装
+- [x] STDLIB-FLOW-176: Flow高度演算子完全実装
   - **仕様**: kotlinx.coroutinesの高度Flow演算子
   - **実装内容**:
-    - 変換演算子: map, filter, transform, takeWhile, dropWhile
-    - フラット化: flatMapConcat, flatMapMerge, flatMapLatest
-    - 組合せ演算子: combine, zip, merge
-    - バッファリング: buffer, conflate, flowOn
-    - タイミング: debounce, sample, delayEach
-  - **現状**: 基本的なFlowは実装済み、高度な演算子は未実装
+    - 変換演算子: map, filter, transform, takeWhile, dropWhile（既存実装済み）
+    - フラット化: flatMapConcat, flatMapMerge, flatMapLatest（新規実装）
+    - 組合せ演算子: combine, zip, merge（新規実装）
+    - バッファリング: buffer, conflate, flowOn（既存実装済み）
+    - タイミング: debounce, sample, delayEach（既存実装済み）
+  - **現状**: 全演算子実装済み (STDLIB-FLOW-176)
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/flow_advanced_operators.kt`
 
@@ -245,11 +245,11 @@
   - **仕様**: 実験的時間APIの完全サポート
   - **実装内容**:
     - @ExperimentalTime: 実験的時間APIマーカー (`HeaderHelpers+SyntheticExperimentalTimeStubs.swift`)
-    - Clockインターフェース: 時計の抽象化 (`kk_clock_now`)
-    - Clock.System: システム時計実装 (`kk_clock_system_now`)
+    - Clockインターフェース: 時計の抽象化 (`HeaderHelpers+SyntheticClockStubs.swift`, `kk_clock_now`)
+    - Clock.System: システム時計実装 (`kk_clock_system_now`, `RuntimeInstant.swift`)
     - TimeSource: 時間ソースの抽象化 (`kk_time_source_mark_now`)
-    - TimeMark: 時間マークと差分計算 (`kk_time_mark_elapsed_now` など)
-    - TimeSource.Monotonic: モノトニック時間ソース (`kk_time_source_monotonic_mark_now`)
+    - TimeMark: 時間マークと差分計算 (`kk_time_mark_elapsed_now`, `kk_time_mark_has_passed_now` など)
+    - TimeSource.Monotonic: モノトニック時間ソース (`kk_time_source_monotonic_mark_now`, `RuntimeTime.swift`)
   - **現状**: 実装完了; ABISpec/ABIParity/BridgeCoverage に Clock 関数を追加
   - **関連ファイル**: `RuntimeTime.swift`, `RuntimeInstant.swift`, `HeaderHelpers+SyntheticExperimentalTimeStubs.swift`, `HeaderHelpers+SyntheticClockStubs.swift`
   - **テストケース**: `Scripts/diff_cases/experimental_time.kt`

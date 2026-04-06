@@ -2141,6 +2141,7 @@ private func runtimeFlowApplyElementOp(
         case .catchHandler, .retry, .retryWhen, .onErrorReturn, .onErrorResume:
             continue
         case .onCompletion:
+            // onCompletion is a completion-only handler; pass elements through unchanged.
             continue
         }
     }
@@ -2759,7 +2760,21 @@ private func runtimeFlowRunSourceStage(
 }
 
 private func runtimeFlowHasErrorHandlers(_ ops: [RuntimeFlowOp]) -> Bool {
-    ops.contains { runtimeFlowErrorHandler(for: $0) != nil }
+    ops.contains { runtimeFlowErrorHandler(for: $0) != nil || $0.kind == .onCompletion }
+}
+
+/// Invoke all onCompletion handlers in the op chain.
+/// `failure`: nil on success, non-zero exception pointer on error.
+private func runtimeFlowFireCompletionHandlers(_ ops: [RuntimeFlowOp], failure: Int?) {
+    for op in ops where op.kind == .onCompletion {
+        guard op.argument != 0 else { continue }
+        let handler = unsafeBitCast(
+            op.argument,
+            to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+        )
+        var thrown = 0
+        _ = handler(0, failure ?? 0, &thrown)
+    }
 }
 
 /// Invoke all onCompletion handlers in the op chain.
