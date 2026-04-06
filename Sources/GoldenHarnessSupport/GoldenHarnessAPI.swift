@@ -119,48 +119,36 @@ public enum GoldenHarness {
         let fileManager = FileManager.default
         let workerName = "GoldenHarnessWorker"
 
+        // Check environment override first
         if let overridePath = ProcessInfo.processInfo.environment["GOLDEN_HARNESS_WORKER"],
-           fileManager.isExecutableFile(atPath: overridePath)
-        {
+           fileManager.isExecutableFile(atPath: overridePath) {
             return URL(fileURLWithPath: overridePath)
         }
 
-        var directory = URL(fileURLWithPath: CommandLine.arguments[0]).resolvingSymlinksInPath()
-            .deletingLastPathComponent()
-        while true {
-            let candidate = directory.appendingPathComponent(workerName, isDirectory: false)
-            if fileManager.isExecutableFile(atPath: candidate.path) {
-                return candidate
-            }
-            let parent = directory.deletingLastPathComponent()
-            if parent.path == directory.path {
-                break
-            }
-            directory = parent
-        }
-
-        let cwd = URL(fileURLWithPath: fileManager.currentDirectoryPath, isDirectory: true)
-        let directCandidates = [
-            cwd.appendingPathComponent(".build/debug/\(workerName)", isDirectory: false),
-            cwd.appendingPathComponent(".build/arm64-apple-macosx/debug/\(workerName)", isDirectory: false),
+        // Check common build directories
+        let cwd = URL(fileURLWithPath: fileManager.currentDirectoryPath)
+        let candidates = [
+            cwd.appendingPathComponent(".build/debug/\(workerName)"),
+            cwd.appendingPathComponent(".build/arm64-apple-macosx/debug/\(workerName)"),
+            URL(fileURLWithPath: CommandLine.arguments[0]).deletingLastPathComponent().appendingPathComponent(workerName)
         ]
-        for candidate in directCandidates where fileManager.isExecutableFile(atPath: candidate.path) {
+
+        for candidate in candidates where fileManager.isExecutableFile(atPath: candidate.path) {
             return candidate
         }
 
-        let buildRoot = cwd.appendingPathComponent(".build", isDirectory: true)
+        // Search in .build directory as last resort
+        let buildRoot = cwd.appendingPathComponent(".build")
         if let enumerator = fileManager.enumerator(
             at: buildRoot,
             includingPropertiesForKeys: [.isRegularFileKey],
             options: [.skipsHiddenFiles]
         ) {
             for case let candidate as URL in enumerator {
-                guard candidate.lastPathComponent == workerName,
-                      fileManager.isExecutableFile(atPath: candidate.path)
-                else {
-                    continue
+                if candidate.lastPathComponent == workerName,
+                   fileManager.isExecutableFile(atPath: candidate.path) {
+                    return candidate
                 }
-                return candidate
             }
         }
 
