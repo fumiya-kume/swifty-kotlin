@@ -67,7 +67,7 @@ private func logLevelRank(_ level: String) -> Int {
 
 // MARK: - Appender protocol (internal)
 
-protocol RuntimeAppender: AnyObject {
+protocol RuntimeAppender: AnyObject, Sendable {
     func append(record: RuntimeLogRecord)
 }
 
@@ -82,7 +82,7 @@ struct RuntimeLogRecord {
 
 // MARK: - Console Appender
 
-private final class RuntimeConsoleAppender: RuntimeAppender {
+private final class RuntimeConsoleAppender: RuntimeAppender, @unchecked Sendable {
     func append(record: RuntimeLogRecord) {
         print(renderText(record))
     }
@@ -96,7 +96,7 @@ private final class RuntimeConsoleAppender: RuntimeAppender {
 
 // MARK: - File Appender
 
-final class RuntimeFileAppenderBox: RuntimeAppender {
+final class RuntimeFileAppenderBox: RuntimeAppender, @unchecked Sendable {
     private let lock = NSLock()
     let path: String
 
@@ -134,7 +134,7 @@ private func writeLineToFile(_ line: String, at path: String) {
 
 // MARK: - Rolling File Appender
 
-final class RuntimeRollingFileAppenderBox: RuntimeAppender {
+final class RuntimeRollingFileAppenderBox: RuntimeAppender, @unchecked Sendable {
     private let lock = NSLock()
     let basePath: String
     let maxBytes: Int64
@@ -193,7 +193,7 @@ final class RuntimeRollingFileAppenderBox: RuntimeAppender {
 
 // MARK: - Structured (JSON) Appender
 
-final class RuntimeStructuredAppenderBox: RuntimeAppender {
+final class RuntimeStructuredAppenderBox: RuntimeAppender, @unchecked Sendable {
     private let lock = NSLock()
     let path: String?   // nil → stdout
 
@@ -243,7 +243,7 @@ final class RuntimeStructuredAppenderBox: RuntimeAppender {
 
 // MARK: - Async Appender
 
-final class RuntimeAsyncAppenderBox: RuntimeAppender {
+final class RuntimeAsyncAppenderBox: RuntimeAppender, @unchecked Sendable {
     private let queue: DispatchQueue
     private let delegate: RuntimeAppender
 
