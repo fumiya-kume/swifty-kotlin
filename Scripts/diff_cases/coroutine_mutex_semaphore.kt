@@ -1,5 +1,6 @@
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
+import java.util.concurrent.atomic.AtomicInteger
 
 // TEST-CORO-003: Mutex and Semaphore — protecting shared state in coroutines,
 // withLock helper, and Semaphore for limiting concurrent access.
@@ -26,21 +27,23 @@ fun main() = runBlocking {
     println("isLocked: ${mutex.isLocked}")
 
     // 4. Semaphore limits concurrency
+    // Use AtomicInteger to avoid data races when multiple coroutines on
+    // Dispatchers.Default update current/maxConcurrent simultaneously.
     val semaphore = Semaphore(3)
-    var maxConcurrent = 0
-    var current = 0
+    val maxConcurrent = AtomicInteger(0)
+    val current = AtomicInteger(0)
     val semJobs = (1..10).map {
         launch(Dispatchers.Default) {
             semaphore.withPermit {
-                current++
-                if (current > maxConcurrent) maxConcurrent = current
+                val c = current.incrementAndGet()
+                maxConcurrent.updateAndGet { max -> if (c > max) c else max }
                 delay(1)
-                current--
+                current.decrementAndGet()
             }
         }
     }
     semJobs.forEach { it.join() }
-    println("max concurrent <= 3: ${maxConcurrent <= 3}")
+    println("max concurrent <= 3: ${maxConcurrent.get() <= 3}")
 
     // 5. Semaphore with 1 permit acts like a mutex
     val binarySema = Semaphore(1)

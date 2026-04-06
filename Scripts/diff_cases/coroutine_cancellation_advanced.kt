@@ -5,7 +5,7 @@ import kotlinx.coroutines.*
 
 suspend fun cancellableWork(): String {
     var count = 0
-    while (isActive && count < 5) {
+    while (currentCoroutineContext().isActive && count < 5) {
         delay(1)
         count++
     }
