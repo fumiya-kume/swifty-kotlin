@@ -1129,6 +1129,72 @@ public func kk_sequence_forEach(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) 
     return 0
 }
 
+@_cdecl("kk_sequence_forEachIndexed")
+public func kk_sequence_forEachIndexed(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
+    let elements: [Int]
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        elements = evaluateSequence(seq)
+    } else {
+        elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    }
+    for (idx, elem) in elements.enumerated() {
+        var thrown = 0
+        _ = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown)
+        if thrown != 0 {
+            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: sequence forEachIndexed lambda threw but no outThrown available")
+        }
+    }
+    return 0
+}
+
+// MARK: - kk_sequence_zipWithNext (STDLIB: Sequence.zipWithNext)
+
+@_cdecl("kk_sequence_zipWithNext")
+public func kk_sequence_zipWithNext(_ seqRaw: Int) -> Int {
+    let elements: [Int]
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        elements = evaluateSequence(seq)
+    } else {
+        elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    }
+    guard elements.count >= 2 else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    var pairs: [Int] = []
+    pairs.reserveCapacity(elements.count - 1)
+    for i in 0 ..< elements.count - 1 {
+        pairs.append(kk_pair_new(elements[i], elements[i + 1]))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: pairs))
+}
+
+@_cdecl("kk_sequence_zipWithNextTransform")
+public func kk_sequence_zipWithNextTransform(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    let elements: [Int]
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        elements = evaluateSequence(seq)
+    } else {
+        elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    }
+    guard elements.count >= 2 else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    var results: [Int] = []
+    results.reserveCapacity(elements.count - 1)
+    for i in 0 ..< elements.count - 1 {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: elements[i], rhs: elements[i + 1], outThrown: &thrown)
+        if thrown != 0 {
+            if let outThrown = outThrown {
+                outThrown.pointee = thrown
+            }
+            return 0
+        }
+        results.append(maybeUnbox(result))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: results))
+}
+
 @_cdecl("kk_sequence_flatMap")
 public func kk_sequence_flatMap(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
     guard let seq = runtimeSequenceBox(from: seqRaw) else {

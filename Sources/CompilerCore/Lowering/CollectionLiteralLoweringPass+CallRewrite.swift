@@ -1844,6 +1844,81 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    // forEachIndexed on sequence → kk_sequence_forEachIndexed
+                    if callee == lookup.forEachIndexedName,
+                       arguments.count == 2 || arguments.count == 3
+                    {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkSequenceForEachIndexedName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
+                    }
+
+                    // zipWithNext on sequence → kk_sequence_zipWithNext / kk_sequence_zipWithNextTransform
+                    if callee == lookup.zipWithNextName,
+                       arguments.count == 1 || arguments.count == 2 || arguments.count == 3
+                    {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            if arguments.count == 1 {
+                                // zipWithNext() — no transform
+                                let hofResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: lookup.kkSequenceZipWithNextName,
+                                    arguments: [receiverID],
+                                    result: hofResult,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                if let result {
+                                    listExprIDs.insert(result.rawValue)
+                                    listExprIDs.insert(hofResult.rawValue)
+                                    loweredBody.append(.copy(from: hofResult, to: result))
+                                }
+                                continue
+                            } else {
+                                // zipWithNext { a, b -> ... } — with transform
+                                let lambdaID = arguments[1]
+                                let closureRawID: KIRExprID
+                                if arguments.count == 3 {
+                                    closureRawID = arguments[2]
+                                } else {
+                                    let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                    loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                    closureRawID = zeroExpr
+                                }
+                                let hofResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: lookup.kkSequenceZipWithNextTransformName,
+                                    arguments: [receiverID, lambdaID, closureRawID],
+                                    result: hofResult,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                                if let result {
+                                    listExprIDs.insert(result.rawValue)
+                                    listExprIDs.insert(hofResult.rawValue)
+                                    loweredBody.append(.copy(from: hofResult, to: result))
+                                }
+                                continue
+                            }
+                        }
+                    }
+
                     // flatMap on sequence → kk_sequence_flatMap (STDLIB-095)
                     if callee == lookup.flatMapName,
                        arguments.count == 2 || arguments.count == 3

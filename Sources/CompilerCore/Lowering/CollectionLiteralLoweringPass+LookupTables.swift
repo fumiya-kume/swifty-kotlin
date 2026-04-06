@@ -263,6 +263,9 @@ struct CollectionLiteralLookupTables {
     let kkSequenceOnEachName: InternedString
     let kkEmptySequenceName: InternedString
     let kkSequenceIfEmptyName: InternedString
+    let kkSequenceForEachIndexedName: InternedString
+    let kkSequenceZipWithNextName: InternedString
+    let kkSequenceZipWithNextTransformName: InternedString
     let kkSequenceFirstName: InternedString
     let kkSequenceFirstOrNullName: InternedString
     let kkSequenceLastName: InternedString
@@ -385,6 +388,10 @@ struct CollectionLiteralLookupTables {
     let kkRangeSumName: InternedString
     let kkRangeToIntArrayName: InternedString
     let kkOpContainsName: InternedString
+    let kkRangeTakeName: InternedString
+    let kkRangeDropName: InternedString
+    let kkRangeAverageName: InternedString
+    let kkRangeSortedName: InternedString
 
     // Member names (STDLIB-637)
     let sumName: InternedString
@@ -952,6 +959,9 @@ struct CollectionLiteralLookupTables {
         kkSequenceOnEachName = interner.intern("kk_sequence_onEach")
         kkEmptySequenceName = interner.intern("kk_empty_sequence")
         kkSequenceIfEmptyName = interner.intern("kk_sequence_ifEmpty")
+        kkSequenceForEachIndexedName = interner.intern("kk_sequence_forEachIndexed")
+        kkSequenceZipWithNextName = interner.intern("kk_sequence_zipWithNext")
+        kkSequenceZipWithNextTransformName = interner.intern("kk_sequence_zipWithNextTransform")
         kkSequenceFirstName = interner.intern("kk_sequence_first")
         kkSequenceFirstOrNullName = interner.intern("kk_sequence_firstOrNull")
         kkSequenceLastName = interner.intern("kk_sequence_last")
@@ -1068,6 +1078,10 @@ struct CollectionLiteralLookupTables {
         kkRangeSumName = interner.intern("kk_range_sum")
         kkRangeToIntArrayName = interner.intern("kk_range_toIntArray")
         kkOpContainsName = interner.intern("kk_op_contains")
+        kkRangeTakeName = interner.intern("kk_range_take")
+        kkRangeDropName = interner.intern("kk_range_drop")
+        kkRangeAverageName = interner.intern("kk_range_average")
+        kkRangeSortedName = interner.intern("kk_range_sorted")
 
         sumName = interner.intern("sum")
 

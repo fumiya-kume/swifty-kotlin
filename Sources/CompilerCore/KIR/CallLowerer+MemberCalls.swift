@@ -3190,6 +3190,11 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_onEach"
                 } else if calleeName == interner.intern("ifEmpty") {
                     runtimeCallee = "kk_sequence_ifEmpty"
+                } else if calleeName == interner.intern("forEachIndexed") {
+                    runtimeCallee = "kk_sequence_forEachIndexed"
+                } else if calleeName == interner.intern("zipWithNext") {
+                    // Overload dispatch: no-arg → kk_sequence_zipWithNext, with transform → kk_sequence_zipWithNextTransform
+                    runtimeCallee = normalizedArgIDs.isEmpty ? "kk_sequence_zipWithNext" : "kk_sequence_zipWithNextTransform"
                 } else {
                     runtimeCallee = nil
                 }
@@ -3203,6 +3208,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_mapIndexed"
                         || runtimeCallee == "kk_sequence_onEach"
                         || runtimeCallee == "kk_sequence_ifEmpty"
+                        || runtimeCallee == "kk_sequence_zipWithNextTransform"
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
