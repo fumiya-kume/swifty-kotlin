@@ -3614,7 +3614,7 @@ public func kk_callback_flow_create(_ emitterFnPtr: Int, _: Int) -> Int {
 }
 
 /// ProducerScope / SendChannel stub used by channelFlow and callbackFlow blocks.
-/// `trySend` delegates to the active flow collect context, mirroring `emit`.
+/// `send` delegates to the active flow collect context, mirroring `emit`.
 /// Returns a ChannelResult.success sentinel (non-zero = success).
 @_cdecl("kk_channel_flow_send")
 public func kk_channel_flow_send(_ channelRaw: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
