@@ -2,6 +2,10 @@ import Dispatch
 @testable import Runtime
 import XCTest
 
+// Runtime テストの下限時間（短縮候補・フレークに注意）: 本ファイルの ~50ms sleep（measureTime）、
+// RuntimeFlowTests の usleep、RuntimeChannelTests / RuntimeMutexTests の期待待ち 2s 前後、
+// RuntimeReadWriteLockTests のセマフォ待ち 2s など。
+
 // MARK: - C-callable thunks for kk_measureTime tests
 
 /// A no-op closure thunk that returns 0 immediately.
@@ -17,7 +21,21 @@ private let sleep50msThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> 
 
 /// Global to capture closureRaw value passed to the thunk.
 /// Access is single-threaded in tests; disable concurrency-safety check.
-nonisolated(unsafe) private var capturedClosureRaw: Int = 0
+private let capturedClosureRawLock = NSLock()
+nonisolated(unsafe) private var _capturedClosureRaw: Int = 0
+
+private var capturedClosureRaw: Int {
+    get {
+        capturedClosureRawLock.lock()
+        defer { capturedClosureRawLock.unlock() }
+        return _capturedClosureRaw
+    }
+    set {
+        capturedClosureRawLock.lock()
+        defer { capturedClosureRawLock.unlock() }
+        _capturedClosureRaw = newValue
+    }
+}
 
 /// A closure thunk that captures its closureRaw value into a global for verification.
 private let captureClosureRawThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { closureRaw, _ in

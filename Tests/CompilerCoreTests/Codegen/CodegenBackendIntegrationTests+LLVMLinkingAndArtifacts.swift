@@ -189,7 +189,7 @@ extension CodegenBackendIntegrationTests {
         // Create a temp file so the existence check passes.
         let tempURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString + ".dylib")
-        FileManager.default.createFile(atPath: tempURL.path, contents: Data())
+        _ = FileManager.default.createFile(atPath: tempURL.path, contents: Data())
         defer { try? FileManager.default.removeItem(at: tempURL) }
 
         let overridePath = tempURL.path
@@ -211,7 +211,7 @@ extension CodegenBackendIntegrationTests {
         defer { try? FileManager.default.removeItem(at: tempDirectory) }
 
         let versionedLibrary = tempDirectory.appendingPathComponent("libLLVM-18.so")
-        FileManager.default.createFile(atPath: versionedLibrary.path, contents: Data())
+        _ = FileManager.default.createFile(atPath: versionedLibrary.path, contents: Data())
 
         let paths = LLVMCAPIBindings.candidateLibraryPaths(environment: [
             "LIBRARY_PATH": tempDirectory.path,

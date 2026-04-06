@@ -277,7 +277,8 @@ extension TypeCheckHelpers {
         named calleeName: InternedString,
         receiverType: TypeID,
         sema: SemaModule,
-        allowedOwnerSymbols: Set<SymbolID>? = nil
+        allowedOwnerSymbols: Set<SymbolID>? = nil,
+        interner: StringInterner
     ) -> [SymbolID] {
         let nominalRoots = allNominalSymbols(of: receiverType, types: sema.types, symbols: sema.symbols)
         guard !nominalRoots.isEmpty else {
@@ -309,6 +310,43 @@ extension TypeCheckHelpers {
         var candidatesByKey: [MemberDispatchKey: [(symbol: SymbolID, owner: SymbolID, depth: Int)]] = [:]
         var keyOrder: [MemberDispatchKey] = []
         var seenCandidates: Set<SymbolID> = []
+        
+        // STDLIB-NUM-130: Handle extension functions for primitive types (Double/Float)
+        // Since primitive types don't have owner symbols, we need to check kotlin package
+        let receiverKind = sema.types.kind(of: receiverType)
+        let isDoubleFloat = (receiverKind == .primitive(.double, .nonNull) || receiverKind == .primitive(.double, .nullable) ||
+                           receiverKind == .primitive(.float, .nonNull) || receiverKind == .primitive(.float, .nullable))
+        
+        if isDoubleFloat {
+            // Look for extension functions in kotlin package for Double/Float
+            let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
+            let kotlinPackageSymbol = sema.symbols.lookup(fqName: kotlinPkg)
+            if let pkgSymbol = kotlinPackageSymbol {
+                let extensionFQName = kotlinPkg + [calleeName]
+                for candidate in sema.symbols.lookupAll(fqName: extensionFQName) {
+                    guard seenCandidates.insert(candidate).inserted,
+                          let symbol = sema.symbols.symbol(candidate),
+                          symbol.kind == .function,
+                          sema.symbols.parentSymbol(for: candidate) == pkgSymbol,
+                          let signature = sema.symbols.functionSignature(for: candidate),
+                          signature.receiverType != nil,
+                          sema.types.isSubtype(receiverType, signature.receiverType!)
+                    else {
+                        continue
+                    }
+                    let key = MemberDispatchKey(
+                        name: calleeName,
+                        parameterTypes: signature.parameterTypes,
+                        isSuspend: signature.isSuspend
+                    )
+                    if candidatesByKey[key] == nil {
+                        keyOrder.append(key)
+                    }
+                    candidatesByKey[key, default: []].append((candidate, pkgSymbol, 0))
+                }
+            }
+        }
+        
         for (owner, depth) in ownersInLookupOrder {
             guard let ownerSymbol = sema.symbols.symbol(owner) else {
                 continue

@@ -2,12 +2,38 @@ import Foundation
 @testable import Runtime
 import XCTest
 
-private nonisolated(unsafe) let runtimeReadWriteLockStateLock = NSLock()
-private nonisolated(unsafe) var runtimeReadWriteLockActiveReaders = 0
-private nonisolated(unsafe) var runtimeReadWriteLockMaxReaders = 0
-private nonisolated(unsafe) var runtimeReadWriteLockReadEnteredSemaphore = DispatchSemaphore(value: 0)
-private nonisolated(unsafe) var runtimeReadWriteLockReadReleaseSemaphore = DispatchSemaphore(value: 0)
-private nonisolated(unsafe) var runtimeReadWriteLockWriterEnteredSemaphore = DispatchSemaphore(value: 0)
+private let runtimeReadWriteLockStateLock = NSLock()
+nonisolated(unsafe) private var _runtimeReadWriteLockActiveReaders = 0
+nonisolated(unsafe) private var _runtimeReadWriteLockMaxReaders = 0
+nonisolated(unsafe) private var runtimeReadWriteLockReadEnteredSemaphore = DispatchSemaphore(value: 0)
+nonisolated(unsafe) private var runtimeReadWriteLockReadReleaseSemaphore = DispatchSemaphore(value: 0)
+nonisolated(unsafe) private var runtimeReadWriteLockWriterEnteredSemaphore = DispatchSemaphore(value: 0)
+
+private var runtimeReadWriteLockActiveReaders: Int {
+    get {
+        runtimeReadWriteLockStateLock.lock()
+        defer { runtimeReadWriteLockStateLock.unlock() }
+        return _runtimeReadWriteLockActiveReaders
+    }
+    set {
+        runtimeReadWriteLockStateLock.lock()
+        defer { runtimeReadWriteLockStateLock.unlock() }
+        _runtimeReadWriteLockActiveReaders = newValue
+    }
+}
+
+private var runtimeReadWriteLockMaxReaders: Int {
+    get {
+        runtimeReadWriteLockStateLock.lock()
+        defer { runtimeReadWriteLockStateLock.unlock() }
+        return _runtimeReadWriteLockMaxReaders
+    }
+    set {
+        runtimeReadWriteLockStateLock.lock()
+        defer { runtimeReadWriteLockStateLock.unlock() }
+        _runtimeReadWriteLockMaxReaders = newValue
+    }
+}
 
 @_cdecl("runtime_read_write_lock_passthrough")
 private func runtime_read_write_lock_passthrough(

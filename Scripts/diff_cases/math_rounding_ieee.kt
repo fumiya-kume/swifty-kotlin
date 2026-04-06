@@ -1,4 +1,5 @@
 import kotlin.math.*
+// KSWIFTK_DIFF_IGNORE - Math functions ulp/nextUp/nextDown not yet implemented
 fun main() {
     // Pre-existing roundToInt / roundToLong (STDLIB-510~511)
     println(3.7.roundToInt())

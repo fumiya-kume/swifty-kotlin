@@ -49,7 +49,7 @@ final class RuntimeParallelTests: IsolatedRuntimeXCTestCase {
         let array = kk_array_new(elements.count)
         var thrown = 0
         for (index, element) in elements.enumerated() {
-            _ = kk_array_set(array, index, element, &thrown)
+            _ = _ = kk_array_set(array, index, element, &thrown)
             XCTAssertEqual(thrown, 0)
         }
         return array

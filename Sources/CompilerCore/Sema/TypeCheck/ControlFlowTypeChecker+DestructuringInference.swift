@@ -29,7 +29,8 @@ extension ControlFlowTypeChecker {
             let candidates = driver.helpers.collectMemberFunctionCandidates(
                 named: componentName,
                 receiverType: rhsType,
-                sema: sema
+                sema: sema,
+                interner: interner
             )
 
             let componentType: TypeID
@@ -126,7 +127,8 @@ extension ControlFlowTypeChecker {
             let candidates = driver.helpers.collectMemberFunctionCandidates(
                 named: componentName,
                 receiverType: elementType,
-                sema: sema
+                sema: sema,
+                interner: interner
             )
 
             let componentType: TypeID

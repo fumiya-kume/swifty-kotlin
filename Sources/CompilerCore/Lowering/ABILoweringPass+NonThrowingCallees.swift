@@ -359,6 +359,7 @@ extension ABILoweringPass {
             interner.intern("kk_job_is_active"),
             interner.intern("kk_job_is_completed"),
             interner.intern("kk_job_is_cancelled"),
+            interner.intern("kk_job_is_failed"),
             interner.intern("kk_atomic_int_create"),
             interner.intern("kk_atomic_int_load"),
             interner.intern("kk_atomic_int_store"),

@@ -2296,7 +2296,8 @@ final class CallTypeChecker {
             let invokeCandidates = driver.helpers.collectMemberFunctionCandidates(
                 named: invokeName,
                 receiverType: callableCalleeType,
-                sema: sema
+                sema: sema,
+                interner: interner
             ).filter { candidateID in
                 guard let sym = sema.symbols.symbol(candidateID) else { return false }
                 return sym.flags.contains(.operatorFunction)
@@ -3025,7 +3026,8 @@ final class CallTypeChecker {
             let memberCandidates = driver.helpers.collectMemberFunctionCandidates(
                 named: calleeName,
                 receiverType: nonNullReceiver,
-                sema: sema
+                sema: sema,
+                interner: interner
             )
             if !memberCandidates.isEmpty {
                 // Eagerly infer argument types for overload resolution.

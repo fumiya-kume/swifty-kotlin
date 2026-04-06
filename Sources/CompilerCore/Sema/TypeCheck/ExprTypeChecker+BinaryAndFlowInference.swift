@@ -463,11 +463,22 @@ extension ExprTypeChecker {
         switch sema.types.kind(of: bound) {
         case let .classType(classType):
             guard classType.classSymbol == comparableSymbol,
-                  classType.args.count == 1,
-                  case let .invariant(argumentType) = classType.args[0]
+                  classType.args.count == 1
             else {
                 return false
             }
+            
+            // Support both invariant and contravariant Comparable bounds
+            let argumentType: TypeID
+            switch classType.args[0] {
+            case let .invariant(type):
+                argumentType = type
+            case let .in(type):
+                argumentType = type
+            default:
+                return false
+            }
+            
             return argumentType == targetType
 
         case let .intersection(parts):

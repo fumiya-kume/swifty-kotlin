@@ -21,7 +21,8 @@ extension LocalDeclTypeChecker {
         let getCandidates = driver.helpers.collectMemberFunctionCandidates(
             named: getName,
             receiverType: receiverType,
-            sema: sema
+            sema: sema,
+            interner: interner
         )
 
         // Infer all index expressions without forcing Int.
@@ -56,7 +57,7 @@ extension LocalDeclTypeChecker {
                         chosenCallee: chosen,
                         substitutedTypeArguments: resolved.substitutedTypeArguments
                             .sorted(by: { $0.key.rawValue < $1.key.rawValue })
-                            .map(\.value),
+                            .map { (key: TypeVarID, value: TypeID) in value },
                         parameterMapping: resolved.parameterMapping
                     )
                 )
@@ -165,7 +166,8 @@ extension LocalDeclTypeChecker {
         let setCandidates = driver.helpers.collectMemberFunctionCandidates(
             named: setName,
             receiverType: receiverType,
-            sema: sema
+            sema: sema,
+            interner: interner
         )
 
         // Infer all index expressions without forcing Int.
@@ -202,7 +204,7 @@ extension LocalDeclTypeChecker {
                         chosenCallee: chosen,
                         substitutedTypeArguments: resolved.substitutedTypeArguments
                             .sorted(by: { $0.key.rawValue < $1.key.rawValue })
-                            .map(\.value),
+                            .map { (key: TypeVarID, value: TypeID) in value },
                         parameterMapping: resolved.parameterMapping
                     )
                 )

@@ -129,7 +129,7 @@ private func withComparatorObject(mode: Int, body: (Int) -> Void) {
         return
     }
     box.elements[0] = mode
-    kk_object_register_itable_method(object, 0, 0, unsafeBitCast(comparatorObjectCompare, to: Int.self))
+    _ = kk_object_register_itable_method(object, 0, 0, unsafeBitCast(comparatorObjectCompare, to: Int.self))
     body(object)
 }
 

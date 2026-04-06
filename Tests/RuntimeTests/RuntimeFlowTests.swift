@@ -259,11 +259,10 @@ func runtime_test_flow_emitter_burst_1_2_3(_ outThrown: UnsafeMutablePointer<Int
 @_cdecl("runtime_test_flow_emitter_spaced_1_2_3")
 func runtime_test_flow_emitter_spaced_1_2_3(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    _ = kk_flow_emit(0, 1, RuntimeFlowTag.emit.rawValue)
-    usleep(1_500)
-    _ = kk_flow_emit(0, 2, RuntimeFlowTag.emit.rawValue)
-    usleep(1_500)
-    _ = kk_flow_emit(0, 3, RuntimeFlowTag.emit.rawValue)
+    let now = DispatchTime.now().uptimeNanoseconds
+    _ = kk_flow_emit_with_timestamp(0, 1, RuntimeFlowTag.emit.rawValue, now)
+    _ = kk_flow_emit_with_timestamp(0, 2, RuntimeFlowTag.emit.rawValue, now + 1_500_000)
+    _ = kk_flow_emit_with_timestamp(0, 3, RuntimeFlowTag.emit.rawValue, now + 3_000_000)
     return 0
 }
 
@@ -526,9 +525,9 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
 
         // Create an array with values [10, 20, 30]
         let arrayHandle = kk_array_new(3)
-        kk_array_set(arrayHandle, 0, 10, nil)
-        kk_array_set(arrayHandle, 1, 20, nil)
-        kk_array_set(arrayHandle, 2, 30, nil)
+        _ = kk_array_set(arrayHandle, 0, 10, nil)
+        _ = kk_array_set(arrayHandle, 1, 20, nil)
+        _ = kk_array_set(arrayHandle, 2, 30, nil)
 
         let flowHandle = kk_flow_of(arrayHandle, 3)
 
@@ -547,9 +546,9 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
         let mapPtr = unsafeBitCast(runtime_test_flow_map_double as RuntimeFlowUnaryEntry, to: Int.self)
 
         let arrayHandle = kk_array_new(3)
-        kk_array_set(arrayHandle, 0, 5, nil)
-        kk_array_set(arrayHandle, 1, 10, nil)
-        kk_array_set(arrayHandle, 2, 15, nil)
+        _ = kk_array_set(arrayHandle, 0, 5, nil)
+        _ = kk_array_set(arrayHandle, 1, 10, nil)
+        _ = kk_array_set(arrayHandle, 2, 15, nil)
 
         let flowHandle = kk_flow_of(arrayHandle, 3)
         let mapped = kk_flow_emit(flowHandle, mapPtr, RuntimeFlowTag.map.rawValue)
@@ -584,9 +583,9 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
         let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
 
         let arrayHandle = kk_array_new(3)
-        kk_array_set(arrayHandle, 0, 11, nil)
-        kk_array_set(arrayHandle, 1, 12, nil)
-        kk_array_set(arrayHandle, 2, 13, nil)
+        _ = kk_array_set(arrayHandle, 0, 11, nil)
+        _ = kk_array_set(arrayHandle, 1, 12, nil)
+        _ = kk_array_set(arrayHandle, 2, 13, nil)
 
         let flowHandle = kk_flow_as_flow(arrayHandle, 0)
         _ = kk_flow_collect(flowHandle, collectorPtr, 0)
@@ -754,9 +753,9 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
 
     func testShareInAndStateInMaterializeFromColdFlowSource() {
         let valuesArray = registerRuntimeObject(RuntimeArrayBox(length: 3))
-        _ = kk_array_set(valuesArray, 0, 1, nil)
-        _ = kk_array_set(valuesArray, 1, 2, nil)
-        _ = kk_array_set(valuesArray, 2, 3, nil)
+        _ = _ = kk_array_set(valuesArray, 0, 1, nil)
+        _ = _ = kk_array_set(valuesArray, 1, 2, nil)
+        _ = _ = kk_array_set(valuesArray, 2, 3, nil)
         let coldFlow = kk_flow_of(valuesArray, 3)
 
         let sharedHandle = kk_flow_share_in(coldFlow, 2)
@@ -830,8 +829,8 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
         let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
 
         let arrayHandle = kk_array_new(2)
-        kk_array_set(arrayHandle, 0, 42, nil)
-        kk_array_set(arrayHandle, 1, 43, nil)
+        _ = kk_array_set(arrayHandle, 0, 42, nil)
+        _ = kk_array_set(arrayHandle, 1, 43, nil)
         let fallbackFlow = kk_flow_of(arrayHandle, 2)
 
         let flowHandle = kk_flow_create(emitterPtr, 0)

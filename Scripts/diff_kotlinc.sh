@@ -34,13 +34,13 @@ Options:
   --kotlinc-classpath <path>
                      Additional classpath for kotlinc and java (default: \$KOTLINC_CLASSPATH)
   --java <path>      Path to java command (default: java)
-  --parallel [0|1]   Enable (or disable) parallel execution (default: env DIFF_PARALLEL)
+  --parallel [n]    Enable parallel execution with n workers (default: 1, 0 = disabled)
   --no-parallel      Disable parallel execution
   --jobs <n>         Number of parallel workers (default: env DIFF_WORKERS, default: 4, clipped by CPU)
   --compile-timeout <seconds>
                      Per-compiler timeout (default: \$DIFF_COMPILE_TIMEOUT or 120)
   --run-timeout <seconds>
-                     Per-program timeout (default: \$DIFF_RUN_TIMEOUT or 30)
+                     Per-program timeout (default: \$DIFF_RUN_TIMEOUT or 10)
   --keep-temp        Keep per-test temporary directories
   --report <path>    Write TSV report (case, status, artifact_dir)
   --artifact-root <path>
@@ -93,7 +93,7 @@ while [[ $# -gt 0 ]]; do
       JAVA_BIN="$1"
       ;;
     --parallel)
-      if [[ $# -gt 1 && ( "$2" == "0" || "$2" == "1" ) ]]; then
+      if [[ $# -gt 1 && "$2" =~ ^[0-9]+$ ]]; then
         DIFF_PARALLEL="$2"
         shift
       else
@@ -241,8 +241,10 @@ fi
 
 ensure_kotlinc_classpath
 
-if ! [[ "$DIFF_PARALLEL" =~ ^[01]$ ]]; then
-  echo "DIFF_PARALLEL must be 0 or 1: $DIFF_PARALLEL" >&2
+# DIFF_PARALLEL can be any integer value (0, 1, 2, 3, 4, etc.)
+# 0 = disabled, 1+ = enabled with that many parallel workers
+if ! [[ "$DIFF_PARALLEL" =~ ^[0-9]+$ ]]; then
+  echo "DIFF_PARALLEL must be a non-negative integer: $DIFF_PARALLEL" >&2
   exit 1
 fi
 
@@ -331,13 +333,18 @@ if [[ -z "$WORKER_COUNT" ]]; then
   [[ -z "$WORKER_COUNT" ]] && WORKER_COUNT=4
 fi
 
-if [[ "$DIFF_PARALLEL" -eq 1 ]]; then
+# Handle DIFF_PARALLEL: 0 = disabled, 1+ = enabled with specified workers
+if [[ "$DIFF_PARALLEL" -eq 0 ]]; then
+  WORKER_COUNT=1
+elif [[ "$DIFF_PARALLEL" -gt 1 ]]; then
+  # Use DIFF_PARALLEL as the worker count if it's greater than 1
+  WORKER_COUNT="$DIFF_PARALLEL"
+else
+  # DIFF_PARALLEL = 1, use auto-detection with CPU limit
   CPU_LIMIT="$(detect_workers)"
   if [[ -n "$CPU_LIMIT" && "$WORKER_COUNT" -gt "$CPU_LIMIT" ]]; then
     WORKER_COUNT="$CPU_LIMIT"
   fi
-else
-  WORKER_COUNT=1
 fi
 
 if [[ "$WORKER_COUNT" -lt 1 ]]; then

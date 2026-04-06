@@ -13,16 +13,24 @@ swift build                              # デバッグビルド
 swift build -c release                   # リリースビルド
 bash Scripts/swift_test.sh                               # 全テスト（並列）
 bash Scripts/swift_test.sh --filter SmokeTests           # スモークテスト
-bash Scripts/swift_test.sh --filter GoldenHarnessTests   # ゴールデンテスト
-bash Scripts/swift_test.sh --filter CompilerCoreTests.LoweringPassRegressionTests  # 単一テストクラス
+bash Scripts/swift_test.sh --filter Golden   # ゴールデン（Swift Testing: Golden.Lexer / Parser / Sema / Diagnostics）
+bash Scripts/swift_test.sh --filter Golden.Sema   # Sema ゴールデンのみ
+bash Scripts/swift_test.sh --filter CompilerCoreTests.LoweringPassRegressionTests  # 単一 XCTest クラス
 .build/debug/kswiftc path/to/file.kt -o out  # コンパイラを直接実行
 ```
 
 ### ゴールデンテスト更新
 
 ```bash
-UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter GoldenHarnessTests
+UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden
 git diff -- Tests/CompilerCoreTests/GoldenCases
+```
+
+### テスト所要のざっくり計測（ゴールデン）
+
+```bash
+time swift test --filter Golden.Lexer
+time swift test --filter Golden.Sema
 ```
 
 ### kotlinc 回帰差分

@@ -36,7 +36,7 @@ bash Scripts/swift_lint.sh --update-baseline
 1. Run golden tests without updating fixtures:
 
 ```bash
-bash Scripts/swift_test.sh --filter GoldenHarnessTests
+bash Scripts/swift_test.sh --filter Golden
 ```
 
 2. Review differences:
@@ -48,7 +48,7 @@ git diff -- Tests/CompilerCoreTests/GoldenCases
 3. If the parser/sema/lowering change is intentional, update fixtures:
 
 ```bash
-UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter GoldenHarnessTests
+UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden
 ```
 
 4. Re-review fixture changes and ensure only intended files changed:
@@ -63,6 +63,15 @@ git diff -- Tests/CompilerCoreTests/GoldenCases
 ```bash
 bash Scripts/swift_test.sh
 bash Scripts/diff_kotlinc.sh Scripts/diff_cases
+```
+
+### Golden stability (after harness / concurrency changes)
+
+Golden tests run each case in a dedicated worker process so `swift test --parallel` can fan them out safely. To sanity-check flakiness after harness changes, run the filter twice (or more):
+
+```bash
+bash Scripts/swift_test.sh --filter Golden
+bash Scripts/swift_test.sh --filter Golden
 ```
 
 ## kotlinc diff workflow

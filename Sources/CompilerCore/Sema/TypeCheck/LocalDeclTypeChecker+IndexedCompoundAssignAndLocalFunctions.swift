@@ -67,7 +67,7 @@ extension LocalDeclTypeChecker {
         let interner = ctx.interner
         let getName = interner.intern("get")
         let getCandidates = driver.helpers.collectMemberFunctionCandidates(
-            named: getName, receiverType: receiverType, sema: sema
+            named: getName, receiverType: receiverType, sema: sema, interner: interner
         )
         let fallback = driver.helpers.arrayElementType(
             for: receiverType, sema: sema, interner: interner
@@ -88,7 +88,7 @@ extension LocalDeclTypeChecker {
         sema.bindings.bindCall(id, binding: CallBinding(
             chosenCallee: chosen,
             substitutedTypeArguments: resolved.substitutedTypeArguments
-                .sorted(by: { $0.key.rawValue < $1.key.rawValue }).map(\.value),
+                .sorted(by: { $0.key.rawValue < $1.key.rawValue }).map { (key: TypeVarID, value: TypeID) in value },
             parameterMapping: resolved.parameterMapping
         ))
         sema.bindings.bindCallableTarget(id, target: .symbol(chosen))

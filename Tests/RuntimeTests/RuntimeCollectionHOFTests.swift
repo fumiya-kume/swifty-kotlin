@@ -65,8 +65,8 @@ private func runtimeStringRaw(_ value: String) -> Int {
 private let flatMapPair: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     let array = kk_array_new(2)
     var thrown = 0
-    _ = kk_array_set(array, 0, value, &thrown)
-    _ = kk_array_set(array, 1, value * 10, &thrown)
+    _ = _ = kk_array_set(array, 0, value, &thrown)
+    _ = _ = kk_array_set(array, 1, value * 10, &thrown)
     return kk_list_of(array, 2)
 }
 
@@ -642,7 +642,7 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         let arrayRaw = kk_array_new(elements.count)
         var thrown = 0
         for (index, element) in elements.enumerated() {
-            _ = kk_array_set(arrayRaw, index, element, &thrown)
+            _ = _ = kk_array_set(arrayRaw, index, element, &thrown)
             XCTAssertEqual(thrown, 0)
         }
         return arrayRaw

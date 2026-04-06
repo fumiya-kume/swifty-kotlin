@@ -545,7 +545,7 @@ private func runtimeSecurityBytes(from raw: Int, caller: StaticString) -> [UInt8
     return nil
 }
 
-private func runtimeMakeByteArrayRaw(_ bytes: [UInt8]) -> Int {
+internal func runtimeMakeByteArrayRaw(_ bytes: [UInt8]) -> Int {
     let box = RuntimeArrayBox(length: bytes.count)
     for (index, byte) in bytes.enumerated() {
         box.elements[index] = Int(Int8(bitPattern: byte))

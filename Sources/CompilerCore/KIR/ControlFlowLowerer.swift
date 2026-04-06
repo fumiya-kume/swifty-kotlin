@@ -454,7 +454,8 @@ final class ControlFlowLowerer {
         let iteratorCandidates = helpers.collectMemberFunctionCandidates(
             named: iteratorName,
             receiverType: nonNullType,
-            sema: sema
+            sema: sema,
+            interner: interner
         ).filter { candidate in
             guard let symbol = sema.symbols.symbol(candidate),
                   symbol.flags.contains(.operatorFunction),
@@ -479,7 +480,8 @@ final class ControlFlowLowerer {
         let hasNextCandidates = helpers.collectMemberFunctionCandidates(
             named: hasNextName,
             receiverType: iteratorReturnType,
-            sema: sema
+            sema: sema,
+            interner: interner
         ).filter { candidate in
             guard let _ = sema.symbols.symbol(candidate),
                   let signature = sema.symbols.functionSignature(for: candidate),
@@ -494,7 +496,8 @@ final class ControlFlowLowerer {
         let nextCandidates = helpers.collectMemberFunctionCandidates(
             named: nextName,
             receiverType: iteratorReturnType,
-            sema: sema
+            sema: sema,
+            interner: interner
         ).filter { candidate in
             guard let _ = sema.symbols.symbol(candidate),
                   let signature = sema.symbols.functionSignature(for: candidate),
@@ -1517,7 +1520,8 @@ final class ControlFlowLowerer {
                 let memberCandidates = TypeCheckHelpers().collectMemberFunctionCandidates(
                     named: componentName,
                     receiverType: nonNullElementType,
-                    sema: sema
+                    sema: sema,
+                    interner: interner
                 )
                 let resolvedCallee: InternedString = if let chosen = memberCandidates.first,
                                                         let linkName = sema.symbols.externalLinkName(for: chosen),
@@ -1650,7 +1654,8 @@ final class ControlFlowLowerer {
             let memberCandidates = TypeCheckHelpers().collectMemberFunctionCandidates(
                 named: componentName,
                 receiverType: nonNullElementType,
-                sema: sema
+                sema: sema,
+                interner: interner
             )
             let resolvedCallee: InternedString = if let chosen = memberCandidates.first,
                                                     let linkName = sema.symbols.externalLinkName(for: chosen),

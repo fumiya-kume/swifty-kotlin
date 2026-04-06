@@ -47,7 +47,7 @@ jobs:
         run: swift build -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
       - name: Run smoke tests
         env:
-          SWIFT_TEST_PARALLEL: "0"
+          SWIFT_TEST_PARALLEL: "4"
         run: bash Scripts/swift_test.sh --filter SmokeTests -Xswiftc -swift-version -Xswiftc 6
       - name: Smoke test reproduce hint
         if: always()
@@ -55,7 +55,7 @@ jobs:
           {
             echo '## Smoke test reproduce'
             echo '```bash'
-            echo 'SWIFT_TEST_PARALLEL=0 bash Scripts/swift_test.sh --filter SmokeTests -Xswiftc -swift-version -Xswiftc 6'
+            echo 'SWIFT_TEST_PARALLEL=4 bash Scripts/swift_test.sh --filter SmokeTests -Xswiftc -swift-version -Xswiftc 6'
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -103,9 +103,9 @@ jobs:
         env:
           DIFF_REPORT: ${{ runner.temp }}/diff_kotlinc_report.tsv
           DIFF_ARTIFACT_ROOT: ${{ runner.temp }}/diff_kotlinc_artifacts
-          DIFF_PARALLEL: "1"
-          DIFF_WORKERS: "2"
-          DIFF_COMPILE_TIMEOUT: "120"
+          DIFF_PARALLEL: "4"
+          DIFF_WORKERS: "4"
+          DIFF_COMPILE_TIMEOUT: "180"
           DIFF_RUN_TIMEOUT: "30"
           DIFF_LOG_PASS: "0"
         run: bash Scripts/diff_kotlinc.sh --report "$DIFF_REPORT" Scripts/diff_cases

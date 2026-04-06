@@ -527,10 +527,11 @@ final class ExprTypeChecker {
         let candidates = driver.helpers.collectMemberFunctionCandidates(
             named: containsName,
             receiverType: nonNullContainerType,
-            sema: sema
+            sema: sema,
+            interner: interner
         ).filter { candidate in
             guard let symbol = sema.symbols.symbol(candidate),
-                  symbol.flags.contains(.operatorFunction),
+                  symbol.flags.contains(SymbolFlags.operatorFunction),
                   let signature = sema.symbols.functionSignature(for: candidate),
                   signature.parameterTypes.count == 1
             else {
@@ -562,7 +563,7 @@ final class ExprTypeChecker {
                 chosenCallee: chosen,
                 substitutedTypeArguments: resolved.substitutedTypeArguments
                     .sorted(by: { $0.key.rawValue < $1.key.rawValue })
-                    .map(\.value),
+                    .map { (key: TypeVarID, value: TypeID) in value },
                 parameterMapping: resolved.parameterMapping
             )
         )
@@ -613,7 +614,8 @@ final class ExprTypeChecker {
             for candidate in driver.helpers.collectMemberFunctionCandidates(
                 named: name,
                 receiverType: receiverType,
-                sema: sema
+                sema: sema,
+                interner: ctx.interner
             ) {
                 guard seen.insert(candidate).inserted,
                       let symbol = sema.symbols.symbol(candidate)
@@ -624,11 +626,11 @@ final class ExprTypeChecker {
                 // of inherited operator functions (equals, compareTo) that may
                 // omit the `operator` keyword. In Kotlin, overrides of Any.equals
                 // and Comparable.compareTo inherit operator status.
-                if symbol.flags.contains(.operatorFunction) {
+                if symbol.flags.contains(SymbolFlags.operatorFunction) {
                     candidates.append(candidate)
                 } else if isInheritedOperator,
                           symbol.kind == .function,
-                          symbol.flags.contains(.overrideMember) {
+                          symbol.flags.contains(SymbolFlags.overrideMember) {
                     candidates.append(candidate)
                 }
             }

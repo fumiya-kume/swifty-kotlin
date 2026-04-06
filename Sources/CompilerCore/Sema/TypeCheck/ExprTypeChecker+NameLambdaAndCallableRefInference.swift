@@ -224,7 +224,7 @@ extension ExprTypeChecker {
         let dslBlockedIDs = allCandidateIDs.filter { ctx.isCandidateBlockedByDslMarker($0) }
         let dslFilteredIDs = allCandidateIDs.filter { !ctx.isCandidateBlockedByDslMarker($0) }
         let (visibleIDs, _) = ctx.filterByVisibility(dslFilteredIDs)
-        var candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
+        let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
         if let propSymbol = candidates.first(where: { sym in
             guard sym.kind == .property else { return false }
             guard let parentID = sema.symbols.parentSymbol(for: sym.id),
@@ -861,7 +861,8 @@ extension ExprTypeChecker {
             let memberCandidates = driver.helpers.collectMemberFunctionCandidates(
                 named: member,
                 receiverType: nonNullReceiver,
-                sema: sema
+                sema: sema,
+                interner: interner
             )
             if !memberCandidates.isEmpty {
                 candidates = memberCandidates
@@ -1323,7 +1324,8 @@ extension ExprTypeChecker {
             candidateSymbols = driver.helpers.collectMemberFunctionCandidates(
                 named: calleeName,
                 receiverType: receiverType,
-                sema: sema
+                sema: sema,
+                interner: ctx.interner
             )
         }
 
@@ -1377,7 +1379,7 @@ extension ExprTypeChecker {
         
         // If the body is a block expression with no trailing expression, infer Unit
         if let bodyExprNode = ast.arena.expr(bodyExpr),
-           case let .blockExpr(statements, trailingExpr, _) = bodyExprNode,
+           case let .blockExpr(_, trailingExpr, _) = bodyExprNode,
            trailingExpr == nil {
             return sema.types.unitType
         }

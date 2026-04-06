@@ -375,6 +375,8 @@ public final class ClassMemberScope: BaseScope {
 public final class FunctionScope: BaseScope {}
 public final class BlockScope: BaseScope {}
 
+import Foundation
+
 public final class SymbolTable {
     private var symbolsStorage: [SemanticSymbol] = []
     private var byFQName: [[InternedString]: [SymbolID]] = [:]
@@ -418,6 +420,9 @@ public final class SymbolTable {
     /// CLASS-008: Interfaces delegated by a class via `: Interface by expr`.
     /// Key = class symbol, Value = set of interface symbols that class delegates to.
     private var delegatedInterfacesByClass: [SymbolID: Set<SymbolID>] = [:]
+    
+    /// Thread safety lock for concurrent access
+    private let lock = NSLock()
 
     public init() {}
 
@@ -446,15 +451,21 @@ public final class SymbolTable {
     }
 
     public func lookup(fqName: [InternedString]) -> SymbolID? {
-        byFQName[fqName]?.first
+        lock.lock()
+        defer { lock.unlock() }
+        return byFQName[fqName]?.first
     }
 
     public func lookupAll(fqName: [InternedString]) -> [SymbolID] {
-        byFQName[fqName] ?? []
+        lock.lock()
+        defer { lock.unlock() }
+        return byFQName[fqName] ?? []
     }
 
     public func lookupByShortName(_ name: InternedString) -> [SymbolID] {
-        byShortName[name] ?? []
+        lock.lock()
+        defer { lock.unlock() }
+        return byShortName[name] ?? []
     }
 
     public func define(
@@ -465,6 +476,9 @@ public final class SymbolTable {
         visibility: Visibility,
         flags: SymbolFlags = []
     ) -> SymbolID {
+        lock.lock()
+        defer { lock.unlock() }
+        
         if let existing = byFQName[fqName], !existing.isEmpty {
             let existingSymbols = existing.compactMap { symbol($0) }
             let existingKinds = existingSymbols.map(\.kind)
@@ -732,19 +746,27 @@ public final class SymbolTable {
     }
 
     public func setTypeAliasUnderlyingType(_ type: TypeID, for symbol: SymbolID) {
+        lock.lock()
+        defer { lock.unlock() }
         typeAliasUnderlyingTypes[symbol] = type
     }
 
     public func typeAliasUnderlyingType(for symbol: SymbolID) -> TypeID? {
-        typeAliasUnderlyingTypes[symbol]
+        lock.lock()
+        defer { lock.unlock() }
+        return typeAliasUnderlyingTypes[symbol]
     }
 
     public func setTypeAliasTypeParameters(_ params: [SymbolID], for symbol: SymbolID) {
+        lock.lock()
+        defer { lock.unlock() }
         typeAliasTypeParameters[symbol] = params
     }
 
     public func typeAliasTypeParameters(for symbol: SymbolID) -> [SymbolID] {
-        typeAliasTypeParameters[symbol] ?? []
+        lock.lock()
+        defer { lock.unlock() }
+        return typeAliasTypeParameters[symbol] ?? []
     }
 
     public func setParentSymbol(_ parent: SymbolID, for child: SymbolID) {
@@ -912,12 +934,75 @@ public final class SymbolTable {
 
     /// Link an `expect` declaration to its matching `actual` declaration.
     public func setExpectActualLink(expect: SymbolID, actual: SymbolID) {
+        lock.lock()
+        defer { lock.unlock() }
         expectActualLinks[expect] = actual
     }
 
     /// Returns the `actual` symbol linked to the given `expect` symbol, if any.
     public func actualSymbol(for expect: SymbolID) -> SymbolID? {
-        expectActualLinks[expect]
+        lock.lock()
+        defer { lock.unlock() }
+        return expectActualLinks[expect]
+    }
+    
+    /// Validate the consistency of expect/actual links for debugging purposes
+    public func validateExpectActualLinks() -> [String] {
+        lock.lock()
+        defer { lock.unlock() }
+        
+        var issues: [String] = []
+        
+        for (expectId, actualId) in expectActualLinks {
+            // Check if both symbols exist
+            guard let expectSymbol = symbol(expectId) else {
+                issues.append("Expect symbol \(expectId) not found in symbol table")
+                continue
+            }
+            
+            guard let actualSymbol = symbol(actualId) else {
+                issues.append("Actual symbol \(actualId) not found in symbol table")
+                continue
+            }
+            
+            // Check if expect symbol has expect flag
+            if !expectSymbol.flags.contains(.expectDeclaration) {
+                issues.append("Symbol \(expectId) lacks expect declaration flag")
+            }
+            
+            // Check if actual symbol has actual flag
+            if !actualSymbol.flags.contains(.actualDeclaration) {
+                issues.append("Symbol \(actualId) lacks actual declaration flag")
+            }
+            
+            // Check if FQ names match (for same-package expect/actual)
+            if expectSymbol.fqName == actualSymbol.fqName {
+                // Same package expect/actual should have compatible kinds
+                if !areKindsCompatibleForExpectActual(expect: expectSymbol.kind, actual: actualSymbol.kind) {
+                    issues.append("Incompatible kinds: expect=\(expectSymbol.kind), actual=\(actualSymbol.kind)")
+                }
+            }
+        }
+        
+        return issues
+    }
+    
+    /// Check if two symbol kinds are compatible for expect/actual relationship
+    private func areKindsCompatibleForExpectActual(expect: SymbolKind, actual: SymbolKind) -> Bool {
+        switch (expect, actual) {
+        case (.annotationClass, .annotationClass), (.annotationClass, .typeAlias):
+            return true
+        case (.function, .function), (.constructor, .constructor):
+            return true
+        case (.property, .property), (.field, .field):
+            return true
+        case (.class, .class), (.interface, .interface), (.object, .object):
+            return true
+        case (.enumClass, .enumClass):
+            return true
+        default:
+            return expect == actual
+        }
     }
 
     public func setContractNonNullEffect(_ effect: ContractNonNullEffect, for function: SymbolID) {

@@ -34,9 +34,31 @@ let package = Package(
             name: "CompilerCore",
             dependencies: ["CLLVM", "RuntimeABI"]
         ),
+        .target(
+            name: "GoldenHarnessSupport",
+            dependencies: ["CompilerCore"],
+            path: "Sources/GoldenHarnessSupport",
+            sources: [
+                "GoldenHarnessAPI.swift",
+                "GoldenHarnessCaseDiscovery.swift",
+                "GoldenHarnessDump.swift",
+                "GoldenHarnessExprFormat.swift",
+                "GoldenHarnessGoldenFileIO.swift",
+                "GoldenHarnessPipeline.swift",
+                "GoldenHarnessGoldenSuiteKind.swift",
+                "GoldenHarnessPaths.swift",
+                "GoldenHarnessSemaFormat.swift",
+                "GoldenHarnessSyntaxFormat.swift",
+            ]
+        ),
         .executableTarget(
             name: "KSwiftKCLI",
             dependencies: ["CompilerCore"]
+        ),
+        .executableTarget(
+            name: "GoldenHarnessWorker",
+            dependencies: ["GoldenHarnessSupport"],
+            path: "Sources/GoldenHarnessWorker"
         ),
         .target(
             name: "Runtime",
@@ -44,9 +66,22 @@ let package = Package(
         ),
         .testTarget(
             name: "CompilerCoreTests",
-            dependencies: ["CompilerCore"],
+            dependencies: ["CompilerCore", "GoldenHarnessSupport", "GoldenHarnessWorker"],
             path: "Tests/CompilerCoreTests",
-            exclude: ["GoldenCases", "Integration/ClassDelegationSmokeTest.kt"]
+            exclude: [
+                "GoldenCases",
+                "Integration/ClassDelegationSmokeTest.kt",
+                "Integration/GoldenHarnessAPI.swift",
+                "Integration/GoldenHarnessCaseDiscovery.swift",
+                "Integration/GoldenHarnessDump.swift",
+                "Integration/GoldenHarnessExprFormat.swift",
+                "Integration/GoldenHarnessGoldenFileIO.swift",
+                "Integration/GoldenHarnessPipeline.swift",
+                "Integration/GoldenHarnessGoldenSuiteKind.swift",
+                "Integration/GoldenHarnessPaths.swift",
+                "Integration/GoldenHarnessSemaFormat.swift",
+                "Integration/GoldenHarnessSyntaxFormat.swift",
+            ]
         ),
         .testTarget(
             name: "RuntimeTests",

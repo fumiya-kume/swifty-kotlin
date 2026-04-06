@@ -11,7 +11,21 @@ private let lazyMessageReturnsString: @convention(c) (Int, UnsafeMutablePointer<
     }
 }
 
-private nonisolated(unsafe) var assertLazyMessageEvaluations = 0
+private let assertLazyMessageEvaluationsLock = NSLock()
+nonisolated(unsafe) private var _assertLazyMessageEvaluations = 0
+
+nonisolated(unsafe) private var assertLazyMessageEvaluations: Int {
+    get {
+        assertLazyMessageEvaluationsLock.lock()
+        defer { assertLazyMessageEvaluationsLock.unlock() }
+        return _assertLazyMessageEvaluations
+    }
+    set {
+        assertLazyMessageEvaluationsLock.lock()
+        defer { assertLazyMessageEvaluationsLock.unlock() }
+        _assertLazyMessageEvaluations = newValue
+    }
+}
 
 private let lazyMessageCountsEvaluation: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { _, outThrown in
     outThrown?.pointee = 0

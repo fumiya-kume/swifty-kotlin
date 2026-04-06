@@ -386,6 +386,8 @@ final class RuntimeDatabaseConnectionBox {
     var rawHandle: Int = 0
     fileprivate var isOpen = true
     fileprivate var isInUse = false
+    /// Wall-clock time when this pool connection object was created (for `maxLifetime`).
+    fileprivate let createdAt = Date()
     fileprivate var lastCheckoutAt: Date?
     fileprivate var lastReturnAt: Date?
 
@@ -399,6 +401,11 @@ final class RuntimeDatabasePoolBox {
     private let condition = NSCondition()
     let maxConnections: Int
     let timeoutMillis: Int
+    private var validationQuery: String?
+    private var testOnBorrow = false
+    private var testOnReturn = false
+    private var maxIdleTime: TimeInterval = 300.0 // 5 minutes
+    private var maxLifetime: TimeInterval = 1800.0 // 30 minutes
 
     private var nextIdentifier = 1
     private var idleConnections: [RuntimeDatabaseConnectionBox] = []
@@ -470,6 +477,13 @@ final class RuntimeDatabasePoolBox {
 
             connection.isInUse = false
             connection.lastReturnAt = Date()
+            
+            // Validate connection if test on return is enabled
+            if testOnReturn && !validateConnection(connection) {
+                connection.isOpen = false
+                return 1  // Connection validated and closed, don't return to pool
+            }
+            
             idleConnections.append(connection)
             condition.signal()
             return 1
@@ -498,12 +512,94 @@ final class RuntimeDatabasePoolBox {
             guard connection.isOpen else {
                 continue
             }
+            
+            // Check if connection has exceeded maximum lifetime (from creation, not last checkout)
+            let age = Date().timeIntervalSince(connection.createdAt)
+            if age > maxLifetime {
+                connection.isOpen = false
+                continue
+            }
+            
+            // Check if connection has been idle too long
+            if let lastReturn = connection.lastReturnAt {
+                let idleTime = Date().timeIntervalSince(lastReturn)
+                if idleTime > maxIdleTime {
+                    connection.isOpen = false
+                    continue
+                }
+            }
+            
+            // Validate connection if test on borrow is enabled
+            if testOnBorrow && !validateConnection(connection) {
+                connection.isOpen = false
+                continue
+            }
+            
             connection.isInUse = true
             connection.lastCheckoutAt = Date()
             activeConnections[connection.rawHandle] = connection
             return connection
         }
         return nil
+    }
+    
+    private func validateConnection(_ connection: RuntimeDatabaseConnectionBox) -> Bool {
+        // Idle hand-outs are always `!isInUse` here; `testOnBorrow`/`testOnReturn` need a real
+        // probe (e.g. run `validationQuery` against the open sqlite/db handle). This stub pool
+        // box does not carry a DB pointer, so we only assert structural health.
+        guard connection.isOpen, !connection.isInUse else { return false }
+        if let query = validationQuery, !query.isEmpty {
+            _ = query
+            // TODO(STDLIB-DB): execute `query` when connection exposes `sqlite3*`.
+        }
+        return true
+    }
+    
+    func setValidationQuery(_ query: String?) {
+        condition.withLock {
+            self.validationQuery = query
+        }
+    }
+    
+    func setTestOnBorrow(_ test: Bool) {
+        condition.withLock {
+            self.testOnBorrow = test
+        }
+    }
+    
+    func setTestOnReturn(_ test: Bool) {
+        condition.withLock {
+            self.testOnReturn = test
+        }
+    }
+    
+    func setMaxIdleTime(_ seconds: TimeInterval) {
+        condition.withLock {
+            self.maxIdleTime = max(0, seconds)
+        }
+    }
+    
+    func setMaxLifetime(_ seconds: TimeInterval) {
+        condition.withLock {
+            self.maxLifetime = max(0, seconds)
+        }
+    }
+    
+    func isValid(_ connection: RuntimeDatabaseConnectionBox) -> Bool {
+        return condition.withLock {
+            guard connection.isOpen else { return false }
+            
+            let age = Date().timeIntervalSince(connection.createdAt)
+            if age > maxLifetime { return false }
+            
+            // Check if connection has been idle too long
+            if let lastReturn = connection.lastReturnAt {
+                let idleTime = Date().timeIntervalSince(lastReturn)
+                if idleTime > maxIdleTime { return false }
+            }
+            
+            return true
+        }
     }
 
     private func makeConnectionLocked() -> RuntimeDatabaseConnectionBox {
@@ -632,6 +728,91 @@ public func kk_db_connection_is_open(_ connectionRaw: Int) -> Int {
     (runtimeDatabaseConnectionBox(from: connectionRaw)?.isOpen ?? false) ? 1 : 0
 }
 
+@_cdecl("kk_db_connection_is_valid")
+public func kk_db_connection_is_valid(_ connectionRaw: Int) -> Int {
+    guard let connection = runtimeDatabaseConnectionBox(from: connectionRaw),
+          let pool = connection.pool else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(pool.isValid(connection) ? 1 : 0)
+}
+
+@_cdecl("kk_db_pool_set_validation_query")
+public func kk_db_pool_set_validation_query(_ poolRaw: Int, _ queryRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let pool = runtimeDatabasePoolBox(from: poolRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_db_pool_set_validation_query received invalid pool handle")
+        }
+        let query = queryRaw == 0 ? nil : try jdbcExtractString(queryRaw)
+        pool.setValidationQuery(query)
+        return 0
+    } catch {
+        outThrown?.pointee = databaseThrowable(from: error)
+        return 0
+    }
+}
+
+@_cdecl("kk_db_pool_set_test_on_borrow")
+public func kk_db_pool_set_test_on_borrow(_ poolRaw: Int, _ test: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let pool = runtimeDatabasePoolBox(from: poolRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_db_pool_set_test_on_borrow received invalid pool handle")
+        }
+        pool.setTestOnBorrow(test != 0)
+        return 0
+    } catch {
+        outThrown?.pointee = databaseThrowable(from: error)
+        return 0
+    }
+}
+
+@_cdecl("kk_db_pool_set_test_on_return")
+public func kk_db_pool_set_test_on_return(_ poolRaw: Int, _ test: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let pool = runtimeDatabasePoolBox(from: poolRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_db_pool_set_test_on_return received invalid pool handle")
+        }
+        pool.setTestOnReturn(test != 0)
+        return 0
+    } catch {
+        outThrown?.pointee = databaseThrowable(from: error)
+        return 0
+    }
+}
+
+@_cdecl("kk_db_pool_set_max_idle_time")
+public func kk_db_pool_set_max_idle_time(_ poolRaw: Int, _ seconds: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let pool = runtimeDatabasePoolBox(from: poolRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_db_pool_set_max_idle_time received invalid pool handle")
+        }
+        pool.setMaxIdleTime(TimeInterval(seconds))
+        return 0
+    } catch {
+        outThrown?.pointee = databaseThrowable(from: error)
+        return 0
+    }
+}
+
+@_cdecl("kk_db_pool_set_max_lifetime")
+public func kk_db_pool_set_max_lifetime(_ poolRaw: Int, _ seconds: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let pool = runtimeDatabasePoolBox(from: poolRaw) else {
+            throw DatabaseRuntimeError.invalidHandle("kk_db_pool_set_max_lifetime received invalid pool handle")
+        }
+        pool.setMaxLifetime(TimeInterval(seconds))
+        return 0
+    } catch {
+        outThrown?.pointee = databaseThrowable(from: error)
+        return 0
+    }
+}
+
 // MARK: - JDBC Runtime (STDLIB-DB-140)
 
 private enum RuntimeJDBCError: Error {
@@ -697,10 +878,19 @@ private final class RuntimeJDBCPreparedStatementBox {
     let connection: RuntimeJDBCConnectionBox
     private(set) var statement: OpaquePointer?
     var closed = false
+    private var batchCommands: [String] = []
+    private var parameterCount: Int32 = 0
+    private let originalSQL: String
+    private var parameterValues: [Any?] = []
+    private var parameterTypes: [Int32] = []
 
-    init(connection: RuntimeJDBCConnectionBox, statement: OpaquePointer) {
+    init(connection: RuntimeJDBCConnectionBox, statement: OpaquePointer, sql: String) {
         self.connection = connection
         self.statement = statement
+        self.parameterCount = sqlite3_bind_parameter_count(statement)
+        self.originalSQL = sql
+        self.parameterValues = Array(repeating: nil, count: Int(parameterCount))
+        self.parameterTypes = Array(repeating: 0, count: Int(parameterCount))
     }
 
     deinit {
@@ -725,7 +915,112 @@ private final class RuntimeJDBCPreparedStatementBox {
         sqlite3_finalize(statement)
         self.statement = nil
         self.closed = true
+        batchCommands.removeAll()
     }
+    
+    func addBatch() {
+        if statement != nil {
+            let currentParameters = captureCurrentParameters()
+            let batchSQL = generateBatchSQL(with: currentParameters)
+            batchCommands.append(batchSQL)
+        }
+    }
+    
+    func clearBatch() {
+        batchCommands.removeAll()
+    }
+    
+    func executeBatch() throws -> [Int] {
+        let db = try connection.requireDB()
+        var results: [Int] = []
+        
+        for command in batchCommands {
+            let batchStatement = try jdbcPrepareStatement(db: db, sql: command)
+            defer { sqlite3_finalize(batchStatement) }
+            
+            let result = try jdbcExecuteUpdate(db: db, statement: batchStatement)
+            results.append(result)
+        }
+        
+        return results
+    }
+    
+    func getParameterCount() -> Int32 {
+        return parameterCount
+    }
+    
+    func setParameterValue(_ index: Int32, value: Any?, type: Int32) {
+        let idx = Int(index - 1)
+        guard idx >= 0 && idx < parameterValues.count else { return }
+        parameterValues[idx] = value
+        parameterTypes[idx] = type
+    }
+    
+    func captureCurrentParameters() -> [Any?] {
+        return Array(parameterValues)
+    }
+    
+    func generateBatchSQL(with parameters: [Any?]) -> String {
+        var result = originalSQL
+        let paramCount = min(parameters.count, Int(parameterCount))
+
+        for i in 0..<paramCount {
+            let value = parameters[i]
+            let stringValue: String
+
+            if let value {
+                switch parameterTypes[i] {
+                case SQLITE_TEXT:
+                    let raw: String
+                    if let s = value as? String {
+                        raw = s
+                    } else if let ns = value as? NSString {
+                        raw = ns as String
+                    } else {
+                        raw = String(describing: value)
+                    }
+                    let escaped = raw.replacingOccurrences(of: "'", with: "''")
+                    stringValue = "'\(escaped)'"
+                case SQLITE_INTEGER:
+                    if let n = value as? Int {
+                        stringValue = String(n)
+                    } else if let n64 = value as? Int64 {
+                        stringValue = String(n64)
+                    } else if let n32 = value as? Int32 {
+                        stringValue = String(n32)
+                    } else {
+                        stringValue = String(describing: value)
+                    }
+                case SQLITE_FLOAT:
+                    if let d = value as? Double {
+                        stringValue = jdbcAsciiSqlDouble(d)
+                    } else if let f = value as? Float {
+                        stringValue = jdbcAsciiSqlDouble(Double(f))
+                    } else {
+                        stringValue = String(describing: value)
+                    }
+                case SQLITE_NULL:
+                    stringValue = "NULL"
+                default:
+                    stringValue = "NULL"
+                }
+            } else {
+                stringValue = "NULL"
+            }
+
+            if let range = result.range(of: "?") {
+                result.replaceSubrange(range, with: stringValue)
+            }
+        }
+
+        return result
+    }
+}
+
+/// ASCII SQL literal for floating point (finite only; avoids locale-dependent formatting).
+private func jdbcAsciiSqlDouble(_ value: Double) -> String {
+    guard value.isFinite else { return "NULL" }
+    return String(format: "%.17g", value)
 }
 
 private final class RuntimeJDBCResultSetBox {
@@ -738,10 +1033,13 @@ private final class RuntimeJDBCResultSetBox {
     private(set) var statement: OpaquePointer?
     var closed = false
     var lastStepWasRow = false
+    var lastColumnWasNull = false
+    var columnCount = 0
 
     init(statement: OpaquePointer, ownership: Ownership) {
         self.statement = statement
         self.ownership = ownership
+        self.columnCount = Int(sqlite3_column_count(statement))
     }
 
     deinit {
@@ -892,8 +1190,9 @@ private func jdbcResolveColumnIndex(statement: OpaquePointer, label: String) thr
     throw RuntimeJDBCError.columnNotFound(label)
 }
 
-private func jdbcColumnInt(statement: OpaquePointer, index: Int32) -> Int {
-    Int(sqlite3_column_int64(statement, index))
+private func jdbcColumnInt(statement: OpaquePointer, index: Int32, resultSet: RuntimeJDBCResultSetBox) -> Int {
+    resultSet.lastColumnWasNull = sqlite3_column_type(statement, index) == SQLITE_NULL
+    return Int(sqlite3_column_int64(statement, index))
 }
 
 private func jdbcColumnString(statement: OpaquePointer, index: Int32) -> Int {
@@ -901,6 +1200,123 @@ private func jdbcColumnString(statement: OpaquePointer, index: Int32) -> Int {
         return runtimeNullSentinelInt
     }
     return jdbcStringRaw(String(cString: text))
+}
+
+private func jdbcColumnString(statement: OpaquePointer, index: Int32, resultSet: RuntimeJDBCResultSetBox) -> Int {
+    guard let text = sqlite3_column_text(statement, index) else {
+        resultSet.lastColumnWasNull = true
+        return runtimeNullSentinelInt
+    }
+    resultSet.lastColumnWasNull = false
+    return jdbcStringRaw(String(cString: text))
+}
+
+private func jdbcColumnDouble(statement: OpaquePointer, index: Int32, resultSet: RuntimeJDBCResultSetBox) -> Int {
+    resultSet.lastColumnWasNull = sqlite3_column_type(statement, index) == SQLITE_NULL
+    let value = sqlite3_column_double(statement, index)
+    return kk_box_double(Int(truncatingIfNeeded: value.bitPattern))
+}
+
+private func jdbcColumnFloat(statement: OpaquePointer, index: Int32, resultSet: RuntimeJDBCResultSetBox) -> Int {
+    resultSet.lastColumnWasNull = sqlite3_column_type(statement, index) == SQLITE_NULL
+    let value = Float(sqlite3_column_double(statement, index))
+    return kk_box_float(Int(truncatingIfNeeded: UInt32(value.bitPattern)))
+}
+
+private func jdbcColumnLong(statement: OpaquePointer, index: Int32, resultSet: RuntimeJDBCResultSetBox) -> Int {
+    resultSet.lastColumnWasNull = sqlite3_column_type(statement, index) == SQLITE_NULL
+    let value = sqlite3_column_int64(statement, index)
+    return kk_box_long(Int(truncatingIfNeeded: value))
+}
+
+private func jdbcColumnBoolean(statement: OpaquePointer, index: Int32, resultSet: RuntimeJDBCResultSetBox) -> Int {
+    resultSet.lastColumnWasNull = sqlite3_column_type(statement, index) == SQLITE_NULL
+    let value = sqlite3_column_int(statement, index)
+    return kk_box_bool(value != 0 ? 1 : 0)
+}
+
+final class RuntimeJDBCResultSetMetaDataBox {
+    /// Snapshot at construction so metadata stays valid after the ResultSet/statement is closed.
+    private let columnCount: Int
+    private let columnNames: [String]
+    private let columnDeclTypesUppercased: [String]
+
+    init(statement: OpaquePointer) {
+        let cc = Int(sqlite3_column_count(statement))
+        self.columnCount = cc
+        var names: [String] = []
+        var decls: [String] = []
+        names.reserveCapacity(cc)
+        decls.reserveCapacity(cc)
+        for i in 0..<cc {
+            let namePtr = sqlite3_column_name(statement, Int32(i))
+            names.append(namePtr.map { String(cString: $0) } ?? "")
+            let declPtr = sqlite3_column_decltype(statement, Int32(i))
+            decls.append(declPtr.map { String(cString: $0).uppercased() } ?? "")
+        }
+        self.columnNames = names
+        self.columnDeclTypesUppercased = decls
+    }
+    
+    func getColumnCount() -> Int {
+        return columnCount
+    }
+    
+    func getColumnName(_ index: Int) -> String? {
+        guard index >= 1 && index <= columnCount else { return nil }
+        let name = columnNames[index - 1]
+        return name.isEmpty ? nil : name
+    }
+    
+    func getColumnLabel(_ index: Int) -> String? {
+        return getColumnName(index)
+    }
+    
+    func getColumnType(_ index: Int) -> Int32 {
+        guard index >= 1 && index <= columnCount else { return 0 }
+        let decl = columnDeclTypesUppercased[index - 1]
+        if decl.contains("INT") { return SQLITE_INTEGER }
+        if decl.contains("TEXT") || decl.contains("CLOB") || decl.contains("CHAR") || decl.contains("STR") {
+            return SQLITE_TEXT
+        }
+        if decl.contains("BLOB") { return SQLITE_BLOB }
+        if decl.contains("REAL") || decl.contains("FLOA") || decl.contains("DOUB") { return SQLITE_FLOAT }
+        return SQLITE_NULL
+    }
+    
+    func getColumnTypeName(_ index: Int) -> String {
+        let type = getColumnType(index)
+        switch type {
+        case SQLITE_INTEGER:
+            return "INTEGER"
+        case SQLITE_FLOAT:
+            return "FLOAT"
+        case SQLITE_TEXT:
+            return "TEXT"
+        case SQLITE_BLOB:
+            return "BLOB"
+        case SQLITE_NULL:
+            return "NULL"
+        default:
+            return "UNKNOWN"
+        }
+    }
+    
+    func isNullable(_ index: Int) -> Int {
+        return 1 // ResultSetMetaData.columnNullable
+    }
+    
+    func isAutoIncrement(_ index: Int) -> Bool {
+        return false
+    }
+    
+    func isReadOnly(_ index: Int) -> Bool {
+        return true
+    }
+    
+    func isSearchable(_ index: Int) -> Bool {
+        return true
+    }
 }
 
 private func jdbcBindString(_ statement: OpaquePointer, index: Int32, value: String) -> Int32 {
@@ -953,7 +1369,7 @@ public func kk_jdbc_connection_prepareStatement(_ connectionRaw: Int, _ sqlRaw: 
         let db = try connection.requireDB()
         let sql = try jdbcExtractString(sqlRaw)
         let statement = try jdbcPrepareStatement(db: db, sql: sql)
-        return registerRuntimeObject(RuntimeJDBCPreparedStatementBox(connection: connection, statement: statement))
+        return registerRuntimeObject(RuntimeJDBCPreparedStatementBox(connection: connection, statement: statement, sql: sql))
     } catch {
         outThrown?.pointee = jdbcErrorThrowable(error)
         return 0
@@ -1034,10 +1450,12 @@ public func kk_jdbc_prepared_statement_setInt(_ preparedStatementRaw: Int, _ ind
             throw RuntimeJDBCError.invalidHandle("prepared statement")
         }
         let statement = try preparedStatement.requireStatement()
+        let value = kk_unbox_long(value)
         let rc = sqlite3_bind_int64(statement, Int32(index), sqlite3_int64(value))
         guard rc == SQLITE_OK else {
             throw RuntimeJDBCError.sqlite(sqliteMessage(from: try preparedStatement.connection.requireDB()))
         }
+        preparedStatement.setParameterValue(Int32(index), value: value, type: SQLITE_INTEGER)
     } catch {
         outThrown?.pointee = jdbcErrorThrowable(error)
     }
@@ -1057,6 +1475,7 @@ public func kk_jdbc_prepared_statement_setString(_ preparedStatementRaw: Int, _ 
         guard rc == SQLITE_OK else {
             throw RuntimeJDBCError.sqlite(sqliteMessage(from: try preparedStatement.connection.requireDB()))
         }
+        preparedStatement.setParameterValue(Int32(index), value: value, type: SQLITE_TEXT)
     } catch {
         outThrown?.pointee = jdbcErrorThrowable(error)
     }
@@ -1110,6 +1529,158 @@ public func kk_jdbc_prepared_statement_close(_ preparedStatementRaw: Int, _ outT
     return 0
 }
 
+@_cdecl("kk_jdbc_prepared_statement_setDouble")
+public func kk_jdbc_prepared_statement_setDouble(_ preparedStatementRaw: Int, _ index: Int, _ value: Double, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let preparedStatement = jdbcPreparedStatementBox(from: preparedStatementRaw) else {
+            throw RuntimeJDBCError.invalidHandle("prepared statement")
+        }
+        let statement = try preparedStatement.requireStatement()
+        let rc = sqlite3_bind_double(statement, Int32(index), value)
+        guard rc == SQLITE_OK else {
+            throw RuntimeJDBCError.sqlite(sqliteMessage(from: try preparedStatement.connection.requireDB()))
+        }
+        preparedStatement.setParameterValue(Int32(index), value: value, type: SQLITE_FLOAT)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+    }
+    return 0
+}
+
+@_cdecl("kk_jdbc_prepared_statement_setFloat")
+public func kk_jdbc_prepared_statement_setFloat(_ preparedStatementRaw: Int, _ index: Int, _ value: Float, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let preparedStatement = jdbcPreparedStatementBox(from: preparedStatementRaw) else {
+            throw RuntimeJDBCError.invalidHandle("prepared statement")
+        }
+        let statement = try preparedStatement.requireStatement()
+        let rc = sqlite3_bind_double(statement, Int32(index), Double(value))
+        guard rc == SQLITE_OK else {
+            throw RuntimeJDBCError.sqlite(sqliteMessage(from: try preparedStatement.connection.requireDB()))
+        }
+        preparedStatement.setParameterValue(Int32(index), value: value, type: SQLITE_FLOAT)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+    }
+    return 0
+}
+
+@_cdecl("kk_jdbc_prepared_statement_setLong")
+public func kk_jdbc_prepared_statement_setLong(_ preparedStatementRaw: Int, _ index: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let preparedStatement = jdbcPreparedStatementBox(from: preparedStatementRaw) else {
+            throw RuntimeJDBCError.invalidHandle("prepared statement")
+        }
+        let statement = try preparedStatement.requireStatement()
+        let longValue = kk_unbox_long(value)
+        let rc = sqlite3_bind_int64(statement, Int32(index), sqlite3_int64(longValue))
+        guard rc == SQLITE_OK else {
+            throw RuntimeJDBCError.sqlite(sqliteMessage(from: try preparedStatement.connection.requireDB()))
+        }
+        preparedStatement.setParameterValue(Int32(index), value: longValue, type: SQLITE_INTEGER)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+    }
+    return 0
+}
+
+@_cdecl("kk_jdbc_prepared_statement_setBoolean")
+public func kk_jdbc_prepared_statement_setBoolean(_ preparedStatementRaw: Int, _ index: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let preparedStatement = jdbcPreparedStatementBox(from: preparedStatementRaw) else {
+            throw RuntimeJDBCError.invalidHandle("prepared statement")
+        }
+        let statement = try preparedStatement.requireStatement()
+        let boolValue = kk_unbox_bool(value) != 0 ? 1 : 0
+        let rc = sqlite3_bind_int(statement, Int32(index), Int32(boolValue))
+        guard rc == SQLITE_OK else {
+            throw RuntimeJDBCError.sqlite(sqliteMessage(from: try preparedStatement.connection.requireDB()))
+        }
+        preparedStatement.setParameterValue(Int32(index), value: boolValue != 0, type: SQLITE_INTEGER)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+    }
+    return 0
+}
+
+@_cdecl("kk_jdbc_prepared_statement_setNull")
+public func kk_jdbc_prepared_statement_setNull(_ preparedStatementRaw: Int, _ index: Int, _ sqlType: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let preparedStatement = jdbcPreparedStatementBox(from: preparedStatementRaw) else {
+            throw RuntimeJDBCError.invalidHandle("prepared statement")
+        }
+        let statement = try preparedStatement.requireStatement()
+        let rc = sqlite3_bind_null(statement, Int32(index))
+        guard rc == SQLITE_OK else {
+            throw RuntimeJDBCError.sqlite(sqliteMessage(from: try preparedStatement.connection.requireDB()))
+        }
+        preparedStatement.setParameterValue(Int32(index), value: nil, type: SQLITE_NULL)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+    }
+    return 0
+}
+
+@_cdecl("kk_jdbc_prepared_statement_addBatch")
+public func kk_jdbc_prepared_statement_addBatch(_ preparedStatementRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let preparedStatement = jdbcPreparedStatementBox(from: preparedStatementRaw) else {
+            throw RuntimeJDBCError.invalidHandle("prepared statement")
+        }
+        preparedStatement.addBatch()
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+    }
+    return 0
+}
+
+@_cdecl("kk_jdbc_prepared_statement_clearBatch")
+public func kk_jdbc_prepared_statement_clearBatch(_ preparedStatementRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let preparedStatement = jdbcPreparedStatementBox(from: preparedStatementRaw) else {
+            throw RuntimeJDBCError.invalidHandle("prepared statement")
+        }
+        preparedStatement.clearBatch()
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+    }
+    return 0
+}
+
+@_cdecl("kk_jdbc_prepared_statement_executeBatch")
+public func kk_jdbc_prepared_statement_executeBatch(_ preparedStatementRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let preparedStatement = jdbcPreparedStatementBox(from: preparedStatementRaw) else {
+            throw RuntimeJDBCError.invalidHandle("prepared statement")
+        }
+        let results = try preparedStatement.executeBatch()
+        let arrayBox = RuntimeArrayBox(length: results.count)
+        for (index, result) in results.enumerated() {
+            arrayBox.elements[index] = result
+        }
+        return registerRuntimeObject(arrayBox)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+        return 0
+    }
+}
+
+@_cdecl("kk_jdbc_prepared_statement_getParameterCount")
+public func kk_jdbc_prepared_statement_getParameterCount(_ preparedStatementRaw: Int) -> Int {
+    guard let preparedStatement = jdbcPreparedStatementBox(from: preparedStatementRaw) else {
+        return 0
+    }
+    return Int(preparedStatement.getParameterCount())
+}
+
 @_cdecl("kk_jdbc_result_set_next")
 public func kk_jdbc_result_set_next(_ resultSetRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -1144,7 +1715,7 @@ public func kk_jdbc_result_set_getInt(_ resultSetRaw: Int, _ index: Int, _ outTh
             throw RuntimeJDBCError.invalidHandle("result set")
         }
         let statement = try resultSet.requireStatement()
-        return jdbcColumnInt(statement: statement, index: Int32(index - 1))
+        return jdbcColumnInt(statement: statement, index: Int32(index - 1), resultSet: resultSet)
     } catch {
         outThrown?.pointee = jdbcErrorThrowable(error)
         return 0
@@ -1161,7 +1732,7 @@ public func kk_jdbc_result_set_getIntByLabel(_ resultSetRaw: Int, _ labelRaw: In
         let statement = try resultSet.requireStatement()
         let label = try jdbcExtractString(labelRaw)
         let index = try jdbcResolveColumnIndex(statement: statement, label: label)
-        return jdbcColumnInt(statement: statement, index: index)
+        return jdbcColumnInt(statement: statement, index: index, resultSet: resultSet)
     } catch {
         outThrown?.pointee = jdbcErrorThrowable(error)
         return 0
@@ -1176,7 +1747,7 @@ public func kk_jdbc_result_set_getString(_ resultSetRaw: Int, _ index: Int, _ ou
             throw RuntimeJDBCError.invalidHandle("result set")
         }
         let statement = try resultSet.requireStatement()
-        return jdbcColumnString(statement: statement, index: Int32(index - 1))
+        return jdbcColumnString(statement: statement, index: Int32(index - 1), resultSet: resultSet)
     } catch {
         outThrown?.pointee = jdbcErrorThrowable(error)
         return runtimeNullSentinelInt
@@ -1193,7 +1764,7 @@ public func kk_jdbc_result_set_getStringByLabel(_ resultSetRaw: Int, _ labelRaw:
         let statement = try resultSet.requireStatement()
         let label = try jdbcExtractString(labelRaw)
         let index = try jdbcResolveColumnIndex(statement: statement, label: label)
-        return jdbcColumnString(statement: statement, index: index)
+        return jdbcColumnString(statement: statement, index: index, resultSet: resultSet)
     } catch {
         outThrown?.pointee = jdbcErrorThrowable(error)
         return runtimeNullSentinelInt
@@ -1209,4 +1780,241 @@ public func kk_jdbc_result_set_close(_ resultSetRaw: Int, _ outThrown: UnsafeMut
     }
     resultSet.close()
     return 0
+}
+
+@_cdecl("kk_jdbc_result_set_wasNull")
+public func kk_jdbc_result_set_wasNull(_ resultSetRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let resultSet = jdbcResultSetBox(from: resultSetRaw) else {
+        outThrown?.pointee = jdbcErrorThrowable(RuntimeJDBCError.invalidHandle("result set"))
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(resultSet.lastColumnWasNull ? 1 : 0)
+}
+
+@_cdecl("kk_jdbc_result_set_getDouble")
+public func kk_jdbc_result_set_getDouble(_ resultSetRaw: Int, _ index: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let resultSet = jdbcResultSetBox(from: resultSetRaw) else {
+            throw RuntimeJDBCError.invalidHandle("result set")
+        }
+        let statement = try resultSet.requireStatement()
+        return jdbcColumnDouble(statement: statement, index: Int32(index - 1), resultSet: resultSet)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+        return 0
+    }
+}
+
+@_cdecl("kk_jdbc_result_set_getDoubleByLabel")
+public func kk_jdbc_result_set_getDoubleByLabel(_ resultSetRaw: Int, _ labelRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let resultSet = jdbcResultSetBox(from: resultSetRaw) else {
+            throw RuntimeJDBCError.invalidHandle("result set")
+        }
+        let statement = try resultSet.requireStatement()
+        let label = try jdbcExtractString(labelRaw)
+        let index = try jdbcResolveColumnIndex(statement: statement, label: label)
+        return jdbcColumnDouble(statement: statement, index: index, resultSet: resultSet)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+        return 0
+    }
+}
+
+@_cdecl("kk_jdbc_result_set_getBoolean")
+public func kk_jdbc_result_set_getBoolean(_ resultSetRaw: Int, _ index: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let resultSet = jdbcResultSetBox(from: resultSetRaw) else {
+            throw RuntimeJDBCError.invalidHandle("result set")
+        }
+        let statement = try resultSet.requireStatement()
+        return jdbcColumnBoolean(statement: statement, index: Int32(index - 1), resultSet: resultSet)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+        return kk_box_bool(0)
+    }
+}
+
+@_cdecl("kk_jdbc_result_set_getBooleanByLabel")
+public func kk_jdbc_result_set_getBooleanByLabel(_ resultSetRaw: Int, _ labelRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let resultSet = jdbcResultSetBox(from: resultSetRaw) else {
+            throw RuntimeJDBCError.invalidHandle("result set")
+        }
+        let statement = try resultSet.requireStatement()
+        let label = try jdbcExtractString(labelRaw)
+        let index = try jdbcResolveColumnIndex(statement: statement, label: label)
+        return jdbcColumnBoolean(statement: statement, index: index, resultSet: resultSet)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+        return kk_box_bool(0)
+    }
+}
+
+@_cdecl("kk_jdbc_result_set_getLong")
+public func kk_jdbc_result_set_getLong(_ resultSetRaw: Int, _ index: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let resultSet = jdbcResultSetBox(from: resultSetRaw) else {
+            throw RuntimeJDBCError.invalidHandle("result set")
+        }
+        let statement = try resultSet.requireStatement()
+        return jdbcColumnLong(statement: statement, index: Int32(index - 1), resultSet: resultSet)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+        return 0
+    }
+}
+
+@_cdecl("kk_jdbc_result_set_getLongByLabel")
+public func kk_jdbc_result_set_getLongByLabel(_ resultSetRaw: Int, _ labelRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let resultSet = jdbcResultSetBox(from: resultSetRaw) else {
+            throw RuntimeJDBCError.invalidHandle("result set")
+        }
+        let statement = try resultSet.requireStatement()
+        let label = try jdbcExtractString(labelRaw)
+        let index = try jdbcResolveColumnIndex(statement: statement, label: label)
+        return jdbcColumnLong(statement: statement, index: index, resultSet: resultSet)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+        return 0
+    }
+}
+
+@_cdecl("kk_jdbc_result_set_getFloat")
+public func kk_jdbc_result_set_getFloat(_ resultSetRaw: Int, _ index: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let resultSet = jdbcResultSetBox(from: resultSetRaw) else {
+            throw RuntimeJDBCError.invalidHandle("result set")
+        }
+        let statement = try resultSet.requireStatement()
+        return jdbcColumnFloat(statement: statement, index: Int32(index - 1), resultSet: resultSet)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+        return 0
+    }
+}
+
+@_cdecl("kk_jdbc_result_set_getFloatByLabel")
+public func kk_jdbc_result_set_getFloatByLabel(_ resultSetRaw: Int, _ labelRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let resultSet = jdbcResultSetBox(from: resultSetRaw) else {
+            throw RuntimeJDBCError.invalidHandle("result set")
+        }
+        let statement = try resultSet.requireStatement()
+        let label = try jdbcExtractString(labelRaw)
+        let index = try jdbcResolveColumnIndex(statement: statement, label: label)
+        return jdbcColumnFloat(statement: statement, index: index, resultSet: resultSet)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+        return 0
+    }
+}
+
+@_cdecl("kk_jdbc_result_set_getMetaData")
+public func kk_jdbc_result_set_getMetaData(_ resultSetRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    do {
+        guard let resultSet = jdbcResultSetBox(from: resultSetRaw) else {
+            throw RuntimeJDBCError.invalidHandle("result set")
+        }
+        let statement = try resultSet.requireStatement()
+        let metaData = RuntimeJDBCResultSetMetaDataBox(statement: statement)
+        return registerRuntimeObject(metaData)
+    } catch {
+        outThrown?.pointee = jdbcErrorThrowable(error)
+        return 0
+    }
+}
+
+private func jdbcResultSetMetaDataBox(from raw: Int) -> RuntimeJDBCResultSetMetaDataBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeJDBCResultSetMetaDataBox.self)
+}
+
+@_cdecl("kk_jdbc_result_set_meta_getColumnCount")
+public func kk_jdbc_result_set_meta_getColumnCount(_ metaDataRaw: Int) -> Int {
+    guard let metaData = jdbcResultSetMetaDataBox(from: metaDataRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_jdbc_result_set_meta_getColumnCount received invalid ResultSetMetaData handle")
+    }
+    return metaData.getColumnCount()
+}
+
+@_cdecl("kk_jdbc_result_set_meta_getColumnName")
+public func kk_jdbc_result_set_meta_getColumnName(_ metaDataRaw: Int, _ index: Int) -> Int {
+    guard let metaData = jdbcResultSetMetaDataBox(from: metaDataRaw) else {
+        return runtimeNullSentinelInt
+    }
+    guard let name = metaData.getColumnName(index) else {
+        return runtimeNullSentinelInt
+    }
+    return jdbcStringRaw(name)
+}
+
+@_cdecl("kk_jdbc_result_set_meta_getColumnLabel")
+public func kk_jdbc_result_set_meta_getColumnLabel(_ metaDataRaw: Int, _ index: Int) -> Int {
+    guard let metaData = jdbcResultSetMetaDataBox(from: metaDataRaw) else {
+        return runtimeNullSentinelInt
+    }
+    guard let label = metaData.getColumnLabel(index) else {
+        return runtimeNullSentinelInt
+    }
+    return jdbcStringRaw(label)
+}
+
+@_cdecl("kk_jdbc_result_set_meta_getColumnType")
+public func kk_jdbc_result_set_meta_getColumnType(_ metaDataRaw: Int, _ index: Int) -> Int {
+    guard let metaData = jdbcResultSetMetaDataBox(from: metaDataRaw) else {
+        return 0
+    }
+    return Int(metaData.getColumnType(index))
+}
+
+@_cdecl("kk_jdbc_result_set_meta_getColumnTypeName")
+public func kk_jdbc_result_set_meta_getColumnTypeName(_ metaDataRaw: Int, _ index: Int) -> Int {
+    guard let metaData = jdbcResultSetMetaDataBox(from: metaDataRaw) else {
+        return runtimeNullSentinelInt
+    }
+    return jdbcStringRaw(metaData.getColumnTypeName(index))
+}
+
+@_cdecl("kk_jdbc_result_set_meta_isNullable")
+public func kk_jdbc_result_set_meta_isNullable(_ metaDataRaw: Int, _ index: Int) -> Int {
+    guard let metaData = jdbcResultSetMetaDataBox(from: metaDataRaw) else {
+        return 0
+    }
+    return metaData.isNullable(index)
+}
+
+@_cdecl("kk_jdbc_result_set_meta_isAutoIncrement")
+public func kk_jdbc_result_set_meta_isAutoIncrement(_ metaDataRaw: Int, _ index: Int) -> Int {
+    guard let metaData = jdbcResultSetMetaDataBox(from: metaDataRaw) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(metaData.isAutoIncrement(index) ? 1 : 0)
+}
+
+@_cdecl("kk_jdbc_result_set_meta_isReadOnly")
+public func kk_jdbc_result_set_meta_isReadOnly(_ metaDataRaw: Int, _ index: Int) -> Int {
+    guard let metaData = jdbcResultSetMetaDataBox(from: metaDataRaw) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(metaData.isReadOnly(index) ? 1 : 0)
+}
+
+@_cdecl("kk_jdbc_result_set_meta_isSearchable")
+public func kk_jdbc_result_set_meta_isSearchable(_ metaDataRaw: Int, _ index: Int) -> Int {
+    guard let metaData = jdbcResultSetMetaDataBox(from: metaDataRaw) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(metaData.isSearchable(index) ? 1 : 0)
 }

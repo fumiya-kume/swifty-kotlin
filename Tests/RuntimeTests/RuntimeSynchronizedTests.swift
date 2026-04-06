@@ -1,9 +1,53 @@
 @testable import Runtime
 import XCTest
 
-private nonisolated(unsafe) var synchronizedCapturedClosureRaw = 0
-private nonisolated(unsafe) var synchronizedNestedFnPtr = 0
-private nonisolated(unsafe) var synchronizedNestedClosureRaw = 0
+private let synchronizedCapturedClosureRawLock = NSLock()
+nonisolated(unsafe) private var _synchronizedCapturedClosureRaw = 0
+
+private var synchronizedCapturedClosureRaw: Int {
+    get {
+        synchronizedCapturedClosureRawLock.lock()
+        defer { synchronizedCapturedClosureRawLock.unlock() }
+        return _synchronizedCapturedClosureRaw
+    }
+    set {
+        synchronizedCapturedClosureRawLock.lock()
+        defer { synchronizedCapturedClosureRawLock.unlock() }
+        _synchronizedCapturedClosureRaw = newValue
+    }
+}
+
+private let synchronizedNestedFnPtrLock = NSLock()
+nonisolated(unsafe) private var _synchronizedNestedFnPtr = 0
+
+private var synchronizedNestedFnPtr: Int {
+    get {
+        synchronizedNestedFnPtrLock.lock()
+        defer { synchronizedNestedFnPtrLock.unlock() }
+        return _synchronizedNestedFnPtr
+    }
+    set {
+        synchronizedNestedFnPtrLock.lock()
+        defer { synchronizedNestedFnPtrLock.unlock() }
+        _synchronizedNestedFnPtr = newValue
+    }
+}
+
+private let synchronizedNestedClosureRawLock = NSLock()
+nonisolated(unsafe) private var _synchronizedNestedClosureRaw = 0
+
+private var synchronizedNestedClosureRaw: Int {
+    get {
+        synchronizedNestedClosureRawLock.lock()
+        defer { synchronizedNestedClosureRawLock.unlock() }
+        return _synchronizedNestedClosureRaw
+    }
+    set {
+        synchronizedNestedClosureRawLock.lock()
+        defer { synchronizedNestedClosureRawLock.unlock() }
+        _synchronizedNestedClosureRaw = newValue
+    }
+}
 
 @_cdecl("runtime_synchronized_success_lambda")
 private func runtime_synchronized_success_lambda(

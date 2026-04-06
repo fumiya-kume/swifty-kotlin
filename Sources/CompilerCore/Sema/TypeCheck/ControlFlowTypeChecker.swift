@@ -25,7 +25,8 @@ final class ControlFlowTypeChecker {
         let iteratorCandidates = driver.helpers.collectMemberFunctionCandidates(
             named: iteratorName,
             receiverType: nonNullIterableType,
-            sema: sema
+            sema: sema,
+            interner: interner
         ).filter { candidate in
             guard let symbol = sema.symbols.symbol(candidate),
                   symbol.flags.contains(.operatorFunction),
@@ -59,7 +60,7 @@ final class ControlFlowTypeChecker {
             chosenCallee: iteratorChosen,
             substitutedTypeArguments: iteratorResolved.substitutedTypeArguments
                 .sorted(by: { $0.key.rawValue < $1.key.rawValue })
-                .map(\.value),
+                .map { (key: TypeVarID, value: TypeID) in value },
             parameterMapping: iteratorResolved.parameterMapping
         )
 
@@ -74,7 +75,8 @@ final class ControlFlowTypeChecker {
         let hasNextCandidates = driver.helpers.collectMemberFunctionCandidates(
             named: hasNextName,
             receiverType: iteratorType,
-            sema: sema
+            sema: sema,
+            interner: interner
         ).filter { candidate in
             guard let symbol = sema.symbols.symbol(candidate),
                   symbol.flags.contains(.operatorFunction),
@@ -89,7 +91,8 @@ final class ControlFlowTypeChecker {
         let nextCandidates = driver.helpers.collectMemberFunctionCandidates(
             named: nextName,
             receiverType: iteratorType,
-            sema: sema
+            sema: sema,
+            interner: interner
         ).filter { candidate in
             guard let symbol = sema.symbols.symbol(candidate),
                   symbol.flags.contains(.operatorFunction),
@@ -130,14 +133,14 @@ final class ControlFlowTypeChecker {
             chosenCallee: hasNextChosen,
             substitutedTypeArguments: hasNextResolved.substitutedTypeArguments
                 .sorted(by: { $0.key.rawValue < $1.key.rawValue })
-                .map(\.value),
+                .map { (key: TypeVarID, value: TypeID) in value },
             parameterMapping: hasNextResolved.parameterMapping
         )
         let nextCall = CallBinding(
             chosenCallee: nextChosen,
             substitutedTypeArguments: nextResolved.substitutedTypeArguments
                 .sorted(by: { $0.key.rawValue < $1.key.rawValue })
-                .map(\.value),
+                .map { (key: TypeVarID, value: TypeID) in value },
             parameterMapping: nextResolved.parameterMapping
         )
 

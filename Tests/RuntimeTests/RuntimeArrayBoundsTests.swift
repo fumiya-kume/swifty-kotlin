@@ -6,7 +6,8 @@ final class RuntimeArrayBoundsTests: IsolatedRuntimeXCTestCase {
         let array = kk_array_new(elements.count)
         var thrown = 0
         for (index, element) in elements.enumerated() {
-            XCTAssertEqual(kk_array_set(array, index, element, &thrown), element)
+            let setResult = kk_array_set(array, index, element, &thrown)
+            XCTAssertEqual(setResult, element)
             XCTAssertEqual(thrown, 0)
         }
         return kk_list_to_mutable_list(kk_list_of(array, elements.count))

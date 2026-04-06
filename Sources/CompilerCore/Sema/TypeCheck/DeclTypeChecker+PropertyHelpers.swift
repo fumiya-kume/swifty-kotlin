@@ -62,7 +62,8 @@ extension DeclTypeChecker {
             .collectMemberFunctionCandidates(
                 named: getValueName,
                 receiverType: delegateType,
-                sema: sema
+                sema: sema,
+                interner: interner
             ).filter { candidateID in
                 guard let sym = sema.symbols.symbol(candidateID)
                 else { return false }
@@ -85,15 +86,17 @@ extension DeclTypeChecker {
         // Check setValue for var properties.
         if property.isVar {
             let setValueName = interner.intern("setValue")
-            let setValueCandidates = driver.helpers.collectMemberFunctionCandidates(
-                named: setValueName,
-                receiverType: delegateType,
-                sema: sema
-            ).filter { candidateID in
-                guard let sym = sema.symbols.symbol(candidateID)
-                else { return false }
-                return sym.flags.contains(.operatorFunction)
-            }
+            let setValueCandidates = driver.helpers
+                .collectMemberFunctionCandidates(
+                    named: setValueName,
+                    receiverType: delegateType,
+                    sema: sema,
+                    interner: interner
+                ).filter { candidateID in
+                    guard let sym = sema.symbols.symbol(candidateID)
+                    else { return false }
+                    return sym.flags.contains(.operatorFunction)
+                }
             if let setValueSymbol = setValueCandidates.first {
                 sema.symbols.setDelegateSetValueSymbol(setValueSymbol, for: symbol)
             }
@@ -105,7 +108,8 @@ extension DeclTypeChecker {
             .collectMemberFunctionCandidates(
                 named: provideDelegateName,
                 receiverType: delegateType,
-                sema: sema
+                sema: sema,
+                interner: interner
             ).filter { candidateID in
                 guard let sym = sema.symbols.symbol(candidateID)
                 else { return false }
@@ -124,7 +128,8 @@ extension DeclTypeChecker {
                         .collectMemberFunctionCandidates(
                             named: getValueName,
                             receiverType: actualDelegateType,
-                            sema: sema
+                            sema: sema,
+                            interner: interner
                         )
                     // Accept operator functions first; fall back to any non-synthetic override
                     // (Kotlin allows omitting 'operator' on overrides of operator functions).
@@ -156,7 +161,8 @@ extension DeclTypeChecker {
                         let allSetValueCandidates = driver.helpers.collectMemberFunctionCandidates(
                             named: setValueName,
                             receiverType: actualDelegateType,
-                            sema: sema
+                            sema: sema,
+                            interner: interner
                         )
                         let actualSetValueCandidates = allSetValueCandidates.filter { candidateID in
                             guard let sym = sema.symbols.symbol(candidateID)

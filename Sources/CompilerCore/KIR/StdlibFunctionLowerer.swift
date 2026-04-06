@@ -356,9 +356,9 @@ final class StdlibFunctionLowerer {
             return nil
         }
         
-        let timesArgID = context.lowerSubExpr(args[0].expr, driver: coordinator.driver)
+        let _ = context.lowerSubExpr(args[0].expr, driver: coordinator.driver)
         
-        let actionArgID = context.lowerSubExpr(args[1].expr, driver: coordinator.driver)
+        let _ = context.lowerSubExpr(args[1].expr, driver: coordinator.driver)
         
         let result = arena.appendExpr(.unit, type: sema.types.unitType)
         context.append(.constValue(result: result, value: .unit))
@@ -377,7 +377,6 @@ final class StdlibFunctionLowerer {
         args: [CallArgument],
         context: inout CallLoweringContext
     ) -> KIRExprID? {
-        let sema = context.sema
         let interner = context.interner
         
         if let arrayResult = lowerArrayConstructorCall(exprID: exprID, args: args, context: &context) {

@@ -92,8 +92,8 @@ final class IndexedAccessLowerer {
         context: inout CallLoweringContext
     ) -> KIRExprID {
         let sema = context.sema
-        let arena = context.arena
-        let interner = context.interner
+        let _ = context.arena
+        let _ = context.interner
         
         // レシーバーと値のローワーリング
         let receiverID = context.lowerSubExpr(receiverExpr, driver: coordinator.driver)
@@ -445,9 +445,9 @@ final class IndexedAccessLowerer {
         arguments: [KIRExprID]
     ) {
         let sema = context.sema
-        let arena = context.arena
+        let _ = context.arena
         let interner = context.interner
-        let intType = sema.types.make(.primitive(.int, .nonNull))
+        let _ = sema.types.make(.primitive(.int, .nonNull))
         
         var finalArguments = arguments
         

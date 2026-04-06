@@ -2100,7 +2100,8 @@ extension ExprLowerer {
                 let memberCandidates = TypeCheckHelpers().collectMemberFunctionCandidates(
                     named: componentName,
                     receiverType: nonNullRhsType,
-                    sema: sema
+                    sema: sema,
+                    interner: interner
                 )
                 let calleeName: InternedString = if let chosen = memberCandidates.first,
                                                     let linkName = sema.symbols.externalLinkName(for: chosen),

@@ -614,6 +614,15 @@ extension DataFlowSemaPhase {
                 )
             }
             
+            // Check exception type covariance
+            validateExceptionTypeCovariance(
+                memberName: memberName,
+                memberRange: memberRange,
+                ownerSymbol: ownerSymbol,
+                parentSymbol: parentSym,
+                ctx: ctx
+            )
+            
             // Check visibility expansion
             validateVisibilityExpansion(
                 childVisibility: visibility,
@@ -666,15 +675,25 @@ extension DataFlowSemaPhase {
             return
         }
 
-        // Skip covariance check when the parent or child return type involves type parameters
-        // (including type parameters nested inside generic type arguments, e.g. List<T>).
-        // Type parameter substitution (e.g. T -> String for Producer<String>) is not
-        // performed here; such cases require full generic instantiation which is out of
-        // scope for this lightweight check.
-        if typeContainsAnyTypeParam(parentReturnType, types: ctx.types) {
-            return
-        }
-        if typeContainsAnyTypeParam(childReturnType, types: ctx.types) {
+        // Enhanced covariance check for generic types
+        if typeContainsAnyTypeParam(parentReturnType, types: ctx.types) ||
+           typeContainsAnyTypeParam(childReturnType, types: ctx.types) {
+            // For generic types, perform basic covariance checking where possible
+            if !validateGenericReturnTypeCovariance(
+                childReturnType: childReturnType,
+                parentReturnType: parentReturnType,
+                types: ctx.types
+            ) {
+                let name = ctx.interner.resolve(memberName)
+                let parentReturnTypeStr = ctx.types.renderType(parentReturnType)
+                let childReturnTypeStr = ctx.types.renderType(childReturnType)
+                ctx.diagnostics.error(
+                    "KSWIFTK-SEMA-OVERRIDE-RETURN",
+                    "Override of '\(name)' has incompatible return type. "
+                        + "Expected covariant relationship with '\(parentReturnTypeStr)' but found '\(childReturnTypeStr)'.",
+                    range: memberRange
+                )
+            }
             return
         }
 
@@ -694,6 +713,163 @@ extension DataFlowSemaPhase {
         )
     }
 
+    // MARK: - Check 2c: exception type covariance
+
+    private func validateExceptionTypeCovariance(
+        memberName: InternedString,
+        memberRange: SourceRange,
+        ownerSymbol: SymbolID,
+        parentSymbol: SemanticSymbol,
+        ctx: OpenFinalOverrideContext
+    ) {
+        guard let parentSignature = ctx.symbols.functionSignature(for: parentSymbol.id),
+              let childSymbol = getFunctionMemberMatching(parentSignature, named: memberName, in: ownerSymbol, ctx: ctx),
+              let childSignature = ctx.symbols.functionSignature(for: childSymbol) else {
+            return
+        }
+
+        // Skip check if this member is overloaded in the parent hierarchy
+        let allParentMembers = findAllInheritedMembers(
+            named: memberName,
+            for: ownerSymbol,
+            symbols: ctx.symbols
+        )
+        guard allParentMembers.count == 1 else {
+            return
+        }
+
+        let parentExceptions = parentSignature.canThrow
+        let childExceptions = childSignature.canThrow
+
+        // Exception covariance check: child cannot throw more exceptions than parent
+        if parentExceptions && !childExceptions {
+            // This is valid - child throws fewer exceptions
+            return
+        }
+        
+        if !parentExceptions && childExceptions {
+            // Child throws exceptions but parent doesn't - this violates covariance
+            let name = ctx.interner.resolve(memberName)
+            ctx.diagnostics.error(
+                "KSWIFTK-SEMA-OVERRIDE-EXCEPTION",
+                "Override of '\(name)' cannot throw exceptions because overridden method does not throw.",
+                range: memberRange
+            )
+        }
+        
+        // Note: Currently the FunctionSignature only tracks canThrow boolean, not specific exception types
+        // When exception type information is added to FunctionSignature, we should enhance this check
+        // to verify that child exception types are subtypes of parent exception types
+    }
+
+    // MARK: - Helper: generic return type covariance
+
+    private func validateGenericReturnTypeCovariance(
+        childReturnType: TypeID,
+        parentReturnType: TypeID,
+        types: TypeSystem
+    ) -> Bool {
+        // For now, implement basic checks for common generic patterns
+        // Full generic substitution would require more sophisticated type system integration
+        
+        let parentKind = types.kind(of: parentReturnType)
+        let childKind = types.kind(of: childReturnType)
+        
+        // Case 1: Both are the same generic class with potentially different type arguments
+        if case let .classType(parentClass) = parentKind,
+           case let .classType(childClass) = childKind,
+           parentClass.classSymbol == childClass.classSymbol {
+            return validateGenericTypeArgumentCovariance(
+                childArgs: childClass.args,
+                parentArgs: parentClass.args,
+                types: types
+            )
+        }
+        
+        // Case 2: Child is a subtype of parent (for non-generic cases)
+        return types.isSubtype(childReturnType, parentReturnType)
+    }
+
+    private func validateGenericTypeArgumentCovariance(
+        childArgs: [TypeArg],
+        parentArgs: [TypeArg],
+        types: TypeSystem
+    ) -> Bool {
+        guard childArgs.count == parentArgs.count else { return false }
+        
+        for (childArg, parentArg) in zip(childArgs, parentArgs) {
+            switch (childArg, parentArg) {
+            case (.out(let childType), .out(let parentType)):
+                // Both are covariant: child must be subtype of parent
+                if !types.isSubtype(childType, parentType) {
+                    return false
+                }
+            case (.in(let childType), .in(let parentType)):
+                // Both are contravariant: parent must be subtype of child
+                if !types.isSubtype(parentType, childType) {
+                    return false
+                }
+            case (.invariant(let childType), .invariant(let parentType)):
+                // Both are invariant: types must be equal
+                if childType != parentType {
+                    return false
+                }
+            default:
+                // Mixed variances: conservative approach - reject
+                return false
+            }
+        }
+        
+        return true
+    }
+
+    // MARK: - Helper: get member symbol
+
+    private func getMemberSymbol(
+        named memberName: InternedString,
+        in ownerSymbol: SymbolID,
+        ctx: OpenFinalOverrideContext
+    ) -> SymbolID? {
+        guard let ownerSym = ctx.symbols.symbol(ownerSymbol) else { return nil }
+
+        return ctx.symbols.children(ofFQName: ownerSym.fqName).first { childID in
+            guard let child = ctx.symbols.symbol(childID) else { return false }
+            return child.name == memberName && (child.kind == .function || child.kind == .property)
+        }
+    }
+
+    /// Child functions named `memberName` in `ownerSymbol` (overload set).
+    private func childFunctions(
+        named memberName: InternedString,
+        in ownerSymbol: SymbolID,
+        ctx: OpenFinalOverrideContext
+    ) -> [SymbolID] {
+        guard let ownerSym = ctx.symbols.symbol(ownerSymbol) else { return [] }
+        return ctx.symbols.children(ofFQName: ownerSym.fqName).compactMap { childID -> SymbolID? in
+            guard let child = ctx.symbols.symbol(childID),
+                  child.name == memberName,
+                  child.kind == .function
+            else { return nil }
+            return childID
+        }
+    }
+
+    /// Pick the overriding overload in the child that matches the parent signature (Kotlin override rules).
+    private func getFunctionMemberMatching(
+        _ parentSignature: FunctionSignature,
+        named memberName: InternedString,
+        in ownerSymbol: SymbolID,
+        ctx: OpenFinalOverrideContext
+    ) -> SymbolID? {
+        for childID in childFunctions(named: memberName, in: ownerSymbol, ctx: ctx) {
+            guard let childSig = ctx.symbols.functionSignature(for: childID) else { continue }
+            if signaturesMatch(child: childSig, parent: parentSignature, ctx: ctx) {
+                return childID
+            }
+        }
+        return nil
+    }
+
     // MARK: - Check 2b: visibility expansion
 
     private func validateVisibilityExpansion(
@@ -705,8 +881,9 @@ extension DataFlowSemaPhase {
     ) {
         let parentVisibility = parentSymbol.visibility
         
-        // In Kotlin, overriding member cannot have lower visibility than parent
-        // private < protected < internal < public
+        // Enhanced visibility validation with Kotlin-specific rules
+        
+        // Rule 1: Basic visibility hierarchy check
         if !isVisibilityExpansionAllowed(child: childVisibility, parent: parentVisibility) {
             let name = ctx.interner.resolve(memberName)
             let ownerName = ctx.interner.resolve(parentSymbol.name)
@@ -715,7 +892,62 @@ extension DataFlowSemaPhase {
             
             ctx.diagnostics.error(
                 "KSWIFTK-SEMA-VISIBILITY",
-                "'\(name)' in '\(ownerName)' has \(childVisStr) visibility, which is more restrictive than \(parentVisStr) visibility of overridden member.",
+                "'\(name)' cannot override '\(ownerName).\(name)' because it has \(childVisStr) visibility, which is more restrictive than the \(parentVisStr) visibility of the overridden member.",
+                range: memberRange
+            )
+            return
+        }
+        
+        // Rule 2: Special handling for interface members
+        if let ownerSym = ctx.symbols.symbol(ctx.symbols.parentSymbol(for: parentSymbol.id) ?? parentSymbol.id),
+           ownerSym.kind == .interface {
+            // Interface members are implicitly public, but can be implemented with broader visibility
+            if childVisibility == .private {
+                let name = ctx.interner.resolve(memberName)
+                let ownerName = ctx.interner.resolve(parentSymbol.name)
+                ctx.diagnostics.error(
+                    "KSWIFTK-SEMA-VISIBILITY",
+                    "'\(name)' cannot implement interface member '\(ownerName).\(name)' with private visibility. Interface implementations must be at least internal.",
+                    range: memberRange
+                )
+            }
+        }
+        
+        // Rule 3: Module boundary considerations (simplified)
+        // In a full implementation, this would check if parent and child are in different modules
+        validateModuleBoundaryCompatibility(
+            childVisibility: childVisibility,
+            parentVisibility: parentVisibility,
+            memberName: memberName,
+            memberRange: memberRange,
+            parentSymbol: parentSymbol,
+            ctx: ctx
+        )
+    }
+    
+    private func validateModuleBoundaryCompatibility(
+        childVisibility: Visibility,
+        parentVisibility: Visibility,
+        memberName: InternedString,
+        memberRange: SourceRange,
+        parentSymbol: SemanticSymbol,
+        ctx: OpenFinalOverrideContext
+    ) {
+        // Simplified module boundary check
+        // In a full implementation, this would compare package/module FQNames
+        
+        // For now, implement conservative rules:
+        // - internal members can only be overridden within the same module
+        // - protected members have special cross-module rules
+        
+        let name = ctx.interner.resolve(memberName)
+        
+        if parentVisibility == .internal && childVisibility != .internal && childVisibility != .public {
+            // This would need actual module comparison in a full implementation
+            // For now, allow it with a warning
+            ctx.diagnostics.warning(
+                "KSWIFTK-SEMA-VISIBILITY-MODULE",
+                "Overriding internal member '\(name)' with different visibility may cause issues across module boundaries.",
                 range: memberRange
             )
         }
@@ -742,36 +974,183 @@ extension DataFlowSemaPhase {
         ownerSymbol: SymbolID,
         ctx: OpenFinalOverrideContext
     ) {
-        // Skip the missing-override check for interface members until signature-aware
-        // matching is implemented. Name-only lookup via findInheritedMember would
-        // incorrectly flag valid overloads (e.g. fun f(String) alongside inherited
-        // fun f(Int)) as missing the 'override' modifier.
-        if let ownerSym = ctx.symbols.symbol(ownerSymbol), ownerSym.kind == .interface {
-            return
-        }
-
-        let parent = findInheritedMember(
+        let name = ctx.interner.resolve(memberName)
+        
+        // Enhanced override detection with signature-aware matching
+        
+        // Find all potential parent members that could be overridden
+        let allParentMembers = findAllInheritedMembers(
             named: memberName,
             for: ownerSymbol,
             symbols: ctx.symbols
         )
-        guard let parent else { return }
-        guard let parentSym = ctx.symbols.symbol(parent.memberID) else {
-            return
+        
+        guard !allParentMembers.isEmpty else { return }
+        
+        // Filter to only overridable members
+        let overridableParents = allParentMembers.filter { parent in
+            guard let parentSym = ctx.symbols.symbol(parent.memberID) else { return false }
+            return isMemberOverridable(parentSym, parent: parent)
+        }
+        
+        guard !overridableParents.isEmpty else { return }
+        
+        // Special handling for interface implementations
+        if let ownerSym = ctx.symbols.symbol(ownerSymbol), ownerSym.kind == .class {
+            // Check if this is implementing an interface method
+            let interfaceParents = overridableParents.filter { $0.ownerIsInterface }
+            if !interfaceParents.isEmpty {
+                // Check if any interface parent has matching signature
+                let childOverloads = childFunctions(named: memberName, in: ownerSymbol, ctx: ctx)
+                guard !childOverloads.isEmpty else { return }
+
+                let hasMatchingSignature = interfaceParents.contains { parent in
+                    guard ctx.symbols.symbol(parent.memberID) != nil,
+                          let parentSig = ctx.symbols.functionSignature(for: parent.memberID) else {
+                        return false
+                    }
+                    return childOverloads.contains { childID in
+                        guard let childSig = ctx.symbols.functionSignature(for: childID) else { return false }
+                        return signaturesMatch(child: childSig, parent: parentSig, ctx: ctx)
+                    }
+                }
+
+                if hasMatchingSignature {
+                    // For interface implementations with matching signature, require override modifier
+                    ctx.diagnostics.error(
+                        "KSWIFTK-SEMA-OVERRIDE",
+                        "'\(name)' implements interface member and needs 'override' modifier.",
+                        range: memberRange
+                    )
+                    return
+                }
+            }
+        }
+        
+        // For class inheritance, check if this actually overrides a parent member
+        // Use improved signature matching to avoid false positives with overloads
+        if let ownerSym = ctx.symbols.symbol(ownerSymbol), ownerSym.kind == .class {
+            let classParents = overridableParents.filter { !$0.ownerIsInterface }
+            if !classParents.isEmpty {
+                // Check if any class parent has matching signature
+                let childOverloads = childFunctions(named: memberName, in: ownerSymbol, ctx: ctx)
+                guard !childOverloads.isEmpty else { return }
+
+                let hasMatchingSignature = classParents.contains { parent in
+                    guard ctx.symbols.symbol(parent.memberID) != nil,
+                          let parentSig = ctx.symbols.functionSignature(for: parent.memberID) else {
+                        return false
+                    }
+                    return childOverloads.contains { childID in
+                        guard let childSig = ctx.symbols.functionSignature(for: childID) else { return false }
+                        return signaturesMatch(child: childSig, parent: parentSig, ctx: ctx)
+                    }
+                }
+
+                if hasMatchingSignature {
+                    let parentName = ctx.interner.resolve(classParents.first!.ownerName)
+                    ctx.diagnostics.error(
+                        "KSWIFTK-SEMA-OVERRIDE",
+                        "'\(name)' hides member of supertype '\(parentName)' "
+                            + "and needs 'override' modifier.",
+                        range: memberRange
+                    )
+                    return
+                }
+            }
+        }
+    }
+    
+    private func actuallyOverridesParentMember(
+        memberName: InternedString,
+        ownerSymbol: SymbolID,
+        parentMembers: [OFOInheritedMember],
+        ctx: OpenFinalOverrideContext
+    ) -> Bool {
+        let childOverloads = childFunctions(named: memberName, in: ownerSymbol, ctx: ctx)
+
+        for childID in childOverloads {
+            guard let currentSignature = ctx.symbols.functionSignature(for: childID) else { continue }
+            let currentFuncType = ctx.types.make(.functionType(FunctionType(
+                params: currentSignature.parameterTypes,
+                returnType: currentSignature.returnType,
+                isSuspend: currentSignature.isSuspend,
+                nullability: .nonNull
+            )))
+            guard case let .functionType(currentFunctionType) = ctx.types.kind(of: currentFuncType) else {
+                continue
+            }
+            for parent in parentMembers {
+                guard let parentSignature = ctx.symbols.functionSignature(for: parent.memberID) else {
+                    continue
+                }
+                let parentFuncType = ctx.types.make(.functionType(FunctionType(
+                    params: parentSignature.parameterTypes,
+                    returnType: parentSignature.returnType,
+                    isSuspend: parentSignature.isSuspend,
+                    nullability: .nonNull
+                )))
+                guard case let .functionType(parentFunctionType) = ctx.types.kind(of: parentFuncType) else {
+                    continue
+                }
+                if areSignaturesCompatible(current: currentFunctionType, parent: parentFunctionType, ctx: ctx) {
+                    return true
+                }
+            }
         }
 
-        guard isMemberOverridable(parentSym, parent: parent) else {
-            return
-        }
-
-        let name = ctx.interner.resolve(memberName)
-        let ownerName = ctx.interner.resolve(parent.ownerName)
-        ctx.diagnostics.error(
-            "KSWIFTK-SEMA-OVERRIDE",
-            "'\(name)' hides member of supertype '\(ownerName)' "
-                + "and needs 'override' modifier.",
-            range: memberRange
+        return false
+    }
+    
+    // MARK: - Helper: FunctionSignature to FunctionType conversion
+    
+    private func functionType(from signature: FunctionSignature) -> FunctionType {
+        return FunctionType(
+            contextReceivers: [],
+            receiver: signature.receiverType,
+            params: signature.parameterTypes,
+            returnType: signature.returnType,
+            isSuspend: signature.isSuspend,
+            nullability: .nonNull, // Default nullability
+            throws: [] // FunctionSignature uses canThrow instead
         )
+    }
+    
+    private func areSignaturesCompatible(
+        current: FunctionType,
+        parent: FunctionType,
+        ctx: OpenFinalOverrideContext
+    ) -> Bool {
+        // Check parameter count
+        guard current.params.count == parent.params.count else { return false }
+        
+        // Parameter types: Kotlin override uses contravariance in the declared parameter types.
+        for (currentParam, parentParam) in zip(current.params, parent.params) {
+            if !ctx.types.isSubtype(parentParam, currentParam) {
+                return false
+            }
+        }
+        
+        // Check return type covariance (child can be subtype of parent)
+        if !ctx.types.isSubtype(current.returnType, parent.returnType) {
+            return false
+        }
+        
+        // Check receiver type (if present)
+        if let currentReceiver = current.receiver,
+           let parentReceiver = parent.receiver {
+            if currentReceiver != parentReceiver {
+                return false
+            }
+        } else if current.receiver != nil || parent.receiver != nil {
+            // One has receiver, other doesn't
+            return false
+        }
+        
+        // Note: Exception type covariance would be checked separately
+        // For override detection, we're primarily concerned with the basic signature
+        
+        return true
     }
 
     // MARK: - Overridability check
@@ -907,5 +1286,28 @@ extension DataFlowSemaPhase {
             }
         }
         return results
+    }
+
+    /// Checks if two function signatures match for override purposes
+    private func signaturesMatch(child: FunctionSignature, parent: FunctionSignature, ctx: OpenFinalOverrideContext) -> Bool {
+        // Check parameter count
+        guard child.parameterTypes.count == parent.parameterTypes.count else {
+            return false
+        }
+        
+        // Check parameter types (covariant for return, contravariant for parameters)
+        for (childParam, parentParam) in zip(child.parameterTypes, parent.parameterTypes) {
+            if !ctx.types.isSubtype(parentParam, childParam) {
+                return false
+            }
+        }
+        
+        // Check return type (covariant)
+        if !ctx.types.isSubtype(child.returnType, parent.returnType) {
+            return false
+        }
+        
+        // Check other signature aspects
+        return child.isSuspend == parent.isSuspend
     }
 }

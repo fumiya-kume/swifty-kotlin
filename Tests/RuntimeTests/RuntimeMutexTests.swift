@@ -25,8 +25,37 @@ private final class RuntimeMutexTestState: @unchecked Sendable {
     }
 }
 
-private nonisolated(unsafe) var runtimeMutexTestState = RuntimeMutexTestState()
-private nonisolated(unsafe) var runtimeMutexWithLockObservedLockedInside = false
+private let runtimeMutexTestStateLock = NSLock()
+nonisolated(unsafe) private var _runtimeMutexTestState = RuntimeMutexTestState()
+
+private var runtimeMutexTestState: RuntimeMutexTestState {
+    get {
+        runtimeMutexTestStateLock.lock()
+        defer { runtimeMutexTestStateLock.unlock() }
+        return _runtimeMutexTestState
+    }
+    set {
+        runtimeMutexTestStateLock.lock()
+        defer { runtimeMutexTestStateLock.unlock() }
+        _runtimeMutexTestState = newValue
+    }
+}
+
+private let runtimeMutexWithLockObservedLockedInsideLock = NSLock()
+nonisolated(unsafe) private var _runtimeMutexWithLockObservedLockedInside = false
+
+private var runtimeMutexWithLockObservedLockedInside: Bool {
+    get {
+        runtimeMutexWithLockObservedLockedInsideLock.lock()
+        defer { runtimeMutexWithLockObservedLockedInsideLock.unlock() }
+        return _runtimeMutexWithLockObservedLockedInside
+    }
+    set {
+        runtimeMutexWithLockObservedLockedInsideLock.lock()
+        defer { runtimeMutexWithLockObservedLockedInsideLock.unlock() }
+        _runtimeMutexWithLockObservedLockedInside = newValue
+    }
+}
 
 @_cdecl("runtime_mutex_with_lock_action")
 private func runtime_mutex_with_lock_action(_ envRaw: Int) -> Int {
