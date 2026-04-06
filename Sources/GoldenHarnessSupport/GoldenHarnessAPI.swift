@@ -109,16 +109,34 @@ public enum GoldenHarness {
             return URL(fileURLWithPath: overridePath)
         }
 
-        // Check common build directories
         let cwd = URL(fileURLWithPath: fileManager.currentDirectoryPath)
-        let candidates = [
+        
+        // Check common build directories with platform-specific paths
+        var candidates: [URL] = []
+        
+        #if os(Linux)
+        candidates.append(contentsOf: [
+            cwd.appendingPathComponent(".build/debug/\(workerName)"),
+            cwd.appendingPathComponent(".build/x86_64-unknown-linux-gnu/debug/\(workerName)"),
+            cwd.appendingPathComponent(".build/aarch64-unknown-linux-gnu/debug/\(workerName)")
+        ])
+        #else
+        candidates.append(contentsOf: [
             cwd.appendingPathComponent(".build/debug/\(workerName)"),
             cwd.appendingPathComponent(".build/arm64-apple-macosx/debug/\(workerName)"),
-            URL(fileURLWithPath: CommandLine.arguments[0]).deletingLastPathComponent().appendingPathComponent(workerName)
-        ]
+            cwd.appendingPathComponent(".build/x86_64-apple-macosx/debug/\(workerName)")
+        ])
+        #endif
+        
+        // Add the directory of the current executable as fallback
+        if let currentExecutable = Bundle.main.executablePath {
+            candidates.append(URL(fileURLWithPath: currentExecutable).deletingLastPathComponent().appendingPathComponent(workerName))
+        }
 
-        for candidate in candidates where fileManager.isExecutableFile(atPath: candidate.path) {
-            return candidate
+        for candidate in candidates {
+            if fileManager.isExecutableFile(atPath: candidate.path) {
+                return candidate
+            }
         }
 
         // Search in .build directory as last resort
@@ -136,6 +154,8 @@ public enum GoldenHarness {
             }
         }
 
-        throw GoldenHarnessAPIError.workerExecutableNotFound(workerName)
+        // Provide detailed error information for debugging
+        let searchedPaths = candidates.map { $0.path }.joined(separator: ", ")
+        throw GoldenHarnessAPIError.workerExecutableNotFound("\(workerName) (searched: \(searchedPaths))")
     }
 }
