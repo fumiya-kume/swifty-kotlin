@@ -2,12 +2,12 @@ import Foundation
 @testable import Runtime
 import XCTest
 
-private nonisolated(unsafe) let runtimeReadWriteLockStateLock = NSLock()
-private nonisolated(unsafe) var runtimeReadWriteLockActiveReaders = 0
-private nonisolated(unsafe) var runtimeReadWriteLockMaxReaders = 0
-private nonisolated(unsafe) var runtimeReadWriteLockReadEnteredSemaphore = DispatchSemaphore(value: 0)
-private nonisolated(unsafe) var runtimeReadWriteLockReadReleaseSemaphore = DispatchSemaphore(value: 0)
-private nonisolated(unsafe) var runtimeReadWriteLockWriterEnteredSemaphore = DispatchSemaphore(value: 0)
+private let runtimeReadWriteLockStateLock = NSLock()
+private var runtimeReadWriteLockActiveReaders = 0
+private var runtimeReadWriteLockMaxReaders = 0
+private var runtimeReadWriteLockReadEnteredSemaphore = DispatchSemaphore(value: 0)
+private var runtimeReadWriteLockReadReleaseSemaphore = DispatchSemaphore(value: 0)
+private var runtimeReadWriteLockWriterEnteredSemaphore = DispatchSemaphore(value: 0)
 
 @_cdecl("runtime_read_write_lock_passthrough")
 private func runtime_read_write_lock_passthrough(
@@ -139,8 +139,8 @@ final class RuntimeReadWriteLockLegacyTests: XCTestCase {
     }
 }
 
-nonisolated(unsafe) private var readWriteLockHandle: Int = 0
-nonisolated(unsafe) private var capturedReadClosureRaw: Int = 0
+private var readWriteLockHandle: Int = 0
+private var capturedReadClosureRaw: Int = 0
 
 private let readEchoThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { closureRaw, outThrown in
     capturedReadClosureRaw = closureRaw

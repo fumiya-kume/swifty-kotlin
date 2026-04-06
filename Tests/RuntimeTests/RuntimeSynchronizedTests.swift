@@ -1,9 +1,9 @@
 @testable import Runtime
 import XCTest
 
-private nonisolated(unsafe) var synchronizedCapturedClosureRaw = 0
-private nonisolated(unsafe) var synchronizedNestedFnPtr = 0
-private nonisolated(unsafe) var synchronizedNestedClosureRaw = 0
+private var synchronizedCapturedClosureRaw = 0
+private var synchronizedNestedFnPtr = 0
+private var synchronizedNestedClosureRaw = 0
 
 @_cdecl("runtime_synchronized_success_lambda")
 private func runtime_synchronized_success_lambda(

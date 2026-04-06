@@ -8,7 +8,7 @@ import XCTest
 /// cannot capture context.
 /// Access is safe because the tests run sequentially and the counter is only
 /// mutated from one thread at a time (the producer thread).
-nonisolated(unsafe) private var _lazyTestYieldCounter = 0
+private var _lazyTestYieldCounter = 0
 
 private let stringKeySelector: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     switch value {

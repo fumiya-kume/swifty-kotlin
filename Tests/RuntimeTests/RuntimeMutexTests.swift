@@ -25,8 +25,8 @@ private final class RuntimeMutexTestState: @unchecked Sendable {
     }
 }
 
-private nonisolated(unsafe) var runtimeMutexTestState = RuntimeMutexTestState()
-private nonisolated(unsafe) var runtimeMutexWithLockObservedLockedInside = false
+private var runtimeMutexTestState = RuntimeMutexTestState()
+private var runtimeMutexWithLockObservedLockedInside = false
 
 @_cdecl("runtime_mutex_with_lock_action")
 private func runtime_mutex_with_lock_action(_ envRaw: Int) -> Int {

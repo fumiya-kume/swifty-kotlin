@@ -7,7 +7,7 @@ import XCTest
 
 final class RuntimeHTTPClientTests: IsolatedRuntimeXCTestCase {
     private final class MockURLProtocol: URLProtocol {
-        nonisolated(unsafe) static var handler: ((URLRequest) -> (HTTPURLResponse, Data?, TimeInterval)?)?
+        static var handler: ((URLRequest) -> (HTTPURLResponse, Data?, TimeInterval)?)?
 
         override class func canInit(with request: URLRequest) -> Bool {
             true

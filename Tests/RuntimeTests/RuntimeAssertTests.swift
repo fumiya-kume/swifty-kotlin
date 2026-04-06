@@ -11,7 +11,7 @@ private let lazyMessageReturnsString: @convention(c) (Int, UnsafeMutablePointer<
     }
 }
 
-private nonisolated(unsafe) var assertLazyMessageEvaluations = 0
+private var assertLazyMessageEvaluations = 0
 
 private let lazyMessageCountsEvaluation: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { _, outThrown in
     outThrown?.pointee = 0
