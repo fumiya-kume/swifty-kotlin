@@ -76,11 +76,10 @@ class MyCommandProcessor(
 class MyExtensionRegistrar(override val pluginId: String) : ExtensionRegistrar {
     override fun registerExtension(name: String, kind: String) {
         PluginRegistry.update(pluginId) { m ->
-            val tag = "$kind:$name"
-            val updated = if (m.registeredExtensions.contains(tag)) {
+            val updated = if (m.registeredExtensions.contains("$kind:$name")) {
                 m.registeredExtensions
             } else {
-                m.registeredExtensions + tag
+                m.registeredExtensions + "$kind:$name"
             }
             m.copy(registrarName = name, registeredExtensions = updated)
         }
