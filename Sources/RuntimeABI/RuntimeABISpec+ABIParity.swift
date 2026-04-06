@@ -2046,6 +2046,22 @@ public extension RuntimeABISpec {
             section: "ABIParity"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_clock_now",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_clock_system_now",
+            parameters: [
+
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_singleOrNull",
             parameters: [
                 RuntimeABIParameter(name: "p0", type: .intptr),

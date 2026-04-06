@@ -387,6 +387,8 @@ public extension RuntimeABISpec {
             bridgeSpec("kk_time_mark_minus_duration", section: "Duration", params: ["markRaw", "durationRaw"]),
             bridgeSpec("kk_time_mark_minus_mark", section: "Duration", params: ["lhsRaw", "rhsRaw"]),
             bridgeSpec("kk_time_mark_compare", section: "Duration", params: ["lhsRaw", "rhsRaw"]),
+            bridgeSpec("kk_clock_now", section: "System", params: ["receiver"]),
+            bridgeSpec("kk_clock_system_now", section: "System"),
             bridgeSpec("kk_path_deleteIfExists", section: "FileIO", params: ["pathRaw"]),
             bridgeSpec("kk_path_exists", section: "FileIO", params: ["pathRaw"]),
             bridgeSpec("kk_path_isDirectory", section: "FileIO", params: ["pathRaw"]),
