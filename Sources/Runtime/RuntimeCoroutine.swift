@@ -2292,17 +2292,45 @@ private func runtimeFlowApplyStreamOps(
             
             // 遅延がある場合は実際に待機する
             if intervalMs > 0 {
-                var finalDelayed: [RuntimeFlowEvent] = []
+                let group = DispatchGroup()
                 
-                // 同期的に各イベントの遅延を計算
-                for (index, event) in currentEvents.enumerated() {
-                    let delayedEvent = RuntimeFlowEvent(
-                        value: event.value, 
-                        timestamp: event.timestamp + intervalNs * UInt64(index + 1)
-                    )
-                    finalDelayed.append(delayedEvent)
+                // ThreadSafeなコンテナを使用
+                class DelayedEventsContainer: @unchecked Sendable {
+                    private var events: [RuntimeFlowEvent] = []
+                    private let lock = NSLock()
+                    
+                    func append(_ event: RuntimeFlowEvent) {
+                        lock.lock()
+                        events.append(event)
+                        lock.unlock()
+                    }
+                    
+                    func getAll() -> [RuntimeFlowEvent] {
+                        lock.lock()
+                        let result = events
+                        lock.unlock()
+                        return result
+                    }
                 }
-                delayed = finalDelayed
+                
+                let container = DelayedEventsContainer()
+                
+                // 並列実行で各イベントの遅延を計算
+                for (index, event) in currentEvents.enumerated() {
+                    group.enter()
+                    DispatchQueue.global().asyncAfter(deadline: .now() + .milliseconds(intervalMs * index)) {
+                        let delayedEvent = RuntimeFlowEvent(
+                            value: event.value, 
+                            timestamp: event.timestamp + intervalNs * UInt64(index + 1)
+                        )
+                        container.append(delayedEvent)
+                        group.leave()
+                    }
+                }
+                group.wait()
+                
+                // 並列実行が完了したら、結果をメインのdelayedにコピー
+                delayed = container.getAll()
             } else {  // 遅延がない場合はタイムスタンプのみ操作
                 for event in currentEvents {
                     delayed.append(RuntimeFlowEvent(value: event.value, timestamp: event.timestamp + intervalNs))
