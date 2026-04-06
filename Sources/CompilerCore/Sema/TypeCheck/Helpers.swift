@@ -126,7 +126,8 @@ struct TypeCheckHelpers {
         let candidates = collectMemberFunctionCandidates(
             named: iteratorName,
             receiverType: nonNullType,
-            sema: sema
+            sema: sema,
+            interner: interner
         ).filter { candidate in
             guard let symbol = sema.symbols.symbol(candidate),
                   symbol.flags.contains(.operatorFunction),
@@ -161,7 +162,8 @@ struct TypeCheckHelpers {
         let nextCandidates = collectMemberFunctionCandidates(
             named: nextName,
             receiverType: returnType,
-            sema: sema
+            sema: sema,
+            interner: interner
         )
         if let nextCandidate = nextCandidates.first,
            let nextSignature = sema.symbols.functionSignature(for: nextCandidate)

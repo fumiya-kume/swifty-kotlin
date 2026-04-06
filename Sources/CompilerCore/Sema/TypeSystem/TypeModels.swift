@@ -100,6 +100,7 @@ public struct FunctionType: Hashable, Sendable {
     public let returnType: TypeID
     public let isSuspend: Bool
     public let nullability: Nullability
+    public let `throws`: [TypeID]
 
     public init(
         contextReceivers: [TypeID] = [],
@@ -107,7 +108,8 @@ public struct FunctionType: Hashable, Sendable {
         params: [TypeID],
         returnType: TypeID,
         isSuspend: Bool = false,
-        nullability: Nullability = .nonNull
+        nullability: Nullability = .nonNull,
+        `throws`: [TypeID] = []
     ) {
         self.contextReceivers = contextReceivers
         self.receiver = receiver
@@ -115,6 +117,7 @@ public struct FunctionType: Hashable, Sendable {
         self.returnType = returnType
         self.isSuspend = isSuspend
         self.nullability = nullability
+        self.`throws` = `throws`
     }
 }
 
