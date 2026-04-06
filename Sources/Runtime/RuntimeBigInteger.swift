@@ -61,6 +61,10 @@ struct BigIntValue: Equatable {
         Int64(stringValue) ?? 0
     }
 
+    func toByteArray() -> [UInt8] {
+        return twosComplementBytes()
+    }
+
     // MARK: - Comparison helpers
 
     /// Returns -1, 0, or 1 for absolute value comparison (no sign consideration)
@@ -465,6 +469,100 @@ struct BigIntValue: Equatable {
         return result
     }
 
+    func modInverse(_ modulus: BigIntValue) throws -> BigIntValue {
+        guard modulus.stringValue != "0" else {
+            throw NSError(domain: "ArithmeticException", code: 0, userInfo: [NSLocalizedDescriptionKey: "Modulus must be non-zero"])
+        }
+        
+        let a = self.abs()
+        let m = modulus.abs()
+        
+        // Extended Euclidean Algorithm
+        var oldR = a
+        var r = m
+        var oldS = BigIntValue(string: "1")
+        var s = BigIntValue(string: "0")
+        var oldT = BigIntValue(string: "0")
+        var t = BigIntValue(string: "1")
+        
+        while r.stringValue != "0" {
+            let quotient = oldR.divide(r)
+            let tempR = r
+            r = oldR.subtract(quotient.multiply(r))
+            oldR = tempR
+            
+            let tempS = s
+            s = oldS.subtract(quotient.multiply(s))
+            oldS = tempS
+            
+            let tempT = t
+            t = oldT.subtract(quotient.multiply(t))
+            oldT = tempT
+        }
+        
+        // Check if inverse exists
+        if oldR.stringValue != "1" {
+            throw NSError(domain: "ArithmeticException", code: 0, userInfo: [NSLocalizedDescriptionKey: "BigInteger has no modular inverse"])
+        }
+        
+        var result = oldS
+        if result.isNegative {
+            result = result.add(m)
+        }
+        
+        // Handle sign of original number
+        if isNegative {
+            result = result.negate()
+            result = result.add(m)
+        }
+        
+        return result
+    }
+
+    func modPow(_ exponent: BigIntValue, _ modulus: BigIntValue) throws -> BigIntValue {
+        guard modulus.stringValue != "0" else {
+            fatalError("ArithmeticException: Modulus must be non-zero")
+        }
+        
+        if exponent.stringValue == "0" {
+            // a^0 mod m = 1 mod m
+            // If modulus is 1, then 1 mod 1 = 0
+            if modulus.stringValue == "1" {
+                return BigIntValue(string: "0")
+            } else {
+                return BigIntValue(string: "1")
+            }
+        }
+        
+        if exponent.isNegative {
+            let inv = try modInverse(modulus)
+            return try inv.modPow(exponent.negate(), modulus)
+        }
+        
+        var result = BigIntValue(string: "1")
+        var base = self.mod(modulus)
+        var exp = exponent
+        
+        while exp.stringValue != "0" {
+            if exp.and(BigIntValue(string: "1")).stringValue != "0" {
+                result = result.multiply(base).mod(modulus)
+            }
+            base = base.multiply(base).mod(modulus)
+            exp = exp.shiftRight(1)
+        }
+        
+        return result
+    }
+
+    private func mod(_ modulus: BigIntValue) -> BigIntValue {
+        let aDigits = BigIntValue.stringToDigits(absString)
+        let bDigits = BigIntValue.stringToDigits(modulus.absString)
+        let (_, remainderDigits) = BigIntValue.divideDigits(aDigits, bDigits)
+        let remainderStr = BigIntValue.digitsToString(remainderDigits)
+        let resultNeg = isNegative && remainderStr != "0"
+        return BigIntValue(string: resultNeg ? "-" + remainderStr : remainderStr)
+    }
+
     func and(_ other: BigIntValue) -> BigIntValue {
         let lhsBytes = twosComplementBytes()
         let rhsBytes = other.twosComplementBytes()
@@ -473,6 +571,104 @@ struct BigIntValue: Equatable {
         let rhsExtended = BigIntValue.signExtended(rhsBytes, to: width)
         let resultBytes = zip(lhsExtended, rhsExtended).map { $0 & $1 }
         return BigIntValue.fromTwosComplementBytes(resultBytes)
+    }
+
+    func or(_ other: BigIntValue) -> BigIntValue {
+        let lhsBytes = twosComplementBytes()
+        let rhsBytes = other.twosComplementBytes()
+        let width = max(lhsBytes.count, rhsBytes.count)
+        let lhsExtended = BigIntValue.signExtended(lhsBytes, to: width)
+        let rhsExtended = BigIntValue.signExtended(rhsBytes, to: width)
+        let resultBytes = zip(lhsExtended, rhsExtended).map { $0 | $1 }
+        return BigIntValue.fromTwosComplementBytes(resultBytes)
+    }
+
+    func xor(_ other: BigIntValue) -> BigIntValue {
+        let lhsBytes = twosComplementBytes()
+        let rhsBytes = other.twosComplementBytes()
+        let width = max(lhsBytes.count, rhsBytes.count)
+        let lhsExtended = BigIntValue.signExtended(lhsBytes, to: width)
+        let rhsExtended = BigIntValue.signExtended(rhsBytes, to: width)
+        let resultBytes = zip(lhsExtended, rhsExtended).map { $0 ^ $1 }
+        return BigIntValue.fromTwosComplementBytes(resultBytes)
+    }
+
+    func not() -> BigIntValue {
+        let bytes = twosComplementBytes()
+        let invertedBytes = bytes.map { ~$0 }
+        return BigIntValue.fromTwosComplementBytes(invertedBytes)
+    }
+
+    func shiftLeft(_ n: Int) -> BigIntValue {
+        if n == 0 { return self }
+        if n < 0 { return shiftRight(-n) }
+        
+        let bytes = twosComplementBytes()
+        let totalShiftBits = n
+        let byteShift = totalShiftBits / 8
+        let bitShift = totalShiftBits % 8
+        
+        var result = [UInt8](repeating: 0, count: bytes.count + byteShift + 1)
+        
+        for i in 0..<bytes.count {
+            let sourceIdx = i
+            let targetIdx = i + byteShift
+            
+            var value = UInt16(bytes[sourceIdx]) << UInt16(bitShift)
+            result[targetIdx] |= UInt8(value & 0xFF)
+            
+            if bitShift > 0 && targetIdx + 1 < result.count {
+                result[targetIdx + 1] |= UInt8((value >> 8) & 0xFF)
+            }
+        }
+        
+        return BigIntValue.fromTwosComplementBytes(result)
+    }
+
+    func shiftRight(_ n: Int) -> BigIntValue {
+        if n == 0 { return self }
+        if n < 0 { return shiftLeft(-n) }
+        
+        let bytes = twosComplementBytes()
+        let totalShiftBits = n
+        let byteShift = totalShiftBits / 8
+        let bitShift = totalShiftBits % 8
+        
+        if byteShift >= bytes.count {
+            if bytes.first.map({ $0 & 0x80 != 0 }) ?? false {
+                return BigIntValue(string: "-1")
+            } else {
+                return .zero
+            }
+        }
+        
+        var result = [UInt8](repeating: 0, count: bytes.count - byteShift)
+        let isNegative = bytes.first.map({ $0 & 0x80 != 0 }) ?? false
+        
+        for i in 0..<result.count {
+            let sourceIdx = i + byteShift
+            let targetIdx = i
+            
+            var value = UInt16(bytes[sourceIdx]) >> UInt16(bitShift)
+            
+            if bitShift > 0 && sourceIdx + 1 < bytes.count {
+                value |= UInt16(bytes[sourceIdx + 1]) << UInt16(8 - bitShift)
+            }
+            
+            result[targetIdx] = UInt8(value & 0xFF)
+        }
+        
+        if isNegative && !result.isEmpty {
+            let signExtend: UInt8 = 0xFF
+            for i in stride(from: result.count - 1, through: 0, by: -1) {
+                if result[i] & 0x80 != 0 {
+                    break
+                }
+                result[i] |= signExtend
+            }
+        }
+        
+        return BigIntValue.fromTwosComplementBytes(result)
     }
 
 }
@@ -657,6 +853,134 @@ public func kk_biginteger_and(_ selfRaw: Int, _ otherRaw: Int) -> Int {
     }
     let result = selfBox.value.and(otherBox.value)
     return registerRuntimeObject(RuntimeBigIntegerBox(value: result))
+}
+
+// MARK: - or()
+
+@_cdecl("kk_biginteger_or")
+public func kk_biginteger_or(_ selfRaw: Int, _ otherRaw: Int) -> Int {
+    guard let selfBox = runtimeBigIntegerBox(from: selfRaw),
+          let otherBox = runtimeBigIntegerBox(from: otherRaw)
+    else {
+        return kk_biginteger_valueOf(0)
+    }
+    let result = selfBox.value.or(otherBox.value)
+    return registerRuntimeObject(RuntimeBigIntegerBox(value: result))
+}
+
+// MARK: - xor()
+
+@_cdecl("kk_biginteger_xor")
+public func kk_biginteger_xor(_ selfRaw: Int, _ otherRaw: Int) -> Int {
+    guard let selfBox = runtimeBigIntegerBox(from: selfRaw),
+          let otherBox = runtimeBigIntegerBox(from: otherRaw)
+    else {
+        return kk_biginteger_valueOf(0)
+    }
+    let result = selfBox.value.xor(otherBox.value)
+    return registerRuntimeObject(RuntimeBigIntegerBox(value: result))
+}
+
+// MARK: - not()
+
+@_cdecl("kk_biginteger_not")
+public func kk_biginteger_not(_ selfRaw: Int) -> Int {
+    guard let selfBox = runtimeBigIntegerBox(from: selfRaw) else {
+        return kk_biginteger_valueOf(0)
+    }
+    let result = selfBox.value.not()
+    return registerRuntimeObject(RuntimeBigIntegerBox(value: result))
+}
+
+// MARK: - shiftLeft()
+
+@_cdecl("kk_biginteger_shiftLeft")
+public func kk_biginteger_shiftLeft(_ selfRaw: Int, _ n: Int) -> Int {
+    guard let selfBox = runtimeBigIntegerBox(from: selfRaw) else {
+        return kk_biginteger_valueOf(0)
+    }
+    let result = selfBox.value.shiftLeft(n)
+    return registerRuntimeObject(RuntimeBigIntegerBox(value: result))
+}
+
+// MARK: - shiftRight()
+
+@_cdecl("kk_biginteger_shiftRight")
+public func kk_biginteger_shiftRight(_ selfRaw: Int, _ n: Int) -> Int {
+    guard let selfBox = runtimeBigIntegerBox(from: selfRaw) else {
+        return kk_biginteger_valueOf(0)
+    }
+    let result = selfBox.value.shiftRight(n)
+    return registerRuntimeObject(RuntimeBigIntegerBox(value: result))
+}
+
+// MARK: - modInverse()
+
+@_cdecl("kk_biginteger_modInverse")
+public func kk_biginteger_modInverse(_ selfRaw: Int, _ modulusRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let selfBox = runtimeBigIntegerBox(from: selfRaw),
+          let modulusBox = runtimeBigIntegerBox(from: modulusRaw)
+    else {
+        return kk_biginteger_valueOf(0)
+    }
+    if modulusBox.value.stringValue == "0" {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArithmeticException: Modulus must be non-zero")
+        return 0
+    }
+    
+    do {
+        let result = try selfBox.value.modInverse(modulusBox.value)
+        return registerRuntimeObject(RuntimeBigIntegerBox(value: result))
+    } catch let error as NSError {
+        let errorMessage = error.userInfo[NSLocalizedDescriptionKey] as? String ?? "ArithmeticException: BigInteger has no modular inverse"
+        outThrown?.pointee = runtimeAllocateThrowable(message: errorMessage)
+        return 0
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArithmeticException: BigInteger has no modular inverse")
+        return 0
+    }
+}
+
+// MARK: - modPow()
+
+@_cdecl("kk_biginteger_modPow")
+public func kk_biginteger_modPow(_ selfRaw: Int, _ exponentRaw: Int, _ modulusRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let selfBox = runtimeBigIntegerBox(from: selfRaw),
+          let exponentBox = runtimeBigIntegerBox(from: exponentRaw),
+          let modulusBox = runtimeBigIntegerBox(from: modulusRaw)
+    else {
+        return kk_biginteger_valueOf(0)
+    }
+    if modulusBox.value.stringValue == "0" {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArithmeticException: Modulus must be non-zero")
+        return 0
+    }
+    
+    do {
+        let result = try selfBox.value.modPow(exponentBox.value, modulusBox.value)
+        return registerRuntimeObject(RuntimeBigIntegerBox(value: result))
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: error.localizedDescription)
+        return 0
+    }
+}
+
+// MARK: - toByteArray()
+
+@_cdecl("kk_biginteger_toByteArray")
+public func kk_biginteger_toByteArray(_ selfRaw: Int) -> Int {
+    guard let selfBox = runtimeBigIntegerBox(from: selfRaw) else {
+        let box = RuntimeArrayBox(length: 0)
+        return registerRuntimeObject(box)
+    }
+    let byteArray = selfBox.value.toByteArray()
+    let box = RuntimeArrayBox(length: byteArray.count)
+    for (index, byte) in byteArray.enumerated() {
+        box.elements[index] = Int(Int8(bitPattern: byte))
+    }
+    return registerRuntimeObject(box)
 }
 
 // MARK: - toInt()
