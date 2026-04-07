@@ -1105,6 +1105,65 @@ public func kk_string_toBooleanStrict(_ strRaw: Int, _ outThrown: UnsafeMutableP
     }
 }
 
+@_cdecl("kk_string_toBooleanStrictOrNull")
+public func kk_string_toBooleanStrictOrNull(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    switch source {
+    case "true":
+        return 1
+    case "false":
+        return 0
+    default:
+        return runtimeNullSentinelInt
+    }
+}
+
+@_cdecl("kk_string_toShort")
+public func kk_string_toShort(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard let value = Int16(source) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "NumberFormatException: For input string: \"\(source)\""
+        )
+        return 0
+    }
+    return Int(value)
+}
+
+@_cdecl("kk_string_toShortOrNull")
+public func kk_string_toShortOrNull(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard let value = Int16(source) else {
+        return runtimeNullSentinelInt
+    }
+    return Int(value)
+}
+
+@_cdecl("kk_string_toByte")
+public func kk_string_toByte(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard let value = Int8(source) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "NumberFormatException: For input string: \"\(source)\""
+        )
+        return 0
+    }
+    return Int(value)
+}
+
+@_cdecl("kk_string_toByteOrNull")
+public func kk_string_toByteOrNull(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard let value = Int8(source) else {
+        return runtimeNullSentinelInt
+    }
+    return Int(value)
+}
+
 @_cdecl("kk_string_lines")
 public func kk_string_lines(_ strRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
