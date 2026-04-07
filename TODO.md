@@ -207,7 +207,7 @@
 3. **CI連携**: 新規テストはCIで自動実行されるように設定
 4. **ドキュメント化**: 各テストケースの目的と期待結果を明記
 
-- [ ] STDLIB-PERF-154: メモリ管理基本実装
+- [x] STDLIB-PERF-154: メモリ管理基本実装
   - **仕様**: メモリ管理の基本的な機能
   - **実装内容**:
     - メモリ使用量: Runtime.getRuntime().totalMemory()
@@ -215,7 +215,7 @@
     - ガベージコレクション: System.gc()
     - メモリリーク検出: メモリリークの検出ツール
     - パフォーマンス監視: メモリ使用量の監視
-  - **現状**: メモリ管理は未実装
+  - **現状**: 実装済み (`Sources/Runtime/RuntimeMemory.swift`)
   - **関連ファイル**: `RuntimeMemory.swift`
   - **テストケース**: `Scripts/diff_cases/memory_management.kt`
 
