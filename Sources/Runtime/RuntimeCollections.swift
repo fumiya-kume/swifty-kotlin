@@ -1627,6 +1627,116 @@ public func kk_list_toByteArray(_ listRaw: Int) -> Int {
     return registerRuntimeObject(box)
 }
 
+// MARK: - Primitive array to List conversions
+
+/// IntArray.toList(): List<Int>
+@_cdecl("kk_intArray_toList")
+public func kk_intArray_toList(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_intArray_toList")
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
+}
+
+/// LongArray.toList(): List<Long>
+@_cdecl("kk_longArray_toList")
+public func kk_longArray_toList(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_longArray_toList")
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
+}
+
+/// ByteArray.toList(): List<Byte>
+@_cdecl("kk_byteArray_toList")
+public func kk_byteArray_toList(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_byteArray_toList")
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
+}
+
+/// ShortArray.toList(): List<Short>
+@_cdecl("kk_shortArray_toList")
+public func kk_shortArray_toList(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_shortArray_toList")
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
+}
+
+/// UIntArray.toList(): List<UInt>
+@_cdecl("kk_uIntArray_toList")
+public func kk_uIntArray_toList(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_uIntArray_toList")
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
+}
+
+/// ULongArray.toList(): List<ULong>
+@_cdecl("kk_uLongArray_toList")
+public func kk_uLongArray_toList(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_uLongArray_toList")
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
+}
+
+/// DoubleArray.toList(): List<Double>
+@_cdecl("kk_doubleArray_toList")
+public func kk_doubleArray_toList(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_doubleArray_toList")
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
+}
+
+/// FloatArray.toList(): List<Float>
+@_cdecl("kk_floatArray_toList")
+public func kk_floatArray_toList(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_floatArray_toList")
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
+}
+
+/// BooleanArray.toList(): List<Boolean>
+@_cdecl("kk_booleanArray_toList")
+public func kk_booleanArray_toList(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_booleanArray_toList")
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
+}
+
+/// CharArray.toList(): List<Char>
+@_cdecl("kk_charArray_toList")
+public func kk_charArray_toList(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_charArray_toList")
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
+}
+
+/// UByteArray.toList(): List<UByte>
+@_cdecl("kk_uByteArray_toList")
+public func kk_uByteArray_toList(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_uByteArray_toList")
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
+}
+
+/// UShortArray.toList(): List<UShort>
+@_cdecl("kk_uShortArray_toList")
+public func kk_uShortArray_toList(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_uShortArray_toList")
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
+}
+
 // MARK: - ArrayDeque Functions (STDLIB-240)
 
 @_cdecl("kk_arraydeque_new")
