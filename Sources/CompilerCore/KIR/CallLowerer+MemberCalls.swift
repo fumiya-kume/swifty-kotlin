@@ -161,7 +161,8 @@ extension CallLowerer {
         "count", "iterator",
         "map", "filter", "filterNot", "mapNotNull", "filterNotNull", "forEach", "flatMap",
         "any", "none", "all",
-        "fold", "foldIndexed", "reduce", "reduceIndexed", "reduceIndexedOrNull",
+        "fold", "foldIndexed", "foldRight", "foldRightIndexed",
+        "reduce", "reduceRight", "reduceIndexed", "reduceIndexedOrNull",
         "scan", "scanIndexed", "runningFold", "runningFoldIndexed",
         "runningReduce", "runningReduceIndexed",
         "groupBy", "groupingBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
@@ -3774,7 +3775,7 @@ extension CallLowerer {
     ) -> Bool {
         [
             "map", "filter", "mapNotNull", "forEach", "flatMap",
-            "any", "none", "all", "fold", "reduce", "scan", "scanIndexed",
+            "any", "none", "all", "fold", "foldRight", "reduce", "reduceRight", "scan", "scanIndexed",
             "runningFold", "runningFoldIndexed", "runningReduce", "runningReduceIndexed", "groupBy", "groupingBy",
             "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate",
@@ -3784,7 +3785,7 @@ extension CallLowerer {
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
-            "indexOfFirst", "indexOfLast", "binarySearch", "reduceIndexed", "reduceIndexedOrNull", "foldIndexed",
+            "indexOfFirst", "indexOfLast", "binarySearch", "reduceIndexed", "reduceIndexedOrNull", "foldIndexed", "foldRightIndexed",
             "sortedByDescending", "sortedWith", "partition", "zipWithNext",
             "takeWhile", "dropWhile", "filterNot", "findLast",
             "replaceFirstChar",
@@ -5166,7 +5167,9 @@ extension CallLowerer {
             interner.intern("kk_list_maxOfWith"),
             interner.intern("kk_list_minOfWith"),
             interner.intern("kk_list_fold"),
+            interner.intern("kk_list_foldRight"),
             interner.intern("kk_list_reduce"),
+            interner.intern("kk_list_reduceRight"),
             interner.intern("kk_list_reduceOrNull"),
             interner.intern("kk_list_scan"),
             interner.intern("kk_list_runningFold"),
@@ -5174,6 +5177,7 @@ extension CallLowerer {
             interner.intern("kk_list_scanReduce"),
             interner.intern("kk_list_filterIndexed"),
             interner.intern("kk_list_foldIndexed"),
+            interner.intern("kk_list_foldRightIndexed"),
             interner.intern("kk_list_reduceIndexed"),
             interner.intern("kk_list_reduceIndexedOrNull"),
             interner.intern("kk_list_runningFoldIndexed"),
@@ -6006,6 +6010,12 @@ extension CallLowerer {
                     : "kk_list_binarySearch")
             case "reduceIndexedOrNull":
                 return interner.intern("kk_list_reduceIndexedOrNull")
+            case "foldRight":
+                return interner.intern("kk_list_foldRight")
+            case "foldRightIndexed":
+                return interner.intern("kk_list_foldRightIndexed")
+            case "reduceRight":
+                return interner.intern("kk_list_reduceRight")
             case "runningFoldIndexed":
                 return interner.intern("kk_list_runningFoldIndexed")
             case "runningReduceIndexed":

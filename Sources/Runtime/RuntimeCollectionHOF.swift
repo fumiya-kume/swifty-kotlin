@@ -660,6 +660,54 @@ public func kk_list_reduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ ou
     return acc
 }
 
+@_cdecl("kk_list_foldRight")
+public func kk_list_foldRight(
+    _ listRaw: Int, _ initial: Int, _ fnPtr: Int, _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    var acc = initial
+    for elem in list.elements.reversed() {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: elem, rhs: acc, outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    }
+    return acc
+}
+
+@_cdecl("kk_list_foldRightIndexed")
+public func kk_list_foldRightIndexed(
+    _ listRaw: Int, _ initial: Int, _ fnPtr: Int, _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    var acc = initial
+    for idx in stride(from: list.elements.count - 1, through: 0, by: -1) {
+        let elem = list.elements[idx]
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(fnPtr: fnPtr, closureRaw: closureRaw, arg1: idx, arg2: elem, arg3: acc, outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    }
+    return acc
+}
+
+@_cdecl("kk_list_reduceRight")
+public func kk_list_reduceRight(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "Empty collection can't be reduced."), outThrown)
+    }
+    var acc = maybeUnbox(list.elements[list.elements.count - 1])
+    for idx in stride(from: list.elements.count - 2, through: 0, by: -1) {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: list.elements[idx], rhs: acc, outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    }
+    return acc
+}
+
 // MARK: - List scan / runningFold / runningReduce (STDLIB-442)
 
 @_cdecl("kk_list_scan")
