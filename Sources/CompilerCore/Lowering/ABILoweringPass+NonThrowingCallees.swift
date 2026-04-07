@@ -132,6 +132,7 @@ extension ABILoweringPass {
             interner.intern("kk_string_firstOrNull"),
             interner.intern("kk_string_lastOrNull"),
             interner.intern("kk_string_singleOrNull"),
+            interner.intern("kk_string_getOrNull"),
             interner.intern("kk_string_prependIndent_default"),
             interner.intern("kk_string_prependIndent"),
             interner.intern("kk_string_replaceIndent_default"),

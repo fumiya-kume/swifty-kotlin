@@ -949,6 +949,15 @@ public func kk_string_singleOrNull(_ strRaw: Int) -> Int {
     return kk_box_char(Int(codeUnits[0]))
 }
 
+@_cdecl("kk_string_getOrNull")
+public func kk_string_getOrNull(_ strRaw: Int, _ index: Int) -> Int {
+    let scalars = runtimeStringScalars(strRaw)
+    guard index >= 0, index < scalars.count else {
+        return runtimeNullSentinelInt
+    }
+    return kk_box_char(Int(scalars[index].value))
+}
+
 // MARK: - STDLIB-187: isEmpty / isNotEmpty / isBlank / isNotBlank
 
 @_cdecl("kk_string_isEmpty")
