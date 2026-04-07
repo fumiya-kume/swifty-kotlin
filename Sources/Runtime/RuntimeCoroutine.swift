@@ -2140,6 +2140,8 @@ private func runtimeFlowApplyElementOp(
             state.dropWhileFinished[index] = true
         case .catchHandler, .retry, .retryWhen, .onErrorReturn, .onErrorResume:
             continue
+        case .onCompletion:
+            continue
         }
     }
     if runtimeFlowElementStateHasExhaustedTake(state) {
@@ -2631,6 +2633,9 @@ private func runtimeFlowApplyOpsLazy(
             continue
 
         case .buffer, .conflate, .flowOn, .debounce, .sample, .delayEach:
+            continue
+
+        case .onCompletion:
             continue
         }
     }

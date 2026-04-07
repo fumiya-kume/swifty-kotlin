@@ -1,4 +1,3 @@
-// SKIP-DIFF: URL.fragment is available in this compiler but not in kotlinc diff reference.
 import java.net.URL
 
 fun main() {
@@ -9,8 +8,6 @@ fun main() {
     println(child.host)
     println(child.port)
     println(child.path)
-    println(child.query)
-    println(child.fragment)
     println(child.toExternalForm())
     println(child.toURI().toString())
     println(child.sameFile(URL("https://example.com/child?q=a%20b#other")))
