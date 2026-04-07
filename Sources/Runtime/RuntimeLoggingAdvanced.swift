@@ -160,6 +160,9 @@ final class RuntimeRollingFileAppenderBox: RuntimeAppender, @unchecked Sendable 
     }
 
     private func rotate() {
+        // delete the oldest generation so the shift below can succeed
+        let oldest = rolledPath(generation: maxFiles - 1)
+        _ = try? FileManager.default.removeItem(atPath: oldest)
         // shift old generations
         for i in stride(from: maxFiles - 1, through: 1, by: -1) {
             let old = rolledPath(generation: i - 1)
