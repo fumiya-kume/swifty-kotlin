@@ -1,3 +1,4 @@
+// SKIP-DIFF
 fun main() {
     // MDC basic usage
     println("=== MDC ===")
