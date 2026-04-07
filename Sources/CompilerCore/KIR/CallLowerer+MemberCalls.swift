@@ -2769,7 +2769,13 @@ extension CallLowerer {
                         || calleeStr == "indexOfFirst"
                         || calleeStr == "indexOfLast"
                         || calleeStr == "partition"
-                    let stringHOFThrownResult = stringHOFCanThrow
+                    // Only `partition` captures the thrown result into a register so the
+                    // caller can inspect it.  All other HOFs propagate exceptions through
+                    // the standard thrown-channel codegen path (thrownResult == nil),
+                    // which emits an early return when the channel is non-zero.  Setting
+                    // thrownResult to non-nil for those HOFs would silently swallow the
+                    // exception instead of propagating it.
+                    let stringHOFThrownResult: KIRExprID? = calleeStr == "partition"
                         ? arena.appendExpr(
                             .temporary(Int32(arena.expressions.count)),
                             type: sema.types.nullableAnyType
