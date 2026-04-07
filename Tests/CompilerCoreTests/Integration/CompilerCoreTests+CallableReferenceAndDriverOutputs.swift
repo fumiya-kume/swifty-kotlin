@@ -369,19 +369,13 @@ extension CompilerCoreTests {
         defer { try? FileManager.default.removeItem(at: outputURL) }
 
         try withTemporaryFile(contents: source) { tempSourcePath in
-            let options = CompilerOptions(
+            let options = makeTestOptions(
                 moduleName: "ObjTest",
                 inputs: [tempSourcePath],
                 outputPath: outputURL.path,
-                emit: .object,
-                target: defaultTargetTriple()
+                emit: .object
             )
-            let driver = CompilerDriver(
-                version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
-                kotlinVersion: .v2_3_10
-            )
-
-            let exitCode = driver.run(options: options)
+            let exitCode = makeTestDriver().run(options: options)
             XCTAssertEqual(exitCode, 0)
             let data = try Data(contentsOf: outputURL)
             XCTAssertGreaterThanOrEqual(data.count, 4)
@@ -400,19 +394,13 @@ extension CompilerCoreTests {
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
 
         try withTemporaryFile(contents: source) { tempSourcePath in
-            let options = CompilerOptions(
+            let options = makeTestOptions(
                 moduleName: "ExeTest",
                 inputs: [tempSourcePath],
                 outputPath: outputURL.path,
-                emit: .executable,
-                target: defaultTargetTriple()
+                emit: .executable
             )
-            let driver = CompilerDriver(
-                version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
-                kotlinVersion: .v2_3_10
-            )
-
-            let exitCode = driver.run(options: options)
+            let exitCode = makeTestDriver().run(options: options)
             XCTAssertEqual(exitCode, 1)
         }
     }

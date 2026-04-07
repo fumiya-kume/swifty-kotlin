@@ -13,13 +13,13 @@ final class SmokeTests: XCTestCase {
                 try? fileManager.removeItem(atPath: outputBase + ".kir")
             }
 
-            let options = makeOptions(
+            let options = makeTestOptions(
                 moduleName: "SmokeKir",
                 inputs: [path],
                 outputPath: outputBase,
                 emit: .kirDump
             )
-            let result = makeDriver().runForTesting(options: options)
+            let result = makeTestDriver().runForTesting(options: options)
 
             XCTAssertEqual(result.exitCode, 0)
             XCTAssertFalse(result.diagnostics.contains(where: { $0.severity == .error }))
@@ -38,13 +38,13 @@ final class SmokeTests: XCTestCase {
                 try? fileManager.removeItem(atPath: outputBase + ".o")
             }
 
-            let options = makeOptions(
+            let options = makeTestOptions(
                 moduleName: "SmokeMissingMain",
                 inputs: [path],
                 outputPath: outputBase,
                 emit: .executable
             )
-            let result = makeDriver().runForTesting(options: options)
+            let result = makeTestDriver().runForTesting(options: options)
 
             XCTAssertEqual(result.exitCode, 1)
             XCTAssertTrue(result.diagnostics.contains(where: { $0.code == "KSWIFTK-LINK-0002" }))
@@ -65,13 +65,13 @@ final class SmokeTests: XCTestCase {
                 try? fileManager.removeItem(atPath: outputBase + ".kir")
             }
 
-            let options = makeOptions(
+            let options = makeTestOptions(
                 moduleName: "SmokeSema",
                 inputs: [path],
                 outputPath: outputBase,
                 emit: .kirDump
             )
-            let result = makeDriver().runForTesting(options: options)
+            let result = makeTestDriver().runForTesting(options: options)
 
             XCTAssertEqual(result.exitCode, 1)
             XCTAssertTrue(result.diagnostics.contains(where: { $0.severity == .error }))
@@ -93,13 +93,13 @@ final class SmokeTests: XCTestCase {
             try? FileManager.default.removeItem(atPath: outputBase + ".kir")
         }
 
-        let options = makeOptions(
+        let options = makeTestOptions(
             moduleName: "SmokeMissingInput",
             inputs: [missingPath],
             outputPath: outputBase,
             emit: .kirDump
         )
-        let result = makeDriver().runForTesting(options: options)
+        let result = makeTestDriver().runForTesting(options: options)
 
         XCTAssertEqual(result.exitCode, 1)
         XCTAssertTrue(result.diagnostics.contains(where: { $0.code == "KSWIFTK-SOURCE-0002" }))
@@ -116,13 +116,13 @@ final class SmokeTests: XCTestCase {
                 try? fileManager.removeItem(atPath: objectPath)
             }
 
-            let options = makeOptions(
+            let options = makeTestOptions(
                 moduleName: "SmokeLLVM",
                 inputs: [path],
                 outputPath: outputBase,
                 emit: .object
             )
-            let result = makeDriver().runForTesting(options: options)
+            let result = makeTestDriver().runForTesting(options: options)
 
             XCTAssertEqual(result.exitCode, 0)
             XCTAssertFalse(result.diagnostics.contains(where: { $0.severity == .error }))
@@ -138,27 +138,4 @@ final class SmokeTests: XCTestCase {
         }
     }
 
-    private func makeDriver() -> CompilerDriver {
-        CompilerDriver(
-            version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
-            kotlinVersion: .v2_3_10
-        )
-    }
-
-    private func makeOptions(
-        moduleName: String,
-        inputs: [String],
-        outputPath: String,
-        emit: EmitMode,
-        irFlags: [String] = []
-    ) -> CompilerOptions {
-        CompilerOptions(
-            moduleName: moduleName,
-            inputs: inputs,
-            outputPath: outputPath,
-            emit: emit,
-            target: defaultTargetTriple(),
-            irFlags: irFlags
-        )
-    }
 }
