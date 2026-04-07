@@ -19,6 +19,7 @@ extension CallTypeChecker {
         candidates: [SymbolID],
         preInferredNonLambdaArgTypes: [Int: TypeID] = [:],
         expectedTypeOverrides: [Int: TypeID] = [:],
+        explicitTypeArgs: [TypeID] = [],
         ctx: TypeInferenceContext,
         locals: inout LocalBindings
     ) -> PreparedCallArguments {
@@ -70,12 +71,14 @@ extension CallTypeChecker {
                 contextualArgExpectedTypes[index] = callableReferenceExpectedType(
                     at: index,
                     candidates: expectedTypeCandidates,
+                    explicitTypeArgs: explicitTypeArgs,
                     sema: sema
                 )
             case .lambdaLiteral:
                 let expectation = lambdaLiteralExpectedType(
                     at: index,
                     candidates: expectedTypeCandidates,
+                    explicitTypeArgs: explicitTypeArgs,
                     sema: sema
                 )
                 contextualArgExpectedTypes[index] = expectation.type
@@ -203,7 +206,7 @@ extension CallTypeChecker {
             return ambiguousCallResult(range: range)
         }
 
-        let overloadResolutionExpectedType: TypeID? = nil
+        let overloadResolutionExpectedType: TypeID? = expectedType
 
         let probe = ctx.resolver.probeCall(
             candidates: candidates,
@@ -297,16 +300,56 @@ extension CallTypeChecker {
         return narrowed.isEmpty ? candidates : narrowed
     }
 
+    /// Applies explicit type arguments to a parameter type from a given signature.
+    /// When explicit type args are provided, substitutes them into the parameter type.
+    private func applyExplicitTypeArgs(
+        to parameterType: TypeID,
+        signature: FunctionSignature,
+        candidate: SymbolID,
+        explicitTypeArgs: [TypeID],
+        sema: SemaModule
+    ) -> TypeID {
+        guard !explicitTypeArgs.isEmpty, !signature.typeParameterSymbols.isEmpty else {
+            return parameterType
+        }
+        let isConstructor = sema.symbols.symbol(candidate)?.kind == .constructor
+        let typeArgOffset = isConstructor ? 0 : signature.classTypeParameterCount
+        let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+        var substitution: [TypeVarID: TypeID] = [:]
+        for (idx, explicitTypeArg) in explicitTypeArgs.enumerated() {
+            let symbolIndex = typeArgOffset + idx
+            guard symbolIndex < signature.typeParameterSymbols.count else { break }
+            let sym = signature.typeParameterSymbols[symbolIndex]
+            if let typeVar = typeVarBySymbol[sym] {
+                substitution[typeVar] = explicitTypeArg
+            }
+        }
+        guard !substitution.isEmpty else { return parameterType }
+        return sema.types.substituteTypeParameters(
+            in: parameterType,
+            substitution: substitution,
+            typeVarBySymbol: typeVarBySymbol
+        )
+    }
+
     private func callableReferenceExpectedType(
         at index: Int,
         candidates: [SymbolID],
+        explicitTypeArgs: [TypeID] = [],
         sema: SemaModule
     ) -> TypeID? {
         if candidates.count == 1,
            let signature = sema.symbols.functionSignature(for: candidates[0]),
            index < signature.parameterTypes.count
         {
-            return signature.parameterTypes[index]
+            let rawType = signature.parameterTypes[index]
+            return applyExplicitTypeArgs(
+                to: rawType,
+                signature: signature,
+                candidate: candidates[0],
+                explicitTypeArgs: explicitTypeArgs,
+                sema: sema
+            )
         }
 
         var matchingParameterTypes: [TypeID] = []
@@ -331,13 +374,22 @@ extension CallTypeChecker {
     private func lambdaLiteralExpectedType(
         at index: Int,
         candidates: [SymbolID],
+        explicitTypeArgs: [TypeID] = [],
         sema: SemaModule
     ) -> (type: TypeID?, isInputOnly: Bool, blocksRefinement: Bool) {
         if candidates.count == 1,
            let signature = sema.symbols.functionSignature(for: candidates[0]),
            index < signature.parameterTypes.count
         {
-            return (signature.parameterTypes[index], false, false)
+            let rawType = signature.parameterTypes[index]
+            let substituted = applyExplicitTypeArgs(
+                to: rawType,
+                signature: signature,
+                candidate: candidates[0],
+                explicitTypeArgs: explicitTypeArgs,
+                sema: sema
+            )
+            return (substituted, false, false)
         }
 
         let parameterCandidates = lambdaParameterCandidates(
