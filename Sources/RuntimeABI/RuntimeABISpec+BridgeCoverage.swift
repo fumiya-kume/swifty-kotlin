@@ -231,6 +231,9 @@ public extension RuntimeABISpec {
             "kk_char_toIntOrNull",
         ].map { bridgeSpec($0, section: "Char", params: ["value"]) }
         + [
+            bridgeSpec("kk_char_minus", section: "Char", params: ["lhsRaw", "rhsRaw"]),
+        ]
+        + [
             bridgeSpec("kk_double_fromBits", section: "NumericConversion", params: ["bits"]),
             bridgeSpec("kk_double_isFinite", section: "NumericConversion", params: ["value"]),
             bridgeSpec("kk_double_isInfinite", section: "NumericConversion", params: ["value"]),

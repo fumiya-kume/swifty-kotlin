@@ -5675,6 +5675,15 @@ public enum RuntimeABISpec {
     /// Char operations
     public static let charFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
+            name: "kk_char_minus",
+            parameters: [
+                RuntimeABIParameter(name: "lhsRaw", type: .intptr),
+                RuntimeABIParameter(name: "rhsRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Char"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_char_plus",
             parameters: [
                 RuntimeABIParameter(name: "charValue", type: .intptr),

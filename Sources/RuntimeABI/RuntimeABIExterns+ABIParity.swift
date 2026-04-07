@@ -247,6 +247,12 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_char_minus = ExternDecl(
+        name: "kk_char_minus",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     static let kk_char_plus = ExternDecl(
         name: "kk_char_plus",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -310,6 +316,7 @@ public extension RuntimeABIExterns {
         kk_op_lmod,
         kk_logical_and,
         kk_logical_or,
+        kk_char_minus,
         kk_char_plus,
         kk_char_get,
         kk_char_rangeTo,
