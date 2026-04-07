@@ -2464,6 +2464,7 @@ extension CallTypeChecker {
                    "indexOfFirst", "indexOfLast",
                    "mapIndexed", "mapNotNull", "filterIndexed", "filterNot",
                    "takeWhile", "dropWhile", "find", "findLast", "splitToSequence",
+                   "partition",
                ].contains(stringHOFCalleeStr)
             {
                 let charType = sema.types.make(.primitive(.char, .nonNull))
@@ -2514,7 +2515,7 @@ extension CallTypeChecker {
                 let resolvedArgTypes = args.map { arg in
                     sema.bindings.exprType(for: arg.expr) ?? sema.types.anyType
                 }
-                if stringHOFCalleeStr == "splitToSequence" {
+                if stringHOFCalleeStr == "splitToSequence" || stringHOFCalleeStr == "partition" {
                     bindSyntheticStringMemberDirectlyIfAvailable(
                         id,
                         calleeName: calleeName,
@@ -2556,6 +2557,20 @@ extension CallTypeChecker {
                         nullability: .nonNull
                     )))
                 }()
+                let pairStringStringTypeEarly: TypeID = {
+                    let pairFQName: [InternedString] = [
+                        interner.intern("kotlin"),
+                        interner.intern("Pair"),
+                    ]
+                    guard let pairSymbol = sema.symbols.lookup(fqName: pairFQName) else {
+                        return sema.types.anyType
+                    }
+                    return sema.types.make(.classType(ClassType(
+                        classSymbol: pairSymbol,
+                        args: [.out(sema.types.stringType), .out(sema.types.stringType)],
+                        nullability: .nonNull
+                    )))
+                }()
                 let resultType: TypeID = switch stringHOFCalleeStr {
                 case "filter": sema.types.stringType
                 case "map": sema.types.anyType  // Kotlin String.map returns List<R>
@@ -2566,6 +2581,7 @@ extension CallTypeChecker {
                 case "filterIndexed", "filterNot", "takeWhile", "dropWhile": sema.types.stringType
                 case "find", "findLast": sema.types.make(.primitive(.char, .nullable))
                 case "splitToSequence": sequenceStringType
+                case "partition": pairStringStringTypeEarly
                 default: sema.types.anyType
                 }
                 let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
@@ -4523,6 +4539,7 @@ extension CallTypeChecker {
                        "indexOfFirst", "indexOfLast",
                        "mapIndexed", "mapNotNull", "filterIndexed", "filterNot",
                        "takeWhile", "dropWhile", "find", "findLast", "splitToSequence",
+                       "partition",
                    ].contains(calleeStr)
                 {
                     let charType = sema.types.make(.primitive(.char, .nonNull))
@@ -4574,6 +4591,20 @@ extension CallTypeChecker {
                         sema: sema,
                         interner: interner
                     )
+                    let pairStringStringType: TypeID = {
+                        let pairFQName: [InternedString] = [
+                            interner.intern("kotlin"),
+                            interner.intern("Pair"),
+                        ]
+                        guard let pairSymbol = sema.symbols.lookup(fqName: pairFQName) else {
+                            return sema.types.anyType
+                        }
+                        return sema.types.make(.classType(ClassType(
+                            classSymbol: pairSymbol,
+                            args: [.out(sema.types.stringType), .out(sema.types.stringType)],
+                            nullability: .nonNull
+                        )))
+                    }()
                     let resultType: TypeID = switch calleeStr {
                     case "filter": sema.types.stringType
                     case "map": sema.types.anyType
@@ -4584,7 +4615,23 @@ extension CallTypeChecker {
                     case "filterIndexed", "filterNot", "takeWhile", "dropWhile": sema.types.stringType
                     case "find", "findLast": sema.types.make(.primitive(.char, .nullable))
                     case "splitToSequence": sequenceStringType
+                    case "partition": pairStringStringType
                     default: sema.types.anyType
+                    }
+                    // For "partition", skip the fallback resolver (which may fail due to
+                    // lambda argType mismatch) and bind the synthetic symbol directly.
+                    if calleeStr == "partition" {
+                        bindSyntheticStringMemberDirectlyIfAvailable(
+                            id,
+                            calleeName: calleeName,
+                            argumentCount: args.count,
+                            receiverType: receiverTypeForCheck,
+                            sema: sema,
+                            interner: interner
+                        )
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
                     }
                     if let boundType = tryBindSyntheticStringMemberFallback(
                         id,
