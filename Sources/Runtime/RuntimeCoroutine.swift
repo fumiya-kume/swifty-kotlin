@@ -2937,7 +2937,8 @@ private func runtimeFlowCollectLazy(
     if !runtimeFlowHasErrorHandlers(flow.opChain) {
         let retVal = runtimeFlowCollectStreaming(flow, collectorFnPtr: collectorFnPtr, continuation: continuation)
         if hasOnCompletion {
-            if let handlerException = runtimeFlowFireCompletionHandlers(flow.opChain, failure: nil) {
+            let streamingFailure: Int? = retVal != 0 ? retVal : nil
+            if let handlerException = runtimeFlowFireCompletionHandlers(flow.opChain, failure: streamingFailure) {
                 return handlerException
             }
         }
@@ -3415,7 +3416,9 @@ public func kk_flow_to_list(_ flowHandle: Int, _: Int) -> Int {
     guard let flow = runtimeFlowHandle(from: flowHandle) else {
         return registerRuntimeObject(RuntimeListBox(elements: []))
     }
-    return registerRuntimeObject(RuntimeListBox(elements: runtimeFlowEvaluate(flow: flow).values))
+    let result = runtimeFlowEvaluate(flow: flow)
+    runtimeFlowFireCompletionHandlers(flow.opChain, failure: result.failure)
+    return registerRuntimeObject(RuntimeListBox(elements: result.values))
 }
 
 /// Return the first emitted value after applying the operator chain, or 0 if empty.
@@ -3424,7 +3427,9 @@ public func kk_flow_first(_ flowHandle: Int, _: Int) -> Int {
     guard let flow = runtimeFlowHandle(from: flowHandle) else {
         return 0
     }
-    return runtimeFlowEvaluate(flow: flow).values.first ?? 0
+    let result = runtimeFlowEvaluate(flow: flow)
+    runtimeFlowFireCompletionHandlers(flow.opChain, failure: result.failure)
+    return result.values.first ?? 0
 }
 
 @_cdecl("kk_flow_single")
@@ -3432,14 +3437,15 @@ public func kk_flow_single(_ flowHandle: Int, _: Int, _ outThrown: UnsafeMutable
     guard let flow = runtimeFlowHandle(from: flowHandle) else {
         return 0
     }
-    let values = runtimeFlowEvaluate(flow: flow).values
-    guard values.count == 1 else {
+    let result = runtimeFlowEvaluate(flow: flow)
+    runtimeFlowFireCompletionHandlers(flow.opChain, failure: result.failure)
+    guard result.values.count == 1 else {
         outThrown?.pointee = runtimeAllocateThrowable(
             message: "NoSuchElementException: Flow does not contain exactly one element."
         )
         return 0
     }
-    return values[0]
+    return result.values[0]
 }
 
 /// Count the number of elements emitted after applying the operator chain.
@@ -3448,7 +3454,9 @@ public func kk_flow_count(_ flowHandle: Int, _: Int) -> Int {
     guard let flow = runtimeFlowHandle(from: flowHandle) else {
         return 0
     }
-    return runtimeFlowEvaluate(flow: flow).values.count
+    let result = runtimeFlowEvaluate(flow: flow)
+    runtimeFlowFireCompletionHandlers(flow.opChain, failure: result.failure)
+    return result.values.count
 }
 
 /// Fold: accumulate values with an initial value and an operation.
@@ -3467,14 +3475,17 @@ public func kk_flow_fold(_ flowHandle: Int, _ initial: Int, _ operationFnPtr: In
         to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
     )
 
+    let result = runtimeFlowEvaluate(flow: flow)
     var accumulator = initial
-    for value in runtimeFlowEvaluate(flow: flow).values {
+    for value in result.values {
         var thrown = 0
         accumulator = runtimeFlowMaybeUnbox(operation(0, accumulator, value, &thrown))
         if thrown != 0 {
+            runtimeFlowFireCompletionHandlers(flow.opChain, failure: thrown)
             return accumulator
         }
     }
+    runtimeFlowFireCompletionHandlers(flow.opChain, failure: result.failure)
     return accumulator
 }
 
