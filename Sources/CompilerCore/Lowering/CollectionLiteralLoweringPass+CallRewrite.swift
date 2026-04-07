@@ -2395,6 +2395,78 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    // toIntArray() on list → kk_list_toIntArray (STDLIB-LIST-PRIM-ARRAY)
+                    if callee == lookup.toIntArrayName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let toArrayResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkListToIntArrayName,
+                                arguments: [receiverID],
+                                result: toArrayResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                arrayExprIDs.insert(result.rawValue)
+                                arrayExprIDs.insert(toArrayResult.rawValue)
+                                loweredBody.append(.copy(from: toArrayResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
+                    // toLongArray() on list → kk_list_toLongArray (STDLIB-LIST-PRIM-ARRAY)
+                    if callee == lookup.toLongArrayName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let toArrayResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkListToLongArrayName,
+                                arguments: [receiverID],
+                                result: toArrayResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                arrayExprIDs.insert(result.rawValue)
+                                arrayExprIDs.insert(toArrayResult.rawValue)
+                                loweredBody.append(.copy(from: toArrayResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
+                    // toByteArray() on list → kk_list_toByteArray (STDLIB-LIST-PRIM-ARRAY)
+                    if callee == lookup.toByteArrayName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let toArrayResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkListToByteArrayName,
+                                arguments: [receiverID],
+                                result: toArrayResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                arrayExprIDs.insert(result.rawValue)
+                                arrayExprIDs.insert(toArrayResult.rawValue)
+                                loweredBody.append(.copy(from: toArrayResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
                     // copyOf / copyOfRange / fill on array (STDLIB-089)
                     if callee == lookup.copyOfName, arguments.count == 1 {
                         let receiverID = arguments[0]

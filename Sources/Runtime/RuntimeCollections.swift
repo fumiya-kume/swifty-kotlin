@@ -1584,6 +1584,49 @@ public func kk_list_toTypedArray(_ listRaw: Int) -> Int {
     return registerRuntimeObject(box)
 }
 
+// MARK: - List to primitive array conversions (STDLIB-LIST-PRIM-ARRAY)
+
+/// Collection<Int>.toIntArray(): IntArray
+@_cdecl("kk_list_toIntArray")
+public func kk_list_toIntArray(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid list handle in kk_list_toIntArray")
+    }
+    let box = RuntimeArrayBox(length: list.elements.count)
+    for (i, elem) in list.elements.enumerated() {
+        box.elements[i] = kk_unbox_int(elem)
+    }
+    return registerRuntimeObject(box)
+}
+
+/// Collection<Long>.toLongArray(): LongArray
+@_cdecl("kk_list_toLongArray")
+public func kk_list_toLongArray(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid list handle in kk_list_toLongArray")
+    }
+    let box = RuntimeArrayBox(length: list.elements.count)
+    for (i, elem) in list.elements.enumerated() {
+        box.elements[i] = kk_unbox_long(elem)
+    }
+    return registerRuntimeObject(box)
+}
+
+/// Collection<Byte>.toByteArray(): ByteArray
+@_cdecl("kk_list_toByteArray")
+public func kk_list_toByteArray(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid list handle in kk_list_toByteArray")
+    }
+    let box = RuntimeArrayBox(length: list.elements.count)
+    for (i, elem) in list.elements.enumerated() {
+        // Byte values are stored as Int8-range integers (unboxed or raw);
+        // preserve the sign-extended bit pattern as Kotlin Byte semantics require.
+        box.elements[i] = kk_unbox_int(elem)
+    }
+    return registerRuntimeObject(box)
+}
+
 // MARK: - ArrayDeque Functions (STDLIB-240)
 
 @_cdecl("kk_arraydeque_new")

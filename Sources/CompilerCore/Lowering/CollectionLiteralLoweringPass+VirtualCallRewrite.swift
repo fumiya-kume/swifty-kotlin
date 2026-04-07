@@ -114,6 +114,69 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // toIntArray() on list → kk_list_toIntArray (STDLIB-LIST-PRIM-ARRAY)
+        if callee == lookup.toIntArrayName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
+            let toArrayResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListToIntArrayName,
+                arguments: [receiver],
+                result: toArrayResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                arrayExprIDs.insert(result.rawValue)
+                arrayExprIDs.insert(toArrayResult.rawValue)
+                loweredBody.append(.copy(from: toArrayResult, to: result))
+            }
+            return true
+        }
+
+        // toLongArray() on list → kk_list_toLongArray (STDLIB-LIST-PRIM-ARRAY)
+        if callee == lookup.toLongArrayName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
+            let toArrayResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListToLongArrayName,
+                arguments: [receiver],
+                result: toArrayResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                arrayExprIDs.insert(result.rawValue)
+                arrayExprIDs.insert(toArrayResult.rawValue)
+                loweredBody.append(.copy(from: toArrayResult, to: result))
+            }
+            return true
+        }
+
+        // toByteArray() on list → kk_list_toByteArray (STDLIB-LIST-PRIM-ARRAY)
+        if callee == lookup.toByteArrayName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
+            let toArrayResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListToByteArrayName,
+                arguments: [receiver],
+                result: toArrayResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                arrayExprIDs.insert(result.rawValue)
+                arrayExprIDs.insert(toArrayResult.rawValue)
+                loweredBody.append(.copy(from: toArrayResult, to: result))
+            }
+            return true
+        }
+
         // --- Rewrite File member virtual calls (STDLIB-320) ---
         if fileExprIDs.contains(receiver.rawValue) {
             if rewriteFileMemberVirtualCall(

@@ -318,6 +318,9 @@ struct CollectionLiteralLookupTables {
     let kkArrayToListName: InternedString
     let kkArrayToMutableListName: InternedString
     let kkListToTypedArrayName: InternedString
+    let kkListToIntArrayName: InternedString
+    let kkListToLongArrayName: InternedString
+    let kkListToByteArrayName: InternedString
     let kkArrayMapName: InternedString
     let kkArrayFilterName: InternedString
     let kkArrayForEachName: InternedString
@@ -527,6 +530,7 @@ struct CollectionLiteralLookupTables {
     let toULongArrayName: InternedString
     let toIntArrayName: InternedString
     let toLongArrayName: InternedString
+    let toByteArrayName: InternedString
     let kkLongRangeToLongArrayName: InternedString
     let toSetName: InternedString
     let toMapName: InternedString
@@ -987,6 +991,9 @@ struct CollectionLiteralLookupTables {
         kkArrayToListName = interner.intern("kk_array_toList")
         kkArrayToMutableListName = interner.intern("kk_array_toMutableList")
         kkListToTypedArrayName = interner.intern("kk_list_toTypedArray")
+        kkListToIntArrayName = interner.intern("kk_list_toIntArray")
+        kkListToLongArrayName = interner.intern("kk_list_toLongArray")
+        kkListToByteArrayName = interner.intern("kk_list_toByteArray")
         kkArrayMapName = interner.intern("kk_array_map")
         kkArrayFilterName = interner.intern("kk_array_filter")
         kkArrayForEachName = interner.intern("kk_array_forEach")
@@ -1188,6 +1195,7 @@ struct CollectionLiteralLookupTables {
         toULongArrayName = interner.intern("toULongArray")
         toIntArrayName = interner.intern("toIntArray")
         toLongArrayName = interner.intern("toLongArray")
+        toByteArrayName = interner.intern("toByteArray")
         kkLongRangeToLongArrayName = interner.intern("kk_long_range_toLongArray")
         toSetName = interner.intern("toSet")
         toMapName = interner.intern("toMap")

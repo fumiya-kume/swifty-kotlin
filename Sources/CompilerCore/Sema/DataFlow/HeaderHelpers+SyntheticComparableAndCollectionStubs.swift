@@ -3935,6 +3935,96 @@ extension DataFlowSemaPhase {
             listTypeParamSymbol: listTypeParamSymbol,
             listTypeParamType: listTypeParamType
         )
+        let kotlinPkg = [interner.intern("kotlin")]
+        registerListToPrimitiveArrayMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            memberName: "toIntArray",
+            arrayTypeName: "IntArray",
+            arrayPackage: kotlinPkg,
+            externalLinkName: "kk_list_toIntArray"
+        )
+        registerListToPrimitiveArrayMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            memberName: "toLongArray",
+            arrayTypeName: "LongArray",
+            arrayPackage: kotlinPkg,
+            externalLinkName: "kk_list_toLongArray"
+        )
+        registerListToPrimitiveArrayMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            memberName: "toByteArray",
+            arrayTypeName: "ByteArray",
+            arrayPackage: kotlinPkg,
+            externalLinkName: "kk_list_toByteArray"
+        )
+    }
+
+    /// Register a `List<E>.toXxxArray(): XxxArray` conversion member stub.
+    ///
+    /// Used for `toIntArray`, `toLongArray`, and `toByteArray` (STDLIB-LIST-PRIM-ARRAY).
+    private func registerListToPrimitiveArrayMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        memberName: String,
+        arrayTypeName: String,
+        arrayPackage: [InternedString],
+        externalLinkName: String
+    ) {
+        guard let listFQName = symbols.symbol(listInterfaceSymbol)?.fqName else { return }
+        let internedMemberName = interner.intern(memberName)
+        let memberFQName = listFQName + [internedMemberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let listTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: listTypeParamSymbol, nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+
+        let arraySymbol = ensureClassSymbol(
+            named: arrayTypeName,
+            in: arrayPackage,
+            symbols: symbols,
+            interner: interner
+        )
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: arraySymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: internedMemberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [listTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
     }
 
     /// Register `kotlin.collections.MutableList<E>` interface stub with `operator fun set(index: Int, element: E): E`.
