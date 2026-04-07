@@ -4760,6 +4760,7 @@ extension CallLowerer {
                 "fold", "foldIndexed", "find", "findLast", "firstOrNull",
                 "lastOrNull", "any", "all", "none", "chunked", "windowed",
                 "reversed",
+                "take", "drop", "average", "sorted",
             ]
             if rangeMembers.contains(calleeText) {
                 arguments.insert(loweredReceiverID, at: 0)
