@@ -1790,6 +1790,185 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "ABIParity"
         ),
+        // STDLIB-TIME-181: java.time.Instant accessors
+        RuntimeABIFunctionSpec(
+            name: "kk_java_instant_epoch_seconds",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_instant_nano_of_second",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_instant_to_epoch_milli",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_instant_of_epoch_second",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+                RuntimeABIParameter(name: "p1", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_instant_of_epoch_milli",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_instant_to_string",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        // STDLIB-TIME-181: java.time.Duration accessors
+        RuntimeABIFunctionSpec(
+            name: "kk_java_duration_seconds",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_duration_nano",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_duration_to_millis",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_duration_of_seconds",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+                RuntimeABIParameter(name: "p1", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_duration_of_millis",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_duration_to_string",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        // STDLIB-TIME-181: JS Date accessors
+        RuntimeABIFunctionSpec(
+            name: "kk_js_date_epoch_millis",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_js_date_from_epoch_millis",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_js_date_to_string",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        // STDLIB-TIME-181: Native Foundation Date bridge
+        RuntimeABIFunctionSpec(
+            name: "kk_instant_to_foundation_date",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_foundation_date_to_kotlin_instant",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        // STDLIB-TIME-181: Native clock_gettime bridge
+        RuntimeABIFunctionSpec(
+            name: "kk_clock_gettime_realtime",
+            parameters: [],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_clock_gettime_monotonic_ns",
+            parameters: [],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_clock_monotonic_mark_now",
+            parameters: [],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        // STDLIB-TIME-181: Type-safe epoch conversion helpers
+        RuntimeABIFunctionSpec(
+            name: "kk_instant_to_epoch_millis",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_instant_from_epoch_seconds",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+                RuntimeABIParameter(name: "p1", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_time_source_mark_now",
             parameters: [
