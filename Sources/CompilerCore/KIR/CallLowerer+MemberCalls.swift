@@ -3258,8 +3258,6 @@ extension CallLowerer {
                     "kk_list_elementAtOrNull"
                 case "elementAt":
                     "kk_list_elementAt"
-                case "elementAtOrElse":
-                    "kk_list_elementAtOrElse"
                 case "containsAll":
                     "kk_list_containsAll"
                 default:
@@ -3347,6 +3345,20 @@ extension CallLowerer {
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern("kk_array_copyOfRange"),
+                    arguments: [loweredReceiverID] + normalizedArgIDs,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+            // List.elementAtOrElse(index, defaultValue) — 2 args (STDLIB-214)
+            if isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner),
+               interner.resolve(calleeName) == "elementAtOrElse"
+            {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_list_elementAtOrElse"),
                     arguments: [loweredReceiverID] + normalizedArgIDs,
                     result: result,
                     canThrow: false,
