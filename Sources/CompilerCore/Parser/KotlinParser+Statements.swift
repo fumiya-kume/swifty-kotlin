@@ -292,22 +292,23 @@ extension KotlinParser {
     ) {
         var parenDepth = 0
         var bracketDepth = 0
+        var braceDepth = 0
         let startChildCount = children.count
         while !stream.atEOF() {
             let token = stream.peek()
-            if shouldStopStatementBefore(token, inBlock: inBlock) { break }
-            if stopBeforeElse, parenDepth == 0, bracketDepth == 0,
+            let atTopLevel = parenDepth == 0 && bracketDepth == 0 && braceDepth == 0
+            if atTopLevel, shouldStopStatementBefore(token, inBlock: inBlock) { break }
+            if stopBeforeElse, atTopLevel,
                token.kind == .keyword(.else) { break }
-            if stopBeforeTopLevelComma, parenDepth == 0, bracketDepth == 0,
+            if stopBeforeTopLevelComma, atTopLevel,
                token.kind == .symbol(.comma) { break }
-            if stopBeforeCatchFinally, parenDepth == 0, bracketDepth == 0 {
+            if stopBeforeCatchFinally, atTopLevel {
                 if case .keyword(.catch) = token.kind { break }
                 if case .keyword(.finally) = token.kind { break }
             }
             if inBlock,
                children.count > startChildCount,
-               parenDepth == 0,
-               bracketDepth == 0,
+               atTopLevel,
                hasLeadingNewline(token),
                shouldSplitStatementOnNewline(token.kind)
             {
@@ -315,7 +316,7 @@ extension KotlinParser {
             }
 
             // Handle nested blocks (e.g. trailing lambdas)
-            if case .symbol(.lBrace) = token.kind, inBlock {
+            if case .symbol(.lBrace) = token.kind, inBlock, atTopLevel {
                 let block = parseBlock()
                 children.append(.node(block))
                 range.append(arena.node(block).range)
@@ -328,10 +329,18 @@ extension KotlinParser {
             case .symbol(.rParen): parenDepth = max(0, parenDepth - 1)
             case .symbol(.lBracket): bracketDepth += 1
             case .symbol(.rBracket): bracketDepth = max(0, bracketDepth - 1)
+            case .symbol(.lBrace): braceDepth += 1
+            case .symbol(.rBrace): braceDepth = max(0, braceDepth - 1)
             case .symbol(.semicolon): return
             default: break
             }
-            if !inBlock, hasLeadingNewline(stream.peek()) { break }
+            if !inBlock, hasLeadingNewline(stream.peek()) {
+                let stillGrouped = parenDepth > 0 || bracketDepth > 0 || braceDepth > 0
+                if stillGrouped {
+                    continue
+                }
+                break
+            }
         }
     }
 
@@ -650,20 +659,23 @@ extension KotlinParser {
     func parseTail(inBlock: Bool, into children: inout [SyntaxChild], range: inout RangeAccumulator, isClassBody: Bool = false) {
         var progress = false
         var sawTryKeyword = false
-        var groupingDepth = 0
+        var parenDepth = 0
+        var bracketDepth = 0
+        var braceDepth = 0
         while !stream.atEOF() {
             let token = stream.peek()
-            if groupingDepth == 0, shouldStopStatementBefore(token, inBlock: inBlock) {
+            let atTopLevel = parenDepth == 0 && bracketDepth == 0 && braceDepth == 0
+            if atTopLevel, shouldStopStatementBefore(token, inBlock: inBlock) {
                 break
             }
-            if case .symbol(.lBrace) = token.kind, inBlock {
+            if case .symbol(.lBrace) = token.kind, inBlock, atTopLevel {
                 let blockID = parseBlock()
                 children.append(.node(blockID))
                 range.append(arena.node(blockID).range)
                 progress = true
                 continue
             }
-            if case .symbol(.lBrace) = token.kind {
+            if case .symbol(.lBrace) = token.kind, atTopLevel {
                 let blockID = parseBlock(isClassBody: isClassBody)
                 children.append(.node(blockID))
                 range.append(arena.node(blockID).range)
@@ -682,10 +694,18 @@ extension KotlinParser {
             _ = consumeToken(into: &children, range: &range)
             progress = true
             switch token.kind {
-            case .symbol(.lParen), .symbol(.lBracket):
-                groupingDepth += 1
-            case .symbol(.rParen), .symbol(.rBracket):
-                groupingDepth = max(0, groupingDepth - 1)
+            case .symbol(.lParen):
+                parenDepth += 1
+            case .symbol(.rParen):
+                parenDepth = max(0, parenDepth - 1)
+            case .symbol(.lBracket):
+                bracketDepth += 1
+            case .symbol(.rBracket):
+                bracketDepth = max(0, bracketDepth - 1)
+            case .symbol(.lBrace):
+                braceDepth += 1
+            case .symbol(.rBrace):
+                braceDepth = max(0, braceDepth - 1)
             default:
                 break
             }
@@ -693,7 +713,8 @@ extension KotlinParser {
                 break
             }
             if !inBlock, hasLeadingNewline(stream.peek()) {
-                if groupingDepth > 0 {
+                let stillGrouped = parenDepth > 0 || bracketDepth > 0 || braceDepth > 0
+                if stillGrouped {
                     continue
                 }
                 // After `=`, continue consuming across newlines so that

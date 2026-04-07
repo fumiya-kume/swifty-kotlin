@@ -43,6 +43,35 @@ public struct ResolvedCall {
     }
 }
 
+public struct ProbedCallCandidate {
+    public let symbol: SymbolID
+    public let instantiatedParameterTypes: [TypeID]
+    public let substitutedTypeArguments: [TypeVarID: TypeID]
+    public let parameterMapping: [Int: Int]
+
+    public init(
+        symbol: SymbolID,
+        instantiatedParameterTypes: [TypeID],
+        substitutedTypeArguments: [TypeVarID: TypeID],
+        parameterMapping: [Int: Int]
+    ) {
+        self.symbol = symbol
+        self.instantiatedParameterTypes = instantiatedParameterTypes
+        self.substitutedTypeArguments = substitutedTypeArguments
+        self.parameterMapping = parameterMapping
+    }
+}
+
+public struct ProbedCallResult {
+    public let viableCandidates: [ProbedCallCandidate]
+    public let diagnostic: Diagnostic?
+
+    public init(viableCandidates: [ProbedCallCandidate], diagnostic: Diagnostic?) {
+        self.viableCandidates = viableCandidates
+        self.diagnostic = diagnostic
+    }
+}
+
 public final class OverloadResolver {
     /// Optional sema cache context.  When non-nil the resolver checks the
     /// call-resolution cache before performing full candidate evaluation.

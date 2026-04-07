@@ -3492,11 +3492,11 @@ expr e45 name(it) type=_
 expr e46 memberCall recv=e45 callee=value args=[] type=_
 expr e47 int(2) type=_
 expr e48 binary(multiply) lhs=e46 rhs=e47 type=_
-expr e49 name(it) type=<error>
-expr e50 memberCall recv=e49 callee=value args=[] type=<error>
-expr e51 int(2) type=Int
-expr e52 binary(multiply) lhs=e50 rhs=e51 type=Int
-expr e53 lambda params=[] body=e52 label=mapValues type=() -> Int
+expr e49 name(it) type=_
+expr e50 memberCall recv=e49 callee=value args=[] type=_
+expr e51 int(2) type=_
+expr e52 binary(multiply) lhs=e50 rhs=e51 type=_
+expr e53 lambda params=[] body=e52 label=mapValues type=_
 expr e54 memberCall recv=e44 callee=mapValues args=[_:e53] type=<error>
 expr e55 call callee=e43 args=[_:e54] type=Unit call=s1638 map=[0->0] targs=[]
 expr e56 name(println) type=_
@@ -3505,11 +3505,11 @@ expr e58 name(it) type=_
 expr e59 memberCall recv=e58 callee=key args=[] type=_
 expr e60 string(!) type=_
 expr e61 binary(add) lhs=e59 rhs=e60 type=_
-expr e62 name(it) type=<error>
-expr e63 memberCall recv=e62 callee=key args=[] type=<error>
-expr e64 string(!) type=String
-expr e65 binary(add) lhs=e63 rhs=e64 type=String
-expr e66 lambda params=[] body=e65 label=mapKeys type=() -> String
+expr e62 name(it) type=_
+expr e63 memberCall recv=e62 callee=key args=[] type=_
+expr e64 string(!) type=_
+expr e65 binary(add) lhs=e63 rhs=e64 type=_
+expr e66 lambda params=[] body=e65 label=mapKeys type=_
 expr e67 memberCall recv=e57 callee=mapKeys args=[_:e66] type=<error>
 expr e68 call callee=e56 args=[_:e67] type=Unit call=s1638 map=[0->0] targs=[]
 expr e69 name(println) type=_

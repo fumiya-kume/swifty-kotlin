@@ -141,4 +141,49 @@ extension CompilerCoreTests {
             return
         }
     }
+
+    func testParenthesizedCallWithTwoLambdaArgumentsParsesBothArguments() throws {
+        let source = """
+        fun foo(a: () -> Int, b: () -> String): Int = 0
+        fun main(): Int = foo({ 42 }, { "x" })
+        """
+        let ctx = makeContextFromSource(source)
+        try runFrontend(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let function = try XCTUnwrap(topLevelFunction(named: "main", in: ast, interner: ctx.interner))
+        guard case let .expr(exprID, _) = function.body,
+              let expr = ast.arena.expr(exprID),
+              case let .call(calleeID, _, args, _) = expr
+        else {
+            XCTFail("Expected parenthesized lambda call to parse as a call expression.")
+            return
+        }
+
+        guard args.count == 2 else {
+            XCTFail("Expected two lambda arguments, got \(args.count).")
+            return
+        }
+        guard let calleeExpr = ast.arena.expr(calleeID),
+              case let .nameRef(calleeName, _) = calleeExpr
+        else {
+            XCTFail("Expected call callee to be a name reference.")
+            return
+        }
+        XCTAssertEqual(ctx.interner.resolve(calleeName), "foo")
+
+        guard let firstArgExpr = ast.arena.expr(args[0].expr),
+              case .lambdaLiteral = firstArgExpr
+        else {
+            XCTFail("Expected first argument to be a lambda literal.")
+            return
+        }
+
+        guard let secondArgExpr = ast.arena.expr(args[1].expr),
+              case .lambdaLiteral = secondArgExpr
+        else {
+            XCTFail("Expected second argument to be a lambda literal.")
+            return
+        }
+    }
 }

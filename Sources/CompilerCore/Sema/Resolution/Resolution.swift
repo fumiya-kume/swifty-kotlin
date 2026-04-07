@@ -1,4 +1,40 @@
 extension OverloadResolver {
+    public func probeCall(
+        candidates: [SymbolID],
+        call: CallExpr,
+        expectedType: TypeID?,
+        implicitReceiverType: TypeID? = nil,
+        ignoringLambdaReturnTypeArgumentIndices: Set<Int> = [],
+        ctx: SemaModule
+    ) -> ProbedCallResult {
+        let solver = ConstraintSolver()
+        var viable: [ViableCandidate] = []
+        var candidateFailures: [Diagnostic] = []
+        for candidate in candidates {
+            let evaluation = evaluateCandidate(
+                candidate,
+                call: call,
+                expectedType: expectedType,
+                implicitReceiverType: implicitReceiverType,
+                ignoredLambdaReturnTypeArgumentIndices: ignoringLambdaReturnTypeArgumentIndices,
+                solver: solver,
+                ctx: ctx
+            )
+            switch evaluation {
+            case let .viable(value):
+                viable.append(value)
+            case let .constraintFailure(diagnostic):
+                candidateFailures.append(diagnostic)
+            case .rejected:
+                continue
+            }
+        }
+        return ProbedCallResult(
+            viableCandidates: viable.map { $0.toProbedCallCandidate() },
+            diagnostic: viable.isEmpty ? candidateFailures.first : nil
+        )
+    }
+
     public func resolveCall(
         candidates: [SymbolID],
         call: CallExpr,
@@ -55,6 +91,7 @@ extension OverloadResolver {
                 call: call,
                 expectedType: expectedType,
                 implicitReceiverType: implicitReceiverType,
+                ignoredLambdaReturnTypeArgumentIndices: [],
                 solver: solver,
                 ctx: ctx
             )
@@ -80,6 +117,7 @@ extension OverloadResolver {
         call: CallExpr,
         expectedType: TypeID?,
         implicitReceiverType: TypeID?,
+        ignoredLambdaReturnTypeArgumentIndices: Set<Int>,
         solver: ConstraintSolver,
         ctx: SemaModule
     ) -> CandidateEvaluation {
@@ -142,6 +180,7 @@ extension OverloadResolver {
             parameterMapping: parameterMapping,
             signature: signature,
             typeVarBySymbol: typeVarBySymbol,
+            ignoredLambdaReturnTypeArgumentIndices: ignoredLambdaReturnTypeArgumentIndices,
             typeSystem: ctx.types
         ) else {
             return .rejected
@@ -271,6 +310,7 @@ extension OverloadResolver {
         parameterMapping: [Int: Int],
         signature: FunctionSignature,
         typeVarBySymbol: [SymbolID: TypeVarID],
+        ignoredLambdaReturnTypeArgumentIndices: Set<Int>,
         typeSystem: TypeSystem
     ) -> Bool {
         let isVararg = normalizeFlags(signature.valueParameterIsVararg, count: signature.parameterTypes.count)
@@ -298,6 +338,19 @@ extension OverloadResolver {
                 continue
             }
 
+            if ignoredLambdaReturnTypeArgumentIndices.contains(argIndex),
+               appendLambdaInputConstraintsIgnoringReturn(
+                   to: &constraints,
+                   argType: argType,
+                   paramType: paramType,
+                   typeVarBySymbol: typeVarBySymbol,
+                   typeSystem: typeSystem,
+                   blameRange: call.range
+               )
+            {
+                continue
+            }
+
             let decomposed = decomposeSubtypeConstraint(
                 subtype: argType,
                 supertype: paramType,
@@ -309,6 +362,51 @@ extension OverloadResolver {
         }
         if !processedAll {
             return !(constraints.isEmpty && !call.args.isEmpty)
+        }
+        return true
+    }
+
+    private func appendLambdaInputConstraintsIgnoringReturn(
+        to constraints: inout [VariableConstraint],
+        argType: TypeID,
+        paramType: TypeID,
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        typeSystem: TypeSystem,
+        blameRange: SourceRange
+    ) -> Bool {
+        guard case let .functionType(argFunction) = typeSystem.kind(of: argType),
+              case let .functionType(paramFunction) = typeSystem.kind(of: paramType),
+              argFunction.isSuspend == paramFunction.isSuspend,
+              argFunction.params.count == paramFunction.params.count
+        else {
+            return false
+        }
+
+        if let argReceiver = argFunction.receiver,
+           let paramReceiver = paramFunction.receiver
+        {
+            // Function receivers are contravariant — flip direction.
+            constraints.append(contentsOf: decomposeSubtypeConstraint(
+                subtype: paramReceiver,
+                supertype: argReceiver,
+                typeVarBySymbol: typeVarBySymbol,
+                typeSystem: typeSystem,
+                blameRange: blameRange
+            ))
+        } else if argFunction.receiver != nil || paramFunction.receiver != nil {
+            return false
+        }
+
+        // Function type parameters are contravariant — flip direction
+        // (matching decomposeSubtypeConstraintImpl in Resolution+TypeConstraints.swift).
+        for (argParameter, paramParameter) in zip(argFunction.params, paramFunction.params) {
+            constraints.append(contentsOf: decomposeSubtypeConstraint(
+                subtype: paramParameter,
+                supertype: argParameter,
+                typeVarBySymbol: typeVarBySymbol,
+                typeSystem: typeSystem,
+                blameRange: blameRange
+            ))
         }
         return true
     }
@@ -403,6 +501,15 @@ extension OverloadResolver {
                 substitutedTypeArguments: substitutedTypeArguments,
                 parameterMapping: parameterMapping,
                 diagnostic: nil
+            )
+        }
+
+        func toProbedCallCandidate() -> ProbedCallCandidate {
+            ProbedCallCandidate(
+                symbol: symbol,
+                instantiatedParameterTypes: instantiatedParameterTypes,
+                substitutedTypeArguments: substitutedTypeArguments,
+                parameterMapping: parameterMapping
             )
         }
     }

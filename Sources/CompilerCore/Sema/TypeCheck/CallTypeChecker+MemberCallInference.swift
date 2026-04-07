@@ -2631,8 +2631,19 @@ extension CallTypeChecker {
         // Infer argument types for the normal resolution path (scope functions,
         // collection HOFs, and comparator HOFs infer their lambda args with
         // expected type above and return).
-        let argTypes = args.enumerated().map { _, arg in
-            sema.bindings.exprType(for: arg.expr) ?? driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
+        // Skip lambda literals and callable refs so that their first inference
+        // happens inside prepareCallArguments with a contextual expected type,
+        // preventing a stale no-expectedType binding from poisoning the cache.
+        let argTypes = args.enumerated().map { _, arg -> TypeID in
+            if let expr = ast.arena.expr(arg.expr) {
+                switch expr {
+                case .lambdaLiteral, .callableRef:
+                    return sema.bindings.exprType(for: arg.expr) ?? sema.types.anyType
+                default:
+                    break
+                }
+            }
+            return sema.bindings.exprType(for: arg.expr) ?? driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
         }
 
         let hasLeadingLocaleArgument = calleeName == interner.intern("format")
@@ -5184,6 +5195,22 @@ extension CallTypeChecker {
                 }
             }
 
+            // Collection fallback needs to run before the generic overload resolver
+            // so synthetic collection members can use their specialized lambda
+            // expectations without type-variable noise from the general path.
+            if let fallbackType = tryCollectionMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
+
             // Receiver-lambda invocation: `receiver.localVar()` where localVar
             // has a function-with-receiver type matching the receiver.
             // e.g. `sb.action()` where action: StringBuilder.() -> Unit
@@ -5261,14 +5288,53 @@ extension CallTypeChecker {
         // Use the companion type as implicit receiver when the candidates were
         // redirected from the owner class to its companion object.
         let effectiveReceiverType = companionReceiverType ?? lookupReceiverType
-
-        let resolvedArgs = zip(args, argTypes).map { CallArg(label: $0.label, isSpread: $0.isSpread, type: $1) }
-        let resolved = ctx.resolver.resolveCall(
+        // Synthetic collection members need to short-circuit before the generic
+        // overload resolver so their trailing-lambda expectations stay concrete.
+        if let fallbackType = tryCollectionMemberFallback(
+            id,
+            calleeName: calleeName,
+            isClassNameReceiver: isClassNameReceiver,
+            safeCall: safeCall,
+            receiverID: receiverID,
+            args: args,
+            ctx: ctx,
+            locals: &locals
+        ) {
+            return fallbackType
+        }
+        var cachedNonLambdaArgTypes: [Int: TypeID] = [:]
+        for (index, argument) in args.enumerated() {
+            guard let argumentExpr = ast.arena.expr(argument.expr) else {
+                continue
+            }
+            switch argumentExpr {
+            case .lambdaLiteral, .callableRef:
+                continue
+            default:
+                cachedNonLambdaArgTypes[index] = argTypes[index]
+            }
+        }
+        let preparedArgs = prepareCallArguments(
+            args: args,
             candidates: candidates,
-            call: CallExpr(range: range, calleeName: calleeName, args: resolvedArgs, explicitTypeArgs: explicitTypeArgs),
+            preInferredNonLambdaArgTypes: cachedNonLambdaArgTypes,
+            explicitTypeArgs: explicitTypeArgs,
+            ctx: ctx,
+            locals: &locals
+        )
+        let resolved = resolveCallRespectingLambdaReturnType(
+            candidates: candidates,
+            args: args,
+            argTypes: preparedArgs.argTypes,
+            range: range,
+            calleeName: calleeName,
+            explicitTypeArgs: explicitTypeArgs,
             expectedType: expectedType,
             implicitReceiverType: effectiveReceiverType,
-            ctx: ctx.semaCtx
+            lambdaLiteralIndices: preparedArgs.lambdaLiteralIndices,
+            inputOnlyLambdaIndices: preparedArgs.inputOnlyLambdaIndices,
+            blockedLambdaRefinement: preparedArgs.blockedLambdaRefinement,
+            ctx: ctx
         )
         if let diagnostic = resolved.diagnostic {
             if diagnostic.code == "KSWIFTK-SEMA-BOUND" {
@@ -5316,18 +5382,6 @@ extension CallTypeChecker {
             ) {
                 ctx.semaCtx.diagnostics.emit(projectionDiagnostic)
                 return driver.helpers.bindAndReturnErrorType(id, sema: sema)
-            }
-            if let fallbackType = tryCollectionMemberFallback(
-                id,
-                calleeName: calleeName,
-                isClassNameReceiver: isClassNameReceiver,
-                safeCall: safeCall,
-                receiverID: receiverID,
-                args: args,
-                ctx: ctx,
-                locals: &locals
-            ) {
-                return fallbackType
             }
             if let fallbackType = tryRegexMemberFallback(
                 id,
