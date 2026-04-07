@@ -865,6 +865,11 @@ final class RuntimeJDBCConnectionBox {
                 throw RuntimeJDBCError.sqlite(sqliteMessage(from: db))
             }
             savepoints.removeAll()
+            // Re-open the next transaction immediately so subsequent statements are still guarded.
+            let beginRc = sqlite3_exec(db, "BEGIN TRANSACTION", nil, nil, nil)
+            guard beginRc == SQLITE_OK else {
+                throw RuntimeJDBCError.sqlite(sqliteMessage(from: db))
+            }
         }
     }
 
@@ -876,7 +881,19 @@ final class RuntimeJDBCConnectionBox {
                 throw RuntimeJDBCError.sqlite(sqliteMessage(from: db))
             }
             savepoints.removeAll()
+            // Re-open the next transaction immediately so subsequent statements are still guarded.
+            let beginRc = sqlite3_exec(db, "BEGIN TRANSACTION", nil, nil, nil)
+            guard beginRc == SQLITE_OK else {
+                throw RuntimeJDBCError.sqlite(sqliteMessage(from: db))
+            }
         }
+    }
+
+    /// Returns an SQL-safe double-quoted identifier for a savepoint name.
+    /// Any double-quote characters in `name` are doubled to escape them.
+    private func quotedSavepointName(_ name: String) -> String {
+        let escaped = name.replacingOccurrences(of: "\"", with: "\"\"")
+        return "\"\(escaped)\""
     }
 
     func rollback(to savepoint: RuntimeJDBCSavepointBox) throws {
@@ -884,7 +901,8 @@ final class RuntimeJDBCConnectionBox {
             throw RuntimeJDBCError.sqlite("Savepoint does not belong to this connection")
         }
         let db = try requireDB()
-        let spName = savepoint.name ?? "sp_\(savepoint.identifier)"
+        let rawName = savepoint.name ?? "sp_\(savepoint.identifier)"
+        let spName = quotedSavepointName(rawName)
         let rc = sqlite3_exec(db, "ROLLBACK TO SAVEPOINT \(spName)", nil, nil, nil)
         guard rc == SQLITE_OK else {
             throw RuntimeJDBCError.sqlite(sqliteMessage(from: db))
@@ -898,7 +916,8 @@ final class RuntimeJDBCConnectionBox {
         let db = try requireDB()
         let sp = RuntimeJDBCSavepointBox(identifier: nextSavepointID, name: name, connection: self)
         nextSavepointID += 1
-        let spName = name ?? "sp_\(sp.identifier)"
+        let rawName = name ?? "sp_\(sp.identifier)"
+        let spName = quotedSavepointName(rawName)
         let rc = sqlite3_exec(db, "SAVEPOINT \(spName)", nil, nil, nil)
         guard rc == SQLITE_OK else {
             throw RuntimeJDBCError.sqlite(sqliteMessage(from: db))
@@ -912,7 +931,8 @@ final class RuntimeJDBCConnectionBox {
             throw RuntimeJDBCError.sqlite("Savepoint does not belong to this connection")
         }
         let db = try requireDB()
-        let spName = savepoint.name ?? "sp_\(savepoint.identifier)"
+        let rawName = savepoint.name ?? "sp_\(savepoint.identifier)"
+        let spName = quotedSavepointName(rawName)
         let rc = sqlite3_exec(db, "RELEASE SAVEPOINT \(spName)", nil, nil, nil)
         guard rc == SQLITE_OK else {
             throw RuntimeJDBCError.sqlite(sqliteMessage(from: db))
@@ -921,8 +941,19 @@ final class RuntimeJDBCConnectionBox {
     }
 
     func setAutoCommit(_ newValue: Bool) throws {
-        _ = try requireDB()
+        let db = try requireDB()
+        guard autoCommit != newValue else { return }
         autoCommit = newValue
+        if !newValue {
+            // Issue BEGIN TRANSACTION immediately so that commit()/rollback() have
+            // an active transaction to work with.
+            let rc = sqlite3_exec(db, "BEGIN TRANSACTION", nil, nil, nil)
+            guard rc == SQLITE_OK else {
+                autoCommit = true  // revert on failure
+                throw RuntimeJDBCError.sqlite(sqliteMessage(from: db))
+            }
+        }
+        savepoints.removeAll()
     }
 
     func close() throws {
