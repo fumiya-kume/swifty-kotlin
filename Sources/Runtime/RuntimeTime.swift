@@ -98,8 +98,17 @@ private func runtimeInstantFromEpochMilliseconds(_ epochMilliseconds: Double) ->
 }
 
 private func runtimeJavaDurationComponents(from nanoseconds: Int64) -> (seconds: Int64, nanoAdjustment: Int32) {
-    let seconds = nanoseconds / 1_000_000_000
-    let nanoAdjustment = Int32(nanoseconds % 1_000_000_000)
+    // Use floor division so that nanoAdjustment is always in [0, 999_999_999].
+    // For positive values, truncation == floor; for negative values we adjust.
+    let seconds: Int64
+    if nanoseconds >= 0 {
+        seconds = nanoseconds / 1_000_000_000
+    } else {
+        // Guard against Int64.min overflow before subtracting 999_999_999.
+        let (adjusted, overflow) = nanoseconds.subtractingReportingOverflow(999_999_999)
+        seconds = overflow ? Int64.min / 1_000_000_000 : adjusted / 1_000_000_000
+    }
+    let nanoAdjustment = Int32(nanoseconds - seconds * 1_000_000_000)
     return (seconds, nanoAdjustment)
 }
 
@@ -322,7 +331,16 @@ public func kk_java_instant_of_epoch_second(_ epochSeconds: Int, _ nanoOfSecond:
 @_cdecl("kk_java_instant_of_epoch_milli")
 public func kk_java_instant_of_epoch_milli(_ epochMillis: Int) -> Int {
     let ms = Int64(epochMillis)
-    let seconds = ms >= 0 ? ms / 1_000 : (ms - 999) / 1_000
+    // Use floor division so that nanoOfSecond is always in [0, 999_999_999].
+    // For negative ms, truncation-toward-zero gives wrong results.
+    // Guard against Int64.min overflow before subtracting 999.
+    let seconds: Int64
+    if ms >= 0 {
+        seconds = ms / 1_000
+    } else {
+        let (adjusted, overflow) = ms.subtractingReportingOverflow(999)
+        seconds = overflow ? Int64.min / 1_000 : adjusted / 1_000
+    }
     let nanoOfSecond = Int32((ms - seconds * 1_000) * 1_000_000)
     return registerRuntimeObject(RuntimeJavaInstantBox(epochSeconds: seconds, nanoOfSecond: nanoOfSecond))
 }
@@ -400,7 +418,16 @@ public func kk_java_duration_of_seconds(_ seconds: Int, _ nanoAdjustment: Int) -
 @_cdecl("kk_java_duration_of_millis")
 public func kk_java_duration_of_millis(_ millis: Int) -> Int {
     let ms = Int64(millis)
-    let seconds = ms >= 0 ? ms / 1_000 : (ms - 999) / 1_000
+    // Use floor division so that nanoAdjustment is always in [0, 999_999_999].
+    // For negative ms, truncation-toward-zero gives wrong results.
+    // Guard against Int64.min overflow before subtracting 999.
+    let seconds: Int64
+    if ms >= 0 {
+        seconds = ms / 1_000
+    } else {
+        let (adjusted, overflow) = ms.subtractingReportingOverflow(999)
+        seconds = overflow ? Int64.min / 1_000 : adjusted / 1_000
+    }
     let nanoAdjustment = Int32((ms - seconds * 1_000) * 1_000_000)
     return registerRuntimeObject(RuntimeJavaDurationBox(seconds: seconds, nanoAdjustment: nanoAdjustment))
 }
@@ -408,33 +435,39 @@ public func kk_java_duration_of_millis(_ millis: Int) -> Int {
 /// Returns a human-readable string for a java.time.Duration (ISO-8601 format).
 ///
 /// Kotlin/JVM: javaDuration.toString()
+///
+/// Java's Duration.toString() follows the ISO-8601 pattern PTnHnMn.nS.
+/// The sign is placed on each component, not as a leading "-PT" prefix.
+/// For example: Duration.ofMillis(-1500) → "PT-1.500000000S"
+///              Duration.ofSeconds(-3600) → "PT-1H"
 @_cdecl("kk_java_duration_to_string")
 public func kk_java_duration_to_string(_ durationRaw: Int) -> Int {
     guard let duration = runtimeJavaDurationBox(from: durationRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_java_duration_to_string received invalid java.time.Duration handle")
     }
-    let totalNs = runtimeSaturatingAdd(
-        saturatingMultiply(duration.seconds, 1_000_000_000),
-        Int64(duration.nanoAdjustment)
-    )
-    let absNs = totalNs == Int64.min ? Int64.max : (totalNs < 0 ? -totalNs : totalNs)
-    let isNegative = totalNs < 0
+    // duration.seconds and duration.nanoAdjustment are the canonical fields
+    // (nanoAdjustment is always in [0, 999_999_999] after construction).
+    let secs = duration.seconds
+    let nano = Int64(duration.nanoAdjustment)
 
-    // Build ISO-8601 duration string: PT[nH][nM][n[.nnn]S]
-    var result = isNegative ? "-PT" : "PT"
-    let totalSecs = absNs / 1_000_000_000
-    let nanoRemainder = absNs % 1_000_000_000
-    let hours = totalSecs / 3_600
-    let minutes = (totalSecs % 3_600) / 60
-    let seconds = totalSecs % 60
-    if hours > 0 { result += "\(hours)H" }
-    if minutes > 0 { result += "\(minutes)M" }
-    if seconds > 0 || nanoRemainder > 0 || (hours == 0 && minutes == 0) {
-        if nanoRemainder == 0 {
-            result += "\(seconds)S"
+    // Build ISO-8601 duration string: PT[nH][nM][n[.nnnnnnnnn]S]
+    // Components are signed individually, matching java.time.Duration.toString().
+    var result = "PT"
+    let absSecs = secs == Int64.min ? Int64.max : (secs < 0 ? -secs : secs)
+    let hours = absSecs / 3_600
+    let minutes = (absSecs % 3_600) / 60
+    let seconds = absSecs % 60
+    let isNegative = secs < 0
+
+    if hours > 0 { result += isNegative ? "-\(hours)H" : "\(hours)H" }
+    if minutes > 0 { result += isNegative ? "-\(minutes)M" : "\(minutes)M" }
+    if seconds > 0 || nano > 0 || (hours == 0 && minutes == 0) {
+        let signedSec = isNegative ? -Int64(seconds) : Int64(seconds)
+        if nano == 0 {
+            result += "\(signedSec)S"
         } else {
-            let fracStr = String(format: "%09d", nanoRemainder).replacingOccurrences(of: "0+$", with: "", options: .regularExpression)
-            result += "\(seconds).\(fracStr)S"
+            let fracStr = String(format: "%09d", nano).replacingOccurrences(of: "0+$", with: "", options: .regularExpression)
+            result += "\(signedSec).\(fracStr)S"
         }
     }
     let utf8 = Array(result.utf8)
