@@ -64,6 +64,11 @@ struct CollectionLiteralLookupTables {
     let kkSetFilterNotName: InternedString
     let kkSetMapNotNullName: InternedString
     let kkSetFlatMapName: InternedString
+    // Set predicate HOF ABI names (STDLIB-SET-PRED)
+    let kkSetAnyName: InternedString
+    let kkSetNoneName: InternedString
+    let kkSetAllName: InternedString
+    let kkSetCountPredicateName: InternedString
 
     let kkStringSplitName: InternedString
     let kkStringChunkedName: InternedString
@@ -754,6 +759,10 @@ struct CollectionLiteralLookupTables {
         kkSetFilterNotName = interner.intern("kk_set_filterNot")
         kkSetMapNotNullName = interner.intern("kk_set_mapNotNull")
         kkSetFlatMapName = interner.intern("kk_set_flatMap")
+        kkSetAnyName = interner.intern("kk_set_any")
+        kkSetNoneName = interner.intern("kk_set_none")
+        kkSetAllName = interner.intern("kk_set_all")
+        kkSetCountPredicateName = interner.intern("kk_set_count_predicate")
         kkStringSplitName = interner.intern("kk_string_split")
         kkStringChunkedName = interner.intern("kk_string_chunked")
         kkStringWindowedName = interner.intern("kk_string_windowed")

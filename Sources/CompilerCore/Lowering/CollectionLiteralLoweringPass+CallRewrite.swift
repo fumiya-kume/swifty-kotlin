@@ -2592,7 +2592,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.filterNotName || callee == lookup.mapNotNullName || callee == lookup.forEachName || callee == lookup.onEachName
                         || callee == lookup.flatMapName || callee == lookup.anyName || callee == lookup.noneName
                         || callee == lookup.allName || callee == lookup.mapValuesName || callee == lookup.mapKeysName
-                        || callee == lookup.toListName
+                        || callee == lookup.toListName || callee == lookup.countName
                     {
                         if callee == lookup.toListName, arguments.count == 1 {
                             let receiverID = arguments[0]
@@ -2639,7 +2639,11 @@ extension CollectionLiteralLoweringPass {
                         if arguments.count == 2 || arguments.count == 3 {
                             let receiverID = arguments[0]
                             let lambdaID = arguments[1]
-                            if listExprIDs.contains(receiverID.rawValue) {
+                            // countName with a List receiver is handled by the dedicated count/first/last
+                            // handler below, which correctly rewrites it to kk_list_count.
+                            // Entering this generic list-HOF path for countName would emit a call with
+                            // the un-rewritten "count" callee and then `continue`, skipping that handler.
+                            if listExprIDs.contains(receiverID.rawValue) && callee != lookup.countName {
                                 let closureRawID: KIRExprID
                                 if arguments.count == 3 {
                                     closureRawID = arguments[2]
@@ -2846,6 +2850,10 @@ extension CollectionLiteralLoweringPass {
                                || callee == lookup.filterNotName
                                || callee == lookup.mapNotNullName
                                || callee == lookup.flatMapName
+                               || callee == lookup.anyName
+                               || callee == lookup.noneName
+                               || callee == lookup.allName
+                               || callee == lookup.countName
                             {
                                 let closureRawID: KIRExprID
                                 if arguments.count == 3 {
@@ -2862,6 +2870,10 @@ extension CollectionLiteralLoweringPass {
                                 case lookup.filterNotName: lookup.kkSetFilterNotName
                                 case lookup.mapNotNullName: lookup.kkSetMapNotNullName
                                 case lookup.flatMapName: lookup.kkSetFlatMapName
+                                case lookup.anyName: lookup.kkSetAnyName
+                                case lookup.noneName: lookup.kkSetNoneName
+                                case lookup.allName: lookup.kkSetAllName
+                                case lookup.countName: lookup.kkSetCountPredicateName
                                 default: callee
                                 }
                                 let needsListTag = callee == lookup.mapName || callee == lookup.filterName
