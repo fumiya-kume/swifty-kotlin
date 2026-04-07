@@ -108,7 +108,9 @@ public func kk_char_digitToIntOrNull(_ value: Int) -> Int {
 /// Returns the difference of the Unicode code points of two Char values.
 @_cdecl("kk_char_minus")
 public func kk_char_minus(_ lhsRaw: Int, _ rhsRaw: Int) -> Int {
-    return lhsRaw - rhsRaw
+    let lhs = kk_unbox_char(lhsRaw)
+    let rhs = kk_unbox_char(rhsRaw)
+    return lhs - rhs
 }
 
 // New numeric conversion functions
