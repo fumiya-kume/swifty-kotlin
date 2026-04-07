@@ -2140,9 +2140,6 @@ private func runtimeFlowApplyElementOp(
             state.dropWhileFinished[index] = true
         case .catchHandler, .retry, .retryWhen, .onErrorReturn, .onErrorResume:
             continue
-        case .onCompletion:
-            // onCompletion is a completion-only handler; pass elements through unchanged.
-            continue
         }
     }
     if runtimeFlowElementStateHasExhaustedTake(state) {
@@ -3511,13 +3508,16 @@ public func kk_flow_reduce(_ flowHandle: Int, _ operationFnPtr: Int, _: Int) -> 
     }
 
     var accumulator = first
+    var thrownOnReduce: Int? = nil
     for value in values.dropFirst() {
         var thrown = 0
         accumulator = runtimeFlowMaybeUnbox(operation(0, accumulator, value, &thrown))
         if thrown != 0 {
-            return accumulator
+            thrownOnReduce = thrown
+            break
         }
     }
+    runtimeFlowFireCompletionHandlers(flow.opChain, failure: thrownOnReduce)
     return accumulator
 }
 
