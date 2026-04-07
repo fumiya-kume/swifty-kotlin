@@ -1108,7 +1108,7 @@ extension CallTypeChecker {
         // contextual function type (and thus implicit `it`) is available.
         let collectionHOFNames: Set = [
             "map", "filter", "filterNot", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
-            "fold", "reduce", "reduceOrNull", "foldIndexed", "reduceIndexed", "reduceIndexedOrNull",
+            "fold", "foldRight", "reduce", "reduceOrNull", "reduceRight", "foldIndexed", "foldRightIndexed", "reduceIndexed", "reduceIndexedOrNull",
             "scan", "scanIndexed", "runningFold", "runningFoldIndexed", "runningReduce", "runningReduceIndexed", "scanReduce",
             "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "associateByTo", "associateWithTo", "groupByTo", "forEachIndexed", "mapIndexed",
@@ -1526,6 +1526,65 @@ extension CallTypeChecker {
                 }
                 _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = initialType
+
+            case "foldRight":
+                guard args.count == 2 else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0024",
+                        "No viable overload found for call.",
+                        range: ast.arena.exprRange(id)
+                    )
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let initialType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType, initialType],
+                    returnType: initialType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                }
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = initialType
+
+            case "foldRightIndexed":
+                guard args.count == 2 else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0024",
+                        "No viable overload found for call.",
+                        range: ast.arena.exprRange(id)
+                    )
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let initialType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [sema.types.intType, collectionElementType, initialType],
+                    returnType: initialType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                }
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = initialType
+
+            case "reduceRight":
+                guard args.count == 1 else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0024",
+                        "No viable overload found for call.",
+                        range: ast.arena.exprRange(id)
+                    )
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType, collectionElementType],
+                    returnType: collectionElementType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = collectionElementType
 
             case "reduce":
                 guard args.count == 1 else {

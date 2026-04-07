@@ -609,8 +609,11 @@ extension CallTypeChecker {
             interner.intern("none"),
             interner.intern("all"),
             interner.intern("fold"),
+            interner.intern("foldRight"),
             interner.intern("foldIndexed"),
+            interner.intern("foldRightIndexed"),
             interner.intern("reduce"),
+            interner.intern("reduceRight"),
             interner.intern("reduceOrNull"),
             interner.intern("reduceIndexed"),
             interner.intern("reduceIndexedOrNull"),
@@ -843,11 +846,11 @@ extension CallTypeChecker {
             return isMutableMapReceiver && argCount == 1
         case interner.intern("plus"), interner.intern("minus"):
             return isMapReceiver && argCount == 1
-        case interner.intern("fold"), interner.intern("foldIndexed"), interner.intern("scan"), interner.intern("scanIndexed"), interner.intern("runningFold"), interner.intern("runningFoldIndexed"), interner.intern("subList"):
+        case interner.intern("fold"), interner.intern("foldRight"), interner.intern("foldIndexed"), interner.intern("foldRightIndexed"), interner.intern("scan"), interner.intern("scanIndexed"), interner.intern("runningFold"), interner.intern("runningFoldIndexed"), interner.intern("subList"):
             return argCount == 2
         case interner.intern("slice"):
             return argCount == 1
-        case interner.intern("reduceIndexed"), interner.intern("reduceIndexedOrNull"), interner.intern("runningReduceIndexed"):
+        case interner.intern("reduceRight"), interner.intern("reduceIndexed"), interner.intern("reduceIndexedOrNull"), interner.intern("runningReduceIndexed"):
             return argCount == 1
         case interner.intern("windowed"):
             return argCount == 1 || argCount == 2 || argCount == 3
@@ -1321,6 +1324,36 @@ extension CallTypeChecker {
                 nullability: .nonNull
             )))
             return (argumentIndex: 1, expectedType: expectedType)
+        }
+
+        if memberName == interner.intern("foldRight"), argCount == 2 {
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [sema.types.anyType, sema.types.anyType],
+                returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 1, expectedType: expectedType)
+        }
+
+        if memberName == interner.intern("foldRightIndexed"), argCount == 2 {
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [sema.types.intType, sema.types.anyType, sema.types.anyType],
+                returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 1, expectedType: expectedType)
+        }
+
+        if memberName == interner.intern("reduceRight"), argCount == 1 {
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [sema.types.anyType, sema.types.anyType],
+                returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 0, expectedType: expectedType)
         }
 
         if (memberName == interner.intern("reduce") || memberName == interner.intern("reduceOrNull")), argCount == 1 {
