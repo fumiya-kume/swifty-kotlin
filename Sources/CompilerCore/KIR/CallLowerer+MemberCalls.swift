@@ -3274,12 +3274,13 @@ extension CallLowerer {
                         instructions.append(.constValue(result: kindExpr, value: .intLiteral(Int64(primitiveSelectorKind.rawValue))))
                         callArguments.append(kindExpr)
                     }
+                    let canThrow = runtimeCallee == "kk_list_elementAt"
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
                         arguments: callArguments,
                         result: result,
-                        canThrow: false,
+                        canThrow: canThrow,
                         thrownResult: nil
                     ))
                     return result
