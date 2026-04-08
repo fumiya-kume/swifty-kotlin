@@ -1,4 +1,4 @@
-// SKIP-DIFF
+// SKIP-DIFF: advanced coroutine APIs (CoroutineScope, ReceiveChannel, produce) not yet implemented
 import kotlinx.coroutines.*
 
 // TEST-CORO-003: CoroutineScope lifecycle — creating, using, and cancelling
