@@ -90,6 +90,15 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerDateFormatTopLevel(
+            packageFQName: javaTextPkg,
+            name: "ofPattern",
+            parameterTypes: [types.stringType],
+            returnType: dateFormatType,
+            externalLinkName: "kk_dateformat_ofPatternDefaultLocale",
+            symbols: symbols,
+            interner: interner
+        )
         registerDateFormatMember(
             ownerSymbol: dateFormatSymbol,
             ownerType: dateFormatType,
@@ -97,6 +106,17 @@ extension DataFlowSemaPhase {
             parameterTypes: [types.longType],
             returnType: types.stringType,
             externalLinkName: "kk_dateformat_format",
+            symbols: symbols,
+            interner: interner
+        )
+        registerDateFormatMember(
+            ownerSymbol: dateFormatSymbol,
+            ownerType: dateFormatType,
+            name: "parse",
+            parameterTypes: [types.stringType],
+            returnType: types.longType,
+            externalLinkName: "kk_dateformat_parse",
+            extraFlags: [.throwingFunction],
             symbols: symbols,
             interner: interner
         )
@@ -112,12 +132,12 @@ extension DataFlowSemaPhase {
         symbols.setFunctionSignature(FunctionSignature(parameterTypes: parameterTypes, returnType: returnType, valueParameterSymbols: [], valueParameterHasDefaultValues: [], valueParameterIsVararg: []), for: function)
     }
 
-    private func registerDateFormatMember(ownerSymbol: SymbolID, ownerType: TypeID, name: String, parameterTypes: [TypeID], returnType: TypeID, externalLinkName: String, symbols: SymbolTable, interner: StringInterner) {
+    private func registerDateFormatMember(ownerSymbol: SymbolID, ownerType: TypeID, name: String, parameterTypes: [TypeID], returnType: TypeID, externalLinkName: String, extraFlags: SymbolFlags = [], symbols: SymbolTable, interner: StringInterner) {
         guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
         let functionName = interner.intern(name)
         let fqName = ownerInfo.fqName + [functionName]
         guard symbols.lookupAll(fqName: fqName).first(where: { symbols.functionSignature(for: $0)?.parameterTypes == parameterTypes }) == nil else { return }
-        let function = symbols.define(kind: .function, name: functionName, fqName: fqName, declSite: nil, visibility: .public, flags: [.synthetic])
+        let function = symbols.define(kind: .function, name: functionName, fqName: fqName, declSite: nil, visibility: .public, flags: SymbolFlags([.synthetic]).union(extraFlags))
         symbols.setParentSymbol(ownerSymbol, for: function)
         symbols.setExternalLinkName(externalLinkName, for: function)
         symbols.setFunctionSignature(FunctionSignature(receiverType: ownerType, parameterTypes: parameterTypes, returnType: returnType, valueParameterSymbols: [], valueParameterHasDefaultValues: [], valueParameterIsVararg: []), for: function)
