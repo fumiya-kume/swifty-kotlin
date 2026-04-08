@@ -202,7 +202,7 @@
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/flow_advanced_operators.kt`
 
-- [ ] STDLIB-FLOW-177: SharedFlowとStateFlow完全実装
+- [x] STDLIB-FLOW-177: SharedFlowとStateFlow完全実装
   - **仕様**: ホットストリームの完全サポート
   - **実装内容**:
     - SharedFlow: マルチキャストホットフロー
@@ -210,7 +210,7 @@
     - shareIn(): コールドフローからSharedFlowへの変換
     - stateIn(): コールドフローからStateFlowへの変換
     - リプレイキャッシュ: 過去値のキャッシュ機能
-  - **現状**: SharedFlowとStateFlowは未実装
+  - **現状**: 実装完了（`RuntimeSharedFlowHandle`、`RuntimeStateFlowHandle`、各C関数エントリポイント）
   - **関連ファイル**: `RuntimeCoroutine.swift`
   - **テストケース**: `Scripts/diff_cases/shared_state_flow.kt`
 
