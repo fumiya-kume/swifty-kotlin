@@ -4617,7 +4617,7 @@ enum ChannelBufferOverflow {
 /// resuming the continuation.  Using a class (reference type) ensures the
 /// `delivered` flag set under the channel lock is visible to the sender
 /// after it re-acquires the lock post-wakeup.
-final class SuspendedSender {
+final class SuspendedSender: @unchecked Sendable {
     let semaphore: DispatchSemaphore // CORO-004: Keep for backward compatibility during migration
     let continuation: Int
     let value: Int
@@ -4641,7 +4641,7 @@ final class SuspendedSender {
 
 /// Mutable box for a suspended receiver so senders / close can mark the
 /// wakeup reason before resuming the continuation. Mirrors `SuspendedSender`.
-final class SuspendedReceiver {
+final class SuspendedReceiver: @unchecked Sendable {
     let semaphore: DispatchSemaphore // CORO-004: Keep for backward compatibility during migration
     let continuation: Int
     /// CORO-004: Resume closure for continuation-based implementation
@@ -4727,8 +4727,9 @@ final class RuntimeChannelHandle: @unchecked Sendable {
             receiverQueue.removeFirst()
             receiver.result = value
             lock.unlock()
-            // CORO-004: Use continuation-based resume if available
-            resumeReceiver(receiver)
+            // Preserve rendezvous handoff ordering: let the sender resume and
+            // return from `send` before the waiting receiver continues.
+            resumeReceiverAsync(receiver)
             return value
         }
 
@@ -5000,6 +5001,16 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         } else {
             // Fallback to semaphore
             receiver.semaphore.signal()
+        }
+    }
+
+    /// Dispatch receiver wakeup asynchronously even for semaphore-backed waiters.
+    /// This keeps direct sender->receiver handoff aligned with Kotlin's observed
+    /// rendezvous ordering where the sender resumes from `send` before the
+    /// receiver continues past `receive`.
+    func resumeReceiverAsync(_ receiver: SuspendedReceiver) {
+        DispatchQueue.global().async {
+            self.resumeReceiver(receiver)
         }
     }
 
