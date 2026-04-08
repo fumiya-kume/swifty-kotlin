@@ -1096,6 +1096,45 @@ extension CallTypeChecker {
             )))
         }
 
+        if memberName == interner.intern("toIntArray"),
+           let intArraySymbol = sema.symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("IntArray"),
+           ])
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: intArraySymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        }
+
+        if memberName == interner.intern("toLongArray"),
+           let longArraySymbol = sema.symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("LongArray"),
+           ])
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: longArraySymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        }
+
+        if memberName == interner.intern("toByteArray"),
+           let byteArraySymbol = sema.symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("ByteArray"),
+           ])
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: byteArraySymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        }
+
         if memberName == interner.intern("toMutableList"),
            let mutableListSymbol = sema.symbols.lookupByShortName(interner.intern("MutableList")).first
         {

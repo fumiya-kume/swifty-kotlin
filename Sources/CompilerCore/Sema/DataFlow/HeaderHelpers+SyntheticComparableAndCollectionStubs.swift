@@ -4085,7 +4085,6 @@ extension DataFlowSemaPhase {
         guard let listFQName = symbols.symbol(listInterfaceSymbol)?.fqName else { return }
         let internedMemberName = interner.intern(memberName)
         let memberFQName = listFQName + [internedMemberName]
-        guard symbols.lookup(fqName: memberFQName) == nil else { return }
 
         let listTypeParamType = types.make(.typeParam(TypeParamType(
             symbol: listTypeParamSymbol, nullability: .nonNull
@@ -4211,6 +4210,8 @@ extension DataFlowSemaPhase {
             }
         }
         
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
         let returnType = types.make(.classType(ClassType(
             classSymbol: arraySymbol,
             args: [],
