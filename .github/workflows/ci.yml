@@ -63,7 +63,7 @@ jobs:
     name: kotlinc Diff Regression
     runs-on: ubuntu-latest
     # Kotlin/Java tool downloads occasionally spike on GitHub-hosted runners.
-    timeout-minutes: 120
+    timeout-minutes: 60
     env:
       KOTLIN_VERSION: "2.3.10"
       KOTLINX_COROUTINES_VERSION: "1.10.2"
@@ -73,6 +73,12 @@ jobs:
         uses: ./.github/actions/setup-swift-llvm
         with:
           swift-version: "6.2"
+      - name: Cache Kotlin compiler and coroutines jar
+        id: cache-kotlin
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/kotlin-tools
+          key: kotlin-tools-${{ env.KOTLIN_VERSION }}-coroutines-${{ env.KOTLINX_COROUTINES_VERSION }}
       - name: Install Kotlin and Java
         run: |
           sudo apt-get install -y default-jdk unzip
@@ -80,13 +86,17 @@ jobs:
           KOTLIN_DIR="${TOOLS_DIR}/kotlin"
           mkdir -p "$TOOLS_DIR"
 
-          curl -sSL -o "${TOOLS_DIR}/kotlin-compiler.zip" \
-            "https://github.com/JetBrains/kotlin/releases/download/v${KOTLIN_VERSION}/kotlin-compiler-${KOTLIN_VERSION}.zip"
-          unzip -q "${TOOLS_DIR}/kotlin-compiler.zip" -d "$KOTLIN_DIR"
+          if [ ! -f "${KOTLIN_DIR}/kotlinc/bin/kotlinc" ]; then
+            curl -sSL -o "${TOOLS_DIR}/kotlin-compiler.zip" \
+              "https://github.com/JetBrains/kotlin/releases/download/v${KOTLIN_VERSION}/kotlin-compiler-${KOTLIN_VERSION}.zip"
+            unzip -q "${TOOLS_DIR}/kotlin-compiler.zip" -d "$KOTLIN_DIR"
+          fi
           echo "${KOTLIN_DIR}/kotlinc/bin" >> "$GITHUB_PATH"
 
-          curl -sSL -o "${TOOLS_DIR}/kotlinx-coroutines-core-jvm.jar" \
-            "https://repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/${KOTLINX_COROUTINES_VERSION}/kotlinx-coroutines-core-jvm-${KOTLINX_COROUTINES_VERSION}.jar"
+          if [ ! -f "${TOOLS_DIR}/kotlinx-coroutines-core-jvm.jar" ]; then
+            curl -sSL -o "${TOOLS_DIR}/kotlinx-coroutines-core-jvm.jar" \
+              "https://repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/${KOTLINX_COROUTINES_VERSION}/kotlinx-coroutines-core-jvm-${KOTLINX_COROUTINES_VERSION}.jar"
+          fi
           echo "KOTLINC_CLASSPATH=${TOOLS_DIR}/kotlinx-coroutines-core-jvm.jar" >> "$GITHUB_ENV"
       - name: Verify prerequisites
         run: |
@@ -103,12 +113,13 @@ jobs:
         env:
           DIFF_REPORT: ${{ runner.temp }}/diff_kotlinc_report.tsv
           DIFF_ARTIFACT_ROOT: ${{ runner.temp }}/diff_kotlinc_artifacts
-          DIFF_PARALLEL: "4"
-          DIFF_WORKERS: "4"
           DIFF_COMPILE_TIMEOUT: "180"
           DIFF_RUN_TIMEOUT: "30"
           DIFF_LOG_PASS: "0"
-        run: bash Scripts/diff_kotlinc.sh --report "$DIFF_REPORT" Scripts/diff_cases
+        run: |
+          NCPU=$(nproc)
+          DIFF_PARALLEL="$NCPU" DIFF_WORKERS="$NCPU" \
+            bash Scripts/diff_kotlinc.sh --report "$DIFF_REPORT" Scripts/diff_cases
       - name: Summarize kotlinc diff artifacts
         if: always()
         env:
@@ -128,4 +139,4 @@ jobs:
             ${{ runner.temp }}/diff_kotlinc_report.tsv
             ${{ runner.temp }}/diff_kotlinc_artifacts
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 30
