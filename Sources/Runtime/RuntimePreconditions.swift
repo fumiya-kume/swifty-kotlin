@@ -7,7 +7,7 @@ import Foundation
 public func kk_require(_ condition: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     if condition == 0 {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Failed requirement.")
+        outThrown?.pointee = runtimeAllocateIllegalArgumentException(message: "Failed requirement.")
         return 0
     }
     return 0
@@ -17,7 +17,7 @@ public func kk_require(_ condition: Int, _ outThrown: UnsafeMutablePointer<Int>?
 public func kk_check(_ condition: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     if condition == 0 {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalStateException: Check failed.")
+        outThrown?.pointee = runtimeAllocateIllegalStateException(message: "Check failed.")
         return 0
     }
     return 0
@@ -35,7 +35,8 @@ public func kk_require_lazy(
         fnPtr,
         closureRaw,
         outThrown,
-        defaultMessage: "IllegalArgumentException: Failed requirement."
+        defaultMessage: "Failed requirement.",
+        allocate: runtimeAllocateIllegalArgumentException
     )
 }
 
@@ -51,7 +52,8 @@ public func kk_check_lazy(
         fnPtr,
         closureRaw,
         outThrown,
-        defaultMessage: "IllegalStateException: Check failed."
+        defaultMessage: "Check failed.",
+        allocate: runtimeAllocateIllegalStateException
     )
 }
 
@@ -64,7 +66,7 @@ public func kk_precondition_assert(_ condition: Int, _ outThrown: UnsafeMutableP
         return 0
     }
     if condition == 0 {
-        outThrown?.pointee = runtimeAllocateThrowable(message: runtimeAssertionErrorMessage())
+        outThrown?.pointee = runtimeAllocateAssertionError(message: "Assertion failed.")
         return 0
     }
     return 0
@@ -85,21 +87,22 @@ public func kk_precondition_assert_lazy(
         return 0
     }
     guard fnPtr != 0 else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: runtimeAssertionErrorMessage())
+        outThrown?.pointee = runtimeAllocateAssertionError(message: "Assertion failed.")
         return 0
     }
 
     var lazyThrown = 0
     let rawMessage = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: closureRaw, outThrown: &lazyThrown)
     if lazyThrown != 0 {
-        outThrown?.pointee = runtimeAllocateThrowable(
-            message: runtimeAssertionErrorMessage(),
+        outThrown?.pointee = runtimeAllocateAssertionError(
+            message: "Assertion failed.",
             cause: lazyThrown
         )
         return 0
     }
 
-    outThrown?.pointee = runtimeAllocateThrowable(message: runtimeAssertionErrorMessage(rawMessage))
+    let message = runtimePreconditionMessage(from: rawMessage)
+    outThrown?.pointee = runtimeAllocateAssertionError(message: message)
     return 0
 }
 
@@ -107,7 +110,7 @@ public func kk_precondition_assert_lazy(
 public func kk_error(_ messageRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     let message = runtimePreconditionMessage(from: messageRaw)
-    outThrown?.pointee = runtimeAllocateThrowable(message: message)
+    outThrown?.pointee = runtimeAllocateIllegalStateException(message: message)
     return 0
 }
 
@@ -131,7 +134,8 @@ private func preconditionWithLazyMessage(
     _ fnPtr: Int,
     _ closureRaw: Int,
     _ outThrown: UnsafeMutablePointer<Int>?,
-    defaultMessage: String
+    defaultMessage: String,
+    allocate: (String, Int) -> Int
 ) -> Int {
     outThrown?.pointee = 0
     guard condition == 0 else {
@@ -140,7 +144,7 @@ private func preconditionWithLazyMessage(
 
     // No lazy message lambda provided — use the default message directly
     guard fnPtr != 0 else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: defaultMessage)
+        outThrown?.pointee = allocate(defaultMessage, 0)
         return 0
     }
 
@@ -153,17 +157,14 @@ private func preconditionWithLazyMessage(
         // STDLIB-257: The precondition failure (IllegalArgumentException / IllegalStateException)
         // is the primary exception; the lambda's exception is attached as the cause so callers
         // can distinguish "precondition failed" from "lazy message evaluation failed".
-        outThrown?.pointee = runtimeAllocateThrowable(
-            message: defaultMessage,
-            cause: lazyThrown
-        )
+        outThrown?.pointee = allocate(defaultMessage, lazyThrown)
         return 0
     }
 
     // Lazy message evaluated successfully — use it for the precondition failure.
     // Kotlin's e.message returns only the user-provided message, not the exception type prefix.
     let message = runtimePreconditionMessage(from: rawMessage)
-    outThrown?.pointee = runtimeAllocateThrowable(message: message)
+    outThrown?.pointee = allocate(message, 0)
     return 0
 }
 
