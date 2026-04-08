@@ -2762,20 +2762,6 @@ private func runtimeFlowHasErrorHandlers(_ ops: [RuntimeFlowOp]) -> Bool {
 
 /// Invoke all onCompletion handlers in the op chain.
 /// `failure`: nil on success, non-zero exception pointer on error.
-private func runtimeFlowFireCompletionHandlers(_ ops: [RuntimeFlowOp], failure: Int?) {
-    for op in ops where op.kind == .onCompletion {
-        guard op.argument != 0 else { continue }
-        let handler = unsafeBitCast(
-            op.argument,
-            to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
-        )
-        var thrown = 0
-        _ = handler(0, failure ?? 0, &thrown)
-    }
-}
-
-/// Invoke all onCompletion handlers in the op chain.
-/// `failure`: nil on success, non-zero exception pointer on error.
 /// Returns the first exception thrown by a handler, or nil if all handlers completed normally.
 @discardableResult
 private func runtimeFlowFireCompletionHandlers(_ ops: [RuntimeFlowOp], failure: Int?) -> Int? {
