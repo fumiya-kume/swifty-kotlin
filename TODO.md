@@ -241,16 +241,17 @@
 
 #### Phase 5: 高度時間測定 (低優先度)
 
-- [ ] STDLIB-TIME-180: 実験的時間API完全実装
+- [x] STDLIB-TIME-180: 実験的時間API完全実装
   - **仕様**: 実験的時間APIの完全サポート
   - **実装内容**:
-    - @ExperimentalTime: 実験的時間APIマーカー
-    - Clockインターフェース: 時計の抽象化
-    - Clock.System: システム時計実装
-    - TimeSource: 時間ソースの抽象化
-    - TimeMark: 時間マークと差分計算
-  - **現状**: 基本的な時間APIは実装済み、実験的APIは未実装
-  - **関連ファイル**: `RuntimeTime.swift`
+    - @ExperimentalTime: 実験的時間APIマーカー (`HeaderHelpers+SyntheticExperimentalTimeStubs.swift`)
+    - Clockインターフェース: 時計の抽象化 (`kk_clock_now`)
+    - Clock.System: システム時計実装 (`kk_clock_system_now`)
+    - TimeSource: 時間ソースの抽象化 (`kk_time_source_mark_now`)
+    - TimeMark: 時間マークと差分計算 (`kk_time_mark_elapsed_now` など)
+    - TimeSource.Monotonic: モノトニック時間ソース (`kk_time_source_monotonic_mark_now`)
+  - **現状**: 実装完了; ABISpec/ABIParity/BridgeCoverage に Clock 関数を追加
+  - **関連ファイル**: `RuntimeTime.swift`, `RuntimeInstant.swift`, `HeaderHelpers+SyntheticExperimentalTimeStubs.swift`, `HeaderHelpers+SyntheticClockStubs.swift`
   - **テストケース**: `Scripts/diff_cases/experimental_time.kt`
 
 - [ ] STDLIB-TIME-181: プラットフォーム時間変換完全実装
