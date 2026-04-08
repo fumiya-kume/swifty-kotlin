@@ -405,11 +405,6 @@ extension DataFlowSemaPhase {
             kotlinCollectionsPkg: kotlinCollectionsPkg
         )
 
-        // Register Array<T> and primitive array types (TYPE-103)
-        registerSyntheticArrayStubs(
-            symbols: symbols, types: types, interner: interner
-        )
-
         // Register type aliases: ArrayList, HashMap, HashSet, LinkedHashMap, LinkedHashSet (STDLIB-560)
         // TODO: Add golden test cases that exercise these aliases in type positions
         //       (e.g. property types, parameter types, return types) to verify
@@ -418,83 +413,20 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg
         )
-        
-        // Register toList methods for arrays after List is registered
-        registerArrayToListMethods(
+
+        // Register Array<T> and primitive array types (TYPE-103) after collections are registered
+        registerSyntheticArrayStubs(
             symbols: symbols, types: types, interner: interner
         )
     }
     
-    /// Register toList methods for Array<T> and primitive arrays
+    /// Register toList methods for primitive arrays
     private func registerArrayToListMethods(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
     ) {
         let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
-        
-        // --- Array<T>.toList() ---
-        let arrayFQName = kotlinPkg + [interner.intern("Array")]
-        guard let arraySymbol = symbols.lookup(fqName: arrayFQName) else { return }
-        
-        let tParamName = interner.intern("T")
-        let tParamSymbol = symbols.lookup(fqName: arrayFQName + [tParamName]) ?? symbols.define(
-            kind: .typeParameter,
-            name: tParamName,
-            fqName: arrayFQName + [tParamName],
-            declSite: nil,
-            visibility: .private,
-            flags: []
-        )
-        
-        let toListName = interner.intern("toList")
-        let toListFQName = arrayFQName + [toListName]
-        if symbols.lookup(fqName: toListFQName) == nil {
-            let toListSym = symbols.define(
-                kind: .function,
-                name: toListName,
-                fqName: toListFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-            symbols.setParentSymbol(arraySymbol, for: toListSym)
-            symbols.setExternalLinkName("kk_array_toList", for: toListSym)
-            
-            // Get List<T> type for return type
-            let listFQName = [interner.intern("kotlin"), interner.intern("collections"), interner.intern("List")]
-            if let listSymbol = symbols.lookup(fqName: listFQName) {
-                let listElementType = types.make(.typeParam(TypeParamType(
-                    symbol: tParamSymbol,
-                    nullability: .nonNull
-                )))
-                let listReturnType = types.make(.classType(ClassType(
-                    classSymbol: listSymbol,
-                    args: [.invariant(listElementType)],
-                    nullability: .nonNull
-                )))
-                
-                let arrayReceiverType = types.make(.classType(ClassType(
-                    classSymbol: arraySymbol,
-                    args: [.invariant(listElementType)],
-                    nullability: .nonNull
-                )))
-                
-                symbols.setFunctionSignature(
-                    FunctionSignature(
-                        receiverType: arrayReceiverType,
-                        parameterTypes: [],
-                        returnType: listReturnType,
-                        isSuspend: false,
-                        valueParameterSymbols: [],
-                        valueParameterHasDefaultValues: [],
-                        valueParameterIsVararg: [],
-                        typeParameterSymbols: [tParamSymbol]
-                    ),
-                    for: toListSym
-                )
-            }
-        }
         
         // --- Primitive arrays toList() ---
         let primitiveArrayNames = [
@@ -4170,6 +4102,115 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        
+        // Ensure the primitive array has size property and toList() method
+        let sizeName = interner.intern("size")
+        let sizeFQName = arrayPackage + [interner.intern(arrayTypeName), sizeName]
+        if symbols.lookup(fqName: sizeFQName) == nil {
+            let sizeSym = symbols.define(
+                kind: .property,
+                name: sizeName,
+                fqName: sizeFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(arraySymbol, for: sizeSym)
+            symbols.setPropertyType(types.intType, for: sizeSym)
+            
+            // Set external link name for size property
+            let sizeLinkName: String = switch arrayTypeName {
+            case "IntArray": "kk_intArray_size"
+            case "LongArray": "kk_longArray_size"
+            case "ByteArray": "kk_byteArray_size"
+            case "ShortArray": "kk_shortArray_size"
+            case "UIntArray": "kk_uIntArray_size"
+            case "ULongArray": "kk_uLongArray_size"
+            case "DoubleArray": "kk_doubleArray_size"
+            case "FloatArray": "kk_floatArray_size"
+            case "BooleanArray": "kk_booleanArray_size"
+            case "CharArray": "kk_charArray_size"
+            case "UByteArray": "kk_uByteArray_size"
+            case "UShortArray": "kk_uShortArray_size"
+            default: "kk_array_size"
+            }
+            symbols.setExternalLinkName(sizeLinkName, for: sizeSym)
+        }
+        
+        // Also register toList() method for this primitive array
+        let toListName = interner.intern("toList")
+        let toListFQName = arrayPackage + [interner.intern(arrayTypeName), toListName]
+        if symbols.lookup(fqName: toListFQName) == nil {
+            let toListSym = symbols.define(
+                kind: .function,
+                name: toListName,
+                fqName: toListFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(arraySymbol, for: toListSym)
+            
+            let externalLinkName: String = switch arrayTypeName {
+            case "IntArray": "kk_intArray_toList"
+            case "LongArray": "kk_longArray_toList"
+            case "ByteArray": "kk_byteArray_toList"
+            case "ShortArray": "kk_shortArray_toList"
+            case "UIntArray": "kk_uIntArray_toList"
+            case "ULongArray": "kk_uLongArray_toList"
+            case "DoubleArray": "kk_doubleArray_toList"
+            case "FloatArray": "kk_floatArray_toList"
+            case "BooleanArray": "kk_booleanArray_toList"
+            case "CharArray": "kk_charArray_toList"
+            case "UByteArray": "kk_uByteArray_toList"
+            case "UShortArray": "kk_uShortArray_toList"
+            default: "kk_array_toList"
+            }
+            symbols.setExternalLinkName(externalLinkName, for: toListSym)
+            
+            // Get List interface for return type
+            let listFQName = [interner.intern("kotlin"), interner.intern("collections"), interner.intern("List")]
+            if let listSymbol = symbols.lookup(fqName: listFQName) {
+                let elementType: TypeID = switch arrayTypeName {
+                case "IntArray": types.intType
+                case "LongArray": types.longType
+                case "ByteArray": types.intType
+                case "ShortArray": types.intType
+                case "UIntArray": types.uintType
+                case "ULongArray": types.ulongType
+                case "DoubleArray": types.doubleType
+                case "FloatArray": types.floatType
+                case "BooleanArray": types.booleanType
+                case "CharArray": types.charType
+                case "UByteArray": types.ubyteType
+                case "UShortArray": types.ushortType
+                default: types.intType
+                }
+                
+                let listReturnType = types.make(.classType(ClassType(
+                    classSymbol: listSymbol,
+                    args: [.invariant(elementType)],
+                    nullability: .nonNull
+                )))
+                
+                let arrayReceiverType = types.make(.classType(ClassType(
+                    classSymbol: arraySymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+                
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: arrayReceiverType,
+                        parameterTypes: [],
+                        returnType: listReturnType,
+                        isSuspend: false
+                    ),
+                    for: toListSym
+                )
+            }
+        }
+        
         let returnType = types.make(.classType(ClassType(
             classSymbol: arraySymbol,
             args: [],
@@ -7455,6 +7496,57 @@ extension DataFlowSemaPhase {
             )
             symbols.setParentSymbol(arraySymbol, for: sizeSym)
             symbols.setPropertyType(sizeReturnType, for: sizeSym)
+            symbols.setExternalLinkName("kk_array_size", for: sizeSym)
+        }
+
+        // Register toList() method for Array<T>
+        let toListName = interner.intern("toList")
+        let toListFQName = arrayFQName + [toListName]
+        if symbols.lookup(fqName: toListFQName) == nil {
+            let toListSym = symbols.define(
+                kind: .function,
+                name: toListName,
+                fqName: toListFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(arraySymbol, for: toListSym)
+            symbols.setExternalLinkName("kk_array_toList", for: toListSym)
+            
+            // Get List<T> type for return type
+            let listFQName = [interner.intern("kotlin"), interner.intern("collections"), interner.intern("List")]
+            if let listSymbol = symbols.lookup(fqName: listFQName) {
+                let listElementType = types.make(.typeParam(TypeParamType(
+                    symbol: tParamSymbol,
+                    nullability: .nonNull
+                )))
+                let listReturnType = types.make(.classType(ClassType(
+                    classSymbol: listSymbol,
+                    args: [.invariant(listElementType)],
+                    nullability: .nonNull
+                )))
+                
+                let arrayReceiverType = types.make(.classType(ClassType(
+                    classSymbol: arraySymbol,
+                    args: [.invariant(listElementType)],
+                    nullability: .nonNull
+                )))
+                
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: arrayReceiverType,
+                        parameterTypes: [],
+                        returnType: listReturnType,
+                        isSuspend: false,
+                        valueParameterSymbols: [],
+                        valueParameterHasDefaultValues: [],
+                        valueParameterIsVararg: [],
+                        typeParameterSymbols: [tParamSymbol]
+                    ),
+                    for: toListSym
+                )
+            }
         }
 
         // --- STDLIB-410: arrayOf / emptyArray<T>() ---
@@ -7674,6 +7766,105 @@ extension DataFlowSemaPhase {
                 )
                 symbols.setParentSymbol(sym, for: primSizeSym)
                 symbols.setPropertyType(sizeReturnType, for: primSizeSym)
+                
+                // Set external link name for size property
+                let sizeLinkName: String = switch name {
+                case "IntArray": "kk_intArray_size"
+                case "LongArray": "kk_longArray_size"
+                case "ByteArray": "kk_byteArray_size"
+                case "ShortArray": "kk_shortArray_size"
+                case "UIntArray": "kk_uIntArray_size"
+                case "ULongArray": "kk_uLongArray_size"
+                case "DoubleArray": "kk_doubleArray_size"
+                case "FloatArray": "kk_floatArray_size"
+                case "BooleanArray": "kk_booleanArray_size"
+                case "CharArray": "kk_charArray_size"
+                case "UByteArray": "kk_uByteArray_size"
+                case "UShortArray": "kk_uShortArray_size"
+                default: "kk_array_size"
+                }
+                symbols.setExternalLinkName(sizeLinkName, for: primSizeSym)
+            }
+        }
+
+        // Register toList() methods for primitive arrays
+        let listFQName = [interner.intern("kotlin"), interner.intern("collections"), interner.intern("List")]
+        let listInterfaceSym = symbols.lookup(fqName: listFQName)
+        
+        for name in primitiveArrayNames {
+            let primName = interner.intern(name)
+            let fqName = kotlinPkg + [primName]
+            guard let arraySymbol = symbols.lookup(fqName: fqName) else {
+                continue
+            }
+            
+            let toListName = interner.intern("toList")
+            let toListFQName = fqName + [toListName]
+            if symbols.lookup(fqName: toListFQName) == nil, let listInterfaceSym = listInterfaceSym {
+                let toListSym = symbols.define(
+                    kind: .function,
+                    name: toListName,
+                    fqName: toListFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(arraySymbol, for: toListSym)
+                
+                let externalLinkName: String = switch name {
+                case "IntArray": "kk_intArray_toList"
+                case "LongArray": "kk_longArray_toList"
+                case "ByteArray": "kk_byteArray_toList"
+                case "ShortArray": "kk_shortArray_toList"
+                case "UIntArray": "kk_uIntArray_toList"
+                case "ULongArray": "kk_uLongArray_toList"
+                case "DoubleArray": "kk_doubleArray_toList"
+                case "FloatArray": "kk_floatArray_toList"
+                case "BooleanArray": "kk_booleanArray_toList"
+                case "CharArray": "kk_charArray_toList"
+                case "UByteArray": "kk_uByteArray_toList"
+                case "UShortArray": "kk_uShortArray_toList"
+                default: "kk_array_toList"
+                }
+                symbols.setExternalLinkName(externalLinkName, for: toListSym)
+                
+                let elementType: TypeID = switch name {
+                case "IntArray": types.intType
+                case "LongArray": types.longType
+                case "ByteArray": types.intType
+                case "ShortArray": types.intType
+                case "UIntArray": types.uintType
+                case "ULongArray": types.ulongType
+                case "DoubleArray": types.doubleType
+                case "FloatArray": types.floatType
+                case "BooleanArray": types.booleanType
+                case "CharArray": types.charType
+                case "UByteArray": types.ubyteType
+                case "UShortArray": types.ushortType
+                default: types.intType
+                }
+                
+                let listReturnType = types.make(.classType(ClassType(
+                    classSymbol: listInterfaceSym,
+                    args: [.invariant(elementType)],
+                    nullability: .nonNull
+                )))
+                
+                let arrayReceiverType = types.make(.classType(ClassType(
+                    classSymbol: arraySymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+                
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: arrayReceiverType,
+                        parameterTypes: [],
+                        returnType: listReturnType,
+                        isSuspend: false
+                    ),
+                    for: toListSym
+                )
             }
         }
 
@@ -7711,6 +7902,7 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+
     }
 
     private func registerSyntheticArrayFactoryFunction(

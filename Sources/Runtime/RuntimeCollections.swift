@@ -1737,6 +1737,116 @@ public func kk_uShortArray_toList(_ arrayRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
 }
 
+// MARK: - Primitive array size property
+
+/// IntArray.size: Int
+@_cdecl("kk_intArray_size")
+public func kk_intArray_size(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return 0
+    }
+    return array.elements.count
+}
+
+/// LongArray.size: Int
+@_cdecl("kk_longArray_size")
+public func kk_longArray_size(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return 0
+    }
+    return array.elements.count
+}
+
+/// ByteArray.size: Int
+@_cdecl("kk_byteArray_size")
+public func kk_byteArray_size(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return 0
+    }
+    return array.elements.count
+}
+
+/// ShortArray.size: Int
+@_cdecl("kk_shortArray_size")
+public func kk_shortArray_size(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return 0
+    }
+    return array.elements.count
+}
+
+/// UIntArray.size: Int
+@_cdecl("kk_uIntArray_size")
+public func kk_uIntArray_size(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return 0
+    }
+    return array.elements.count
+}
+
+/// ULongArray.size: Int
+@_cdecl("kk_uLongArray_size")
+public func kk_uLongArray_size(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return 0
+    }
+    return array.elements.count
+}
+
+/// DoubleArray.size: Int
+@_cdecl("kk_doubleArray_size")
+public func kk_doubleArray_size(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return 0
+    }
+    return array.elements.count
+}
+
+/// FloatArray.size: Int
+@_cdecl("kk_floatArray_size")
+public func kk_floatArray_size(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return 0
+    }
+    return array.elements.count
+}
+
+/// BooleanArray.size: Int
+@_cdecl("kk_booleanArray_size")
+public func kk_booleanArray_size(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return 0
+    }
+    return array.elements.count
+}
+
+/// CharArray.size: Int
+@_cdecl("kk_charArray_size")
+public func kk_charArray_size(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return 0
+    }
+    return array.elements.count
+}
+
+/// UByteArray.size: Int
+@_cdecl("kk_uByteArray_size")
+public func kk_uByteArray_size(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return 0
+    }
+    return array.elements.count
+}
+
+/// UShortArray.size: Int
+@_cdecl("kk_uShortArray_size")
+public func kk_uShortArray_size(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return 0
+    }
+    return array.elements.count
+}
+
 // MARK: - ArrayDeque Functions (STDLIB-240)
 
 @_cdecl("kk_arraydeque_new")
