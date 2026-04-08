@@ -2694,6 +2694,78 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // take/drop/average/sorted — dispatch by range type (STDLIB-RANGE-TDS)
+        let isLongRange = sema.map { module.arena.exprType(receiver) == $0.types.longType } ?? false
+        if callee == lookup.takeName, arguments.count == 1 {
+            let takeName: InternedString
+            if isULongRange {
+                takeName = interner.intern("kk_ulong_range_take")
+            } else if isUIntRange {
+                takeName = interner.intern("kk_uint_range_take")
+            } else if isLongRange {
+                takeName = interner.intern("kk_long_range_take")
+            } else if isCharRange {
+                takeName = interner.intern("kk_char_range_take")
+            } else {
+                takeName = lookup.kkRangeTakeName
+            }
+            loweredBody.append(.call(symbol: nil, callee: takeName,
+                arguments: [receiver] + arguments, result: result, canThrow: false, thrownResult: nil))
+            if let result { listExprIDs.insert(result.rawValue) }
+            return true
+        }
+        if callee == lookup.dropName, arguments.count == 1 {
+            let dropName: InternedString
+            if isULongRange {
+                dropName = interner.intern("kk_ulong_range_drop")
+            } else if isUIntRange {
+                dropName = interner.intern("kk_uint_range_drop")
+            } else if isLongRange {
+                dropName = interner.intern("kk_long_range_drop")
+            } else if isCharRange {
+                dropName = interner.intern("kk_char_range_drop")
+            } else {
+                dropName = lookup.kkRangeDropName
+            }
+            loweredBody.append(.call(symbol: nil, callee: dropName,
+                arguments: [receiver] + arguments, result: result, canThrow: false, thrownResult: nil))
+            if let result { listExprIDs.insert(result.rawValue) }
+            return true
+        }
+        if callee == lookup.averageName, arguments.isEmpty {
+            let averageName: InternedString
+            if isULongRange {
+                averageName = interner.intern("kk_ulong_range_average")
+            } else if isUIntRange {
+                averageName = interner.intern("kk_uint_range_average")
+            } else if isLongRange {
+                averageName = interner.intern("kk_long_range_average")
+            } else {
+                averageName = lookup.kkRangeAverageName
+            }
+            loweredBody.append(.call(symbol: nil, callee: averageName,
+                arguments: [receiver], result: result, canThrow: false, thrownResult: nil))
+            return true
+        }
+        if callee == lookup.sortedName, arguments.isEmpty {
+            let sortedName: InternedString
+            if isULongRange {
+                sortedName = interner.intern("kk_ulong_range_sorted")
+            } else if isUIntRange {
+                sortedName = interner.intern("kk_uint_range_sorted")
+            } else if isLongRange {
+                sortedName = interner.intern("kk_long_range_sorted")
+            } else if isCharRange {
+                sortedName = interner.intern("kk_char_range_sorted")
+            } else {
+                sortedName = lookup.kkRangeSortedName
+            }
+            loweredBody.append(.call(symbol: nil, callee: sortedName,
+                arguments: [receiver], result: result, canThrow: false, thrownResult: nil))
+            if let result { listExprIDs.insert(result.rawValue) }
+            return true
+        }
+
         // reversed — returns a range (STDLIB-093)
         if callee == lookup.reversedName, arguments.isEmpty {
             let reversedName = isULongRange ? lookup.kkULongRangeReversedName : (isUIntRange ? interner.intern("kk_uint_range_reversed") : lookup.kkRangeReversedName)

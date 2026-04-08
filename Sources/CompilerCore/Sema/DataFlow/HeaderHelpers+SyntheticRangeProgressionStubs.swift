@@ -485,6 +485,46 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerProgressionMethod(
+            named: "take",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [types.intType],
+            returnType: syntheticListType(elementType: types.uintType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_uint_range_take",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "drop",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [types.intType],
+            returnType: syntheticListType(elementType: types.uintType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_uint_range_drop",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "average",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [],
+            returnType: types.doubleType,
+            externalLinkName: "kk_uint_range_average",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "sorted",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [],
+            returnType: syntheticListType(elementType: types.uintType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_uint_range_sorted",
+            symbols: symbols,
+            interner: interner
+        )
         registerSyntheticConstructor(
             ownerSymbol: classSymbol,
             ownerType: rangeType,
@@ -648,6 +688,46 @@ extension DataFlowSemaPhase {
             parameterTypes: [],
             returnType: types.makeNullable(types.ulongType),
             externalLinkName: "kk_ulong_range_lastOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "take",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [types.intType],
+            returnType: syntheticListType(elementType: types.ulongType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_ulong_range_take",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "drop",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [types.intType],
+            returnType: syntheticListType(elementType: types.ulongType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_ulong_range_drop",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "average",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [],
+            returnType: types.doubleType,
+            externalLinkName: "kk_ulong_range_average",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "sorted",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [],
+            returnType: syntheticListType(elementType: types.ulongType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_ulong_range_sorted",
             symbols: symbols,
             interner: interner
         )
@@ -949,6 +1029,50 @@ extension DataFlowSemaPhase {
             parameterTypes: [],
             returnType: types.makeNullable(types.intType),
             externalLinkName: "kk_range_lastOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticIntRangeMethod(
+            named: "take",
+            ownerSymbol: classSymbol,
+            classFQName: classFQName,
+            receiverType: intRangeType,
+            parameterTypes: [types.intType],
+            returnType: syntheticListType(elementType: types.intType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_range_take",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticIntRangeMethod(
+            named: "drop",
+            ownerSymbol: classSymbol,
+            classFQName: classFQName,
+            receiverType: intRangeType,
+            parameterTypes: [types.intType],
+            returnType: syntheticListType(elementType: types.intType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_range_drop",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticIntRangeMethod(
+            named: "average",
+            ownerSymbol: classSymbol,
+            classFQName: classFQName,
+            receiverType: intRangeType,
+            parameterTypes: [],
+            returnType: types.doubleType,
+            externalLinkName: "kk_range_average",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticIntRangeMethod(
+            named: "sorted",
+            ownerSymbol: classSymbol,
+            classFQName: classFQName,
+            receiverType: intRangeType,
+            parameterTypes: [],
+            returnType: syntheticListType(elementType: types.intType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_range_sorted",
             symbols: symbols,
             interner: interner
         )
@@ -1331,6 +1455,47 @@ extension DataFlowSemaPhase {
             parameterTypes: [],
             returnType: longArrayType,
             externalLinkName: "kk_long_range_toLongArray",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerProgressionMethod(
+            named: "take",
+            ownerSymbol: classSymbol,
+            receiverType: longRangeType,
+            parameterTypes: [types.intType],
+            returnType: syntheticListType(elementType: types.longType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_long_range_take",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "drop",
+            ownerSymbol: classSymbol,
+            receiverType: longRangeType,
+            parameterTypes: [types.intType],
+            returnType: syntheticListType(elementType: types.longType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_long_range_drop",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "average",
+            ownerSymbol: classSymbol,
+            receiverType: longRangeType,
+            parameterTypes: [],
+            returnType: types.doubleType,
+            externalLinkName: "kk_long_range_average",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "sorted",
+            ownerSymbol: classSymbol,
+            receiverType: longRangeType,
+            parameterTypes: [],
+            returnType: syntheticListType(elementType: types.longType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_long_range_sorted",
             symbols: symbols,
             interner: interner
         )

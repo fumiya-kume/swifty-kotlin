@@ -384,6 +384,10 @@ struct CollectionLiteralLookupTables {
     let kkRangeIsEmptyName: InternedString
     let kkRangeSumName: InternedString
     let kkRangeToIntArrayName: InternedString
+    let kkRangeTakeName: InternedString
+    let kkRangeDropName: InternedString
+    let kkRangeAverageName: InternedString
+    let kkRangeSortedName: InternedString
     let kkOpContainsName: InternedString
 
     // Member names (STDLIB-637)
@@ -505,6 +509,7 @@ struct CollectionLiteralLookupTables {
     let reversedName: InternedString
     let asReversedName: InternedString
     let sortedName: InternedString
+    let averageName: InternedString
     let distinctName: InternedString
     let distinctByName: InternedString
     let shuffledName: InternedString
@@ -1067,6 +1072,10 @@ struct CollectionLiteralLookupTables {
         kkRangeIsEmptyName = interner.intern("kk_range_isEmpty")
         kkRangeSumName = interner.intern("kk_range_sum")
         kkRangeToIntArrayName = interner.intern("kk_range_toIntArray")
+        kkRangeTakeName = interner.intern("kk_range_take")
+        kkRangeDropName = interner.intern("kk_range_drop")
+        kkRangeAverageName = interner.intern("kk_range_average")
+        kkRangeSortedName = interner.intern("kk_range_sorted")
         kkOpContainsName = interner.intern("kk_op_contains")
 
         sumName = interner.intern("sum")
@@ -1185,6 +1194,7 @@ struct CollectionLiteralLookupTables {
         reversedName = interner.intern("reversed")
         asReversedName = interner.intern("asReversed")
         sortedName = interner.intern("sorted")
+        averageName = interner.intern("average")
         distinctName = interner.intern("distinct")
         distinctByName = interner.intern("distinctBy")
         shuffledName = interner.intern("shuffled")

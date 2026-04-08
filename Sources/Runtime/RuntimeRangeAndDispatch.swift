@@ -506,6 +506,104 @@ public func kk_range_end(_ rangeRaw: Int) -> Int {
     return range.last
 }
 
+// MARK: - IntRange take/drop/average/sorted (STDLIB-RANGE-TDS)
+
+@_cdecl("kk_range_take")
+public func kk_range_take(_ rangeRaw: Int, _ n: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_take")
+    }
+    guard n > 0 else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
+    var elements: [Int] = []
+    var current = range.first
+    var taken = 0
+    if range.step > 0 {
+        while current <= range.last && taken < n {
+            elements.append(current)
+            current &+= range.step
+            taken += 1
+        }
+    } else if range.step < 0 {
+        while current >= range.last && taken < n {
+            elements.append(current)
+            current &+= range.step
+            taken += 1
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
+@_cdecl("kk_range_drop")
+public func kk_range_drop(_ rangeRaw: Int, _ n: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_drop")
+    }
+    var elements: [Int] = []
+    var current = range.first
+    var skipped = 0
+    if range.step > 0 {
+        while current <= range.last {
+            if skipped >= n { elements.append(current) }
+            else { skipped += 1 }
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        while current >= range.last {
+            if skipped >= n { elements.append(current) }
+            else { skipped += 1 }
+            current &+= range.step
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
+@_cdecl("kk_range_average")
+public func kk_range_average(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_average")
+    }
+    var sum: Double = 0.0
+    var count: Double = 0.0
+    var current = range.first
+    if range.step > 0 {
+        while current <= range.last {
+            sum += Double(current)
+            count += 1.0
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        while current >= range.last {
+            sum += Double(current)
+            count += 1.0
+            current &+= range.step
+        }
+    }
+    let result: Double = count > 0 ? sum / count : Double.nan
+    return Int(bitPattern: UInt(truncatingIfNeeded: result.bitPattern))
+}
+
+@_cdecl("kk_range_sorted")
+public func kk_range_sorted(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_sorted")
+    }
+    var elements: [Int] = []
+    var current = range.first
+    if range.step > 0 {
+        while current <= range.last {
+            elements.append(current)
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        while current >= range.last {
+            elements.append(current)
+            current &+= range.step
+        }
+    }
+    elements.sort()
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
 // MARK: - IntRange HOFs (STDLIB-091)
 
 @_cdecl("kk_range_toList")
@@ -1383,6 +1481,86 @@ public func kk_char_range_forEach(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: I
         }
     }
     return 0
+}
+
+@_cdecl("kk_char_range_take")
+public func kk_char_range_take(_ rangeRaw: Int, _ n: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_char_range_take")
+    }
+    guard n > 0 else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
+    let first = kk_unbox_char(range.first)
+    let last = kk_unbox_char(range.last)
+    var elements: [Int] = []
+    var taken = 0
+    if range.step > 0 {
+        var current = first
+        while current <= last && taken < n {
+            elements.append(kk_box_char(current))
+            current &+= range.step
+            taken += 1
+        }
+    } else if range.step < 0 {
+        var current = first
+        while current >= last && taken < n {
+            elements.append(kk_box_char(current))
+            current &+= range.step
+            taken += 1
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
+@_cdecl("kk_char_range_drop")
+public func kk_char_range_drop(_ rangeRaw: Int, _ n: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_char_range_drop")
+    }
+    let first = kk_unbox_char(range.first)
+    let last = kk_unbox_char(range.last)
+    var elements: [Int] = []
+    var skipped = 0
+    if range.step > 0 {
+        var current = first
+        while current <= last {
+            if skipped >= n { elements.append(kk_box_char(current)) }
+            else { skipped += 1 }
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        var current = first
+        while current >= last {
+            if skipped >= n { elements.append(kk_box_char(current)) }
+            else { skipped += 1 }
+            current &+= range.step
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
+@_cdecl("kk_char_range_sorted")
+public func kk_char_range_sorted(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_char_range_sorted")
+    }
+    let first = kk_unbox_char(range.first)
+    let last = kk_unbox_char(range.last)
+    var elements: [Int] = []
+    if range.step > 0 {
+        var current = first
+        while current <= last {
+            elements.append(kk_box_char(current))
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        var current = first
+        while current >= last {
+            elements.append(kk_box_char(current))
+            current &+= range.step
+        }
+    }
+    elements.sort { kk_unbox_char($0) < kk_unbox_char($1) }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
 }
 
 // MARK: - Progression fromClosedRange (STDLIB-RANGE-039)
@@ -2341,6 +2519,71 @@ public func kk_uint_range_windowed(_ rangeRaw: Int, _ size: Int, _ step: Int, _ 
     return registerRuntimeObject(RuntimeListBox(elements: windows))
 }
 
+@_cdecl("kk_uint_range_take")
+public func kk_uint_range_take(_ rangeRaw: Int, _ n: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_take")
+    }
+    guard n > 0 else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
+    var elements: [Int] = []
+    var taken = 0
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        guard taken < n else { return false }
+        elements.append(Int(bitPattern: current))
+        taken += 1
+        return true
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
+@_cdecl("kk_uint_range_drop")
+public func kk_uint_range_drop(_ rangeRaw: Int, _ n: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_drop")
+    }
+    var elements: [Int] = []
+    var skipped = 0
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        if skipped < n {
+            skipped += 1
+        } else {
+            elements.append(Int(bitPattern: current))
+        }
+        return true
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
+@_cdecl("kk_uint_range_average")
+public func kk_uint_range_average(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_average")
+    }
+    var sum: Double = 0.0
+    var count: Double = 0.0
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        sum += Double(current)
+        count += 1.0
+        return true
+    }
+    let result: Double = count > 0 ? sum / count : Double.nan
+    return Int(bitPattern: UInt(truncatingIfNeeded: result.bitPattern))
+}
+
+@_cdecl("kk_uint_range_sorted")
+public func kk_uint_range_sorted(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_sorted")
+    }
+    var elements: [Int] = []
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        elements.append(Int(bitPattern: current))
+        return true
+    }
+    elements.sort { UInt(bitPattern: $0) < UInt(bitPattern: $1) }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
 @_cdecl("kk_ulong_range_mapIndexed")
 public func kk_ulong_range_mapIndexed(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
                                       _ outThrown: UnsafeMutablePointer<Int>?) -> Int
@@ -2830,6 +3073,71 @@ public func kk_ulong_range_windowed(_ rangeRaw: Int, _ size: Int, _ step: Int, _
     return registerRuntimeObject(RuntimeListBox(elements: windows))
 }
 
+@_cdecl("kk_ulong_range_take")
+public func kk_ulong_range_take(_ rangeRaw: Int, _ n: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_take")
+    }
+    guard n > 0 else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
+    var elements: [Int] = []
+    var taken = 0
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        guard taken < n else { return false }
+        elements.append(Int(bitPattern: current))
+        taken += 1
+        return true
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
+@_cdecl("kk_ulong_range_drop")
+public func kk_ulong_range_drop(_ rangeRaw: Int, _ n: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_drop")
+    }
+    var elements: [Int] = []
+    var skipped = 0
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        if skipped < n {
+            skipped += 1
+        } else {
+            elements.append(Int(bitPattern: current))
+        }
+        return true
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
+@_cdecl("kk_ulong_range_average")
+public func kk_ulong_range_average(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_average")
+    }
+    var sum: Double = 0.0
+    var count: Double = 0.0
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        sum += Double(current)
+        count += 1.0
+        return true
+    }
+    let result: Double = count > 0 ? sum / count : Double.nan
+    return Int(bitPattern: UInt(truncatingIfNeeded: result.bitPattern))
+}
+
+@_cdecl("kk_ulong_range_sorted")
+public func kk_ulong_range_sorted(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_sorted")
+    }
+    var elements: [Int] = []
+    _ = runtimeUnsignedRangeTraverse(range) { current, _ in
+        elements.append(Int(bitPattern: current))
+        return true
+    }
+    elements.sort { UInt(bitPattern: $0) < UInt(bitPattern: $1) }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
 // MARK: - ULongProgression operations (STDLIB-RANGE-039)
 
 @_cdecl("kk_ulong_rangeTo")
@@ -3217,6 +3525,102 @@ public func kk_long_range_map(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
         }
     }
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
+@_cdecl("kk_long_range_take")
+public func kk_long_range_take(_ rangeRaw: Int, _ n: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_take")
+    }
+    guard n > 0 else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
+    var elements: [Int] = []
+    var taken = 0
+    var current = range.first
+    if range.step > 0 {
+        while current <= range.last && taken < n {
+            elements.append(current)
+            current &+= range.step
+            taken += 1
+        }
+    } else if range.step < 0 {
+        while current >= range.last && taken < n {
+            elements.append(current)
+            current &+= range.step
+            taken += 1
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
+@_cdecl("kk_long_range_drop")
+public func kk_long_range_drop(_ rangeRaw: Int, _ n: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_drop")
+    }
+    var elements: [Int] = []
+    var current = range.first
+    var skipped = 0
+    if range.step > 0 {
+        while current <= range.last {
+            if skipped >= n { elements.append(current) }
+            else { skipped += 1 }
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        while current >= range.last {
+            if skipped >= n { elements.append(current) }
+            else { skipped += 1 }
+            current &+= range.step
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
+@_cdecl("kk_long_range_average")
+public func kk_long_range_average(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_average")
+    }
+    var sum: Double = 0.0
+    var count: Double = 0.0
+    var current = range.first
+    if range.step > 0 {
+        while current <= range.last {
+            sum += Double(current)
+            count += 1.0
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        while current >= range.last {
+            sum += Double(current)
+            count += 1.0
+            current &+= range.step
+        }
+    }
+    let result: Double = count > 0 ? sum / count : Double.nan
+    return Int(bitPattern: UInt(truncatingIfNeeded: result.bitPattern))
+}
+
+@_cdecl("kk_long_range_sorted")
+public func kk_long_range_sorted(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_sorted")
+    }
+    var elements: [Int] = []
+    var current = range.first
+    if range.step > 0 {
+        while current <= range.last {
+            elements.append(current)
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        while current >= range.last {
+            elements.append(current)
+            current &+= range.step
+        }
+    }
+    elements.sort()
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
 }
 
 // MARK: - IntRange toIntArray (STDLIB-RANGE-034)

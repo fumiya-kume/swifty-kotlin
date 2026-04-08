@@ -131,13 +131,14 @@ extension CallTypeChecker {
             "any", "all", "none",
             "chunked", "windowed",
             "reversed", "step", "isEmpty", "sum", "iterator",
+            "take", "drop", "average", "sorted",
         ]
         return rangeMembers.contains(memberName)
     }
 
     private func isValidRangeMemberArity(_ memberName: String, argCount: Int) -> Bool {
         switch memberName {
-        case "count", "start", "end", "endInclusive", "iterator", "toList", "toIntArray", "toLongArray", "toUIntArray", "toULongArray", "reversed", "isEmpty", "sum":
+        case "count", "start", "end", "endInclusive", "iterator", "toList", "toIntArray", "toLongArray", "toUIntArray", "toULongArray", "reversed", "isEmpty", "sum", "average", "sorted":
             argCount == 0
         case "step":
             argCount == 0 || argCount == 1
@@ -145,7 +146,8 @@ extension CallTypeChecker {
             argCount == 0 || argCount == 1
         case "contains", "forEach", "map", "mapIndexed", "mapNotNull",
              "filter", "filterIndexed", "filterNot", "reduce", "reduceIndexed",
-             "find", "findLast", "any", "all", "none":
+             "find", "findLast", "any", "all", "none",
+             "take", "drop":
             argCount == 1
         case "firstOrNull", "lastOrNull":
             argCount == 0 || argCount == 1
@@ -161,7 +163,7 @@ extension CallTypeChecker {
     }
 
     private func isRangeMemberReturningCollection(_ memberName: String) -> Bool {
-        ["toList", "map", "mapIndexed", "mapNotNull", "filter", "filterIndexed", "filterNot", "chunked", "windowed"].contains(memberName)
+        ["toList", "map", "mapIndexed", "mapNotNull", "filter", "filterIndexed", "filterNot", "chunked", "windowed", "take", "drop", "sorted"].contains(memberName)
     }
 
     /// Returns the element type for a range expression based on its range-kind markers.
@@ -244,6 +246,10 @@ extension CallTypeChecker {
                 sema: sema,
                 interner: interner
             )
+        case "take", "drop", "sorted":
+            return rangeMemberListType(elementType: elementType, sema: sema, interner: interner)
+        case "average":
+            return sema.types.doubleType
         case "reversed":
             return rangeMemberRangeType(
                 receiverType: receiverType,
