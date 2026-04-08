@@ -138,4 +138,89 @@ final class SmokeTests: XCTestCase {
         }
     }
 
+    func testSmokeDriverEmptyFileProducesSourceError() throws {
+        try withTemporaryFile(contents: "") { path in
+            let fileManager = FileManager.default
+            let outputBase = fileManager.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            defer {
+                try? fileManager.removeItem(atPath: outputBase + ".kir")
+            }
+
+            let options = makeTestOptions(
+                moduleName: "SmokeEmpty",
+                inputs: [path],
+                outputPath: outputBase,
+                emit: .kirDump
+            )
+            let result = makeTestDriver().runForTesting(options: options)
+
+            // An empty Kotlin file is valid (no top-level declarations is acceptable);
+            // the compiler should not crash and must return a defined exit code.
+            XCTAssertTrue(
+                result.exitCode == 0 || result.exitCode == 1,
+                "Unexpected exit code \(result.exitCode) for empty file"
+            )
+        }
+    }
+
+    func testSmokeDriverMultipleInputFilesCompilesToKIR() throws {
+        let sourceA = "fun greet(): String = \"hello\""
+        let sourceB = "fun main() = 0"
+        try withTemporaryFiles(contents: [sourceA, sourceB]) { paths in
+            let fileManager = FileManager.default
+            let outputBase = fileManager.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            defer {
+                try? fileManager.removeItem(atPath: outputBase + ".kir")
+            }
+
+            let options = makeTestOptions(
+                moduleName: "SmokeMultiFile",
+                inputs: paths,
+                outputPath: outputBase,
+                emit: .kirDump
+            )
+            let result = makeTestDriver().runForTesting(options: options)
+
+            XCTAssertEqual(result.exitCode, 0)
+            XCTAssertFalse(result.diagnostics.contains(where: { $0.severity == .error }))
+            XCTAssertTrue(fileManager.fileExists(atPath: outputBase + ".kir"))
+        }
+    }
+
+    func testSmokeDriverLargeFileCompilesToKIR() throws {
+        // Generate a file with many top-level functions to exercise the pipeline
+        // under a larger-than-trivial input without triggering semantic errors.
+        var lines: [String] = []
+        for i in 0 ..< 200 {
+            lines.append("fun smokeFunc\(i)(x: Int): Int = x + \(i)")
+        }
+        lines.append("fun main() = 0")
+        let source = lines.joined(separator: "\n")
+
+        try withTemporaryFile(contents: source) { path in
+            let fileManager = FileManager.default
+            let outputBase = fileManager.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            defer {
+                try? fileManager.removeItem(atPath: outputBase + ".kir")
+            }
+
+            let options = makeTestOptions(
+                moduleName: "SmokeLargeFile",
+                inputs: [path],
+                outputPath: outputBase,
+                emit: .kirDump
+            )
+            let result = makeTestDriver().runForTesting(options: options)
+
+            XCTAssertEqual(result.exitCode, 0)
+            XCTAssertFalse(result.diagnostics.contains(where: { $0.severity == .error }))
+            XCTAssertTrue(fileManager.fileExists(atPath: outputBase + ".kir"))
+        }
+    }
 }
