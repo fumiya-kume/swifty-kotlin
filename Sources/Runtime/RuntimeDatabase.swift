@@ -943,6 +943,14 @@ final class RuntimeJDBCConnectionBox {
     func setAutoCommit(_ newValue: Bool) throws {
         let db = try requireDB()
         guard autoCommit != newValue else { return }
+        if newValue {
+            // Transitioning from autoCommit=false to autoCommit=true: commit any
+            // open transaction before enabling auto-commit mode.
+            let rc = sqlite3_exec(db, "COMMIT", nil, nil, nil)
+            guard rc == SQLITE_OK else {
+                throw RuntimeJDBCError.sqlite(sqliteMessage(from: db))
+            }
+        }
         autoCommit = newValue
         if !newValue {
             // Issue BEGIN TRANSACTION immediately so that commit()/rollback() have
@@ -1820,6 +1828,8 @@ public func kk_jdbc_result_set_next(_ resultSetRaw: Int, _ outThrown: UnsafeMuta
             return kk_box_bool(1)
         case SQLITE_DONE:
             resultSet.lastStepWasRow = false
+            // JDBC spec: getRow() must return 0 when not positioned on a valid row.
+            resultSet.currentRow = 0
             return kk_box_bool(0)
         default:
             resultSet.lastStepWasRow = false
