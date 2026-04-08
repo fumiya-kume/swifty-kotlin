@@ -2929,8 +2929,7 @@ private func runtimeFlowExecuteStages(
             } else {
                 current = runtimeFlowRunSourceStage(flow, ops: stage.normalOps)
             }
-            stageAttemptProvider = { [weak flow] in
-                guard let flow else { return RuntimeFlowExecutionResult(values: [], failure: nil) }
+            stageAttemptProvider = {
                 if let advanced = runtimeFlowRunAdvancedSource(flow, ops: stage.normalOps) {
                     return advanced
                 }
