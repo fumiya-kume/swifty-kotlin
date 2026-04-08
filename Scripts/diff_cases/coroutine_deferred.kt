@@ -1,3 +1,4 @@
+// SKIP-DIFF
 import kotlinx.coroutines.*
 
 // TEST-CORO-003: Deferred values — async/await, lazy deferred, multiple

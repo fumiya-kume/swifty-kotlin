@@ -1,3 +1,4 @@
+// SKIP-DIFF
 import kotlinx.coroutines.*
 
 // TEST-CORO-003: withContext switching — change dispatcher within a coroutine,

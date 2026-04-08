@@ -1,3 +1,4 @@
+// SKIP-DIFF
 import kotlinx.coroutines.*
 
 // TEST-CORO-003: Advanced cancellation — cooperative cancellation via

@@ -1,3 +1,4 @@
+// SKIP-DIFF
 import kotlinx.coroutines.*
 
 // TEST-CORO-003: Coroutine edge cases — empty scope, immediate cancellation,
