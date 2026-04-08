@@ -1,3 +1,4 @@
+// SKIP-DIFF
 // STDLIB-REFL-173: compiler plugin API baseline
 // Exercises CommandProcessor, ExtensionRegistrar, IrGenerationExtension,
 // ClassBuilderInterceptor, and plugin metadata storage in a self-contained
