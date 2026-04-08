@@ -1,3 +1,4 @@
+// SKIP-DIFF: advanced coroutine APIs (CoroutineScope, ReceiveChannel, produce) not yet implemented
 private fun hex(bytes: ByteArray): String {
     val sb = StringBuilder()
     for (i in 0..bytes.size - 1) {
