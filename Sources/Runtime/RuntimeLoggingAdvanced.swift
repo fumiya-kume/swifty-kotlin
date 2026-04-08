@@ -160,6 +160,9 @@ final class RuntimeRollingFileAppenderBox: RuntimeAppender, @unchecked Sendable 
     }
 
     private func rotate() {
+        // delete the oldest generation so the shift below can succeed
+        let oldest = rolledPath(generation: maxFiles - 1)
+        _ = try? FileManager.default.removeItem(atPath: oldest)
         // shift old generations; remove destination first so moveItem never
         // fails because the target file already exists (e.g. after the first
         // full rotation cycle).
@@ -284,9 +287,9 @@ final class RuntimeAdvancedLoggerBox: @unchecked Sendable {
     }
 
     func publish(level: String, message: String, throwableMessage: String?) {
-        // Acquire the lock once to atomically snapshot all mutable properties,
-        // preventing data races with setters such as kk_adv_logger_set_level /
-        // kk_adv_logger_set_filter that write minimumLevel / packageFilter.
+        // Acquire the lock once to atomically read all mutable properties and
+        // snapshot the appender list, preventing data races with setters such
+        // as kk_adv_logger_set_level / kk_adv_logger_set_filter.
         let (filter, minLevel, snapshot): (String?, String, [RuntimeAppender]) = lock.withLockAdvanced {
             (packageFilter, minimumLevel, appenders)
         }
