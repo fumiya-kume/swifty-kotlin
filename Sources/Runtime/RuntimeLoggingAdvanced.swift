@@ -273,8 +273,18 @@ final class RuntimeAdvancedLoggerBox: @unchecked Sendable {
     let name: String
     private let lock = NSLock()
     private var appenders: [RuntimeAppender] = []
-    var minimumLevel: String = "INFO"
-    var packageFilter: String? = nil   // optional prefix filter
+    private var _minimumLevel: String = "INFO"
+    private var _packageFilter: String? = nil   // optional prefix filter
+
+    var minimumLevel: String {
+        get { lock.withLockAdvanced { _minimumLevel } }
+        set { lock.withLockAdvanced { _minimumLevel = newValue } }
+    }
+
+    var packageFilter: String? {
+        get { lock.withLockAdvanced { _packageFilter } }
+        set { lock.withLockAdvanced { _packageFilter = newValue } }
+    }
 
     init(name: String) {
         self.name = name
@@ -291,10 +301,10 @@ final class RuntimeAdvancedLoggerBox: @unchecked Sendable {
         // snapshot the appender list, preventing data races with setters such
         // as kk_adv_logger_set_level / kk_adv_logger_set_filter.
         let (filter, minLevel, snapshot): (String?, String, [RuntimeAppender]) = lock.withLockAdvanced {
-            (packageFilter, minimumLevel, appenders)
+            (_packageFilter, _minimumLevel, appenders)
         }
         // package/class filter
-        if let f = filter, !name.hasPrefix(f) { return }
+        if let filter = filter, !name.hasPrefix(filter) { return }
         // level filter
         guard logLevelRank(level) >= logLevelRank(minLevel) else { return }
         let record = RuntimeLogRecord(
