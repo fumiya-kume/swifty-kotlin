@@ -16,8 +16,8 @@ class Child : Base() {
     // ERROR: Overriding non-open (final) function
     override fun finalMethod(): String = "overriding final"  // KSWIFTK-SEMA-0032: 'finalMethod' hides member but cannot be overridden
 
-    // ERROR: Missing override keyword for shadowing member
-    fun anotherMethod(): Int = 1  // OK if not overriding, but below we declare same name in interface
+    // This method is not declared in Base, so it is not an override and needs no keyword.
+    fun anotherMethod(): Int = 1  // OK: new method, no override required
 }
 
 interface IBase {
