@@ -735,6 +735,7 @@ extension CallTypeChecker {
             interner.intern("single"),
             interner.intern("toMutableList"),
             interner.intern("sum"),
+            interner.intern("average"),
         ]
         let setOnlyMembers: Set = [
             interner.intern("intersect"),
@@ -864,7 +865,7 @@ extension CallTypeChecker {
              interner.intern("distinct"), interner.intern("flatten"), interner.intern("withIndex"),
              interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"),
              interner.intern("firstOrNull"), interner.intern("lastOrNull"), interner.intern("singleOrNull"), interner.intern("sort"),
-             interner.intern("toMutableList"), interner.intern("sum"):
+             interner.intern("toMutableList"), interner.intern("sum"), interner.intern("average"):
             return argCount == 0
         case interner.intern("joinToString"):
             return (0 ... 3).contains(argCount)

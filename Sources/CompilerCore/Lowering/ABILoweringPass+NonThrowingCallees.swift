@@ -642,6 +642,7 @@ extension ABILoweringPass {
             interner.intern("kk_list_take"),
             interner.intern("kk_list_drop"),
             interner.intern("kk_list_sum"),
+            interner.intern("kk_list_average"),
             interner.intern("kk_list_reversed"),
             interner.intern("kk_list_as_reversed"),
             interner.intern("kk_list_sorted"),
