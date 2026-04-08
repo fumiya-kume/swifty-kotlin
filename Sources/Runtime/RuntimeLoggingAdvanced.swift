@@ -160,17 +160,19 @@ final class RuntimeRollingFileAppenderBox: RuntimeAppender, @unchecked Sendable 
     }
 
     private func rotate() {
-        // delete the oldest generation so the shift below can succeed
-        let oldest = rolledPath(generation: maxFiles - 1)
-        _ = try? FileManager.default.removeItem(atPath: oldest)
-        // shift old generations
+        // shift old generations; remove destination first so moveItem never
+        // fails because the target file already exists (e.g. after the first
+        // full rotation cycle).
         for i in stride(from: maxFiles - 1, through: 1, by: -1) {
             let old = rolledPath(generation: i - 1)
             let new = rolledPath(generation: i)
+            _ = try? FileManager.default.removeItem(atPath: new)
             _ = try? FileManager.default.moveItem(atPath: old, toPath: new)
         }
-        // rename current file to .0
-        _ = try? FileManager.default.moveItem(atPath: basePath, toPath: rolledPath(generation: 0))
+        // rename current file to .0; remove destination first for the same reason
+        let dest0 = rolledPath(generation: 0)
+        _ = try? FileManager.default.removeItem(atPath: dest0)
+        _ = try? FileManager.default.moveItem(atPath: basePath, toPath: dest0)
         currentSize = 0
         generation += 1
     }
@@ -282,10 +284,16 @@ final class RuntimeAdvancedLoggerBox {
     }
 
     func publish(level: String, message: String, throwableMessage: String?) {
+        // Acquire the lock once to atomically snapshot all mutable properties,
+        // preventing data races with setters such as kk_adv_logger_set_level /
+        // kk_adv_logger_set_filter that write minimumLevel / packageFilter.
+        let (filter, minLevel, snapshot): (String?, String, [RuntimeAppender]) = lock.withLockAdvanced {
+            (packageFilter, minimumLevel, appenders)
+        }
         // package/class filter
-        if let filter = packageFilter, !name.hasPrefix(filter) { return }
+        if let f = filter, !name.hasPrefix(f) { return }
         // level filter
-        guard logLevelRank(level) >= logLevelRank(minimumLevel) else { return }
+        guard logLevelRank(level) >= logLevelRank(minLevel) else { return }
         let record = RuntimeLogRecord(
             timestamp: Date(),
             level: level,
@@ -294,7 +302,6 @@ final class RuntimeAdvancedLoggerBox {
             throwableMessage: throwableMessage,
             mdc: RuntimeMDCBox.shared.copyContext()
         )
-        let snapshot: [RuntimeAppender] = lock.withLockAdvanced { appenders }
         if snapshot.isEmpty {
             print("[\(level)] \(name): \(message)\(throwableMessage.map { " | \($0)" } ?? "")")
         } else {
