@@ -1723,6 +1723,22 @@ public func kk_list_drop(_ listRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: Array(elements.dropFirst(clamped))))
 }
 
+@_cdecl("kk_list_takeLast")
+public func kk_list_takeLast(_ listRaw: Int, _ count: Int) -> Int {
+    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = _listBox.elements
+    let clamped = max(0, min(count, elements.count))
+    return registerRuntimeObject(RuntimeListBox(elements: Array(elements.suffix(clamped))))
+}
+
+@_cdecl("kk_list_dropLast")
+public func kk_list_dropLast(_ listRaw: Int, _ count: Int) -> Int {
+    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = _listBox.elements
+    let clamped = max(0, min(count, elements.count))
+    return registerRuntimeObject(RuntimeListBox(elements: Array(elements.dropLast(clamped))))
+}
+
 @_cdecl("kk_list_sum")
 public func kk_list_sum(_ listRaw: Int) -> Int {
     guard let listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }

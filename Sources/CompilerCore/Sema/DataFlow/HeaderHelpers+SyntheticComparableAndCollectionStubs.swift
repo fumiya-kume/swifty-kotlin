@@ -2709,6 +2709,8 @@ extension DataFlowSemaPhase {
 
         registerMember(name: "take", parameterTypes: [types.intType], externalLinkName: "kk_list_take")
         registerMember(name: "drop", parameterTypes: [types.intType], externalLinkName: "kk_list_drop")
+        registerMember(name: "takeLast", parameterTypes: [types.intType], externalLinkName: "kk_list_takeLast")
+        registerMember(name: "dropLast", parameterTypes: [types.intType], externalLinkName: "kk_list_dropLast")
         registerMember(name: "sum", parameterTypes: [], externalLinkName: "kk_list_sum", returnTypeOverride: types.intType)
         registerMember(name: "average", parameterTypes: [], externalLinkName: "kk_list_average", returnTypeOverride: types.doubleType)
         registerMember(name: "reversed", parameterTypes: [], externalLinkName: "kk_list_reversed")
@@ -3915,8 +3917,13 @@ extension DataFlowSemaPhase {
             )
         }
 
-        let zipWithNextTransformFQName = zipWithNextFQName + [interner.intern("transform")]
-        if symbols.lookup(fqName: zipWithNextTransformFQName) == nil {
+        let zipWithNextTransformFQName = listFQName + [zipWithNextName]
+        let existingZipWithNextOverloads = symbols.lookupAll(fqName: zipWithNextTransformFQName)
+        let hasZipWithNextTransform = existingZipWithNextOverloads.contains { symID in
+            guard let sig = symbols.functionSignature(for: symID) else { return false }
+            return sig.parameterTypes.count == 1
+        }
+        if !hasZipWithNextTransform {
             let rName = interner.intern("R")
             let rSymbol = symbols.define(
                 kind: .typeParameter,

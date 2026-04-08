@@ -2628,6 +2628,150 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // forEachIndexed(action: (Int, T) -> Unit): Unit
+        let forEachIndexedActionType = types.make(.functionType(FunctionType(
+            params: [types.intType, typeParamType],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerSequenceMemberStub(
+            named: "forEachIndexed",
+            externalLinkName: "kk_sequence_forEachIndexed",
+            receiverType: receiverType,
+            parameters: [("action", forEachIndexedActionType)],
+            returnType: types.unitType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // zipWithNext(): List<Pair<T, T>>
+        let zipWithNextName = interner.intern("zipWithNext")
+        let zipWithNextFQName = sequenceFQName + [zipWithNextName]
+        if symbols.lookup(fqName: zipWithNextFQName) == nil {
+            let pairSymbol: SymbolID? = symbols.lookup(fqName: [
+                interner.intern("kotlin"), interner.intern("Pair"),
+            ])
+            let zipWithNextResultType: TypeID = if let pairSymbol {
+                types.make(.classType(ClassType(
+                    classSymbol: pairSymbol,
+                    args: [.out(typeParamType), .out(typeParamType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                types.anyType
+            }
+            let listSymbol = symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("List"),
+            ])
+            let zipWithNextListResultType: TypeID = if let listSymbol {
+                types.make(.classType(ClassType(
+                    classSymbol: listSymbol,
+                    args: [.out(zipWithNextResultType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                types.anyType
+            }
+            let zipWithNextSymbol = symbols.define(
+                kind: .function,
+                name: zipWithNextName,
+                fqName: zipWithNextFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(sequenceSymbol, for: zipWithNextSymbol)
+            symbols.setExternalLinkName("kk_sequence_zipWithNext", for: zipWithNextSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [],
+                    returnType: zipWithNextListResultType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: zipWithNextSymbol
+            )
+        }
+
+        // zipWithNext(transform: (T, T) -> R): List<R>
+        let zipWithNextTransformFQName = zipWithNextFQName + [interner.intern("transform")]
+        if symbols.lookup(fqName: zipWithNextTransformFQName) == nil {
+            let rName = interner.intern("R")
+            let rFQName = zipWithNextTransformFQName + [rName]
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: rFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let listSymbol = symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("List"),
+            ])
+            let listRType: TypeID = if let listSymbol {
+                types.make(.classType(ClassType(
+                    classSymbol: listSymbol,
+                    args: [.out(rType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                types.anyType
+            }
+            let transformType = types.make(.functionType(FunctionType(
+                params: [typeParamType, typeParamType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let transformSymbol = symbols.define(
+                kind: .function,
+                name: zipWithNextName,
+                fqName: zipWithNextTransformFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(sequenceSymbol, for: transformSymbol)
+            symbols.setExternalLinkName("kk_sequence_zipWithNextTransform", for: transformSymbol)
+            let transformParamName = interner.intern("transform")
+            let transformParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: transformParamName,
+                fqName: zipWithNextTransformFQName + [transformParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(transformSymbol, for: transformParamSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [transformType],
+                    returnType: listRType,
+                    valueParameterSymbols: [transformParamSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [typeParamSymbol, rSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: transformSymbol
+            )
+        }
     }
 
     private func registerSequenceScopeMember(

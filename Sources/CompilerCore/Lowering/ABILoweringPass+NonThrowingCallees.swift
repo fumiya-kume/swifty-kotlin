@@ -279,6 +279,10 @@ extension ABILoweringPass {
             interner.intern("kk_range_average"),
             interner.intern("kk_range_sorted"),
             interner.intern("kk_range_toList"),
+            interner.intern("kk_range_take"),
+            interner.intern("kk_range_drop"),
+            interner.intern("kk_range_average"),
+            interner.intern("kk_range_sorted"),
             interner.intern("kk_range_toIntArray"),
             interner.intern("kk_ulong_range_toList"),
             interner.intern("kk_ulong_range_count"),
@@ -641,6 +645,8 @@ extension ABILoweringPass {
             interner.intern("kk_indexing_iterable_next"),
             interner.intern("kk_list_take"),
             interner.intern("kk_list_drop"),
+            interner.intern("kk_list_takeLast"),
+            interner.intern("kk_list_dropLast"),
             interner.intern("kk_list_sum"),
             interner.intern("kk_list_average"),
             interner.intern("kk_list_reversed"),
@@ -730,6 +736,8 @@ extension ABILoweringPass {
             // NOTE: kk_sequence_firstOrNull and kk_sequence_count are NOT
             // non-throwing — they accept an outThrown parameter for lazy
             // pipeline exception propagation.
+            interner.intern("kk_sequence_forEachIndexed"),
+            interner.intern("kk_sequence_zipWithNext"),
             // Sequence (STDLIB-470)
             interner.intern("kk_sequence_toSet"),
             interner.intern("kk_sequence_toMap"),
