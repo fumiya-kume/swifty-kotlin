@@ -2957,6 +2957,20 @@ private func runtimeFlowEvaluate(flow: RuntimeFlowHandle) -> RuntimeFlowExecutio
     runtimeFlowExecuteStages(flow: flow, stages: runtimeFlowBuildStages(flow.opChain))
 }
 
+/// Returns true when `flow` uses an advanced source type that requires the
+/// evaluate path (flatMapConcat, flatMapMerge, flatMapLatest, merge, zip,
+/// combine).  Simple `.emitter` and `.fixed` sources can use the faster
+/// streaming path; advanced sources must go through runtimeFlowEvaluate.
+private func runtimeFlowHasAdvancedSource(_ flow: RuntimeFlowHandle) -> Bool {
+    switch flow.source {
+    case .emitter, .fixed:
+        return false
+    default:
+        // .flatMapConcat, .flatMapMerge, .flatMapLatest, .merge, .zip, .combine
+        return true
+    }
+}
+
 /// Cold-stream collect: re-execute the source emitter, apply the operator chain,
 /// then deliver the resulting values to the collector.
 private func runtimeFlowCollectLazy(
@@ -2965,7 +2979,11 @@ private func runtimeFlowCollectLazy(
     continuation: Int
 ) -> Int {
     let hasOnCompletion = flow.opChain.contains { $0.kind == .onCompletion }
-    if !runtimeFlowHasErrorHandlers(flow.opChain) {
+    // Advanced sources (flatMapConcat, flatMapMerge, merge, zip, combine, etc.)
+    // are not handled by runtimeFlowCollectStreaming which only processes
+    // .emitter and .fixed sources.  Route them through runtimeFlowEvaluate so
+    // that they produce values correctly.
+    if !runtimeFlowHasErrorHandlers(flow.opChain) && !runtimeFlowHasAdvancedSource(flow) {
         let retVal = runtimeFlowCollectStreaming(flow, collectorFnPtr: collectorFnPtr, continuation: continuation)
         if hasOnCompletion {
             let streamingFailure: Int? = retVal != 0 ? retVal : nil
