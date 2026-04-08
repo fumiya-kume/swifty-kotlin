@@ -266,7 +266,7 @@ final class RuntimeAsyncAppenderBox: RuntimeAppender, @unchecked Sendable {
 
 // MARK: - Advanced Logger Box
 
-final class RuntimeAdvancedLoggerBox {
+final class RuntimeAdvancedLoggerBox: @unchecked Sendable {
     let name: String
     private let lock = NSLock()
     private var appenders: [RuntimeAppender] = []
