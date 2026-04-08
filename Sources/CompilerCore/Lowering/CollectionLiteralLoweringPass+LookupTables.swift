@@ -392,10 +392,6 @@ struct CollectionLiteralLookupTables {
     let kkRangeAverageName: InternedString
     let kkRangeSortedName: InternedString
     let kkOpContainsName: InternedString
-    let kkRangeTakeName: InternedString
-    let kkRangeDropName: InternedString
-    let kkRangeAverageName: InternedString
-    let kkRangeSortedName: InternedString
 
     // Member names (STDLIB-637)
     let sumName: InternedString
@@ -1087,10 +1083,6 @@ struct CollectionLiteralLookupTables {
         kkRangeAverageName = interner.intern("kk_range_average")
         kkRangeSortedName = interner.intern("kk_range_sorted")
         kkOpContainsName = interner.intern("kk_op_contains")
-        kkRangeTakeName = interner.intern("kk_range_take")
-        kkRangeDropName = interner.intern("kk_range_drop")
-        kkRangeAverageName = interner.intern("kk_range_average")
-        kkRangeSortedName = interner.intern("kk_range_sorted")
 
         sumName = interner.intern("sum")
 
