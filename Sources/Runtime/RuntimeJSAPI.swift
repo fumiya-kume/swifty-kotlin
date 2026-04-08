@@ -342,14 +342,14 @@ public func kk_console_log(_ messageRaw: Int) {
 @_cdecl("kk_console_error")
 public func kk_console_error(_ messageRaw: Int) {
     let text = jsStringForRaw(messageRaw)
-    fputs("\(text)\n", stderr)
+    FileHandle.standardError.write(Data("\(text)\n".utf8))
 }
 
 /// Stub for `console.warn(message)`.
 @_cdecl("kk_console_warn")
 public func kk_console_warn(_ messageRaw: Int) {
     let text = jsStringForRaw(messageRaw)
-    fputs("WARN: \(text)\n", stderr)
+    FileHandle.standardError.write(Data("WARN: \(text)\n".utf8))
 }
 
 // MARK: - DOM stubs: document
