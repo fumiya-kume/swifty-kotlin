@@ -2,6 +2,14 @@ import Foundation
 
 // MARK: - Runtime Reflection (REFL-004)
 
+private let runtimeHiddenAnnotationFQNames: Set<String> = [
+    "kotlin.Metadata",
+]
+
+private func runtimeShouldExposeAnnotation(fqName: String) -> Bool {
+    !runtimeHiddenAnnotationFQNames.contains(fqName)
+}
+
 private func runtimeReflectionKClassBox(from raw: Int) -> RuntimeKClassBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
         return nil
@@ -263,7 +271,7 @@ public func kk_kclass_get_annotations(_ kclassRaw: Int) -> Int {
     }
 
     var annotationHandles: [Int] = []
-    for record in metadata.annotations {
+    for record in metadata.annotations where runtimeShouldExposeAnnotation(fqName: record.annotationFQName) {
         let box = RuntimeAnnotationBox(
             annotationFQName: record.annotationFQName,
             arguments: record.arguments,
@@ -289,7 +297,7 @@ public func kk_kclass_find_annotation(_ kclassRaw: Int, _ nameRaw: Int) -> Int {
         return runtimeNullSentinelInt
     }
 
-    for record in metadata.annotations {
+    for record in metadata.annotations where runtimeShouldExposeAnnotation(fqName: record.annotationFQName) {
         // Match by FQ name or simple name.
         let simpleName = record.annotationFQName.split(separator: ".").last.map(String.init) ?? record.annotationFQName
         if record.annotationFQName == searchName || simpleName == searchName {
@@ -320,6 +328,9 @@ public func kk_kclass_register_single_annotation(
     _ argCount: Int
 ) -> Int {
     let fqName = extractString(from: UnsafeMutableRawPointer(bitPattern: fqNameRaw)) ?? "Unknown"
+    guard runtimeShouldExposeAnnotation(fqName: fqName) else {
+        return 0
+    }
 
     var arguments: [String] = []
     if argCount > 0,

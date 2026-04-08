@@ -657,6 +657,33 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Type-annotation parse diagnostics should be errors")
     }
 
+    func testCompilerMetadataAutoAttachedToNominalDeclarations() throws {
+        let source = """
+        class Plain
+        interface Face
+        object Singleton
+        enum class Color { RED }
+        annotation class Marker
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected metadata attachment smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let interner = ctx.interner
+
+        XCTAssertNotNil(sema.symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Metadata")]))
+
+        for name in ["Plain", "Face", "Singleton", "Color", "Marker"] {
+            let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: [interner.intern(name)]))
+            let annotations = sema.symbols.annotations(for: symbol)
+            XCTAssertTrue(
+                annotations.contains(where: { $0.annotationFQName == KnownCompilerAnnotation.metadata.qualifiedName }),
+                "Expected \(name) to receive compiler metadata annotation, got: \(annotations)"
+            )
+        }
+    }
+
     private func runSemaCollectingDiagnostics(_ source: String) -> CompilationContext {
         let ctx = makeContextFromSource(source)
         do {

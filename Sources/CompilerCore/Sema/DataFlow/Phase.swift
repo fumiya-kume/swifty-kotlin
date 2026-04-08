@@ -141,6 +141,12 @@ public final class DataFlowSemaPhase: CompilerPhase {
             types: types, interner: ctx.interner
         )
         synthesizeNominalLayouts(symbols: symbols)
+        attachCompilerMetadataAnnotations(
+            symbols: symbols,
+            types: types,
+            moduleName: ctx.options.moduleName,
+            interner: ctx.interner
+        )
     }
 
     private func runBodyAnalysis(

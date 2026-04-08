@@ -128,6 +128,28 @@ final class MetadataSerializerTests: XCTestCase {
         XCTAssertNotEqual(ann1, ann3)
     }
 
+    func testMetadataAnnotationPayloadRoundTripsThroughDecoder() {
+        let encoder = MetadataEncoder()
+        let record = MetadataRecord(
+            kind: .class,
+            mangledName: "_KK_demo__Box__C__",
+            fqName: "demo.Box",
+            declaredFieldCount: 1,
+            annotations: [MetadataAnnotationRecord(annotationFQName: "kotlin.Deprecated", arguments: ["legacy"])]
+        )
+
+        let metadataAnnotation = encoder.metadataAnnotationRecord(for: record)
+        XCTAssertEqual(metadataAnnotation.annotationFQName, KnownCompilerAnnotation.metadata.qualifiedName)
+        XCTAssertEqual(metadataAnnotation.arguments.count, 1)
+
+        let decoded = MetadataDecoder().decode(metadataAnnotation.arguments[0])
+        XCTAssertEqual(decoded.count, 1)
+        XCTAssertEqual(decoded[0].kind, .class)
+        XCTAssertEqual(decoded[0].fqName, "demo.Box")
+        XCTAssertEqual(decoded[0].declaredFieldCount, 1)
+        XCTAssertEqual(decoded[0].annotations.first?.annotationFQName, "kotlin.Deprecated")
+    }
+
     // MARK: - MetadataEncoder serialize
 
     func testSerializeFunctionRecord() {
@@ -303,6 +325,33 @@ final class MetadataSerializerTests: XCTestCase {
         XCTAssertTrue(output.contains("annotations="))
         XCTAssertTrue(output.contains("kotlin.Deprecated"))
         XCTAssertTrue(output.contains("target:get"))
+    }
+
+    func testBuildRecordSkipsMissingValueClassUnderlyingType() throws {
+        let encoder = MetadataEncoder()
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+
+        let symbol = symbols.define(
+            kind: .class,
+            name: interner.intern("Wrapper"),
+            fqName: [interner.intern("demo"), interner.intern("Wrapper")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.valueType]
+        )
+
+        let record = encoder.buildRecord(
+            for: try XCTUnwrap(symbols.symbol(symbol)),
+            symbols: symbols,
+            types: types,
+            moduleName: "Demo",
+            interner: interner
+        )
+
+        XCTAssertFalse(record.isValueClass)
+        XCTAssertNil(record.valueClassUnderlyingTypeSig)
     }
 
     func testSerializeMultipleRecords() {

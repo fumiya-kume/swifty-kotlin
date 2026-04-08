@@ -133,6 +133,57 @@ extension DataFlowSemaPhase {
         return SourceRange(start: declRange.start, end: bodyRange.end)
     }
 
+    func attachCompilerMetadataAnnotations(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        moduleName: String,
+        interner: StringInterner
+    ) {
+        let encoder = MetadataEncoder()
+        let targets = symbols.allSymbols().filter { symbol in
+            guard Self.compilerMetadataAnnotatedKinds.contains(symbol.kind),
+                  !symbol.flags.contains(.synthetic)
+            else {
+                return false
+            }
+            return !symbols.annotations(for: symbol.id).contains {
+                KnownCompilerAnnotation.metadata.matches($0.annotationFQName)
+            }
+        }
+
+        let recordsBySymbol = targets.reduce(into: [SymbolID: MetadataRecord]()) { partial, symbol in
+            partial[symbol.id] = encoder.buildRecord(
+                for: symbol,
+                symbols: symbols,
+                types: types,
+                moduleName: moduleName,
+                interner: interner
+            )
+        }
+
+        for symbol in targets {
+            guard let record = recordsBySymbol[symbol.id] else {
+                continue
+            }
+            // Strip any existing kotlin.Metadata annotation before appending the new one
+            // to prevent infinite nesting when the symbol is re-processed.
+            var annotations = symbols.annotations(for: symbol.id).filter {
+                !KnownCompilerAnnotation.metadata.matches($0.annotationFQName)
+            }
+            annotations.append(encoder.metadataAnnotationRecord(for: record))
+            symbols.setAnnotations(annotations, for: symbol.id)
+        }
+    }
+
+    private static let compilerMetadataAnnotatedKinds: Set<SymbolKind> = [
+        .class,
+        .interface,
+        .object,
+        .enumClass,
+        .annotationClass,
+    ]
+
+
     /// Base value for synthetic type parameter symbol IDs used in metadata encoding.
     /// Shared between MetadataTypeSignatureParser (encoding) and collectSyntheticTypeParameters (decoding).
     static var syntheticTypeParameterBase: Int32 {

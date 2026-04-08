@@ -66,6 +66,62 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenLibraryMetadataIncludesCompilerMetadataAnnotation() throws {
+        let source = """
+        class Plain
+        interface Face
+        object Singleton
+        enum class Color { RED }
+        annotation class Marker
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let tempDir = FileManager.default.temporaryDirectory
+            let libBase = tempDir.appendingPathComponent(UUID().uuidString).path
+            _ = try runCodegenPipeline(inputPath: path, moduleName: "MetadataLib", emit: .library, outputPath: libBase)
+
+            let metadataPath = libBase + ".kklib/metadata.bin"
+            let metadata = try String(contentsOfFile: metadataPath, encoding: .utf8)
+            XCTAssertTrue(metadata.contains("kotlin.Metadata"))
+            XCTAssertTrue(metadata.contains("fq=Plain"))
+            XCTAssertTrue(metadata.contains("fq=Face"))
+            XCTAssertTrue(metadata.contains("fq=Singleton"))
+            XCTAssertTrue(metadata.contains("fq=Color"))
+            XCTAssertTrue(metadata.contains("fq=Marker"))
+        }
+    }
+
+    func testCodegenAnnotationReflectionHidesCompilerMetadata() throws {
+        let source = """
+        annotation class Label(val value: String = "ok")
+
+        @Label("hello")
+        class Tagged
+
+        class Plain
+
+        fun main() {
+            println(Tagged::class.annotations.size)
+            println(Plain::class.annotations.size)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "MetadataReflection",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "1\n0\n")
+        }
+    }
+
     func testCodegenProducesDeterministicKirOutput() throws {
         let source = """
         fun helper(x: Int, y: Int) = x + y

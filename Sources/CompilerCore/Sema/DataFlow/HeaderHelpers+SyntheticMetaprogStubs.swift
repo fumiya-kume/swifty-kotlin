@@ -127,6 +127,14 @@ extension DataFlowSemaPhase {
         }
 
         registerSyntheticJvmAnnotationClass(
+            named: "Metadata",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticJvmAnnotationClass(
             named: "OptIn",
             packageFQName: kotlinPkg,
             packageSymbol: kotlinPkgSymbol,

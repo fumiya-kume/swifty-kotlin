@@ -3,6 +3,7 @@ import Foundation
 enum KnownCompilerAnnotation {
     case deprecated
     case replaceWith
+    case metadata
     case target
     case jvmStatic
     case jvmName
@@ -27,6 +28,8 @@ enum KnownCompilerAnnotation {
             "Deprecated"
         case .replaceWith:
             "ReplaceWith"
+        case .metadata:
+            "Metadata"
         case .target:
             "Target"
         case .jvmStatic:
@@ -70,6 +73,8 @@ enum KnownCompilerAnnotation {
             "kotlin.Deprecated"
         case .replaceWith:
             "kotlin.ReplaceWith"
+        case .metadata:
+            "kotlin.Metadata"
         case .target:
             "kotlin.annotation.Target"
         case .jvmStatic:

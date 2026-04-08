@@ -133,7 +133,6 @@ public final class MetadataEncoder {
         functionLinkNames: [SymbolID: String],
         includeNonPublic: Bool = false
     ) -> [MetadataRecord] {
-        let mangler = NameMangler()
         let exported = symbols.allSymbols()
             .filter { symbol in
                 if !includeNonPublic && symbol.visibility != .public {
@@ -158,177 +157,13 @@ public final class MetadataEncoder {
 
         var records: [MetadataRecord] = []
         for symbol in exported {
-            let mangled = mangler.mangle(
-                moduleName: moduleName,
-                symbol: symbol,
+            records.append(buildRecord(
+                for: symbol,
                 symbols: symbols,
                 types: types,
-                nameResolver: { interner.resolve($0) }
-            )
-            let fqName = symbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
-
-            var arity = 0
-            var isSuspend = false
-            var isInline = false
-            var typeSignature: String?
-            var externalLinkName: String?
-
-            if symbol.kind == .function || symbol.kind == .constructor, let signature = symbols.functionSignature(for: symbol.id) {
-                arity = signature.parameterTypes.count
-                isSuspend = signature.isSuspend
-                isInline = symbol.flags.contains(.inlineFunction)
-                typeSignature = mangler.mangledSignature(
-                    for: symbol,
-                    symbols: symbols,
-                    types: types,
-                    nameResolver: { interner.resolve($0) }
-                )
-                externalLinkName = functionLinkNames[symbol.id]
-            }
-
-            if symbol.kind == .property || symbol.kind == .field,
-               symbols.propertyType(for: symbol.id) != nil
-            {
-                typeSignature = symbols.propertyType(for: symbol.id).map { propertyType in
-                    metadataTypeSignature(
-                        propertyType,
-                        symbols: symbols,
-                        types: types,
-                        mangler: mangler,
-                        nameResolver: { interner.resolve($0) }
-                    )
-                }
-            }
-
-            if symbol.kind == .typeAlias,
-               symbols.typeAliasUnderlyingType(for: symbol.id) != nil
-            {
-                typeSignature = symbols.typeAliasUnderlyingType(for: symbol.id).map { underlyingType in
-                    metadataTypeSignature(
-                        underlyingType,
-                        symbols: symbols,
-                        types: types,
-                        mangler: mangler,
-                        nameResolver: { interner.resolve($0) }
-                    )
-                }
-            }
-
-            if symbol.kind == .function || symbol.kind == .constructor, let signature = symbols.functionSignature(for: symbol.id) {
-                arity = signature.parameterTypes.count
-                isSuspend = signature.isSuspend
-                isInline = symbol.flags.contains(.inlineFunction)
-                typeSignature = mangler.mangledSignature(
-                    for: symbol,
-                    symbols: symbols,
-                    types: types,
-                    nameResolver: { interner.resolve($0) }
-                )
-                externalLinkName = functionLinkNames[symbol.id]
-            }
-
-            var declaredFieldCount: Int?
-            var declaredInstanceSizeWords: Int?
-            var declaredVtableSize: Int?
-            var declaredItableSize: Int?
-            var superFQName: String?
-            var fieldOffsetsStr: String?
-            var vtableSlotsStr: String?
-            var itableSlotsStr: String?
-
-            if Self.nominalKinds.contains(symbol.kind), let layout = symbols.nominalLayout(for: symbol.id) {
-                declaredInstanceSizeWords = layout.instanceSizeWords
-                declaredFieldCount = layout.instanceFieldCount
-                declaredVtableSize = layout.vtableSize
-                declaredItableSize = layout.itableSize
-
-                let serializedFieldOffsets = serializeFieldOffsets(layout.fieldOffsets, symbols: symbols, interner: interner)
-                if !serializedFieldOffsets.isEmpty {
-                    fieldOffsetsStr = serializedFieldOffsets
-                }
-                let serializedVTableSlots = serializeVTableSlots(layout.vtableSlots, symbols: symbols, interner: interner)
-                if !serializedVTableSlots.isEmpty {
-                    vtableSlotsStr = serializedVTableSlots
-                }
-                let serializedITableSlots = serializeITableSlots(layout.itableSlots, symbols: symbols, interner: interner)
-                if !serializedITableSlots.isEmpty {
-                    itableSlotsStr = serializedITableSlots
-                }
-                if let superClass = layout.superClass,
-                   let superSymbol = symbols.symbol(superClass)
-                {
-                    superFQName = superSymbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
-                }
-            }
-
-            let isDataClass = symbol.flags.contains(.dataType)
-            let isSealedClass = symbol.flags.contains(.sealedType)
-            let isExpect = symbol.flags.contains(.expectDeclaration)
-            let isActual = symbol.flags.contains(.actualDeclaration)
-            let rawIsValueClass = symbol.flags.contains(.valueType)
-
-            var valueClassUnderlyingTypeSig: String?
-            if rawIsValueClass,
-               let underlyingType = symbols.valueClassUnderlyingType(for: symbol.id)
-            {
-                valueClassUnderlyingTypeSig = mangler.encodeType(
-                    underlyingType,
-                    symbols: symbols,
-                    types: types,
-                    nameResolver: { interner.resolve($0) }
-                )
-            }
-
-            // Only emit valueClass=1 when the underlying type is available;
-            // without it, importers cannot resolve/unbox the value class.
-            let isValueClass: Bool
-            if rawIsValueClass, valueClassUnderlyingTypeSig == nil {
-                assertionFailure(
-                    "Value class '\(fqName)' is missing underlying type; omitting valueClass flag from metadata."
-                )
-                isValueClass = false
-            } else {
-                isValueClass = rawIsValueClass
-            }
-
-            let annotationEntries = symbols.annotations(for: symbol.id)
-
-            // P5-78: collect sealed subclass FQ names for cross-module exhaustiveness
-            var sealedSubclassFQNames: [String] = []
-            if isSealedClass {
-                let directSubs = symbols.sealedSubclasses(for: symbol.id) ?? symbols.directSubtypes(of: symbol.id)
-                sealedSubclassFQNames = directSubs.compactMap { subID in
-                    guard let subSymbol = symbols.symbol(subID) else { return nil }
-                    let subFQ = subSymbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
-                    return subFQ.isEmpty ? nil : subFQ
-                }.sorted()
-            }
-
-            records.append(MetadataRecord(
-                kind: symbol.kind,
-                mangledName: mangled,
-                fqName: fqName,
-                arity: arity,
-                isSuspend: isSuspend,
-                isInline: isInline,
-                typeSignature: typeSignature,
-                externalLinkName: externalLinkName,
-                declaredFieldCount: declaredFieldCount,
-                declaredInstanceSizeWords: declaredInstanceSizeWords,
-                declaredVtableSize: declaredVtableSize,
-                declaredItableSize: declaredItableSize,
-                superFQName: superFQName,
-                fieldOffsets: fieldOffsetsStr,
-                vtableSlots: vtableSlotsStr,
-                itableSlots: itableSlotsStr,
-                isDataClass: isDataClass,
-                isSealedClass: isSealedClass,
-                annotations: annotationEntries,
-                isValueClass: isValueClass,
-                valueClassUnderlyingTypeSig: valueClassUnderlyingTypeSig,
-                sealedSubclassFQNames: sealedSubclassFQNames,
-                isExpect: isExpect,
-                isActual: isActual
+                moduleName: moduleName,
+                interner: interner,
+                functionLinkNames: functionLinkNames
             ))
         }
         return records
@@ -510,8 +345,179 @@ public final class MetadataEncoder {
         }
     }
 
+    func buildRecord(
+        for symbol: SemanticSymbol,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        moduleName: String,
+        interner: StringInterner,
+        functionLinkNames: [SymbolID: String] = [:]
+    ) -> MetadataRecord {
+        let mangler = NameMangler()
+        let mangled = mangler.mangle(
+            moduleName: moduleName,
+            symbol: symbol,
+            symbols: symbols,
+            types: types,
+            nameResolver: { interner.resolve($0) }
+        )
+        let fqName = symbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
+
+        var arity = 0
+        var isSuspend = false
+        var isInline = false
+        var typeSignature: String?
+        var externalLinkName: String?
+
+        if symbol.kind == .function || symbol.kind == .constructor, let signature = symbols.functionSignature(for: symbol.id) {
+            arity = signature.parameterTypes.count
+            isSuspend = signature.isSuspend
+            isInline = symbol.flags.contains(.inlineFunction)
+            typeSignature = mangler.mangledSignature(
+                for: symbol,
+                symbols: symbols,
+                types: types,
+                nameResolver: { interner.resolve($0) }
+            )
+            externalLinkName = functionLinkNames[symbol.id]
+        }
+
+        if symbol.kind == .property || symbol.kind == .field,
+           symbols.propertyType(for: symbol.id) != nil
+        {
+            typeSignature = symbols.propertyType(for: symbol.id).map { propertyType in
+                metadataTypeSignature(
+                    propertyType,
+                    symbols: symbols,
+                    types: types,
+                    mangler: mangler,
+                    nameResolver: { interner.resolve($0) }
+                )
+            }
+        }
+
+        if symbol.kind == .typeAlias,
+           symbols.typeAliasUnderlyingType(for: symbol.id) != nil
+        {
+            typeSignature = symbols.typeAliasUnderlyingType(for: symbol.id).map { underlyingType in
+                metadataTypeSignature(
+                    underlyingType,
+                    symbols: symbols,
+                    types: types,
+                    mangler: mangler,
+                    nameResolver: { interner.resolve($0) }
+                )
+            }
+        }
+
+        var declaredFieldCount: Int?
+        var declaredInstanceSizeWords: Int?
+        var declaredVtableSize: Int?
+        var declaredItableSize: Int?
+        var superFQName: String?
+        var fieldOffsetsStr: String?
+        var vtableSlotsStr: String?
+        var itableSlotsStr: String?
+
+        if Self.nominalKinds.contains(symbol.kind), let layout = symbols.nominalLayout(for: symbol.id) {
+            declaredInstanceSizeWords = layout.instanceSizeWords
+            declaredFieldCount = layout.instanceFieldCount
+            declaredVtableSize = layout.vtableSize
+            declaredItableSize = layout.itableSize
+
+            let serializedFieldOffsets = serializeFieldOffsets(layout.fieldOffsets, symbols: symbols, interner: interner)
+            if !serializedFieldOffsets.isEmpty {
+                fieldOffsetsStr = serializedFieldOffsets
+            }
+            let serializedVTableSlots = serializeVTableSlots(layout.vtableSlots, symbols: symbols, interner: interner)
+            if !serializedVTableSlots.isEmpty {
+                vtableSlotsStr = serializedVTableSlots
+            }
+            let serializedITableSlots = serializeITableSlots(layout.itableSlots, symbols: symbols, interner: interner)
+            if !serializedITableSlots.isEmpty {
+                itableSlotsStr = serializedITableSlots
+            }
+            if let superClass = layout.superClass,
+               let superSymbol = symbols.symbol(superClass)
+            {
+                superFQName = superSymbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
+            }
+        }
+
+        let isDataClass = symbol.flags.contains(.dataType)
+        let isSealedClass = symbol.flags.contains(.sealedType)
+        let isExpect = symbol.flags.contains(.expectDeclaration)
+        let isActual = symbol.flags.contains(.actualDeclaration)
+        let rawIsValueClass = symbol.flags.contains(.valueType)
+
+        var valueClassUnderlyingTypeSig: String?
+        if rawIsValueClass,
+           let underlyingType = symbols.valueClassUnderlyingType(for: symbol.id)
+        {
+            valueClassUnderlyingTypeSig = mangler.encodeType(
+                underlyingType,
+                symbols: symbols,
+                types: types,
+                nameResolver: { interner.resolve($0) }
+            )
+        }
+
+        // Serialize isValueClass independently of whether the underlying type was found.
+        // Even if underlying type extraction fails, mark it as a value class so importers
+        // can identify it correctly; valueClassUnderlyingTypeSig may be nil in that case.
+        let isValueClass = rawIsValueClass
+
+        let annotationEntries = symbols.annotations(for: symbol.id)
+
+        // P5-78: collect sealed subclass FQ names for cross-module exhaustiveness
+        var sealedSubclassFQNames: [String] = []
+        if isSealedClass {
+            let directSubs = symbols.sealedSubclasses(for: symbol.id) ?? symbols.directSubtypes(of: symbol.id)
+            sealedSubclassFQNames = directSubs.compactMap { subID in
+                guard let subSymbol = symbols.symbol(subID) else { return nil }
+                let subFQ = subSymbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
+                return subFQ.isEmpty ? nil : subFQ
+            }.sorted()
+        }
+
+        return MetadataRecord(
+            kind: symbol.kind,
+            mangledName: mangled,
+            fqName: fqName,
+            arity: arity,
+            isSuspend: isSuspend,
+            isInline: isInline,
+            typeSignature: typeSignature,
+            externalLinkName: externalLinkName,
+            declaredFieldCount: declaredFieldCount,
+            declaredInstanceSizeWords: declaredInstanceSizeWords,
+            declaredVtableSize: declaredVtableSize,
+            declaredItableSize: declaredItableSize,
+            superFQName: superFQName,
+            fieldOffsets: fieldOffsetsStr,
+            vtableSlots: vtableSlotsStr,
+            itableSlots: itableSlotsStr,
+            isDataClass: isDataClass,
+            isSealedClass: isSealedClass,
+            annotations: annotationEntries,
+            isValueClass: isValueClass,
+            valueClassUnderlyingTypeSig: valueClassUnderlyingTypeSig,
+            sealedSubclassFQNames: sealedSubclassFQNames,
+            isExpect: isExpect,
+            isActual: isActual
+        )
+    }
+
+
     /// Nominal kinds that carry layout information in metadata.
     private static let nominalKinds: Set<SymbolKind> = [.class, .interface, .object, .enumClass, .annotationClass]
+
+    func metadataAnnotationRecord(for record: MetadataRecord) -> MetadataAnnotationRecord {
+        MetadataAnnotationRecord(
+            annotationFQName: KnownCompilerAnnotation.metadata.qualifiedName,
+            arguments: [serialize([record])]
+        )
+    }
 
     /// Serialize records to the text-based metadata format.
     public func serialize(_ records: [MetadataRecord]) -> String {
