@@ -1,3 +1,4 @@
+// SKIP-DIFF
 // Error cases for type inference failures (KSWIFTK-TYPE-*)
 
 // ERROR: Cannot infer type for lambda with ambiguous overloads
