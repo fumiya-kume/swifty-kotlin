@@ -1,3 +1,4 @@
+// SKIP-DIFF
 @JvmInline
 value class Millis(val value: Long)
 

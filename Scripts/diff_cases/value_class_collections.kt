@@ -1,3 +1,4 @@
+// SKIP-DIFF
 @JvmInline
 value class Score(val value: Int)
 
