@@ -38,22 +38,6 @@
 
 #### Phase 2: リフレクション (中優先度)
 
-- [x] STDLIB-REFLECT-066: 型リフレクション完全実装
-  - **仕様**: 型情報のリフレクションアクセス
-  - **実装内容**:
-    - KType: 型情報の表現 (RuntimeKTypeBox)
-    - 型引数: arguments (RuntimeKTypeProjectionBox)
-    - 分類: classifier (KClass raw handle)
-    - null可能性: isMarkedNullable
-    - ジェネリック型の分解
-    - 配列型の要素型取得
-    - 型射影: KTypeProjection (variance: IN/OUT/INVARIANT/STAR)
-    - 文字列表現: toString()
-  - **現状**: 完全実装済み - 全APIが利用可能
-  - **関連ファイル**: `RuntimeReflection.swift`, `RuntimeStringArray.swift`, `RuntimeTypes.swift`
-  - **テストケース**: `Scripts/diff_cases/type_reflection.kt`
-  - **実装API**: kk_ktype_create, kk_ktype_classifier, kk_ktype_arguments, kk_ktype_isMarkedNullable, kk_ktype_to_string, kk_typeof, kk_ktypeprojection_create, kk_ktypeprojection_type, kk_ktypeprojection_variance
-
 #### Phase 3: コルーチンと並行処理 (低優先度)
 
 
@@ -207,18 +191,6 @@
 3. **CI連携**: 新規テストはCIで自動実行されるように設定
 4. **ドキュメント化**: 各テストケースの目的と期待結果を明記
 
-- [x] STDLIB-PERF-154: メモリ管理基本実装
-  - **仕様**: メモリ管理の基本的な機能
-  - **実装内容**:
-    - メモリ使用量: Runtime.getRuntime().totalMemory()
-    - 空きメモリ: freeMemory(), maxMemory()
-    - ガベージコレクション: System.gc()
-    - メモリリーク検出: メモリリークの検出ツール
-    - パフォーマンス監視: メモリ使用量の監視
-  - **現状**: 実装済み (`Sources/Runtime/RuntimeMemory.swift`)
-  - **関連ファイル**: `RuntimeMemory.swift`
-  - **テストケース**: `Scripts/diff_cases/memory_management.kt`
-
 ---
 
 #### Phase 5: 実験的機能と高度API (低優先度)
@@ -230,8 +202,6 @@
 - [ ] STDLIB-JS-167: JavaScript固有API完全実装
 
 - [ ] STDLIB-NATIVE-168: Native固有API完全実装
-
-- [x] STDLIB-NATIVE-169: プラットフォーム情報完全実装
 
 #### Phase 5: 非推奨APIと移行 (低優先度)
 
