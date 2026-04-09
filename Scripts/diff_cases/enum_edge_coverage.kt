@@ -4,7 +4,7 @@ enum class Direction {
 }
 
 fun main() {
-    println(Direction.entries.toList())
+    println(Direction.entries)
     println(enumValues<Direction>().toList())
     println(enumValueOf<Direction>("NORTH"))
     println(Direction.SOUTH.name)
