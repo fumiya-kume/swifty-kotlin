@@ -1,5 +1,5 @@
 fun main() {
-    println((1 until 5).toList())
+    println((1..4).toList())
     println((5 downTo 1 step 2).toList())
     println((1..0).toList())
 
