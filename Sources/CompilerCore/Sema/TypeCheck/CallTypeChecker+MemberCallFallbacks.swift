@@ -902,7 +902,7 @@ extension CallTypeChecker {
         case knownNames.getOrDefault:
             return isMapReceiver && argCount == 2
         case knownNames.getOrElse:
-            return isMapReceiver ? argCount == 1 : argCount == 2
+            return argCount == 2
         case interner.intern("elementAtOrElse"):
             return argCount == 2
         case knownNames.getOrPut:
