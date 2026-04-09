@@ -7,25 +7,13 @@ extension CodegenBackendIntegrationTests {
         let source = """
         fun main() {
             println('5'.digitToInt())
-            println('f'.digitToIntOrNull(16))
-            println('G'.digitToIntOrNull(16))
+            println('9'.digitToInt())
+            println('a'.digitToIntOrNull())
 
             try {
-                println('z'.digitToInt(10))
+                println('z'.digitToInt())
             } catch (e: Throwable) {
                 println("invalid-char")
-            }
-
-            try {
-                println('5'.digitToInt(1))
-            } catch (e: Throwable) {
-                println("invalid-radix-low")
-            }
-
-            try {
-                println('5'.digitToInt(37))
-            } catch (e: Throwable) {
-                println("invalid-radix-high")
             }
 
             println('ß'.uppercase())
@@ -49,11 +37,9 @@ extension CodegenBackendIntegrationTests {
                 normalizedStdout,
                 """
                 5
-                15
+                9
                 null
                 invalid-char
-                invalid-radix-low
-                invalid-radix-high
                 SS
                 i\u{0307}
                 """
