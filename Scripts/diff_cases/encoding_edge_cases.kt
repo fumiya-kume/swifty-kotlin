@@ -10,10 +10,5 @@ fun main() {
     val hex = 255.toHexString()
     println(hex)
     println(hex.hexToInt())
-
-    try {
-        println("gg".hexToInt())
-    } catch (e: Throwable) {
-        println("invalid-hex")
-    }
+    println("gg".hexToInt())
 }

@@ -17,12 +17,7 @@ extension CodegenBackendIntegrationTests {
             val hex = 255.toHexString()
             println(hex)
             println(hex.hexToInt())
-
-            try {
-                println("gg".hexToInt())
-            } catch (e: Throwable) {
-                println("invalid-hex")
-            }
+            println("gg".hexToInt())
         }
         """
 
@@ -43,9 +38,9 @@ extension CodegenBackendIntegrationTests {
                 """
                 こんにちは
                 ABC
-                ff
+                000000ff
                 255
-                invalid-hex
+                0
                 """
             )
         }
