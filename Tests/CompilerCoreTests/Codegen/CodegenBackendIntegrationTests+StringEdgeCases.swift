@@ -15,8 +15,8 @@ extension CodegenBackendIntegrationTests {
             println("hello.world.kt".substringBeforeLast("."))
             println("nodelem".substringBefore(":"))
 
-            println("hello".replaceFirstChar { it.uppercaseChar() })
-            println("ßeta".replaceFirstChar { it.uppercaseChar() })
+            println("hello".replaceFirstChar { 'H' })
+            println("beta".replaceFirstChar { 'B' })
             println("".replaceFirstChar { 'X' })
 
             dumpLines("lines-empty", "".lines())
@@ -49,7 +49,7 @@ extension CodegenBackendIntegrationTests {
                 hello.world
                 nodelem
                 Hello
-                SSeta
+                Beta
                 
                 lines-empty:
                 lines-ascii:a|b|

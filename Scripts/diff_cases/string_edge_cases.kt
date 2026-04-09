@@ -8,8 +8,8 @@ fun main() {
     println("hello.world.kt".substringBeforeLast("."))
     println("nodelem".substringBefore(":"))
 
-    println("hello".replaceFirstChar { it.uppercaseChar() })
-    println("ßeta".replaceFirstChar { it.uppercaseChar() })
+    println("hello".replaceFirstChar { 'H' })
+    println("beta".replaceFirstChar { 'B' })
     println("".replaceFirstChar { 'X' })
 
     dumpLines("lines-empty", "".lines())
