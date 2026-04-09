@@ -133,10 +133,12 @@ final class RuntimeMemScopeBox: @unchecked Sendable {
         }
         runtimeStorage.withLock { state in
             for key in keys {
-                state.objectPointers.remove(key)
-                if let ptr = UnsafeMutableRawPointer(bitPattern: key) {
-                    Unmanaged<RuntimeNativeHeapAllocationBox>.fromOpaque(ptr).release()
+                guard state.objectPointers.remove(key) != nil,
+                      let ptr = UnsafeMutableRawPointer(bitPattern: key)
+                else {
+                    continue
                 }
+                Unmanaged<RuntimeNativeHeapAllocationBox>.fromOpaque(ptr).release()
             }
         }
     }
