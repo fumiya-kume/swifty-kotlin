@@ -471,6 +471,12 @@ extension ExprTypeChecker {
                     range: nameRange,
                     diagnostics: ctx.semaCtx.diagnostics
                 )
+                driver.helpers.checkOptIn(
+                    for: result.symbol,
+                    ctx: ctx,
+                    range: nameRange,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
                 sema.bindings.bindExprType(id, type: result.type)
                 return result.type
             } else if let firstInvisible = invisibleSyms.first {
@@ -510,6 +516,12 @@ extension ExprTypeChecker {
                 for: preferredCandidate.id,
                 sema: sema,
                 interner: interner,
+                range: nameRange,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            driver.helpers.checkOptIn(
+                for: preferredCandidate.id,
+                ctx: ctx,
                 range: nameRange,
                 diagnostics: ctx.semaCtx.diagnostics
             )
@@ -566,6 +578,12 @@ extension ExprTypeChecker {
             driver.helpers.checkDeprecation(
                 for: result.symbol, sema: sema, interner: interner,
                 range: nameRange, diagnostics: ctx.semaCtx.diagnostics
+            )
+            driver.helpers.checkOptIn(
+                for: result.symbol,
+                ctx: ctx,
+                range: nameRange,
+                diagnostics: ctx.semaCtx.diagnostics
             )
             sema.bindings.bindExprType(id, type: result.type)
             return result.type

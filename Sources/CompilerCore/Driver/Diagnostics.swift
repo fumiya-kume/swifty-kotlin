@@ -70,6 +70,9 @@ public final class DiagnosticEngine: @unchecked Sendable {
                 return // Suppressed — do not emit.
             }
         }
+        if _diagnostics.contains(diagnostic) {
+            return
+        }
         _diagnostics.append(diagnostic)
     }
 

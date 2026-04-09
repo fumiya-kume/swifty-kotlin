@@ -1988,6 +1988,12 @@ final class CallTypeChecker {
                 range: range,
                 diagnostics: ctx.semaCtx.diagnostics
             )
+            driver.helpers.checkOptIn(
+                for: chosen,
+                ctx: ctx,
+                range: range,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
             let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
             let adjustedReturnType: TypeID = if let externalLinkName = sema.symbols.externalLinkName(for: chosen) {
                 switch externalLinkName {

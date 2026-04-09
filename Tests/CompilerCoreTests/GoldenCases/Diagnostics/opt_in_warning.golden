@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "opt_in_warning.kt",
+      "range": {
+        "start": { "line": 8, "character": 27 },
+        "end": { "line": 8, "character": 44 }
+      },
+      "severity": 2,
+      "severityLabel": "warning",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalWarningApi' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalWarningApi' or '@OptIn(golden.diagnostics.ExperimentalWarningApi::class)'.",
+      "codeActions": []
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "opt_in_error.kt",
+      "range": {
+        "start": { "line": 8, "character": 25 },
+        "end": { "line": 8, "character": 40 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalErrorApi' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalErrorApi' or '@OptIn(golden.diagnostics.ExperimentalErrorApi::class)'.",
+      "codeActions": []
+    }
+  ]
+}

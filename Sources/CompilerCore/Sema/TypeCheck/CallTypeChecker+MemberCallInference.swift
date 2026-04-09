@@ -3529,6 +3529,19 @@ extension CallTypeChecker {
                             driver.helpers.emitVisibilityError(for: propSym, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                         }
+                        driver.helpers.checkDeprecation(
+                            for: propSymbol,
+                            sema: sema,
+                            interner: interner,
+                            range: range,
+                            diagnostics: ctx.semaCtx.diagnostics
+                        )
+                        driver.helpers.checkOptIn(
+                            for: propSymbol,
+                            ctx: ctx,
+                            range: range,
+                            diagnostics: ctx.semaCtx.diagnostics
+                        )
                         // Re-bind receiver to companion type for correct KIR lowering
                         let compType = sema.types.make(.classType(ClassType(classSymbol: companionSymbol, args: [], nullability: .nonNull)))
                         sema.bindings.bindExprType(receiverID, type: compType)
@@ -3952,6 +3965,12 @@ extension CallTypeChecker {
                         if args.count == 1, let expectedType = hexFormatType {
                             _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: expectedType)
                         }
+                        driver.helpers.checkOptIn(
+                            for: chosen,
+                            ctx: ctx,
+                            range: range,
+                            diagnostics: ctx.semaCtx.diagnostics
+                        )
                         let returnType = bindCallAndResolveReturnType(
                             id,
                             chosen: chosen,
@@ -5659,6 +5678,12 @@ extension CallTypeChecker {
             for: chosen,
             sema: sema,
             interner: interner,
+            range: range,
+            diagnostics: ctx.semaCtx.diagnostics
+        )
+        driver.helpers.checkOptIn(
+            for: chosen,
+            ctx: ctx,
             range: range,
             diagnostics: ctx.semaCtx.diagnostics
         )

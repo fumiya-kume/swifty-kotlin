@@ -143,7 +143,9 @@ extension LocalDeclTypeChecker {
                     sema: sema,
                     interner: interner,
                     scope: ctx.scope,
-                    diagnostics: ctx.semaCtx.diagnostics
+                    diagnostics: ctx.semaCtx.diagnostics,
+                    inferenceContext: ctx,
+                    usageRange: range
                 )
             } else {
                 sema.types.anyType
@@ -171,7 +173,9 @@ extension LocalDeclTypeChecker {
                 sema: sema,
                 interner: interner,
                 scope: ctx.scope,
-                diagnostics: ctx.semaCtx.diagnostics
+                diagnostics: ctx.semaCtx.diagnostics,
+                inferenceContext: ctx,
+                usageRange: range
             )
         } else {
             switch body {

@@ -424,7 +424,9 @@ struct TypeCheckHelpers {
         sema: SemaModule,
         interner: StringInterner,
         scope: Scope? = nil,
-        diagnostics: DiagnosticEngine? = nil
+        diagnostics: DiagnosticEngine? = nil,
+        inferenceContext: TypeInferenceContext? = nil,
+        usageRange: SourceRange? = nil
     ) -> TypeID {
         guard let typeRef = ast.arena.typeRef(typeRefID) else {
             return sema.types.errorType
@@ -471,6 +473,14 @@ struct TypeCheckHelpers {
                     }.sorted(by: { $0.rawValue < $1.rawValue })
                 }
                 if let symbolID = candidates.first {
+                    if let inferenceContext, let diagnostics {
+                        checkOptIn(
+                            for: symbolID,
+                            ctx: inferenceContext,
+                            range: usageRange,
+                            diagnostics: diagnostics
+                        )
+                    }
                     let resolvedArgs = resolveTypeArgRefsForTypeCheck(
                         argRefs, ast: ast, sema: sema, interner: interner,
                         scope: scope, diagnostics: diagnostics

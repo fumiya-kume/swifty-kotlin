@@ -19,6 +19,7 @@ struct TypeInferenceContext {
     var exportBlockLocalsForExpr: ExprID?
     var flowState: DataFlowState
     let currentFileID: FileID
+    var currentDeclSymbol: SymbolID?
     var enclosingClassSymbol: SymbolID?
     let visibilityChecker: VisibilityChecker
     var outerReceiverTypes: [(label: InternedString, type: TypeID)]
@@ -51,7 +52,6 @@ struct TypeInferenceContext {
     /// DslMarker annotation as an outer receiver, the outer receiver is hidden
     /// from implicit resolution.
     var activeDslMarkerAnnotations: Set<String> = []
-
     func with(scope newScope: Scope) -> TypeInferenceContext {
         var copy = self; copy.scope = newScope; return copy
     }
@@ -100,6 +100,10 @@ struct TypeInferenceContext {
         var copy = self; copy.enclosingClassSymbol = newSymbol; return copy
     }
 
+    func with(currentDeclSymbol newSymbol: SymbolID?) -> TypeInferenceContext {
+        var copy = self; copy.currentDeclSymbol = newSymbol; return copy
+    }
+
     func copying(
         scope: Scope? = nil,
         implicitReceiverType: TypeID?? = nil,
@@ -108,6 +112,7 @@ struct TypeInferenceContext {
         lambdaLabelStack: [InternedString]? = nil,
         exportBlockLocalsForExpr: ExprID?? = nil,
         flowState: DataFlowState? = nil,
+        currentDeclSymbol: SymbolID?? = nil,
         enclosingClassSymbol: SymbolID?? = nil,
         outerReceiverTypes: [(label: InternedString, type: TypeID)]? = nil
     ) -> TypeInferenceContext {
@@ -127,6 +132,7 @@ struct TypeInferenceContext {
         if let lambdaLabelStack { copy.lambdaLabelStack = lambdaLabelStack }
         if let exportBlockLocalsForExpr { copy.exportBlockLocalsForExpr = exportBlockLocalsForExpr }
         if let flowState { copy.flowState = flowState }
+        if let currentDeclSymbol { copy.currentDeclSymbol = currentDeclSymbol }
         if let enclosingClassSymbol { copy.enclosingClassSymbol = enclosingClassSymbol }
         if let outerReceiverTypes { copy.outerReceiverTypes = outerReceiverTypes }
         return copy

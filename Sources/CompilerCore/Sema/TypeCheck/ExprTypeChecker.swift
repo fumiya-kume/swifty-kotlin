@@ -270,7 +270,9 @@ final class ExprTypeChecker {
                 sema: sema,
                 interner: interner,
                 scope: ctx.scope,
-                diagnostics: ctx.semaCtx.diagnostics
+                diagnostics: ctx.semaCtx.diagnostics,
+                inferenceContext: ctx,
+                usageRange: range
             )
             if case let .typeParam(typeParam) = sema.types.kind(of: targetType),
                let typeParameterSymbol = sema.symbols.symbol(typeParam.symbol),
@@ -312,7 +314,9 @@ final class ExprTypeChecker {
                 sema: sema,
                 interner: interner,
                 scope: ctx.scope,
-                diagnostics: ctx.semaCtx.diagnostics
+                diagnostics: ctx.semaCtx.diagnostics,
+                inferenceContext: ctx,
+                usageRange: range
             )
             let type: TypeID = if isSafe {
                 sema.types.makeNullable(targetType)
