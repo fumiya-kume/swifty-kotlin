@@ -18,7 +18,7 @@ extension CodegenBackendIntegrationTests {
             val ranged = Random(7)
             val nextInt = ranged.nextInt(5, 10)
             val nextDouble = ranged.nextDouble(1.0, 2.0)
-            println(nextInt in 5 until 10)
+            println(nextInt >= 5 && nextInt < 10)
             println(nextDouble >= 1.0 && nextDouble < 2.0)
         }
         """
