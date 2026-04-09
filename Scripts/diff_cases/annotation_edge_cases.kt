@@ -1,6 +1,6 @@
 @Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class RuntimeMark(val label: String)
+annotation class RuntimeMark(val label: String = "default")
 
 @Target(AnnotationTarget.FIELD)
 annotation class FieldMark
