@@ -44,11 +44,16 @@ jobs:
         include:
           - test-target: CompilerCoreTests
             test-filter: '^CompilerCoreTests\\.'
-          # Temporarily disabled due to crashes on Linux
-          # - test-target: RuntimeTests
-          #   test-filter: '^RuntimeTests\\.'
+            workers: "8"
+            build-jobs: "8"
+          - test-target: RuntimeTests
+            test-filter: '^RuntimeTests\\.'
+            workers: "1"
+            build-jobs: "4"
           - test-target: KSwiftKCLITests
             test-filter: '^KSwiftKCLITests\\.'
+            workers: "4"
+            build-jobs: "4"
     steps:
       - uses: actions/checkout@v4
       - name: Setup Swift and LLVM
@@ -61,8 +66,8 @@ jobs:
         run: swift build -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
       - name: Run full Swift test suite for ${{ matrix.test-target }}
         env:
-          SWIFT_TEST_WORKERS: "8"
-          SWIFT_TEST_BUILD_JOBS: "8"
+          SWIFT_TEST_WORKERS: "${{ matrix.workers }}"
+          SWIFT_TEST_BUILD_JOBS: "${{ matrix.build-jobs }}"
         run: bash Scripts/swift_test.sh --filter "${{ matrix.test-filter }}" -Xswiftc -swift-version -Xswiftc 6
       - name: Full test reproduce hint
         if: always()
@@ -70,7 +75,7 @@ jobs:
           {
             echo '## Full Swift test reproduce (${{ matrix.test-target }})'
             echo '```bash'
-            echo 'SWIFT_TEST_WORKERS=8 SWIFT_TEST_BUILD_JOBS=8 bash Scripts/swift_test.sh --filter "${{ matrix.test-filter }}" -Xswiftc -swift-version -Xswiftc 6'
+            echo "SWIFT_TEST_WORKERS=${{ matrix.workers }} SWIFT_TEST_BUILD_JOBS=${{ matrix.build-jobs }} bash Scripts/swift_test.sh --filter \"${{ matrix.test-filter }}\" -Xswiftc -swift-version -Xswiftc 6"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
