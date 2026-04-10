@@ -3559,8 +3559,7 @@ extension CallTypeChecker {
                     guard let symbol = sema.symbols.symbol(candidate),
                           symbol.kind == .function,
                           sema.symbols.parentSymbol(for: candidate) == companionSymbol,
-                          let signature = sema.symbols.functionSignature(for: candidate),
-                          signature.receiverType != nil
+                          sema.symbols.functionSignature(for: candidate) != nil
                     else {
                         continue
                     }

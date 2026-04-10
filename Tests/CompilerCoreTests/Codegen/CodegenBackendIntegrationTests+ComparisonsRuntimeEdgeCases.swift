@@ -37,7 +37,7 @@ extension CodegenBackendIntegrationTests {
                 fig
                 null
                 null
-                """
+                """ + "\n"
             )
         }
     }

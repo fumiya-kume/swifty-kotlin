@@ -39,7 +39,7 @@ extension CodegenBackendIntegrationTests {
                 5
                 WORLD
                 4
-                """
+                """ + "\n"
             )
         }
     }

@@ -173,6 +173,7 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
 
         import kotlin.concurrent.atomics.ExperimentalAtomicApi
+        import kotlin.concurrent.atomics.AtomicReference
 
         fun main() {
             val ar = AtomicReference("hello")

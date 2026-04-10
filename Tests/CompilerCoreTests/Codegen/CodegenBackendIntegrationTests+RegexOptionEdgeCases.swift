@@ -44,7 +44,7 @@ extension CodegenBackendIntegrationTests {
                 true
                 hello
                 world
-                """
+                """ + "\n"
             )
         }
     }

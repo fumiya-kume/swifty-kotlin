@@ -424,7 +424,7 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
     }
 
-    func testExperimentalTypeInferenceRejectsFunctionTarget() {
+    func testExperimentalTypeInferenceAcceptsFunctionTarget() {
         let source = """
         import kotlin.experimental.ExperimentalTypeInference
 
@@ -435,8 +435,7 @@ final class AnnotationSemanticTests: XCTestCase {
         let ctx = runSemaCollectingDiagnostics(source)
         let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
 
-        XCTAssertEqual(diagnostics.count, 1, "Expected one annotation-target diagnostic for ExperimentalTypeInference misuse, got: \(ctx.diagnostics.diagnostics)")
-        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+        XCTAssertTrue(diagnostics.isEmpty, "ExperimentalTypeInference should be accepted on functions, got: \(ctx.diagnostics.diagnostics)")
     }
 
     func testOverloadResolutionByLambdaReturnTypeRequiresOptIn() {

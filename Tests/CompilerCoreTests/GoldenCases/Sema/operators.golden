@@ -3585,7 +3585,7 @@ symbol s3583 kind=local fq=__local_21.b vis=private flags=mutable type=Int
 symbol s3584 kind=local fq=__local_28.c vis=private flags=mutable type=Int
 symbol s3585 kind=local fq=__local_35.d vis=private flags=mutable type=Int
 symbol s3586 kind=local fq=__local_42.e vis=private flags=mutable type=Int
-symbol s3587 kind=local fq=__local_53.arr vis=private flags=mutable type=Any
+symbol s3587 kind=local fq=__local_53.arr vis=private flags=mutable type=Class#295
 file f0 package=_
   decl d0 fun typeCheck suspend=0 inline=0 sym=s3557
   decl d1 fun negatedTypeCheck suspend=0 inline=0 sym=s3559
@@ -3650,16 +3650,16 @@ expr e46 name(e) type=Int ref=s3586
 expr e47 return value=e46 type=Nothing
 expr e48 name(s) type=String? ref=s3580
 expr e49 safeMemberCall recv=e48 callee=hashCode args=[] type=<error>
-expr e50 name(IntArray) type=Any ref=s295
+expr e50 name(IntArray) type=_
 expr e51 int(3) type=Int
-expr e52 call callee=e50 args=[_:e51] type=Any
+expr e52 call callee=e50 args=[_:e51] type=Class#295
 expr e53 localDecl arr mutable=1 type=_ init=e52 type=Unit ref=s3587
-expr e54 name(arr) type=Any ref=s3587
+expr e54 name(arr) type=Class#295 ref=s3587
 expr e55 int(0) type=Int
 expr e56 indexedAccess receiver=e54 indices=[e55] type=_
 expr e57 int(42) type=Int
 expr e58 indexedAssign receiver=e54 indices=[e55] value=e57 type=Unit
-expr e59 name(arr) type=Any ref=s3587
+expr e59 name(arr) type=Class#295 ref=s3587
 expr e60 int(0) type=Int
-expr e61 indexedAccess receiver=e59 indices=[e60] type=Any
+expr e61 indexedAccess receiver=e59 indices=[e60] type=Int
 expr e62 return value=e61 type=Nothing

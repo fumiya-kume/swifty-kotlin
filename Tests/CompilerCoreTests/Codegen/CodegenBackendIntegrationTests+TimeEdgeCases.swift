@@ -6,6 +6,8 @@ extension CodegenBackendIntegrationTests {
     func testCodegenCompilesTimeEdgeCases() throws {
         let source = """
         import kotlin.time.*
+        import kotlin.time.Duration.Companion.milliseconds
+        import kotlin.time.Duration.Companion.seconds
 
         fun main() {
             val measured = measureTimedValue {
@@ -18,7 +20,7 @@ extension CodegenBackendIntegrationTests {
             println(negative.inWholeSeconds)
             println(negative.isNegative())
 
-            val epoch = Instant.fromEpochMilliseconds(0)
+            val epoch = Instant.fromEpochMilliseconds(0L)
             val later = epoch + 1500.milliseconds
             println(later.epochSeconds)
             println(later.nanoOfSecond)
@@ -52,7 +54,7 @@ extension CodegenBackendIntegrationTests {
                 500000000
                 -1
                 500000000
-                """
+                """ + "\n"
             )
         }
     }

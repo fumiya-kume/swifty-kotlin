@@ -978,7 +978,7 @@ final class CallTypeChecker {
         // --- Stdlib Array(size) { init } constructor (STDLIB-085/086, TYPE-103) ---
         if let calleeName,
            knownNames.isPrimitiveArrayConstructorTypeName(calleeName),
-           args.count == 2,
+           args.count == 2 || (args.count == 1 && calleeName != knownNames.array),
            locals[calleeName] == nil
         {
             let intType = sema.types.intType
@@ -997,6 +997,27 @@ final class CallTypeChecker {
                 sema: sema,
                 diagnostics: ctx.semaCtx.diagnostics
             )
+            if args.count == 1 {
+                sema.bindings.markStdlibSpecialCallExpr(id, kind: .arrayConstructor)
+                sema.bindings.markCollectionExpr(id)
+                let resultType: TypeID = if calleeNameStr == "Array" {
+                    makeSyntheticArrayType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: explicitTypeArgs.first ?? expectedType ?? sema.types.anyType
+                    )
+                } else {
+                    makeSyntheticPrimitiveArrayType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        arrayName: calleeNameStr
+                    )
+                }
+                sema.bindings.bindExprType(id, type: resultType)
+                return resultType
+            }
             // Determine the element type from the expected type annotation or
             // the init lambda's return type, avoiding erasure to Any.
             //
