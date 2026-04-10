@@ -5,52 +5,53 @@ import FoundationNetworking
 @testable import Runtime
 import XCTest
 
-final class RuntimeHTTPClientTests: IsolatedRuntimeXCTestCase {
-    private final class MockURLProtocol: URLProtocol {
-        private static let handlerLock = NSLock()
-        nonisolated(unsafe) private static var _handler: ((URLRequest) -> (HTTPURLResponse, Data?, TimeInterval)?)?
-        
-        static var handler: ((URLRequest) -> (HTTPURLResponse, Data?, TimeInterval)?)? {
-            get {
-                handlerLock.lock()
-                defer { handlerLock.unlock() }
-                return _handler
-            }
-            set {
-                handlerLock.lock()
-                defer { handlerLock.unlock() }
-                _handler = newValue
-            }
-        }
+// Top-level so NSStringFromClass() works on Linux (nested classes are unsupported).
+private final class MockURLProtocol: URLProtocol {
+    private static let handlerLock = NSLock()
+    nonisolated(unsafe) private static var _handler: ((URLRequest) -> (HTTPURLResponse, Data?, TimeInterval)?)?
 
-        override class func canInit(with request: URLRequest) -> Bool {
-            true
+    static var handler: ((URLRequest) -> (HTTPURLResponse, Data?, TimeInterval)?)? {
+        get {
+            handlerLock.lock()
+            defer { handlerLock.unlock() }
+            return _handler
         }
-
-        override class func canonicalRequest(for request: URLRequest) -> URLRequest {
-            request
+        set {
+            handlerLock.lock()
+            defer { handlerLock.unlock() }
+            _handler = newValue
         }
-
-        override func startLoading() {
-            guard let handler = Self.handler,
-                  let (response, data, delay) = handler(request)
-            else {
-                client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
-                return
-            }
-            if delay > 0 {
-                Thread.sleep(forTimeInterval: delay)
-            }
-            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-            if let data {
-                client?.urlProtocol(self, didLoad: data)
-            }
-            client?.urlProtocolDidFinishLoading(self)
-        }
-
-        override func stopLoading() {}
     }
 
+    override class func canInit(with request: URLRequest) -> Bool {
+        true
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
+
+    override func startLoading() {
+        guard let handler = Self.handler,
+              let (response, data, delay) = handler(request)
+        else {
+            client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
+            return
+        }
+        if delay > 0 {
+            Thread.sleep(forTimeInterval: delay)
+        }
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        if let data {
+            client?.urlProtocol(self, didLoad: data)
+        }
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {}
+}
+
+final class RuntimeHTTPClientTests: IsolatedRuntimeXCTestCase {
     private func runtimeString(_ text: String) -> Int {
         text.withCString { cstr in
             cstr.withMemoryRebound(to: UInt8.self, capacity: text.utf8.count) { ptr in
