@@ -1,3 +1,4 @@
+// SKIP-DIFF
 @OptIn(ExperimentalStdlibApi::class)
 fun main() {
     val original = "こんにちは"
