@@ -1,4 +1,3 @@
-// SKIP-DIFF
 @Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class RuntimeMark(val label: String = "default")
