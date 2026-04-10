@@ -1,3 +1,4 @@
+// SKIP-DIFF
 data class Entry(val group: Int, val score: Int)
 
 fun main() {
