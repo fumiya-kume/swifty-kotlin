@@ -1,4 +1,3 @@
-// SKIP-DIFF
 import kotlin.math.*
 
 fun main() {
