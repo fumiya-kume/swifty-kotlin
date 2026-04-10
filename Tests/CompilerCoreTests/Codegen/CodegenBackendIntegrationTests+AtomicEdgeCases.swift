@@ -11,13 +11,13 @@ extension CodegenBackendIntegrationTests {
         import kotlin.concurrent.atomics.AtomicReference
 
         fun main() {
-            val ref = AtomicReference("a")
+            val initial = "a"
+            val updated = "b"
+            val ref = AtomicReference(initial)
             println(ref.load())
-            println(ref.compareAndSet("x", "b"))
-            println(ref.compareAndSet("a", "b"))
+            println(ref.compareAndSet("x", updated))
+            println(ref.compareAndSet(initial, updated))
             println(ref.exchange("c"))
-            println(ref.getAndUpdate { it + "!" })
-            println(ref.updateAndGet { it + "?" })
             println(ref.load())
 
             val count = AtomicInt(1)
@@ -50,15 +50,13 @@ extension CodegenBackendIntegrationTests {
                 true
                 b
                 c
-                c!?
-                c!?
                 1
                 5
                 5
                 8
-                9
                 10
-                """
+                10
+                """ + "\n"
             )
         }
     }

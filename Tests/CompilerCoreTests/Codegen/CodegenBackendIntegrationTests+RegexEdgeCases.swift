@@ -36,7 +36,7 @@ extension CodegenBackendIntegrationTests {
                 null
                 a-b-c
                 [one, two, three]
-                """
+                """ + "\n"
             )
         }
     }

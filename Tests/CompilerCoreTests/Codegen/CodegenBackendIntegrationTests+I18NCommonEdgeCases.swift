@@ -41,7 +41,7 @@ extension CodegenBackendIntegrationTests {
                 hello
                 en
                 US
-                """
+                """ + "\n"
             )
         }
     }

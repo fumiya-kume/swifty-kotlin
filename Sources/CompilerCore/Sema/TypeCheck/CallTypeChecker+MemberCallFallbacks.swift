@@ -467,6 +467,16 @@ extension CallTypeChecker {
             argCount: args.count,
             sema: sema
         ) {
+            if let invalidFallbackType = validateCollectionFallbackCallee(
+                fallbackCallee,
+                exprID: id,
+                calleeName: calleeName,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                ctx: ctx
+            ) {
+                return invalidFallbackType
+            }
             let parameterMapping = buildCollectionFallbackParameterMapping(
                 memberName: calleeName,
                 args: args,
@@ -512,6 +522,104 @@ extension CallTypeChecker {
         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
+    }
+
+    private func validateCollectionFallbackCallee(
+        _ fallbackCallee: SymbolID,
+        exprID: ExprID,
+        calleeName: InternedString,
+        safeCall: Bool,
+        receiverID: ExprID,
+        ctx: TypeInferenceContext
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        let diagnosticRange = ctx.ast.arena.exprRange(exprID) ?? ctx.ast.arena.exprRange(receiverID)
+
+        if let diagnosticRange,
+           let projectionDiagnostic = makeProjectionViolationDiagnostic(
+            candidates: [fallbackCallee],
+            receiverType: receiverType,
+            calleeName: calleeName,
+            range: diagnosticRange,
+            sema: sema,
+            interner: interner
+        ) {
+            ctx.semaCtx.diagnostics.emit(projectionDiagnostic)
+            let invalidType = safeCall ? sema.types.makeNullable(sema.types.errorType) : sema.types.errorType
+            sema.bindings.bindExprType(exprID, type: invalidType)
+            return invalidType
+        }
+
+        guard let signature = sema.symbols.functionSignature(for: fallbackCallee),
+              signature.classTypeParameterCount > 0,
+              case let .classType(receiverClassType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType))
+        else {
+            return nil
+        }
+
+        let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+        var substitution: [TypeVarID: TypeID] = [:]
+        let receiverTypeParamCount = min(
+            signature.classTypeParameterCount,
+            receiverClassType.args.count,
+            signature.typeParameterSymbols.count
+        )
+
+        for index in 0 ..< receiverTypeParamCount {
+            let concreteType: TypeID = switch receiverClassType.args[index] {
+            case let .invariant(type), let .out(type), let .in(type):
+                type
+            case .star:
+                sema.types.anyType
+            }
+            let typeParamSymbol = signature.typeParameterSymbols[index]
+            if let typeVar = typeVarBySymbol[typeParamSymbol] {
+                substitution[typeVar] = concreteType
+            }
+        }
+
+        for index in 0 ..< receiverTypeParamCount {
+            let typeParamSymbol = signature.typeParameterSymbols[index]
+            guard let typeVar = typeVarBySymbol[typeParamSymbol],
+                  let substitutedType = substitution[typeVar]
+            else {
+                continue
+            }
+
+            let signatureUpperBounds: [TypeID] = if index < signature.typeParameterUpperBoundsList.count {
+                signature.typeParameterUpperBoundsList[index]
+            } else {
+                []
+            }
+            let symbolUpperBounds = sema.symbols.typeParameterUpperBounds(for: typeParamSymbol)
+            let upperBounds = signatureUpperBounds + symbolUpperBounds.filter { bound in
+                !signatureUpperBounds.contains(bound)
+            }
+
+            for bound in upperBounds {
+                let substitutedBound = sema.types.substituteTypeParameters(
+                    in: bound,
+                    substitution: substitution,
+                    typeVarBySymbol: typeVarBySymbol
+                )
+                if !sema.types.isSubtype(substitutedType, substitutedBound) {
+                    if let diagnosticRange {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-BOUND",
+                            "Type argument does not satisfy upper bound constraint.",
+                            range: diagnosticRange
+                        )
+                    }
+                    let invalidType = safeCall ? sema.types.makeNullable(sema.types.anyType) : sema.types.anyType
+                    sema.bindings.bindExprType(exprID, type: invalidType)
+                    return invalidType
+                }
+            }
+        }
+
+        return nil
     }
 
     private func buildCollectionFallbackParameterMapping(

@@ -182,6 +182,10 @@ extension CallTypeChecker {
             return true
         })
 
+        if blockedLambdaRefinement, hasRefinementAnnotation {
+            return ambiguousCallResult(range: range)
+        }
+
         guard !inputOnlyLambdaIndices.isEmpty else {
             return ctx.resolver.resolveCall(
                 candidates: candidates,
@@ -199,10 +203,6 @@ extension CallTypeChecker {
             return ambiguousCallResult(range: range)
         }
         if functionTypedArgumentIndices.count > 1, hasRefinementAnnotation {
-            return ambiguousCallResult(range: range)
-        }
-
-        if blockedLambdaRefinement, hasRefinementAnnotation {
             return ambiguousCallResult(range: range)
         }
 

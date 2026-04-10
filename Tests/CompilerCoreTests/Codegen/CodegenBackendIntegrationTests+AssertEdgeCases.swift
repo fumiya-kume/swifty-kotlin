@@ -51,7 +51,7 @@ extension CodegenBackendIntegrationTests {
                 bad-arg
                 bad-state
                 boom
-                """
+                """ + "\n"
             )
         }
     }
