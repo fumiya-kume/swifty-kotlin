@@ -589,6 +589,7 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
 
         XCTAssertTrue(job.cancel(cause: cause))
         XCTAssertTrue(job.cancellationSnapshot())
+        XCTAssertTrue(job.completeCancellationIfNeeded())
         XCTAssertEqual(job.join(), cause)
     }
 

@@ -47,15 +47,15 @@ private func runtime_read_write_lock_reader(
     _ closureRaw: Int
 ) -> Int {
     runtimeReadWriteLockStateLock.lock()
-    runtimeReadWriteLockActiveReaders += 1
-    runtimeReadWriteLockMaxReaders = max(runtimeReadWriteLockMaxReaders, runtimeReadWriteLockActiveReaders)
+    _runtimeReadWriteLockActiveReaders += 1
+    _runtimeReadWriteLockMaxReaders = max(_runtimeReadWriteLockMaxReaders, _runtimeReadWriteLockActiveReaders)
     runtimeReadWriteLockStateLock.unlock()
 
     runtimeReadWriteLockReadEnteredSemaphore.signal()
     runtimeReadWriteLockReadReleaseSemaphore.wait()
 
     runtimeReadWriteLockStateLock.lock()
-    runtimeReadWriteLockActiveReaders -= 1
+    _runtimeReadWriteLockActiveReaders -= 1
     runtimeReadWriteLockStateLock.unlock()
     return 77
 }
@@ -73,8 +73,8 @@ final class RuntimeReadWriteLockLegacyTests: XCTestCase {
         super.setUp()
         kk_runtime_force_reset()
         runtimeReadWriteLockStateLock.lock()
-        runtimeReadWriteLockActiveReaders = 0
-        runtimeReadWriteLockMaxReaders = 0
+        _runtimeReadWriteLockActiveReaders = 0
+        _runtimeReadWriteLockMaxReaders = 0
         runtimeReadWriteLockStateLock.unlock()
         runtimeReadWriteLockReadEnteredSemaphore = DispatchSemaphore(value: 0)
         runtimeReadWriteLockReadReleaseSemaphore = DispatchSemaphore(value: 0)
@@ -120,7 +120,7 @@ final class RuntimeReadWriteLockLegacyTests: XCTestCase {
         XCTAssertEqual(runtimeReadWriteLockReadEnteredSemaphore.wait(timeout: .now() + .seconds(2)), .success)
         XCTAssertEqual(runtimeReadWriteLockReadEnteredSemaphore.wait(timeout: .now() + .seconds(2)), .success)
         runtimeReadWriteLockStateLock.lock()
-        let maxReaders = runtimeReadWriteLockMaxReaders
+        let maxReaders = _runtimeReadWriteLockMaxReaders
         runtimeReadWriteLockStateLock.unlock()
         XCTAssertGreaterThanOrEqual(maxReaders, 2)
 

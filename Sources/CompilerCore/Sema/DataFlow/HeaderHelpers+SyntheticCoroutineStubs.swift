@@ -442,7 +442,7 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([exceptionSymbol], for: rootCancellationSymbol)
         symbols.setDirectSupertypes([continuationInterceptorSymbol], for: dispatcherSymbol)
         types.setNominalTypeParameterSymbols([continuationTypeParameterSymbol], for: continuationSymbol)
-        types.setNominalTypeParameterVariances([.in], for: continuationSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: continuationSymbol)
         symbols.setDirectSupertypes([flowInterfaceSymbol], for: sharedFlowSymbol)
         symbols.setDirectSupertypes([sharedFlowSymbol], for: stateFlowSymbol)
         symbols.setDirectSupertypes([sharedFlowSymbol], for: mutableSharedFlowSymbol)
@@ -2703,7 +2703,7 @@ extension DataFlowSemaPhase {
         registerSyntheticCoroutineTopLevelProperty(
             named: "COROUTINE_SUSPENDED",
             packageFQName: intrinsicsPkg,
-            returnType: types.anyType,
+            returnType: types.nullableAnyType,
             externalLinkName: "kk_coroutine_suspended",
             symbols: symbols,
             interner: interner

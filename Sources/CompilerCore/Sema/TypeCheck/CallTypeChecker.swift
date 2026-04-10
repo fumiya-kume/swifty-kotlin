@@ -1915,6 +1915,7 @@ final class CallTypeChecker {
                         return false
                     }
                     return signature.typeParameterSymbols.count == signature.classTypeParameterCount
+                        && sema.symbols.externalLinkName(for: symbolID) == "kk_deep_recursive_scope_callRecursive"
                 }) {
                     sema.bindings.bindCall(
                         id,
@@ -2817,6 +2818,7 @@ final class CallTypeChecker {
                             return false
                         }
                         return signature.typeParameterSymbols.count == signature.classTypeParameterCount
+                            && sema.symbols.externalLinkName(for: symbolID) == "kk_deep_recursive_scope_callRecursive"
                     }) {
                         sema.bindings.bindCall(
                             id,
