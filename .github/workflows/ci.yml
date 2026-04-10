@@ -34,34 +34,6 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-  smoke-tests:
-    name: Smoke Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Swift and LLVM
-        uses: ./.github/actions/setup-swift-llvm
-        with:
-          swift-version: "6.2"
-      - name: Show toolchain versions
-        run: swift --version
-      - name: Build with strict concurrency (warnings)
-        run: swift build -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
-      - name: Run smoke tests
-        env:
-          SWIFT_TEST_WORKERS: "4"
-          SWIFT_TEST_BUILD_JOBS: "4"
-        run: bash Scripts/swift_test.sh --filter SmokeTests -Xswiftc -swift-version -Xswiftc 6
-      - name: Smoke test reproduce hint
-        if: always()
-        run: |
-          {
-            echo '## Smoke test reproduce'
-            echo '```bash'
-            echo 'SWIFT_TEST_WORKERS=4 SWIFT_TEST_BUILD_JOBS=4 bash Scripts/swift_test.sh --filter SmokeTests -Xswiftc -swift-version -Xswiftc 6'
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
   full-swift-tests:
     name: Full Swift Tests (${{ matrix.test-target }})
     runs-on: ubuntu-latest
