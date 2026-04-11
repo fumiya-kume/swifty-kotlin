@@ -6,7 +6,7 @@ import FoundationNetworking
 import XCTest
 
 // Top-level so NSStringFromClass() works on Linux (nested classes are unsupported).
-private final class MockURLProtocol: URLProtocol {
+final class MockURLProtocol: URLProtocol {
     private static let handlerLock = NSLock()
     nonisolated(unsafe) private static var _handler: ((URLRequest) -> (HTTPURLResponse, Data?, TimeInterval)?)?
 
