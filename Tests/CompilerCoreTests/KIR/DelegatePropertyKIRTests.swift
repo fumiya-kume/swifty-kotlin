@@ -380,7 +380,14 @@ final class DelegatePropertyKIRTests: XCTestCase {
             process.standardError = stderrPipe
 
             try process.run()
-            process.waitUntilExit()
+            let deadline = Date().addingTimeInterval(5)
+            while process.isRunning, Date() < deadline {
+                Thread.sleep(forTimeInterval: 0.05)
+            }
+            if process.isRunning {
+                process.terminate()
+                XCTFail("Timed out waiting for delegated property test executable to exit")
+            }
 
             let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
             let stderr = String(data: stderrData, encoding: .utf8) ?? ""
