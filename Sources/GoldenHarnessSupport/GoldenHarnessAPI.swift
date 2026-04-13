@@ -1,6 +1,12 @@
 @testable import CompilerCore
 import Foundation
 
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
+
 public struct GoldenHarnessCase: Sendable {
     public let sourcePath: String
     public let basename: String
@@ -89,6 +95,14 @@ public enum GoldenHarness {
             let terminateDeadline = Date().addingTimeInterval(1.0)
             while process.isRunning, Date() < terminateDeadline {
                 Thread.sleep(forTimeInterval: 0.05)
+            }
+            // If process is still running, send SIGKILL
+            if process.isRunning {
+                kill(process.processIdentifier, SIGKILL)
+                let sigkillDeadline = Date().addingTimeInterval(1.0)
+                while process.isRunning, Date() < sigkillDeadline {
+                    Thread.sleep(forTimeInterval: 0.05)
+                }
             }
             let stderrText = String(data: stderrAccumulator.snapshot(), encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             throw GoldenHarnessAPIError.workerTimedOut(stderrText)
