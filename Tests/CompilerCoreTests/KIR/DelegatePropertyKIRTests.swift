@@ -386,6 +386,11 @@ final class DelegatePropertyKIRTests: XCTestCase {
             }
             if process.isRunning {
                 process.terminate()
+                // Wait for process to exit after terminate to avoid zombie processes
+                let terminateDeadline = Date().addingTimeInterval(1.0)
+                while process.isRunning, Date() < terminateDeadline {
+                    Thread.sleep(forTimeInterval: 0.05)
+                }
                 XCTFail("Timed out waiting for delegated property test executable to exit")
             }
 
