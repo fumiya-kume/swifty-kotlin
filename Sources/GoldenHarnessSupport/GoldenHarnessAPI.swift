@@ -37,6 +37,9 @@ enum GoldenHarnessAPIError: Error, CustomStringConvertible {
 public enum GoldenHarness {
     private static let subprocessTimeout: TimeInterval = 30
     private static let pipeDrainTimeout: DispatchTimeInterval = .seconds(5)
+    private static let terminationGracePeriodSeconds: TimeInterval = 1.0
+    private static let sigkillGracePeriodSeconds: TimeInterval = 1.0
+    private static let processPollIntervalSeconds: TimeInterval = 0.05
 
     public static func loadCasesOrCrash(suiteName: String) -> [GoldenHarnessCase] {
         do {
@@ -87,25 +90,37 @@ public enum GoldenHarness {
         try process.run()
         let deadline = Date().addingTimeInterval(subprocessTimeout)
         while process.isRunning, Date() < deadline {
-            Thread.sleep(forTimeInterval: 0.05)
+            Thread.sleep(forTimeInterval: processPollIntervalSeconds)
         }
         if process.isRunning {
             process.terminate()
             // Wait for process to exit after terminate to avoid zombie processes
-            let terminateDeadline = Date().addingTimeInterval(1.0)
+            let terminateDeadline = Date().addingTimeInterval(terminationGracePeriodSeconds)
             while process.isRunning, Date() < terminateDeadline {
-                Thread.sleep(forTimeInterval: 0.05)
+                Thread.sleep(forTimeInterval: processPollIntervalSeconds)
             }
             // If process is still running, send SIGKILL
             if process.isRunning {
-                kill(process.processIdentifier, SIGKILL)
-                let sigkillDeadline = Date().addingTimeInterval(1.0)
+                let killResult = kill(process.processIdentifier, SIGKILL)
+                if killResult != 0 {
+                    // kill() failed - process may have already exited or PID may be invalid
+                    // Continue with the wait loop to check if process is still running
+                }
+                let sigkillDeadline = Date().addingTimeInterval(sigkillGracePeriodSeconds)
                 while process.isRunning, Date() < sigkillDeadline {
-                    Thread.sleep(forTimeInterval: 0.05)
+                    Thread.sleep(forTimeInterval: processPollIntervalSeconds)
+                }
+                // Verify process exited after SIGKILL
+                if process.isRunning {
+                    // Process is still running despite SIGKILL - this is unusual but possible
+                    // Include this information in the error message
                 }
             }
             let stderrText = String(data: stderrAccumulator.snapshot(), encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            throw GoldenHarnessAPIError.workerTimedOut(stderrText)
+            let errorMessage = process.isRunning 
+                ? "Worker timed out and survived SIGKILL. \(stderrText)"
+                : stderrText
+            throw GoldenHarnessAPIError.workerTimedOut(errorMessage)
         }
 
         guard stdoutGroup.wait(timeout: .now() + pipeDrainTimeout) == .success else {

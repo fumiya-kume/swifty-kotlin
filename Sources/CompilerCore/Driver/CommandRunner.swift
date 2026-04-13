@@ -131,7 +131,10 @@ public enum CommandRunner {
             process.terminate()
             didExit = wait(for: exitGroup, timeout: terminationGracePeriodSeconds)
             if !didExit {
-                kill(process.processIdentifier, SIGKILL)
+                // Check if process is still running before sending SIGKILL to avoid killing wrong process
+                if process.isRunning {
+                    kill(process.processIdentifier, SIGKILL)
+                }
                 didExit = wait(for: exitGroup, timeout: terminationGracePeriodSeconds)
                 // Verify process exited after SIGKILL
                 if !didExit && process.isRunning {
