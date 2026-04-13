@@ -136,9 +136,10 @@ public enum CommandRunner {
                 // could exit and the PID could be reused. This is a fundamental limitation of the kill() API.
                 if process.isRunning {
                     let killResult = kill(process.processIdentifier, SIGKILL)
-                    if killResult != 0 {
-                        // kill() failed - process may have already exited or PID may be invalid
-                        // Continue with the wait loop to check if process is still running
+                    if killResult != 0 && errno != ESRCH {
+                        // kill() failed with error other than ESRCH (no such process)
+                        // ESRCH is expected if process exited between isRunning check and kill call
+                        // Other errors are unusual but we continue anyway
                     }
                 }
                 didExit = wait(for: exitGroup, timeout: terminationGracePeriodSeconds)

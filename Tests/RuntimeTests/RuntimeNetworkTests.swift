@@ -41,6 +41,17 @@ final class RuntimeNetworkTests: IsolatedRuntimeXCTestCase {
                 }
                 if process.isRunning {
                     process.interrupt()
+                    let interruptDeadline = Date().addingTimeInterval(Self.serverShutdownTimeout)
+                    while process.isRunning, Date() < interruptDeadline {
+                        Thread.sleep(forTimeInterval: Self.serverShutdownPollInterval)
+                    }
+                    if process.isRunning {
+                        kill(process.processIdentifier, SIGKILL)
+                        let sigkillDeadline = Date().addingTimeInterval(1.0)
+                        while process.isRunning, Date() < sigkillDeadline {
+                            Thread.sleep(forTimeInterval: Self.serverShutdownPollInterval)
+                        }
+                    }
                 }
             }
             try? FileManager.default.removeItem(at: directoryURL)

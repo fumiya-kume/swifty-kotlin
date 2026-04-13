@@ -36,7 +36,7 @@ enum GoldenHarnessAPIError: Error, CustomStringConvertible {
 
 public enum GoldenHarness {
     private static let subprocessTimeout: TimeInterval = 30
-    private static let pipeDrainTimeout: DispatchTimeInterval = .seconds(5)
+    private static let pipeDrainTimeout: DispatchTimeInterval = .seconds(20)
     private static let terminationGracePeriodSeconds: TimeInterval = 1.0
     private static let sigkillGracePeriodSeconds: TimeInterval = 1.0
     private static let processPollIntervalSeconds: TimeInterval = 0.05
@@ -100,13 +100,14 @@ public enum GoldenHarness {
                 Thread.sleep(forTimeInterval: processPollIntervalSeconds)
             }
             // If process is still running, send SIGKILL
-            // Note: There's a race condition between this check and the kill() call where the process
-            // could exit and the PID could be reused. This is a fundamental limitation of the kill() API.
             if process.isRunning {
+                // Note: There's a race condition between this check and the kill() call where the process
+                // could exit and the PID could be reused. This is a fundamental limitation of the kill() API.
                 let killResult = kill(process.processIdentifier, SIGKILL)
-                if killResult != 0 {
-                    // kill() failed - process may have already exited or PID may be invalid
-                    // Continue with the wait loop to check if process is still running
+                if killResult != 0 && errno != ESRCH {
+                    // kill() failed with error other than ESRCH (no such process)
+                    // ESRCH is expected if process exited between isRunning check and kill call
+                    // Other errors are unusual but we continue anyway
                 }
                 let sigkillDeadline = Date().addingTimeInterval(sigkillGracePeriodSeconds)
                 while process.isRunning, Date() < sigkillDeadline {
