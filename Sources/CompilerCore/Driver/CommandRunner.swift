@@ -129,6 +129,12 @@ public enum CommandRunner {
         let didTimeOut = !didExit
         if !didExit {
             process.terminate()
+            // Re-enter group to wait for process exit after terminate
+            exitGroup.enter()
+            DispatchQueue.global().async {
+                defer { exitGroup.leave() }
+                process.waitUntilExit()
+            }
             didExit = wait(for: exitGroup, timeout: terminationGracePeriodSeconds)
             if !didExit {
                 // Check if process is still running before sending SIGKILL to avoid killing wrong process
@@ -141,6 +147,12 @@ public enum CommandRunner {
                         // ESRCH is expected if process exited between isRunning check and kill call
                         // Other errors are unusual but we continue anyway
                     }
+                }
+                // Re-enter group to wait for process exit after SIGKILL
+                exitGroup.enter()
+                DispatchQueue.global().async {
+                    defer { exitGroup.leave() }
+                    process.waitUntilExit()
                 }
                 didExit = wait(for: exitGroup, timeout: terminationGracePeriodSeconds)
                 // Verify process exited after SIGKILL
