@@ -85,6 +85,11 @@ public enum GoldenHarness {
         }
         if process.isRunning {
             process.terminate()
+            // Wait for process to exit after terminate to avoid zombie processes
+            let terminateDeadline = Date().addingTimeInterval(1.0)
+            while process.isRunning, Date() < terminateDeadline {
+                Thread.sleep(forTimeInterval: 0.05)
+            }
             let stderrText = String(data: stderrAccumulator.snapshot(), encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             throw GoldenHarnessAPIError.workerTimedOut(stderrText)
         }
