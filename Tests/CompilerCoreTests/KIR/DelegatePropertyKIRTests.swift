@@ -1,5 +1,10 @@
 @testable import CompilerCore
 import Foundation
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
 import XCTest
 
 /// Tests for P5-79: property delegation (`by`) full desugaring.
@@ -391,7 +396,15 @@ final class DelegatePropertyKIRTests: XCTestCase {
                 while process.isRunning, Date() < terminateDeadline {
                     Thread.sleep(forTimeInterval: 0.05)
                 }
+                if process.isRunning {
+                    _ = kill(process.processIdentifier, SIGKILL)
+                    let sigkillDeadline = Date().addingTimeInterval(1.0)
+                    while process.isRunning, Date() < sigkillDeadline {
+                        Thread.sleep(forTimeInterval: 0.05)
+                    }
+                }
                 XCTFail("Timed out waiting for delegated property test executable to exit")
+                return
             }
 
             let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
