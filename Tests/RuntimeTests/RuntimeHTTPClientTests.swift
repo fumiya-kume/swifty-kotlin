@@ -52,6 +52,11 @@ private final class MockURLProtocol: URLProtocol {
 }
 
 final class RuntimeHTTPClientTests: IsolatedRuntimeXCTestCase {
+    override func resetIsolatedRuntimeTestState() {
+        MockURLProtocol.handler = nil
+        unsetenv("KSWIFTK_HTTP_PROTOCOL_CLASS")
+    }
+
     private func runtimeString(_ text: String) -> Int {
         text.withCString { cstr in
             cstr.withMemoryRebound(to: UInt8.self, capacity: text.utf8.count) { ptr in
@@ -66,10 +71,6 @@ final class RuntimeHTTPClientTests: IsolatedRuntimeXCTestCase {
 
     func testHTTPClientSupportsAuthRedirectsAndAsyncRequests() {
         setenv("KSWIFTK_HTTP_PROTOCOL_CLASS", NSStringFromClass(MockURLProtocol.self), 1)
-        defer {
-            MockURLProtocol.handler = nil
-            unsetenv("KSWIFTK_HTTP_PROTOCOL_CLASS")
-        }
         MockURLProtocol.handler = { request in
             let url = request.url?.absoluteString ?? ""
             if url == "https://example.com/redirect" {
@@ -129,10 +130,6 @@ final class RuntimeHTTPClientTests: IsolatedRuntimeXCTestCase {
 
     func testHTTPClientEncodesTimeoutAsResponseState() {
         setenv("KSWIFTK_HTTP_PROTOCOL_CLASS", NSStringFromClass(MockURLProtocol.self), 1)
-        defer {
-            MockURLProtocol.handler = nil
-            unsetenv("KSWIFTK_HTTP_PROTOCOL_CLASS")
-        }
         MockURLProtocol.handler = { request in
             let response = HTTPURLResponse(
                 url: request.url!,
