@@ -132,8 +132,14 @@ public enum CommandRunner {
             didExit = wait(for: exitGroup, timeout: terminationGracePeriodSeconds)
             if !didExit {
                 // Check if process is still running before sending SIGKILL to avoid killing wrong process
+                // Note: There's a race condition between this check and the kill() call where the process
+                // could exit and the PID could be reused. This is a fundamental limitation of the kill() API.
                 if process.isRunning {
-                    kill(process.processIdentifier, SIGKILL)
+                    let killResult = kill(process.processIdentifier, SIGKILL)
+                    if killResult != 0 {
+                        // kill() failed - process may have already exited or PID may be invalid
+                        // Continue with the wait loop to check if process is still running
+                    }
                 }
                 didExit = wait(for: exitGroup, timeout: terminationGracePeriodSeconds)
                 // Verify process exited after SIGKILL

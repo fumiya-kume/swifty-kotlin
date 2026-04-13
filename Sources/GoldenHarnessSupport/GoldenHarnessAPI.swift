@@ -100,6 +100,8 @@ public enum GoldenHarness {
                 Thread.sleep(forTimeInterval: processPollIntervalSeconds)
             }
             // If process is still running, send SIGKILL
+            // Note: There's a race condition between this check and the kill() call where the process
+            // could exit and the PID could be reused. This is a fundamental limitation of the kill() API.
             if process.isRunning {
                 let killResult = kill(process.processIdentifier, SIGKILL)
                 if killResult != 0 {
