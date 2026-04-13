@@ -133,6 +133,12 @@ public enum CommandRunner {
             if !didExit {
                 kill(process.processIdentifier, SIGKILL)
                 didExit = wait(for: exitGroup, timeout: terminationGracePeriodSeconds)
+                // Verify process exited after SIGKILL
+                if !didExit && process.isRunning {
+                    // Process is still running despite SIGKILL - this is unusual but possible
+                    // Log warning and continue - process should be dead by now
+                    // (We don't have a logging mechanism here, but the drain operations may fail)
+                }
             }
         }
 
