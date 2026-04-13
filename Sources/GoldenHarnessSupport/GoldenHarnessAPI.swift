@@ -238,13 +238,9 @@ public enum GoldenHarness {
     ) {
         let handle = pipe.fileHandleForReading
         group.enter()
-        handle.readabilityHandler = { readableHandle in
-            let data = readableHandle.availableData
-            if data.isEmpty {
-                readableHandle.readabilityHandler = nil
-                group.leave()
-                return
-            }
+        DispatchQueue.global().async {
+            defer { group.leave() }
+            let data = handle.readDataToEndOfFile()
             accumulator.append(data)
         }
     }
