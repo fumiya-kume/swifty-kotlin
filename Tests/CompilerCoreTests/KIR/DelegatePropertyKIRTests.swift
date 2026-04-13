@@ -397,7 +397,14 @@ final class DelegatePropertyKIRTests: XCTestCase {
                     Thread.sleep(forTimeInterval: 0.05)
                 }
                 if process.isRunning {
-                    _ = kill(process.processIdentifier, SIGKILL)
+                    // Note: There's a race condition between this check and the kill() call where the process
+                    // could exit and the PID could be reused. This is a fundamental limitation of the kill() API.
+                    let killResult = kill(process.processIdentifier, SIGKILL)
+                    if killResult != 0 && errno != ESRCH {
+                        // kill() failed with error other than ESRCH (no such process)
+                        // ESRCH is expected if process exited between isRunning check and kill call
+                        // Other errors are unusual but we continue anyway
+                    }
                     let sigkillDeadline = Date().addingTimeInterval(1.0)
                     while process.isRunning, Date() < sigkillDeadline {
                         Thread.sleep(forTimeInterval: 0.05)
