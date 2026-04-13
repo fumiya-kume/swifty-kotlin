@@ -10,6 +10,7 @@ enum GoldenHarnessAPIError: Error, CustomStringConvertible {
     case unknownSuite(String)
     case workerExecutableNotFound(String)
     case workerFailed(Int32, String)
+    case workerTimedOut(String)
 
     var description: String {
         switch self {
@@ -20,11 +21,17 @@ enum GoldenHarnessAPIError: Error, CustomStringConvertible {
         case let .workerFailed(status, details):
             let suffix = details.isEmpty ? "" : "\n\(details)"
             return "Golden worker failed with exit status \(status)\(suffix)"
+        case let .workerTimedOut(details):
+            let suffix = details.isEmpty ? "" : "\n\(details)"
+            return "Golden worker timed out\(suffix)"
         }
     }
 }
 
 public enum GoldenHarness {
+    private static let subprocessTimeout: TimeInterval = 30
+    private static let pipeDrainTimeout: DispatchTimeInterval = .seconds(5)
+
     public static func loadCasesOrCrash(suiteName: String) -> [GoldenHarnessCase] {
         do {
             return try GoldenHarnessCaseDiscovery.loadCases(suite: try suite(named: suiteName)).map {
@@ -55,6 +62,8 @@ public enum GoldenHarness {
         let stderrAccumulator = DataAccumulator()
         let stdoutGroup = DispatchGroup()
         let stderrGroup = DispatchGroup()
+        let stdoutHandle = stdout.fileHandleForReading
+        let stderrHandle = stderr.fileHandleForReading
 
         process.executableURL = try workerExecutableURL()
         process.arguments = [suiteName, sourcePath]
@@ -64,12 +73,28 @@ public enum GoldenHarness {
 
         drain(pipe: stdout, into: stdoutAccumulator, group: stdoutGroup)
         drain(pipe: stderr, into: stderrAccumulator, group: stderrGroup)
+        defer {
+            stdoutHandle.readabilityHandler = nil
+            stderrHandle.readabilityHandler = nil
+        }
 
         try process.run()
-        process.waitUntilExit()
+        let deadline = Date().addingTimeInterval(subprocessTimeout)
+        while process.isRunning, Date() < deadline {
+            Thread.sleep(forTimeInterval: 0.05)
+        }
+        if process.isRunning {
+            process.terminate()
+            let stderrText = String(data: stderrAccumulator.snapshot(), encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            throw GoldenHarnessAPIError.workerTimedOut(stderrText)
+        }
 
-        stdoutGroup.wait()
-        stderrGroup.wait()
+        guard stdoutGroup.wait(timeout: .now() + pipeDrainTimeout) == .success else {
+            throw GoldenHarnessAPIError.workerTimedOut("Timed out while draining worker stdout")
+        }
+        guard stderrGroup.wait(timeout: .now() + pipeDrainTimeout) == .success else {
+            throw GoldenHarnessAPIError.workerTimedOut("Timed out while draining worker stderr")
+        }
 
         let stdoutData = stdoutAccumulator.snapshot()
         let stderrData = stderrAccumulator.snapshot()
