@@ -141,7 +141,9 @@ public enum CommandRunner {
         let stdoutData = output.data(for: .stdout)
         let stderrData = output.data(for: .stderr)
 
-        if didTimeOut || !didExit || !didDrain {
+        // Check timeout conditions, but prioritize actual exit status over drain failures
+        if !didExit {
+            // Process didn't exit at all - this is a timeout
             let stdout = String(decoding: stdoutData, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
             let stderr = String(decoding: stderrData, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
             throw CommandRunnerError.timedOut(timeoutMessage(
@@ -160,6 +162,23 @@ public enum CommandRunner {
             stdout: String(decoding: stdoutData, as: UTF8.self),
             stderr: String(decoding: stderrData, as: UTF8.self)
         )
+
+        // If process exited but drain failed, check exit status
+        if !didDrain {
+            if result.exitCode == 0 {
+                // Process succeeded but drain failed - report as timeout
+                throw CommandRunnerError.timedOut(timeoutMessage(
+                    executable: executable,
+                    arguments: arguments,
+                    timeout: timeout,
+                    stdout: result.stdout.trimmingCharacters(in: .whitespacesAndNewlines),
+                    stderr: result.stderr.trimmingCharacters(in: .whitespacesAndNewlines),
+                    didExit: didExit,
+                    didDrain: didDrain
+                ))
+            }
+            // Process failed with non-zero exit code - fall through to throw nonZeroExit below
+        }
         // Record subprocess wall-clock time when a timer is active.
         if let timer = phaseTimer, let label = subPhaseName {
             let endTime = DispatchTime.now().uptimeNanoseconds
