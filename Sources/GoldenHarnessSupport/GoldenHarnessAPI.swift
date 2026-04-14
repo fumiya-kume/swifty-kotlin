@@ -126,12 +126,15 @@ public enum GoldenHarness {
             throw GoldenHarnessAPIError.workerTimedOut(errorMessage)
         }
 
-        guard stdoutGroup.wait(timeout: .now() + pipeDrainTimeout) == .success else {
-            throw GoldenHarnessAPIError.workerTimedOut("Timed out while draining worker stdout")
-        }
-        guard stderrGroup.wait(timeout: .now() + pipeDrainTimeout) == .success else {
-            throw GoldenHarnessAPIError.workerTimedOut("Timed out while draining worker stderr")
-        }
+        // Process has terminated, so stop event-based drain and read remaining data
+        stdoutHandle.readabilityHandler = nil
+        stderrHandle.readabilityHandler = nil
+
+        // Read any remaining data from pipes (safe since process has terminated)
+        let remainingStdout = stdoutHandle.readDataToEndOfFile()
+        let remainingStderr = stderrHandle.readDataToEndOfFile()
+        stdoutAccumulator.append(remainingStdout)
+        stderrAccumulator.append(remainingStderr)
 
         let stdoutData = stdoutAccumulator.snapshot()
         let stderrData = stderrAccumulator.snapshot()
