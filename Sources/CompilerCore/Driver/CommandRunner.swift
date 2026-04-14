@@ -166,20 +166,18 @@ public enum CommandRunner {
 
         let didDrain = wait(for: drainGroup, timeout: drainTimeoutSeconds)
 
-        let stdoutData = output.data(for: .stdout)
-        let stderrData = output.data(for: .stderr)
+        let stdout = String(decoding: output.data(for: .stdout), as: UTF8.self)
+        let stderr = String(decoding: output.data(for: .stderr), as: UTF8.self)
 
-        // Check timeout conditions, but prioritize actual exit status over drain failures
-        if !didExit {
-            // Process didn't exit at all - this is a timeout
-            let stdout = String(decoding: stdoutData, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
-            let stderr = String(decoding: stderrData, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        // Once the initial wait exceeds the timeout budget, surface a timeout
+        // even if terminate()/SIGKILL eventually forces a non-zero exit code.
+        if didTimeOut {
             throw CommandRunnerError.timedOut(timeoutMessage(
                 executable: executable,
                 arguments: arguments,
                 timeout: timeout,
-                stdout: stdout,
-                stderr: stderr,
+                stdout: stdout.trimmingCharacters(in: .whitespacesAndNewlines),
+                stderr: stderr.trimmingCharacters(in: .whitespacesAndNewlines),
                 didExit: didExit,
                 didDrain: didDrain
             ))
@@ -187,8 +185,8 @@ public enum CommandRunner {
 
         let result = CommandResult(
             exitCode: process.terminationStatus,
-            stdout: String(decoding: stdoutData, as: UTF8.self),
-            stderr: String(decoding: stderrData, as: UTF8.self)
+            stdout: stdout,
+            stderr: stderr
         )
 
         // If process exited but drain failed, check exit status
