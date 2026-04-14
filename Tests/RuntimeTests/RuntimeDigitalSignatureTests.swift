@@ -14,7 +14,7 @@ final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
     private func runtimeBytes(_ bytes: [UInt8]) -> Int {
         let box = RuntimeArrayBox(length: bytes.count)
         for (index, byte) in bytes.enumerated() {
-            box.elements[index] = Int(Int8(bitPattern: byte))
+            box.elements[index] = Int(byte)
         }
         return registerRuntimeObject(box)
     }
