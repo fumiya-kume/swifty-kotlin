@@ -35,13 +35,17 @@ final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
 
     private func signatureRoundTrip(algorithm: String, message: [UInt8]) -> Bool {
         let keyPair = makeKeyPair()
+        XCTAssertNotEqual(keyPair, 0, "Key pair generation failed")
         let publicKey = kk_keypair_publicKey(keyPair, nil)
+        XCTAssertNotEqual(publicKey, 0, "Public key extraction failed")
         let privateKey = kk_keypair_privateKey(keyPair, nil)
+        XCTAssertNotEqual(privateKey, 0, "Private key extraction failed")
 
         let signer = kk_signature_getInstance(0, runtimeString(algorithm), nil)
         _ = kk_signature_initSign(signer, privateKey, nil)
         _ = kk_signature_update(signer, runtimeBytes(message), nil)
         let signatureBytes = kk_signature_sign(signer, nil)
+        XCTAssertNotEqual(signatureBytes, 0, "Signature creation returned null")
 
         let verifier = kk_signature_getInstance(0, runtimeString(algorithm), nil)
         _ = kk_signature_initVerify(verifier, publicKey, nil)
@@ -79,7 +83,20 @@ final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
         """
 
         let factory = kk_certificatefactory_getInstance(0, runtimeString("X.509"), nil)
-        let certificate = kk_certificatefactory_generateCertificate(factory, runtimeBytes(Array(certPem.utf8)), nil)
+
+        // Convert PEM to DER bytes before passing to the native certificate factory
+        let pemLines = certPem
+            .split(separator: "\n")
+            .filter { !$0.hasPrefix("-----") && !$0.isEmpty }
+        let derDataOptional = Data(base64Encoded: pemLines.joined())
+
+        guard let derData = derDataOptional else {
+            XCTFail("Failed to decode certificate PEM to DER")
+            return
+        }
+
+        let certificate = kk_certificatefactory_generateCertificate(factory, runtimeBytes(Array(derData)), nil)
+        XCTAssertNotEqual(certificate, 0, "certificate factory returned null")
         XCTAssertGreaterThan(byteArray(from: kk_x509certificate_getEncoded(certificate, nil)).count, 0)
         XCTAssertNotEqual(kk_x509certificate_getPublicKey(certificate, nil), 0)
 
