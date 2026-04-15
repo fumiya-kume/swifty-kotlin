@@ -2,6 +2,7 @@ import Foundation
 @testable import Runtime
 import XCTest
 
+#if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
 final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
     private func runtimeString(_ text: String) -> Int {
         text.withCString { cstr in
@@ -122,3 +123,4 @@ final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
         )
     }
 }
+#endif
