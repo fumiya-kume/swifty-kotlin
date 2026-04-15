@@ -39,6 +39,7 @@ extension CodegenBackendIntegrationTests {
                 04
                 unexpected-regex
                 """
+                + "\n"
             )
         }
     }
