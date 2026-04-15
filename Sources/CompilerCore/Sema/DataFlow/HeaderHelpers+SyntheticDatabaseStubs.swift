@@ -19,8 +19,9 @@ extension DataFlowSemaPhase {
         let statementSymbol = ensureClassSymbol(named: "Statement", in: javaSQLPkg, symbols: symbols, interner: interner)
         let preparedStatementSymbol = ensureClassSymbol(named: "PreparedStatement", in: javaSQLPkg, symbols: symbols, interner: interner)
         let resultSetSymbol = ensureClassSymbol(named: "ResultSet", in: javaSQLPkg, symbols: symbols, interner: interner)
+        let savepointSymbol = ensureClassSymbol(named: "Savepoint", in: javaSQLPkg, symbols: symbols, interner: interner)
 
-        for symbol in [connectionSymbol, statementSymbol, preparedStatementSymbol, resultSetSymbol] {
+        for symbol in [connectionSymbol, statementSymbol, preparedStatementSymbol, resultSetSymbol, savepointSymbol] {
             if let javaSQLPkgSymbol {
                 symbols.setParentSymbol(javaSQLPkgSymbol, for: symbol)
             }
@@ -30,6 +31,7 @@ extension DataFlowSemaPhase {
         let statementType = types.make(.classType(ClassType(classSymbol: statementSymbol, args: [], nullability: .nonNull)))
         let preparedStatementType = types.make(.classType(ClassType(classSymbol: preparedStatementSymbol, args: [], nullability: .nonNull)))
         let resultSetType = types.make(.classType(ClassType(classSymbol: resultSetSymbol, args: [], nullability: .nonNull)))
+        let savepointType = types.make(.classType(ClassType(classSymbol: savepointSymbol, args: [], nullability: .nonNull)))
 
         if let closeableSymbol = javaIOCloseable {
             symbols.setDirectSupertypes([closeableSymbol], for: connectionSymbol)
@@ -83,6 +85,136 @@ extension DataFlowSemaPhase {
             returnType: types.unitType,
             externalLinkName: "kk_jdbc_connection_close",
             named: "close",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: connectionSymbol,
+            ownerType: connectionType,
+            parameters: [],
+            returnType: types.booleanType,
+            externalLinkName: "kk_jdbc_connection_isClosed",
+            named: "isClosed",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: connectionSymbol,
+            ownerType: connectionType,
+            parameters: [],
+            returnType: types.booleanType,
+            externalLinkName: "kk_jdbc_connection_getAutoCommit",
+            named: "getAutoCommit",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: connectionSymbol,
+            ownerType: connectionType,
+            parameters: [("autoCommit", types.booleanType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_jdbc_connection_setAutoCommit",
+            named: "setAutoCommit",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: connectionSymbol,
+            ownerType: connectionType,
+            parameters: [],
+            returnType: types.intType,
+            externalLinkName: "kk_jdbc_connection_getTransactionIsolation",
+            named: "getTransactionIsolation",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: connectionSymbol,
+            ownerType: connectionType,
+            parameters: [("level", types.intType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_jdbc_connection_setTransactionIsolation",
+            named: "setTransactionIsolation",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: connectionSymbol,
+            ownerType: connectionType,
+            parameters: [],
+            returnType: types.unitType,
+            externalLinkName: "kk_jdbc_connection_commit",
+            named: "commit",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: connectionSymbol,
+            ownerType: connectionType,
+            parameters: [],
+            returnType: types.unitType,
+            externalLinkName: "kk_jdbc_connection_rollback",
+            named: "rollback",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: connectionSymbol,
+            ownerType: connectionType,
+            parameters: [("savepoint", savepointType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_jdbc_connection_rollback_savepoint",
+            named: "rollback",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: connectionSymbol,
+            ownerType: connectionType,
+            parameters: [],
+            returnType: savepointType,
+            externalLinkName: "kk_jdbc_connection_setSavepoint",
+            named: "setSavepoint",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: connectionSymbol,
+            ownerType: connectionType,
+            parameters: [("name", types.stringType)],
+            returnType: savepointType,
+            externalLinkName: "kk_jdbc_connection_setSavepointNamed",
+            named: "setSavepoint",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: connectionSymbol,
+            ownerType: connectionType,
+            parameters: [("savepoint", savepointType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_jdbc_connection_releaseSavepoint",
+            named: "releaseSavepoint",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: savepointSymbol,
+            ownerType: savepointType,
+            parameters: [],
+            returnType: types.intType,
+            externalLinkName: "kk_jdbc_savepoint_getSavepointId",
+            named: "getSavepointId",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstanceFunction(
+            ownerSymbol: savepointSymbol,
+            ownerType: savepointType,
+            parameters: [],
+            returnType: types.stringType,
+            externalLinkName: "kk_jdbc_savepoint_getSavepointName",
+            named: "getSavepointName",
             symbols: symbols,
             interner: interner
         )

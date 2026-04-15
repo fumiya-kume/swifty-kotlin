@@ -4,7 +4,9 @@ enum KnownCompilerAnnotation {
     case deprecated
     case replaceWith
     case metadata
+    case requiresOptIn
     case target
+    case experimentalStdlibApi
     case jvmStatic
     case jvmName
     case jvmField
@@ -30,8 +32,12 @@ enum KnownCompilerAnnotation {
             "ReplaceWith"
         case .metadata:
             "Metadata"
+        case .requiresOptIn:
+            "RequiresOptIn"
         case .target:
             "Target"
+        case .experimentalStdlibApi:
+            "ExperimentalStdlibApi"
         case .jvmStatic:
             "JvmStatic"
         case .jvmName:
@@ -75,8 +81,12 @@ enum KnownCompilerAnnotation {
             "kotlin.ReplaceWith"
         case .metadata:
             "kotlin.Metadata"
+        case .requiresOptIn:
+            "kotlin.RequiresOptIn"
         case .target:
             "kotlin.annotation.Target"
+        case .experimentalStdlibApi:
+            "kotlin.ExperimentalStdlibApi"
         case .jvmStatic:
             "kotlin.jvm.JvmStatic"
         case .jvmName:

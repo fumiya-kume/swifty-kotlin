@@ -182,6 +182,10 @@ extension CallTypeChecker {
             return true
         })
 
+        if blockedLambdaRefinement, hasRefinementAnnotation {
+            return ambiguousCallResult(range: range)
+        }
+
         guard !inputOnlyLambdaIndices.isEmpty else {
             return ctx.resolver.resolveCall(
                 candidates: candidates,
@@ -199,10 +203,6 @@ extension CallTypeChecker {
             return ambiguousCallResult(range: range)
         }
         if functionTypedArgumentIndices.count > 1, hasRefinementAnnotation {
-            return ambiguousCallResult(range: range)
-        }
-
-        if blockedLambdaRefinement, hasRefinementAnnotation {
             return ambiguousCallResult(range: range)
         }
 
@@ -302,11 +302,18 @@ extension CallTypeChecker {
 
     /// Applies explicit type arguments to a parameter type from a given signature.
     /// When explicit type args are provided, substitutes them into the parameter type.
+    /// - Parameter typeArgOffset: Index into `signature.typeParameterSymbols` at which the
+    ///   explicit type args begin. For constructors this is 0 (explicit args map to the class's
+    ///   own type parameters). For non-constructor member functions this should be
+    ///   `signature.classTypeParameterCount`, so that the explicit args skip the leading class
+    ///   type parameters (which are inferred from the receiver) and map only to the function's
+    ///   own type parameters.
     private func applyExplicitTypeArgs(
         to parameterType: TypeID,
         signature: FunctionSignature,
         candidate: SymbolID,
         explicitTypeArgs: [TypeID],
+        typeArgOffset: Int = 0,
         sema: SemaModule
     ) -> TypeID {
         guard !explicitTypeArgs.isEmpty, !signature.typeParameterSymbols.isEmpty else {
@@ -343,11 +350,14 @@ extension CallTypeChecker {
            index < signature.parameterTypes.count
         {
             let rawType = signature.parameterTypes[index]
+            let isConstructor = sema.symbols.symbol(candidates[0])?.kind == .constructor
+            let typeArgOffset = isConstructor ? 0 : signature.classTypeParameterCount
             return applyExplicitTypeArgs(
                 to: rawType,
                 signature: signature,
                 candidate: candidates[0],
                 explicitTypeArgs: explicitTypeArgs,
+                typeArgOffset: typeArgOffset,
                 sema: sema
             )
         }
@@ -382,11 +392,14 @@ extension CallTypeChecker {
            index < signature.parameterTypes.count
         {
             let rawType = signature.parameterTypes[index]
+            let isConstructor = sema.symbols.symbol(candidates[0])?.kind == .constructor
+            let typeArgOffset = isConstructor ? 0 : signature.classTypeParameterCount
             let substituted = applyExplicitTypeArgs(
                 to: rawType,
                 signature: signature,
                 candidate: candidates[0],
                 explicitTypeArgs: explicitTypeArgs,
+                typeArgOffset: typeArgOffset,
                 sema: sema
             )
             return (substituted, false, false)

@@ -274,6 +274,8 @@ extension DataFlowSemaPhase {
                         ast: ast, symbols: symbols, types: types,
                         interner: interner,
                         localTypeParameters: classLocalTypeParameters,
+                        currentPackageFQName: package,
+                        imports: file.imports,
                         diagnostics: diagnostics,
                         fallbackType: anyType
                     )
@@ -312,6 +314,8 @@ extension DataFlowSemaPhase {
                     ast: ast, symbols: symbols, types: types,
                     interner: interner,
                     localTypeParameters: classLocalTypeParameters,
+                    currentPackageFQName: package,
+                    imports: file.imports,
                     diagnostics: diagnostics,
                     fallbackType: anyType
                 )
@@ -349,6 +353,8 @@ extension DataFlowSemaPhase {
                         types: types,
                         interner: interner,
                         localTypeParameters: classLocalTypeParameters,
+                        currentPackageFQName: package,
+                        imports: file.imports,
                         diagnostics: diagnostics
                     ) ?? anyType
                     symbols.setValueClassUnderlyingType(underlyingType, for: symbol)
@@ -666,6 +672,9 @@ extension DataFlowSemaPhase {
                 types: types,
                 interner: interner,
                 localTypeParameters: typeParamResult.localTypeParameters,
+                relativeOwnerFQName: package,
+                currentPackageFQName: package,
+                imports: file.imports,
                 diagnostics: diagnostics
             )
             let params = collectValueParameters(
@@ -675,6 +684,9 @@ extension DataFlowSemaPhase {
                 ast: ast, symbols: symbols, types: types,
                 interner: interner,
                 localTypeParameters: typeParamResult.localTypeParameters,
+                relativeOwnerFQName: package,
+                currentPackageFQName: package,
+                imports: file.imports,
                 diagnostics: diagnostics,
                 fallbackType: anyType
             )
@@ -685,6 +697,9 @@ extension DataFlowSemaPhase {
                 types: types,
                 interner: interner,
                 localTypeParameters: typeParamResult.localTypeParameters,
+                relativeOwnerFQName: package,
+                currentPackageFQName: package,
+                imports: file.imports,
                 diagnostics: diagnostics
             ) {
                 explicit
@@ -730,6 +745,9 @@ extension DataFlowSemaPhase {
                 symbols: symbols,
                 types: types,
                 interner: interner,
+                relativeOwnerFQName: package,
+                currentPackageFQName: package,
+                imports: file.imports,
                 diagnostics: diagnostics
             ) ?? types.nullableAnyType
             symbols.setPropertyType(resolvedType, for: symbol)
@@ -740,6 +758,9 @@ extension DataFlowSemaPhase {
                 symbols: symbols,
                 types: types,
                 interner: interner,
+                relativeOwnerFQName: package,
+                currentPackageFQName: package,
+                imports: file.imports,
                 diagnostics: diagnostics
             ) {
                 symbols.setExtensionPropertyReceiverType(receiverType, for: symbol)
@@ -823,6 +844,9 @@ extension DataFlowSemaPhase {
                         types: types,
                         interner: interner,
                         localTypeParameters: [:],
+                        relativeOwnerFQName: package,
+                        currentPackageFQName: package,
+                        imports: file.imports,
                         diagnostics: diagnostics
                     ) ?? resolvedType
                 } else {
@@ -864,6 +888,8 @@ extension DataFlowSemaPhase {
                 types: types,
                 interner: interner,
                 localTypeParameters: localTypeParameters,
+                currentPackageFQName: package,
+                imports: file.imports,
                 diagnostics: diagnostics
             ) {
                 symbols.setTypeAliasUnderlyingType(resolvedUnderlying, for: symbol)

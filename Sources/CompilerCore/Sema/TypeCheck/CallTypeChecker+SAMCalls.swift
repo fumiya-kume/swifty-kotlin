@@ -97,6 +97,12 @@ extension CallTypeChecker {
                 range: range,
                 diagnostics: ctx.semaCtx.diagnostics
             )
+            driver.helpers.checkOptIn(
+                for: chosen,
+                ctx: ctx,
+                range: range,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
             return bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: ctx.sema)
         }
 

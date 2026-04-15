@@ -9,10 +9,15 @@ extension DeclTypeChecker {
         solver: ConstraintSolver,
         diagnostics: DiagnosticEngine
     ) {
+        let propertyCtx = ctx.with(currentDeclSymbol: symbol)
+        validatePropertyHeaderOptInTypes(
+            symbol,
+            ctx: propertyCtx
+        )
         typeCheckPropertyDecl(
             property,
             symbol: symbol,
-            ctx: ctx,
+            ctx: propertyCtx,
             solver: solver,
             diagnostics: diagnostics
         )
@@ -43,7 +48,18 @@ extension DeclTypeChecker {
         let classLabel = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
         let classCtx = ctx
             .withOuterReceiver(label: classLabel, type: classType)
-            .copying(scope: classScope, implicitReceiverType: classType, enclosingClassSymbol: symbol)
+            .copying(
+                scope: classScope,
+                implicitReceiverType: classType,
+                currentDeclSymbol: symbol,
+                enclosingClassSymbol: symbol
+            )
+
+        validateClassLikeHeaderOptInTypes(
+            symbol: symbol,
+            ctx: classCtx,
+            range: classDecl.range
+        )
 
         typeCheckInitBlocks(classDecl.initBlocks, ctx: classCtx)
         typeCheckSecondaryConstructors(classDecl.secondaryConstructors, ctx: classCtx, ownerSymbol: symbol, hasPrimaryConstructor: classDecl.hasPrimaryConstructorSyntax)
@@ -134,7 +150,18 @@ extension DeclTypeChecker {
         let objectLabel = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
         let objectCtx = ctx
             .withOuterReceiver(label: objectLabel, type: objectType)
-            .copying(scope: objectScope, implicitReceiverType: objectType, enclosingClassSymbol: symbol)
+            .copying(
+                scope: objectScope,
+                implicitReceiverType: objectType,
+                currentDeclSymbol: symbol,
+                enclosingClassSymbol: symbol
+            )
+
+        validateClassLikeHeaderOptInTypes(
+            symbol: symbol,
+            ctx: objectCtx,
+            range: objectDecl.range
+        )
 
         typeCheckInitBlocks(objectDecl.initBlocks, ctx: objectCtx)
         typeCheckClassLikeMembers(
@@ -175,7 +202,18 @@ extension DeclTypeChecker {
         let label = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
         let interfaceCtx = ctx
             .withOuterReceiver(label: label, type: interfaceType)
-            .copying(scope: interfaceScope, implicitReceiverType: interfaceType, enclosingClassSymbol: symbol)
+            .copying(
+                scope: interfaceScope,
+                implicitReceiverType: interfaceType,
+                currentDeclSymbol: symbol,
+                enclosingClassSymbol: symbol
+            )
+
+        validateClassLikeHeaderOptInTypes(
+            symbol: symbol,
+            ctx: interfaceCtx,
+            range: interfaceDecl.range
+        )
 
         typeCheckClassLikeMembers(
             memberFunctions: interfaceDecl.memberFunctions,
@@ -210,7 +248,7 @@ extension DeclTypeChecker {
             typeCheckFunctionDecl(
                 function,
                 symbol: symbol,
-                ctx: ctx,
+                ctx: ctx.with(currentDeclSymbol: symbol),
                 solver: solver,
                 diagnostics: diagnostics
             )
@@ -227,7 +265,7 @@ extension DeclTypeChecker {
                 property,
                 declID: declID,
                 symbol: symbol,
-                ctx: ctx,
+                ctx: ctx.with(currentDeclSymbol: symbol),
                 solver: solver,
                 diagnostics: diagnostics
             )
@@ -247,7 +285,7 @@ extension DeclTypeChecker {
             typeCheckObjectDecl(
                 objectDecl,
                 symbol: symbol,
-                ctx: ctx,
+                ctx: ctx.with(currentDeclSymbol: symbol),
                 solver: solver,
                 diagnostics: diagnostics
             )
@@ -268,10 +306,22 @@ extension DeclTypeChecker {
             // Inner classes inherit outer receiver context (can use this@Outer).
             // Non-inner nested classes are effectively static: clear outer receivers.
             let nestedCtx: TypeInferenceContext = classDecl.isInner ? ctx : ctx.copying(outerReceiverTypes: [])
-            typeCheckClassDecl(classDecl, symbol: symbol, ctx: nestedCtx, solver: solver, diagnostics: diagnostics)
+            typeCheckClassDecl(
+                classDecl,
+                symbol: symbol,
+                ctx: nestedCtx.with(currentDeclSymbol: symbol),
+                solver: solver,
+                diagnostics: diagnostics
+            )
         case let .interfaceDecl(nestedInterface):
             let nestedCtx = ctx.copying(outerReceiverTypes: [])
-            typeCheckInterfaceDecl(nestedInterface, symbol: symbol, ctx: nestedCtx, solver: solver, diagnostics: diagnostics)
+            typeCheckInterfaceDecl(
+                nestedInterface,
+                symbol: symbol,
+                ctx: nestedCtx.with(currentDeclSymbol: symbol),
+                solver: solver,
+                diagnostics: diagnostics
+            )
         default:
             break
         }

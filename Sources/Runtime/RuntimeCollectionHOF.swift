@@ -134,6 +134,12 @@ public func kk_list_getOrElse(_ listRaw: Int, _ index: Int, _ fnPtr: Int, _ clos
     return result
 }
 
+// elementAtOrElse delegates to getOrElse — same semantics, distinct Kotlin stdlib name.
+@_cdecl("kk_list_elementAtOrElse")
+public func kk_list_elementAtOrElse(_ listRaw: Int, _ index: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    kk_list_getOrElse(listRaw, index, fnPtr, closureRaw, outThrown)
+}
+
 @_cdecl("kk_list_map")
 public func kk_list_map(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {

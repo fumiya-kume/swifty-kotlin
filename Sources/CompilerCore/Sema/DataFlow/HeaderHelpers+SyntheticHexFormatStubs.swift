@@ -256,6 +256,7 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(companionSymbol, for: defaultSymbol)
         symbols.setPropertyType(hexFormatType, for: defaultSymbol)
         symbols.setExternalLinkName("kk_hexformat_default", for: defaultSymbol)
+        attachExperimentalStdlibApiAnnotation(to: defaultSymbol, symbols: symbols)
     }
 
     private func makeHexFormatByteArrayType(
@@ -324,6 +325,7 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
         symbols.setPropertyType(returnType, for: propertySymbol)
+        attachExperimentalStdlibApiAnnotation(to: propertySymbol, symbols: symbols)
     }
 
     private func registerHexFormatTopLevelFunction(
@@ -360,6 +362,7 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(packageSymbol, for: functionSymbol)
         }
         symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        attachExperimentalStdlibApiAnnotation(to: functionSymbol, symbols: symbols)
 
         var valueParameterSymbols: [SymbolID] = []
         for parameter in parameters {
@@ -424,6 +427,7 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(packageSymbol, for: functionSymbol)
         }
         symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        attachExperimentalStdlibApiAnnotation(to: functionSymbol, symbols: symbols)
 
         var parameterTypes: [TypeID] = []
         var parameterSymbols: [SymbolID] = []
@@ -460,5 +464,17 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+    }
+
+    private func attachExperimentalStdlibApiAnnotation(
+        to symbol: SymbolID,
+        symbols: SymbolTable
+    ) {
+        let record = MetadataAnnotationRecord(annotationFQName: "kotlin.ExperimentalStdlibApi")
+        var annotations = symbols.annotations(for: symbol)
+        if !annotations.contains(record) {
+            annotations.append(record)
+            symbols.setAnnotations(annotations, for: symbol)
+        }
     }
 }

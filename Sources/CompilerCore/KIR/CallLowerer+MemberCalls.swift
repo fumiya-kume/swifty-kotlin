@@ -168,7 +168,7 @@ extension CallLowerer {
         "groupBy", "groupingBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
         "eachCount",
         "withIndex", "forEachIndexed", "mapIndexed", "filterIndexed", "mapValues", "mapKeys", "filterKeys", "filterValues",
-        "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull",
+        "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull", "elementAt", "elementAtOrElse",
         "putAll", "addAll",
         "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
         "plus", "minus",
@@ -3262,6 +3262,8 @@ extension CallLowerer {
                     "kk_list_getOrNull"
                 case "elementAtOrNull":
                     "kk_list_elementAtOrNull"
+                case "elementAt":
+                    "kk_list_elementAt"
                 case "containsAll":
                     "kk_list_containsAll"
                 default:
@@ -3276,12 +3278,13 @@ extension CallLowerer {
                         instructions.append(.constValue(result: kindExpr, value: .intLiteral(Int64(primitiveSelectorKind.rawValue))))
                         callArguments.append(kindExpr)
                     }
+                    let canThrow = runtimeCallee == "kk_list_elementAt"
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
                         arguments: callArguments,
                         result: result,
-                        canThrow: false,
+                        canThrow: canThrow,
                         thrownResult: nil
                     ))
                     return result
@@ -3348,6 +3351,20 @@ extension CallLowerer {
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern("kk_array_copyOfRange"),
+                    arguments: [loweredReceiverID] + normalizedArgIDs,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+            // List.elementAtOrElse(index, defaultValue) — 2 args (STDLIB-214)
+            if isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner),
+               interner.resolve(calleeName) == "elementAtOrElse"
+            {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_list_elementAtOrElse"),
                     arguments: [loweredReceiverID] + normalizedArgIDs,
                     result: result,
                     canThrow: false,
@@ -3786,7 +3803,7 @@ extension CallLowerer {
             "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate",
             "forEachIndexed", "mapIndexed", "filterIndexed", "sumOf", "mapValues", "mapKeys", "filterKeys", "filterValues",
-            "getOrElse", "getOrPut",
+            "getOrElse", "elementAtOrElse", "getOrPut",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
@@ -5167,6 +5184,7 @@ extension CallLowerer {
     private static func throwingMemberCalleeNames(interner: StringInterner) -> Set<InternedString> {
         Set([
             interner.intern("kk_list_random"),
+            interner.intern("kk_list_elementAt"),
             interner.intern("kk_list_maxOf"),
             interner.intern("kk_list_minOf"),
             interner.intern("kk_list_maxWith"),
@@ -6056,6 +6074,10 @@ extension CallLowerer {
                 return interner.intern("kk_list_getOrNull")
             case "elementAtOrNull":
                 return interner.intern("kk_list_elementAtOrNull")
+            case "elementAt":
+                return interner.intern("kk_list_elementAt")
+            case "elementAtOrElse":
+                return interner.intern("kk_list_elementAtOrElse")
             case "getOrElse":
                 return interner.intern("kk_list_getOrElse")
             case "subList":
@@ -6268,6 +6290,10 @@ extension CallLowerer {
             return interner.intern("kk_list_getOrNull")
         case "elementAtOrNull":
             return interner.intern("kk_list_elementAtOrNull")
+        case "elementAt":
+            return interner.intern("kk_list_elementAt")
+        case "elementAtOrElse":
+            return interner.intern("kk_list_elementAtOrElse")
         case "getOrElse":
             return interner.intern("kk_list_getOrElse")
         case "containsAll":

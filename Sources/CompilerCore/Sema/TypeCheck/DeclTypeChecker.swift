@@ -18,6 +18,64 @@ final class DeclTypeChecker {
         )
     }
 
+    func validateOptInTypeUsage(
+        _ type: TypeID,
+        ctx: TypeInferenceContext,
+        range: SourceRange?
+    ) {
+        driver.helpers.checkOptInForType(
+            type,
+            ctx: ctx,
+            range: range,
+            diagnostics: ctx.semaCtx.diagnostics
+        )
+    }
+
+    func validateFunctionHeaderOptInTypes(
+        _ symbol: SymbolID,
+        ctx: TypeInferenceContext
+    ) {
+        guard let signature = ctx.sema.symbols.functionSignature(for: symbol) else {
+            return
+        }
+        let range = ctx.sema.symbols.symbol(symbol)?.declSite
+        if let receiverType = signature.receiverType {
+            validateOptInTypeUsage(receiverType, ctx: ctx, range: range)
+        }
+        for parameterType in signature.parameterTypes {
+            validateOptInTypeUsage(parameterType, ctx: ctx, range: range)
+        }
+        validateOptInTypeUsage(signature.returnType, ctx: ctx, range: range)
+    }
+
+    func validatePropertyHeaderOptInTypes(
+        _ symbol: SymbolID,
+        ctx: TypeInferenceContext
+    ) {
+        let range = ctx.sema.symbols.symbol(symbol)?.declSite
+        if let receiverType = ctx.sema.symbols.extensionPropertyReceiverType(for: symbol) {
+            validateOptInTypeUsage(receiverType, ctx: ctx, range: range)
+        }
+        if let propertyType = ctx.sema.symbols.propertyType(for: symbol) {
+            validateOptInTypeUsage(propertyType, ctx: ctx, range: range)
+        }
+    }
+
+    func validateClassLikeHeaderOptInTypes(
+        symbol: SymbolID,
+        ctx: TypeInferenceContext,
+        range: SourceRange?
+    ) {
+        for supertypeSymbol in ctx.sema.symbols.directSupertypes(for: symbol) {
+            let supertype = ctx.sema.types.make(.classType(ClassType(
+                classSymbol: supertypeSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            validateOptInTypeUsage(supertype, ctx: ctx, range: range)
+        }
+    }
+
     // MARK: - Function Body Type Inference
 
     func inferFunctionBodyType(

@@ -3368,7 +3368,63 @@ extension DataFlowSemaPhase {
                     for: memberSymbol
                 )
             }
+
+            // elementAtOrElse — identical signature to getOrElse (STDLIB-212)
+            let elementAtOrElseName = interner.intern("elementAtOrElse")
+            let elementAtOrElseFQName = listFQName + [elementAtOrElseName]
+            if symbols.lookup(fqName: elementAtOrElseFQName) == nil {
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: elementAtOrElseName,
+                    fqName: elementAtOrElseFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName("kk_list_elementAtOrElse", for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [types.intType, getOrElseLambdaType],
+                        returnType: listTypeParamType,
+                        typeParameterSymbols: [listTypeParamSymbol],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
         }
+
+        // elementAt — throws IndexOutOfBoundsException (STDLIB-212)
+        do {
+            let elementAtName = interner.intern("elementAt")
+            let elementAtFQName = listFQName + [elementAtName]
+            if symbols.lookup(fqName: elementAtFQName) == nil {
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: elementAtName,
+                    fqName: elementAtFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName("kk_list_elementAt", for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [types.intType],
+                        returnType: listTypeParamType,
+                        canThrow: true,
+                        typeParameterSymbols: [listTypeParamSymbol],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+        }
+
         // firstOrNull / lastOrNull no-predicate (STDLIB-210)
         registerSimpleMember(name: "firstOrNull", returnType: nullableElementType, externalLinkName: "kk_list_firstOrNull")
         registerSimpleMember(name: "lastOrNull", returnType: nullableElementType, externalLinkName: "kk_list_lastOrNull")
