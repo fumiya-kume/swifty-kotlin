@@ -85,6 +85,11 @@ extension DataFlowSemaPhase {
             args: [.invariant(functionTType), .invariant(functionRType)],
             nullability: .nonNull
         )))
+        let functionTypeInScopeContext = types.make(.classType(ClassType(
+            classSymbol: functionSymbol,
+            args: [.invariant(scopeTType), .invariant(scopeRType)],
+            nullability: .nonNull
+        )))
         symbols.setPropertyType(scopeType, for: scopeSymbol)
         symbols.setPropertyType(functionType, for: functionSymbol)
 
@@ -113,6 +118,7 @@ extension DataFlowSemaPhase {
             parameters: [(name: "value", type: functionTType)],
             returnType: functionRType,
             externalLinkName: "kk_deep_recursive_function_invoke",
+            isSuspend: false,
             extraFlags: [.operatorFunction],
             symbols: symbols,
             interner: interner
@@ -127,6 +133,7 @@ extension DataFlowSemaPhase {
             parameters: [(name: "value", type: functionTType)],
             returnType: functionRType,
             externalLinkName: "kk_deep_recursive_function_callRecursive",
+            isSuspend: true,
             extraFlags: [],
             symbols: symbols,
             interner: interner
@@ -141,6 +148,22 @@ extension DataFlowSemaPhase {
             parameters: [(name: "value", type: scopeTType)],
             returnType: scopeRType,
             externalLinkName: "kk_deep_recursive_scope_callRecursive",
+            isSuspend: true,
+            extraFlags: [],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDeepRecursiveMember(
+            ownerSymbol: scopeSymbol,
+            ownerType: functionTypeInScopeContext,
+            ownerFQName: kotlinPkg + [interner.intern("DeepRecursiveScope")],
+            typeParameterSymbols: scopeTypeParams,
+            name: "callRecursive",
+            parameters: [(name: "value", type: scopeTType)],
+            returnType: scopeRType,
+            externalLinkName: "kk_deep_recursive_function_callRecursive",
+            isSuspend: true,
             extraFlags: [],
             symbols: symbols,
             interner: interner
@@ -235,13 +258,23 @@ extension DataFlowSemaPhase {
         parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
         externalLinkName: String,
+        isSuspend: Bool,
         extraFlags: SymbolFlags,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
         let memberName = interner.intern(name)
         let memberFQName = ownerFQName + [memberName]
-        guard symbols.lookupAll(fqName: memberFQName).isEmpty else {
+        let hasMatchingOverload = symbols.lookupAll(fqName: memberFQName).contains { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == ownerType
+                && signature.parameterTypes == parameters.map(\.type)
+                && signature.returnType == returnType
+                && signature.isSuspend == isSuspend
+        }
+        guard !hasMatchingOverload else {
             return
         }
 
@@ -278,6 +311,7 @@ extension DataFlowSemaPhase {
                 receiverType: ownerType,
                 parameterTypes: parameterTypes,
                 returnType: returnType,
+                isSuspend: isSuspend,
                 valueParameterSymbols: parameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: parameters.count),
                 valueParameterIsVararg: Array(repeating: false, count: parameters.count),
