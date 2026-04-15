@@ -261,7 +261,7 @@ extension DataFlowSemaPhase {
 
         for (name, extLink) in [
             ("compareByPrimitive", "kk_comparator_from_selector_primitive"),
-            ("compareByDescendingPrimitive", "kk_comparator_from_selector_primitive"),
+            ("compareByDescendingPrimitive", "kk_comparator_from_selector_primitive_descending"),
         ] {
             let functionName = interner.intern(name)
             let functionFQName = comparisonsPkg + [functionName]

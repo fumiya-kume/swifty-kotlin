@@ -171,6 +171,32 @@ public func kk_char_directionality(_ value: Int) -> Int {
     return charDirectionalityToInt(scalar)
 }
 
+@_cdecl("kk_char_isSurrogate")
+public func kk_char_isSurrogate(_ value: Int) -> Int {
+    return kk_box_bool((value >= 0xD800 && value <= 0xDFFF) ? 1 : 0)
+}
+
+@_cdecl("kk_char_isHighSurrogate")
+public func kk_char_isHighSurrogate(_ value: Int) -> Int {
+    return kk_box_bool((value >= 0xD800 && value <= 0xDBFF) ? 1 : 0)
+}
+
+@_cdecl("kk_char_isLowSurrogate")
+public func kk_char_isLowSurrogate(_ value: Int) -> Int {
+    return kk_box_bool((value >= 0xDC00 && value <= 0xDFFF) ? 1 : 0)
+}
+
+@_cdecl("kk_char_isISOControl")
+public func kk_char_isISOControl(_ value: Int) -> Int {
+    return kk_box_bool((value <= 0x1F || (value >= 0x7F && value <= 0x9F)) ? 1 : 0)
+}
+
+@_cdecl("kk_char_isTitleCase")
+public func kk_char_isTitleCase(_ value: Int) -> Int {
+    guard let scalar = runtimeUnicodeScalar(value) else { return kk_box_bool(0) }
+    return kk_box_bool(scalar.properties.generalCategory == .titlecaseLetter ? 1 : 0)
+}
+
 private func charBase10DigitValue(_ scalar: UnicodeScalar) -> Int? {
     if scalar.value >= 0x30, scalar.value <= 0x39 {
         return Int(scalar.value - 0x30)
