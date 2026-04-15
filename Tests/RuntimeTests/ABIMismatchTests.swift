@@ -141,9 +141,8 @@ final class ABIMismatchTests: XCTestCase {
 
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
-        // STDLIB-CORO-070 adds Job.complete/completeExceptionally/cancel(cause)/awaitCompletion.
-        // read-write lock adds kk_read_write_lock_create/read/write.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 115)
+        // Includes the Job lifecycle helpers plus the read-write lock runtime entry points.
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 119)
     }
 
     func testBoxingFunctionCount() {
@@ -178,7 +177,8 @@ final class ABIMismatchTests: XCTestCase {
         // - 14 STDLIB-MATH-112 numeric constants (5 Double + 5 Float + 2 Int + 2 Long)
         // - 2 generic mode-dispatch (round_mode, round_mode_float)
         // - 8 STDLIB-MATH-109 hyperbolic/cbrt entries (sinh, cosh, tanh, cbrt + Float overloads)
-        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 95)
+        // - 6 STDLIB-MATH-113 floating-point helpers (IEEE remainder + sign helpers)
+        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 101)
         // Random ABI currently includes default, seeded, and bounded long/float helpers.
         XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 19)
     }

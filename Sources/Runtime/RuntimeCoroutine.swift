@@ -613,6 +613,7 @@ final class RuntimeJobHandle: @unchecked Sendable {
     private var result: Int = 0
     private var failure: Int = 0
     private var cancelCause: Int = 0
+    private var cancelMessage: String = "CancellationException"
     weak var continuationState: RuntimeContinuationState?
     private weak var parentJob: RuntimeJobHandle?
     private var childJobHandles: [Int] = []
@@ -750,9 +751,15 @@ final class RuntimeJobHandle: @unchecked Sendable {
     }
 
     func cancel(cause: Int = 0) -> Bool {
-        let resolvedCause = cause != 0 ? cause : runtimeAllocateCancellationException()
+        cancel(message: "CancellationException", cause: cause)
+    }
+
+    @discardableResult
+    func cancel(message: String, cause: Int = 0) -> Bool {
+        let resolvedCause = cause != 0 ? cause : runtimeAllocateCancellationException(message: message)
         var childrenToCancel: [Int] = []
         var stateToResume: RuntimeContinuationState?
+        var shouldSignalCompletion = false
         lock.lock()
         switch state {
         case .completed, .cancelled, .failed:
@@ -763,16 +770,22 @@ final class RuntimeJobHandle: @unchecked Sendable {
             if cancelCause == 0 {
                 cancelCause = resolvedCause
             }
+            if cancelMessage == "CancellationException" {
+                cancelMessage = message
+            }
             lock.unlock()
             return false
         case .new, .active, .completing:
-            // Transition to cancelling but do NOT signal completionSemaphore here.
-            // join() must wait until the coroutine body has fully finished executing
-            // (including catch/finally blocks). The semaphore is only signalled when
-            // complete(with:) is called from the launch closure after
-            // runSuspendEntryLoopWithContinuation returns. This matches Kotlin's
-            // join() semantics where join() waits for complete termination.
-            state = .cancelling
+            cancelMessage = message
+            // A never-started job can become terminal immediately. Once a job
+            // has started, keep the intermediate cancelling state so explicit
+            // completion mirrors kotlinx.coroutines lifecycle semantics.
+            if state == .new && continuationState == nil {
+                state = .cancelled
+                shouldSignalCompletion = true
+            } else {
+                state = .cancelling
+            }
             cancelCause = resolvedCause
             result = 0
             failure = 0
@@ -784,6 +797,9 @@ final class RuntimeJobHandle: @unchecked Sendable {
         stateToResume?.signalResume()
         for child in childrenToCancel {
             runtimeCancelChild(child)
+        }
+        if shouldSignalCompletion {
+            completionSemaphore.signal()
         }
         return true
     }
@@ -827,6 +843,18 @@ final class RuntimeJobHandle: @unchecked Sendable {
 
     func awaitCompletion() -> Int {
         join()
+    }
+
+    func cancellationMessageSnapshot() -> String {
+        lock.lock()
+        defer { lock.unlock() }
+        return cancelMessage
+    }
+
+    func cancellationCauseSnapshot() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return cancelCause
     }
 
     /// Thread-safe snapshot of the cancellation flag.
@@ -993,7 +1021,11 @@ final class RuntimeCoroutineScope: @unchecked Sendable {
         var cancelledRemainingChildren = false
         for (index, child) in currentChildren.enumerated() {
             let childResult = runtimeJoinChild(child)
-            if firstFailure == 0, runtimeCoroutineIsThrowableResult(childResult) {
+            let shouldIgnoreChildCancellation = isCancelled && runtimeCoroutineIsCancellationResult(childResult)
+            if firstFailure == 0,
+               runtimeCoroutineIsThrowableResult(childResult),
+               !shouldIgnoreChildCancellation
+            {
                 firstFailure = childResult
                 if !isSupervisor, !cancelledRemainingChildren {
                     cancelledRemainingChildren = true
@@ -1046,6 +1078,19 @@ private func runtimeCoroutineIsThrowableResult(_ result: Int) -> Bool {
         return false
     }
     return tryCast(pointer, to: RuntimeThrowableBox.self) != nil
+}
+
+private func runtimeCoroutineIsCancellationResult(_ result: Int) -> Bool {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: result) else {
+        return false
+    }
+    let isRegistered = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: pointer))
+    }
+    guard isRegistered else {
+        return false
+    }
+    return tryCast(pointer, to: RuntimeCancellationBox.self) != nil
 }
 
 /// CORO-003: Per-thread task key used to index into the task-scope map.
@@ -5034,16 +5079,10 @@ final class RuntimeChannelHandle: @unchecked Sendable {
 
     /// Check whether the coroutine associated with `continuation` has been cancelled.
     private func isCancelled(continuation: Int) -> Bool {
-        guard continuation != 0,
-              let ptr = UnsafeMutableRawPointer(bitPattern: continuation)
-        else {
+        guard continuation != 0 else {
             return false
         }
-        let isRegistered = runtimeStorage.withLock { state in
-            state.objectPointers.contains(UInt(bitPattern: ptr))
-        }
-        guard isRegistered,
-              let state = runtimeContinuationState(from: continuation),
+        guard let state = runtimeContinuationState(from: continuation),
               let job = state.jobHandle
         else {
             return false
@@ -5105,10 +5144,36 @@ public func kk_channel_send(_ handle: Int, _ value: Int) -> Int {
 }
 
 /// Swift-only convenience overload that preserves the legacy 3-argument call
-/// sites used by runtime tests. The continuation is ignored because the C ABI
-/// wrapper already normalizes and forwards the send operation.
+/// sites used by runtime tests.
 public func kk_channel_send(_ handle: Int, _ value: Int, _ continuation: Int) -> Int {
-    kk_channel_send(handle, value)
+    func isRegisteredChannelHandle(_ raw: Int) -> Bool {
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+            return false
+        }
+        let isRegistered = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        guard isRegistered else {
+            return false
+        }
+        return tryCast(ptr, to: RuntimeChannelHandle.self) != nil
+    }
+
+    let resolvedHandle: Int
+    let resolvedValue: Int
+    if !isRegisteredChannelHandle(handle), isRegisteredChannelHandle(value) {
+        resolvedHandle = value
+        resolvedValue = handle
+    } else {
+        resolvedHandle = handle
+        resolvedValue = value
+    }
+
+    guard let resolvedPtr = UnsafeMutableRawPointer(bitPattern: resolvedHandle) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_channel_send received invalid channel handle")
+    }
+    let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(resolvedPtr).takeUnretainedValue()
+    return channel.send(resolvedValue, continuation: continuation)
 }
 
 @_cdecl("kk_channel_receive")
@@ -6028,7 +6093,10 @@ public func kk_coroutine_check_cancellation(_ continuation: Int, _ outThrown: Un
         return 0
     }
     if let job = state.jobHandle, job.cancellationSnapshot() {
-        let cancellation = runtimeAllocateCancellationException()
+        let cancellation = runtimeAllocateCancellationException(
+            message: job.cancellationMessageSnapshot(),
+            cause: job.cancellationCauseSnapshot()
+        )
         outThrown?.pointee = cancellation
         return 1
     }
@@ -6064,7 +6132,7 @@ public func kk_coroutine_cancel_current(_ message: Int, _ causeRaw: Int) -> Int 
         return 0
     }
     if let job = state.jobHandle {
-        _ = job.cancel(cause: normalizedCause)
+        _ = job.cancel(message: text, cause: normalizedCause)
     } else if let scope = state.scope {
         scope.cancel(message: text, cause: normalizedCause)
     }
