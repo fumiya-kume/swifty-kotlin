@@ -28,6 +28,9 @@ extension DataFlowSemaPhase {
         classTypeParameterSymbols: [SymbolID] = [],
         classLocalTypeParameters: [InternedString: SymbolID] = [:]
     ) {
+        let sourceFile = ast.files.first { $0.fileID == sourceFileID }
+        let sourcePackageFQName = sourceFile?.packageFQName
+        let sourceImports = sourceFile?.imports ?? []
         let ownerFQName = owner.fqName
         let ownerSymbol = owner.symbol
         let ownerType = owner.type
@@ -125,6 +128,9 @@ extension DataFlowSemaPhase {
                 ast: ast, symbols: symbols, types: types,
                 interner: interner,
                 localTypeParameters: mergedLocalTypeParameters,
+                relativeOwnerFQName: ownerFQName,
+                currentPackageFQName: sourcePackageFQName,
+                imports: sourceImports,
                 diagnostics: diagnostics,
                 fallbackType: anyType
             )
@@ -136,6 +142,9 @@ extension DataFlowSemaPhase {
                 types: types,
                 interner: interner,
                 localTypeParameters: mergedLocalTypeParameters,
+                relativeOwnerFQName: ownerFQName,
+                currentPackageFQName: sourcePackageFQName,
+                imports: sourceImports,
                 diagnostics: diagnostics
             ) {
                 explicit
@@ -310,6 +319,9 @@ extension DataFlowSemaPhase {
                 types: types,
                 interner: interner,
                 localTypeParameters: classLocalTypeParameters,
+                relativeOwnerFQName: ownerFQName,
+                currentPackageFQName: sourcePackageFQName,
+                imports: sourceImports,
                 diagnostics: diagnostics
             ) ?? types.nullableAnyType
             symbols.setPropertyType(resolvedType, for: memberSymbol)
@@ -369,6 +381,9 @@ extension DataFlowSemaPhase {
                         types: types,
                         interner: interner,
                         localTypeParameters: classLocalTypeParameters,
+                        relativeOwnerFQName: ownerFQName,
+                        currentPackageFQName: sourcePackageFQName,
+                        imports: sourceImports,
                         diagnostics: diagnostics
                     ) ?? resolvedType
                 } else {
@@ -447,6 +462,9 @@ extension DataFlowSemaPhase {
         guard let decl = ast.arena.decl(declID) else {
             return
         }
+        let sourceFile = ast.files.first { $0.fileID == sourceFileID }
+        let sourcePackageFQName = sourceFile?.packageFQName
+        let sourceImports = sourceFile?.imports ?? []
         let anyType = types.anyType
         switch decl {
         case let .classDecl(nestedClass):
@@ -537,7 +555,10 @@ extension DataFlowSemaPhase {
                         localNamespaceFQName: localNamespaceFQName,
                         declSite: nestedClass.range,
                         ast: ast, symbols: symbols, types: types,
-                        interner: interner, diagnostics: diagnostics,
+                        interner: interner,
+                        currentPackageFQName: sourcePackageFQName,
+                        imports: sourceImports,
+                        diagnostics: diagnostics,
                         fallbackType: anyType
                     )
                     symbols.setFunctionSignature(
@@ -570,7 +591,10 @@ extension DataFlowSemaPhase {
                     localNamespaceFQName: localNamespaceFQName,
                     declSite: secondaryCtor.range,
                     ast: ast, symbols: symbols, types: types,
-                    interner: interner, diagnostics: diagnostics,
+                    interner: interner,
+                    currentPackageFQName: sourcePackageFQName,
+                    imports: sourceImports,
+                    diagnostics: diagnostics,
                     fallbackType: anyType
                 )
                 symbols.setFunctionSignature(

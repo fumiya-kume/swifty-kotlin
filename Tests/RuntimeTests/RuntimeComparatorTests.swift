@@ -394,6 +394,20 @@ final class RuntimeComparatorTests: XCTestCase {
         }
     }
 
+    func testSortedWithPrimitiveComparatorObjectDispatchesThroughITable() {
+        let source = makeList([5, 3, 8, 1, 4])
+        let comparatorRaw = kk_comparator_from_selector_primitive(selectorPtr(selectIdentity), 0, 0)
+        let sorted = kk_list_sortedWith(source, comparatorRaw, 0, nil)
+        XCTAssertEqual(listElements(sorted), [1, 3, 4, 5, 8])
+    }
+
+    func testSortedWithPrimitiveDescendingComparatorObjectDispatchesThroughITable() {
+        let source = makeList([5, 3, 8, 1, 4])
+        let comparatorRaw = kk_comparator_from_selector_primitive_descending(selectorPtr(selectIdentity), 0, 0)
+        let sorted = kk_list_sortedWith(source, comparatorRaw, 0, nil)
+        XCTAssertEqual(listElements(sorted), [8, 5, 4, 3, 1])
+    }
+
     func testMutableListPrimitiveSortAscending() {
         let source = makeList([5, 3, 8, 1, 4])
         XCTAssertEqual(kk_mutable_list_sort_primitive(source, 0), 0)

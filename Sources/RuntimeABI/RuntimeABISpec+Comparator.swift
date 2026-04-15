@@ -29,6 +29,16 @@ public extension RuntimeABISpec {
             section: "Comparator"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_comparator_from_selector_primitive_descending",
+            parameters: [
+                RuntimeABIParameter(name: "selectorFn", type: .intptr),
+                RuntimeABIParameter(name: "selectorClosure", type: .intptr),
+                RuntimeABIParameter(name: "kindRaw", type: .int32),
+            ],
+            returnType: .intptr,
+            section: "Comparator"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_comparator_from_selector_trampoline",
             parameters: [
                 RuntimeABIParameter(name: "closureRaw", type: .intptr),
