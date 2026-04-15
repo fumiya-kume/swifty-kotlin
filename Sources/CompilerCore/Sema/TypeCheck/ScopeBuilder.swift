@@ -7,7 +7,7 @@ struct TypeCheckScopeBuilder {
         interner: StringInterner
     ) -> [Int32: FileScope] {
         var topLevelSymbolsByPackage = collectTopLevelSymbolsByPackage(ast: ast, sema: sema)
-        let librarySymbolsByPackage = collectLibraryTopLevelSymbolsByPackage(sema: sema)
+        let librarySymbolsByPackage = collectLibraryTopLevelSymbolsByPackage(sema: sema, interner: interner)
         for (packagePath, symbols) in librarySymbolsByPackage {
             topLevelSymbolsByPackage[packagePath, default: []].append(contentsOf: symbols)
         }
@@ -168,7 +168,8 @@ struct TypeCheckScopeBuilder {
     }
 
     func collectLibraryTopLevelSymbolsByPackage(
-        sema: SemaModule
+        sema: SemaModule,
+        interner: StringInterner
     ) -> [[InternedString]: [SymbolID]] {
         var knownPackages: Set<[InternedString]> = []
         for packageID in sema.symbols.symbols(ofKind: .package) {
@@ -192,7 +193,18 @@ struct TypeCheckScopeBuilder {
             {
                 continue
             }
-            let candidatePackage: [InternedString] = if symbol.fqName.count == 1 {
+            let candidatePackage: [InternedString] = if symbol.kind == .property,
+                sema.symbols.extensionPropertyReceiverType(for: symbol.id) != nil,
+                let companionSymbol = sema.symbols.parentSymbol(for: symbol.id),
+                let companionInfo = sema.symbols.symbol(companionSymbol),
+                companionInfo.kind == .object,
+                companionInfo.name == interner.intern("Companion"),
+                let ownerSymbol = sema.symbols.parentSymbol(for: companionSymbol),
+                let ownerInfo = sema.symbols.symbol(ownerSymbol),
+                !ownerInfo.fqName.isEmpty
+            {
+                Array(ownerInfo.fqName.dropLast())
+            } else if symbol.fqName.count == 1 {
                 []
             } else {
                 Array(symbol.fqName.dropLast())

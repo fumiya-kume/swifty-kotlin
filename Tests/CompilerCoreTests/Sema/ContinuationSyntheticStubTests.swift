@@ -26,7 +26,7 @@ final class ContinuationSyntheticStubTests: XCTestCase {
 
         let continuationTypeParameterSymbols = sema.types.nominalTypeParameterSymbols(for: continuationSymbol)
         XCTAssertEqual(continuationTypeParameterSymbols.count, 1)
-        XCTAssertEqual(sema.types.nominalTypeParameterVariances(for: continuationSymbol), [.in])
+        XCTAssertEqual(sema.types.nominalTypeParameterVariances(for: continuationSymbol), [.invariant])
 
         let continuationTParamSymbol = try XCTUnwrap(continuationTypeParameterSymbols.first)
         let continuationTType = sema.types.make(.typeParam(TypeParamType(

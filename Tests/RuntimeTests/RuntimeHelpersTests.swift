@@ -1,3 +1,4 @@
+import Dispatch
 @testable import Runtime
 import XCTest
 
@@ -207,23 +208,54 @@ final class RuntimeHelpersTests: IsolatedRuntimeXCTestCase {
     // MARK: - KxMiniRuntime.runBlocking
 
     func testRunBlockingBlocksUntilCallbackInvoked() {
-        var executed = false
-        KxMiniRuntime.runBlocking { done in
-            executed = true
-            done(nil)
+        let callbackInvoked = expectation(description: "runBlocking callback invoked")
+        let runBlockingReturned = expectation(description: "runBlocking returned")
+
+        DispatchQueue.global().async {
+            KxMiniRuntime.runBlocking { done in
+                callbackInvoked.fulfill()
+                done(nil)
+            }
+            runBlockingReturned.fulfill()
         }
-        XCTAssertTrue(executed)
+
+        wait(for: [callbackInvoked, runBlockingReturned], timeout: 2.0)
     }
 
     func testRunBlockingCompletesWhenCallbackCalledAsync() {
-        var count = 0
-        KxMiniRuntime.runBlocking { done in
-            DispatchQueue.global().async(execute: DispatchWorkItem {
-                count = 42
-                done(nil)
-            })
+        let callbackInvoked = expectation(description: "async callback invoked")
+        let runBlockingReturned = expectation(description: "runBlocking returned after async callback")
+        final class CountBox: @unchecked Sendable {
+            private let lock = NSLock()
+            private var value = 0
+
+            func set(_ newValue: Int) {
+                lock.lock()
+                value = newValue
+                lock.unlock()
+            }
+
+            func get() -> Int {
+                lock.lock()
+                defer { lock.unlock() }
+                return value
+            }
         }
-        XCTAssertEqual(count, 42)
+        let count = CountBox()
+
+        DispatchQueue.global().async {
+            KxMiniRuntime.runBlocking { done in
+                DispatchQueue.global().async(execute: DispatchWorkItem {
+                    count.set(42)
+                    callbackInvoked.fulfill()
+                    done(nil)
+                })
+            }
+            runBlockingReturned.fulfill()
+        }
+
+        wait(for: [callbackInvoked, runBlockingReturned], timeout: 2.0)
+        XCTAssertEqual(count.get(), 42)
     }
 
     // MARK: - KxMiniRuntime.launch

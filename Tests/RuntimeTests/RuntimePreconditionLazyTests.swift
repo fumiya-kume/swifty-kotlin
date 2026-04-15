@@ -47,7 +47,8 @@ final class RuntimePreconditionLazyTests: IsolatedRuntimeXCTestCase {
         _ = kk_require(0, &outThrown)
         XCTAssertNotEqual(outThrown, 0, "require(false) should throw")
         let box = try XCTUnwrap(throwableBox(from: outThrown))
-        XCTAssertTrue(box.message.contains("IllegalArgumentException"))
+        XCTAssertEqual(box.exceptionFQName, "kotlin.IllegalArgumentException")
+        XCTAssertTrue(box.renderedMessage.contains("IllegalArgumentException"))
     }
 
     // MARK: - kk_check (non-lazy)
@@ -63,7 +64,8 @@ final class RuntimePreconditionLazyTests: IsolatedRuntimeXCTestCase {
         _ = kk_check(0, &outThrown)
         XCTAssertNotEqual(outThrown, 0, "check(false) should throw")
         let box = try XCTUnwrap(throwableBox(from: outThrown))
-        XCTAssertTrue(box.message.contains("IllegalStateException"))
+        XCTAssertEqual(box.exceptionFQName, "kotlin.IllegalStateException")
+        XCTAssertTrue(box.renderedMessage.contains("IllegalStateException"))
     }
 
     // MARK: - kk_require_lazy: condition passes
@@ -98,8 +100,8 @@ final class RuntimePreconditionLazyTests: IsolatedRuntimeXCTestCase {
         // The primary exception must be the precondition failure, not the lambda's exception.
         let box = try XCTUnwrap(throwableBox(from: outThrown), "outThrown should be a RuntimeThrowableBox")
         XCTAssertTrue(
-            box.message.contains("IllegalArgumentException"),
-            "Primary exception must be IllegalArgumentException, got: \(box.message)"
+            box.exceptionFQName == "kotlin.IllegalArgumentException",
+            "Primary exception must be IllegalArgumentException, got: \(box.exceptionFQName)"
         )
 
         // The lambda's exception must be attached as the cause.
@@ -122,8 +124,8 @@ final class RuntimePreconditionLazyTests: IsolatedRuntimeXCTestCase {
         // The primary exception must be the precondition failure, not the lambda's exception.
         let box = try XCTUnwrap(throwableBox(from: outThrown), "outThrown should be a RuntimeThrowableBox")
         XCTAssertTrue(
-            box.message.contains("IllegalStateException"),
-            "Primary exception must be IllegalStateException, got: \(box.message)"
+            box.exceptionFQName == "kotlin.IllegalStateException",
+            "Primary exception must be IllegalStateException, got: \(box.exceptionFQName)"
         )
 
         // The lambda's exception must be attached as the cause.
@@ -143,9 +145,10 @@ final class RuntimePreconditionLazyTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(outThrown, 0)
         let box = try XCTUnwrap(throwableBox(from: outThrown))
         XCTAssertTrue(
-            box.message.contains("IllegalArgumentException"),
-            "Should use default IllegalArgumentException message"
+            box.exceptionFQName == "kotlin.IllegalArgumentException",
+            "Should use IllegalArgumentException type"
         )
+        XCTAssertEqual(box.message, "Failed requirement.")
         XCTAssertEqual(box.cause, 0, "No cause when lambda is absent")
     }
 
@@ -157,9 +160,10 @@ final class RuntimePreconditionLazyTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(outThrown, 0)
         let box = try XCTUnwrap(throwableBox(from: outThrown))
         XCTAssertTrue(
-            box.message.contains("IllegalStateException"),
-            "Should use default IllegalStateException message"
+            box.exceptionFQName == "kotlin.IllegalStateException",
+            "Should use IllegalStateException type"
         )
+        XCTAssertEqual(box.message, "Check failed.")
         XCTAssertEqual(box.cause, 0, "No cause when lambda is absent")
     }
 

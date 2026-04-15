@@ -30,7 +30,9 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(channelHandle, 0)
 
         let expectation = XCTestExpectation(description: "receive completes")
+        let sendDone = XCTestExpectation(description: "send completes")
         let receivedValue = ThreadSafeInt()
+        let sendResult = ThreadSafeInt()
 
         // Receive on a background thread (will suspend until a sender pairs).
         DispatchQueue.global().async {
@@ -42,10 +44,13 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         Thread.sleep(forTimeInterval: 0.05)
 
         // Send on the main thread -- should wake the receiver.
-        let sendResult = kk_channel_send(channelHandle, 42, 0)
-        XCTAssertEqual(sendResult, 42, "send should return the sent value")
+        DispatchQueue.global().async {
+            sendResult.set(kk_channel_send(channelHandle, 42, 0))
+            sendDone.fulfill()
+        }
 
-        wait(for: [expectation], timeout: 2.0)
+        wait(for: [expectation, sendDone], timeout: 2.0)
+        XCTAssertEqual(sendResult.get(), 42, "send should return the sent value")
         XCTAssertEqual(receivedValue.get(), 42, "receiver should get the sent value")
 
         _ = kk_channel_close(channelHandle)
@@ -55,7 +60,9 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         let channelHandle = kk_channel_create(0)
 
         let sendDone = XCTestExpectation(description: "send completes")
+        let receiveDone = XCTestExpectation(description: "receive completes")
         let sendResult = ThreadSafeInt()
+        let receivedValue = ThreadSafeInt()
 
         // Send on background thread -- no receiver yet, so it should suspend.
         DispatchQueue.global().async {
@@ -67,10 +74,13 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         Thread.sleep(forTimeInterval: 0.05)
 
         // Receive on the main thread -- should unblock the sender.
-        let received = kk_channel_receive(channelHandle, 0)
-        XCTAssertEqual(received, 99)
+        DispatchQueue.global().async {
+            receivedValue.set(kk_channel_receive(channelHandle, 0))
+            receiveDone.fulfill()
+        }
 
-        wait(for: [sendDone], timeout: 2.0)
+        wait(for: [sendDone, receiveDone], timeout: 2.0)
+        XCTAssertEqual(receivedValue.get(), 99)
         XCTAssertEqual(sendResult.get(), 99)
 
         _ = kk_channel_close(channelHandle)
@@ -270,7 +280,9 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
             let ch = kk_channel_create(0) // rendezvous
 
             let sendDone = XCTestExpectation(description: "send completes")
+            let receiveDone = XCTestExpectation(description: "receive completes")
             let sendResult = ThreadSafeInt()
+            let receivedValue = ThreadSafeInt()
 
             // Sender suspends on rendezvous channel.
             DispatchQueue.global().async {
@@ -280,8 +292,13 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
             Thread.sleep(forTimeInterval: 0.01)
 
             // Receiver accepts the value -- sender should see success.
-            let received = kk_channel_receive(ch, 0)
-            XCTAssertEqual(received, 77)
+            DispatchQueue.global().async {
+                receivedValue.set(kk_channel_receive(ch, 0))
+                receiveDone.fulfill()
+            }
+
+            wait(for: [receiveDone], timeout: 2.0)
+            XCTAssertEqual(receivedValue.get(), 77)
 
             // Close immediately after receive to create the race window.
             _ = kk_channel_close(ch)
@@ -639,7 +656,9 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
         let ch = kk_channel_create(0) // rendezvous
 
         let sendDone = XCTestExpectation(description: "send completes")
+        let receiveDone = XCTestExpectation(description: "receive completes")
         let sendResult = ThreadSafeInt()
+        let receivedValue = ThreadSafeInt()
 
         DispatchQueue.global().async {
             sendResult.set(kk_channel_send(ch, 42, 0)) // no continuation - fallback to semaphore
@@ -648,10 +667,13 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
 
         Thread.sleep(forTimeInterval: 0.05)
 
-        let received = kk_channel_receive(ch, 0)
-        XCTAssertEqual(received, 42)
+        DispatchQueue.global().async {
+            receivedValue.set(kk_channel_receive(ch, 0))
+            receiveDone.fulfill()
+        }
 
-        wait(for: [sendDone], timeout: 2.0)
+        wait(for: [sendDone, receiveDone], timeout: 2.0)
+        XCTAssertEqual(receivedValue.get(), 42)
         XCTAssertEqual(sendResult.get(), 42)
 
         _ = kk_channel_close(ch)

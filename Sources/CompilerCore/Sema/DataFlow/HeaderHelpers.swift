@@ -802,6 +802,9 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         localTypeParameters: [InternedString: SymbolID] = [:],
+        relativeOwnerFQName: [InternedString]? = nil,
+        currentPackageFQName: [InternedString]? = nil,
+        imports: [ImportDecl] = [],
         diagnostics: DiagnosticEngine? = nil,
         fallbackType: TypeID
     ) -> (paramTypes: [TypeID], paramSymbols: [SymbolID], paramHasDefaultValues: [Bool], paramIsVararg: [Bool]) {
@@ -826,6 +829,9 @@ extension DataFlowSemaPhase {
                 types: types,
                 interner: interner,
                 localTypeParameters: localTypeParameters,
+                relativeOwnerFQName: relativeOwnerFQName,
+                currentPackageFQName: currentPackageFQName,
+                imports: imports,
                 diagnostics: diagnostics
             ) ?? fallbackType
             paramTypes.append(resolvedType)
