@@ -67,12 +67,12 @@ final class RuntimeAssertTests: IsolatedRuntimeXCTestCase {
             return
         }
         XCTAssertTrue(
-            throwable.message.hasPrefix("AssertionError:"),
-            "Expected message to start with 'AssertionError:', got: \(throwable.message)"
+            throwable.renderedMessage.hasPrefix("AssertionError:"),
+            "Expected rendered message to start with 'AssertionError:', got: \(throwable.renderedMessage)"
         )
         XCTAssertTrue(
-            throwable.message.contains("Assertion failed"),
-            "Expected message to contain 'Assertion failed', got: \(throwable.message)"
+            throwable.renderedMessage.contains("Assertion failed"),
+            "Expected rendered message to contain 'Assertion failed', got: \(throwable.renderedMessage)"
         )
     }
 
@@ -94,8 +94,8 @@ final class RuntimeAssertTests: IsolatedRuntimeXCTestCase {
             return
         }
         XCTAssertTrue(
-            throwable.message.hasPrefix("AssertionError:"),
-            "Expected default message to start with 'AssertionError:', got: \(throwable.message)"
+            throwable.renderedMessage.hasPrefix("AssertionError:"),
+            "Expected default rendered message to start with 'AssertionError:', got: \(throwable.renderedMessage)"
         )
     }
 
@@ -108,7 +108,7 @@ final class RuntimeAssertTests: IsolatedRuntimeXCTestCase {
             XCTFail("Expected a valid RuntimeThrowableBox")
             return
         }
-        XCTAssertEqual(throwable.message, "AssertionError: custom assert message")
+        XCTAssertEqual(throwable.renderedMessage, "AssertionError: custom assert message")
     }
 
     func testAssertionsCanBeDisabledAtRuntime() {

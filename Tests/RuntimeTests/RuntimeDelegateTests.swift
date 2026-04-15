@@ -126,10 +126,13 @@ private final class LazyPublicationCallbackState: @unchecked Sendable {
         enteredSemaphore.signal()
     }
 
-    func waitForInitializerEntries(_ count: Int) {
+    func waitForInitializerEntries(_ count: Int, timeout: DispatchTimeInterval = .seconds(5)) -> Bool {
         for _ in 0..<count {
-            enteredSemaphore.wait()
+            if enteredSemaphore.wait(timeout: .now() + timeout) != .success {
+                return false
+            }
         }
+        return true
     }
 
     func releaseInitializers(_ count: Int) {
@@ -138,8 +141,8 @@ private final class LazyPublicationCallbackState: @unchecked Sendable {
         }
     }
 
-    func waitForRelease() {
-        releaseSemaphore.wait()
+    func waitForRelease(timeout: DispatchTimeInterval = .seconds(5)) -> Bool {
+        releaseSemaphore.wait(timeout: .now() + timeout) == .success
     }
 
     func callCountSnapshot() -> Int {
@@ -194,7 +197,9 @@ private let lazyPublicationValue: Int = 123
 
 private func lazyPublicationInit() -> Int {
     gLazyPublicationState.recordInitializerEntry()
-    gLazyPublicationState.waitForRelease()
+    guard gLazyPublicationState.waitForRelease() else {
+        return 0
+    }
     return lazyPublicationValue
 }
 
@@ -295,9 +300,10 @@ final class RuntimeDelegateTests: IsolatedRuntimeXCTestCase {
             }
         }
 
-        gLazyPublicationState.waitForInitializerEntries(2)
+        let didObserveInitializers = gLazyPublicationState.waitForInitializerEntries(2)
         gLazyPublicationState.releaseInitializers(2)
-        group.wait()
+        XCTAssertTrue(didObserveInitializers)
+        XCTAssertEqual(group.wait(timeout: .now() + .seconds(5)), .success)
 
         XCTAssertEqual(values.value, [lazyPublicationValue, lazyPublicationValue])
         XCTAssertEqual(gLazyPublicationState.callCountSnapshot(), 2)

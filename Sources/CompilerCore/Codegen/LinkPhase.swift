@@ -117,6 +117,8 @@ public final class LinkPhase: CompilerPhase {
             let stdout = result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
             let output = "STDOUT: \(stdout)\nSTDERR: \(stderr)"
             return "Linker failed with exit code \(result.exitCode):\n\(output)"
+        case let .timedOut(reason):
+            return "Linker timed out: \(reason)"
         }
     }
 
