@@ -13,7 +13,7 @@ fun main() {
     val ints = intArrayOf(4, 5, 6)
     println(ints[1])
 
-    val boxed: Array<Any> = arrayOf<Any>(1, "two", 3)
+    val boxed: Array<Any> = arrayOf(1, "two", 3)
     println(boxed[1])
 
     try {
