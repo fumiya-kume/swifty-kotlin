@@ -1,5 +1,10 @@
 @testable import CompilerCore
 import Foundation
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
 import XCTest
 
 /// Tests for P5-79: property delegation (`by`) full desugaring.
@@ -380,7 +385,34 @@ final class DelegatePropertyKIRTests: XCTestCase {
             process.standardError = stderrPipe
 
             try process.run()
-            process.waitUntilExit()
+            let deadline = Date().addingTimeInterval(5)
+            while process.isRunning, Date() < deadline {
+                Thread.sleep(forTimeInterval: 0.05)
+            }
+            if process.isRunning {
+                process.terminate()
+                // Wait for process to exit after terminate to avoid zombie processes
+                let terminateDeadline = Date().addingTimeInterval(1.0)
+                while process.isRunning, Date() < terminateDeadline {
+                    Thread.sleep(forTimeInterval: 0.05)
+                }
+                if process.isRunning {
+                    // Note: There's a race condition between this check and the kill() call where the process
+                    // could exit and the PID could be reused. This is a fundamental limitation of the kill() API.
+                    let killResult = kill(process.processIdentifier, SIGKILL)
+                    if killResult != 0 && errno != ESRCH {
+                        // kill() failed with error other than ESRCH (no such process)
+                        // ESRCH is expected if process exited between isRunning check and kill call
+                        // Other errors are unusual but we continue anyway
+                    }
+                    let sigkillDeadline = Date().addingTimeInterval(1.0)
+                    while process.isRunning, Date() < sigkillDeadline {
+                        Thread.sleep(forTimeInterval: 0.05)
+                    }
+                }
+                XCTFail("Timed out waiting for delegated property test executable to exit")
+                return
+            }
 
             let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
             let stderr = String(data: stderrData, encoding: .utf8) ?? ""
