@@ -3,6 +3,7 @@ import Foundation
 import XCTest
 
 final class RuntimeSymmetricCryptoTests: IsolatedRuntimeXCTestCase {
+    #if canImport(CommonCrypto)
     private func runtimeString(_ text: String) -> Int {
         text.withCString { cstr in
             cstr.withMemoryRebound(to: UInt8.self, capacity: text.utf8.count) { ptr in
@@ -99,4 +100,5 @@ final class RuntimeSymmetricCryptoTests: IsolatedRuntimeXCTestCase {
         let decrypted = kk_cipher_doFinal(decryptCipher, encryptedEmpty, nil)
         XCTAssertEqual(byteArray(from: decrypted), [])
     }
+    #endif
 }

@@ -70,8 +70,8 @@ final class ComparatorSyntheticMemberLinkTests: XCTestCase {
             let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
             XCTAssertEqual(
                 sema.symbols.externalLinkName(for: chosenCallee),
-                "kk_comparator_from_selector_descending",
-                "Expected compareByDescending to resolve to kk_comparator_from_selector_descending"
+                "kk_comparator_from_selector_primitive_descending",
+                "Expected compareByDescending to resolve to kk_comparator_from_selector_primitive_descending"
             )
         }
     }

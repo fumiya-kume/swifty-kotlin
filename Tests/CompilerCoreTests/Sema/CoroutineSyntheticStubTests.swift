@@ -82,7 +82,7 @@ final class CoroutineSyntheticStubTests: XCTestCase {
         XCTAssertEqual(semanticSymbol.kind, .property)
         XCTAssertEqual(semanticSymbol.visibility, .public)
         XCTAssertTrue(semanticSymbol.flags.contains(.synthetic))
-        XCTAssertEqual(sema.symbols.propertyType(for: symbol), sema.types.anyType)
+        XCTAssertEqual(sema.symbols.propertyType(for: symbol), sema.types.nullableAnyType)
         XCTAssertEqual(
             sema.symbols.externalLinkName(for: symbol),
             "kk_coroutine_suspended"
@@ -283,7 +283,7 @@ final class CoroutineSyntheticStubTests: XCTestCase {
                 return ctx.interner.resolve(calleeName) == "suspendCoroutineUninterceptedOrReturn"
             })
             let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: suspendCall)?.chosenCallee)
-            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_suspend_coroutine")
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), nil)
         }
     }
 

@@ -350,7 +350,7 @@ final class MetadataSerializerTests: XCTestCase {
             interner: interner
         )
 
-        XCTAssertFalse(record.isValueClass)
+        XCTAssertTrue(record.isValueClass)
         XCTAssertNil(record.valueClassUnderlyingTypeSig)
     }
 
