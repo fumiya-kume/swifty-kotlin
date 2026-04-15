@@ -54,7 +54,6 @@ private final class MockURLProtocol: URLProtocol {
     override func stopLoading() {}
 }
 
-#if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
 final class RuntimeHTTPClientTests: IsolatedRuntimeXCTestCase {
     override func resetIsolatedRuntimeTestState() {
         MockURLProtocol.handler = nil
@@ -73,8 +72,24 @@ final class RuntimeHTTPClientTests: IsolatedRuntimeXCTestCase {
         extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? ""
     }
 
+    private func installMockURLProtocol(file: StaticString = #filePath, line: UInt = #line) {
+        let className = NSStringFromClass(MockURLProtocol.self)
+        let resolvedClass = NSClassFromString(className) as? URLProtocol.Type
+        XCTAssertNotNil(resolvedClass, "MockURLProtocol should resolve from NSStringFromClass()", file: file, line: line)
+        setenv("KSWIFTK_HTTP_PROTOCOL_CLASS", className, 1)
+    }
+
+    func testMockURLProtocolClassNameRoundTripsThroughNSClassFromString() {
+        let className = NSStringFromClass(MockURLProtocol.self)
+        let resolvedClass: AnyClass? = NSClassFromString(className)
+        XCTAssertEqual(
+            resolvedClass.map(ObjectIdentifier.init),
+            ObjectIdentifier(MockURLProtocol.self)
+        )
+    }
+
     func testHTTPClientSupportsAuthRedirectsAndAsyncRequests() {
-        setenv("KSWIFTK_HTTP_PROTOCOL_CLASS", NSStringFromClass(MockURLProtocol.self), 1)
+        installMockURLProtocol()
         MockURLProtocol.handler = { request in
             let url = request.url?.absoluteString ?? ""
             if url == "https://example.com/redirect" {
@@ -133,7 +148,7 @@ final class RuntimeHTTPClientTests: IsolatedRuntimeXCTestCase {
     }
 
     func testHTTPClientEncodesTimeoutAsResponseState() {
-        setenv("KSWIFTK_HTTP_PROTOCOL_CLASS", NSStringFromClass(MockURLProtocol.self), 1)
+        installMockURLProtocol()
         MockURLProtocol.handler = { request in
             let response = HTTPURLResponse(
                 url: request.url!,
@@ -154,4 +169,3 @@ final class RuntimeHTTPClientTests: IsolatedRuntimeXCTestCase {
         XCTAssertTrue(stringValue(kk_http_response_errorMessage(responseRaw)).isEmpty == false)
     }
 }
-#endif
