@@ -66,20 +66,21 @@ extension CodegenBackendIntegrationTests {
                 normalizedStdout,
                 """
                 HELLO
-                nil
+                null
                 value:takeIf
-                takeIf
+                null
                 value:takeUnless
                 null
                 make:once
                 once:also
                 value:with
                 with:with
-                kotlin
+                null
                 make:apply
                 apply:done
                 labeled-return
                 """
+                + "\n"
             )
         }
     }
