@@ -38,6 +38,28 @@ final class ReadWriteLockSyntheticLinkTests: XCTestCase {
 
             XCTAssertEqual(readCalls.count, 1, "Expected a single ReentrantReadWriteLock.read call.")
 
+            if case let .memberCall(receiverExpr, _, _, _, _) = ast.arena.expr(readCalls[0]) {
+                let receiverType = sema.bindings.exprTypes[receiverExpr]
+                let renderedReceiverType = receiverType.map(sema.types.renderType) ?? "nil"
+                let diagnosticMessages = ctx.diagnostics.diagnostics.map(\.message)
+                let expectedReceiverType = sema.types.make(.classType(ClassType(
+                    classSymbol: try XCTUnwrap(sema.symbols.lookup(fqName: [
+                        ctx.interner.intern("java"),
+                        ctx.interner.intern("util"),
+                        ctx.interner.intern("concurrent"),
+                        ctx.interner.intern("locks"),
+                        ctx.interner.intern("ReentrantReadWriteLock"),
+                    ])),
+                    args: [],
+                    nullability: .nonNull
+                )))
+                XCTAssertEqual(
+                    receiverType,
+                    expectedReceiverType,
+                    "Expected read() receiver to resolve as java.util.concurrent.locks.ReentrantReadWriteLock, got \(renderedReceiverType); diagnostics: \(diagnosticMessages)"
+                )
+            }
+
             let chosenCallee = try XCTUnwrap(
                 sema.bindings.callBinding(for: readCalls[0])?.chosenCallee,
                 "Expected ReentrantReadWriteLock.read to resolve"

@@ -77,9 +77,9 @@ final class ComparisonSyntheticTopLevelTests: XCTestCase {
             let sema = try XCTUnwrap(ctx.sema)
             let interner = ctx.interner
 
-            for (name, expectedLink) in [
-                ("compareBy", "kk_comparator_from_selector"),
-                ("compareByDescending", "kk_comparator_from_selector_descending"),
+            for (name, expectedResolvedName, expectedLink) in [
+                ("compareBy", "compareByPrimitive", "kk_comparator_from_selector_primitive"),
+                ("compareByDescending", "compareByDescendingPrimitive", "kk_comparator_from_selector_primitive_descending"),
             ] {
                 let callExpr = try XCTUnwrap(
                     firstExprID(in: ast) { _, expr in
@@ -97,8 +97,8 @@ final class ComparisonSyntheticTopLevelTests: XCTestCase {
                 let symbol = try XCTUnwrap(sema.symbols.symbol(chosenCallee))
                 XCTAssertEqual(
                     symbol.fqName.map { interner.resolve($0) },
-                    ["kotlin", "comparisons", name],
-                    "Expected \(name) to resolve to kotlin.comparisons.\(name)"
+                    ["kotlin", "comparisons", expectedResolvedName],
+                    "Expected \(name) to resolve to kotlin.comparisons.\(expectedResolvedName)"
                 )
                 XCTAssertEqual(
                     sema.symbols.externalLinkName(for: chosenCallee),

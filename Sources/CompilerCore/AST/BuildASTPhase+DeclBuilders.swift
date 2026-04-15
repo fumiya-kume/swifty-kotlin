@@ -402,26 +402,17 @@ extension BuildASTPhase {
             return []
         }
 
-        var depth = 0
+        var depth = BracketDepth()
         var arguments: [ValueParamDecl] = []
         var paramTokens: [Token] = []
         var index = startIndex + 1
         while index < tokens.count {
             let token = tokens[index]
-            if token.kind == .symbol(.lParen) {
-                depth += 1
-                if depth > 0 {
-                    paramTokens.append(token)
-                }
-            } else if token.kind == .symbol(.rParen) {
-                if depth == 0 {
-                    break
-                }
-                depth -= 1
-                if depth >= 0 {
-                    paramTokens.append(token)
-                }
-            } else if token.kind == .symbol(.comma), depth == 0 {
+            if token.kind == .symbol(.rParen), depth.paren == 0 {
+                break
+            }
+            depth.track(token.kind)
+            if token.kind == .symbol(.comma), depth.isAtTopLevel {
                 appendValueParameter(from: paramTokens, into: &arguments, interner: interner, astArena: astArena)
                 paramTokens.removeAll(keepingCapacity: true)
             } else {

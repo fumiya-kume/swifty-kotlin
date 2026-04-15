@@ -1,6 +1,12 @@
 @testable import CompilerCore
 import Foundation
 
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
+
 public struct GoldenHarnessCase: Sendable {
     public let sourcePath: String
     public let basename: String
@@ -10,6 +16,7 @@ enum GoldenHarnessAPIError: Error, CustomStringConvertible {
     case unknownSuite(String)
     case workerExecutableNotFound(String)
     case workerFailed(Int32, String)
+    case workerTimedOut(String)
 
     var description: String {
         switch self {
@@ -20,11 +27,20 @@ enum GoldenHarnessAPIError: Error, CustomStringConvertible {
         case let .workerFailed(status, details):
             let suffix = details.isEmpty ? "" : "\n\(details)"
             return "Golden worker failed with exit status \(status)\(suffix)"
+        case let .workerTimedOut(details):
+            let suffix = details.isEmpty ? "" : "\n\(details)"
+            return "Golden worker timed out\(suffix)"
         }
     }
 }
 
 public enum GoldenHarness {
+    private static let subprocessTimeout: TimeInterval = 30
+    private static let pipeDrainTimeout: DispatchTimeInterval = .seconds(20)
+    private static let terminationGracePeriodSeconds: TimeInterval = 1.0
+    private static let sigkillGracePeriodSeconds: TimeInterval = 1.0
+    private static let processPollIntervalSeconds: TimeInterval = 0.05
+
     public static func loadCasesOrCrash(suiteName: String) -> [GoldenHarnessCase] {
         do {
             return try GoldenHarnessCaseDiscovery.loadCases(suite: try suite(named: suiteName)).map {
@@ -51,6 +67,12 @@ public enum GoldenHarness {
     public static func renderInSubprocess(suiteName: String, sourcePath: String) throws -> String {
         let process = Process()
         let stdout = Pipe(), stderr = Pipe()
+        let stdoutAccumulator = DataAccumulator()
+        let stderrAccumulator = DataAccumulator()
+        let stdoutGroup = DispatchGroup()
+        let stderrGroup = DispatchGroup()
+        let stdoutHandle = stdout.fileHandleForReading
+        let stderrHandle = stderr.fileHandleForReading
 
         process.executableURL = try workerExecutableURL()
         process.arguments = [suiteName, sourcePath]
@@ -58,12 +80,65 @@ public enum GoldenHarness {
         process.standardOutput = stdout
         process.standardError = stderr
 
+        drain(pipe: stdout, into: stdoutAccumulator, group: stdoutGroup)
+        drain(pipe: stderr, into: stderrAccumulator, group: stderrGroup)
+        defer {
+            stdoutHandle.readabilityHandler = nil
+            stderrHandle.readabilityHandler = nil
+        }
+
         try process.run()
-        process.waitUntilExit()
-        
-        let stdoutData = stdout.fileHandleForReading.readDataToEndOfFile()
-        let stderrData = stderr.fileHandleForReading.readDataToEndOfFile()
-        
+        let deadline = Date().addingTimeInterval(subprocessTimeout)
+        while process.isRunning, Date() < deadline {
+            Thread.sleep(forTimeInterval: processPollIntervalSeconds)
+        }
+        if process.isRunning {
+            process.terminate()
+            // Wait for process to exit after terminate to avoid zombie processes
+            let terminateDeadline = Date().addingTimeInterval(terminationGracePeriodSeconds)
+            while process.isRunning, Date() < terminateDeadline {
+                Thread.sleep(forTimeInterval: processPollIntervalSeconds)
+            }
+            // If process is still running, send SIGKILL
+            if process.isRunning {
+                // Note: There's a race condition between this check and the kill() call where the process
+                // could exit and the PID could be reused. This is a fundamental limitation of the kill() API.
+                let killResult = kill(process.processIdentifier, SIGKILL)
+                if killResult != 0 && errno != ESRCH {
+                    // kill() failed with error other than ESRCH (no such process)
+                    // ESRCH is expected if process exited between isRunning check and kill call
+                    // Other errors are unusual but we continue anyway
+                }
+                let sigkillDeadline = Date().addingTimeInterval(sigkillGracePeriodSeconds)
+                while process.isRunning, Date() < sigkillDeadline {
+                    Thread.sleep(forTimeInterval: processPollIntervalSeconds)
+                }
+                // Verify process exited after SIGKILL
+                if process.isRunning {
+                    // Process is still running despite SIGKILL - this is unusual but possible
+                    // Include this information in the error message
+                }
+            }
+            let stderrText = String(data: stderrAccumulator.snapshot(), encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let errorMessage = process.isRunning 
+                ? "Worker timed out and survived SIGKILL. \(stderrText)"
+                : stderrText
+            throw GoldenHarnessAPIError.workerTimedOut(errorMessage)
+        }
+
+        // Process has terminated, so stop event-based drain and read remaining data
+        stdoutHandle.readabilityHandler = nil
+        stderrHandle.readabilityHandler = nil
+
+        // Read any remaining data from pipes (safe since process has terminated)
+        let remainingStdout = stdoutHandle.readDataToEndOfFile()
+        let remainingStderr = stderrHandle.readDataToEndOfFile()
+        stdoutAccumulator.append(remainingStdout)
+        stderrAccumulator.append(remainingStderr)
+
+        let stdoutData = stdoutAccumulator.snapshot()
+        let stderrData = stderrAccumulator.snapshot()
+
         guard process.terminationStatus == 0 else {
             let stderrText = String(data: stderrData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             throw GoldenHarnessAPIError.workerFailed(process.terminationStatus, stderrText)
@@ -157,5 +232,43 @@ public enum GoldenHarness {
         // Provide detailed error information for debugging
         let searchedPaths = candidates.map { $0.path }.joined(separator: ", ")
         throw GoldenHarnessAPIError.workerExecutableNotFound("\(workerName) (searched: \(searchedPaths))")
+    }
+
+    private static func drain(
+        pipe: Pipe,
+        into accumulator: DataAccumulator,
+        group: DispatchGroup
+    ) {
+        let handle = pipe.fileHandleForReading
+        group.enter()
+        handle.readabilityHandler = { readableHandle in
+            let data = readableHandle.availableData
+            if data.isEmpty {
+                readableHandle.readabilityHandler = nil
+                group.leave()
+                return
+            }
+            accumulator.append(data)
+        }
+    }
+}
+
+private final class DataAccumulator: @unchecked Sendable {
+    private let lock = NSLock()
+    private var buffer = Data()
+
+    func append(_ data: Data) {
+        guard !data.isEmpty else {
+            return
+        }
+        lock.lock()
+        buffer.append(data)
+        lock.unlock()
+    }
+
+    func snapshot() -> Data {
+        lock.lock()
+        defer { lock.unlock() }
+        return buffer
     }
 }
