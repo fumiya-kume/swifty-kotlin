@@ -54,6 +54,9 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         localTypeParameters: [InternedString: SymbolID] = [:],
+        relativeOwnerFQName: [InternedString]? = nil,
+        currentPackageFQName: [InternedString]? = nil,
+        imports: [ImportDecl] = [],
         diagnostics: DiagnosticEngine? = nil
     ) -> TypeID? {
         let builtinNames = BuiltinTypeNames(interner: interner)
@@ -84,13 +87,43 @@ extension DataFlowSemaPhase {
             }
 
             let candidates: [SemanticSymbol]
-            let fqCandidates = symbols.lookupAll(fqName: path).compactMap { symbols.symbol($0) }
-            if !fqCandidates.isEmpty {
-                candidates = fqCandidates
-            } else if path.count == 1 {
-                candidates = symbols.lookupByShortName(shortName).compactMap { symbols.symbol($0) }
+            if path.count == 1,
+               let relativeOwnerFQName
+            {
+                let relativeCandidates = resolveRelativeNominalCandidates(
+                    named: shortName,
+                    relativeTo: relativeOwnerFQName,
+                    symbols: symbols
+                )
+                if !relativeCandidates.isEmpty {
+                    candidates = relativeCandidates
+                } else {
+                    let fqCandidates = resolveNominalCandidates(
+                        for: path,
+                        currentPackageFQName: currentPackageFQName,
+                        imports: imports,
+                        symbols: symbols
+                    )
+                    if !fqCandidates.isEmpty {
+                        candidates = fqCandidates
+                    } else {
+                        candidates = symbols.lookupByShortName(shortName).compactMap { symbols.symbol($0) }
+                    }
+                }
             } else {
-                candidates = []
+                let fqCandidates = resolveNominalCandidates(
+                    for: path,
+                    currentPackageFQName: currentPackageFQName,
+                    imports: imports,
+                    symbols: symbols
+                )
+                if !fqCandidates.isEmpty {
+                    candidates = fqCandidates
+                } else if path.count == 1 {
+                    candidates = symbols.lookupByShortName(shortName).compactMap { symbols.symbol($0) }
+                } else {
+                    candidates = []
+                }
             }
             if let resolved = candidates.first(where: { isNominalTypeSymbol($0.kind) }) {
                 let resolvedArgs = resolveTypeArgRefs(
@@ -100,6 +133,9 @@ extension DataFlowSemaPhase {
                     types: types,
                     interner: interner,
                     localTypeParameters: localTypeParameters,
+                    relativeOwnerFQName: relativeOwnerFQName,
+                    currentPackageFQName: currentPackageFQName,
+                    imports: imports,
                     diagnostics: diagnostics
                 )
                 if resolved.kind == .typeAlias {
@@ -140,6 +176,9 @@ extension DataFlowSemaPhase {
                     types: types,
                     interner: interner,
                     localTypeParameters: localTypeParameters,
+                    relativeOwnerFQName: relativeOwnerFQName,
+                    currentPackageFQName: currentPackageFQName,
+                    imports: imports,
                     diagnostics: diagnostics
                 ) else {
                     return nil
@@ -155,6 +194,8 @@ extension DataFlowSemaPhase {
                     types: types,
                     interner: interner,
                     localTypeParameters: localTypeParameters,
+                    currentPackageFQName: currentPackageFQName,
+                    imports: imports,
                     diagnostics: diagnostics
                 )
             }
@@ -167,6 +208,9 @@ extension DataFlowSemaPhase {
                     types: types,
                     interner: interner,
                     localTypeParameters: localTypeParameters,
+                    relativeOwnerFQName: relativeOwnerFQName,
+                    currentPackageFQName: currentPackageFQName,
+                    imports: imports,
                     diagnostics: diagnostics
                 ) else {
                     return nil
@@ -180,6 +224,9 @@ extension DataFlowSemaPhase {
                 types: types,
                 interner: interner,
                 localTypeParameters: localTypeParameters,
+                relativeOwnerFQName: relativeOwnerFQName,
+                currentPackageFQName: currentPackageFQName,
+                imports: imports,
                 diagnostics: diagnostics
             ) ?? types.unitType
             return types.make(.functionType(FunctionType(
@@ -200,6 +247,8 @@ extension DataFlowSemaPhase {
                     types: types,
                     interner: interner,
                     localTypeParameters: localTypeParameters,
+                    currentPackageFQName: currentPackageFQName,
+                    imports: imports,
                     diagnostics: diagnostics
                 )
             }
@@ -214,6 +263,9 @@ extension DataFlowSemaPhase {
                 types: types,
                 interner: interner,
                 localTypeParameters: localTypeParameters,
+                relativeOwnerFQName: relativeOwnerFQName,
+                currentPackageFQName: currentPackageFQName,
+                imports: imports,
                 diagnostics: diagnostics
             ) else {
                 return nil
@@ -245,6 +297,78 @@ extension DataFlowSemaPhase {
         return nil
     }
 
+    private func resolveRelativeNominalCandidates(
+        named shortName: InternedString,
+        relativeTo ownerFQName: [InternedString],
+        symbols: SymbolTable
+    ) -> [SemanticSymbol] {
+        guard !ownerFQName.isEmpty else {
+            return []
+        }
+
+        var candidates: [SemanticSymbol] = []
+        var seen: Set<SymbolID> = []
+        var current = ownerFQName
+        while !current.isEmpty {
+            if current.last == shortName {
+                for symbolID in symbols.lookupAll(fqName: current) where seen.insert(symbolID).inserted {
+                    if let symbol = symbols.symbol(symbolID) {
+                        candidates.append(symbol)
+                    }
+                }
+            }
+
+            let nestedFQName = current + [shortName]
+            for symbolID in symbols.lookupAll(fqName: nestedFQName) where seen.insert(symbolID).inserted {
+                if let symbol = symbols.symbol(symbolID) {
+                    candidates.append(symbol)
+                }
+            }
+
+            current.removeLast()
+        }
+        return candidates
+    }
+
+    private func resolveNominalCandidates(
+        for path: [InternedString],
+        currentPackageFQName: [InternedString]?,
+        imports: [ImportDecl],
+        symbols: SymbolTable
+    ) -> [SemanticSymbol] {
+        guard !path.isEmpty else {
+            return []
+        }
+
+        var candidatePaths: [[InternedString]] = [path]
+        if path.count == 1,
+           let currentPackageFQName,
+           !currentPackageFQName.isEmpty
+        {
+            candidatePaths.append(currentPackageFQName + path)
+        }
+        if path.count == 1,
+           let shortName = path.first
+        {
+            for importDecl in imports {
+                if let alias = importDecl.alias, alias == shortName {
+                    candidatePaths.append(importDecl.path)
+                } else if importDecl.alias == nil,
+                          importDecl.path.last == shortName
+                {
+                    candidatePaths.append(importDecl.path)
+                }
+            }
+        }
+
+        var seenPaths: Set<[InternedString]> = []
+        var result: [SemanticSymbol] = []
+        for candidatePath in candidatePaths where seenPaths.insert(candidatePath).inserted {
+            result.append(contentsOf: symbols.lookupAll(fqName: candidatePath).compactMap { symbols.symbol($0) })
+        }
+        return result
+    }
+
     func resolveTypeArgRefs(
         _ argRefs: [TypeArgRef],
         ast: ASTModule,
@@ -252,6 +376,9 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         localTypeParameters: [InternedString: SymbolID] = [:],
+        relativeOwnerFQName: [InternedString]? = nil,
+        currentPackageFQName: [InternedString]? = nil,
+        imports: [ImportDecl] = [],
         diagnostics: DiagnosticEngine? = nil
     ) -> [TypeArg] {
         var result: [TypeArg] = []
@@ -266,6 +393,9 @@ extension DataFlowSemaPhase {
                     types: types,
                     interner: interner,
                     localTypeParameters: localTypeParameters,
+                    relativeOwnerFQName: relativeOwnerFQName,
+                    currentPackageFQName: currentPackageFQName,
+                    imports: imports,
                     diagnostics: diagnostics
                 ) ?? types.errorType
                 result.append(.invariant(resolved))
@@ -277,6 +407,9 @@ extension DataFlowSemaPhase {
                     types: types,
                     interner: interner,
                     localTypeParameters: localTypeParameters,
+                    relativeOwnerFQName: relativeOwnerFQName,
+                    currentPackageFQName: currentPackageFQName,
+                    imports: imports,
                     diagnostics: diagnostics
                 ) ?? types.errorType
                 result.append(.out(resolved))
@@ -288,6 +421,9 @@ extension DataFlowSemaPhase {
                     types: types,
                     interner: interner,
                     localTypeParameters: localTypeParameters,
+                    relativeOwnerFQName: relativeOwnerFQName,
+                    currentPackageFQName: currentPackageFQName,
+                    imports: imports,
                     diagnostics: diagnostics
                 ) ?? types.errorType
                 result.append(.in(resolved))
