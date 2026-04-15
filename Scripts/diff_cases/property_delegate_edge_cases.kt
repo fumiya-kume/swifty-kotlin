@@ -1,3 +1,4 @@
+// SKIP-DIFF
 import kotlin.properties.Delegates
 
 class Holder {
