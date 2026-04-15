@@ -85,7 +85,21 @@ public func kk_comparator_from_selector_primitive(_ selectorFn: Int, _ selectorC
         closureRaw: selectorClosure,
         kind: runtimePrimitiveCompareKind(from: kindRaw)
     )
-    return registerRuntimeObject(box)
+    let raw = registerRuntimeObject(box)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_from_selector_primitive_trampoline)
+    return raw
+}
+
+@_cdecl("kk_comparator_from_selector_primitive_descending")
+public func kk_comparator_from_selector_primitive_descending(_ selectorFn: Int, _ selectorClosure: Int, _ kindRaw: Int32) -> Int {
+    let box = RuntimePrimitiveComparatorBox(
+        fnPtr: selectorFn,
+        closureRaw: selectorClosure,
+        kind: runtimePrimitiveCompareKind(from: kindRaw)
+    )
+    let raw = registerRuntimeObject(box)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_from_selector_primitive_descending_trampoline)
+    return raw
 }
 
 @_cdecl("kk_comparator_from_selector_primitive_trampoline")

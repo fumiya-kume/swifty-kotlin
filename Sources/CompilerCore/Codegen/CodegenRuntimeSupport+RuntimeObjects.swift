@@ -97,7 +97,8 @@ extension CodegenRuntimeSupport {
                 arguments: swiftBuildArguments(target: target),
                 currentDirectoryPath: packageRootURL().path,
                 phaseTimer: nil,
-                subPhaseName: "Link/swift-runtime-build"
+                subPhaseName: "Link/swift-runtime-build",
+                timeout: 300
             )
         } catch let error as CommandRunnerError {
             throw CodegenRuntimeSupportError.runtimeBuildFailed(describeBuild(error))
@@ -113,6 +114,8 @@ extension CodegenRuntimeSupport {
         case let .nonZeroExit(result):
             let stderr = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
             return stderr.isEmpty ? "swift build exited with code \(result.exitCode)." : stderr
+        case let .timedOut(reason):
+            return reason
         }
     }
 
