@@ -2,6 +2,7 @@ import Foundation
 @testable import Runtime
 import XCTest
 
+#if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
 final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
     private func runtimeString(_ text: String) -> Int {
         text.withCString { cstr in
@@ -35,13 +36,29 @@ final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
 
     private func signatureRoundTrip(algorithm: String, message: [UInt8]) -> Bool {
         let keyPair = makeKeyPair()
+        guard keyPair != 0 else {
+            XCTFail("Key pair generation failed")
+            return false
+        }
         let publicKey = kk_keypair_publicKey(keyPair, nil)
+        guard publicKey != 0 else {
+            XCTFail("Public key extraction failed")
+            return false
+        }
         let privateKey = kk_keypair_privateKey(keyPair, nil)
+        guard privateKey != 0 else {
+            XCTFail("Private key extraction failed")
+            return false
+        }
 
         let signer = kk_signature_getInstance(0, runtimeString(algorithm), nil)
         _ = kk_signature_initSign(signer, privateKey, nil)
         _ = kk_signature_update(signer, runtimeBytes(message), nil)
         let signatureBytes = kk_signature_sign(signer, nil)
+        guard signatureBytes != 0 else {
+            XCTFail("Signature creation returned null")
+            return false
+        }
 
         let verifier = kk_signature_getInstance(0, runtimeString(algorithm), nil)
         _ = kk_signature_initVerify(verifier, publicKey, nil)
@@ -79,7 +96,20 @@ final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
         """
 
         let factory = kk_certificatefactory_getInstance(0, runtimeString("X.509"), nil)
-        let certificate = kk_certificatefactory_generateCertificate(factory, runtimeBytes(Array(certPem.utf8)), nil)
+
+        // Convert PEM to DER bytes before passing to the native certificate factory
+        let pemLines = certPem
+            .split(separator: "\n")
+            .filter { !$0.hasPrefix("-----") && !$0.isEmpty }
+        let derDataOptional = Data(base64Encoded: pemLines.joined())
+
+        guard let derData = derDataOptional else {
+            XCTFail("Failed to decode certificate PEM to DER")
+            return
+        }
+
+        let certificate = kk_certificatefactory_generateCertificate(factory, runtimeBytes(Array(derData)), nil)
+        XCTAssertNotEqual(certificate, 0, "certificate factory returned null")
         XCTAssertGreaterThan(byteArray(from: kk_x509certificate_getEncoded(certificate, nil)).count, 0)
         XCTAssertNotEqual(kk_x509certificate_getPublicKey(certificate, nil), 0)
 
@@ -93,3 +123,4 @@ final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
         )
     }
 }
+#endif
