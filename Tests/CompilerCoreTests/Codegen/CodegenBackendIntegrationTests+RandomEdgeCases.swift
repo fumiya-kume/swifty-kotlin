@@ -42,8 +42,8 @@ extension CodegenBackendIntegrationTests {
                 true
                 true
                 true
-                true
                 """
+                + "\n"
             )
         }
     }
