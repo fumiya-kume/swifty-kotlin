@@ -6,7 +6,9 @@ import FoundationNetworking
 import XCTest
 
 // Top-level so NSStringFromClass() works on Linux (nested classes are unsupported).
+#if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
 @objcMembers
+#endif
 private final class MockURLProtocol: URLProtocol {
     private static let handlerLock = NSLock()
     nonisolated(unsafe) private static var _handler: ((URLRequest) -> (HTTPURLResponse, Data?, TimeInterval)?)?
@@ -71,7 +73,11 @@ final class RuntimeHTTPClientTests: IsolatedRuntimeXCTestCase {
     }
 
     func testHTTPClientSupportsAuthRedirectsAndAsyncRequests() {
+        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
         setenv("KSWIFTK_HTTP_PROTOCOL_CLASS", NSStringFromClass(MockURLProtocol.self), 1)
+        #else
+        setenv("KSWIFTK_HTTP_PROTOCOL_CLASS", String(describing: MockURLProtocol.self), 1)
+        #endif
         MockURLProtocol.handler = { request in
             let url = request.url?.absoluteString ?? ""
             if url == "https://example.com/redirect" {
@@ -130,7 +136,11 @@ final class RuntimeHTTPClientTests: IsolatedRuntimeXCTestCase {
     }
 
     func testHTTPClientEncodesTimeoutAsResponseState() {
+        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
         setenv("KSWIFTK_HTTP_PROTOCOL_CLASS", NSStringFromClass(MockURLProtocol.self), 1)
+        #else
+        setenv("KSWIFTK_HTTP_PROTOCOL_CLASS", String(describing: MockURLProtocol.self), 1)
+        #endif
         MockURLProtocol.handler = { request in
             let response = HTTPURLResponse(
                 url: request.url!,
