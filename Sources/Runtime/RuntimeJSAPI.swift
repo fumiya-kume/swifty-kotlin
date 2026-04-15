@@ -429,7 +429,7 @@ public func kk_json_parse(_ rawString: Int) -> Int {
 // MARK: - Promise interop
 
 /// Box type for a native stub of a Kotlin/JS Promise.
-final class RuntimeJsPromiseBox {
+final class RuntimeJsPromiseBox: @unchecked Sendable {
     enum State {
         case pending
         case fulfilled(Int)

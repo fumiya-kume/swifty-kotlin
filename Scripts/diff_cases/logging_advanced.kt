@@ -1,4 +1,4 @@
-// SKIP-DIFF
+// SKIP-DIFF: uses runtime-only APIs (MDC, AdvancedLogger, StructuredAppender) not available in standard kotlinc
 fun main() {
     // MDC basic usage
     println("=== MDC ===")
