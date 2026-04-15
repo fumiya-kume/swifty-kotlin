@@ -152,7 +152,7 @@ final class RuntimeThreadLocalTests: IsolatedRuntimeXCTestCase {
             )
             group.leave()
         }
-        group.wait()
+        XCTAssertEqual(group.wait(timeout: .now() + .seconds(5)), .success)
 
         let secondMainValue = kk_thread_local_getOrSet(
             receiver,
