@@ -63,15 +63,9 @@ private func runtimeTestStringHandle(_ value: String) -> Int {
     }
 }
 
-final class RuntimeSequenceTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        kk_runtime_force_reset()
-    }
-
-    override func tearDown() {
-        kk_runtime_force_reset()
-        super.tearDown()
+final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
+    override func resetIsolatedRuntimeTestState() {
+        _lazyTestYieldCounter = 0
     }
 
     func testSortedByUsesRuntimeValueComparisonForSelectorKeys() {

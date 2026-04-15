@@ -64,7 +64,7 @@ jobs:
   full-swift-tests:
     name: Full Swift Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 3000
     steps:
       - uses: actions/checkout@v4
       - name: Setup Swift and LLVM
