@@ -42,6 +42,7 @@ extension CodegenBackendIntegrationTests {
                 255
                 0
                 """
+                + "\n"
             )
         }
     }
