@@ -43,6 +43,7 @@ extension CodegenBackendIntegrationTests {
                 SS
                 i\u{0307}
                 """
+                + "\n"
             )
         }
     }
