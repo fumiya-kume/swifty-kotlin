@@ -53,6 +53,7 @@ extension CodegenBackendIntegrationTests {
                 true
                 true
                 """
+                + "\n"
             )
         }
     }
