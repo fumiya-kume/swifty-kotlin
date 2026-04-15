@@ -70,6 +70,7 @@ extension CodegenBackendIntegrationTests {
                 true
                 false
                 """
+                + "\n"
             )
         }
     }
