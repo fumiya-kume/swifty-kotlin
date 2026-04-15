@@ -2,6 +2,8 @@ name: CI
 
 on:
   push:
+    branches:
+      - master
   pull_request:
 
 permissions:
@@ -56,6 +58,34 @@ jobs:
             echo '## Smoke test reproduce'
             echo '```bash'
             echo 'SWIFT_TEST_PARALLEL=4 bash Scripts/swift_test.sh --filter SmokeTests -Xswiftc -swift-version -Xswiftc 6'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  full-swift-tests:
+    name: Full Swift Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 3000
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Swift and LLVM
+        uses: ./.github/actions/setup-swift-llvm
+        with:
+          swift-version: "6.2"
+      - name: Show toolchain versions
+        run: swift --version
+      - name: Build with strict concurrency (warnings)
+        run: swift build -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
+      - name: Run full Swift test suite
+        env:
+          SWIFT_TEST_WORKERS: "4"
+        run: bash Scripts/swift_test.sh -Xswiftc -swift-version -Xswiftc 6
+      - name: Full test reproduce hint
+        if: always()
+        run: |
+          {
+            echo '## Full Swift test reproduce'
+            echo '```bash'
+            echo 'SWIFT_TEST_WORKERS=4 bash Scripts/swift_test.sh -Xswiftc -swift-version -Xswiftc 6'
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 

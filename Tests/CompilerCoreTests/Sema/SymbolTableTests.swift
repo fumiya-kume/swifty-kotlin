@@ -147,6 +147,30 @@ final class SymbolTableTests: XCTestCase {
         XCTAssertEqual(symbols.count, 2)
     }
 
+    func testFunctionCanCoexistWithPropertyUsingSameNameInReverseDeclarationOrder() {
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let fqName = [interner.intern("port")]
+        let propertyID = symbols.define(
+            kind: .property,
+            name: interner.intern("port"),
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public
+        )
+        let functionID = symbols.define(
+            kind: .function,
+            name: interner.intern("port"),
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public
+        )
+
+        XCTAssertNotEqual(propertyID, functionID)
+        XCTAssertEqual(symbols.count, 2)
+        XCTAssertEqual(symbols.lookupAll(fqName: fqName), [propertyID, functionID])
+    }
+
     func testExpectAnnotationClassCanCoexistWithActualTypeAlias() throws {
         let interner = StringInterner()
         let symbols = SymbolTable()

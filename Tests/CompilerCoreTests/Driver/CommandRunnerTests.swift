@@ -106,6 +106,23 @@ final class CommandRunnerTests: XCTestCase {
         XCTAssertEqual(result.stderr.count, 131_072)
     }
 
+    func testRunTimedOutProcessThrowsTimedOutError() {
+        XCTAssertThrowsError(
+            try CommandRunner.run(
+                executable: "/bin/sh",
+                arguments: ["-c", "sleep 10"],
+                timeout: 0.1
+            )
+        ) { error in
+            guard case let CommandRunnerError.timedOut(message) = error else {
+                XCTFail("Expected timedOut error, got: \(error)")
+                return
+            }
+            XCTAssertTrue(message.contains("Timed out"))
+            XCTAssertTrue(message.contains("sleep 10"))
+        }
+    }
+
     // MARK: - run: currentDirectoryPath
 
     func testRunCurrentDirectoryPathSetsWorkingDirectory() throws {
