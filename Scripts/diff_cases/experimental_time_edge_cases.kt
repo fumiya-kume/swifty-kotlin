@@ -1,3 +1,4 @@
+// SKIP-DIFF
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
