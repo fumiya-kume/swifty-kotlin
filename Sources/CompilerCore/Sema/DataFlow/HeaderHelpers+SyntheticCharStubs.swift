@@ -119,6 +119,32 @@ private let syntheticCharMemberSpecs: [SyntheticCharMemberSpec] = [
         externalLinkName: "kk_char_toDoubleOrNull",
         returnKind: .nullableDouble
     ),
+    // Surrogate and control character predicates
+    SyntheticCharMemberSpec(
+        name: "isSurrogate",
+        externalLinkName: "kk_char_isSurrogate",
+        returnKind: .boolean
+    ),
+    SyntheticCharMemberSpec(
+        name: "isHighSurrogate",
+        externalLinkName: "kk_char_isHighSurrogate",
+        returnKind: .boolean
+    ),
+    SyntheticCharMemberSpec(
+        name: "isLowSurrogate",
+        externalLinkName: "kk_char_isLowSurrogate",
+        returnKind: .boolean
+    ),
+    SyntheticCharMemberSpec(
+        name: "isISOControl",
+        externalLinkName: "kk_char_isISOControl",
+        returnKind: .boolean
+    ),
+    SyntheticCharMemberSpec(
+        name: "isTitleCase",
+        externalLinkName: "kk_char_isTitleCase",
+        returnKind: .boolean
+    ),
     // Code point and Unicode properties
     SyntheticCharMemberSpec(
         name: "code",

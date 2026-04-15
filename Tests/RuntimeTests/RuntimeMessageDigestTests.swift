@@ -31,6 +31,7 @@ final class RuntimeMessageDigestTests: IsolatedRuntimeXCTestCase {
         }
     }
 
+    #if canImport(CryptoKit)
     func testSupportedMessageDigestsMatchKnownVectors() {
         let input = runtimeBytes(Array("abc".utf8))
         let expectedByAlgorithm: [(String, String)] = [
@@ -46,7 +47,9 @@ final class RuntimeMessageDigestTests: IsolatedRuntimeXCTestCase {
             XCTAssertEqual(byteArray(from: output), hexBytes(expectedHex), "Digest mismatch for \(algorithm)")
         }
     }
+    #endif
 
+    #if canImport(CommonCrypto)
     func testSupportedHmacAlgorithmsMatchKnownVectors() {
         let expectedByAlgorithm: [(String, String)] = [
             ("HmacMD5", "d2fe98063f876b03193afb49b4979591"),
@@ -64,4 +67,5 @@ final class RuntimeMessageDigestTests: IsolatedRuntimeXCTestCase {
             XCTAssertEqual(byteArray(from: output), hexBytes(expectedHex), "HMAC mismatch for \(algorithm)")
         }
     }
+    #endif
 }

@@ -14,6 +14,24 @@ private func runtimeDurationBox(from raw: Int) -> RuntimeDurationBox? {
     return tryCast(ptr, to: RuntimeDurationBox.self)
 }
 
+private func runtimeFormatScaledDuration(_ absNs: Int64, unitDivisor: Int64, suffix: String) -> String {
+    let whole = absNs / unitDivisor
+    let remainder = absNs % unitDivisor
+    guard remainder != 0 else {
+        return "\(whole)\(suffix)"
+    }
+
+    var fraction = String(remainder)
+    let targetWidth = String(unitDivisor - 1).count
+    if fraction.count < targetWidth {
+        fraction = String(repeating: "0", count: targetWidth - fraction.count) + fraction
+    }
+    while fraction.last == "0" {
+        fraction.removeLast()
+    }
+    return "\(whole).\(fraction)\(suffix)"
+}
+
 
 /// Clamp-safe multiplication: returns `Int64.max` / `Int64.min` on overflow
 /// instead of trapping, matching Kotlin's Duration saturation semantics.
@@ -173,15 +191,21 @@ public func kk_duration_toString(_ durationRaw: Int) -> Int {
     } else {
         let isNegative = ns < 0
         let absNs = isNegative ? (ns == Int64.min ? Int64.max : -ns) : ns
-        if absNs % 1_000_000_000 == 0 {
+        if absNs % 3_600_000_000_000 == 0 {
+            let hours = absNs / 3_600_000_000_000
+            str = isNegative ? "-\(hours)h" : "\(hours)h"
+        } else if absNs % 60_000_000_000 == 0 {
+            let minutes = absNs / 60_000_000_000
+            str = isNegative ? "-\(minutes)m" : "\(minutes)m"
+        } else if absNs % 1_000_000_000 == 0 {
             let seconds = absNs / 1_000_000_000
             str = isNegative ? "-\(seconds)s" : "\(seconds)s"
-        } else if absNs % 1_000_000 == 0 {
-            let milliseconds = absNs / 1_000_000
-            str = isNegative ? "-\(milliseconds)ms" : "\(milliseconds)ms"
-        } else if absNs % 1_000 == 0 {
-            let microseconds = absNs / 1_000
-            str = isNegative ? "-\(microseconds)us" : "\(microseconds)us"
+        } else if absNs >= 1_000_000 {
+            let formatted = runtimeFormatScaledDuration(absNs, unitDivisor: 1_000_000, suffix: "ms")
+            str = isNegative ? "-\(formatted)" : formatted
+        } else if absNs >= 1_000 {
+            let formatted = runtimeFormatScaledDuration(absNs, unitDivisor: 1_000, suffix: "us")
+            str = isNegative ? "-\(formatted)" : formatted
         } else {
             str = isNegative ? "-\(absNs)ns" : "\(absNs)ns"
         }
