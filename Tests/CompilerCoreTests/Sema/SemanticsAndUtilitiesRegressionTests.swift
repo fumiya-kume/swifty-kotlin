@@ -3,6 +3,19 @@ import Foundation
 import XCTest
 
 final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
+    private func memberCallExprIDs(named name: String, in ast: ASTModule, interner: StringInterner) -> [ExprID] {
+        ast.arena.exprs.indices.compactMap { index in
+            let exprID = ExprID(rawValue: Int32(index))
+            guard let expr = ast.arena.expr(exprID),
+                  case let .memberCall(_, callee, _, _, _) = expr,
+                  interner.resolve(callee) == name
+            else {
+                return nil
+            }
+            return exprID
+        }
+    }
+
     func testAtomicStoreExpressionIsTypedAsUnit() throws {
         let source = """
         import kotlin.concurrent.atomics.AtomicInt
@@ -20,6 +33,96 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
                 "Atomic.store() should be typed as Unit: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testBuilderMemberChainWithSameNamePropertiesResolvesMemberFunctions() throws {
+        let source = """
+        class Config(
+            val host: String,
+            val port: Int,
+            val debug: Boolean
+        ) {
+            class Builder {
+                var host: String = "localhost"
+                var port: Int = 8080
+                var debug: Boolean = false
+
+                fun host(h: String): Builder { host = h; return this }
+                fun port(p: Int): Builder { port = p; return this }
+                fun debug(d: Boolean): Builder { debug = d; return this }
+                fun build(): Config = Config(host, port, debug)
+            }
+        }
+
+        fun main() {
+            val cfg = Config.Builder()
+                .host("example.com")
+                .port(443)
+                .debug(true)
+                .build()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+            let interner = ctx.interner
+            let helpers = TypeCheckHelpers()
+
+            let builderSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: [interner.intern("Config"), interner.intern("Builder")]),
+                "Expected nested Config.Builder symbol"
+            )
+            let builderType = sema.types.make(.classType(ClassType(classSymbol: builderSymbol, args: [], nullability: .nonNull)))
+            let portCandidates = helpers.collectMemberFunctionCandidates(
+                named: interner.intern("port"),
+                receiverType: builderType,
+                sema: sema,
+                interner: interner
+            )
+            XCTAssertTrue(
+                portCandidates.contains { candidate in
+                    sema.symbols.symbol(candidate)?.fqName == [interner.intern("Config"), interner.intern("Builder"), interner.intern("port")]
+                },
+                "Expected Config.Builder.port to be visible among candidates"
+            )
+
+            let hostCall = try XCTUnwrap(memberCallExprIDs(named: "host", in: ast, interner: interner).first)
+            let portCall = try XCTUnwrap(memberCallExprIDs(named: "port", in: ast, interner: interner).first)
+            let hostExprType = sema.bindings.exprTypes[hostCall]
+            let portExprType = sema.bindings.exprTypes[portCall]
+
+            if case let .memberCall(portReceiverExpr, _, _, _, _) = ast.arena.expr(portCall) {
+                let portReceiverType = sema.bindings.exprTypes[portReceiverExpr]
+                XCTAssertEqual(
+                    portReceiverType,
+                    builderType,
+                    "Expected host() result used as port() receiver to stay Config.Builder, got \(portReceiverType.map(sema.types.renderType) ?? "nil"); diagnostics: \(diagnostics)"
+                )
+            } else {
+                XCTFail("Expected port call expression to be a memberCall")
+            }
+
+            XCTAssertNotNil(sema.bindings.callBinding(for: hostCall)?.chosenCallee, "Expected host() call to resolve")
+            XCTAssertEqual(
+                hostExprType,
+                builderType,
+                "Expected host() to return Config.Builder, got \(hostExprType.map(sema.types.renderType) ?? "nil"); diagnostics: \(diagnostics)"
+            )
+            XCTAssertEqual(
+                portExprType,
+                builderType,
+                "Expected port() to return Config.Builder, got \(portExprType.map(sema.types.renderType) ?? "nil"); diagnostics: \(diagnostics)"
+            )
+            XCTAssertNotNil(
+                sema.bindings.callBinding(for: portCall)?.chosenCallee,
+                "Expected port() call to resolve; diagnostics: \(diagnostics)"
             )
         }
     }
@@ -70,6 +173,7 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
 
         import kotlin.concurrent.atomics.ExperimentalAtomicApi
+        import kotlin.concurrent.atomics.AtomicReference
 
         fun main() {
             val ar = AtomicReference("hello")
