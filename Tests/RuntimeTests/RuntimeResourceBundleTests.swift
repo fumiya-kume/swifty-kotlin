@@ -3,11 +3,14 @@ import Foundation
 import XCTest
 
 final class RuntimeResourceBundleTests: IsolatedRuntimeXCTestCase {
+    override func resetIsolatedRuntimeTestState() {
+        unsetenv("KSWIFTK_RESOURCE_ROOT")
+    }
+
     func testResourceBundleLoadsLocaleSpecificProperties() throws {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         defer {
-            unsetenv("KSWIFTK_RESOURCE_ROOT")
             try? FileManager.default.removeItem(at: dir)
         }
 
@@ -32,7 +35,6 @@ final class RuntimeResourceBundleTests: IsolatedRuntimeXCTestCase {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         defer {
-            unsetenv("KSWIFTK_RESOURCE_ROOT")
             try? FileManager.default.removeItem(at: dir)
         }
 

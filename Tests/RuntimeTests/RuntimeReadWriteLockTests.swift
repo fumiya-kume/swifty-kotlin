@@ -52,7 +52,9 @@ private func runtime_read_write_lock_reader(
     runtimeReadWriteLockStateLock.unlock()
 
     runtimeReadWriteLockReadEnteredSemaphore.signal()
-    runtimeReadWriteLockReadReleaseSemaphore.wait()
+    guard runtimeReadWriteLockReadReleaseSemaphore.wait(timeout: .now() + .seconds(5)) == .success else {
+        return 0
+    }
 
     runtimeReadWriteLockStateLock.lock()
     _runtimeReadWriteLockActiveReaders -= 1

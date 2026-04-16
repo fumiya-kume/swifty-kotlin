@@ -71,12 +71,10 @@ let package = Package(
             exclude: [
                 "GoldenCases",
                 "Integration/ClassDelegationSmokeTest.kt",
-                "Integration/GoldenHarnessAPI.swift",
                 "Integration/GoldenHarnessCaseDiscovery.swift",
                 "Integration/GoldenHarnessDump.swift",
                 "Integration/GoldenHarnessExprFormat.swift",
                 "Integration/GoldenHarnessGoldenFileIO.swift",
-                "Integration/GoldenHarnessPipeline.swift",
                 "Integration/GoldenHarnessGoldenSuiteKind.swift",
                 "Integration/GoldenHarnessPaths.swift",
                 "Integration/GoldenHarnessSemaFormat.swift",

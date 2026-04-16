@@ -51,6 +51,10 @@ private let throwingThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> I
 }
 
 final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
+    override func resetIsolatedRuntimeTestState() {
+        capturedClosureRaw = 0
+    }
+
     private final class DurationResultsBox: @unchecked Sendable {
         private let lock = NSLock()
         private var values: [Int] = []
@@ -725,7 +729,7 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
         let fnPtr = unsafeBitCast(noopThunk, to: Int.self)
         var thrown: Int = 0
         
-        var timestamps: [Int64] = []
+        var durations: [Int64] = []
         let startTime = DispatchTime.now().uptimeNanoseconds
         
         // Perform rapid measurements
@@ -733,24 +737,23 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
             let result = kk_measureTime(fnPtr, i, &thrown)
             XCTAssertEqual(thrown, 0, "Measurement \(i) should not throw")
             let ns = kk_duration_inWholeNanoseconds(result)
-            timestamps.append(Int64(ns))
+            durations.append(Int64(ns))
         }
         
         let endTime = DispatchTime.now().uptimeNanoseconds
         let totalTestTime = endTime - startTime
-        
-        // Verify monotonicity: time should generally increase
-        var nonMonotonicCount = 0
-        for i in 1..<timestamps.count {
-            if timestamps[i] < timestamps[i-1] {
-                nonMonotonicCount += 1
-            }
-        }
-        
-        // Allow some non-monotonic behavior due to system timer resolution and
-        // scheduler noise on loaded CI hosts.
-        let toleranceRatio = Double(nonMonotonicCount) / Double(timestamps.count)
-        XCTAssertLessThan(toleranceRatio, 0.60, "Less than 60% of measurements should be non-monotonic")
+
+        // These are independent duration samples, not timestamps. Validate that
+        // the aggregate measured time stays within the enclosing wall-clock time
+        // with a small allowance for clock sampling overhead.
+        let measuredTotal = durations.reduce(0, +)
+        let aggregateSlackNs: Int64 = 20_000_000
+        XCTAssertGreaterThanOrEqual(durations.min() ?? -1, 0, "Measured durations should never be negative")
+        XCTAssertLessThanOrEqual(
+            measuredTotal,
+            Int64(totalTestTime) + aggregateSlackNs,
+            "Aggregate measured durations should stay close to enclosing wall-clock time"
+        )
         
         // Verify total test time is reasonable
         XCTAssertLessThan(totalTestTime, 10_000_000_000, "50 rapid measurements should complete within 10 seconds")
