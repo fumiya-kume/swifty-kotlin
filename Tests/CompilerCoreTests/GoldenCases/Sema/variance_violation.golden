@@ -3563,19 +3563,19 @@ symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private fl
 symbol s3562 kind=class fq=golden.sema.Producer vis=public flags=_
 symbol s3563 kind=typeParameter fq=golden.sema.Producer.$class3562.T vis=private flags=_
 symbol s3564 kind=constructor fq=golden.sema.Producer.<init> vis=public flags=_ sig=recv=Class#3562<T#3563> params=[T#3563] ret=Class#3562<T#3563> suspend=0 defaults=[0] vararg=[0]
-symbol s3565 kind=valueParameter fq=golden.sema.Producer.<init>.$3564.item vis=private flags=_
-symbol s3566 kind=property fq=golden.sema.Producer.item vis=public flags=_ type=T#3563
+symbol s3565 kind=valueParameter fq=golden.sema.Producer.<init>.$3564.value vis=private flags=_
+symbol s3566 kind=property fq=golden.sema.Producer.value vis=public flags=_ type=T#3563
 symbol s3567 kind=class fq=golden.sema.Consumer vis=public flags=_
 symbol s3568 kind=typeParameter fq=golden.sema.Consumer.$class3567.T vis=private flags=_
 symbol s3569 kind=constructor fq=golden.sema.Consumer.<init> vis=public flags=_ sig=recv=Class#3567<T#3568> params=[] ret=Class#3567<T#3568> suspend=0 defaults=[] vararg=[]
 symbol s3570 kind=function fq=golden.sema.Consumer.accept vis=public flags=_ sig=recv=Class#3567<T#3568> params=[T#3568] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s3571 kind=valueParameter fq=golden.sema.Consumer.accept.$3570.item vis=private flags=_
+symbol s3571 kind=valueParameter fq=golden.sema.Consumer.accept.$3570.value vis=private flags=_
 symbol s3572 kind=function fq=golden.sema.validVariance vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s3573 kind=class fq=golden.sema.BadProducer vis=public flags=_
 symbol s3574 kind=typeParameter fq=golden.sema.BadProducer.$class3573.T vis=private flags=_
 symbol s3575 kind=constructor fq=golden.sema.BadProducer.<init> vis=public flags=_ sig=recv=Class#3573<T#3574> params=[] ret=Class#3573<T#3574> suspend=0 defaults=[] vararg=[]
 symbol s3576 kind=function fq=golden.sema.BadProducer.consume vis=public flags=_ sig=recv=Class#3573<T#3574> params=[T#3574] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s3577 kind=valueParameter fq=golden.sema.BadProducer.consume.$3576.item vis=private flags=_
+symbol s3577 kind=valueParameter fq=golden.sema.BadProducer.consume.$3576.value vis=private flags=_
 symbol s3578 kind=class fq=golden.sema.BadConsumer vis=public flags=_
 symbol s3579 kind=typeParameter fq=golden.sema.BadConsumer.$class3578.T vis=private flags=_
 symbol s3580 kind=constructor fq=golden.sema.BadConsumer.<init> vis=public flags=_ sig=recv=Class#3578<T#3579> params=[] ret=Class#3578<T#3579> suspend=0 defaults=[] vararg=[]
@@ -3590,7 +3590,7 @@ file f0 package=golden.sema
   decl d8 class BadConsumer sym=s3578
 expr e0 name(Producer) type=_
 expr e1 int(42) type=Int
-expr e2 call callee=e0 args=[_:e1] type=<error>
+expr e2 call callee=e0 args=[_:e1] type=Class#3562<Any> call=s3564 map=[0->0] targs=[Any]
 expr e3 localDecl p mutable=0 type=t3 init=e2 type=Unit ref=s3582
 expr e4 name(Consumer) type=_
 expr e5 call callee=e4 args=[] type=<error>

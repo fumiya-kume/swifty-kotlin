@@ -3607,8 +3607,8 @@ expr e39 int(1) type=Int
 expr e40 call callee=e38 args=[_:e39] type=Class#123<out Int>
 expr e41 name(listOf) type=_
 expr e42 call callee=e41 args=[] type=Any
-expr e43 call callee=e35 args=[_:e37,_:e40,_:e42] type=Class#123<out Any?>
-expr e44 memberCall recv=e43 callee=flatten args=[] type=Class#123<Any?>
+expr e43 call callee=e35 args=[_:e37,_:e40,_:e42] type=Class#123<out Any>
+expr e44 memberCall recv=e43 callee=flatten args=[] type=Class#123<Any>
 expr e45 call callee=e34 args=[_:e44] type=Unit call=s1718 map=[0->0] targs=[]
 expr e46 name(println) type=_
 expr e47 name(listOf) type=_
@@ -3637,8 +3637,8 @@ expr e69 call callee=e68 args=[] type=Any
 expr e70 name(listOf) type=_
 expr e71 string(x) type=String
 expr e72 call callee=e70 args=[_:e71] type=Class#123<out String>
-expr e73 call callee=e67 args=[_:e69,_:e72] type=Class#123<out Any?>
-expr e74 memberCall recv=e73 callee=flatten args=[] type=Class#123<Any?>
+expr e73 call callee=e67 args=[_:e69,_:e72] type=Class#123<out Any>
+expr e74 memberCall recv=e73 callee=flatten args=[] type=Class#123<Any>
 expr e75 call callee=e66 args=[_:e74] type=Unit call=s1718 map=[0->0] targs=[]
 expr e76 int(1) type=Int
 expr e77 int(10) type=Int
