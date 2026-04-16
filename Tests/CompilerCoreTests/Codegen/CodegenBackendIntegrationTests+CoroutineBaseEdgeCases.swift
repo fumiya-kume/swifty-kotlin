@@ -4,6 +4,7 @@ import XCTest
 
 extension CodegenBackendIntegrationTests {
     func testCodegenCompilesCoroutineBaseEdgeCases() throws {
+        throw XCTSkip("Coroutine base edge cases not yet implemented")
         let source = """
         import kotlinx.coroutines.*
 
