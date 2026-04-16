@@ -11,8 +11,4 @@ fun main() {
     val b8 = rangedBits.nextInt(256)
     println(b1 == 0 || b1 == 1)
     println(b8 >= 0 && b8 < 256)
-
-    val d1 = Random(99).nextDouble()
-    val d2 = Random(99).nextDouble()
-    println(d1 == d2)
 }
