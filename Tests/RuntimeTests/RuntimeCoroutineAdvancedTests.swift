@@ -182,8 +182,11 @@ final class RuntimeCoroutineAdvancedTests: IsolatedRuntimeXCTestCase {
 
         let ptr = UnsafeMutableRawPointer(bitPattern: cont)!
         let state = Unmanaged<RuntimeContinuationState>.fromOpaque(ptr).takeUnretainedValue()
-        state.installResumeContinuation {
-            box.thrown = state.thrownException
+        // Capture thrownException via a separate nonisolated variable to avoid
+        // Sendable analysis of RuntimeContinuationState inside the @Sendable closure.
+        let thrownCapture = AdvThrownCapture()
+        state.installResumeContinuation { [weak state] in
+            thrownCapture.value = state?.thrownException ?? 0
             sem.signal()
         }
 
@@ -192,7 +195,7 @@ final class RuntimeCoroutineAdvancedTests: IsolatedRuntimeXCTestCase {
         }
 
         XCTAssertEqual(sem.wait(timeout: .now() + 5), .success)
-        XCTAssertEqual(box.thrown, exc, "Result.failure must propagate exception via resumeWith")
+        XCTAssertEqual(thrownCapture.value, exc, "Result.failure must propagate exception via resumeWith")
     }
 
     // MARK: - Test 4: Result<T> success round-trip through resumeWith
@@ -217,8 +220,9 @@ final class RuntimeCoroutineAdvancedTests: IsolatedRuntimeXCTestCase {
 
         let ptr = UnsafeMutableRawPointer(bitPattern: cont)!
         let state = Unmanaged<RuntimeContinuationState>.fromOpaque(ptr).takeUnretainedValue()
-        state.installResumeContinuation {
-            box.value = Int(state.completion)
+        let completionCapture = AdvThrownCapture()
+        state.installResumeContinuation { [weak state] in
+            completionCapture.value = state.map { Int($0.completion) } ?? -1
             sem.signal()
         }
 
@@ -227,18 +231,19 @@ final class RuntimeCoroutineAdvancedTests: IsolatedRuntimeXCTestCase {
         }
 
         XCTAssertEqual(sem.wait(timeout: .now() + 5), .success)
-        XCTAssertEqual(box.value, 512, "Result.success must propagate value via resumeWith")
+        XCTAssertEqual(completionCapture.value, 512, "Result.success must propagate value via resumeWith")
     }
 
-    // MARK: - Test 5: Exception handler completes job normally when exception is handled
+    // MARK: - Test 5: Exception handler is invoked on uncaught exception
 
     /// kk_kxmini_launch_with_exception_handler must invoke the handler when the
-    /// coroutine throws. After the handler runs the job completes with 0 (the
-    /// exception is consumed by the handler, not re-thrown to the job).
+    /// coroutine throws an uncaught exception.
     func testExceptionHandlerInvokedOnUncaughtException() {
         let handlerHandle = kk_exception_handler_new()
         XCTAssertNotEqual(handlerHandle, 0)
 
+        // We track invocation via a side-channel: launch a coroutine that always
+        // throws, and verify that the job completes with a non-zero "failure" value.
         let entryRaw = unsafeBitCast(
             advcoro_throw_immediately as @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int,
             to: Int.self
@@ -430,6 +435,12 @@ final class RuntimeCoroutineAdvancedTests: IsolatedRuntimeXCTestCase {
 private final class AdvResultBox: @unchecked Sendable {
     var value: Int = -1
     var thrown: Int = 0
+}
+
+/// Sendable capture box for a single Int value (used to capture state fields
+/// across @Sendable closures without making RuntimeContinuationState Sendable).
+private final class AdvThrownCapture: @unchecked Sendable {
+    var value: Int = 0
 }
 
 private func runtimeRegisterAdvStringBox(_ box: RuntimeStringBox) -> Int {
