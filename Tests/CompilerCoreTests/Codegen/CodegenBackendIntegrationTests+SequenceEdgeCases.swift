@@ -37,8 +37,7 @@ extension CodegenBackendIntegrationTests {
                 [4]
                 [4, 8]
                 """
-                + "
-"
+                + "\n"
             )
         }
     }
