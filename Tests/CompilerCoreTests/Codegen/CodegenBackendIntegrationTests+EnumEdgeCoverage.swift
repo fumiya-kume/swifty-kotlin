@@ -37,9 +37,7 @@ extension CodegenBackendIntegrationTests {
             try LinkPhase().run(ctx)
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let normalizedStdout = result.stdout.replacingOccurrences(of: "
-", with: "
-")
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(
                 normalizedStdout,
                 """
@@ -50,6 +48,7 @@ extension CodegenBackendIntegrationTests {
                 1
                 invalid-enum-name
                 """
+                + "\n"
             )
         }
     }
