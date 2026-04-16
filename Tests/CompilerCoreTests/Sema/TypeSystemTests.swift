@@ -300,11 +300,11 @@ final class TypeSystemTests: XCTestCase {
         XCTAssertEqual(ts.lub([intType, intType, intType]), intType)
     }
 
-    func testLubOfMixedTypesReturnsNullableAny() {
+    func testLubOfMixedTypesReturnsAny() {
         let ts = TypeSystem()
         let intType = ts.make(.primitive(.int, .nonNull))
         let stringType = ts.make(.primitive(.string, .nonNull))
-        XCTAssertEqual(ts.lub([intType, stringType]), ts.nullableAnyType)
+        XCTAssertEqual(ts.lub([intType, stringType]), ts.anyType)
     }
 
     func testLubFiltersNothingAndError() {

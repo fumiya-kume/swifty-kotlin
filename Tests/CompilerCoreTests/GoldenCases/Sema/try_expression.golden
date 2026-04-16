@@ -3661,7 +3661,7 @@ expr e57 string(handled) type=String
 expr e58 blockExpr stmts=[] trailing=e57 type=String ref=s3585
 expr e59 int(7) type=Int
 expr e60 blockExpr stmts=[] trailing=e59 type=Int ref=s3586
-expr e61 try body=e56 catches=[e58,e60] finally=_ type=Any?
+expr e61 try body=e56 catches=[e58,e60] finally=_ type=Any
 expr e62 localDecl x mutable=1 type=t12 init=_ type=Unit ref=s3587
 expr e63 name(flag) type=Boolean ref=s3576
 expr e64 name(Handled) type=_

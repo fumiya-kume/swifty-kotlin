@@ -92,10 +92,9 @@ extension OverloadResolverTests {
 
         XCTAssertEqual(resolved.chosenCallee, fn)
         XCTAssertNil(resolved.diagnostic)
-        // LUB(Int, String) = Any? (nullableAnyType) because the current
-        // LUB implementation returns nullableAnyType when all types satisfy
-        // isSubtype($0, nullableAnyType).
-        XCTAssertEqual(resolved.substitutedTypeArguments[TypeVarID(rawValue: 0)], types.nullableAnyType)
+        // LUB(Int, String) = Any (anyType) because the LUB implementation
+        // returns anyType when all types are non-null and satisfy isSubtype($0, anyType).
+        XCTAssertEqual(resolved.substitutedTypeArguments[TypeVarID(rawValue: 0)], types.anyType)
     }
 
     // P5-85: listOf<Int>(1, 2) – explicit type argument overrides inference

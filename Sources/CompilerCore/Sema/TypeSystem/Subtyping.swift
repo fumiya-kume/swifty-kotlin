@@ -313,6 +313,9 @@ extension TypeSystem {
             first
         } else if let kClassLub = lubKClassTypes(filtered) {
             kClassLub
+        } else if filtered.allSatisfy({ isSubtype($0, anyType) }) {
+            // All types are non-null subtypes of Any — prefer non-null LUB.
+            anyType
         } else if filtered.allSatisfy({ isSubtype($0, nullableAnyType) }) {
             nullableAnyType
         } else {
