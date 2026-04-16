@@ -3587,7 +3587,7 @@ symbol s3585 kind=local fq=__local_44.e vis=private flags=_ type=Class#395
 symbol s3586 kind=local fq=__local_54.f vis=private flags=_ type=Class#397
 symbol s3587 kind=local fq=__local_64.g vis=private flags=_ type=Class#399
 symbol s3588 kind=local fq=__local_74.h vis=private flags=_ type=Class#401
-symbol s3589 kind=local fq=__local_84.mixed vis=private flags=_ type=Class#381<Any?>
+symbol s3589 kind=local fq=__local_84.mixed vis=private flags=_ type=Class#381<Any>
 symbol s3590 kind=local fq=__local_99.i vis=private flags=_ type=Class#381<Int>
 symbol s3591 kind=local fq=__local_106.strings vis=private flags=_ type=Class#381<String>
 symbol s3592 kind=local fq=__local_117.array vis=private flags=_ type=Class#381<out Any>
@@ -3701,10 +3701,10 @@ expr e79 name(arrayOf) type=_
 expr e80 int(1) type=Int
 expr e81 string(two) type=String
 expr e82 double(3.0) type=Double
-expr e83 call callee=e79 args=[_:e80,_:e81,_:e82] type=Class#381<Any?> call=s387 map=[0->0,1->0,2->0] targs=[Any?]
+expr e83 call callee=e79 args=[_:e80,_:e81,_:e82] type=Class#381<Any> call=s387 map=[0->0,1->0,2->0] targs=[Any]
 expr e84 localDecl mixed mutable=0 type=_ init=e83 type=Unit ref=s3589
 expr e85 name(println) type=_
-expr e86 name(mixed) type=Class#381<Any?> ref=s3589
+expr e86 name(mixed) type=Class#381<Any> ref=s3589
 expr e87 memberCall recv=e86 callee=size args=[] type=Int ref=s383
 expr e88 call callee=e85 args=[_:e87] type=Unit call=s1718 map=[0->0] targs=[]
 expr e89 name(Array) type=_

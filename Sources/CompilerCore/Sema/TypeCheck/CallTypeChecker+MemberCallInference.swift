@@ -2910,16 +2910,30 @@ extension CallTypeChecker {
             if args.isEmpty && (calleeStr == "isNaN" || calleeStr == "isInfinite" || calleeStr == "isFinite" ||
                                calleeStr == "toBits" || calleeStr == "toRawBits" || calleeStr == "ulp" ||
                                calleeStr == "nextUp" || calleeStr == "nextDown") {
-                
+
                 let resultType: TypeID = switch calleeStr {
                 case "isNaN", "isInfinite", "isFinite": sema.types.booleanType
                 case "toBits", "toRawBits": receiverForCheck == doubleType ? sema.types.longType : sema.types.intType
                 case "ulp", "nextUp", "nextDown": receiverForCheck
                 default: sema.types.errorType
                 }
-                
+
                 if resultType != sema.types.errorType {
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    // Bind the synthetic coercion function so the KIR lowerer
+                    // emits the correct external link name (e.g. kk_double_isNaN).
+                    let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
+                    let funcFQName = kotlinPkg + [calleeName]
+                    if let chosen = sema.symbols.lookupAll(fqName: funcFQName).first(where: { symbolID in
+                        guard let sig = sema.symbols.functionSignature(for: symbolID) else { return false }
+                        return sig.receiverType == receiverForCheck
+                    }) {
+                        sema.bindings.bindCall(id, binding: CallBinding(
+                            chosenCallee: chosen,
+                            substitutedTypeArguments: [],
+                            parameterMapping: [:]
+                        ))
+                    }
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
                 }

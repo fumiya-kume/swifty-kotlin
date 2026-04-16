@@ -1,6 +1,10 @@
+// SKIP-DIFF
 // JS-specific API smoke test (STDLIB-JS-167)
 // This file exercises the Kotlin/JS annotations and types so that the compiler
 // can parse, type-check, and lower them on native targets.
+// @JsName / @JsExport / @JsModule are Kotlin/JS-only annotations and are not
+// available in the standard kotlinc JVM backend, so this file is excluded from
+// the kotlinc diff regression test.
 
 @JsName("myRenamedFunction")
 fun namedFunction(): String = "renamed"

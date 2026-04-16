@@ -3565,7 +3565,7 @@ symbol s3563 kind=local fq=__for_51.i vis=private flags=_
 symbol s3564 kind=local fq=__local_54.largeSeq vis=private flags=_ type=Class#114<out Class#123<out Int>>
 symbol s3565 kind=local fq=__local_58.flattenedSeq vis=private flags=_ type=Class#123<Int>
 symbol s3566 kind=local fq=__local_89.nestedSeq vis=private flags=_ type=Class#114<out Class#114<out Int>>
-symbol s3567 kind=local fq=__local_108.mixedSeq vis=private flags=_ type=Class#114<out Any?>
+symbol s3567 kind=local fq=__local_108.mixedSeq vis=private flags=_ type=Class#114<out Any>
 symbol s3568 kind=local fq=__local_122.singleSeq vis=private flags=_ type=Class#114<out Class#123<out Int>>
 file f0 package=_
   decl d0 fun main suspend=0 inline=0 sym=s3562
@@ -3593,9 +3593,9 @@ expr e20 int(1) type=Int
 expr e21 call callee=e19 args=[_:e20] type=Class#123<out Int>
 expr e22 name(listOf) type=_
 expr e23 call callee=e22 args=[] type=Any
-expr e24 call callee=e16 args=[_:e18,_:e21,_:e23] type=Class#114<out Any?> call=s1741 map=[0->0,1->0,2->0] targs=[Any?]
-expr e25 memberCall recv=e24 callee=flatten args=[] type=Class#114<out Any?>
-expr e26 memberCall recv=e25 callee=toList args=[] type=Class#123<Any?> call=s1763 map=[] targs=[]
+expr e24 call callee=e16 args=[_:e18,_:e21,_:e23] type=Class#114<out Any> call=s1741 map=[0->0,1->0,2->0] targs=[Any]
+expr e25 memberCall recv=e24 callee=flatten args=[] type=Class#114<out Any>
+expr e26 memberCall recv=e25 callee=toList args=[] type=Class#123<Any> call=s1763 map=[] targs=[]
 expr e27 call callee=e15 args=[_:e26] type=Unit call=s1718 map=[0->0] targs=[]
 expr e28 name(println) type=_
 expr e29 string(
@@ -3679,12 +3679,12 @@ expr e103 name(sequenceOf) type=_
 expr e104 int(3) type=Int
 expr e105 int(4) type=Int
 expr e106 call callee=e103 args=[_:e104,_:e105] type=Class#114<out Int> call=s1741 map=[0->0,1->0] targs=[Int]
-expr e107 call callee=e98 args=[_:e102,_:e106] type=Class#114<out Any?> call=s1741 map=[0->0,1->0] targs=[Any?]
+expr e107 call callee=e98 args=[_:e102,_:e106] type=Class#114<out Any> call=s1741 map=[0->0,1->0] targs=[Any]
 expr e108 localDecl mixedSeq mutable=0 type=_ init=e107 type=Unit ref=s3567
 expr e109 name(println) type=_
-expr e110 name(mixedSeq) type=Class#114<out Any?> ref=s3567
-expr e111 memberCall recv=e110 callee=flatten args=[] type=Class#114<out Any?>
-expr e112 memberCall recv=e111 callee=toList args=[] type=Class#123<Any?> call=s1763 map=[] targs=[]
+expr e110 name(mixedSeq) type=Class#114<out Any> ref=s3567
+expr e111 memberCall recv=e110 callee=flatten args=[] type=Class#114<out Any>
+expr e112 memberCall recv=e111 callee=toList args=[] type=Class#123<Any> call=s1763 map=[] targs=[]
 expr e113 call callee=e109 args=[_:e112] type=Unit call=s1718 map=[0->0] targs=[]
 expr e114 name(println) type=_
 expr e115 string(

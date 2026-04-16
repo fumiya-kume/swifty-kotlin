@@ -1,0 +1,87 @@
+@testable import CompilerCore
+import Foundation
+import XCTest
+
+extension CodegenBackendIntegrationTests {
+    func testCodegenCompilesScopeFunctionEdgeCases() throws {
+        let source = """
+        fun traceValue(tag: String): String {
+            println("value:$tag")
+            return tag
+        }
+
+        fun makeTaggedBuilder(tag: String): StringBuilder {
+            println("make:$tag")
+            return StringBuilder(tag)
+        }
+
+        fun labeledResult(): String = run {
+            if (true) return@run "labeled-return"
+            "unreachable"
+        }
+
+        fun main() {
+            val nullableInput: String? = "hello"
+            println(nullableInput?.let { it.uppercase() })
+            println((null as String?)?.let { it.uppercase() })
+
+            println(traceValue("takeIf").takeIf { it.startsWith("take") })
+            println(traceValue("takeUnless").takeUnless { it.endsWith("less") })
+
+            val alsoResult = makeTaggedBuilder("once").also { it.append(":also") }.toString()
+            println(alsoResult)
+
+            val withResult = with(traceValue("with")) {
+                this + ":with"
+            }
+            println(withResult)
+
+            val nested = "kotlin"
+                .takeIf { it.startsWith("kot") }
+                ?.let { it.takeUnless { inner -> inner.length > 10 } }
+            println(nested)
+
+            val applyResult = makeTaggedBuilder("apply").apply {
+                append(":done")
+            }.toString()
+            println(applyResult)
+
+            println(labeledResult())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ScopeFunctionEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                HELLO
+                null
+                value:takeIf
+                null
+                value:takeUnless
+                null
+                make:once
+                once:also
+                value:with
+                with:with
+                null
+                make:apply
+                apply:done
+                labeled-return
+                """
+                + "\n"
+            )
+        }
+    }
+}

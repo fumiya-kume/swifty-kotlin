@@ -530,7 +530,11 @@ extension BuildASTPhase {
             return
         }
 
-        let colonIndex = withoutDefault.firstIndex(where: { token in
+        // Skip leading annotations (e.g. @field:FieldMark, @Deprecated("msg"))
+        // so their colons are not confused with the parameter name:type colon.
+        let afterAnnotations = skipLeadingAnnotations(in: withoutDefault)
+
+        let colonIndex = withoutDefault[afterAnnotations...].firstIndex(where: { token in
             if case .symbol(.colon) = token.kind {
                 return true
             }
@@ -597,6 +601,40 @@ extension BuildASTPhase {
             isVararg: isVararg,
             defaultValue: defaultValueExpr
         ))
+    }
+
+    /// Returns the index of the first token after any leading annotations in a
+    /// parameter token list.  Annotations can be `@Name`, `@target:Name`, or
+    /// `@Name(args)` with nested parentheses.
+    private func skipLeadingAnnotations(in tokens: [Token]) -> Int {
+        var i = 0
+        while i < tokens.count {
+            guard case .symbol(.at) = tokens[i].kind else { break }
+            i += 1 // skip '@'
+            guard i < tokens.count else { break }
+            // Skip optional use-site target: `field:`, `get:`, `set:`, etc.
+            if i + 1 < tokens.count,
+               case .symbol(.colon) = tokens[i + 1].kind,
+               isTypeLikeNameToken(tokens[i].kind) {
+                i += 2 // skip `target` and `:`
+            }
+            guard i < tokens.count else { break }
+            // Skip annotation name
+            if isTypeLikeNameToken(tokens[i].kind) {
+                i += 1
+            }
+            // Skip optional parenthesised arguments: `(args)`
+            if i < tokens.count, case .symbol(.lParen) = tokens[i].kind {
+                var depth = 1
+                i += 1
+                while i < tokens.count, depth > 0 {
+                    if case .symbol(.lParen) = tokens[i].kind { depth += 1 }
+                    if case .symbol(.rParen) = tokens[i].kind { depth -= 1 }
+                    i += 1
+                }
+            }
+        }
+        return i
     }
 
     private func primaryConstructorPropertyDecls(
