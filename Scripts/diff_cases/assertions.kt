@@ -1,4 +1,6 @@
-// SKIP-DIFF: exception type catch clauses (AssertionError, IllegalArgumentException, IllegalStateException) not yet supported
+// SKIP-DIFF: assert() is enabled by default in kswiftc runtime but disabled on the JVM
+// reference (requires `-ea`), so stdout diverges. AssertionError/Error type catches now
+// resolve in Sema; require/check/error cases pass parity.
 fun main() {
     // assert passes when condition is true
     assert(true)
