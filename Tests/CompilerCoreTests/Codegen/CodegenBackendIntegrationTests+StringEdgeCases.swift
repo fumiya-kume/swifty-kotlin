@@ -58,6 +58,8 @@ extension CodegenBackendIntegrationTests {
                 seq-mixed:a|b|c
                 seq-head-tail:|alpha|
                 """
+                + "
+"
             )
         }
     }
