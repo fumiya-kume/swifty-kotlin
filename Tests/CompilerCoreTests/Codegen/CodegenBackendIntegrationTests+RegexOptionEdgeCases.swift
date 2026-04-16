@@ -4,7 +4,9 @@ import XCTest
 
 extension CodegenBackendIntegrationTests {
     func testCodegenCompilesRegexOptionEdgeCases() throws {
+        #if os(Linux)
         throw XCTSkip("Regex option edge cases test temporarily disabled on Linux")
+        #endif
         let source = """
         fun main() {
             val ignoreCase = Regex("hello", RegexOption.IGNORE_CASE)
