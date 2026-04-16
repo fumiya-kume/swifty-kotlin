@@ -4,27 +4,7 @@ import XCTest
 
 final class SmokeTests: XCTestCase {
     func testSmokeDriverKirDumpSucceedsForMinimalProgram() throws {
-        try withTemporaryFile(contents: "fun main() = 0") { path in
-            let fileManager = FileManager.default
-            let outputBase = fileManager.temporaryDirectory
-                .appendingPathComponent(UUID().uuidString)
-                .path
-            defer {
-                try? fileManager.removeItem(atPath: outputBase + ".kir")
-            }
-
-            let options = makeTestOptions(
-                moduleName: "SmokeKir",
-                inputs: [path],
-                outputPath: outputBase,
-                emit: .kirDump
-            )
-            let result = makeTestDriver().runForTesting(options: options)
-
-            XCTAssertEqual(result.exitCode, 0)
-            XCTAssertFalse(result.diagnostics.contains(where: { $0.severity == .error }))
-            XCTAssertTrue(fileManager.fileExists(atPath: outputBase + ".kir"))
-        }
+        try assertKotlinCompilesToKIR("fun main() = 0", moduleName: "SmokeKir")
     }
 
     func testSmokeDriverExecutableFailsWithoutMain() throws {
@@ -166,61 +146,102 @@ final class SmokeTests: XCTestCase {
     }
 
     func testSmokeDriverMultipleInputFilesCompilesToKIR() throws {
-        let sourceA = "fun greet(): String = \"hello\""
-        let sourceB = "fun main() = 0"
-        try withTemporaryFiles(contents: [sourceA, sourceB]) { paths in
-            let fileManager = FileManager.default
-            let outputBase = fileManager.temporaryDirectory
-                .appendingPathComponent(UUID().uuidString)
-                .path
-            defer {
-                try? fileManager.removeItem(atPath: outputBase + ".kir")
-            }
-
-            let options = makeTestOptions(
-                moduleName: "SmokeMultiFile",
-                inputs: paths,
-                outputPath: outputBase,
-                emit: .kirDump
-            )
-            let result = makeTestDriver().runForTesting(options: options)
-
-            XCTAssertEqual(result.exitCode, 0)
-            XCTAssertFalse(result.diagnostics.contains(where: { $0.severity == .error }))
-            XCTAssertTrue(fileManager.fileExists(atPath: outputBase + ".kir"))
-        }
+        try assertKotlinSourcesToKIR(
+            ["fun greet(): String = \"hello\"", "fun main() = 0"],
+            moduleName: "SmokeMultiFile"
+        )
     }
 
     func testSmokeDriverLargeFileCompilesToKIR() throws {
         // Generate a file with many top-level functions to exercise the pipeline
         // under a larger-than-trivial input without triggering semantic errors.
-        var lines: [String] = []
-        for i in 0 ..< 200 {
-            lines.append("fun smokeFunc\(i)(x: Int): Int = x + \(i)")
-        }
+        var lines: [String] = (0 ..< 200).map { "fun smokeFunc\($0)(x: Int): Int = x + \($0)" }
         lines.append("fun main() = 0")
-        let source = lines.joined(separator: "\n")
+        try assertKotlinCompilesToKIR(lines.joined(separator: "\n"), moduleName: "SmokeLargeFile")
+    }
 
-        try withTemporaryFile(contents: source) { path in
-            let fileManager = FileManager.default
-            let outputBase = fileManager.temporaryDirectory
-                .appendingPathComponent(UUID().uuidString)
-                .path
-            defer {
-                try? fileManager.removeItem(atPath: outputBase + ".kir")
-            }
+    // MARK: - New smoke tests (TEST-SMOKE-005)
 
-            let options = makeTestOptions(
-                moduleName: "SmokeLargeFile",
-                inputs: [path],
-                outputPath: outputBase,
-                emit: .kirDump
-            )
-            let result = makeTestDriver().runForTesting(options: options)
-
-            XCTAssertEqual(result.exitCode, 0)
-            XCTAssertFalse(result.diagnostics.contains(where: { $0.severity == .error }))
-            XCTAssertTrue(fileManager.fileExists(atPath: outputBase + ".kir"))
+    func testSmokeSealedClassExhaustiveWhenCompilesToKIR() throws {
+        // Sealed class with exhaustive when branches must compile cleanly through
+        // the full frontend pipeline (Lex → Parse → BuildAST → Sema → KIR).
+        try assertKotlinCompilesToKIR("""
+        sealed class Shape {
+            class Circle(val radius: Double) : Shape()
+            class Rectangle(val width: Double, val height: Double) : Shape()
+            object Triangle : Shape()
         }
+
+        fun area(shape: Shape): Double = when (shape) {
+            is Shape.Circle -> 3.14 * shape.radius * shape.radius
+            is Shape.Rectangle -> shape.width * shape.height
+            is Shape.Triangle -> 0.5
+        }
+
+        fun main() {
+            val c = Shape.Circle(2.0)
+            val r = Shape.Rectangle(3.0, 4.0)
+            area(c)
+            area(r)
+        }
+        """, moduleName: "SmokeSealedWhen")
+    }
+
+    func testSmokeEnumClassWhenExpressionCompilesToKIR() throws {
+        // Enum class entries used in a when expression must compile cleanly;
+        // this exercises the enum codepath through Sema and KIR lowering.
+        try assertKotlinCompilesToKIR("""
+        enum class Direction {
+            NORTH, SOUTH, EAST, WEST
+        }
+
+        fun describe(dir: Direction): String = when (dir) {
+            Direction.NORTH -> "up"
+            Direction.SOUTH -> "down"
+            Direction.EAST -> "right"
+            Direction.WEST -> "left"
+        }
+
+        fun main() {
+            describe(Direction.NORTH)
+            describe(Direction.WEST)
+        }
+        """, moduleName: "SmokeEnumWhen")
+    }
+
+    func testSmokeDefaultParameterForwardingCompilesToKIR() throws {
+        // Functions with default parameters and call-sites that omit those
+        // parameters must survive Sema argument-filling and KIR generation.
+        try assertKotlinCompilesToKIR("""
+        fun greet(name: String, greeting: String = "Hello", punctuation: String = "!"): String {
+            return "$greeting, $name$punctuation"
+        }
+
+        fun main() {
+            greet("World")
+            greet("Kotlin", greeting = "Hi")
+            greet("KSwiftK", greeting = "Hey", punctuation = ".")
+        }
+        """, moduleName: "SmokeDefaultParams")
+    }
+
+    func testSmokeTypealiasAndExtensionFunctionCompilesToKIR() throws {
+        // A typealias used as a parameter type together with an extension function
+        // on the aliased type must compile without errors through the full pipeline.
+        try assertKotlinCompilesToKIR("""
+        typealias Score = Int
+
+        fun Score.grade(): String = when {
+            this >= 90 -> "A"
+            this >= 80 -> "B"
+            this >= 70 -> "C"
+            else -> "F"
+        }
+
+        fun main() {
+            val s: Score = 85
+            s.grade()
+        }
+        """, moduleName: "SmokeTypealiasExtension")
     }
 }
