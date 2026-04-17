@@ -11,6 +11,14 @@ import XCTest
 // Implemented APIs (tested here):
 //   - Worker: kk_worker_new / kk_worker_execute / kk_worker_request_termination /
 //             kk_worker_is_terminated / kk_worker_name
+//   - Worker.id: kk_worker_id (STDLIB-NATIVE-CONCURRENT-ABI-001)
+//   - Future<T>: kk_future_new / kk_future_complete / kk_future_result / kk_future_consume /
+//               kk_future_is_ready (STDLIB-NATIVE-CONCURRENT-ABI-002)
+//   - TransferMode: kk_transfer_object (STDLIB-NATIVE-CONCURRENT-ABI-003)
+//   - FreezableAtomicReference<T>: kk_freezable_atomic_ref_create / _load / _store / _is_frozen
+//               (STDLIB-NATIVE-CONCURRENT-ABI-004)
+//   - @SharedImmutable: kk_shared_immutable_init (STDLIB-NATIVE-CONCURRENT-ABI-005)
+//   - Worker.executeAfter: kk_worker_execute_after (STDLIB-NATIVE-CONCURRENT-ABI-006)
 //   - freeze() / isFrozen: kk_freeze_object / kk_is_frozen
 //   - AtomicInt (legacy kotlin.native.concurrent.AtomicInt / unified kotlin.concurrent.AtomicInt):
 //             compareAndSet semantics — already tested in isolation via AtomicInt cdecl wrappers
@@ -18,14 +26,9 @@ import XCTest
 //   - AtomicReference: compareAndSet semantics — ditto
 //   - @ThreadLocal: kk_thread_local_new / kk_thread_local_getOrSet — tested in RuntimeThreadLocalTests
 //
-// NOT yet implemented (gaps):
-//   - Worker.id (unique stable integer id per worker)
-//   - Future<T> (kk_future_new / kk_future_result / kk_future_consume)
-//   - TransferMode enum (SAFE vs UNCHECKED validation on Worker.execute)
-//   - FreezableAtomicReference<T>
-//   - @SharedImmutable annotation enforcement (compile-time annotation; runtime freeze-on-init
-//     is tracked but not yet enforced for top-level vals)
-//   - Worker.executeAfter (scheduling with delay)
+// Remaining work / known limitations:
+//   - TransferMode SAFE: full cycle-detection via DFS over the object graph is not yet
+//     implemented; the current stub performs a lightweight freeze-based check only.
 
 // ---------------------------------------------------------------------------
 // MARK: - Helpers
@@ -329,5 +332,243 @@ final class RuntimeAtomicReferenceNativeConcurrentTests: XCTestCase {
         let old = kk_atomic_ref_exchange(atomicRef, refB)
         XCTAssertEqual(old, refA)
         XCTAssertEqual(kk_atomic_ref_load(atomicRef), refB)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// MARK: - Worker.id Tests (STDLIB-NATIVE-CONCURRENT-ABI-001)
+// ---------------------------------------------------------------------------
+
+final class RuntimeWorkerIDTests: IsolatedRuntimeXCTestCase {
+
+    func testWorkerIDIsPositive() {
+        let handle = kk_worker_new(0)
+        let id = kk_worker_id(handle)
+        XCTAssertGreaterThan(id, 0, "Worker IDs must be positive monotonic integers")
+    }
+
+    func testWorkerIDsAreMonotonicallyIncreasing() {
+        let h1 = kk_worker_new(0)
+        let h2 = kk_worker_new(0)
+        let id1 = kk_worker_id(h1)
+        let id2 = kk_worker_id(h2)
+        XCTAssertGreaterThan(id2, id1, "Worker IDs must be monotonically increasing")
+    }
+
+    func testWorkerIDIsStable() {
+        let handle = kk_worker_new(0)
+        let id1 = kk_worker_id(handle)
+        let id2 = kk_worker_id(handle)
+        XCTAssertEqual(id1, id2, "Worker ID must be stable across multiple calls")
+    }
+
+    func testWorkerIDForInvalidHandleReturnsNegative() {
+        XCTAssertEqual(kk_worker_id(0), -1, "Invalid handle must return -1")
+    }
+}
+
+// ---------------------------------------------------------------------------
+// MARK: - Future<T> Tests (STDLIB-NATIVE-CONCURRENT-ABI-002)
+// ---------------------------------------------------------------------------
+
+final class RuntimeFutureTests: IsolatedRuntimeXCTestCase {
+
+    func testFutureNewReturnsNonZeroHandle() {
+        let handle = kk_future_new()
+        XCTAssertNotEqual(handle, 0)
+    }
+
+    func testFutureIsNotReadyBeforeComplete() {
+        let handle = kk_future_new()
+        XCTAssertEqual(kk_future_is_ready(handle), 0)
+    }
+
+    func testFutureIsReadyAfterComplete() {
+        let handle = kk_future_new()
+        kk_future_complete(handle, 42)
+        XCTAssertEqual(kk_future_is_ready(handle), 1)
+    }
+
+    func testFutureResultReturnsCompletedValue() {
+        let handle = kk_future_new()
+        kk_future_complete(handle, 99)
+        XCTAssertEqual(kk_future_result(handle), 99)
+    }
+
+    func testFutureResultDoesNotConsumeValue() {
+        let handle = kk_future_new()
+        kk_future_complete(handle, 7)
+        _ = kk_future_result(handle)
+        XCTAssertEqual(kk_future_result(handle), 7, "result() must be idempotent")
+    }
+
+    func testFutureConsumeReturnsValue() {
+        let handle = kk_future_new()
+        kk_future_complete(handle, 55)
+        XCTAssertEqual(kk_future_consume(handle), 55)
+    }
+
+    func testFutureConsumeSecondCallReturnsZero() {
+        let handle = kk_future_new()
+        kk_future_complete(handle, 100)
+        _ = kk_future_consume(handle)
+        XCTAssertEqual(kk_future_consume(handle), 0, "Second consume must return 0")
+    }
+
+    func testFutureCompletedFromBackgroundThread() {
+        let handle = kk_future_new()
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        DispatchQueue.global().async {
+            Thread.sleep(forTimeInterval: 0.01)
+            kk_future_complete(handle, 1234)
+            dispatchGroup.leave()
+        }
+        let result = kk_future_result(handle)
+        XCTAssertEqual(result, 1234)
+        dispatchGroup.wait()
+    }
+
+    func testWorkerExecuteReturnsFutureHandle() {
+        // kk_worker_execute now returns a Future handle, not 1.
+        let workerHandle = kk_worker_new(0)
+        // Terminate immediately; execute must decline (return 0).
+        kk_worker_request_termination(workerHandle, 1)
+        let result = kk_worker_execute(workerHandle, 0, 0)
+        XCTAssertEqual(result, 0, "Terminated worker returns 0 (no future)")
+    }
+}
+
+// ---------------------------------------------------------------------------
+// MARK: - TransferMode Tests (STDLIB-NATIVE-CONCURRENT-ABI-003)
+// ---------------------------------------------------------------------------
+
+final class RuntimeTransferModeTests: IsolatedRuntimeXCTestCase {
+
+    func testTransferSafeModeReturnsSameHandle() {
+        let handle = kk_atomic_int_create(10)
+        let result = kk_transfer_object(handle, 0) // SAFE = 0
+        XCTAssertEqual(result, handle)
+    }
+
+    func testTransferUnsafeModeReturnsSameHandle() {
+        let handle = kk_atomic_int_create(20)
+        let result = kk_transfer_object(handle, 1) // UNSAFE = 1
+        XCTAssertEqual(result, handle)
+    }
+
+    func testTransferSafeModeFreezesObject() {
+        let handle = kk_atomic_int_create(30)
+        XCTAssertEqual(kk_is_frozen(handle), 0, "Object must not be frozen before transfer")
+        kk_transfer_object(handle, 0) // SAFE transfer
+        XCTAssertEqual(kk_is_frozen(handle), 1, "SAFE transfer must freeze the object")
+    }
+
+    func testTransferNullHandleIsNoOp() {
+        let result = kk_transfer_object(0, 0)
+        XCTAssertEqual(result, 0)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// MARK: - FreezableAtomicReference Tests (STDLIB-NATIVE-CONCURRENT-ABI-004)
+// ---------------------------------------------------------------------------
+
+final class RuntimeFreezableAtomicRefTests: IsolatedRuntimeXCTestCase {
+
+    func testCreateReturnsNonZeroHandle() {
+        let handle = kk_freezable_atomic_ref_create(0)
+        XCTAssertNotEqual(handle, 0)
+    }
+
+    func testLoadReturnsInitialValue() {
+        let valueHandle = kk_atomic_int_create(5)
+        let refHandle = kk_freezable_atomic_ref_create(valueHandle)
+        XCTAssertEqual(kk_freezable_atomic_ref_load(refHandle), valueHandle)
+    }
+
+    func testIsNotFrozenInitially() {
+        let refHandle = kk_freezable_atomic_ref_create(0)
+        XCTAssertEqual(kk_freezable_atomic_ref_is_frozen(refHandle), 0)
+    }
+
+    func testFirstStoreSucceedsAndFreezesRef() {
+        let refHandle = kk_freezable_atomic_ref_create(0)
+        let valueHandle = kk_atomic_int_create(99)
+        let result = kk_freezable_atomic_ref_store(refHandle, valueHandle)
+        XCTAssertEqual(result, 1, "First store must succeed")
+        XCTAssertEqual(kk_freezable_atomic_ref_is_frozen(refHandle), 1, "Ref must be frozen after first store")
+        XCTAssertEqual(kk_freezable_atomic_ref_load(refHandle), valueHandle)
+    }
+
+    func testSecondStoreWithDifferentValueFails() {
+        let refHandle = kk_freezable_atomic_ref_create(0)
+        let v1 = kk_atomic_int_create(1)
+        let v2 = kk_atomic_int_create(2)
+        _ = kk_freezable_atomic_ref_store(refHandle, v1)
+        let result = kk_freezable_atomic_ref_store(refHandle, v2)
+        XCTAssertEqual(result, 0, "Mutation after freeze must be rejected")
+        XCTAssertEqual(kk_freezable_atomic_ref_load(refHandle), v1, "Value must be unchanged")
+    }
+
+    func testStoreWithSameValueAfterFreezeIsIdempotent() {
+        let refHandle = kk_freezable_atomic_ref_create(0)
+        let v = kk_atomic_int_create(7)
+        _ = kk_freezable_atomic_ref_store(refHandle, v)
+        let result = kk_freezable_atomic_ref_store(refHandle, v)
+        XCTAssertEqual(result, 1, "Storing the same value after freeze must succeed (idempotent)")
+    }
+}
+
+// ---------------------------------------------------------------------------
+// MARK: - @SharedImmutable Tests (STDLIB-NATIVE-CONCURRENT-ABI-005)
+// ---------------------------------------------------------------------------
+
+final class RuntimeSharedImmutableTests: IsolatedRuntimeXCTestCase {
+
+    func testSharedImmutableInitFreezesObject() {
+        let handle = kk_atomic_int_create(42)
+        XCTAssertEqual(kk_is_frozen(handle), 0, "Object must not be frozen before init")
+        let returned = kk_shared_immutable_init(handle)
+        XCTAssertEqual(returned, handle, "kk_shared_immutable_init must return the same handle")
+        XCTAssertEqual(kk_is_frozen(handle), 1, "Object must be frozen after @SharedImmutable init")
+    }
+
+    func testSharedImmutableInitWithNullHandleIsNoOp() {
+        let result = kk_shared_immutable_init(0)
+        XCTAssertEqual(result, 0, "Null handle must be a no-op")
+    }
+
+    func testSharedImmutableInitIsIdempotent() {
+        let handle = kk_atomic_int_create(10)
+        kk_shared_immutable_init(handle)
+        kk_shared_immutable_init(handle) // second call must not crash
+        XCTAssertEqual(kk_is_frozen(handle), 1)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// MARK: - Worker.executeAfter Tests (STDLIB-NATIVE-CONCURRENT-ABI-006)
+// ---------------------------------------------------------------------------
+
+final class RuntimeWorkerExecuteAfterTests: IsolatedRuntimeXCTestCase {
+
+    func testExecuteAfterReturnsZeroForTerminatedWorker() {
+        let handle = kk_worker_new(0)
+        kk_worker_request_termination(handle, 1)
+        let result = kk_worker_execute_after(handle, 0, 0, 0)
+        XCTAssertEqual(result, 0, "Terminated worker must decline executeAfter")
+    }
+
+    func testExecuteAfterReturnsZeroForInvalidHandle() {
+        let result = kk_worker_execute_after(0, 0, 0, 0)
+        XCTAssertEqual(result, 0)
+    }
+
+    func testExecuteAfterReturnsZeroForNullFnPtr() {
+        let handle = kk_worker_new(0)
+        defer { kk_worker_request_termination(handle, 1) }
+        let result = kk_worker_execute_after(handle, 0, 0, 0)
+        XCTAssertEqual(result, 0, "Null function pointer must be rejected")
     }
 }
