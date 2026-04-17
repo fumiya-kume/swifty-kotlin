@@ -773,6 +773,12 @@ extension CallTypeChecker {
                         ? sema.types.makeNullable(nonNullReceiverType)
                         : nonNullReceiverType
                     sema.bindings.markScopeFunctionExpr(id, kind: scopeKind)
+                    // Propagate collection marking: apply returns receiver unchanged,
+                    // so chained member calls (e.g. .let { it.size }) must still see
+                    // the collection type. (STDLIB-002-BUG-01)
+                    if isCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                        sema.bindings.markCollectionExpr(id)
+                    }
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
 
@@ -790,6 +796,12 @@ extension CallTypeChecker {
                         ? sema.types.makeNullable(nonNullReceiverType)
                         : nonNullReceiverType
                     sema.bindings.markScopeFunctionExpr(id, kind: scopeKind)
+                    // Propagate collection marking: also returns receiver unchanged,
+                    // so chained member calls (e.g. .let { it.size }) must still see
+                    // the collection type. (STDLIB-002-BUG-01)
+                    if isCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                        sema.bindings.markCollectionExpr(id)
+                    }
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
 
