@@ -19,6 +19,8 @@ enum RuntimeTypeCategory {
     case double
     case float
     case char
+    // STDLIB-REFLECT-ABI-001: Unit::class token.
+    case unit
 
     /// The base constant used in the runtime token encoding.
     var base: Int64 {
@@ -38,6 +40,7 @@ enum RuntimeTypeCategory {
         case .double:   RuntimeTypeCheckToken.doubleBase
         case .float:    RuntimeTypeCheckToken.floatBase
         case .char:     RuntimeTypeCheckToken.charBase
+        case .unit:     RuntimeTypeCheckToken.unitBase
         }
     }
 
@@ -58,6 +61,7 @@ enum RuntimeTypeCategory {
         case .double:   PrimitiveType.double.kotlinName
         case .float:    PrimitiveType.float.kotlinName
         case .char:     PrimitiveType.char.kotlinName
+        case .unit:     "Unit"
         case .unknown, .nominal:  nil
         }
     }
@@ -92,6 +96,8 @@ enum RuntimeTypeCheckToken {
     static let doubleBase: Int64 = 12
     static let floatBase: Int64 = 13
     static let charBase: Int64 = 14
+    // STDLIB-REFLECT-ABI-001: Unit::class token base.
+    static let unitBase: Int64 = 15
 
     static let baseMask: Int64 = 0xFF
     static let nullableFlag: Int64 = 1 << 8
@@ -127,6 +133,7 @@ enum RuntimeTypeCheckToken {
         case .primitive(.double, _):    category = .double
         case .primitive(.float, _):     category = .float
         case .primitive(.char, _):      category = .char
+        case .unit:                     category = .unit
         case .nothing:                  category = nullable ? .null : .unknown
         case let .classType(classType): category = .nominal(classType.classSymbol)
         default:                        category = .unknown
@@ -165,6 +172,8 @@ enum RuntimeTypeCheckToken {
             encode(base: floatBase, nullable: nullable)
         case builtinNames.char:
             encode(base: charBase, nullable: nullable)
+        case builtinNames.unit:
+            encode(base: unitBase, nullable: nullable)
         case builtinNames.nothing:
             nullable ? nullBase : unknownBase
         default:
@@ -246,6 +255,8 @@ enum RuntimeTypeCheckToken {
             return "kotlin.Float"
         case .char:
             return "kotlin.Char"
+        case .unit:
+            return "kotlin.Unit"
         case let .nominal(symbolID):
             guard let symbol = sema.symbols.symbol(symbolID) else {
                 return nil

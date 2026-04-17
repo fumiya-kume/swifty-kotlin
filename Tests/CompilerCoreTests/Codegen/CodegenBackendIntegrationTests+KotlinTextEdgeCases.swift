@@ -830,11 +830,6 @@ extension CodegenBackendIntegrationTests {
 
             // dropLast: n == 0 (full string)
             println("hello".dropLast(0))
-
-            // negative n: runtime returns empty for take(-1), full string for drop(-1)
-            // (Kotlin/JVM throws IllegalArgumentException, but this runtime clamps to 0)
-            println("hello".take(-1))
-            println("hello".drop(-1))
         }
         """
 
@@ -850,8 +845,6 @@ extension CodegenBackendIntegrationTests {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            // Note: runtime clamps negative n to 0 instead of throwing IllegalArgumentException.
-            // take(-1) → "" (empty), drop(-1) → original string. Documents current runtime behavior.
             XCTAssertEqual(
                 out,
                 "hel\n" +
@@ -869,10 +862,126 @@ extension CodegenBackendIntegrationTests {
                 "hel\n" +
                 "\n" +
                 "\n" +
-                "hello\n" +
-                "\n" +       // take(-1) → empty string
-                "hello\n"    // drop(-1) → original string
+                "hello\n"
             )
+        }
+    }
+
+    // MARK: - take / drop negative count throws IllegalArgumentException (STDLIB-005-BUG-01)
+
+    func testKotlinTextTakeNegativeThrows() throws {
+        // Kotlin spec: take(n) with n < 0 throws
+        // IllegalArgumentException("Requested element count -1 is less than zero.")
+        let source = """
+        fun main() {
+            try {
+                println("hello".take(-1))
+            } catch (e: IllegalArgumentException) {
+                println("iae-take")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextTakeNegativeThrows",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "iae-take\n")
+        }
+    }
+
+    func testKotlinTextDropNegativeThrows() throws {
+        // Kotlin spec: drop(n) with n < 0 throws
+        // IllegalArgumentException("Requested element count -1 is less than zero.")
+        let source = """
+        fun main() {
+            try {
+                println("hello".drop(-1))
+            } catch (e: IllegalArgumentException) {
+                println("iae-drop")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextDropNegativeThrows",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "iae-drop\n")
+        }
+    }
+
+    func testKotlinTextTakeLastNegativeThrows() throws {
+        // Kotlin spec: takeLast(n) with n < 0 throws
+        // IllegalArgumentException("Requested element count -1 is less than zero.")
+        let source = """
+        fun main() {
+            try {
+                println("hello".takeLast(-1))
+            } catch (e: IllegalArgumentException) {
+                println("iae-takeLast")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextTakeLastNegativeThrows",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "iae-takeLast\n")
+        }
+    }
+
+    func testKotlinTextDropLastNegativeThrows() throws {
+        // Kotlin spec: dropLast(n) with n < 0 throws
+        // IllegalArgumentException("Requested element count -1 is less than zero.")
+        let source = """
+        fun main() {
+            try {
+                println("hello".dropLast(-1))
+            } catch (e: IllegalArgumentException) {
+                println("iae-dropLast")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextDropLastNegativeThrows",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "iae-dropLast\n")
         }
     }
 
