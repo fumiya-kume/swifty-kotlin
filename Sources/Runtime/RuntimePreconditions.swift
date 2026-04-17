@@ -57,6 +57,89 @@ public func kk_check_lazy(
     )
 }
 
+// MARK: - checkNotNull / requireNotNull (STDLIB-ASSERT-ABI-001)
+
+/// Runtime entry for kotlin.checkNotNull(value).
+/// On null input: throws IllegalStateException("Required value was null.").
+/// On non-null input: returns the value unchanged.
+@_cdecl("kk_check_not_null")
+public func kk_check_not_null(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    if value == runtimeNullSentinelInt || value == 0 {
+        outThrown?.pointee = runtimeAllocateIllegalStateException(message: "Required value was null.")
+        return 0
+    }
+    return value
+}
+
+/// Runtime entry for kotlin.requireNotNull(value).
+/// On null input: throws IllegalArgumentException("Required value was null.").
+/// On non-null input: returns the value unchanged.
+@_cdecl("kk_require_not_null")
+public func kk_require_not_null(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    if value == runtimeNullSentinelInt || value == 0 {
+        outThrown?.pointee = runtimeAllocateIllegalArgumentException(message: "Required value was null.")
+        return 0
+    }
+    return value
+}
+
+/// Lazy-message variant of kk_check_not_null.
+/// The message closure is evaluated only when the value is null.
+@_cdecl("kk_check_not_null_lazy")
+public func kk_check_not_null_lazy(
+    _ value: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard value == runtimeNullSentinelInt || value == 0 else {
+        return value
+    }
+    notNullWithLazyMessage(fnPtr, closureRaw, outThrown, allocate: runtimeAllocateIllegalStateException)
+    return 0
+}
+
+/// Lazy-message variant of kk_require_not_null.
+/// The message closure is evaluated only when the value is null.
+@_cdecl("kk_require_not_null_lazy")
+public func kk_require_not_null_lazy(
+    _ value: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard value == runtimeNullSentinelInt || value == 0 else {
+        return value
+    }
+    notNullWithLazyMessage(fnPtr, closureRaw, outThrown, allocate: runtimeAllocateIllegalArgumentException)
+    return 0
+}
+
+private func notNullWithLazyMessage(
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?,
+    allocate: (String, Int) -> Int
+) {
+    let defaultMessage = "Required value was null."
+    guard fnPtr != 0 else {
+        outThrown?.pointee = allocate(defaultMessage, 0)
+        return
+    }
+    var lazyThrown = 0
+    let rawMessage = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: closureRaw, outThrown: &lazyThrown)
+    if lazyThrown != 0 {
+        outThrown?.pointee = allocate(defaultMessage, lazyThrown)
+        return
+    }
+    let message = runtimePreconditionMessage(from: rawMessage)
+    outThrown?.pointee = allocate(message, 0)
+}
+
 // MARK: - assert (STDLIB-258)
 
 @_cdecl("kk_precondition_assert")
