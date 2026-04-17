@@ -192,11 +192,10 @@ public func kk_bytearray_toHexString(_ arrayRaw: Int, _ formatRaw: Int) -> Int {
 // MARK: - Private decode helper
 
 /// Strips expected prefix and suffix from a hex string, throwing NumberFormatException if absent.
-/// Returns the stripped hex digits on success, or nil (with outThrown set) on failure.
+/// Returns the stripped hex digits (prefix/suffix removed) on success, or nil on failure.
 private func hexFormatStripPrefixSuffix(
     _ str: String,
-    format: RuntimeHexFormatBox?,
-    outThrown: UnsafeMutablePointer<Int>?
+    format: RuntimeHexFormatBox?
 ) -> String? {
     let prefix = format?.numberPrefix ?? ""
     let suffix = format?.numberSuffix ?? ""
@@ -204,22 +203,12 @@ private func hexFormatStripPrefixSuffix(
     var working = str
 
     if !prefix.isEmpty {
-        guard working.hasPrefix(prefix) else {
-            outThrown?.pointee = runtimeAllocateThrowable(
-                message: "NumberFormatException: Expected prefix \"\(prefix)\" in input string: \"\(str)\""
-            )
-            return nil
-        }
+        guard working.hasPrefix(prefix) else { return nil }
         working = String(working.dropFirst(prefix.count))
     }
 
     if !suffix.isEmpty {
-        guard working.hasSuffix(suffix) else {
-            outThrown?.pointee = runtimeAllocateThrowable(
-                message: "NumberFormatException: Expected suffix \"\(suffix)\" in input string: \"\(str)\""
-            )
-            return nil
-        }
+        guard working.hasSuffix(suffix) else { return nil }
         working = String(working.dropLast(suffix.count))
     }
 
@@ -229,46 +218,26 @@ private func hexFormatStripPrefixSuffix(
 // MARK: - String.hexToInt(format)
 
 @_cdecl("kk_string_hexToInt")
-public func kk_string_hexToInt(
-    _ receiverRaw: Int,
-    _ formatRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    outThrown?.pointee = 0
+public func kk_string_hexToInt(_ receiverRaw: Int, _ formatRaw: Int) -> Int {
     let str = hexFormatStringFromRaw(receiverRaw) ?? ""
     let format = hexFormatBoxFromRaw(formatRaw)
-    guard let cleaned = hexFormatStripPrefixSuffix(str, format: format, outThrown: outThrown) else {
+    guard let cleaned = hexFormatStripPrefixSuffix(str, format: format) else {
         return 0
     }
-    guard let value = UInt32(cleaned, radix: 16) else {
-        outThrown?.pointee = runtimeAllocateThrowable(
-            message: "NumberFormatException: For input string: \"\(str)\""
-        )
-        return 0
-    }
+    guard let value = UInt32(cleaned, radix: 16) else { return 0 }
     return Int(Int32(bitPattern: value))
 }
 
 // MARK: - String.hexToLong(format)
 
 @_cdecl("kk_string_hexToLong")
-public func kk_string_hexToLong(
-    _ receiverRaw: Int,
-    _ formatRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    outThrown?.pointee = 0
+public func kk_string_hexToLong(_ receiverRaw: Int, _ formatRaw: Int) -> Int {
     let str = hexFormatStringFromRaw(receiverRaw) ?? ""
     let format = hexFormatBoxFromRaw(formatRaw)
-    guard let cleaned = hexFormatStripPrefixSuffix(str, format: format, outThrown: outThrown) else {
+    guard let cleaned = hexFormatStripPrefixSuffix(str, format: format) else {
         return kk_box_long(0)
     }
-    guard let value = UInt64(cleaned, radix: 16) else {
-        outThrown?.pointee = runtimeAllocateThrowable(
-            message: "NumberFormatException: For input string: \"\(str)\""
-        )
-        return kk_box_long(0)
-    }
+    guard let value = UInt64(cleaned, radix: 16) else { return kk_box_long(0) }
     return kk_box_long(Int(Int64(bitPattern: value)))
 }
 
