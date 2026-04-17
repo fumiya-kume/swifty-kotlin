@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "experimental_markers_opt_in_call_site.kt",
+      "range": {
+        "start": { "line": 15, "character": 33 },
+        "end": { "line": 15, "character": 46 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalCallSiteMarker' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalCallSiteMarker' or '@OptIn(golden.diagnostics.ExperimentalCallSiteMarker::class)'.",
+      "codeActions": []
+    }
+  ]
+}
