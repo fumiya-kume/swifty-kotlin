@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "experimental_markers_inventory.kt",
+      "range": {
+        "start": { "line": 47, "character": 4 },
+        "end": { "line": 47, "character": 23 }
+      },
+      "severity": 2,
+      "severityLabel": "warning",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalUnsignedTypesMarker' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalUnsignedTypesMarker' or '@OptIn(golden.diagnostics.ExperimentalUnsignedTypesMarker::class)'.",
+      "codeActions": []
+    },
+    {
+      "file": "experimental_markers_inventory.kt",
+      "range": {
+        "start": { "line": 48, "character": 4 },
+        "end": { "line": 48, "character": 19 }
+      },
+      "severity": 2,
+      "severityLabel": "warning",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalUuidApiMarker' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalUuidApiMarker' or '@OptIn(golden.diagnostics.ExperimentalUuidApiMarker::class)'.",
+      "codeActions": []
+    },
+    {
+      "file": "experimental_markers_inventory.kt",
+      "range": {
+        "start": { "line": 49, "character": 4 },
+        "end": { "line": 49, "character": 23 }
+      },
+      "severity": 2,
+      "severityLabel": "warning",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalEncodingApiMarker' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalEncodingApiMarker' or '@OptIn(golden.diagnostics.ExperimentalEncodingApiMarker::class)'.",
+      "codeActions": []
+    },
+    {
+      "file": "experimental_markers_inventory.kt",
+      "range": {
+        "start": { "line": 50, "character": 4 },
+        "end": { "line": 50, "character": 28 }
+      },
+      "severity": 2,
+      "severityLabel": "warning",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalMultiplatformMarker' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalMultiplatformMarker' or '@OptIn(golden.diagnostics.ExperimentalMultiplatformMarker::class)'.",
+      "codeActions": []
+    },
+    {
+      "file": "experimental_markers_inventory.kt",
+      "range": {
+        "start": { "line": 51, "character": 4 },
+        "end": { "line": 51, "character": 28 }
+      },
+      "severity": 2,
+      "severityLabel": "warning",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalSubclassOptInMarker' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalSubclassOptInMarker' or '@OptIn(golden.diagnostics.ExperimentalSubclassOptInMarker::class)'.",
+      "codeActions": []
+    }
+  ]
+}
