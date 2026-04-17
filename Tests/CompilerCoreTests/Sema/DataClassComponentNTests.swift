@@ -11,7 +11,8 @@ final class DataClassComponentNTests: XCTestCase {
     func testForLoopDestructuringPairSpecializesComponentReturnType() throws {
         let source = """
         fun demo() {
-            for ((k, v) in mapOf("a" to 1).entries.map { it.toPair() }) {
+            val pairs: List<Pair<String, Int>> = listOf(Pair("a", 1), Pair("b", 2))
+            for ((k, v) in pairs) {
                 k.length + v
             }
         }
