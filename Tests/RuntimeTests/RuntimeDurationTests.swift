@@ -743,7 +743,6 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
         let endTime = DispatchTime.now().uptimeNanoseconds
         let totalTestTime = endTime - startTime
 
-
         // These are independent duration samples, not timestamps. Validate that
         // the aggregate measured time stays within the enclosing wall-clock time
         // with a small allowance for clock sampling overhead.
