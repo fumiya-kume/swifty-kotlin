@@ -341,6 +341,27 @@ final class RuntimeWorkerBox: @unchecked Sendable {
         defer { lock.unlock() }
         return terminated
     }
+
+    /// Schedule a closure on the worker's serial queue at the given deadline.
+    /// Returns false if the worker is already terminated.
+    @discardableResult
+    func executeAfter(deadline: DispatchTime, _ work: @escaping @Sendable () -> Void) -> Bool {
+        lock.lock()
+        guard !terminated else {
+            lock.unlock()
+            return false
+        }
+        pendingJobs += 1
+        lock.unlock()
+
+        queue.asyncAfter(deadline: deadline) { [weak self] in
+            work()
+            self?.lock.lock()
+            self?.pendingJobs -= 1
+            self?.lock.unlock()
+        }
+        return true
+    }
 }
 
 @_cdecl("kk_worker_new")
