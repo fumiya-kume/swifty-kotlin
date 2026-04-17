@@ -23,3 +23,16 @@ runs:
         LLVM_PREFIX="$(llvm-config --prefix)"
         echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
         echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
+        # Find the LLVM library and set KSWIFTK_LLVM_DYLIB
+        LLVM_LIB=$(find ${LLVM_PREFIX}/lib -name "libLLVM*.so" 2>/dev/null | head -1)
+        if [ -n "$LLVM_LIB" ]; then
+          echo "KSWIFTK_LLVM_DYLIB=${LLVM_LIB}" >> "$GITHUB_ENV"
+        else
+          # Fallback to common library names
+          for lib in libLLVM.so libLLVM-19.so libLLVM-18.so libLLVM-17.so libLLVM-16.so libLLVM-15.so; do
+            if [ -f "${LLVM_PREFIX}/lib/${lib}" ]; then
+              echo "KSWIFTK_LLVM_DYLIB=${LLVM_PREFIX}/lib/${lib}" >> "$GITHUB_ENV"
+              break
+            fi
+          done
+        fi

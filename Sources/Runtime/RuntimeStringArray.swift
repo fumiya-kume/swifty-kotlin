@@ -210,6 +210,8 @@ private enum RuntimeTypeTokenEncoding {
     static let doubleBase: Int64 = 12
     static let floatBase: Int64 = 13
     static let charBase: Int64 = 14
+    // STDLIB-REFLECT-ABI-001: Unit::class token base.
+    static let unitBase: Int64 = 15
 }
 
 func runtimePanicMessage(fromCString cstr: UnsafePointer<CChar>) -> String {
@@ -379,6 +381,10 @@ public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
     case RuntimeTypeTokenEncoding.nullBase:
         return 0
 
+    case RuntimeTypeTokenEncoding.unitBase:
+        // The Unit singleton is represented as the integer 0 at runtime.
+        return value == 0 ? 1 : 0
+
     case RuntimeTypeTokenEncoding.nominalBase:
         if let sourceTypeID = runtimeObjectTypeID(rawValue: value) {
             return runtimeIsAssignable(sourceTypeID: sourceTypeID, targetTypeID: payload) ? 1 : 0
@@ -518,6 +524,8 @@ public func kk_type_token_simple_name(_ typeToken: Int, _ nameHint: Int) -> Int 
         "Char"
     case RuntimeTypeTokenEncoding.nullBase:
         "Nothing"
+    case RuntimeTypeTokenEncoding.unitBase:
+        "Unit"
     default:
         "Unknown"
     }
@@ -551,6 +559,7 @@ public func kk_type_token_qualified_name(_ typeToken: Int, _ nameHint: Int) -> I
     case RuntimeTypeTokenEncoding.floatBase:   "kotlin.Float"
     case RuntimeTypeTokenEncoding.charBase:    "kotlin.Char"
     case RuntimeTypeTokenEncoding.nullBase:    "kotlin.Nothing"
+    case RuntimeTypeTokenEncoding.unitBase:    "kotlin.Unit"
     default: nil
     }
     if let qualifiedName {
@@ -899,15 +908,33 @@ public func kk_kclass_isInstance(_ kclassRaw: Int, _ valueRaw: Int) -> Int {
     return kk_op_is(valueRaw, box.typeToken)
 }
 
-/// Returns the members of this KClass as a runtime list of KCallable boxes.
-/// The current implementation returns an empty list; member metadata will be
-/// populated by a future metadata emission pass.
+/// Registers a single member (KFunction or KPropertyStub) for a KClass (STDLIB-REFLECT-ABI-002).
+/// Called during module initialization to attach compile-time member data.
+///
+/// - Parameters:
+///   - kclassRaw: Opaque handle to the KClass returned by `kk_kclass_create`.
+///   - memberRaw: Opaque handle to the member callable (KFunction or KPropertyStub).
+/// - Returns: 0 on success.
+@_cdecl("kk_kclass_register_member")
+public func kk_kclass_register_member(_ kclassRaw: Int, _ memberRaw: Int) -> Int {
+    runtimeKMemberRegistry.register(classRaw: kclassRaw, memberRaw: memberRaw)
+    return 0
+}
+
+/// Returns the members of this KClass as a runtime list of KCallable handles.
+/// When members have been registered via `kk_kclass_register_member`, the list
+/// contains the actual KFunction / KPropertyStub handles (STDLIB-REFLECT-ABI-002).
+/// Otherwise falls back to a count-sized placeholder list so that `.size` is still correct.
 @_cdecl("kk_kclass_members")
 public func kk_kclass_members(_ kclassRaw: Int) -> Int {
     guard let box = runtimeKClassBox(from: kclassRaw) else {
         return registerRuntimeObject(RuntimeListBox(elements: []))
     }
-    // Return a list with `memberCount` placeholder elements so that .size is correct.
+    let registered = runtimeKMemberRegistry.members(for: kclassRaw)
+    if !registered.isEmpty {
+        return registerRuntimeObject(RuntimeListBox(elements: registered))
+    }
+    // Fallback: count-sized placeholder list so .size matches metadata.
     let count = box.metadata?.memberCount ?? 0
     let placeholders = (0..<max(count, 0)).map { _ in 0 }
     return registerRuntimeObject(RuntimeListBox(elements: placeholders))
@@ -1026,6 +1053,62 @@ public func kk_kclass_declared_member_functions(_ kclassRaw: Int) -> Int {
     let functionCount = max(0, memberCount - fieldCount)
     let placeholders = (0..<functionCount).map { _ in 0 }
     return registerRuntimeObject(RuntimeListBox(elements: placeholders))
+}
+
+// MARK: - STDLIB-REFLECT-ABI-003: KClass.cast / KClass.safeCast
+
+/// Casts `valueRaw` to the type represented by this KClass.
+/// If the value is an instance of the type, returns it unchanged.
+/// If not, sets `outThrown` to a `ClassCastException` and returns the null sentinel.
+///
+/// - Parameters:
+///   - kclassRaw: Opaque handle to the KClass.
+///   - valueRaw: The value to cast.
+///   - outThrown: Out-pointer for the thrown exception (nullable).
+/// - Returns: `valueRaw` on success, or `runtimeNullSentinelInt` on failure.
+@_cdecl("kk_kclass_cast")
+public func kk_kclass_cast(
+    _ kclassRaw: Int,
+    _ valueRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "ClassCastException: Invalid KClass handle."
+        )
+        return runtimeNullSentinelInt
+    }
+    let isInstance = kk_op_is(valueRaw, box.typeToken)
+    if isInstance != 0 {
+        return valueRaw
+    }
+    let typeName: String
+    if let metadata = box.metadata {
+        typeName = metadata.qualifiedName.isEmpty ? metadata.simpleName : metadata.qualifiedName
+    } else {
+        typeName = "Unknown"
+    }
+    outThrown?.pointee = runtimeAllocateThrowable(
+        message: "ClassCastException: Value cannot be cast to \(typeName)."
+    )
+    return runtimeNullSentinelInt
+}
+
+/// Tries to cast `valueRaw` to the type represented by this KClass.
+/// Returns `valueRaw` if the value is an instance, or the null sentinel if not.
+/// Never throws; equivalent to Kotlin's `safeCast` (`value as? T`).
+///
+/// - Parameters:
+///   - kclassRaw: Opaque handle to the KClass.
+///   - valueRaw: The value to cast.
+/// - Returns: `valueRaw` on success, or `runtimeNullSentinelInt` if not an instance.
+@_cdecl("kk_kclass_safeCast")
+public func kk_kclass_safeCast(_ kclassRaw: Int, _ valueRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw) else {
+        return runtimeNullSentinelInt
+    }
+    let isInstance = kk_op_is(valueRaw, box.typeToken)
+    return isInstance != 0 ? valueRaw : runtimeNullSentinelInt
 }
 
 // MARK: - REFL-005: KType and typeOf<T>()

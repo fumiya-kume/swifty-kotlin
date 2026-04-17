@@ -43,6 +43,13 @@ jobs:
         uses: ./.github/actions/setup-swift-llvm
         with:
           swift-version: "6.2"
+      - name: Cache SPM build artifacts
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: spm-${{ runner.os }}-swift-6.2-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          restore-keys: |
+            spm-${{ runner.os }}-swift-6.2-
       - name: Show toolchain versions
         run: swift --version
       - name: Build with strict concurrency (warnings)
@@ -71,6 +78,13 @@ jobs:
         uses: ./.github/actions/setup-swift-llvm
         with:
           swift-version: "6.2"
+      - name: Cache SPM build artifacts
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: spm-${{ runner.os }}-swift-6.2-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          restore-keys: |
+            spm-${{ runner.os }}-swift-6.2-
       - name: Show toolchain versions
         run: swift --version
       - name: Build with strict concurrency (warnings)
@@ -128,6 +142,13 @@ jobs:
               "https://repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/${KOTLINX_COROUTINES_VERSION}/kotlinx-coroutines-core-jvm-${KOTLINX_COROUTINES_VERSION}.jar"
           fi
           echo "KOTLINC_CLASSPATH=${TOOLS_DIR}/kotlinx-coroutines-core-jvm.jar" >> "$GITHUB_ENV"
+      - name: Cache SPM build artifacts
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: spm-${{ runner.os }}-swift-6.2-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          restore-keys: |
+            spm-${{ runner.os }}-swift-6.2-
       - name: Verify prerequisites
         run: |
           java -version
@@ -135,8 +156,6 @@ jobs:
           test -f "$KOTLINC_CLASSPATH"
       - name: Build compiler
         run: swift build -Xswiftc -swift-version -Xswiftc 6
-      - name: Build with strict concurrency (warnings)
-        run: swift build -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
       - name: Run kotlinc diff regression cases
         id: diff_kotlinc
         continue-on-error: true

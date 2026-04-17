@@ -185,6 +185,8 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+        // STDLIB-003-ABI-001: Char.digitToInt(radix: Int)
+        registerDigitToIntRadixStub(symbols: symbols, types: types, interner: interner)
     }
 
     private func ensureKotlinTextPackageForCharStubs(
@@ -265,6 +267,64 @@ extension DataFlowSemaPhase {
                 receiverType: receiverType,
                 parameterTypes: [],
                 returnType: returnType
+            ),
+            for: functionSymbol
+        )
+    }
+
+    // MARK: - STDLIB-003-ABI-001/002/003 registration helpers
+
+    /// Register `fun Char.digitToInt(radix: Int): Int` synthetic stub.
+    func registerDigitToIntRadixStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let kotlinTextPkg = ensureKotlinTextPackageForCharStubs(symbols: symbols, interner: interner)
+        let functionName = interner.intern("digitToInt")
+        let functionFQName = kotlinTextPkg + [functionName]
+        let intType = types.intType
+
+        let alreadyExists = symbols.lookupAll(fqName: functionFQName).contains { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == types.charType
+                && signature.parameterTypes == [intType]
+                && signature.returnType == intType
+        }
+        guard !alreadyExists else { return }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let pkgSym = symbols.lookup(fqName: kotlinTextPkg) {
+            symbols.setParentSymbol(pkgSym, for: functionSymbol)
+        }
+        symbols.setExternalLinkName("kk_char_digitToInt_radix", for: functionSymbol)
+
+        let radixParamName = interner.intern("radix")
+        let radixParamSym = symbols.define(
+            kind: .valueParameter,
+            name: radixParamName,
+            fqName: functionFQName + [radixParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: radixParamSym)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: types.charType,
+                parameterTypes: [intType],
+                returnType: intType,
+                valueParameterSymbols: [radixParamSym],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false]
             ),
             for: functionSymbol
         )
