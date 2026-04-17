@@ -20,18 +20,15 @@ final class RuntimeHexFormatNumberPrefixSuffixTests: IsolatedRuntimeXCTestCase {
     }
 
     private func makeFormat(prefix: String = "", suffix: String = "", removeLeadingZeros: Bool = false) -> Int {
-        let fmt = kk_hexformat_default()
-        let prefixRaw = makeString(prefix)
-        let suffixRaw = makeString(suffix)
-        _ = kk_hexformat_prefix(fmt, prefixRaw)
-        _ = kk_hexformat_suffix(fmt, suffixRaw)
-        if removeLeadingZeros {
-            guard let box = UnsafeMutableRawPointer(bitPattern: fmt).flatMap({ ptr in
-                Runtime.tryCast(ptr, to: RuntimeHexFormatBox.self)
-            }) else { return fmt }
-            box.removeLeadingZeros = true
-        }
-        return fmt
+        // Always create a fresh box to avoid shared-singleton pollution between tests.
+        let box = RuntimeHexFormatBox(
+            upperCase: false,
+            byteSeparator: "",
+            numberPrefix: prefix,
+            numberSuffix: suffix,
+            removeLeadingZeros: removeLeadingZeros
+        )
+        return registerRuntimeObject(box)
     }
 
     // MARK: - Encode: prefix applied
@@ -68,16 +65,15 @@ final class RuntimeHexFormatNumberPrefixSuffixTests: IsolatedRuntimeXCTestCase {
     }
 
     func testRoundTripIntUpperCase() {
-        let fmt = kk_hexformat_default()
-        guard let box = UnsafeMutableRawPointer(bitPattern: fmt).flatMap({ ptr in
-            Runtime.tryCast(ptr, to: RuntimeHexFormatBox.self)
-        }) else {
-            XCTFail("Could not get format box")
-            return
-        }
-        box.upperCase = true
-        box.numberPrefix = "0x"
-        box.removeLeadingZeros = true
+        // Create a fresh box to avoid shared-singleton pollution.
+        let box = RuntimeHexFormatBox(
+            upperCase: true,
+            byteSeparator: "",
+            numberPrefix: "0x",
+            numberSuffix: "",
+            removeLeadingZeros: true
+        )
+        let fmt = registerRuntimeObject(box)
 
         let encoded = toString(kk_int_toHexString(255, fmt))
         XCTAssertEqual(encoded, "0xFF")
@@ -155,15 +151,15 @@ final class RuntimeHexFormatNumberPrefixSuffixTests: IsolatedRuntimeXCTestCase {
     // MARK: - Long encode/decode with prefix
 
     func testRoundTripLongWithPrefix() {
-        let fmt = kk_hexformat_default()
-        guard let box = UnsafeMutableRawPointer(bitPattern: fmt).flatMap({ ptr in
-            Runtime.tryCast(ptr, to: RuntimeHexFormatBox.self)
-        }) else {
-            XCTFail("Could not get format box")
-            return
-        }
-        box.numberPrefix = "0x"
-        box.removeLeadingZeros = true
+        // Create a fresh box to avoid shared-singleton pollution.
+        let box = RuntimeHexFormatBox(
+            upperCase: false,
+            byteSeparator: "",
+            numberPrefix: "0x",
+            numberSuffix: "",
+            removeLeadingZeros: true
+        )
+        let fmt = registerRuntimeObject(box)
 
         let longRaw = kk_box_long(255)
         let encoded = toString(kk_long_toHexString(longRaw, fmt))
