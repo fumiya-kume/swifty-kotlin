@@ -410,7 +410,7 @@ final class RuntimeDelegateTests: IsolatedRuntimeXCTestCase {
         let written = kk_notNull_set_value(handle, 321)
         XCTAssertEqual(written, 321)
 
-        let current = kk_notNull_get_value(handle)
+        let current = kk_notNull_get_value(handle, nil)
         XCTAssertEqual(current, 321)
     }
 }
