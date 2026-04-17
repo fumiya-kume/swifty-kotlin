@@ -138,6 +138,11 @@ final class RuntimeContinuationState: @unchecked Sendable {
     /// distinguish exception returns from normal (possibly non-zero) return values.
     var thrownException: Int = 0
     private let stateLock = NSLock()
+    /// STDLIB-CORO-BUG-01: one-shot resume guard.
+    /// Set to `true` atomically (under `stateLock`) by the first successful resume
+    /// so that any subsequent resume call is rejected with an `IllegalStateException`.
+    /// Reset by `resetResumeState()` when the coroutine advances to the next suspend point.
+    private var hasResumed: Bool = false
     private var delayTimers: [ObjectIdentifier: DispatchSourceTimer]
     private static let taskStateLock = NSLock()
     nonisolated(unsafe) private static var taskStateMap: [ObjectIdentifier: RuntimeContinuationState] = [:]
@@ -327,20 +332,63 @@ final class RuntimeContinuationState: @unchecked Sendable {
         stateLock.unlock()
     }
 
-    func resume(with value: Int) {
+    /// Resume the continuation with a successful value.
+    ///
+    /// Returns `nil` on success. If the continuation has already been resumed
+    /// (one-shot guard), returns a raw pointer to a `RuntimeIllegalStateExceptionBox`
+    /// describing the double-resume violation (STDLIB-CORO-BUG-01).
+    /// The flag is set BEFORE delivering the result to prevent re-entrant resume.
+    @discardableResult
+    func resume(with value: Int) -> Int? {
         stateLock.lock()
+        if hasResumed {
+            stateLock.unlock()
+            let ise = runtimeAllocateIllegalStateException(
+                message: "Already resumed, but proposed with update \(value)"
+            )
+            return ise
+        }
+        hasResumed = true
         completion = Int64(value)
         thrownException = 0
         stateLock.unlock()
         signalResume()
+        return nil
     }
 
-    func resume(withException exception: Int) {
+    /// Resume the continuation with a thrown exception.
+    ///
+    /// Returns `nil` on success. If the continuation has already been resumed
+    /// (one-shot guard), returns a raw pointer to a `RuntimeIllegalStateExceptionBox`
+    /// describing the double-resume violation (STDLIB-CORO-BUG-01).
+    /// The flag is set BEFORE delivering the result to prevent re-entrant resume.
+    @discardableResult
+    func resume(withException exception: Int) -> Int? {
         stateLock.lock()
+        if hasResumed {
+            stateLock.unlock()
+            let ise = runtimeAllocateIllegalStateException(
+                message: "Already resumed, but proposed with exception"
+            )
+            return ise
+        }
+        hasResumed = true
         completion = 0
         thrownException = exception
         stateLock.unlock()
         signalResume()
+        return nil
+    }
+
+    /// Deliver a double-resume `IllegalStateException` so that the coroutine body
+    /// observes the violation the next time it reads state.  Overwrites `thrownException`
+    /// and resets `completion` to 0.  Called by C-level entry points when the one-shot
+    /// guard fires (STDLIB-CORO-BUG-01).
+    func deliverDoubleResumeException(_ ise: Int) {
+        stateLock.lock()
+        thrownException = ise
+        completion = 0
+        stateLock.unlock()
     }
 
     func makeContinuationContext() -> RuntimeCoroutineContext {
@@ -355,11 +403,14 @@ final class RuntimeContinuationState: @unchecked Sendable {
 
     /// Reset resume state for the next suspend point.  Called after the
     /// coroutine loop resumes to prepare for the next potential suspension.
+    /// Also resets the one-shot guard (STDLIB-CORO-BUG-01) so the next
+    /// suspend point can accept a fresh resume.
     func resetResumeState() {
         stateLock.lock()
         resumeContinuation = nil
         fallbackSemaphore = nil
         resumeSignalPending = false
+        hasResumed = false
         stateLock.unlock()
     }
 
@@ -1265,15 +1316,21 @@ public func kk_coroutine_continuation_resume_with(_ continuation: Int, _ resultR
        let resultPtr = UnsafeMutableRawPointer(bitPattern: resultRaw),
        let resultBox = tryCast(resultPtr, to: RuntimeResultBox.self)
     {
+        let ise: Int?
         if resultBox.isSuccess {
-            state.resume(with: resultBox.value)
+            ise = state.resume(with: resultBox.value)
         } else {
-            state.resume(withException: resultBox.exception)
+            ise = state.resume(withException: resultBox.exception)
+        }
+        if let ise {
+            state.deliverDoubleResumeException(ise)
         }
         return
     }
 
-    state.resume(with: resultRaw)
+    if let ise = state.resume(with: resultRaw) {
+        state.deliverDoubleResumeException(ise)
+    }
 }
 
 @_cdecl("kk_coroutine_continuation_resume")
@@ -1282,7 +1339,10 @@ public func kk_coroutine_continuation_resume(_ continuation: Int, _ value: Int) 
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_continuation_resume received invalid continuation handle")
     }
     let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
-    state.resume(with: value)
+    if let ise = state.resume(with: value) {
+        // STDLIB-CORO-BUG-01: double-resume detected — surface the ISE via thrownException.
+        state.deliverDoubleResumeException(ise)
+    }
 }
 
 @_cdecl("kk_coroutine_continuation_resume_with_exception")
@@ -1291,7 +1351,10 @@ public func kk_coroutine_continuation_resume_with_exception(_ continuation: Int,
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_continuation_resume_with_exception received invalid continuation handle")
     }
     let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
-    state.resume(withException: exception)
+    if let ise = state.resume(withException: exception) {
+        // STDLIB-CORO-BUG-01: double-resume detected — surface the ISE via thrownException.
+        state.deliverDoubleResumeException(ise)
+    }
 }
 
 @_cdecl("kk_kxmini_run_blocking")
