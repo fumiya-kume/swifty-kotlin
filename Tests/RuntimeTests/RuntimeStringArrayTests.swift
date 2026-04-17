@@ -285,8 +285,8 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         let expectedScalars: [Int] = [97, 233, 128_059] // 'a', 'é', '🐻'
         XCTAssertEqual(list?.elements.map(kk_unbox_char), expectedScalars)
 
-        XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString(text), 2)), "aé")
-        XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString(text), 1)), "é🐻")
+        XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString(text), 2, nil)), "aé")
+        XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString(text), 1, nil)), "é🐻")
     }
 
     func testStringScalarIndexedOperationsWithNonASCII() {
@@ -313,21 +313,43 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
     }
 
     func testStringTakeDropFunctions() {
-        XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString("abcde"), 0)), "")
-        XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString("abcde"), 2)), "ab")
-        XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString("abcde"), 10)), "abcde")
-        XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString("abcde"), 0)), "abcde")
-        XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString("abcde"), 2)), "cde")
-        XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString("abcde"), 10)), "")
+        XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString("abcde"), 0, nil)), "")
+        XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString("abcde"), 2, nil)), "ab")
+        XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString("abcde"), 10, nil)), "abcde")
+        XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString("abcde"), 0, nil)), "abcde")
+        XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString("abcde"), 2, nil)), "cde")
+        XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString("abcde"), 10, nil)), "")
+    }
+
+    func testStringTakeNegativeThrowsIllegalArgumentException() {
+        // STDLIB-005-BUG-01: negative count must throw, not silently return empty/full.
+        var thrown = 0
+        _ = kk_string_take(rawFromRuntimeString("hello"), -1, &thrown)
+        XCTAssertNotEqual(thrown, 0, "kk_string_take(-1) should set outThrown")
+
+        var thrown2 = 0
+        _ = kk_string_drop(rawFromRuntimeString("hello"), -1, &thrown2)
+        XCTAssertNotEqual(thrown2, 0, "kk_string_drop(-1) should set outThrown")
     }
 
     func testStringTakeLastDropLastFunctions() {
-        XCTAssertEqual(runtimeStringValue(kk_string_takeLast(rawFromRuntimeString("abcde"), 0)), "")
-        XCTAssertEqual(runtimeStringValue(kk_string_takeLast(rawFromRuntimeString("abcde"), 2)), "de")
-        XCTAssertEqual(runtimeStringValue(kk_string_takeLast(rawFromRuntimeString("abcde"), 10)), "abcde")
-        XCTAssertEqual(runtimeStringValue(kk_string_dropLast(rawFromRuntimeString("abcde"), 0)), "abcde")
-        XCTAssertEqual(runtimeStringValue(kk_string_dropLast(rawFromRuntimeString("abcde"), 2)), "abc")
-        XCTAssertEqual(runtimeStringValue(kk_string_dropLast(rawFromRuntimeString("abcde"), 10)), "")
+        XCTAssertEqual(runtimeStringValue(kk_string_takeLast(rawFromRuntimeString("abcde"), 0, nil)), "")
+        XCTAssertEqual(runtimeStringValue(kk_string_takeLast(rawFromRuntimeString("abcde"), 2, nil)), "de")
+        XCTAssertEqual(runtimeStringValue(kk_string_takeLast(rawFromRuntimeString("abcde"), 10, nil)), "abcde")
+        XCTAssertEqual(runtimeStringValue(kk_string_dropLast(rawFromRuntimeString("abcde"), 0, nil)), "abcde")
+        XCTAssertEqual(runtimeStringValue(kk_string_dropLast(rawFromRuntimeString("abcde"), 2, nil)), "abc")
+        XCTAssertEqual(runtimeStringValue(kk_string_dropLast(rawFromRuntimeString("abcde"), 10, nil)), "")
+    }
+
+    func testStringTakeLastDropLastNegativeThrowsIllegalArgumentException() {
+        // STDLIB-005-BUG-01: negative count must throw, not silently return empty/full.
+        var thrown = 0
+        _ = kk_string_takeLast(rawFromRuntimeString("hello"), -1, &thrown)
+        XCTAssertNotEqual(thrown, 0, "kk_string_takeLast(-1) should set outThrown")
+
+        var thrown2 = 0
+        _ = kk_string_dropLast(rawFromRuntimeString("hello"), -1, &thrown2)
+        XCTAssertNotEqual(thrown2, 0, "kk_string_dropLast(-1) should set outThrown")
     }
 
     func testStringReplaceSupportsLiteralReplacement() {
