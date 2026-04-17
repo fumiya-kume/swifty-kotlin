@@ -570,6 +570,16 @@ extension KIRLoweringDriver {
             ))
         }
 
+        // STDLIB-REFLECT-ABI-002: Register declared member functions and properties.
+        emitMemberReflectionRegistration(
+            ownerSymbol: ownerSymbol,
+            kclassExpr: kclassExpr,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            body: &body
+        )
+
         body.append(.returnUnit)
         body.append(.endBlock)
 
@@ -587,5 +597,104 @@ extension KIRLoweringDriver {
         )
         ctx.registerCompanionInitializer(symbol: initializerSymbol, name: initializerName)
         return [declID]
+    }
+
+    // MARK: - STDLIB-REFLECT-ABI-002: Member Reflection Registration
+
+    /// Emits `kk_kfunction_create` / `kk_kproperty_stub_create` calls for each
+    /// declared non-synthetic member of a class, followed by
+    /// `kk_kclass_register_member` to attach them to the KClass handle.
+    /// Called from `synthesizeConstructorReflectionInitializer` so that
+    /// `KClass.members` returns real handles rather than count-sized placeholders.
+    func emitMemberReflectionRegistration(
+        ownerSymbol: SymbolID,
+        kclassExpr: KIRExprID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        body: inout KIRLoweringEmitContext
+    ) {
+        guard let ownerInfo = sema.symbols.symbol(ownerSymbol) else { return }
+        let intType = sema.types.intType
+        let childSymbols = sema.symbols.children(ofFQName: ownerInfo.fqName)
+        for childID in childSymbols {
+            guard let childSym = sema.symbols.symbol(childID),
+                  !childSym.flags.contains(.synthetic)
+            else { continue }
+            switch childSym.kind {
+            case .function:
+                guard let signature = sema.symbols.functionSignature(for: childID) else { continue }
+                let fnName = interner.resolve(childSym.name)
+                let fnNameInterned = interner.intern(fnName)
+                let fnNameExpr = arena.appendExpr(.stringLiteral(fnNameInterned), type: intType)
+                body.append(.constValue(result: fnNameExpr, value: .stringLiteral(fnNameInterned)))
+                let arity = Int64(signature.parameterTypes.count)
+                let arityExpr = arena.appendExpr(.intLiteral(arity), type: intType)
+                body.append(.constValue(result: arityExpr, value: .intLiteral(arity)))
+                let returnTypeName = sema.types.renderType(signature.returnType)
+                let retTypeInterned = interner.intern(returnTypeName)
+                let retTypeExpr = arena.appendExpr(.stringLiteral(retTypeInterned), type: intType)
+                body.append(.constValue(result: retTypeExpr, value: .stringLiteral(retTypeInterned)))
+                let isSuspendInt = Int64(signature.isSuspend ? 1 : 0)
+                let isSuspendExpr = arena.appendExpr(.intLiteral(isSuspendInt), type: intType)
+                body.append(.constValue(result: isSuspendExpr, value: .intLiteral(isSuspendInt)))
+                let fnPtrExpr = arena.appendExpr(.symbolRef(childID), type: intType)
+                body.append(.constValue(result: fnPtrExpr, value: .symbolRef(childID)))
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                body.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                let kfunctionResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                body.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_kfunction_create"),
+                    arguments: [fnNameExpr, arityExpr, retTypeExpr, isSuspendExpr, fnPtrExpr, zeroExpr],
+                    result: kfunctionResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                let fnRegisterResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                body.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_kclass_register_member"),
+                    arguments: [kclassExpr, kfunctionResult],
+                    result: fnRegisterResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            case .property:
+                let propName = interner.resolve(childSym.name)
+                let propNameInterned = interner.intern(propName)
+                let propNameExpr = arena.appendExpr(.stringLiteral(propNameInterned), type: intType)
+                body.append(.constValue(result: propNameExpr, value: .stringLiteral(propNameInterned)))
+                let propTypeName: String
+                if let propTypeID = sema.symbols.propertyType(for: childID) {
+                    propTypeName = sema.types.renderType(propTypeID)
+                } else {
+                    propTypeName = "kotlin.Any"
+                }
+                let propTypeInterned = interner.intern(propTypeName)
+                let propTypeExpr = arena.appendExpr(.stringLiteral(propTypeInterned), type: intType)
+                body.append(.constValue(result: propTypeExpr, value: .stringLiteral(propTypeInterned)))
+                let kpropResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                body.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_kproperty_stub_create"),
+                    arguments: [propNameExpr, propTypeExpr],
+                    result: kpropResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                let propRegisterResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                body.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_kclass_register_member"),
+                    arguments: [kclassExpr, kpropResult],
+                    result: propRegisterResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            default:
+                break
+            }
+        }
     }
 }

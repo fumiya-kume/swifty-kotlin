@@ -23,6 +23,14 @@ private enum RuntimePlatformCpuArchitecture: Int {
     case wasm32 = 7
 }
 
+// MemoryModel ordinals match Kotlin stdlib MemoryModel enum:
+// EXPERIMENTAL=0, STRICT=1, RELAXED=2
+private enum RuntimePlatformMemoryModel: Int {
+    case experimental = 0
+    case strict = 1
+    case relaxed = 2
+}
+
 private let runtimePlatformCanAccessUnaligned: Bool = {
 #if arch(x86_64) || arch(i386) || arch(arm64)
     true
@@ -76,9 +84,22 @@ private let runtimePlatformCpuArchitecture: RuntimePlatformCpuArchitecture = {
 #endif
 }()
 
+private let runtimePlatformMemoryModel: RuntimePlatformMemoryModel = {
+#if KSWIFTK_MEMORY_MODEL_STRICT
+    .strict
+#elseif KSWIFTK_MEMORY_MODEL_RELAXED
+    .relaxed
+#else
+    .experimental
+#endif
+}()
+
+private let runtimePlatformIsDebugBinary: Bool = _isDebugAssertConfiguration()
+
 // Cache boxed ordinals once at startup to avoid heap allocation on every access.
 private let runtimePlatformOsFamilyBoxed: Int = kk_box_int(runtimePlatformOsFamily.rawValue)
 private let runtimePlatformCpuArchitectureBoxed: Int = kk_box_int(runtimePlatformCpuArchitecture.rawValue)
+private let runtimePlatformMemoryModelBoxed: Int = kk_box_int(runtimePlatformMemoryModel.rawValue)
 
 @_cdecl("kk_platform_canAccessUnaligned")
 public func kk_platform_canAccessUnaligned(_ platformRaw: Int) -> Int {
@@ -108,4 +129,16 @@ public func kk_platform_cpuArchitecture(_ platformRaw: Int) -> Int {
 public func kk_platform_getAvailableProcessors(_ platformRaw: Int) -> Int {
     _ = platformRaw
     return max(1, ProcessInfo.processInfo.processorCount)
+}
+
+@_cdecl("kk_platform_memoryModel")
+public func kk_platform_memoryModel(_ platformRaw: Int) -> Int {
+    _ = platformRaw
+    return runtimePlatformMemoryModelBoxed
+}
+
+@_cdecl("kk_platform_isDebugBinary")
+public func kk_platform_isDebugBinary(_ platformRaw: Int) -> Int {
+    _ = platformRaw
+    return runtimePlatformIsDebugBinary ? 1 : 0
 }
