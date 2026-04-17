@@ -862,7 +862,7 @@ extension DataFlowSemaPhase {
             fqName: propertyFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: [.synthetic, .mutable]
         )
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setExternalLinkName(getterLinkName, for: propertySymbol)
@@ -1097,7 +1097,7 @@ extension DataFlowSemaPhase {
         }
         let typeParamType = types.make(.typeParam(TypeParamType(
             symbol: typeParamSymbol,
-            nullability: .nonNull
+            nullability: .nullable
         )))
         let atomicRefType = types.make(.classType(ClassType(
             classSymbol: atomicRefSymbol,

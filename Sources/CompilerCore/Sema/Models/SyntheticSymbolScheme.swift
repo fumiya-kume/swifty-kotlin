@@ -60,4 +60,17 @@ public enum SyntheticSymbolScheme {
         let raw = symbol.rawValue
         return raw <= propertyGetterAccessorOffset && raw > typeTokenOffset
     }
+
+    /// Returns true when `symbol` is a synthetic setter accessor symbol
+    /// (raw value in the setter accessor range, below getter accessor offset).
+    public static func isLikelySyntheticSetterAccessor(_ symbol: SymbolID) -> Bool {
+        let raw = symbol.rawValue
+        return raw <= propertySetterAccessorOffset && raw > propertyGetterAccessorOffset
+    }
+
+    /// Reverse of `propertySetterAccessorSymbol(for:)`: recovers the original
+    /// property symbol from a synthetic setter accessor symbol.
+    public static func originalPropertySymbolFromSetterAccessor(_ setterAccessor: SymbolID) -> SymbolID {
+        SymbolID(rawValue: propertySetterAccessorOffset - setterAccessor.rawValue)
+    }
 }
