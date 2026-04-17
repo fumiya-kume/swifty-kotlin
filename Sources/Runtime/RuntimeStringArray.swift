@@ -210,6 +210,8 @@ private enum RuntimeTypeTokenEncoding {
     static let doubleBase: Int64 = 12
     static let floatBase: Int64 = 13
     static let charBase: Int64 = 14
+    // STDLIB-REFLECT-ABI-001: Unit::class token base.
+    static let unitBase: Int64 = 15
 }
 
 func runtimePanicMessage(fromCString cstr: UnsafePointer<CChar>) -> String {
@@ -379,6 +381,10 @@ public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
     case RuntimeTypeTokenEncoding.nullBase:
         return 0
 
+    case RuntimeTypeTokenEncoding.unitBase:
+        // The Unit singleton is represented as the integer 0 at runtime.
+        return value == 0 ? 1 : 0
+
     case RuntimeTypeTokenEncoding.nominalBase:
         if let sourceTypeID = runtimeObjectTypeID(rawValue: value) {
             return runtimeIsAssignable(sourceTypeID: sourceTypeID, targetTypeID: payload) ? 1 : 0
@@ -518,6 +524,8 @@ public func kk_type_token_simple_name(_ typeToken: Int, _ nameHint: Int) -> Int 
         "Char"
     case RuntimeTypeTokenEncoding.nullBase:
         "Nothing"
+    case RuntimeTypeTokenEncoding.unitBase:
+        "Unit"
     default:
         "Unknown"
     }
@@ -551,6 +559,7 @@ public func kk_type_token_qualified_name(_ typeToken: Int, _ nameHint: Int) -> I
     case RuntimeTypeTokenEncoding.floatBase:   "kotlin.Float"
     case RuntimeTypeTokenEncoding.charBase:    "kotlin.Char"
     case RuntimeTypeTokenEncoding.nullBase:    "kotlin.Nothing"
+    case RuntimeTypeTokenEncoding.unitBase:    "kotlin.Unit"
     default: nil
     }
     if let qualifiedName {
