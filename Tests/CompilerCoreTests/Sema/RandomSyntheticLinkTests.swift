@@ -3,7 +3,7 @@ import Foundation
 import XCTest
 
 final class RandomSyntheticLinkTests: XCTestCase {
-    private func makeSema() throws -> (SemaModule, StringInterner) {
+    func makeSema() throws -> (SemaModule, StringInterner) {
         var result: (SemaModule, StringInterner)?
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])

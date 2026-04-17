@@ -486,8 +486,13 @@ public func kk_string_replaceFirstChar(
 }
 
 @_cdecl("kk_string_take")
-public func kk_string_take(_ strRaw: Int, _ nRaw: Int) -> Int {
+public func kk_string_take(_ strRaw: Int, _ nRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    outThrown?.pointee = 0
+    if nRaw < 0 {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: Requested element count \(nRaw) is less than zero.")
+        return runtimeMakeStringRaw("")
+    }
     let scalars = runtimeStringScalars(strRaw)
     guard nRaw > 0 else {
         return runtimeMakeStringRaw("")
@@ -557,7 +562,12 @@ public func kk_string_removeSurrounding_pair(
 }
 
 @_cdecl("kk_string_takeLast")
-public func kk_string_takeLast(_ strRaw: Int, _ nRaw: Int) -> Int {
+public func kk_string_takeLast(_ strRaw: Int, _ nRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    if nRaw < 0 {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: Requested element count \(nRaw) is less than zero.")
+        return runtimeMakeStringRaw("")
+    }
     let scalars = runtimeStringScalars(strRaw)
     guard nRaw > 0 else {
         return runtimeMakeStringRaw("")
@@ -567,8 +577,13 @@ public func kk_string_takeLast(_ strRaw: Int, _ nRaw: Int) -> Int {
 }
 
 @_cdecl("kk_string_drop")
-public func kk_string_drop(_ strRaw: Int, _ nRaw: Int) -> Int {
+public func kk_string_drop(_ strRaw: Int, _ nRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    outThrown?.pointee = 0
+    if nRaw < 0 {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: Requested element count \(nRaw) is less than zero.")
+        return runtimeMakeStringRaw("")
+    }
     let scalars = runtimeStringScalars(strRaw)
     guard nRaw > 0 else {
         return runtimeMakeStringRaw(source)
@@ -580,8 +595,13 @@ public func kk_string_drop(_ strRaw: Int, _ nRaw: Int) -> Int {
 }
 
 @_cdecl("kk_string_dropLast")
-public func kk_string_dropLast(_ strRaw: Int, _ nRaw: Int) -> Int {
+public func kk_string_dropLast(_ strRaw: Int, _ nRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    outThrown?.pointee = 0
+    if nRaw < 0 {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: Requested element count \(nRaw) is less than zero.")
+        return runtimeMakeStringRaw("")
+    }
     let scalars = runtimeStringScalars(strRaw)
     guard nRaw > 0 else {
         return runtimeMakeStringRaw(source)
