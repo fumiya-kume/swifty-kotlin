@@ -383,12 +383,24 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
     func testMinOfWithComparatorOverloadIsRegistered_Gap() throws {
         // TODO(STDLIB-COMP-001): minOf with Comparator is not yet registered in the sema layer.
         // When implemented, flip to asserting the symbol exists with the correct arity.
+        //
+        // NOTE: minOf already has 3-arg overloads for primitive types (Int, Long, Double, Float).
+        // We must distinguish those from a Comparator overload by checking whether the
+        // last parameter is a class type whose symbol corresponds to kotlin.Comparator.
         let (sema, interner) = try makeSema()
         let fq = ["kotlin", "comparisons", "minOf"].map { interner.intern($0) }
         let syms = sema.symbols.lookupAll(fqName: fq)
+        let comparatorFQName = ["kotlin", "Comparator"].map { interner.intern($0) }
+        let comparatorSymbol = sema.symbols.lookup(fqName: comparatorFQName)
         let hasComparatorOverload = syms.contains { sym in
-            guard let sig = sema.symbols.functionSignature(for: sym) else { return false }
-            return sig.parameterTypes.count == 3
+            guard let sig = sema.symbols.functionSignature(for: sym),
+                  sig.parameterTypes.count >= 3,
+                  let lastParamType = sig.parameterTypes.last,
+                  let comparatorSym = comparatorSymbol else { return false }
+            if case .classType(let ct) = sema.types.kind(of: lastParamType) {
+                return ct.classSymbol == comparatorSym
+            }
+            return false
         }
         // Documenting the gap: minOf(a, b, comparator) is not yet implemented.
         // TODO(STDLIB-COMP-001): Change XCTAssertFalse to XCTAssertTrue when implemented.
@@ -477,10 +489,12 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
         }
 
         // Factory functions
+        // Note: compareBy (single-selector) links to kk_comparator_from_selector.
+        // kk_comparator_from_selector_primitive is the link for compareByPrimitive (internal name).
         let factoryLinks: [(path: [String], expectedLinks: [String])] = [
             (
                 ["kotlin", "comparisons", "compareBy"],
-                ["kk_comparator_from_selector_primitive",
+                ["kk_comparator_from_selector",
                  "kk_comparator_from_multi_selectors",
                  "kk_comparator_from_multi_selectors3"]
             ),
