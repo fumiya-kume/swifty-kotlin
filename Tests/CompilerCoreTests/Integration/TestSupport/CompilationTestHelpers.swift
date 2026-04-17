@@ -60,6 +60,40 @@ func assertKotlinCompilesToKIR(
     }
 }
 
+/// Compile multiple Kotlin sources through the KIR dump phase and assert success.
+func assertKotlinSourcesToKIR(
+    _ sources: [String],
+    moduleName: String = "TestMod",
+    file: StaticString = #filePath,
+    line: UInt = #line
+) throws {
+    try withTemporaryFiles(contents: sources) { paths in
+        let fm = FileManager.default
+        let outputBase = fm.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString).path
+        let kirPath = outputBase + ".kir"
+        defer { try? fm.removeItem(atPath: kirPath) }
+
+        let options = makeTestOptions(
+            moduleName: moduleName,
+            inputs: paths,
+            outputPath: outputBase,
+            emit: .kirDump
+        )
+        let result = makeTestDriver().runForTesting(options: options)
+
+        XCTAssertEqual(result.exitCode, 0,
+                       "KIR compilation failed. Diagnostics: \(result.diagnostics.map { "\($0.code): \($0.message)" })",
+                       file: file, line: line)
+        XCTAssertFalse(result.diagnostics.contains(where: { $0.severity == .error }),
+                       "Unexpected errors: \(result.diagnostics.filter { $0.severity == .error }.map { "\($0.code): \($0.message)" })",
+                       file: file, line: line)
+        XCTAssertTrue(fm.fileExists(atPath: kirPath),
+                      "KIR file not produced at \(kirPath)",
+                      file: file, line: line)
+    }
+}
+
 /// Compile Kotlin source through object emission and assert a valid object file is produced.
 func assertKotlinCompilesToObject(
     _ source: String,
