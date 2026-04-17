@@ -3,6 +3,29 @@ import Foundation
 import XCTest
 
 final class DataClassComponentNTests: XCTestCase {
+    // Regression test for the bug reported in PR #1281 follow-up:
+    // specializeComponentReturnType was applied only to inferDestructuringDeclExpr
+    // but NOT to inferForDestructuringExpr, so for-loop destructuring of generic
+    // Pair/tuple types still returned the raw type-parameter instead of the
+    // concrete substituted type.
+    func testForLoopDestructuringPairSpecializesComponentReturnType() throws {
+        let source = """
+        fun demo() {
+            for ((k, v) in mapOf("a" to 1).entries.map { it.toPair() }) {
+                k.length + v
+            }
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        XCTAssertFalse(
+            ctx.diagnostics.hasError,
+            "Expected for-loop pair destructuring to compile without sema errors, got: "
+                + ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: ", ")
+        )
+    }
+
     func testComponentNUsesOwnerVisibilityForPrivateDataClass() throws {
         let source = """
         package test

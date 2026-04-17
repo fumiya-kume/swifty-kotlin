@@ -37,7 +37,12 @@ extension ControlFlowTypeChecker {
             if let candidate = candidates.first,
                let signature = sema.symbols.functionSignature(for: candidate)
             {
-                componentType = signature.returnType
+                componentType = specializeComponentReturnType(
+                    candidate: candidate,
+                    signature: signature,
+                    receiverType: rhsType,
+                    sema: sema
+                )
             } else {
                 // Fallback: try to find componentN via scope lookup
                 let scopeCandidates = sema.symbols.lookupAll(fqName: [componentName]).filter { symbolID in
@@ -52,7 +57,12 @@ extension ControlFlowTypeChecker {
                 if let candidate = scopeCandidates.first,
                    let signature = sema.symbols.functionSignature(for: candidate)
                 {
-                    componentType = signature.returnType
+                    componentType = specializeComponentReturnType(
+                        candidate: candidate,
+                        signature: signature,
+                        receiverType: rhsType,
+                        sema: sema
+                    )
                 } else if isDataClassType(rhsType, sema: sema) {
                     // Data class componentN() is synthesized during lowering; fall back to Any
                     componentType = sema.types.anyType
@@ -135,7 +145,12 @@ extension ControlFlowTypeChecker {
             if let candidate = candidates.first,
                let signature = sema.symbols.functionSignature(for: candidate)
             {
-                componentType = signature.returnType
+                componentType = specializeComponentReturnType(
+                    candidate: candidate,
+                    signature: signature,
+                    receiverType: elementType,
+                    sema: sema
+                )
             } else if isDataClassType(elementType, sema: sema) {
                 // Data class componentN() is synthesized during lowering; fall back to Any
                 componentType = sema.types.anyType
@@ -186,6 +201,55 @@ extension ControlFlowTypeChecker {
         default:
             return false
         }
+    }
+
+    /// Specializes the return type of a `componentN()` function by substituting
+    /// the receiver's concrete type arguments for the owner class's type parameters.
+    ///
+    /// For example, given `Pair<String, Int>.component1()` whose raw return type is
+    /// type-parameter `A`, this produces the concrete type `String`.
+    private func specializeComponentReturnType(
+        candidate: SymbolID,
+        signature: FunctionSignature,
+        receiverType: TypeID,
+        sema: SemaModule
+    ) -> TypeID {
+        let rawReturn = signature.returnType
+        guard signature.classTypeParameterCount > 0,
+              case let .classType(receiverClassType) = sema.types.kind(
+                  of: sema.types.makeNonNullable(receiverType))
+        else {
+            return rawReturn
+        }
+
+        let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+        var substitution: [TypeVarID: TypeID] = [:]
+        let count = min(
+            signature.classTypeParameterCount,
+            receiverClassType.args.count,
+            signature.typeParameterSymbols.count
+        )
+        for index in 0 ..< count {
+            let concreteType: TypeID = switch receiverClassType.args[index] {
+            case let .invariant(type), let .out(type), let .in(type):
+                type
+            case .star:
+                sema.types.anyType
+            }
+            let paramSymbol = signature.typeParameterSymbols[index]
+            if let typeVar = typeVarBySymbol[paramSymbol] {
+                substitution[typeVar] = concreteType
+            }
+        }
+
+        guard !substitution.isEmpty else {
+            return rawReturn
+        }
+        return sema.types.substituteTypeParameters(
+            in: rawReturn,
+            substitution: substitution,
+            typeVarBySymbol: typeVarBySymbol
+        )
     }
 
     private func isDataClassType(_ type: TypeID, sema: SemaModule) -> Bool {
