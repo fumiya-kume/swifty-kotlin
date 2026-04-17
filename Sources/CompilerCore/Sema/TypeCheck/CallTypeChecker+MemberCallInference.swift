@@ -6525,6 +6525,19 @@ extension CallTypeChecker {
         if sema.types.isSubtype(nonNullReceiver, closeableType) {
             return true
         }
+        // STDLIB-030-BUG-01: When the receiver is a type parameter (e.g. `T` in
+        // `fun <T : AutoCloseable> useIt(t: T)`), the general isSubtype now traverses
+        // upper bounds (see Subtyping.swift). As an explicit fallback, also check directly:
+        // if any registered upper bound of T is a subtype of Closeable, accept it.
+        if case let .typeParam(typeParam) = sema.types.kind(of: nonNullReceiver) {
+            let upperBounds = sema.symbols.typeParameterUpperBounds(for: typeParam.symbol)
+            for bound in upperBounds {
+                let nonNullBound = sema.types.makeNonNullable(bound)
+                if sema.types.isSubtype(nonNullBound, closeableType) {
+                    return true
+                }
+            }
+        }
         // Fallback: check if the class explicitly declares Closeable or AutoCloseable
         // in its registered supertype list.  This handles synthetic IO types
         // (BufferedReader, BufferedWriter, InputStream, OutputStream) whose supertypes
