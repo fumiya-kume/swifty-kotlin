@@ -244,4 +244,5 @@ final class SmokeTests: XCTestCase {
         }
         """, moduleName: "SmokeTypealiasExtension")
     }
+
 }

@@ -983,6 +983,39 @@ final class RuntimeKConstructorRegistry: @unchecked Sendable {
 
 let runtimeKConstructorRegistry = RuntimeKConstructorRegistry()
 
+/// Global registry mapping a `KClass` raw handle to its member callable handles.
+/// Members are registered during module initialization via `kk_kclass_register_member`.
+/// Each entry is a KFunction or KPropertyStub raw handle (STDLIB-REFLECT-ABI-002).
+final class RuntimeKMemberRegistry: @unchecked Sendable {
+    private let lock = NSLock()
+    private var membersByClassRaw: [Int: [Int]] = [:]
+
+    func register(classRaw: Int, memberRaw: Int) {
+        guard classRaw != 0, classRaw != runtimeNullSentinelInt,
+              memberRaw != 0, memberRaw != runtimeNullSentinelInt
+        else {
+            return
+        }
+        lock.lock()
+        defer { lock.unlock() }
+        membersByClassRaw[classRaw, default: []].append(memberRaw)
+    }
+
+    func members(for classRaw: Int) -> [Int] {
+        lock.lock()
+        defer { lock.unlock() }
+        return membersByClassRaw[classRaw] ?? []
+    }
+
+    func reset() {
+        lock.lock()
+        defer { lock.unlock() }
+        membersByClassRaw.removeAll()
+    }
+}
+
+let runtimeKMemberRegistry = RuntimeKMemberRegistry()
+
 /// Runtime box for `KClass<T>` metadata references produced by `T::class`.
 /// Stores the type token and an optional name-hint pointer so that
 /// `.simpleName` / `.qualifiedName` can be resolved at runtime.
@@ -1522,4 +1555,38 @@ final class RuntimeBufferedWriterBox {
         try fileHandle.write(contentsOf: buffer)
         buffer.removeAll(keepingCapacity: true)
     }
+}
+
+// MARK: - RuntimeChildReferenceProviding conformances (ABI-004)
+//
+// These conformances enable the recursive BFS freeze in kk_freeze_object to
+// traverse all reachable object references when freezing an object graph.
+// Only types that store `Int` child handles need to conform.
+
+extension RuntimeArrayBox: RuntimeChildReferenceProviding {
+    var childRefs: [Int] { elements }
+}
+
+extension RuntimePairBox: RuntimeChildReferenceProviding {
+    var childRefs: [Int] { [first, second] }
+}
+
+extension RuntimeTripleBox: RuntimeChildReferenceProviding {
+    var childRefs: [Int] { [first, second, third] }
+}
+
+extension RuntimeListBox: RuntimeChildReferenceProviding {
+    var childRefs: [Int] { elements }
+}
+
+extension RuntimeSetBox: RuntimeChildReferenceProviding {
+    var childRefs: [Int] { elements }
+}
+
+extension RuntimeMapBox: RuntimeChildReferenceProviding {
+    var childRefs: [Int] { keys + values }
+}
+
+extension RuntimeArrayDequeBox: RuntimeChildReferenceProviding {
+    var childRefs: [Int] { elements }
 }

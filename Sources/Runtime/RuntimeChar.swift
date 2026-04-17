@@ -197,6 +197,97 @@ public func kk_char_isTitleCase(_ value: Int) -> Int {
     return kk_box_bool(scalar.properties.generalCategory == .titlecaseLetter ? 1 : 0)
 }
 
+// MARK: - STDLIB-003-ABI-001: Char.digitToInt(radix: Int)
+
+/// fun Char.digitToInt(radix: Int): Int
+/// Returns the numeric digit value of this Char in the given radix (2..36).
+/// Throws IllegalArgumentException if radix is out of range or char is not a valid digit.
+@_cdecl("kk_char_digitToInt_radix")
+public func kk_char_digitToInt_radix(
+    _ value: Int,
+    _ radix: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard radix >= 2, radix <= 36 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: radix \(radix) is out of the valid range 2..36"
+        )
+        return 0
+    }
+    let digitVal: Int
+    if value >= Int(("0" as UnicodeScalar).value), value <= Int(("9" as UnicodeScalar).value) {
+        digitVal = value - Int(("0" as UnicodeScalar).value)
+    } else if value >= Int(("a" as UnicodeScalar).value), value <= Int(("z" as UnicodeScalar).value) {
+        digitVal = value - Int(("a" as UnicodeScalar).value) + 10
+    } else if value >= Int(("A" as UnicodeScalar).value), value <= Int(("Z" as UnicodeScalar).value) {
+        digitVal = value - Int(("A" as UnicodeScalar).value) + 10
+    } else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: code point \(value) is not a valid digit in radix \(radix)"
+        )
+        return 0
+    }
+    guard digitVal < radix else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: code point \(value) is not a valid digit in radix \(radix)"
+        )
+        return 0
+    }
+    return digitVal
+}
+
+// MARK: - STDLIB-003-ABI-002: Char.Companion.digitToChar(digit: Int, radix: Int)
+
+/// fun Char.Companion.digitToChar(digit: Int, radix: Int): Char
+/// Returns the Char that represents the given digit value in the given radix (2..36).
+/// Throws IllegalArgumentException if radix or digit is out of range.
+@_cdecl("kk_char_digitToChar_radix")
+public func kk_char_digitToChar_radix(
+    _ digit: Int,
+    _ radix: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard radix >= 2, radix <= 36 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: radix \(radix) is out of the valid range 2..36"
+        )
+        return 0
+    }
+    guard digit >= 0, digit < radix else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: digit \(digit) is out of the valid range 0..<\(radix)"
+        )
+        return 0
+    }
+    if digit < 10 {
+        return Int(("0" as UnicodeScalar).value) + digit
+    } else {
+        return Int(("a" as UnicodeScalar).value) + digit - 10
+    }
+}
+
+// MARK: - STDLIB-003-ABI-003: Char(code: Int) constructor
+
+/// constructor(code: Int): Char
+/// Returns the Char with the given Unicode code point.
+/// Throws IllegalArgumentException if code is not in 0..0xFFFF.
+@_cdecl("kk_char_fromCode")
+public func kk_char_fromCode(
+    _ code: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard code >= 0, code <= 0xFFFF else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: code \(code) is out of the valid Char range 0..0xFFFF"
+        )
+        return 0
+    }
+    return code
+}
+
 private func charBase10DigitValue(_ scalar: UnicodeScalar) -> Int? {
     if scalar.value >= 0x30, scalar.value <= 0x39 {
         return Int(scalar.value - 0x30)
