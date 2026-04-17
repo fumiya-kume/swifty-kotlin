@@ -3560,40 +3560,54 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3563 kind=local fq=__local_1.d vis=private flags=_ type=Double
-symbol s3564 kind=local fq=__local_4.dToInt vis=private flags=_ type=Int
-symbol s3565 kind=local fq=__local_7.dToLong vis=private flags=_ type=Long
-symbol s3566 kind=local fq=__local_15.f vis=private flags=_ type=Float
-symbol s3567 kind=local fq=__local_18.fToInt vis=private flags=_ type=Int
-symbol s3568 kind=local fq=__local_21.fToLong vis=private flags=_ type=Long
+symbol s3562 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3563 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3564 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3564<T#3565>
+symbol s3565 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3566 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3564<T#3565> params=[] ret=T#3565? suspend=0 defaults=[] vararg=[]
+symbol s3567 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3568 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3569 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3570 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3570
+symbol s3571 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3573 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3573
+symbol s3574 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3575 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3576 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3577 kind=local fq=__local_1.d vis=private flags=_ type=Double
+symbol s3578 kind=local fq=__local_4.dToInt vis=private flags=_ type=Int
+symbol s3579 kind=local fq=__local_7.dToLong vis=private flags=_ type=Long
+symbol s3580 kind=local fq=__local_15.f vis=private flags=_ type=Float
+symbol s3581 kind=local fq=__local_18.fToInt vis=private flags=_ type=Int
+symbol s3582 kind=local fq=__local_21.fToLong vis=private flags=_ type=Long
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3562
+  decl d0 fun main suspend=0 inline=0 sym=s3576
 expr e0 double(3.7) type=Double
-expr e1 localDecl d mutable=0 type=t0 init=e0 type=Unit ref=s3563
-expr e2 name(d) type=Double ref=s3563
+expr e1 localDecl d mutable=0 type=t0 init=e0 type=Unit ref=s3577
+expr e2 name(d) type=Double ref=s3577
 expr e3 memberCall recv=e2 callee=roundToInt args=[] type=Int call=s2746 map=[] targs=[]
-expr e4 localDecl dToInt mutable=0 type=t1 init=e3 type=Unit ref=s3564
-expr e5 name(d) type=Double ref=s3563
+expr e4 localDecl dToInt mutable=0 type=t1 init=e3 type=Unit ref=s3578
+expr e5 name(d) type=Double ref=s3577
 expr e6 memberCall recv=e5 callee=roundToLong args=[] type=Long call=s2748 map=[] targs=[]
-expr e7 localDecl dToLong mutable=0 type=t2 init=e6 type=Unit ref=s3565
+expr e7 localDecl dToLong mutable=0 type=t2 init=e6 type=Unit ref=s3579
 expr e8 name(println) type=_
-expr e9 name(dToInt) type=Int ref=s3564
+expr e9 name(dToInt) type=Int ref=s3578
 expr e10 call callee=e8 args=[_:e9] type=Unit call=s1718 map=[0->0] targs=[]
 expr e11 name(println) type=_
-expr e12 name(dToLong) type=Long ref=s3565
+expr e12 name(dToLong) type=Long ref=s3579
 expr e13 call callee=e11 args=[_:e12] type=Unit call=s1718 map=[0->0] targs=[]
 expr e14 float(2.3) type=Float
-expr e15 localDecl f mutable=0 type=t3 init=e14 type=Unit ref=s3566
-expr e16 name(f) type=Float ref=s3566
+expr e15 localDecl f mutable=0 type=t3 init=e14 type=Unit ref=s3580
+expr e16 name(f) type=Float ref=s3580
 expr e17 memberCall recv=e16 callee=roundToInt args=[] type=Int call=s2745 map=[] targs=[]
-expr e18 localDecl fToInt mutable=0 type=t4 init=e17 type=Unit ref=s3567
-expr e19 name(f) type=Float ref=s3566
+expr e18 localDecl fToInt mutable=0 type=t4 init=e17 type=Unit ref=s3581
+expr e19 name(f) type=Float ref=s3580
 expr e20 memberCall recv=e19 callee=roundToLong args=[] type=Long call=s2747 map=[] targs=[]
-expr e21 localDecl fToLong mutable=0 type=t5 init=e20 type=Unit ref=s3568
+expr e21 localDecl fToLong mutable=0 type=t5 init=e20 type=Unit ref=s3582
 expr e22 name(println) type=_
-expr e23 name(fToInt) type=Int ref=s3567
+expr e23 name(fToInt) type=Int ref=s3581
 expr e24 call callee=e22 args=[_:e23] type=Unit call=s1718 map=[0->0] targs=[]
 expr e25 name(println) type=_
-expr e26 name(fToLong) type=Long ref=s3568
+expr e26 name(fToLong) type=Long ref=s3582
 expr e27 call callee=e25 args=[_:e26] type=Unit call=s1718 map=[0->0] targs=[]

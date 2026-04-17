@@ -3560,52 +3560,66 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=class fq=golden.sema.MyResource vis=public flags=_
-symbol s3563 kind=constructor fq=golden.sema.MyResource.<init> vis=public flags=_ sig=recv=Class#3562 params=[] ret=Class#3562 suspend=0 defaults=[] vararg=[]
-symbol s3564 kind=function fq=golden.sema.MyResource.close vis=public flags=overrideMember sig=recv=Class#3562 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3565 kind=function fq=golden.sema.useBasic vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3566 kind=function fq=golden.sema.useReturnValue vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3567 kind=function fq=golden.sema.useWithIt vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3568 kind=local fq=__local_5.r vis=private flags=_ type=Class#3562
-symbol s3569 kind=local fq=__local_17.r vis=private flags=_ type=Class#3562
-symbol s3570 kind=local fq=__local_26.r vis=private flags=_ type=Class#3562
+symbol s3562 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3563 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3564 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3564<T#3565>
+symbol s3565 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3566 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3564<T#3565> params=[] ret=T#3565? suspend=0 defaults=[] vararg=[]
+symbol s3567 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3568 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3569 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3570 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3570
+symbol s3571 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3573 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3573
+symbol s3574 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3575 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3576 kind=class fq=golden.sema.MyResource vis=public flags=_
+symbol s3577 kind=constructor fq=golden.sema.MyResource.<init> vis=public flags=_ sig=recv=Class#3576 params=[] ret=Class#3576 suspend=0 defaults=[] vararg=[]
+symbol s3578 kind=function fq=golden.sema.MyResource.close vis=public flags=overrideMember sig=recv=Class#3576 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3579 kind=function fq=golden.sema.useBasic vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3580 kind=function fq=golden.sema.useReturnValue vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3581 kind=function fq=golden.sema.useWithIt vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3582 kind=local fq=__local_5.r vis=private flags=_ type=Class#3576
+symbol s3583 kind=local fq=__local_17.r vis=private flags=_ type=Class#3576
+symbol s3584 kind=local fq=__local_26.r vis=private flags=_ type=Class#3576
 file f0 package=golden.sema
-  decl d1 class MyResource sym=s3562
-  decl d2 fun useBasic suspend=0 inline=0 sym=s3565
-  decl d3 fun useReturnValue suspend=0 inline=0 sym=s3566
-  decl d4 fun useWithIt suspend=0 inline=0 sym=s3567
+  decl d1 class MyResource sym=s3576
+  decl d2 fun useBasic suspend=0 inline=0 sym=s3579
+  decl d3 fun useReturnValue suspend=0 inline=0 sym=s3580
+  decl d4 fun useWithIt suspend=0 inline=0 sym=s3581
 expr e0 name(println) type=_
 expr e1 string(closed) type=String
 expr e2 call callee=e0 args=[_:e1] type=Unit call=s1718 map=[0->0] targs=[]
 expr e3 name(MyResource) type=_
-expr e4 call callee=e3 args=[] type=Class#3562 call=s3563 map=[] targs=[]
-expr e5 localDecl r mutable=0 type=_ init=e4 type=Unit ref=s3568
-expr e6 name(r) type=Class#3562 ref=s3568
+expr e4 call callee=e3 args=[] type=Class#3576 call=s3577 map=[] targs=[]
+expr e5 localDecl r mutable=0 type=_ init=e4 type=Unit ref=s3582
+expr e6 name(r) type=Class#3576 ref=s3582
 expr e7 name(println) type=_
 expr e8 string(using) type=_
 expr e9 call callee=e7 args=[_:e8] type=_
 expr e10 name(println) type=_
 expr e11 string(using) type=String
 expr e12 call callee=e10 args=[_:e11] type=Unit call=s1718 map=[0->0] targs=[]
-expr e13 lambda params=[] body=e12 label=use type=(Class#3562) -> Any
+expr e13 lambda params=[] body=e12 label=use type=(Class#3576) -> Any
 expr e14 memberCall recv=e6 callee=use args=[_:e13] type=Any
 expr e15 name(MyResource) type=_
-expr e16 call callee=e15 args=[] type=Class#3562 call=s3563 map=[] targs=[]
-expr e17 localDecl r mutable=0 type=_ init=e16 type=Unit ref=s3569
-expr e18 name(r) type=Class#3562 ref=s3569
+expr e16 call callee=e15 args=[] type=Class#3576 call=s3577 map=[] targs=[]
+expr e17 localDecl r mutable=0 type=_ init=e16 type=Unit ref=s3583
+expr e18 name(r) type=Class#3576 ref=s3583
 expr e19 int(42) type=_
 expr e20 int(42) type=Int
-expr e21 lambda params=[] body=e20 label=use type=(Class#3562) -> Int
+expr e21 lambda params=[] body=e20 label=use type=(Class#3576) -> Int
 expr e22 memberCall recv=e18 callee=use args=[_:e21] type=Int
 expr e23 return value=e22 type=Nothing
 expr e24 name(MyResource) type=_
-expr e25 call callee=e24 args=[] type=Class#3562 call=s3563 map=[] targs=[]
-expr e26 localDecl r mutable=0 type=_ init=e25 type=Unit ref=s3570
-expr e27 name(r) type=Class#3562 ref=s3570
+expr e25 call callee=e24 args=[] type=Class#3576 call=s3577 map=[] targs=[]
+expr e26 localDecl r mutable=0 type=_ init=e25 type=Unit ref=s3584
+expr e27 name(r) type=Class#3576 ref=s3584
 expr e28 name(it) type=_
 expr e29 memberCall recv=e28 callee=toString args=[] type=_
-expr e30 name(it) type=Class#3562 ref=s-1008192
+expr e30 name(it) type=Class#3576 ref=s-1008192
 expr e31 memberCall recv=e30 callee=toString args=[] type=<error>
-expr e32 lambda params=[] body=e31 label=use type=(Class#3562) -> String
+expr e32 lambda params=[] body=e31 label=use type=(Class#3576) -> String
 expr e33 memberCall recv=e27 callee=use args=[_:e32] type=String
 expr e34 return value=e33 type=Nothing

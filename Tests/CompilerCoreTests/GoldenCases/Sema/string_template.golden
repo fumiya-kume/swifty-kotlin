@@ -3560,26 +3560,40 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3563 kind=local fq=__local_1.name vis=private flags=_ type=String
-symbol s3564 kind=local fq=__local_3.x vis=private flags=_ type=Int
-symbol s3565 kind=local fq=__local_6.greeting vis=private flags=_ type=String
-symbol s3566 kind=local fq=__local_9.result vis=private flags=_ type=String
+symbol s3562 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3563 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3564 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3564<T#3565>
+symbol s3565 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3566 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3564<T#3565> params=[] ret=T#3565? suspend=0 defaults=[] vararg=[]
+symbol s3567 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3568 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3569 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3570 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3570
+symbol s3571 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3573 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3573
+symbol s3574 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3575 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3576 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3577 kind=local fq=__local_1.name vis=private flags=_ type=String
+symbol s3578 kind=local fq=__local_3.x vis=private flags=_ type=Int
+symbol s3579 kind=local fq=__local_6.greeting vis=private flags=_ type=String
+symbol s3580 kind=local fq=__local_9.result vis=private flags=_ type=String
 file f0 package=golden.sema
-  decl d0 fun main suspend=0 inline=0 sym=s3562
+  decl d0 fun main suspend=0 inline=0 sym=s3576
 expr e0 string(world) type=String
-expr e1 localDecl name mutable=0 type=_ init=e0 type=Unit ref=s3563
+expr e1 localDecl name mutable=0 type=_ init=e0 type=Unit ref=s3577
 expr e2 int(42) type=Int
-expr e3 localDecl x mutable=0 type=_ init=e2 type=Unit ref=s3564
-expr e4 name(name) type=String ref=s3563
+expr e3 localDecl x mutable=0 type=_ init=e2 type=Unit ref=s3578
+expr e4 name(name) type=String ref=s3577
 expr e5 stringTemplate[lit(Hello ),expr(e4)] type=String
-expr e6 localDecl greeting mutable=0 type=_ init=e5 type=Unit ref=s3565
-expr e7 name(x) type=Int ref=s3564
+expr e6 localDecl greeting mutable=0 type=_ init=e5 type=Unit ref=s3579
+expr e7 name(x) type=Int ref=s3578
 expr e8 stringTemplate[lit(value=),expr(e7)] type=String
-expr e9 localDecl result mutable=0 type=_ init=e8 type=Unit ref=s3566
+expr e9 localDecl result mutable=0 type=_ init=e8 type=Unit ref=s3580
 expr e10 name(println) type=_
-expr e11 name(greeting) type=String ref=s3565
+expr e11 name(greeting) type=String ref=s3579
 expr e12 call callee=e10 args=[_:e11] type=Unit call=s1718 map=[0->0] targs=[]
 expr e13 name(println) type=_
-expr e14 name(result) type=String ref=s3566
+expr e14 name(result) type=String ref=s3580
 expr e15 call callee=e13 args=[_:e14] type=Unit call=s1718 map=[0->0] targs=[]

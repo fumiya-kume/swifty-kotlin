@@ -3560,29 +3560,43 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=enumClass fq=golden.sema.Color vis=public flags=_
-symbol s3563 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#3562 params=[] ret=Class#3562 suspend=0 defaults=[] vararg=[]
-symbol s3564 kind=field fq=golden.sema.Color.Red vis=public flags=_ type=Class#3562
-symbol s3565 kind=field fq=golden.sema.Color.Green vis=public flags=_ type=Class#3562
-symbol s3566 kind=field fq=golden.sema.Color.Blue vis=public flags=_ type=Class#3562
-symbol s3567 kind=property fq=golden.sema.Color.name vis=public flags=synthetic type=String
-symbol s3568 kind=property fq=golden.sema.Color.ordinal vis=public flags=synthetic type=Int
-symbol s3569 kind=object fq=golden.sema.Color.Companion vis=public flags=synthetic
-symbol s3570 kind=valueParameter fq=golden.sema.Color.Companion.valueOf.name vis=private flags=synthetic
-symbol s3571 kind=function fq=golden.sema.Color.Companion.valueOf vis=public flags=synthetic|static sig=recv=Class#3569 params=[String] ret=Class#3562 suspend=0 defaults=[0] vararg=[0]
-symbol s3572 kind=property fq=golden.sema.Color.Companion.entries vis=public flags=synthetic|static type=Class#2833<Class#3562>
-symbol s3573 kind=function fq=golden.sema.classify vis=public flags=_ sig=recv=_ params=[Int] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3574 kind=valueParameter fq=golden.sema.classify.$3573.x vis=private flags=_
-symbol s3575 kind=function fq=golden.sema.classifyColor vis=public flags=_ sig=recv=_ params=[Class#3562] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3576 kind=valueParameter fq=golden.sema.classifyColor.$3575.c vis=private flags=_
-symbol s3577 kind=function fq=golden.sema.classifyBool vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3578 kind=valueParameter fq=golden.sema.classifyBool.$3577.b vis=private flags=_
+symbol s3562 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3563 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3564 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3564<T#3565>
+symbol s3565 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3566 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3564<T#3565> params=[] ret=T#3565? suspend=0 defaults=[] vararg=[]
+symbol s3567 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3568 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3569 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3570 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3570
+symbol s3571 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3573 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3573
+symbol s3574 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3575 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3576 kind=enumClass fq=golden.sema.Color vis=public flags=_
+symbol s3577 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#3576 params=[] ret=Class#3576 suspend=0 defaults=[] vararg=[]
+symbol s3578 kind=field fq=golden.sema.Color.Red vis=public flags=_ type=Class#3576
+symbol s3579 kind=field fq=golden.sema.Color.Green vis=public flags=_ type=Class#3576
+symbol s3580 kind=field fq=golden.sema.Color.Blue vis=public flags=_ type=Class#3576
+symbol s3581 kind=property fq=golden.sema.Color.name vis=public flags=synthetic type=String
+symbol s3582 kind=property fq=golden.sema.Color.ordinal vis=public flags=synthetic type=Int
+symbol s3583 kind=object fq=golden.sema.Color.Companion vis=public flags=synthetic
+symbol s3584 kind=valueParameter fq=golden.sema.Color.Companion.valueOf.name vis=private flags=synthetic
+symbol s3585 kind=function fq=golden.sema.Color.Companion.valueOf vis=public flags=synthetic|static sig=recv=Class#3583 params=[String] ret=Class#3576 suspend=0 defaults=[0] vararg=[0]
+symbol s3586 kind=property fq=golden.sema.Color.Companion.entries vis=public flags=synthetic|static type=Class#2833<Class#3576>
+symbol s3587 kind=function fq=golden.sema.classify vis=public flags=_ sig=recv=_ params=[Int] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3588 kind=valueParameter fq=golden.sema.classify.$3587.x vis=private flags=_
+symbol s3589 kind=function fq=golden.sema.classifyColor vis=public flags=_ sig=recv=_ params=[Class#3576] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3590 kind=valueParameter fq=golden.sema.classifyColor.$3589.c vis=private flags=_
+symbol s3591 kind=function fq=golden.sema.classifyBool vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3592 kind=valueParameter fq=golden.sema.classifyBool.$3591.b vis=private flags=_
 file f0 package=golden.sema
-  decl d0 class Color sym=s3562
-  decl d1 fun classify suspend=0 inline=0 sym=s3573
-  decl d2 fun classifyColor suspend=0 inline=0 sym=s3575
-  decl d3 fun classifyBool suspend=0 inline=0 sym=s3577
-expr e0 name(x) type=Int ref=s3574
+  decl d0 class Color sym=s3576
+  decl d1 fun classify suspend=0 inline=0 sym=s3587
+  decl d2 fun classifyColor suspend=0 inline=0 sym=s3589
+  decl d3 fun classifyBool suspend=0 inline=0 sym=s3591
+expr e0 name(x) type=Int ref=s3588
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
 expr e3 int(3) type=Int
@@ -3592,17 +3606,17 @@ expr e6 int(5) type=Int
 expr e7 string(some) type=String
 expr e8 string(many) type=String
 expr e9 when subject=e0 branches=[e1,e2,e3->e4,e5,e6->e7] else=e8 type=String
-expr e10 name(c) type=Class#3562 ref=s3576
-expr e11 name(Color) type=Class#3562 ref=s3562
-expr e12 memberCall recv=e11 callee=Red args=[] type=Class#3562 ref=s3564
-expr e13 name(Color) type=Class#3562 ref=s3562
-expr e14 memberCall recv=e13 callee=Green args=[] type=Class#3562 ref=s3565
+expr e10 name(c) type=Class#3576 ref=s3590
+expr e11 name(Color) type=Class#3576 ref=s3576
+expr e12 memberCall recv=e11 callee=Red args=[] type=Class#3576 ref=s3578
+expr e13 name(Color) type=Class#3576 ref=s3576
+expr e14 memberCall recv=e13 callee=Green args=[] type=Class#3576 ref=s3579
 expr e15 string(warm) type=String
-expr e16 name(Color) type=Class#3562 ref=s3562
-expr e17 memberCall recv=e16 callee=Blue args=[] type=Class#3562 ref=s3566
+expr e16 name(Color) type=Class#3576 ref=s3576
+expr e17 memberCall recv=e16 callee=Blue args=[] type=Class#3576 ref=s3580
 expr e18 string(cold) type=String
 expr e19 when subject=e10 branches=[e12,e14->e15,e17->e18] else=_ type=String
-expr e20 name(b) type=Boolean ref=s3578
+expr e20 name(b) type=Boolean ref=s3592
 expr e21 bool(true) type=Boolean
 expr e22 bool(false) type=Boolean
 expr e23 string(always) type=String

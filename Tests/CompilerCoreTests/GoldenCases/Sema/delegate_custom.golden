@@ -3560,24 +3560,38 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=class fq=golden.sema.StringDelegate vis=public flags=_
-symbol s3563 kind=constructor fq=golden.sema.StringDelegate.<init> vis=public flags=_ sig=recv=Class#3562 params=[] ret=Class#3562 suspend=0 defaults=[] vararg=[]
-symbol s3564 kind=function fq=golden.sema.StringDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#3562 params=[Any?,Any?] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3565 kind=valueParameter fq=golden.sema.StringDelegate.getValue.$3564.thisRef vis=private flags=_
-symbol s3566 kind=valueParameter fq=golden.sema.StringDelegate.getValue.$3564.property vis=private flags=_
-symbol s3567 kind=function fq=golden.sema.StringDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#3562 params=[Any?,Any?,String] ret=Unit suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3568 kind=valueParameter fq=golden.sema.StringDelegate.setValue.$3567.thisRef vis=private flags=_
-symbol s3569 kind=valueParameter fq=golden.sema.StringDelegate.setValue.$3567.property vis=private flags=_
-symbol s3570 kind=valueParameter fq=golden.sema.StringDelegate.setValue.$3567.value vis=private flags=_
-symbol s3571 kind=property fq=golden.sema.greeting vis=public flags=mutable type=String
-symbol s3572 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3562 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3563 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3564 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3564<T#3565>
+symbol s3565 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3566 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3564<T#3565> params=[] ret=T#3565? suspend=0 defaults=[] vararg=[]
+symbol s3567 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3568 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3569 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3570 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3570
+symbol s3571 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3573 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3573
+symbol s3574 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3575 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3576 kind=class fq=golden.sema.StringDelegate vis=public flags=_
+symbol s3577 kind=constructor fq=golden.sema.StringDelegate.<init> vis=public flags=_ sig=recv=Class#3576 params=[] ret=Class#3576 suspend=0 defaults=[] vararg=[]
+symbol s3578 kind=function fq=golden.sema.StringDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#3576 params=[Any?,Any?] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3579 kind=valueParameter fq=golden.sema.StringDelegate.getValue.$3578.thisRef vis=private flags=_
+symbol s3580 kind=valueParameter fq=golden.sema.StringDelegate.getValue.$3578.property vis=private flags=_
+symbol s3581 kind=function fq=golden.sema.StringDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#3576 params=[Any?,Any?,String] ret=Unit suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3582 kind=valueParameter fq=golden.sema.StringDelegate.setValue.$3581.thisRef vis=private flags=_
+symbol s3583 kind=valueParameter fq=golden.sema.StringDelegate.setValue.$3581.property vis=private flags=_
+symbol s3584 kind=valueParameter fq=golden.sema.StringDelegate.setValue.$3581.value vis=private flags=_
+symbol s3585 kind=property fq=golden.sema.greeting vis=public flags=mutable type=String
+symbol s3586 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d2 class StringDelegate sym=s3562
-  decl d3 property greeting var=1 sym=s3571
-  decl d4 fun main suspend=0 inline=0 sym=s3572
+  decl d2 class StringDelegate sym=s3576
+  decl d3 property greeting var=1 sym=s3585
+  decl d4 fun main suspend=0 inline=0 sym=s3586
 expr e0 string(default) type=String
 expr e1 name(StringDelegate) type=_
-expr e2 call callee=e1 args=[] type=Class#3562 call=s3563 map=[] targs=[]
+expr e2 call callee=e1 args=[] type=Class#3576 call=s3577 map=[] targs=[]
 expr e3 name(println) type=_
-expr e4 name(greeting) type=String ref=s3571
+expr e4 name(greeting) type=String ref=s3585
 expr e5 call callee=e3 args=[_:e4] type=Unit call=s1718 map=[0->0] targs=[]

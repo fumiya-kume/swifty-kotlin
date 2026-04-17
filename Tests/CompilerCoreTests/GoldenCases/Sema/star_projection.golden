@@ -3560,27 +3560,41 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=class fq=golden.sema.Container vis=public flags=_
-symbol s3563 kind=typeParameter fq=golden.sema.Container.$class3562.T vis=private flags=_
-symbol s3564 kind=constructor fq=golden.sema.Container.<init> vis=public flags=_ sig=recv=Class#3562<T#3563> params=[T#3563] ret=Class#3562<T#3563> suspend=0 defaults=[0] vararg=[0]
-symbol s3565 kind=valueParameter fq=golden.sema.Container.<init>.$3564.item vis=private flags=_
-symbol s3566 kind=property fq=golden.sema.Container.item vis=public flags=_ type=T#3563
-symbol s3567 kind=function fq=golden.sema.readContainer vis=public flags=_ sig=recv=_ params=[Class#3562<*>] ret=Any? suspend=0 defaults=[0] vararg=[0]
-symbol s3568 kind=valueParameter fq=golden.sema.readContainer.$3567.c vis=private flags=_
-symbol s3569 kind=function fq=golden.sema.eraseType vis=public flags=_ sig=recv=_ params=[Class#123<*>] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3570 kind=valueParameter fq=golden.sema.eraseType.$3569.list vis=private flags=_
-symbol s3571 kind=function fq=golden.sema.acceptAny vis=public flags=_ sig=recv=_ params=[Class#3562<*>] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s3572 kind=valueParameter fq=golden.sema.acceptAny.$3571.c vis=private flags=_
-symbol s3573 kind=local fq=__local_6.v vis=private flags=_ type=T#3563
+symbol s3562 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3563 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3564 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3564<T#3565>
+symbol s3565 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3566 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3564<T#3565> params=[] ret=T#3565? suspend=0 defaults=[] vararg=[]
+symbol s3567 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3568 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3569 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3570 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3570
+symbol s3571 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3573 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3573
+symbol s3574 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3575 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3576 kind=class fq=golden.sema.Container vis=public flags=_
+symbol s3577 kind=typeParameter fq=golden.sema.Container.$class3576.T vis=private flags=_
+symbol s3578 kind=constructor fq=golden.sema.Container.<init> vis=public flags=_ sig=recv=Class#3576<T#3577> params=[T#3577] ret=Class#3576<T#3577> suspend=0 defaults=[0] vararg=[0]
+symbol s3579 kind=valueParameter fq=golden.sema.Container.<init>.$3578.item vis=private flags=_
+symbol s3580 kind=property fq=golden.sema.Container.item vis=public flags=_ type=T#3577
+symbol s3581 kind=function fq=golden.sema.readContainer vis=public flags=_ sig=recv=_ params=[Class#3576<*>] ret=Any? suspend=0 defaults=[0] vararg=[0]
+symbol s3582 kind=valueParameter fq=golden.sema.readContainer.$3581.c vis=private flags=_
+symbol s3583 kind=function fq=golden.sema.eraseType vis=public flags=_ sig=recv=_ params=[Class#123<*>] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3584 kind=valueParameter fq=golden.sema.eraseType.$3583.list vis=private flags=_
+symbol s3585 kind=function fq=golden.sema.acceptAny vis=public flags=_ sig=recv=_ params=[Class#3576<*>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s3586 kind=valueParameter fq=golden.sema.acceptAny.$3585.c vis=private flags=_
+symbol s3587 kind=local fq=__local_6.v vis=private flags=_ type=T#3577
 file f0 package=golden.sema
-  decl d1 class Container sym=s3562
-  decl d2 fun readContainer suspend=0 inline=0 sym=s3567
-  decl d3 fun eraseType suspend=0 inline=0 sym=s3569
-  decl d4 fun acceptAny suspend=0 inline=0 sym=s3571
-expr e0 name(c) type=Class#3562<*> ref=s3568
-expr e1 memberCall recv=e0 callee=item args=[] type=T#3563 ref=s3566
-expr e2 name(list) type=Class#123<*> ref=s3570
+  decl d1 class Container sym=s3576
+  decl d2 fun readContainer suspend=0 inline=0 sym=s3581
+  decl d3 fun eraseType suspend=0 inline=0 sym=s3583
+  decl d4 fun acceptAny suspend=0 inline=0 sym=s3585
+expr e0 name(c) type=Class#3576<*> ref=s3582
+expr e1 memberCall recv=e0 callee=item args=[] type=T#3577 ref=s3580
+expr e2 name(list) type=Class#123<*> ref=s3584
 expr e3 memberCall recv=e2 callee=size args=[] type=Int ref=s120
-expr e4 name(c) type=Class#3562<*> ref=s3572
-expr e5 memberCall recv=e4 callee=item args=[] type=T#3563 ref=s3566
-expr e6 localDecl v mutable=0 type=_ init=e5 type=Unit ref=s3573
+expr e4 name(c) type=Class#3576<*> ref=s3586
+expr e5 memberCall recv=e4 callee=item args=[] type=T#3577 ref=s3580
+expr e6 localDecl v mutable=0 type=_ init=e5 type=Unit ref=s3587

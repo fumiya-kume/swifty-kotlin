@@ -3560,25 +3560,39 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=interface fq=golden.sema.Greeter vis=public flags=_
-symbol s3563 kind=function fq=golden.sema.Greeter.greet vis=public flags=_ sig=recv=Class#3562 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3564 kind=class fq=golden.sema.FormalGreeter vis=public flags=_
-symbol s3565 kind=constructor fq=golden.sema.FormalGreeter.<init> vis=public flags=_ sig=recv=Class#3564 params=[] ret=Class#3564 suspend=0 defaults=[] vararg=[]
-symbol s3566 kind=function fq=golden.sema.FormalGreeter.greet vis=public flags=overrideMember sig=recv=Class#3564 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3567 kind=class fq=golden.sema.DefaultGreeter vis=public flags=_
-symbol s3568 kind=constructor fq=golden.sema.DefaultGreeter.<init> vis=public flags=_ sig=recv=Class#3567 params=[] ret=Class#3567 suspend=0 defaults=[] vararg=[]
-symbol s3569 kind=interface fq=golden.sema.Animal vis=public flags=_
-symbol s3570 kind=function fq=golden.sema.Animal.name vis=public flags=abstractType sig=recv=Class#3569 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3571 kind=function fq=golden.sema.Animal.sound vis=public flags=_ sig=recv=Class#3569 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3572 kind=class fq=golden.sema.Dog vis=public flags=_
-symbol s3573 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#3572 params=[] ret=Class#3572 suspend=0 defaults=[] vararg=[]
-symbol s3574 kind=function fq=golden.sema.Dog.name vis=public flags=overrideMember sig=recv=Class#3572 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3562 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3563 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3564 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3564<T#3565>
+symbol s3565 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3566 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3564<T#3565> params=[] ret=T#3565? suspend=0 defaults=[] vararg=[]
+symbol s3567 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3568 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3569 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3570 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3570
+symbol s3571 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3573 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3573
+symbol s3574 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3575 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3576 kind=interface fq=golden.sema.Greeter vis=public flags=_
+symbol s3577 kind=function fq=golden.sema.Greeter.greet vis=public flags=_ sig=recv=Class#3576 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3578 kind=class fq=golden.sema.FormalGreeter vis=public flags=_
+symbol s3579 kind=constructor fq=golden.sema.FormalGreeter.<init> vis=public flags=_ sig=recv=Class#3578 params=[] ret=Class#3578 suspend=0 defaults=[] vararg=[]
+symbol s3580 kind=function fq=golden.sema.FormalGreeter.greet vis=public flags=overrideMember sig=recv=Class#3578 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3581 kind=class fq=golden.sema.DefaultGreeter vis=public flags=_
+symbol s3582 kind=constructor fq=golden.sema.DefaultGreeter.<init> vis=public flags=_ sig=recv=Class#3581 params=[] ret=Class#3581 suspend=0 defaults=[] vararg=[]
+symbol s3583 kind=interface fq=golden.sema.Animal vis=public flags=_
+symbol s3584 kind=function fq=golden.sema.Animal.name vis=public flags=abstractType sig=recv=Class#3583 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3585 kind=function fq=golden.sema.Animal.sound vis=public flags=_ sig=recv=Class#3583 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3586 kind=class fq=golden.sema.Dog vis=public flags=_
+symbol s3587 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#3586 params=[] ret=Class#3586 suspend=0 defaults=[] vararg=[]
+symbol s3588 kind=function fq=golden.sema.Dog.name vis=public flags=overrideMember sig=recv=Class#3586 params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d1 interface Greeter sym=s3562
-  decl d3 class FormalGreeter sym=s3564
-  decl d4 class DefaultGreeter sym=s3567
-  decl d7 interface Animal sym=s3569
-  decl d9 class Dog sym=s3572
+  decl d1 interface Greeter sym=s3576
+  decl d3 class FormalGreeter sym=s3578
+  decl d4 class DefaultGreeter sym=s3581
+  decl d7 interface Animal sym=s3583
+  decl d9 class Dog sym=s3586
 expr e0 string(Hello) type=String
 expr e1 string(Good day) type=String
 expr e2 string(...) type=String

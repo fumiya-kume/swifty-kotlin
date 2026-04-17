@@ -3560,66 +3560,80 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3563 kind=local fq=__local_1.d vis=private flags=_ type=Double
-symbol s3564 kind=local fq=__local_4.di vis=private flags=_ type=Int
-symbol s3565 kind=local fq=__local_7.dl vis=private flags=_ type=Long
-symbol s3566 kind=local fq=__local_10.df vis=private flags=_ type=Float
-symbol s3567 kind=local fq=__local_12.f vis=private flags=_ type=Float
-symbol s3568 kind=local fq=__local_15.fi vis=private flags=_ type=Int
-symbol s3569 kind=local fq=__local_18.fl vis=private flags=_ type=Long
-symbol s3570 kind=local fq=__local_21.fd vis=private flags=_ type=Double
-symbol s3571 kind=local fq=__local_23.l vis=private flags=_ type=Long
-symbol s3572 kind=local fq=__local_26.lf vis=private flags=_ type=Float
-symbol s3573 kind=local fq=__local_29.ld vis=private flags=_ type=Double
-symbol s3574 kind=local fq=__local_32.li vis=private flags=_ type=Int
-symbol s3575 kind=local fq=__local_35.lb vis=private flags=_ type=Int
-symbol s3576 kind=local fq=__local_38.ls vis=private flags=_ type=Int
-symbol s3577 kind=local fq=__local_40.i vis=private flags=_ type=Int
-symbol s3578 kind=local fq=__local_43.id vis=private flags=_ type=Double
+symbol s3562 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3563 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3564 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3564<T#3565>
+symbol s3565 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3566 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3564<T#3565> params=[] ret=T#3565? suspend=0 defaults=[] vararg=[]
+symbol s3567 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3568 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3569 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3570 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3570
+symbol s3571 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3573 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3573
+symbol s3574 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3575 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3576 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3577 kind=local fq=__local_1.d vis=private flags=_ type=Double
+symbol s3578 kind=local fq=__local_4.di vis=private flags=_ type=Int
+symbol s3579 kind=local fq=__local_7.dl vis=private flags=_ type=Long
+symbol s3580 kind=local fq=__local_10.df vis=private flags=_ type=Float
+symbol s3581 kind=local fq=__local_12.f vis=private flags=_ type=Float
+symbol s3582 kind=local fq=__local_15.fi vis=private flags=_ type=Int
+symbol s3583 kind=local fq=__local_18.fl vis=private flags=_ type=Long
+symbol s3584 kind=local fq=__local_21.fd vis=private flags=_ type=Double
+symbol s3585 kind=local fq=__local_23.l vis=private flags=_ type=Long
+symbol s3586 kind=local fq=__local_26.lf vis=private flags=_ type=Float
+symbol s3587 kind=local fq=__local_29.ld vis=private flags=_ type=Double
+symbol s3588 kind=local fq=__local_32.li vis=private flags=_ type=Int
+symbol s3589 kind=local fq=__local_35.lb vis=private flags=_ type=Int
+symbol s3590 kind=local fq=__local_38.ls vis=private flags=_ type=Int
+symbol s3591 kind=local fq=__local_40.i vis=private flags=_ type=Int
+symbol s3592 kind=local fq=__local_43.id vis=private flags=_ type=Double
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3562
+  decl d0 fun main suspend=0 inline=0 sym=s3576
 expr e0 double(3.14) type=Double
-expr e1 localDecl d mutable=0 type=_ init=e0 type=Unit ref=s3563
-expr e2 name(d) type=Double ref=s3563
+expr e1 localDecl d mutable=0 type=_ init=e0 type=Unit ref=s3577
+expr e2 name(d) type=Double ref=s3577
 expr e3 memberCall recv=e2 callee=toInt args=[] type=Int
-expr e4 localDecl di mutable=0 type=_ init=e3 type=Unit ref=s3564
-expr e5 name(d) type=Double ref=s3563
+expr e4 localDecl di mutable=0 type=_ init=e3 type=Unit ref=s3578
+expr e5 name(d) type=Double ref=s3577
 expr e6 memberCall recv=e5 callee=toLong args=[] type=Long
-expr e7 localDecl dl mutable=0 type=_ init=e6 type=Unit ref=s3565
-expr e8 name(d) type=Double ref=s3563
+expr e7 localDecl dl mutable=0 type=_ init=e6 type=Unit ref=s3579
+expr e8 name(d) type=Double ref=s3577
 expr e9 memberCall recv=e8 callee=toFloat args=[] type=Float
-expr e10 localDecl df mutable=0 type=_ init=e9 type=Unit ref=s3566
+expr e10 localDecl df mutable=0 type=_ init=e9 type=Unit ref=s3580
 expr e11 float(2.5) type=Float
-expr e12 localDecl f mutable=0 type=_ init=e11 type=Unit ref=s3567
-expr e13 name(f) type=Float ref=s3567
+expr e12 localDecl f mutable=0 type=_ init=e11 type=Unit ref=s3581
+expr e13 name(f) type=Float ref=s3581
 expr e14 memberCall recv=e13 callee=toInt args=[] type=Int
-expr e15 localDecl fi mutable=0 type=_ init=e14 type=Unit ref=s3568
-expr e16 name(f) type=Float ref=s3567
+expr e15 localDecl fi mutable=0 type=_ init=e14 type=Unit ref=s3582
+expr e16 name(f) type=Float ref=s3581
 expr e17 memberCall recv=e16 callee=toLong args=[] type=Long
-expr e18 localDecl fl mutable=0 type=_ init=e17 type=Unit ref=s3569
-expr e19 name(f) type=Float ref=s3567
+expr e18 localDecl fl mutable=0 type=_ init=e17 type=Unit ref=s3583
+expr e19 name(f) type=Float ref=s3581
 expr e20 memberCall recv=e19 callee=toDouble args=[] type=Double
-expr e21 localDecl fd mutable=0 type=_ init=e20 type=Unit ref=s3570
+expr e21 localDecl fd mutable=0 type=_ init=e20 type=Unit ref=s3584
 expr e22 long(42) type=Long
-expr e23 localDecl l mutable=0 type=_ init=e22 type=Unit ref=s3571
-expr e24 name(l) type=Long ref=s3571
+expr e23 localDecl l mutable=0 type=_ init=e22 type=Unit ref=s3585
+expr e24 name(l) type=Long ref=s3585
 expr e25 memberCall recv=e24 callee=toFloat args=[] type=Float
-expr e26 localDecl lf mutable=0 type=_ init=e25 type=Unit ref=s3572
-expr e27 name(l) type=Long ref=s3571
+expr e26 localDecl lf mutable=0 type=_ init=e25 type=Unit ref=s3586
+expr e27 name(l) type=Long ref=s3585
 expr e28 memberCall recv=e27 callee=toDouble args=[] type=Double
-expr e29 localDecl ld mutable=0 type=_ init=e28 type=Unit ref=s3573
-expr e30 name(l) type=Long ref=s3571
+expr e29 localDecl ld mutable=0 type=_ init=e28 type=Unit ref=s3587
+expr e30 name(l) type=Long ref=s3585
 expr e31 memberCall recv=e30 callee=toInt args=[] type=Int
-expr e32 localDecl li mutable=0 type=_ init=e31 type=Unit ref=s3574
-expr e33 name(l) type=Long ref=s3571
+expr e32 localDecl li mutable=0 type=_ init=e31 type=Unit ref=s3588
+expr e33 name(l) type=Long ref=s3585
 expr e34 memberCall recv=e33 callee=toByte args=[] type=Int
-expr e35 localDecl lb mutable=0 type=_ init=e34 type=Unit ref=s3575
-expr e36 name(l) type=Long ref=s3571
+expr e35 localDecl lb mutable=0 type=_ init=e34 type=Unit ref=s3589
+expr e36 name(l) type=Long ref=s3585
 expr e37 memberCall recv=e36 callee=toShort args=[] type=Int
-expr e38 localDecl ls mutable=0 type=_ init=e37 type=Unit ref=s3576
+expr e38 localDecl ls mutable=0 type=_ init=e37 type=Unit ref=s3590
 expr e39 int(100) type=Int
-expr e40 localDecl i mutable=0 type=_ init=e39 type=Unit ref=s3577
-expr e41 name(i) type=Int ref=s3577
+expr e40 localDecl i mutable=0 type=_ init=e39 type=Unit ref=s3591
+expr e41 name(i) type=Int ref=s3591
 expr e42 memberCall recv=e41 callee=toDouble args=[] type=Double
-expr e43 localDecl id mutable=0 type=_ init=e42 type=Unit ref=s3578
+expr e43 localDecl id mutable=0 type=_ init=e42 type=Unit ref=s3592

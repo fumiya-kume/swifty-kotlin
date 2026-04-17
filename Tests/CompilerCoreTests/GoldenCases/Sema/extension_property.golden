@@ -3560,15 +3560,29 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=property fq=golden.sema.doubled vis=public flags=_ type=Int
-symbol s3563 kind=function fq=golden.sema.doubled.$get vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3564 kind=property fq=golden.sema.isPositive vis=public flags=_ type=Boolean
-symbol s3565 kind=function fq=golden.sema.isPositive.$get vis=public flags=synthetic sig=recv=Int params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s3566 kind=function fq=golden.sema.useExtProp vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3562 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3563 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3564 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3564<T#3565>
+symbol s3565 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3566 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3564<T#3565> params=[] ret=T#3565? suspend=0 defaults=[] vararg=[]
+symbol s3567 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3568 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3569 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3570 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3570
+symbol s3571 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3573 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3573
+symbol s3574 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3575 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3576 kind=property fq=golden.sema.doubled vis=public flags=_ type=Int
+symbol s3577 kind=function fq=golden.sema.doubled.$get vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3578 kind=property fq=golden.sema.isPositive vis=public flags=_ type=Boolean
+symbol s3579 kind=function fq=golden.sema.isPositive.$get vis=public flags=synthetic sig=recv=Int params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s3580 kind=function fq=golden.sema.useExtProp vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 property doubled var=0 sym=s3562
-  decl d1 property isPositive var=0 sym=s3564
-  decl d2 fun useExtProp suspend=0 inline=0 sym=s3566
+  decl d0 property doubled var=0 sym=s3576
+  decl d1 property isPositive var=0 sym=s3578
+  decl d2 fun useExtProp suspend=0 inline=0 sym=s3580
 expr e0 this type=Int
 expr e1 int(2) type=Int
 expr e2 binary(multiply) lhs=e0 rhs=e1 type=Int
@@ -3576,4 +3590,4 @@ expr e3 this type=Int
 expr e4 int(0) type=Int
 expr e5 binary(greaterThan) lhs=e3 rhs=e4 type=Boolean
 expr e6 int(5) type=Int
-expr e7 memberCall recv=e6 callee=doubled args=[] type=Int call=s3563 map=[] targs=[]
+expr e7 memberCall recv=e6 callee=doubled args=[] type=Int call=s3577 map=[] targs=[]

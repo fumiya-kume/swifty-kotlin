@@ -3560,35 +3560,49 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=interface fq=golden.sema.A vis=public flags=_
-symbol s3563 kind=function fq=golden.sema.A.a vis=public flags=abstractType sig=recv=Class#3562 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3564 kind=interface fq=golden.sema.B vis=public flags=_
-symbol s3565 kind=function fq=golden.sema.B.b vis=public flags=abstractType sig=recv=Class#3564 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3566 kind=function fq=golden.sema.intersect vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3567 kind=valueParameter fq=golden.sema.intersect.$3566.x vis=private flags=_
-symbol s3568 kind=function fq=golden.sema.idTag vis=public flags=_ sig=recv=Any params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3569 kind=function fq=golden.sema.directValue vis=public flags=_ sig=recv=_ params=[T#3570 & Any] ret=Int suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
-symbol s3570 kind=typeParameter fq=golden.sema.directValue.$3569.T vis=private flags=_
-symbol s3571 kind=valueParameter fq=golden.sema.directValue.$3569.x vis=private flags=_
-symbol s3572 kind=function fq=golden.sema.safeValue vis=public flags=_ sig=recv=_ params=[T#3573 & Any] ret=Int? suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
-symbol s3573 kind=typeParameter fq=golden.sema.safeValue.$3572.T vis=private flags=_
-symbol s3574 kind=valueParameter fq=golden.sema.safeValue.$3572.x vis=private flags=_
+symbol s3562 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3563 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3564 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3564<T#3565>
+symbol s3565 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3566 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3564<T#3565> params=[] ret=T#3565? suspend=0 defaults=[] vararg=[]
+symbol s3567 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3568 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3569 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3570 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3570
+symbol s3571 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3573 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3573
+symbol s3574 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3575 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3576 kind=interface fq=golden.sema.A vis=public flags=_
+symbol s3577 kind=function fq=golden.sema.A.a vis=public flags=abstractType sig=recv=Class#3576 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3578 kind=interface fq=golden.sema.B vis=public flags=_
+symbol s3579 kind=function fq=golden.sema.B.b vis=public flags=abstractType sig=recv=Class#3578 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3580 kind=function fq=golden.sema.intersect vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3581 kind=valueParameter fq=golden.sema.intersect.$3580.x vis=private flags=_
+symbol s3582 kind=function fq=golden.sema.idTag vis=public flags=_ sig=recv=Any params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3583 kind=function fq=golden.sema.directValue vis=public flags=_ sig=recv=_ params=[T#3584 & Any] ret=Int suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
+symbol s3584 kind=typeParameter fq=golden.sema.directValue.$3583.T vis=private flags=_
+symbol s3585 kind=valueParameter fq=golden.sema.directValue.$3583.x vis=private flags=_
+symbol s3586 kind=function fq=golden.sema.safeValue vis=public flags=_ sig=recv=_ params=[T#3587 & Any] ret=Int? suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
+symbol s3587 kind=typeParameter fq=golden.sema.safeValue.$3586.T vis=private flags=_
+symbol s3588 kind=valueParameter fq=golden.sema.safeValue.$3586.x vis=private flags=_
 file f0 package=golden.sema
-  decl d1 interface A sym=s3562
-  decl d3 interface B sym=s3564
-  decl d4 fun intersect suspend=0 inline=0 sym=s3566
-  decl d5 fun idTag suspend=0 inline=0 sym=s3568
-  decl d6 fun directValue suspend=0 inline=0 sym=s3569
-  decl d7 fun safeValue suspend=0 inline=0 sym=s3572
-expr e0 name(x) type=Any ref=s3567
+  decl d1 interface A sym=s3576
+  decl d3 interface B sym=s3578
+  decl d4 fun intersect suspend=0 inline=0 sym=s3580
+  decl d5 fun idTag suspend=0 inline=0 sym=s3582
+  decl d6 fun directValue suspend=0 inline=0 sym=s3583
+  decl d7 fun safeValue suspend=0 inline=0 sym=s3586
+expr e0 name(x) type=Any ref=s3581
 expr e1 isCheck expr=e0 type=t4 type=Boolean
-expr e2 name(x) type=Class#3562 ref=s3567
+expr e2 name(x) type=Class#3576 ref=s3581
 expr e3 isCheck expr=e2 type=t5 type=Boolean
 expr e4 binary(logicalAnd) lhs=e1 rhs=e3 type=Boolean
-expr e5 name(x) type=Class#3562 & Class#3564 ref=s3567
-expr e6 memberCall recv=e5 callee=a args=[] type=String call=s3563 map=[] targs=[]
-expr e7 name(x) type=Class#3562 & Class#3564 ref=s3567
-expr e8 memberCall recv=e7 callee=b args=[] type=Int call=s3565 map=[] targs=[]
+expr e5 name(x) type=Class#3576 & Class#3578 ref=s3581
+expr e6 memberCall recv=e5 callee=a args=[] type=String call=s3577 map=[] targs=[]
+expr e7 name(x) type=Class#3576 & Class#3578 ref=s3581
+expr e8 memberCall recv=e7 callee=b args=[] type=Int call=s3579 map=[] targs=[]
 expr e9 memberCall recv=e8 callee=toString args=[] type=String
 expr e10 binary(add) lhs=e6 rhs=e9 type=String
 expr e11 return value=e10 type=Nothing
@@ -3597,7 +3611,7 @@ expr e13 if cond=e4 then=e12 else=_ type=Unit
 expr e14 string(unknown) type=String
 expr e15 return value=e14 type=Nothing
 expr e16 int(7) type=Int
-expr e17 name(x) type=T#3570 & Any ref=s3571
-expr e18 memberCall recv=e17 callee=idTag args=[] type=Int call=s3568 map=[] targs=[]
-expr e19 name(x) type=T#3573 & Any ref=s3574
-expr e20 safeMemberCall recv=e19 callee=idTag args=[] type=Int? call=s3568 map=[] targs=[]
+expr e17 name(x) type=T#3584 & Any ref=s3585
+expr e18 memberCall recv=e17 callee=idTag args=[] type=Int call=s3582 map=[] targs=[]
+expr e19 name(x) type=T#3587 & Any ref=s3588
+expr e20 safeMemberCall recv=e19 callee=idTag args=[] type=Int? call=s3582 map=[] targs=[]

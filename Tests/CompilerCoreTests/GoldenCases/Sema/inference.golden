@@ -3560,29 +3560,43 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=choose vis=public flags=_ sig=recv=_ params=[Boolean,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3563 kind=valueParameter fq=choose.$3562.flag vis=private flags=_
-symbol s3564 kind=valueParameter fq=choose.$3562.left vis=private flags=_
-symbol s3565 kind=valueParameter fq=choose.$3562.right vis=private flags=_
-symbol s3566 kind=function fq=useWhen vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3567 kind=valueParameter fq=useWhen.$3566.v vis=private flags=_
+symbol s3562 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3563 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3564 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3564<T#3565>
+symbol s3565 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3566 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3564<T#3565> params=[] ret=T#3565? suspend=0 defaults=[] vararg=[]
+symbol s3567 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3568 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3569 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3570 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3570
+symbol s3571 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3573 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3573
+symbol s3574 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3575 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3576 kind=function fq=choose vis=public flags=_ sig=recv=_ params=[Boolean,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3577 kind=valueParameter fq=choose.$3576.flag vis=private flags=_
+symbol s3578 kind=valueParameter fq=choose.$3576.left vis=private flags=_
+symbol s3579 kind=valueParameter fq=choose.$3576.right vis=private flags=_
+symbol s3580 kind=function fq=useWhen vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3581 kind=valueParameter fq=useWhen.$3580.v vis=private flags=_
 file f0 package=_
-  decl d0 fun choose suspend=0 inline=0 sym=s3562
-  decl d1 fun useWhen suspend=0 inline=0 sym=s3566
-expr e0 name(flag) type=Boolean ref=s3563
-expr e1 name(left) type=Int ref=s3564
-expr e2 name(right) type=Int ref=s3565
+  decl d0 fun choose suspend=0 inline=0 sym=s3576
+  decl d1 fun useWhen suspend=0 inline=0 sym=s3580
+expr e0 name(flag) type=Boolean ref=s3577
+expr e1 name(left) type=Int ref=s3578
+expr e2 name(right) type=Int ref=s3579
 expr e3 if cond=e0 then=e1 else=e2 type=Int
-expr e4 name(v) type=Int ref=s3567
+expr e4 name(v) type=Int ref=s3581
 expr e5 int(1) type=Int
 expr e6 name(choose) type=_
 expr e7 bool(true) type=Boolean
-expr e8 name(v) type=Int ref=s3567
+expr e8 name(v) type=Int ref=s3581
 expr e9 int(0) type=Int
-expr e10 call callee=e6 args=[_:e7,_:e8,_:e9] type=Int call=s3562 map=[0->0,1->1,2->2] targs=[]
+expr e10 call callee=e6 args=[_:e7,_:e8,_:e9] type=Int call=s3576 map=[0->0,1->1,2->2] targs=[]
 expr e11 name(choose) type=_
 expr e12 bool(false) type=Boolean
 expr e13 int(0) type=Int
-expr e14 name(v) type=Int ref=s3567
-expr e15 call callee=e11 args=[_:e12,_:e13,_:e14] type=Int call=s3562 map=[0->0,1->1,2->2] targs=[]
+expr e14 name(v) type=Int ref=s3581
+expr e15 call callee=e11 args=[_:e12,_:e13,_:e14] type=Int call=s3576 map=[0->0,1->1,2->2] targs=[]
 expr e16 when subject=e4 branches=[e5->e10] else=e15 type=Int

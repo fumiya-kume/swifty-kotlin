@@ -3560,26 +3560,40 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=class fq=golden.sema.Foo vis=public flags=_
-symbol s3563 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#3562 params=[Int] ret=Class#3562 suspend=0 defaults=[0] vararg=[0]
-symbol s3564 kind=valueParameter fq=golden.sema.Foo.<init>.$3563.x vis=private flags=_
-symbol s3565 kind=property fq=golden.sema.Foo.x vis=public flags=_ type=Int
-symbol s3566 kind=object fq=golden.sema.Foo.Companion vis=public flags=_
-symbol s3567 kind=function fq=golden.sema.Foo.Companion.create vis=public flags=_ sig=recv=Class#3566 params=[] ret=Class#3562 suspend=0 defaults=[] vararg=[]
-symbol s3568 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=constValue type=Int
-symbol s3569 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3570 kind=local fq=__local_6.f vis=private flags=_ type=Class#3562
-symbol s3571 kind=local fq=__local_9.m vis=private flags=_ type=Int
+symbol s3562 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3563 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3564 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3564<T#3565>
+symbol s3565 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3566 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3564<T#3565> params=[] ret=T#3565? suspend=0 defaults=[] vararg=[]
+symbol s3567 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3568 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3569 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3570 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3570
+symbol s3571 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3573 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3573
+symbol s3574 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3575 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3576 kind=class fq=golden.sema.Foo vis=public flags=_
+symbol s3577 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#3576 params=[Int] ret=Class#3576 suspend=0 defaults=[0] vararg=[0]
+symbol s3578 kind=valueParameter fq=golden.sema.Foo.<init>.$3577.x vis=private flags=_
+symbol s3579 kind=property fq=golden.sema.Foo.x vis=public flags=_ type=Int
+symbol s3580 kind=object fq=golden.sema.Foo.Companion vis=public flags=_
+symbol s3581 kind=function fq=golden.sema.Foo.Companion.create vis=public flags=_ sig=recv=Class#3580 params=[] ret=Class#3576 suspend=0 defaults=[] vararg=[]
+symbol s3582 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=constValue type=Int
+symbol s3583 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3584 kind=local fq=__local_6.f vis=private flags=_ type=Class#3576
+symbol s3585 kind=local fq=__local_9.m vis=private flags=_ type=Int
 file f0 package=golden.sema
-  decl d4 class Foo sym=s3562
-  decl d5 fun main suspend=0 inline=0 sym=s3569
+  decl d4 class Foo sym=s3576
+  decl d5 fun main suspend=0 inline=0 sym=s3583
 expr e0 int(100) type=Int
 expr e1 name(Foo) type=_
 expr e2 int(0) type=Int
-expr e3 call callee=e1 args=[_:e2] type=Class#3562 call=s3563 map=[0->0] targs=[]
-expr e4 name(Foo) type=Class#3566 ref=s3562
-expr e5 memberCall recv=e4 callee=create args=[] type=Class#3562 call=s3567 map=[] targs=[]
-expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s3570
-expr e7 name(Foo) type=Class#3566 ref=s3562
-expr e8 memberCall recv=e7 callee=MAX_COUNT args=[] type=Int ref=s3568
-expr e9 localDecl m mutable=0 type=t4 init=e8 type=Unit ref=s3571
+expr e3 call callee=e1 args=[_:e2] type=Class#3576 call=s3577 map=[0->0] targs=[]
+expr e4 name(Foo) type=Class#3580 ref=s3576
+expr e5 memberCall recv=e4 callee=create args=[] type=Class#3576 call=s3581 map=[] targs=[]
+expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s3584
+expr e7 name(Foo) type=Class#3580 ref=s3576
+expr e8 memberCall recv=e7 callee=MAX_COUNT args=[] type=Int ref=s3582
+expr e9 localDecl m mutable=0 type=t4 init=e8 type=Unit ref=s3585

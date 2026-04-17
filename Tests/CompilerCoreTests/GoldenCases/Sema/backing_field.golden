@@ -3560,22 +3560,36 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=class fq=golden.sema.Validated vis=public flags=_
-symbol s3563 kind=constructor fq=golden.sema.Validated.<init> vis=public flags=_ sig=recv=Class#3562 params=[] ret=Class#3562 suspend=0 defaults=[] vararg=[]
-symbol s3564 kind=property fq=golden.sema.Validated.value vis=public flags=mutable type=Int
-symbol s3565 kind=backingField fq=golden.sema.Validated.$backing_value vis=private flags=mutable type=Int
-symbol s3566 kind=property fq=golden.sema.Validated.doubled vis=public flags=_ type=Int
+symbol s3562 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3563 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3564 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3564<T#3565>
+symbol s3565 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3566 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3564<T#3565> params=[] ret=T#3565? suspend=0 defaults=[] vararg=[]
+symbol s3567 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3568 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3569 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3570 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3570
+symbol s3571 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3570 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3573 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3573
+symbol s3574 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3575 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3576 kind=class fq=golden.sema.Validated vis=public flags=_
+symbol s3577 kind=constructor fq=golden.sema.Validated.<init> vis=public flags=_ sig=recv=Class#3576 params=[] ret=Class#3576 suspend=0 defaults=[] vararg=[]
+symbol s3578 kind=property fq=golden.sema.Validated.value vis=public flags=mutable type=Int
+symbol s3579 kind=backingField fq=golden.sema.Validated.$backing_value vis=private flags=mutable type=Int
+symbol s3580 kind=property fq=golden.sema.Validated.doubled vis=public flags=_ type=Int
 file f0 package=golden.sema
-  decl d2 class Validated sym=s3562
+  decl d2 class Validated sym=s3576
 expr e0 name(field) type=_
-expr e1 name(v) type=Int ref=s-43564
+expr e1 name(v) type=Int ref=s-43578
 expr e2 int(0) type=Int
 expr e3 binary(lessThan) lhs=e1 rhs=e2 type=Boolean
 expr e4 int(0) type=Int
-expr e5 name(v) type=Int ref=s-43564
+expr e5 name(v) type=Int ref=s-43578
 expr e6 if cond=e3 then=e4 else=e5 type=Int
-expr e7 localAssign field value=e6 type=Unit ref=s3565
+expr e7 localAssign field value=e6 type=Unit ref=s3579
 expr e8 int(0) type=Int
-expr e9 name(value) type=Int ref=s3564
+expr e9 name(value) type=Int ref=s3578
 expr e10 int(2) type=Int
 expr e11 binary(multiply) lhs=e9 rhs=e10 type=Int
