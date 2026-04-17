@@ -264,6 +264,60 @@ public func kk_uuid_leastSignificantBits(_ receiver: Int) -> Int {
     return Int(box.leastSignificantBits)
 }
 
+// MARK: - Uuid.fromLongs(mostSignificantBits, leastSignificantBits)
+
+/// Create a Uuid from two Long values (MSB and LSB).
+/// Maps directly to kotlin.uuid.Uuid.fromLongs().
+@_cdecl("kk_uuid_fromLongs")
+public func kk_uuid_fromLongs(_ msb: Int, _ lsb: Int) -> Int {
+    let box = RuntimeUuidBox(
+        mostSignificantBits: Int64(bitPattern: UInt64(bitPattern: Int64(msb))),
+        leastSignificantBits: Int64(bitPattern: UInt64(bitPattern: Int64(lsb)))
+    )
+    return registerRuntimeObject(box)
+}
+
+// MARK: - Uuid.fromByteArray(byteArray: ByteArray)
+
+/// Create a Uuid from a 16-byte array (big-endian, MSB first).
+/// Throws IllegalArgumentException if the array is not exactly 16 bytes.
+@_cdecl("kk_uuid_fromByteArray")
+public func kk_uuid_fromByteArray(_ arrayRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: arrayRaw),
+          let arrayBox = tryCast(ptr, to: RuntimeArrayBox.self)
+    else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: byteArray.size must be 16, was 0"
+        )
+        return 0
+    }
+
+    let size = arrayBox.elements.count
+    guard size == 16 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: byteArray.size must be 16, was \(size)"
+        )
+        return 0
+    }
+
+    var msb: UInt64 = 0
+    var lsb: UInt64 = 0
+    for i in 0..<8 {
+        msb = (msb << 8) | UInt64(arrayBox.elements[i] & 0xFF)
+    }
+    for i in 8..<16 {
+        lsb = (lsb << 8) | UInt64(arrayBox.elements[i] & 0xFF)
+    }
+
+    let box = RuntimeUuidBox(
+        mostSignificantBits: Int64(bitPattern: msb),
+        leastSignificantBits: Int64(bitPattern: lsb)
+    )
+    return registerRuntimeObject(box)
+}
+
 // MARK: - Uuid.nameUUIDFromBytes(name: ByteArray)
 
 /// Generate a version-3 (MD5-based) UUID from a name byte array.
