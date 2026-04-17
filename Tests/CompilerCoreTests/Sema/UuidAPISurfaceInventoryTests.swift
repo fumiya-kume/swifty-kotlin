@@ -13,7 +13,8 @@ import XCTest
 //   • Uuid.random() return type resolves to kotlin.uuid.Uuid
 //   • toString vs toHexString dispatch is tracked as separate links
 //   • toByteArray() and toLongs() are present with their signatures
-//   • NIL constant and @ExperimentalUuidApi opt-in marker (gaps: see below)
+//   • NIL constant (gap: see below)
+//   • @ExperimentalUuidApi opt-in marker: now synthesised (STDLIB-EXPERIMENTAL-ABI-001)
 //
 // Scope: sema / symbol-table level only.  Runtime correctness is in RuntimeUuidTests
 //        and the edge-case file added in PR #1221 (UUID-003).
@@ -22,8 +23,7 @@ import XCTest
 //   • Uuid.parseHex(hex: String) overload is not yet registered by the sema layer.
 //     `allExternalLinks` for kotlin.uuid.Uuid.Companion.parseHex returns an empty set.
 //   • Uuid.NIL companion constant is not yet registered.
-//   • @ExperimentalUuidApi annotation marker is not yet synthesised; using this class
-//     without @OptIn currently emits no diagnostic from the sema checker.
+//   • @ExperimentalUuidApi: resolved in STDLIB-EXPERIMENTAL-ABI-001 (PR #1282).
 
 final class UuidAPISurfaceInventoryTests: XCTestCase {
 
@@ -391,19 +391,17 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         )
     }
 
-    // MARK: - 9. @ExperimentalUuidApi opt-in annotation — gap documentation
+    // MARK: - 9. @ExperimentalUuidApi opt-in annotation — now synthesised (STDLIB-EXPERIMENTAL-ABI-001)
     //
-    // STDLIB-UUID-002 gap: @ExperimentalUuidApi annotation marker is not synthesised.
-    // When it is registered, callers without @OptIn should receive a diagnostic.
+    // STDLIB-UUID-002 gap: resolved. @ExperimentalUuidApi annotation marker is now synthesised.
 
-    func testExperimentalUuidApiAnnotationIsNotYetRegistered_Gap() throws {
+    func testExperimentalUuidApiAnnotationIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let fq = ["kotlin", "uuid", "ExperimentalUuidApi"].map { interner.intern($0) }
         let sym = sema.symbols.lookup(fqName: fq)
-        // TODO(STDLIB-UUID-002): When ExperimentalUuidApi is synthesised, assert sym != nil.
-        XCTAssertNil(
+        XCTAssertNotNil(
             sym,
-            "kotlin.uuid.ExperimentalUuidApi is not yet registered (expected gap)"
+            "kotlin.uuid.ExperimentalUuidApi must be registered (STDLIB-EXPERIMENTAL-ABI-001)"
         )
     }
 
