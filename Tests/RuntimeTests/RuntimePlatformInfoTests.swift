@@ -210,15 +210,13 @@ final class RuntimePlatformInfoTests: XCTestCase {
     }
 }
 
-// MARK: - Known gaps (not yet implemented in RuntimePlatform.swift)
+// MARK: - Previously known gaps (now implemented in RuntimePlatform.swift via #1285)
 //
-// The following `kotlin.native.Platform` properties have NO runtime entry point
-// and therefore cannot be tested yet:
+// The following `kotlin.native.Platform` properties are now implemented:
 //
-//   • Platform.memoryModel  — should return EXPERIMENTAL or STRICT via a
-//     `kk_platform_memoryModel` C entry returning a boxed MemoryModel ordinal.
-//     MemoryModel.STRICT == 0, MemoryModel.EXPERIMENTAL == 1 (Kotlin/Native spec).
+//   • Platform.memoryModel  — implemented as kk_platform_memoryModel returning a boxed
+//     MemoryModel ordinal. Supports EXPERIMENTAL (0), STRICT (1), RELAXED (2) via
+//     compile-time flags. Tests in RuntimePlatformTests.swift.
 //
-//   • Platform.isDebugBinary — should return 1 in debug builds and 0 in
-//     release builds via a `kk_platform_isDebugBinary` C entry.
-//     Could be implemented with a compile-time `#if DEBUG` Swift flag.
+//   • Platform.isDebugBinary — implemented as kk_platform_isDebugBinary using
+//     _isDebugAssertConfiguration(). Tests in RuntimePlatformTests.swift.
