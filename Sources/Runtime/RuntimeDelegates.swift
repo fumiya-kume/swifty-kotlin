@@ -3,12 +3,19 @@ import Foundation
 typealias KKCustomDelegateGetterEntryPoint = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 typealias KKCustomDelegateSetterEntryPoint = @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 
-private let runtimeNotNullUninitializedMessage =
-    "IllegalStateException: Property delegate must be assigned before being accessed."
-
+/// Writes an `IllegalStateException` into `outThrown` and returns 0.
+/// Matches the Kotlin spec: `Delegates.notNull()` reads-before-assignment throw
+/// `IllegalStateException("Property <name> should be initialized before get.")`.
+/// (STDLIB-PROP-ABI-001)
 @inline(__always)
-private func runtimeTrapNotNullUninitialized() -> Never {
-    fatalError(runtimeNotNullUninitializedMessage)
+private func runtimeThrowNotNullUninitialized(
+    propertyName: String? = nil,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let name = propertyName ?? "unknown"
+    let message = "Property \(name) should be initialized before get."
+    outThrown?.pointee = runtimeAllocateIllegalStateException(message: message)
+    return 0
 }
 
 final class RuntimeCustomDelegateBox {
@@ -603,19 +610,21 @@ public func kk_notNull_create() -> Int {
     return Int(bitPattern: opaque)
 }
 
+/// STDLIB-PROP-ABI-001: reads-before-assignment reports via `outThrown` instead of crashing.
 @_cdecl("kk_notNull_get_value")
-public func kk_notNull_get_value(_ handle: Int) -> Int {
+public func kk_notNull_get_value(_ handle: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
-        runtimeTrapNotNullUninitialized()
+        return runtimeThrowNotNullUninitialized(outThrown: outThrown)
     }
     let isObj = runtimeStorage.withLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj, let box = tryCast(ptr, to: RuntimeNotNullBox.self) else {
-        runtimeTrapNotNullUninitialized()
+        return runtimeThrowNotNullUninitialized(outThrown: outThrown)
     }
     guard let value = box.currentValue else {
-        runtimeTrapNotNullUninitialized()
+        return runtimeThrowNotNullUninitialized(outThrown: outThrown)
     }
     return value
 }
@@ -623,13 +632,13 @@ public func kk_notNull_get_value(_ handle: Int) -> Int {
 @_cdecl("kk_notNull_set_value")
 public func kk_notNull_set_value(_ handle: Int, _ newValue: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
-        runtimeTrapNotNullUninitialized()
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_notNull_set_value called with null handle")
     }
     let isObj = runtimeStorage.withLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj, let box = tryCast(ptr, to: RuntimeNotNullBox.self) else {
-        runtimeTrapNotNullUninitialized()
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_notNull_set_value called with invalid handle")
     }
     box.currentValue = newValue
     return newValue
@@ -706,7 +715,8 @@ public func kk_custom_delegate_set_value(_ handle: Int, _ thisRef: Int, _ proper
 /// Bridges compiler-emitted delegated property accessors that still lower to
 /// `getValue` / `setValue` symbols instead of direct runtime helper names.
 @_cdecl("kk_delegate_get_value")
-public func kk_delegate_get_value(_ handle: Int, _: Int, _ property: Int) -> Int {
+public func kk_delegate_get_value(_ handle: Int, _: Int, _ property: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
@@ -727,7 +737,7 @@ public func kk_delegate_get_value(_ handle: Int, _: Int, _ property: Int) -> Int
     }
     if let notNullBox = tryCast(ptr, to: RuntimeNotNullBox.self) {
         guard let value = notNullBox.currentValue else {
-            runtimeTrapNotNullUninitialized()
+            return runtimeThrowNotNullUninitialized(outThrown: outThrown)
         }
         return value
     }
