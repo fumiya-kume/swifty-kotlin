@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "experimental_markers_warning_level.kt",
+      "range": {
+        "start": { "line": 12, "character": 32 },
+        "end": { "line": 12, "character": 49 }
+      },
+      "severity": 2,
+      "severityLabel": "warning",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalMarkerWarning' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalMarkerWarning' or '@OptIn(golden.diagnostics.ExperimentalMarkerWarning::class)'.",
+      "codeActions": []
+    }
+  ]
+}

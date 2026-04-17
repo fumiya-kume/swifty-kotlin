@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "experimental_markers_overload.kt",
+      "range": {
+        "start": { "line": 17, "character": 30 },
+        "end": { "line": 17, "character": 46 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalOverloadMarker' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalOverloadMarker' or '@OptIn(golden.diagnostics.ExperimentalOverloadMarker::class)'.",
+      "codeActions": []
+    }
+  ]
+}

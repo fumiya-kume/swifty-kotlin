@@ -383,32 +383,19 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
     }
 
     func testCompile_multiFile() throws {
-        try withTemporaryFiles(contents: [
-            """
-            fun helper(): Int = 42
-            """,
-            """
-            fun main() {
-                val x = helper()
-            }
-            """,
-        ]) { paths in
-            let fm = FileManager.default
-            let outputBase = fm.temporaryDirectory
-                .appendingPathComponent(UUID().uuidString).path
-            defer { try? fm.removeItem(atPath: outputBase + ".kir") }
-
-            let options = makeTestOptions(
-                moduleName: "MultiFile",
-                inputs: paths,
-                outputPath: outputBase,
-                emit: .kirDump
-            )
-            let result = makeTestDriver().runForTesting(options: options)
-
-            XCTAssertEqual(result.exitCode, 0)
-            XCTAssertFalse(result.diagnostics.contains(where: { $0.severity == .error }))
-        }
+        try assertKotlinSourcesToKIR(
+            [
+                """
+                fun helper(): Int = 42
+                """,
+                """
+                fun main() {
+                    val x = helper()
+                }
+                """,
+            ],
+            moduleName: "MultiFile"
+        )
     }
 
     func testCompile_complex_linkedList() throws {

@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "experimental_markers_unsigned_types.kt",
+      "range": {
+        "start": { "line": 15, "character": 0 },
+        "end": { "line": 16, "character": 26 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-TYPE-0001",
+      "source": "kswiftk",
+      "message": "Type constraint could not be satisfied.",
+      "codeActions": []
+    },
+    {
+      "file": "experimental_markers_unsigned_types.kt",
+      "range": {
+        "start": { "line": 18, "character": 0 },
+        "end": { "line": 19, "character": 28 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-TYPE-0001",
+      "source": "kswiftk",
+      "message": "Type constraint could not be satisfied.",
+      "codeActions": []
+    },
+    {
+      "file": "experimental_markers_unsigned_types.kt",
+      "range": {
+        "start": { "line": 23, "character": 4 },
+        "end": { "line": 23, "character": 13 }
+      },
+      "severity": 2,
+      "severityLabel": "warning",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalUnsignedTypes' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalUnsignedTypes' or '@OptIn(golden.diagnostics.ExperimentalUnsignedTypes::class)'.",
+      "codeActions": []
+    },
+    {
+      "file": "experimental_markers_unsigned_types.kt",
+      "range": {
+        "start": { "line": 24, "character": 4 },
+        "end": { "line": 24, "character": 14 }
+      },
+      "severity": 2,
+      "severityLabel": "warning",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalUnsignedTypes' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalUnsignedTypes' or '@OptIn(golden.diagnostics.ExperimentalUnsignedTypes::class)'.",
+      "codeActions": []
+    },
+    {
+      "file": "experimental_markers_unsigned_types.kt",
+      "range": {
+        "start": { "line": 25, "character": 4 },
+        "end": { "line": 25, "character": 14 }
+      },
+      "severity": 2,
+      "severityLabel": "warning",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalUnsignedTypes' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalUnsignedTypes' or '@OptIn(golden.diagnostics.ExperimentalUnsignedTypes::class)'.",
+      "codeActions": []
+    },
+    {
+      "file": "experimental_markers_unsigned_types.kt",
+      "range": {
+        "start": { "line": 26, "character": 4 },
+        "end": { "line": 26, "character": 15 }
+      },
+      "severity": 2,
+      "severityLabel": "warning",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalUnsignedTypes' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalUnsignedTypes' or '@OptIn(golden.diagnostics.ExperimentalUnsignedTypes::class)'.",
+      "codeActions": []
+    }
+  ]
+}
