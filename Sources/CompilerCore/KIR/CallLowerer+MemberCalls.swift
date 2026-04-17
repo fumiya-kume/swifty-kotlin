@@ -2771,6 +2771,10 @@ extension CallLowerer {
                         || calleeStr == "indexOfFirst"
                         || calleeStr == "indexOfLast"
                         || calleeStr == "partition"
+                        || calleeStr == "take"
+                        || calleeStr == "drop"
+                        || calleeStr == "takeLast"
+                        || calleeStr == "dropLast"
                     // Only `partition` captures the thrown result into a register so the
                     // caller can inspect it.  All other HOFs propagate exceptions through
                     // the standard thrown-channel codegen path (thrownResult == nil),
