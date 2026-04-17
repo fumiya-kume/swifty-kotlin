@@ -195,7 +195,12 @@ final class RuntimeContinuationOneShotTests: IsolatedRuntimeXCTestCase {
 
         for _ in 0..<iterations {
             let state = makeFreshState()
-            var results: [Int?] = [nil, nil]
+            // Use a class wrapper to allow mutation from concurrent closures
+            // while keeping Sendable conformance. The NSLock below guards access.
+            final class ResultsBox: @unchecked Sendable {
+                var values: [Int?] = [nil, nil]
+            }
+            let resultsBox = ResultsBox()
             let group = DispatchGroup()
 
             for i in 0..<2 {
@@ -203,13 +208,14 @@ final class RuntimeContinuationOneShotTests: IsolatedRuntimeXCTestCase {
                 DispatchQueue.global().async {
                     let ex = state.resume(with: 1)
                     countLock.lock()
-                    results[i] = ex
+                    resultsBox.values[i] = ex
                     countLock.unlock()
                     group.leave()
                 }
             }
             group.wait()
 
+            let results = resultsBox.values
             let wins = results.filter { $0 == nil }.count
             let losses = results.filter { $0 != nil }.count
             countLock.lock()
