@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "experimental_markers_propagation.kt",
+      "range": {
+        "start": { "line": 16, "character": 29 },
+        "end": { "line": 16, "character": 49 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalPropagationMarker' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalPropagationMarker' or '@OptIn(golden.diagnostics.ExperimentalPropagationMarker::class)'.",
+      "codeActions": []
+    }
+  ]
+}
