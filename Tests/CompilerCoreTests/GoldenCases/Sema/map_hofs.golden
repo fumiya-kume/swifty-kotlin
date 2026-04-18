@@ -3578,19 +3578,19 @@ symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunna
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
 symbol s3578 kind=function fq=render vis=public flags=_ sig=recv=_ params=[Class#278<String, Int>] ret=Unit suspend=0 defaults=[0] vararg=[0]
 symbol s3579 kind=valueParameter fq=render.$3578.values vis=private flags=_
-symbol s3580 kind=local fq=__destructuring_9.key vis=private flags=_ type=T#279
-symbol s3581 kind=local fq=__destructuring_9.value vis=private flags=_ type=T#280
-symbol s3582 kind=local fq=__destructuring_24.key vis=private flags=_ type=T#279
-symbol s3583 kind=local fq=__destructuring_24.value vis=private flags=_ type=T#280
-symbol s3584 kind=local fq=__destructuring_38.value vis=private flags=_ type=T#280
+symbol s3580 kind=local fq=__destructuring_9.key vis=private flags=_ type=String
+symbol s3581 kind=local fq=__destructuring_9.value vis=private flags=_ type=Int
+symbol s3582 kind=local fq=__destructuring_24.key vis=private flags=_ type=String
+symbol s3583 kind=local fq=__destructuring_24.value vis=private flags=_ type=Int
+symbol s3584 kind=local fq=__destructuring_38.value vis=private flags=_ type=Int
 file f0 package=_
   decl d0 fun render suspend=0 inline=0 sym=s3578
 expr e0 name(values) type=Class#278<String, Int> ref=s3579
 expr e1 name(println) type=_
-expr e2 name(key) type=T#279 ref=s3580
+expr e2 name(key) type=String ref=s3580
 expr e3 call callee=e1 args=[_:e2] type=Unit call=s1720 map=[0->0] targs=[]
 expr e4 name(println) type=_
-expr e5 name(value) type=T#280 ref=s3581
+expr e5 name(value) type=Int ref=s3581
 expr e6 call callee=e4 args=[_:e5] type=Unit call=s1720 map=[0->0] targs=[]
 expr e7 blockExpr stmts=[e3] trailing=e6 type=Unit
 expr e8 name(__destructured_0) type=Class#318<out String, out Int> ref=s-1002816
@@ -3604,9 +3604,9 @@ expr e15 name(key) type=_
 expr e16 memberCall recv=e15 callee=length args=[] type=_
 expr e17 name(value) type=_
 expr e18 binary(add) lhs=e16 rhs=e17 type=_
-expr e19 name(key) type=T#279 ref=s3582
-expr e20 memberCall recv=e19 callee=length args=[] type=<error>
-expr e21 name(value) type=T#280 ref=s3583
+expr e19 name(key) type=String ref=s3582
+expr e20 memberCall recv=e19 callee=length args=[] type=Int call=s684 map=[] targs=[]
+expr e21 name(value) type=Int ref=s3583
 expr e22 binary(add) lhs=e20 rhs=e21 type=Int
 expr e23 name(__destructured_0) type=Class#318<out String, out Int> ref=s-1006656
 expr e24 destructuringDecl names=[key,value] mutable=0 init=e23 type=Unit
@@ -3619,7 +3619,7 @@ expr e30 name(values) type=Class#278<String, Int> ref=s3579
 expr e31 name(value) type=_
 expr e32 int(1) type=_
 expr e33 binary(greaterThan) lhs=e31 rhs=e32 type=_
-expr e34 name(value) type=T#280 ref=s3584
+expr e34 name(value) type=Int ref=s3584
 expr e35 int(1) type=Int
 expr e36 binary(greaterThan) lhs=e34 rhs=e35 type=Boolean
 expr e37 name(__destructured_0) type=Class#318<out String, out Int> ref=s-1010240

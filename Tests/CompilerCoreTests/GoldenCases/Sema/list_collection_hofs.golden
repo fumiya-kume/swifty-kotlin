@@ -3584,8 +3584,8 @@ symbol s3582 kind=local fq=__local_35.assoc vis=private flags=_ type=Class#278<S
 symbol s3583 kind=local fq=__local_43.byKey vis=private flags=_ type=Class#278<Char, String>
 symbol s3584 kind=local fq=__local_51.withVal vis=private flags=_ type=Class#278<String, Int>
 symbol s3585 kind=local fq=__local_59.grouped vis=private flags=_ type=Class#278<Int, Class#123<String>>
-symbol s3586 kind=local fq=__destructuring_71.matching vis=private flags=_ type=T#76
-symbol s3587 kind=local fq=__destructuring_71.rest vis=private flags=_ type=T#77
+symbol s3586 kind=local fq=__destructuring_71.matching vis=private flags=_ type=Class#123<String>
+symbol s3587 kind=local fq=__destructuring_71.rest vis=private flags=_ type=Class#123<String>
 file f0 package=_
   decl d0 fun transform suspend=0 inline=0 sym=s3578
 expr e0 name(values) type=Class#123<String> ref=s3579
