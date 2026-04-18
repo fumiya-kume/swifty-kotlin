@@ -181,10 +181,28 @@ public func kk_mem_scope_exit(_ handle: Int) -> Int {
 /// Pinning prevents the GC from moving (or collecting) a heap object while
 /// the pin is held.  In the KSwiftK stop-the-world mark-sweep GC objects
 /// are never moved, so pinning is implemented as a simple reference hold.
+///
+/// ABI-005: `unpinned` guards against double-unpin UB.  Once `kk_unpin_object`
+/// executes the release path, the flag is set to `true`; any subsequent call
+/// with the same handle is a no-op.
 final class RuntimePinnedBox: @unchecked Sendable {
     let objectRaw: Int
+    private let lock = NSLock()
+    private var _unpinned = false
+
     init(objectRaw: Int) {
         self.objectRaw = objectRaw
+    }
+
+    /// Atomically transitions the box from pinned → unpinned.
+    /// Returns `true` on the first call (caller must do the release);
+    /// returns `false` on any subsequent call (no-op).
+    func tryUnpin() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !_unpinned else { return false }
+        _unpinned = true
+        return true
     }
 }
 
@@ -206,9 +224,22 @@ public func kk_unpin_object(_ pinnedHandle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: pinnedHandle) else {
         return 0
     }
+    // ABI-005: guard is not registered at all → silently no-op.
+    let isKnown = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isKnown else {
+        return 0
+    }
+    guard let box = tryCast(ptr, to: RuntimePinnedBox.self) else {
+        return 0
+    }
+    // ABI-005: idempotency guard — second unpin on same handle is a no-op.
+    guard box.tryUnpin() else {
+        return box.objectRaw
+    }
     let unmanaged = Unmanaged<RuntimePinnedBox>.fromOpaque(ptr)
-    let box = unmanaged.takeUnretainedValue()
-    // Remove the GC root registration so the object can be collected again.
+    // Drop GC root registration so the object can be collected again; see kk_pin_object.
     runtimeStorage.withLock { state in
         state.pinnedObjects.remove(UInt(bitPattern: box.objectRaw))
         state.objectPointers.remove(UInt(bitPattern: ptr))
@@ -230,17 +261,56 @@ public func kk_pinned_get(_ pinnedHandle: Int) -> Int {
 
 // MARK: - freeze() / isFrozen (Kotlin/Native legacy immutability)
 
+/// ABI-004: Protocol adopted by runtime boxes that store child object handles.
+///
+/// `kk_freeze_object` uses BFS over all reachable children so that freezing a
+/// root object also freezes every transitively-reachable ref field.
+/// Cycle detection is handled by the visited set maintained in the registry.
+protocol RuntimeChildReferenceProviding {
+    /// Return all `Int` handles that this box treats as direct child object refs.
+    /// Only handles that are non-zero and registered in `objectPointers` are
+    /// meaningful; `freeze` will skip all others.
+    var childRefs: [Int] { get }
+}
+
 private let runtimeFrozenSet = RuntimeFrozenRegistry()
 
 private final class RuntimeFrozenRegistry: @unchecked Sendable {
     private let lock = NSLock()
     private var frozen: Set<UInt> = []
 
-    func freeze(_ raw: Int) {
-        guard raw != 0 else { return }
-        lock.lock()
-        defer { lock.unlock() }
-        frozen.insert(UInt(bitPattern: raw))
+    /// ABI-004: Freeze `root` and every transitively-reachable object.
+    ///
+    /// BFS traversal via `RuntimeChildReferenceProviding.childRefs`.
+    /// A per-call visited set prevents infinite loops on cyclic graphs.
+    func freezeRecursive(_ root: Int) {
+        guard root != 0 else { return }
+        var visited: Set<UInt> = []
+        var queue: [Int] = [root]
+        while !queue.isEmpty {
+            let raw = queue.removeFirst()
+            guard raw != 0 else { continue }
+            let key = UInt(bitPattern: raw)
+            guard visited.insert(key).inserted else { continue }
+            lock.lock()
+            frozen.insert(key)
+            lock.unlock()
+            // Collect children only for registered objectPointer boxes.
+            guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { continue }
+            let isRegistered = runtimeStorage.withLock { state in
+                state.objectPointers.contains(UInt(bitPattern: ptr))
+            }
+            guard isRegistered else { continue }
+            let anyObject = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
+            if let provider = anyObject as? RuntimeChildReferenceProviding {
+                for child in provider.childRefs where child != 0 {
+                    let childKey = UInt(bitPattern: child)
+                    if !visited.contains(childKey) {
+                        queue.append(child)
+                    }
+                }
+            }
+        }
     }
 
     func isFrozen(_ raw: Int) -> Bool {
@@ -259,7 +329,8 @@ private final class RuntimeFrozenRegistry: @unchecked Sendable {
 
 @_cdecl("kk_freeze_object")
 public func kk_freeze_object(_ objectRaw: Int) -> Int {
-    runtimeFrozenSet.freeze(objectRaw)
+    // ABI-004: recursive freeze — traverses all reachable ref fields.
+    runtimeFrozenSet.freezeRecursive(objectRaw)
     return objectRaw
 }
 
@@ -329,6 +400,27 @@ final class RuntimeWorkerBox: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         return terminated
+    }
+
+    /// Schedule a closure on the worker's serial queue at the given deadline.
+    /// Returns false if the worker is already terminated.
+    @discardableResult
+    func executeAfter(deadline: DispatchTime, _ work: @escaping @Sendable () -> Void) -> Bool {
+        lock.lock()
+        guard !terminated else {
+            lock.unlock()
+            return false
+        }
+        pendingJobs += 1
+        lock.unlock()
+
+        queue.asyncAfter(deadline: deadline) { [weak self] in
+            work()
+            self?.lock.lock()
+            self?.pendingJobs -= 1
+            self?.lock.unlock()
+        }
+        return true
     }
 }
 

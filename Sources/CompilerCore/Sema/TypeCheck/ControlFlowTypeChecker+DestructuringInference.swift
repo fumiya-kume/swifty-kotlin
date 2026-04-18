@@ -37,7 +37,16 @@ extension ControlFlowTypeChecker {
             if let candidate = candidates.first,
                let signature = sema.symbols.functionSignature(for: candidate)
             {
-                componentType = signature.returnType
+                // Substitute the receiver's class type arguments into the raw return
+                // type so that e.g. Pair<List<T>,List<T>>.component1() yields List<T>
+                // rather than the generic parameter A.  Fixes STDLIB-021-BUG-01 where
+                // `.size` access on destructured partition() results failed to lower.
+                componentType = specializeComponentReturnType(
+                    signature.returnType,
+                    receiverType: rhsType,
+                    signature: signature,
+                    sema: sema
+                )
             } else {
                 // Fallback: try to find componentN via scope lookup
                 let scopeCandidates = sema.symbols.lookupAll(fqName: [componentName]).filter { symbolID in
@@ -195,5 +204,65 @@ extension ControlFlowTypeChecker {
             return false
         }
         return symbol.flags.contains(.dataType)
+    }
+
+    /// Specialises the raw return type of a componentN() member by substituting
+    /// the concrete class-level type arguments from the receiver.
+    ///
+    /// When `receiverType` is `Pair<List<Int>, List<Int>>` and `rawReturn` is the
+    /// generic type parameter `A`, the substitution `A → List<Int>` is applied and
+    /// `List<Int>` is returned.  This is needed so that member accesses on the
+    /// destructured variables (e.g. `.size`) resolve to the correct concrete type
+    /// rather than to the raw type parameter.  Fixes STDLIB-021-BUG-01.
+    private func specializeComponentReturnType(
+        _ rawReturn: TypeID,
+        receiverType: TypeID,
+        signature: FunctionSignature,
+        sema: SemaModule
+    ) -> TypeID {
+        // Only proceed when the receiver is a concrete generic class type.
+        let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullReceiver),
+              !classType.args.isEmpty,
+              !signature.typeParameterSymbols.isEmpty
+        else {
+            return rawReturn
+        }
+
+        // Map the signature's type-parameter symbols to TypeVarIDs so we can
+        // call substituteTypeParameters.
+        let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+
+        // Use the TypeSystem's record of the class's own type-parameter symbols
+        // (e.g. [A, B] for Pair) to match each concrete type arg to a TypeVarID.
+        let classOwnParamSymbols = sema.types.nominalTypeParameterSymbols(for: classType.classSymbol)
+
+        var substitution: [TypeVarID: TypeID] = [:]
+        for (index, arg) in classType.args.enumerated() {
+            let tpSymbol: SymbolID
+            if index < classOwnParamSymbols.count {
+                tpSymbol = classOwnParamSymbols[index]
+            } else if index < signature.classTypeParameterCount,
+                      index < signature.typeParameterSymbols.count
+            {
+                tpSymbol = signature.typeParameterSymbols[index]
+            } else {
+                continue
+            }
+            guard let typeVar = typeVarBySymbol[tpSymbol] else { continue }
+            switch arg {
+            case let .invariant(t): substitution[typeVar] = t
+            case let .out(t):       substitution[typeVar] = t
+            case let .in(t):        substitution[typeVar] = t
+            case .star:             substitution[typeVar] = sema.types.nullableAnyType
+            }
+        }
+
+        guard !substitution.isEmpty else { return rawReturn }
+        return sema.types.substituteTypeParameters(
+            in: rawReturn,
+            substitution: substitution,
+            typeVarBySymbol: typeVarBySymbol
+        )
     }
 }

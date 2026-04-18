@@ -329,4 +329,6 @@ func resetRuntimeLocked(state: inout RuntimeStorageState) {
     runtimeKClassMetadataRegistry.reset()
     runtimeCompilerPluginRegistry.reset()
     runtimeKConstructorRegistry.reset()
+    // STDLIB-REFLECT-ABI-002: Clear member registry.
+    runtimeKMemberRegistry.reset()
 }

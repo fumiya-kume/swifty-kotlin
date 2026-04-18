@@ -89,6 +89,13 @@ public final class CodegenPhase: CompilerPhase {
                 break
             }
         } catch {
+            if !ctx.diagnostics.hasError {
+                ctx.diagnostics.error(
+                    "KSWIFTK-PIPELINE-0004",
+                    "Codegen phase could not emit requested output: \(error)",
+                    range: nil
+                )
+            }
             throw CompilerPipelineError.outputUnavailable
         }
     }
