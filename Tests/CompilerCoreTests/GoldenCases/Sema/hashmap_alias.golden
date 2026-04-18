@@ -3562,64 +3562,78 @@ symbol s3560 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3561 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3559 params=[() -> T#3562] ret=T#3562 suspend=0 defaults=[0] vararg=[0]
 symbol s3562 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3563 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3564 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3565 kind=local fq=__local_2.hm vis=private flags=_ type=Class#308<String, Int>
-symbol s3566 kind=local fq=__local_14.mm vis=private flags=_ type=Class#308<String, Int>
-symbol s3567 kind=local fq=__local_27.copy vis=private flags=_ type=Class#308<Any, Any>
-symbol s3568 kind=local fq=__local_58.empty vis=private flags=_ type=Class#308<Int, Int>
+symbol s3564 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3565 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3566 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3566<T#3567>
+symbol s3567 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3568 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3566<T#3567> params=[] ret=T#3567? suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3570 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3571 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3572 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3572
+symbol s3573 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
+symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3578 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3579 kind=local fq=__local_2.hm vis=private flags=_ type=Class#308<String, Int>
+symbol s3580 kind=local fq=__local_14.mm vis=private flags=_ type=Class#308<String, Int>
+symbol s3581 kind=local fq=__local_27.copy vis=private flags=_ type=Class#308<Any, Any>
+symbol s3582 kind=local fq=__local_58.empty vis=private flags=_ type=Class#308<Int, Int>
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3564
+  decl d0 fun main suspend=0 inline=0 sym=s3578
 expr e0 name(HashMap) type=Any ref=s375
 expr e1 call callee=e0 args=[] type=Class#308<String, Int>
-expr e2 localDecl hm mutable=0 type=t2 init=e1 type=Unit ref=s3565
-expr e3 name(hm) type=Class#308<String, Int> ref=s3565
+expr e2 localDecl hm mutable=0 type=t2 init=e1 type=Unit ref=s3579
+expr e3 name(hm) type=Class#308<String, Int> ref=s3579
 expr e4 string(x) type=String
 expr e5 indexedAccess receiver=e3 indices=[e4] type=_
 expr e6 int(10) type=Int
 expr e7 indexedAssign receiver=e3 indices=[e4] value=e6 type=Unit call=s311 map=[0->0,1->1] targs=[String,Int]
-expr e8 name(hm) type=Class#308<String, Int> ref=s3565
+expr e8 name(hm) type=Class#308<String, Int> ref=s3579
 expr e9 string(y) type=String
 expr e10 indexedAccess receiver=e8 indices=[e9] type=_
 expr e11 int(20) type=Int
 expr e12 indexedAssign receiver=e8 indices=[e9] value=e11 type=Unit call=s311 map=[0->0,1->1] targs=[String,Int]
-expr e13 name(hm) type=Class#308<String, Int> ref=s3565
-expr e14 localDecl mm mutable=0 type=t5 init=e13 type=Unit ref=s3566
-expr e15 name(mm) type=Class#308<String, Int> ref=s3566
+expr e13 name(hm) type=Class#308<String, Int> ref=s3579
+expr e14 localDecl mm mutable=0 type=t5 init=e13 type=Unit ref=s3580
+expr e15 name(mm) type=Class#308<String, Int> ref=s3580
 expr e16 string(w) type=String
 expr e17 indexedAccess receiver=e15 indices=[e16] type=_
 expr e18 int(40) type=Int
 expr e19 indexedAssign receiver=e15 indices=[e16] value=e18 type=Unit call=s311 map=[0->0,1->1] targs=[String,Int]
 expr e20 name(println) type=_
-expr e21 name(mm) type=Class#308<String, Int> ref=s3566
+expr e21 name(mm) type=Class#308<String, Int> ref=s3580
 expr e22 memberCall recv=e21 callee=size args=[] type=Int
 expr e23 call callee=e20 args=[_:e22] type=Unit call=s1720 map=[0->0] targs=[]
 expr e24 name(HashMap) type=Any ref=s375
-expr e25 name(hm) type=Class#308<String, Int> ref=s3565
+expr e25 name(hm) type=Class#308<String, Int> ref=s3579
 expr e26 call callee=e24 args=[_:e25] type=Class#308<Any, Any>
-expr e27 localDecl copy mutable=0 type=_ init=e26 type=Unit ref=s3567
+expr e27 localDecl copy mutable=0 type=_ init=e26 type=Unit ref=s3581
 expr e28 name(println) type=_
-expr e29 name(copy) type=Class#308<Any, Any> ref=s3567
+expr e29 name(copy) type=Class#308<Any, Any> ref=s3581
 expr e30 memberCall recv=e29 callee=size args=[] type=Int
 expr e31 call callee=e28 args=[_:e30] type=Unit call=s1720 map=[0->0] targs=[]
 expr e32 name(println) type=_
-expr e33 name(hm) type=Class#308<String, Int> ref=s3565
+expr e33 name(hm) type=Class#308<String, Int> ref=s3579
 expr e34 string(x) type=String
 expr e35 memberCall recv=e33 callee=containsKey args=[_:e34] type=Boolean call=s282 map=[0->0] targs=[]
 expr e36 call callee=e32 args=[_:e35] type=Unit call=s1720 map=[0->0] targs=[]
 expr e37 name(println) type=_
-expr e38 name(hm) type=Class#308<String, Int> ref=s3565
+expr e38 name(hm) type=Class#308<String, Int> ref=s3579
 expr e39 int(99) type=Int
 expr e40 memberCall recv=e38 callee=containsValue args=[_:e39] type=Any call=s283 map=[0->0] targs=[]
 expr e41 call callee=e37 args=[_:e40] type=Unit call=s1720 map=[0->0] targs=[]
-expr e42 name(hm) type=Class#308<String, Int> ref=s3565
+expr e42 name(hm) type=Class#308<String, Int> ref=s3579
 expr e43 string(y) type=String
 expr e44 memberCall recv=e42 callee=remove args=[_:e43] type=Int? call=s313 map=[0->0] targs=[String,Int]
 expr e45 name(println) type=_
-expr e46 name(hm) type=Class#308<String, Int> ref=s3565
+expr e46 name(hm) type=Class#308<String, Int> ref=s3579
 expr e47 memberCall recv=e46 callee=size args=[] type=Int
 expr e48 call callee=e45 args=[_:e47] type=Unit call=s1720 map=[0->0] targs=[]
 expr e49 name(println) type=_
-expr e50 name(hm) type=Class#308<String, Int> ref=s3565
+expr e50 name(hm) type=Class#308<String, Int> ref=s3579
 expr e51 string(missing) type=String
 expr e52 int(1) type=Int
 expr e53 unary(unaryMinus) operand=e52 type=Int
@@ -3627,8 +3641,8 @@ expr e54 memberCall recv=e50 callee=getOrDefault args=[_:e51,_:e53] type=Int cal
 expr e55 call callee=e49 args=[_:e54] type=Unit call=s1720 map=[0->0] targs=[]
 expr e56 name(HashMap) type=Any ref=s375
 expr e57 call callee=e56 args=[] type=Class#308<Int, Int>
-expr e58 localDecl empty mutable=0 type=t8 init=e57 type=Unit ref=s3568
+expr e58 localDecl empty mutable=0 type=t8 init=e57 type=Unit ref=s3582
 expr e59 name(println) type=_
-expr e60 name(empty) type=Class#308<Int, Int> ref=s3568
+expr e60 name(empty) type=Class#308<Int, Int> ref=s3582
 expr e61 memberCall recv=e60 callee=isEmpty args=[] type=Boolean
 expr e62 call callee=e59 args=[_:e61] type=Unit call=s1720 map=[0->0] targs=[]

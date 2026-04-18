@@ -3562,30 +3562,44 @@ symbol s3560 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3561 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3559 params=[() -> T#3562] ret=T#3562 suspend=0 defaults=[0] vararg=[0]
 symbol s3562 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3563 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3564 kind=function fq=golden.sema.testAtan2 vis=public flags=_ sig=recv=_ params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s3565 kind=function fq=golden.sema.testHypot vis=public flags=_ sig=recv=_ params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s3566 kind=function fq=golden.sema.testCoerceIn vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3567 kind=valueParameter fq=golden.sema.testCoerceIn.$3566.x vis=private flags=_
-symbol s3568 kind=function fq=golden.sema.testCoerceAtLeast vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3569 kind=valueParameter fq=golden.sema.testCoerceAtLeast.$3568.x vis=private flags=_
-symbol s3570 kind=function fq=golden.sema.testCoerceAtMost vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3571 kind=valueParameter fq=golden.sema.testCoerceAtMost.$3570.x vis=private flags=_
-symbol s3572 kind=function fq=golden.sema.testMaxOf3 vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3573 kind=valueParameter fq=golden.sema.testMaxOf3.$3572.a vis=private flags=_
-symbol s3574 kind=valueParameter fq=golden.sema.testMaxOf3.$3572.b vis=private flags=_
-symbol s3575 kind=valueParameter fq=golden.sema.testMaxOf3.$3572.c vis=private flags=_
-symbol s3576 kind=function fq=golden.sema.testMinOf3 vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3577 kind=valueParameter fq=golden.sema.testMinOf3.$3576.a vis=private flags=_
-symbol s3578 kind=valueParameter fq=golden.sema.testMinOf3.$3576.b vis=private flags=_
-symbol s3579 kind=valueParameter fq=golden.sema.testMinOf3.$3576.c vis=private flags=_
+symbol s3564 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3565 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3566 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3566<T#3567>
+symbol s3567 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3568 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3566<T#3567> params=[] ret=T#3567? suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3570 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3571 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3572 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3572
+symbol s3573 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
+symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3578 kind=function fq=golden.sema.testAtan2 vis=public flags=_ sig=recv=_ params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s3579 kind=function fq=golden.sema.testHypot vis=public flags=_ sig=recv=_ params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s3580 kind=function fq=golden.sema.testCoerceIn vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3581 kind=valueParameter fq=golden.sema.testCoerceIn.$3580.x vis=private flags=_
+symbol s3582 kind=function fq=golden.sema.testCoerceAtLeast vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3583 kind=valueParameter fq=golden.sema.testCoerceAtLeast.$3582.x vis=private flags=_
+symbol s3584 kind=function fq=golden.sema.testCoerceAtMost vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3585 kind=valueParameter fq=golden.sema.testCoerceAtMost.$3584.x vis=private flags=_
+symbol s3586 kind=function fq=golden.sema.testMaxOf3 vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3587 kind=valueParameter fq=golden.sema.testMaxOf3.$3586.a vis=private flags=_
+symbol s3588 kind=valueParameter fq=golden.sema.testMaxOf3.$3586.b vis=private flags=_
+symbol s3589 kind=valueParameter fq=golden.sema.testMaxOf3.$3586.c vis=private flags=_
+symbol s3590 kind=function fq=golden.sema.testMinOf3 vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3591 kind=valueParameter fq=golden.sema.testMinOf3.$3590.a vis=private flags=_
+symbol s3592 kind=valueParameter fq=golden.sema.testMinOf3.$3590.b vis=private flags=_
+symbol s3593 kind=valueParameter fq=golden.sema.testMinOf3.$3590.c vis=private flags=_
 file f0 package=golden.sema
-  decl d0 fun testAtan2 suspend=0 inline=0 sym=s3564
-  decl d1 fun testHypot suspend=0 inline=0 sym=s3565
-  decl d2 fun testCoerceIn suspend=0 inline=0 sym=s3566
-  decl d3 fun testCoerceAtLeast suspend=0 inline=0 sym=s3568
-  decl d4 fun testCoerceAtMost suspend=0 inline=0 sym=s3570
-  decl d5 fun testMaxOf3 suspend=0 inline=0 sym=s3572
-  decl d6 fun testMinOf3 suspend=0 inline=0 sym=s3576
+  decl d0 fun testAtan2 suspend=0 inline=0 sym=s3578
+  decl d1 fun testHypot suspend=0 inline=0 sym=s3579
+  decl d2 fun testCoerceIn suspend=0 inline=0 sym=s3580
+  decl d3 fun testCoerceAtLeast suspend=0 inline=0 sym=s3582
+  decl d4 fun testCoerceAtMost suspend=0 inline=0 sym=s3584
+  decl d5 fun testMaxOf3 suspend=0 inline=0 sym=s3586
+  decl d6 fun testMinOf3 suspend=0 inline=0 sym=s3590
 expr e0 name(atan2) type=_
 expr e1 double(1.0) type=Double
 expr e2 double(1.0) type=Double
@@ -3594,23 +3608,23 @@ expr e4 name(hypot) type=_
 expr e5 double(3.0) type=Double
 expr e6 double(4.0) type=Double
 expr e7 call callee=e4 args=[_:e5,_:e6] type=Double call=s1077 map=[0->0,1->1] targs=[]
-expr e8 name(x) type=Int ref=s3567
+expr e8 name(x) type=Int ref=s3581
 expr e9 int(1) type=Int
 expr e10 int(10) type=Int
 expr e11 memberCall recv=e8 callee=coerceIn args=[_:e9,_:e10] type=Int
-expr e12 name(x) type=Int ref=s3569
+expr e12 name(x) type=Int ref=s3583
 expr e13 int(0) type=Int
 expr e14 memberCall recv=e12 callee=coerceAtLeast args=[_:e13] type=Int
-expr e15 name(x) type=Int ref=s3571
+expr e15 name(x) type=Int ref=s3585
 expr e16 int(100) type=Int
 expr e17 memberCall recv=e15 callee=coerceAtMost args=[_:e16] type=Int
 expr e18 name(maxOf) type=_
-expr e19 name(a) type=Int ref=s3573
-expr e20 name(b) type=Int ref=s3574
-expr e21 name(c) type=Int ref=s3575
+expr e19 name(a) type=Int ref=s3587
+expr e20 name(b) type=Int ref=s3588
+expr e21 name(c) type=Int ref=s3589
 expr e22 call callee=e18 args=[_:e19,_:e20,_:e21] type=Int call=s634 map=[0->0,1->1,2->2] targs=[]
 expr e23 name(minOf) type=_
-expr e24 name(a) type=Int ref=s3577
-expr e25 name(b) type=Int ref=s3578
-expr e26 name(c) type=Int ref=s3579
+expr e24 name(a) type=Int ref=s3591
+expr e25 name(b) type=Int ref=s3592
+expr e26 name(c) type=Int ref=s3593
 expr e27 call callee=e23 args=[_:e24,_:e25,_:e26] type=Int call=s636 map=[0->0,1->1,2->2] targs=[]

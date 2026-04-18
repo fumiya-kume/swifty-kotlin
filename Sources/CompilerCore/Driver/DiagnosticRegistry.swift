@@ -711,6 +711,12 @@ public enum DiagnosticRegistry {
             defaultSeverity: .error,
             summary: "Link input not available."
         ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-LINK-0004",
+            pass: "LINK",
+            defaultSeverity: .error,
+            summary: "Generated object file missing before link."
+        ),
     ]
 
     // MARK: - Pipeline / driver pass (PIPELINE)
@@ -733,6 +739,12 @@ public enum DiagnosticRegistry {
             pass: "PIPELINE",
             defaultSeverity: .error,
             summary: "Compiler pipeline could not produce requested output."
+        ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-PIPELINE-0004",
+            pass: "PIPELINE",
+            defaultSeverity: .error,
+            summary: "Codegen phase failed to emit requested artifacts."
         ),
     ]
 

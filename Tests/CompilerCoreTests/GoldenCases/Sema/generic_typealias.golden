@@ -3562,28 +3562,42 @@ symbol s3560 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3561 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3559 params=[() -> T#3562] ret=T#3562 suspend=0 defaults=[0] vararg=[0]
 symbol s3562 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3563 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3564 kind=typeAlias fq=golden.sema.Predicate vis=public flags=_
-symbol s3565 kind=typeParameter fq=golden.sema.Predicate.$3564.T vis=private flags=_
-symbol s3566 kind=typeAlias fq=golden.sema.Func vis=public flags=_
-symbol s3567 kind=typeParameter fq=golden.sema.Func.$3566.T vis=private flags=_
-symbol s3568 kind=typeAlias fq=golden.sema.StringAlias vis=public flags=_
-symbol s3569 kind=function fq=golden.sema.usePredicate vis=public flags=_ sig=recv=_ params=[(Int) -> Boolean] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s3570 kind=valueParameter fq=golden.sema.usePredicate.$3569.p vis=private flags=_
-symbol s3571 kind=function fq=golden.sema.useFunc vis=public flags=_ sig=recv=_ params=[(String) -> String] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3572 kind=valueParameter fq=golden.sema.useFunc.$3571.f vis=private flags=_
-symbol s3573 kind=function fq=golden.sema.useAlias vis=public flags=_ sig=recv=_ params=[String] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3574 kind=valueParameter fq=golden.sema.useAlias.$3573.s vis=private flags=_
+symbol s3564 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3565 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3566 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3566<T#3567>
+symbol s3567 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3568 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3566<T#3567> params=[] ret=T#3567? suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3570 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3571 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3572 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3572
+symbol s3573 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
+symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3578 kind=typeAlias fq=golden.sema.Predicate vis=public flags=_
+symbol s3579 kind=typeParameter fq=golden.sema.Predicate.$3578.T vis=private flags=_
+symbol s3580 kind=typeAlias fq=golden.sema.Func vis=public flags=_
+symbol s3581 kind=typeParameter fq=golden.sema.Func.$3580.T vis=private flags=_
+symbol s3582 kind=typeAlias fq=golden.sema.StringAlias vis=public flags=_
+symbol s3583 kind=function fq=golden.sema.usePredicate vis=public flags=_ sig=recv=_ params=[(Int) -> Boolean] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s3584 kind=valueParameter fq=golden.sema.usePredicate.$3583.p vis=private flags=_
+symbol s3585 kind=function fq=golden.sema.useFunc vis=public flags=_ sig=recv=_ params=[(String) -> String] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3586 kind=valueParameter fq=golden.sema.useFunc.$3585.f vis=private flags=_
+symbol s3587 kind=function fq=golden.sema.useAlias vis=public flags=_ sig=recv=_ params=[String] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3588 kind=valueParameter fq=golden.sema.useAlias.$3587.s vis=private flags=_
 file f0 package=golden.sema
-  decl d0 typealias Predicate sym=s3564
-  decl d1 typealias Func sym=s3566
-  decl d2 typealias StringAlias sym=s3568
-  decl d3 fun usePredicate suspend=0 inline=0 sym=s3569
-  decl d4 fun useFunc suspend=0 inline=0 sym=s3571
-  decl d5 fun useAlias suspend=0 inline=0 sym=s3573
-expr e0 name(p) type=(Int) -> Boolean ref=s3570
+  decl d0 typealias Predicate sym=s3578
+  decl d1 typealias Func sym=s3580
+  decl d2 typealias StringAlias sym=s3582
+  decl d3 fun usePredicate suspend=0 inline=0 sym=s3583
+  decl d4 fun useFunc suspend=0 inline=0 sym=s3585
+  decl d5 fun useAlias suspend=0 inline=0 sym=s3587
+expr e0 name(p) type=(Int) -> Boolean ref=s3584
 expr e1 int(42) type=Int
 expr e2 call callee=e0 args=[_:e1] type=Boolean
-expr e3 name(f) type=(String) -> String ref=s3572
+expr e3 name(f) type=(String) -> String ref=s3586
 expr e4 string(hello) type=String
 expr e5 call callee=e3 args=[_:e4] type=String
-expr e6 name(s) type=String ref=s3574
+expr e6 name(s) type=String ref=s3588
