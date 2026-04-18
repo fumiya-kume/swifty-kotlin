@@ -3618,54 +3618,89 @@ symbol s3616 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3617 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3617
 symbol s3618 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3619 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3620 kind=class fq=golden.sema.Adder vis=public flags=_
-symbol s3621 kind=constructor fq=golden.sema.Adder.<init> vis=public flags=_ sig=recv=Class#3620 params=[] ret=Class#3620 suspend=0 defaults=[] vararg=[]
-symbol s3622 kind=function fq=golden.sema.Adder.invoke vis=public flags=operatorFunction sig=recv=Class#3620 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3623 kind=valueParameter fq=golden.sema.Adder.invoke.$3622.x vis=private flags=_
-symbol s3624 kind=property fq=golden.sema.globalAdder vis=public flags=_ type=Class#3620
-symbol s3625 kind=object fq=golden.sema.Incrementer vis=public flags=_
-symbol s3626 kind=function fq=golden.sema.Incrementer.invoke vis=public flags=operatorFunction sig=recv=Class#3625 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3627 kind=valueParameter fq=golden.sema.Incrementer.invoke.$3626.x vis=private flags=_
-symbol s3628 kind=function fq=golden.sema.makeAdder vis=public flags=_ sig=recv=_ params=[] ret=Class#3620 suspend=0 defaults=[] vararg=[]
-symbol s3629 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3630 kind=local fq=__local_12.adder vis=private flags=_ type=Class#3620
-symbol s3631 kind=local fq=__local_16.localResult vis=private flags=_ type=Int
-symbol s3632 kind=local fq=__local_20.topLevelResult vis=private flags=_ type=Int
-symbol s3633 kind=local fq=__local_24.objectResult vis=private flags=_ type=Int
-symbol s3634 kind=local fq=__local_29.exprResult vis=private flags=_ type=Int
+symbol s3620 kind=package fq=kotlin.native.concurrent vis=public flags=synthetic
+symbol s3621 kind=enumClass fq=kotlin.native.concurrent.TransferMode vis=public flags=synthetic
+symbol s3622 kind=field fq=kotlin.native.concurrent.TransferMode.SAFE vis=public flags=synthetic type=Class#3621
+symbol s3623 kind=field fq=kotlin.native.concurrent.TransferMode.UNSAFE vis=public flags=synthetic type=Class#3621
+symbol s3624 kind=enumClass fq=kotlin.native.concurrent.FutureState vis=public flags=synthetic
+symbol s3625 kind=field fq=kotlin.native.concurrent.FutureState.SCHEDULED vis=public flags=synthetic type=Class#3624
+symbol s3626 kind=field fq=kotlin.native.concurrent.FutureState.COMPUTED vis=public flags=synthetic type=Class#3624
+symbol s3627 kind=field fq=kotlin.native.concurrent.FutureState.THROWN vis=public flags=synthetic type=Class#3624
+symbol s3628 kind=field fq=kotlin.native.concurrent.FutureState.CANCELLED vis=public flags=synthetic type=Class#3624
+symbol s3629 kind=class fq=kotlin.native.concurrent.Worker vis=public flags=synthetic type=Class#3629
+symbol s3630 kind=object fq=kotlin.native.concurrent.Worker.Companion vis=public flags=synthetic type=Class#3630
+symbol s3631 kind=function fq=kotlin.native.concurrent.Worker.Companion.start vis=public flags=synthetic sig=recv=Class#3630 params=[String?] ret=Class#3629 suspend=0 defaults=[1] vararg=[0]
+symbol s3632 kind=valueParameter fq=kotlin.native.concurrent.Worker.Companion.start.name vis=private flags=synthetic
+symbol s3633 kind=function fq=kotlin.native.concurrent.Worker.requestTermination vis=public flags=synthetic sig=recv=Class#3629 params=[Boolean] ret=Unit suspend=0 defaults=[1] vararg=[0]
+symbol s3634 kind=valueParameter fq=kotlin.native.concurrent.Worker.requestTermination.processScheduled vis=private flags=synthetic
+symbol s3635 kind=property fq=kotlin.native.concurrent.Worker.isTerminated vis=public flags=synthetic type=Boolean
+symbol s3636 kind=property fq=kotlin.native.concurrent.Worker.name vis=public flags=synthetic type=String
+symbol s3637 kind=class fq=kotlin.native.concurrent.Future vis=public flags=synthetic type=Class#3637<T#3638>
+symbol s3638 kind=typeParameter fq=kotlin.native.concurrent.Future.T vis=private flags=_
+symbol s3639 kind=property fq=kotlin.native.concurrent.Future.result vis=public flags=synthetic type=T#3638
+symbol s3640 kind=function fq=kotlin.native.concurrent.Future.consume vis=public flags=synthetic sig=recv=Class#3637<T#3638> params=[] ret=T#3638 suspend=0 defaults=[] vararg=[]
+symbol s3641 kind=function fq=kotlin.native.concurrent.Future.getState vis=public flags=synthetic sig=recv=Class#3637<T#3638> params=[] ret=Class#3624 suspend=0 defaults=[] vararg=[]
+symbol s3642 kind=class fq=kotlin.native.concurrent.AtomicReference vis=public flags=synthetic type=Class#3642<T#3643>
+symbol s3643 kind=typeParameter fq=kotlin.native.concurrent.AtomicReference.T vis=private flags=_
+symbol s3644 kind=function fq=kotlin.native.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[T#3643] ret=Class#3642<T#3643> suspend=0 defaults=[0] vararg=[0]
+symbol s3645 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.<init>.value vis=private flags=synthetic
+symbol s3646 kind=property fq=kotlin.native.concurrent.AtomicReference.value vis=public flags=synthetic type=T#3643
+symbol s3647 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSwap vis=public flags=synthetic sig=recv=Class#3642<T#3643> params=[T#3643,T#3643] ret=T#3643 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3648 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.expected vis=private flags=synthetic
+symbol s3649 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.new vis=private flags=synthetic
+symbol s3650 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#3642<T#3643> params=[T#3643,T#3643] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3651 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.expected vis=private flags=synthetic
+symbol s3652 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
+symbol s3653 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
+symbol s3654 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
+symbol s3655 kind=class fq=golden.sema.Adder vis=public flags=_
+symbol s3656 kind=constructor fq=golden.sema.Adder.<init> vis=public flags=_ sig=recv=Class#3655 params=[] ret=Class#3655 suspend=0 defaults=[] vararg=[]
+symbol s3657 kind=function fq=golden.sema.Adder.invoke vis=public flags=operatorFunction sig=recv=Class#3655 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3658 kind=valueParameter fq=golden.sema.Adder.invoke.$3657.x vis=private flags=_
+symbol s3659 kind=property fq=golden.sema.globalAdder vis=public flags=_ type=Class#3655
+symbol s3660 kind=object fq=golden.sema.Incrementer vis=public flags=_
+symbol s3661 kind=function fq=golden.sema.Incrementer.invoke vis=public flags=operatorFunction sig=recv=Class#3660 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3662 kind=valueParameter fq=golden.sema.Incrementer.invoke.$3661.x vis=private flags=_
+symbol s3663 kind=function fq=golden.sema.makeAdder vis=public flags=_ sig=recv=_ params=[] ret=Class#3655 suspend=0 defaults=[] vararg=[]
+symbol s3664 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3665 kind=local fq=__local_12.adder vis=private flags=_ type=Class#3655
+symbol s3666 kind=local fq=__local_16.localResult vis=private flags=_ type=Int
+symbol s3667 kind=local fq=__local_20.topLevelResult vis=private flags=_ type=Int
+symbol s3668 kind=local fq=__local_24.objectResult vis=private flags=_ type=Int
+symbol s3669 kind=local fq=__local_29.exprResult vis=private flags=_ type=Int
 file f0 package=golden.sema
-  decl d1 class Adder sym=s3620
-  decl d2 property globalAdder var=0 sym=s3624
-  decl d4 object Incrementer sym=s3625
-  decl d5 fun makeAdder suspend=0 inline=0 sym=s3628
-  decl d6 fun main suspend=0 inline=0 sym=s3629
-expr e0 name(x) type=Int ref=s3623
+  decl d1 class Adder sym=s3655
+  decl d2 property globalAdder var=0 sym=s3659
+  decl d4 object Incrementer sym=s3660
+  decl d5 fun makeAdder suspend=0 inline=0 sym=s3663
+  decl d6 fun main suspend=0 inline=0 sym=s3664
+expr e0 name(x) type=Int ref=s3658
 expr e1 int(1) type=Int
 expr e2 binary(add) lhs=e0 rhs=e1 type=Int
 expr e3 name(Adder) type=_
-expr e4 call callee=e3 args=[] type=Class#3620 call=s3621 map=[] targs=[]
-expr e5 name(x) type=Int ref=s3627
+expr e4 call callee=e3 args=[] type=Class#3655 call=s3656 map=[] targs=[]
+expr e5 name(x) type=Int ref=s3662
 expr e6 int(2) type=Int
 expr e7 binary(add) lhs=e5 rhs=e6 type=Int
 expr e8 name(Adder) type=_
-expr e9 call callee=e8 args=[] type=Class#3620 call=s3621 map=[] targs=[]
+expr e9 call callee=e8 args=[] type=Class#3655 call=s3656 map=[] targs=[]
 expr e10 name(Adder) type=_
-expr e11 call callee=e10 args=[] type=Class#3620 call=s3621 map=[] targs=[]
-expr e12 localDecl adder mutable=0 type=_ init=e11 type=Unit ref=s3630
-expr e13 name(adder) type=Class#3620 ref=s3630
+expr e11 call callee=e10 args=[] type=Class#3655 call=s3656 map=[] targs=[]
+expr e12 localDecl adder mutable=0 type=_ init=e11 type=Unit ref=s3665
+expr e13 name(adder) type=Class#3655 ref=s3665
 expr e14 int(5) type=Int
-expr e15 call callee=e13 args=[_:e14] type=Int call=s3622 map=[0->0] targs=[]
-expr e16 localDecl localResult mutable=0 type=t6 init=e15 type=Unit ref=s3631
-expr e17 name(globalAdder) type=Class#3620 ref=s3624
+expr e15 call callee=e13 args=[_:e14] type=Int call=s3657 map=[0->0] targs=[]
+expr e16 localDecl localResult mutable=0 type=t6 init=e15 type=Unit ref=s3666
+expr e17 name(globalAdder) type=Class#3655 ref=s3659
 expr e18 int(6) type=Int
-expr e19 call callee=e17 args=[_:e18] type=Int call=s3622 map=[0->0] targs=[]
-expr e20 localDecl topLevelResult mutable=0 type=t7 init=e19 type=Unit ref=s3632
-expr e21 name(Incrementer) type=Class#3625 ref=s3625
+expr e19 call callee=e17 args=[_:e18] type=Int call=s3657 map=[0->0] targs=[]
+expr e20 localDecl topLevelResult mutable=0 type=t7 init=e19 type=Unit ref=s3667
+expr e21 name(Incrementer) type=Class#3660 ref=s3660
 expr e22 int(7) type=Int
-expr e23 call callee=e21 args=[_:e22] type=Int call=s3626 map=[0->0] targs=[]
-expr e24 localDecl objectResult mutable=0 type=t8 init=e23 type=Unit ref=s3633
+expr e23 call callee=e21 args=[_:e22] type=Int call=s3661 map=[0->0] targs=[]
+expr e24 localDecl objectResult mutable=0 type=t8 init=e23 type=Unit ref=s3668
 expr e25 name(makeAdder) type=_
-expr e26 call callee=e25 args=[] type=Class#3620 call=s3628 map=[] targs=[]
+expr e26 call callee=e25 args=[] type=Class#3655 call=s3663 map=[] targs=[]
 expr e27 int(8) type=Int
-expr e28 call callee=e26 args=[_:e27] type=Int call=s3622 map=[0->0] targs=[]
-expr e29 localDecl exprResult mutable=0 type=t9 init=e28 type=Unit ref=s3634
+expr e28 call callee=e26 args=[_:e27] type=Int call=s3657 map=[0->0] targs=[]
+expr e29 localDecl exprResult mutable=0 type=t9 init=e28 type=Unit ref=s3669

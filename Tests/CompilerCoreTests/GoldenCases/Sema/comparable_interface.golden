@@ -3618,58 +3618,93 @@ symbol s3616 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3617 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3617
 symbol s3618 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3619 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3620 kind=class fq=Temperature vis=public flags=_
-symbol s3621 kind=constructor fq=Temperature.<init> vis=public flags=_ sig=recv=Class#3620 params=[Int] ret=Class#3620 suspend=0 defaults=[0] vararg=[0]
-symbol s3622 kind=valueParameter fq=Temperature.<init>.$3621.degrees vis=private flags=_
-symbol s3623 kind=function fq=Temperature.compareTo vis=public flags=overrideMember sig=recv=Class#3620 params=[Class#3620] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3624 kind=valueParameter fq=Temperature.compareTo.$3623.other vis=private flags=_
-symbol s3625 kind=property fq=Temperature.degrees vis=public flags=_ type=Int
-symbol s3626 kind=function fq=max vis=public flags=_ sig=recv=_ params=[T#3627,T#3627] ret=T#3627 suspend=0 defaults=[0,0] vararg=[0,0] bounds=[Class#134<T#3627>]
-symbol s3627 kind=typeParameter fq=max.$3626.T vis=private flags=_
-symbol s3628 kind=valueParameter fq=max.$3626.a vis=private flags=_
-symbol s3629 kind=valueParameter fq=max.$3626.b vis=private flags=_
-symbol s3630 kind=function fq=nullSafeCompare vis=public flags=_ sig=recv=_ params=[Class#3620?,Class#3620] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3631 kind=valueParameter fq=nullSafeCompare.$3630.a vis=private flags=_
-symbol s3632 kind=valueParameter fq=nullSafeCompare.$3630.b vis=private flags=_
-symbol s3633 kind=function fq=compareInts vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3634 kind=valueParameter fq=compareInts.$3633.a vis=private flags=_
-symbol s3635 kind=valueParameter fq=compareInts.$3633.b vis=private flags=_
-symbol s3636 kind=function fq=compareTemperatures vis=public flags=_ sig=recv=_ params=[Class#3620,Class#3620] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3637 kind=valueParameter fq=compareTemperatures.$3636.a vis=private flags=_
-symbol s3638 kind=valueParameter fq=compareTemperatures.$3636.b vis=private flags=_
-symbol s3639 kind=function fq=compareGe vis=public flags=_ sig=recv=_ params=[Class#3620,Class#3620] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3640 kind=valueParameter fq=compareGe.$3639.a vis=private flags=_
-symbol s3641 kind=valueParameter fq=compareGe.$3639.b vis=private flags=_
+symbol s3620 kind=package fq=kotlin.native.concurrent vis=public flags=synthetic
+symbol s3621 kind=enumClass fq=kotlin.native.concurrent.TransferMode vis=public flags=synthetic
+symbol s3622 kind=field fq=kotlin.native.concurrent.TransferMode.SAFE vis=public flags=synthetic type=Class#3621
+symbol s3623 kind=field fq=kotlin.native.concurrent.TransferMode.UNSAFE vis=public flags=synthetic type=Class#3621
+symbol s3624 kind=enumClass fq=kotlin.native.concurrent.FutureState vis=public flags=synthetic
+symbol s3625 kind=field fq=kotlin.native.concurrent.FutureState.SCHEDULED vis=public flags=synthetic type=Class#3624
+symbol s3626 kind=field fq=kotlin.native.concurrent.FutureState.COMPUTED vis=public flags=synthetic type=Class#3624
+symbol s3627 kind=field fq=kotlin.native.concurrent.FutureState.THROWN vis=public flags=synthetic type=Class#3624
+symbol s3628 kind=field fq=kotlin.native.concurrent.FutureState.CANCELLED vis=public flags=synthetic type=Class#3624
+symbol s3629 kind=class fq=kotlin.native.concurrent.Worker vis=public flags=synthetic type=Class#3629
+symbol s3630 kind=object fq=kotlin.native.concurrent.Worker.Companion vis=public flags=synthetic type=Class#3630
+symbol s3631 kind=function fq=kotlin.native.concurrent.Worker.Companion.start vis=public flags=synthetic sig=recv=Class#3630 params=[String?] ret=Class#3629 suspend=0 defaults=[1] vararg=[0]
+symbol s3632 kind=valueParameter fq=kotlin.native.concurrent.Worker.Companion.start.name vis=private flags=synthetic
+symbol s3633 kind=function fq=kotlin.native.concurrent.Worker.requestTermination vis=public flags=synthetic sig=recv=Class#3629 params=[Boolean] ret=Unit suspend=0 defaults=[1] vararg=[0]
+symbol s3634 kind=valueParameter fq=kotlin.native.concurrent.Worker.requestTermination.processScheduled vis=private flags=synthetic
+symbol s3635 kind=property fq=kotlin.native.concurrent.Worker.isTerminated vis=public flags=synthetic type=Boolean
+symbol s3636 kind=property fq=kotlin.native.concurrent.Worker.name vis=public flags=synthetic type=String
+symbol s3637 kind=class fq=kotlin.native.concurrent.Future vis=public flags=synthetic type=Class#3637<T#3638>
+symbol s3638 kind=typeParameter fq=kotlin.native.concurrent.Future.T vis=private flags=_
+symbol s3639 kind=property fq=kotlin.native.concurrent.Future.result vis=public flags=synthetic type=T#3638
+symbol s3640 kind=function fq=kotlin.native.concurrent.Future.consume vis=public flags=synthetic sig=recv=Class#3637<T#3638> params=[] ret=T#3638 suspend=0 defaults=[] vararg=[]
+symbol s3641 kind=function fq=kotlin.native.concurrent.Future.getState vis=public flags=synthetic sig=recv=Class#3637<T#3638> params=[] ret=Class#3624 suspend=0 defaults=[] vararg=[]
+symbol s3642 kind=class fq=kotlin.native.concurrent.AtomicReference vis=public flags=synthetic type=Class#3642<T#3643>
+symbol s3643 kind=typeParameter fq=kotlin.native.concurrent.AtomicReference.T vis=private flags=_
+symbol s3644 kind=function fq=kotlin.native.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[T#3643] ret=Class#3642<T#3643> suspend=0 defaults=[0] vararg=[0]
+symbol s3645 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.<init>.value vis=private flags=synthetic
+symbol s3646 kind=property fq=kotlin.native.concurrent.AtomicReference.value vis=public flags=synthetic type=T#3643
+symbol s3647 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSwap vis=public flags=synthetic sig=recv=Class#3642<T#3643> params=[T#3643,T#3643] ret=T#3643 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3648 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.expected vis=private flags=synthetic
+symbol s3649 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.new vis=private flags=synthetic
+symbol s3650 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#3642<T#3643> params=[T#3643,T#3643] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3651 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.expected vis=private flags=synthetic
+symbol s3652 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
+symbol s3653 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
+symbol s3654 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
+symbol s3655 kind=class fq=Temperature vis=public flags=_
+symbol s3656 kind=constructor fq=Temperature.<init> vis=public flags=_ sig=recv=Class#3655 params=[Int] ret=Class#3655 suspend=0 defaults=[0] vararg=[0]
+symbol s3657 kind=valueParameter fq=Temperature.<init>.$3656.degrees vis=private flags=_
+symbol s3658 kind=function fq=Temperature.compareTo vis=public flags=overrideMember sig=recv=Class#3655 params=[Class#3655] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3659 kind=valueParameter fq=Temperature.compareTo.$3658.other vis=private flags=_
+symbol s3660 kind=property fq=Temperature.degrees vis=public flags=_ type=Int
+symbol s3661 kind=function fq=max vis=public flags=_ sig=recv=_ params=[T#3662,T#3662] ret=T#3662 suspend=0 defaults=[0,0] vararg=[0,0] bounds=[Class#134<T#3662>]
+symbol s3662 kind=typeParameter fq=max.$3661.T vis=private flags=_
+symbol s3663 kind=valueParameter fq=max.$3661.a vis=private flags=_
+symbol s3664 kind=valueParameter fq=max.$3661.b vis=private flags=_
+symbol s3665 kind=function fq=nullSafeCompare vis=public flags=_ sig=recv=_ params=[Class#3655?,Class#3655] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3666 kind=valueParameter fq=nullSafeCompare.$3665.a vis=private flags=_
+symbol s3667 kind=valueParameter fq=nullSafeCompare.$3665.b vis=private flags=_
+symbol s3668 kind=function fq=compareInts vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3669 kind=valueParameter fq=compareInts.$3668.a vis=private flags=_
+symbol s3670 kind=valueParameter fq=compareInts.$3668.b vis=private flags=_
+symbol s3671 kind=function fq=compareTemperatures vis=public flags=_ sig=recv=_ params=[Class#3655,Class#3655] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3672 kind=valueParameter fq=compareTemperatures.$3671.a vis=private flags=_
+symbol s3673 kind=valueParameter fq=compareTemperatures.$3671.b vis=private flags=_
+symbol s3674 kind=function fq=compareGe vis=public flags=_ sig=recv=_ params=[Class#3655,Class#3655] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3675 kind=valueParameter fq=compareGe.$3674.a vis=private flags=_
+symbol s3676 kind=valueParameter fq=compareGe.$3674.b vis=private flags=_
 file f0 package=_
-  decl d2 class Temperature sym=s3620
-  decl d3 fun max suspend=0 inline=0 sym=s3626
-  decl d4 fun nullSafeCompare suspend=0 inline=0 sym=s3630
-  decl d5 fun compareInts suspend=0 inline=0 sym=s3633
-  decl d6 fun compareTemperatures suspend=0 inline=0 sym=s3636
-  decl d7 fun compareGe suspend=0 inline=0 sym=s3639
-expr e0 this type=Class#3620
-expr e1 memberCall recv=e0 callee=degrees args=[] type=Int ref=s3625
-expr e2 name(other) type=Class#3620 ref=s3624
-expr e3 memberCall recv=e2 callee=degrees args=[] type=Int ref=s3625
+  decl d2 class Temperature sym=s3655
+  decl d3 fun max suspend=0 inline=0 sym=s3661
+  decl d4 fun nullSafeCompare suspend=0 inline=0 sym=s3665
+  decl d5 fun compareInts suspend=0 inline=0 sym=s3668
+  decl d6 fun compareTemperatures suspend=0 inline=0 sym=s3671
+  decl d7 fun compareGe suspend=0 inline=0 sym=s3674
+expr e0 this type=Class#3655
+expr e1 memberCall recv=e0 callee=degrees args=[] type=Int ref=s3660
+expr e2 name(other) type=Class#3655 ref=s3659
+expr e3 memberCall recv=e2 callee=degrees args=[] type=Int ref=s3660
 expr e4 binary(subtract) lhs=e1 rhs=e3 type=Int
-expr e5 name(a) type=T#3627 ref=s3628
-expr e6 name(b) type=T#3627 ref=s3629
-expr e7 binary(greaterThan) lhs=e5 rhs=e6 type=Boolean call=s136 map=[0->0] targs=[T#3627]
-expr e8 name(a) type=T#3627 ref=s3628
-expr e9 name(b) type=T#3627 ref=s3629
-expr e10 if cond=e7 then=e8 else=e9 type=T#3627
-expr e11 name(a) type=Class#3620? ref=s3631
-expr e12 name(b) type=Class#3620 ref=s3632
-expr e13 safeMemberCall recv=e11 callee=compareTo args=[_:e12] type=Int? call=s3623 map=[0->0] targs=[]
+expr e5 name(a) type=T#3662 ref=s3663
+expr e6 name(b) type=T#3662 ref=s3664
+expr e7 binary(greaterThan) lhs=e5 rhs=e6 type=Boolean call=s136 map=[0->0] targs=[T#3662]
+expr e8 name(a) type=T#3662 ref=s3663
+expr e9 name(b) type=T#3662 ref=s3664
+expr e10 if cond=e7 then=e8 else=e9 type=T#3662
+expr e11 name(a) type=Class#3655? ref=s3666
+expr e12 name(b) type=Class#3655 ref=s3667
+expr e13 safeMemberCall recv=e11 callee=compareTo args=[_:e12] type=Int? call=s3658 map=[0->0] targs=[]
 expr e14 int(1) type=Int
 expr e15 unary(unaryMinus) operand=e14 type=Int
 expr e16 binary(elvis) lhs=e13 rhs=e15 type=Int
-expr e17 name(a) type=Int ref=s3634
-expr e18 name(b) type=Int ref=s3635
+expr e17 name(a) type=Int ref=s3669
+expr e18 name(b) type=Int ref=s3670
 expr e19 binary(lessThan) lhs=e17 rhs=e18 type=Boolean
-expr e20 name(a) type=Class#3620 ref=s3637
-expr e21 name(b) type=Class#3620 ref=s3638
+expr e20 name(a) type=Class#3655 ref=s3672
+expr e21 name(b) type=Class#3655 ref=s3673
 expr e22 binary(lessThan) lhs=e20 rhs=e21 type=<error>
-expr e23 name(a) type=Class#3620 ref=s3640
-expr e24 name(b) type=Class#3620 ref=s3641
+expr e23 name(a) type=Class#3655 ref=s3675
+expr e24 name(b) type=Class#3655 ref=s3676
 expr e25 binary(greaterOrEqual) lhs=e23 rhs=e24 type=<error>

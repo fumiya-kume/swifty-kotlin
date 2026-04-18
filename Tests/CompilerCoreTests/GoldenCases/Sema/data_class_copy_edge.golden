@@ -3618,85 +3618,120 @@ symbol s3616 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3617 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3617
 symbol s3618 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3619 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3620 kind=class fq=Point vis=public flags=dataType
-symbol s3621 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#3620 params=[Int,Int] ret=Class#3620 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3622 kind=valueParameter fq=Point.<init>.$3621.x vis=private flags=_
-symbol s3623 kind=valueParameter fq=Point.<init>.$3621.y vis=private flags=_
-symbol s3624 kind=function fq=Point.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#3620 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3625 kind=function fq=Point.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#3620 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3626 kind=function fq=Point.copy vis=public flags=synthetic sig=recv=Class#3620 params=[Int,Int] ret=Class#3620 suspend=0 defaults=[1,1] vararg=[0,0]
-symbol s3627 kind=valueParameter fq=Point.copy.$3626.x vis=private flags=_
-symbol s3628 kind=valueParameter fq=Point.copy.$3626.y vis=private flags=_
-symbol s3629 kind=function fq=Point.hashCode vis=public flags=synthetic sig=recv=Class#3620 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3630 kind=property fq=Point.x vis=public flags=_ type=Int
-symbol s3631 kind=property fq=Point.y vis=public flags=_ type=Int
-symbol s3632 kind=function fq=Point.toString vis=public flags=synthetic sig=recv=Class#3620 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3633 kind=function fq=Point.equals vis=public flags=synthetic sig=recv=Class#3620 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s3634 kind=valueParameter fq=Point.equals.other vis=private flags=synthetic
-symbol s3635 kind=class fq=Name vis=public flags=dataType
-symbol s3636 kind=constructor fq=Name.<init> vis=public flags=_ sig=recv=Class#3635 params=[String] ret=Class#3635 suspend=0 defaults=[0] vararg=[0]
-symbol s3637 kind=valueParameter fq=Name.<init>.$3636.value vis=private flags=_
-symbol s3638 kind=function fq=Name.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#3635 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3639 kind=function fq=Name.copy vis=public flags=synthetic sig=recv=Class#3635 params=[String] ret=Class#3635 suspend=0 defaults=[1] vararg=[0]
-symbol s3640 kind=valueParameter fq=Name.copy.$3639.value vis=private flags=_
-symbol s3641 kind=function fq=Name.hashCode vis=public flags=synthetic sig=recv=Class#3635 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3642 kind=property fq=Name.value vis=public flags=_ type=String
-symbol s3643 kind=function fq=Name.toString vis=public flags=synthetic sig=recv=Class#3635 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3644 kind=function fq=Name.equals vis=public flags=synthetic sig=recv=Class#3635 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s3645 kind=valueParameter fq=Name.equals.other vis=private flags=synthetic
-symbol s3646 kind=function fq=testCopyBasic vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3647 kind=function fq=testCopyWithOverride vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3648 kind=function fq=testCopySingleProperty vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3649 kind=local fq=__local_4.p vis=private flags=_ type=Class#3620
-symbol s3650 kind=local fq=__local_7.p2 vis=private flags=_ type=Class#3620
-symbol s3651 kind=local fq=__local_20.p vis=private flags=_ type=Class#3620
-symbol s3652 kind=local fq=__local_24.p3 vis=private flags=_ type=Class#3620
-symbol s3653 kind=local fq=__local_32.n vis=private flags=_ type=Class#3635
-symbol s3654 kind=local fq=__local_36.n2 vis=private flags=_ type=Class#3635
+symbol s3620 kind=package fq=kotlin.native.concurrent vis=public flags=synthetic
+symbol s3621 kind=enumClass fq=kotlin.native.concurrent.TransferMode vis=public flags=synthetic
+symbol s3622 kind=field fq=kotlin.native.concurrent.TransferMode.SAFE vis=public flags=synthetic type=Class#3621
+symbol s3623 kind=field fq=kotlin.native.concurrent.TransferMode.UNSAFE vis=public flags=synthetic type=Class#3621
+symbol s3624 kind=enumClass fq=kotlin.native.concurrent.FutureState vis=public flags=synthetic
+symbol s3625 kind=field fq=kotlin.native.concurrent.FutureState.SCHEDULED vis=public flags=synthetic type=Class#3624
+symbol s3626 kind=field fq=kotlin.native.concurrent.FutureState.COMPUTED vis=public flags=synthetic type=Class#3624
+symbol s3627 kind=field fq=kotlin.native.concurrent.FutureState.THROWN vis=public flags=synthetic type=Class#3624
+symbol s3628 kind=field fq=kotlin.native.concurrent.FutureState.CANCELLED vis=public flags=synthetic type=Class#3624
+symbol s3629 kind=class fq=kotlin.native.concurrent.Worker vis=public flags=synthetic type=Class#3629
+symbol s3630 kind=object fq=kotlin.native.concurrent.Worker.Companion vis=public flags=synthetic type=Class#3630
+symbol s3631 kind=function fq=kotlin.native.concurrent.Worker.Companion.start vis=public flags=synthetic sig=recv=Class#3630 params=[String?] ret=Class#3629 suspend=0 defaults=[1] vararg=[0]
+symbol s3632 kind=valueParameter fq=kotlin.native.concurrent.Worker.Companion.start.name vis=private flags=synthetic
+symbol s3633 kind=function fq=kotlin.native.concurrent.Worker.requestTermination vis=public flags=synthetic sig=recv=Class#3629 params=[Boolean] ret=Unit suspend=0 defaults=[1] vararg=[0]
+symbol s3634 kind=valueParameter fq=kotlin.native.concurrent.Worker.requestTermination.processScheduled vis=private flags=synthetic
+symbol s3635 kind=property fq=kotlin.native.concurrent.Worker.isTerminated vis=public flags=synthetic type=Boolean
+symbol s3636 kind=property fq=kotlin.native.concurrent.Worker.name vis=public flags=synthetic type=String
+symbol s3637 kind=class fq=kotlin.native.concurrent.Future vis=public flags=synthetic type=Class#3637<T#3638>
+symbol s3638 kind=typeParameter fq=kotlin.native.concurrent.Future.T vis=private flags=_
+symbol s3639 kind=property fq=kotlin.native.concurrent.Future.result vis=public flags=synthetic type=T#3638
+symbol s3640 kind=function fq=kotlin.native.concurrent.Future.consume vis=public flags=synthetic sig=recv=Class#3637<T#3638> params=[] ret=T#3638 suspend=0 defaults=[] vararg=[]
+symbol s3641 kind=function fq=kotlin.native.concurrent.Future.getState vis=public flags=synthetic sig=recv=Class#3637<T#3638> params=[] ret=Class#3624 suspend=0 defaults=[] vararg=[]
+symbol s3642 kind=class fq=kotlin.native.concurrent.AtomicReference vis=public flags=synthetic type=Class#3642<T#3643>
+symbol s3643 kind=typeParameter fq=kotlin.native.concurrent.AtomicReference.T vis=private flags=_
+symbol s3644 kind=function fq=kotlin.native.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[T#3643] ret=Class#3642<T#3643> suspend=0 defaults=[0] vararg=[0]
+symbol s3645 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.<init>.value vis=private flags=synthetic
+symbol s3646 kind=property fq=kotlin.native.concurrent.AtomicReference.value vis=public flags=synthetic type=T#3643
+symbol s3647 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSwap vis=public flags=synthetic sig=recv=Class#3642<T#3643> params=[T#3643,T#3643] ret=T#3643 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3648 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.expected vis=private flags=synthetic
+symbol s3649 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.new vis=private flags=synthetic
+symbol s3650 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#3642<T#3643> params=[T#3643,T#3643] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3651 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.expected vis=private flags=synthetic
+symbol s3652 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
+symbol s3653 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
+symbol s3654 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
+symbol s3655 kind=class fq=Point vis=public flags=dataType
+symbol s3656 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#3655 params=[Int,Int] ret=Class#3655 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3657 kind=valueParameter fq=Point.<init>.$3656.x vis=private flags=_
+symbol s3658 kind=valueParameter fq=Point.<init>.$3656.y vis=private flags=_
+symbol s3659 kind=function fq=Point.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#3655 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3660 kind=function fq=Point.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#3655 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3661 kind=function fq=Point.copy vis=public flags=synthetic sig=recv=Class#3655 params=[Int,Int] ret=Class#3655 suspend=0 defaults=[1,1] vararg=[0,0]
+symbol s3662 kind=valueParameter fq=Point.copy.$3661.x vis=private flags=_
+symbol s3663 kind=valueParameter fq=Point.copy.$3661.y vis=private flags=_
+symbol s3664 kind=function fq=Point.hashCode vis=public flags=synthetic sig=recv=Class#3655 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3665 kind=property fq=Point.x vis=public flags=_ type=Int
+symbol s3666 kind=property fq=Point.y vis=public flags=_ type=Int
+symbol s3667 kind=function fq=Point.toString vis=public flags=synthetic sig=recv=Class#3655 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3668 kind=function fq=Point.equals vis=public flags=synthetic sig=recv=Class#3655 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s3669 kind=valueParameter fq=Point.equals.other vis=private flags=synthetic
+symbol s3670 kind=class fq=Name vis=public flags=dataType
+symbol s3671 kind=constructor fq=Name.<init> vis=public flags=_ sig=recv=Class#3670 params=[String] ret=Class#3670 suspend=0 defaults=[0] vararg=[0]
+symbol s3672 kind=valueParameter fq=Name.<init>.$3671.value vis=private flags=_
+symbol s3673 kind=function fq=Name.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#3670 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3674 kind=function fq=Name.copy vis=public flags=synthetic sig=recv=Class#3670 params=[String] ret=Class#3670 suspend=0 defaults=[1] vararg=[0]
+symbol s3675 kind=valueParameter fq=Name.copy.$3674.value vis=private flags=_
+symbol s3676 kind=function fq=Name.hashCode vis=public flags=synthetic sig=recv=Class#3670 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3677 kind=property fq=Name.value vis=public flags=_ type=String
+symbol s3678 kind=function fq=Name.toString vis=public flags=synthetic sig=recv=Class#3670 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3679 kind=function fq=Name.equals vis=public flags=synthetic sig=recv=Class#3670 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s3680 kind=valueParameter fq=Name.equals.other vis=private flags=synthetic
+symbol s3681 kind=function fq=testCopyBasic vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3682 kind=function fq=testCopyWithOverride vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3683 kind=function fq=testCopySingleProperty vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3684 kind=local fq=__local_4.p vis=private flags=_ type=Class#3655
+symbol s3685 kind=local fq=__local_7.p2 vis=private flags=_ type=Class#3655
+symbol s3686 kind=local fq=__local_20.p vis=private flags=_ type=Class#3655
+symbol s3687 kind=local fq=__local_24.p3 vis=private flags=_ type=Class#3655
+symbol s3688 kind=local fq=__local_32.n vis=private flags=_ type=Class#3670
+symbol s3689 kind=local fq=__local_36.n2 vis=private flags=_ type=Class#3670
 file f0 package=_
-  decl d2 class Point sym=s3620
-  decl d4 class Name sym=s3635
-  decl d5 fun testCopyBasic suspend=0 inline=0 sym=s3646
-  decl d6 fun testCopyWithOverride suspend=0 inline=0 sym=s3647
-  decl d7 fun testCopySingleProperty suspend=0 inline=0 sym=s3648
+  decl d2 class Point sym=s3655
+  decl d4 class Name sym=s3670
+  decl d5 fun testCopyBasic suspend=0 inline=0 sym=s3681
+  decl d6 fun testCopyWithOverride suspend=0 inline=0 sym=s3682
+  decl d7 fun testCopySingleProperty suspend=0 inline=0 sym=s3683
 expr e0 name(Point) type=_
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
-expr e3 call callee=e0 args=[_:e1,_:e2] type=Class#3620 call=s3621 map=[0->0,1->1] targs=[]
-expr e4 localDecl p mutable=0 type=_ init=e3 type=Unit ref=s3649
-expr e5 name(p) type=Class#3620 ref=s3649
-expr e6 memberCall recv=e5 callee=copy args=[] type=Class#3620 call=s3626 map=[] targs=[]
-expr e7 localDecl p2 mutable=0 type=_ init=e6 type=Unit ref=s3650
+expr e3 call callee=e0 args=[_:e1,_:e2] type=Class#3655 call=s3656 map=[0->0,1->1] targs=[]
+expr e4 localDecl p mutable=0 type=_ init=e3 type=Unit ref=s3684
+expr e5 name(p) type=Class#3655 ref=s3684
+expr e6 memberCall recv=e5 callee=copy args=[] type=Class#3655 call=s3661 map=[] targs=[]
+expr e7 localDecl p2 mutable=0 type=_ init=e6 type=Unit ref=s3685
 expr e8 name(println) type=_
-expr e9 name(p2) type=Class#3620 ref=s3650
-expr e10 memberCall recv=e9 callee=x args=[] type=Int ref=s3630
+expr e9 name(p2) type=Class#3655 ref=s3685
+expr e10 memberCall recv=e9 callee=x args=[] type=Int ref=s3665
 expr e11 call callee=e8 args=[_:e10] type=Unit call=s1736 map=[0->0] targs=[]
 expr e12 name(println) type=_
-expr e13 name(p2) type=Class#3620 ref=s3650
-expr e14 memberCall recv=e13 callee=y args=[] type=Int ref=s3631
+expr e13 name(p2) type=Class#3655 ref=s3685
+expr e14 memberCall recv=e13 callee=y args=[] type=Int ref=s3666
 expr e15 call callee=e12 args=[_:e14] type=Unit call=s1736 map=[0->0] targs=[]
 expr e16 name(Point) type=_
 expr e17 int(1) type=Int
 expr e18 int(2) type=Int
-expr e19 call callee=e16 args=[_:e17,_:e18] type=Class#3620 call=s3621 map=[0->0,1->1] targs=[]
-expr e20 localDecl p mutable=0 type=_ init=e19 type=Unit ref=s3651
-expr e21 name(p) type=Class#3620 ref=s3651
+expr e19 call callee=e16 args=[_:e17,_:e18] type=Class#3655 call=s3656 map=[0->0,1->1] targs=[]
+expr e20 localDecl p mutable=0 type=_ init=e19 type=Unit ref=s3686
+expr e21 name(p) type=Class#3655 ref=s3686
 expr e22 int(10) type=Int
-expr e23 memberCall recv=e21 callee=copy args=[x:e22] type=Class#3620 call=s3626 map=[0->0] targs=[]
-expr e24 localDecl p3 mutable=0 type=_ init=e23 type=Unit ref=s3652
+expr e23 memberCall recv=e21 callee=copy args=[x:e22] type=Class#3655 call=s3661 map=[0->0] targs=[]
+expr e24 localDecl p3 mutable=0 type=_ init=e23 type=Unit ref=s3687
 expr e25 name(println) type=_
-expr e26 name(p3) type=Class#3620 ref=s3652
-expr e27 memberCall recv=e26 callee=x args=[] type=Int ref=s3630
+expr e26 name(p3) type=Class#3655 ref=s3687
+expr e27 memberCall recv=e26 callee=x args=[] type=Int ref=s3665
 expr e28 call callee=e25 args=[_:e27] type=Unit call=s1736 map=[0->0] targs=[]
 expr e29 name(Name) type=_
 expr e30 string(hello) type=String
-expr e31 call callee=e29 args=[_:e30] type=Class#3635 call=s3636 map=[0->0] targs=[]
-expr e32 localDecl n mutable=0 type=_ init=e31 type=Unit ref=s3653
-expr e33 name(n) type=Class#3635 ref=s3653
+expr e31 call callee=e29 args=[_:e30] type=Class#3670 call=s3671 map=[0->0] targs=[]
+expr e32 localDecl n mutable=0 type=_ init=e31 type=Unit ref=s3688
+expr e33 name(n) type=Class#3670 ref=s3688
 expr e34 string(world) type=String
-expr e35 memberCall recv=e33 callee=copy args=[value:e34] type=Class#3635 call=s3639 map=[0->0] targs=[]
-expr e36 localDecl n2 mutable=0 type=_ init=e35 type=Unit ref=s3654
+expr e35 memberCall recv=e33 callee=copy args=[value:e34] type=Class#3670 call=s3674 map=[0->0] targs=[]
+expr e36 localDecl n2 mutable=0 type=_ init=e35 type=Unit ref=s3689
 expr e37 name(println) type=_
-expr e38 name(n2) type=Class#3635 ref=s3654
-expr e39 memberCall recv=e38 callee=value args=[] type=String ref=s3642
+expr e38 name(n2) type=Class#3670 ref=s3689
+expr e39 memberCall recv=e38 callee=value args=[] type=String ref=s3677
 expr e40 call callee=e37 args=[_:e39] type=Unit call=s1736 map=[0->0] targs=[]

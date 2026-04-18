@@ -3618,79 +3618,114 @@ symbol s3616 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3617 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3617
 symbol s3618 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3619 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3620 kind=function fq=golden.sema.useTrim vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3621 kind=function fq=golden.sema.useSplit vis=public flags=_ sig=recv=_ params=[] ret=Class#123<String> suspend=0 defaults=[] vararg=[]
-symbol s3622 kind=function fq=golden.sema.useReplace vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3623 kind=function fq=golden.sema.useStartsWith vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s3624 kind=function fq=golden.sema.useEndsWith vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s3625 kind=function fq=golden.sema.useContains vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s3626 kind=function fq=golden.sema.useToInt vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3627 kind=function fq=golden.sema.useToDouble vis=public flags=_ sig=recv=_ params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s3628 kind=function fq=golden.sema.useFormat vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3629 kind=function fq=golden.sema.useSubstring1 vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3630 kind=function fq=golden.sema.useSubstring2 vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3631 kind=function fq=golden.sema.useLowercase vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3632 kind=function fq=golden.sema.useUppercase vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3633 kind=function fq=golden.sema.useToIntOrNullValid vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
-symbol s3634 kind=function fq=golden.sema.useToIntOrNullInvalid vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
-symbol s3635 kind=function fq=golden.sema.useToDoubleOrNullValid vis=public flags=_ sig=recv=_ params=[] ret=Double? suspend=0 defaults=[] vararg=[]
-symbol s3636 kind=function fq=golden.sema.useToDoubleOrNullInvalid vis=public flags=_ sig=recv=_ params=[] ret=Double? suspend=0 defaults=[] vararg=[]
-symbol s3637 kind=function fq=golden.sema.useRemovePrefix vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3638 kind=function fq=golden.sema.useRemoveSuffix vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3639 kind=function fq=golden.sema.useRemoveSurrounding1 vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3640 kind=function fq=golden.sema.useRemoveSurrounding2 vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3641 kind=function fq=golden.sema.useSubstringBefore vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3642 kind=function fq=golden.sema.useSubstringAfter vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3643 kind=function fq=golden.sema.useSubstringBeforeLast vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3644 kind=function fq=golden.sema.useSubstringAfterLast vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3645 kind=function fq=golden.sema.useIsEmpty vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s3646 kind=function fq=golden.sema.useIsNotEmpty vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s3647 kind=function fq=golden.sema.useIsBlank vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s3648 kind=function fq=golden.sema.useIsNotBlank vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s3649 kind=function fq=golden.sema.useFirst vis=public flags=_ sig=recv=_ params=[] ret=Char suspend=0 defaults=[] vararg=[]
-symbol s3650 kind=function fq=golden.sema.useFirstOrNull vis=public flags=_ sig=recv=_ params=[] ret=Char? suspend=0 defaults=[] vararg=[]
-symbol s3651 kind=function fq=golden.sema.usePrependIndent vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3652 kind=function fq=golden.sema.useReplaceIndent vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3653 kind=function fq=golden.sema.useEqualsIgnoreCase vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s3654 kind=function fq=golden.sema.useReplaceFirst vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3655 kind=function fq=golden.sema.useReplaceRange vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3620 kind=package fq=kotlin.native.concurrent vis=public flags=synthetic
+symbol s3621 kind=enumClass fq=kotlin.native.concurrent.TransferMode vis=public flags=synthetic
+symbol s3622 kind=field fq=kotlin.native.concurrent.TransferMode.SAFE vis=public flags=synthetic type=Class#3621
+symbol s3623 kind=field fq=kotlin.native.concurrent.TransferMode.UNSAFE vis=public flags=synthetic type=Class#3621
+symbol s3624 kind=enumClass fq=kotlin.native.concurrent.FutureState vis=public flags=synthetic
+symbol s3625 kind=field fq=kotlin.native.concurrent.FutureState.SCHEDULED vis=public flags=synthetic type=Class#3624
+symbol s3626 kind=field fq=kotlin.native.concurrent.FutureState.COMPUTED vis=public flags=synthetic type=Class#3624
+symbol s3627 kind=field fq=kotlin.native.concurrent.FutureState.THROWN vis=public flags=synthetic type=Class#3624
+symbol s3628 kind=field fq=kotlin.native.concurrent.FutureState.CANCELLED vis=public flags=synthetic type=Class#3624
+symbol s3629 kind=class fq=kotlin.native.concurrent.Worker vis=public flags=synthetic type=Class#3629
+symbol s3630 kind=object fq=kotlin.native.concurrent.Worker.Companion vis=public flags=synthetic type=Class#3630
+symbol s3631 kind=function fq=kotlin.native.concurrent.Worker.Companion.start vis=public flags=synthetic sig=recv=Class#3630 params=[String?] ret=Class#3629 suspend=0 defaults=[1] vararg=[0]
+symbol s3632 kind=valueParameter fq=kotlin.native.concurrent.Worker.Companion.start.name vis=private flags=synthetic
+symbol s3633 kind=function fq=kotlin.native.concurrent.Worker.requestTermination vis=public flags=synthetic sig=recv=Class#3629 params=[Boolean] ret=Unit suspend=0 defaults=[1] vararg=[0]
+symbol s3634 kind=valueParameter fq=kotlin.native.concurrent.Worker.requestTermination.processScheduled vis=private flags=synthetic
+symbol s3635 kind=property fq=kotlin.native.concurrent.Worker.isTerminated vis=public flags=synthetic type=Boolean
+symbol s3636 kind=property fq=kotlin.native.concurrent.Worker.name vis=public flags=synthetic type=String
+symbol s3637 kind=class fq=kotlin.native.concurrent.Future vis=public flags=synthetic type=Class#3637<T#3638>
+symbol s3638 kind=typeParameter fq=kotlin.native.concurrent.Future.T vis=private flags=_
+symbol s3639 kind=property fq=kotlin.native.concurrent.Future.result vis=public flags=synthetic type=T#3638
+symbol s3640 kind=function fq=kotlin.native.concurrent.Future.consume vis=public flags=synthetic sig=recv=Class#3637<T#3638> params=[] ret=T#3638 suspend=0 defaults=[] vararg=[]
+symbol s3641 kind=function fq=kotlin.native.concurrent.Future.getState vis=public flags=synthetic sig=recv=Class#3637<T#3638> params=[] ret=Class#3624 suspend=0 defaults=[] vararg=[]
+symbol s3642 kind=class fq=kotlin.native.concurrent.AtomicReference vis=public flags=synthetic type=Class#3642<T#3643>
+symbol s3643 kind=typeParameter fq=kotlin.native.concurrent.AtomicReference.T vis=private flags=_
+symbol s3644 kind=function fq=kotlin.native.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[T#3643] ret=Class#3642<T#3643> suspend=0 defaults=[0] vararg=[0]
+symbol s3645 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.<init>.value vis=private flags=synthetic
+symbol s3646 kind=property fq=kotlin.native.concurrent.AtomicReference.value vis=public flags=synthetic type=T#3643
+symbol s3647 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSwap vis=public flags=synthetic sig=recv=Class#3642<T#3643> params=[T#3643,T#3643] ret=T#3643 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3648 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.expected vis=private flags=synthetic
+symbol s3649 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.new vis=private flags=synthetic
+symbol s3650 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#3642<T#3643> params=[T#3643,T#3643] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3651 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.expected vis=private flags=synthetic
+symbol s3652 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
+symbol s3653 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
+symbol s3654 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
+symbol s3655 kind=function fq=golden.sema.useTrim vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3656 kind=function fq=golden.sema.useSplit vis=public flags=_ sig=recv=_ params=[] ret=Class#123<String> suspend=0 defaults=[] vararg=[]
+symbol s3657 kind=function fq=golden.sema.useReplace vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3658 kind=function fq=golden.sema.useStartsWith vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s3659 kind=function fq=golden.sema.useEndsWith vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s3660 kind=function fq=golden.sema.useContains vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s3661 kind=function fq=golden.sema.useToInt vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3662 kind=function fq=golden.sema.useToDouble vis=public flags=_ sig=recv=_ params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s3663 kind=function fq=golden.sema.useFormat vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3664 kind=function fq=golden.sema.useSubstring1 vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3665 kind=function fq=golden.sema.useSubstring2 vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3666 kind=function fq=golden.sema.useLowercase vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3667 kind=function fq=golden.sema.useUppercase vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3668 kind=function fq=golden.sema.useToIntOrNullValid vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
+symbol s3669 kind=function fq=golden.sema.useToIntOrNullInvalid vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
+symbol s3670 kind=function fq=golden.sema.useToDoubleOrNullValid vis=public flags=_ sig=recv=_ params=[] ret=Double? suspend=0 defaults=[] vararg=[]
+symbol s3671 kind=function fq=golden.sema.useToDoubleOrNullInvalid vis=public flags=_ sig=recv=_ params=[] ret=Double? suspend=0 defaults=[] vararg=[]
+symbol s3672 kind=function fq=golden.sema.useRemovePrefix vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3673 kind=function fq=golden.sema.useRemoveSuffix vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3674 kind=function fq=golden.sema.useRemoveSurrounding1 vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3675 kind=function fq=golden.sema.useRemoveSurrounding2 vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3676 kind=function fq=golden.sema.useSubstringBefore vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3677 kind=function fq=golden.sema.useSubstringAfter vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3678 kind=function fq=golden.sema.useSubstringBeforeLast vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3679 kind=function fq=golden.sema.useSubstringAfterLast vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3680 kind=function fq=golden.sema.useIsEmpty vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s3681 kind=function fq=golden.sema.useIsNotEmpty vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s3682 kind=function fq=golden.sema.useIsBlank vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s3683 kind=function fq=golden.sema.useIsNotBlank vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s3684 kind=function fq=golden.sema.useFirst vis=public flags=_ sig=recv=_ params=[] ret=Char suspend=0 defaults=[] vararg=[]
+symbol s3685 kind=function fq=golden.sema.useFirstOrNull vis=public flags=_ sig=recv=_ params=[] ret=Char? suspend=0 defaults=[] vararg=[]
+symbol s3686 kind=function fq=golden.sema.usePrependIndent vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3687 kind=function fq=golden.sema.useReplaceIndent vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3688 kind=function fq=golden.sema.useEqualsIgnoreCase vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s3689 kind=function fq=golden.sema.useReplaceFirst vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3690 kind=function fq=golden.sema.useReplaceRange vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 fun useTrim suspend=0 inline=0 sym=s3620
-  decl d1 fun useSplit suspend=0 inline=0 sym=s3621
-  decl d2 fun useReplace suspend=0 inline=0 sym=s3622
-  decl d3 fun useStartsWith suspend=0 inline=0 sym=s3623
-  decl d4 fun useEndsWith suspend=0 inline=0 sym=s3624
-  decl d5 fun useContains suspend=0 inline=0 sym=s3625
-  decl d6 fun useToInt suspend=0 inline=0 sym=s3626
-  decl d7 fun useToDouble suspend=0 inline=0 sym=s3627
-  decl d8 fun useFormat suspend=0 inline=0 sym=s3628
-  decl d9 fun useSubstring1 suspend=0 inline=0 sym=s3629
-  decl d10 fun useSubstring2 suspend=0 inline=0 sym=s3630
-  decl d11 fun useLowercase suspend=0 inline=0 sym=s3631
-  decl d12 fun useUppercase suspend=0 inline=0 sym=s3632
-  decl d13 fun useToIntOrNullValid suspend=0 inline=0 sym=s3633
-  decl d14 fun useToIntOrNullInvalid suspend=0 inline=0 sym=s3634
-  decl d15 fun useToDoubleOrNullValid suspend=0 inline=0 sym=s3635
-  decl d16 fun useToDoubleOrNullInvalid suspend=0 inline=0 sym=s3636
-  decl d17 fun useRemovePrefix suspend=0 inline=0 sym=s3637
-  decl d18 fun useRemoveSuffix suspend=0 inline=0 sym=s3638
-  decl d19 fun useRemoveSurrounding1 suspend=0 inline=0 sym=s3639
-  decl d20 fun useRemoveSurrounding2 suspend=0 inline=0 sym=s3640
-  decl d21 fun useSubstringBefore suspend=0 inline=0 sym=s3641
-  decl d22 fun useSubstringAfter suspend=0 inline=0 sym=s3642
-  decl d23 fun useSubstringBeforeLast suspend=0 inline=0 sym=s3643
-  decl d24 fun useSubstringAfterLast suspend=0 inline=0 sym=s3644
-  decl d25 fun useIsEmpty suspend=0 inline=0 sym=s3645
-  decl d26 fun useIsNotEmpty suspend=0 inline=0 sym=s3646
-  decl d27 fun useIsBlank suspend=0 inline=0 sym=s3647
-  decl d28 fun useIsNotBlank suspend=0 inline=0 sym=s3648
-  decl d29 fun useFirst suspend=0 inline=0 sym=s3649
-  decl d30 fun useFirstOrNull suspend=0 inline=0 sym=s3650
-  decl d31 fun usePrependIndent suspend=0 inline=0 sym=s3651
-  decl d32 fun useReplaceIndent suspend=0 inline=0 sym=s3652
-  decl d33 fun useEqualsIgnoreCase suspend=0 inline=0 sym=s3653
-  decl d34 fun useReplaceFirst suspend=0 inline=0 sym=s3654
-  decl d35 fun useReplaceRange suspend=0 inline=0 sym=s3655
+  decl d0 fun useTrim suspend=0 inline=0 sym=s3655
+  decl d1 fun useSplit suspend=0 inline=0 sym=s3656
+  decl d2 fun useReplace suspend=0 inline=0 sym=s3657
+  decl d3 fun useStartsWith suspend=0 inline=0 sym=s3658
+  decl d4 fun useEndsWith suspend=0 inline=0 sym=s3659
+  decl d5 fun useContains suspend=0 inline=0 sym=s3660
+  decl d6 fun useToInt suspend=0 inline=0 sym=s3661
+  decl d7 fun useToDouble suspend=0 inline=0 sym=s3662
+  decl d8 fun useFormat suspend=0 inline=0 sym=s3663
+  decl d9 fun useSubstring1 suspend=0 inline=0 sym=s3664
+  decl d10 fun useSubstring2 suspend=0 inline=0 sym=s3665
+  decl d11 fun useLowercase suspend=0 inline=0 sym=s3666
+  decl d12 fun useUppercase suspend=0 inline=0 sym=s3667
+  decl d13 fun useToIntOrNullValid suspend=0 inline=0 sym=s3668
+  decl d14 fun useToIntOrNullInvalid suspend=0 inline=0 sym=s3669
+  decl d15 fun useToDoubleOrNullValid suspend=0 inline=0 sym=s3670
+  decl d16 fun useToDoubleOrNullInvalid suspend=0 inline=0 sym=s3671
+  decl d17 fun useRemovePrefix suspend=0 inline=0 sym=s3672
+  decl d18 fun useRemoveSuffix suspend=0 inline=0 sym=s3673
+  decl d19 fun useRemoveSurrounding1 suspend=0 inline=0 sym=s3674
+  decl d20 fun useRemoveSurrounding2 suspend=0 inline=0 sym=s3675
+  decl d21 fun useSubstringBefore suspend=0 inline=0 sym=s3676
+  decl d22 fun useSubstringAfter suspend=0 inline=0 sym=s3677
+  decl d23 fun useSubstringBeforeLast suspend=0 inline=0 sym=s3678
+  decl d24 fun useSubstringAfterLast suspend=0 inline=0 sym=s3679
+  decl d25 fun useIsEmpty suspend=0 inline=0 sym=s3680
+  decl d26 fun useIsNotEmpty suspend=0 inline=0 sym=s3681
+  decl d27 fun useIsBlank suspend=0 inline=0 sym=s3682
+  decl d28 fun useIsNotBlank suspend=0 inline=0 sym=s3683
+  decl d29 fun useFirst suspend=0 inline=0 sym=s3684
+  decl d30 fun useFirstOrNull suspend=0 inline=0 sym=s3685
+  decl d31 fun usePrependIndent suspend=0 inline=0 sym=s3686
+  decl d32 fun useReplaceIndent suspend=0 inline=0 sym=s3687
+  decl d33 fun useEqualsIgnoreCase suspend=0 inline=0 sym=s3688
+  decl d34 fun useReplaceFirst suspend=0 inline=0 sym=s3689
+  decl d35 fun useReplaceRange suspend=0 inline=0 sym=s3690
 expr e0 string(  hi  ) type=String
 expr e1 memberCall recv=e0 callee=trim args=[] type=String call=s685 map=[] targs=[]
 expr e2 string(1,2,3) type=String

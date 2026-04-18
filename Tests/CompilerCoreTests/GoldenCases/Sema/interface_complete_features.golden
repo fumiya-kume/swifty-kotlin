@@ -3618,39 +3618,74 @@ symbol s3616 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3617 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3617
 symbol s3618 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3619 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3620 kind=interface fq=golden.sema.InterfaceProperties vis=public flags=_
-symbol s3621 kind=property fq=golden.sema.InterfaceProperties.abstractVal vis=public flags=abstractType type=String
-symbol s3622 kind=property fq=golden.sema.InterfaceProperties.abstractVar vis=public flags=mutable|abstractType type=Int
-symbol s3623 kind=property fq=golden.sema.InterfaceProperties.concreteVal vis=public flags=_ type=String
-symbol s3624 kind=property fq=golden.sema.InterfaceProperties.concreteVar vis=public flags=mutable type=Int
-symbol s3625 kind=property fq=golden.sema.InterfaceProperties.computedVal vis=public flags=_ type=String
-symbol s3626 kind=property fq=golden.sema.InterfaceProperties.computedVar vis=public flags=mutable type=String
-symbol s3627 kind=backingField fq=golden.sema.InterfaceProperties.$backing_computedVar vis=private flags=mutable type=String
-symbol s3628 kind=interface fq=golden.sema.InterfaceSuperCalls vis=public flags=_
-symbol s3629 kind=function fq=golden.sema.InterfaceSuperCalls.greet vis=public flags=_ sig=recv=Class#3628 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3630 kind=interface fq=golden.sema.LeftSuper vis=public flags=_
-symbol s3631 kind=function fq=golden.sema.LeftSuper.greet vis=public flags=overrideMember sig=recv=Class#3630 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3632 kind=interface fq=golden.sema.RightSuper vis=public flags=_
-symbol s3633 kind=function fq=golden.sema.RightSuper.greet vis=public flags=overrideMember sig=recv=Class#3632 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3634 kind=class fq=golden.sema.WithSuperCall vis=public flags=_
-symbol s3635 kind=constructor fq=golden.sema.WithSuperCall.<init> vis=public flags=_ sig=recv=Class#3634 params=[] ret=Class#3634 suspend=0 defaults=[] vararg=[]
-symbol s3636 kind=function fq=golden.sema.WithSuperCall.greet vis=public flags=overrideMember sig=recv=Class#3634 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3637 kind=interface fq=golden.sema.WithCompanion vis=public flags=_
-symbol s3638 kind=function fq=golden.sema.WithCompanion.doSomething vis=public flags=abstractType sig=recv=Class#3637 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3639 kind=object fq=golden.sema.WithCompanion.Companion vis=public flags=_
-symbol s3640 kind=function fq=golden.sema.WithCompanion.Companion.helper vis=public flags=_ sig=recv=Class#3639 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3641 kind=property fq=golden.sema.WithCompanion.Companion.CONSTANT vis=public flags=_ type=String
-symbol s3642 kind=class fq=golden.sema.CompanionImpl vis=public flags=_
-symbol s3643 kind=constructor fq=golden.sema.CompanionImpl.<init> vis=public flags=_ sig=recv=Class#3642 params=[] ret=Class#3642 suspend=0 defaults=[] vararg=[]
-symbol s3644 kind=function fq=golden.sema.CompanionImpl.doSomething vis=public flags=overrideMember sig=recv=Class#3642 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3620 kind=package fq=kotlin.native.concurrent vis=public flags=synthetic
+symbol s3621 kind=enumClass fq=kotlin.native.concurrent.TransferMode vis=public flags=synthetic
+symbol s3622 kind=field fq=kotlin.native.concurrent.TransferMode.SAFE vis=public flags=synthetic type=Class#3621
+symbol s3623 kind=field fq=kotlin.native.concurrent.TransferMode.UNSAFE vis=public flags=synthetic type=Class#3621
+symbol s3624 kind=enumClass fq=kotlin.native.concurrent.FutureState vis=public flags=synthetic
+symbol s3625 kind=field fq=kotlin.native.concurrent.FutureState.SCHEDULED vis=public flags=synthetic type=Class#3624
+symbol s3626 kind=field fq=kotlin.native.concurrent.FutureState.COMPUTED vis=public flags=synthetic type=Class#3624
+symbol s3627 kind=field fq=kotlin.native.concurrent.FutureState.THROWN vis=public flags=synthetic type=Class#3624
+symbol s3628 kind=field fq=kotlin.native.concurrent.FutureState.CANCELLED vis=public flags=synthetic type=Class#3624
+symbol s3629 kind=class fq=kotlin.native.concurrent.Worker vis=public flags=synthetic type=Class#3629
+symbol s3630 kind=object fq=kotlin.native.concurrent.Worker.Companion vis=public flags=synthetic type=Class#3630
+symbol s3631 kind=function fq=kotlin.native.concurrent.Worker.Companion.start vis=public flags=synthetic sig=recv=Class#3630 params=[String?] ret=Class#3629 suspend=0 defaults=[1] vararg=[0]
+symbol s3632 kind=valueParameter fq=kotlin.native.concurrent.Worker.Companion.start.name vis=private flags=synthetic
+symbol s3633 kind=function fq=kotlin.native.concurrent.Worker.requestTermination vis=public flags=synthetic sig=recv=Class#3629 params=[Boolean] ret=Unit suspend=0 defaults=[1] vararg=[0]
+symbol s3634 kind=valueParameter fq=kotlin.native.concurrent.Worker.requestTermination.processScheduled vis=private flags=synthetic
+symbol s3635 kind=property fq=kotlin.native.concurrent.Worker.isTerminated vis=public flags=synthetic type=Boolean
+symbol s3636 kind=property fq=kotlin.native.concurrent.Worker.name vis=public flags=synthetic type=String
+symbol s3637 kind=class fq=kotlin.native.concurrent.Future vis=public flags=synthetic type=Class#3637<T#3638>
+symbol s3638 kind=typeParameter fq=kotlin.native.concurrent.Future.T vis=private flags=_
+symbol s3639 kind=property fq=kotlin.native.concurrent.Future.result vis=public flags=synthetic type=T#3638
+symbol s3640 kind=function fq=kotlin.native.concurrent.Future.consume vis=public flags=synthetic sig=recv=Class#3637<T#3638> params=[] ret=T#3638 suspend=0 defaults=[] vararg=[]
+symbol s3641 kind=function fq=kotlin.native.concurrent.Future.getState vis=public flags=synthetic sig=recv=Class#3637<T#3638> params=[] ret=Class#3624 suspend=0 defaults=[] vararg=[]
+symbol s3642 kind=class fq=kotlin.native.concurrent.AtomicReference vis=public flags=synthetic type=Class#3642<T#3643>
+symbol s3643 kind=typeParameter fq=kotlin.native.concurrent.AtomicReference.T vis=private flags=_
+symbol s3644 kind=function fq=kotlin.native.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[T#3643] ret=Class#3642<T#3643> suspend=0 defaults=[0] vararg=[0]
+symbol s3645 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.<init>.value vis=private flags=synthetic
+symbol s3646 kind=property fq=kotlin.native.concurrent.AtomicReference.value vis=public flags=synthetic type=T#3643
+symbol s3647 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSwap vis=public flags=synthetic sig=recv=Class#3642<T#3643> params=[T#3643,T#3643] ret=T#3643 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3648 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.expected vis=private flags=synthetic
+symbol s3649 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.new vis=private flags=synthetic
+symbol s3650 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#3642<T#3643> params=[T#3643,T#3643] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3651 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.expected vis=private flags=synthetic
+symbol s3652 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
+symbol s3653 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
+symbol s3654 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
+symbol s3655 kind=interface fq=golden.sema.InterfaceProperties vis=public flags=_
+symbol s3656 kind=property fq=golden.sema.InterfaceProperties.abstractVal vis=public flags=abstractType type=String
+symbol s3657 kind=property fq=golden.sema.InterfaceProperties.abstractVar vis=public flags=mutable|abstractType type=Int
+symbol s3658 kind=property fq=golden.sema.InterfaceProperties.concreteVal vis=public flags=_ type=String
+symbol s3659 kind=property fq=golden.sema.InterfaceProperties.concreteVar vis=public flags=mutable type=Int
+symbol s3660 kind=property fq=golden.sema.InterfaceProperties.computedVal vis=public flags=_ type=String
+symbol s3661 kind=property fq=golden.sema.InterfaceProperties.computedVar vis=public flags=mutable type=String
+symbol s3662 kind=backingField fq=golden.sema.InterfaceProperties.$backing_computedVar vis=private flags=mutable type=String
+symbol s3663 kind=interface fq=golden.sema.InterfaceSuperCalls vis=public flags=_
+symbol s3664 kind=function fq=golden.sema.InterfaceSuperCalls.greet vis=public flags=_ sig=recv=Class#3663 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3665 kind=interface fq=golden.sema.LeftSuper vis=public flags=_
+symbol s3666 kind=function fq=golden.sema.LeftSuper.greet vis=public flags=overrideMember sig=recv=Class#3665 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3667 kind=interface fq=golden.sema.RightSuper vis=public flags=_
+symbol s3668 kind=function fq=golden.sema.RightSuper.greet vis=public flags=overrideMember sig=recv=Class#3667 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3669 kind=class fq=golden.sema.WithSuperCall vis=public flags=_
+symbol s3670 kind=constructor fq=golden.sema.WithSuperCall.<init> vis=public flags=_ sig=recv=Class#3669 params=[] ret=Class#3669 suspend=0 defaults=[] vararg=[]
+symbol s3671 kind=function fq=golden.sema.WithSuperCall.greet vis=public flags=overrideMember sig=recv=Class#3669 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3672 kind=interface fq=golden.sema.WithCompanion vis=public flags=_
+symbol s3673 kind=function fq=golden.sema.WithCompanion.doSomething vis=public flags=abstractType sig=recv=Class#3672 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3674 kind=object fq=golden.sema.WithCompanion.Companion vis=public flags=_
+symbol s3675 kind=function fq=golden.sema.WithCompanion.Companion.helper vis=public flags=_ sig=recv=Class#3674 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3676 kind=property fq=golden.sema.WithCompanion.Companion.CONSTANT vis=public flags=_ type=String
+symbol s3677 kind=class fq=golden.sema.CompanionImpl vis=public flags=_
+symbol s3678 kind=constructor fq=golden.sema.CompanionImpl.<init> vis=public flags=_ sig=recv=Class#3677 params=[] ret=Class#3677 suspend=0 defaults=[] vararg=[]
+symbol s3679 kind=function fq=golden.sema.CompanionImpl.doSomething vis=public flags=overrideMember sig=recv=Class#3677 params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d6 interface InterfaceProperties sym=s3620
-  decl d8 interface InterfaceSuperCalls sym=s3628
-  decl d10 interface LeftSuper sym=s3630
-  decl d12 interface RightSuper sym=s3632
-  decl d14 class WithSuperCall sym=s3634
-  decl d19 interface WithCompanion sym=s3637
-  decl d21 class CompanionImpl sym=s3642
+  decl d6 interface InterfaceProperties sym=s3655
+  decl d8 interface InterfaceSuperCalls sym=s3663
+  decl d10 interface LeftSuper sym=s3665
+  decl d12 interface RightSuper sym=s3667
+  decl d14 class WithSuperCall sym=s3669
+  decl d19 interface WithCompanion sym=s3672
+  decl d21 class CompanionImpl sym=s3677
 expr e0 string(default) type=String
 expr e1 int(42) type=Int
 expr e2 string(computed) type=String
@@ -3658,12 +3693,12 @@ expr e3 string(get) type=String
 expr e4 string(Hello) type=String
 expr e5 string(Left) type=String
 expr e6 string(Right) type=String
-expr e7 super<LeftSuper> type=Class#3630
-expr e8 memberCall recv=e7 callee=greet args=[] type=String call=s3631 map=[] targs=[]
+expr e7 super<LeftSuper> type=Class#3665
+expr e8 memberCall recv=e7 callee=greet args=[] type=String call=s3666 map=[] targs=[]
 expr e9 string( and ) type=String
 expr e10 binary(add) lhs=e8 rhs=e9 type=String
-expr e11 super<RightSuper> type=Class#3632
-expr e12 memberCall recv=e11 callee=greet args=[] type=String call=s3633 map=[] targs=[]
+expr e11 super<RightSuper> type=Class#3667
+expr e12 memberCall recv=e11 callee=greet args=[] type=String call=s3668 map=[] targs=[]
 expr e13 binary(add) lhs=e10 rhs=e12 type=String
 expr e14 string(test) type=String
 expr e15 string(helper) type=String
