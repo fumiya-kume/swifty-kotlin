@@ -3659,16 +3659,22 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=golden.sema.useAnonymousObjectLocal vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3662 kind=class fq=__ObjectLiteral_0_74_110 vis=private flags=synthetic
-symbol s3663 kind=property fq=__ObjectLiteral_0_74_110.value vis=public flags=synthetic type=Int
-symbol s3664 kind=local fq=__local_3.local vis=private flags=_ type=Class#3662
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=golden.sema.useAnonymousObjectLocal vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3668 kind=class fq=__ObjectLiteral_0_74_110 vis=private flags=synthetic
+symbol s3669 kind=property fq=__ObjectLiteral_0_74_110.value vis=public flags=synthetic type=Int
+symbol s3670 kind=local fq=__local_3.local vis=private flags=_ type=Class#3668
 file f0 package=golden.sema
-  decl d2 fun useAnonymousObjectLocal suspend=0 inline=0 sym=s3661
+  decl d2 fun useAnonymousObjectLocal suspend=0 inline=0 sym=s3667
 expr e0 int(7) type=Int
 expr e1 localDecl value mutable=0 type=_ init=e0 type=_
-expr e2 objectLiteral supers=[] type=Class#3662
-expr e3 localDecl local mutable=0 type=_ init=e2 type=Unit ref=s3664
-expr e4 name(local) type=Class#3662 ref=s3664
-expr e5 memberCall recv=e4 callee=value args=[] type=Int ref=s3663
+expr e2 objectLiteral supers=[] type=Class#3668
+expr e3 localDecl local mutable=0 type=_ init=e2 type=Unit ref=s3670
+expr e4 name(local) type=Class#3668 ref=s3670
+expr e5 memberCall recv=e4 callee=value args=[] type=Int ref=s3669
 expr e6 return value=e5 type=Nothing

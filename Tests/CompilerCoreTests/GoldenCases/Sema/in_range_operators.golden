@@ -3659,29 +3659,35 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=checkIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3662 kind=valueParameter fq=checkIn.$3661.x vis=private flags=_
-symbol s3663 kind=valueParameter fq=checkIn.$3661.y vis=private flags=_
-symbol s3664 kind=function fq=checkNotIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3665 kind=valueParameter fq=checkNotIn.$3664.x vis=private flags=_
-symbol s3666 kind=valueParameter fq=checkNotIn.$3664.y vis=private flags=_
-symbol s3667 kind=function fq=rangeUntilExpr vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s3668 kind=valueParameter fq=rangeUntilExpr.$3667.n vis=private flags=_
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=checkIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3668 kind=valueParameter fq=checkIn.$3667.x vis=private flags=_
+symbol s3669 kind=valueParameter fq=checkIn.$3667.y vis=private flags=_
+symbol s3670 kind=function fq=checkNotIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3671 kind=valueParameter fq=checkNotIn.$3670.x vis=private flags=_
+symbol s3672 kind=valueParameter fq=checkNotIn.$3670.y vis=private flags=_
+symbol s3673 kind=function fq=rangeUntilExpr vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s3674 kind=valueParameter fq=rangeUntilExpr.$3673.n vis=private flags=_
 file f0 package=_
-  decl d0 fun checkIn suspend=0 inline=0 sym=s3661
-  decl d1 fun checkNotIn suspend=0 inline=0 sym=s3664
-  decl d2 fun rangeUntilExpr suspend=0 inline=0 sym=s3667
-expr e0 name(x) type=Int ref=s3662
+  decl d0 fun checkIn suspend=0 inline=0 sym=s3667
+  decl d1 fun checkNotIn suspend=0 inline=0 sym=s3670
+  decl d2 fun rangeUntilExpr suspend=0 inline=0 sym=s3673
+expr e0 name(x) type=Int ref=s3668
 expr e1 int(1) type=Int
 expr e2 int(10) type=Int
 expr e3 binary(rangeTo) lhs=e1 rhs=e2 type=Int
 expr e4 inExpr lhs=e0 rhs=e3 type=Boolean
-expr e5 name(x) type=Int ref=s3665
+expr e5 name(x) type=Int ref=s3671
 expr e6 int(1) type=Int
 expr e7 int(10) type=Int
 expr e8 binary(rangeTo) lhs=e6 rhs=e7 type=Int
 expr e9 notInExpr lhs=e5 rhs=e8 type=Boolean
-expr e10 name(n) type=Int ref=s3668
+expr e10 name(n) type=Int ref=s3674
 expr e11 int(0) type=Int
 expr e12 int(10) type=Int
 expr e13 binary(rangeUntil) lhs=e11 rhs=e12 type=Int

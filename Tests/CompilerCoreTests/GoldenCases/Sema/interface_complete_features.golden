@@ -3659,39 +3659,45 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=interface fq=golden.sema.InterfaceProperties vis=public flags=_
-symbol s3662 kind=property fq=golden.sema.InterfaceProperties.abstractVal vis=public flags=abstractType type=String
-symbol s3663 kind=property fq=golden.sema.InterfaceProperties.abstractVar vis=public flags=mutable|abstractType type=Int
-symbol s3664 kind=property fq=golden.sema.InterfaceProperties.concreteVal vis=public flags=_ type=String
-symbol s3665 kind=property fq=golden.sema.InterfaceProperties.concreteVar vis=public flags=mutable type=Int
-symbol s3666 kind=property fq=golden.sema.InterfaceProperties.computedVal vis=public flags=_ type=String
-symbol s3667 kind=property fq=golden.sema.InterfaceProperties.computedVar vis=public flags=mutable type=String
-symbol s3668 kind=backingField fq=golden.sema.InterfaceProperties.$backing_computedVar vis=private flags=mutable type=String
-symbol s3669 kind=interface fq=golden.sema.InterfaceSuperCalls vis=public flags=_
-symbol s3670 kind=function fq=golden.sema.InterfaceSuperCalls.greet vis=public flags=_ sig=recv=Class#3669 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3671 kind=interface fq=golden.sema.LeftSuper vis=public flags=_
-symbol s3672 kind=function fq=golden.sema.LeftSuper.greet vis=public flags=overrideMember sig=recv=Class#3671 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3673 kind=interface fq=golden.sema.RightSuper vis=public flags=_
-symbol s3674 kind=function fq=golden.sema.RightSuper.greet vis=public flags=overrideMember sig=recv=Class#3673 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3675 kind=class fq=golden.sema.WithSuperCall vis=public flags=_
-symbol s3676 kind=constructor fq=golden.sema.WithSuperCall.<init> vis=public flags=_ sig=recv=Class#3675 params=[] ret=Class#3675 suspend=0 defaults=[] vararg=[]
-symbol s3677 kind=function fq=golden.sema.WithSuperCall.greet vis=public flags=overrideMember sig=recv=Class#3675 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3678 kind=interface fq=golden.sema.WithCompanion vis=public flags=_
-symbol s3679 kind=function fq=golden.sema.WithCompanion.doSomething vis=public flags=abstractType sig=recv=Class#3678 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3680 kind=object fq=golden.sema.WithCompanion.Companion vis=public flags=_
-symbol s3681 kind=function fq=golden.sema.WithCompanion.Companion.helper vis=public flags=_ sig=recv=Class#3680 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3682 kind=property fq=golden.sema.WithCompanion.Companion.CONSTANT vis=public flags=_ type=String
-symbol s3683 kind=class fq=golden.sema.CompanionImpl vis=public flags=_
-symbol s3684 kind=constructor fq=golden.sema.CompanionImpl.<init> vis=public flags=_ sig=recv=Class#3683 params=[] ret=Class#3683 suspend=0 defaults=[] vararg=[]
-symbol s3685 kind=function fq=golden.sema.CompanionImpl.doSomething vis=public flags=overrideMember sig=recv=Class#3683 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=interface fq=golden.sema.InterfaceProperties vis=public flags=_
+symbol s3668 kind=property fq=golden.sema.InterfaceProperties.abstractVal vis=public flags=abstractType type=String
+symbol s3669 kind=property fq=golden.sema.InterfaceProperties.abstractVar vis=public flags=mutable|abstractType type=Int
+symbol s3670 kind=property fq=golden.sema.InterfaceProperties.concreteVal vis=public flags=_ type=String
+symbol s3671 kind=property fq=golden.sema.InterfaceProperties.concreteVar vis=public flags=mutable type=Int
+symbol s3672 kind=property fq=golden.sema.InterfaceProperties.computedVal vis=public flags=_ type=String
+symbol s3673 kind=property fq=golden.sema.InterfaceProperties.computedVar vis=public flags=mutable type=String
+symbol s3674 kind=backingField fq=golden.sema.InterfaceProperties.$backing_computedVar vis=private flags=mutable type=String
+symbol s3675 kind=interface fq=golden.sema.InterfaceSuperCalls vis=public flags=_
+symbol s3676 kind=function fq=golden.sema.InterfaceSuperCalls.greet vis=public flags=_ sig=recv=Class#3675 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3677 kind=interface fq=golden.sema.LeftSuper vis=public flags=_
+symbol s3678 kind=function fq=golden.sema.LeftSuper.greet vis=public flags=overrideMember sig=recv=Class#3677 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3679 kind=interface fq=golden.sema.RightSuper vis=public flags=_
+symbol s3680 kind=function fq=golden.sema.RightSuper.greet vis=public flags=overrideMember sig=recv=Class#3679 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3681 kind=class fq=golden.sema.WithSuperCall vis=public flags=_
+symbol s3682 kind=constructor fq=golden.sema.WithSuperCall.<init> vis=public flags=_ sig=recv=Class#3681 params=[] ret=Class#3681 suspend=0 defaults=[] vararg=[]
+symbol s3683 kind=function fq=golden.sema.WithSuperCall.greet vis=public flags=overrideMember sig=recv=Class#3681 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3684 kind=interface fq=golden.sema.WithCompanion vis=public flags=_
+symbol s3685 kind=function fq=golden.sema.WithCompanion.doSomething vis=public flags=abstractType sig=recv=Class#3684 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3686 kind=object fq=golden.sema.WithCompanion.Companion vis=public flags=_
+symbol s3687 kind=function fq=golden.sema.WithCompanion.Companion.helper vis=public flags=_ sig=recv=Class#3686 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3688 kind=property fq=golden.sema.WithCompanion.Companion.CONSTANT vis=public flags=_ type=String
+symbol s3689 kind=class fq=golden.sema.CompanionImpl vis=public flags=_
+symbol s3690 kind=constructor fq=golden.sema.CompanionImpl.<init> vis=public flags=_ sig=recv=Class#3689 params=[] ret=Class#3689 suspend=0 defaults=[] vararg=[]
+symbol s3691 kind=function fq=golden.sema.CompanionImpl.doSomething vis=public flags=overrideMember sig=recv=Class#3689 params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d6 interface InterfaceProperties sym=s3661
-  decl d8 interface InterfaceSuperCalls sym=s3669
-  decl d10 interface LeftSuper sym=s3671
-  decl d12 interface RightSuper sym=s3673
-  decl d14 class WithSuperCall sym=s3675
-  decl d19 interface WithCompanion sym=s3678
-  decl d21 class CompanionImpl sym=s3683
+  decl d6 interface InterfaceProperties sym=s3667
+  decl d8 interface InterfaceSuperCalls sym=s3675
+  decl d10 interface LeftSuper sym=s3677
+  decl d12 interface RightSuper sym=s3679
+  decl d14 class WithSuperCall sym=s3681
+  decl d19 interface WithCompanion sym=s3684
+  decl d21 class CompanionImpl sym=s3689
 expr e0 string(default) type=String
 expr e1 int(42) type=Int
 expr e2 string(computed) type=String
@@ -3699,12 +3705,12 @@ expr e3 string(get) type=String
 expr e4 string(Hello) type=String
 expr e5 string(Left) type=String
 expr e6 string(Right) type=String
-expr e7 super<LeftSuper> type=Class#3671
-expr e8 memberCall recv=e7 callee=greet args=[] type=String call=s3672 map=[] targs=[]
+expr e7 super<LeftSuper> type=Class#3677
+expr e8 memberCall recv=e7 callee=greet args=[] type=String call=s3678 map=[] targs=[]
 expr e9 string( and ) type=String
 expr e10 binary(add) lhs=e8 rhs=e9 type=String
-expr e11 super<RightSuper> type=Class#3673
-expr e12 memberCall recv=e11 callee=greet args=[] type=String call=s3674 map=[] targs=[]
+expr e11 super<RightSuper> type=Class#3679
+expr e12 memberCall recv=e11 callee=greet args=[] type=String call=s3680 map=[] targs=[]
 expr e13 binary(add) lhs=e10 rhs=e12 type=String
 expr e14 string(test) type=String
 expr e15 string(helper) type=String

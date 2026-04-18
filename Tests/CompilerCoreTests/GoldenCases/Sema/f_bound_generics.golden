@@ -3659,29 +3659,35 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=golden.sema.max vis=public flags=_ sig=recv=_ params=[T#3662,T#3662] ret=T#3662 suspend=0 defaults=[0,0] vararg=[0,0] bounds=[Class#134<T#3662>]
-symbol s3662 kind=typeParameter fq=golden.sema.max.$3661.T vis=private flags=_
-symbol s3663 kind=valueParameter fq=golden.sema.max.$3661.a vis=private flags=_
-symbol s3664 kind=valueParameter fq=golden.sema.max.$3661.b vis=private flags=_
-symbol s3665 kind=function fq=golden.sema.useMax vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3666 kind=local fq=__local_10.m1 vis=private flags=_ type=Int
-symbol s3667 kind=local fq=__local_15.m2 vis=private flags=_ type=String
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=golden.sema.max vis=public flags=_ sig=recv=_ params=[T#3668,T#3668] ret=T#3668 suspend=0 defaults=[0,0] vararg=[0,0] bounds=[Class#134<T#3668>]
+symbol s3668 kind=typeParameter fq=golden.sema.max.$3667.T vis=private flags=_
+symbol s3669 kind=valueParameter fq=golden.sema.max.$3667.a vis=private flags=_
+symbol s3670 kind=valueParameter fq=golden.sema.max.$3667.b vis=private flags=_
+symbol s3671 kind=function fq=golden.sema.useMax vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3672 kind=local fq=__local_10.m1 vis=private flags=_ type=Int
+symbol s3673 kind=local fq=__local_15.m2 vis=private flags=_ type=String
 file f0 package=golden.sema
-  decl d0 fun max suspend=0 inline=0 sym=s3661
-  decl d1 fun useMax suspend=0 inline=0 sym=s3665
-expr e0 name(a) type=T#3662 ref=s3663
-expr e1 name(b) type=T#3662 ref=s3664
-expr e2 binary(greaterThan) lhs=e0 rhs=e1 type=Boolean call=s136 map=[0->0] targs=[T#3662]
-expr e3 name(a) type=T#3662 ref=s3663
-expr e4 name(b) type=T#3662 ref=s3664
-expr e5 if cond=e2 then=e3 else=e4 type=T#3662
+  decl d0 fun max suspend=0 inline=0 sym=s3667
+  decl d1 fun useMax suspend=0 inline=0 sym=s3671
+expr e0 name(a) type=T#3668 ref=s3669
+expr e1 name(b) type=T#3668 ref=s3670
+expr e2 binary(greaterThan) lhs=e0 rhs=e1 type=Boolean call=s136 map=[0->0] targs=[T#3668]
+expr e3 name(a) type=T#3668 ref=s3669
+expr e4 name(b) type=T#3668 ref=s3670
+expr e5 if cond=e2 then=e3 else=e4 type=T#3668
 expr e6 name(max) type=_
 expr e7 int(1) type=Int
 expr e8 int(2) type=Int
-expr e9 call callee=e6 args=[_:e7,_:e8] type=Int call=s3661 map=[0->0,1->1] targs=[Int]
-expr e10 localDecl m1 mutable=0 type=_ init=e9 type=Unit ref=s3666
+expr e9 call callee=e6 args=[_:e7,_:e8] type=Int call=s3667 map=[0->0,1->1] targs=[Int]
+expr e10 localDecl m1 mutable=0 type=_ init=e9 type=Unit ref=s3672
 expr e11 name(max) type=_
 expr e12 string(a) type=String
 expr e13 string(b) type=String
-expr e14 call callee=e11 args=[_:e12,_:e13] type=String call=s3661 map=[0->0,1->1] targs=[String]
-expr e15 localDecl m2 mutable=0 type=_ init=e14 type=Unit ref=s3667
+expr e14 call callee=e11 args=[_:e12,_:e13] type=String call=s3667 map=[0->0,1->1] targs=[String]
+expr e15 localDecl m2 mutable=0 type=_ init=e14 type=Unit ref=s3673

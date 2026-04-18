@@ -3659,26 +3659,32 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3662 kind=local fq=__local_1.name vis=private flags=_ type=String
-symbol s3663 kind=local fq=__local_3.x vis=private flags=_ type=Int
-symbol s3664 kind=local fq=__local_6.greeting vis=private flags=_ type=String
-symbol s3665 kind=local fq=__local_9.result vis=private flags=_ type=String
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3668 kind=local fq=__local_1.name vis=private flags=_ type=String
+symbol s3669 kind=local fq=__local_3.x vis=private flags=_ type=Int
+symbol s3670 kind=local fq=__local_6.greeting vis=private flags=_ type=String
+symbol s3671 kind=local fq=__local_9.result vis=private flags=_ type=String
 file f0 package=golden.sema
-  decl d0 fun main suspend=0 inline=0 sym=s3661
+  decl d0 fun main suspend=0 inline=0 sym=s3667
 expr e0 string(world) type=String
-expr e1 localDecl name mutable=0 type=_ init=e0 type=Unit ref=s3662
+expr e1 localDecl name mutable=0 type=_ init=e0 type=Unit ref=s3668
 expr e2 int(42) type=Int
-expr e3 localDecl x mutable=0 type=_ init=e2 type=Unit ref=s3663
-expr e4 name(name) type=String ref=s3662
+expr e3 localDecl x mutable=0 type=_ init=e2 type=Unit ref=s3669
+expr e4 name(name) type=String ref=s3668
 expr e5 stringTemplate[lit(Hello ),expr(e4)] type=String
-expr e6 localDecl greeting mutable=0 type=_ init=e5 type=Unit ref=s3664
-expr e7 name(x) type=Int ref=s3663
+expr e6 localDecl greeting mutable=0 type=_ init=e5 type=Unit ref=s3670
+expr e7 name(x) type=Int ref=s3669
 expr e8 stringTemplate[lit(value=),expr(e7)] type=String
-expr e9 localDecl result mutable=0 type=_ init=e8 type=Unit ref=s3665
+expr e9 localDecl result mutable=0 type=_ init=e8 type=Unit ref=s3671
 expr e10 name(println) type=_
-expr e11 name(greeting) type=String ref=s3664
+expr e11 name(greeting) type=String ref=s3670
 expr e12 call callee=e10 args=[_:e11] type=Unit call=s1742 map=[0->0] targs=[]
 expr e13 name(println) type=_
-expr e14 name(result) type=String ref=s3665
+expr e14 name(result) type=String ref=s3671
 expr e15 call callee=e13 args=[_:e14] type=Unit call=s1742 map=[0->0] targs=[]

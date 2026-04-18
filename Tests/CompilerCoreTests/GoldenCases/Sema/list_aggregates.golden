@@ -3659,11 +3659,17 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=aggregate vis=public flags=_ sig=recv=_ params=[Class#123<Int>] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s3662 kind=valueParameter fq=aggregate.$3661.values vis=private flags=_
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=aggregate vis=public flags=_ sig=recv=_ params=[Class#123<Int>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s3668 kind=valueParameter fq=aggregate.$3667.values vis=private flags=_
 file f0 package=_
-  decl d0 fun aggregate suspend=0 inline=0 sym=s3661
-expr e0 name(values) type=Class#123<Int> ref=s3662
+  decl d0 fun aggregate suspend=0 inline=0 sym=s3667
+expr e0 name(values) type=Class#123<Int> ref=s3668
 expr e1 name(it) type=_
 expr e2 int(2) type=_
 expr e3 binary(multiply) lhs=e1 rhs=e2 type=_
@@ -3672,7 +3678,7 @@ expr e5 int(2) type=Int
 expr e6 binary(multiply) lhs=e4 rhs=e5 type=Int
 expr e7 lambda params=[] body=e6 label=sumOf type=(Int) -> Int
 expr e8 memberCall recv=e0 callee=sumOf args=[_:e7] type=Int
-expr e9 name(values) type=Class#123<Int> ref=s3662
+expr e9 name(values) type=Class#123<Int> ref=s3668
 expr e10 memberCall recv=e9 callee=maxOrNull args=[] type=Int?
-expr e11 name(values) type=Class#123<Int> ref=s3662
+expr e11 name(values) type=Class#123<Int> ref=s3668
 expr e12 memberCall recv=e11 callee=minOrNull args=[] type=Int?

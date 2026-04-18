@@ -3659,16 +3659,22 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=interface fq=test.Container vis=public flags=_
-symbol s3662 kind=typeParameter fq=test.Container.$iface3661.T vis=private flags=_
-symbol s3663 kind=class fq=test.IntContainer vis=public flags=_
-symbol s3664 kind=constructor fq=test.IntContainer.<init> vis=public flags=_ sig=recv=Class#3663 params=[] ret=Class#3663 suspend=0 defaults=[] vararg=[]
-symbol s3665 kind=class fq=test.StringContainer vis=public flags=_
-symbol s3666 kind=constructor fq=test.StringContainer.<init> vis=public flags=_ sig=recv=Class#3665 params=[] ret=Class#3665 suspend=0 defaults=[] vararg=[]
-symbol s3667 kind=class fq=test.BoolContainer vis=public flags=_
-symbol s3668 kind=constructor fq=test.BoolContainer.<init> vis=public flags=_ sig=recv=Class#3667 params=[] ret=Class#3667 suspend=0 defaults=[] vararg=[]
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=interface fq=test.Container vis=public flags=_
+symbol s3668 kind=typeParameter fq=test.Container.$iface3667.T vis=private flags=_
+symbol s3669 kind=class fq=test.IntContainer vis=public flags=_
+symbol s3670 kind=constructor fq=test.IntContainer.<init> vis=public flags=_ sig=recv=Class#3669 params=[] ret=Class#3669 suspend=0 defaults=[] vararg=[]
+symbol s3671 kind=class fq=test.StringContainer vis=public flags=_
+symbol s3672 kind=constructor fq=test.StringContainer.<init> vis=public flags=_ sig=recv=Class#3671 params=[] ret=Class#3671 suspend=0 defaults=[] vararg=[]
+symbol s3673 kind=class fq=test.BoolContainer vis=public flags=_
+symbol s3674 kind=constructor fq=test.BoolContainer.<init> vis=public flags=_ sig=recv=Class#3673 params=[] ret=Class#3673 suspend=0 defaults=[] vararg=[]
 file f0 package=test
-  decl d0 interface Container sym=s3661
-  decl d1 class IntContainer sym=s3663
-  decl d2 class StringContainer sym=s3665
-  decl d3 class BoolContainer sym=s3667
+  decl d0 interface Container sym=s3667
+  decl d1 class IntContainer sym=s3669
+  decl d2 class StringContainer sym=s3671
+  decl d3 class BoolContainer sym=s3673

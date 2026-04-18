@@ -3659,28 +3659,34 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=typeAlias fq=golden.sema.Predicate vis=public flags=_
-symbol s3662 kind=typeParameter fq=golden.sema.Predicate.$3661.T vis=private flags=_
-symbol s3663 kind=typeAlias fq=golden.sema.Func vis=public flags=_
-symbol s3664 kind=typeParameter fq=golden.sema.Func.$3663.T vis=private flags=_
-symbol s3665 kind=typeAlias fq=golden.sema.StringAlias vis=public flags=_
-symbol s3666 kind=function fq=golden.sema.usePredicate vis=public flags=_ sig=recv=_ params=[(Int) -> Boolean] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s3667 kind=valueParameter fq=golden.sema.usePredicate.$3666.p vis=private flags=_
-symbol s3668 kind=function fq=golden.sema.useFunc vis=public flags=_ sig=recv=_ params=[(String) -> String] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3669 kind=valueParameter fq=golden.sema.useFunc.$3668.f vis=private flags=_
-symbol s3670 kind=function fq=golden.sema.useAlias vis=public flags=_ sig=recv=_ params=[String] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3671 kind=valueParameter fq=golden.sema.useAlias.$3670.s vis=private flags=_
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=typeAlias fq=golden.sema.Predicate vis=public flags=_
+symbol s3668 kind=typeParameter fq=golden.sema.Predicate.$3667.T vis=private flags=_
+symbol s3669 kind=typeAlias fq=golden.sema.Func vis=public flags=_
+symbol s3670 kind=typeParameter fq=golden.sema.Func.$3669.T vis=private flags=_
+symbol s3671 kind=typeAlias fq=golden.sema.StringAlias vis=public flags=_
+symbol s3672 kind=function fq=golden.sema.usePredicate vis=public flags=_ sig=recv=_ params=[(Int) -> Boolean] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s3673 kind=valueParameter fq=golden.sema.usePredicate.$3672.p vis=private flags=_
+symbol s3674 kind=function fq=golden.sema.useFunc vis=public flags=_ sig=recv=_ params=[(String) -> String] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3675 kind=valueParameter fq=golden.sema.useFunc.$3674.f vis=private flags=_
+symbol s3676 kind=function fq=golden.sema.useAlias vis=public flags=_ sig=recv=_ params=[String] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3677 kind=valueParameter fq=golden.sema.useAlias.$3676.s vis=private flags=_
 file f0 package=golden.sema
-  decl d0 typealias Predicate sym=s3661
-  decl d1 typealias Func sym=s3663
-  decl d2 typealias StringAlias sym=s3665
-  decl d3 fun usePredicate suspend=0 inline=0 sym=s3666
-  decl d4 fun useFunc suspend=0 inline=0 sym=s3668
-  decl d5 fun useAlias suspend=0 inline=0 sym=s3670
-expr e0 name(p) type=(Int) -> Boolean ref=s3667
+  decl d0 typealias Predicate sym=s3667
+  decl d1 typealias Func sym=s3669
+  decl d2 typealias StringAlias sym=s3671
+  decl d3 fun usePredicate suspend=0 inline=0 sym=s3672
+  decl d4 fun useFunc suspend=0 inline=0 sym=s3674
+  decl d5 fun useAlias suspend=0 inline=0 sym=s3676
+expr e0 name(p) type=(Int) -> Boolean ref=s3673
 expr e1 int(42) type=Int
 expr e2 call callee=e0 args=[_:e1] type=Boolean
-expr e3 name(f) type=(String) -> String ref=s3669
+expr e3 name(f) type=(String) -> String ref=s3675
 expr e4 string(hello) type=String
 expr e5 call callee=e3 args=[_:e4] type=String
-expr e6 name(s) type=String ref=s3671
+expr e6 name(s) type=String ref=s3677

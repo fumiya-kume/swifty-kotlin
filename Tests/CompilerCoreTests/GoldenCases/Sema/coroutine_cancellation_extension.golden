@@ -3659,10 +3659,16 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s3662 kind=local fq=__local_10.job vis=private flags=_ type=Class#1173
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3668 kind=local fq=__local_10.job vis=private flags=_ type=Class#1173
 file f0 package=golden.sema
-  decl d0 fun main suspend=0 inline=0 sym=s3661
+  decl d0 fun main suspend=0 inline=0 sym=s3667
 expr e0 name(runBlocking) type=_
 expr e1 name(launch) type=_
 expr e2 name(delay) type=_
@@ -3673,10 +3679,10 @@ expr e6 int(10) type=Long
 expr e7 call callee=e5 args=[_:e6] type=Unit
 expr e8 lambda params=[] body=e7 label=launch type=suspend () -> Unit
 expr e9 call callee=e1 args=[_:e8] type=Class#1173 call=s1209 map=[0->0] targs=[]
-expr e10 localDecl job mutable=0 type=_ init=e9 type=Unit ref=s3662
-expr e11 name(job) type=Class#1173 ref=s3662
+expr e10 localDecl job mutable=0 type=_ init=e9 type=Unit ref=s3668
+expr e11 name(job) type=Class#1173 ref=s3668
 expr e12 memberCall recv=e11 callee=cancel args=[] type=Unit call=s1304 map=[] targs=[]
-expr e13 name(job) type=Class#1173 ref=s3662
+expr e13 name(job) type=Class#1173 ref=s3668
 expr e14 memberCall recv=e13 callee=join args=[] type=Unit call=s1305 map=[] targs=[]
 expr e15 blockExpr stmts=[e10,e12] trailing=e14 type=Unit
 expr e16 lambda params=[] body=e15 label=runBlocking type=suspend () -> Any

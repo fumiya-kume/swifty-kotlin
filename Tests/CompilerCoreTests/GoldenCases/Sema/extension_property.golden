@@ -3659,15 +3659,21 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=property fq=golden.sema.doubled vis=public flags=_ type=Int
-symbol s3662 kind=function fq=golden.sema.doubled.$get vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3663 kind=property fq=golden.sema.isPositive vis=public flags=_ type=Boolean
-symbol s3664 kind=function fq=golden.sema.isPositive.$get vis=public flags=synthetic sig=recv=Int params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s3665 kind=function fq=golden.sema.useExtProp vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=property fq=golden.sema.doubled vis=public flags=_ type=Int
+symbol s3668 kind=function fq=golden.sema.doubled.$get vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3669 kind=property fq=golden.sema.isPositive vis=public flags=_ type=Boolean
+symbol s3670 kind=function fq=golden.sema.isPositive.$get vis=public flags=synthetic sig=recv=Int params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s3671 kind=function fq=golden.sema.useExtProp vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 property doubled var=0 sym=s3661
-  decl d1 property isPositive var=0 sym=s3663
-  decl d2 fun useExtProp suspend=0 inline=0 sym=s3665
+  decl d0 property doubled var=0 sym=s3667
+  decl d1 property isPositive var=0 sym=s3669
+  decl d2 fun useExtProp suspend=0 inline=0 sym=s3671
 expr e0 this type=Int
 expr e1 int(2) type=Int
 expr e2 binary(multiply) lhs=e0 rhs=e1 type=Int
@@ -3675,4 +3681,4 @@ expr e3 this type=Int
 expr e4 int(0) type=Int
 expr e5 binary(greaterThan) lhs=e3 rhs=e4 type=Boolean
 expr e6 int(5) type=Int
-expr e7 memberCall recv=e6 callee=doubled args=[] type=Int call=s3662 map=[] targs=[]
+expr e7 memberCall recv=e6 callee=doubled args=[] type=Int call=s3668 map=[] targs=[]

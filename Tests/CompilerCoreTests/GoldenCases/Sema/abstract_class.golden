@@ -3659,50 +3659,56 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=class fq=golden.sema.Shape vis=public flags=abstractType|openType
-symbol s3662 kind=constructor fq=golden.sema.Shape.<init> vis=public flags=_ sig=recv=Class#3661 params=[] ret=Class#3661 suspend=0 defaults=[] vararg=[]
-symbol s3663 kind=function fq=golden.sema.Shape.area vis=public flags=abstractType sig=recv=Class#3661 params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s3664 kind=function fq=golden.sema.Shape.description vis=public flags=_ sig=recv=Class#3661 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3665 kind=property fq=golden.sema.Shape.name vis=public flags=abstractType type=String
-symbol s3666 kind=class fq=golden.sema.Circle vis=public flags=_
-symbol s3667 kind=constructor fq=golden.sema.Circle.<init> vis=public flags=_ sig=recv=Class#3666 params=[Double] ret=Class#3666 suspend=0 defaults=[0] vararg=[0]
-symbol s3668 kind=valueParameter fq=golden.sema.Circle.<init>.$3667.radius vis=private flags=_
-symbol s3669 kind=function fq=golden.sema.Circle.area vis=public flags=overrideMember sig=recv=Class#3666 params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s3670 kind=property fq=golden.sema.Circle.radius vis=public flags=_ type=Double
-symbol s3671 kind=property fq=golden.sema.Circle.name vis=public flags=overrideMember type=String
-symbol s3672 kind=class fq=golden.sema.Animal vis=public flags=abstractType|openType
-symbol s3673 kind=constructor fq=golden.sema.Animal.<init> vis=public flags=_ sig=recv=Class#3672 params=[] ret=Class#3672 suspend=0 defaults=[] vararg=[]
-symbol s3674 kind=function fq=golden.sema.Animal.speak vis=public flags=abstractType sig=recv=Class#3672 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3675 kind=property fq=golden.sema.Animal.species vis=public flags=abstractType type=String
-symbol s3676 kind=class fq=golden.sema.Pet vis=public flags=abstractType|openType
-symbol s3677 kind=constructor fq=golden.sema.Pet.<init> vis=public flags=_ sig=recv=Class#3676 params=[] ret=Class#3676 suspend=0 defaults=[] vararg=[]
-symbol s3678 kind=function fq=golden.sema.Pet.petName vis=public flags=abstractType sig=recv=Class#3676 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3679 kind=property fq=golden.sema.Pet.owner vis=public flags=abstractType type=String
-symbol s3680 kind=class fq=golden.sema.Dog vis=public flags=_
-symbol s3681 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#3680 params=[] ret=Class#3680 suspend=0 defaults=[] vararg=[]
-symbol s3682 kind=function fq=golden.sema.Dog.speak vis=public flags=overrideMember sig=recv=Class#3680 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3683 kind=function fq=golden.sema.Dog.petName vis=public flags=overrideMember sig=recv=Class#3680 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3684 kind=property fq=golden.sema.Dog.species vis=public flags=overrideMember type=String
-symbol s3685 kind=property fq=golden.sema.Dog.owner vis=public flags=overrideMember type=String
-symbol s3686 kind=class fq=golden.sema.Container vis=public flags=abstractType|openType
-symbol s3687 kind=constructor fq=golden.sema.Container.<init> vis=public flags=_ sig=recv=Class#3686 params=[] ret=Class#3686 suspend=0 defaults=[] vararg=[]
-symbol s3688 kind=property fq=golden.sema.Container.items vis=public flags=mutable|abstractType type=Class#123<String>
-symbol s3689 kind=class fq=golden.sema.Box vis=public flags=_
-symbol s3690 kind=constructor fq=golden.sema.Box.<init> vis=public flags=_ sig=recv=Class#3689 params=[] ret=Class#3689 suspend=0 defaults=[] vararg=[]
-symbol s3691 kind=property fq=golden.sema.Box.items vis=public flags=mutable|overrideMember type=Class#123<String>
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=class fq=golden.sema.Shape vis=public flags=abstractType|openType
+symbol s3668 kind=constructor fq=golden.sema.Shape.<init> vis=public flags=_ sig=recv=Class#3667 params=[] ret=Class#3667 suspend=0 defaults=[] vararg=[]
+symbol s3669 kind=function fq=golden.sema.Shape.area vis=public flags=abstractType sig=recv=Class#3667 params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s3670 kind=function fq=golden.sema.Shape.description vis=public flags=_ sig=recv=Class#3667 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3671 kind=property fq=golden.sema.Shape.name vis=public flags=abstractType type=String
+symbol s3672 kind=class fq=golden.sema.Circle vis=public flags=_
+symbol s3673 kind=constructor fq=golden.sema.Circle.<init> vis=public flags=_ sig=recv=Class#3672 params=[Double] ret=Class#3672 suspend=0 defaults=[0] vararg=[0]
+symbol s3674 kind=valueParameter fq=golden.sema.Circle.<init>.$3673.radius vis=private flags=_
+symbol s3675 kind=function fq=golden.sema.Circle.area vis=public flags=overrideMember sig=recv=Class#3672 params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s3676 kind=property fq=golden.sema.Circle.radius vis=public flags=_ type=Double
+symbol s3677 kind=property fq=golden.sema.Circle.name vis=public flags=overrideMember type=String
+symbol s3678 kind=class fq=golden.sema.Animal vis=public flags=abstractType|openType
+symbol s3679 kind=constructor fq=golden.sema.Animal.<init> vis=public flags=_ sig=recv=Class#3678 params=[] ret=Class#3678 suspend=0 defaults=[] vararg=[]
+symbol s3680 kind=function fq=golden.sema.Animal.speak vis=public flags=abstractType sig=recv=Class#3678 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3681 kind=property fq=golden.sema.Animal.species vis=public flags=abstractType type=String
+symbol s3682 kind=class fq=golden.sema.Pet vis=public flags=abstractType|openType
+symbol s3683 kind=constructor fq=golden.sema.Pet.<init> vis=public flags=_ sig=recv=Class#3682 params=[] ret=Class#3682 suspend=0 defaults=[] vararg=[]
+symbol s3684 kind=function fq=golden.sema.Pet.petName vis=public flags=abstractType sig=recv=Class#3682 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3685 kind=property fq=golden.sema.Pet.owner vis=public flags=abstractType type=String
+symbol s3686 kind=class fq=golden.sema.Dog vis=public flags=_
+symbol s3687 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#3686 params=[] ret=Class#3686 suspend=0 defaults=[] vararg=[]
+symbol s3688 kind=function fq=golden.sema.Dog.speak vis=public flags=overrideMember sig=recv=Class#3686 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3689 kind=function fq=golden.sema.Dog.petName vis=public flags=overrideMember sig=recv=Class#3686 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3690 kind=property fq=golden.sema.Dog.species vis=public flags=overrideMember type=String
+symbol s3691 kind=property fq=golden.sema.Dog.owner vis=public flags=overrideMember type=String
+symbol s3692 kind=class fq=golden.sema.Container vis=public flags=abstractType|openType
+symbol s3693 kind=constructor fq=golden.sema.Container.<init> vis=public flags=_ sig=recv=Class#3692 params=[] ret=Class#3692 suspend=0 defaults=[] vararg=[]
+symbol s3694 kind=property fq=golden.sema.Container.items vis=public flags=mutable|abstractType type=Class#123<String>
+symbol s3695 kind=class fq=golden.sema.Box vis=public flags=_
+symbol s3696 kind=constructor fq=golden.sema.Box.<init> vis=public flags=_ sig=recv=Class#3695 params=[] ret=Class#3695 suspend=0 defaults=[] vararg=[]
+symbol s3697 kind=property fq=golden.sema.Box.items vis=public flags=mutable|overrideMember type=Class#123<String>
 file f0 package=golden.sema
-  decl d3 class Shape sym=s3661
-  decl d7 class Circle sym=s3666
-  decl d10 class Animal sym=s3672
-  decl d13 class Pet sym=s3676
-  decl d18 class Dog sym=s3680
-  decl d20 class Container sym=s3686
-  decl d22 class Box sym=s3689
+  decl d3 class Shape sym=s3667
+  decl d7 class Circle sym=s3672
+  decl d10 class Animal sym=s3678
+  decl d13 class Pet sym=s3682
+  decl d18 class Dog sym=s3686
+  decl d20 class Container sym=s3692
+  decl d22 class Box sym=s3695
 expr e0 string(shape) type=String
 expr e1 double(3.14) type=Double
-expr e2 name(radius) type=Double ref=s3670
+expr e2 name(radius) type=Double ref=s3676
 expr e3 binary(multiply) lhs=e1 rhs=e2 type=Double
-expr e4 name(radius) type=Double ref=s3670
+expr e4 name(radius) type=Double ref=s3676
 expr e5 binary(multiply) lhs=e3 rhs=e4 type=Double
 expr e6 string(circle) type=String
 expr e7 string(woof) type=String

@@ -3659,77 +3659,83 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3662 kind=local fq=__local_3.a vis=private flags=_ type=Class#915
-symbol s3663 kind=local fq=__local_7.b vis=private flags=_ type=Class#915
-symbol s3664 kind=local fq=__local_11.sum vis=private flags=_ type=Class#915
-symbol s3665 kind=local fq=__local_15.diff vis=private flags=_ type=Class#915
-symbol s3666 kind=local fq=__local_19.product vis=private flags=_ type=Class#915
-symbol s3667 kind=local fq=__local_23.quotient vis=private flags=_ type=Class#915
-symbol s3668 kind=local fq=__local_27.g vis=private flags=_ type=Class#915
-symbol s3669 kind=local fq=__local_31.neg vis=private flags=_ type=Class#915
-symbol s3670 kind=local fq=__local_34.abs vis=private flags=_ type=Class#915
-symbol s3671 kind=local fq=__local_38.base vis=private flags=_ type=Class#915
-symbol s3672 kind=local fq=__local_42.powered vis=private flags=_ type=Class#915
-symbol s3673 kind=local fq=__local_46.s vis=private flags=_ type=Class#915
-symbol s3674 kind=local fq=__local_49.i vis=private flags=_ type=Int
-symbol s3675 kind=local fq=__local_52.l vis=private flags=_ type=Long
-symbol s3676 kind=local fq=__local_55.str vis=private flags=_ type=String
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3668 kind=local fq=__local_3.a vis=private flags=_ type=Class#915
+symbol s3669 kind=local fq=__local_7.b vis=private flags=_ type=Class#915
+symbol s3670 kind=local fq=__local_11.sum vis=private flags=_ type=Class#915
+symbol s3671 kind=local fq=__local_15.diff vis=private flags=_ type=Class#915
+symbol s3672 kind=local fq=__local_19.product vis=private flags=_ type=Class#915
+symbol s3673 kind=local fq=__local_23.quotient vis=private flags=_ type=Class#915
+symbol s3674 kind=local fq=__local_27.g vis=private flags=_ type=Class#915
+symbol s3675 kind=local fq=__local_31.neg vis=private flags=_ type=Class#915
+symbol s3676 kind=local fq=__local_34.abs vis=private flags=_ type=Class#915
+symbol s3677 kind=local fq=__local_38.base vis=private flags=_ type=Class#915
+symbol s3678 kind=local fq=__local_42.powered vis=private flags=_ type=Class#915
+symbol s3679 kind=local fq=__local_46.s vis=private flags=_ type=Class#915
+symbol s3680 kind=local fq=__local_49.i vis=private flags=_ type=Int
+symbol s3681 kind=local fq=__local_52.l vis=private flags=_ type=Long
+symbol s3682 kind=local fq=__local_55.str vis=private flags=_ type=String
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3661
+  decl d0 fun main suspend=0 inline=0 sym=s3667
 expr e0 name(BigInteger) type=_
 expr e1 string(100) type=String
 expr e2 call callee=e0 args=[_:e1] type=Class#915 call=s3570 map=[0->0] targs=[]
-expr e3 localDecl a mutable=0 type=_ init=e2 type=Unit ref=s3662
+expr e3 localDecl a mutable=0 type=_ init=e2 type=Unit ref=s3668
 expr e4 name(BigInteger) type=_
 expr e5 string(200) type=String
 expr e6 call callee=e4 args=[_:e5] type=Class#915 call=s3570 map=[0->0] targs=[]
-expr e7 localDecl b mutable=0 type=_ init=e6 type=Unit ref=s3663
-expr e8 name(a) type=Class#915 ref=s3662
-expr e9 name(b) type=Class#915 ref=s3663
+expr e7 localDecl b mutable=0 type=_ init=e6 type=Unit ref=s3669
+expr e8 name(a) type=Class#915 ref=s3668
+expr e9 name(b) type=Class#915 ref=s3669
 expr e10 memberCall recv=e8 callee=add args=[_:e9] type=Class#915 call=s3575 map=[0->0] targs=[]
-expr e11 localDecl sum mutable=0 type=_ init=e10 type=Unit ref=s3664
-expr e12 name(b) type=Class#915 ref=s3663
-expr e13 name(a) type=Class#915 ref=s3662
+expr e11 localDecl sum mutable=0 type=_ init=e10 type=Unit ref=s3670
+expr e12 name(b) type=Class#915 ref=s3669
+expr e13 name(a) type=Class#915 ref=s3668
 expr e14 memberCall recv=e12 callee=subtract args=[_:e13] type=Class#915 call=s3577 map=[0->0] targs=[]
-expr e15 localDecl diff mutable=0 type=_ init=e14 type=Unit ref=s3665
-expr e16 name(a) type=Class#915 ref=s3662
-expr e17 name(b) type=Class#915 ref=s3663
+expr e15 localDecl diff mutable=0 type=_ init=e14 type=Unit ref=s3671
+expr e16 name(a) type=Class#915 ref=s3668
+expr e17 name(b) type=Class#915 ref=s3669
 expr e18 memberCall recv=e16 callee=multiply args=[_:e17] type=Class#915 call=s3579 map=[0->0] targs=[]
-expr e19 localDecl product mutable=0 type=_ init=e18 type=Unit ref=s3666
-expr e20 name(b) type=Class#915 ref=s3663
-expr e21 name(a) type=Class#915 ref=s3662
+expr e19 localDecl product mutable=0 type=_ init=e18 type=Unit ref=s3672
+expr e20 name(b) type=Class#915 ref=s3669
+expr e21 name(a) type=Class#915 ref=s3668
 expr e22 memberCall recv=e20 callee=divide args=[_:e21] type=Class#915 call=s3581 map=[0->0] targs=[]
-expr e23 localDecl quotient mutable=0 type=_ init=e22 type=Unit ref=s3667
-expr e24 name(a) type=Class#915 ref=s3662
-expr e25 name(b) type=Class#915 ref=s3663
+expr e23 localDecl quotient mutable=0 type=_ init=e22 type=Unit ref=s3673
+expr e24 name(a) type=Class#915 ref=s3668
+expr e25 name(b) type=Class#915 ref=s3669
 expr e26 memberCall recv=e24 callee=gcd args=[_:e25] type=Class#915 call=s3583 map=[0->0] targs=[]
-expr e27 localDecl g mutable=0 type=_ init=e26 type=Unit ref=s3668
+expr e27 localDecl g mutable=0 type=_ init=e26 type=Unit ref=s3674
 expr e28 name(BigInteger) type=_
 expr e29 string(-42) type=String
 expr e30 call callee=e28 args=[_:e29] type=Class#915 call=s3570 map=[0->0] targs=[]
-expr e31 localDecl neg mutable=0 type=_ init=e30 type=Unit ref=s3669
-expr e32 name(neg) type=Class#915 ref=s3669
+expr e31 localDecl neg mutable=0 type=_ init=e30 type=Unit ref=s3675
+expr e32 name(neg) type=Class#915 ref=s3675
 expr e33 memberCall recv=e32 callee=abs args=[] type=Class#915 call=s3585 map=[] targs=[]
-expr e34 localDecl abs mutable=0 type=_ init=e33 type=Unit ref=s3670
+expr e34 localDecl abs mutable=0 type=_ init=e33 type=Unit ref=s3676
 expr e35 name(BigInteger) type=_
 expr e36 string(2) type=String
 expr e37 call callee=e35 args=[_:e36] type=Class#915 call=s3570 map=[0->0] targs=[]
-expr e38 localDecl base mutable=0 type=_ init=e37 type=Unit ref=s3671
-expr e39 name(base) type=Class#915 ref=s3671
+expr e38 localDecl base mutable=0 type=_ init=e37 type=Unit ref=s3677
+expr e39 name(base) type=Class#915 ref=s3677
 expr e40 int(10) type=Int
 expr e41 memberCall recv=e39 callee=pow args=[_:e40] type=Class#915 call=s3586 map=[0->0] targs=[]
-expr e42 localDecl powered mutable=0 type=_ init=e41 type=Unit ref=s3672
+expr e42 localDecl powered mutable=0 type=_ init=e41 type=Unit ref=s3678
 expr e43 name(BigInteger) type=_
 expr e44 string(12345) type=String
 expr e45 call callee=e43 args=[_:e44] type=Class#915 call=s3570 map=[0->0] targs=[]
-expr e46 localDecl s mutable=0 type=_ init=e45 type=Unit ref=s3673
-expr e47 name(s) type=Class#915 ref=s3673
+expr e46 localDecl s mutable=0 type=_ init=e45 type=Unit ref=s3679
+expr e47 name(s) type=Class#915 ref=s3679
 expr e48 memberCall recv=e47 callee=toInt args=[] type=Int call=s3588 map=[] targs=[]
-expr e49 localDecl i mutable=0 type=_ init=e48 type=Unit ref=s3674
-expr e50 name(s) type=Class#915 ref=s3673
+expr e49 localDecl i mutable=0 type=_ init=e48 type=Unit ref=s3680
+expr e50 name(s) type=Class#915 ref=s3679
 expr e51 memberCall recv=e50 callee=toLong args=[] type=Long call=s3589 map=[] targs=[]
-expr e52 localDecl l mutable=0 type=_ init=e51 type=Unit ref=s3675
-expr e53 name(s) type=Class#915 ref=s3673
+expr e52 localDecl l mutable=0 type=_ init=e51 type=Unit ref=s3681
+expr e53 name(s) type=Class#915 ref=s3679
 expr e54 memberCall recv=e53 callee=toString args=[] type=String call=s919 map=[] targs=[]
-expr e55 localDecl str mutable=0 type=_ init=e54 type=Unit ref=s3676
+expr e55 localDecl str mutable=0 type=_ init=e54 type=Unit ref=s3682

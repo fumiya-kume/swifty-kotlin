@@ -3659,21 +3659,27 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=golden.sema.useLet vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3662 kind=function fq=golden.sema.useRun vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3663 kind=function fq=golden.sema.useRunWithThis vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3664 kind=function fq=golden.sema.useApply vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3665 kind=function fq=golden.sema.useAlso vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3666 kind=function fq=golden.sema.useWith vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3667 kind=function fq=golden.sema.useWithThis vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=golden.sema.useLet vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3668 kind=function fq=golden.sema.useRun vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3669 kind=function fq=golden.sema.useRunWithThis vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3670 kind=function fq=golden.sema.useApply vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3671 kind=function fq=golden.sema.useAlso vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3672 kind=function fq=golden.sema.useWith vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3673 kind=function fq=golden.sema.useWithThis vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 fun useLet suspend=0 inline=0 sym=s3661
-  decl d1 fun useRun suspend=0 inline=0 sym=s3662
-  decl d2 fun useRunWithThis suspend=0 inline=0 sym=s3663
-  decl d3 fun useApply suspend=0 inline=0 sym=s3664
-  decl d4 fun useAlso suspend=0 inline=0 sym=s3665
-  decl d5 fun useWith suspend=0 inline=0 sym=s3666
-  decl d6 fun useWithThis suspend=0 inline=0 sym=s3667
+  decl d0 fun useLet suspend=0 inline=0 sym=s3667
+  decl d1 fun useRun suspend=0 inline=0 sym=s3668
+  decl d2 fun useRunWithThis suspend=0 inline=0 sym=s3669
+  decl d3 fun useApply suspend=0 inline=0 sym=s3670
+  decl d4 fun useAlso suspend=0 inline=0 sym=s3671
+  decl d5 fun useWith suspend=0 inline=0 sym=s3672
+  decl d6 fun useWithThis suspend=0 inline=0 sym=s3673
 expr e0 string(hello) type=String
 expr e1 name(it) type=_
 expr e2 memberCall recv=e1 callee=length args=[] type=_

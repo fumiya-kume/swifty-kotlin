@@ -3659,18 +3659,24 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=myRequire vis=public flags=_ sig=recv=_ params=[Boolean] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s3662 kind=valueParameter fq=myRequire.$3661.value vis=private flags=_
-symbol s3663 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3664 kind=local fq=__local_18.x vis=private flags=_ type=String?
-symbol s3665 kind=local fq=__local_29.y vis=private flags=_ type=String?
-symbol s3666 kind=local fq=__local_40.a vis=private flags=_ type=Any
-symbol s3667 kind=local fq=__local_50.b vis=private flags=_ type=Any
-symbol s3668 kind=local fq=__local_60.c vis=private flags=_ type=String?
-symbol s3669 kind=local fq=__local_74.d vis=private flags=_ type=String?
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=myRequire vis=public flags=_ sig=recv=_ params=[Boolean] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s3668 kind=valueParameter fq=myRequire.$3667.value vis=private flags=_
+symbol s3669 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3670 kind=local fq=__local_18.x vis=private flags=_ type=String?
+symbol s3671 kind=local fq=__local_29.y vis=private flags=_ type=String?
+symbol s3672 kind=local fq=__local_40.a vis=private flags=_ type=Any
+symbol s3673 kind=local fq=__local_50.b vis=private flags=_ type=Any
+symbol s3674 kind=local fq=__local_60.c vis=private flags=_ type=String?
+symbol s3675 kind=local fq=__local_74.d vis=private flags=_ type=String?
 file f0 package=_
-  decl d0 fun myRequire suspend=0 inline=0 sym=s3661
-  decl d1 fun main suspend=0 inline=0 sym=s3663
+  decl d0 fun myRequire suspend=0 inline=0 sym=s3667
+  decl d1 fun main suspend=0 inline=0 sym=s3669
 expr e0 name(contract) type=_
 expr e1 name(returns) type=_
 expr e2 call callee=e1 args=[] type=_
@@ -3678,62 +3684,62 @@ expr e3 name(value) type=_
 expr e4 memberCall recv=e2 callee=implies args=[_:e3] type=_
 expr e5 name(returns) type=_
 expr e6 call callee=e5 args=[] type=Class#1447 call=s1453 map=[] targs=[]
-expr e7 name(value) type=Boolean ref=s3662
+expr e7 name(value) type=Boolean ref=s3668
 expr e8 memberCall recv=e6 callee=implies args=[_:e7] type=<error>
 expr e9 lambda params=[] body=e8 label=contract type=Class#1444.() -> Unit
 expr e10 call callee=e0 args=[_:e9] type=Unit
-expr e11 name(value) type=Boolean ref=s3662
+expr e11 name(value) type=Boolean ref=s3668
 expr e12 unary(not) operand=e11 type=Boolean
 expr e13 name(IllegalArgumentException) type=_
 expr e14 call callee=e13 args=[] type=Class#1364 call=s1390 map=[] targs=[]
 expr e15 throw value=e14 type=Nothing
 expr e16 if cond=e12 then=e15 else=_ type=Unit
 expr e17 string(hello) type=String
-expr e18 localDecl x mutable=0 type=t1 init=e17 type=Unit ref=s3664
+expr e18 localDecl x mutable=0 type=t1 init=e17 type=Unit ref=s3670
 expr e19 name(require) type=_
-expr e20 name(x) type=String? ref=s3664
+expr e20 name(x) type=String? ref=s3670
 expr e21 name(null) type=Nothing?
 expr e22 binary(notEqual) lhs=e20 rhs=e21 type=Boolean
 expr e23 call callee=e19 args=[_:e22] type=Unit call=s1465 map=[0->0] targs=[]
 expr e24 name(println) type=_
-expr e25 name(x) type=String ref=s3664
+expr e25 name(x) type=String ref=s3670
 expr e26 memberCall recv=e25 callee=length args=[] type=Int call=s690 map=[] targs=[]
 expr e27 call callee=e24 args=[_:e26] type=Unit call=s1742 map=[0->0] targs=[]
 expr e28 string(world) type=String
-expr e29 localDecl y mutable=0 type=t2 init=e28 type=Unit ref=s3665
+expr e29 localDecl y mutable=0 type=t2 init=e28 type=Unit ref=s3671
 expr e30 name(check) type=_
-expr e31 name(y) type=String? ref=s3665
+expr e31 name(y) type=String? ref=s3671
 expr e32 name(null) type=Nothing?
 expr e33 binary(notEqual) lhs=e31 rhs=e32 type=Boolean
 expr e34 call callee=e30 args=[_:e33] type=Unit call=s1469 map=[0->0] targs=[]
 expr e35 name(println) type=_
-expr e36 name(y) type=String ref=s3665
+expr e36 name(y) type=String ref=s3671
 expr e37 memberCall recv=e36 callee=length args=[] type=Int call=s690 map=[] targs=[]
 expr e38 call callee=e35 args=[_:e37] type=Unit call=s1742 map=[0->0] targs=[]
 expr e39 string(kotlin) type=String
-expr e40 localDecl a mutable=0 type=t3 init=e39 type=Unit ref=s3666
+expr e40 localDecl a mutable=0 type=t3 init=e39 type=Unit ref=s3672
 expr e41 name(require) type=_
-expr e42 name(a) type=Any ref=s3666
+expr e42 name(a) type=Any ref=s3672
 expr e43 isCheck expr=e42 type=t4 type=Boolean
 expr e44 call callee=e41 args=[_:e43] type=Unit call=s1465 map=[0->0] targs=[]
 expr e45 name(println) type=_
-expr e46 name(a) type=String ref=s3666
+expr e46 name(a) type=String ref=s3672
 expr e47 memberCall recv=e46 callee=length args=[] type=Int call=s690 map=[] targs=[]
 expr e48 call callee=e45 args=[_:e47] type=Unit call=s1742 map=[0->0] targs=[]
 expr e49 string(swift) type=String
-expr e50 localDecl b mutable=0 type=t5 init=e49 type=Unit ref=s3667
+expr e50 localDecl b mutable=0 type=t5 init=e49 type=Unit ref=s3673
 expr e51 name(check) type=_
-expr e52 name(b) type=Any ref=s3667
+expr e52 name(b) type=Any ref=s3673
 expr e53 isCheck expr=e52 type=t6 type=Boolean
 expr e54 call callee=e51 args=[_:e53] type=Unit call=s1469 map=[0->0] targs=[]
 expr e55 name(println) type=_
-expr e56 name(b) type=String ref=s3667
+expr e56 name(b) type=String ref=s3673
 expr e57 memberCall recv=e56 callee=length args=[] type=Int call=s690 map=[] targs=[]
 expr e58 call callee=e55 args=[_:e57] type=Unit call=s1742 map=[0->0] targs=[]
 expr e59 string(lazy) type=String
-expr e60 localDecl c mutable=0 type=t7 init=e59 type=Unit ref=s3668
+expr e60 localDecl c mutable=0 type=t7 init=e59 type=Unit ref=s3674
 expr e61 name(require) type=_
-expr e62 name(c) type=String? ref=s3668
+expr e62 name(c) type=String? ref=s3674
 expr e63 name(null) type=Nothing?
 expr e64 binary(notEqual) lhs=e62 rhs=e63 type=Boolean
 expr e65 string(c must not be null) type=_
@@ -3741,17 +3747,17 @@ expr e66 string(c must not be null) type=String
 expr e67 lambda params=[] body=e66 label=require type=() -> Any
 expr e68 call callee=e61 args=[_:e64,_:e67] type=Unit call=s1467 map=[0->0,1->1] targs=[]
 expr e69 name(println) type=_
-expr e70 name(c) type=String ref=s3668
+expr e70 name(c) type=String ref=s3674
 expr e71 memberCall recv=e70 callee=length args=[] type=Int call=s690 map=[] targs=[]
 expr e72 call callee=e69 args=[_:e71] type=Unit call=s1742 map=[0->0] targs=[]
 expr e73 string(user) type=String
-expr e74 localDecl d mutable=0 type=t8 init=e73 type=Unit ref=s3669
+expr e74 localDecl d mutable=0 type=t8 init=e73 type=Unit ref=s3675
 expr e75 name(myRequire) type=_
-expr e76 name(d) type=String? ref=s3669
+expr e76 name(d) type=String? ref=s3675
 expr e77 name(null) type=Nothing?
 expr e78 binary(notEqual) lhs=e76 rhs=e77 type=Boolean
-expr e79 call callee=e75 args=[_:e78] type=Unit call=s3661 map=[0->0] targs=[]
+expr e79 call callee=e75 args=[_:e78] type=Unit call=s3667 map=[0->0] targs=[]
 expr e80 name(println) type=_
-expr e81 name(d) type=String? ref=s3669
+expr e81 name(d) type=String? ref=s3675
 expr e82 memberCall recv=e81 callee=length args=[] type=<error>
 expr e83 call callee=e80 args=[_:e82] type=Unit call=s1742 map=[0->0] targs=[]

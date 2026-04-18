@@ -3659,27 +3659,33 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=multiGuard vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=String suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3662 kind=valueParameter fq=multiGuard.$3661.a vis=private flags=_
-symbol s3663 kind=valueParameter fq=multiGuard.$3661.b vis=private flags=_
-symbol s3664 kind=valueParameter fq=multiGuard.$3661.c vis=private flags=_
-symbol s3665 kind=function fq=noElseGuard vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3666 kind=valueParameter fq=noElseGuard.$3665.x vis=private flags=_
-symbol s3667 kind=function fq=boolExhaustive vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3668 kind=local fq=__local_16.result vis=private flags=_ type=Int
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=multiGuard vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=String suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3668 kind=valueParameter fq=multiGuard.$3667.a vis=private flags=_
+symbol s3669 kind=valueParameter fq=multiGuard.$3667.b vis=private flags=_
+symbol s3670 kind=valueParameter fq=multiGuard.$3667.c vis=private flags=_
+symbol s3671 kind=function fq=noElseGuard vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3672 kind=valueParameter fq=noElseGuard.$3671.x vis=private flags=_
+symbol s3673 kind=function fq=boolExhaustive vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3674 kind=local fq=__local_16.result vis=private flags=_ type=Int
 file f0 package=_
-  decl d0 fun multiGuard suspend=0 inline=0 sym=s3661
-  decl d1 fun noElseGuard suspend=0 inline=0 sym=s3665
-  decl d2 fun boolExhaustive suspend=0 inline=0 sym=s3667
-expr e0 name(a) type=Int ref=s3662
+  decl d0 fun multiGuard suspend=0 inline=0 sym=s3667
+  decl d1 fun noElseGuard suspend=0 inline=0 sym=s3671
+  decl d2 fun boolExhaustive suspend=0 inline=0 sym=s3673
+expr e0 name(a) type=Int ref=s3668
 expr e1 int(0) type=Int
 expr e2 binary(greaterThan) lhs=e0 rhs=e1 type=Boolean
 expr e3 string(positive_a) type=String
-expr e4 name(b) type=Int ref=s3663
+expr e4 name(b) type=Int ref=s3669
 expr e5 int(0) type=Int
 expr e6 binary(greaterThan) lhs=e4 rhs=e5 type=Boolean
 expr e7 string(positive_b) type=String
-expr e8 name(c) type=Int ref=s3664
+expr e8 name(c) type=Int ref=s3670
 expr e9 int(0) type=Int
 expr e10 binary(greaterThan) lhs=e8 rhs=e9 type=Boolean
 expr e11 string(positive_c) type=String
@@ -3687,17 +3693,17 @@ expr e12 string(all_non_positive) type=String
 expr e13 when subject=_ branches=[e2->e3,e6->e7,e10->e11] else=e12 type=String
 expr e14 return value=e13 type=Nothing
 expr e15 int(0) type=Int
-expr e16 localDecl result mutable=0 type=_ init=e15 type=Unit ref=s3668
-expr e17 name(x) type=Int ref=s3666
+expr e16 localDecl result mutable=0 type=_ init=e15 type=Unit ref=s3674
+expr e17 name(x) type=Int ref=s3672
 expr e18 int(10) type=Int
 expr e19 binary(greaterThan) lhs=e17 rhs=e18 type=Boolean
-expr e20 name(result) type=Int ref=s3668
-expr e21 name(x) type=Int ref=s3666
+expr e20 name(result) type=Int ref=s3674
+expr e21 name(x) type=Int ref=s3672
 expr e22 int(0) type=Int
 expr e23 binary(greaterThan) lhs=e21 rhs=e22 type=Boolean
-expr e24 name(result) type=Int ref=s3668
+expr e24 name(result) type=Int ref=s3674
 expr e25 when subject=_ branches=[e19->e20,e23->e24] else=_ type=Int
-expr e26 name(result) type=Int ref=s3668
+expr e26 name(result) type=Int ref=s3674
 expr e27 return value=e26 type=Nothing
 expr e28 bool(true) type=Boolean
 expr e29 int(1) type=Int

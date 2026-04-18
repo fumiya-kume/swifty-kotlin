@@ -3659,22 +3659,28 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=annotationClass fq=golden.sema.MyLabel vis=public flags=_
-symbol s3662 kind=constructor fq=golden.sema.MyLabel.<init> vis=public flags=_ sig=recv=Class#3661 params=[String] ret=Class#3661 suspend=0 defaults=[1] vararg=[0]
-symbol s3663 kind=valueParameter fq=golden.sema.MyLabel.<init>.$3662.name vis=private flags=_
-symbol s3664 kind=property fq=golden.sema.MyLabel.name vis=public flags=_ type=String
-symbol s3665 kind=class fq=golden.sema.Foo vis=public flags=_
-symbol s3666 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#3665 params=[] ret=Class#3665 suspend=0 defaults=[] vararg=[]
-symbol s3667 kind=class fq=golden.sema.Bar vis=public flags=_
-symbol s3668 kind=constructor fq=golden.sema.Bar.<init> vis=public flags=_ sig=recv=Class#3667 params=[] ret=Class#3667 suspend=0 defaults=[] vararg=[]
-symbol s3669 kind=annotationClass fq=golden.sema.Marker vis=public flags=_
-symbol s3670 kind=constructor fq=golden.sema.Marker.<init> vis=public flags=_ sig=recv=Class#3669 params=[] ret=Class#3669 suspend=0 defaults=[] vararg=[]
-symbol s3671 kind=class fq=golden.sema.Baz vis=public flags=_
-symbol s3672 kind=constructor fq=golden.sema.Baz.<init> vis=public flags=_ sig=recv=Class#3671 params=[] ret=Class#3671 suspend=0 defaults=[] vararg=[]
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=annotationClass fq=golden.sema.MyLabel vis=public flags=_
+symbol s3668 kind=constructor fq=golden.sema.MyLabel.<init> vis=public flags=_ sig=recv=Class#3667 params=[String] ret=Class#3667 suspend=0 defaults=[1] vararg=[0]
+symbol s3669 kind=valueParameter fq=golden.sema.MyLabel.<init>.$3668.name vis=private flags=_
+symbol s3670 kind=property fq=golden.sema.MyLabel.name vis=public flags=_ type=String
+symbol s3671 kind=class fq=golden.sema.Foo vis=public flags=_
+symbol s3672 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#3671 params=[] ret=Class#3671 suspend=0 defaults=[] vararg=[]
+symbol s3673 kind=class fq=golden.sema.Bar vis=public flags=_
+symbol s3674 kind=constructor fq=golden.sema.Bar.<init> vis=public flags=_ sig=recv=Class#3673 params=[] ret=Class#3673 suspend=0 defaults=[] vararg=[]
+symbol s3675 kind=annotationClass fq=golden.sema.Marker vis=public flags=_
+symbol s3676 kind=constructor fq=golden.sema.Marker.<init> vis=public flags=_ sig=recv=Class#3675 params=[] ret=Class#3675 suspend=0 defaults=[] vararg=[]
+symbol s3677 kind=class fq=golden.sema.Baz vis=public flags=_
+symbol s3678 kind=constructor fq=golden.sema.Baz.<init> vis=public flags=_ sig=recv=Class#3677 params=[] ret=Class#3677 suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d1 class MyLabel sym=s3661
-  decl d2 class Foo sym=s3665
-  decl d3 class Bar sym=s3667
-  decl d4 class Marker sym=s3669
-  decl d5 class Baz sym=s3671
+  decl d1 class MyLabel sym=s3667
+  decl d2 class Foo sym=s3671
+  decl d3 class Bar sym=s3673
+  decl d4 class Marker sym=s3675
+  decl d5 class Baz sym=s3677
 expr e0 string(default) type=_

@@ -3659,44 +3659,50 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=useRandom vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3662 kind=local fq=__local_2.a vis=private flags=_ type=Int
-symbol s3663 kind=local fq=__local_6.b vis=private flags=_ type=Int
-symbol s3664 kind=local fq=__local_11.c vis=private flags=_ type=Int
-symbol s3665 kind=local fq=__local_14.d vis=private flags=_ type=Double
-symbol s3666 kind=local fq=__local_17.e vis=private flags=_ type=Boolean
-symbol s3667 kind=local fq=__local_20.f vis=private flags=_ type=Float
-symbol s3668 kind=local fq=__local_24.g vis=private flags=_ type=Double
-symbol s3669 kind=local fq=__local_29.h vis=private flags=_ type=Double
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=useRandom vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3668 kind=local fq=__local_2.a vis=private flags=_ type=Int
+symbol s3669 kind=local fq=__local_6.b vis=private flags=_ type=Int
+symbol s3670 kind=local fq=__local_11.c vis=private flags=_ type=Int
+symbol s3671 kind=local fq=__local_14.d vis=private flags=_ type=Double
+symbol s3672 kind=local fq=__local_17.e vis=private flags=_ type=Boolean
+symbol s3673 kind=local fq=__local_20.f vis=private flags=_ type=Float
+symbol s3674 kind=local fq=__local_24.g vis=private flags=_ type=Double
+symbol s3675 kind=local fq=__local_29.h vis=private flags=_ type=Double
 file f0 package=_
-  decl d0 fun useRandom suspend=0 inline=0 sym=s3661
+  decl d0 fun useRandom suspend=0 inline=0 sym=s3667
 expr e0 name(Random) type=Class#40 ref=s40
 expr e1 memberCall recv=e0 callee=nextInt args=[] type=Int call=s43 map=[] targs=[]
-expr e2 localDecl a mutable=0 type=_ init=e1 type=Unit ref=s3662
+expr e2 localDecl a mutable=0 type=_ init=e1 type=Unit ref=s3668
 expr e3 name(Random) type=Class#40 ref=s40
 expr e4 int(10) type=Int
 expr e5 memberCall recv=e3 callee=nextInt args=[_:e4] type=Int call=s44 map=[0->0] targs=[]
-expr e6 localDecl b mutable=0 type=_ init=e5 type=Unit ref=s3663
+expr e6 localDecl b mutable=0 type=_ init=e5 type=Unit ref=s3669
 expr e7 name(Random) type=Class#40 ref=s40
 expr e8 int(1) type=Int
 expr e9 int(10) type=Int
 expr e10 memberCall recv=e7 callee=nextInt args=[_:e8,_:e9] type=Int call=s46 map=[0->0,1->1] targs=[]
-expr e11 localDecl c mutable=0 type=_ init=e10 type=Unit ref=s3664
+expr e11 localDecl c mutable=0 type=_ init=e10 type=Unit ref=s3670
 expr e12 name(Random) type=Class#40 ref=s40
 expr e13 memberCall recv=e12 callee=nextDouble args=[] type=Double call=s58 map=[] targs=[]
-expr e14 localDecl d mutable=0 type=_ init=e13 type=Unit ref=s3665
+expr e14 localDecl d mutable=0 type=_ init=e13 type=Unit ref=s3671
 expr e15 name(Random) type=Class#40 ref=s40
 expr e16 memberCall recv=e15 callee=nextBoolean args=[] type=Boolean call=s65 map=[] targs=[]
-expr e17 localDecl e mutable=0 type=_ init=e16 type=Unit ref=s3666
+expr e17 localDecl e mutable=0 type=_ init=e16 type=Unit ref=s3672
 expr e18 name(Random) type=Class#40 ref=s40
 expr e19 memberCall recv=e18 callee=nextFloat args=[] type=Float call=s53 map=[] targs=[]
-expr e20 localDecl f mutable=0 type=_ init=e19 type=Unit ref=s3667
+expr e20 localDecl f mutable=0 type=_ init=e19 type=Unit ref=s3673
 expr e21 name(Random) type=Class#40 ref=s40
 expr e22 double(5.0) type=Double
 expr e23 memberCall recv=e21 callee=nextDouble args=[_:e22] type=Double call=s59 map=[0->0] targs=[]
-expr e24 localDecl g mutable=0 type=_ init=e23 type=Unit ref=s3668
+expr e24 localDecl g mutable=0 type=_ init=e23 type=Unit ref=s3674
 expr e25 name(Random) type=Class#40 ref=s40
 expr e26 double(1.0) type=Double
 expr e27 double(10.0) type=Double
 expr e28 memberCall recv=e25 callee=nextDouble args=[_:e26,_:e27] type=Double call=s61 map=[0->0,1->1] targs=[]
-expr e29 localDecl h mutable=0 type=_ init=e28 type=Unit ref=s3669
+expr e29 localDecl h mutable=0 type=_ init=e28 type=Unit ref=s3675

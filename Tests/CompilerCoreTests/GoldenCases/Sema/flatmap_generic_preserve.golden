@@ -3659,14 +3659,20 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=flatMapGeneric vis=public flags=_ sig=recv=_ params=[Class#123<String>] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s3662 kind=valueParameter fq=flatMapGeneric.$3661.names vis=private flags=_
-symbol s3663 kind=local fq=__local_11.lengths vis=private flags=_ type=Class#123<Int>
-symbol s3664 kind=local fq=__local_25.chars vis=private flags=_ type=Class#123<String>
-symbol s3665 kind=local fq=__local_45.doubled vis=private flags=_ type=Class#123<Int>
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=flatMapGeneric vis=public flags=_ sig=recv=_ params=[Class#123<String>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s3668 kind=valueParameter fq=flatMapGeneric.$3667.names vis=private flags=_
+symbol s3669 kind=local fq=__local_11.lengths vis=private flags=_ type=Class#123<Int>
+symbol s3670 kind=local fq=__local_25.chars vis=private flags=_ type=Class#123<String>
+symbol s3671 kind=local fq=__local_45.doubled vis=private flags=_ type=Class#123<Int>
 file f0 package=_
-  decl d0 fun flatMapGeneric suspend=0 inline=0 sym=s3661
-expr e0 name(names) type=Class#123<String> ref=s3662
+  decl d0 fun flatMapGeneric suspend=0 inline=0 sym=s3667
+expr e0 name(names) type=Class#123<String> ref=s3668
 expr e1 name(listOf) type=_
 expr e2 name(it) type=_
 expr e3 memberCall recv=e2 callee=length args=[] type=_
@@ -3677,8 +3683,8 @@ expr e7 memberCall recv=e6 callee=length args=[] type=Int call=s690 map=[] targs
 expr e8 call callee=e5 args=[_:e7] type=Class#123<out Int>
 expr e9 lambda params=[] body=e8 label=flatMap type=(String) -> Any
 expr e10 memberCall recv=e0 callee=flatMap args=[_:e9] type=Class#123<Int>
-expr e11 localDecl lengths mutable=0 type=t3 init=e10 type=Unit ref=s3663
-expr e12 name(names) type=Class#123<String> ref=s3662
+expr e11 localDecl lengths mutable=0 type=t3 init=e10 type=Unit ref=s3669
+expr e12 name(names) type=Class#123<String> ref=s3668
 expr e13 name(listOf) type=_
 expr e14 name(it) type=_
 expr e15 name(it) type=_
@@ -3691,8 +3697,8 @@ expr e21 memberCall recv=e20 callee=uppercase args=[] type=String call=s693 map=
 expr e22 call callee=e18 args=[_:e19,_:e21] type=Class#123<out String>
 expr e23 lambda params=[] body=e22 label=flatMap type=(String) -> Any
 expr e24 memberCall recv=e12 callee=flatMap args=[_:e23] type=Class#123<String>
-expr e25 localDecl chars mutable=0 type=t5 init=e24 type=Unit ref=s3664
-expr e26 name(names) type=Class#123<String> ref=s3662
+expr e25 localDecl chars mutable=0 type=t5 init=e24 type=Unit ref=s3670
+expr e26 name(names) type=Class#123<String> ref=s3668
 expr e27 name(listOf) type=_
 expr e28 name(it) type=_
 expr e29 memberCall recv=e28 callee=length args=[] type=_
@@ -3711,13 +3717,13 @@ expr e41 binary(multiply) lhs=e39 rhs=e40 type=Int
 expr e42 call callee=e35 args=[_:e37,_:e41] type=Class#123<out Int>
 expr e43 lambda params=[] body=e42 label=flatMap type=(String) -> Any
 expr e44 memberCall recv=e26 callee=flatMap args=[_:e43] type=Class#123<Int>
-expr e45 localDecl doubled mutable=0 type=_ init=e44 type=Unit ref=s3665
+expr e45 localDecl doubled mutable=0 type=_ init=e44 type=Unit ref=s3671
 expr e46 name(println) type=_
-expr e47 name(lengths) type=Class#123<Int> ref=s3663
+expr e47 name(lengths) type=Class#123<Int> ref=s3669
 expr e48 call callee=e46 args=[_:e47] type=Unit call=s1742 map=[0->0] targs=[]
 expr e49 name(println) type=_
-expr e50 name(chars) type=Class#123<String> ref=s3664
+expr e50 name(chars) type=Class#123<String> ref=s3670
 expr e51 call callee=e49 args=[_:e50] type=Unit call=s1742 map=[0->0] targs=[]
 expr e52 name(println) type=_
-expr e53 name(doubled) type=Class#123<Int> ref=s3665
+expr e53 name(doubled) type=Class#123<Int> ref=s3671
 expr e54 call callee=e52 args=[_:e53] type=Unit call=s1742 map=[0->0] targs=[]

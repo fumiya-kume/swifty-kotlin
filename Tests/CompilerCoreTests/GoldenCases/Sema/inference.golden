@@ -3659,29 +3659,35 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=choose vis=public flags=_ sig=recv=_ params=[Boolean,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3662 kind=valueParameter fq=choose.$3661.flag vis=private flags=_
-symbol s3663 kind=valueParameter fq=choose.$3661.left vis=private flags=_
-symbol s3664 kind=valueParameter fq=choose.$3661.right vis=private flags=_
-symbol s3665 kind=function fq=useWhen vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3666 kind=valueParameter fq=useWhen.$3665.v vis=private flags=_
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=choose vis=public flags=_ sig=recv=_ params=[Boolean,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3668 kind=valueParameter fq=choose.$3667.flag vis=private flags=_
+symbol s3669 kind=valueParameter fq=choose.$3667.left vis=private flags=_
+symbol s3670 kind=valueParameter fq=choose.$3667.right vis=private flags=_
+symbol s3671 kind=function fq=useWhen vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3672 kind=valueParameter fq=useWhen.$3671.v vis=private flags=_
 file f0 package=_
-  decl d0 fun choose suspend=0 inline=0 sym=s3661
-  decl d1 fun useWhen suspend=0 inline=0 sym=s3665
-expr e0 name(flag) type=Boolean ref=s3662
-expr e1 name(left) type=Int ref=s3663
-expr e2 name(right) type=Int ref=s3664
+  decl d0 fun choose suspend=0 inline=0 sym=s3667
+  decl d1 fun useWhen suspend=0 inline=0 sym=s3671
+expr e0 name(flag) type=Boolean ref=s3668
+expr e1 name(left) type=Int ref=s3669
+expr e2 name(right) type=Int ref=s3670
 expr e3 if cond=e0 then=e1 else=e2 type=Int
-expr e4 name(v) type=Int ref=s3666
+expr e4 name(v) type=Int ref=s3672
 expr e5 int(1) type=Int
 expr e6 name(choose) type=_
 expr e7 bool(true) type=Boolean
-expr e8 name(v) type=Int ref=s3666
+expr e8 name(v) type=Int ref=s3672
 expr e9 int(0) type=Int
-expr e10 call callee=e6 args=[_:e7,_:e8,_:e9] type=Int call=s3661 map=[0->0,1->1,2->2] targs=[]
+expr e10 call callee=e6 args=[_:e7,_:e8,_:e9] type=Int call=s3667 map=[0->0,1->1,2->2] targs=[]
 expr e11 name(choose) type=_
 expr e12 bool(false) type=Boolean
 expr e13 int(0) type=Int
-expr e14 name(v) type=Int ref=s3666
-expr e15 call callee=e11 args=[_:e12,_:e13,_:e14] type=Int call=s3661 map=[0->0,1->1,2->2] targs=[]
+expr e14 name(v) type=Int ref=s3672
+expr e15 call callee=e11 args=[_:e12,_:e13,_:e14] type=Int call=s3667 map=[0->0,1->1,2->2] targs=[]
 expr e16 when subject=e4 branches=[e5->e10] else=e15 type=Int

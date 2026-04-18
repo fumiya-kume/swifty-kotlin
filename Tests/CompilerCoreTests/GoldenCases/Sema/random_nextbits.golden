@@ -3659,31 +3659,37 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=useRandomNextBits vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3662 kind=local fq=__local_3.r vis=private flags=_ type=Class#40
-symbol s3663 kind=local fq=__local_7.a vis=private flags=_ type=<error>
-symbol s3664 kind=local fq=__local_11.b vis=private flags=_ type=<error>
-symbol s3665 kind=local fq=__local_15.c vis=private flags=_ type=<error>
-symbol s3666 kind=local fq=__local_19.d vis=private flags=_ type=<error>
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=useRandomNextBits vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3668 kind=local fq=__local_3.r vis=private flags=_ type=Class#40
+symbol s3669 kind=local fq=__local_7.a vis=private flags=_ type=<error>
+symbol s3670 kind=local fq=__local_11.b vis=private flags=_ type=<error>
+symbol s3671 kind=local fq=__local_15.c vis=private flags=_ type=<error>
+symbol s3672 kind=local fq=__local_19.d vis=private flags=_ type=<error>
 file f0 package=_
-  decl d0 fun useRandomNextBits suspend=0 inline=0 sym=s3661
+  decl d0 fun useRandomNextBits suspend=0 inline=0 sym=s3667
 expr e0 name(Random) type=_
 expr e1 int(42) type=Int
 expr e2 call callee=e0 args=[_:e1] type=Class#40 call=s41 map=[0->0] targs=[]
-expr e3 localDecl r mutable=0 type=_ init=e2 type=Unit ref=s3662
-expr e4 name(r) type=Class#40 ref=s3662
+expr e3 localDecl r mutable=0 type=_ init=e2 type=Unit ref=s3668
+expr e4 name(r) type=Class#40 ref=s3668
 expr e5 int(8) type=Int
 expr e6 memberCall recv=e4 callee=nextBits args=[_:e5] type=<error>
-expr e7 localDecl a mutable=0 type=_ init=e6 type=Unit ref=s3663
-expr e8 name(r) type=Class#40 ref=s3662
+expr e7 localDecl a mutable=0 type=_ init=e6 type=Unit ref=s3669
+expr e8 name(r) type=Class#40 ref=s3668
 expr e9 int(16) type=Int
 expr e10 memberCall recv=e8 callee=nextBits args=[_:e9] type=<error>
-expr e11 localDecl b mutable=0 type=_ init=e10 type=Unit ref=s3664
-expr e12 name(r) type=Class#40 ref=s3662
+expr e11 localDecl b mutable=0 type=_ init=e10 type=Unit ref=s3670
+expr e12 name(r) type=Class#40 ref=s3668
 expr e13 int(32) type=Int
 expr e14 memberCall recv=e12 callee=nextBits args=[_:e13] type=<error>
-expr e15 localDecl c mutable=0 type=_ init=e14 type=Unit ref=s3665
+expr e15 localDecl c mutable=0 type=_ init=e14 type=Unit ref=s3671
 expr e16 name(Random) type=Class#40 ref=s40
 expr e17 int(1) type=Int
 expr e18 memberCall recv=e16 callee=nextBits args=[_:e17] type=<error>
-expr e19 localDecl d mutable=0 type=_ init=e18 type=Unit ref=s3666
+expr e19 localDecl d mutable=0 type=_ init=e18 type=Unit ref=s3672

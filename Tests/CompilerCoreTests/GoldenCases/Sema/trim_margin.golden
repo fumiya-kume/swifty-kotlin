@@ -3659,20 +3659,26 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3662 kind=local fq=__local_2.defaultMargin vis=private flags=_ type=String
-symbol s3663 kind=local fq=__local_9.customMargin vis=private flags=_ type=String
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3668 kind=local fq=__local_2.defaultMargin vis=private flags=_ type=String
+symbol s3669 kind=local fq=__local_9.customMargin vis=private flags=_ type=String
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3661
+  decl d0 fun main suspend=0 inline=0 sym=s3667
 expr e0 string(
         |alpha
         |beta
         |gamma
     ) type=String
 expr e1 memberCall recv=e0 callee=trimMargin args=[] type=String call=s750 map=[] targs=[]
-expr e2 localDecl defaultMargin mutable=0 type=_ init=e1 type=Unit ref=s3662
+expr e2 localDecl defaultMargin mutable=0 type=_ init=e1 type=Unit ref=s3668
 expr e3 name(println) type=_
-expr e4 name(defaultMargin) type=String ref=s3662
+expr e4 name(defaultMargin) type=String ref=s3668
 expr e5 call callee=e3 args=[_:e4] type=Unit call=s1742 map=[0->0] targs=[]
 expr e6 string(
         >left
@@ -3680,7 +3686,7 @@ expr e6 string(
     ) type=String
 expr e7 string(>) type=String
 expr e8 memberCall recv=e6 callee=trimMargin args=[_:e7] type=String call=s751 map=[0->0] targs=[]
-expr e9 localDecl customMargin mutable=0 type=_ init=e8 type=Unit ref=s3663
+expr e9 localDecl customMargin mutable=0 type=_ init=e8 type=Unit ref=s3669
 expr e10 name(println) type=_
-expr e11 name(customMargin) type=String ref=s3663
+expr e11 name(customMargin) type=String ref=s3669
 expr e12 call callee=e10 args=[_:e11] type=Unit call=s1742 map=[0->0] targs=[]

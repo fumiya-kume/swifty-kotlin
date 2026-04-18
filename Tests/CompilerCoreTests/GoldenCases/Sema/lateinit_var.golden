@@ -3659,46 +3659,52 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=class fq=Config vis=public flags=_
-symbol s3662 kind=constructor fq=Config.<init> vis=public flags=_ sig=recv=Class#3661 params=[] ret=Class#3661 suspend=0 defaults=[] vararg=[]
-symbol s3663 kind=function fq=Config.isReady vis=public flags=_ sig=recv=Class#3661 params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s3664 kind=function fq=Config.setup vis=public flags=_ sig=recv=Class#3661 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3665 kind=property fq=Config.name vis=public flags=mutable type=String
-symbol s3666 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3667 kind=local fq=__local_7.c vis=private flags=_ type=Class#3661
-symbol s3668 kind=local fq=__try_21_catch_0.e vis=internal flags=_ type=Class#1172
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=class fq=Config vis=public flags=_
+symbol s3668 kind=constructor fq=Config.<init> vis=public flags=_ sig=recv=Class#3667 params=[] ret=Class#3667 suspend=0 defaults=[] vararg=[]
+symbol s3669 kind=function fq=Config.isReady vis=public flags=_ sig=recv=Class#3667 params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s3670 kind=function fq=Config.setup vis=public flags=_ sig=recv=Class#3667 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3671 kind=property fq=Config.name vis=public flags=mutable type=String
+symbol s3672 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3673 kind=local fq=__local_7.c vis=private flags=_ type=Class#3667
+symbol s3674 kind=local fq=__try_21_catch_0.e vis=internal flags=_ type=Class#1172
 file f0 package=_
-  decl d3 class Config sym=s3661
-  decl d4 fun main suspend=0 inline=0 sym=s3666
-expr e0 callableRef recv=_ member=name type=String ref=s3665
+  decl d3 class Config sym=s3667
+  decl d4 fun main suspend=0 inline=0 sym=s3672
+expr e0 callableRef recv=_ member=name type=String ref=s3671
 expr e1 memberCall recv=e0 callee=isInitialized args=[] type=Boolean
 expr e2 name(name) type=_
 expr e3 string(test) type=String
-expr e4 localAssign name value=e3 type=Unit ref=s3665
+expr e4 localAssign name value=e3 type=Unit ref=s3671
 expr e5 name(Config) type=_
-expr e6 call callee=e5 args=[] type=Class#3661 call=s3662 map=[] targs=[]
-expr e7 localDecl c mutable=0 type=_ init=e6 type=Unit ref=s3667
+expr e6 call callee=e5 args=[] type=Class#3667 call=s3668 map=[] targs=[]
+expr e7 localDecl c mutable=0 type=_ init=e6 type=Unit ref=s3673
 expr e8 name(println) type=_
-expr e9 name(c) type=Class#3661 ref=s3667
-expr e10 memberCall recv=e9 callee=isReady args=[] type=Boolean call=s3663 map=[] targs=[]
+expr e9 name(c) type=Class#3667 ref=s3673
+expr e10 memberCall recv=e9 callee=isReady args=[] type=Boolean call=s3669 map=[] targs=[]
 expr e11 call callee=e8 args=[_:e10] type=Unit call=s1742 map=[0->0] targs=[]
 expr e12 name(println) type=_
-expr e13 name(c) type=Class#3661 ref=s3667
-expr e14 memberCall recv=e13 callee=name args=[] type=String ref=s3665
+expr e13 name(c) type=Class#3667 ref=s3673
+expr e14 memberCall recv=e13 callee=name args=[] type=String ref=s3671
 expr e15 call callee=e12 args=[_:e14] type=Unit call=s1742 map=[0->0] targs=[]
 expr e16 blockExpr stmts=[] trailing=e15 type=Unit
 expr e17 name(println) type=_
 expr e18 string(caught) type=String
 expr e19 call callee=e17 args=[_:e18] type=Unit call=s1742 map=[0->0] targs=[]
-expr e20 blockExpr stmts=[] trailing=e19 type=Unit ref=s3668
+expr e20 blockExpr stmts=[] trailing=e19 type=Unit ref=s3674
 expr e21 try body=e16 catches=[e20] finally=_ type=Unit
-expr e22 name(c) type=Class#3661 ref=s3667
-expr e23 memberCall recv=e22 callee=setup args=[] type=Unit call=s3664 map=[] targs=[]
+expr e22 name(c) type=Class#3667 ref=s3673
+expr e23 memberCall recv=e22 callee=setup args=[] type=Unit call=s3670 map=[] targs=[]
 expr e24 name(println) type=_
-expr e25 name(c) type=Class#3661 ref=s3667
-expr e26 memberCall recv=e25 callee=isReady args=[] type=Boolean call=s3663 map=[] targs=[]
+expr e25 name(c) type=Class#3667 ref=s3673
+expr e26 memberCall recv=e25 callee=isReady args=[] type=Boolean call=s3669 map=[] targs=[]
 expr e27 call callee=e24 args=[_:e26] type=Unit call=s1742 map=[0->0] targs=[]
 expr e28 name(println) type=_
-expr e29 name(c) type=Class#3661 ref=s3667
-expr e30 memberCall recv=e29 callee=name args=[] type=String ref=s3665
+expr e29 name(c) type=Class#3667 ref=s3673
+expr e30 memberCall recv=e29 callee=name args=[] type=String ref=s3671
 expr e31 call callee=e28 args=[_:e30] type=Unit call=s1742 map=[0->0] targs=[]

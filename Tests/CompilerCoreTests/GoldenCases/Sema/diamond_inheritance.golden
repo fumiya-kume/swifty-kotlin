@@ -3659,25 +3659,31 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=interface fq=golden.sema.A vis=public flags=_
-symbol s3662 kind=function fq=golden.sema.A.greet vis=public flags=_ sig=recv=Class#3661 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3663 kind=interface fq=golden.sema.B vis=public flags=_
-symbol s3664 kind=function fq=golden.sema.B.greet vis=public flags=overrideMember sig=recv=Class#3663 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3665 kind=interface fq=golden.sema.C vis=public flags=_
-symbol s3666 kind=function fq=golden.sema.C.greet vis=public flags=overrideMember sig=recv=Class#3665 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3667 kind=class fq=golden.sema.D vis=public flags=_
-symbol s3668 kind=constructor fq=golden.sema.D.<init> vis=public flags=_ sig=recv=Class#3667 params=[] ret=Class#3667 suspend=0 defaults=[] vararg=[]
-symbol s3669 kind=function fq=golden.sema.D.greet vis=public flags=overrideMember sig=recv=Class#3667 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=interface fq=golden.sema.A vis=public flags=_
+symbol s3668 kind=function fq=golden.sema.A.greet vis=public flags=_ sig=recv=Class#3667 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3669 kind=interface fq=golden.sema.B vis=public flags=_
+symbol s3670 kind=function fq=golden.sema.B.greet vis=public flags=overrideMember sig=recv=Class#3669 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3671 kind=interface fq=golden.sema.C vis=public flags=_
+symbol s3672 kind=function fq=golden.sema.C.greet vis=public flags=overrideMember sig=recv=Class#3671 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3673 kind=class fq=golden.sema.D vis=public flags=_
+symbol s3674 kind=constructor fq=golden.sema.D.<init> vis=public flags=_ sig=recv=Class#3673 params=[] ret=Class#3673 suspend=0 defaults=[] vararg=[]
+symbol s3675 kind=function fq=golden.sema.D.greet vis=public flags=overrideMember sig=recv=Class#3673 params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d1 interface A sym=s3661
-  decl d3 interface B sym=s3663
-  decl d5 interface C sym=s3665
-  decl d7 class D sym=s3667
+  decl d1 interface A sym=s3667
+  decl d3 interface B sym=s3669
+  decl d5 interface C sym=s3671
+  decl d7 class D sym=s3673
 expr e0 string(A) type=String
 expr e1 string(B) type=String
 expr e2 string(C) type=String
-expr e3 super<B> type=Class#3663
-expr e4 memberCall recv=e3 callee=greet args=[] type=String call=s3664 map=[] targs=[]
-expr e5 super<C> type=Class#3665
-expr e6 memberCall recv=e5 callee=greet args=[] type=String call=s3666 map=[] targs=[]
+expr e3 super<B> type=Class#3669
+expr e4 memberCall recv=e3 callee=greet args=[] type=String call=s3670 map=[] targs=[]
+expr e5 super<C> type=Class#3671
+expr e6 memberCall recv=e5 callee=greet args=[] type=String call=s3672 map=[] targs=[]
 expr e7 binary(add) lhs=e4 rhs=e6 type=String

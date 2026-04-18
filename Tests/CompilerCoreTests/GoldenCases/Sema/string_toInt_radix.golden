@@ -3659,31 +3659,37 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3662 kind=local fq=__local_3.a vis=private flags=_ type=Int
-symbol s3663 kind=local fq=__local_7.b vis=private flags=_ type=Int
-symbol s3664 kind=local fq=__local_11.c vis=private flags=_ type=Int
-symbol s3665 kind=local fq=__local_15.d vis=private flags=_ type=Int
-symbol s3666 kind=local fq=__local_19.e vis=private flags=_ type=String
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3668 kind=local fq=__local_3.a vis=private flags=_ type=Int
+symbol s3669 kind=local fq=__local_7.b vis=private flags=_ type=Int
+symbol s3670 kind=local fq=__local_11.c vis=private flags=_ type=Int
+symbol s3671 kind=local fq=__local_15.d vis=private flags=_ type=Int
+symbol s3672 kind=local fq=__local_19.e vis=private flags=_ type=String
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3661
+  decl d0 fun main suspend=0 inline=0 sym=s3667
 expr e0 string(ff) type=String
 expr e1 int(16) type=Int
 expr e2 memberCall recv=e0 callee=toInt args=[_:e1] type=Int call=s728 map=[0->0] targs=[]
-expr e3 localDecl a mutable=0 type=_ init=e2 type=Unit ref=s3662
+expr e3 localDecl a mutable=0 type=_ init=e2 type=Unit ref=s3668
 expr e4 string(1010) type=String
 expr e5 int(2) type=Int
 expr e6 memberCall recv=e4 callee=toInt args=[_:e5] type=Int call=s728 map=[0->0] targs=[]
-expr e7 localDecl b mutable=0 type=_ init=e6 type=Unit ref=s3663
+expr e7 localDecl b mutable=0 type=_ init=e6 type=Unit ref=s3669
 expr e8 string(77) type=String
 expr e9 int(8) type=Int
 expr e10 memberCall recv=e8 callee=toInt args=[_:e9] type=Int call=s728 map=[0->0] targs=[]
-expr e11 localDecl c mutable=0 type=_ init=e10 type=Unit ref=s3664
+expr e11 localDecl c mutable=0 type=_ init=e10 type=Unit ref=s3670
 expr e12 string(42) type=String
 expr e13 int(10) type=Int
 expr e14 memberCall recv=e12 callee=toInt args=[_:e13] type=Int call=s728 map=[0->0] targs=[]
-expr e15 localDecl d mutable=0 type=_ init=e14 type=Unit ref=s3665
+expr e15 localDecl d mutable=0 type=_ init=e14 type=Unit ref=s3671
 expr e16 int(255) type=Int
 expr e17 int(16) type=Int
 expr e18 memberCall recv=e16 callee=toString args=[_:e17] type=String
-expr e19 localDecl e mutable=0 type=_ init=e18 type=Unit ref=s3666
+expr e19 localDecl e mutable=0 type=_ init=e18 type=Unit ref=s3672

@@ -3659,35 +3659,41 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=class fq=Point vis=public flags=_
-symbol s3662 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#3661 params=[Int,Int] ret=Class#3661 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3663 kind=valueParameter fq=Point.<init>.$3662.x vis=private flags=_
-symbol s3664 kind=valueParameter fq=Point.<init>.$3662.y vis=private flags=_
-symbol s3665 kind=property fq=Point.x vis=public flags=_ type=Int
-symbol s3666 kind=property fq=Point.y vis=public flags=_ type=Int
-symbol s3667 kind=class fq=Named vis=public flags=_
-symbol s3668 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#3667 params=[String] ret=Class#3667 suspend=0 defaults=[0] vararg=[0]
-symbol s3669 kind=valueParameter fq=Named.<init>.$3668.name vis=private flags=_
-symbol s3670 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#3667 params=[] ret=Class#3667 suspend=0 defaults=[] vararg=[]
-symbol s3671 kind=property fq=Named.name vis=public flags=_ type=String
-symbol s3672 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3673 kind=local fq=__local_5.p vis=private flags=_ type=Class#3661
-symbol s3674 kind=local fq=__local_9.n vis=private flags=_ type=Class#3667
-symbol s3675 kind=local fq=__local_12.d vis=private flags=_ type=Class#3667
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=class fq=Point vis=public flags=_
+symbol s3668 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#3667 params=[Int,Int] ret=Class#3667 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3669 kind=valueParameter fq=Point.<init>.$3668.x vis=private flags=_
+symbol s3670 kind=valueParameter fq=Point.<init>.$3668.y vis=private flags=_
+symbol s3671 kind=property fq=Point.x vis=public flags=_ type=Int
+symbol s3672 kind=property fq=Point.y vis=public flags=_ type=Int
+symbol s3673 kind=class fq=Named vis=public flags=_
+symbol s3674 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#3673 params=[String] ret=Class#3673 suspend=0 defaults=[0] vararg=[0]
+symbol s3675 kind=valueParameter fq=Named.<init>.$3674.name vis=private flags=_
+symbol s3676 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#3673 params=[] ret=Class#3673 suspend=0 defaults=[] vararg=[]
+symbol s3677 kind=property fq=Named.name vis=public flags=_ type=String
+symbol s3678 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3679 kind=local fq=__local_5.p vis=private flags=_ type=Class#3667
+symbol s3680 kind=local fq=__local_9.n vis=private flags=_ type=Class#3673
+symbol s3681 kind=local fq=__local_12.d vis=private flags=_ type=Class#3673
 file f0 package=_
-  decl d2 class Point sym=s3661
-  decl d4 class Named sym=s3667
-  decl d5 fun main suspend=0 inline=0 sym=s3672
+  decl d2 class Point sym=s3667
+  decl d4 class Named sym=s3673
+  decl d5 fun main suspend=0 inline=0 sym=s3678
 expr e0 string(default) type=String
 expr e1 name(Point) type=_
 expr e2 int(1) type=Int
 expr e3 int(2) type=Int
-expr e4 call callee=e1 args=[_:e2,_:e3] type=Class#3661 call=s3662 map=[0->0,1->1] targs=[]
-expr e5 localDecl p mutable=0 type=_ init=e4 type=Unit ref=s3673
+expr e4 call callee=e1 args=[_:e2,_:e3] type=Class#3667 call=s3668 map=[0->0,1->1] targs=[]
+expr e5 localDecl p mutable=0 type=_ init=e4 type=Unit ref=s3679
 expr e6 name(Named) type=_
 expr e7 string(hello) type=String
-expr e8 call callee=e6 args=[_:e7] type=Class#3667 call=s3668 map=[0->0] targs=[]
-expr e9 localDecl n mutable=0 type=_ init=e8 type=Unit ref=s3674
+expr e8 call callee=e6 args=[_:e7] type=Class#3673 call=s3674 map=[0->0] targs=[]
+expr e9 localDecl n mutable=0 type=_ init=e8 type=Unit ref=s3680
 expr e10 name(Named) type=_
-expr e11 call callee=e10 args=[] type=Class#3667 call=s3670 map=[] targs=[]
-expr e12 localDecl d mutable=0 type=_ init=e11 type=Unit ref=s3675
+expr e11 call callee=e10 args=[] type=Class#3673 call=s3676 map=[] targs=[]
+expr e12 localDecl d mutable=0 type=_ init=e11 type=Unit ref=s3681

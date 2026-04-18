@@ -3659,17 +3659,23 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=interface fq=golden.sema.Action vis=public flags=funInterface
-symbol s3662 kind=function fq=golden.sema.Action.run vis=public flags=abstractType sig=recv=Class#3661 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3663 kind=function fq=golden.sema.execute vis=public flags=_ sig=recv=_ params=[Class#3661] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s3664 kind=valueParameter fq=golden.sema.execute.$3663.action vis=private flags=_
-symbol s3665 kind=function fq=golden.sema.useSam vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=interface fq=golden.sema.Action vis=public flags=funInterface
+symbol s3668 kind=function fq=golden.sema.Action.run vis=public flags=abstractType sig=recv=Class#3667 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3669 kind=function fq=golden.sema.execute vis=public flags=_ sig=recv=_ params=[Class#3667] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s3670 kind=valueParameter fq=golden.sema.execute.$3669.action vis=private flags=_
+symbol s3671 kind=function fq=golden.sema.useSam vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d1 interface Action sym=s3661
-  decl d2 fun execute suspend=0 inline=0 sym=s3663
-  decl d3 fun useSam suspend=0 inline=0 sym=s3665
-expr e0 name(action) type=Class#3661 ref=s3664
-expr e1 memberCall recv=e0 callee=run args=[] type=Unit call=s3662 map=[] targs=[]
+  decl d1 interface Action sym=s3667
+  decl d2 fun execute suspend=0 inline=0 sym=s3669
+  decl d3 fun useSam suspend=0 inline=0 sym=s3671
+expr e0 name(action) type=Class#3667 ref=s3670
+expr e1 memberCall recv=e0 callee=run args=[] type=Unit call=s3668 map=[] targs=[]
 expr e2 name(execute) type=_
 expr e3 name(println) type=_
 expr e4 string(hello) type=_
@@ -3677,5 +3683,5 @@ expr e5 call callee=e3 args=[_:e4] type=_
 expr e6 name(println) type=_
 expr e7 string(hello) type=String
 expr e8 call callee=e6 args=[_:e7] type=Unit call=s1742 map=[0->0] targs=[]
-expr e9 lambda params=[] body=e8 label=execute type=Class#3661
-expr e10 call callee=e2 args=[_:e9] type=Unit call=s3663 map=[0->0] targs=[]
+expr e9 lambda params=[] body=e8 label=execute type=Class#3667
+expr e10 call callee=e2 args=[_:e9] type=Unit call=s3669 map=[0->0] targs=[]

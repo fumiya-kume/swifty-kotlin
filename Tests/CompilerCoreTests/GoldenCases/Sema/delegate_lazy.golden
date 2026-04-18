@@ -3659,13 +3659,19 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=property fq=golden.sema.message vis=public flags=_ type=String
-symbol s3662 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=property fq=golden.sema.message vis=public flags=_ type=String
+symbol s3668 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 property message var=0 sym=s3661
-  decl d1 fun main suspend=0 inline=0 sym=s3662
+  decl d0 property message var=0 sym=s3667
+  decl d1 fun main suspend=0 inline=0 sym=s3668
 expr e0 name(lazy) type=Class#5 ref=s33
 expr e1 string(hello) type=_
 expr e2 name(println) type=_
-expr e3 name(message) type=String ref=s3661
+expr e3 name(message) type=String ref=s3667
 expr e4 call callee=e2 args=[_:e3] type=Unit call=s1742 map=[0->0] targs=[]

@@ -3659,64 +3659,70 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=golden.sema.basicIs vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s3662 kind=valueParameter fq=golden.sema.basicIs.$3661.v vis=private flags=_
-symbol s3663 kind=function fq=golden.sema.negatedIs vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s3664 kind=valueParameter fq=golden.sema.negatedIs.$3663.v vis=private flags=_
-symbol s3665 kind=function fq=golden.sema.smartCastAfterIs vis=public flags=_ sig=recv=_ params=[Any] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3666 kind=valueParameter fq=golden.sema.smartCastAfterIs.$3665.v vis=private flags=_
-symbol s3667 kind=function fq=golden.sema.combinedCondition vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3668 kind=valueParameter fq=golden.sema.combinedCondition.$3667.v vis=private flags=_
-symbol s3669 kind=function fq=golden.sema.smartCastAfterNegatedIs vis=public flags=_ sig=recv=_ params=[Any] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3670 kind=valueParameter fq=golden.sema.smartCastAfterNegatedIs.$3669.v vis=private flags=_
-symbol s3671 kind=function fq=golden.sema.combinedOrCondition vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3672 kind=valueParameter fq=golden.sema.combinedOrCondition.$3671.v vis=private flags=_
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=golden.sema.basicIs vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s3668 kind=valueParameter fq=golden.sema.basicIs.$3667.v vis=private flags=_
+symbol s3669 kind=function fq=golden.sema.negatedIs vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s3670 kind=valueParameter fq=golden.sema.negatedIs.$3669.v vis=private flags=_
+symbol s3671 kind=function fq=golden.sema.smartCastAfterIs vis=public flags=_ sig=recv=_ params=[Any] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3672 kind=valueParameter fq=golden.sema.smartCastAfterIs.$3671.v vis=private flags=_
+symbol s3673 kind=function fq=golden.sema.combinedCondition vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3674 kind=valueParameter fq=golden.sema.combinedCondition.$3673.v vis=private flags=_
+symbol s3675 kind=function fq=golden.sema.smartCastAfterNegatedIs vis=public flags=_ sig=recv=_ params=[Any] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3676 kind=valueParameter fq=golden.sema.smartCastAfterNegatedIs.$3675.v vis=private flags=_
+symbol s3677 kind=function fq=golden.sema.combinedOrCondition vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3678 kind=valueParameter fq=golden.sema.combinedOrCondition.$3677.v vis=private flags=_
 file f0 package=golden.sema
-  decl d0 fun basicIs suspend=0 inline=0 sym=s3661
-  decl d1 fun negatedIs suspend=0 inline=0 sym=s3663
-  decl d2 fun smartCastAfterIs suspend=0 inline=0 sym=s3665
-  decl d3 fun combinedCondition suspend=0 inline=0 sym=s3667
-  decl d4 fun smartCastAfterNegatedIs suspend=0 inline=0 sym=s3669
-  decl d5 fun combinedOrCondition suspend=0 inline=0 sym=s3671
-expr e0 name(v) type=Any ref=s3662
+  decl d0 fun basicIs suspend=0 inline=0 sym=s3667
+  decl d1 fun negatedIs suspend=0 inline=0 sym=s3669
+  decl d2 fun smartCastAfterIs suspend=0 inline=0 sym=s3671
+  decl d3 fun combinedCondition suspend=0 inline=0 sym=s3673
+  decl d4 fun smartCastAfterNegatedIs suspend=0 inline=0 sym=s3675
+  decl d5 fun combinedOrCondition suspend=0 inline=0 sym=s3677
+expr e0 name(v) type=Any ref=s3668
 expr e1 isCheck expr=e0 type=t2 type=Boolean
-expr e2 name(v) type=Any ref=s3664
+expr e2 name(v) type=Any ref=s3670
 expr e3 isCheck! expr=e2 type=t5 type=Boolean
-expr e4 name(v) type=Any ref=s3666
+expr e4 name(v) type=Any ref=s3672
 expr e5 isCheck expr=e4 type=t8 type=Boolean
-expr e6 name(v) type=String ref=s3666
+expr e6 name(v) type=String ref=s3672
 expr e7 memberCall recv=e6 callee=length args=[] type=Int call=s690 map=[] targs=[]
 expr e8 return value=e7 type=Nothing
 expr e9 blockExpr stmts=[] trailing=e8 type=Nothing
 expr e10 if cond=e5 then=e9 else=_ type=Unit
 expr e11 int(0) type=Int
 expr e12 return value=e11 type=Nothing
-expr e13 name(v) type=Any ref=s3668
+expr e13 name(v) type=Any ref=s3674
 expr e14 isCheck expr=e13 type=t11 type=Boolean
-expr e15 name(v) type=String ref=s3668
+expr e15 name(v) type=String ref=s3674
 expr e16 memberCall recv=e15 callee=length args=[] type=Int call=s690 map=[] targs=[]
 expr e17 int(3) type=Int
 expr e18 binary(greaterThan) lhs=e16 rhs=e17 type=Boolean
 expr e19 binary(logicalAnd) lhs=e14 rhs=e18 type=Boolean
-expr e20 name(v) type=String ref=s3668
+expr e20 name(v) type=String ref=s3674
 expr e21 return value=e20 type=Nothing
 expr e22 blockExpr stmts=[] trailing=e21 type=Nothing
 expr e23 if cond=e19 then=e22 else=_ type=Unit
 expr e24 string() type=String
 expr e25 return value=e24 type=Nothing
-expr e26 name(v) type=Any ref=s3670
+expr e26 name(v) type=Any ref=s3676
 expr e27 isCheck! expr=e26 type=t14 type=Boolean
 expr e28 int(0) type=Int
 expr e29 return value=e28 type=Nothing
 expr e30 blockExpr stmts=[] trailing=e29 type=Nothing
-expr e31 name(v) type=String ref=s3670
+expr e31 name(v) type=String ref=s3676
 expr e32 memberCall recv=e31 callee=length args=[] type=Int call=s690 map=[] targs=[]
 expr e33 return value=e32 type=Nothing
 expr e34 blockExpr stmts=[] trailing=e33 type=Nothing
 expr e35 if cond=e27 then=e30 else=e34 type=Nothing
-expr e36 name(v) type=Any ref=s3672
+expr e36 name(v) type=Any ref=s3678
 expr e37 isCheck! expr=e36 type=t17 type=Boolean
-expr e38 name(v) type=String ref=s3672
+expr e38 name(v) type=String ref=s3678
 expr e39 memberCall recv=e38 callee=length args=[] type=Int call=s690 map=[] targs=[]
 expr e40 int(0) type=Int
 expr e41 binary(equal) lhs=e39 rhs=e40 type=Boolean
@@ -3725,5 +3731,5 @@ expr e43 string() type=String
 expr e44 return value=e43 type=Nothing
 expr e45 blockExpr stmts=[] trailing=e44 type=Nothing
 expr e46 if cond=e42 then=e45 else=_ type=Unit
-expr e47 name(v) type=Any ref=s3672
+expr e47 name(v) type=Any ref=s3678
 expr e48 return value=e47 type=Nothing

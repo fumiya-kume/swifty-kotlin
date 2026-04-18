@@ -3659,14 +3659,20 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=golden.sema.usePlatformType vis=public flags=_ sig=recv=_ params=[String] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s3662 kind=valueParameter fq=golden.sema.usePlatformType.$3661.v vis=private flags=_
-symbol s3663 kind=local fq=__local_2.len vis=private flags=_ type=Int
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=golden.sema.usePlatformType vis=public flags=_ sig=recv=_ params=[String] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s3668 kind=valueParameter fq=golden.sema.usePlatformType.$3667.v vis=private flags=_
+symbol s3669 kind=local fq=__local_2.len vis=private flags=_ type=Int
 file f0 package=golden.sema
-  decl d0 fun usePlatformType suspend=0 inline=0 sym=s3661
-expr e0 name(v) type=String ref=s3662
+  decl d0 fun usePlatformType suspend=0 inline=0 sym=s3667
+expr e0 name(v) type=String ref=s3668
 expr e1 memberCall recv=e0 callee=length args=[] type=Int call=s690 map=[] targs=[]
-expr e2 localDecl len mutable=0 type=t1 init=e1 type=Unit ref=s3663
+expr e2 localDecl len mutable=0 type=t1 init=e1 type=Unit ref=s3669
 expr e3 name(println) type=_
-expr e4 name(len) type=Int ref=s3663
+expr e4 name(len) type=Int ref=s3669
 expr e5 call callee=e3 args=[_:e4] type=Unit call=s1742 map=[0->0] targs=[]

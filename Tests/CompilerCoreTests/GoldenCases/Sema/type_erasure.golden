@@ -3659,24 +3659,30 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=golden.sema.isRawList vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s3662 kind=valueParameter fq=golden.sema.isRawList.$3661.v vis=private flags=_
-symbol s3663 kind=function fq=golden.sema.asRawList vis=public flags=_ sig=recv=_ params=[Any] ret=Class#123<*>? suspend=0 defaults=[0] vararg=[0]
-symbol s3664 kind=valueParameter fq=golden.sema.asRawList.$3663.v vis=private flags=_
-symbol s3665 kind=function fq=golden.sema.printSizeIfList vis=public flags=_ sig=recv=_ params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s3666 kind=valueParameter fq=golden.sema.printSizeIfList.$3665.v vis=private flags=_
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=golden.sema.isRawList vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s3668 kind=valueParameter fq=golden.sema.isRawList.$3667.v vis=private flags=_
+symbol s3669 kind=function fq=golden.sema.asRawList vis=public flags=_ sig=recv=_ params=[Any] ret=Class#123<*>? suspend=0 defaults=[0] vararg=[0]
+symbol s3670 kind=valueParameter fq=golden.sema.asRawList.$3669.v vis=private flags=_
+symbol s3671 kind=function fq=golden.sema.printSizeIfList vis=public flags=_ sig=recv=_ params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s3672 kind=valueParameter fq=golden.sema.printSizeIfList.$3671.v vis=private flags=_
 file f0 package=golden.sema
-  decl d0 fun isRawList suspend=0 inline=0 sym=s3661
-  decl d1 fun asRawList suspend=0 inline=0 sym=s3663
-  decl d2 fun printSizeIfList suspend=0 inline=0 sym=s3665
-expr e0 name(v) type=Any ref=s3662
+  decl d0 fun isRawList suspend=0 inline=0 sym=s3667
+  decl d1 fun asRawList suspend=0 inline=0 sym=s3669
+  decl d2 fun printSizeIfList suspend=0 inline=0 sym=s3671
+expr e0 name(v) type=Any ref=s3668
 expr e1 isCheck expr=e0 type=t2 type=Boolean
-expr e2 name(v) type=Any ref=s3664
+expr e2 name(v) type=Any ref=s3670
 expr e3 asCast? expr=e2 type=t5 type=Class#123<*>?
-expr e4 name(v) type=Any ref=s3666
+expr e4 name(v) type=Any ref=s3672
 expr e5 isCheck expr=e4 type=t7 type=Boolean
 expr e6 name(println) type=_
-expr e7 name(v) type=Class#123<*> ref=s3666
+expr e7 name(v) type=Class#123<*> ref=s3672
 expr e8 memberCall recv=e7 callee=size args=[] type=Int ref=s120
 expr e9 call callee=e6 args=[_:e8] type=Unit call=s1742 map=[0->0] targs=[]
 expr e10 blockExpr stmts=[] trailing=e9 type=Unit

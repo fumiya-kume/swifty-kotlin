@@ -3659,55 +3659,61 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3662 kind=local fq=__local_1.i vis=private flags=_ type=Int
-symbol s3663 kind=local fq=__local_4.l vis=private flags=_ type=Long
-symbol s3664 kind=local fq=__local_7.d vis=private flags=_ type=Double
-symbol s3665 kind=local fq=__local_10.f vis=private flags=_ type=Float
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3668 kind=local fq=__local_1.i vis=private flags=_ type=Int
+symbol s3669 kind=local fq=__local_4.l vis=private flags=_ type=Long
+symbol s3670 kind=local fq=__local_7.d vis=private flags=_ type=Double
+symbol s3671 kind=local fq=__local_10.f vis=private flags=_ type=Float
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3661
+  decl d0 fun main suspend=0 inline=0 sym=s3667
 expr e0 int(42) type=Int
-expr e1 localDecl i mutable=0 type=t0 init=e0 type=Unit ref=s3662
-expr e2 name(i) type=Int ref=s3662
+expr e1 localDecl i mutable=0 type=t0 init=e0 type=Unit ref=s3668
+expr e2 name(i) type=Int ref=s3668
 expr e3 memberCall recv=e2 callee=toLong args=[] type=Long
-expr e4 localDecl l mutable=0 type=t1 init=e3 type=Unit ref=s3663
-expr e5 name(i) type=Int ref=s3662
+expr e4 localDecl l mutable=0 type=t1 init=e3 type=Unit ref=s3669
+expr e5 name(i) type=Int ref=s3668
 expr e6 memberCall recv=e5 callee=toDouble args=[] type=Double
-expr e7 localDecl d mutable=0 type=t2 init=e6 type=Unit ref=s3664
-expr e8 name(i) type=Int ref=s3662
+expr e7 localDecl d mutable=0 type=t2 init=e6 type=Unit ref=s3670
+expr e8 name(i) type=Int ref=s3668
 expr e9 memberCall recv=e8 callee=toFloat args=[] type=Float
-expr e10 localDecl f mutable=0 type=t3 init=e9 type=Unit ref=s3665
+expr e10 localDecl f mutable=0 type=t3 init=e9 type=Unit ref=s3671
 expr e11 name(println) type=_
-expr e12 name(l) type=Long ref=s3663
+expr e12 name(l) type=Long ref=s3669
 expr e13 call callee=e11 args=[_:e12] type=Unit call=s1742 map=[0->0] targs=[]
 expr e14 name(println) type=_
-expr e15 name(d) type=Double ref=s3664
+expr e15 name(d) type=Double ref=s3670
 expr e16 call callee=e14 args=[_:e15] type=Unit call=s1742 map=[0->0] targs=[]
 expr e17 name(println) type=_
-expr e18 name(f) type=Float ref=s3665
+expr e18 name(f) type=Float ref=s3671
 expr e19 call callee=e17 args=[_:e18] type=Unit call=s1742 map=[0->0] targs=[]
 expr e20 name(println) type=_
-expr e21 name(l) type=Long ref=s3663
+expr e21 name(l) type=Long ref=s3669
 expr e22 memberCall recv=e21 callee=toInt args=[] type=Int
 expr e23 call callee=e20 args=[_:e22] type=Unit call=s1742 map=[0->0] targs=[]
 expr e24 name(println) type=_
-expr e25 name(d) type=Double ref=s3664
+expr e25 name(d) type=Double ref=s3670
 expr e26 memberCall recv=e25 callee=toInt args=[] type=Int
 expr e27 call callee=e24 args=[_:e26] type=Unit call=s1742 map=[0->0] targs=[]
 expr e28 name(println) type=_
-expr e29 name(d) type=Double ref=s3664
+expr e29 name(d) type=Double ref=s3670
 expr e30 memberCall recv=e29 callee=toLong args=[] type=Long
 expr e31 call callee=e28 args=[_:e30] type=Unit call=s1742 map=[0->0] targs=[]
 expr e32 name(println) type=_
-expr e33 name(f) type=Float ref=s3665
+expr e33 name(f) type=Float ref=s3671
 expr e34 memberCall recv=e33 callee=toInt args=[] type=Int
 expr e35 call callee=e32 args=[_:e34] type=Unit call=s1742 map=[0->0] targs=[]
 expr e36 name(println) type=_
-expr e37 name(f) type=Float ref=s3665
+expr e37 name(f) type=Float ref=s3671
 expr e38 memberCall recv=e37 callee=toLong args=[] type=Long
 expr e39 call callee=e36 args=[_:e38] type=Unit call=s1742 map=[0->0] targs=[]
 expr e40 name(println) type=_
-expr e41 name(f) type=Float ref=s3665
+expr e41 name(f) type=Float ref=s3671
 expr e42 memberCall recv=e41 callee=toDouble args=[] type=Double
 expr e43 call callee=e40 args=[_:e42] type=Unit call=s1742 map=[0->0] targs=[]
 expr e44 name(println) type=_

@@ -3659,13 +3659,19 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=chained vis=public flags=_ sig=recv=_ params=[Class#123<Int>] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s3662 kind=valueParameter fq=chained.$3661.values vis=private flags=_
-symbol s3663 kind=local fq=__local_37.result vis=private flags=_ type=Class#278<Int, String>
-symbol s3664 kind=local fq=__local_55.groups vis=private flags=_ type=Class#278<Int, Int>
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=chained vis=public flags=_ sig=recv=_ params=[Class#123<Int>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s3668 kind=valueParameter fq=chained.$3667.values vis=private flags=_
+symbol s3669 kind=local fq=__local_37.result vis=private flags=_ type=Class#278<Int, String>
+symbol s3670 kind=local fq=__local_55.groups vis=private flags=_ type=Class#278<Int, Int>
 file f0 package=_
-  decl d0 fun chained suspend=0 inline=0 sym=s3661
-expr e0 name(values) type=Class#123<Int> ref=s3662
+  decl d0 fun chained suspend=0 inline=0 sym=s3667
+expr e0 name(values) type=Class#123<Int> ref=s3668
 expr e1 name(it) type=_
 expr e2 int(0) type=_
 expr e3 binary(greaterThan) lhs=e1 rhs=e2 type=_
@@ -3702,8 +3708,8 @@ expr e33 name(it) type=Int ref=s-1008960
 expr e34 memberCall recv=e33 callee=toString args=[] type=String
 expr e35 lambda params=[] body=e34 label=associateWith type=(Int) -> Any
 expr e36 memberCall recv=e30 callee=associateWith args=[_:e35] type=Class#278<Int, String>
-expr e37 localDecl result mutable=0 type=_ init=e36 type=Unit ref=s3663
-expr e38 name(values) type=Class#123<Int> ref=s3662
+expr e37 localDecl result mutable=0 type=_ init=e36 type=Unit ref=s3669
+expr e38 name(values) type=Class#123<Int> ref=s3668
 expr e39 name(it) type=_
 expr e40 int(3) type=_
 expr e41 binary(modulo) lhs=e39 rhs=e40 type=_
@@ -3720,4 +3726,4 @@ expr e51 memberCall recv=e50 callee=value args=[] type=Class#123<Int> call=s322 
 expr e52 memberCall recv=e51 callee=size args=[] type=Int ref=s120
 expr e53 lambda params=[] body=e52 label=mapValues type=(Class#318<out Int, out Class#123<Int>>) -> Any
 expr e54 memberCall recv=e46 callee=mapValues args=[_:e53] type=Class#278<Int, Int>
-expr e55 localDecl groups mutable=0 type=_ init=e54 type=Unit ref=s3664
+expr e55 localDecl groups mutable=0 type=_ init=e54 type=Unit ref=s3670

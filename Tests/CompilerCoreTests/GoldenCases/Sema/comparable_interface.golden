@@ -3659,58 +3659,64 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=class fq=Temperature vis=public flags=_
-symbol s3662 kind=constructor fq=Temperature.<init> vis=public flags=_ sig=recv=Class#3661 params=[Int] ret=Class#3661 suspend=0 defaults=[0] vararg=[0]
-symbol s3663 kind=valueParameter fq=Temperature.<init>.$3662.degrees vis=private flags=_
-symbol s3664 kind=function fq=Temperature.compareTo vis=public flags=overrideMember sig=recv=Class#3661 params=[Class#3661] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3665 kind=valueParameter fq=Temperature.compareTo.$3664.other vis=private flags=_
-symbol s3666 kind=property fq=Temperature.degrees vis=public flags=_ type=Int
-symbol s3667 kind=function fq=max vis=public flags=_ sig=recv=_ params=[T#3668,T#3668] ret=T#3668 suspend=0 defaults=[0,0] vararg=[0,0] bounds=[Class#134<T#3668>]
-symbol s3668 kind=typeParameter fq=max.$3667.T vis=private flags=_
-symbol s3669 kind=valueParameter fq=max.$3667.a vis=private flags=_
-symbol s3670 kind=valueParameter fq=max.$3667.b vis=private flags=_
-symbol s3671 kind=function fq=nullSafeCompare vis=public flags=_ sig=recv=_ params=[Class#3661?,Class#3661] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3672 kind=valueParameter fq=nullSafeCompare.$3671.a vis=private flags=_
-symbol s3673 kind=valueParameter fq=nullSafeCompare.$3671.b vis=private flags=_
-symbol s3674 kind=function fq=compareInts vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3675 kind=valueParameter fq=compareInts.$3674.a vis=private flags=_
-symbol s3676 kind=valueParameter fq=compareInts.$3674.b vis=private flags=_
-symbol s3677 kind=function fq=compareTemperatures vis=public flags=_ sig=recv=_ params=[Class#3661,Class#3661] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3678 kind=valueParameter fq=compareTemperatures.$3677.a vis=private flags=_
-symbol s3679 kind=valueParameter fq=compareTemperatures.$3677.b vis=private flags=_
-symbol s3680 kind=function fq=compareGe vis=public flags=_ sig=recv=_ params=[Class#3661,Class#3661] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3681 kind=valueParameter fq=compareGe.$3680.a vis=private flags=_
-symbol s3682 kind=valueParameter fq=compareGe.$3680.b vis=private flags=_
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=class fq=Temperature vis=public flags=_
+symbol s3668 kind=constructor fq=Temperature.<init> vis=public flags=_ sig=recv=Class#3667 params=[Int] ret=Class#3667 suspend=0 defaults=[0] vararg=[0]
+symbol s3669 kind=valueParameter fq=Temperature.<init>.$3668.degrees vis=private flags=_
+symbol s3670 kind=function fq=Temperature.compareTo vis=public flags=overrideMember sig=recv=Class#3667 params=[Class#3667] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3671 kind=valueParameter fq=Temperature.compareTo.$3670.other vis=private flags=_
+symbol s3672 kind=property fq=Temperature.degrees vis=public flags=_ type=Int
+symbol s3673 kind=function fq=max vis=public flags=_ sig=recv=_ params=[T#3674,T#3674] ret=T#3674 suspend=0 defaults=[0,0] vararg=[0,0] bounds=[Class#134<T#3674>]
+symbol s3674 kind=typeParameter fq=max.$3673.T vis=private flags=_
+symbol s3675 kind=valueParameter fq=max.$3673.a vis=private flags=_
+symbol s3676 kind=valueParameter fq=max.$3673.b vis=private flags=_
+symbol s3677 kind=function fq=nullSafeCompare vis=public flags=_ sig=recv=_ params=[Class#3667?,Class#3667] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3678 kind=valueParameter fq=nullSafeCompare.$3677.a vis=private flags=_
+symbol s3679 kind=valueParameter fq=nullSafeCompare.$3677.b vis=private flags=_
+symbol s3680 kind=function fq=compareInts vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3681 kind=valueParameter fq=compareInts.$3680.a vis=private flags=_
+symbol s3682 kind=valueParameter fq=compareInts.$3680.b vis=private flags=_
+symbol s3683 kind=function fq=compareTemperatures vis=public flags=_ sig=recv=_ params=[Class#3667,Class#3667] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3684 kind=valueParameter fq=compareTemperatures.$3683.a vis=private flags=_
+symbol s3685 kind=valueParameter fq=compareTemperatures.$3683.b vis=private flags=_
+symbol s3686 kind=function fq=compareGe vis=public flags=_ sig=recv=_ params=[Class#3667,Class#3667] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3687 kind=valueParameter fq=compareGe.$3686.a vis=private flags=_
+symbol s3688 kind=valueParameter fq=compareGe.$3686.b vis=private flags=_
 file f0 package=_
-  decl d2 class Temperature sym=s3661
-  decl d3 fun max suspend=0 inline=0 sym=s3667
-  decl d4 fun nullSafeCompare suspend=0 inline=0 sym=s3671
-  decl d5 fun compareInts suspend=0 inline=0 sym=s3674
-  decl d6 fun compareTemperatures suspend=0 inline=0 sym=s3677
-  decl d7 fun compareGe suspend=0 inline=0 sym=s3680
-expr e0 this type=Class#3661
-expr e1 memberCall recv=e0 callee=degrees args=[] type=Int ref=s3666
-expr e2 name(other) type=Class#3661 ref=s3665
-expr e3 memberCall recv=e2 callee=degrees args=[] type=Int ref=s3666
+  decl d2 class Temperature sym=s3667
+  decl d3 fun max suspend=0 inline=0 sym=s3673
+  decl d4 fun nullSafeCompare suspend=0 inline=0 sym=s3677
+  decl d5 fun compareInts suspend=0 inline=0 sym=s3680
+  decl d6 fun compareTemperatures suspend=0 inline=0 sym=s3683
+  decl d7 fun compareGe suspend=0 inline=0 sym=s3686
+expr e0 this type=Class#3667
+expr e1 memberCall recv=e0 callee=degrees args=[] type=Int ref=s3672
+expr e2 name(other) type=Class#3667 ref=s3671
+expr e3 memberCall recv=e2 callee=degrees args=[] type=Int ref=s3672
 expr e4 binary(subtract) lhs=e1 rhs=e3 type=Int
-expr e5 name(a) type=T#3668 ref=s3669
-expr e6 name(b) type=T#3668 ref=s3670
-expr e7 binary(greaterThan) lhs=e5 rhs=e6 type=Boolean call=s136 map=[0->0] targs=[T#3668]
-expr e8 name(a) type=T#3668 ref=s3669
-expr e9 name(b) type=T#3668 ref=s3670
-expr e10 if cond=e7 then=e8 else=e9 type=T#3668
-expr e11 name(a) type=Class#3661? ref=s3672
-expr e12 name(b) type=Class#3661 ref=s3673
-expr e13 safeMemberCall recv=e11 callee=compareTo args=[_:e12] type=Int? call=s3664 map=[0->0] targs=[]
+expr e5 name(a) type=T#3674 ref=s3675
+expr e6 name(b) type=T#3674 ref=s3676
+expr e7 binary(greaterThan) lhs=e5 rhs=e6 type=Boolean call=s136 map=[0->0] targs=[T#3674]
+expr e8 name(a) type=T#3674 ref=s3675
+expr e9 name(b) type=T#3674 ref=s3676
+expr e10 if cond=e7 then=e8 else=e9 type=T#3674
+expr e11 name(a) type=Class#3667? ref=s3678
+expr e12 name(b) type=Class#3667 ref=s3679
+expr e13 safeMemberCall recv=e11 callee=compareTo args=[_:e12] type=Int? call=s3670 map=[0->0] targs=[]
 expr e14 int(1) type=Int
 expr e15 unary(unaryMinus) operand=e14 type=Int
 expr e16 binary(elvis) lhs=e13 rhs=e15 type=Int
-expr e17 name(a) type=Int ref=s3675
-expr e18 name(b) type=Int ref=s3676
+expr e17 name(a) type=Int ref=s3681
+expr e18 name(b) type=Int ref=s3682
 expr e19 binary(lessThan) lhs=e17 rhs=e18 type=Boolean
-expr e20 name(a) type=Class#3661 ref=s3678
-expr e21 name(b) type=Class#3661 ref=s3679
+expr e20 name(a) type=Class#3667 ref=s3684
+expr e21 name(b) type=Class#3667 ref=s3685
 expr e22 binary(lessThan) lhs=e20 rhs=e21 type=<error>
-expr e23 name(a) type=Class#3661 ref=s3681
-expr e24 name(b) type=Class#3661 ref=s3682
+expr e23 name(a) type=Class#3667 ref=s3687
+expr e24 name(b) type=Class#3667 ref=s3688
 expr e25 binary(greaterOrEqual) lhs=e23 rhs=e24 type=<error>

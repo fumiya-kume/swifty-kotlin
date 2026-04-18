@@ -3659,22 +3659,28 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=interface fq=Expr vis=public flags=sealedType
-symbol s3662 kind=class fq=Literal vis=public flags=_
-symbol s3663 kind=constructor fq=Literal.<init> vis=public flags=_ sig=recv=Class#3662 params=[] ret=Class#3662 suspend=0 defaults=[] vararg=[]
-symbol s3664 kind=class fq=Add vis=public flags=_
-symbol s3665 kind=constructor fq=Add.<init> vis=public flags=_ sig=recv=Class#3664 params=[] ret=Class#3664 suspend=0 defaults=[] vararg=[]
-symbol s3666 kind=class fq=Multiply vis=public flags=_
-symbol s3667 kind=constructor fq=Multiply.<init> vis=public flags=_ sig=recv=Class#3666 params=[] ret=Class#3666 suspend=0 defaults=[] vararg=[]
-symbol s3668 kind=function fq=eval vis=public flags=_ sig=recv=_ params=[Class#3661] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3669 kind=valueParameter fq=eval.$3668.e vis=private flags=_
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=interface fq=Expr vis=public flags=sealedType
+symbol s3668 kind=class fq=Literal vis=public flags=_
+symbol s3669 kind=constructor fq=Literal.<init> vis=public flags=_ sig=recv=Class#3668 params=[] ret=Class#3668 suspend=0 defaults=[] vararg=[]
+symbol s3670 kind=class fq=Add vis=public flags=_
+symbol s3671 kind=constructor fq=Add.<init> vis=public flags=_ sig=recv=Class#3670 params=[] ret=Class#3670 suspend=0 defaults=[] vararg=[]
+symbol s3672 kind=class fq=Multiply vis=public flags=_
+symbol s3673 kind=constructor fq=Multiply.<init> vis=public flags=_ sig=recv=Class#3672 params=[] ret=Class#3672 suspend=0 defaults=[] vararg=[]
+symbol s3674 kind=function fq=eval vis=public flags=_ sig=recv=_ params=[Class#3667] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3675 kind=valueParameter fq=eval.$3674.e vis=private flags=_
 file f0 package=_
-  decl d0 interface Expr sym=s3661
-  decl d1 class Literal sym=s3662
-  decl d2 class Add sym=s3664
-  decl d3 class Multiply sym=s3666
-  decl d4 fun eval suspend=0 inline=0 sym=s3668
-expr e0 name(e) type=Class#3661 ref=s3669
+  decl d0 interface Expr sym=s3667
+  decl d1 class Literal sym=s3668
+  decl d2 class Add sym=s3670
+  decl d3 class Multiply sym=s3672
+  decl d4 fun eval suspend=0 inline=0 sym=s3674
+expr e0 name(e) type=Class#3667 ref=s3675
 expr e1 isCheck expr=e0 type=t5 type=Boolean
 expr e2 string(literal) type=String
 expr e3 isCheck expr=e0 type=t6 type=Boolean

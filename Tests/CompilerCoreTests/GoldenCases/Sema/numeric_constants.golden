@@ -3659,22 +3659,28 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3662 kind=local fq=__local_2.a vis=private flags=_ type=Int
-symbol s3663 kind=local fq=__local_5.b vis=private flags=_ type=Int
-symbol s3664 kind=local fq=__local_8.c vis=private flags=_ type=Long
-symbol s3665 kind=local fq=__local_11.d vis=private flags=_ type=Double
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3668 kind=local fq=__local_2.a vis=private flags=_ type=Int
+symbol s3669 kind=local fq=__local_5.b vis=private flags=_ type=Int
+symbol s3670 kind=local fq=__local_8.c vis=private flags=_ type=Long
+symbol s3671 kind=local fq=__local_11.d vis=private flags=_ type=Double
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3661
+  decl d0 fun main suspend=0 inline=0 sym=s3667
 expr e0 name(Int) type=_
 expr e1 memberCall recv=e0 callee=MAX_VALUE args=[] type=Int
-expr e2 localDecl a mutable=0 type=_ init=e1 type=Unit ref=s3662
+expr e2 localDecl a mutable=0 type=_ init=e1 type=Unit ref=s3668
 expr e3 name(Int) type=_
 expr e4 memberCall recv=e3 callee=MIN_VALUE args=[] type=Int
-expr e5 localDecl b mutable=0 type=_ init=e4 type=Unit ref=s3663
+expr e5 localDecl b mutable=0 type=_ init=e4 type=Unit ref=s3669
 expr e6 name(Long) type=_
 expr e7 memberCall recv=e6 callee=MAX_VALUE args=[] type=Long
-expr e8 localDecl c mutable=0 type=_ init=e7 type=Unit ref=s3664
+expr e8 localDecl c mutable=0 type=_ init=e7 type=Unit ref=s3670
 expr e9 name(Double) type=_
 expr e10 memberCall recv=e9 callee=NaN args=[] type=Double
-expr e11 localDecl d mutable=0 type=_ init=e10 type=Unit ref=s3665
+expr e11 localDecl d mutable=0 type=_ init=e10 type=Unit ref=s3671

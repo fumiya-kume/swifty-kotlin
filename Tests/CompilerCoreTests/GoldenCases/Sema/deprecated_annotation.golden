@@ -3659,23 +3659,29 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=golden.sema.oldFunError vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3662 kind=function fq=golden.sema.oldFunWarning vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3663 kind=function fq=golden.sema.newFun vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3664 kind=function fq=golden.sema.caller vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=golden.sema.oldFunError vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3668 kind=function fq=golden.sema.oldFunWarning vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3669 kind=function fq=golden.sema.newFun vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3670 kind=function fq=golden.sema.caller vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 fun oldFunError suspend=0 inline=0 sym=s3661
-  decl d1 fun oldFunWarning suspend=0 inline=0 sym=s3662
-  decl d2 fun newFun suspend=0 inline=0 sym=s3663
-  decl d3 fun caller suspend=0 inline=0 sym=s3664
+  decl d0 fun oldFunError suspend=0 inline=0 sym=s3667
+  decl d1 fun oldFunWarning suspend=0 inline=0 sym=s3668
+  decl d2 fun newFun suspend=0 inline=0 sym=s3669
+  decl d3 fun caller suspend=0 inline=0 sym=s3670
 expr e0 int(1) type=Int
 expr e1 int(2) type=Int
 expr e2 int(3) type=Int
 expr e3 name(oldFunError) type=_
-expr e4 call callee=e3 args=[] type=Int call=s3661 map=[] targs=[]
+expr e4 call callee=e3 args=[] type=Int call=s3667 map=[] targs=[]
 expr e5 name(oldFunWarning) type=_
-expr e6 call callee=e5 args=[] type=Int call=s3662 map=[] targs=[]
+expr e6 call callee=e5 args=[] type=Int call=s3668 map=[] targs=[]
 expr e7 binary(add) lhs=e4 rhs=e6 type=Int
 expr e8 name(newFun) type=_
-expr e9 call callee=e8 args=[] type=Int call=s3663 map=[] targs=[]
+expr e9 call callee=e8 args=[] type=Int call=s3669 map=[] targs=[]
 expr e10 binary(add) lhs=e7 rhs=e9 type=Int

@@ -3659,12 +3659,18 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=golden.sema.useIt vis=public flags=_ sig=recv=_ params=[] ret=Class#123<Int> suspend=0 defaults=[] vararg=[]
-symbol s3662 kind=function fq=golden.sema.useDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Class#123<Int> suspend=0 defaults=[] vararg=[]
-symbol s3663 kind=local fq=__destructuring_24.num vis=private flags=_ type=Int
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=golden.sema.useIt vis=public flags=_ sig=recv=_ params=[] ret=Class#123<Int> suspend=0 defaults=[] vararg=[]
+symbol s3668 kind=function fq=golden.sema.useDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Class#123<Int> suspend=0 defaults=[] vararg=[]
+symbol s3669 kind=local fq=__destructuring_24.num vis=private flags=_ type=Int
 file f0 package=golden.sema
-  decl d0 fun useIt suspend=0 inline=0 sym=s3661
-  decl d1 fun useDestructuring suspend=0 inline=0 sym=s3662
+  decl d0 fun useIt suspend=0 inline=0 sym=s3667
+  decl d1 fun useDestructuring suspend=0 inline=0 sym=s3668
 expr e0 name(listOf) type=_
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
@@ -3687,7 +3693,7 @@ expr e18 string(b) type=String
 expr e19 memberCall recv=e17 callee=to args=[_:e18] type=Class#75<Int, String>
 expr e20 call callee=e13 args=[_:e16,_:e19] type=Class#123<out Class#75<Int, String>>
 expr e21 name(num) type=_
-expr e22 name(num) type=Int ref=s3663
+expr e22 name(num) type=Int ref=s3669
 expr e23 name(__destructured_0) type=Class#75<Int, String> ref=s-1006656
 expr e24 destructuringDecl names=[num,_] mutable=0 init=e23 type=Unit
 expr e25 blockExpr stmts=[e24] trailing=e22 type=Int

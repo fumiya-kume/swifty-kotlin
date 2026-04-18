@@ -3659,20 +3659,26 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=function fq=rangeFirst vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3662 kind=function fq=rangeLast vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3663 kind=function fq=rangeCount vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3664 kind=function fq=rangeContains vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s3665 kind=valueParameter fq=rangeContains.$3664.x vis=private flags=_
-symbol s3666 kind=function fq=rangeToList vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s3667 kind=function fq=rangeReversed vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=rangeFirst vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3668 kind=function fq=rangeLast vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3669 kind=function fq=rangeCount vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3670 kind=function fq=rangeContains vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s3671 kind=valueParameter fq=rangeContains.$3670.x vis=private flags=_
+symbol s3672 kind=function fq=rangeToList vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3673 kind=function fq=rangeReversed vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
 file f0 package=_
-  decl d0 fun rangeFirst suspend=0 inline=0 sym=s3661
-  decl d1 fun rangeLast suspend=0 inline=0 sym=s3662
-  decl d2 fun rangeCount suspend=0 inline=0 sym=s3663
-  decl d3 fun rangeContains suspend=0 inline=0 sym=s3664
-  decl d4 fun rangeToList suspend=0 inline=0 sym=s3666
-  decl d5 fun rangeReversed suspend=0 inline=0 sym=s3667
+  decl d0 fun rangeFirst suspend=0 inline=0 sym=s3667
+  decl d1 fun rangeLast suspend=0 inline=0 sym=s3668
+  decl d2 fun rangeCount suspend=0 inline=0 sym=s3669
+  decl d3 fun rangeContains suspend=0 inline=0 sym=s3670
+  decl d4 fun rangeToList suspend=0 inline=0 sym=s3672
+  decl d5 fun rangeReversed suspend=0 inline=0 sym=s3673
 expr e0 int(1) type=Int
 expr e1 int(5) type=Int
 expr e2 binary(rangeTo) lhs=e0 rhs=e1 type=Int

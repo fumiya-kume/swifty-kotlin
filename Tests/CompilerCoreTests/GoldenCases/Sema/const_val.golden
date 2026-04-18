@@ -3659,25 +3659,31 @@ symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.com
 symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
 symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
 symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3661 kind=property fq=golden.sema.MAX vis=public flags=constValue type=Int
-symbol s3662 kind=property fq=golden.sema.NAME vis=public flags=constValue type=String
-symbol s3663 kind=property fq=golden.sema.FLAG vis=public flags=constValue type=Boolean
-symbol s3664 kind=property fq=golden.sema.RATE vis=public flags=constValue type=Double
-symbol s3665 kind=property fq=golden.sema.NEG vis=public flags=constValue type=Int
-symbol s3666 kind=object fq=golden.sema.Constants vis=public flags=_
-symbol s3667 kind=property fq=golden.sema.Constants.LIMIT vis=public flags=constValue type=Int
-symbol s3668 kind=property fq=golden.sema.Constants.LABEL vis=public flags=constValue type=String
-symbol s3669 kind=function fq=golden.sema.useConst vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s3670 kind=function fq=golden.sema.useNegConst vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=property fq=golden.sema.MAX vis=public flags=constValue type=Int
+symbol s3668 kind=property fq=golden.sema.NAME vis=public flags=constValue type=String
+symbol s3669 kind=property fq=golden.sema.FLAG vis=public flags=constValue type=Boolean
+symbol s3670 kind=property fq=golden.sema.RATE vis=public flags=constValue type=Double
+symbol s3671 kind=property fq=golden.sema.NEG vis=public flags=constValue type=Int
+symbol s3672 kind=object fq=golden.sema.Constants vis=public flags=_
+symbol s3673 kind=property fq=golden.sema.Constants.LIMIT vis=public flags=constValue type=Int
+symbol s3674 kind=property fq=golden.sema.Constants.LABEL vis=public flags=constValue type=String
+symbol s3675 kind=function fq=golden.sema.useConst vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s3676 kind=function fq=golden.sema.useNegConst vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 property MAX var=0 sym=s3661
-  decl d1 property NAME var=0 sym=s3662
-  decl d2 property FLAG var=0 sym=s3663
-  decl d3 property RATE var=0 sym=s3664
-  decl d4 property NEG var=0 sym=s3665
-  decl d7 object Constants sym=s3666
-  decl d8 fun useConst suspend=0 inline=0 sym=s3669
-  decl d9 fun useNegConst suspend=0 inline=0 sym=s3670
+  decl d0 property MAX var=0 sym=s3667
+  decl d1 property NAME var=0 sym=s3668
+  decl d2 property FLAG var=0 sym=s3669
+  decl d3 property RATE var=0 sym=s3670
+  decl d4 property NEG var=0 sym=s3671
+  decl d7 object Constants sym=s3672
+  decl d8 fun useConst suspend=0 inline=0 sym=s3675
+  decl d9 fun useNegConst suspend=0 inline=0 sym=s3676
 expr e0 int(100) type=Int
 expr e1 string(hello) type=String
 expr e2 bool(true) type=Boolean
@@ -3686,7 +3692,7 @@ expr e4 int(42) type=Int
 expr e5 unary(unaryMinus) operand=e4 type=Int
 expr e6 int(200) type=Int
 expr e7 string(world) type=String
-expr e8 name(MAX) type=Int ref=s3661
+expr e8 name(MAX) type=Int ref=s3667
 expr e9 int(50) type=Int
 expr e10 binary(greaterThan) lhs=e8 rhs=e9 type=Boolean
-expr e11 name(NEG) type=Int ref=s3665
+expr e11 name(NEG) type=Int ref=s3671
