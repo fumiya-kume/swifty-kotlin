@@ -3594,8 +3594,8 @@ symbol s3592 kind=local fq=__local_74.lhm2 vis=private flags=_ type=Class#308<St
 symbol s3593 kind=local fq=__local_90.mutable vis=private flags=_ type=Class#308<Int, String>
 symbol s3594 kind=local fq=__local_150.generic vis=private flags=_ type=Class#308<Double, Boolean>
 symbol s3595 kind=local fq=__local_166.empty vis=private flags=_ type=Class#308<String, Int>
-symbol s3596 kind=local fq=__for_destructuring_182.key vis=private flags=_ type=T#279
-symbol s3597 kind=local fq=__for_destructuring_182.value vis=private flags=_ type=T#280
+symbol s3596 kind=local fq=__for_destructuring_182.key vis=private flags=_ type=Int
+symbol s3597 kind=local fq=__for_destructuring_182.value vis=private flags=_ type=String
 file f0 package=_
   decl d0 fun main suspend=0 inline=0 sym=s3590
 expr e0 name(LinkedHashMap) type=Any ref=s378
@@ -3775,8 +3775,8 @@ expr e173 memberCall recv=e172 callee=isEmpty args=[] type=Boolean
 expr e174 call callee=e171 args=[_:e173] type=Unit call=s1732 map=[0->0] targs=[]
 expr e175 name(mutable) type=Class#308<Int, String> ref=s3593
 expr e176 name(println) type=_
-expr e177 name(key) type=T#279 ref=s3596
-expr e178 name(value) type=T#280 ref=s3597
+expr e177 name(key) type=Int ref=s3596
+expr e178 name(value) type=String ref=s3597
 expr e179 stringTemplate[expr(e177),lit(=),expr(e178)] type=String
 expr e180 call callee=e176 args=[_:e179] type=Unit call=s1732 map=[0->0] targs=[]
 expr e181 blockExpr stmts=[] trailing=e180 type=Unit
