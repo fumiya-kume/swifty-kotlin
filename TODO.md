@@ -46,7 +46,7 @@
 
 ### Phase 2: コレクション・Sequence・Range
 - [ ] STDLIB-GAP-PH2: `kotlin.collections` / `kotlin.sequences` / `kotlin.ranges` の未対応を潰す
-- [ ] STDLIB-020: `Sequence` の lazy 性と builder 系 API の評価順を固定
+- [x] STDLIB-020: `Sequence` の lazy 性と builder 系 API の評価順を固定
 - [ ] STDLIB-021: mutable collection 変換 API と destination variant の差分を潰す
 - [ ] STDLIB-022: range / progression / unsigned range の網羅性を上げる
 

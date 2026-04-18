@@ -680,6 +680,46 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(sequenceElements(seqHandle), [10, 20, 30])
     }
 
+    func testSequenceBuilderBuildYieldAllFromLazySequenceIsLazy() {
+        // sequence { yieldAll(inner); yield(99) }.take(2).toList()
+        _lazyTestYieldCounter = 0
+        let innerThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 10)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 20)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 30)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 40)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 50)
+            return 0
+        }
+        let innerFnPtr = unsafeBitCast(innerThunk, to: Int.self)
+        let innerSeq = kk_sequence_builder_build(innerFnPtr)
+
+        let outerThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_sequence_builder_yieldAll(builderRaw, innerSeq)
+            _ = kk_sequence_builder_yield(builderRaw, 99)
+            return 0
+        }
+        let outerFnPtr = unsafeBitCast(outerThunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(outerFnPtr)
+
+        let taken = kk_sequence_take(seqHandle, 2)
+        XCTAssertEqual(sequenceElements(taken), [10, 20])
+        XCTAssertLessThanOrEqual(
+            _lazyTestYieldCounter,
+            3,
+            "yieldAll should not eagerly evaluate all 5 elements of the nested sequence before first consumer demand"
+        )
+
+        let full = sequenceElements(seqHandle)
+        XCTAssertEqual(full, [10, 20, 30, 40, 50, 99])
+        XCTAssertEqual(_lazyTestYieldCounter, 5)
+    }
+
     func testSequenceBuilderBuildReiterableProducesSameElements() {
         // Verify that materializing the same lazy sequence twice produces the same result
         // (cached after first materialization).
