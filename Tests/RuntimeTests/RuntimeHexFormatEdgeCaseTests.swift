@@ -301,28 +301,36 @@ final class RuntimeHexFormatEdgeCaseTests: IsolatedRuntimeXCTestCase {
     func testHexToIntBasic() {
         let fmt = makeFormat()
         let strRaw = makeString("000000ff")
-        let result = kk_string_hexToInt(strRaw, fmt)
+        var thrown = 0
+        let result = kk_string_hexToInt(strRaw, fmt, &thrown)
+        XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, 255)
     }
 
     func testHexToIntMaxPositive() {
         let fmt = makeFormat()
         let strRaw = makeString("7fffffff")
-        let result = kk_string_hexToInt(strRaw, fmt)
+        var thrown = 0
+        let result = kk_string_hexToInt(strRaw, fmt, &thrown)
+        XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, Int(Int32.max))
     }
 
     func testHexToIntNegativeOne() {
         let fmt = makeFormat()
         let strRaw = makeString("ffffffff")
-        let result = kk_string_hexToInt(strRaw, fmt)
+        var thrown = 0
+        let result = kk_string_hexToInt(strRaw, fmt, &thrown)
+        XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, -1, "0xFFFFFFFF reinterpreted as signed Int32 must equal -1")
     }
 
     func testHexToIntZero() {
         let fmt = makeFormat()
         let strRaw = makeString("00000000")
-        let result = kk_string_hexToInt(strRaw, fmt)
+        var thrown = 0
+        let result = kk_string_hexToInt(strRaw, fmt, &thrown)
+        XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, 0)
     }
 
@@ -331,21 +339,27 @@ final class RuntimeHexFormatEdgeCaseTests: IsolatedRuntimeXCTestCase {
     func testHexToLongBasic() {
         let fmt = makeFormat()
         let strRaw = makeString("ff")
-        let result = kk_string_hexToLong(strRaw, fmt)
+        var thrown = 0
+        let result = kk_string_hexToLong(strRaw, fmt, &thrown)
+        XCTAssertEqual(thrown, 0)
         XCTAssertEqual(kk_unbox_long(result), 255)
     }
 
     func testHexToLongNegativeOne() {
         let fmt = makeFormat()
         let strRaw = makeString("ffffffffffffffff")
-        let result = kk_string_hexToLong(strRaw, fmt)
+        var thrown = 0
+        let result = kk_string_hexToLong(strRaw, fmt, &thrown)
+        XCTAssertEqual(thrown, 0)
         XCTAssertEqual(kk_unbox_long(result), -1, "0xFFFFFFFFFFFFFFFF reinterpreted as signed Int64 must equal -1")
     }
 
     func testHexToLongZero() {
         let fmt = makeFormat()
         let strRaw = makeString("0")
-        let result = kk_string_hexToLong(strRaw, fmt)
+        var thrown = 0
+        let result = kk_string_hexToLong(strRaw, fmt, &thrown)
+        XCTAssertEqual(thrown, 0)
         XCTAssertEqual(kk_unbox_long(result), 0)
     }
 
@@ -422,7 +436,9 @@ final class RuntimeHexFormatEdgeCaseTests: IsolatedRuntimeXCTestCase {
         let stripped = withPrefix.hasPrefix(prefix) ? String(withPrefix.dropFirst(prefix.count)) : withPrefix
         let fmtDecode = makeFormat()
         let strRaw = makeString(stripped)
-        let decoded = kk_string_hexToInt(strRaw, fmtDecode)
+        var thrown = 0
+        let decoded = kk_string_hexToInt(strRaw, fmtDecode, &thrown)
+        XCTAssertEqual(thrown, 0)
         XCTAssertEqual(decoded, 255, "Tolerant prefix decode must recover original Int value")
     }
 

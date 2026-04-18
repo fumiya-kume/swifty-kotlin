@@ -61,7 +61,12 @@ extension ControlFlowTypeChecker {
                 if let candidate = scopeCandidates.first,
                    let signature = sema.symbols.functionSignature(for: candidate)
                 {
-                    componentType = signature.returnType
+                    componentType = specializeComponentReturnType(
+                        signature.returnType,
+                        receiverType: rhsType,
+                        signature: signature,
+                        sema: sema
+                    )
                 } else if isDataClassType(rhsType, sema: sema) {
                     // Data class componentN() is synthesized during lowering; fall back to Any
                     componentType = sema.types.anyType
@@ -144,7 +149,12 @@ extension ControlFlowTypeChecker {
             if let candidate = candidates.first,
                let signature = sema.symbols.functionSignature(for: candidate)
             {
-                componentType = signature.returnType
+                componentType = specializeComponentReturnType(
+                    signature.returnType,
+                    receiverType: elementType,
+                    signature: signature,
+                    sema: sema
+                )
             } else if isDataClassType(elementType, sema: sema) {
                 // Data class componentN() is synthesized during lowering; fall back to Any
                 componentType = sema.types.anyType
