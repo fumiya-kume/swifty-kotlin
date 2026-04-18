@@ -17,7 +17,11 @@ extension CodegenBackendIntegrationTests {
             val hex = 255.toHexString()
             println(hex)
             println(hex.hexToInt())
-            println("gg".hexToInt())
+            try {
+                println("gg".hexToInt())
+            } catch (e: Throwable) {
+                println("caught")
+            }
         }
         """
 
@@ -40,7 +44,7 @@ extension CodegenBackendIntegrationTests {
                 ABC
                 000000ff
                 255
-                0
+                caught
                 """
                 + "\n"
             )
