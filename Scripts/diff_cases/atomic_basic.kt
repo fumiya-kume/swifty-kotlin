@@ -12,7 +12,27 @@ fun main() {
     println(ar.load())              // foo
     println(ar.compareAndSet("foo", "bar"))   // true
     println(ar.compareAndExchange("bar", "baz")) // bar
-    println(ar.getAndUpdate { it + "!" })      // baz
-    println(ar.updateAndGet { it + "?" })      // baz!
+    // JVM kotlinc 2.3.10 does not resolve AtomicReference.getAndUpdate / updateAndGet;
+    // keep behaviour identical via CAS loops so kswiftc vs kotlinc diff stays aligned.
+    run {
+        while (true) {
+            val cur = ar.load()
+            val next = cur + "!"
+            if (ar.compareAndSet(cur, next)) {
+                println(cur)
+                break
+            }
+        }
+    }
+    run {
+        while (true) {
+            val cur = ar.load()
+            val next = cur + "?"
+            if (ar.compareAndSet(cur, next)) {
+                println(next)
+                break
+            }
+        }
+    }
     println(ar.load())                          // baz!?
 }
