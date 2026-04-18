@@ -419,7 +419,7 @@ final class RuntimeDelegateTests: IsolatedRuntimeXCTestCase {
     // so kk_notNull_get_value calls fatalError rather than setting outThrown.
     // Integration-level verification (subprocess exit code + stderr message) is in
     // DelegatePropertyKIRTests.testNotNullDelegateReadBeforeAssignmentTrapsWithHelpfulMessage.
-    // TODO: When the compiler lowers notNull gets as throwing calls, add a unit test here
+    // Future: when the compiler lowers notNull gets as throwing calls, add a unit test here
     // that passes an outThrown pointer and verifies an IllegalStateException is set.
     func testNotNullHandleIsNonZeroAfterCreate() {
         let handle = kk_notNull_create()
