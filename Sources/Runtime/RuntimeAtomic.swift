@@ -541,10 +541,12 @@ final class AtomicRefBox {
         return old
     }
 
+    /// Kotlin `AtomicReference` CAS uses value equality (e.g. same string contents),
+    /// not pointer identity — match JVM `kotlin.concurrent.atomics` behaviour.
     func compareAndSet(expect: Int, update: Int) -> Bool {
         lock.lock()
         defer { lock.unlock() }
-        if storage == expect {
+        if runtimeValuesEqual(storage, expect) {
             storage = update
             return true
         }
@@ -555,7 +557,7 @@ final class AtomicRefBox {
         lock.lock()
         defer { lock.unlock() }
         let old = storage
-        if old == expect {
+        if runtimeValuesEqual(old, expect) {
             storage = update
         }
         return old
