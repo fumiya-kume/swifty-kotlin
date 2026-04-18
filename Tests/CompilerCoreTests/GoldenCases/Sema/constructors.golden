@@ -3562,35 +3562,49 @@ symbol s3560 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3561 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3559 params=[() -> T#3562] ret=T#3562 suspend=0 defaults=[0] vararg=[0]
 symbol s3562 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3563 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3564 kind=class fq=Point vis=public flags=_
-symbol s3565 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#3564 params=[Int,Int] ret=Class#3564 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3566 kind=valueParameter fq=Point.<init>.$3565.x vis=private flags=_
-symbol s3567 kind=valueParameter fq=Point.<init>.$3565.y vis=private flags=_
-symbol s3568 kind=property fq=Point.x vis=public flags=_ type=Int
-symbol s3569 kind=property fq=Point.y vis=public flags=_ type=Int
-symbol s3570 kind=class fq=Named vis=public flags=_
-symbol s3571 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#3570 params=[String] ret=Class#3570 suspend=0 defaults=[0] vararg=[0]
-symbol s3572 kind=valueParameter fq=Named.<init>.$3571.name vis=private flags=_
-symbol s3573 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#3570 params=[] ret=Class#3570 suspend=0 defaults=[] vararg=[]
-symbol s3574 kind=property fq=Named.name vis=public flags=_ type=String
-symbol s3575 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3576 kind=local fq=__local_5.p vis=private flags=_ type=Class#3564
-symbol s3577 kind=local fq=__local_9.n vis=private flags=_ type=Class#3570
-symbol s3578 kind=local fq=__local_12.d vis=private flags=_ type=Class#3570
+symbol s3564 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3565 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3566 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3566<T#3567>
+symbol s3567 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3568 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3566<T#3567> params=[] ret=T#3567? suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3570 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3571 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3572 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3572
+symbol s3573 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
+symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3578 kind=class fq=Point vis=public flags=_
+symbol s3579 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#3578 params=[Int,Int] ret=Class#3578 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3580 kind=valueParameter fq=Point.<init>.$3579.x vis=private flags=_
+symbol s3581 kind=valueParameter fq=Point.<init>.$3579.y vis=private flags=_
+symbol s3582 kind=property fq=Point.x vis=public flags=_ type=Int
+symbol s3583 kind=property fq=Point.y vis=public flags=_ type=Int
+symbol s3584 kind=class fq=Named vis=public flags=_
+symbol s3585 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#3584 params=[String] ret=Class#3584 suspend=0 defaults=[0] vararg=[0]
+symbol s3586 kind=valueParameter fq=Named.<init>.$3585.name vis=private flags=_
+symbol s3587 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#3584 params=[] ret=Class#3584 suspend=0 defaults=[] vararg=[]
+symbol s3588 kind=property fq=Named.name vis=public flags=_ type=String
+symbol s3589 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3590 kind=local fq=__local_5.p vis=private flags=_ type=Class#3578
+symbol s3591 kind=local fq=__local_9.n vis=private flags=_ type=Class#3584
+symbol s3592 kind=local fq=__local_12.d vis=private flags=_ type=Class#3584
 file f0 package=_
-  decl d2 class Point sym=s3564
-  decl d4 class Named sym=s3570
-  decl d5 fun main suspend=0 inline=0 sym=s3575
+  decl d2 class Point sym=s3578
+  decl d4 class Named sym=s3584
+  decl d5 fun main suspend=0 inline=0 sym=s3589
 expr e0 string(default) type=String
 expr e1 name(Point) type=_
 expr e2 int(1) type=Int
 expr e3 int(2) type=Int
-expr e4 call callee=e1 args=[_:e2,_:e3] type=Class#3564 call=s3565 map=[0->0,1->1] targs=[]
-expr e5 localDecl p mutable=0 type=_ init=e4 type=Unit ref=s3576
+expr e4 call callee=e1 args=[_:e2,_:e3] type=Class#3578 call=s3579 map=[0->0,1->1] targs=[]
+expr e5 localDecl p mutable=0 type=_ init=e4 type=Unit ref=s3590
 expr e6 name(Named) type=_
 expr e7 string(hello) type=String
-expr e8 call callee=e6 args=[_:e7] type=Class#3570 call=s3571 map=[0->0] targs=[]
-expr e9 localDecl n mutable=0 type=_ init=e8 type=Unit ref=s3577
+expr e8 call callee=e6 args=[_:e7] type=Class#3584 call=s3585 map=[0->0] targs=[]
+expr e9 localDecl n mutable=0 type=_ init=e8 type=Unit ref=s3591
 expr e10 name(Named) type=_
-expr e11 call callee=e10 args=[] type=Class#3570 call=s3573 map=[] targs=[]
-expr e12 localDecl d mutable=0 type=_ init=e11 type=Unit ref=s3578
+expr e11 call callee=e10 args=[] type=Class#3584 call=s3587 map=[] targs=[]
+expr e12 localDecl d mutable=0 type=_ init=e11 type=Unit ref=s3592

@@ -3562,15 +3562,29 @@ symbol s3560 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3561 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3559 params=[() -> T#3562] ret=T#3562 suspend=0 defaults=[0] vararg=[0]
 symbol s3562 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3563 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3564 kind=function fq=golden.sema.useTakeIf vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
-symbol s3565 kind=function fq=golden.sema.useTakeUnless vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
-symbol s3566 kind=function fq=golden.sema.useTakeIfFalse vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
-symbol s3567 kind=function fq=golden.sema.useTakeUnlessFalse vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
+symbol s3564 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3565 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3566 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3566<T#3567>
+symbol s3567 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3568 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3566<T#3567> params=[] ret=T#3567? suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3570 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3571 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3572 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3572
+symbol s3573 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
+symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3578 kind=function fq=golden.sema.useTakeIf vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
+symbol s3579 kind=function fq=golden.sema.useTakeUnless vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
+symbol s3580 kind=function fq=golden.sema.useTakeIfFalse vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
+symbol s3581 kind=function fq=golden.sema.useTakeUnlessFalse vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 fun useTakeIf suspend=0 inline=0 sym=s3564
-  decl d1 fun useTakeUnless suspend=0 inline=0 sym=s3565
-  decl d2 fun useTakeIfFalse suspend=0 inline=0 sym=s3566
-  decl d3 fun useTakeUnlessFalse suspend=0 inline=0 sym=s3567
+  decl d0 fun useTakeIf suspend=0 inline=0 sym=s3578
+  decl d1 fun useTakeUnless suspend=0 inline=0 sym=s3579
+  decl d2 fun useTakeIfFalse suspend=0 inline=0 sym=s3580
+  decl d3 fun useTakeUnlessFalse suspend=0 inline=0 sym=s3581
 expr e0 int(42) type=Int
 expr e1 name(it) type=_
 expr e2 int(0) type=_

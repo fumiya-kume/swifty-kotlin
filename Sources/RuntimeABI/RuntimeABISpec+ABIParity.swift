@@ -1638,6 +1638,22 @@ public extension RuntimeABISpec {
             section: "ABIParity"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_platform_memoryModel",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_platform_isDebugBinary",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_duration_isInfinite",
             parameters: [
                 RuntimeABIParameter(name: "p0", type: .intptr),

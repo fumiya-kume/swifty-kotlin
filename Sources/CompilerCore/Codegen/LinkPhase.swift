@@ -3,13 +3,29 @@ import Foundation
 public final class LinkPhase: CompilerPhase {
     public static let name = "Link"
 
+    /// Linux links share one Swift autolink stub per target triple under `TMPDIR/kswiftk-link-stubs`.
+    /// Parallel XCTest workers could otherwise race on `fileExists` + atomic write and hand
+    /// `swiftc` a torn or empty stub, causing flaky link failures (`outputUnavailable`).
+    private static let linuxAutolinkStubLock = NSLock()
+
     public init() {}
 
     public func run(_ ctx: CompilationContext) throws {
         guard ctx.options.emit == .executable else { return }
-        guard let objectPath = ctx.generatedObjectPath,
-              FileManager.default.fileExists(atPath: objectPath)
-        else {
+        guard let objectPath = ctx.generatedObjectPath else {
+            ctx.diagnostics.error(
+                "KSWIFTK-LINK-0004",
+                "Link phase expected a generated object file path, but none was recorded after codegen.",
+                range: nil
+            )
+            throw CompilerPipelineError.outputUnavailable
+        }
+        guard FileManager.default.fileExists(atPath: objectPath) else {
+            ctx.diagnostics.error(
+                "KSWIFTK-LINK-0004",
+                "Link phase expected object file at '\(objectPath)', but the file does not exist.",
+                range: nil
+            )
             throw CompilerPipelineError.outputUnavailable
         }
         guard let kir = ctx.kir else {
@@ -68,6 +84,9 @@ public final class LinkPhase: CompilerPhase {
         guard target.os.hasPrefix("linux") else {
             return nil
         }
+
+        Self.linuxAutolinkStubLock.lock()
+        defer { Self.linuxAutolinkStubLock.unlock() }
 
         let stubDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("kswiftk-link-stubs", isDirectory: true)
