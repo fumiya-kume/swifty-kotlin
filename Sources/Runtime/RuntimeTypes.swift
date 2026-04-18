@@ -1556,3 +1556,37 @@ final class RuntimeBufferedWriterBox {
         buffer.removeAll(keepingCapacity: true)
     }
 }
+
+// MARK: - RuntimeChildReferenceProviding conformances (ABI-004)
+//
+// These conformances enable the recursive BFS freeze in kk_freeze_object to
+// traverse all reachable object references when freezing an object graph.
+// Only types that store `Int` child handles need to conform.
+
+extension RuntimeArrayBox: RuntimeChildReferenceProviding {
+    var childRefs: [Int] { elements }
+}
+
+extension RuntimePairBox: RuntimeChildReferenceProviding {
+    var childRefs: [Int] { [first, second] }
+}
+
+extension RuntimeTripleBox: RuntimeChildReferenceProviding {
+    var childRefs: [Int] { [first, second, third] }
+}
+
+extension RuntimeListBox: RuntimeChildReferenceProviding {
+    var childRefs: [Int] { elements }
+}
+
+extension RuntimeSetBox: RuntimeChildReferenceProviding {
+    var childRefs: [Int] { elements }
+}
+
+extension RuntimeMapBox: RuntimeChildReferenceProviding {
+    var childRefs: [Int] { keys + values }
+}
+
+extension RuntimeArrayDequeBox: RuntimeChildReferenceProviding {
+    var childRefs: [Int] { elements }
+}
