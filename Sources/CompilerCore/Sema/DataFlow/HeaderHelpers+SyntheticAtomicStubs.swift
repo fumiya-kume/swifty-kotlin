@@ -1097,7 +1097,7 @@ extension DataFlowSemaPhase {
         }
         let typeParamType = types.make(.typeParam(TypeParamType(
             symbol: typeParamSymbol,
-            nullability: .nullable
+            nullability: .nonNull
         )))
         let atomicRefType = types.make(.classType(ClassType(
             classSymbol: atomicRefSymbol,

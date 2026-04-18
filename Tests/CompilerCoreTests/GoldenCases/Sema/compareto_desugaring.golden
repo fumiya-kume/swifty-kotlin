@@ -2914,25 +2914,25 @@ symbol s2912 kind=function fq=kotlin.concurrent.AtomicBoolean.getAndUpdate vis=p
 symbol s2913 kind=valueParameter fq=kotlin.concurrent.AtomicBoolean.getAndUpdate.transform vis=private flags=synthetic
 symbol s2914 kind=function fq=kotlin.concurrent.AtomicBoolean.updateAndGet vis=public flags=synthetic sig=recv=Class#2897 params=[(Boolean) -> Boolean] ret=Boolean suspend=0 defaults=[0] vararg=[0]
 symbol s2915 kind=valueParameter fq=kotlin.concurrent.AtomicBoolean.updateAndGet.transform vis=private flags=synthetic
-symbol s2916 kind=class fq=kotlin.concurrent.AtomicReference vis=public flags=synthetic type=Class#2916<T#2917?>
+symbol s2916 kind=class fq=kotlin.concurrent.AtomicReference vis=public flags=synthetic type=Class#2916<T#2917>
 symbol s2917 kind=typeParameter fq=kotlin.concurrent.AtomicReference.T vis=private flags=_
-symbol s2918 kind=constructor fq=kotlin.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[T#2917?] ret=Class#2916<T#2917?> suspend=0 defaults=[0] vararg=[0]
+symbol s2918 kind=constructor fq=kotlin.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[T#2917] ret=Class#2916<T#2917> suspend=0 defaults=[0] vararg=[0]
 symbol s2919 kind=valueParameter fq=kotlin.concurrent.AtomicReference.<init>.size vis=private flags=synthetic
-symbol s2920 kind=property fq=kotlin.concurrent.AtomicReference.value vis=public flags=mutable|synthetic type=T#2917?
-symbol s2921 kind=function fq=kotlin.concurrent.AtomicReference.load vis=public flags=synthetic sig=recv=Class#2916<T#2917?> params=[] ret=T#2917? suspend=0 defaults=[] vararg=[]
-symbol s2922 kind=function fq=kotlin.concurrent.AtomicReference.store vis=public flags=synthetic sig=recv=Class#2916<T#2917?> params=[T#2917?] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s2920 kind=property fq=kotlin.concurrent.AtomicReference.value vis=public flags=mutable|synthetic type=T#2917
+symbol s2921 kind=function fq=kotlin.concurrent.AtomicReference.load vis=public flags=synthetic sig=recv=Class#2916<T#2917> params=[] ret=T#2917 suspend=0 defaults=[] vararg=[]
+symbol s2922 kind=function fq=kotlin.concurrent.AtomicReference.store vis=public flags=synthetic sig=recv=Class#2916<T#2917> params=[T#2917] ret=Unit suspend=0 defaults=[0] vararg=[0]
 symbol s2923 kind=valueParameter fq=kotlin.concurrent.AtomicReference.store.value vis=private flags=synthetic
-symbol s2924 kind=function fq=kotlin.concurrent.AtomicReference.exchange vis=public flags=synthetic sig=recv=Class#2916<T#2917?> params=[T#2917?] ret=T#2917? suspend=0 defaults=[0] vararg=[0]
+symbol s2924 kind=function fq=kotlin.concurrent.AtomicReference.exchange vis=public flags=synthetic sig=recv=Class#2916<T#2917> params=[T#2917] ret=T#2917 suspend=0 defaults=[0] vararg=[0]
 symbol s2925 kind=valueParameter fq=kotlin.concurrent.AtomicReference.exchange.new vis=private flags=synthetic
-symbol s2926 kind=function fq=kotlin.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#2916<T#2917?> params=[T#2917?,T#2917?] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2926 kind=function fq=kotlin.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#2916<T#2917> params=[T#2917,T#2917] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
 symbol s2927 kind=valueParameter fq=kotlin.concurrent.AtomicReference.compareAndSet.expect vis=private flags=synthetic
 symbol s2928 kind=valueParameter fq=kotlin.concurrent.AtomicReference.compareAndSet.update vis=private flags=synthetic
-symbol s2929 kind=function fq=kotlin.concurrent.AtomicReference.compareAndExchange vis=public flags=synthetic sig=recv=Class#2916<T#2917?> params=[T#2917?,T#2917?] ret=T#2917? suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2929 kind=function fq=kotlin.concurrent.AtomicReference.compareAndExchange vis=public flags=synthetic sig=recv=Class#2916<T#2917> params=[T#2917,T#2917] ret=T#2917 suspend=0 defaults=[0,0] vararg=[0,0]
 symbol s2930 kind=valueParameter fq=kotlin.concurrent.AtomicReference.compareAndExchange.expect vis=private flags=synthetic
 symbol s2931 kind=valueParameter fq=kotlin.concurrent.AtomicReference.compareAndExchange.update vis=private flags=synthetic
-symbol s2932 kind=function fq=kotlin.concurrent.AtomicReference.getAndUpdate vis=public flags=synthetic sig=recv=Class#2916<T#2917?> params=[(T#2917?) -> T#2917?] ret=T#2917? suspend=0 defaults=[0] vararg=[0]
+symbol s2932 kind=function fq=kotlin.concurrent.AtomicReference.getAndUpdate vis=public flags=synthetic sig=recv=Class#2916<T#2917> params=[(T#2917) -> T#2917] ret=T#2917 suspend=0 defaults=[0] vararg=[0]
 symbol s2933 kind=valueParameter fq=kotlin.concurrent.AtomicReference.getAndUpdate.transform vis=private flags=synthetic
-symbol s2934 kind=function fq=kotlin.concurrent.AtomicReference.updateAndGet vis=public flags=synthetic sig=recv=Class#2916<T#2917?> params=[(T#2917?) -> T#2917?] ret=T#2917? suspend=0 defaults=[0] vararg=[0]
+symbol s2934 kind=function fq=kotlin.concurrent.AtomicReference.updateAndGet vis=public flags=synthetic sig=recv=Class#2916<T#2917> params=[(T#2917) -> T#2917] ret=T#2917 suspend=0 defaults=[0] vararg=[0]
 symbol s2935 kind=valueParameter fq=kotlin.concurrent.AtomicReference.updateAndGet.transform vis=private flags=synthetic
 symbol s2936 kind=annotationClass fq=kotlin.concurrent.atomics.ExperimentalAtomicApi vis=public flags=synthetic
 symbol s2937 kind=enumClass fq=kotlin.concurrent.atomics.MemoryOrder vis=public flags=synthetic

@@ -441,7 +441,7 @@ public func kk_worker_new(_ nameRaw: Int) -> Int {
     if let nameStr = extractString(from: UnsafeMutableRawPointer(bitPattern: nameRaw)) {
         name = nameStr
     } else {
-        name = "worker-\(arc4random())"
+        name = "worker-\(UInt32.random(in: 0...UInt32.max))"
     }
     return registerRuntimeObject(RuntimeWorkerBox(name: name))
 }
