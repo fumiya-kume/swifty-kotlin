@@ -19,9 +19,9 @@ import XCTest
 // Unimplemented (noted in PR body, NOT tested here):
 //   • startCoroutineUninterceptedOrReturn — no @_cdecl("kk_start_coroutine_unintercepted…") entry
 //   • createCoroutineUnintercepted       — no @_cdecl("kk_create_coroutine_unintercepted") entry
-//   • CancellationException extends IllegalStateException inheritance chain on Native
-//     (RuntimeCancellationBox only extends RuntimeThrowableBox, not a separate
-//      RuntimeIllegalStateExceptionBox hierarchy)
+// CancellationException inherits IllegalStateException → RuntimeException in Kotlin.
+// RuntimeCancellationBox reports this chain via exceptionHierarchyFQNames so catch clauses
+// targeting IllegalStateException / RuntimeException match CancellationException at runtime (PR #1261).
 
 final class RuntimeCoroutineIntrinsicsEdgeCaseTests: XCTestCase {
 
@@ -278,5 +278,62 @@ final class RuntimeCoroutineIntrinsicsEdgeCaseTests: XCTestCase {
         let shouldSuspend = (blockResult == sentinel)
         XCTAssertFalse(shouldSuspend,
             "State machine must NOT short-circuit when blockResult is a real value (not COROUTINE_SUSPENDED)")
+    }
+
+    // MARK: - CancellationException extends IllegalStateException hierarchy (PR #1261)
+
+    /// CancellationException hierarchy must include kotlin.IllegalStateException so that
+    /// catch (e: IllegalStateException) blocks catch CancellationException (Kotlin spec).
+    func testCancellationExceptionHierarchyIncludesIllegalStateException() {
+        let box = RuntimeCancellationBox(message: "cancelled")
+        XCTAssertTrue(
+            box.exceptionHierarchyFQNames.contains("kotlin.IllegalStateException"),
+            "CancellationException must be catchable as IllegalStateException per Kotlin spec"
+        )
+    }
+
+    /// CancellationException hierarchy must include kotlin.RuntimeException.
+    func testCancellationExceptionHierarchyIncludesRuntimeException() {
+        let box = RuntimeCancellationBox(message: "cancelled")
+        XCTAssertTrue(
+            box.exceptionHierarchyFQNames.contains("kotlin.RuntimeException"),
+            "CancellationException must be catchable as RuntimeException per Kotlin spec"
+        )
+    }
+
+    /// IllegalStateException must appear before RuntimeException in the hierarchy list
+    /// (subtype ordering: CancellationException → ISE → RuntimeException → Exception → Throwable).
+    func testCancellationExceptionHierarchyOrderingISEBeforeRuntimeException() {
+        let box = RuntimeCancellationBox(message: "cancelled")
+        let names = box.exceptionHierarchyFQNames
+        let iseIndex = names.firstIndex(of: "kotlin.IllegalStateException")
+        let rteIndex = names.firstIndex(of: "kotlin.RuntimeException")
+        XCTAssertNotNil(iseIndex, "kotlin.IllegalStateException must be present")
+        XCTAssertNotNil(rteIndex, "kotlin.RuntimeException must be present")
+        if let ise = iseIndex, let rte = rteIndex {
+            XCTAssertLessThan(ise, rte,
+                "IllegalStateException must precede RuntimeException in the hierarchy list")
+        }
+    }
+
+    /// runtimeThrowableMatchesNominalTypeID must return true when checking CancellationException
+    /// against the nominal type ID of kotlin.IllegalStateException — this is what catch blocks use.
+    func testCancellationExceptionMatchesIllegalStateExceptionTypeID() {
+        let box = RuntimeCancellationBox(message: "cancelled")
+        let iseTypeID = runtimeStableNominalTypeID(fqName: "kotlin.IllegalStateException")
+        XCTAssertTrue(
+            runtimeThrowableMatchesNominalTypeID(box, targetTypeID: iseTypeID),
+            "catch (e: IllegalStateException) must catch CancellationException"
+        )
+    }
+
+    /// runtimeThrowableMatchesNominalTypeID must return true for kotlin.RuntimeException as well.
+    func testCancellationExceptionMatchesRuntimeExceptionTypeID() {
+        let box = RuntimeCancellationBox(message: "cancelled")
+        let rteTypeID = runtimeStableNominalTypeID(fqName: "kotlin.RuntimeException")
+        XCTAssertTrue(
+            runtimeThrowableMatchesNominalTypeID(box, targetTypeID: rteTypeID),
+            "catch (e: RuntimeException) must catch CancellationException"
+        )
     }
 }

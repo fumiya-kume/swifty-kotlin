@@ -211,78 +211,78 @@ final class RuntimeAtomicIntArrayTests: XCTestCase {
 
     func testInitialValuesAreZero() {
         let handle = kk_atomic_int_array_create(3)
-        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 0), 0)
-        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 1), 0)
-        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 2), 0)
+        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 0, nil), 0)
+        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 1, nil), 0)
+        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 2, nil), 0)
     }
 
     func testStoreAndLoad() {
         let handle = kk_atomic_int_array_create(4)
-        _ = kk_atomic_int_array_storeAt(handle, 2, 42)
-        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 2), 42)
+        _ = kk_atomic_int_array_storeAt(handle, 2, 42, nil)
+        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 2, nil), 42)
     }
 
     func testExchangeAt() {
         let handle = kk_atomic_int_array_create(2)
-        _ = kk_atomic_int_array_storeAt(handle, 0, 10)
-        let old = kk_atomic_int_array_exchangeAt(handle, 0, 99)
+        _ = kk_atomic_int_array_storeAt(handle, 0, 10, nil)
+        let old = kk_atomic_int_array_exchangeAt(handle, 0, 99, nil)
         XCTAssertEqual(old, 10, "exchangeAt must return the old value")
-        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 0), 99)
+        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 0, nil), 99)
     }
 
     func testCompareAndSetAtSuccess() {
         let handle = kk_atomic_int_array_create(2)
-        _ = kk_atomic_int_array_storeAt(handle, 1, 7)
-        let result = kk_atomic_int_array_compareAndSetAt(handle, 1, 7, 77)
+        _ = kk_atomic_int_array_storeAt(handle, 1, 7, nil)
+        let result = kk_atomic_int_array_compareAndSetAt(handle, 1, 7, 77, nil)
         XCTAssertEqual(result, 1, "CAS must succeed when expected value matches")
-        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 1), 77)
+        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 1, nil), 77)
     }
 
     func testCompareAndSetAtFailure() {
         let handle = kk_atomic_int_array_create(2)
-        _ = kk_atomic_int_array_storeAt(handle, 0, 5)
-        let result = kk_atomic_int_array_compareAndSetAt(handle, 0, 999, 50)
+        _ = kk_atomic_int_array_storeAt(handle, 0, 5, nil)
+        let result = kk_atomic_int_array_compareAndSetAt(handle, 0, 999, 50, nil)
         XCTAssertEqual(result, 0)
-        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 0), 5, "Value must not change on failed CAS")
+        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 0, nil), 5, "Value must not change on failed CAS")
     }
 
     func testCompareAndExchangeAt() {
         let handle = kk_atomic_int_array_create(3)
-        _ = kk_atomic_int_array_storeAt(handle, 2, 20)
-        let old = kk_atomic_int_array_compareAndExchangeAt(handle, 2, 20, 200)
+        _ = kk_atomic_int_array_storeAt(handle, 2, 20, nil)
+        let old = kk_atomic_int_array_compareAndExchangeAt(handle, 2, 20, 200, nil)
         XCTAssertEqual(old, 20)
-        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 2), 200)
+        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 2, nil), 200)
     }
 
     func testFetchAndAddAt() {
         let handle = kk_atomic_int_array_create(1)
-        _ = kk_atomic_int_array_storeAt(handle, 0, 100)
-        let old = kk_atomic_int_array_fetchAndAddAt(handle, 0, 5)
+        _ = kk_atomic_int_array_storeAt(handle, 0, 100, nil)
+        let old = kk_atomic_int_array_fetchAndAddAt(handle, 0, 5, nil)
         XCTAssertEqual(old, 100)
-        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 0), 105)
+        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 0, nil), 105)
     }
 
     func testAddAndFetchAt() {
         let handle = kk_atomic_int_array_create(1)
-        _ = kk_atomic_int_array_storeAt(handle, 0, 50)
-        let new = kk_atomic_int_array_addAndFetchAt(handle, 0, 10)
+        _ = kk_atomic_int_array_storeAt(handle, 0, 50, nil)
+        let new = kk_atomic_int_array_addAndFetchAt(handle, 0, 10, nil)
         XCTAssertEqual(new, 60)
     }
 
     func testIncrementAndDecrementAt() {
         let handle = kk_atomic_int_array_create(1)
-        _ = kk_atomic_int_array_storeAt(handle, 0, 0)
-        let afterInc = kk_atomic_int_array_incrementAndFetchAt(handle, 0)
+        _ = kk_atomic_int_array_storeAt(handle, 0, 0, nil)
+        let afterInc = kk_atomic_int_array_incrementAndFetchAt(handle, 0, nil)
         XCTAssertEqual(afterInc, 1)
-        let afterDec = kk_atomic_int_array_decrementAndFetchAt(handle, 0)
+        let afterDec = kk_atomic_int_array_decrementAndFetchAt(handle, 0, nil)
         XCTAssertEqual(afterDec, 0)
     }
 
     func testOutOfBoundsIndexReturnsZero() {
         let handle = kk_atomic_int_array_create(2)
-        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 99), 0)
-        XCTAssertEqual(kk_atomic_int_array_compareAndSetAt(handle, 99, 0, 1), 0)
-        XCTAssertEqual(kk_atomic_int_array_fetchAndAddAt(handle, 99, 1), 0)
+        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 99, nil), 0)
+        XCTAssertEqual(kk_atomic_int_array_compareAndSetAt(handle, 99, 0, 1, nil), 0)
+        XCTAssertEqual(kk_atomic_int_array_fetchAndAddAt(handle, 99, 1, nil), 0)
     }
 
     func testZeroSizeArrayHasZeroSize() {
@@ -292,7 +292,7 @@ final class RuntimeAtomicIntArrayTests: XCTestCase {
 
     func testInvalidHandleReturnsZero() {
         XCTAssertEqual(kk_atomic_int_array_size(0), 0)
-        XCTAssertEqual(kk_atomic_int_array_loadAt(0, 0), 0)
+        XCTAssertEqual(kk_atomic_int_array_loadAt(0, 0, nil), 0)
     }
 }
 
@@ -310,54 +310,54 @@ final class RuntimeAtomicLongArrayTests: XCTestCase {
 
     func testStoreAndLoad() {
         let handle = kk_atomic_long_array_create(2)
-        _ = kk_atomic_long_array_storeAt(handle, 0, 1000)
-        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0), 1000)
+        _ = kk_atomic_long_array_storeAt(handle, 0, 1000, nil)
+        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0, nil), 1000)
     }
 
     func testExchangeAt() {
         let handle = kk_atomic_long_array_create(1)
-        _ = kk_atomic_long_array_storeAt(handle, 0, 42)
-        let old = kk_atomic_long_array_exchangeAt(handle, 0, 84)
+        _ = kk_atomic_long_array_storeAt(handle, 0, 42, nil)
+        let old = kk_atomic_long_array_exchangeAt(handle, 0, 84, nil)
         XCTAssertEqual(old, 42)
-        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0), 84)
+        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0, nil), 84)
     }
 
     func testCompareAndSetAtSuccess() {
         let handle = kk_atomic_long_array_create(1)
-        _ = kk_atomic_long_array_storeAt(handle, 0, 99)
-        XCTAssertEqual(kk_atomic_long_array_compareAndSetAt(handle, 0, 99, 199), 1)
-        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0), 199)
+        _ = kk_atomic_long_array_storeAt(handle, 0, 99, nil)
+        XCTAssertEqual(kk_atomic_long_array_compareAndSetAt(handle, 0, 99, 199, nil), 1)
+        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0, nil), 199)
     }
 
     func testCompareAndSetAtFailure() {
         let handle = kk_atomic_long_array_create(1)
-        _ = kk_atomic_long_array_storeAt(handle, 0, 10)
-        XCTAssertEqual(kk_atomic_long_array_compareAndSetAt(handle, 0, 999, 20), 0)
-        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0), 10)
+        _ = kk_atomic_long_array_storeAt(handle, 0, 10, nil)
+        XCTAssertEqual(kk_atomic_long_array_compareAndSetAt(handle, 0, 999, 20, nil), 0)
+        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0, nil), 10)
     }
 
     func testFetchAndAddAt() {
         let handle = kk_atomic_long_array_create(1)
-        _ = kk_atomic_long_array_storeAt(handle, 0, 500)
-        let old = kk_atomic_long_array_fetchAndAddAt(handle, 0, 100)
+        _ = kk_atomic_long_array_storeAt(handle, 0, 500, nil)
+        let old = kk_atomic_long_array_fetchAndAddAt(handle, 0, 100, nil)
         XCTAssertEqual(old, 500)
-        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0), 600)
+        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0, nil), 600)
     }
 
     func testIncrementAndDecrementAt() {
         let handle = kk_atomic_long_array_create(1)
-        _ = kk_atomic_long_array_storeAt(handle, 0, 0)
-        _ = kk_atomic_long_array_incrementAndFetchAt(handle, 0)
-        _ = kk_atomic_long_array_incrementAndFetchAt(handle, 0)
-        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0), 2)
-        _ = kk_atomic_long_array_decrementAndFetchAt(handle, 0)
-        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0), 1)
+        _ = kk_atomic_long_array_storeAt(handle, 0, 0, nil)
+        _ = kk_atomic_long_array_incrementAndFetchAt(handle, 0, nil)
+        _ = kk_atomic_long_array_incrementAndFetchAt(handle, 0, nil)
+        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0, nil), 2)
+        _ = kk_atomic_long_array_decrementAndFetchAt(handle, 0, nil)
+        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0, nil), 1)
     }
 
     func testOutOfBoundsIndexReturnsZero() {
         let handle = kk_atomic_long_array_create(2)
-        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 50), 0)
-        XCTAssertEqual(kk_atomic_long_array_compareAndSetAt(handle, 50, 0, 1), 0)
+        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 50, nil), 0)
+        XCTAssertEqual(kk_atomic_long_array_compareAndSetAt(handle, 50, 0, 1, nil), 0)
     }
 }
 

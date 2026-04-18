@@ -679,4 +679,169 @@ extension CodegenBackendIntegrationTests {
             XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "5\n10\n")
         }
     }
+
+    // MARK: - ABI-001: AtomicBoolean.value setter
+
+    func testCodegenAtomicBooleanValueSetterWiresBoolStore() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import kotlin.concurrent.atomics.AtomicBoolean
+
+        fun main() {
+            val a = AtomicBoolean(false)
+            a.value = true
+            println(a.value)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicBoolSetterABI001", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "true\n")
+        }
+    }
+
+    func testCodegenAtomicIntValueSetterWiresIntStore() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import kotlin.concurrent.atomics.AtomicInt
+
+        fun main() {
+            val a = AtomicInt(0)
+            a.value = 42
+            println(a.value)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicIntSetterABI001", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "42\n")
+        }
+    }
+
+    // MARK: - BUG-01: AtomicReference getAndUpdate / updateAndGet type inference
+
+    func testCodegenAtomicReferenceGetAndUpdate() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import kotlin.concurrent.atomics.AtomicReference
+
+        fun main() {
+            val a = AtomicReference("hello")
+            val old = a.getAndUpdate { it + "!" }
+            println(old)
+            println(a.value)
+            val updated = a.updateAndGet { it.uppercase() }
+            println(updated)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicRefGetAndUpdateBUG01", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "hello\nhello!\nHELLO!\n")
+        }
+    }
+
+    // MARK: - BUG-02: AtomicIntArray / AtomicLongArray OOB throws IndexOutOfBoundsException
+
+    func testCodegenAtomicIntArrayOOBLoadThrowsIndexOutOfBounds() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import kotlin.concurrent.atomics.AtomicIntArray
+
+        fun main() {
+            val a = AtomicIntArray(3)
+            try {
+                val _ = a[5]
+                println("no exception")
+            } catch (e: IndexOutOfBoundsException) {
+                println("caught")
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicIntArrayOOBLoad", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "caught\n")
+        }
+    }
+
+    func testCodegenAtomicIntArrayOOBStoreThrowsIndexOutOfBounds() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import kotlin.concurrent.atomics.AtomicIntArray
+
+        fun main() {
+            val a = AtomicIntArray(3)
+            try {
+                a[10] = 99
+                println("no exception")
+            } catch (e: IndexOutOfBoundsException) {
+                println("caught")
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicIntArrayOOBStore", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "caught\n")
+        }
+    }
+
+    func testCodegenAtomicLongArrayOOBLoadThrowsIndexOutOfBounds() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import kotlin.concurrent.atomics.AtomicLongArray
+
+        fun main() {
+            val a = AtomicLongArray(2)
+            try {
+                val _ = a[7]
+                println("no exception")
+            } catch (e: IndexOutOfBoundsException) {
+                println("caught")
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicLongArrayOOBLoad", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "caught\n")
+        }
+    }
+
+    func testCodegenAtomicLongArrayOOBStoreThrowsIndexOutOfBounds() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import kotlin.concurrent.atomics.AtomicLongArray
+
+        fun main() {
+            val a = AtomicLongArray(2)
+            try {
+                a[99] = 1L
+                println("no exception")
+            } catch (e: IndexOutOfBoundsException) {
+                println("caught")
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicLongArrayOOBStore", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "caught\n")
+        }
+    }
 }
