@@ -53,6 +53,10 @@
 ### Phase 3: I/O・パス・時間・並行（common）
 - [ ] STDLIB-GAP-PH3: `kotlin.io`（common） / `kotlin.time` / `kotlin.concurrent` / `kotlin.concurrent.atomics` の未対応を潰す
 - [ ] STDLIB-030: `kotlin.io` common 範囲の file / buffered / `use` を仕様単位で締める
+- [ ] STDLIB-IO-ENC-001: `kotlin.io.encoding.Base64.Default` / `UrlSafe` / `Mime` / `PemMime` を追加する
+- [ ] STDLIB-IO-ENC-002: `Base64.encode(ByteArray)` / `decode(String)` を追加する
+- [ ] STDLIB-IO-ENC-003: `Base64.encodeToByteArray(ByteArray)` / `decodeFromByteArray(ByteArray)` を追加する
+- [ ] STDLIB-IO-ENC-004: `Base64.withPadding(PaddingOption)` と MIME / URL-safe variant の挙動を追加する
 - [ ] STDLIB-032: `kotlin.time` の stable / experimental 境界を明文化
 - [ ] STDLIB-033: `kotlin.concurrent` / `kotlin.concurrent.atomics` / Native concurrent の parity を上げる
 
@@ -76,6 +80,10 @@
 - [ ] STDLIB-ANNO-002: annotation sema / diagnostics を整える
 - [ ] STDLIB-I18N-COMMON-001: `kotlin.text` / common のフォーマット・ロケール
 - [ ] STDLIB-I18N-COMMON-002: `Char.category` を `CharCategory` enum で露出する（現状は `Int` placeholder）
+- [ ] STDLIB-I18N-COMMON-003: `String.Companion.format(locale, format, vararg args)` を追加する
+- [ ] STDLIB-I18N-COMMON-004: `Char.uppercase(Locale)` を追加する
+- [ ] STDLIB-I18N-COMMON-005: `Char.lowercase(Locale)` を追加する
+- [ ] STDLIB-I18N-COMMON-006: `String.toIntOrNull(radix: Int)` を追加する
 - [ ] STDLIB-TIME-EXP-001: `@ExperimentalTime` 系 API の整理（`Clock` / `TimeMark`）
 - [~] STDLIB-CORO-001: `kotlin.coroutines.intrinsics` / cancellation — 主要部分実装済み（`suspendCoroutineUninterceptedOrReturn`, `intercepted`, `CancellationException`）。残課題は別チケットへ分割。
 - [ ] STDLIB-CORO-002: `kotlin.coroutines.intrinsics` の runtime entry point（`startCoroutineUninterceptedOrReturn`, `createCoroutineUnintercepted`）を追加する。対応 C ABI 名: `kk_start_coroutine_unintercepted_or_return`, `kk_create_coroutine_unintercepted`。
