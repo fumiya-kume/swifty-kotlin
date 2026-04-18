@@ -109,11 +109,7 @@
 - `java.text` 前提の日時・数値フォーマット
 
 ## テスト改善タスク
-- [ ] TEST-VAL-001: Value Classes テスト拡充（4→15）
-- [ ] TEST-SCRIPT-002: Script モードテスト拡充（3→10）
 - [ ] TEST-CORO-003: 高度な Coroutine 機能テスト（29→40）
-- [ ] TEST-ERR-004: エラーケースと診断コード網羅（3→20）
-- [ ] TEST-SMOKE-005: Smoke Tests の拡充（5→8）
 - [ ] TEST-INT-006: Integration Tests の整理と重複削減
 - [ ] TEST-CI-007: CI パイプラインの最適化
 - [ ] TEST-REPORT-008: テストレポート形式の改善
