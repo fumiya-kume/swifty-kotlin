@@ -82,7 +82,7 @@ final class RuntimeRangeProgressionEdgeCaseTests: IsolatedRuntimeXCTestCase {
     // MARK: - Step > 1 (IntProgression)
 
     func testIntProgressionStepTwo() {
-        let range = kk_op_step(kk_op_rangeTo(1, 10), 2)
+        let range = kk_op_step(kk_op_rangeTo(1, 10), 2, nil)
         // 1,3,5,7,9 — last aligned to 9
         XCTAssertEqual(kk_range_first(range), 1)
         XCTAssertEqual(kk_range_last(range), 9)
@@ -95,14 +95,14 @@ final class RuntimeRangeProgressionEdgeCaseTests: IsolatedRuntimeXCTestCase {
 
     func testIntProgressionStepExactlyFitsRange() {
         // (0..6) step 2 -> 0,2,4,6; last == 6 (exact fit)
-        let range = kk_op_step(kk_op_rangeTo(0, 6), 2)
+        let range = kk_op_step(kk_op_rangeTo(0, 6), 2, nil)
         XCTAssertEqual(kk_range_last(range), 6)
         XCTAssertEqual(kk_range_count(range), 4)
     }
 
     func testIntProgressionStepLargerThanRange() {
         // (1..3) step 10 -> [1]; last == 1
-        let range = kk_op_step(kk_op_rangeTo(1, 3), 10)
+        let range = kk_op_step(kk_op_rangeTo(1, 3), 10, nil)
         XCTAssertEqual(kk_range_count(range), 1)
         let list = kk_range_toList(range)
         XCTAssertEqual(kk_list_size(list), 1)
@@ -112,14 +112,14 @@ final class RuntimeRangeProgressionEdgeCaseTests: IsolatedRuntimeXCTestCase {
     func testIntProgressionStep_lastAdjustedCorrectly() {
         // Kotlin rule: last = first + ((end - first) / step) * step
         // (2..11) step 3 -> 2,5,8,11; last == 11
-        let range = kk_op_step(kk_op_rangeTo(2, 11), 3)
+        let range = kk_op_step(kk_op_rangeTo(2, 11), 3, nil)
         XCTAssertEqual(kk_range_last(range), 11)
         XCTAssertEqual(kk_range_count(range), 4)
     }
 
     func testIntProgressionStep_lastRoundedDown() {
         // (2..10) step 3 -> 2,5,8; last adjusted to 8, not 10
-        let range = kk_op_step(kk_op_rangeTo(2, 10), 3)
+        let range = kk_op_step(kk_op_rangeTo(2, 10), 3, nil)
         XCTAssertEqual(kk_range_last(range), 8)
         XCTAssertEqual(kk_range_count(range), 3)
     }
@@ -152,7 +152,7 @@ final class RuntimeRangeProgressionEdgeCaseTests: IsolatedRuntimeXCTestCase {
 
     func testDownToStep_containsOnlyReachableElements() {
         // (10 downTo 1 step 3) -> 10,7,4,1
-        let range = kk_op_step(kk_op_downTo(10, 1), 3)
+        let range = kk_op_step(kk_op_downTo(10, 1), 3, nil)
         XCTAssertEqual(kk_range_contains(range, 10), 1)
         XCTAssertEqual(kk_range_contains(range, 7), 1)
         XCTAssertEqual(kk_range_contains(range, 4), 1)
@@ -206,7 +206,7 @@ final class RuntimeRangeProgressionEdgeCaseTests: IsolatedRuntimeXCTestCase {
 
     func testUntilWithStep() {
         // (1 until 10 step 3) -> 1,4,7; last aligned to 7
-        let range = kk_op_step(kk_op_rangeUntil(1, 10), 3)
+        let range = kk_op_step(kk_op_rangeUntil(1, 10), 3, nil)
         XCTAssertEqual(kk_range_count(range), 3)
         let list = kk_range_toList(range)
         XCTAssertEqual(kk_list_get(list, 0), 1)
@@ -244,13 +244,13 @@ final class RuntimeRangeProgressionEdgeCaseTests: IsolatedRuntimeXCTestCase {
 
     // MARK: - step 0 / invalid step handling
 
-    func testStepZeroReturnedAsIsOrEmpty() {
-        // Implementation returns rangeRaw unchanged; just verify no crash and isEmpty
+    func testStepZeroThrowsIllegalArgumentException() {
+        // STDLIB-022: kk_op_step with step=0 must throw IllegalArgumentException.
+        // Previous behavior silently returned the range unchanged; this is now corrected.
+        var thrown = 0
         let range = kk_op_rangeTo(1, 10)
-        let result = kk_op_step(range, 0) // should guard / not change range
-        // The result should not crash; we verify the returned handle is valid
-        _ = kk_range_first(result)
-        _ = kk_range_last(result)
+        _ = kk_op_step(range, 0, &thrown)
+        XCTAssertNotEqual(thrown, 0, "step=0 must throw IllegalArgumentException (STDLIB-022)")
     }
 
     // MARK: - IntProgression fromClosedRange
@@ -584,7 +584,7 @@ final class RuntimeRangeProgressionEdgeCaseTests: IsolatedRuntimeXCTestCase {
 
     func testIterator_withStep_yieldsAlignedValues() {
         // (1..10 step 3) -> 1,4,7,10
-        let range = kk_op_step(kk_op_rangeTo(1, 10), 3)
+        let range = kk_op_step(kk_op_rangeTo(1, 10), 3, nil)
         let iter = kk_range_iterator(range)
         var values: [Int] = []
         while kk_range_hasNext(iter) != 0 {
@@ -613,7 +613,7 @@ final class RuntimeRangeProgressionEdgeCaseTests: IsolatedRuntimeXCTestCase {
 
     func testProgressionSum_descendingWithStep() {
         // (10 downTo 1 step 3) -> 10,7,4,1 -> sum=22
-        let r = kk_op_step(kk_op_downTo(10, 1), 3)
+        let r = kk_op_step(kk_op_downTo(10, 1), 3, nil)
         XCTAssertEqual(kk_range_sum(r), 22)
     }
 }
