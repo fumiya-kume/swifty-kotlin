@@ -277,6 +277,13 @@ private func decodeBase64String(
         break // Accept either form
     }
 
+    // URL-safe alphabet rejects standard `+/` (RFC 4648 §5); do not normalise them away.
+    if alphabet == .urlSafe, input.contains("+") || input.contains("/") {
+        outThrown?.pointee = runtimeAllocateIllegalArgumentException(
+            message: "Illegal base64 character in URL-safe input")
+        return runtimeNullSentinelInt
+    }
+
     // Normalise: for URL-safe, swap - → + and _ → /
     var normalised = input
     if alphabet == .urlSafe {

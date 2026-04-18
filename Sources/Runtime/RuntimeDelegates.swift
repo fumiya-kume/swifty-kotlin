@@ -14,7 +14,12 @@ private func runtimeThrowNotNullUninitialized(
 ) -> Int {
     let name = propertyName ?? "unknown"
     let message = "Property \(name) should be initialized before get."
-    outThrown?.pointee = runtimeAllocateIllegalStateException(message: message)
+    guard let outThrown else {
+        // Call sites compiled before STDLIB-PROP-ABI-001 omit the outThrown slot;
+        // keep a hard trap so executables still fail fast (DelegatePropertyKIRTests).
+        fatalError("IllegalStateException: \(message)")
+    }
+    outThrown.pointee = runtimeAllocateIllegalStateException(message: message)
     return 0
 }
 
