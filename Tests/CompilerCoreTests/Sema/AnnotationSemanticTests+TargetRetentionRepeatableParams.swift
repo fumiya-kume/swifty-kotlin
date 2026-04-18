@@ -163,13 +163,13 @@ extension AnnotationSemanticTests {
         """
 
         let ctx = runSemaCollectingDiagnostics(source)
-        // The test verifies no diagnostic is emitted for using an annotation twice
-        // when the annotation class is @Repeatable.
-        let diags = ctx.diagnostics.diagnostics.filter {
-            $0.message.contains("Tag") && ($0.message.contains("repeat") || $0.message.contains("duplicate"))
-        }
-
-        XCTAssertTrue(diags.isEmpty, "Expected no duplicate-annotation diagnostics for @Repeatable annotation, got: \(diags)")
+        // The test verifies no error-level diagnostics for using an annotation twice
+        // when the annotation class is @Repeatable (stricter than substring heuristics).
+        let errors = ctx.diagnostics.diagnostics.filter { $0.severity == .error }
+        XCTAssertTrue(
+            errors.isEmpty,
+            "Expected no sema errors for @Repeatable duplicate applications, got: \(errors.map(\.message))"
+        )
     }
 
     // MARK: - @MustBeDocumented visibility in reflection

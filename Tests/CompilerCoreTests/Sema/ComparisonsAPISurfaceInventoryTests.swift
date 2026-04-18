@@ -485,6 +485,8 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
         }
 
         // Factory functions
+        // Note: compareBy (single-selector) links to kk_comparator_from_selector.
+        // kk_comparator_from_selector_primitive is the link for compareByPrimitive (internal name).
         let factoryLinks: [(path: [String], expectedLinks: [String])] = [
             (
                 ["kotlin", "comparisons", "compareBy"],
