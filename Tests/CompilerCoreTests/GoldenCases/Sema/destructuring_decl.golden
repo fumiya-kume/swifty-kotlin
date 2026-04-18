@@ -3576,52 +3576,87 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=class fq=Point vis=public flags=dataType
-symbol s3579 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#3578 params=[Int,Int] ret=Class#3578 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3580 kind=valueParameter fq=Point.<init>.$3579.x vis=private flags=_
-symbol s3581 kind=valueParameter fq=Point.<init>.$3579.y vis=private flags=_
-symbol s3582 kind=function fq=Point.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#3578 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3583 kind=function fq=Point.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#3578 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3584 kind=function fq=Point.copy vis=public flags=synthetic sig=recv=Class#3578 params=[Int,Int] ret=Class#3578 suspend=0 defaults=[1,1] vararg=[0,0]
-symbol s3585 kind=valueParameter fq=Point.copy.$3584.x vis=private flags=_
-symbol s3586 kind=valueParameter fq=Point.copy.$3584.y vis=private flags=_
-symbol s3587 kind=function fq=Point.hashCode vis=public flags=synthetic sig=recv=Class#3578 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3588 kind=property fq=Point.x vis=public flags=_ type=Int
-symbol s3589 kind=property fq=Point.y vis=public flags=_ type=Int
-symbol s3590 kind=function fq=Point.toString vis=public flags=synthetic sig=recv=Class#3578 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3591 kind=function fq=Point.equals vis=public flags=synthetic sig=recv=Class#3578 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s3592 kind=valueParameter fq=Point.equals.other vis=private flags=synthetic
-symbol s3593 kind=function fq=basicDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3594 kind=function fq=destructuringWithUnderscore vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3595 kind=local fq=__local_4.p vis=private flags=_ type=Class#3578
-symbol s3596 kind=local fq=__destructuring_6.a vis=private flags=_ type=Int
-symbol s3597 kind=local fq=__destructuring_6.b vis=private flags=_ type=Int
-symbol s3598 kind=local fq=__local_17.p vis=private flags=_ type=Class#3578
-symbol s3599 kind=local fq=__destructuring_19.second vis=private flags=_ type=Int
+symbol s3578 kind=package fq=kotlin.native.concurrent vis=public flags=synthetic
+symbol s3579 kind=enumClass fq=kotlin.native.concurrent.TransferMode vis=public flags=synthetic
+symbol s3580 kind=field fq=kotlin.native.concurrent.TransferMode.SAFE vis=public flags=synthetic type=Class#3579
+symbol s3581 kind=field fq=kotlin.native.concurrent.TransferMode.UNSAFE vis=public flags=synthetic type=Class#3579
+symbol s3582 kind=enumClass fq=kotlin.native.concurrent.FutureState vis=public flags=synthetic
+symbol s3583 kind=field fq=kotlin.native.concurrent.FutureState.SCHEDULED vis=public flags=synthetic type=Class#3582
+symbol s3584 kind=field fq=kotlin.native.concurrent.FutureState.COMPUTED vis=public flags=synthetic type=Class#3582
+symbol s3585 kind=field fq=kotlin.native.concurrent.FutureState.THROWN vis=public flags=synthetic type=Class#3582
+symbol s3586 kind=field fq=kotlin.native.concurrent.FutureState.CANCELLED vis=public flags=synthetic type=Class#3582
+symbol s3587 kind=class fq=kotlin.native.concurrent.Worker vis=public flags=synthetic type=Class#3587
+symbol s3588 kind=object fq=kotlin.native.concurrent.Worker.Companion vis=public flags=synthetic type=Class#3588
+symbol s3589 kind=function fq=kotlin.native.concurrent.Worker.Companion.start vis=public flags=synthetic sig=recv=Class#3588 params=[String?] ret=Class#3587 suspend=0 defaults=[1] vararg=[0]
+symbol s3590 kind=valueParameter fq=kotlin.native.concurrent.Worker.Companion.start.name vis=private flags=synthetic
+symbol s3591 kind=function fq=kotlin.native.concurrent.Worker.requestTermination vis=public flags=synthetic sig=recv=Class#3587 params=[Boolean] ret=Unit suspend=0 defaults=[1] vararg=[0]
+symbol s3592 kind=valueParameter fq=kotlin.native.concurrent.Worker.requestTermination.processScheduled vis=private flags=synthetic
+symbol s3593 kind=property fq=kotlin.native.concurrent.Worker.isTerminated vis=public flags=synthetic type=Boolean
+symbol s3594 kind=property fq=kotlin.native.concurrent.Worker.name vis=public flags=synthetic type=String
+symbol s3595 kind=class fq=kotlin.native.concurrent.Future vis=public flags=synthetic type=Class#3595<T#3596>
+symbol s3596 kind=typeParameter fq=kotlin.native.concurrent.Future.T vis=private flags=_
+symbol s3597 kind=property fq=kotlin.native.concurrent.Future.result vis=public flags=synthetic type=T#3596
+symbol s3598 kind=function fq=kotlin.native.concurrent.Future.consume vis=public flags=synthetic sig=recv=Class#3595<T#3596> params=[] ret=T#3596 suspend=0 defaults=[] vararg=[]
+symbol s3599 kind=function fq=kotlin.native.concurrent.Future.getState vis=public flags=synthetic sig=recv=Class#3595<T#3596> params=[] ret=Class#3582 suspend=0 defaults=[] vararg=[]
+symbol s3600 kind=class fq=kotlin.native.concurrent.AtomicReference vis=public flags=synthetic type=Class#3600<T#3601>
+symbol s3601 kind=typeParameter fq=kotlin.native.concurrent.AtomicReference.T vis=private flags=_
+symbol s3602 kind=function fq=kotlin.native.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[T#3601] ret=Class#3600<T#3601> suspend=0 defaults=[0] vararg=[0]
+symbol s3603 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.<init>.value vis=private flags=synthetic
+symbol s3604 kind=property fq=kotlin.native.concurrent.AtomicReference.value vis=public flags=synthetic type=T#3601
+symbol s3605 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSwap vis=public flags=synthetic sig=recv=Class#3600<T#3601> params=[T#3601,T#3601] ret=T#3601 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3606 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.expected vis=private flags=synthetic
+symbol s3607 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.new vis=private flags=synthetic
+symbol s3608 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#3600<T#3601> params=[T#3601,T#3601] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3609 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.expected vis=private flags=synthetic
+symbol s3610 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
+symbol s3611 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
+symbol s3612 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
+symbol s3613 kind=class fq=Point vis=public flags=dataType
+symbol s3614 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#3613 params=[Int,Int] ret=Class#3613 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3615 kind=valueParameter fq=Point.<init>.$3614.x vis=private flags=_
+symbol s3616 kind=valueParameter fq=Point.<init>.$3614.y vis=private flags=_
+symbol s3617 kind=function fq=Point.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#3613 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3618 kind=function fq=Point.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#3613 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3619 kind=function fq=Point.copy vis=public flags=synthetic sig=recv=Class#3613 params=[Int,Int] ret=Class#3613 suspend=0 defaults=[1,1] vararg=[0,0]
+symbol s3620 kind=valueParameter fq=Point.copy.$3619.x vis=private flags=_
+symbol s3621 kind=valueParameter fq=Point.copy.$3619.y vis=private flags=_
+symbol s3622 kind=function fq=Point.hashCode vis=public flags=synthetic sig=recv=Class#3613 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3623 kind=property fq=Point.x vis=public flags=_ type=Int
+symbol s3624 kind=property fq=Point.y vis=public flags=_ type=Int
+symbol s3625 kind=function fq=Point.toString vis=public flags=synthetic sig=recv=Class#3613 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3626 kind=function fq=Point.equals vis=public flags=synthetic sig=recv=Class#3613 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s3627 kind=valueParameter fq=Point.equals.other vis=private flags=synthetic
+symbol s3628 kind=function fq=basicDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3629 kind=function fq=destructuringWithUnderscore vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3630 kind=local fq=__local_4.p vis=private flags=_ type=Class#3613
+symbol s3631 kind=local fq=__destructuring_6.a vis=private flags=_ type=Int
+symbol s3632 kind=local fq=__destructuring_6.b vis=private flags=_ type=Int
+symbol s3633 kind=local fq=__local_17.p vis=private flags=_ type=Class#3613
+symbol s3634 kind=local fq=__destructuring_19.second vis=private flags=_ type=Int
 file f0 package=_
-  decl d2 class Point sym=s3578
-  decl d3 fun basicDestructuring suspend=0 inline=0 sym=s3593
-  decl d4 fun destructuringWithUnderscore suspend=0 inline=0 sym=s3594
+  decl d2 class Point sym=s3613
+  decl d3 fun basicDestructuring suspend=0 inline=0 sym=s3628
+  decl d4 fun destructuringWithUnderscore suspend=0 inline=0 sym=s3629
 expr e0 name(Point) type=_
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
-expr e3 call callee=e0 args=[_:e1,_:e2] type=Class#3578 call=s3579 map=[0->0,1->1] targs=[]
-expr e4 localDecl p mutable=0 type=_ init=e3 type=Unit ref=s3595
-expr e5 name(p) type=Class#3578 ref=s3595
+expr e3 call callee=e0 args=[_:e1,_:e2] type=Class#3613 call=s3614 map=[0->0,1->1] targs=[]
+expr e4 localDecl p mutable=0 type=_ init=e3 type=Unit ref=s3630
+expr e5 name(p) type=Class#3613 ref=s3630
 expr e6 destructuringDecl names=[a,b] mutable=0 init=e5 type=Unit
 expr e7 name(println) type=_
-expr e8 name(a) type=Int ref=s3596
+expr e8 name(a) type=Int ref=s3631
 expr e9 call callee=e7 args=[_:e8] type=Unit call=s1720 map=[0->0] targs=[]
 expr e10 name(println) type=_
-expr e11 name(b) type=Int ref=s3597
+expr e11 name(b) type=Int ref=s3632
 expr e12 call callee=e10 args=[_:e11] type=Unit call=s1720 map=[0->0] targs=[]
 expr e13 name(Point) type=_
 expr e14 int(3) type=Int
 expr e15 int(4) type=Int
-expr e16 call callee=e13 args=[_:e14,_:e15] type=Class#3578 call=s3579 map=[0->0,1->1] targs=[]
-expr e17 localDecl p mutable=0 type=_ init=e16 type=Unit ref=s3598
-expr e18 name(p) type=Class#3578 ref=s3598
+expr e16 call callee=e13 args=[_:e14,_:e15] type=Class#3613 call=s3614 map=[0->0,1->1] targs=[]
+expr e17 localDecl p mutable=0 type=_ init=e16 type=Unit ref=s3633
+expr e18 name(p) type=Class#3613 ref=s3633
 expr e19 destructuringDecl names=[_,second] mutable=0 init=e18 type=Unit
 expr e20 name(println) type=_
-expr e21 name(second) type=Int ref=s3599
+expr e21 name(second) type=Int ref=s3634
 expr e22 call callee=e20 args=[_:e21] type=Unit call=s1720 map=[0->0] targs=[]

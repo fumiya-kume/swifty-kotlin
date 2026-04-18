@@ -3576,35 +3576,70 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=interface fq=golden.sema.A vis=public flags=_
-symbol s3579 kind=function fq=golden.sema.A.a vis=public flags=abstractType sig=recv=Class#3578 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3580 kind=interface fq=golden.sema.B vis=public flags=_
-symbol s3581 kind=function fq=golden.sema.B.b vis=public flags=abstractType sig=recv=Class#3580 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3582 kind=function fq=golden.sema.intersect vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3583 kind=valueParameter fq=golden.sema.intersect.$3582.x vis=private flags=_
-symbol s3584 kind=function fq=golden.sema.idTag vis=public flags=_ sig=recv=Any params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3585 kind=function fq=golden.sema.directValue vis=public flags=_ sig=recv=_ params=[T#3586 & Any] ret=Int suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
-symbol s3586 kind=typeParameter fq=golden.sema.directValue.$3585.T vis=private flags=_
-symbol s3587 kind=valueParameter fq=golden.sema.directValue.$3585.x vis=private flags=_
-symbol s3588 kind=function fq=golden.sema.safeValue vis=public flags=_ sig=recv=_ params=[T#3589 & Any] ret=Int? suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
-symbol s3589 kind=typeParameter fq=golden.sema.safeValue.$3588.T vis=private flags=_
-symbol s3590 kind=valueParameter fq=golden.sema.safeValue.$3588.x vis=private flags=_
+symbol s3578 kind=package fq=kotlin.native.concurrent vis=public flags=synthetic
+symbol s3579 kind=enumClass fq=kotlin.native.concurrent.TransferMode vis=public flags=synthetic
+symbol s3580 kind=field fq=kotlin.native.concurrent.TransferMode.SAFE vis=public flags=synthetic type=Class#3579
+symbol s3581 kind=field fq=kotlin.native.concurrent.TransferMode.UNSAFE vis=public flags=synthetic type=Class#3579
+symbol s3582 kind=enumClass fq=kotlin.native.concurrent.FutureState vis=public flags=synthetic
+symbol s3583 kind=field fq=kotlin.native.concurrent.FutureState.SCHEDULED vis=public flags=synthetic type=Class#3582
+symbol s3584 kind=field fq=kotlin.native.concurrent.FutureState.COMPUTED vis=public flags=synthetic type=Class#3582
+symbol s3585 kind=field fq=kotlin.native.concurrent.FutureState.THROWN vis=public flags=synthetic type=Class#3582
+symbol s3586 kind=field fq=kotlin.native.concurrent.FutureState.CANCELLED vis=public flags=synthetic type=Class#3582
+symbol s3587 kind=class fq=kotlin.native.concurrent.Worker vis=public flags=synthetic type=Class#3587
+symbol s3588 kind=object fq=kotlin.native.concurrent.Worker.Companion vis=public flags=synthetic type=Class#3588
+symbol s3589 kind=function fq=kotlin.native.concurrent.Worker.Companion.start vis=public flags=synthetic sig=recv=Class#3588 params=[String?] ret=Class#3587 suspend=0 defaults=[1] vararg=[0]
+symbol s3590 kind=valueParameter fq=kotlin.native.concurrent.Worker.Companion.start.name vis=private flags=synthetic
+symbol s3591 kind=function fq=kotlin.native.concurrent.Worker.requestTermination vis=public flags=synthetic sig=recv=Class#3587 params=[Boolean] ret=Unit suspend=0 defaults=[1] vararg=[0]
+symbol s3592 kind=valueParameter fq=kotlin.native.concurrent.Worker.requestTermination.processScheduled vis=private flags=synthetic
+symbol s3593 kind=property fq=kotlin.native.concurrent.Worker.isTerminated vis=public flags=synthetic type=Boolean
+symbol s3594 kind=property fq=kotlin.native.concurrent.Worker.name vis=public flags=synthetic type=String
+symbol s3595 kind=class fq=kotlin.native.concurrent.Future vis=public flags=synthetic type=Class#3595<T#3596>
+symbol s3596 kind=typeParameter fq=kotlin.native.concurrent.Future.T vis=private flags=_
+symbol s3597 kind=property fq=kotlin.native.concurrent.Future.result vis=public flags=synthetic type=T#3596
+symbol s3598 kind=function fq=kotlin.native.concurrent.Future.consume vis=public flags=synthetic sig=recv=Class#3595<T#3596> params=[] ret=T#3596 suspend=0 defaults=[] vararg=[]
+symbol s3599 kind=function fq=kotlin.native.concurrent.Future.getState vis=public flags=synthetic sig=recv=Class#3595<T#3596> params=[] ret=Class#3582 suspend=0 defaults=[] vararg=[]
+symbol s3600 kind=class fq=kotlin.native.concurrent.AtomicReference vis=public flags=synthetic type=Class#3600<T#3601>
+symbol s3601 kind=typeParameter fq=kotlin.native.concurrent.AtomicReference.T vis=private flags=_
+symbol s3602 kind=function fq=kotlin.native.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[T#3601] ret=Class#3600<T#3601> suspend=0 defaults=[0] vararg=[0]
+symbol s3603 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.<init>.value vis=private flags=synthetic
+symbol s3604 kind=property fq=kotlin.native.concurrent.AtomicReference.value vis=public flags=synthetic type=T#3601
+symbol s3605 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSwap vis=public flags=synthetic sig=recv=Class#3600<T#3601> params=[T#3601,T#3601] ret=T#3601 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3606 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.expected vis=private flags=synthetic
+symbol s3607 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.new vis=private flags=synthetic
+symbol s3608 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#3600<T#3601> params=[T#3601,T#3601] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3609 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.expected vis=private flags=synthetic
+symbol s3610 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
+symbol s3611 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
+symbol s3612 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
+symbol s3613 kind=interface fq=golden.sema.A vis=public flags=_
+symbol s3614 kind=function fq=golden.sema.A.a vis=public flags=abstractType sig=recv=Class#3613 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3615 kind=interface fq=golden.sema.B vis=public flags=_
+symbol s3616 kind=function fq=golden.sema.B.b vis=public flags=abstractType sig=recv=Class#3615 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3617 kind=function fq=golden.sema.intersect vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3618 kind=valueParameter fq=golden.sema.intersect.$3617.x vis=private flags=_
+symbol s3619 kind=function fq=golden.sema.idTag vis=public flags=_ sig=recv=Any params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3620 kind=function fq=golden.sema.directValue vis=public flags=_ sig=recv=_ params=[T#3621 & Any] ret=Int suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
+symbol s3621 kind=typeParameter fq=golden.sema.directValue.$3620.T vis=private flags=_
+symbol s3622 kind=valueParameter fq=golden.sema.directValue.$3620.x vis=private flags=_
+symbol s3623 kind=function fq=golden.sema.safeValue vis=public flags=_ sig=recv=_ params=[T#3624 & Any] ret=Int? suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
+symbol s3624 kind=typeParameter fq=golden.sema.safeValue.$3623.T vis=private flags=_
+symbol s3625 kind=valueParameter fq=golden.sema.safeValue.$3623.x vis=private flags=_
 file f0 package=golden.sema
-  decl d1 interface A sym=s3578
-  decl d3 interface B sym=s3580
-  decl d4 fun intersect suspend=0 inline=0 sym=s3582
-  decl d5 fun idTag suspend=0 inline=0 sym=s3584
-  decl d6 fun directValue suspend=0 inline=0 sym=s3585
-  decl d7 fun safeValue suspend=0 inline=0 sym=s3588
-expr e0 name(x) type=Any ref=s3583
+  decl d1 interface A sym=s3613
+  decl d3 interface B sym=s3615
+  decl d4 fun intersect suspend=0 inline=0 sym=s3617
+  decl d5 fun idTag suspend=0 inline=0 sym=s3619
+  decl d6 fun directValue suspend=0 inline=0 sym=s3620
+  decl d7 fun safeValue suspend=0 inline=0 sym=s3623
+expr e0 name(x) type=Any ref=s3618
 expr e1 isCheck expr=e0 type=t4 type=Boolean
-expr e2 name(x) type=Class#3578 ref=s3583
+expr e2 name(x) type=Class#3613 ref=s3618
 expr e3 isCheck expr=e2 type=t5 type=Boolean
 expr e4 binary(logicalAnd) lhs=e1 rhs=e3 type=Boolean
-expr e5 name(x) type=Class#3578 & Class#3580 ref=s3583
-expr e6 memberCall recv=e5 callee=a args=[] type=String call=s3579 map=[] targs=[]
-expr e7 name(x) type=Class#3578 & Class#3580 ref=s3583
-expr e8 memberCall recv=e7 callee=b args=[] type=Int call=s3581 map=[] targs=[]
+expr e5 name(x) type=Class#3613 & Class#3615 ref=s3618
+expr e6 memberCall recv=e5 callee=a args=[] type=String call=s3614 map=[] targs=[]
+expr e7 name(x) type=Class#3613 & Class#3615 ref=s3618
+expr e8 memberCall recv=e7 callee=b args=[] type=Int call=s3616 map=[] targs=[]
 expr e9 memberCall recv=e8 callee=toString args=[] type=String
 expr e10 binary(add) lhs=e6 rhs=e9 type=String
 expr e11 return value=e10 type=Nothing
@@ -3613,7 +3648,7 @@ expr e13 if cond=e4 then=e12 else=_ type=Unit
 expr e14 string(unknown) type=String
 expr e15 return value=e14 type=Nothing
 expr e16 int(7) type=Int
-expr e17 name(x) type=T#3586 & Any ref=s3587
-expr e18 memberCall recv=e17 callee=idTag args=[] type=Int call=s3584 map=[] targs=[]
-expr e19 name(x) type=T#3589 & Any ref=s3590
-expr e20 safeMemberCall recv=e19 callee=idTag args=[] type=Int? call=s3584 map=[] targs=[]
+expr e17 name(x) type=T#3621 & Any ref=s3622
+expr e18 memberCall recv=e17 callee=idTag args=[] type=Int call=s3619 map=[] targs=[]
+expr e19 name(x) type=T#3624 & Any ref=s3625
+expr e20 safeMemberCall recv=e19 callee=idTag args=[] type=Int? call=s3619 map=[] targs=[]

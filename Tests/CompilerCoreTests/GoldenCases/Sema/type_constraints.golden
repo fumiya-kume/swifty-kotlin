@@ -3576,113 +3576,148 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=function fq=golden.sema.clamp vis=public flags=_ sig=recv=_ params=[T#3579,T#3579,T#3579] ret=T#3579 suspend=0 defaults=[0,0,0] vararg=[0,0,0] bounds=[Class#134<T#3579>]
-symbol s3579 kind=typeParameter fq=golden.sema.clamp.$3578.T vis=private flags=_
-symbol s3580 kind=valueParameter fq=golden.sema.clamp.$3578.value vis=private flags=_
-symbol s3581 kind=valueParameter fq=golden.sema.clamp.$3578.min vis=private flags=_
-symbol s3582 kind=valueParameter fq=golden.sema.clamp.$3578.max vis=private flags=_
-symbol s3583 kind=function fq=golden.sema.maxItem vis=public flags=_ sig=recv=_ params=[T#3584,T#3584] ret=T#3584 suspend=0 defaults=[0,0] vararg=[0,0] bounds=[Class#134<T#3584>]
-symbol s3584 kind=typeParameter fq=golden.sema.maxItem.$3583.T vis=private flags=_
-symbol s3585 kind=valueParameter fq=golden.sema.maxItem.$3583.a vis=private flags=_
-symbol s3586 kind=valueParameter fq=golden.sema.maxItem.$3583.b vis=private flags=_
-symbol s3587 kind=function fq=golden.sema.processItem vis=public flags=_ sig=recv=_ params=[T#3588] ret=String suspend=0 defaults=[0] vararg=[0] bounds=[Class#134<T#3588>&Any]
-symbol s3588 kind=typeParameter fq=golden.sema.processItem.$3587.T vis=private flags=_
-symbol s3589 kind=valueParameter fq=golden.sema.processItem.$3587.v vis=private flags=_
-symbol s3590 kind=class fq=golden.sema.BoundedBox vis=public flags=_
-symbol s3591 kind=typeParameter fq=golden.sema.BoundedBox.$class3590.T vis=private flags=_
-symbol s3592 kind=constructor fq=golden.sema.BoundedBox.<init> vis=public flags=_ sig=recv=Class#3590<T#3591> params=[T#3591] ret=Class#3590<T#3591> suspend=0 defaults=[0] vararg=[0]
-symbol s3593 kind=valueParameter fq=golden.sema.BoundedBox.<init>.$3592.value vis=private flags=_
-symbol s3594 kind=function fq=golden.sema.BoundedBox.isLessThan vis=public flags=_ sig=recv=Class#3590<T#3591> params=[T#3591] ret=Boolean suspend=0 defaults=[0] vararg=[0] bounds=[Class#134<T#3591>]
-symbol s3595 kind=valueParameter fq=golden.sema.BoundedBox.isLessThan.$3594.other vis=private flags=_
-symbol s3596 kind=function fq=golden.sema.BoundedBox.isGreaterThan vis=public flags=_ sig=recv=Class#3590<T#3591> params=[T#3591] ret=Boolean suspend=0 defaults=[0] vararg=[0] bounds=[Class#134<T#3591>]
-symbol s3597 kind=valueParameter fq=golden.sema.BoundedBox.isGreaterThan.$3596.other vis=private flags=_
-symbol s3598 kind=function fq=golden.sema.BoundedBox.describe vis=public flags=_ sig=recv=Class#3590<T#3591> params=[] ret=String suspend=0 defaults=[] vararg=[] bounds=[Class#134<T#3591>]
-symbol s3599 kind=property fq=golden.sema.BoundedBox.value vis=public flags=_ type=T#3591
-symbol s3600 kind=function fq=golden.sema.useConstraints vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3601 kind=local fq=__local_31.c1 vis=private flags=_ type=Int
-symbol s3602 kind=local fq=__local_37.c2 vis=private flags=_ type=String
-symbol s3603 kind=local fq=__local_42.m1 vis=private flags=_ type=Int
-symbol s3604 kind=local fq=__local_47.m2 vis=private flags=_ type=String
-symbol s3605 kind=local fq=__local_51.p1 vis=private flags=_ type=String
-symbol s3606 kind=local fq=__local_55.p2 vis=private flags=_ type=String
-symbol s3607 kind=local fq=__local_59.box vis=private flags=_ type=Class#3590<Int>
-symbol s3608 kind=local fq=__local_63.lt vis=private flags=_ type=Boolean
-symbol s3609 kind=local fq=__local_67.gt vis=private flags=_ type=Boolean
-symbol s3610 kind=local fq=__local_70.desc vis=private flags=_ type=String
+symbol s3578 kind=package fq=kotlin.native.concurrent vis=public flags=synthetic
+symbol s3579 kind=enumClass fq=kotlin.native.concurrent.TransferMode vis=public flags=synthetic
+symbol s3580 kind=field fq=kotlin.native.concurrent.TransferMode.SAFE vis=public flags=synthetic type=Class#3579
+symbol s3581 kind=field fq=kotlin.native.concurrent.TransferMode.UNSAFE vis=public flags=synthetic type=Class#3579
+symbol s3582 kind=enumClass fq=kotlin.native.concurrent.FutureState vis=public flags=synthetic
+symbol s3583 kind=field fq=kotlin.native.concurrent.FutureState.SCHEDULED vis=public flags=synthetic type=Class#3582
+symbol s3584 kind=field fq=kotlin.native.concurrent.FutureState.COMPUTED vis=public flags=synthetic type=Class#3582
+symbol s3585 kind=field fq=kotlin.native.concurrent.FutureState.THROWN vis=public flags=synthetic type=Class#3582
+symbol s3586 kind=field fq=kotlin.native.concurrent.FutureState.CANCELLED vis=public flags=synthetic type=Class#3582
+symbol s3587 kind=class fq=kotlin.native.concurrent.Worker vis=public flags=synthetic type=Class#3587
+symbol s3588 kind=object fq=kotlin.native.concurrent.Worker.Companion vis=public flags=synthetic type=Class#3588
+symbol s3589 kind=function fq=kotlin.native.concurrent.Worker.Companion.start vis=public flags=synthetic sig=recv=Class#3588 params=[String?] ret=Class#3587 suspend=0 defaults=[1] vararg=[0]
+symbol s3590 kind=valueParameter fq=kotlin.native.concurrent.Worker.Companion.start.name vis=private flags=synthetic
+symbol s3591 kind=function fq=kotlin.native.concurrent.Worker.requestTermination vis=public flags=synthetic sig=recv=Class#3587 params=[Boolean] ret=Unit suspend=0 defaults=[1] vararg=[0]
+symbol s3592 kind=valueParameter fq=kotlin.native.concurrent.Worker.requestTermination.processScheduled vis=private flags=synthetic
+symbol s3593 kind=property fq=kotlin.native.concurrent.Worker.isTerminated vis=public flags=synthetic type=Boolean
+symbol s3594 kind=property fq=kotlin.native.concurrent.Worker.name vis=public flags=synthetic type=String
+symbol s3595 kind=class fq=kotlin.native.concurrent.Future vis=public flags=synthetic type=Class#3595<T#3596>
+symbol s3596 kind=typeParameter fq=kotlin.native.concurrent.Future.T vis=private flags=_
+symbol s3597 kind=property fq=kotlin.native.concurrent.Future.result vis=public flags=synthetic type=T#3596
+symbol s3598 kind=function fq=kotlin.native.concurrent.Future.consume vis=public flags=synthetic sig=recv=Class#3595<T#3596> params=[] ret=T#3596 suspend=0 defaults=[] vararg=[]
+symbol s3599 kind=function fq=kotlin.native.concurrent.Future.getState vis=public flags=synthetic sig=recv=Class#3595<T#3596> params=[] ret=Class#3582 suspend=0 defaults=[] vararg=[]
+symbol s3600 kind=class fq=kotlin.native.concurrent.AtomicReference vis=public flags=synthetic type=Class#3600<T#3601>
+symbol s3601 kind=typeParameter fq=kotlin.native.concurrent.AtomicReference.T vis=private flags=_
+symbol s3602 kind=function fq=kotlin.native.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[T#3601] ret=Class#3600<T#3601> suspend=0 defaults=[0] vararg=[0]
+symbol s3603 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.<init>.value vis=private flags=synthetic
+symbol s3604 kind=property fq=kotlin.native.concurrent.AtomicReference.value vis=public flags=synthetic type=T#3601
+symbol s3605 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSwap vis=public flags=synthetic sig=recv=Class#3600<T#3601> params=[T#3601,T#3601] ret=T#3601 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3606 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.expected vis=private flags=synthetic
+symbol s3607 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.new vis=private flags=synthetic
+symbol s3608 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#3600<T#3601> params=[T#3601,T#3601] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3609 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.expected vis=private flags=synthetic
+symbol s3610 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
+symbol s3611 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
+symbol s3612 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
+symbol s3613 kind=function fq=golden.sema.clamp vis=public flags=_ sig=recv=_ params=[T#3614,T#3614,T#3614] ret=T#3614 suspend=0 defaults=[0,0,0] vararg=[0,0,0] bounds=[Class#134<T#3614>]
+symbol s3614 kind=typeParameter fq=golden.sema.clamp.$3613.T vis=private flags=_
+symbol s3615 kind=valueParameter fq=golden.sema.clamp.$3613.value vis=private flags=_
+symbol s3616 kind=valueParameter fq=golden.sema.clamp.$3613.min vis=private flags=_
+symbol s3617 kind=valueParameter fq=golden.sema.clamp.$3613.max vis=private flags=_
+symbol s3618 kind=function fq=golden.sema.maxItem vis=public flags=_ sig=recv=_ params=[T#3619,T#3619] ret=T#3619 suspend=0 defaults=[0,0] vararg=[0,0] bounds=[Class#134<T#3619>]
+symbol s3619 kind=typeParameter fq=golden.sema.maxItem.$3618.T vis=private flags=_
+symbol s3620 kind=valueParameter fq=golden.sema.maxItem.$3618.a vis=private flags=_
+symbol s3621 kind=valueParameter fq=golden.sema.maxItem.$3618.b vis=private flags=_
+symbol s3622 kind=function fq=golden.sema.processItem vis=public flags=_ sig=recv=_ params=[T#3623] ret=String suspend=0 defaults=[0] vararg=[0] bounds=[Class#134<T#3623>&Any]
+symbol s3623 kind=typeParameter fq=golden.sema.processItem.$3622.T vis=private flags=_
+symbol s3624 kind=valueParameter fq=golden.sema.processItem.$3622.v vis=private flags=_
+symbol s3625 kind=class fq=golden.sema.BoundedBox vis=public flags=_
+symbol s3626 kind=typeParameter fq=golden.sema.BoundedBox.$class3625.T vis=private flags=_
+symbol s3627 kind=constructor fq=golden.sema.BoundedBox.<init> vis=public flags=_ sig=recv=Class#3625<T#3626> params=[T#3626] ret=Class#3625<T#3626> suspend=0 defaults=[0] vararg=[0]
+symbol s3628 kind=valueParameter fq=golden.sema.BoundedBox.<init>.$3627.value vis=private flags=_
+symbol s3629 kind=function fq=golden.sema.BoundedBox.isLessThan vis=public flags=_ sig=recv=Class#3625<T#3626> params=[T#3626] ret=Boolean suspend=0 defaults=[0] vararg=[0] bounds=[Class#134<T#3626>]
+symbol s3630 kind=valueParameter fq=golden.sema.BoundedBox.isLessThan.$3629.other vis=private flags=_
+symbol s3631 kind=function fq=golden.sema.BoundedBox.isGreaterThan vis=public flags=_ sig=recv=Class#3625<T#3626> params=[T#3626] ret=Boolean suspend=0 defaults=[0] vararg=[0] bounds=[Class#134<T#3626>]
+symbol s3632 kind=valueParameter fq=golden.sema.BoundedBox.isGreaterThan.$3631.other vis=private flags=_
+symbol s3633 kind=function fq=golden.sema.BoundedBox.describe vis=public flags=_ sig=recv=Class#3625<T#3626> params=[] ret=String suspend=0 defaults=[] vararg=[] bounds=[Class#134<T#3626>]
+symbol s3634 kind=property fq=golden.sema.BoundedBox.value vis=public flags=_ type=T#3626
+symbol s3635 kind=function fq=golden.sema.useConstraints vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3636 kind=local fq=__local_31.c1 vis=private flags=_ type=Int
+symbol s3637 kind=local fq=__local_37.c2 vis=private flags=_ type=String
+symbol s3638 kind=local fq=__local_42.m1 vis=private flags=_ type=Int
+symbol s3639 kind=local fq=__local_47.m2 vis=private flags=_ type=String
+symbol s3640 kind=local fq=__local_51.p1 vis=private flags=_ type=String
+symbol s3641 kind=local fq=__local_55.p2 vis=private flags=_ type=String
+symbol s3642 kind=local fq=__local_59.box vis=private flags=_ type=Class#3625<Int>
+symbol s3643 kind=local fq=__local_63.lt vis=private flags=_ type=Boolean
+symbol s3644 kind=local fq=__local_67.gt vis=private flags=_ type=Boolean
+symbol s3645 kind=local fq=__local_70.desc vis=private flags=_ type=String
 file f0 package=golden.sema
-  decl d0 fun clamp suspend=0 inline=0 sym=s3578
-  decl d1 fun maxItem suspend=0 inline=0 sym=s3583
-  decl d2 fun processItem suspend=0 inline=0 sym=s3587
-  decl d7 class BoundedBox sym=s3590
-  decl d8 fun useConstraints suspend=0 inline=0 sym=s3600
-expr e0 name(value) type=T#3579 ref=s3580
-expr e1 name(min) type=T#3579 ref=s3581
-expr e2 binary(lessThan) lhs=e0 rhs=e1 type=Boolean call=s136 map=[0->0] targs=[T#3579]
-expr e3 name(min) type=T#3579 ref=s3581
-expr e4 name(value) type=T#3579 ref=s3580
-expr e5 name(max) type=T#3579 ref=s3582
-expr e6 binary(greaterThan) lhs=e4 rhs=e5 type=Boolean call=s136 map=[0->0] targs=[T#3579]
-expr e7 name(max) type=T#3579 ref=s3582
-expr e8 name(value) type=T#3579 ref=s3580
-expr e9 when subject=_ branches=[e2->e3,e6->e7] else=e8 type=T#3579
-expr e10 name(a) type=T#3584 ref=s3585
-expr e11 name(b) type=T#3584 ref=s3586
-expr e12 binary(greaterThan) lhs=e10 rhs=e11 type=Boolean call=s136 map=[0->0] targs=[T#3584]
-expr e13 name(a) type=T#3584 ref=s3585
-expr e14 name(b) type=T#3584 ref=s3586
-expr e15 if cond=e12 then=e13 else=e14 type=T#3584
-expr e16 name(v) type=T#3588 ref=s3589
+  decl d0 fun clamp suspend=0 inline=0 sym=s3613
+  decl d1 fun maxItem suspend=0 inline=0 sym=s3618
+  decl d2 fun processItem suspend=0 inline=0 sym=s3622
+  decl d7 class BoundedBox sym=s3625
+  decl d8 fun useConstraints suspend=0 inline=0 sym=s3635
+expr e0 name(value) type=T#3614 ref=s3615
+expr e1 name(min) type=T#3614 ref=s3616
+expr e2 binary(lessThan) lhs=e0 rhs=e1 type=Boolean call=s136 map=[0->0] targs=[T#3614]
+expr e3 name(min) type=T#3614 ref=s3616
+expr e4 name(value) type=T#3614 ref=s3615
+expr e5 name(max) type=T#3614 ref=s3617
+expr e6 binary(greaterThan) lhs=e4 rhs=e5 type=Boolean call=s136 map=[0->0] targs=[T#3614]
+expr e7 name(max) type=T#3614 ref=s3617
+expr e8 name(value) type=T#3614 ref=s3615
+expr e9 when subject=_ branches=[e2->e3,e6->e7] else=e8 type=T#3614
+expr e10 name(a) type=T#3619 ref=s3620
+expr e11 name(b) type=T#3619 ref=s3621
+expr e12 binary(greaterThan) lhs=e10 rhs=e11 type=Boolean call=s136 map=[0->0] targs=[T#3619]
+expr e13 name(a) type=T#3619 ref=s3620
+expr e14 name(b) type=T#3619 ref=s3621
+expr e15 if cond=e12 then=e13 else=e14 type=T#3619
+expr e16 name(v) type=T#3623 ref=s3624
 expr e17 memberCall recv=e16 callee=toString args=[] type=String
-expr e18 name(value) type=T#3591 ref=s3599
-expr e19 name(other) type=T#3591 ref=s3595
-expr e20 binary(lessThan) lhs=e18 rhs=e19 type=Boolean call=s136 map=[0->0] targs=[T#3591]
-expr e21 name(value) type=T#3591 ref=s3599
-expr e22 name(other) type=T#3591 ref=s3597
-expr e23 binary(greaterThan) lhs=e21 rhs=e22 type=Boolean call=s136 map=[0->0] targs=[T#3591]
-expr e24 name(value) type=T#3591 ref=s3599
+expr e18 name(value) type=T#3626 ref=s3634
+expr e19 name(other) type=T#3626 ref=s3630
+expr e20 binary(lessThan) lhs=e18 rhs=e19 type=Boolean call=s136 map=[0->0] targs=[T#3626]
+expr e21 name(value) type=T#3626 ref=s3634
+expr e22 name(other) type=T#3626 ref=s3632
+expr e23 binary(greaterThan) lhs=e21 rhs=e22 type=Boolean call=s136 map=[0->0] targs=[T#3626]
+expr e24 name(value) type=T#3626 ref=s3634
 expr e25 memberCall recv=e24 callee=toString args=[] type=String
 expr e26 name(clamp) type=_
 expr e27 int(5) type=Int
 expr e28 int(1) type=Int
 expr e29 int(10) type=Int
-expr e30 call callee=e26 args=[_:e27,_:e28,_:e29] type=Int call=s3578 map=[0->0,1->1,2->2] targs=[Int]
-expr e31 localDecl c1 mutable=0 type=_ init=e30 type=Unit ref=s3601
+expr e30 call callee=e26 args=[_:e27,_:e28,_:e29] type=Int call=s3613 map=[0->0,1->1,2->2] targs=[Int]
+expr e31 localDecl c1 mutable=0 type=_ init=e30 type=Unit ref=s3636
 expr e32 name(clamp) type=_
 expr e33 string(b) type=String
 expr e34 string(a) type=String
 expr e35 string(c) type=String
-expr e36 call callee=e32 args=[_:e33,_:e34,_:e35] type=String call=s3578 map=[0->0,1->1,2->2] targs=[String]
-expr e37 localDecl c2 mutable=0 type=_ init=e36 type=Unit ref=s3602
+expr e36 call callee=e32 args=[_:e33,_:e34,_:e35] type=String call=s3613 map=[0->0,1->1,2->2] targs=[String]
+expr e37 localDecl c2 mutable=0 type=_ init=e36 type=Unit ref=s3637
 expr e38 name(maxItem) type=_
 expr e39 int(3) type=Int
 expr e40 int(7) type=Int
-expr e41 call callee=e38 args=[_:e39,_:e40] type=Int call=s3583 map=[0->0,1->1] targs=[Int]
-expr e42 localDecl m1 mutable=0 type=_ init=e41 type=Unit ref=s3603
+expr e41 call callee=e38 args=[_:e39,_:e40] type=Int call=s3618 map=[0->0,1->1] targs=[Int]
+expr e42 localDecl m1 mutable=0 type=_ init=e41 type=Unit ref=s3638
 expr e43 name(maxItem) type=_
 expr e44 string(apple) type=String
 expr e45 string(banana) type=String
-expr e46 call callee=e43 args=[_:e44,_:e45] type=String call=s3583 map=[0->0,1->1] targs=[String]
-expr e47 localDecl m2 mutable=0 type=_ init=e46 type=Unit ref=s3604
+expr e46 call callee=e43 args=[_:e44,_:e45] type=String call=s3618 map=[0->0,1->1] targs=[String]
+expr e47 localDecl m2 mutable=0 type=_ init=e46 type=Unit ref=s3639
 expr e48 name(processItem) type=_
 expr e49 int(42) type=Int
-expr e50 call callee=e48 args=[_:e49] type=String call=s3587 map=[0->0] targs=[Int]
-expr e51 localDecl p1 mutable=0 type=_ init=e50 type=Unit ref=s3605
+expr e50 call callee=e48 args=[_:e49] type=String call=s3622 map=[0->0] targs=[Int]
+expr e51 localDecl p1 mutable=0 type=_ init=e50 type=Unit ref=s3640
 expr e52 name(processItem) type=_
 expr e53 string(hello) type=String
-expr e54 call callee=e52 args=[_:e53] type=String call=s3587 map=[0->0] targs=[String]
-expr e55 localDecl p2 mutable=0 type=_ init=e54 type=Unit ref=s3606
+expr e54 call callee=e52 args=[_:e53] type=String call=s3622 map=[0->0] targs=[String]
+expr e55 localDecl p2 mutable=0 type=_ init=e54 type=Unit ref=s3641
 expr e56 name(BoundedBox) type=_
 expr e57 int(5) type=Int
-expr e58 call callee=e56 args=[_:e57] type=Class#3590<Int> call=s3592 map=[0->0] targs=[Int]
-expr e59 localDecl box mutable=0 type=_ init=e58 type=Unit ref=s3607
-expr e60 name(box) type=Class#3590<Int> ref=s3607
+expr e58 call callee=e56 args=[_:e57] type=Class#3625<Int> call=s3627 map=[0->0] targs=[Int]
+expr e59 localDecl box mutable=0 type=_ init=e58 type=Unit ref=s3642
+expr e60 name(box) type=Class#3625<Int> ref=s3642
 expr e61 int(10) type=Int
-expr e62 memberCall recv=e60 callee=isLessThan args=[_:e61] type=Boolean call=s3594 map=[0->0] targs=[Int]
-expr e63 localDecl lt mutable=0 type=_ init=e62 type=Unit ref=s3608
-expr e64 name(box) type=Class#3590<Int> ref=s3607
+expr e62 memberCall recv=e60 callee=isLessThan args=[_:e61] type=Boolean call=s3629 map=[0->0] targs=[Int]
+expr e63 localDecl lt mutable=0 type=_ init=e62 type=Unit ref=s3643
+expr e64 name(box) type=Class#3625<Int> ref=s3642
 expr e65 int(3) type=Int
-expr e66 memberCall recv=e64 callee=isGreaterThan args=[_:e65] type=Boolean call=s3596 map=[0->0] targs=[Int]
-expr e67 localDecl gt mutable=0 type=_ init=e66 type=Unit ref=s3609
-expr e68 name(box) type=Class#3590<Int> ref=s3607
-expr e69 memberCall recv=e68 callee=describe args=[] type=String call=s3598 map=[] targs=[Int]
-expr e70 localDecl desc mutable=0 type=_ init=e69 type=Unit ref=s3610
+expr e66 memberCall recv=e64 callee=isGreaterThan args=[_:e65] type=Boolean call=s3631 map=[0->0] targs=[Int]
+expr e67 localDecl gt mutable=0 type=_ init=e66 type=Unit ref=s3644
+expr e68 name(box) type=Class#3625<Int> ref=s3642
+expr e69 memberCall recv=e68 callee=describe args=[] type=String call=s3633 map=[] targs=[Int]
+expr e70 localDecl desc mutable=0 type=_ init=e69 type=Unit ref=s3645

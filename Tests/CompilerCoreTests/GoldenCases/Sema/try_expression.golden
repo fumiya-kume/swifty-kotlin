@@ -3576,47 +3576,82 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=class fq=golden.sema.Handled vis=public flags=_
-symbol s3579 kind=constructor fq=golden.sema.Handled.<init> vis=public flags=_ sig=recv=Class#3578 params=[] ret=Class#3578 suspend=0 defaults=[] vararg=[]
-symbol s3580 kind=class fq=golden.sema.Unhandled vis=public flags=_
-symbol s3581 kind=constructor fq=golden.sema.Unhandled.<init> vis=public flags=_ sig=recv=Class#3580 params=[] ret=Class#3580 suspend=0 defaults=[] vararg=[]
-symbol s3582 kind=function fq=golden.sema.tryCatchExpr vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3583 kind=valueParameter fq=golden.sema.tryCatchExpr.$3582.flag vis=private flags=_
-symbol s3584 kind=function fq=golden.sema.tryMultiCatch vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3585 kind=function fq=golden.sema.tryFinally vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3586 kind=function fq=golden.sema.tryCatchFinally vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3587 kind=function fq=golden.sema.tryCompletionCriteria vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3588 kind=function fq=golden.sema.tryFinallyIgnoresValue vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3589 kind=function fq=golden.sema.tryMultiCatchJoin vis=public flags=_ sig=recv=_ params=[Int] ret=Any? suspend=0 defaults=[0] vararg=[0]
-symbol s3590 kind=valueParameter fq=golden.sema.tryMultiCatchJoin.$3589.flag vis=private flags=_
-symbol s3591 kind=function fq=golden.sema.tryPartialCatchRethrow vis=public flags=_ sig=recv=_ params=[Boolean] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3592 kind=valueParameter fq=golden.sema.tryPartialCatchRethrow.$3591.flag vis=private flags=_
-symbol s3593 kind=property fq=golden.sema.propTryCatch vis=public flags=_ type=String
-symbol s3594 kind=property fq=golden.sema.propTryFinally vis=public flags=_ type=String
-symbol s3595 kind=local fq=__try_10_catch_0.e vis=internal flags=_ type=Class#1162
-symbol s3596 kind=local fq=__try_17_catch_0.e vis=internal flags=_ type=Class#1354
-symbol s3597 kind=local fq=__try_17_catch_1.e vis=internal flags=_ type=Class#1162
-symbol s3598 kind=local fq=__try_27_catch_0.e vis=internal flags=_ type=Class#1162
-symbol s3599 kind=local fq=__try_32_catch_0.e vis=internal flags=_ type=Class#1162
-symbol s3600 kind=local fq=__local_33.x vis=private flags=_ type=String
-symbol s3601 kind=local fq=__try_61_catch_0.e vis=internal flags=_ type=Class#3578
-symbol s3602 kind=local fq=__try_61_catch_1.e vis=internal flags=_ type=Class#3580
-symbol s3603 kind=local fq=__local_62.x vis=private flags=mutable type=Int
-symbol s3604 kind=local fq=__try_76_catch_0.e vis=internal flags=_ type=Class#3578
+symbol s3578 kind=package fq=kotlin.native.concurrent vis=public flags=synthetic
+symbol s3579 kind=enumClass fq=kotlin.native.concurrent.TransferMode vis=public flags=synthetic
+symbol s3580 kind=field fq=kotlin.native.concurrent.TransferMode.SAFE vis=public flags=synthetic type=Class#3579
+symbol s3581 kind=field fq=kotlin.native.concurrent.TransferMode.UNSAFE vis=public flags=synthetic type=Class#3579
+symbol s3582 kind=enumClass fq=kotlin.native.concurrent.FutureState vis=public flags=synthetic
+symbol s3583 kind=field fq=kotlin.native.concurrent.FutureState.SCHEDULED vis=public flags=synthetic type=Class#3582
+symbol s3584 kind=field fq=kotlin.native.concurrent.FutureState.COMPUTED vis=public flags=synthetic type=Class#3582
+symbol s3585 kind=field fq=kotlin.native.concurrent.FutureState.THROWN vis=public flags=synthetic type=Class#3582
+symbol s3586 kind=field fq=kotlin.native.concurrent.FutureState.CANCELLED vis=public flags=synthetic type=Class#3582
+symbol s3587 kind=class fq=kotlin.native.concurrent.Worker vis=public flags=synthetic type=Class#3587
+symbol s3588 kind=object fq=kotlin.native.concurrent.Worker.Companion vis=public flags=synthetic type=Class#3588
+symbol s3589 kind=function fq=kotlin.native.concurrent.Worker.Companion.start vis=public flags=synthetic sig=recv=Class#3588 params=[String?] ret=Class#3587 suspend=0 defaults=[1] vararg=[0]
+symbol s3590 kind=valueParameter fq=kotlin.native.concurrent.Worker.Companion.start.name vis=private flags=synthetic
+symbol s3591 kind=function fq=kotlin.native.concurrent.Worker.requestTermination vis=public flags=synthetic sig=recv=Class#3587 params=[Boolean] ret=Unit suspend=0 defaults=[1] vararg=[0]
+symbol s3592 kind=valueParameter fq=kotlin.native.concurrent.Worker.requestTermination.processScheduled vis=private flags=synthetic
+symbol s3593 kind=property fq=kotlin.native.concurrent.Worker.isTerminated vis=public flags=synthetic type=Boolean
+symbol s3594 kind=property fq=kotlin.native.concurrent.Worker.name vis=public flags=synthetic type=String
+symbol s3595 kind=class fq=kotlin.native.concurrent.Future vis=public flags=synthetic type=Class#3595<T#3596>
+symbol s3596 kind=typeParameter fq=kotlin.native.concurrent.Future.T vis=private flags=_
+symbol s3597 kind=property fq=kotlin.native.concurrent.Future.result vis=public flags=synthetic type=T#3596
+symbol s3598 kind=function fq=kotlin.native.concurrent.Future.consume vis=public flags=synthetic sig=recv=Class#3595<T#3596> params=[] ret=T#3596 suspend=0 defaults=[] vararg=[]
+symbol s3599 kind=function fq=kotlin.native.concurrent.Future.getState vis=public flags=synthetic sig=recv=Class#3595<T#3596> params=[] ret=Class#3582 suspend=0 defaults=[] vararg=[]
+symbol s3600 kind=class fq=kotlin.native.concurrent.AtomicReference vis=public flags=synthetic type=Class#3600<T#3601>
+symbol s3601 kind=typeParameter fq=kotlin.native.concurrent.AtomicReference.T vis=private flags=_
+symbol s3602 kind=function fq=kotlin.native.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[T#3601] ret=Class#3600<T#3601> suspend=0 defaults=[0] vararg=[0]
+symbol s3603 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.<init>.value vis=private flags=synthetic
+symbol s3604 kind=property fq=kotlin.native.concurrent.AtomicReference.value vis=public flags=synthetic type=T#3601
+symbol s3605 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSwap vis=public flags=synthetic sig=recv=Class#3600<T#3601> params=[T#3601,T#3601] ret=T#3601 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3606 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.expected vis=private flags=synthetic
+symbol s3607 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.new vis=private flags=synthetic
+symbol s3608 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#3600<T#3601> params=[T#3601,T#3601] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3609 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.expected vis=private flags=synthetic
+symbol s3610 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
+symbol s3611 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
+symbol s3612 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
+symbol s3613 kind=class fq=golden.sema.Handled vis=public flags=_
+symbol s3614 kind=constructor fq=golden.sema.Handled.<init> vis=public flags=_ sig=recv=Class#3613 params=[] ret=Class#3613 suspend=0 defaults=[] vararg=[]
+symbol s3615 kind=class fq=golden.sema.Unhandled vis=public flags=_
+symbol s3616 kind=constructor fq=golden.sema.Unhandled.<init> vis=public flags=_ sig=recv=Class#3615 params=[] ret=Class#3615 suspend=0 defaults=[] vararg=[]
+symbol s3617 kind=function fq=golden.sema.tryCatchExpr vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3618 kind=valueParameter fq=golden.sema.tryCatchExpr.$3617.flag vis=private flags=_
+symbol s3619 kind=function fq=golden.sema.tryMultiCatch vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3620 kind=function fq=golden.sema.tryFinally vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3621 kind=function fq=golden.sema.tryCatchFinally vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3622 kind=function fq=golden.sema.tryCompletionCriteria vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3623 kind=function fq=golden.sema.tryFinallyIgnoresValue vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3624 kind=function fq=golden.sema.tryMultiCatchJoin vis=public flags=_ sig=recv=_ params=[Int] ret=Any? suspend=0 defaults=[0] vararg=[0]
+symbol s3625 kind=valueParameter fq=golden.sema.tryMultiCatchJoin.$3624.flag vis=private flags=_
+symbol s3626 kind=function fq=golden.sema.tryPartialCatchRethrow vis=public flags=_ sig=recv=_ params=[Boolean] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3627 kind=valueParameter fq=golden.sema.tryPartialCatchRethrow.$3626.flag vis=private flags=_
+symbol s3628 kind=property fq=golden.sema.propTryCatch vis=public flags=_ type=String
+symbol s3629 kind=property fq=golden.sema.propTryFinally vis=public flags=_ type=String
+symbol s3630 kind=local fq=__try_10_catch_0.e vis=internal flags=_ type=Class#1162
+symbol s3631 kind=local fq=__try_17_catch_0.e vis=internal flags=_ type=Class#1354
+symbol s3632 kind=local fq=__try_17_catch_1.e vis=internal flags=_ type=Class#1162
+symbol s3633 kind=local fq=__try_27_catch_0.e vis=internal flags=_ type=Class#1162
+symbol s3634 kind=local fq=__try_32_catch_0.e vis=internal flags=_ type=Class#1162
+symbol s3635 kind=local fq=__local_33.x vis=private flags=_ type=String
+symbol s3636 kind=local fq=__try_61_catch_0.e vis=internal flags=_ type=Class#3613
+symbol s3637 kind=local fq=__try_61_catch_1.e vis=internal flags=_ type=Class#3615
+symbol s3638 kind=local fq=__local_62.x vis=private flags=mutable type=Int
+symbol s3639 kind=local fq=__try_76_catch_0.e vis=internal flags=_ type=Class#3613
 file f0 package=golden.sema
-  decl d0 class Handled sym=s3578
-  decl d1 class Unhandled sym=s3580
-  decl d2 fun tryCatchExpr suspend=0 inline=0 sym=s3582
-  decl d3 fun tryMultiCatch suspend=0 inline=0 sym=s3584
-  decl d4 fun tryFinally suspend=0 inline=0 sym=s3585
-  decl d5 fun tryCatchFinally suspend=0 inline=0 sym=s3586
-  decl d6 fun tryCompletionCriteria suspend=0 inline=0 sym=s3587
-  decl d7 fun tryFinallyIgnoresValue suspend=0 inline=0 sym=s3588
-  decl d8 fun tryMultiCatchJoin suspend=0 inline=0 sym=s3589
-  decl d9 fun tryPartialCatchRethrow suspend=0 inline=0 sym=s3591
-  decl d10 property propTryCatch var=0 sym=s3593
-  decl d11 property propTryFinally var=0 sym=s3594
-expr e0 name(flag) type=Boolean ref=s3583
+  decl d0 class Handled sym=s3613
+  decl d1 class Unhandled sym=s3615
+  decl d2 fun tryCatchExpr suspend=0 inline=0 sym=s3617
+  decl d3 fun tryMultiCatch suspend=0 inline=0 sym=s3619
+  decl d4 fun tryFinally suspend=0 inline=0 sym=s3620
+  decl d5 fun tryCatchFinally suspend=0 inline=0 sym=s3621
+  decl d6 fun tryCompletionCriteria suspend=0 inline=0 sym=s3622
+  decl d7 fun tryFinallyIgnoresValue suspend=0 inline=0 sym=s3623
+  decl d8 fun tryMultiCatchJoin suspend=0 inline=0 sym=s3624
+  decl d9 fun tryPartialCatchRethrow suspend=0 inline=0 sym=s3626
+  decl d10 property propTryCatch var=0 sym=s3628
+  decl d11 property propTryFinally var=0 sym=s3629
+expr e0 name(flag) type=Boolean ref=s3618
 expr e1 string(ok) type=String
 expr e2 name(Exception) type=_
 expr e3 string(fail) type=String
@@ -3625,14 +3660,14 @@ expr e5 throw value=e4 type=Nothing
 expr e6 if cond=e0 then=e1 else=e5 type=String
 expr e7 blockExpr stmts=[] trailing=e6 type=String
 expr e8 string(error) type=String
-expr e9 blockExpr stmts=[] trailing=e8 type=String ref=s3595
+expr e9 blockExpr stmts=[] trailing=e8 type=String ref=s3630
 expr e10 try body=e7 catches=[e9] finally=_ type=String
 expr e11 string(ok) type=String
 expr e12 blockExpr stmts=[] trailing=e11 type=String
 expr e13 string(arg) type=String
-expr e14 blockExpr stmts=[] trailing=e13 type=String ref=s3596
+expr e14 blockExpr stmts=[] trailing=e13 type=String ref=s3631
 expr e15 string(other) type=String
-expr e16 blockExpr stmts=[] trailing=e15 type=String ref=s3597
+expr e16 blockExpr stmts=[] trailing=e15 type=String ref=s3632
 expr e17 try body=e12 catches=[e14,e16] finally=_ type=String
 expr e18 string(result) type=String
 expr e19 blockExpr stmts=[] trailing=e18 type=String
@@ -3641,57 +3676,57 @@ expr e21 try body=e19 catches=[] finally=e20 type=String
 expr e22 string(ok) type=String
 expr e23 blockExpr stmts=[] trailing=e22 type=String
 expr e24 string(err) type=String
-expr e25 blockExpr stmts=[] trailing=e24 type=String ref=s3598
+expr e25 blockExpr stmts=[] trailing=e24 type=String ref=s3633
 expr e26 blockExpr stmts=[] trailing=_ type=Unit
 expr e27 try body=e23 catches=[e25] finally=e26 type=String
 expr e28 string(ok) type=String
 expr e29 blockExpr stmts=[] trailing=e28 type=String
 expr e30 string(err) type=String
-expr e31 blockExpr stmts=[] trailing=e30 type=String ref=s3599
+expr e31 blockExpr stmts=[] trailing=e30 type=String ref=s3634
 expr e32 try body=e29 catches=[e31] finally=_ type=String
-expr e33 localDecl x mutable=0 type=t6 init=e32 type=Unit ref=s3600
-expr e34 name(x) type=String ref=s3600
+expr e33 localDecl x mutable=0 type=t6 init=e32 type=Unit ref=s3635
+expr e34 name(x) type=String ref=s3635
 expr e35 return value=e34 type=Nothing
 expr e36 string(ok) type=String
 expr e37 blockExpr stmts=[] trailing=e36 type=String
 expr e38 int(123) type=Int
 expr e39 blockExpr stmts=[] trailing=e38 type=Int
 expr e40 try body=e37 catches=[] finally=e39 type=String
-expr e41 name(flag) type=Int ref=s3590
+expr e41 name(flag) type=Int ref=s3625
 expr e42 int(0) type=Int
 expr e43 binary(equal) lhs=e41 rhs=e42 type=Boolean
 expr e44 string(ok) type=String
-expr e45 name(flag) type=Int ref=s3590
+expr e45 name(flag) type=Int ref=s3625
 expr e46 int(1) type=Int
 expr e47 binary(equal) lhs=e45 rhs=e46 type=Boolean
 expr e48 name(Handled) type=_
-expr e49 call callee=e48 args=[] type=Class#3578 call=s3579 map=[] targs=[]
+expr e49 call callee=e48 args=[] type=Class#3613 call=s3614 map=[] targs=[]
 expr e50 throw value=e49 type=Nothing
 expr e51 name(Unhandled) type=_
-expr e52 call callee=e51 args=[] type=Class#3580 call=s3581 map=[] targs=[]
+expr e52 call callee=e51 args=[] type=Class#3615 call=s3616 map=[] targs=[]
 expr e53 throw value=e52 type=Nothing
 expr e54 if cond=e47 then=e50 else=e53 type=Nothing
 expr e55 if cond=e43 then=e44 else=e54 type=String
 expr e56 blockExpr stmts=[] trailing=e55 type=String
 expr e57 string(handled) type=String
-expr e58 blockExpr stmts=[] trailing=e57 type=String ref=s3601
+expr e58 blockExpr stmts=[] trailing=e57 type=String ref=s3636
 expr e59 int(7) type=Int
-expr e60 blockExpr stmts=[] trailing=e59 type=Int ref=s3602
+expr e60 blockExpr stmts=[] trailing=e59 type=Int ref=s3637
 expr e61 try body=e56 catches=[e58,e60] finally=_ type=Any
-expr e62 localDecl x mutable=1 type=t12 init=_ type=Unit ref=s3603
-expr e63 name(flag) type=Boolean ref=s3592
+expr e62 localDecl x mutable=1 type=t12 init=_ type=Unit ref=s3638
+expr e63 name(flag) type=Boolean ref=s3627
 expr e64 name(Handled) type=_
-expr e65 call callee=e64 args=[] type=Class#3578 call=s3579 map=[] targs=[]
+expr e65 call callee=e64 args=[] type=Class#3613 call=s3614 map=[] targs=[]
 expr e66 throw value=e65 type=Nothing
 expr e67 name(Unhandled) type=_
-expr e68 call callee=e67 args=[] type=Class#3580 call=s3581 map=[] targs=[]
+expr e68 call callee=e67 args=[] type=Class#3615 call=s3616 map=[] targs=[]
 expr e69 throw value=e68 type=Nothing
 expr e70 if cond=e63 then=e66 else=e69 type=Nothing
 expr e71 blockExpr stmts=[] trailing=e70 type=Nothing
 expr e72 name(x) type=_
 expr e73 int(7) type=Int
-expr e74 localAssign x value=e73 type=Unit ref=s3603
-expr e75 blockExpr stmts=[e74] trailing=_ type=Unit ref=s3604
+expr e74 localAssign x value=e73 type=Unit ref=s3638
+expr e75 blockExpr stmts=[e74] trailing=_ type=Unit ref=s3639
 expr e76 try body=e71 catches=[e75] finally=_ type=Unit
-expr e77 name(x) type=Int ref=s3603
+expr e77 name(x) type=Int ref=s3638
 expr e78 return value=e77 type=Nothing

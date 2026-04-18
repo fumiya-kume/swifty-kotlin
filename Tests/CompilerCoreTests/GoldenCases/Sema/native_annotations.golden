@@ -3576,46 +3576,81 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=annotationClass fq=golden.sema.SwiftRefined vis=public flags=_
-symbol s3579 kind=constructor fq=golden.sema.SwiftRefined.<init> vis=public flags=_ sig=recv=Class#3578 params=[] ret=Class#3578 suspend=0 defaults=[] vararg=[]
-symbol s3580 kind=annotationClass fq=golden.sema.NativeEnumBridge vis=public flags=_
-symbol s3581 kind=constructor fq=golden.sema.NativeEnumBridge.<init> vis=public flags=_ sig=recv=Class#3580 params=[] ret=Class#3580 suspend=0 defaults=[] vararg=[]
-symbol s3582 kind=annotationClass fq=golden.sema.ExportEnumToObjC vis=public flags=_
-symbol s3583 kind=constructor fq=golden.sema.ExportEnumToObjC.<init> vis=public flags=_ sig=recv=Class#3582 params=[] ret=Class#3582 suspend=0 defaults=[] vararg=[]
-symbol s3584 kind=class fq=golden.sema.NativeGreeter vis=public flags=_
-symbol s3585 kind=constructor fq=golden.sema.NativeGreeter.<init> vis=public flags=_ sig=recv=Class#3584 params=[] ret=Class#3584 suspend=0 defaults=[] vararg=[]
-symbol s3586 kind=function fq=golden.sema.NativeGreeter.greet vis=public flags=_ sig=recv=Class#3584 params=[String] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3587 kind=valueParameter fq=golden.sema.NativeGreeter.greet.$3586.person vis=private flags=_
-symbol s3588 kind=annotationClass fq=golden.sema.SwiftFacade vis=public flags=_
-symbol s3589 kind=constructor fq=golden.sema.SwiftFacade.<init> vis=public flags=_ sig=recv=Class#3588 params=[] ret=Class#3588 suspend=0 defaults=[] vararg=[]
-symbol s3590 kind=enumClass fq=golden.sema.NativeStatus vis=public flags=_
-symbol s3591 kind=constructor fq=golden.sema.NativeStatus.<init> vis=public flags=_ sig=recv=Class#3590 params=[] ret=Class#3590 suspend=0 defaults=[] vararg=[]
-symbol s3592 kind=field fq=golden.sema.NativeStatus.OK vis=public flags=_ type=Class#3590
-symbol s3593 kind=field fq=golden.sema.NativeStatus.FAIL vis=public flags=_ type=Class#3590
-symbol s3594 kind=property fq=golden.sema.NativeStatus.name vis=public flags=synthetic type=String
-symbol s3595 kind=property fq=golden.sema.NativeStatus.ordinal vis=public flags=synthetic type=Int
-symbol s3596 kind=object fq=golden.sema.NativeStatus.Companion vis=public flags=synthetic
-symbol s3597 kind=valueParameter fq=golden.sema.NativeStatus.Companion.valueOf.name vis=private flags=synthetic
-symbol s3598 kind=function fq=golden.sema.NativeStatus.Companion.valueOf vis=public flags=synthetic|static sig=recv=Class#3596 params=[String] ret=Class#3590 suspend=0 defaults=[0] vararg=[0]
-symbol s3599 kind=property fq=golden.sema.NativeStatus.Companion.entries vis=public flags=synthetic|static type=Class#2835<Class#3590>
-symbol s3600 kind=function fq=golden.sema.nativeSum vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3601 kind=valueParameter fq=golden.sema.nativeSum.$3600.a vis=private flags=_
-symbol s3602 kind=valueParameter fq=golden.sema.nativeSum.$3600.b vis=private flags=_
-symbol s3603 kind=function fq=golden.sema.takesPointer vis=public flags=_ sig=recv=_ params=[Class#3505<Class#3514>?,Class#3501?,Class#3504<Class#3514>?] ret=Class#3505<Class#3514>? suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3604 kind=valueParameter fq=golden.sema.takesPointer.$3603.ptr vis=private flags=_
-symbol s3605 kind=valueParameter fq=golden.sema.takesPointer.$3603.opaque vis=private flags=_
-symbol s3606 kind=valueParameter fq=golden.sema.takesPointer.$3603.ints vis=private flags=_
+symbol s3578 kind=package fq=kotlin.native.concurrent vis=public flags=synthetic
+symbol s3579 kind=enumClass fq=kotlin.native.concurrent.TransferMode vis=public flags=synthetic
+symbol s3580 kind=field fq=kotlin.native.concurrent.TransferMode.SAFE vis=public flags=synthetic type=Class#3579
+symbol s3581 kind=field fq=kotlin.native.concurrent.TransferMode.UNSAFE vis=public flags=synthetic type=Class#3579
+symbol s3582 kind=enumClass fq=kotlin.native.concurrent.FutureState vis=public flags=synthetic
+symbol s3583 kind=field fq=kotlin.native.concurrent.FutureState.SCHEDULED vis=public flags=synthetic type=Class#3582
+symbol s3584 kind=field fq=kotlin.native.concurrent.FutureState.COMPUTED vis=public flags=synthetic type=Class#3582
+symbol s3585 kind=field fq=kotlin.native.concurrent.FutureState.THROWN vis=public flags=synthetic type=Class#3582
+symbol s3586 kind=field fq=kotlin.native.concurrent.FutureState.CANCELLED vis=public flags=synthetic type=Class#3582
+symbol s3587 kind=class fq=kotlin.native.concurrent.Worker vis=public flags=synthetic type=Class#3587
+symbol s3588 kind=object fq=kotlin.native.concurrent.Worker.Companion vis=public flags=synthetic type=Class#3588
+symbol s3589 kind=function fq=kotlin.native.concurrent.Worker.Companion.start vis=public flags=synthetic sig=recv=Class#3588 params=[String?] ret=Class#3587 suspend=0 defaults=[1] vararg=[0]
+symbol s3590 kind=valueParameter fq=kotlin.native.concurrent.Worker.Companion.start.name vis=private flags=synthetic
+symbol s3591 kind=function fq=kotlin.native.concurrent.Worker.requestTermination vis=public flags=synthetic sig=recv=Class#3587 params=[Boolean] ret=Unit suspend=0 defaults=[1] vararg=[0]
+symbol s3592 kind=valueParameter fq=kotlin.native.concurrent.Worker.requestTermination.processScheduled vis=private flags=synthetic
+symbol s3593 kind=property fq=kotlin.native.concurrent.Worker.isTerminated vis=public flags=synthetic type=Boolean
+symbol s3594 kind=property fq=kotlin.native.concurrent.Worker.name vis=public flags=synthetic type=String
+symbol s3595 kind=class fq=kotlin.native.concurrent.Future vis=public flags=synthetic type=Class#3595<T#3596>
+symbol s3596 kind=typeParameter fq=kotlin.native.concurrent.Future.T vis=private flags=_
+symbol s3597 kind=property fq=kotlin.native.concurrent.Future.result vis=public flags=synthetic type=T#3596
+symbol s3598 kind=function fq=kotlin.native.concurrent.Future.consume vis=public flags=synthetic sig=recv=Class#3595<T#3596> params=[] ret=T#3596 suspend=0 defaults=[] vararg=[]
+symbol s3599 kind=function fq=kotlin.native.concurrent.Future.getState vis=public flags=synthetic sig=recv=Class#3595<T#3596> params=[] ret=Class#3582 suspend=0 defaults=[] vararg=[]
+symbol s3600 kind=class fq=kotlin.native.concurrent.AtomicReference vis=public flags=synthetic type=Class#3600<T#3601>
+symbol s3601 kind=typeParameter fq=kotlin.native.concurrent.AtomicReference.T vis=private flags=_
+symbol s3602 kind=function fq=kotlin.native.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[T#3601] ret=Class#3600<T#3601> suspend=0 defaults=[0] vararg=[0]
+symbol s3603 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.<init>.value vis=private flags=synthetic
+symbol s3604 kind=property fq=kotlin.native.concurrent.AtomicReference.value vis=public flags=synthetic type=T#3601
+symbol s3605 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSwap vis=public flags=synthetic sig=recv=Class#3600<T#3601> params=[T#3601,T#3601] ret=T#3601 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3606 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.expected vis=private flags=synthetic
+symbol s3607 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.new vis=private flags=synthetic
+symbol s3608 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#3600<T#3601> params=[T#3601,T#3601] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3609 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.expected vis=private flags=synthetic
+symbol s3610 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
+symbol s3611 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
+symbol s3612 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
+symbol s3613 kind=annotationClass fq=golden.sema.SwiftRefined vis=public flags=_
+symbol s3614 kind=constructor fq=golden.sema.SwiftRefined.<init> vis=public flags=_ sig=recv=Class#3613 params=[] ret=Class#3613 suspend=0 defaults=[] vararg=[]
+symbol s3615 kind=annotationClass fq=golden.sema.NativeEnumBridge vis=public flags=_
+symbol s3616 kind=constructor fq=golden.sema.NativeEnumBridge.<init> vis=public flags=_ sig=recv=Class#3615 params=[] ret=Class#3615 suspend=0 defaults=[] vararg=[]
+symbol s3617 kind=annotationClass fq=golden.sema.ExportEnumToObjC vis=public flags=_
+symbol s3618 kind=constructor fq=golden.sema.ExportEnumToObjC.<init> vis=public flags=_ sig=recv=Class#3617 params=[] ret=Class#3617 suspend=0 defaults=[] vararg=[]
+symbol s3619 kind=class fq=golden.sema.NativeGreeter vis=public flags=_
+symbol s3620 kind=constructor fq=golden.sema.NativeGreeter.<init> vis=public flags=_ sig=recv=Class#3619 params=[] ret=Class#3619 suspend=0 defaults=[] vararg=[]
+symbol s3621 kind=function fq=golden.sema.NativeGreeter.greet vis=public flags=_ sig=recv=Class#3619 params=[String] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3622 kind=valueParameter fq=golden.sema.NativeGreeter.greet.$3621.person vis=private flags=_
+symbol s3623 kind=annotationClass fq=golden.sema.SwiftFacade vis=public flags=_
+symbol s3624 kind=constructor fq=golden.sema.SwiftFacade.<init> vis=public flags=_ sig=recv=Class#3623 params=[] ret=Class#3623 suspend=0 defaults=[] vararg=[]
+symbol s3625 kind=enumClass fq=golden.sema.NativeStatus vis=public flags=_
+symbol s3626 kind=constructor fq=golden.sema.NativeStatus.<init> vis=public flags=_ sig=recv=Class#3625 params=[] ret=Class#3625 suspend=0 defaults=[] vararg=[]
+symbol s3627 kind=field fq=golden.sema.NativeStatus.OK vis=public flags=_ type=Class#3625
+symbol s3628 kind=field fq=golden.sema.NativeStatus.FAIL vis=public flags=_ type=Class#3625
+symbol s3629 kind=property fq=golden.sema.NativeStatus.name vis=public flags=synthetic type=String
+symbol s3630 kind=property fq=golden.sema.NativeStatus.ordinal vis=public flags=synthetic type=Int
+symbol s3631 kind=object fq=golden.sema.NativeStatus.Companion vis=public flags=synthetic
+symbol s3632 kind=valueParameter fq=golden.sema.NativeStatus.Companion.valueOf.name vis=private flags=synthetic
+symbol s3633 kind=function fq=golden.sema.NativeStatus.Companion.valueOf vis=public flags=synthetic|static sig=recv=Class#3631 params=[String] ret=Class#3625 suspend=0 defaults=[0] vararg=[0]
+symbol s3634 kind=property fq=golden.sema.NativeStatus.Companion.entries vis=public flags=synthetic|static type=Class#2835<Class#3625>
+symbol s3635 kind=function fq=golden.sema.nativeSum vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3636 kind=valueParameter fq=golden.sema.nativeSum.$3635.a vis=private flags=_
+symbol s3637 kind=valueParameter fq=golden.sema.nativeSum.$3635.b vis=private flags=_
+symbol s3638 kind=function fq=golden.sema.takesPointer vis=public flags=_ sig=recv=_ params=[Class#3505<Class#3514>?,Class#3501?,Class#3504<Class#3514>?] ret=Class#3505<Class#3514>? suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3639 kind=valueParameter fq=golden.sema.takesPointer.$3638.ptr vis=private flags=_
+symbol s3640 kind=valueParameter fq=golden.sema.takesPointer.$3638.opaque vis=private flags=_
+symbol s3641 kind=valueParameter fq=golden.sema.takesPointer.$3638.ints vis=private flags=_
 file f0 package=golden.sema
-  decl d0 class SwiftRefined sym=s3578
-  decl d1 class NativeEnumBridge sym=s3580
-  decl d2 class ExportEnumToObjC sym=s3582
-  decl d4 class NativeGreeter sym=s3584
-  decl d5 class SwiftFacade sym=s3588
-  decl d6 class NativeStatus sym=s3590
-  decl d7 fun nativeSum suspend=0 inline=0 sym=s3600
-  decl d8 fun takesPointer suspend=0 inline=0 sym=s3603
-expr e0 name(person) type=String ref=s3587
-expr e1 name(a) type=Int ref=s3601
-expr e2 name(b) type=Int ref=s3602
+  decl d0 class SwiftRefined sym=s3613
+  decl d1 class NativeEnumBridge sym=s3615
+  decl d2 class ExportEnumToObjC sym=s3617
+  decl d4 class NativeGreeter sym=s3619
+  decl d5 class SwiftFacade sym=s3623
+  decl d6 class NativeStatus sym=s3625
+  decl d7 fun nativeSum suspend=0 inline=0 sym=s3635
+  decl d8 fun takesPointer suspend=0 inline=0 sym=s3638
+expr e0 name(person) type=String ref=s3622
+expr e1 name(a) type=Int ref=s3636
+expr e2 name(b) type=Int ref=s3637
 expr e3 binary(add) lhs=e1 rhs=e2 type=Int
-expr e4 name(ptr) type=Class#3505<Class#3514>? ref=s3604
+expr e4 name(ptr) type=Class#3505<Class#3514>? ref=s3639

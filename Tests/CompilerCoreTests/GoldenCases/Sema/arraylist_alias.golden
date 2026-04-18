@@ -3576,43 +3576,78 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=function fq=processList vis=public flags=_ sig=recv=_ params=[Class#240<String>] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s3579 kind=valueParameter fq=processList.$3578.list vis=private flags=_
-symbol s3580 kind=function fq=createList vis=public flags=_ sig=recv=_ params=[] ret=Class#240<Int> suspend=0 defaults=[] vararg=[]
-symbol s3581 kind=class fq=Container vis=public flags=_
-symbol s3582 kind=constructor fq=Container.<init> vis=public flags=_ sig=recv=Class#3581 params=[] ret=Class#3581 suspend=0 defaults=[] vararg=[]
-symbol s3583 kind=property fq=Container.items vis=public flags=_ type=Class#240<String>
-symbol s3584 kind=property fq=Container.numbers vis=public flags=_ type=Class#240<Int>
-symbol s3585 kind=function fq=nestedLists vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3586 kind=class fq=MyList vis=public flags=_
-symbol s3587 kind=constructor fq=MyList.<init> vis=public flags=_ sig=recv=Class#3586 params=[] ret=Class#3586 suspend=0 defaults=[] vararg=[]
-symbol s3588 kind=function fq=MyList.customOp vis=public flags=_ sig=recv=Class#3586 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3589 kind=function fq=constrain vis=public flags=_ sig=recv=_ params=[T#3590] ret=T#3590 suspend=0 defaults=[0] vararg=[0] bounds=[Class#240<String>]
-symbol s3590 kind=typeParameter fq=constrain.$3589.T vis=private flags=_
-symbol s3591 kind=valueParameter fq=constrain.$3589.list vis=private flags=_
-symbol s3592 kind=function fq=customExtension vis=public flags=_ sig=recv=Class#240<String> params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3593 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3594 kind=local fq=__local_13.nested vis=private flags=_ type=Class#240<Class#240<String>>
-symbol s3595 kind=local fq=__local_16.inner vis=private flags=_ type=Class#240<String>
-symbol s3596 kind=local fq=__local_36.list vis=private flags=_ type=Class#240<String>
-symbol s3597 kind=local fq=__local_53.ml vis=private flags=_ type=Class#240<String>
-symbol s3598 kind=local fq=__local_63.nums vis=private flags=_ type=Class#240<Int>
-symbol s3599 kind=local fq=__local_81.items vis=private flags=_ type=Class#123<String>
-symbol s3600 kind=local fq=__local_91.created vis=private flags=_ type=Class#240<Int>
-symbol s3601 kind=local fq=__local_101.container vis=private flags=_ type=Class#3581
-symbol s3602 kind=local fq=__local_115.myList vis=private flags=_ type=Class#3586
-symbol s3603 kind=local fq=__local_126.constrained vis=private flags=_ type=Class#240<String>
+symbol s3578 kind=package fq=kotlin.native.concurrent vis=public flags=synthetic
+symbol s3579 kind=enumClass fq=kotlin.native.concurrent.TransferMode vis=public flags=synthetic
+symbol s3580 kind=field fq=kotlin.native.concurrent.TransferMode.SAFE vis=public flags=synthetic type=Class#3579
+symbol s3581 kind=field fq=kotlin.native.concurrent.TransferMode.UNSAFE vis=public flags=synthetic type=Class#3579
+symbol s3582 kind=enumClass fq=kotlin.native.concurrent.FutureState vis=public flags=synthetic
+symbol s3583 kind=field fq=kotlin.native.concurrent.FutureState.SCHEDULED vis=public flags=synthetic type=Class#3582
+symbol s3584 kind=field fq=kotlin.native.concurrent.FutureState.COMPUTED vis=public flags=synthetic type=Class#3582
+symbol s3585 kind=field fq=kotlin.native.concurrent.FutureState.THROWN vis=public flags=synthetic type=Class#3582
+symbol s3586 kind=field fq=kotlin.native.concurrent.FutureState.CANCELLED vis=public flags=synthetic type=Class#3582
+symbol s3587 kind=class fq=kotlin.native.concurrent.Worker vis=public flags=synthetic type=Class#3587
+symbol s3588 kind=object fq=kotlin.native.concurrent.Worker.Companion vis=public flags=synthetic type=Class#3588
+symbol s3589 kind=function fq=kotlin.native.concurrent.Worker.Companion.start vis=public flags=synthetic sig=recv=Class#3588 params=[String?] ret=Class#3587 suspend=0 defaults=[1] vararg=[0]
+symbol s3590 kind=valueParameter fq=kotlin.native.concurrent.Worker.Companion.start.name vis=private flags=synthetic
+symbol s3591 kind=function fq=kotlin.native.concurrent.Worker.requestTermination vis=public flags=synthetic sig=recv=Class#3587 params=[Boolean] ret=Unit suspend=0 defaults=[1] vararg=[0]
+symbol s3592 kind=valueParameter fq=kotlin.native.concurrent.Worker.requestTermination.processScheduled vis=private flags=synthetic
+symbol s3593 kind=property fq=kotlin.native.concurrent.Worker.isTerminated vis=public flags=synthetic type=Boolean
+symbol s3594 kind=property fq=kotlin.native.concurrent.Worker.name vis=public flags=synthetic type=String
+symbol s3595 kind=class fq=kotlin.native.concurrent.Future vis=public flags=synthetic type=Class#3595<T#3596>
+symbol s3596 kind=typeParameter fq=kotlin.native.concurrent.Future.T vis=private flags=_
+symbol s3597 kind=property fq=kotlin.native.concurrent.Future.result vis=public flags=synthetic type=T#3596
+symbol s3598 kind=function fq=kotlin.native.concurrent.Future.consume vis=public flags=synthetic sig=recv=Class#3595<T#3596> params=[] ret=T#3596 suspend=0 defaults=[] vararg=[]
+symbol s3599 kind=function fq=kotlin.native.concurrent.Future.getState vis=public flags=synthetic sig=recv=Class#3595<T#3596> params=[] ret=Class#3582 suspend=0 defaults=[] vararg=[]
+symbol s3600 kind=class fq=kotlin.native.concurrent.AtomicReference vis=public flags=synthetic type=Class#3600<T#3601>
+symbol s3601 kind=typeParameter fq=kotlin.native.concurrent.AtomicReference.T vis=private flags=_
+symbol s3602 kind=function fq=kotlin.native.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[T#3601] ret=Class#3600<T#3601> suspend=0 defaults=[0] vararg=[0]
+symbol s3603 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.<init>.value vis=private flags=synthetic
+symbol s3604 kind=property fq=kotlin.native.concurrent.AtomicReference.value vis=public flags=synthetic type=T#3601
+symbol s3605 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSwap vis=public flags=synthetic sig=recv=Class#3600<T#3601> params=[T#3601,T#3601] ret=T#3601 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3606 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.expected vis=private flags=synthetic
+symbol s3607 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.new vis=private flags=synthetic
+symbol s3608 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#3600<T#3601> params=[T#3601,T#3601] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3609 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.expected vis=private flags=synthetic
+symbol s3610 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
+symbol s3611 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
+symbol s3612 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
+symbol s3613 kind=function fq=processList vis=public flags=_ sig=recv=_ params=[Class#240<String>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s3614 kind=valueParameter fq=processList.$3613.list vis=private flags=_
+symbol s3615 kind=function fq=createList vis=public flags=_ sig=recv=_ params=[] ret=Class#240<Int> suspend=0 defaults=[] vararg=[]
+symbol s3616 kind=class fq=Container vis=public flags=_
+symbol s3617 kind=constructor fq=Container.<init> vis=public flags=_ sig=recv=Class#3616 params=[] ret=Class#3616 suspend=0 defaults=[] vararg=[]
+symbol s3618 kind=property fq=Container.items vis=public flags=_ type=Class#240<String>
+symbol s3619 kind=property fq=Container.numbers vis=public flags=_ type=Class#240<Int>
+symbol s3620 kind=function fq=nestedLists vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3621 kind=class fq=MyList vis=public flags=_
+symbol s3622 kind=constructor fq=MyList.<init> vis=public flags=_ sig=recv=Class#3621 params=[] ret=Class#3621 suspend=0 defaults=[] vararg=[]
+symbol s3623 kind=function fq=MyList.customOp vis=public flags=_ sig=recv=Class#3621 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3624 kind=function fq=constrain vis=public flags=_ sig=recv=_ params=[T#3625] ret=T#3625 suspend=0 defaults=[0] vararg=[0] bounds=[Class#240<String>]
+symbol s3625 kind=typeParameter fq=constrain.$3624.T vis=private flags=_
+symbol s3626 kind=valueParameter fq=constrain.$3624.list vis=private flags=_
+symbol s3627 kind=function fq=customExtension vis=public flags=_ sig=recv=Class#240<String> params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3628 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3629 kind=local fq=__local_13.nested vis=private flags=_ type=Class#240<Class#240<String>>
+symbol s3630 kind=local fq=__local_16.inner vis=private flags=_ type=Class#240<String>
+symbol s3631 kind=local fq=__local_36.list vis=private flags=_ type=Class#240<String>
+symbol s3632 kind=local fq=__local_53.ml vis=private flags=_ type=Class#240<String>
+symbol s3633 kind=local fq=__local_63.nums vis=private flags=_ type=Class#240<Int>
+symbol s3634 kind=local fq=__local_81.items vis=private flags=_ type=Class#123<String>
+symbol s3635 kind=local fq=__local_91.created vis=private flags=_ type=Class#240<Int>
+symbol s3636 kind=local fq=__local_101.container vis=private flags=_ type=Class#3616
+symbol s3637 kind=local fq=__local_115.myList vis=private flags=_ type=Class#3621
+symbol s3638 kind=local fq=__local_126.constrained vis=private flags=_ type=Class#240<String>
 file f0 package=_
-  decl d0 fun processList suspend=0 inline=0 sym=s3578
-  decl d1 fun createList suspend=0 inline=0 sym=s3580
-  decl d4 class Container sym=s3581
-  decl d5 fun nestedLists suspend=0 inline=0 sym=s3585
-  decl d7 class MyList sym=s3586
-  decl d8 fun constrain suspend=0 inline=0 sym=s3589
-  decl d9 fun customExtension suspend=0 inline=0 sym=s3592
-  decl d10 fun main suspend=0 inline=0 sym=s3593
+  decl d0 fun processList suspend=0 inline=0 sym=s3613
+  decl d1 fun createList suspend=0 inline=0 sym=s3615
+  decl d4 class Container sym=s3616
+  decl d5 fun nestedLists suspend=0 inline=0 sym=s3620
+  decl d7 class MyList sym=s3621
+  decl d8 fun constrain suspend=0 inline=0 sym=s3624
+  decl d9 fun customExtension suspend=0 inline=0 sym=s3627
+  decl d10 fun main suspend=0 inline=0 sym=s3628
 expr e0 name(println) type=_
-expr e1 name(list) type=Class#240<String> ref=s3579
+expr e1 name(list) type=Class#240<String> ref=s3614
 expr e2 memberCall recv=e1 callee=size args=[] type=Int ref=s120
 expr e3 call callee=e0 args=[_:e2] type=Unit call=s1720 map=[0->0] targs=[]
 expr e4 name(ArrayList) type=Any ref=s367
@@ -3624,22 +3659,22 @@ expr e9 name(ArrayList) type=Any ref=s367
 expr e10 call callee=e9 args=[] type=Class#240<Int>
 expr e11 name(ArrayList) type=Any ref=s367
 expr e12 call callee=e11 args=[] type=Class#240<Class#240<String>>
-expr e13 localDecl nested mutable=0 type=t12 init=e12 type=Unit ref=s3594
+expr e13 localDecl nested mutable=0 type=t12 init=e12 type=Unit ref=s3629
 expr e14 name(ArrayList) type=Any ref=s367
 expr e15 call callee=e14 args=[] type=Class#240<String>
-expr e16 localDecl inner mutable=0 type=_ init=e15 type=Unit ref=s3595
-expr e17 name(inner) type=Class#240<String> ref=s3595
+expr e16 localDecl inner mutable=0 type=_ init=e15 type=Unit ref=s3630
+expr e17 name(inner) type=Class#240<String> ref=s3630
 expr e18 string(nested) type=String
 expr e19 memberCall recv=e17 callee=add args=[_:e18] type=Boolean call=s243 map=[0->0] targs=[String]
-expr e20 name(nested) type=Class#240<Class#240<String>> ref=s3594
-expr e21 name(inner) type=Class#240<String> ref=s3595
+expr e20 name(nested) type=Class#240<Class#240<String>> ref=s3629
+expr e21 name(inner) type=Class#240<String> ref=s3630
 expr e22 memberCall recv=e20 callee=add args=[_:e21] type=Boolean call=s243 map=[0->0] targs=[Class#240<String>]
 expr e23 name(println) type=_
-expr e24 name(nested) type=Class#240<Class#240<String>> ref=s3594
+expr e24 name(nested) type=Class#240<Class#240<String>> ref=s3629
 expr e25 memberCall recv=e24 callee=size args=[] type=Int ref=s120
 expr e26 call callee=e23 args=[_:e25] type=Unit call=s1720 map=[0->0] targs=[]
 expr e27 string(custom) type=String
-expr e28 name(list) type=T#3590 ref=s3591
+expr e28 name(list) type=T#3625 ref=s3626
 expr e29 return value=e28 type=Nothing
 expr e30 this type=Class#240<String>
 expr e31 memberCall recv=e30 callee=size args=[] type=Int ref=s120
@@ -3647,102 +3682,102 @@ expr e32 stringTemplate[lit(extended: ),expr(e31)] type=String
 expr e33 return value=e32 type=Nothing
 expr e34 name(ArrayList) type=Any ref=s367
 expr e35 call callee=e34 args=[] type=Class#240<String>
-expr e36 localDecl list mutable=0 type=t24 init=e35 type=Unit ref=s3596
-expr e37 name(list) type=Class#240<String> ref=s3596
+expr e36 localDecl list mutable=0 type=t24 init=e35 type=Unit ref=s3631
+expr e37 name(list) type=Class#240<String> ref=s3631
 expr e38 string(hello) type=String
 expr e39 memberCall recv=e37 callee=add args=[_:e38] type=Boolean call=s243 map=[0->0] targs=[String]
-expr e40 name(list) type=Class#240<String> ref=s3596
+expr e40 name(list) type=Class#240<String> ref=s3631
 expr e41 string(world) type=String
 expr e42 memberCall recv=e40 callee=add args=[_:e41] type=Boolean call=s243 map=[0->0] targs=[String]
 expr e43 name(println) type=_
-expr e44 name(list) type=Class#240<String> ref=s3596
+expr e44 name(list) type=Class#240<String> ref=s3631
 expr e45 memberCall recv=e44 callee=size args=[] type=Int ref=s120
 expr e46 call callee=e43 args=[_:e45] type=Unit call=s1720 map=[0->0] targs=[]
 expr e47 name(println) type=_
-expr e48 name(list) type=Class#240<String> ref=s3596
+expr e48 name(list) type=Class#240<String> ref=s3631
 expr e49 int(0) type=Int
 expr e50 indexedAccess receiver=e48 indices=[e49] type=String call=s125 map=[0->0] targs=[String]
 expr e51 call callee=e47 args=[_:e50] type=Unit call=s1720 map=[0->0] targs=[]
-expr e52 name(list) type=Class#240<String> ref=s3596
-expr e53 localDecl ml mutable=0 type=t26 init=e52 type=Unit ref=s3597
-expr e54 name(ml) type=Class#240<String> ref=s3597
+expr e52 name(list) type=Class#240<String> ref=s3631
+expr e53 localDecl ml mutable=0 type=t26 init=e52 type=Unit ref=s3632
+expr e54 name(ml) type=Class#240<String> ref=s3632
 expr e55 string(!) type=String
 expr e56 memberCall recv=e54 callee=add args=[_:e55] type=Boolean call=s243 map=[0->0] targs=[String]
 expr e57 name(println) type=_
-expr e58 name(ml) type=Class#240<String> ref=s3597
+expr e58 name(ml) type=Class#240<String> ref=s3632
 expr e59 memberCall recv=e58 callee=size args=[] type=Int ref=s120
 expr e60 call callee=e57 args=[_:e59] type=Unit call=s1720 map=[0->0] targs=[]
 expr e61 name(ArrayList) type=Any ref=s367
 expr e62 call callee=e61 args=[] type=Class#240<Int>
-expr e63 localDecl nums mutable=0 type=_ init=e62 type=Unit ref=s3598
-expr e64 name(nums) type=Class#240<Int> ref=s3598
+expr e63 localDecl nums mutable=0 type=_ init=e62 type=Unit ref=s3633
+expr e64 name(nums) type=Class#240<Int> ref=s3633
 expr e65 int(1) type=Int
 expr e66 memberCall recv=e64 callee=add args=[_:e65] type=Boolean call=s243 map=[0->0] targs=[Int]
-expr e67 name(nums) type=Class#240<Int> ref=s3598
+expr e67 name(nums) type=Class#240<Int> ref=s3633
 expr e68 int(2) type=Int
 expr e69 memberCall recv=e67 callee=add args=[_:e68] type=Boolean call=s243 map=[0->0] targs=[Int]
-expr e70 name(nums) type=Class#240<Int> ref=s3598
+expr e70 name(nums) type=Class#240<Int> ref=s3633
 expr e71 int(3) type=Int
 expr e72 memberCall recv=e70 callee=add args=[_:e71] type=Boolean call=s243 map=[0->0] targs=[Int]
-expr e73 name(nums) type=Class#240<Int> ref=s3598
+expr e73 name(nums) type=Class#240<Int> ref=s3633
 expr e74 int(0) type=Int
 expr e75 memberCall recv=e73 callee=removeAt args=[_:e74] type=Int call=s245 map=[0->0] targs=[Int]
 expr e76 name(println) type=_
-expr e77 name(nums) type=Class#240<Int> ref=s3598
+expr e77 name(nums) type=Class#240<Int> ref=s3633
 expr e78 call callee=e76 args=[_:e77] type=Unit call=s1720 map=[0->0] targs=[]
 expr e79 name(ArrayList) type=Any ref=s367
 expr e80 call callee=e79 args=[] type=Class#123<String>
-expr e81 localDecl items mutable=0 type=t29 init=e80 type=Unit ref=s3599
+expr e81 localDecl items mutable=0 type=t29 init=e80 type=Unit ref=s3634
 expr e82 name(println) type=_
-expr e83 name(items) type=Class#123<String> ref=s3599
+expr e83 name(items) type=Class#123<String> ref=s3634
 expr e84 memberCall recv=e83 callee=size args=[] type=Int ref=s120
 expr e85 call callee=e82 args=[_:e84] type=Unit call=s1720 map=[0->0] targs=[]
 expr e86 name(processList) type=_
-expr e87 name(list) type=Class#240<String> ref=s3596
-expr e88 call callee=e86 args=[_:e87] type=Unit call=s3578 map=[0->0] targs=[]
+expr e87 name(list) type=Class#240<String> ref=s3631
+expr e88 call callee=e86 args=[_:e87] type=Unit call=s3613 map=[0->0] targs=[]
 expr e89 name(createList) type=_
-expr e90 call callee=e89 args=[] type=Class#240<Int> call=s3580 map=[] targs=[]
-expr e91 localDecl created mutable=0 type=_ init=e90 type=Unit ref=s3600
-expr e92 name(created) type=Class#240<Int> ref=s3600
+expr e90 call callee=e89 args=[] type=Class#240<Int> call=s3615 map=[] targs=[]
+expr e91 localDecl created mutable=0 type=_ init=e90 type=Unit ref=s3635
+expr e92 name(created) type=Class#240<Int> ref=s3635
 expr e93 int(42) type=Int
 expr e94 memberCall recv=e92 callee=add args=[_:e93] type=Boolean call=s243 map=[0->0] targs=[Int]
 expr e95 name(println) type=_
-expr e96 name(created) type=Class#240<Int> ref=s3600
+expr e96 name(created) type=Class#240<Int> ref=s3635
 expr e97 memberCall recv=e96 callee=size args=[] type=Int ref=s120
 expr e98 call callee=e95 args=[_:e97] type=Unit call=s1720 map=[0->0] targs=[]
 expr e99 name(Container) type=_
-expr e100 call callee=e99 args=[] type=Class#3581 call=s3582 map=[] targs=[]
-expr e101 localDecl container mutable=0 type=_ init=e100 type=Unit ref=s3601
-expr e102 name(container) type=Class#3581 ref=s3601
-expr e103 memberCall recv=e102 callee=items args=[] type=Class#240<String> ref=s3583
+expr e100 call callee=e99 args=[] type=Class#3616 call=s3617 map=[] targs=[]
+expr e101 localDecl container mutable=0 type=_ init=e100 type=Unit ref=s3636
+expr e102 name(container) type=Class#3616 ref=s3636
+expr e103 memberCall recv=e102 callee=items args=[] type=Class#240<String> ref=s3618
 expr e104 string(property) type=String
 expr e105 memberCall recv=e103 callee=add args=[_:e104] type=Boolean call=s243 map=[0->0] targs=[String]
 expr e106 name(println) type=_
-expr e107 name(container) type=Class#3581 ref=s3601
-expr e108 memberCall recv=e107 callee=items args=[] type=Class#240<String> ref=s3583
+expr e107 name(container) type=Class#3616 ref=s3636
+expr e108 memberCall recv=e107 callee=items args=[] type=Class#240<String> ref=s3618
 expr e109 memberCall recv=e108 callee=size args=[] type=Int ref=s120
 expr e110 call callee=e106 args=[_:e109] type=Unit call=s1720 map=[0->0] targs=[]
 expr e111 name(nestedLists) type=_
-expr e112 call callee=e111 args=[] type=Unit call=s3585 map=[] targs=[]
+expr e112 call callee=e111 args=[] type=Unit call=s3620 map=[] targs=[]
 expr e113 name(MyList) type=_
-expr e114 call callee=e113 args=[] type=Class#3586 call=s3587 map=[] targs=[]
-expr e115 localDecl myList mutable=0 type=_ init=e114 type=Unit ref=s3602
-expr e116 name(myList) type=Class#3586 ref=s3602
+expr e114 call callee=e113 args=[] type=Class#3621 call=s3622 map=[] targs=[]
+expr e115 localDecl myList mutable=0 type=_ init=e114 type=Unit ref=s3637
+expr e116 name(myList) type=Class#3621 ref=s3637
 expr e117 string(inherited) type=String
 expr e118 memberCall recv=e116 callee=add args=[_:e117] type=<error>
 expr e119 name(println) type=_
-expr e120 name(myList) type=Class#3586 ref=s3602
-expr e121 memberCall recv=e120 callee=customOp args=[] type=String call=s3588 map=[] targs=[]
+expr e120 name(myList) type=Class#3621 ref=s3637
+expr e121 memberCall recv=e120 callee=customOp args=[] type=String call=s3623 map=[] targs=[]
 expr e122 call callee=e119 args=[_:e121] type=Unit call=s1720 map=[0->0] targs=[]
 expr e123 name(constrain) type=_
-expr e124 name(list) type=Class#240<String> ref=s3596
-expr e125 call callee=e123 args=[_:e124] type=Class#240<String> call=s3589 map=[0->0] targs=[Class#240<String>]
-expr e126 localDecl constrained mutable=0 type=_ init=e125 type=Unit ref=s3603
+expr e124 name(list) type=Class#240<String> ref=s3631
+expr e125 call callee=e123 args=[_:e124] type=Class#240<String> call=s3624 map=[0->0] targs=[Class#240<String>]
+expr e126 localDecl constrained mutable=0 type=_ init=e125 type=Unit ref=s3638
 expr e127 name(println) type=_
-expr e128 name(constrained) type=Class#240<String> ref=s3603
+expr e128 name(constrained) type=Class#240<String> ref=s3638
 expr e129 memberCall recv=e128 callee=size args=[] type=Int ref=s120
 expr e130 call callee=e127 args=[_:e129] type=Unit call=s1720 map=[0->0] targs=[]
 expr e131 name(println) type=_
-expr e132 name(list) type=Class#240<String> ref=s3596
-expr e133 memberCall recv=e132 callee=customExtension args=[] type=String call=s3592 map=[] targs=[]
+expr e132 name(list) type=Class#240<String> ref=s3631
+expr e133 memberCall recv=e132 callee=customExtension args=[] type=String call=s3627 map=[] targs=[]
 expr e134 call callee=e131 args=[_:e133] type=Unit call=s1720 map=[0->0] targs=[]

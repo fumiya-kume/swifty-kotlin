@@ -3576,40 +3576,75 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3579 kind=local fq=__local_1.d vis=private flags=_ type=Double
-symbol s3580 kind=local fq=__local_4.dToInt vis=private flags=_ type=Int
-symbol s3581 kind=local fq=__local_7.dToLong vis=private flags=_ type=Long
-symbol s3582 kind=local fq=__local_15.f vis=private flags=_ type=Float
-symbol s3583 kind=local fq=__local_18.fToInt vis=private flags=_ type=Int
-symbol s3584 kind=local fq=__local_21.fToLong vis=private flags=_ type=Long
+symbol s3578 kind=package fq=kotlin.native.concurrent vis=public flags=synthetic
+symbol s3579 kind=enumClass fq=kotlin.native.concurrent.TransferMode vis=public flags=synthetic
+symbol s3580 kind=field fq=kotlin.native.concurrent.TransferMode.SAFE vis=public flags=synthetic type=Class#3579
+symbol s3581 kind=field fq=kotlin.native.concurrent.TransferMode.UNSAFE vis=public flags=synthetic type=Class#3579
+symbol s3582 kind=enumClass fq=kotlin.native.concurrent.FutureState vis=public flags=synthetic
+symbol s3583 kind=field fq=kotlin.native.concurrent.FutureState.SCHEDULED vis=public flags=synthetic type=Class#3582
+symbol s3584 kind=field fq=kotlin.native.concurrent.FutureState.COMPUTED vis=public flags=synthetic type=Class#3582
+symbol s3585 kind=field fq=kotlin.native.concurrent.FutureState.THROWN vis=public flags=synthetic type=Class#3582
+symbol s3586 kind=field fq=kotlin.native.concurrent.FutureState.CANCELLED vis=public flags=synthetic type=Class#3582
+symbol s3587 kind=class fq=kotlin.native.concurrent.Worker vis=public flags=synthetic type=Class#3587
+symbol s3588 kind=object fq=kotlin.native.concurrent.Worker.Companion vis=public flags=synthetic type=Class#3588
+symbol s3589 kind=function fq=kotlin.native.concurrent.Worker.Companion.start vis=public flags=synthetic sig=recv=Class#3588 params=[String?] ret=Class#3587 suspend=0 defaults=[1] vararg=[0]
+symbol s3590 kind=valueParameter fq=kotlin.native.concurrent.Worker.Companion.start.name vis=private flags=synthetic
+symbol s3591 kind=function fq=kotlin.native.concurrent.Worker.requestTermination vis=public flags=synthetic sig=recv=Class#3587 params=[Boolean] ret=Unit suspend=0 defaults=[1] vararg=[0]
+symbol s3592 kind=valueParameter fq=kotlin.native.concurrent.Worker.requestTermination.processScheduled vis=private flags=synthetic
+symbol s3593 kind=property fq=kotlin.native.concurrent.Worker.isTerminated vis=public flags=synthetic type=Boolean
+symbol s3594 kind=property fq=kotlin.native.concurrent.Worker.name vis=public flags=synthetic type=String
+symbol s3595 kind=class fq=kotlin.native.concurrent.Future vis=public flags=synthetic type=Class#3595<T#3596>
+symbol s3596 kind=typeParameter fq=kotlin.native.concurrent.Future.T vis=private flags=_
+symbol s3597 kind=property fq=kotlin.native.concurrent.Future.result vis=public flags=synthetic type=T#3596
+symbol s3598 kind=function fq=kotlin.native.concurrent.Future.consume vis=public flags=synthetic sig=recv=Class#3595<T#3596> params=[] ret=T#3596 suspend=0 defaults=[] vararg=[]
+symbol s3599 kind=function fq=kotlin.native.concurrent.Future.getState vis=public flags=synthetic sig=recv=Class#3595<T#3596> params=[] ret=Class#3582 suspend=0 defaults=[] vararg=[]
+symbol s3600 kind=class fq=kotlin.native.concurrent.AtomicReference vis=public flags=synthetic type=Class#3600<T#3601>
+symbol s3601 kind=typeParameter fq=kotlin.native.concurrent.AtomicReference.T vis=private flags=_
+symbol s3602 kind=function fq=kotlin.native.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[T#3601] ret=Class#3600<T#3601> suspend=0 defaults=[0] vararg=[0]
+symbol s3603 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.<init>.value vis=private flags=synthetic
+symbol s3604 kind=property fq=kotlin.native.concurrent.AtomicReference.value vis=public flags=synthetic type=T#3601
+symbol s3605 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSwap vis=public flags=synthetic sig=recv=Class#3600<T#3601> params=[T#3601,T#3601] ret=T#3601 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3606 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.expected vis=private flags=synthetic
+symbol s3607 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.new vis=private flags=synthetic
+symbol s3608 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#3600<T#3601> params=[T#3601,T#3601] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3609 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.expected vis=private flags=synthetic
+symbol s3610 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
+symbol s3611 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
+symbol s3612 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
+symbol s3613 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3614 kind=local fq=__local_1.d vis=private flags=_ type=Double
+symbol s3615 kind=local fq=__local_4.dToInt vis=private flags=_ type=Int
+symbol s3616 kind=local fq=__local_7.dToLong vis=private flags=_ type=Long
+symbol s3617 kind=local fq=__local_15.f vis=private flags=_ type=Float
+symbol s3618 kind=local fq=__local_18.fToInt vis=private flags=_ type=Int
+symbol s3619 kind=local fq=__local_21.fToLong vis=private flags=_ type=Long
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3578
+  decl d0 fun main suspend=0 inline=0 sym=s3613
 expr e0 double(3.7) type=Double
-expr e1 localDecl d mutable=0 type=t0 init=e0 type=Unit ref=s3579
-expr e2 name(d) type=Double ref=s3579
+expr e1 localDecl d mutable=0 type=t0 init=e0 type=Unit ref=s3614
+expr e2 name(d) type=Double ref=s3614
 expr e3 memberCall recv=e2 callee=roundToInt args=[] type=Int call=s2748 map=[] targs=[]
-expr e4 localDecl dToInt mutable=0 type=t1 init=e3 type=Unit ref=s3580
-expr e5 name(d) type=Double ref=s3579
+expr e4 localDecl dToInt mutable=0 type=t1 init=e3 type=Unit ref=s3615
+expr e5 name(d) type=Double ref=s3614
 expr e6 memberCall recv=e5 callee=roundToLong args=[] type=Long call=s2750 map=[] targs=[]
-expr e7 localDecl dToLong mutable=0 type=t2 init=e6 type=Unit ref=s3581
+expr e7 localDecl dToLong mutable=0 type=t2 init=e6 type=Unit ref=s3616
 expr e8 name(println) type=_
-expr e9 name(dToInt) type=Int ref=s3580
+expr e9 name(dToInt) type=Int ref=s3615
 expr e10 call callee=e8 args=[_:e9] type=Unit call=s1720 map=[0->0] targs=[]
 expr e11 name(println) type=_
-expr e12 name(dToLong) type=Long ref=s3581
+expr e12 name(dToLong) type=Long ref=s3616
 expr e13 call callee=e11 args=[_:e12] type=Unit call=s1720 map=[0->0] targs=[]
 expr e14 float(2.3) type=Float
-expr e15 localDecl f mutable=0 type=t3 init=e14 type=Unit ref=s3582
-expr e16 name(f) type=Float ref=s3582
+expr e15 localDecl f mutable=0 type=t3 init=e14 type=Unit ref=s3617
+expr e16 name(f) type=Float ref=s3617
 expr e17 memberCall recv=e16 callee=roundToInt args=[] type=Int call=s2747 map=[] targs=[]
-expr e18 localDecl fToInt mutable=0 type=t4 init=e17 type=Unit ref=s3583
-expr e19 name(f) type=Float ref=s3582
+expr e18 localDecl fToInt mutable=0 type=t4 init=e17 type=Unit ref=s3618
+expr e19 name(f) type=Float ref=s3617
 expr e20 memberCall recv=e19 callee=roundToLong args=[] type=Long call=s2749 map=[] targs=[]
-expr e21 localDecl fToLong mutable=0 type=t5 init=e20 type=Unit ref=s3584
+expr e21 localDecl fToLong mutable=0 type=t5 init=e20 type=Unit ref=s3619
 expr e22 name(println) type=_
-expr e23 name(fToInt) type=Int ref=s3583
+expr e23 name(fToInt) type=Int ref=s3618
 expr e24 call callee=e22 args=[_:e23] type=Unit call=s1720 map=[0->0] targs=[]
 expr e25 name(println) type=_
-expr e26 name(fToLong) type=Long ref=s3584
+expr e26 name(fToLong) type=Long ref=s3619
 expr e27 call callee=e25 args=[_:e26] type=Unit call=s1720 map=[0->0] targs=[]
