@@ -301,28 +301,28 @@ final class RuntimeHexFormatEdgeCaseTests: IsolatedRuntimeXCTestCase {
     func testHexToIntBasic() {
         let fmt = makeFormat()
         let strRaw = makeString("000000ff")
-        let result = kk_string_hexToInt(strRaw, fmt)
+        let result = kk_string_hexToInt(strRaw, fmt, nil)
         XCTAssertEqual(result, 255)
     }
 
     func testHexToIntMaxPositive() {
         let fmt = makeFormat()
         let strRaw = makeString("7fffffff")
-        let result = kk_string_hexToInt(strRaw, fmt)
+        let result = kk_string_hexToInt(strRaw, fmt, nil)
         XCTAssertEqual(result, Int(Int32.max))
     }
 
     func testHexToIntNegativeOne() {
         let fmt = makeFormat()
         let strRaw = makeString("ffffffff")
-        let result = kk_string_hexToInt(strRaw, fmt)
+        let result = kk_string_hexToInt(strRaw, fmt, nil)
         XCTAssertEqual(result, -1, "0xFFFFFFFF reinterpreted as signed Int32 must equal -1")
     }
 
     func testHexToIntZero() {
         let fmt = makeFormat()
         let strRaw = makeString("00000000")
-        let result = kk_string_hexToInt(strRaw, fmt)
+        let result = kk_string_hexToInt(strRaw, fmt, nil)
         XCTAssertEqual(result, 0)
     }
 
@@ -331,21 +331,21 @@ final class RuntimeHexFormatEdgeCaseTests: IsolatedRuntimeXCTestCase {
     func testHexToLongBasic() {
         let fmt = makeFormat()
         let strRaw = makeString("ff")
-        let result = kk_string_hexToLong(strRaw, fmt)
+        let result = kk_string_hexToLong(strRaw, fmt, nil)
         XCTAssertEqual(kk_unbox_long(result), 255)
     }
 
     func testHexToLongNegativeOne() {
         let fmt = makeFormat()
         let strRaw = makeString("ffffffffffffffff")
-        let result = kk_string_hexToLong(strRaw, fmt)
+        let result = kk_string_hexToLong(strRaw, fmt, nil)
         XCTAssertEqual(kk_unbox_long(result), -1, "0xFFFFFFFFFFFFFFFF reinterpreted as signed Int64 must equal -1")
     }
 
     func testHexToLongZero() {
         let fmt = makeFormat()
         let strRaw = makeString("0")
-        let result = kk_string_hexToLong(strRaw, fmt)
+        let result = kk_string_hexToLong(strRaw, fmt, nil)
         XCTAssertEqual(kk_unbox_long(result), 0)
     }
 
@@ -387,9 +387,8 @@ final class RuntimeHexFormatEdgeCaseTests: IsolatedRuntimeXCTestCase {
     //
     // Kotlin's HexFormat.number.prefix / HexFormat.number.suffix allow attaching
     // a constant prefix (e.g. "0x") or suffix to formatted number strings.
-    // kk_hexformat_prefix and kk_hexformat_suffix are NOT YET IMPLEMENTED as ABI stubs.
-    // The tests below document expected runtime semantics using helper simulation so
-    // that ABI authors have concrete expectations to match.
+    // Runtime coverage for real prefix/suffix encode/decode lives in
+    // RuntimeHexFormatNumberPrefixSuffixTests; the cases below keep lightweight simulations.
 
     /// Simulates Int.toHexString with a "0x" prefix applied manually.
     func testNumberFormatPrefixSimulated() {
@@ -422,7 +421,7 @@ final class RuntimeHexFormatEdgeCaseTests: IsolatedRuntimeXCTestCase {
         let stripped = withPrefix.hasPrefix(prefix) ? String(withPrefix.dropFirst(prefix.count)) : withPrefix
         let fmtDecode = makeFormat()
         let strRaw = makeString(stripped)
-        let decoded = kk_string_hexToInt(strRaw, fmtDecode)
+        let decoded = kk_string_hexToInt(strRaw, fmtDecode, nil)
         XCTAssertEqual(decoded, 255, "Tolerant prefix decode must recover original Int value")
     }
 
