@@ -1,0 +1,450 @@
+@testable import CompilerCore
+import Foundation
+import XCTest
+
+// MARK: - kotlin.native.concurrent sema / diagnostics coverage (STDLIB-NATIVE-CONCURRENT-002)
+
+final class NativeConcurrentSyntheticStubTests: XCTestCase {
+
+    // MARK: Helpers
+
+    private func makeSema() throws -> (SemaModule, StringInterner) {
+        var result: (SemaModule, StringInterner)?
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            result = try (XCTUnwrap(ctx.sema), ctx.interner)
+        }
+        return try XCTUnwrap(result)
+    }
+
+    private func runSemaCollectingDiagnostics(_ source: String) -> CompilationContext {
+        let ctx = makeContextFromSource(source)
+        do {
+            try runSema(ctx)
+        } catch {
+            // Diagnostics are inspected per-test.
+        }
+        return ctx
+    }
+
+    // MARK: - TransferMode enum
+
+    func testTransferModeEnumIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fqName = ["kotlin", "native", "concurrent", "TransferMode"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.native.concurrent.TransferMode to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .enumClass)
+    }
+
+    func testTransferModeSafeEntryHasCorrectType() throws {
+        let (sema, interner) = try makeSema()
+
+        let enumFQName = ["kotlin", "native", "concurrent", "TransferMode"].map { interner.intern($0) }
+        let enumSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: enumFQName))
+        let enumType = sema.types.make(.classType(ClassType(
+            classSymbol: enumSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let safeFQName = enumFQName + [interner.intern("SAFE")]
+        let safeSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: safeFQName),
+            "Expected TransferMode.SAFE entry"
+        )
+        XCTAssertEqual(sema.symbols.propertyType(for: safeSymbol), enumType)
+    }
+
+    func testTransferModeUnsafeEntryHasCorrectType() throws {
+        let (sema, interner) = try makeSema()
+
+        let enumFQName = ["kotlin", "native", "concurrent", "TransferMode"].map { interner.intern($0) }
+        let enumSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: enumFQName))
+        let enumType = sema.types.make(.classType(ClassType(
+            classSymbol: enumSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let unsafeFQName = enumFQName + [interner.intern("UNSAFE")]
+        let unsafeSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: unsafeFQName))
+        XCTAssertEqual(sema.symbols.propertyType(for: unsafeSymbol), enumType)
+    }
+
+    func testTransferModeResolvesInSource() throws {
+        let source = """
+        import kotlin.native.concurrent.TransferMode
+
+        fun probe(): TransferMode = TransferMode.SAFE
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertFalse(
+            ctx.diagnostics.hasError,
+            "Expected TransferMode.SAFE to resolve cleanly, got: \(ctx.diagnostics.diagnostics.map(\.message))"
+        )
+    }
+
+    // MARK: - FutureState enum
+
+    func testFutureStateEnumIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fqName = ["kotlin", "native", "concurrent", "FutureState"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.native.concurrent.FutureState to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .enumClass)
+    }
+
+    func testFutureStateEntriesAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let baseFQName = ["kotlin", "native", "concurrent", "FutureState"].map { interner.intern($0) }
+        for entry in ["SCHEDULED", "COMPUTED", "THROWN", "CANCELLED"] {
+            let entryFQName = baseFQName + [interner.intern(entry)]
+            XCTAssertNotNil(
+                sema.symbols.lookup(fqName: entryFQName),
+                "Expected FutureState.\(entry) to be registered"
+            )
+        }
+    }
+
+    // MARK: - Worker class
+
+    func testWorkerClassIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fqName = ["kotlin", "native", "concurrent", "Worker"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.native.concurrent.Worker to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .class)
+    }
+
+    func testWorkerRequestTerminationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let workerFQName = ["kotlin", "native", "concurrent", "Worker"].map { interner.intern($0) }
+        let workerSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: workerFQName))
+
+        let methodFQName = workerFQName + [interner.intern("requestTermination")]
+        let methods = sema.symbols.lookupAll(fqName: methodFQName)
+        XCTAssertFalse(methods.isEmpty, "Expected Worker.requestTermination to be registered")
+
+        let method = try XCTUnwrap(methods.first)
+        let sig = try XCTUnwrap(sema.symbols.functionSignature(for: method))
+        XCTAssertEqual(sig.parameterTypes, [sema.types.booleanType])
+        XCTAssertEqual(sig.returnType, sema.types.unitType)
+
+        let workerType = try XCTUnwrap(sema.symbols.propertyType(for: workerSymbol))
+        XCTAssertEqual(sig.receiverType, workerType)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: method), "kk_worker_request_termination")
+    }
+
+    func testWorkerIsTerminatedPropertyIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let workerFQName = ["kotlin", "native", "concurrent", "Worker"].map { interner.intern($0) }
+        let propFQName = workerFQName + [interner.intern("isTerminated")]
+        let propSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: propFQName),
+            "Expected Worker.isTerminated property"
+        )
+        XCTAssertEqual(sema.symbols.propertyType(for: propSymbol), sema.types.booleanType)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: propSymbol), "kk_worker_is_terminated")
+    }
+
+    func testWorkerNamePropertyIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let workerFQName = ["kotlin", "native", "concurrent", "Worker"].map { interner.intern($0) }
+        let propFQName = workerFQName + [interner.intern("name")]
+        let propSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: propFQName),
+            "Expected Worker.name property"
+        )
+        XCTAssertEqual(sema.symbols.propertyType(for: propSymbol), sema.types.stringType)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: propSymbol), "kk_worker_name")
+    }
+
+    func testWorkerCompanionStartIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let companionFQName = ["kotlin", "native", "concurrent", "Worker", "Companion"]
+            .map { interner.intern($0) }
+        let startFQName = companionFQName + [interner.intern("start")]
+        let methods = sema.symbols.lookupAll(fqName: startFQName)
+        XCTAssertFalse(methods.isEmpty, "Expected Worker.Companion.start to be registered")
+
+        let method = try XCTUnwrap(methods.first)
+        let sig = try XCTUnwrap(sema.symbols.functionSignature(for: method))
+        XCTAssertEqual(sig.parameterTypes, [sema.types.makeNullable(sema.types.stringType)])
+        XCTAssertEqual(sig.valueParameterHasDefaultValues, [true])
+        XCTAssertEqual(sema.symbols.externalLinkName(for: method), "kk_worker_new")
+    }
+
+    // MARK: - Future<T> class
+
+    func testFutureClassIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fqName = ["kotlin", "native", "concurrent", "Future"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.native.concurrent.Future to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .class)
+
+        let typeParams = sema.types.nominalTypeParameterSymbols(for: symbol)
+        XCTAssertEqual(typeParams.count, 1)
+    }
+
+    func testFutureResultPropertyIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let futureFQName = ["kotlin", "native", "concurrent", "Future"].map { interner.intern($0) }
+        let propFQName = futureFQName + [interner.intern("result")]
+        let propSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: propFQName),
+            "Expected Future.result property"
+        )
+        XCTAssertEqual(sema.symbols.externalLinkName(for: propSymbol), "kk_future_result")
+    }
+
+    func testFutureConsumeMethodIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let futureFQName = ["kotlin", "native", "concurrent", "Future"].map { interner.intern($0) }
+        let methodFQName = futureFQName + [interner.intern("consume")]
+        let methods = sema.symbols.lookupAll(fqName: methodFQName)
+        XCTAssertFalse(methods.isEmpty, "Expected Future.consume to be registered")
+
+        let method = try XCTUnwrap(methods.first)
+        let sig = try XCTUnwrap(sema.symbols.functionSignature(for: method))
+        XCTAssertEqual(sig.parameterTypes, [])
+        XCTAssertEqual(sema.symbols.externalLinkName(for: method), "kk_future_consume")
+    }
+
+    func testFutureGetStateMethodIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let futureFQName = ["kotlin", "native", "concurrent", "Future"].map { interner.intern($0) }
+        let methodFQName = futureFQName + [interner.intern("getState")]
+        let methods = sema.symbols.lookupAll(fqName: methodFQName)
+        XCTAssertFalse(methods.isEmpty, "Expected Future.getState to be registered")
+
+        let method = try XCTUnwrap(methods.first)
+        let sig = try XCTUnwrap(sema.symbols.functionSignature(for: method))
+        XCTAssertEqual(sig.parameterTypes, [])
+
+        let futureStateFQName = ["kotlin", "native", "concurrent", "FutureState"].map { interner.intern($0) }
+        let futureStateSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: futureStateFQName))
+        let futureStateType = sema.types.make(.classType(ClassType(
+            classSymbol: futureStateSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        XCTAssertEqual(sig.returnType, futureStateType)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: method), "kk_future_getState")
+    }
+
+    // MARK: - AtomicReference<T> (legacy kotlin.native.concurrent)
+
+    func testLegacyAtomicReferenceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fqName = ["kotlin", "native", "concurrent", "AtomicReference"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.native.concurrent.AtomicReference to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .class)
+
+        let typeParams = sema.types.nominalTypeParameterSymbols(for: symbol)
+        XCTAssertEqual(typeParams.count, 1)
+    }
+
+    func testLegacyAtomicReferenceConstructorIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let atomicRefFQName = ["kotlin", "native", "concurrent", "AtomicReference"].map { interner.intern($0) }
+        let initFQName = atomicRefFQName + [interner.intern("<init>")]
+        let initMethods = sema.symbols.lookupAll(fqName: initFQName)
+        XCTAssertFalse(initMethods.isEmpty, "Expected AtomicReference <init> to be registered")
+
+        let initMethod = try XCTUnwrap(initMethods.first)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: initMethod), "kk_native_atomic_ref_create")
+
+        let sig = try XCTUnwrap(sema.symbols.functionSignature(for: initMethod))
+        XCTAssertEqual(sig.parameterTypes.count, 1)
+        XCTAssertNil(sig.receiverType, "Constructor should have no receiver type")
+    }
+
+    func testLegacyAtomicReferenceValuePropertyIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let atomicRefFQName = ["kotlin", "native", "concurrent", "AtomicReference"].map { interner.intern($0) }
+        let propFQName = atomicRefFQName + [interner.intern("value")]
+        let propSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: propFQName))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: propSymbol), "kk_native_atomic_ref_load")
+    }
+
+    func testLegacyAtomicReferenceCompareAndSwapIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let atomicRefFQName = ["kotlin", "native", "concurrent", "AtomicReference"].map { interner.intern($0) }
+        let methodFQName = atomicRefFQName + [interner.intern("compareAndSwap")]
+        let methods = sema.symbols.lookupAll(fqName: methodFQName)
+        XCTAssertFalse(methods.isEmpty, "Expected AtomicReference.compareAndSwap to be registered")
+
+        let method = try XCTUnwrap(methods.first)
+        let sig = try XCTUnwrap(sema.symbols.functionSignature(for: method))
+        XCTAssertEqual(sig.parameterTypes.count, 2)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: method), "kk_native_atomic_ref_compareAndSwap")
+    }
+
+    func testLegacyAtomicReferenceCompareAndSetIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let atomicRefFQName = ["kotlin", "native", "concurrent", "AtomicReference"].map { interner.intern($0) }
+        let methodFQName = atomicRefFQName + [interner.intern("compareAndSet")]
+        let methods = sema.symbols.lookupAll(fqName: methodFQName)
+        XCTAssertFalse(methods.isEmpty, "Expected AtomicReference.compareAndSet to be registered")
+
+        let method = try XCTUnwrap(methods.first)
+        let sig = try XCTUnwrap(sema.symbols.functionSignature(for: method))
+        XCTAssertEqual(sig.parameterTypes.count, 2)
+        XCTAssertEqual(sig.returnType, sema.types.booleanType)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: method), "kk_native_atomic_ref_compareAndSet")
+    }
+
+    // MARK: - @SharedImmutable annotation
+
+    func testSharedImmutableAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fqName = ["kotlin", "native", "concurrent", "SharedImmutable"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.native.concurrent.SharedImmutable annotation to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .annotationClass)
+
+        let annotations = sema.symbols.annotations(for: symbol)
+        let targetAnnotation = annotations.first { $0.annotationFQName == "kotlin.annotation.Target" }
+        XCTAssertNotNil(targetAnnotation, "Expected @Target annotation on @SharedImmutable")
+        XCTAssertTrue(
+            targetAnnotation?.arguments.contains("AnnotationTarget.PROPERTY") == true,
+            "Expected PROPERTY target for @SharedImmutable"
+        )
+    }
+
+    func testSharedImmutableAnnotationResolvesOnProperty() throws {
+        let source = """
+        import kotlin.native.concurrent.SharedImmutable
+
+        @SharedImmutable
+        val globalData: Int = 42
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertFalse(
+            ctx.diagnostics.hasError,
+            "@SharedImmutable on top-level property should resolve cleanly, got: \(ctx.diagnostics.diagnostics.map(\.message))"
+        )
+    }
+
+    func testSharedImmutableAnnotationTargetErrorOnFunction() throws {
+        // @SharedImmutable is only valid on PROPERTY/FIELD, not on functions.
+        // The AnnotationTargetValidation phase should emit KSWIFTK-SEMA-ANNOTATION-TARGET.
+        let source = """
+        import kotlin.native.concurrent.SharedImmutable
+
+        @SharedImmutable
+        fun badUsage(): Int = 1
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = ctx.diagnostics.diagnostics.filter {
+            $0.code == "KSWIFTK-SEMA-ANNOTATION-TARGET"
+        }
+        XCTAssertEqual(
+            diagnostics.count, 1,
+            "Expected one annotation-target diagnostic for @SharedImmutable on fun, got: \(ctx.diagnostics.diagnostics)"
+        )
+    }
+
+    // MARK: - @ThreadLocal (kotlin.native.concurrent) annotation
+
+    func testNativeThreadLocalAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fqName = ["kotlin", "native", "concurrent", "ThreadLocal"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.native.concurrent.ThreadLocal annotation to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .annotationClass)
+
+        let annotations = sema.symbols.annotations(for: symbol)
+        let targetAnnotation = annotations.first { $0.annotationFQName == "kotlin.annotation.Target" }
+        XCTAssertNotNil(targetAnnotation, "Expected @Target annotation on native @ThreadLocal")
+        XCTAssertTrue(
+            targetAnnotation?.arguments.contains("AnnotationTarget.PROPERTY") == true,
+            "Expected PROPERTY target for native @ThreadLocal"
+        )
+    }
+
+    func testNativeThreadLocalAnnotationResolvesOnProperty() throws {
+        let source = """
+        import kotlin.native.concurrent.ThreadLocal
+
+        @ThreadLocal
+        var counter: Int = 0
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertFalse(
+            ctx.diagnostics.hasError,
+            "@ThreadLocal on top-level property should resolve cleanly, got: \(ctx.diagnostics.diagnostics.map(\.message))"
+        )
+    }
+
+    func testNativeThreadLocalAnnotationTargetErrorOnFunction() throws {
+        // @ThreadLocal (native) is only valid on PROPERTY/FIELD, not on functions.
+        let source = """
+        import kotlin.native.concurrent.ThreadLocal
+
+        @ThreadLocal
+        fun badUsage(): Int = 1
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = ctx.diagnostics.diagnostics.filter {
+            $0.code == "KSWIFTK-SEMA-ANNOTATION-TARGET"
+        }
+        XCTAssertEqual(
+            diagnostics.count, 1,
+            "Expected one annotation-target diagnostic for native @ThreadLocal on fun, got: \(ctx.diagnostics.diagnostics)"
+        )
+    }
+
+    // MARK: - Package existence
+
+    func testNativeConcurrentPackageIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let pkgFQName = ["kotlin", "native", "concurrent"].map { interner.intern($0) }
+        let pkgSymbol = sema.symbols.lookup(fqName: pkgFQName)
+        XCTAssertNotNil(pkgSymbol, "Expected kotlin.native.concurrent package to be registered")
+        XCTAssertEqual(sema.symbols.symbol(try XCTUnwrap(pkgSymbol))?.kind, .package)
+    }
+}

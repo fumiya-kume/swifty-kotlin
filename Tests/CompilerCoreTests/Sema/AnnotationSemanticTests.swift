@@ -745,7 +745,7 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.isEmpty, "Expected OPT_IN_USAGE suppression alias to suppress opt-in diagnostics, got: \(ctx.diagnostics.diagnostics)")
     }
 
-    private func runSemaCollectingDiagnostics(_ source: String) -> CompilationContext {
+    func runSemaCollectingDiagnostics(_ source: String) -> CompilationContext {
         let ctx = makeContextFromSource(source)
         do {
             try runSema(ctx)
@@ -755,18 +755,18 @@ final class AnnotationSemanticTests: XCTestCase {
         return ctx
     }
 
-    private func diagnostics(withCode code: String, in ctx: CompilationContext) -> [Diagnostic] {
+    func diagnostics(withCode code: String, in ctx: CompilationContext) -> [Diagnostic] {
         ctx.diagnostics.diagnostics.filter { $0.code == code }
     }
 
-    private func isError(_ diagnostic: Diagnostic) -> Bool {
+    func isError(_ diagnostic: Diagnostic) -> Bool {
         if case .error = diagnostic.severity {
             return true
         }
         return false
     }
 
-    private func isWarning(_ diagnostic: Diagnostic) -> Bool {
+    func isWarning(_ diagnostic: Diagnostic) -> Bool {
         if case .warning = diagnostic.severity {
             return true
         }

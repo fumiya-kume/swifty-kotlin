@@ -2643,7 +2643,7 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "initial", type: .intptr),
                 RuntimeABIParameter(name: "operationFnPtr", type: .intptr),
                 RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -3830,6 +3830,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "rangeRaw", type: .intptr),
                 RuntimeABIParameter(name: "stepVal", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Range"

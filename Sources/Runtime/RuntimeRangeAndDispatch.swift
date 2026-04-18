@@ -224,13 +224,20 @@ public func kk_op_downTo(_ lhs: Int, _ rhs: Int) -> Int {
 }
 
 @_cdecl("kk_op_step")
-public func kk_op_step(_ rangeRaw: Int, _ stepValue: Int) -> Int {
-    // Validate step constraints (STDLIB-RANGE-039)
+public func kk_op_step(_ rangeRaw: Int, _ stepValue: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    // Kotlin spec: step() requires a strictly positive argument (STDLIB-022).
     guard stepValue > 0 else {
-        return rangeRaw // Return unchanged for invalid step
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: Step must be positive, was: \(stepValue)."
+        )
+        return rangeRaw
     }
     guard stepValue != Int.min else {
-        return rangeRaw // Return unchanged for invalid step
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: Step must be positive, was: \(stepValue)."
+        )
+        return rangeRaw
     }
 
     guard let range = runtimeRangeBox(from: rangeRaw) else {
