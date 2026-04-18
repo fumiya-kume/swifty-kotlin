@@ -81,27 +81,6 @@ extension CodegenBackendIntegrationTests {
         // split(delimiter, limit) is not yet implemented as a separate overload;
         // the runtime only provides split(String) without a limit parameter.
         throw XCTSkip("split with limit parameter not yet implemented")
-        let source = """
-        fun main() {
-            println("a,b,c".split(",", limit = 2))
-            println("a,b,c".split(",", limit = 1))
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
-            let ctx = try runCodegenPipeline(
-                inputPath: path,
-                moduleName: "KotlinTextSplitWithLimitEdgeCases",
-                emit: .executable,
-                outputPath: outputBase
-            )
-            try LinkPhase().run(ctx)
-
-            let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(out, "[a, b,c]\n[a,b,c]\n")
-        }
     }
 
     func testKotlinTextSplitToSequenceEdgeCases() throws {
@@ -401,28 +380,6 @@ extension CodegenBackendIntegrationTests {
         // trim { predicate }, trimStart { predicate }, trimEnd { predicate }
         // are not yet implemented in the runtime stubs.
         throw XCTSkip("trim/trimStart/trimEnd with predicate not yet implemented")
-        let source = """
-        fun main() {
-            println("123abc456".trim { it.isDigit() })
-            println("123abc456".trimStart { it.isDigit() })
-            println("123abc456".trimEnd { it.isDigit() })
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
-            let ctx = try runCodegenPipeline(
-                inputPath: path,
-                moduleName: "KotlinTextTrimPredicateEdgeCases",
-                emit: .executable,
-                outputPath: outputBase
-            )
-            try LinkPhase().run(ctx)
-
-            let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(out, "abc\nabc456\n123abc\n")
-        }
     }
 
     // MARK: - padStart / padEnd
@@ -561,27 +518,6 @@ extension CodegenBackendIntegrationTests {
         // are not yet implemented in the runtime (they fall back to case-sensitive search).
         // This test documents the current behavior and can be upgraded when implemented.
         throw XCTSkip("indexOf/lastIndexOf with ignoreCase not yet implemented")
-        let source = """
-        fun main() {
-            println("Hello World".indexOf("world", ignoreCase = true))
-            println("Hello World Hello".lastIndexOf("HELLO", ignoreCase = true))
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
-            let ctx = try runCodegenPipeline(
-                inputPath: path,
-                moduleName: "KotlinTextIndexOfIgnoreCaseEdgeCases",
-                emit: .executable,
-                outputPath: outputBase
-            )
-            try LinkPhase().run(ctx)
-
-            let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(out, "6\n12\n")
-        }
     }
 
     // MARK: - chunked / windowed
