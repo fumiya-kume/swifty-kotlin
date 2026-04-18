@@ -18,13 +18,15 @@ fun main() = runBlocking {
     // Give receiver time to start
     delay(100)
     
-    // Send value - should suspend until receiver is ready
+    // Send value - should suspend until receiver is ready.
+    // Join before printing to make the post-rendezvous ordering deterministic
+    // across dispatchers (kotlinx-coroutines JVM vs. our runtime schedule the
+    // two resumes in different orders).
     println("Sender sending value...")
     rendezvousChannel.send(42)
-    println("Sender sent value")
-    
-    // Wait for completion
     receiverJob.join()
+    println("Sender sent value")
+
     println("Rendezvous test completed")
     
     // Launch a sender before the receiver to exercise blocking behavior again

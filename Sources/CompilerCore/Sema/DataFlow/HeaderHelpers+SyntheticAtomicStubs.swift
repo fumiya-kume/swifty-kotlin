@@ -166,6 +166,15 @@ extension DataFlowSemaPhase {
             types: types
         )
 
+        registerAtomicRefArrayStub(
+            packageFQName: atomicsPkg,
+            boolType: boolType,
+            unitType: unitType,
+            symbols: symbols,
+            interner: interner,
+            types: types
+        )
+
         // -- Lock --
         let lockSymbol = ensureClassSymbol(
             named: "Lock",
@@ -488,6 +497,181 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner,
             types: types
+        )
+    }
+
+    /// Registers `kotlin.concurrent.atomics.AtomicArray<T>` backed by
+    /// `kk_atomic_ref_array_*` ABI functions.  CAS uses identity semantics.
+    private func registerAtomicRefArrayStub(
+        packageFQName: [InternedString],
+        boolType: TypeID,
+        unitType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner,
+        types: TypeSystem
+    ) {
+        let className = interner.intern("AtomicArray")
+        let symbol = ensureClassSymbol(
+            named: "AtomicArray",
+            in: packageFQName,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Register the T type parameter
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = packageFQName + [className, typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: .nullable)))
+        let ownerType = types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: symbol)
+        types.setNominalTypeParameterVariances([.invariant], for: symbol)
+        symbols.setPropertyType(ownerType, for: symbol)
+
+        // constructor(size: Int)
+        registerAtomicConstructor(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            externalLinkName: "kk_atomic_ref_array_new",
+            paramType: types.intType,
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // size: Int
+        registerAtomicReadOnlyProperty(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            propertyName: "size",
+            valueType: types.intType,
+            getterLinkName: "kk_atomic_ref_array_size",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // loadAt(index: Int): T
+        registerAtomicMember(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            name: "loadAt",
+            externalLinkName: "kk_atomic_ref_array_loadAt",
+            returnType: typeParamType,
+            parameters: [(name: "index", type: types.intType)],
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // storeAt(index: Int, value: T): Unit
+        registerAtomicMember(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            name: "storeAt",
+            externalLinkName: "kk_atomic_ref_array_storeAt",
+            returnType: unitType,
+            parameters: [(name: "index", type: types.intType), (name: "value", type: typeParamType)],
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // exchangeAt(index: Int, newValue: T): T
+        registerAtomicMember(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            name: "exchangeAt",
+            externalLinkName: "kk_atomic_ref_array_exchangeAt",
+            returnType: typeParamType,
+            parameters: [(name: "index", type: types.intType), (name: "newValue", type: typeParamType)],
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // compareAndSetAt(index: Int, expect: T, update: T): Boolean
+        registerAtomicMember(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            name: "compareAndSetAt",
+            externalLinkName: "kk_atomic_ref_array_compareAndSetAt",
+            returnType: boolType,
+            parameters: [
+                (name: "index", type: types.intType),
+                (name: "expect", type: typeParamType),
+                (name: "update", type: typeParamType),
+            ],
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // compareAndExchangeAt(index: Int, expect: T, update: T): T
+        registerAtomicMember(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            name: "compareAndExchangeAt",
+            externalLinkName: "kk_atomic_ref_array_compareAndExchangeAt",
+            returnType: typeParamType,
+            parameters: [
+                (name: "index", type: types.intType),
+                (name: "expect", type: typeParamType),
+                (name: "update", type: typeParamType),
+            ],
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // get operator alias (index: Int): T
+        registerAtomicMember(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            name: "get",
+            externalLinkName: "kk_atomic_ref_array_loadAt",
+            returnType: typeParamType,
+            parameters: [(name: "index", type: types.intType)],
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+
+        // set operator alias (index: Int, value: T): Unit
+        registerAtomicMember(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            name: "set",
+            externalLinkName: "kk_atomic_ref_array_storeAt",
+            returnType: unitType,
+            parameters: [(name: "index", type: types.intType), (name: "value", type: typeParamType)],
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
         )
     }
 
@@ -862,7 +1046,7 @@ extension DataFlowSemaPhase {
             fqName: propertyFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: [.synthetic, .mutable]
         )
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setExternalLinkName(getterLinkName, for: propertySymbol)

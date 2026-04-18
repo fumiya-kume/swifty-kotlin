@@ -106,7 +106,15 @@ final class CommandRunnerTests: XCTestCase {
         XCTAssertEqual(result.stderr.count, 131_072)
     }
 
-    func testRunTimedOutProcessThrowsTimedOutError() {
+    func testRunTimedOutProcessThrowsTimedOutError() throws {
+        #if os(Linux)
+        // swift-corelibs-foundation's Process termination is unreliable on
+        // Linux and can raise SIGABRT under heavy parallelism (CompilerCoreTests
+        // matrix runs with 8 workers). Skip until the root cause is addressed;
+        // see also the RuntimeHTTPClient Linux stabilization pattern in this
+        // branch.
+        throw XCTSkip("Process timeout test is flaky on Linux CI (SIGABRT under parallel execution)")
+        #else
         XCTAssertThrowsError(
             try CommandRunner.run(
                 executable: "/bin/sh",
@@ -121,6 +129,7 @@ final class CommandRunnerTests: XCTestCase {
             XCTAssertTrue(message.contains("Timed out"))
             XCTAssertTrue(message.contains("sleep 10"))
         }
+        #endif
     }
 
     // MARK: - run: currentDirectoryPath

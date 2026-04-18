@@ -211,14 +211,10 @@ public func kk_pin_object(_ objectRaw: Int) -> Int {
     guard objectRaw != 0 else {
         return 0
     }
-    // Retain a reference so the GC cannot collect it.
-    if let ptr = UnsafeMutableRawPointer(bitPattern: objectRaw) {
-        let isManaged = runtimeStorage.withLock { state in
-            state.objectPointers.contains(UInt(bitPattern: ptr))
-        }
-        if isManaged {
-            _ = Unmanaged<AnyObject>.fromOpaque(ptr).retain()
-        }
+    // Register the object as a GC root so the mark-sweep collector treats it
+    // as reachable for as long as the pin is held.
+    runtimeStorage.withLock { state in
+        state.pinnedObjects.insert(UInt(bitPattern: objectRaw))
     }
     return registerRuntimeObject(RuntimePinnedBox(objectRaw: objectRaw))
 }
@@ -243,16 +239,9 @@ public func kk_unpin_object(_ pinnedHandle: Int) -> Int {
         return box.objectRaw
     }
     let unmanaged = Unmanaged<RuntimePinnedBox>.fromOpaque(ptr)
-    // Release the extra retain we added in kk_pin_object.
-    if let objPtr = UnsafeMutableRawPointer(bitPattern: box.objectRaw) {
-        let isManaged = runtimeStorage.withLock { state in
-            state.objectPointers.contains(UInt(bitPattern: objPtr))
-        }
-        if isManaged {
-            Unmanaged<AnyObject>.fromOpaque(objPtr).release()
-        }
-    }
+    // Drop GC root registration so the object can be collected again; see kk_pin_object.
     runtimeStorage.withLock { state in
+        state.pinnedObjects.remove(UInt(bitPattern: box.objectRaw))
         state.objectPointers.remove(UInt(bitPattern: ptr))
     }
     unmanaged.release()
@@ -441,7 +430,7 @@ public func kk_worker_new(_ nameRaw: Int) -> Int {
     if let nameStr = extractString(from: UnsafeMutableRawPointer(bitPattern: nameRaw)) {
         name = nameStr
     } else {
-        name = "worker-\(arc4random())"
+        name = "worker-\(UInt32.random(in: 0...UInt32.max))"
     }
     return registerRuntimeObject(RuntimeWorkerBox(name: name))
 }
