@@ -155,7 +155,15 @@ public func kk_int_toHexString(_ receiverRaw: Int, _ formatRaw: Int) -> Int {
 
 @_cdecl("kk_long_toHexString")
 public func kk_long_toHexString(_ receiverRaw: Int, _ formatRaw: Int) -> Int {
-    let longValue = Int(kk_unbox_long(receiverRaw))
+    // Int64.min == runtimeNullSentinelInt, so kk_box_long passes it through
+    // unboxed and kk_unbox_long would return 0 (null-sentinel path).
+    // Detect this case before unboxing and treat it as the actual Long.MIN_VALUE.
+    let longValue: Int
+    if receiverRaw == runtimeNullSentinelInt {
+        longValue = Int.min
+    } else {
+        longValue = Int(kk_unbox_long(receiverRaw))
+    }
     let format = hexFormatBoxFromRaw(formatRaw)
     let rawHex: String
     if longValue < 0 {
