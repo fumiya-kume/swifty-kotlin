@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "opt_in_companion_member.kt",
+      "range": {
+        "start": { "line": 15, "character": 32 },
+        "end": { "line": 15, "character": 68 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalCompanionApi' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalCompanionApi' or '@OptIn(golden.diagnostics.ExperimentalCompanionApi::class)'.",
+      "codeActions": []
+    }
+  ]
+}

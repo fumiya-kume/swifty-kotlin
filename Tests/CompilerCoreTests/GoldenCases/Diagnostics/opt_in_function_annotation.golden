@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "opt_in_function_annotation.kt",
+      "range": {
+        "start": { "line": 11, "character": 36 },
+        "end": { "line": 11, "character": 53 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalFuncApi' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalFuncApi' or '@OptIn(golden.diagnostics.ExperimentalFuncApi::class)'.",
+      "codeActions": []
+    }
+  ]
+}
