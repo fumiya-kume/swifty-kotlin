@@ -8,6 +8,9 @@ private let runtimeNotNullUninitializedMessage =
 
 @inline(__always)
 private func runtimeTrapNotNullUninitialized() -> Never {
+    // Top-level entry wrapper maps uncaught traps to KSWIFTK-LINK-0003 without forwarding
+    // Swift's fatalError string; mirror the message on stderr so integration tests can assert it.
+    FileHandle.standardError.write(Data((runtimeNotNullUninitializedMessage + "\n").utf8))
     fatalError(runtimeNotNullUninitializedMessage)
 }
 
