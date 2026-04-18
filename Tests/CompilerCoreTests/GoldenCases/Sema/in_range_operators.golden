@@ -3562,29 +3562,43 @@ symbol s3560 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3561 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3559 params=[() -> T#3562] ret=T#3562 suspend=0 defaults=[0] vararg=[0]
 symbol s3562 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3563 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3564 kind=function fq=checkIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3565 kind=valueParameter fq=checkIn.$3564.x vis=private flags=_
-symbol s3566 kind=valueParameter fq=checkIn.$3564.y vis=private flags=_
-symbol s3567 kind=function fq=checkNotIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3568 kind=valueParameter fq=checkNotIn.$3567.x vis=private flags=_
-symbol s3569 kind=valueParameter fq=checkNotIn.$3567.y vis=private flags=_
-symbol s3570 kind=function fq=rangeUntilExpr vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s3571 kind=valueParameter fq=rangeUntilExpr.$3570.n vis=private flags=_
+symbol s3564 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3565 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3566 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3566<T#3567>
+symbol s3567 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3568 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3566<T#3567> params=[] ret=T#3567? suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3570 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3571 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3572 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3572
+symbol s3573 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
+symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3578 kind=function fq=checkIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3579 kind=valueParameter fq=checkIn.$3578.x vis=private flags=_
+symbol s3580 kind=valueParameter fq=checkIn.$3578.y vis=private flags=_
+symbol s3581 kind=function fq=checkNotIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3582 kind=valueParameter fq=checkNotIn.$3581.x vis=private flags=_
+symbol s3583 kind=valueParameter fq=checkNotIn.$3581.y vis=private flags=_
+symbol s3584 kind=function fq=rangeUntilExpr vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s3585 kind=valueParameter fq=rangeUntilExpr.$3584.n vis=private flags=_
 file f0 package=_
-  decl d0 fun checkIn suspend=0 inline=0 sym=s3564
-  decl d1 fun checkNotIn suspend=0 inline=0 sym=s3567
-  decl d2 fun rangeUntilExpr suspend=0 inline=0 sym=s3570
-expr e0 name(x) type=Int ref=s3565
+  decl d0 fun checkIn suspend=0 inline=0 sym=s3578
+  decl d1 fun checkNotIn suspend=0 inline=0 sym=s3581
+  decl d2 fun rangeUntilExpr suspend=0 inline=0 sym=s3584
+expr e0 name(x) type=Int ref=s3579
 expr e1 int(1) type=Int
 expr e2 int(10) type=Int
 expr e3 binary(rangeTo) lhs=e1 rhs=e2 type=Int
 expr e4 inExpr lhs=e0 rhs=e3 type=Boolean
-expr e5 name(x) type=Int ref=s3568
+expr e5 name(x) type=Int ref=s3582
 expr e6 int(1) type=Int
 expr e7 int(10) type=Int
 expr e8 binary(rangeTo) lhs=e6 rhs=e7 type=Int
 expr e9 notInExpr lhs=e5 rhs=e8 type=Boolean
-expr e10 name(n) type=Int ref=s3571
+expr e10 name(n) type=Int ref=s3585
 expr e11 int(0) type=Int
 expr e12 int(10) type=Int
 expr e13 binary(rangeUntil) lhs=e11 rhs=e12 type=Int
