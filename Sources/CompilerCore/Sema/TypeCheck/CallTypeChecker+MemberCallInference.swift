@@ -2907,50 +2907,13 @@ extension CallTypeChecker {
             return finalType
         }
 
-        // STDLIB-NUM-130: Early resolution for Double/Float extension functions
-        // This handles the case where primitive types don't have owner symbols
-        let doubleType = sema.types.make(.primitive(.double, .nonNull))
-        let floatType = sema.types.make(.primitive(.float, .nonNull))
-        let receiverForCheck = safeCall
-            ? sema.types.makeNonNullable(lookupReceiverType)
-            : lookupReceiverType
-        
-        if receiverForCheck == doubleType || receiverForCheck == floatType {
-            let calleeStr = interner.resolve(calleeName)
-            
-            // Handle zero-parameter extension functions for Double/Float
-            if args.isEmpty && (calleeStr == "isNaN" || calleeStr == "isInfinite" || calleeStr == "isFinite" ||
-                               calleeStr == "toBits" || calleeStr == "toRawBits" || calleeStr == "ulp" ||
-                               calleeStr == "nextUp" || calleeStr == "nextDown") {
-
-                let resultType: TypeID = switch calleeStr {
-                case "isNaN", "isInfinite", "isFinite": sema.types.booleanType
-                case "toBits", "toRawBits": receiverForCheck == doubleType ? sema.types.longType : sema.types.intType
-                case "ulp", "nextUp", "nextDown": receiverForCheck
-                default: sema.types.errorType
-                }
-
-                if resultType != sema.types.errorType {
-                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
-                    // Bind the synthetic coercion function so the KIR lowerer
-                    // emits the correct external link name (e.g. kk_double_isNaN).
-                    let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
-                    let funcFQName = kotlinPkg + [calleeName]
-                    if let chosen = sema.symbols.lookupAll(fqName: funcFQName).first(where: { symbolID in
-                        guard let sig = sema.symbols.functionSignature(for: symbolID) else { return false }
-                        return sig.receiverType == receiverForCheck
-                    }) {
-                        sema.bindings.bindCall(id, binding: CallBinding(
-                            chosenCallee: chosen,
-                            substitutedTypeArguments: [],
-                            parameterMapping: [:]
-                        ))
-                    }
-                    sema.bindings.bindExprType(id, type: finalType)
-                    return finalType
-                }
-            }
-        }
+        // STDLIB-NUM-130 (previous fast-path) removed:
+        // isNaN / isInfinite / isFinite / toBits / toRawBits / ulp / nextUp / nextDown
+        // are registered as real extension functions with external link names
+        // (kk_{double,float}_*) in HeaderHelpers+SyntheticCoercionStubs.swift. Letting
+        // them flow through the normal extension-function resolution path carries the
+        // link name into codegen; the old early-return bound only the result type, so
+        // the linker saw raw "_isNaN"/"_nextUp" symbols.
 
         // Int/Long/Double/Float.coerceIn(min, max) (STDLIB-150, STDLIB-500)
         if interner.resolve(calleeName) == "coerceIn", args.count == 2 {
@@ -5525,6 +5488,7 @@ extension CallTypeChecker {
             candidates: candidates,
             preInferredNonLambdaArgTypes: cachedNonLambdaArgTypes,
             explicitTypeArgs: explicitTypeArgs,
+            receiverType: effectiveReceiverType,
             ctx: ctx,
             locals: &locals
         )

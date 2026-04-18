@@ -754,7 +754,7 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
             Int64(totalTestTime) + aggregateSlackNs,
             "Aggregate measured durations should stay close to enclosing wall-clock time"
         )
-        
+
         // Verify total test time is reasonable
         XCTAssertLessThan(totalTestTime, 10_000_000_000, "50 rapid measurements should complete within 10 seconds")
     }

@@ -131,8 +131,22 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let errorSymbol = ensureClassSymbol(
+            named: "Error",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let assertionErrorSymbol = ensureClassSymbol(
+            named: "AssertionError",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
 
         symbols.setDirectSupertypes([throwableSymbol], for: exceptionSymbol)
+        symbols.setDirectSupertypes([throwableSymbol], for: errorSymbol)
+        symbols.setDirectSupertypes([errorSymbol], for: assertionErrorSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: runtimeExceptionSymbol)
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: uninitializedSymbol)
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: nullPointerSymbol)
@@ -158,6 +172,8 @@ extension DataFlowSemaPhase {
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: noSuchElementSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: arithmeticSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: classCastSymbol)
+        types.setNominalDirectSupertypes([throwableSymbol], for: errorSymbol)
+        types.setNominalDirectSupertypes([errorSymbol], for: assertionErrorSymbol)
 
         for symbol in [
             throwableSymbol,
@@ -173,6 +189,8 @@ extension DataFlowSemaPhase {
             noSuchElementSymbol,
             arithmeticSymbol,
             classCastSymbol,
+            errorSymbol,
+            assertionErrorSymbol,
         ] {
             let type = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
             symbols.setPropertyType(type, for: symbol)
@@ -231,6 +249,8 @@ extension DataFlowSemaPhase {
             noSuchElementSymbol,
             arithmeticSymbol,
             classCastSymbol,
+            errorSymbol,
+            assertionErrorSymbol,
         ] {
             registerSyntheticExceptionConstructors(
                 ownerSymbol: exSymbol,
