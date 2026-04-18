@@ -6,12 +6,28 @@ typealias KKCustomDelegateSetterEntryPoint = @convention(c) (Int, Int, Int, Int,
 private let runtimeNotNullUninitializedMessage =
     "IllegalStateException: Property delegate must be assigned before being accessed."
 
+/// Throws an `IllegalStateException` for uninitialized `notNull` delegate access.
+/// (STDLIB-PROP-ABI-001)
+///
+/// When `outThrown` is non-nil (throwing call site), the exception is set via
+/// `outThrown` and 0 is returned.  When `outThrown` is nil (non-throwing call
+/// site — the compiler currently lowers this as a non-throwing call), we fall
+/// back to `fatalError` so the process still terminates with a diagnostic
+/// message and a non-zero exit code.
 @inline(__always)
-private func runtimeTrapNotNullUninitialized() -> Never {
-    // Top-level entry wrapper maps uncaught traps to KSWIFTK-LINK-0003 without forwarding
-    // Swift's fatalError string; mirror the message on stderr so integration tests can assert it.
-    FileHandle.standardError.write(Data((runtimeNotNullUninitializedMessage + "\n").utf8))
-    fatalError(runtimeNotNullUninitializedMessage)
+private func runtimeThrowNotNullUninitialized(
+    propertyName: String? = nil,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    if let outThrown {
+        let name = propertyName ?? "unknown"
+        let message = "Property \(name) should be initialized before get."
+        outThrown.pointee = runtimeAllocateIllegalStateException(message: message)
+        return 0
+    } else {
+        FileHandle.standardError.write(Data((runtimeNotNullUninitializedMessage + "\n").utf8))
+        fatalError(runtimeNotNullUninitializedMessage)
+    }
 }
 
 final class RuntimeCustomDelegateBox {
@@ -606,19 +622,23 @@ public func kk_notNull_create() -> Int {
     return Int(bitPattern: opaque)
 }
 
+/// STDLIB-PROP-ABI-001: reads-before-assignment terminates with an IllegalStateException message.
+/// The compiler currently lowers notNull delegate gets as non-throwing calls (one argument),
+/// so we use fatalError to ensure the process exits with a non-zero status and a
+/// helpful diagnostic on stderr.
 @_cdecl("kk_notNull_get_value")
 public func kk_notNull_get_value(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
-        runtimeTrapNotNullUninitialized()
+        fatalError(runtimeNotNullUninitializedMessage)
     }
     let isObj = runtimeStorage.withLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj, let box = tryCast(ptr, to: RuntimeNotNullBox.self) else {
-        runtimeTrapNotNullUninitialized()
+        fatalError(runtimeNotNullUninitializedMessage)
     }
     guard let value = box.currentValue else {
-        runtimeTrapNotNullUninitialized()
+        fatalError(runtimeNotNullUninitializedMessage)
     }
     return value
 }
@@ -626,13 +646,13 @@ public func kk_notNull_get_value(_ handle: Int) -> Int {
 @_cdecl("kk_notNull_set_value")
 public func kk_notNull_set_value(_ handle: Int, _ newValue: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
-        runtimeTrapNotNullUninitialized()
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_notNull_set_value called with null handle")
     }
     let isObj = runtimeStorage.withLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj, let box = tryCast(ptr, to: RuntimeNotNullBox.self) else {
-        runtimeTrapNotNullUninitialized()
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_notNull_set_value called with invalid handle")
     }
     box.currentValue = newValue
     return newValue
@@ -709,7 +729,8 @@ public func kk_custom_delegate_set_value(_ handle: Int, _ thisRef: Int, _ proper
 /// Bridges compiler-emitted delegated property accessors that still lower to
 /// `getValue` / `setValue` symbols instead of direct runtime helper names.
 @_cdecl("kk_delegate_get_value")
-public func kk_delegate_get_value(_ handle: Int, _: Int, _ property: Int) -> Int {
+public func kk_delegate_get_value(_ handle: Int, _: Int, _ property: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
@@ -730,7 +751,7 @@ public func kk_delegate_get_value(_ handle: Int, _: Int, _ property: Int) -> Int
     }
     if let notNullBox = tryCast(ptr, to: RuntimeNotNullBox.self) {
         guard let value = notNullBox.currentValue else {
-            runtimeTrapNotNullUninitialized()
+            return runtimeThrowNotNullUninitialized(outThrown: outThrown)
         }
         return value
     }
@@ -750,7 +771,14 @@ public func kk_delegate_get_value(_ handle: Int, _: Int, _ property: Int) -> Int
 /// Bridges compiler-emitted delegated property setters that still lower to
 /// `setValue` instead of direct runtime helper names.
 @_cdecl("kk_delegate_set_value")
-public func kk_delegate_set_value(_ handle: Int, _: Int, _ property: Int, _ newValue: Int) -> Int {
+public func kk_delegate_set_value(
+    _ handle: Int,
+    _: Int,
+    _ property: Int,
+    _ newValue: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }

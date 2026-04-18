@@ -399,6 +399,20 @@ final class KotlinAnnotationAPIInventoryTests: XCTestCase {
         if let valueSym {
             let propType = sema.symbols.propertyType(for: valueSym)
             XCTAssertNotNil(propType, "Retention.value must have a property type (AnnotationRetention)")
+            let enumSym = try XCTUnwrap(
+                symbol(fqPath: ["kotlin", "annotation", "AnnotationRetention"], sema: sema, interner: interner),
+                "AnnotationRetention enum must be registered for Retention.value typing"
+            )
+            if let propType {
+                if case let .classType(ct) = sema.types.kind(of: propType) {
+                    XCTAssertEqual(
+                        ct.classSymbol, enumSym,
+                        "Retention.value must be typed with the AnnotationRetention enum symbol"
+                    )
+                } else {
+                    XCTFail("Retention.value property type must be a classType for AnnotationRetention")
+                }
+            }
 
             let runtimeSym = symbol(
                 fqPath: ["kotlin", "annotation", "AnnotationRetention", "RUNTIME"],
