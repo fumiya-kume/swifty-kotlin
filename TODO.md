@@ -65,12 +65,17 @@
 - [ ] STDLIB-RANDOM-001: `kotlin.random` の対象 API 一覧を固定
 - [ ] STDLIB-RANDOM-002: `kotlin.random` の sema / lowering を整える
 - [ ] STDLIB-RANDOM-003: `kotlin.random` の runtime / seed / 境界値を固定
+- [ ] STDLIB-RANDOM-004: `Random(seed: Long)` constructor を追加する
+- [ ] STDLIB-RANDOM-005: `Random.Default` singleton を sema から露出する
+- [ ] STDLIB-RANDOM-006: `Random.nextBytes(size: Int)` overload を追加する
+- [ ] STDLIB-RANDOM-007: `Random.nextInt(range: IntRange)` extension を追加する
 - [ ] STDLIB-COMP-001: `kotlin.comparisons` の対象 API 一覧を固定
 - [ ] STDLIB-COMP-002: `Comparator` 合成の sema / lowering を整える
 - [ ] STDLIB-COMP-003: `Comparator` runtime と failure path を固定
 - [ ] STDLIB-ANNO-001: `kotlin.annotation` の対象一覧を固定
 - [ ] STDLIB-ANNO-002: annotation sema / diagnostics を整える
 - [ ] STDLIB-I18N-COMMON-001: `kotlin.text` / common のフォーマット・ロケール
+- [ ] STDLIB-I18N-COMMON-002: `Char.category` を `CharCategory` enum で露出する（現状は `Int` placeholder）
 - [ ] STDLIB-TIME-EXP-001: `@ExperimentalTime` 系 API の整理（`Clock` / `TimeMark`）
 - [~] STDLIB-CORO-001: `kotlin.coroutines.intrinsics` / cancellation — 主要部分実装済み（`suspendCoroutineUninterceptedOrReturn`, `intercepted`, `CancellationException`）。残課題は別チケットへ分割。
 - [ ] STDLIB-CORO-002: `kotlin.coroutines.intrinsics` の runtime entry point（`startCoroutineUninterceptedOrReturn`, `createCoroutineUnintercepted`）を追加する。対応 C ABI 名: `kk_start_coroutine_unintercepted_or_return`, `kk_create_coroutine_unintercepted`。
@@ -88,8 +93,12 @@
 - [ ] STDLIB-UUID-001: `kotlin.uuid` の対象 API 一覧を固定
 - [ ] STDLIB-UUID-002: `kotlin.uuid` の sema / lowering を整える
 - [ ] STDLIB-UUID-003: `kotlin.uuid` の runtime / canonical form / failure path を固定
+- [ ] STDLIB-UUID-004: `Uuid.Companion.parseHex(hexString: String)` を追加する
+- [ ] STDLIB-UUID-005: `Uuid.Companion.NIL` constant を追加する
+- [ ] STDLIB-UUID-006: `@ExperimentalUuidApi` marker と opt-in diagnostics を追加する
 - [ ] STDLIB-NATIVE-PLATFORM-001: `kotlin.native` の platform info 残差を詰める
 - [ ] STDLIB-NATIVE-PLATFORM-002: common から見える Native bridge を整理
+- [ ] STDLIB-NATIVE-PLATFORM-003: `kotlin.native.MemoryModel` enum stub と platform bridge を追加する
 - [ ] STDLIB-NATIVE-CONCURRENT-001: `kotlin.native.concurrent` の対象 API 一覧を固定
 - [ ] STDLIB-NATIVE-CONCURRENT-002: `kotlin.native.concurrent` の sema / diagnostics を整える
 - [ ] STDLIB-NATIVE-CONCURRENT-003: `kotlin.native.concurrent` の最小 runtime / ABI を実装
