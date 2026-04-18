@@ -79,6 +79,21 @@ extension TypeSystem {
             }
         }
 
+        // STDLIB-030-BUG-01: A type parameter T is a subtype of its upper bounds.
+        // This allows `T : AutoCloseable` (which stores `Closeable` as its bound after
+        // typealias expansion) to satisfy `T <: Closeable` in the constraint solver and
+        // member-lookup paths.
+        if case let .typeParam(typeParam) = lhs,
+           let symbols = symbolTable
+        {
+            let upperBounds = symbols.typeParameterUpperBounds(for: typeParam.symbol)
+            if !upperBounds.isEmpty {
+                if upperBounds.contains(where: { isSubtype($0, supertype) }) {
+                    return true
+                }
+            }
+        }
+
         if case let .classType(rhsClass) = rhs, let annotationSym = annotationInterfaceSymbol, rhsClass.classSymbol == annotationSym {
             if case .nothing(.nonNull) = lhs { return true }
             if case let .classType(lhsClass) = lhs {
