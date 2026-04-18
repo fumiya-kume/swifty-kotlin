@@ -3,7 +3,15 @@
 `Scripts/swift_test.sh` wraps `swift test` with parallel execution enabled by default.
 
 - Tune workers: `SWIFT_TEST_WORKERS=4 bash Scripts/swift_test.sh`
+- Tune build jobs: `SWIFT_TEST_BUILD_JOBS=4 bash Scripts/swift_test.sh`
 - Disable parallel mode: `SWIFT_TEST_PARALLEL=0 bash Scripts/swift_test.sh`
+
+When you are iterating on test failures after a successful build, you can also
+reuse the existing build products:
+
+```bash
+bash Scripts/swift_test.sh --skip-build
+```
 
 ## Style workflow
 

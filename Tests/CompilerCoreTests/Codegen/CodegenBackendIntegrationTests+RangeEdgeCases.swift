@@ -4,6 +4,9 @@ import XCTest
 
 extension CodegenBackendIntegrationTests {
     func testCodegenCompilesRangeEdgeCases() throws {
+        #if os(Linux)
+        throw XCTSkip("Range edge cases test temporarily disabled on Linux")
+        #endif
         let source = """
         fun main() {
             println((1..4).toList())

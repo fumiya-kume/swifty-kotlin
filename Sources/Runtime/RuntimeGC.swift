@@ -40,6 +40,7 @@ struct RuntimeStorageState {
     var frameMaps: [UInt32: [Int32]] = [:]
     var activeFrames: [ActiveFrameRecord] = []
     var coroutineRoots: Set<UInt> = []
+    var pinnedObjects: Set<UInt> = []
 }
 
 final class RuntimeStorageBox: @unchecked Sendable {
@@ -253,6 +254,13 @@ func collectRootPointersLocked(state: RuntimeStorageState, into worklist: inout 
         worklist.append(ptr)
     }
 
+    for pinned in state.pinnedObjects {
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: pinned) else {
+            continue
+        }
+        worklist.append(ptr)
+    }
+
     for threadValues in state.threadLocalValues.values {
         for raw in threadValues.values {
             guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
@@ -313,6 +321,7 @@ func resetRuntimeLocked(state: inout RuntimeStorageState) {
     state.frameMaps.removeAll(keepingCapacity: false)
     state.activeFrames.removeAll(keepingCapacity: false)
     state.coroutineRoots.removeAll(keepingCapacity: false)
+    state.pinnedObjects.removeAll(keepingCapacity: false)
     state.kClassBoxCache.removeAll(keepingCapacity: false)
     state.threadLocalBoxes.removeAll(keepingCapacity: false)
     state.threadLocalValues.removeAll(keepingCapacity: false)
