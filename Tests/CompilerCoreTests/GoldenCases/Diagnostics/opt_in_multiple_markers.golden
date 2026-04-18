@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "opt_in_multiple_markers.kt",
+      "range": {
+        "start": { "line": 17, "character": 31 },
+        "end": { "line": 17, "character": 46 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalAlphaApi' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalAlphaApi' or '@OptIn(golden.diagnostics.ExperimentalAlphaApi::class)'.",
+      "codeActions": []
+    },
+    {
+      "file": "opt_in_multiple_markers.kt",
+      "range": {
+        "start": { "line": 17, "character": 49 },
+        "end": { "line": 17, "character": 63 }
+      },
+      "severity": 2,
+      "severityLabel": "warning",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalBetaApi' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalBetaApi' or '@OptIn(golden.diagnostics.ExperimentalBetaApi::class)'.",
+      "codeActions": []
+    }
+  ]
+}
