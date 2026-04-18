@@ -3560,13 +3560,19 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3563 kind=local fq=__local_2.line vis=private flags=_ type=String?
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=local fq=__local_2.line vis=private flags=_ type=String?
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3562
+  decl d0 fun main suspend=0 inline=0 sym=s3568
 expr e0 name(readlnOrNull) type=_
 expr e1 call callee=e0 args=[] type=String? call=s1725 map=[] targs=[]
-expr e2 localDecl line mutable=0 type=t0 init=e1 type=Unit ref=s3563
+expr e2 localDecl line mutable=0 type=t0 init=e1 type=Unit ref=s3569
 expr e3 name(println) type=_
-expr e4 name(line) type=String? ref=s3563
+expr e4 name(line) type=String? ref=s3569
 expr e5 call callee=e3 args=[_:e4] type=Unit call=s1718 map=[0->0] targs=[]

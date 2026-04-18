@@ -3560,18 +3560,24 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=class fq=golden.sema.Meter vis=public flags=valueType
-symbol s3563 kind=constructor fq=golden.sema.Meter.<init> vis=public flags=_ sig=recv=Class#3562 params=[Int] ret=Class#3562 suspend=0 defaults=[0] vararg=[0]
-symbol s3564 kind=valueParameter fq=golden.sema.Meter.<init>.$3563.amount vis=private flags=_
-symbol s3565 kind=property fq=golden.sema.Meter.amount vis=public flags=_ type=Int
-symbol s3566 kind=function fq=golden.sema.measure vis=public flags=_ sig=recv=_ params=[Class#3562] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3567 kind=valueParameter fq=golden.sema.measure.$3566.m vis=private flags=_
-symbol s3568 kind=function fq=golden.sema.toAny vis=public flags=_ sig=recv=_ params=[Class#3562] ret=Any suspend=0 defaults=[0] vararg=[0]
-symbol s3569 kind=valueParameter fq=golden.sema.toAny.$3568.m vis=private flags=_
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=class fq=golden.sema.Meter vis=public flags=valueType
+symbol s3569 kind=constructor fq=golden.sema.Meter.<init> vis=public flags=_ sig=recv=Class#3568 params=[Int] ret=Class#3568 suspend=0 defaults=[0] vararg=[0]
+symbol s3570 kind=valueParameter fq=golden.sema.Meter.<init>.$3569.amount vis=private flags=_
+symbol s3571 kind=property fq=golden.sema.Meter.amount vis=public flags=_ type=Int
+symbol s3572 kind=function fq=golden.sema.measure vis=public flags=_ sig=recv=_ params=[Class#3568] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3573 kind=valueParameter fq=golden.sema.measure.$3572.m vis=private flags=_
+symbol s3574 kind=function fq=golden.sema.toAny vis=public flags=_ sig=recv=_ params=[Class#3568] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s3575 kind=valueParameter fq=golden.sema.toAny.$3574.m vis=private flags=_
 file f0 package=golden.sema
-  decl d1 class Meter sym=s3562
-  decl d2 fun measure suspend=0 inline=0 sym=s3566
-  decl d3 fun toAny suspend=0 inline=0 sym=s3568
-expr e0 name(m) type=Class#3562 ref=s3567
-expr e1 memberCall recv=e0 callee=amount args=[] type=Int ref=s3565
-expr e2 name(m) type=Class#3562 ref=s3569
+  decl d1 class Meter sym=s3568
+  decl d2 fun measure suspend=0 inline=0 sym=s3572
+  decl d3 fun toAny suspend=0 inline=0 sym=s3574
+expr e0 name(m) type=Class#3568 ref=s3573
+expr e1 memberCall recv=e0 callee=amount args=[] type=Int ref=s3571
+expr e2 name(m) type=Class#3568 ref=s3575

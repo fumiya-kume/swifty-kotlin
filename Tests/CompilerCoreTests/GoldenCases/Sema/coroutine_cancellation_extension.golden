@@ -3560,10 +3560,16 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s3563 kind=local fq=__local_10.job vis=private flags=_ type=Class#1161
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=local fq=__local_10.job vis=private flags=_ type=Class#1161
 file f0 package=golden.sema
-  decl d0 fun main suspend=0 inline=0 sym=s3562
+  decl d0 fun main suspend=0 inline=0 sym=s3568
 expr e0 name(runBlocking) type=_
 expr e1 name(launch) type=_
 expr e2 name(delay) type=_
@@ -3574,10 +3580,10 @@ expr e6 int(10) type=Long
 expr e7 call callee=e5 args=[_:e6] type=Unit
 expr e8 lambda params=[] body=e7 label=launch type=suspend () -> Unit
 expr e9 call callee=e1 args=[_:e8] type=Class#1161 call=s1197 map=[0->0] targs=[]
-expr e10 localDecl job mutable=0 type=_ init=e9 type=Unit ref=s3563
-expr e11 name(job) type=Class#1161 ref=s3563
+expr e10 localDecl job mutable=0 type=_ init=e9 type=Unit ref=s3569
+expr e11 name(job) type=Class#1161 ref=s3569
 expr e12 memberCall recv=e11 callee=cancel args=[] type=Unit call=s1292 map=[] targs=[]
-expr e13 name(job) type=Class#1161 ref=s3563
+expr e13 name(job) type=Class#1161 ref=s3569
 expr e14 memberCall recv=e13 callee=join args=[] type=Unit call=s1293 map=[] targs=[]
 expr e15 blockExpr stmts=[e10,e12] trailing=e14 type=Unit
 expr e16 lambda params=[] body=e15 label=runBlocking type=suspend () -> Any

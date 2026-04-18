@@ -3560,15 +3560,21 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=testDigitConversion vis=public flags=_ sig=recv=_ params=[Char] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s3563 kind=valueParameter fq=testDigitConversion.$3562.c vis=private flags=_
-symbol s3564 kind=local fq=__local_2.d vis=private flags=_ type=Int
-symbol s3565 kind=local fq=__local_5.n vis=private flags=_ type=Int?
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=function fq=testDigitConversion vis=public flags=_ sig=recv=_ params=[Char] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s3569 kind=valueParameter fq=testDigitConversion.$3568.c vis=private flags=_
+symbol s3570 kind=local fq=__local_2.d vis=private flags=_ type=Int
+symbol s3571 kind=local fq=__local_5.n vis=private flags=_ type=Int?
 file f0 package=_
-  decl d0 fun testDigitConversion suspend=0 inline=0 sym=s3562
-expr e0 name(c) type=Char ref=s3563
+  decl d0 fun testDigitConversion suspend=0 inline=0 sym=s3568
+expr e0 name(c) type=Char ref=s3569
 expr e1 memberCall recv=e0 callee=digitToInt args=[] type=Int call=s956 map=[] targs=[]
-expr e2 localDecl d mutable=0 type=_ init=e1 type=Unit ref=s3564
-expr e3 name(c) type=Char ref=s3563
+expr e2 localDecl d mutable=0 type=_ init=e1 type=Unit ref=s3570
+expr e3 name(c) type=Char ref=s3569
 expr e4 memberCall recv=e3 callee=digitToIntOrNull args=[] type=Int? call=s957 map=[] targs=[]
-expr e5 localDecl n mutable=0 type=_ init=e4 type=Unit ref=s3565
+expr e5 localDecl n mutable=0 type=_ init=e4 type=Unit ref=s3571

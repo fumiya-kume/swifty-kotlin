@@ -3560,31 +3560,37 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3563 kind=local fq=__local_3.a vis=private flags=_ type=Int
-symbol s3564 kind=local fq=__local_7.b vis=private flags=_ type=Int
-symbol s3565 kind=local fq=__local_11.c vis=private flags=_ type=Int
-symbol s3566 kind=local fq=__local_15.d vis=private flags=_ type=Int
-symbol s3567 kind=local fq=__local_19.e vis=private flags=_ type=String
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=local fq=__local_3.a vis=private flags=_ type=Int
+symbol s3570 kind=local fq=__local_7.b vis=private flags=_ type=Int
+symbol s3571 kind=local fq=__local_11.c vis=private flags=_ type=Int
+symbol s3572 kind=local fq=__local_15.d vis=private flags=_ type=Int
+symbol s3573 kind=local fq=__local_19.e vis=private flags=_ type=String
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3562
+  decl d0 fun main suspend=0 inline=0 sym=s3568
 expr e0 string(ff) type=String
 expr e1 int(16) type=Int
 expr e2 memberCall recv=e0 callee=toInt args=[_:e1] type=Int call=s722 map=[0->0] targs=[]
-expr e3 localDecl a mutable=0 type=_ init=e2 type=Unit ref=s3563
+expr e3 localDecl a mutable=0 type=_ init=e2 type=Unit ref=s3569
 expr e4 string(1010) type=String
 expr e5 int(2) type=Int
 expr e6 memberCall recv=e4 callee=toInt args=[_:e5] type=Int call=s722 map=[0->0] targs=[]
-expr e7 localDecl b mutable=0 type=_ init=e6 type=Unit ref=s3564
+expr e7 localDecl b mutable=0 type=_ init=e6 type=Unit ref=s3570
 expr e8 string(77) type=String
 expr e9 int(8) type=Int
 expr e10 memberCall recv=e8 callee=toInt args=[_:e9] type=Int call=s722 map=[0->0] targs=[]
-expr e11 localDecl c mutable=0 type=_ init=e10 type=Unit ref=s3565
+expr e11 localDecl c mutable=0 type=_ init=e10 type=Unit ref=s3571
 expr e12 string(42) type=String
 expr e13 int(10) type=Int
 expr e14 memberCall recv=e12 callee=toInt args=[_:e13] type=Int call=s722 map=[0->0] targs=[]
-expr e15 localDecl d mutable=0 type=_ init=e14 type=Unit ref=s3566
+expr e15 localDecl d mutable=0 type=_ init=e14 type=Unit ref=s3572
 expr e16 int(255) type=Int
 expr e17 int(16) type=Int
 expr e18 memberCall recv=e16 callee=toString args=[_:e17] type=String
-expr e19 localDecl e mutable=0 type=_ init=e18 type=Unit ref=s3567
+expr e19 localDecl e mutable=0 type=_ init=e18 type=Unit ref=s3573

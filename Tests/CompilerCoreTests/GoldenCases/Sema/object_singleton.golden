@@ -3560,25 +3560,31 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=object fq=golden.sema.Counter vis=public flags=_
-symbol s3563 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#3562 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3564 kind=property fq=golden.sema.Counter.label vis=public flags=_ type=String
-symbol s3565 kind=property fq=golden.sema.Counter.n vis=public flags=mutable type=Int
-symbol s3566 kind=function fq=golden.sema.useCounter vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=object fq=golden.sema.Counter vis=public flags=_
+symbol s3569 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#3568 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3570 kind=property fq=golden.sema.Counter.label vis=public flags=_ type=String
+symbol s3571 kind=property fq=golden.sema.Counter.n vis=public flags=mutable type=Int
+symbol s3572 kind=function fq=golden.sema.useCounter vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d3 object Counter sym=s3562
-  decl d4 fun useCounter suspend=0 inline=0 sym=s3566
+  decl d3 object Counter sym=s3568
+  decl d4 fun useCounter suspend=0 inline=0 sym=s3572
 expr e0 string(counter) type=String
 expr e1 int(0) type=Int
 expr e2 name(n) type=_
-expr e3 name(n) type=Int ref=s3565
+expr e3 name(n) type=Int ref=s3571
 expr e4 int(1) type=Int
 expr e5 binary(add) lhs=e3 rhs=e4 type=Int
-expr e6 localAssign n value=e5 type=Unit ref=s3565
+expr e6 localAssign n value=e5 type=Unit ref=s3571
 expr e7 name(n) type=_
 expr e8 int(1) type=Int
-expr e9 localAssign n value=e8 type=Unit ref=s3565
-expr e10 name(Counter) type=Class#3562 ref=s3562
-expr e11 memberCall recv=e10 callee=increment args=[] type=Unit call=s3563 map=[] targs=[]
-expr e12 name(Counter) type=Class#3562 ref=s3562
-expr e13 memberCall recv=e12 callee=increment args=[] type=Unit call=s3563 map=[] targs=[]
+expr e9 localAssign n value=e8 type=Unit ref=s3571
+expr e10 name(Counter) type=Class#3568 ref=s3568
+expr e11 memberCall recv=e10 callee=increment args=[] type=Unit call=s3569 map=[] targs=[]
+expr e12 name(Counter) type=Class#3568 ref=s3568
+expr e13 memberCall recv=e12 callee=increment args=[] type=Unit call=s3569 map=[] targs=[]

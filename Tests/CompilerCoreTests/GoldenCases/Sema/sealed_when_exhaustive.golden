@@ -3560,23 +3560,29 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=class fq=Shape vis=public flags=sealedType|abstractType|openType
-symbol s3563 kind=constructor fq=Shape.<init> vis=protected flags=_ sig=recv=Class#3562 params=[] ret=Class#3562 suspend=0 defaults=[] vararg=[]
-symbol s3564 kind=class fq=Circle vis=public flags=_
-symbol s3565 kind=constructor fq=Circle.<init> vis=public flags=_ sig=recv=Class#3564 params=[] ret=Class#3564 suspend=0 defaults=[] vararg=[]
-symbol s3566 kind=class fq=Rectangle vis=public flags=_
-symbol s3567 kind=constructor fq=Rectangle.<init> vis=public flags=_ sig=recv=Class#3566 params=[] ret=Class#3566 suspend=0 defaults=[] vararg=[]
-symbol s3568 kind=class fq=Triangle vis=public flags=_
-symbol s3569 kind=constructor fq=Triangle.<init> vis=public flags=_ sig=recv=Class#3568 params=[] ret=Class#3568 suspend=0 defaults=[] vararg=[]
-symbol s3570 kind=function fq=describeShape vis=public flags=_ sig=recv=_ params=[Class#3562] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3571 kind=valueParameter fq=describeShape.$3570.s vis=private flags=_
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=class fq=Shape vis=public flags=sealedType|abstractType|openType
+symbol s3569 kind=constructor fq=Shape.<init> vis=protected flags=_ sig=recv=Class#3568 params=[] ret=Class#3568 suspend=0 defaults=[] vararg=[]
+symbol s3570 kind=class fq=Circle vis=public flags=_
+symbol s3571 kind=constructor fq=Circle.<init> vis=public flags=_ sig=recv=Class#3570 params=[] ret=Class#3570 suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=class fq=Rectangle vis=public flags=_
+symbol s3573 kind=constructor fq=Rectangle.<init> vis=public flags=_ sig=recv=Class#3572 params=[] ret=Class#3572 suspend=0 defaults=[] vararg=[]
+symbol s3574 kind=class fq=Triangle vis=public flags=_
+symbol s3575 kind=constructor fq=Triangle.<init> vis=public flags=_ sig=recv=Class#3574 params=[] ret=Class#3574 suspend=0 defaults=[] vararg=[]
+symbol s3576 kind=function fq=describeShape vis=public flags=_ sig=recv=_ params=[Class#3568] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3577 kind=valueParameter fq=describeShape.$3576.s vis=private flags=_
 file f0 package=_
-  decl d0 class Shape sym=s3562
-  decl d1 class Circle sym=s3564
-  decl d2 class Rectangle sym=s3566
-  decl d3 class Triangle sym=s3568
-  decl d4 fun describeShape suspend=0 inline=0 sym=s3570
-expr e0 name(s) type=Class#3562 ref=s3571
+  decl d0 class Shape sym=s3568
+  decl d1 class Circle sym=s3570
+  decl d2 class Rectangle sym=s3572
+  decl d3 class Triangle sym=s3574
+  decl d4 fun describeShape suspend=0 inline=0 sym=s3576
+expr e0 name(s) type=Class#3568 ref=s3577
 expr e1 isCheck expr=e0 type=t5 type=Boolean
 expr e2 string(circle) type=String
 expr e3 isCheck expr=e0 type=t6 type=Boolean

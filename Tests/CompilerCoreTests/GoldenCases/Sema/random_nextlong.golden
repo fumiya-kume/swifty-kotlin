@@ -3560,21 +3560,27 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=useRandomLong vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3563 kind=local fq=__local_2.a vis=private flags=_ type=Long
-symbol s3564 kind=local fq=__local_6.b vis=private flags=_ type=Long
-symbol s3565 kind=local fq=__local_11.c vis=private flags=_ type=Long
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=function fq=useRandomLong vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=local fq=__local_2.a vis=private flags=_ type=Long
+symbol s3570 kind=local fq=__local_6.b vis=private flags=_ type=Long
+symbol s3571 kind=local fq=__local_11.c vis=private flags=_ type=Long
 file f0 package=_
-  decl d0 fun useRandomLong suspend=0 inline=0 sym=s3562
+  decl d0 fun useRandomLong suspend=0 inline=0 sym=s3568
 expr e0 name(Random) type=Class#40 ref=s40
 expr e1 memberCall recv=e0 callee=nextLong args=[] type=Long call=s48 map=[] targs=[]
-expr e2 localDecl a mutable=0 type=_ init=e1 type=Unit ref=s3563
+expr e2 localDecl a mutable=0 type=_ init=e1 type=Unit ref=s3569
 expr e3 name(Random) type=Class#40 ref=s40
 expr e4 long(100) type=Long
 expr e5 memberCall recv=e3 callee=nextLong args=[_:e4] type=Long call=s49 map=[0->0] targs=[]
-expr e6 localDecl b mutable=0 type=_ init=e5 type=Unit ref=s3564
+expr e6 localDecl b mutable=0 type=_ init=e5 type=Unit ref=s3570
 expr e7 name(Random) type=Class#40 ref=s40
 expr e8 long(10) type=Long
 expr e9 long(100) type=Long
 expr e10 memberCall recv=e7 callee=nextLong args=[_:e8,_:e9] type=Long call=s51 map=[0->0,1->1] targs=[]
-expr e11 localDecl c mutable=0 type=_ init=e10 type=Unit ref=s3565
+expr e11 localDecl c mutable=0 type=_ init=e10 type=Unit ref=s3571

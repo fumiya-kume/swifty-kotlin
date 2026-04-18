@@ -3560,27 +3560,33 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=enumClass fq=golden.sema.Color vis=public flags=_
-symbol s3563 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#3562 params=[] ret=Class#3562 suspend=0 defaults=[] vararg=[]
-symbol s3564 kind=field fq=golden.sema.Color.RED vis=public flags=_ type=Class#3562
-symbol s3565 kind=field fq=golden.sema.Color.GREEN vis=public flags=_ type=Class#3562
-symbol s3566 kind=field fq=golden.sema.Color.BLUE vis=public flags=_ type=Class#3562
-symbol s3567 kind=property fq=golden.sema.Color.name vis=public flags=synthetic type=String
-symbol s3568 kind=property fq=golden.sema.Color.ordinal vis=public flags=synthetic type=Int
-symbol s3569 kind=object fq=golden.sema.Color.Companion vis=public flags=synthetic
-symbol s3570 kind=valueParameter fq=golden.sema.Color.Companion.valueOf.name vis=private flags=synthetic
-symbol s3571 kind=function fq=golden.sema.Color.Companion.valueOf vis=public flags=synthetic|static sig=recv=Class#3569 params=[String] ret=Class#3562 suspend=0 defaults=[0] vararg=[0]
-symbol s3572 kind=property fq=golden.sema.Color.Companion.entries vis=public flags=synthetic|static type=Class#2833<Class#3562>
-symbol s3573 kind=enumClass fq=golden.sema.Direction vis=public flags=_
-symbol s3574 kind=constructor fq=golden.sema.Direction.<init> vis=public flags=_ sig=recv=Class#3573 params=[] ret=Class#3573 suspend=0 defaults=[] vararg=[]
-symbol s3575 kind=field fq=golden.sema.Direction.NORTH vis=public flags=_ type=Class#3573
-symbol s3576 kind=field fq=golden.sema.Direction.SOUTH vis=public flags=_ type=Class#3573
-symbol s3577 kind=property fq=golden.sema.Direction.name vis=public flags=synthetic type=String
-symbol s3578 kind=property fq=golden.sema.Direction.ordinal vis=public flags=synthetic type=Int
-symbol s3579 kind=object fq=golden.sema.Direction.Companion vis=public flags=synthetic
-symbol s3580 kind=valueParameter fq=golden.sema.Direction.Companion.valueOf.name vis=private flags=synthetic
-symbol s3581 kind=function fq=golden.sema.Direction.Companion.valueOf vis=public flags=synthetic|static sig=recv=Class#3579 params=[String] ret=Class#3573 suspend=0 defaults=[0] vararg=[0]
-symbol s3582 kind=property fq=golden.sema.Direction.Companion.entries vis=public flags=synthetic|static type=Class#2833<Class#3573>
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=enumClass fq=golden.sema.Color vis=public flags=_
+symbol s3569 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#3568 params=[] ret=Class#3568 suspend=0 defaults=[] vararg=[]
+symbol s3570 kind=field fq=golden.sema.Color.RED vis=public flags=_ type=Class#3568
+symbol s3571 kind=field fq=golden.sema.Color.GREEN vis=public flags=_ type=Class#3568
+symbol s3572 kind=field fq=golden.sema.Color.BLUE vis=public flags=_ type=Class#3568
+symbol s3573 kind=property fq=golden.sema.Color.name vis=public flags=synthetic type=String
+symbol s3574 kind=property fq=golden.sema.Color.ordinal vis=public flags=synthetic type=Int
+symbol s3575 kind=object fq=golden.sema.Color.Companion vis=public flags=synthetic
+symbol s3576 kind=valueParameter fq=golden.sema.Color.Companion.valueOf.name vis=private flags=synthetic
+symbol s3577 kind=function fq=golden.sema.Color.Companion.valueOf vis=public flags=synthetic|static sig=recv=Class#3575 params=[String] ret=Class#3568 suspend=0 defaults=[0] vararg=[0]
+symbol s3578 kind=property fq=golden.sema.Color.Companion.entries vis=public flags=synthetic|static type=Class#2833<Class#3568>
+symbol s3579 kind=enumClass fq=golden.sema.Direction vis=public flags=_
+symbol s3580 kind=constructor fq=golden.sema.Direction.<init> vis=public flags=_ sig=recv=Class#3579 params=[] ret=Class#3579 suspend=0 defaults=[] vararg=[]
+symbol s3581 kind=field fq=golden.sema.Direction.NORTH vis=public flags=_ type=Class#3579
+symbol s3582 kind=field fq=golden.sema.Direction.SOUTH vis=public flags=_ type=Class#3579
+symbol s3583 kind=property fq=golden.sema.Direction.name vis=public flags=synthetic type=String
+symbol s3584 kind=property fq=golden.sema.Direction.ordinal vis=public flags=synthetic type=Int
+symbol s3585 kind=object fq=golden.sema.Direction.Companion vis=public flags=synthetic
+symbol s3586 kind=valueParameter fq=golden.sema.Direction.Companion.valueOf.name vis=private flags=synthetic
+symbol s3587 kind=function fq=golden.sema.Direction.Companion.valueOf vis=public flags=synthetic|static sig=recv=Class#3585 params=[String] ret=Class#3579 suspend=0 defaults=[0] vararg=[0]
+symbol s3588 kind=property fq=golden.sema.Direction.Companion.entries vis=public flags=synthetic|static type=Class#2833<Class#3579>
 file f0 package=golden.sema
-  decl d0 class Color sym=s3562
-  decl d1 class Direction sym=s3573
+  decl d0 class Color sym=s3568
+  decl d1 class Direction sym=s3579

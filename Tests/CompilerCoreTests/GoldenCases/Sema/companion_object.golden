@@ -3560,26 +3560,32 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=class fq=golden.sema.Foo vis=public flags=_
-symbol s3563 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#3562 params=[Int] ret=Class#3562 suspend=0 defaults=[0] vararg=[0]
-symbol s3564 kind=valueParameter fq=golden.sema.Foo.<init>.$3563.x vis=private flags=_
-symbol s3565 kind=property fq=golden.sema.Foo.x vis=public flags=_ type=Int
-symbol s3566 kind=object fq=golden.sema.Foo.Companion vis=public flags=_
-symbol s3567 kind=function fq=golden.sema.Foo.Companion.create vis=public flags=_ sig=recv=Class#3566 params=[] ret=Class#3562 suspend=0 defaults=[] vararg=[]
-symbol s3568 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=constValue type=Int
-symbol s3569 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3570 kind=local fq=__local_6.f vis=private flags=_ type=Class#3562
-symbol s3571 kind=local fq=__local_9.m vis=private flags=_ type=Int
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=class fq=golden.sema.Foo vis=public flags=_
+symbol s3569 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#3568 params=[Int] ret=Class#3568 suspend=0 defaults=[0] vararg=[0]
+symbol s3570 kind=valueParameter fq=golden.sema.Foo.<init>.$3569.x vis=private flags=_
+symbol s3571 kind=property fq=golden.sema.Foo.x vis=public flags=_ type=Int
+symbol s3572 kind=object fq=golden.sema.Foo.Companion vis=public flags=_
+symbol s3573 kind=function fq=golden.sema.Foo.Companion.create vis=public flags=_ sig=recv=Class#3572 params=[] ret=Class#3568 suspend=0 defaults=[] vararg=[]
+symbol s3574 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=constValue type=Int
+symbol s3575 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3576 kind=local fq=__local_6.f vis=private flags=_ type=Class#3568
+symbol s3577 kind=local fq=__local_9.m vis=private flags=_ type=Int
 file f0 package=golden.sema
-  decl d4 class Foo sym=s3562
-  decl d5 fun main suspend=0 inline=0 sym=s3569
+  decl d4 class Foo sym=s3568
+  decl d5 fun main suspend=0 inline=0 sym=s3575
 expr e0 int(100) type=Int
 expr e1 name(Foo) type=_
 expr e2 int(0) type=Int
-expr e3 call callee=e1 args=[_:e2] type=Class#3562 call=s3563 map=[0->0] targs=[]
-expr e4 name(Foo) type=Class#3566 ref=s3562
-expr e5 memberCall recv=e4 callee=create args=[] type=Class#3562 call=s3567 map=[] targs=[]
-expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s3570
-expr e7 name(Foo) type=Class#3566 ref=s3562
-expr e8 memberCall recv=e7 callee=MAX_COUNT args=[] type=Int ref=s3568
-expr e9 localDecl m mutable=0 type=t4 init=e8 type=Unit ref=s3571
+expr e3 call callee=e1 args=[_:e2] type=Class#3568 call=s3569 map=[0->0] targs=[]
+expr e4 name(Foo) type=Class#3572 ref=s3568
+expr e5 memberCall recv=e4 callee=create args=[] type=Class#3568 call=s3573 map=[] targs=[]
+expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s3576
+expr e7 name(Foo) type=Class#3572 ref=s3568
+expr e8 memberCall recv=e7 callee=MAX_COUNT args=[] type=Int ref=s3574
+expr e9 localDecl m mutable=0 type=t4 init=e8 type=Unit ref=s3577

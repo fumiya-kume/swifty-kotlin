@@ -3560,13 +3560,19 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=classify vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3563 kind=valueParameter fq=classify.$3562.x vis=private flags=_
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=function fq=classify vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3569 kind=valueParameter fq=classify.$3568.x vis=private flags=_
 file f0 package=_
-  decl d0 fun classify suspend=0 inline=0 sym=s3562
-expr e0 name(x) type=Any ref=s3563
+  decl d0 fun classify suspend=0 inline=0 sym=s3568
+expr e0 name(x) type=Any ref=s3569
 expr e1 isCheck expr=e0 type=t2 type=Boolean
-expr e2 name(x) type=String ref=s3563
+expr e2 name(x) type=String ref=s3569
 expr e3 memberCall recv=e2 callee=length args=[] type=Int call=s684 map=[] targs=[]
 expr e4 int(3) type=Int
 expr e5 binary(greaterThan) lhs=e3 rhs=e4 type=Boolean
@@ -3574,7 +3580,7 @@ expr e6 string(long string) type=String
 expr e7 isCheck expr=e0 type=t3 type=Boolean
 expr e8 string(short string) type=String
 expr e9 isCheck expr=e0 type=t4 type=Boolean
-expr e10 name(x) type=Int ref=s3563
+expr e10 name(x) type=Int ref=s3569
 expr e11 int(0) type=Int
 expr e12 binary(greaterThan) lhs=e10 rhs=e11 type=Boolean
 expr e13 string(positive int) type=String

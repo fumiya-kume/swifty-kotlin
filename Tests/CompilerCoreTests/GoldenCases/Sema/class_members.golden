@@ -3560,28 +3560,34 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=class fq=golden.sema.Counter vis=public flags=_
-symbol s3563 kind=constructor fq=golden.sema.Counter.<init> vis=public flags=_ sig=recv=Class#3562 params=[Int] ret=Class#3562 suspend=0 defaults=[0] vararg=[0]
-symbol s3564 kind=valueParameter fq=golden.sema.Counter.<init>.$3563.initial0 vis=private flags=_
-symbol s3565 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#3562 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3566 kind=function fq=golden.sema.Counter.get vis=public flags=_ sig=recv=Class#3562 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3567 kind=property fq=golden.sema.Counter.initial vis=public flags=_ type=Int
-symbol s3568 kind=property fq=golden.sema.Counter.count vis=public flags=mutable type=Int
-symbol s3569 kind=property fq=golden.sema.Counter.label vis=public flags=_ type=String
-symbol s3570 kind=object fq=golden.sema.Singleton vis=public flags=_
-symbol s3571 kind=function fq=golden.sema.Singleton.greet vis=public flags=_ sig=recv=Class#3570 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3572 kind=property fq=golden.sema.Singleton.name vis=public flags=_ type=String
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=class fq=golden.sema.Counter vis=public flags=_
+symbol s3569 kind=constructor fq=golden.sema.Counter.<init> vis=public flags=_ sig=recv=Class#3568 params=[Int] ret=Class#3568 suspend=0 defaults=[0] vararg=[0]
+symbol s3570 kind=valueParameter fq=golden.sema.Counter.<init>.$3569.initial0 vis=private flags=_
+symbol s3571 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#3568 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=function fq=golden.sema.Counter.get vis=public flags=_ sig=recv=Class#3568 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3573 kind=property fq=golden.sema.Counter.initial vis=public flags=_ type=Int
+symbol s3574 kind=property fq=golden.sema.Counter.count vis=public flags=mutable type=Int
+symbol s3575 kind=property fq=golden.sema.Counter.label vis=public flags=_ type=String
+symbol s3576 kind=object fq=golden.sema.Singleton vis=public flags=_
+symbol s3577 kind=function fq=golden.sema.Singleton.greet vis=public flags=_ sig=recv=Class#3576 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3578 kind=property fq=golden.sema.Singleton.name vis=public flags=_ type=String
 file f0 package=golden.sema
-  decl d5 class Counter sym=s3562
-  decl d8 object Singleton sym=s3570
+  decl d5 class Counter sym=s3568
+  decl d8 object Singleton sym=s3576
 expr e0 name(initial0) type=<error>
-expr e1 name(initial) type=Int ref=s3567
+expr e1 name(initial) type=Int ref=s3573
 expr e2 string(counter) type=String
 expr e3 name(count) type=_
-expr e4 name(count) type=Int ref=s3568
+expr e4 name(count) type=Int ref=s3574
 expr e5 int(1) type=Int
 expr e6 binary(add) lhs=e4 rhs=e5 type=Int
-expr e7 localAssign count value=e6 type=Unit ref=s3568
-expr e8 name(count) type=Int ref=s3568
+expr e7 localAssign count value=e6 type=Unit ref=s3574
+expr e8 name(count) type=Int ref=s3574
 expr e9 string(singleton) type=String
 expr e10 string(hello) type=String

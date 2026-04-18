@@ -3560,118 +3560,124 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3563 kind=local fq=__local_1.l vis=private flags=_ type=Long
-symbol s3564 kind=local fq=__local_6.lClamped vis=private flags=_ type=Long
-symbol s3565 kind=local fq=__local_10.lAtLeast vis=private flags=_ type=Long
-symbol s3566 kind=local fq=__local_14.lAtMost vis=private flags=_ type=Long
-symbol s3567 kind=local fq=__local_25.d vis=private flags=_ type=Double
-symbol s3568 kind=local fq=__local_30.dClamped vis=private flags=_ type=Double
-symbol s3569 kind=local fq=__local_34.dAtLeast vis=private flags=_ type=Double
-symbol s3570 kind=local fq=__local_38.dAtMost vis=private flags=_ type=Double
-symbol s3571 kind=local fq=__local_49.f vis=private flags=_ type=Float
-symbol s3572 kind=local fq=__local_54.fClamped vis=private flags=_ type=Float
-symbol s3573 kind=local fq=__local_58.fAtLeast vis=private flags=_ type=Float
-symbol s3574 kind=local fq=__local_62.fAtMost vis=private flags=_ type=Float
-symbol s3575 kind=local fq=__local_73.i vis=private flags=_ type=Int
-symbol s3576 kind=local fq=__local_78.iClamped vis=private flags=_ type=Int
-symbol s3577 kind=local fq=__local_82.iAtLeast vis=private flags=_ type=Int
-symbol s3578 kind=local fq=__local_86.iAtMost vis=private flags=_ type=Int
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=local fq=__local_1.l vis=private flags=_ type=Long
+symbol s3570 kind=local fq=__local_6.lClamped vis=private flags=_ type=Long
+symbol s3571 kind=local fq=__local_10.lAtLeast vis=private flags=_ type=Long
+symbol s3572 kind=local fq=__local_14.lAtMost vis=private flags=_ type=Long
+symbol s3573 kind=local fq=__local_25.d vis=private flags=_ type=Double
+symbol s3574 kind=local fq=__local_30.dClamped vis=private flags=_ type=Double
+symbol s3575 kind=local fq=__local_34.dAtLeast vis=private flags=_ type=Double
+symbol s3576 kind=local fq=__local_38.dAtMost vis=private flags=_ type=Double
+symbol s3577 kind=local fq=__local_49.f vis=private flags=_ type=Float
+symbol s3578 kind=local fq=__local_54.fClamped vis=private flags=_ type=Float
+symbol s3579 kind=local fq=__local_58.fAtLeast vis=private flags=_ type=Float
+symbol s3580 kind=local fq=__local_62.fAtMost vis=private flags=_ type=Float
+symbol s3581 kind=local fq=__local_73.i vis=private flags=_ type=Int
+symbol s3582 kind=local fq=__local_78.iClamped vis=private flags=_ type=Int
+symbol s3583 kind=local fq=__local_82.iAtLeast vis=private flags=_ type=Int
+symbol s3584 kind=local fq=__local_86.iAtMost vis=private flags=_ type=Int
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3562
+  decl d0 fun main suspend=0 inline=0 sym=s3568
 expr e0 long(100) type=Long
-expr e1 localDecl l mutable=0 type=t0 init=e0 type=Unit ref=s3563
-expr e2 name(l) type=Long ref=s3563
+expr e1 localDecl l mutable=0 type=t0 init=e0 type=Unit ref=s3569
+expr e2 name(l) type=Long ref=s3569
 expr e3 long(0) type=Long
 expr e4 long(200) type=Long
 expr e5 memberCall recv=e2 callee=coerceIn args=[_:e3,_:e4] type=Long
-expr e6 localDecl lClamped mutable=0 type=t1 init=e5 type=Unit ref=s3564
-expr e7 name(l) type=Long ref=s3563
+expr e6 localDecl lClamped mutable=0 type=t1 init=e5 type=Unit ref=s3570
+expr e7 name(l) type=Long ref=s3569
 expr e8 long(50) type=Long
 expr e9 memberCall recv=e7 callee=coerceAtLeast args=[_:e8] type=Long
-expr e10 localDecl lAtLeast mutable=0 type=t2 init=e9 type=Unit ref=s3565
-expr e11 name(l) type=Long ref=s3563
+expr e10 localDecl lAtLeast mutable=0 type=t2 init=e9 type=Unit ref=s3571
+expr e11 name(l) type=Long ref=s3569
 expr e12 long(150) type=Long
 expr e13 memberCall recv=e11 callee=coerceAtMost args=[_:e12] type=Long
-expr e14 localDecl lAtMost mutable=0 type=t3 init=e13 type=Unit ref=s3566
+expr e14 localDecl lAtMost mutable=0 type=t3 init=e13 type=Unit ref=s3572
 expr e15 name(println) type=_
-expr e16 name(lClamped) type=Long ref=s3564
+expr e16 name(lClamped) type=Long ref=s3570
 expr e17 call callee=e15 args=[_:e16] type=Unit call=s1718 map=[0->0] targs=[]
 expr e18 name(println) type=_
-expr e19 name(lAtLeast) type=Long ref=s3565
+expr e19 name(lAtLeast) type=Long ref=s3571
 expr e20 call callee=e18 args=[_:e19] type=Unit call=s1718 map=[0->0] targs=[]
 expr e21 name(println) type=_
-expr e22 name(lAtMost) type=Long ref=s3566
+expr e22 name(lAtMost) type=Long ref=s3572
 expr e23 call callee=e21 args=[_:e22] type=Unit call=s1718 map=[0->0] targs=[]
 expr e24 double(3.14) type=Double
-expr e25 localDecl d mutable=0 type=t4 init=e24 type=Unit ref=s3567
-expr e26 name(d) type=Double ref=s3567
+expr e25 localDecl d mutable=0 type=t4 init=e24 type=Unit ref=s3573
+expr e26 name(d) type=Double ref=s3573
 expr e27 double(0.0) type=Double
 expr e28 double(10.0) type=Double
 expr e29 memberCall recv=e26 callee=coerceIn args=[_:e27,_:e28] type=Double
-expr e30 localDecl dClamped mutable=0 type=t5 init=e29 type=Unit ref=s3568
-expr e31 name(d) type=Double ref=s3567
+expr e30 localDecl dClamped mutable=0 type=t5 init=e29 type=Unit ref=s3574
+expr e31 name(d) type=Double ref=s3573
 expr e32 double(1.0) type=Double
 expr e33 memberCall recv=e31 callee=coerceAtLeast args=[_:e32] type=Double
-expr e34 localDecl dAtLeast mutable=0 type=t6 init=e33 type=Unit ref=s3569
-expr e35 name(d) type=Double ref=s3567
+expr e34 localDecl dAtLeast mutable=0 type=t6 init=e33 type=Unit ref=s3575
+expr e35 name(d) type=Double ref=s3573
 expr e36 double(5.0) type=Double
 expr e37 memberCall recv=e35 callee=coerceAtMost args=[_:e36] type=Double
-expr e38 localDecl dAtMost mutable=0 type=t7 init=e37 type=Unit ref=s3570
+expr e38 localDecl dAtMost mutable=0 type=t7 init=e37 type=Unit ref=s3576
 expr e39 name(println) type=_
-expr e40 name(dClamped) type=Double ref=s3568
+expr e40 name(dClamped) type=Double ref=s3574
 expr e41 call callee=e39 args=[_:e40] type=Unit call=s1718 map=[0->0] targs=[]
 expr e42 name(println) type=_
-expr e43 name(dAtLeast) type=Double ref=s3569
+expr e43 name(dAtLeast) type=Double ref=s3575
 expr e44 call callee=e42 args=[_:e43] type=Unit call=s1718 map=[0->0] targs=[]
 expr e45 name(println) type=_
-expr e46 name(dAtMost) type=Double ref=s3570
+expr e46 name(dAtMost) type=Double ref=s3576
 expr e47 call callee=e45 args=[_:e46] type=Unit call=s1718 map=[0->0] targs=[]
 expr e48 float(2.5) type=Float
-expr e49 localDecl f mutable=0 type=t8 init=e48 type=Unit ref=s3571
-expr e50 name(f) type=Float ref=s3571
+expr e49 localDecl f mutable=0 type=t8 init=e48 type=Unit ref=s3577
+expr e50 name(f) type=Float ref=s3577
 expr e51 float(0.0) type=Float
 expr e52 float(5.0) type=Float
 expr e53 memberCall recv=e50 callee=coerceIn args=[_:e51,_:e52] type=Float
-expr e54 localDecl fClamped mutable=0 type=t9 init=e53 type=Unit ref=s3572
-expr e55 name(f) type=Float ref=s3571
+expr e54 localDecl fClamped mutable=0 type=t9 init=e53 type=Unit ref=s3578
+expr e55 name(f) type=Float ref=s3577
 expr e56 float(1.0) type=Float
 expr e57 memberCall recv=e55 callee=coerceAtLeast args=[_:e56] type=Float
-expr e58 localDecl fAtLeast mutable=0 type=t10 init=e57 type=Unit ref=s3573
-expr e59 name(f) type=Float ref=s3571
+expr e58 localDecl fAtLeast mutable=0 type=t10 init=e57 type=Unit ref=s3579
+expr e59 name(f) type=Float ref=s3577
 expr e60 float(4.0) type=Float
 expr e61 memberCall recv=e59 callee=coerceAtMost args=[_:e60] type=Float
-expr e62 localDecl fAtMost mutable=0 type=t11 init=e61 type=Unit ref=s3574
+expr e62 localDecl fAtMost mutable=0 type=t11 init=e61 type=Unit ref=s3580
 expr e63 name(println) type=_
-expr e64 name(fClamped) type=Float ref=s3572
+expr e64 name(fClamped) type=Float ref=s3578
 expr e65 call callee=e63 args=[_:e64] type=Unit call=s1718 map=[0->0] targs=[]
 expr e66 name(println) type=_
-expr e67 name(fAtLeast) type=Float ref=s3573
+expr e67 name(fAtLeast) type=Float ref=s3579
 expr e68 call callee=e66 args=[_:e67] type=Unit call=s1718 map=[0->0] targs=[]
 expr e69 name(println) type=_
-expr e70 name(fAtMost) type=Float ref=s3574
+expr e70 name(fAtMost) type=Float ref=s3580
 expr e71 call callee=e69 args=[_:e70] type=Unit call=s1718 map=[0->0] targs=[]
 expr e72 int(42) type=Int
-expr e73 localDecl i mutable=0 type=t12 init=e72 type=Unit ref=s3575
-expr e74 name(i) type=Int ref=s3575
+expr e73 localDecl i mutable=0 type=t12 init=e72 type=Unit ref=s3581
+expr e74 name(i) type=Int ref=s3581
 expr e75 int(0) type=Int
 expr e76 int(100) type=Int
 expr e77 memberCall recv=e74 callee=coerceIn args=[_:e75,_:e76] type=Int
-expr e78 localDecl iClamped mutable=0 type=t13 init=e77 type=Unit ref=s3576
-expr e79 name(i) type=Int ref=s3575
+expr e78 localDecl iClamped mutable=0 type=t13 init=e77 type=Unit ref=s3582
+expr e79 name(i) type=Int ref=s3581
 expr e80 int(10) type=Int
 expr e81 memberCall recv=e79 callee=coerceAtLeast args=[_:e80] type=Int
-expr e82 localDecl iAtLeast mutable=0 type=t14 init=e81 type=Unit ref=s3577
-expr e83 name(i) type=Int ref=s3575
+expr e82 localDecl iAtLeast mutable=0 type=t14 init=e81 type=Unit ref=s3583
+expr e83 name(i) type=Int ref=s3581
 expr e84 int(50) type=Int
 expr e85 memberCall recv=e83 callee=coerceAtMost args=[_:e84] type=Int
-expr e86 localDecl iAtMost mutable=0 type=t15 init=e85 type=Unit ref=s3578
+expr e86 localDecl iAtMost mutable=0 type=t15 init=e85 type=Unit ref=s3584
 expr e87 name(println) type=_
-expr e88 name(iClamped) type=Int ref=s3576
+expr e88 name(iClamped) type=Int ref=s3582
 expr e89 call callee=e87 args=[_:e88] type=Unit call=s1718 map=[0->0] targs=[]
 expr e90 name(println) type=_
-expr e91 name(iAtLeast) type=Int ref=s3577
+expr e91 name(iAtLeast) type=Int ref=s3583
 expr e92 call callee=e90 args=[_:e91] type=Unit call=s1718 map=[0->0] targs=[]
 expr e93 name(println) type=_
-expr e94 name(iAtMost) type=Int ref=s3578
+expr e94 name(iAtMost) type=Int ref=s3584
 expr e95 call callee=e93 args=[_:e94] type=Unit call=s1718 map=[0->0] targs=[]

@@ -3560,24 +3560,30 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3563 kind=local fq=__local_2.startNanos vis=private flags=_ type=Long
-symbol s3564 kind=local fq=__local_5.now vis=private flags=_ type=Long
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=local fq=__local_2.startNanos vis=private flags=_ type=Long
+symbol s3570 kind=local fq=__local_5.now vis=private flags=_ type=Long
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3562
+  decl d0 fun main suspend=0 inline=0 sym=s3568
 expr e0 name(System) type=Class#1792 ref=s1792
 expr e1 memberCall recv=e0 callee=processStartNanos args=[] type=Long call=s1795 map=[] targs=[]
-expr e2 localDecl startNanos mutable=0 type=t0 init=e1 type=Unit ref=s3563
+expr e2 localDecl startNanos mutable=0 type=t0 init=e1 type=Unit ref=s3569
 expr e3 name(System) type=Class#1792 ref=s1792
 expr e4 memberCall recv=e3 callee=nanoTime args=[] type=Long call=s1794 map=[] targs=[]
-expr e5 localDecl now mutable=0 type=t1 init=e4 type=Unit ref=s3564
+expr e5 localDecl now mutable=0 type=t1 init=e4 type=Unit ref=s3570
 expr e6 name(println) type=_
-expr e7 name(startNanos) type=Long ref=s3563
+expr e7 name(startNanos) type=Long ref=s3569
 expr e8 int(0) type=Int
 expr e9 binary(greaterThan) lhs=e7 rhs=e8 type=Boolean
 expr e10 call callee=e6 args=[_:e9] type=Unit call=s1718 map=[0->0] targs=[]
 expr e11 name(println) type=_
-expr e12 name(now) type=Long ref=s3564
-expr e13 name(startNanos) type=Long ref=s3563
+expr e12 name(now) type=Long ref=s3570
+expr e13 name(startNanos) type=Long ref=s3569
 expr e14 binary(greaterOrEqual) lhs=e12 rhs=e13 type=Boolean
 expr e15 call callee=e11 args=[_:e14] type=Unit call=s1718 map=[0->0] targs=[]

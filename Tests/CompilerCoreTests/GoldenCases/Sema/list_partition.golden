@@ -3560,12 +3560,18 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3563 kind=local fq=__local_7.list vis=private flags=_ type=Class#123<out Int>
-symbol s3564 kind=local fq=__destructuring_21.evens vis=private flags=_ type=T#76
-symbol s3565 kind=local fq=__destructuring_21.odds vis=private flags=_ type=T#77
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=local fq=__local_7.list vis=private flags=_ type=Class#123<out Int>
+symbol s3570 kind=local fq=__destructuring_21.evens vis=private flags=_ type=T#76
+symbol s3571 kind=local fq=__destructuring_21.odds vis=private flags=_ type=T#77
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3562
+  decl d0 fun main suspend=0 inline=0 sym=s3568
 expr e0 name(listOf) type=_
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
@@ -3573,8 +3579,8 @@ expr e3 int(3) type=Int
 expr e4 int(4) type=Int
 expr e5 int(5) type=Int
 expr e6 call callee=e0 args=[_:e1,_:e2,_:e3,_:e4,_:e5] type=Class#123<out Int>
-expr e7 localDecl list mutable=0 type=_ init=e6 type=Unit ref=s3563
-expr e8 name(list) type=Class#123<out Int> ref=s3563
+expr e7 localDecl list mutable=0 type=_ init=e6 type=Unit ref=s3569
+expr e8 name(list) type=Class#123<out Int> ref=s3569
 expr e9 name(it) type=_
 expr e10 int(2) type=_
 expr e11 binary(modulo) lhs=e9 rhs=e10 type=_
@@ -3589,8 +3595,8 @@ expr e19 lambda params=[] body=e18 label=partition type=(Int) -> Boolean
 expr e20 memberCall recv=e8 callee=partition args=[_:e19] type=Class#75<Class#123<Int>, Class#123<Int>>
 expr e21 destructuringDecl names=[evens,odds] mutable=0 init=e20 type=Unit
 expr e22 name(println) type=_
-expr e23 name(evens) type=T#76 ref=s3564
+expr e23 name(evens) type=T#76 ref=s3570
 expr e24 call callee=e22 args=[_:e23] type=Unit call=s1718 map=[0->0] targs=[]
 expr e25 name(println) type=_
-expr e26 name(odds) type=T#77 ref=s3565
+expr e26 name(odds) type=T#77 ref=s3571
 expr e27 call callee=e25 args=[_:e26] type=Unit call=s1718 map=[0->0] targs=[]

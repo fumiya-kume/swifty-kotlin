@@ -3560,19 +3560,25 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=golden.sema.greet vis=public flags=_ sig=recv=_ params=[String] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s3563 kind=valueParameter fq=golden.sema.greet.$3562.name vis=private flags=_
-symbol s3564 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3565 kind=local fq=__local_3.ref vis=private flags=_ type=(String) -> String
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=function fq=golden.sema.greet vis=public flags=_ sig=recv=_ params=[String] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s3569 kind=valueParameter fq=golden.sema.greet.$3568.name vis=private flags=_
+symbol s3570 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3571 kind=local fq=__local_3.ref vis=private flags=_ type=(String) -> String
 file f0 package=golden.sema
-  decl d0 fun greet suspend=0 inline=0 sym=s3562
-  decl d1 fun main suspend=0 inline=0 sym=s3564
-expr e0 name(name) type=String ref=s3563
+  decl d0 fun greet suspend=0 inline=0 sym=s3568
+  decl d1 fun main suspend=0 inline=0 sym=s3570
+expr e0 name(name) type=String ref=s3569
 expr e1 stringTemplate[lit(Hello, ),expr(e0)] type=String
-expr e2 callableRef recv=_ member=greet type=(String) -> String ref=s3562
-expr e3 localDecl ref mutable=0 type=_ init=e2 type=Unit ref=s3565
+expr e2 callableRef recv=_ member=greet type=(String) -> String ref=s3568
+expr e3 localDecl ref mutable=0 type=_ init=e2 type=Unit ref=s3571
 expr e4 name(println) type=_
-expr e5 name(ref) type=(String) -> String ref=s3565
+expr e5 name(ref) type=(String) -> String ref=s3571
 expr e6 string(World) type=String
 expr e7 call callee=e5 args=[_:e6] type=String
 expr e8 call callee=e4 args=[_:e7] type=Unit call=s1718 map=[0->0] targs=[]

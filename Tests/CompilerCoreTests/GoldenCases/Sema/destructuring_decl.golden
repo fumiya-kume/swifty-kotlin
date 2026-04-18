@@ -3560,52 +3560,58 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=class fq=Point vis=public flags=dataType
-symbol s3563 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#3562 params=[Int,Int] ret=Class#3562 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3564 kind=valueParameter fq=Point.<init>.$3563.x vis=private flags=_
-symbol s3565 kind=valueParameter fq=Point.<init>.$3563.y vis=private flags=_
-symbol s3566 kind=function fq=Point.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#3562 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3567 kind=function fq=Point.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#3562 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3568 kind=function fq=Point.copy vis=public flags=synthetic sig=recv=Class#3562 params=[Int,Int] ret=Class#3562 suspend=0 defaults=[1,1] vararg=[0,0]
-symbol s3569 kind=valueParameter fq=Point.copy.$3568.x vis=private flags=_
-symbol s3570 kind=valueParameter fq=Point.copy.$3568.y vis=private flags=_
-symbol s3571 kind=function fq=Point.hashCode vis=public flags=synthetic sig=recv=Class#3562 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3572 kind=property fq=Point.x vis=public flags=_ type=Int
-symbol s3573 kind=property fq=Point.y vis=public flags=_ type=Int
-symbol s3574 kind=function fq=Point.toString vis=public flags=synthetic sig=recv=Class#3562 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3575 kind=function fq=Point.equals vis=public flags=synthetic sig=recv=Class#3562 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s3576 kind=valueParameter fq=Point.equals.other vis=private flags=synthetic
-symbol s3577 kind=function fq=basicDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3578 kind=function fq=destructuringWithUnderscore vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3579 kind=local fq=__local_4.p vis=private flags=_ type=Class#3562
-symbol s3580 kind=local fq=__destructuring_6.a vis=private flags=_ type=Int
-symbol s3581 kind=local fq=__destructuring_6.b vis=private flags=_ type=Int
-symbol s3582 kind=local fq=__local_17.p vis=private flags=_ type=Class#3562
-symbol s3583 kind=local fq=__destructuring_19.second vis=private flags=_ type=Int
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=class fq=Point vis=public flags=dataType
+symbol s3569 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#3568 params=[Int,Int] ret=Class#3568 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3570 kind=valueParameter fq=Point.<init>.$3569.x vis=private flags=_
+symbol s3571 kind=valueParameter fq=Point.<init>.$3569.y vis=private flags=_
+symbol s3572 kind=function fq=Point.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#3568 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3573 kind=function fq=Point.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#3568 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3574 kind=function fq=Point.copy vis=public flags=synthetic sig=recv=Class#3568 params=[Int,Int] ret=Class#3568 suspend=0 defaults=[1,1] vararg=[0,0]
+symbol s3575 kind=valueParameter fq=Point.copy.$3574.x vis=private flags=_
+symbol s3576 kind=valueParameter fq=Point.copy.$3574.y vis=private flags=_
+symbol s3577 kind=function fq=Point.hashCode vis=public flags=synthetic sig=recv=Class#3568 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3578 kind=property fq=Point.x vis=public flags=_ type=Int
+symbol s3579 kind=property fq=Point.y vis=public flags=_ type=Int
+symbol s3580 kind=function fq=Point.toString vis=public flags=synthetic sig=recv=Class#3568 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3581 kind=function fq=Point.equals vis=public flags=synthetic sig=recv=Class#3568 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s3582 kind=valueParameter fq=Point.equals.other vis=private flags=synthetic
+symbol s3583 kind=function fq=basicDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3584 kind=function fq=destructuringWithUnderscore vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3585 kind=local fq=__local_4.p vis=private flags=_ type=Class#3568
+symbol s3586 kind=local fq=__destructuring_6.a vis=private flags=_ type=Int
+symbol s3587 kind=local fq=__destructuring_6.b vis=private flags=_ type=Int
+symbol s3588 kind=local fq=__local_17.p vis=private flags=_ type=Class#3568
+symbol s3589 kind=local fq=__destructuring_19.second vis=private flags=_ type=Int
 file f0 package=_
-  decl d2 class Point sym=s3562
-  decl d3 fun basicDestructuring suspend=0 inline=0 sym=s3577
-  decl d4 fun destructuringWithUnderscore suspend=0 inline=0 sym=s3578
+  decl d2 class Point sym=s3568
+  decl d3 fun basicDestructuring suspend=0 inline=0 sym=s3583
+  decl d4 fun destructuringWithUnderscore suspend=0 inline=0 sym=s3584
 expr e0 name(Point) type=_
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
-expr e3 call callee=e0 args=[_:e1,_:e2] type=Class#3562 call=s3563 map=[0->0,1->1] targs=[]
-expr e4 localDecl p mutable=0 type=_ init=e3 type=Unit ref=s3579
-expr e5 name(p) type=Class#3562 ref=s3579
+expr e3 call callee=e0 args=[_:e1,_:e2] type=Class#3568 call=s3569 map=[0->0,1->1] targs=[]
+expr e4 localDecl p mutable=0 type=_ init=e3 type=Unit ref=s3585
+expr e5 name(p) type=Class#3568 ref=s3585
 expr e6 destructuringDecl names=[a,b] mutable=0 init=e5 type=Unit
 expr e7 name(println) type=_
-expr e8 name(a) type=Int ref=s3580
+expr e8 name(a) type=Int ref=s3586
 expr e9 call callee=e7 args=[_:e8] type=Unit call=s1718 map=[0->0] targs=[]
 expr e10 name(println) type=_
-expr e11 name(b) type=Int ref=s3581
+expr e11 name(b) type=Int ref=s3587
 expr e12 call callee=e10 args=[_:e11] type=Unit call=s1718 map=[0->0] targs=[]
 expr e13 name(Point) type=_
 expr e14 int(3) type=Int
 expr e15 int(4) type=Int
-expr e16 call callee=e13 args=[_:e14,_:e15] type=Class#3562 call=s3563 map=[0->0,1->1] targs=[]
-expr e17 localDecl p mutable=0 type=_ init=e16 type=Unit ref=s3582
-expr e18 name(p) type=Class#3562 ref=s3582
+expr e16 call callee=e13 args=[_:e14,_:e15] type=Class#3568 call=s3569 map=[0->0,1->1] targs=[]
+expr e17 localDecl p mutable=0 type=_ init=e16 type=Unit ref=s3588
+expr e18 name(p) type=Class#3568 ref=s3588
 expr e19 destructuringDecl names=[_,second] mutable=0 init=e18 type=Unit
 expr e20 name(println) type=_
-expr e21 name(second) type=Int ref=s3583
+expr e21 name(second) type=Int ref=s3589
 expr e22 call callee=e20 args=[_:e21] type=Unit call=s1718 map=[0->0] targs=[]

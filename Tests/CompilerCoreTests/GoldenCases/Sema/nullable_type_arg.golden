@@ -3560,18 +3560,24 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=golden.sema.useNullableArg vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3563 kind=local fq=__local_5.list vis=private flags=_ type=Class#123<String?>
-symbol s3564 kind=local fq=__local_9.first vis=private flags=_ type=String?
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=function fq=golden.sema.useNullableArg vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=local fq=__local_5.list vis=private flags=_ type=Class#123<String?>
+symbol s3570 kind=local fq=__local_9.first vis=private flags=_ type=String?
 file f0 package=golden.sema
-  decl d0 fun useNullableArg suspend=0 inline=0 sym=s3562
+  decl d0 fun useNullableArg suspend=0 inline=0 sym=s3568
 expr e0 name(listOf) type=_
 expr e1 string(a) type=String
 expr e2 name(null) type=Nothing?
 expr e3 string(b) type=String
 expr e4 call callee=e0 args=[_:e1,_:e2,_:e3] type=Class#123<String?>
-expr e5 localDecl list mutable=0 type=t1 init=e4 type=Unit ref=s3563
-expr e6 name(list) type=Class#123<String?> ref=s3563
+expr e5 localDecl list mutable=0 type=t1 init=e4 type=Unit ref=s3569
+expr e6 name(list) type=Class#123<String?> ref=s3569
 expr e7 int(0) type=Int
 expr e8 indexedAccess receiver=e6 indices=[e7] type=String? call=s125 map=[0->0] targs=[String?]
-expr e9 localDecl first mutable=0 type=t2 init=e8 type=Unit ref=s3564
+expr e9 localDecl first mutable=0 type=t2 init=e8 type=Unit ref=s3570

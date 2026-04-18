@@ -3560,15 +3560,21 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=golden.sema.add vis=public flags=_ sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3563 kind=valueParameter fq=golden.sema.add.$3562.other vis=private flags=_
-symbol s3564 kind=function fq=golden.sema.useInfix vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=function fq=golden.sema.add vis=public flags=_ sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3569 kind=valueParameter fq=golden.sema.add.$3568.other vis=private flags=_
+symbol s3570 kind=function fq=golden.sema.useInfix vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 fun add suspend=0 inline=0 sym=s3562
-  decl d1 fun useInfix suspend=0 inline=0 sym=s3564
+  decl d0 fun add suspend=0 inline=0 sym=s3568
+  decl d1 fun useInfix suspend=0 inline=0 sym=s3570
 expr e0 this type=Int
-expr e1 name(other) type=Int ref=s3563
+expr e1 name(other) type=Int ref=s3569
 expr e2 binary(add) lhs=e0 rhs=e1 type=Int
 expr e3 int(1) type=Int
 expr e4 int(2) type=Int
-expr e5 memberCall recv=e3 callee=add args=[_:e4] type=Int call=s3562 map=[0->0] targs=[]
+expr e5 memberCall recv=e3 callee=add args=[_:e4] type=Int call=s3568 map=[0->0] targs=[]

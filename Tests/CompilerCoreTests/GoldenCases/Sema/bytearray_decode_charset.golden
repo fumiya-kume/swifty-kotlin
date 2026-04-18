@@ -3560,14 +3560,20 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3563 kind=local fq=__local_7.bytes vis=private flags=_ type=Class#303
-symbol s3564 kind=local fq=__local_10.s1 vis=private flags=_ type=String
-symbol s3565 kind=local fq=__local_15.s2 vis=private flags=_ type=String
-symbol s3566 kind=local fq=__local_20.s3 vis=private flags=_ type=String
-symbol s3567 kind=local fq=__local_25.s4 vis=private flags=_ type=String
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=local fq=__local_7.bytes vis=private flags=_ type=Class#303
+symbol s3570 kind=local fq=__local_10.s1 vis=private flags=_ type=String
+symbol s3571 kind=local fq=__local_15.s2 vis=private flags=_ type=String
+symbol s3572 kind=local fq=__local_20.s3 vis=private flags=_ type=String
+symbol s3573 kind=local fq=__local_25.s4 vis=private flags=_ type=String
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3562
+  decl d0 fun main suspend=0 inline=0 sym=s3568
 expr e0 name(byteArrayOf) type=_
 expr e1 int(72) type=Int
 expr e2 int(101) type=Int
@@ -3575,34 +3581,34 @@ expr e3 int(108) type=Int
 expr e4 int(108) type=Int
 expr e5 int(111) type=Int
 expr e6 call callee=e0 args=[_:e1,_:e2,_:e3,_:e4,_:e5] type=Class#303 call=s424 map=[0->0,1->0,2->0,3->0,4->0] targs=[]
-expr e7 localDecl bytes mutable=0 type=_ init=e6 type=Unit ref=s3563
-expr e8 name(bytes) type=Class#303 ref=s3563
+expr e7 localDecl bytes mutable=0 type=_ init=e6 type=Unit ref=s3569
+expr e8 name(bytes) type=Class#303 ref=s3569
 expr e9 memberCall recv=e8 callee=decodeToString args=[] type=String call=s915 map=[] targs=[]
-expr e10 localDecl s1 mutable=0 type=_ init=e9 type=Unit ref=s3564
-expr e11 name(bytes) type=Class#303 ref=s3563
+expr e10 localDecl s1 mutable=0 type=_ init=e9 type=Unit ref=s3570
+expr e11 name(bytes) type=Class#303 ref=s3569
 expr e12 name(Charsets) type=Class#886 ref=s886
 expr e13 memberCall recv=e12 callee=UTF_8 args=[] type=Class#885 ref=s887
 expr e14 memberCall recv=e11 callee=decodeToString args=[_:e13] type=String call=s918 map=[0->0] targs=[]
-expr e15 localDecl s2 mutable=0 type=_ init=e14 type=Unit ref=s3565
-expr e16 name(bytes) type=Class#303 ref=s3563
+expr e15 localDecl s2 mutable=0 type=_ init=e14 type=Unit ref=s3571
+expr e16 name(bytes) type=Class#303 ref=s3569
 expr e17 name(Charsets) type=Class#886 ref=s886
 expr e18 memberCall recv=e17 callee=ISO_8859_1 args=[] type=Class#885 ref=s888
 expr e19 memberCall recv=e16 callee=decodeToString args=[_:e18] type=String call=s918 map=[0->0] targs=[]
-expr e20 localDecl s3 mutable=0 type=_ init=e19 type=Unit ref=s3566
-expr e21 name(bytes) type=Class#303 ref=s3563
+expr e20 localDecl s3 mutable=0 type=_ init=e19 type=Unit ref=s3572
+expr e21 name(bytes) type=Class#303 ref=s3569
 expr e22 name(Charsets) type=Class#886 ref=s886
 expr e23 memberCall recv=e22 callee=US_ASCII args=[] type=Class#885 ref=s889
 expr e24 memberCall recv=e21 callee=decodeToString args=[_:e23] type=String call=s918 map=[0->0] targs=[]
-expr e25 localDecl s4 mutable=0 type=_ init=e24 type=Unit ref=s3567
+expr e25 localDecl s4 mutable=0 type=_ init=e24 type=Unit ref=s3573
 expr e26 name(println) type=_
-expr e27 name(s1) type=String ref=s3564
+expr e27 name(s1) type=String ref=s3570
 expr e28 call callee=e26 args=[_:e27] type=Unit call=s1718 map=[0->0] targs=[]
 expr e29 name(println) type=_
-expr e30 name(s2) type=String ref=s3565
+expr e30 name(s2) type=String ref=s3571
 expr e31 call callee=e29 args=[_:e30] type=Unit call=s1718 map=[0->0] targs=[]
 expr e32 name(println) type=_
-expr e33 name(s3) type=String ref=s3566
+expr e33 name(s3) type=String ref=s3572
 expr e34 call callee=e32 args=[_:e33] type=Unit call=s1718 map=[0->0] targs=[]
 expr e35 name(println) type=_
-expr e36 name(s4) type=String ref=s3567
+expr e36 name(s4) type=String ref=s3573
 expr e37 call callee=e35 args=[_:e36] type=Unit call=s1718 map=[0->0] targs=[]

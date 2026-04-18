@@ -3560,29 +3560,35 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=class fq=golden.sema.NumberContainer vis=public flags=openType
-symbol s3563 kind=constructor fq=golden.sema.NumberContainer.<init> vis=public flags=_ sig=recv=Class#3562 params=[] ret=Class#3562 suspend=0 defaults=[] vararg=[]
-symbol s3564 kind=function fq=golden.sema.NumberContainer.getValue vis=public flags=openType sig=recv=Class#3562 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s3565 kind=function fq=golden.sema.NumberContainer.getInternal vis=protected flags=openType sig=recv=Class#3562 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3566 kind=class fq=golden.sema.IntContainer vis=public flags=openType
-symbol s3567 kind=constructor fq=golden.sema.IntContainer.<init> vis=public flags=_ sig=recv=Class#3566 params=[] ret=Class#3566 suspend=0 defaults=[] vararg=[]
-symbol s3568 kind=function fq=golden.sema.IntContainer.getValue vis=public flags=overrideMember sig=recv=Class#3566 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3569 kind=function fq=golden.sema.IntContainer.getInternal vis=public flags=overrideMember sig=recv=Class#3566 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3570 kind=class fq=golden.sema.Animal vis=public flags=openType
-symbol s3571 kind=constructor fq=golden.sema.Animal.<init> vis=public flags=_ sig=recv=Class#3570 params=[] ret=Class#3570 suspend=0 defaults=[] vararg=[]
-symbol s3572 kind=function fq=golden.sema.Animal.makeSound vis=public flags=openType sig=recv=Class#3570 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3573 kind=class fq=golden.sema.Dog vis=public flags=openType
-symbol s3574 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#3573 params=[] ret=Class#3573 suspend=0 defaults=[] vararg=[]
-symbol s3575 kind=function fq=golden.sema.Dog.makeSound vis=public flags=overrideMember sig=recv=Class#3573 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3576 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3577 kind=local fq=__local_8.c vis=private flags=_ type=Class#3566
-symbol s3578 kind=local fq=__local_19.dog vis=private flags=_ type=Class#3573
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=class fq=golden.sema.NumberContainer vis=public flags=openType
+symbol s3569 kind=constructor fq=golden.sema.NumberContainer.<init> vis=public flags=_ sig=recv=Class#3568 params=[] ret=Class#3568 suspend=0 defaults=[] vararg=[]
+symbol s3570 kind=function fq=golden.sema.NumberContainer.getValue vis=public flags=openType sig=recv=Class#3568 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3571 kind=function fq=golden.sema.NumberContainer.getInternal vis=protected flags=openType sig=recv=Class#3568 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=class fq=golden.sema.IntContainer vis=public flags=openType
+symbol s3573 kind=constructor fq=golden.sema.IntContainer.<init> vis=public flags=_ sig=recv=Class#3572 params=[] ret=Class#3572 suspend=0 defaults=[] vararg=[]
+symbol s3574 kind=function fq=golden.sema.IntContainer.getValue vis=public flags=overrideMember sig=recv=Class#3572 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3575 kind=function fq=golden.sema.IntContainer.getInternal vis=public flags=overrideMember sig=recv=Class#3572 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3576 kind=class fq=golden.sema.Animal vis=public flags=openType
+symbol s3577 kind=constructor fq=golden.sema.Animal.<init> vis=public flags=_ sig=recv=Class#3576 params=[] ret=Class#3576 suspend=0 defaults=[] vararg=[]
+symbol s3578 kind=function fq=golden.sema.Animal.makeSound vis=public flags=openType sig=recv=Class#3576 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3579 kind=class fq=golden.sema.Dog vis=public flags=openType
+symbol s3580 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#3579 params=[] ret=Class#3579 suspend=0 defaults=[] vararg=[]
+symbol s3581 kind=function fq=golden.sema.Dog.makeSound vis=public flags=overrideMember sig=recv=Class#3579 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3582 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3583 kind=local fq=__local_8.c vis=private flags=_ type=Class#3572
+symbol s3584 kind=local fq=__local_19.dog vis=private flags=_ type=Class#3579
 file f0 package=golden.sema
-  decl d2 class NumberContainer sym=s3562
-  decl d5 class IntContainer sym=s3566
-  decl d7 class Animal sym=s3570
-  decl d9 class Dog sym=s3573
-  decl d10 fun main suspend=0 inline=0 sym=s3576
+  decl d2 class NumberContainer sym=s3568
+  decl d5 class IntContainer sym=s3572
+  decl d7 class Animal sym=s3576
+  decl d9 class Dog sym=s3579
+  decl d10 fun main suspend=0 inline=0 sym=s3582
 expr e0 int(42) type=Int
 expr e1 string(base) type=String
 expr e2 int(123) type=Int
@@ -3590,20 +3596,20 @@ expr e3 string(derived) type=String
 expr e4 string(animal sound) type=String
 expr e5 string(woof) type=String
 expr e6 name(IntContainer) type=_
-expr e7 call callee=e6 args=[] type=Class#3566 call=s3567 map=[] targs=[]
-expr e8 localDecl c mutable=0 type=_ init=e7 type=Unit ref=s3577
+expr e7 call callee=e6 args=[] type=Class#3572 call=s3573 map=[] targs=[]
+expr e8 localDecl c mutable=0 type=_ init=e7 type=Unit ref=s3583
 expr e9 name(println) type=_
-expr e10 name(c) type=Class#3566 ref=s3577
-expr e11 memberCall recv=e10 callee=getValue args=[] type=Int call=s3568 map=[] targs=[]
+expr e10 name(c) type=Class#3572 ref=s3583
+expr e11 memberCall recv=e10 callee=getValue args=[] type=Int call=s3574 map=[] targs=[]
 expr e12 call callee=e9 args=[_:e11] type=Unit call=s1718 map=[0->0] targs=[]
 expr e13 name(println) type=_
-expr e14 name(c) type=Class#3566 ref=s3577
-expr e15 memberCall recv=e14 callee=getInternal args=[] type=String call=s3569 map=[] targs=[]
+expr e14 name(c) type=Class#3572 ref=s3583
+expr e15 memberCall recv=e14 callee=getInternal args=[] type=String call=s3575 map=[] targs=[]
 expr e16 call callee=e13 args=[_:e15] type=Unit call=s1718 map=[0->0] targs=[]
 expr e17 name(Dog) type=_
-expr e18 call callee=e17 args=[] type=Class#3573 call=s3574 map=[] targs=[]
-expr e19 localDecl dog mutable=0 type=_ init=e18 type=Unit ref=s3578
+expr e18 call callee=e17 args=[] type=Class#3579 call=s3580 map=[] targs=[]
+expr e19 localDecl dog mutable=0 type=_ init=e18 type=Unit ref=s3584
 expr e20 name(println) type=_
-expr e21 name(dog) type=Class#3573 ref=s3578
-expr e22 memberCall recv=e21 callee=makeSound args=[] type=String call=s3575 map=[] targs=[]
+expr e21 name(dog) type=Class#3579 ref=s3584
+expr e22 memberCall recv=e21 callee=makeSound args=[] type=String call=s3581 map=[] targs=[]
 expr e23 call callee=e20 args=[_:e22] type=Unit call=s1718 map=[0->0] targs=[]

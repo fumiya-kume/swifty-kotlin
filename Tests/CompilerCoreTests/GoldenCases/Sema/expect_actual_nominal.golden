@@ -3560,18 +3560,24 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=class fq=golden.sema.Foo vis=public flags=expectDeclaration
-symbol s3563 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#3562 params=[] ret=Class#3562 suspend=0 defaults=[] vararg=[]
-symbol s3564 kind=class fq=golden.sema.Foo vis=public flags=actualDeclaration
-symbol s3565 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#3564 params=[] ret=Class#3564 suspend=0 defaults=[] vararg=[]
-symbol s3566 kind=class fq=golden.sema.Bar vis=public flags=expectDeclaration
-symbol s3567 kind=typeParameter fq=golden.sema.Bar.$class3566.T vis=private flags=_
-symbol s3568 kind=constructor fq=golden.sema.Bar.<init> vis=public flags=_ sig=recv=Class#3566<T#3567> params=[] ret=Class#3566<T#3567> suspend=0 defaults=[] vararg=[]
-symbol s3569 kind=class fq=golden.sema.Bar vis=public flags=actualDeclaration
-symbol s3570 kind=typeParameter fq=golden.sema.Bar.$class3569.T vis=private flags=_
-symbol s3571 kind=constructor fq=golden.sema.Bar.<init> vis=public flags=_ sig=recv=Class#3569<T#3570> params=[] ret=Class#3569<T#3570> suspend=0 defaults=[] vararg=[]
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=class fq=golden.sema.Foo vis=public flags=expectDeclaration
+symbol s3569 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#3568 params=[] ret=Class#3568 suspend=0 defaults=[] vararg=[]
+symbol s3570 kind=class fq=golden.sema.Foo vis=public flags=actualDeclaration
+symbol s3571 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#3570 params=[] ret=Class#3570 suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=class fq=golden.sema.Bar vis=public flags=expectDeclaration
+symbol s3573 kind=typeParameter fq=golden.sema.Bar.$class3572.T vis=private flags=_
+symbol s3574 kind=constructor fq=golden.sema.Bar.<init> vis=public flags=_ sig=recv=Class#3572<T#3573> params=[] ret=Class#3572<T#3573> suspend=0 defaults=[] vararg=[]
+symbol s3575 kind=class fq=golden.sema.Bar vis=public flags=actualDeclaration
+symbol s3576 kind=typeParameter fq=golden.sema.Bar.$class3575.T vis=private flags=_
+symbol s3577 kind=constructor fq=golden.sema.Bar.<init> vis=public flags=_ sig=recv=Class#3575<T#3576> params=[] ret=Class#3575<T#3576> suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 class Foo sym=s3562
-  decl d1 class Foo sym=s3564
-  decl d2 class Bar sym=s3566
-  decl d3 class Bar sym=s3569
+  decl d0 class Foo sym=s3568
+  decl d1 class Foo sym=s3570
+  decl d2 class Bar sym=s3572
+  decl d3 class Bar sym=s3575

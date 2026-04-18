@@ -3560,16 +3560,22 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=class fq=golden.sema.Widget vis=public flags=_
-symbol s3563 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#3562 params=[] ret=Class#3562 suspend=0 defaults=[] vararg=[]
-symbol s3564 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
-symbol s3565 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
-symbol s3566 kind=backingField fq=golden.sema.Widget.$backing_backed vis=private flags=mutable type=Int
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=class fq=golden.sema.Widget vis=public flags=_
+symbol s3569 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#3568 params=[] ret=Class#3568 suspend=0 defaults=[] vararg=[]
+symbol s3570 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
+symbol s3571 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
+symbol s3572 kind=backingField fq=golden.sema.Widget.$backing_backed vis=private flags=mutable type=Int
 file f0 package=golden.sema
-  decl d2 class Widget sym=s3562
+  decl d2 class Widget sym=s3568
 expr e0 string(hello) type=String
 expr e1 name(field) type=_
-expr e2 name(value) type=Int ref=s-43565
-expr e3 localAssign field value=e2 type=Unit ref=s3566
-expr e4 name(field) type=Int ref=s3566
+expr e2 name(value) type=Int ref=s-43571
+expr e3 localAssign field value=e2 type=Unit ref=s3572
+expr e4 name(field) type=Int ref=s3572
 expr e5 int(0) type=Int

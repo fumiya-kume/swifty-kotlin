@@ -3560,24 +3560,30 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=class fq=golden.sema.StringDelegate vis=public flags=_
-symbol s3563 kind=constructor fq=golden.sema.StringDelegate.<init> vis=public flags=_ sig=recv=Class#3562 params=[] ret=Class#3562 suspend=0 defaults=[] vararg=[]
-symbol s3564 kind=function fq=golden.sema.StringDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#3562 params=[Any?,Any?] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3565 kind=valueParameter fq=golden.sema.StringDelegate.getValue.$3564.thisRef vis=private flags=_
-symbol s3566 kind=valueParameter fq=golden.sema.StringDelegate.getValue.$3564.property vis=private flags=_
-symbol s3567 kind=function fq=golden.sema.StringDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#3562 params=[Any?,Any?,String] ret=Unit suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3568 kind=valueParameter fq=golden.sema.StringDelegate.setValue.$3567.thisRef vis=private flags=_
-symbol s3569 kind=valueParameter fq=golden.sema.StringDelegate.setValue.$3567.property vis=private flags=_
-symbol s3570 kind=valueParameter fq=golden.sema.StringDelegate.setValue.$3567.value vis=private flags=_
-symbol s3571 kind=property fq=golden.sema.greeting vis=public flags=mutable type=String
-symbol s3572 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=class fq=golden.sema.StringDelegate vis=public flags=_
+symbol s3569 kind=constructor fq=golden.sema.StringDelegate.<init> vis=public flags=_ sig=recv=Class#3568 params=[] ret=Class#3568 suspend=0 defaults=[] vararg=[]
+symbol s3570 kind=function fq=golden.sema.StringDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#3568 params=[Any?,Any?] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3571 kind=valueParameter fq=golden.sema.StringDelegate.getValue.$3570.thisRef vis=private flags=_
+symbol s3572 kind=valueParameter fq=golden.sema.StringDelegate.getValue.$3570.property vis=private flags=_
+symbol s3573 kind=function fq=golden.sema.StringDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#3568 params=[Any?,Any?,String] ret=Unit suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3574 kind=valueParameter fq=golden.sema.StringDelegate.setValue.$3573.thisRef vis=private flags=_
+symbol s3575 kind=valueParameter fq=golden.sema.StringDelegate.setValue.$3573.property vis=private flags=_
+symbol s3576 kind=valueParameter fq=golden.sema.StringDelegate.setValue.$3573.value vis=private flags=_
+symbol s3577 kind=property fq=golden.sema.greeting vis=public flags=mutable type=String
+symbol s3578 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d2 class StringDelegate sym=s3562
-  decl d3 property greeting var=1 sym=s3571
-  decl d4 fun main suspend=0 inline=0 sym=s3572
+  decl d2 class StringDelegate sym=s3568
+  decl d3 property greeting var=1 sym=s3577
+  decl d4 fun main suspend=0 inline=0 sym=s3578
 expr e0 string(default) type=String
 expr e1 name(StringDelegate) type=_
-expr e2 call callee=e1 args=[] type=Class#3562 call=s3563 map=[] targs=[]
+expr e2 call callee=e1 args=[] type=Class#3568 call=s3569 map=[] targs=[]
 expr e3 name(println) type=_
-expr e4 name(greeting) type=String ref=s3571
+expr e4 name(greeting) type=String ref=s3577
 expr e5 call callee=e3 args=[_:e4] type=Unit call=s1718 map=[0->0] targs=[]

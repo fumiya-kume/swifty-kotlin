@@ -3560,15 +3560,21 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3563 kind=local fq=__for_51.i vis=private flags=_
-symbol s3564 kind=local fq=__local_54.largeSeq vis=private flags=_ type=Class#114<out Class#123<out Int>>
-symbol s3565 kind=local fq=__local_58.flattenedSeq vis=private flags=_ type=Class#123<Int>
-symbol s3566 kind=local fq=__local_89.nestedSeq vis=private flags=_ type=Class#114<out Class#114<out Int>>
-symbol s3567 kind=local fq=__local_108.mixedSeq vis=private flags=_ type=Class#114<out Any>
-symbol s3568 kind=local fq=__local_122.singleSeq vis=private flags=_ type=Class#114<out Class#123<out Int>>
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=local fq=__for_51.i vis=private flags=_
+symbol s3570 kind=local fq=__local_54.largeSeq vis=private flags=_ type=Class#114<out Class#123<out Int>>
+symbol s3571 kind=local fq=__local_58.flattenedSeq vis=private flags=_ type=Class#123<Int>
+symbol s3572 kind=local fq=__local_89.nestedSeq vis=private flags=_ type=Class#114<out Class#114<out Int>>
+symbol s3573 kind=local fq=__local_108.mixedSeq vis=private flags=_ type=Class#114<out Any>
+symbol s3574 kind=local fq=__local_122.singleSeq vis=private flags=_ type=Class#114<out Class#123<out Int>>
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3562
+  decl d0 fun main suspend=0 inline=0 sym=s3568
 expr e0 name(println) type=_
 expr e1 string(=== Sequence flatten edge cases ===) type=String
 expr e2 call callee=e0 args=[_:e1] type=Unit call=s1718 map=[0->0] targs=[]
@@ -3617,30 +3623,30 @@ expr e43 int(10) type=Int
 expr e44 binary(rangeTo) lhs=e42 rhs=e43 type=Int
 expr e45 name(yield) type=_
 expr e46 name(listOf) type=_
-expr e47 name(i) type=Int ref=s3563
+expr e47 name(i) type=Int ref=s3569
 expr e48 call callee=e46 args=[_:e47] type=Class#123<out Int>
 expr e49 call callee=e45 args=[_:e48] type=Unit call=s1728 map=[0->0] targs=[]
 expr e50 blockExpr stmts=[] trailing=e49 type=Unit
-expr e51 for var=i iterable=e44 body=e50 type=Unit ref=s3563
+expr e51 for var=i iterable=e44 body=e50 type=Unit ref=s3569
 expr e52 lambda params=[] body=e51 label=sequence type=suspend Class#1726<Class#123<out <error>>>.() -> Unit
 expr e53 call callee=e31 args=[_:e52] type=Class#114<out Class#123<out Int>> call=s1732 map=[0->0] targs=[]
-expr e54 localDecl largeSeq mutable=0 type=_ init=e53 type=Unit ref=s3564
-expr e55 name(largeSeq) type=Class#114<out Class#123<out Int>> ref=s3564
+expr e54 localDecl largeSeq mutable=0 type=_ init=e53 type=Unit ref=s3570
+expr e55 name(largeSeq) type=Class#114<out Class#123<out Int>> ref=s3570
 expr e56 memberCall recv=e55 callee=flatten args=[] type=Class#114<out Int>
 expr e57 memberCall recv=e56 callee=toList args=[] type=Class#123<Int> call=s1763 map=[] targs=[]
-expr e58 localDecl flattenedSeq mutable=0 type=_ init=e57 type=Unit ref=s3565
+expr e58 localDecl flattenedSeq mutable=0 type=_ init=e57 type=Unit ref=s3571
 expr e59 name(println) type=_
-expr e60 name(flattenedSeq) type=Class#123<Int> ref=s3565
+expr e60 name(flattenedSeq) type=Class#123<Int> ref=s3571
 expr e61 memberCall recv=e60 callee=size args=[] type=Int ref=s120
 expr e62 call callee=e59 args=[_:e61] type=Unit call=s1718 map=[0->0] targs=[]
 expr e63 name(println) type=_
-expr e64 name(flattenedSeq) type=Class#123<Int> ref=s3565
+expr e64 name(flattenedSeq) type=Class#123<Int> ref=s3571
 expr e65 int(5) type=Int
 expr e66 memberCall recv=e64 callee=take args=[_:e65] type=Any call=s150 map=[0->0] targs=[]
 expr e67 call callee=e63 args=[_:e66] type=Unit call=s1718 map=[0->0] targs=[]
 expr e68 name(println) type=_
-expr e69 name(flattenedSeq) type=Class#123<Int> ref=s3565
-expr e70 name(flattenedSeq) type=Class#123<Int> ref=s3565
+expr e69 name(flattenedSeq) type=Class#123<Int> ref=s3571
+expr e70 name(flattenedSeq) type=Class#123<Int> ref=s3571
 expr e71 memberCall recv=e70 callee=size args=[] type=Int ref=s120
 expr e72 int(5) type=Int
 expr e73 binary(subtract) lhs=e71 rhs=e72 type=Int
@@ -3660,9 +3666,9 @@ expr e85 int(3) type=Int
 expr e86 int(4) type=Int
 expr e87 call callee=e84 args=[_:e85,_:e86] type=Class#114<out Int> call=s1741 map=[0->0,1->0] targs=[Int]
 expr e88 call callee=e79 args=[_:e83,_:e87] type=Class#114<out Class#114<out Int>> call=s1741 map=[0->0,1->0] targs=[Class#114<out Int>]
-expr e89 localDecl nestedSeq mutable=0 type=_ init=e88 type=Unit ref=s3566
+expr e89 localDecl nestedSeq mutable=0 type=_ init=e88 type=Unit ref=s3572
 expr e90 name(println) type=_
-expr e91 name(nestedSeq) type=Class#114<out Class#114<out Int>> ref=s3566
+expr e91 name(nestedSeq) type=Class#114<out Class#114<out Int>> ref=s3572
 expr e92 memberCall recv=e91 callee=flatten args=[] type=Class#114<out Int>
 expr e93 memberCall recv=e92 callee=toList args=[] type=Class#123<Int> call=s1763 map=[] targs=[]
 expr e94 call callee=e90 args=[_:e93] type=Unit call=s1718 map=[0->0] targs=[]
@@ -3680,9 +3686,9 @@ expr e104 int(3) type=Int
 expr e105 int(4) type=Int
 expr e106 call callee=e103 args=[_:e104,_:e105] type=Class#114<out Int> call=s1741 map=[0->0,1->0] targs=[Int]
 expr e107 call callee=e98 args=[_:e102,_:e106] type=Class#114<out Any> call=s1741 map=[0->0,1->0] targs=[Any]
-expr e108 localDecl mixedSeq mutable=0 type=_ init=e107 type=Unit ref=s3567
+expr e108 localDecl mixedSeq mutable=0 type=_ init=e107 type=Unit ref=s3573
 expr e109 name(println) type=_
-expr e110 name(mixedSeq) type=Class#114<out Any> ref=s3567
+expr e110 name(mixedSeq) type=Class#114<out Any> ref=s3573
 expr e111 memberCall recv=e110 callee=flatten args=[] type=Class#114<out Any>
 expr e112 memberCall recv=e111 callee=toList args=[] type=Class#123<Any> call=s1763 map=[] targs=[]
 expr e113 call callee=e109 args=[_:e112] type=Unit call=s1718 map=[0->0] targs=[]
@@ -3695,9 +3701,9 @@ expr e118 name(listOf) type=_
 expr e119 int(42) type=Int
 expr e120 call callee=e118 args=[_:e119] type=Class#123<out Int>
 expr e121 call callee=e117 args=[_:e120] type=Class#114<out Class#123<out Int>> call=s1741 map=[0->0] targs=[Class#123<out Int>]
-expr e122 localDecl singleSeq mutable=0 type=_ init=e121 type=Unit ref=s3568
+expr e122 localDecl singleSeq mutable=0 type=_ init=e121 type=Unit ref=s3574
 expr e123 name(println) type=_
-expr e124 name(singleSeq) type=Class#114<out Class#123<out Int>> ref=s3568
+expr e124 name(singleSeq) type=Class#114<out Class#123<out Int>> ref=s3574
 expr e125 memberCall recv=e124 callee=flatten args=[] type=Class#114<out Int>
 expr e126 memberCall recv=e125 callee=toList args=[] type=Class#123<Int> call=s1763 map=[] targs=[]
 expr e127 call callee=e123 args=[_:e126] type=Unit call=s1718 map=[0->0] targs=[]

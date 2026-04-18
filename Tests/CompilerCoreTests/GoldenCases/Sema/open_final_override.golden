@@ -3560,16 +3560,22 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=class fq=golden.sema.Base vis=public flags=openType
-symbol s3563 kind=constructor fq=golden.sema.Base.<init> vis=public flags=_ sig=recv=Class#3562 params=[] ret=Class#3562 suspend=0 defaults=[] vararg=[]
-symbol s3564 kind=function fq=golden.sema.Base.foo vis=public flags=openType sig=recv=Class#3562 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3565 kind=function fq=golden.sema.Base.bar vis=public flags=_ sig=recv=Class#3562 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3566 kind=class fq=golden.sema.Derived vis=public flags=_
-symbol s3567 kind=constructor fq=golden.sema.Derived.<init> vis=public flags=_ sig=recv=Class#3566 params=[] ret=Class#3566 suspend=0 defaults=[] vararg=[]
-symbol s3568 kind=function fq=golden.sema.Derived.foo vis=public flags=overrideMember sig=recv=Class#3566 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=class fq=golden.sema.Base vis=public flags=openType
+symbol s3569 kind=constructor fq=golden.sema.Base.<init> vis=public flags=_ sig=recv=Class#3568 params=[] ret=Class#3568 suspend=0 defaults=[] vararg=[]
+symbol s3570 kind=function fq=golden.sema.Base.foo vis=public flags=openType sig=recv=Class#3568 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3571 kind=function fq=golden.sema.Base.bar vis=public flags=_ sig=recv=Class#3568 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3572 kind=class fq=golden.sema.Derived vis=public flags=_
+symbol s3573 kind=constructor fq=golden.sema.Derived.<init> vis=public flags=_ sig=recv=Class#3572 params=[] ret=Class#3572 suspend=0 defaults=[] vararg=[]
+symbol s3574 kind=function fq=golden.sema.Derived.foo vis=public flags=overrideMember sig=recv=Class#3572 params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d2 class Base sym=s3562
-  decl d4 class Derived sym=s3566
+  decl d2 class Base sym=s3568
+  decl d4 class Derived sym=s3572
 expr e0 int(1) type=Int
 expr e1 int(2) type=Int
 expr e2 int(10) type=Int

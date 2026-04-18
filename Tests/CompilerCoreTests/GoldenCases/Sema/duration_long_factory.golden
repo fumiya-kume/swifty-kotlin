@@ -3560,22 +3560,28 @@ symbol s3558 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3559 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3557 params=[() -> T#3560] ret=T#3560 suspend=0 defaults=[0] vararg=[0]
 symbol s3560 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3561 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3562 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3563 kind=local fq=__local_2.d1 vis=private flags=_ type=Class#1567
-symbol s3564 kind=local fq=__local_9.d2 vis=private flags=_ type=Class#1567
+symbol s3562 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3563 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3564 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3565 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3566 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3567 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3568 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=local fq=__local_2.d1 vis=private flags=_ type=Class#1567
+symbol s3570 kind=local fq=__local_9.d2 vis=private flags=_ type=Class#1567
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3562
+  decl d0 fun main suspend=0 inline=0 sym=s3568
 expr e0 long(5) type=Long
 expr e1 memberCall recv=e0 callee=seconds args=[] type=Class#1567 call=s1609 map=[] targs=[]
-expr e2 localDecl d1 mutable=0 type=_ init=e1 type=Unit ref=s3563
+expr e2 localDecl d1 mutable=0 type=_ init=e1 type=Unit ref=s3569
 expr e3 name(println) type=_
-expr e4 name(d1) type=Class#1567 ref=s3563
+expr e4 name(d1) type=Class#1567 ref=s3569
 expr e5 memberCall recv=e4 callee=inWholeSeconds args=[] type=Long ref=s1570
 expr e6 call callee=e3 args=[_:e5] type=Unit call=s1718 map=[0->0] targs=[]
 expr e7 long(2500) type=Long
 expr e8 memberCall recv=e7 callee=milliseconds args=[] type=Class#1567 call=s1611 map=[] targs=[]
-expr e9 localDecl d2 mutable=0 type=_ init=e8 type=Unit ref=s3564
+expr e9 localDecl d2 mutable=0 type=_ init=e8 type=Unit ref=s3570
 expr e10 name(println) type=_
-expr e11 name(d2) type=Class#1567 ref=s3564
+expr e11 name(d2) type=Class#1567 ref=s3570
 expr e12 memberCall recv=e11 callee=inWholeMilliseconds args=[] type=Long ref=s1569
 expr e13 call callee=e10 args=[_:e12] type=Unit call=s1718 map=[0->0] targs=[]
