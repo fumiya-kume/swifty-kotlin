@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "opt_in_propagate_marker.kt",
+      "range": {
+        "start": { "line": 16, "character": 34 },
+        "end": { "line": 16, "character": 52 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalPropagatedApi' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalPropagatedApi' or '@OptIn(golden.diagnostics.ExperimentalPropagatedApi::class)'.",
+      "codeActions": []
+    }
+  ]
+}

@@ -64,6 +64,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "receiverRaw", type: .intptr),
                 RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "HexFormat"
@@ -73,6 +74,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "receiverRaw", type: .intptr),
                 RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "HexFormat"

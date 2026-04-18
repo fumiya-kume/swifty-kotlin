@@ -378,6 +378,8 @@ public extension RuntimeABISpec {
             bridgeSpec("kk_platform_osFamily", section: "System", params: ["platformRaw"]),
             bridgeSpec("kk_platform_cpuArchitecture", section: "System", params: ["platformRaw"]),
             bridgeSpec("kk_platform_getAvailableProcessors", section: "System", params: ["platformRaw"]),
+            bridgeSpec("kk_platform_memoryModel", section: "System", params: ["platformRaw"]),
+            bridgeSpec("kk_platform_isDebugBinary", section: "System", params: ["platformRaw"]),
             bridgeSpec("kk_time_source_mark_now", section: "Duration", params: ["receiver"]),
             bridgeSpec("kk_time_source_monotonic_mark_now", section: "Duration", params: ["receiver"]),
             bridgeSpec("kk_time_mark_elapsed_now", section: "Duration", params: ["markRaw"]),

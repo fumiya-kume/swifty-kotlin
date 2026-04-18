@@ -3562,50 +3562,64 @@ symbol s3560 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3561 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3559 params=[() -> T#3562] ret=T#3562 suspend=0 defaults=[0] vararg=[0]
 symbol s3562 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3563 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3564 kind=class fq=User vis=public flags=dataType
-symbol s3565 kind=constructor fq=User.<init> vis=public flags=_ sig=recv=Class#3564 params=[String,String?] ret=Class#3564 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3566 kind=valueParameter fq=User.<init>.$3565.name vis=private flags=_
-symbol s3567 kind=valueParameter fq=User.<init>.$3565.nickname vis=private flags=_
-symbol s3568 kind=function fq=User.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#3564 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3569 kind=function fq=User.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#3564 params=[] ret=String? suspend=0 defaults=[] vararg=[]
-symbol s3570 kind=function fq=User.copy vis=public flags=synthetic sig=recv=Class#3564 params=[String,String?] ret=Class#3564 suspend=0 defaults=[1,1] vararg=[0,0]
-symbol s3571 kind=valueParameter fq=User.copy.$3570.name vis=private flags=_
-symbol s3572 kind=valueParameter fq=User.copy.$3570.nickname vis=private flags=_
-symbol s3573 kind=function fq=User.hashCode vis=public flags=synthetic sig=recv=Class#3564 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3574 kind=property fq=User.name vis=public flags=_ type=String
-symbol s3575 kind=property fq=User.nickname vis=public flags=_ type=String?
-symbol s3576 kind=function fq=User.toString vis=public flags=synthetic sig=recv=Class#3564 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3577 kind=function fq=User.equals vis=public flags=synthetic sig=recv=Class#3564 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s3578 kind=valueParameter fq=User.equals.other vis=private flags=synthetic
-symbol s3579 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3580 kind=local fq=__local_14.users vis=private flags=_ type=Class#123<out Class#3564>
-symbol s3581 kind=local fq=__local_22.byNickname vis=private flags=_ type=Class#123<out Class#3564>
+symbol s3564 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3565 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3566 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3566<T#3567>
+symbol s3567 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3568 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3566<T#3567> params=[] ret=T#3567? suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3570 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3571 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3572 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3572
+symbol s3573 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
+symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3578 kind=class fq=User vis=public flags=dataType
+symbol s3579 kind=constructor fq=User.<init> vis=public flags=_ sig=recv=Class#3578 params=[String,String?] ret=Class#3578 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3580 kind=valueParameter fq=User.<init>.$3579.name vis=private flags=_
+symbol s3581 kind=valueParameter fq=User.<init>.$3579.nickname vis=private flags=_
+symbol s3582 kind=function fq=User.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#3578 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3583 kind=function fq=User.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#3578 params=[] ret=String? suspend=0 defaults=[] vararg=[]
+symbol s3584 kind=function fq=User.copy vis=public flags=synthetic sig=recv=Class#3578 params=[String,String?] ret=Class#3578 suspend=0 defaults=[1,1] vararg=[0,0]
+symbol s3585 kind=valueParameter fq=User.copy.$3584.name vis=private flags=_
+symbol s3586 kind=valueParameter fq=User.copy.$3584.nickname vis=private flags=_
+symbol s3587 kind=function fq=User.hashCode vis=public flags=synthetic sig=recv=Class#3578 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3588 kind=property fq=User.name vis=public flags=_ type=String
+symbol s3589 kind=property fq=User.nickname vis=public flags=_ type=String?
+symbol s3590 kind=function fq=User.toString vis=public flags=synthetic sig=recv=Class#3578 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3591 kind=function fq=User.equals vis=public flags=synthetic sig=recv=Class#3578 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s3592 kind=valueParameter fq=User.equals.other vis=private flags=synthetic
+symbol s3593 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3594 kind=local fq=__local_14.users vis=private flags=_ type=Class#123<out Class#3578>
+symbol s3595 kind=local fq=__local_22.byNickname vis=private flags=_ type=Class#123<out Class#3578>
 file f0 package=_
-  decl d2 class User sym=s3564
-  decl d3 fun main suspend=0 inline=0 sym=s3579
+  decl d2 class User sym=s3578
+  decl d3 fun main suspend=0 inline=0 sym=s3593
 expr e0 name(listOf) type=_
 expr e1 name(User) type=_
 expr e2 string(Alice) type=String
 expr e3 string(A) type=String
-expr e4 call callee=e1 args=[_:e2,_:e3] type=Class#3564 call=s3565 map=[0->0,1->1] targs=[]
+expr e4 call callee=e1 args=[_:e2,_:e3] type=Class#3578 call=s3579 map=[0->0,1->1] targs=[]
 expr e5 name(User) type=_
 expr e6 string(Bob) type=String
 expr e7 name(null) type=Nothing?
-expr e8 call callee=e5 args=[_:e6,_:e7] type=Class#3564 call=s3565 map=[0->0,1->1] targs=[]
+expr e8 call callee=e5 args=[_:e6,_:e7] type=Class#3578 call=s3579 map=[0->0,1->1] targs=[]
 expr e9 name(User) type=_
 expr e10 string(Carol) type=String
 expr e11 string(A) type=String
-expr e12 call callee=e9 args=[_:e10,_:e11] type=Class#3564 call=s3565 map=[0->0,1->1] targs=[]
-expr e13 call callee=e0 args=[_:e4,_:e8,_:e12] type=Class#123<out Class#3564>
-expr e14 localDecl users mutable=0 type=_ init=e13 type=Unit ref=s3580
-expr e15 name(users) type=Class#123<out Class#3564> ref=s3580
+expr e12 call callee=e9 args=[_:e10,_:e11] type=Class#3578 call=s3579 map=[0->0,1->1] targs=[]
+expr e13 call callee=e0 args=[_:e4,_:e8,_:e12] type=Class#123<out Class#3578>
+expr e14 localDecl users mutable=0 type=_ init=e13 type=Unit ref=s3594
+expr e15 name(users) type=Class#123<out Class#3578> ref=s3594
 expr e16 name(it) type=_
 expr e17 memberCall recv=e16 callee=nickname args=[] type=_
-expr e18 name(it) type=Class#3564 ref=s-1005120
-expr e19 memberCall recv=e18 callee=nickname args=[] type=String? ref=s3575
-expr e20 lambda params=[] body=e19 label=distinctBy type=(Class#3564) -> Any
-expr e21 memberCall recv=e15 callee=distinctBy args=[_:e20] type=Class#123<out Class#3564>
-expr e22 localDecl byNickname mutable=0 type=_ init=e21 type=Unit ref=s3581
+expr e18 name(it) type=Class#3578 ref=s-1005120
+expr e19 memberCall recv=e18 callee=nickname args=[] type=String? ref=s3589
+expr e20 lambda params=[] body=e19 label=distinctBy type=(Class#3578) -> Any
+expr e21 memberCall recv=e15 callee=distinctBy args=[_:e20] type=Class#123<out Class#3578>
+expr e22 localDecl byNickname mutable=0 type=_ init=e21 type=Unit ref=s3595
 expr e23 name(println) type=_
-expr e24 name(byNickname) type=Class#123<out Class#3564> ref=s3581
+expr e24 name(byNickname) type=Class#123<out Class#3578> ref=s3595
 expr e25 call callee=e23 args=[_:e24] type=Unit call=s1720 map=[0->0] targs=[]
