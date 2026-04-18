@@ -3576,41 +3576,83 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=function fq=golden.sema.twoArgInt vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3579 kind=function fq=golden.sema.twoArgMinInt vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3580 kind=function fq=golden.sema.threeArgMaxInt vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3581 kind=valueParameter fq=golden.sema.threeArgMaxInt.$3580.a vis=private flags=_
-symbol s3582 kind=valueParameter fq=golden.sema.threeArgMaxInt.$3580.b vis=private flags=_
-symbol s3583 kind=valueParameter fq=golden.sema.threeArgMaxInt.$3580.c vis=private flags=_
-symbol s3584 kind=function fq=golden.sema.threeArgMinInt vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3585 kind=valueParameter fq=golden.sema.threeArgMinInt.$3584.a vis=private flags=_
-symbol s3586 kind=valueParameter fq=golden.sema.threeArgMinInt.$3584.b vis=private flags=_
-symbol s3587 kind=valueParameter fq=golden.sema.threeArgMinInt.$3584.c vis=private flags=_
-symbol s3588 kind=function fq=golden.sema.threeArgMaxLong vis=public flags=_ sig=recv=_ params=[Long,Long,Long] ret=Long suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3589 kind=valueParameter fq=golden.sema.threeArgMaxLong.$3588.a vis=private flags=_
-symbol s3590 kind=valueParameter fq=golden.sema.threeArgMaxLong.$3588.b vis=private flags=_
-symbol s3591 kind=valueParameter fq=golden.sema.threeArgMaxLong.$3588.c vis=private flags=_
-symbol s3592 kind=function fq=golden.sema.threeArgMinLong vis=public flags=_ sig=recv=_ params=[Long,Long,Long] ret=Long suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3593 kind=valueParameter fq=golden.sema.threeArgMinLong.$3592.a vis=private flags=_
-symbol s3594 kind=valueParameter fq=golden.sema.threeArgMinLong.$3592.b vis=private flags=_
-symbol s3595 kind=valueParameter fq=golden.sema.threeArgMinLong.$3592.c vis=private flags=_
-symbol s3596 kind=function fq=golden.sema.threeArgMaxDouble vis=public flags=_ sig=recv=_ params=[Double,Double,Double] ret=Double suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3597 kind=valueParameter fq=golden.sema.threeArgMaxDouble.$3596.a vis=private flags=_
-symbol s3598 kind=valueParameter fq=golden.sema.threeArgMaxDouble.$3596.b vis=private flags=_
-symbol s3599 kind=valueParameter fq=golden.sema.threeArgMaxDouble.$3596.c vis=private flags=_
-symbol s3600 kind=function fq=golden.sema.threeArgMinDouble vis=public flags=_ sig=recv=_ params=[Double,Double,Double] ret=Double suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3601 kind=valueParameter fq=golden.sema.threeArgMinDouble.$3600.a vis=private flags=_
-symbol s3602 kind=valueParameter fq=golden.sema.threeArgMinDouble.$3600.b vis=private flags=_
-symbol s3603 kind=valueParameter fq=golden.sema.threeArgMinDouble.$3600.c vis=private flags=_
+symbol s3578 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3579 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresent vis=public flags=synthetic|static type=Int
+symbol s3580 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsent vis=public flags=synthetic|static type=Int
+symbol s3581 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresentOptional vis=public flags=synthetic|static type=Int
+symbol s3582 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsentOptional vis=public flags=synthetic|static type=Int
+symbol s3583 kind=function fq=kotlin.io.encoding.kk_base64_encode_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3584 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.bytes vis=private flags=synthetic
+symbol s3585 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.padding vis=private flags=synthetic
+symbol s3586 kind=function fq=kotlin.io.encoding.kk_base64_decode_default_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3587 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.string vis=private flags=synthetic
+symbol s3588 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.padding vis=private flags=synthetic
+symbol s3589 kind=function fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3590 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3591 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3592 kind=function fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3593 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.string vis=private flags=synthetic
+symbol s3594 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3595 kind=function fq=kotlin.io.encoding.kk_base64_encode_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3596 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.bytes vis=private flags=synthetic
+symbol s3597 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.padding vis=private flags=synthetic
+symbol s3598 kind=function fq=kotlin.io.encoding.kk_base64_decode_mime_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3599 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.string vis=private flags=synthetic
+symbol s3600 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.padding vis=private flags=synthetic
+symbol s3601 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3602 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.bytes vis=private flags=synthetic
+symbol s3603 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.padding vis=private flags=synthetic
+symbol s3604 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3605 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3606 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3607 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3608 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.bytes vis=private flags=synthetic
+symbol s3609 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.padding vis=private flags=synthetic
+symbol s3610 kind=class fq=kotlin.coroutines.AbstractCoroutineContextElement vis=public flags=synthetic|abstractType type=Class#3610
+symbol s3611 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextElement.<init> vis=public flags=synthetic sig=recv=Class#3610 params=[Class#1234<*>] ret=Class#3610 suspend=0 defaults=[0] vararg=[0]
+symbol s3612 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextElement.<init>.key vis=private flags=synthetic
+symbol s3613 kind=property fq=kotlin.coroutines.AbstractCoroutineContextElement.key vis=public flags=synthetic type=Class#1234<*>
+symbol s3614 kind=class fq=kotlin.coroutines.AbstractCoroutineContextKey vis=public flags=synthetic|abstractType type=Class#3614
+symbol s3615 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.B vis=private flags=synthetic
+symbol s3616 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.E vis=private flags=synthetic
+symbol s3617 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextKey.<init> vis=public flags=synthetic sig=recv=Class#3614 params=[Class#1234<T#3615>,(Class#1233) -> T#3616?] ret=Class#3614 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3618 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.baseKey vis=private flags=synthetic
+symbol s3619 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.safeCast vis=private flags=synthetic
+symbol s3620 kind=function fq=golden.sema.twoArgInt vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3621 kind=function fq=golden.sema.twoArgMinInt vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3622 kind=function fq=golden.sema.threeArgMaxInt vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3623 kind=valueParameter fq=golden.sema.threeArgMaxInt.$3622.a vis=private flags=_
+symbol s3624 kind=valueParameter fq=golden.sema.threeArgMaxInt.$3622.b vis=private flags=_
+symbol s3625 kind=valueParameter fq=golden.sema.threeArgMaxInt.$3622.c vis=private flags=_
+symbol s3626 kind=function fq=golden.sema.threeArgMinInt vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3627 kind=valueParameter fq=golden.sema.threeArgMinInt.$3626.a vis=private flags=_
+symbol s3628 kind=valueParameter fq=golden.sema.threeArgMinInt.$3626.b vis=private flags=_
+symbol s3629 kind=valueParameter fq=golden.sema.threeArgMinInt.$3626.c vis=private flags=_
+symbol s3630 kind=function fq=golden.sema.threeArgMaxLong vis=public flags=_ sig=recv=_ params=[Long,Long,Long] ret=Long suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3631 kind=valueParameter fq=golden.sema.threeArgMaxLong.$3630.a vis=private flags=_
+symbol s3632 kind=valueParameter fq=golden.sema.threeArgMaxLong.$3630.b vis=private flags=_
+symbol s3633 kind=valueParameter fq=golden.sema.threeArgMaxLong.$3630.c vis=private flags=_
+symbol s3634 kind=function fq=golden.sema.threeArgMinLong vis=public flags=_ sig=recv=_ params=[Long,Long,Long] ret=Long suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3635 kind=valueParameter fq=golden.sema.threeArgMinLong.$3634.a vis=private flags=_
+symbol s3636 kind=valueParameter fq=golden.sema.threeArgMinLong.$3634.b vis=private flags=_
+symbol s3637 kind=valueParameter fq=golden.sema.threeArgMinLong.$3634.c vis=private flags=_
+symbol s3638 kind=function fq=golden.sema.threeArgMaxDouble vis=public flags=_ sig=recv=_ params=[Double,Double,Double] ret=Double suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3639 kind=valueParameter fq=golden.sema.threeArgMaxDouble.$3638.a vis=private flags=_
+symbol s3640 kind=valueParameter fq=golden.sema.threeArgMaxDouble.$3638.b vis=private flags=_
+symbol s3641 kind=valueParameter fq=golden.sema.threeArgMaxDouble.$3638.c vis=private flags=_
+symbol s3642 kind=function fq=golden.sema.threeArgMinDouble vis=public flags=_ sig=recv=_ params=[Double,Double,Double] ret=Double suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3643 kind=valueParameter fq=golden.sema.threeArgMinDouble.$3642.a vis=private flags=_
+symbol s3644 kind=valueParameter fq=golden.sema.threeArgMinDouble.$3642.b vis=private flags=_
+symbol s3645 kind=valueParameter fq=golden.sema.threeArgMinDouble.$3642.c vis=private flags=_
 file f0 package=golden.sema
-  decl d0 fun twoArgInt suspend=0 inline=0 sym=s3578
-  decl d1 fun twoArgMinInt suspend=0 inline=0 sym=s3579
-  decl d2 fun threeArgMaxInt suspend=0 inline=0 sym=s3580
-  decl d3 fun threeArgMinInt suspend=0 inline=0 sym=s3584
-  decl d4 fun threeArgMaxLong suspend=0 inline=0 sym=s3588
-  decl d5 fun threeArgMinLong suspend=0 inline=0 sym=s3592
-  decl d6 fun threeArgMaxDouble suspend=0 inline=0 sym=s3596
-  decl d7 fun threeArgMinDouble suspend=0 inline=0 sym=s3600
+  decl d0 fun twoArgInt suspend=0 inline=0 sym=s3620
+  decl d1 fun twoArgMinInt suspend=0 inline=0 sym=s3621
+  decl d2 fun threeArgMaxInt suspend=0 inline=0 sym=s3622
+  decl d3 fun threeArgMinInt suspend=0 inline=0 sym=s3626
+  decl d4 fun threeArgMaxLong suspend=0 inline=0 sym=s3630
+  decl d5 fun threeArgMinLong suspend=0 inline=0 sym=s3634
+  decl d6 fun threeArgMaxDouble suspend=0 inline=0 sym=s3638
+  decl d7 fun threeArgMinDouble suspend=0 inline=0 sym=s3642
 expr e0 name(maxOf) type=_
 expr e1 int(3) type=Int
 expr e2 int(7) type=Int
@@ -3620,32 +3662,32 @@ expr e5 int(3) type=Int
 expr e6 int(7) type=Int
 expr e7 call callee=e4 args=[_:e5,_:e6] type=Int call=s625 map=[0->0,1->1] targs=[]
 expr e8 name(maxOf) type=_
-expr e9 name(a) type=Int ref=s3581
-expr e10 name(b) type=Int ref=s3582
-expr e11 name(c) type=Int ref=s3583
+expr e9 name(a) type=Int ref=s3623
+expr e10 name(b) type=Int ref=s3624
+expr e11 name(c) type=Int ref=s3625
 expr e12 call callee=e8 args=[_:e9,_:e10,_:e11] type=Int call=s634 map=[0->0,1->1,2->2] targs=[]
 expr e13 name(minOf) type=_
-expr e14 name(a) type=Int ref=s3585
-expr e15 name(b) type=Int ref=s3586
-expr e16 name(c) type=Int ref=s3587
+expr e14 name(a) type=Int ref=s3627
+expr e15 name(b) type=Int ref=s3628
+expr e16 name(c) type=Int ref=s3629
 expr e17 call callee=e13 args=[_:e14,_:e15,_:e16] type=Int call=s636 map=[0->0,1->1,2->2] targs=[]
 expr e18 name(maxOf) type=_
-expr e19 name(a) type=Long ref=s3589
-expr e20 name(b) type=Long ref=s3590
-expr e21 name(c) type=Long ref=s3591
+expr e19 name(a) type=Long ref=s3631
+expr e20 name(b) type=Long ref=s3632
+expr e21 name(c) type=Long ref=s3633
 expr e22 call callee=e18 args=[_:e19,_:e20,_:e21] type=Long call=s638 map=[0->0,1->1,2->2] targs=[]
 expr e23 name(minOf) type=_
-expr e24 name(a) type=Long ref=s3593
-expr e25 name(b) type=Long ref=s3594
-expr e26 name(c) type=Long ref=s3595
+expr e24 name(a) type=Long ref=s3635
+expr e25 name(b) type=Long ref=s3636
+expr e26 name(c) type=Long ref=s3637
 expr e27 call callee=e23 args=[_:e24,_:e25,_:e26] type=Long call=s639 map=[0->0,1->1,2->2] targs=[]
 expr e28 name(maxOf) type=_
-expr e29 name(a) type=Double ref=s3597
-expr e30 name(b) type=Double ref=s3598
-expr e31 name(c) type=Double ref=s3599
+expr e29 name(a) type=Double ref=s3639
+expr e30 name(b) type=Double ref=s3640
+expr e31 name(c) type=Double ref=s3641
 expr e32 call callee=e28 args=[_:e29,_:e30,_:e31] type=Double call=s640 map=[0->0,1->1,2->2] targs=[]
 expr e33 name(minOf) type=_
-expr e34 name(a) type=Double ref=s3601
-expr e35 name(b) type=Double ref=s3602
-expr e36 name(c) type=Double ref=s3603
+expr e34 name(a) type=Double ref=s3643
+expr e35 name(b) type=Double ref=s3644
+expr e36 name(c) type=Double ref=s3645
 expr e37 call callee=e33 args=[_:e34,_:e35,_:e36] type=Double call=s641 map=[0->0,1->1,2->2] targs=[]

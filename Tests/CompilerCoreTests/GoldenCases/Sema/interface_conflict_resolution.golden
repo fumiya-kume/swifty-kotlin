@@ -3576,57 +3576,99 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=interface fq=golden.sema.Base vis=public flags=_
-symbol s3579 kind=function fq=golden.sema.Base.method vis=public flags=_ sig=recv=Class#3578 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3580 kind=interface fq=golden.sema.Left vis=public flags=_
-symbol s3581 kind=function fq=golden.sema.Left.method vis=public flags=overrideMember sig=recv=Class#3580 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3582 kind=interface fq=golden.sema.Right vis=public flags=_
-symbol s3583 kind=function fq=golden.sema.Right.method vis=public flags=overrideMember sig=recv=Class#3582 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3584 kind=class fq=golden.sema.WithOverride vis=public flags=_
-symbol s3585 kind=constructor fq=golden.sema.WithOverride.<init> vis=public flags=_ sig=recv=Class#3584 params=[] ret=Class#3584 suspend=0 defaults=[] vararg=[]
-symbol s3586 kind=function fq=golden.sema.WithOverride.method vis=public flags=overrideMember sig=recv=Class#3584 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3587 kind=class fq=golden.sema.WithSuperCall vis=public flags=_
-symbol s3588 kind=constructor fq=golden.sema.WithSuperCall.<init> vis=public flags=_ sig=recv=Class#3587 params=[] ret=Class#3587 suspend=0 defaults=[] vararg=[]
-symbol s3589 kind=function fq=golden.sema.WithSuperCall.method vis=public flags=overrideMember sig=recv=Class#3587 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3590 kind=interface fq=golden.sema.A vis=public flags=_
-symbol s3591 kind=function fq=golden.sema.A.greet vis=public flags=_ sig=recv=Class#3590 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3592 kind=interface fq=golden.sema.B vis=public flags=_
-symbol s3593 kind=function fq=golden.sema.B.greet vis=public flags=overrideMember sig=recv=Class#3592 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3594 kind=function fq=golden.sema.B.bOnly vis=public flags=_ sig=recv=Class#3592 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3595 kind=interface fq=golden.sema.C vis=public flags=_
-symbol s3596 kind=function fq=golden.sema.C.greet vis=public flags=overrideMember sig=recv=Class#3595 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3597 kind=function fq=golden.sema.C.cOnly vis=public flags=_ sig=recv=Class#3595 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s3598 kind=class fq=golden.sema.D vis=public flags=_
-symbol s3599 kind=constructor fq=golden.sema.D.<init> vis=public flags=_ sig=recv=Class#3598 params=[] ret=Class#3598 suspend=0 defaults=[] vararg=[]
-symbol s3600 kind=function fq=golden.sema.D.greet vis=public flags=overrideMember sig=recv=Class#3598 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3578 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3579 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresent vis=public flags=synthetic|static type=Int
+symbol s3580 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsent vis=public flags=synthetic|static type=Int
+symbol s3581 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresentOptional vis=public flags=synthetic|static type=Int
+symbol s3582 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsentOptional vis=public flags=synthetic|static type=Int
+symbol s3583 kind=function fq=kotlin.io.encoding.kk_base64_encode_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3584 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.bytes vis=private flags=synthetic
+symbol s3585 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.padding vis=private flags=synthetic
+symbol s3586 kind=function fq=kotlin.io.encoding.kk_base64_decode_default_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3587 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.string vis=private flags=synthetic
+symbol s3588 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.padding vis=private flags=synthetic
+symbol s3589 kind=function fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3590 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3591 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3592 kind=function fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3593 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.string vis=private flags=synthetic
+symbol s3594 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3595 kind=function fq=kotlin.io.encoding.kk_base64_encode_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3596 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.bytes vis=private flags=synthetic
+symbol s3597 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.padding vis=private flags=synthetic
+symbol s3598 kind=function fq=kotlin.io.encoding.kk_base64_decode_mime_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3599 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.string vis=private flags=synthetic
+symbol s3600 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.padding vis=private flags=synthetic
+symbol s3601 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3602 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.bytes vis=private flags=synthetic
+symbol s3603 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.padding vis=private flags=synthetic
+symbol s3604 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3605 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3606 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3607 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3608 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.bytes vis=private flags=synthetic
+symbol s3609 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.padding vis=private flags=synthetic
+symbol s3610 kind=class fq=kotlin.coroutines.AbstractCoroutineContextElement vis=public flags=synthetic|abstractType type=Class#3610
+symbol s3611 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextElement.<init> vis=public flags=synthetic sig=recv=Class#3610 params=[Class#1234<*>] ret=Class#3610 suspend=0 defaults=[0] vararg=[0]
+symbol s3612 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextElement.<init>.key vis=private flags=synthetic
+symbol s3613 kind=property fq=kotlin.coroutines.AbstractCoroutineContextElement.key vis=public flags=synthetic type=Class#1234<*>
+symbol s3614 kind=class fq=kotlin.coroutines.AbstractCoroutineContextKey vis=public flags=synthetic|abstractType type=Class#3614
+symbol s3615 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.B vis=private flags=synthetic
+symbol s3616 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.E vis=private flags=synthetic
+symbol s3617 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextKey.<init> vis=public flags=synthetic sig=recv=Class#3614 params=[Class#1234<T#3615>,(Class#1233) -> T#3616?] ret=Class#3614 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3618 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.baseKey vis=private flags=synthetic
+symbol s3619 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.safeCast vis=private flags=synthetic
+symbol s3620 kind=interface fq=golden.sema.Base vis=public flags=_
+symbol s3621 kind=function fq=golden.sema.Base.method vis=public flags=_ sig=recv=Class#3620 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3622 kind=interface fq=golden.sema.Left vis=public flags=_
+symbol s3623 kind=function fq=golden.sema.Left.method vis=public flags=overrideMember sig=recv=Class#3622 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3624 kind=interface fq=golden.sema.Right vis=public flags=_
+symbol s3625 kind=function fq=golden.sema.Right.method vis=public flags=overrideMember sig=recv=Class#3624 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3626 kind=class fq=golden.sema.WithOverride vis=public flags=_
+symbol s3627 kind=constructor fq=golden.sema.WithOverride.<init> vis=public flags=_ sig=recv=Class#3626 params=[] ret=Class#3626 suspend=0 defaults=[] vararg=[]
+symbol s3628 kind=function fq=golden.sema.WithOverride.method vis=public flags=overrideMember sig=recv=Class#3626 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3629 kind=class fq=golden.sema.WithSuperCall vis=public flags=_
+symbol s3630 kind=constructor fq=golden.sema.WithSuperCall.<init> vis=public flags=_ sig=recv=Class#3629 params=[] ret=Class#3629 suspend=0 defaults=[] vararg=[]
+symbol s3631 kind=function fq=golden.sema.WithSuperCall.method vis=public flags=overrideMember sig=recv=Class#3629 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3632 kind=interface fq=golden.sema.A vis=public flags=_
+symbol s3633 kind=function fq=golden.sema.A.greet vis=public flags=_ sig=recv=Class#3632 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3634 kind=interface fq=golden.sema.B vis=public flags=_
+symbol s3635 kind=function fq=golden.sema.B.greet vis=public flags=overrideMember sig=recv=Class#3634 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3636 kind=function fq=golden.sema.B.bOnly vis=public flags=_ sig=recv=Class#3634 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3637 kind=interface fq=golden.sema.C vis=public flags=_
+symbol s3638 kind=function fq=golden.sema.C.greet vis=public flags=overrideMember sig=recv=Class#3637 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3639 kind=function fq=golden.sema.C.cOnly vis=public flags=_ sig=recv=Class#3637 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s3640 kind=class fq=golden.sema.D vis=public flags=_
+symbol s3641 kind=constructor fq=golden.sema.D.<init> vis=public flags=_ sig=recv=Class#3640 params=[] ret=Class#3640 suspend=0 defaults=[] vararg=[]
+symbol s3642 kind=function fq=golden.sema.D.greet vis=public flags=overrideMember sig=recv=Class#3640 params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d1 interface Base sym=s3578
-  decl d3 interface Left sym=s3580
-  decl d5 interface Right sym=s3582
-  decl d7 class WithOverride sym=s3584
-  decl d9 class WithSuperCall sym=s3587
-  decl d11 interface A sym=s3590
-  decl d14 interface B sym=s3592
-  decl d17 interface C sym=s3595
-  decl d19 class D sym=s3598
+  decl d1 interface Base sym=s3620
+  decl d3 interface Left sym=s3622
+  decl d5 interface Right sym=s3624
+  decl d7 class WithOverride sym=s3626
+  decl d9 class WithSuperCall sym=s3629
+  decl d11 interface A sym=s3632
+  decl d14 interface B sym=s3634
+  decl d17 interface C sym=s3637
+  decl d19 class D sym=s3640
 expr e0 string(Base) type=String
 expr e1 string(Left) type=String
 expr e2 string(Right) type=String
 expr e3 string(Override) type=String
-expr e4 super<Left> type=Class#3580
-expr e5 memberCall recv=e4 callee=method args=[] type=String call=s3581 map=[] targs=[]
+expr e4 super<Left> type=Class#3622
+expr e5 memberCall recv=e4 callee=method args=[] type=String call=s3623 map=[] targs=[]
 expr e6 string(+) type=String
 expr e7 binary(add) lhs=e5 rhs=e6 type=String
-expr e8 super<Right> type=Class#3582
-expr e9 memberCall recv=e8 callee=method args=[] type=String call=s3583 map=[] targs=[]
+expr e8 super<Right> type=Class#3624
+expr e9 memberCall recv=e8 callee=method args=[] type=String call=s3625 map=[] targs=[]
 expr e10 binary(add) lhs=e7 rhs=e9 type=String
 expr e11 string(A) type=String
 expr e12 string(B) type=String
 expr e13 string(BOnly) type=String
 expr e14 string(C) type=String
 expr e15 string(COnly) type=String
-expr e16 super<B> type=Class#3592
-expr e17 memberCall recv=e16 callee=greet args=[] type=String call=s3593 map=[] targs=[]
-expr e18 super<C> type=Class#3595
-expr e19 memberCall recv=e18 callee=greet args=[] type=String call=s3596 map=[] targs=[]
+expr e16 super<B> type=Class#3634
+expr e17 memberCall recv=e16 callee=greet args=[] type=String call=s3635 map=[] targs=[]
+expr e18 super<C> type=Class#3637
+expr e19 memberCall recv=e18 callee=greet args=[] type=String call=s3638 map=[] targs=[]
 expr e20 binary(add) lhs=e17 rhs=e19 type=String

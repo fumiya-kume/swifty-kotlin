@@ -3576,59 +3576,101 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3579 kind=local fq=__local_3.testDir vis=private flags=_ type=Class#1836
-symbol s3580 kind=local fq=__local_6.mkdirsResult vis=private flags=_ type=Boolean
-symbol s3581 kind=local fq=__local_13.existsResult vis=private flags=_ type=Boolean
-symbol s3582 kind=local fq=__local_20.isDirResult vis=private flags=_ type=Boolean
-symbol s3583 kind=local fq=__local_27.files vis=private flags=_ type=Class#123<out Class#1836>?
-symbol s3584 kind=local fq=__local_34.walkResult vis=private flags=_ type=Class#123<out Class#1836>
-symbol s3585 kind=local fq=__local_41.deleteResult vis=private flags=_ type=Boolean
+symbol s3578 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3579 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresent vis=public flags=synthetic|static type=Int
+symbol s3580 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsent vis=public flags=synthetic|static type=Int
+symbol s3581 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresentOptional vis=public flags=synthetic|static type=Int
+symbol s3582 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsentOptional vis=public flags=synthetic|static type=Int
+symbol s3583 kind=function fq=kotlin.io.encoding.kk_base64_encode_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3584 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.bytes vis=private flags=synthetic
+symbol s3585 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.padding vis=private flags=synthetic
+symbol s3586 kind=function fq=kotlin.io.encoding.kk_base64_decode_default_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3587 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.string vis=private flags=synthetic
+symbol s3588 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.padding vis=private flags=synthetic
+symbol s3589 kind=function fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3590 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3591 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3592 kind=function fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3593 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.string vis=private flags=synthetic
+symbol s3594 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3595 kind=function fq=kotlin.io.encoding.kk_base64_encode_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3596 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.bytes vis=private flags=synthetic
+symbol s3597 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.padding vis=private flags=synthetic
+symbol s3598 kind=function fq=kotlin.io.encoding.kk_base64_decode_mime_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3599 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.string vis=private flags=synthetic
+symbol s3600 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.padding vis=private flags=synthetic
+symbol s3601 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3602 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.bytes vis=private flags=synthetic
+symbol s3603 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.padding vis=private flags=synthetic
+symbol s3604 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3605 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3606 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3607 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3608 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.bytes vis=private flags=synthetic
+symbol s3609 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.padding vis=private flags=synthetic
+symbol s3610 kind=class fq=kotlin.coroutines.AbstractCoroutineContextElement vis=public flags=synthetic|abstractType type=Class#3610
+symbol s3611 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextElement.<init> vis=public flags=synthetic sig=recv=Class#3610 params=[Class#1234<*>] ret=Class#3610 suspend=0 defaults=[0] vararg=[0]
+symbol s3612 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextElement.<init>.key vis=private flags=synthetic
+symbol s3613 kind=property fq=kotlin.coroutines.AbstractCoroutineContextElement.key vis=public flags=synthetic type=Class#1234<*>
+symbol s3614 kind=class fq=kotlin.coroutines.AbstractCoroutineContextKey vis=public flags=synthetic|abstractType type=Class#3614
+symbol s3615 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.B vis=private flags=synthetic
+symbol s3616 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.E vis=private flags=synthetic
+symbol s3617 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextKey.<init> vis=public flags=synthetic sig=recv=Class#3614 params=[Class#1234<T#3615>,(Class#1233) -> T#3616?] ret=Class#3614 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3618 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.baseKey vis=private flags=synthetic
+symbol s3619 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.safeCast vis=private flags=synthetic
+symbol s3620 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3621 kind=local fq=__local_3.testDir vis=private flags=_ type=Class#1836
+symbol s3622 kind=local fq=__local_6.mkdirsResult vis=private flags=_ type=Boolean
+symbol s3623 kind=local fq=__local_13.existsResult vis=private flags=_ type=Boolean
+symbol s3624 kind=local fq=__local_20.isDirResult vis=private flags=_ type=Boolean
+symbol s3625 kind=local fq=__local_27.files vis=private flags=_ type=Class#123<out Class#1836>?
+symbol s3626 kind=local fq=__local_34.walkResult vis=private flags=_ type=Class#123<out Class#1836>
+symbol s3627 kind=local fq=__local_41.deleteResult vis=private flags=_ type=Boolean
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3578
+  decl d0 fun main suspend=0 inline=0 sym=s3620
 expr e0 name(File) type=_
 expr e1 string(/tmp/test_mkdirs) type=String
 expr e2 call callee=e0 args=[_:e1] type=Class#1836 call=s1851 map=[0->0] targs=[]
-expr e3 localDecl testDir mutable=0 type=_ init=e2 type=Unit ref=s3579
-expr e4 name(testDir) type=Class#1836 ref=s3579
+expr e3 localDecl testDir mutable=0 type=_ init=e2 type=Unit ref=s3621
+expr e4 name(testDir) type=Class#1836 ref=s3621
 expr e5 memberCall recv=e4 callee=mkdirs args=[] type=Boolean call=s2547 map=[] targs=[]
-expr e6 localDecl mkdirsResult mutable=0 type=_ init=e5 type=Unit ref=s3580
+expr e6 localDecl mkdirsResult mutable=0 type=_ init=e5 type=Unit ref=s3622
 expr e7 name(println) type=_
-expr e8 name(mkdirsResult) type=Boolean ref=s3580
+expr e8 name(mkdirsResult) type=Boolean ref=s3622
 expr e9 stringTemplate[lit(mkdirs result: ),expr(e8)] type=String
 expr e10 call callee=e7 args=[_:e9] type=Unit call=s1720 map=[0->0] targs=[]
-expr e11 name(testDir) type=Class#1836 ref=s3579
+expr e11 name(testDir) type=Class#1836 ref=s3621
 expr e12 memberCall recv=e11 callee=exists args=[] type=Boolean call=s2532 map=[] targs=[]
-expr e13 localDecl existsResult mutable=0 type=_ init=e12 type=Unit ref=s3581
+expr e13 localDecl existsResult mutable=0 type=_ init=e12 type=Unit ref=s3623
 expr e14 name(println) type=_
-expr e15 name(existsResult) type=Boolean ref=s3581
+expr e15 name(existsResult) type=Boolean ref=s3623
 expr e16 stringTemplate[lit(exists result: ),expr(e15)] type=String
 expr e17 call callee=e14 args=[_:e16] type=Unit call=s1720 map=[0->0] targs=[]
-expr e18 name(testDir) type=Class#1836 ref=s3579
+expr e18 name(testDir) type=Class#1836 ref=s3621
 expr e19 memberCall recv=e18 callee=isDirectory args=[] type=Boolean call=s2534 map=[] targs=[]
-expr e20 localDecl isDirResult mutable=0 type=_ init=e19 type=Unit ref=s3582
+expr e20 localDecl isDirResult mutable=0 type=_ init=e19 type=Unit ref=s3624
 expr e21 name(println) type=_
-expr e22 name(isDirResult) type=Boolean ref=s3582
+expr e22 name(isDirResult) type=Boolean ref=s3624
 expr e23 stringTemplate[lit(isDirectory result: ),expr(e22)] type=String
 expr e24 call callee=e21 args=[_:e23] type=Unit call=s1720 map=[0->0] targs=[]
-expr e25 name(testDir) type=Class#1836 ref=s3579
+expr e25 name(testDir) type=Class#1836 ref=s3621
 expr e26 memberCall recv=e25 callee=listFiles args=[] type=Class#123<out Class#1836>? call=s2548 map=[] targs=[]
-expr e27 localDecl files mutable=0 type=_ init=e26 type=Unit ref=s3583
+expr e27 localDecl files mutable=0 type=_ init=e26 type=Unit ref=s3625
 expr e28 name(println) type=_
-expr e29 name(files) type=Class#123<out Class#1836>? ref=s3583
+expr e29 name(files) type=Class#123<out Class#1836>? ref=s3625
 expr e30 stringTemplate[lit(listFiles result: ),expr(e29)] type=String
 expr e31 call callee=e28 args=[_:e30] type=Unit call=s1720 map=[0->0] targs=[]
-expr e32 name(testDir) type=Class#1836 ref=s3579
+expr e32 name(testDir) type=Class#1836 ref=s3621
 expr e33 memberCall recv=e32 callee=walk args=[] type=Class#123<out Class#1836> call=s2549 map=[] targs=[]
-expr e34 localDecl walkResult mutable=0 type=_ init=e33 type=Unit ref=s3584
+expr e34 localDecl walkResult mutable=0 type=_ init=e33 type=Unit ref=s3626
 expr e35 name(println) type=_
-expr e36 name(walkResult) type=Class#123<out Class#1836> ref=s3584
+expr e36 name(walkResult) type=Class#123<out Class#1836> ref=s3626
 expr e37 stringTemplate[lit(walk result: ),expr(e36)] type=String
 expr e38 call callee=e35 args=[_:e37] type=Unit call=s1720 map=[0->0] targs=[]
-expr e39 name(testDir) type=Class#1836 ref=s3579
+expr e39 name(testDir) type=Class#1836 ref=s3621
 expr e40 memberCall recv=e39 callee=delete args=[] type=Boolean call=s2546 map=[] targs=[]
-expr e41 localDecl deleteResult mutable=0 type=_ init=e40 type=Unit ref=s3585
+expr e41 localDecl deleteResult mutable=0 type=_ init=e40 type=Unit ref=s3627
 expr e42 name(println) type=_
-expr e43 name(deleteResult) type=Boolean ref=s3585
+expr e43 name(deleteResult) type=Boolean ref=s3627
 expr e44 stringTemplate[lit(delete result: ),expr(e43)] type=String
 expr e45 call callee=e42 args=[_:e44] type=Unit call=s1720 map=[0->0] targs=[]

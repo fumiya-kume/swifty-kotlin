@@ -3576,27 +3576,69 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=enumClass fq=golden.sema.Color vis=public flags=_
-symbol s3579 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#3578 params=[] ret=Class#3578 suspend=0 defaults=[] vararg=[]
-symbol s3580 kind=field fq=golden.sema.Color.RED vis=public flags=_ type=Class#3578
-symbol s3581 kind=field fq=golden.sema.Color.GREEN vis=public flags=_ type=Class#3578
-symbol s3582 kind=field fq=golden.sema.Color.BLUE vis=public flags=_ type=Class#3578
-symbol s3583 kind=property fq=golden.sema.Color.name vis=public flags=synthetic type=String
-symbol s3584 kind=property fq=golden.sema.Color.ordinal vis=public flags=synthetic type=Int
-symbol s3585 kind=object fq=golden.sema.Color.Companion vis=public flags=synthetic
-symbol s3586 kind=valueParameter fq=golden.sema.Color.Companion.valueOf.name vis=private flags=synthetic
-symbol s3587 kind=function fq=golden.sema.Color.Companion.valueOf vis=public flags=synthetic|static sig=recv=Class#3585 params=[String] ret=Class#3578 suspend=0 defaults=[0] vararg=[0]
-symbol s3588 kind=property fq=golden.sema.Color.Companion.entries vis=public flags=synthetic|static type=Class#2835<Class#3578>
-symbol s3589 kind=enumClass fq=golden.sema.Direction vis=public flags=_
-symbol s3590 kind=constructor fq=golden.sema.Direction.<init> vis=public flags=_ sig=recv=Class#3589 params=[] ret=Class#3589 suspend=0 defaults=[] vararg=[]
-symbol s3591 kind=field fq=golden.sema.Direction.NORTH vis=public flags=_ type=Class#3589
-symbol s3592 kind=field fq=golden.sema.Direction.SOUTH vis=public flags=_ type=Class#3589
-symbol s3593 kind=property fq=golden.sema.Direction.name vis=public flags=synthetic type=String
-symbol s3594 kind=property fq=golden.sema.Direction.ordinal vis=public flags=synthetic type=Int
-symbol s3595 kind=object fq=golden.sema.Direction.Companion vis=public flags=synthetic
-symbol s3596 kind=valueParameter fq=golden.sema.Direction.Companion.valueOf.name vis=private flags=synthetic
-symbol s3597 kind=function fq=golden.sema.Direction.Companion.valueOf vis=public flags=synthetic|static sig=recv=Class#3595 params=[String] ret=Class#3589 suspend=0 defaults=[0] vararg=[0]
-symbol s3598 kind=property fq=golden.sema.Direction.Companion.entries vis=public flags=synthetic|static type=Class#2835<Class#3589>
+symbol s3578 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3579 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresent vis=public flags=synthetic|static type=Int
+symbol s3580 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsent vis=public flags=synthetic|static type=Int
+symbol s3581 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresentOptional vis=public flags=synthetic|static type=Int
+symbol s3582 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsentOptional vis=public flags=synthetic|static type=Int
+symbol s3583 kind=function fq=kotlin.io.encoding.kk_base64_encode_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3584 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.bytes vis=private flags=synthetic
+symbol s3585 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.padding vis=private flags=synthetic
+symbol s3586 kind=function fq=kotlin.io.encoding.kk_base64_decode_default_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3587 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.string vis=private flags=synthetic
+symbol s3588 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.padding vis=private flags=synthetic
+symbol s3589 kind=function fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3590 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3591 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3592 kind=function fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3593 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.string vis=private flags=synthetic
+symbol s3594 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3595 kind=function fq=kotlin.io.encoding.kk_base64_encode_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3596 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.bytes vis=private flags=synthetic
+symbol s3597 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.padding vis=private flags=synthetic
+symbol s3598 kind=function fq=kotlin.io.encoding.kk_base64_decode_mime_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3599 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.string vis=private flags=synthetic
+symbol s3600 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.padding vis=private flags=synthetic
+symbol s3601 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3602 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.bytes vis=private flags=synthetic
+symbol s3603 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.padding vis=private flags=synthetic
+symbol s3604 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3605 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3606 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3607 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3608 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.bytes vis=private flags=synthetic
+symbol s3609 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.padding vis=private flags=synthetic
+symbol s3610 kind=class fq=kotlin.coroutines.AbstractCoroutineContextElement vis=public flags=synthetic|abstractType type=Class#3610
+symbol s3611 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextElement.<init> vis=public flags=synthetic sig=recv=Class#3610 params=[Class#1234<*>] ret=Class#3610 suspend=0 defaults=[0] vararg=[0]
+symbol s3612 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextElement.<init>.key vis=private flags=synthetic
+symbol s3613 kind=property fq=kotlin.coroutines.AbstractCoroutineContextElement.key vis=public flags=synthetic type=Class#1234<*>
+symbol s3614 kind=class fq=kotlin.coroutines.AbstractCoroutineContextKey vis=public flags=synthetic|abstractType type=Class#3614
+symbol s3615 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.B vis=private flags=synthetic
+symbol s3616 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.E vis=private flags=synthetic
+symbol s3617 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextKey.<init> vis=public flags=synthetic sig=recv=Class#3614 params=[Class#1234<T#3615>,(Class#1233) -> T#3616?] ret=Class#3614 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3618 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.baseKey vis=private flags=synthetic
+symbol s3619 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.safeCast vis=private flags=synthetic
+symbol s3620 kind=enumClass fq=golden.sema.Color vis=public flags=_
+symbol s3621 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#3620 params=[] ret=Class#3620 suspend=0 defaults=[] vararg=[]
+symbol s3622 kind=field fq=golden.sema.Color.RED vis=public flags=_ type=Class#3620
+symbol s3623 kind=field fq=golden.sema.Color.GREEN vis=public flags=_ type=Class#3620
+symbol s3624 kind=field fq=golden.sema.Color.BLUE vis=public flags=_ type=Class#3620
+symbol s3625 kind=property fq=golden.sema.Color.name vis=public flags=synthetic type=String
+symbol s3626 kind=property fq=golden.sema.Color.ordinal vis=public flags=synthetic type=Int
+symbol s3627 kind=object fq=golden.sema.Color.Companion vis=public flags=synthetic
+symbol s3628 kind=valueParameter fq=golden.sema.Color.Companion.valueOf.name vis=private flags=synthetic
+symbol s3629 kind=function fq=golden.sema.Color.Companion.valueOf vis=public flags=synthetic|static sig=recv=Class#3627 params=[String] ret=Class#3620 suspend=0 defaults=[0] vararg=[0]
+symbol s3630 kind=property fq=golden.sema.Color.Companion.entries vis=public flags=synthetic|static type=Class#2835<Class#3620>
+symbol s3631 kind=enumClass fq=golden.sema.Direction vis=public flags=_
+symbol s3632 kind=constructor fq=golden.sema.Direction.<init> vis=public flags=_ sig=recv=Class#3631 params=[] ret=Class#3631 suspend=0 defaults=[] vararg=[]
+symbol s3633 kind=field fq=golden.sema.Direction.NORTH vis=public flags=_ type=Class#3631
+symbol s3634 kind=field fq=golden.sema.Direction.SOUTH vis=public flags=_ type=Class#3631
+symbol s3635 kind=property fq=golden.sema.Direction.name vis=public flags=synthetic type=String
+symbol s3636 kind=property fq=golden.sema.Direction.ordinal vis=public flags=synthetic type=Int
+symbol s3637 kind=object fq=golden.sema.Direction.Companion vis=public flags=synthetic
+symbol s3638 kind=valueParameter fq=golden.sema.Direction.Companion.valueOf.name vis=private flags=synthetic
+symbol s3639 kind=function fq=golden.sema.Direction.Companion.valueOf vis=public flags=synthetic|static sig=recv=Class#3637 params=[String] ret=Class#3631 suspend=0 defaults=[0] vararg=[0]
+symbol s3640 kind=property fq=golden.sema.Direction.Companion.entries vis=public flags=synthetic|static type=Class#2835<Class#3631>
 file f0 package=golden.sema
-  decl d0 class Color sym=s3578
-  decl d1 class Direction sym=s3589
+  decl d0 class Color sym=s3620
+  decl d1 class Direction sym=s3631

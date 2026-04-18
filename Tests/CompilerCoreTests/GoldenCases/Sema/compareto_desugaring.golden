@@ -3576,65 +3576,107 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=class fq=Temperature vis=public flags=_
-symbol s3579 kind=constructor fq=Temperature.<init> vis=public flags=_ sig=recv=Class#3578 params=[Int] ret=Class#3578 suspend=0 defaults=[0] vararg=[0]
-symbol s3580 kind=valueParameter fq=Temperature.<init>.$3579.degrees vis=private flags=_
-symbol s3581 kind=function fq=Temperature.compareTo vis=public flags=overrideMember sig=recv=Class#3578 params=[Class#3578] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3582 kind=valueParameter fq=Temperature.compareTo.$3581.other vis=private flags=_
-symbol s3583 kind=property fq=Temperature.degrees vis=public flags=_ type=Int
-symbol s3584 kind=function fq=stringCompareLt vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3585 kind=valueParameter fq=stringCompareLt.$3584.a vis=private flags=_
-symbol s3586 kind=valueParameter fq=stringCompareLt.$3584.b vis=private flags=_
-symbol s3587 kind=function fq=stringCompareGe vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3588 kind=valueParameter fq=stringCompareGe.$3587.a vis=private flags=_
-symbol s3589 kind=valueParameter fq=stringCompareGe.$3587.b vis=private flags=_
-symbol s3590 kind=function fq=stringCompareLe vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3591 kind=valueParameter fq=stringCompareLe.$3590.a vis=private flags=_
-symbol s3592 kind=valueParameter fq=stringCompareLe.$3590.b vis=private flags=_
-symbol s3593 kind=function fq=stringCompareGt vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3594 kind=valueParameter fq=stringCompareGt.$3593.a vis=private flags=_
-symbol s3595 kind=valueParameter fq=stringCompareGt.$3593.b vis=private flags=_
-symbol s3596 kind=function fq=customCompareLt vis=public flags=_ sig=recv=_ params=[Class#3578,Class#3578] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3597 kind=valueParameter fq=customCompareLt.$3596.a vis=private flags=_
-symbol s3598 kind=valueParameter fq=customCompareLt.$3596.b vis=private flags=_
-symbol s3599 kind=function fq=customCompareGe vis=public flags=_ sig=recv=_ params=[Class#3578,Class#3578] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3600 kind=valueParameter fq=customCompareGe.$3599.a vis=private flags=_
-symbol s3601 kind=valueParameter fq=customCompareGe.$3599.b vis=private flags=_
-symbol s3602 kind=function fq=primitiveCompare vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3603 kind=valueParameter fq=primitiveCompare.$3602.a vis=private flags=_
-symbol s3604 kind=valueParameter fq=primitiveCompare.$3602.b vis=private flags=_
+symbol s3578 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3579 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresent vis=public flags=synthetic|static type=Int
+symbol s3580 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsent vis=public flags=synthetic|static type=Int
+symbol s3581 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresentOptional vis=public flags=synthetic|static type=Int
+symbol s3582 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsentOptional vis=public flags=synthetic|static type=Int
+symbol s3583 kind=function fq=kotlin.io.encoding.kk_base64_encode_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3584 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.bytes vis=private flags=synthetic
+symbol s3585 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.padding vis=private flags=synthetic
+symbol s3586 kind=function fq=kotlin.io.encoding.kk_base64_decode_default_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3587 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.string vis=private flags=synthetic
+symbol s3588 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.padding vis=private flags=synthetic
+symbol s3589 kind=function fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3590 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3591 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3592 kind=function fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3593 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.string vis=private flags=synthetic
+symbol s3594 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3595 kind=function fq=kotlin.io.encoding.kk_base64_encode_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3596 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.bytes vis=private flags=synthetic
+symbol s3597 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.padding vis=private flags=synthetic
+symbol s3598 kind=function fq=kotlin.io.encoding.kk_base64_decode_mime_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3599 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.string vis=private flags=synthetic
+symbol s3600 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.padding vis=private flags=synthetic
+symbol s3601 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3602 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.bytes vis=private flags=synthetic
+symbol s3603 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.padding vis=private flags=synthetic
+symbol s3604 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3605 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3606 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3607 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3608 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.bytes vis=private flags=synthetic
+symbol s3609 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.padding vis=private flags=synthetic
+symbol s3610 kind=class fq=kotlin.coroutines.AbstractCoroutineContextElement vis=public flags=synthetic|abstractType type=Class#3610
+symbol s3611 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextElement.<init> vis=public flags=synthetic sig=recv=Class#3610 params=[Class#1234<*>] ret=Class#3610 suspend=0 defaults=[0] vararg=[0]
+symbol s3612 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextElement.<init>.key vis=private flags=synthetic
+symbol s3613 kind=property fq=kotlin.coroutines.AbstractCoroutineContextElement.key vis=public flags=synthetic type=Class#1234<*>
+symbol s3614 kind=class fq=kotlin.coroutines.AbstractCoroutineContextKey vis=public flags=synthetic|abstractType type=Class#3614
+symbol s3615 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.B vis=private flags=synthetic
+symbol s3616 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.E vis=private flags=synthetic
+symbol s3617 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextKey.<init> vis=public flags=synthetic sig=recv=Class#3614 params=[Class#1234<T#3615>,(Class#1233) -> T#3616?] ret=Class#3614 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3618 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.baseKey vis=private flags=synthetic
+symbol s3619 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.safeCast vis=private flags=synthetic
+symbol s3620 kind=class fq=Temperature vis=public flags=_
+symbol s3621 kind=constructor fq=Temperature.<init> vis=public flags=_ sig=recv=Class#3620 params=[Int] ret=Class#3620 suspend=0 defaults=[0] vararg=[0]
+symbol s3622 kind=valueParameter fq=Temperature.<init>.$3621.degrees vis=private flags=_
+symbol s3623 kind=function fq=Temperature.compareTo vis=public flags=overrideMember sig=recv=Class#3620 params=[Class#3620] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3624 kind=valueParameter fq=Temperature.compareTo.$3623.other vis=private flags=_
+symbol s3625 kind=property fq=Temperature.degrees vis=public flags=_ type=Int
+symbol s3626 kind=function fq=stringCompareLt vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3627 kind=valueParameter fq=stringCompareLt.$3626.a vis=private flags=_
+symbol s3628 kind=valueParameter fq=stringCompareLt.$3626.b vis=private flags=_
+symbol s3629 kind=function fq=stringCompareGe vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3630 kind=valueParameter fq=stringCompareGe.$3629.a vis=private flags=_
+symbol s3631 kind=valueParameter fq=stringCompareGe.$3629.b vis=private flags=_
+symbol s3632 kind=function fq=stringCompareLe vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3633 kind=valueParameter fq=stringCompareLe.$3632.a vis=private flags=_
+symbol s3634 kind=valueParameter fq=stringCompareLe.$3632.b vis=private flags=_
+symbol s3635 kind=function fq=stringCompareGt vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3636 kind=valueParameter fq=stringCompareGt.$3635.a vis=private flags=_
+symbol s3637 kind=valueParameter fq=stringCompareGt.$3635.b vis=private flags=_
+symbol s3638 kind=function fq=customCompareLt vis=public flags=_ sig=recv=_ params=[Class#3620,Class#3620] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3639 kind=valueParameter fq=customCompareLt.$3638.a vis=private flags=_
+symbol s3640 kind=valueParameter fq=customCompareLt.$3638.b vis=private flags=_
+symbol s3641 kind=function fq=customCompareGe vis=public flags=_ sig=recv=_ params=[Class#3620,Class#3620] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3642 kind=valueParameter fq=customCompareGe.$3641.a vis=private flags=_
+symbol s3643 kind=valueParameter fq=customCompareGe.$3641.b vis=private flags=_
+symbol s3644 kind=function fq=primitiveCompare vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3645 kind=valueParameter fq=primitiveCompare.$3644.a vis=private flags=_
+symbol s3646 kind=valueParameter fq=primitiveCompare.$3644.b vis=private flags=_
 file f0 package=_
-  decl d2 class Temperature sym=s3578
-  decl d3 fun stringCompareLt suspend=0 inline=0 sym=s3584
-  decl d4 fun stringCompareGe suspend=0 inline=0 sym=s3587
-  decl d5 fun stringCompareLe suspend=0 inline=0 sym=s3590
-  decl d6 fun stringCompareGt suspend=0 inline=0 sym=s3593
-  decl d7 fun customCompareLt suspend=0 inline=0 sym=s3596
-  decl d8 fun customCompareGe suspend=0 inline=0 sym=s3599
-  decl d9 fun primitiveCompare suspend=0 inline=0 sym=s3602
-expr e0 this type=Class#3578
-expr e1 memberCall recv=e0 callee=degrees args=[] type=Int ref=s3583
-expr e2 name(other) type=Class#3578 ref=s3582
-expr e3 memberCall recv=e2 callee=degrees args=[] type=Int ref=s3583
+  decl d2 class Temperature sym=s3620
+  decl d3 fun stringCompareLt suspend=0 inline=0 sym=s3626
+  decl d4 fun stringCompareGe suspend=0 inline=0 sym=s3629
+  decl d5 fun stringCompareLe suspend=0 inline=0 sym=s3632
+  decl d6 fun stringCompareGt suspend=0 inline=0 sym=s3635
+  decl d7 fun customCompareLt suspend=0 inline=0 sym=s3638
+  decl d8 fun customCompareGe suspend=0 inline=0 sym=s3641
+  decl d9 fun primitiveCompare suspend=0 inline=0 sym=s3644
+expr e0 this type=Class#3620
+expr e1 memberCall recv=e0 callee=degrees args=[] type=Int ref=s3625
+expr e2 name(other) type=Class#3620 ref=s3624
+expr e3 memberCall recv=e2 callee=degrees args=[] type=Int ref=s3625
 expr e4 binary(subtract) lhs=e1 rhs=e3 type=Int
-expr e5 name(a) type=String ref=s3585
-expr e6 name(b) type=String ref=s3586
+expr e5 name(a) type=String ref=s3627
+expr e6 name(b) type=String ref=s3628
 expr e7 binary(lessThan) lhs=e5 rhs=e6 type=Boolean
-expr e8 name(a) type=String ref=s3588
-expr e9 name(b) type=String ref=s3589
+expr e8 name(a) type=String ref=s3630
+expr e9 name(b) type=String ref=s3631
 expr e10 binary(greaterOrEqual) lhs=e8 rhs=e9 type=Boolean
-expr e11 name(a) type=String ref=s3591
-expr e12 name(b) type=String ref=s3592
+expr e11 name(a) type=String ref=s3633
+expr e12 name(b) type=String ref=s3634
 expr e13 binary(lessOrEqual) lhs=e11 rhs=e12 type=Boolean
-expr e14 name(a) type=String ref=s3594
-expr e15 name(b) type=String ref=s3595
+expr e14 name(a) type=String ref=s3636
+expr e15 name(b) type=String ref=s3637
 expr e16 binary(greaterThan) lhs=e14 rhs=e15 type=Boolean
-expr e17 name(a) type=Class#3578 ref=s3597
-expr e18 name(b) type=Class#3578 ref=s3598
+expr e17 name(a) type=Class#3620 ref=s3639
+expr e18 name(b) type=Class#3620 ref=s3640
 expr e19 binary(lessThan) lhs=e17 rhs=e18 type=<error>
-expr e20 name(a) type=Class#3578 ref=s3600
-expr e21 name(b) type=Class#3578 ref=s3601
+expr e20 name(a) type=Class#3620 ref=s3642
+expr e21 name(b) type=Class#3620 ref=s3643
 expr e22 binary(greaterOrEqual) lhs=e20 rhs=e21 type=<error>
-expr e23 name(a) type=Int ref=s3603
-expr e24 name(b) type=Int ref=s3604
+expr e23 name(a) type=Int ref=s3645
+expr e24 name(b) type=Int ref=s3646
 expr e25 binary(lessThan) lhs=e23 rhs=e24 type=Boolean

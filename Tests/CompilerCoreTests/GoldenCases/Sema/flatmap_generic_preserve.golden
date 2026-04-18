@@ -3576,14 +3576,56 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=function fq=flatMapGeneric vis=public flags=_ sig=recv=_ params=[Class#123<String>] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s3579 kind=valueParameter fq=flatMapGeneric.$3578.names vis=private flags=_
-symbol s3580 kind=local fq=__local_11.lengths vis=private flags=_ type=Class#123<Int>
-symbol s3581 kind=local fq=__local_25.chars vis=private flags=_ type=Class#123<String>
-symbol s3582 kind=local fq=__local_45.doubled vis=private flags=_ type=Class#123<Int>
+symbol s3578 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3579 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresent vis=public flags=synthetic|static type=Int
+symbol s3580 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsent vis=public flags=synthetic|static type=Int
+symbol s3581 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresentOptional vis=public flags=synthetic|static type=Int
+symbol s3582 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsentOptional vis=public flags=synthetic|static type=Int
+symbol s3583 kind=function fq=kotlin.io.encoding.kk_base64_encode_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3584 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.bytes vis=private flags=synthetic
+symbol s3585 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.padding vis=private flags=synthetic
+symbol s3586 kind=function fq=kotlin.io.encoding.kk_base64_decode_default_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3587 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.string vis=private flags=synthetic
+symbol s3588 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.padding vis=private flags=synthetic
+symbol s3589 kind=function fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3590 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3591 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3592 kind=function fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3593 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.string vis=private flags=synthetic
+symbol s3594 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3595 kind=function fq=kotlin.io.encoding.kk_base64_encode_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3596 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.bytes vis=private flags=synthetic
+symbol s3597 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.padding vis=private flags=synthetic
+symbol s3598 kind=function fq=kotlin.io.encoding.kk_base64_decode_mime_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3599 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.string vis=private flags=synthetic
+symbol s3600 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.padding vis=private flags=synthetic
+symbol s3601 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3602 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.bytes vis=private flags=synthetic
+symbol s3603 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.padding vis=private flags=synthetic
+symbol s3604 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3605 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3606 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3607 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3608 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.bytes vis=private flags=synthetic
+symbol s3609 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.padding vis=private flags=synthetic
+symbol s3610 kind=class fq=kotlin.coroutines.AbstractCoroutineContextElement vis=public flags=synthetic|abstractType type=Class#3610
+symbol s3611 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextElement.<init> vis=public flags=synthetic sig=recv=Class#3610 params=[Class#1234<*>] ret=Class#3610 suspend=0 defaults=[0] vararg=[0]
+symbol s3612 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextElement.<init>.key vis=private flags=synthetic
+symbol s3613 kind=property fq=kotlin.coroutines.AbstractCoroutineContextElement.key vis=public flags=synthetic type=Class#1234<*>
+symbol s3614 kind=class fq=kotlin.coroutines.AbstractCoroutineContextKey vis=public flags=synthetic|abstractType type=Class#3614
+symbol s3615 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.B vis=private flags=synthetic
+symbol s3616 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.E vis=private flags=synthetic
+symbol s3617 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextKey.<init> vis=public flags=synthetic sig=recv=Class#3614 params=[Class#1234<T#3615>,(Class#1233) -> T#3616?] ret=Class#3614 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3618 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.baseKey vis=private flags=synthetic
+symbol s3619 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.safeCast vis=private flags=synthetic
+symbol s3620 kind=function fq=flatMapGeneric vis=public flags=_ sig=recv=_ params=[Class#123<String>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s3621 kind=valueParameter fq=flatMapGeneric.$3620.names vis=private flags=_
+symbol s3622 kind=local fq=__local_11.lengths vis=private flags=_ type=Class#123<Int>
+symbol s3623 kind=local fq=__local_25.chars vis=private flags=_ type=Class#123<String>
+symbol s3624 kind=local fq=__local_45.doubled vis=private flags=_ type=Class#123<Int>
 file f0 package=_
-  decl d0 fun flatMapGeneric suspend=0 inline=0 sym=s3578
-expr e0 name(names) type=Class#123<String> ref=s3579
+  decl d0 fun flatMapGeneric suspend=0 inline=0 sym=s3620
+expr e0 name(names) type=Class#123<String> ref=s3621
 expr e1 name(listOf) type=_
 expr e2 name(it) type=_
 expr e3 memberCall recv=e2 callee=length args=[] type=_
@@ -3594,8 +3636,8 @@ expr e7 memberCall recv=e6 callee=length args=[] type=Int call=s684 map=[] targs
 expr e8 call callee=e5 args=[_:e7] type=Class#123<out Int>
 expr e9 lambda params=[] body=e8 label=flatMap type=(String) -> Any
 expr e10 memberCall recv=e0 callee=flatMap args=[_:e9] type=Class#123<Int>
-expr e11 localDecl lengths mutable=0 type=t3 init=e10 type=Unit ref=s3580
-expr e12 name(names) type=Class#123<String> ref=s3579
+expr e11 localDecl lengths mutable=0 type=t3 init=e10 type=Unit ref=s3622
+expr e12 name(names) type=Class#123<String> ref=s3621
 expr e13 name(listOf) type=_
 expr e14 name(it) type=_
 expr e15 name(it) type=_
@@ -3608,8 +3650,8 @@ expr e21 memberCall recv=e20 callee=uppercase args=[] type=String call=s687 map=
 expr e22 call callee=e18 args=[_:e19,_:e21] type=Class#123<out String>
 expr e23 lambda params=[] body=e22 label=flatMap type=(String) -> Any
 expr e24 memberCall recv=e12 callee=flatMap args=[_:e23] type=Class#123<String>
-expr e25 localDecl chars mutable=0 type=t5 init=e24 type=Unit ref=s3581
-expr e26 name(names) type=Class#123<String> ref=s3579
+expr e25 localDecl chars mutable=0 type=t5 init=e24 type=Unit ref=s3623
+expr e26 name(names) type=Class#123<String> ref=s3621
 expr e27 name(listOf) type=_
 expr e28 name(it) type=_
 expr e29 memberCall recv=e28 callee=length args=[] type=_
@@ -3628,13 +3670,13 @@ expr e41 binary(multiply) lhs=e39 rhs=e40 type=Int
 expr e42 call callee=e35 args=[_:e37,_:e41] type=Class#123<out Int>
 expr e43 lambda params=[] body=e42 label=flatMap type=(String) -> Any
 expr e44 memberCall recv=e26 callee=flatMap args=[_:e43] type=Class#123<Int>
-expr e45 localDecl doubled mutable=0 type=_ init=e44 type=Unit ref=s3582
+expr e45 localDecl doubled mutable=0 type=_ init=e44 type=Unit ref=s3624
 expr e46 name(println) type=_
-expr e47 name(lengths) type=Class#123<Int> ref=s3580
+expr e47 name(lengths) type=Class#123<Int> ref=s3622
 expr e48 call callee=e46 args=[_:e47] type=Unit call=s1720 map=[0->0] targs=[]
 expr e49 name(println) type=_
-expr e50 name(chars) type=Class#123<String> ref=s3581
+expr e50 name(chars) type=Class#123<String> ref=s3623
 expr e51 call callee=e49 args=[_:e50] type=Unit call=s1720 map=[0->0] targs=[]
 expr e52 name(println) type=_
-expr e53 name(doubled) type=Class#123<Int> ref=s3582
+expr e53 name(doubled) type=Class#123<Int> ref=s3624
 expr e54 call callee=e52 args=[_:e53] type=Unit call=s1720 map=[0->0] targs=[]

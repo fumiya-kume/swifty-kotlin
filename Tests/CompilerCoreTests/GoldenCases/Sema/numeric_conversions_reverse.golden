@@ -3576,66 +3576,108 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3579 kind=local fq=__local_1.d vis=private flags=_ type=Double
-symbol s3580 kind=local fq=__local_4.di vis=private flags=_ type=Int
-symbol s3581 kind=local fq=__local_7.dl vis=private flags=_ type=Long
-symbol s3582 kind=local fq=__local_10.df vis=private flags=_ type=Float
-symbol s3583 kind=local fq=__local_12.f vis=private flags=_ type=Float
-symbol s3584 kind=local fq=__local_15.fi vis=private flags=_ type=Int
-symbol s3585 kind=local fq=__local_18.fl vis=private flags=_ type=Long
-symbol s3586 kind=local fq=__local_21.fd vis=private flags=_ type=Double
-symbol s3587 kind=local fq=__local_23.l vis=private flags=_ type=Long
-symbol s3588 kind=local fq=__local_26.lf vis=private flags=_ type=Float
-symbol s3589 kind=local fq=__local_29.ld vis=private flags=_ type=Double
-symbol s3590 kind=local fq=__local_32.li vis=private flags=_ type=Int
-symbol s3591 kind=local fq=__local_35.lb vis=private flags=_ type=Int
-symbol s3592 kind=local fq=__local_38.ls vis=private flags=_ type=Int
-symbol s3593 kind=local fq=__local_40.i vis=private flags=_ type=Int
-symbol s3594 kind=local fq=__local_43.id vis=private flags=_ type=Double
+symbol s3578 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3579 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresent vis=public flags=synthetic|static type=Int
+symbol s3580 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsent vis=public flags=synthetic|static type=Int
+symbol s3581 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresentOptional vis=public flags=synthetic|static type=Int
+symbol s3582 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsentOptional vis=public flags=synthetic|static type=Int
+symbol s3583 kind=function fq=kotlin.io.encoding.kk_base64_encode_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3584 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.bytes vis=private flags=synthetic
+symbol s3585 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.padding vis=private flags=synthetic
+symbol s3586 kind=function fq=kotlin.io.encoding.kk_base64_decode_default_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3587 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.string vis=private flags=synthetic
+symbol s3588 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.padding vis=private flags=synthetic
+symbol s3589 kind=function fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3590 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3591 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3592 kind=function fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3593 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.string vis=private flags=synthetic
+symbol s3594 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3595 kind=function fq=kotlin.io.encoding.kk_base64_encode_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3596 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.bytes vis=private flags=synthetic
+symbol s3597 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.padding vis=private flags=synthetic
+symbol s3598 kind=function fq=kotlin.io.encoding.kk_base64_decode_mime_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3599 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.string vis=private flags=synthetic
+symbol s3600 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.padding vis=private flags=synthetic
+symbol s3601 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3602 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.bytes vis=private flags=synthetic
+symbol s3603 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.padding vis=private flags=synthetic
+symbol s3604 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3605 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3606 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3607 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3608 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.bytes vis=private flags=synthetic
+symbol s3609 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.padding vis=private flags=synthetic
+symbol s3610 kind=class fq=kotlin.coroutines.AbstractCoroutineContextElement vis=public flags=synthetic|abstractType type=Class#3610
+symbol s3611 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextElement.<init> vis=public flags=synthetic sig=recv=Class#3610 params=[Class#1234<*>] ret=Class#3610 suspend=0 defaults=[0] vararg=[0]
+symbol s3612 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextElement.<init>.key vis=private flags=synthetic
+symbol s3613 kind=property fq=kotlin.coroutines.AbstractCoroutineContextElement.key vis=public flags=synthetic type=Class#1234<*>
+symbol s3614 kind=class fq=kotlin.coroutines.AbstractCoroutineContextKey vis=public flags=synthetic|abstractType type=Class#3614
+symbol s3615 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.B vis=private flags=synthetic
+symbol s3616 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.E vis=private flags=synthetic
+symbol s3617 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextKey.<init> vis=public flags=synthetic sig=recv=Class#3614 params=[Class#1234<T#3615>,(Class#1233) -> T#3616?] ret=Class#3614 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3618 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.baseKey vis=private flags=synthetic
+symbol s3619 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.safeCast vis=private flags=synthetic
+symbol s3620 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3621 kind=local fq=__local_1.d vis=private flags=_ type=Double
+symbol s3622 kind=local fq=__local_4.di vis=private flags=_ type=Int
+symbol s3623 kind=local fq=__local_7.dl vis=private flags=_ type=Long
+symbol s3624 kind=local fq=__local_10.df vis=private flags=_ type=Float
+symbol s3625 kind=local fq=__local_12.f vis=private flags=_ type=Float
+symbol s3626 kind=local fq=__local_15.fi vis=private flags=_ type=Int
+symbol s3627 kind=local fq=__local_18.fl vis=private flags=_ type=Long
+symbol s3628 kind=local fq=__local_21.fd vis=private flags=_ type=Double
+symbol s3629 kind=local fq=__local_23.l vis=private flags=_ type=Long
+symbol s3630 kind=local fq=__local_26.lf vis=private flags=_ type=Float
+symbol s3631 kind=local fq=__local_29.ld vis=private flags=_ type=Double
+symbol s3632 kind=local fq=__local_32.li vis=private flags=_ type=Int
+symbol s3633 kind=local fq=__local_35.lb vis=private flags=_ type=Int
+symbol s3634 kind=local fq=__local_38.ls vis=private flags=_ type=Int
+symbol s3635 kind=local fq=__local_40.i vis=private flags=_ type=Int
+symbol s3636 kind=local fq=__local_43.id vis=private flags=_ type=Double
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3578
+  decl d0 fun main suspend=0 inline=0 sym=s3620
 expr e0 double(3.14) type=Double
-expr e1 localDecl d mutable=0 type=_ init=e0 type=Unit ref=s3579
-expr e2 name(d) type=Double ref=s3579
+expr e1 localDecl d mutable=0 type=_ init=e0 type=Unit ref=s3621
+expr e2 name(d) type=Double ref=s3621
 expr e3 memberCall recv=e2 callee=toInt args=[] type=Int
-expr e4 localDecl di mutable=0 type=_ init=e3 type=Unit ref=s3580
-expr e5 name(d) type=Double ref=s3579
+expr e4 localDecl di mutable=0 type=_ init=e3 type=Unit ref=s3622
+expr e5 name(d) type=Double ref=s3621
 expr e6 memberCall recv=e5 callee=toLong args=[] type=Long
-expr e7 localDecl dl mutable=0 type=_ init=e6 type=Unit ref=s3581
-expr e8 name(d) type=Double ref=s3579
+expr e7 localDecl dl mutable=0 type=_ init=e6 type=Unit ref=s3623
+expr e8 name(d) type=Double ref=s3621
 expr e9 memberCall recv=e8 callee=toFloat args=[] type=Float
-expr e10 localDecl df mutable=0 type=_ init=e9 type=Unit ref=s3582
+expr e10 localDecl df mutable=0 type=_ init=e9 type=Unit ref=s3624
 expr e11 float(2.5) type=Float
-expr e12 localDecl f mutable=0 type=_ init=e11 type=Unit ref=s3583
-expr e13 name(f) type=Float ref=s3583
+expr e12 localDecl f mutable=0 type=_ init=e11 type=Unit ref=s3625
+expr e13 name(f) type=Float ref=s3625
 expr e14 memberCall recv=e13 callee=toInt args=[] type=Int
-expr e15 localDecl fi mutable=0 type=_ init=e14 type=Unit ref=s3584
-expr e16 name(f) type=Float ref=s3583
+expr e15 localDecl fi mutable=0 type=_ init=e14 type=Unit ref=s3626
+expr e16 name(f) type=Float ref=s3625
 expr e17 memberCall recv=e16 callee=toLong args=[] type=Long
-expr e18 localDecl fl mutable=0 type=_ init=e17 type=Unit ref=s3585
-expr e19 name(f) type=Float ref=s3583
+expr e18 localDecl fl mutable=0 type=_ init=e17 type=Unit ref=s3627
+expr e19 name(f) type=Float ref=s3625
 expr e20 memberCall recv=e19 callee=toDouble args=[] type=Double
-expr e21 localDecl fd mutable=0 type=_ init=e20 type=Unit ref=s3586
+expr e21 localDecl fd mutable=0 type=_ init=e20 type=Unit ref=s3628
 expr e22 long(42) type=Long
-expr e23 localDecl l mutable=0 type=_ init=e22 type=Unit ref=s3587
-expr e24 name(l) type=Long ref=s3587
+expr e23 localDecl l mutable=0 type=_ init=e22 type=Unit ref=s3629
+expr e24 name(l) type=Long ref=s3629
 expr e25 memberCall recv=e24 callee=toFloat args=[] type=Float
-expr e26 localDecl lf mutable=0 type=_ init=e25 type=Unit ref=s3588
-expr e27 name(l) type=Long ref=s3587
+expr e26 localDecl lf mutable=0 type=_ init=e25 type=Unit ref=s3630
+expr e27 name(l) type=Long ref=s3629
 expr e28 memberCall recv=e27 callee=toDouble args=[] type=Double
-expr e29 localDecl ld mutable=0 type=_ init=e28 type=Unit ref=s3589
-expr e30 name(l) type=Long ref=s3587
+expr e29 localDecl ld mutable=0 type=_ init=e28 type=Unit ref=s3631
+expr e30 name(l) type=Long ref=s3629
 expr e31 memberCall recv=e30 callee=toInt args=[] type=Int
-expr e32 localDecl li mutable=0 type=_ init=e31 type=Unit ref=s3590
-expr e33 name(l) type=Long ref=s3587
+expr e32 localDecl li mutable=0 type=_ init=e31 type=Unit ref=s3632
+expr e33 name(l) type=Long ref=s3629
 expr e34 memberCall recv=e33 callee=toByte args=[] type=Int
-expr e35 localDecl lb mutable=0 type=_ init=e34 type=Unit ref=s3591
-expr e36 name(l) type=Long ref=s3587
+expr e35 localDecl lb mutable=0 type=_ init=e34 type=Unit ref=s3633
+expr e36 name(l) type=Long ref=s3629
 expr e37 memberCall recv=e36 callee=toShort args=[] type=Int
-expr e38 localDecl ls mutable=0 type=_ init=e37 type=Unit ref=s3592
+expr e38 localDecl ls mutable=0 type=_ init=e37 type=Unit ref=s3634
 expr e39 int(100) type=Int
-expr e40 localDecl i mutable=0 type=_ init=e39 type=Unit ref=s3593
-expr e41 name(i) type=Int ref=s3593
+expr e40 localDecl i mutable=0 type=_ init=e39 type=Unit ref=s3635
+expr e41 name(i) type=Int ref=s3635
 expr e42 memberCall recv=e41 callee=toDouble args=[] type=Double
-expr e43 localDecl id mutable=0 type=_ init=e42 type=Unit ref=s3594
+expr e43 localDecl id mutable=0 type=_ init=e42 type=Unit ref=s3636

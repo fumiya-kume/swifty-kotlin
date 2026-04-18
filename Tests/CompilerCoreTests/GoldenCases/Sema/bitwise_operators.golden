@@ -3576,51 +3576,93 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=function fq=golden.sema.bitwiseAnd vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3579 kind=valueParameter fq=golden.sema.bitwiseAnd.$3578.a vis=private flags=_
-symbol s3580 kind=valueParameter fq=golden.sema.bitwiseAnd.$3578.b vis=private flags=_
-symbol s3581 kind=function fq=golden.sema.bitwiseOr vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3582 kind=valueParameter fq=golden.sema.bitwiseOr.$3581.a vis=private flags=_
-symbol s3583 kind=valueParameter fq=golden.sema.bitwiseOr.$3581.b vis=private flags=_
-symbol s3584 kind=function fq=golden.sema.bitwiseXor vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3585 kind=valueParameter fq=golden.sema.bitwiseXor.$3584.a vis=private flags=_
-symbol s3586 kind=valueParameter fq=golden.sema.bitwiseXor.$3584.b vis=private flags=_
-symbol s3587 kind=function fq=golden.sema.bitwiseInv vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3588 kind=valueParameter fq=golden.sema.bitwiseInv.$3587.a vis=private flags=_
-symbol s3589 kind=function fq=golden.sema.shiftLeft vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3590 kind=valueParameter fq=golden.sema.shiftLeft.$3589.a vis=private flags=_
-symbol s3591 kind=valueParameter fq=golden.sema.shiftLeft.$3589.n vis=private flags=_
-symbol s3592 kind=function fq=golden.sema.shiftRight vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3593 kind=valueParameter fq=golden.sema.shiftRight.$3592.a vis=private flags=_
-symbol s3594 kind=valueParameter fq=golden.sema.shiftRight.$3592.n vis=private flags=_
-symbol s3595 kind=function fq=golden.sema.unsignedShiftRight vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3596 kind=valueParameter fq=golden.sema.unsignedShiftRight.$3595.a vis=private flags=_
-symbol s3597 kind=valueParameter fq=golden.sema.unsignedShiftRight.$3595.n vis=private flags=_
+symbol s3578 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3579 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresent vis=public flags=synthetic|static type=Int
+symbol s3580 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsent vis=public flags=synthetic|static type=Int
+symbol s3581 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresentOptional vis=public flags=synthetic|static type=Int
+symbol s3582 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsentOptional vis=public flags=synthetic|static type=Int
+symbol s3583 kind=function fq=kotlin.io.encoding.kk_base64_encode_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3584 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.bytes vis=private flags=synthetic
+symbol s3585 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.padding vis=private flags=synthetic
+symbol s3586 kind=function fq=kotlin.io.encoding.kk_base64_decode_default_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3587 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.string vis=private flags=synthetic
+symbol s3588 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.padding vis=private flags=synthetic
+symbol s3589 kind=function fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3590 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3591 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3592 kind=function fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3593 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.string vis=private flags=synthetic
+symbol s3594 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3595 kind=function fq=kotlin.io.encoding.kk_base64_encode_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3596 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.bytes vis=private flags=synthetic
+symbol s3597 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.padding vis=private flags=synthetic
+symbol s3598 kind=function fq=kotlin.io.encoding.kk_base64_decode_mime_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3599 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.string vis=private flags=synthetic
+symbol s3600 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.padding vis=private flags=synthetic
+symbol s3601 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3602 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.bytes vis=private flags=synthetic
+symbol s3603 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.padding vis=private flags=synthetic
+symbol s3604 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3605 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3606 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3607 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3608 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.bytes vis=private flags=synthetic
+symbol s3609 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.padding vis=private flags=synthetic
+symbol s3610 kind=class fq=kotlin.coroutines.AbstractCoroutineContextElement vis=public flags=synthetic|abstractType type=Class#3610
+symbol s3611 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextElement.<init> vis=public flags=synthetic sig=recv=Class#3610 params=[Class#1234<*>] ret=Class#3610 suspend=0 defaults=[0] vararg=[0]
+symbol s3612 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextElement.<init>.key vis=private flags=synthetic
+symbol s3613 kind=property fq=kotlin.coroutines.AbstractCoroutineContextElement.key vis=public flags=synthetic type=Class#1234<*>
+symbol s3614 kind=class fq=kotlin.coroutines.AbstractCoroutineContextKey vis=public flags=synthetic|abstractType type=Class#3614
+symbol s3615 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.B vis=private flags=synthetic
+symbol s3616 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.E vis=private flags=synthetic
+symbol s3617 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextKey.<init> vis=public flags=synthetic sig=recv=Class#3614 params=[Class#1234<T#3615>,(Class#1233) -> T#3616?] ret=Class#3614 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3618 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.baseKey vis=private flags=synthetic
+symbol s3619 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.safeCast vis=private flags=synthetic
+symbol s3620 kind=function fq=golden.sema.bitwiseAnd vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3621 kind=valueParameter fq=golden.sema.bitwiseAnd.$3620.a vis=private flags=_
+symbol s3622 kind=valueParameter fq=golden.sema.bitwiseAnd.$3620.b vis=private flags=_
+symbol s3623 kind=function fq=golden.sema.bitwiseOr vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3624 kind=valueParameter fq=golden.sema.bitwiseOr.$3623.a vis=private flags=_
+symbol s3625 kind=valueParameter fq=golden.sema.bitwiseOr.$3623.b vis=private flags=_
+symbol s3626 kind=function fq=golden.sema.bitwiseXor vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3627 kind=valueParameter fq=golden.sema.bitwiseXor.$3626.a vis=private flags=_
+symbol s3628 kind=valueParameter fq=golden.sema.bitwiseXor.$3626.b vis=private flags=_
+symbol s3629 kind=function fq=golden.sema.bitwiseInv vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3630 kind=valueParameter fq=golden.sema.bitwiseInv.$3629.a vis=private flags=_
+symbol s3631 kind=function fq=golden.sema.shiftLeft vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3632 kind=valueParameter fq=golden.sema.shiftLeft.$3631.a vis=private flags=_
+symbol s3633 kind=valueParameter fq=golden.sema.shiftLeft.$3631.n vis=private flags=_
+symbol s3634 kind=function fq=golden.sema.shiftRight vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3635 kind=valueParameter fq=golden.sema.shiftRight.$3634.a vis=private flags=_
+symbol s3636 kind=valueParameter fq=golden.sema.shiftRight.$3634.n vis=private flags=_
+symbol s3637 kind=function fq=golden.sema.unsignedShiftRight vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3638 kind=valueParameter fq=golden.sema.unsignedShiftRight.$3637.a vis=private flags=_
+symbol s3639 kind=valueParameter fq=golden.sema.unsignedShiftRight.$3637.n vis=private flags=_
 file f0 package=golden.sema
-  decl d0 fun bitwiseAnd suspend=0 inline=0 sym=s3578
-  decl d1 fun bitwiseOr suspend=0 inline=0 sym=s3581
-  decl d2 fun bitwiseXor suspend=0 inline=0 sym=s3584
-  decl d3 fun bitwiseInv suspend=0 inline=0 sym=s3587
-  decl d4 fun shiftLeft suspend=0 inline=0 sym=s3589
-  decl d5 fun shiftRight suspend=0 inline=0 sym=s3592
-  decl d6 fun unsignedShiftRight suspend=0 inline=0 sym=s3595
-expr e0 name(a) type=Int ref=s3579
-expr e1 name(b) type=Int ref=s3580
+  decl d0 fun bitwiseAnd suspend=0 inline=0 sym=s3620
+  decl d1 fun bitwiseOr suspend=0 inline=0 sym=s3623
+  decl d2 fun bitwiseXor suspend=0 inline=0 sym=s3626
+  decl d3 fun bitwiseInv suspend=0 inline=0 sym=s3629
+  decl d4 fun shiftLeft suspend=0 inline=0 sym=s3631
+  decl d5 fun shiftRight suspend=0 inline=0 sym=s3634
+  decl d6 fun unsignedShiftRight suspend=0 inline=0 sym=s3637
+expr e0 name(a) type=Int ref=s3621
+expr e1 name(b) type=Int ref=s3622
 expr e2 memberCall recv=e0 callee=and args=[_:e1] type=Int
-expr e3 name(a) type=Int ref=s3582
-expr e4 name(b) type=Int ref=s3583
+expr e3 name(a) type=Int ref=s3624
+expr e4 name(b) type=Int ref=s3625
 expr e5 memberCall recv=e3 callee=or args=[_:e4] type=Int
-expr e6 name(a) type=Int ref=s3585
-expr e7 name(b) type=Int ref=s3586
+expr e6 name(a) type=Int ref=s3627
+expr e7 name(b) type=Int ref=s3628
 expr e8 memberCall recv=e6 callee=xor args=[_:e7] type=Int
-expr e9 name(a) type=Int ref=s3588
+expr e9 name(a) type=Int ref=s3630
 expr e10 memberCall recv=e9 callee=inv args=[] type=Int
-expr e11 name(a) type=Int ref=s3590
-expr e12 name(n) type=Int ref=s3591
+expr e11 name(a) type=Int ref=s3632
+expr e12 name(n) type=Int ref=s3633
 expr e13 memberCall recv=e11 callee=shl args=[_:e12] type=Int
-expr e14 name(a) type=Int ref=s3593
-expr e15 name(n) type=Int ref=s3594
+expr e14 name(a) type=Int ref=s3635
+expr e15 name(n) type=Int ref=s3636
 expr e16 memberCall recv=e14 callee=shr args=[_:e15] type=Int
-expr e17 name(a) type=Int ref=s3596
-expr e18 name(n) type=Int ref=s3597
+expr e17 name(a) type=Int ref=s3638
+expr e18 name(n) type=Int ref=s3639
 expr e19 memberCall recv=e17 callee=ushr args=[_:e18] type=Int

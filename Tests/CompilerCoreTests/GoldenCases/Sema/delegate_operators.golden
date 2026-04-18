@@ -3576,48 +3576,90 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=class fq=golden.sema.ReadOnlyDelegate vis=public flags=_
-symbol s3579 kind=constructor fq=golden.sema.ReadOnlyDelegate.<init> vis=public flags=_ sig=recv=Class#3578 params=[] ret=Class#3578 suspend=0 defaults=[] vararg=[]
-symbol s3580 kind=function fq=golden.sema.ReadOnlyDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#3578 params=[Any?,Class#9<*>] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3581 kind=valueParameter fq=golden.sema.ReadOnlyDelegate.getValue.$3580.thisRef vis=private flags=_
-symbol s3582 kind=valueParameter fq=golden.sema.ReadOnlyDelegate.getValue.$3580.property vis=private flags=_
-symbol s3583 kind=class fq=golden.sema.ReadWriteDelegate vis=public flags=_
-symbol s3584 kind=constructor fq=golden.sema.ReadWriteDelegate.<init> vis=public flags=_ sig=recv=Class#3583 params=[] ret=Class#3583 suspend=0 defaults=[] vararg=[]
-symbol s3585 kind=function fq=golden.sema.ReadWriteDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#3583 params=[Any?,Class#9<*>] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3586 kind=valueParameter fq=golden.sema.ReadWriteDelegate.getValue.$3585.thisRef vis=private flags=_
-symbol s3587 kind=valueParameter fq=golden.sema.ReadWriteDelegate.getValue.$3585.property vis=private flags=_
-symbol s3588 kind=function fq=golden.sema.ReadWriteDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#3583 params=[Any?,Class#9<*>,String] ret=Unit suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3589 kind=valueParameter fq=golden.sema.ReadWriteDelegate.setValue.$3588.thisRef vis=private flags=_
-symbol s3590 kind=valueParameter fq=golden.sema.ReadWriteDelegate.setValue.$3588.property vis=private flags=_
-symbol s3591 kind=valueParameter fq=golden.sema.ReadWriteDelegate.setValue.$3588.value vis=private flags=_
-symbol s3592 kind=property fq=golden.sema.ReadWriteDelegate.stored vis=private flags=mutable type=String
-symbol s3593 kind=class fq=golden.sema.DelegateProvider vis=public flags=_
-symbol s3594 kind=constructor fq=golden.sema.DelegateProvider.<init> vis=public flags=_ sig=recv=Class#3593 params=[] ret=Class#3593 suspend=0 defaults=[] vararg=[]
-symbol s3595 kind=function fq=golden.sema.DelegateProvider.provideDelegate vis=public flags=operatorFunction sig=recv=Class#3593 params=[Any?,Class#9<*>] ret=Class#3578 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3596 kind=valueParameter fq=golden.sema.DelegateProvider.provideDelegate.$3595.thisRef vis=private flags=_
-symbol s3597 kind=valueParameter fq=golden.sema.DelegateProvider.provideDelegate.$3595.prop vis=private flags=_
-symbol s3598 kind=property fq=golden.sema.readOnly vis=public flags=_ type=String
-symbol s3599 kind=property fq=golden.sema.readWrite vis=public flags=mutable type=String
-symbol s3600 kind=property fq=golden.sema.provided vis=public flags=_ type=String
+symbol s3578 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3579 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresent vis=public flags=synthetic|static type=Int
+symbol s3580 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsent vis=public flags=synthetic|static type=Int
+symbol s3581 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresentOptional vis=public flags=synthetic|static type=Int
+symbol s3582 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsentOptional vis=public flags=synthetic|static type=Int
+symbol s3583 kind=function fq=kotlin.io.encoding.kk_base64_encode_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3584 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.bytes vis=private flags=synthetic
+symbol s3585 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.padding vis=private flags=synthetic
+symbol s3586 kind=function fq=kotlin.io.encoding.kk_base64_decode_default_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3587 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.string vis=private flags=synthetic
+symbol s3588 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.padding vis=private flags=synthetic
+symbol s3589 kind=function fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3590 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3591 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3592 kind=function fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3593 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.string vis=private flags=synthetic
+symbol s3594 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3595 kind=function fq=kotlin.io.encoding.kk_base64_encode_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3596 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.bytes vis=private flags=synthetic
+symbol s3597 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.padding vis=private flags=synthetic
+symbol s3598 kind=function fq=kotlin.io.encoding.kk_base64_decode_mime_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3599 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.string vis=private flags=synthetic
+symbol s3600 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.padding vis=private flags=synthetic
+symbol s3601 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3602 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.bytes vis=private flags=synthetic
+symbol s3603 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.padding vis=private flags=synthetic
+symbol s3604 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3605 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3606 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3607 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3608 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.bytes vis=private flags=synthetic
+symbol s3609 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.padding vis=private flags=synthetic
+symbol s3610 kind=class fq=kotlin.coroutines.AbstractCoroutineContextElement vis=public flags=synthetic|abstractType type=Class#3610
+symbol s3611 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextElement.<init> vis=public flags=synthetic sig=recv=Class#3610 params=[Class#1234<*>] ret=Class#3610 suspend=0 defaults=[0] vararg=[0]
+symbol s3612 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextElement.<init>.key vis=private flags=synthetic
+symbol s3613 kind=property fq=kotlin.coroutines.AbstractCoroutineContextElement.key vis=public flags=synthetic type=Class#1234<*>
+symbol s3614 kind=class fq=kotlin.coroutines.AbstractCoroutineContextKey vis=public flags=synthetic|abstractType type=Class#3614
+symbol s3615 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.B vis=private flags=synthetic
+symbol s3616 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.E vis=private flags=synthetic
+symbol s3617 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextKey.<init> vis=public flags=synthetic sig=recv=Class#3614 params=[Class#1234<T#3615>,(Class#1233) -> T#3616?] ret=Class#3614 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3618 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.baseKey vis=private flags=synthetic
+symbol s3619 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.safeCast vis=private flags=synthetic
+symbol s3620 kind=class fq=golden.sema.ReadOnlyDelegate vis=public flags=_
+symbol s3621 kind=constructor fq=golden.sema.ReadOnlyDelegate.<init> vis=public flags=_ sig=recv=Class#3620 params=[] ret=Class#3620 suspend=0 defaults=[] vararg=[]
+symbol s3622 kind=function fq=golden.sema.ReadOnlyDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#3620 params=[Any?,Class#9<*>] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3623 kind=valueParameter fq=golden.sema.ReadOnlyDelegate.getValue.$3622.thisRef vis=private flags=_
+symbol s3624 kind=valueParameter fq=golden.sema.ReadOnlyDelegate.getValue.$3622.property vis=private flags=_
+symbol s3625 kind=class fq=golden.sema.ReadWriteDelegate vis=public flags=_
+symbol s3626 kind=constructor fq=golden.sema.ReadWriteDelegate.<init> vis=public flags=_ sig=recv=Class#3625 params=[] ret=Class#3625 suspend=0 defaults=[] vararg=[]
+symbol s3627 kind=function fq=golden.sema.ReadWriteDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#3625 params=[Any?,Class#9<*>] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3628 kind=valueParameter fq=golden.sema.ReadWriteDelegate.getValue.$3627.thisRef vis=private flags=_
+symbol s3629 kind=valueParameter fq=golden.sema.ReadWriteDelegate.getValue.$3627.property vis=private flags=_
+symbol s3630 kind=function fq=golden.sema.ReadWriteDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#3625 params=[Any?,Class#9<*>,String] ret=Unit suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3631 kind=valueParameter fq=golden.sema.ReadWriteDelegate.setValue.$3630.thisRef vis=private flags=_
+symbol s3632 kind=valueParameter fq=golden.sema.ReadWriteDelegate.setValue.$3630.property vis=private flags=_
+symbol s3633 kind=valueParameter fq=golden.sema.ReadWriteDelegate.setValue.$3630.value vis=private flags=_
+symbol s3634 kind=property fq=golden.sema.ReadWriteDelegate.stored vis=private flags=mutable type=String
+symbol s3635 kind=class fq=golden.sema.DelegateProvider vis=public flags=_
+symbol s3636 kind=constructor fq=golden.sema.DelegateProvider.<init> vis=public flags=_ sig=recv=Class#3635 params=[] ret=Class#3635 suspend=0 defaults=[] vararg=[]
+symbol s3637 kind=function fq=golden.sema.DelegateProvider.provideDelegate vis=public flags=operatorFunction sig=recv=Class#3635 params=[Any?,Class#9<*>] ret=Class#3620 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3638 kind=valueParameter fq=golden.sema.DelegateProvider.provideDelegate.$3637.thisRef vis=private flags=_
+symbol s3639 kind=valueParameter fq=golden.sema.DelegateProvider.provideDelegate.$3637.prop vis=private flags=_
+symbol s3640 kind=property fq=golden.sema.readOnly vis=public flags=_ type=String
+symbol s3641 kind=property fq=golden.sema.readWrite vis=public flags=mutable type=String
+symbol s3642 kind=property fq=golden.sema.provided vis=public flags=_ type=String
 file f0 package=golden.sema
-  decl d1 class ReadOnlyDelegate sym=s3578
-  decl d5 class ReadWriteDelegate sym=s3583
-  decl d7 class DelegateProvider sym=s3593
-  decl d8 property readOnly var=0 sym=s3598
-  decl d9 property readWrite var=1 sym=s3599
-  decl d10 property provided var=0 sym=s3600
+  decl d1 class ReadOnlyDelegate sym=s3620
+  decl d5 class ReadWriteDelegate sym=s3625
+  decl d7 class DelegateProvider sym=s3635
+  decl d8 property readOnly var=0 sym=s3640
+  decl d9 property readWrite var=1 sym=s3641
+  decl d10 property provided var=0 sym=s3642
 expr e0 string(delegated) type=String
 expr e1 string() type=String
-expr e2 name(stored) type=String ref=s3592
+expr e2 name(stored) type=String ref=s3634
 expr e3 name(stored) type=_
-expr e4 name(value) type=String ref=s3591
-expr e5 localAssign stored value=e4 type=Unit ref=s3592
+expr e4 name(value) type=String ref=s3633
+expr e5 localAssign stored value=e4 type=Unit ref=s3634
 expr e6 name(ReadOnlyDelegate) type=_
-expr e7 call callee=e6 args=[] type=Class#3578 call=s3579 map=[] targs=[]
+expr e7 call callee=e6 args=[] type=Class#3620 call=s3621 map=[] targs=[]
 expr e8 return value=e7 type=Nothing
 expr e9 name(ReadOnlyDelegate) type=_
-expr e10 call callee=e9 args=[] type=Class#3578 call=s3579 map=[] targs=[]
+expr e10 call callee=e9 args=[] type=Class#3620 call=s3621 map=[] targs=[]
 expr e11 name(ReadWriteDelegate) type=_
-expr e12 call callee=e11 args=[] type=Class#3583 call=s3584 map=[] targs=[]
+expr e12 call callee=e11 args=[] type=Class#3625 call=s3626 map=[] targs=[]
 expr e13 name(DelegateProvider) type=_
-expr e14 call callee=e13 args=[] type=Class#3593 call=s3594 map=[] targs=[]
+expr e14 call callee=e13 args=[] type=Class#3635 call=s3636 map=[] targs=[]

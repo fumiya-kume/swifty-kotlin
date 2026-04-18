@@ -3576,27 +3576,69 @@ symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
 symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3578 kind=class fq=golden.sema.Container vis=public flags=_
-symbol s3579 kind=typeParameter fq=golden.sema.Container.$class3578.T vis=private flags=_
-symbol s3580 kind=constructor fq=golden.sema.Container.<init> vis=public flags=_ sig=recv=Class#3578<T#3579> params=[T#3579] ret=Class#3578<T#3579> suspend=0 defaults=[0] vararg=[0]
-symbol s3581 kind=valueParameter fq=golden.sema.Container.<init>.$3580.item vis=private flags=_
-symbol s3582 kind=property fq=golden.sema.Container.item vis=public flags=_ type=T#3579
-symbol s3583 kind=function fq=golden.sema.readContainer vis=public flags=_ sig=recv=_ params=[Class#3578<*>] ret=Any? suspend=0 defaults=[0] vararg=[0]
-symbol s3584 kind=valueParameter fq=golden.sema.readContainer.$3583.c vis=private flags=_
-symbol s3585 kind=function fq=golden.sema.eraseType vis=public flags=_ sig=recv=_ params=[Class#123<*>] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3586 kind=valueParameter fq=golden.sema.eraseType.$3585.list vis=private flags=_
-symbol s3587 kind=function fq=golden.sema.acceptAny vis=public flags=_ sig=recv=_ params=[Class#3578<*>] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s3588 kind=valueParameter fq=golden.sema.acceptAny.$3587.c vis=private flags=_
-symbol s3589 kind=local fq=__local_6.v vis=private flags=_ type=T#3579
+symbol s3578 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3579 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresent vis=public flags=synthetic|static type=Int
+symbol s3580 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsent vis=public flags=synthetic|static type=Int
+symbol s3581 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresentOptional vis=public flags=synthetic|static type=Int
+symbol s3582 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsentOptional vis=public flags=synthetic|static type=Int
+symbol s3583 kind=function fq=kotlin.io.encoding.kk_base64_encode_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3584 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.bytes vis=private flags=synthetic
+symbol s3585 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.padding vis=private flags=synthetic
+symbol s3586 kind=function fq=kotlin.io.encoding.kk_base64_decode_default_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3587 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.string vis=private flags=synthetic
+symbol s3588 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.padding vis=private flags=synthetic
+symbol s3589 kind=function fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3590 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3591 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3592 kind=function fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3593 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.string vis=private flags=synthetic
+symbol s3594 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3595 kind=function fq=kotlin.io.encoding.kk_base64_encode_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3596 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.bytes vis=private flags=synthetic
+symbol s3597 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.padding vis=private flags=synthetic
+symbol s3598 kind=function fq=kotlin.io.encoding.kk_base64_decode_mime_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3599 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.string vis=private flags=synthetic
+symbol s3600 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.padding vis=private flags=synthetic
+symbol s3601 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3602 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.bytes vis=private flags=synthetic
+symbol s3603 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.padding vis=private flags=synthetic
+symbol s3604 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3605 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.bytes vis=private flags=synthetic
+symbol s3606 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.padding vis=private flags=synthetic
+symbol s3607 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3608 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.bytes vis=private flags=synthetic
+symbol s3609 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.padding vis=private flags=synthetic
+symbol s3610 kind=class fq=kotlin.coroutines.AbstractCoroutineContextElement vis=public flags=synthetic|abstractType type=Class#3610
+symbol s3611 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextElement.<init> vis=public flags=synthetic sig=recv=Class#3610 params=[Class#1234<*>] ret=Class#3610 suspend=0 defaults=[0] vararg=[0]
+symbol s3612 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextElement.<init>.key vis=private flags=synthetic
+symbol s3613 kind=property fq=kotlin.coroutines.AbstractCoroutineContextElement.key vis=public flags=synthetic type=Class#1234<*>
+symbol s3614 kind=class fq=kotlin.coroutines.AbstractCoroutineContextKey vis=public flags=synthetic|abstractType type=Class#3614
+symbol s3615 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.B vis=private flags=synthetic
+symbol s3616 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.E vis=private flags=synthetic
+symbol s3617 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextKey.<init> vis=public flags=synthetic sig=recv=Class#3614 params=[Class#1234<T#3615>,(Class#1233) -> T#3616?] ret=Class#3614 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3618 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.baseKey vis=private flags=synthetic
+symbol s3619 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.safeCast vis=private flags=synthetic
+symbol s3620 kind=class fq=golden.sema.Container vis=public flags=_
+symbol s3621 kind=typeParameter fq=golden.sema.Container.$class3620.T vis=private flags=_
+symbol s3622 kind=constructor fq=golden.sema.Container.<init> vis=public flags=_ sig=recv=Class#3620<T#3621> params=[T#3621] ret=Class#3620<T#3621> suspend=0 defaults=[0] vararg=[0]
+symbol s3623 kind=valueParameter fq=golden.sema.Container.<init>.$3622.item vis=private flags=_
+symbol s3624 kind=property fq=golden.sema.Container.item vis=public flags=_ type=T#3621
+symbol s3625 kind=function fq=golden.sema.readContainer vis=public flags=_ sig=recv=_ params=[Class#3620<*>] ret=Any? suspend=0 defaults=[0] vararg=[0]
+symbol s3626 kind=valueParameter fq=golden.sema.readContainer.$3625.c vis=private flags=_
+symbol s3627 kind=function fq=golden.sema.eraseType vis=public flags=_ sig=recv=_ params=[Class#123<*>] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3628 kind=valueParameter fq=golden.sema.eraseType.$3627.list vis=private flags=_
+symbol s3629 kind=function fq=golden.sema.acceptAny vis=public flags=_ sig=recv=_ params=[Class#3620<*>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s3630 kind=valueParameter fq=golden.sema.acceptAny.$3629.c vis=private flags=_
+symbol s3631 kind=local fq=__local_6.v vis=private flags=_ type=T#3621
 file f0 package=golden.sema
-  decl d1 class Container sym=s3578
-  decl d2 fun readContainer suspend=0 inline=0 sym=s3583
-  decl d3 fun eraseType suspend=0 inline=0 sym=s3585
-  decl d4 fun acceptAny suspend=0 inline=0 sym=s3587
-expr e0 name(c) type=Class#3578<*> ref=s3584
-expr e1 memberCall recv=e0 callee=item args=[] type=T#3579 ref=s3582
-expr e2 name(list) type=Class#123<*> ref=s3586
+  decl d1 class Container sym=s3620
+  decl d2 fun readContainer suspend=0 inline=0 sym=s3625
+  decl d3 fun eraseType suspend=0 inline=0 sym=s3627
+  decl d4 fun acceptAny suspend=0 inline=0 sym=s3629
+expr e0 name(c) type=Class#3620<*> ref=s3626
+expr e1 memberCall recv=e0 callee=item args=[] type=T#3621 ref=s3624
+expr e2 name(list) type=Class#123<*> ref=s3628
 expr e3 memberCall recv=e2 callee=size args=[] type=Int ref=s120
-expr e4 name(c) type=Class#3578<*> ref=s3588
-expr e5 memberCall recv=e4 callee=item args=[] type=T#3579 ref=s3582
-expr e6 localDecl v mutable=0 type=_ init=e5 type=Unit ref=s3589
+expr e4 name(c) type=Class#3620<*> ref=s3630
+expr e5 memberCall recv=e4 callee=item args=[] type=T#3621 ref=s3624
+expr e6 localDecl v mutable=0 type=_ init=e5 type=Unit ref=s3631
