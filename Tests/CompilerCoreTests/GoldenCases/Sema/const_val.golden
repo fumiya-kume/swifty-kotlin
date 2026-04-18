@@ -3562,25 +3562,39 @@ symbol s3560 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3561 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3559 params=[() -> T#3562] ret=T#3562 suspend=0 defaults=[0] vararg=[0]
 symbol s3562 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3563 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3564 kind=property fq=golden.sema.MAX vis=public flags=constValue type=Int
-symbol s3565 kind=property fq=golden.sema.NAME vis=public flags=constValue type=String
-symbol s3566 kind=property fq=golden.sema.FLAG vis=public flags=constValue type=Boolean
-symbol s3567 kind=property fq=golden.sema.RATE vis=public flags=constValue type=Double
-symbol s3568 kind=property fq=golden.sema.NEG vis=public flags=constValue type=Int
-symbol s3569 kind=object fq=golden.sema.Constants vis=public flags=_
-symbol s3570 kind=property fq=golden.sema.Constants.LIMIT vis=public flags=constValue type=Int
-symbol s3571 kind=property fq=golden.sema.Constants.LABEL vis=public flags=constValue type=String
-symbol s3572 kind=function fq=golden.sema.useConst vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s3573 kind=function fq=golden.sema.useNegConst vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3564 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3565 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3566 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3566<T#3567>
+symbol s3567 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3568 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3566<T#3567> params=[] ret=T#3567? suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3570 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3571 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3572 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3572
+symbol s3573 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
+symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3578 kind=property fq=golden.sema.MAX vis=public flags=constValue type=Int
+symbol s3579 kind=property fq=golden.sema.NAME vis=public flags=constValue type=String
+symbol s3580 kind=property fq=golden.sema.FLAG vis=public flags=constValue type=Boolean
+symbol s3581 kind=property fq=golden.sema.RATE vis=public flags=constValue type=Double
+symbol s3582 kind=property fq=golden.sema.NEG vis=public flags=constValue type=Int
+symbol s3583 kind=object fq=golden.sema.Constants vis=public flags=_
+symbol s3584 kind=property fq=golden.sema.Constants.LIMIT vis=public flags=constValue type=Int
+symbol s3585 kind=property fq=golden.sema.Constants.LABEL vis=public flags=constValue type=String
+symbol s3586 kind=function fq=golden.sema.useConst vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s3587 kind=function fq=golden.sema.useNegConst vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 property MAX var=0 sym=s3564
-  decl d1 property NAME var=0 sym=s3565
-  decl d2 property FLAG var=0 sym=s3566
-  decl d3 property RATE var=0 sym=s3567
-  decl d4 property NEG var=0 sym=s3568
-  decl d7 object Constants sym=s3569
-  decl d8 fun useConst suspend=0 inline=0 sym=s3572
-  decl d9 fun useNegConst suspend=0 inline=0 sym=s3573
+  decl d0 property MAX var=0 sym=s3578
+  decl d1 property NAME var=0 sym=s3579
+  decl d2 property FLAG var=0 sym=s3580
+  decl d3 property RATE var=0 sym=s3581
+  decl d4 property NEG var=0 sym=s3582
+  decl d7 object Constants sym=s3583
+  decl d8 fun useConst suspend=0 inline=0 sym=s3586
+  decl d9 fun useNegConst suspend=0 inline=0 sym=s3587
 expr e0 int(100) type=Int
 expr e1 string(hello) type=String
 expr e2 bool(true) type=Boolean
@@ -3589,7 +3603,7 @@ expr e4 int(42) type=Int
 expr e5 unary(unaryMinus) operand=e4 type=Int
 expr e6 int(200) type=Int
 expr e7 string(world) type=String
-expr e8 name(MAX) type=Int ref=s3564
+expr e8 name(MAX) type=Int ref=s3578
 expr e9 int(50) type=Int
 expr e10 binary(greaterThan) lhs=e8 rhs=e9 type=Boolean
-expr e11 name(NEG) type=Int ref=s3568
+expr e11 name(NEG) type=Int ref=s3582
