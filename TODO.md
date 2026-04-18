@@ -1,11 +1,11 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-04-17
+最終更新: 2026-04-18
 
 ---
 
 ## 使い方（簡略）
-- `[ ]` は未完了、`[x]` は完了扱い
+- `[ ]` は未完了、`[x]` は完了扱い、`[~]` は部分完了（本文に残タスクを記載）
 - `kotlin.*` の common / Kotlin/Native 相当を主対象とする
 - JVM/JS/JVM専用・`kotlinx`・プラグイン系は「ターゲット外バックログ」へ
 - 参照は必要最小に留め、詳細は都度 task 本文に反映する
@@ -41,8 +41,8 @@
 
 ### Phase 1: プリミティブ・演算子・配列・String コア
 - [ ] STDLIB-GAP-PH1: ギャップ表の `kotlin` / `kotlin.text` / `Array` 周辺の未対応を潰す
-- [ ] STDLIB-002: スコープ関数（`let` / `run` / `with` / `apply` / `also` / `takeIf` / `takeUnless`）
-- [ ] STDLIB-003: `Char` 系 API の未整備を埋める
+- [x] STDLIB-002: スコープ関数（`let` / `run` / `with` / `apply` / `also` / `takeIf` / `takeUnless`）
+- [x] STDLIB-003: `Char` 系 API の未整備を埋める
 - [ ] STDLIB-004: `Array` / primitive array の生成・変換・境界挙動を整理する
 - [ ] STDLIB-005: `kotlin.text` の文字列変換・分割・置換の端ケースを揃える
 
@@ -51,12 +51,12 @@
 - [ ] STDLIB-020: `Sequence` の lazy 性と builder 系 API の評価順を固定
 - [ ] STDLIB-021: mutable collection 変換 API と destination variant の差分を潰す
 - [ ] STDLIB-022: range / progression / unsigned range の網羅性を上げる
-- [ ] STDLIB-023: `kotlin.enums` の `entries` / `enumEntries<T>()` 周辺を固める
+- [x] STDLIB-023: `kotlin.enums` の `entries` / `enumEntries<T>()` 周辺を固める
 
 ### Phase 3: I/O・パス・時間・並行（common）
 - [ ] STDLIB-GAP-PH3: `kotlin.io`（common） / `kotlin.time` / `kotlin.concurrent` / `kotlin.concurrent.atomics` の未対応を潰す
 - [ ] STDLIB-030: `kotlin.io` common 範囲の file / buffered / `use` を仕様単位で締める
-- [ ] STDLIB-031: `kotlin.io.encoding`（Base64 / `HexFormat`）を前進
+- [x] STDLIB-031: `kotlin.io.encoding`（Base64 / `HexFormat`）を前進
 - [ ] STDLIB-032: `kotlin.time` の stable / experimental 境界を明文化
 - [ ] STDLIB-033: `kotlin.concurrent` / `kotlin.concurrent.atomics` / Native concurrent の parity を上げる
 
@@ -74,16 +74,16 @@
 - [ ] STDLIB-COMP-003: `Comparator` runtime と failure path を固定
 - [ ] STDLIB-ANNO-001: `kotlin.annotation` の対象一覧を固定
 - [ ] STDLIB-ANNO-002: annotation sema / diagnostics を整える
-- [ ] STDLIB-REGEX-001: `kotlin.text.Regex` の対象 API 一覧を固定
-- [ ] STDLIB-REGEX-002: `Regex` の sema / lowering を整える
-- [ ] STDLIB-REGEX-003: `Regex` runtime / ABI と failure path を固定
-- [ ] STDLIB-ASSERT-001: `assert` / `check` / `require`
+- [x] STDLIB-REGEX-001: `kotlin.text.Regex` の対象 API 一覧を固定
+- [x] STDLIB-REGEX-002: `Regex` の sema / lowering を整える
+- [x] STDLIB-REGEX-003: `Regex` runtime / ABI と failure path を固定
+- [x] STDLIB-ASSERT-001: `assert` / `check` / `require` / `error`
 - [ ] STDLIB-I18N-COMMON-001: `kotlin.text` / common のフォーマット・ロケール
 - [ ] STDLIB-TIME-EXP-001: `@ExperimentalTime` 系 API の整理（`Clock` / `TimeMark`）
-- [ ] STDLIB-PROP-001: `kotlin.properties` デリゲート実装差分を詰める
-- [ ] STDLIB-CORO-001: `kotlin.coroutines.intrinsics` / cancellation の差分棚卸し
-- [ ] STDLIB-CORO-BASE-001: `kotlin.coroutines` 基盤（`Continuation` / suspend primitive）の残差を詰める
-- [ ] STDLIB-CONTRACT-001: `kotlin.contracts` の effect model を整理
+- [x] STDLIB-PROP-001: `kotlin.properties` デリゲート実装差分を詰める
+- [~] STDLIB-CORO-001: `kotlin.coroutines.intrinsics` / cancellation — 主要部分実装済み（`suspendCoroutineUninterceptedOrReturn`, `intercepted`, `CancellationException`）。`startCoroutineUninterceptedOrReturn` / `createCoroutineUnintercepted` の runtime entry point が未実装。
+- [x] STDLIB-CORO-BASE-001: `kotlin.coroutines` 基盤（`Continuation` / suspend primitive）の残差を詰める
+- [x] STDLIB-CONTRACT-001: `kotlin.contracts` の effect model を整理
 - [ ] STDLIB-NATIVE-REF-001: `kotlin.native.ref` / `kotlin.native.runtime` の API 棚卸しを固定
 - [ ] STDLIB-NATIVE-REF-002: `kotlin.native.ref` / `kotlin.native.runtime` の sema 露出を整える
 - [ ] STDLIB-NATIVE-REF-003: `kotlin.native.ref` / `kotlin.native.runtime` の runtime / ABI を最小必要実装へ整理
