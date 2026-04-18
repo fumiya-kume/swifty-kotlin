@@ -3624,107 +3624,71 @@ symbol s3622 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags
 symbol s3623 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3623
 symbol s3624 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
 symbol s3625 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
-symbol s3626 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
-symbol s3627 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresent vis=public flags=synthetic|static type=Int
-symbol s3628 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsent vis=public flags=synthetic|static type=Int
-symbol s3629 kind=property fq=kotlin.io.encoding.Base64PaddingOptionPresentOptional vis=public flags=synthetic|static type=Int
-symbol s3630 kind=property fq=kotlin.io.encoding.Base64PaddingOptionAbsentOptional vis=public flags=synthetic|static type=Int
-symbol s3631 kind=function fq=kotlin.io.encoding.kk_base64_encode_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3632 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.bytes vis=private flags=synthetic
-symbol s3633 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_default_fn.padding vis=private flags=synthetic
-symbol s3634 kind=function fq=kotlin.io.encoding.kk_base64_decode_default_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3635 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.string vis=private flags=synthetic
-symbol s3636 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_default_fn.padding vis=private flags=synthetic
-symbol s3637 kind=function fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3638 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.bytes vis=private flags=synthetic
-symbol s3639 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_urlsafe_fn.padding vis=private flags=synthetic
-symbol s3640 kind=function fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3641 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.string vis=private flags=synthetic
-symbol s3642 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_urlsafe_fn.padding vis=private flags=synthetic
-symbol s3643 kind=function fq=kotlin.io.encoding.kk_base64_encode_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3644 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.bytes vis=private flags=synthetic
-symbol s3645 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encode_mime_fn.padding vis=private flags=synthetic
-symbol s3646 kind=function fq=kotlin.io.encoding.kk_base64_decode_mime_fn vis=public flags=synthetic sig=recv=_ params=[String,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3647 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.string vis=private flags=synthetic
-symbol s3648 kind=valueParameter fq=kotlin.io.encoding.kk_base64_decode_mime_fn.padding vis=private flags=synthetic
-symbol s3649 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3650 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.bytes vis=private flags=synthetic
-symbol s3651 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_default_fn.padding vis=private flags=synthetic
-symbol s3652 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3653 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.bytes vis=private flags=synthetic
-symbol s3654 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_urlsafe_fn.padding vis=private flags=synthetic
-symbol s3655 kind=function fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn vis=public flags=synthetic sig=recv=_ params=[Class#303,Int] ret=Class#303 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3656 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.bytes vis=private flags=synthetic
-symbol s3657 kind=valueParameter fq=kotlin.io.encoding.kk_base64_encodeToByteArray_mime_fn.padding vis=private flags=synthetic
-symbol s3658 kind=package fq=kotlin.native.concurrent vis=public flags=synthetic
-symbol s3659 kind=enumClass fq=kotlin.native.concurrent.TransferMode vis=public flags=synthetic
-symbol s3660 kind=field fq=kotlin.native.concurrent.TransferMode.SAFE vis=public flags=synthetic type=Class#3659
-symbol s3661 kind=field fq=kotlin.native.concurrent.TransferMode.UNSAFE vis=public flags=synthetic type=Class#3659
-symbol s3662 kind=enumClass fq=kotlin.native.concurrent.FutureState vis=public flags=synthetic
-symbol s3663 kind=field fq=kotlin.native.concurrent.FutureState.SCHEDULED vis=public flags=synthetic type=Class#3662
-symbol s3664 kind=field fq=kotlin.native.concurrent.FutureState.COMPUTED vis=public flags=synthetic type=Class#3662
-symbol s3665 kind=field fq=kotlin.native.concurrent.FutureState.THROWN vis=public flags=synthetic type=Class#3662
-symbol s3666 kind=field fq=kotlin.native.concurrent.FutureState.CANCELLED vis=public flags=synthetic type=Class#3662
-symbol s3667 kind=class fq=kotlin.native.concurrent.Worker vis=public flags=synthetic type=Class#3667
-symbol s3668 kind=object fq=kotlin.native.concurrent.Worker.Companion vis=public flags=synthetic type=Class#3668
-symbol s3669 kind=function fq=kotlin.native.concurrent.Worker.Companion.start vis=public flags=synthetic sig=recv=Class#3668 params=[String?] ret=Class#3667 suspend=0 defaults=[1] vararg=[0]
-symbol s3670 kind=valueParameter fq=kotlin.native.concurrent.Worker.Companion.start.name vis=private flags=synthetic
-symbol s3671 kind=function fq=kotlin.native.concurrent.Worker.requestTermination vis=public flags=synthetic sig=recv=Class#3667 params=[Boolean] ret=Unit suspend=0 defaults=[1] vararg=[0]
-symbol s3672 kind=valueParameter fq=kotlin.native.concurrent.Worker.requestTermination.processScheduled vis=private flags=synthetic
-symbol s3673 kind=property fq=kotlin.native.concurrent.Worker.isTerminated vis=public flags=synthetic type=Boolean
-symbol s3674 kind=property fq=kotlin.native.concurrent.Worker.name vis=public flags=synthetic type=String
-symbol s3675 kind=class fq=kotlin.native.concurrent.Future vis=public flags=synthetic type=Class#3675<T#3676>
-symbol s3676 kind=typeParameter fq=kotlin.native.concurrent.Future.T vis=private flags=_
-symbol s3677 kind=property fq=kotlin.native.concurrent.Future.result vis=public flags=synthetic type=T#3676
-symbol s3678 kind=function fq=kotlin.native.concurrent.Future.consume vis=public flags=synthetic sig=recv=Class#3675<T#3676> params=[] ret=T#3676 suspend=0 defaults=[] vararg=[]
-symbol s3679 kind=function fq=kotlin.native.concurrent.Future.getState vis=public flags=synthetic sig=recv=Class#3675<T#3676> params=[] ret=Class#3662 suspend=0 defaults=[] vararg=[]
-symbol s3680 kind=class fq=kotlin.native.concurrent.AtomicReference vis=public flags=synthetic type=Class#3680<T#3681>
-symbol s3681 kind=typeParameter fq=kotlin.native.concurrent.AtomicReference.T vis=private flags=_
-symbol s3682 kind=function fq=kotlin.native.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[T#3681] ret=Class#3680<T#3681> suspend=0 defaults=[0] vararg=[0]
-symbol s3683 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.<init>.value vis=private flags=synthetic
-symbol s3684 kind=property fq=kotlin.native.concurrent.AtomicReference.value vis=public flags=synthetic type=T#3681
-symbol s3685 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSwap vis=public flags=synthetic sig=recv=Class#3680<T#3681> params=[T#3681,T#3681] ret=T#3681 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3686 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.expected vis=private flags=synthetic
-symbol s3687 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.new vis=private flags=synthetic
-symbol s3688 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#3680<T#3681> params=[T#3681,T#3681] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3689 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.expected vis=private flags=synthetic
-symbol s3690 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
-symbol s3691 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
-symbol s3692 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
-symbol s3693 kind=class fq=kotlin.coroutines.AbstractCoroutineContextElement vis=public flags=synthetic|abstractType type=Class#3693
-symbol s3694 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextElement.<init> vis=public flags=synthetic sig=recv=Class#3693 params=[Class#1244<*>] ret=Class#3693 suspend=0 defaults=[0] vararg=[0]
-symbol s3695 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextElement.<init>.key vis=private flags=synthetic
-symbol s3696 kind=property fq=kotlin.coroutines.AbstractCoroutineContextElement.key vis=public flags=synthetic type=Class#1244<*>
-symbol s3697 kind=class fq=kotlin.coroutines.AbstractCoroutineContextKey vis=public flags=synthetic|abstractType type=Class#3697
-symbol s3698 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.B vis=private flags=synthetic
-symbol s3699 kind=typeParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.$synthetic.E vis=private flags=synthetic
-symbol s3700 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextKey.<init> vis=public flags=synthetic sig=recv=Class#3697 params=[Class#1244<T#3698>,(Class#1243) -> T#3699?] ret=Class#3697 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3701 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.baseKey vis=private flags=synthetic
-symbol s3702 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.safeCast vis=private flags=synthetic
-symbol s3703 kind=function fq=requireNonNull vis=public flags=_ sig=recv=_ params=[Any?] ret=Any suspend=0 defaults=[0] vararg=[0]
-symbol s3704 kind=valueParameter fq=requireNonNull.$3703.value vis=private flags=_
-symbol s3705 kind=function fq=bareReturns vis=public flags=_ sig=recv=_ params=[Int] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s3706 kind=valueParameter fq=bareReturns.$3705.x vis=private flags=_
-symbol s3707 kind=function fq=returnsTrue vis=public flags=_ sig=recv=_ params=[Boolean] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s3708 kind=valueParameter fq=returnsTrue.$3707.condition vis=private flags=_
-symbol s3709 kind=function fq=returnsFalse vis=public flags=_ sig=recv=_ params=[Boolean] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s3710 kind=valueParameter fq=returnsFalse.$3709.condition vis=private flags=_
-symbol s3711 kind=function fq=multiEffect vis=public flags=_ sig=recv=_ params=[Any?,Boolean] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3712 kind=valueParameter fq=multiEffect.$3711.value vis=private flags=_
-symbol s3713 kind=valueParameter fq=multiEffect.$3711.condition vis=private flags=_
-symbol s3714 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3715 kind=local fq=__local_100.x vis=private flags=_ type=String?
-symbol s3716 kind=local fq=__local_114.flag vis=private flags=_ type=Boolean
-symbol s3717 kind=local fq=__local_121.flag2 vis=private flags=_ type=Boolean
-symbol s3718 kind=local fq=__local_126.y vis=private flags=_ type=String?
-symbol s3719 kind=local fq=__local_131.result vis=private flags=_ type=Boolean
+symbol s3626 kind=package fq=kotlin.native.concurrent vis=public flags=synthetic
+symbol s3627 kind=enumClass fq=kotlin.native.concurrent.TransferMode vis=public flags=synthetic
+symbol s3628 kind=field fq=kotlin.native.concurrent.TransferMode.SAFE vis=public flags=synthetic type=Class#3627
+symbol s3629 kind=field fq=kotlin.native.concurrent.TransferMode.UNSAFE vis=public flags=synthetic type=Class#3627
+symbol s3630 kind=enumClass fq=kotlin.native.concurrent.FutureState vis=public flags=synthetic
+symbol s3631 kind=field fq=kotlin.native.concurrent.FutureState.SCHEDULED vis=public flags=synthetic type=Class#3630
+symbol s3632 kind=field fq=kotlin.native.concurrent.FutureState.COMPUTED vis=public flags=synthetic type=Class#3630
+symbol s3633 kind=field fq=kotlin.native.concurrent.FutureState.THROWN vis=public flags=synthetic type=Class#3630
+symbol s3634 kind=field fq=kotlin.native.concurrent.FutureState.CANCELLED vis=public flags=synthetic type=Class#3630
+symbol s3635 kind=class fq=kotlin.native.concurrent.Worker vis=public flags=synthetic type=Class#3635
+symbol s3636 kind=object fq=kotlin.native.concurrent.Worker.Companion vis=public flags=synthetic type=Class#3636
+symbol s3637 kind=function fq=kotlin.native.concurrent.Worker.Companion.start vis=public flags=synthetic sig=recv=Class#3636 params=[String?] ret=Class#3635 suspend=0 defaults=[1] vararg=[0]
+symbol s3638 kind=valueParameter fq=kotlin.native.concurrent.Worker.Companion.start.name vis=private flags=synthetic
+symbol s3639 kind=function fq=kotlin.native.concurrent.Worker.requestTermination vis=public flags=synthetic sig=recv=Class#3635 params=[Boolean] ret=Unit suspend=0 defaults=[1] vararg=[0]
+symbol s3640 kind=valueParameter fq=kotlin.native.concurrent.Worker.requestTermination.processScheduled vis=private flags=synthetic
+symbol s3641 kind=property fq=kotlin.native.concurrent.Worker.isTerminated vis=public flags=synthetic type=Boolean
+symbol s3642 kind=property fq=kotlin.native.concurrent.Worker.name vis=public flags=synthetic type=String
+symbol s3643 kind=class fq=kotlin.native.concurrent.Future vis=public flags=synthetic type=Class#3643<T#3644>
+symbol s3644 kind=typeParameter fq=kotlin.native.concurrent.Future.T vis=private flags=_
+symbol s3645 kind=property fq=kotlin.native.concurrent.Future.result vis=public flags=synthetic type=T#3644
+symbol s3646 kind=function fq=kotlin.native.concurrent.Future.consume vis=public flags=synthetic sig=recv=Class#3643<T#3644> params=[] ret=T#3644 suspend=0 defaults=[] vararg=[]
+symbol s3647 kind=function fq=kotlin.native.concurrent.Future.getState vis=public flags=synthetic sig=recv=Class#3643<T#3644> params=[] ret=Class#3630 suspend=0 defaults=[] vararg=[]
+symbol s3648 kind=class fq=kotlin.native.concurrent.AtomicReference vis=public flags=synthetic type=Class#3648<T#3649>
+symbol s3649 kind=typeParameter fq=kotlin.native.concurrent.AtomicReference.T vis=private flags=_
+symbol s3650 kind=function fq=kotlin.native.concurrent.AtomicReference.<init> vis=public flags=synthetic sig=recv=_ params=[T#3649] ret=Class#3648<T#3649> suspend=0 defaults=[0] vararg=[0]
+symbol s3651 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.<init>.value vis=private flags=synthetic
+symbol s3652 kind=property fq=kotlin.native.concurrent.AtomicReference.value vis=public flags=synthetic type=T#3649
+symbol s3653 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSwap vis=public flags=synthetic sig=recv=Class#3648<T#3649> params=[T#3649,T#3649] ret=T#3649 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3654 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.expected vis=private flags=synthetic
+symbol s3655 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSwap.new vis=private flags=synthetic
+symbol s3656 kind=function fq=kotlin.native.concurrent.AtomicReference.compareAndSet vis=public flags=synthetic sig=recv=Class#3648<T#3649> params=[T#3649,T#3649] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3657 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.expected vis=private flags=synthetic
+symbol s3658 kind=valueParameter fq=kotlin.native.concurrent.AtomicReference.compareAndSet.new vis=private flags=synthetic
+symbol s3659 kind=annotationClass fq=kotlin.native.concurrent.SharedImmutable vis=public flags=synthetic
+symbol s3660 kind=annotationClass fq=kotlin.native.concurrent.ThreadLocal vis=public flags=synthetic
+symbol s3661 kind=annotationClass fq=kotlin.ExperimentalUnsignedTypes vis=public flags=synthetic
+symbol s3662 kind=annotationClass fq=kotlin.ExperimentalMultiplatform vis=public flags=synthetic
+symbol s3663 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public flags=synthetic
+symbol s3664 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
+symbol s3665 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
+symbol s3666 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
+symbol s3667 kind=function fq=requireNonNull vis=public flags=_ sig=recv=_ params=[Any?] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s3668 kind=valueParameter fq=requireNonNull.$3667.value vis=private flags=_
+symbol s3669 kind=function fq=bareReturns vis=public flags=_ sig=recv=_ params=[Int] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s3670 kind=valueParameter fq=bareReturns.$3669.x vis=private flags=_
+symbol s3671 kind=function fq=returnsTrue vis=public flags=_ sig=recv=_ params=[Boolean] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s3672 kind=valueParameter fq=returnsTrue.$3671.condition vis=private flags=_
+symbol s3673 kind=function fq=returnsFalse vis=public flags=_ sig=recv=_ params=[Boolean] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s3674 kind=valueParameter fq=returnsFalse.$3673.condition vis=private flags=_
+symbol s3675 kind=function fq=multiEffect vis=public flags=_ sig=recv=_ params=[Any?,Boolean] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3676 kind=valueParameter fq=multiEffect.$3675.value vis=private flags=_
+symbol s3677 kind=valueParameter fq=multiEffect.$3675.condition vis=private flags=_
+symbol s3678 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3679 kind=local fq=__local_100.x vis=private flags=_ type=String?
+symbol s3680 kind=local fq=__local_114.flag vis=private flags=_ type=Boolean
+symbol s3681 kind=local fq=__local_121.flag2 vis=private flags=_ type=Boolean
+symbol s3682 kind=local fq=__local_126.y vis=private flags=_ type=String?
+symbol s3683 kind=local fq=__local_131.result vis=private flags=_ type=Boolean
 file f0 package=_
-  decl d0 fun requireNonNull suspend=0 inline=0 sym=s3703
-  decl d1 fun bareReturns suspend=0 inline=0 sym=s3705
-  decl d2 fun returnsTrue suspend=0 inline=0 sym=s3707
-  decl d3 fun returnsFalse suspend=0 inline=0 sym=s3709
-  decl d4 fun multiEffect suspend=0 inline=0 sym=s3711
-  decl d5 fun main suspend=0 inline=0 sym=s3714
+  decl d0 fun requireNonNull suspend=0 inline=0 sym=s3667
+  decl d1 fun bareReturns suspend=0 inline=0 sym=s3669
+  decl d2 fun returnsTrue suspend=0 inline=0 sym=s3671
+  decl d3 fun returnsFalse suspend=0 inline=0 sym=s3673
+  decl d4 fun multiEffect suspend=0 inline=0 sym=s3675
+  decl d5 fun main suspend=0 inline=0 sym=s3678
 expr e0 name(contract) type=_
 expr e1 name(returns) type=_
 expr e2 call callee=e1 args=[] type=_
@@ -3734,20 +3698,20 @@ expr e5 binary(notEqual) lhs=e3 rhs=e4 type=_
 expr e6 memberCall recv=e2 callee=implies args=[_:e5] type=_
 expr e7 name(returns) type=_
 expr e8 call callee=e7 args=[] type=Class#1447 call=s1453 map=[] targs=[]
-expr e9 name(value) type=Any? ref=s3704
+expr e9 name(value) type=Any? ref=s3668
 expr e10 name(null) type=Nothing?
 expr e11 binary(notEqual) lhs=e9 rhs=e10 type=Boolean
 expr e12 memberCall recv=e8 callee=implies args=[_:e11] type=<error>
 expr e13 lambda params=[] body=e12 label=contract type=Class#1444.() -> Unit
 expr e14 call callee=e0 args=[_:e13] type=Unit
-expr e15 name(value) type=Any? ref=s3704
+expr e15 name(value) type=Any? ref=s3668
 expr e16 name(null) type=Nothing?
 expr e17 binary(equal) lhs=e15 rhs=e16 type=Boolean
 expr e18 name(IllegalArgumentException) type=_
 expr e19 call callee=e18 args=[] type=Class#1364 call=s1390 map=[] targs=[]
 expr e20 throw value=e19 type=Nothing
 expr e21 if cond=e17 then=e20 else=_ type=Unit
-expr e22 name(value) type=Any? ref=s3704
+expr e22 name(value) type=Any? ref=s3668
 expr e23 return value=e22 type=Nothing
 expr e24 name(contract) type=_
 expr e25 name(returns) type=_
@@ -3756,7 +3720,7 @@ expr e27 name(returns) type=_
 expr e28 call callee=e27 args=[] type=Class#1447 call=s1453 map=[] targs=[]
 expr e29 lambda params=[] body=e28 label=contract type=Class#1444.() -> Unit
 expr e30 call callee=e24 args=[_:e29] type=Unit
-expr e31 name(x) type=Int ref=s3706
+expr e31 name(x) type=Int ref=s3670
 expr e32 int(0) type=Int
 expr e33 binary(lessThan) lhs=e31 rhs=e32 type=Boolean
 expr e34 name(IllegalArgumentException) type=_
@@ -3772,7 +3736,7 @@ expr e43 bool(true) type=Boolean
 expr e44 call callee=e42 args=[_:e43] type=Class#1447 call=s1453 map=[0->0] targs=[]
 expr e45 lambda params=[] body=e44 label=contract type=Class#1444.() -> Unit
 expr e46 call callee=e38 args=[_:e45] type=Unit
-expr e47 name(condition) type=Boolean ref=s3708
+expr e47 name(condition) type=Boolean ref=s3672
 expr e48 unary(not) operand=e47 type=Boolean
 expr e49 name(IllegalArgumentException) type=_
 expr e50 call callee=e49 args=[] type=Class#1364 call=s1390 map=[] targs=[]
@@ -3789,7 +3753,7 @@ expr e60 bool(false) type=Boolean
 expr e61 call callee=e59 args=[_:e60] type=Class#1447 call=s1453 map=[0->0] targs=[]
 expr e62 lambda params=[] body=e61 label=contract type=Class#1444.() -> Unit
 expr e63 call callee=e55 args=[_:e62] type=Unit
-expr e64 name(condition) type=Boolean ref=s3710
+expr e64 name(condition) type=Boolean ref=s3674
 expr e65 name(IllegalArgumentException) type=_
 expr e66 call callee=e65 args=[] type=Class#1364 call=s1390 map=[] targs=[]
 expr e67 throw value=e66 type=Nothing
@@ -3799,7 +3763,7 @@ expr e70 return value=e69 type=Nothing
 expr e71 name(contract) type=_
 expr e72 name(returns) type=_
 expr e73 call callee=e72 args=[] type=Class#1447 call=s1453 map=[] targs=[]
-expr e74 name(value) type=Any? ref=s3712
+expr e74 name(value) type=Any? ref=s3676
 expr e75 name(null) type=Nothing?
 expr e76 binary(notEqual) lhs=e74 rhs=e75 type=Boolean
 expr e77 memberCall recv=e73 callee=implies args=[_:e76] type=Class#1448 call=s1455 map=[0->0] targs=[]
@@ -3809,14 +3773,14 @@ expr e80 call callee=e78 args=[_:e79] type=Class#1447 call=s1453 map=[0->0] targ
 expr e81 blockExpr stmts=[e77] trailing=e80 type=Class#1447
 expr e82 lambda params=[] body=e81 label=contract type=Class#1444.() -> Unit
 expr e83 call callee=e71 args=[_:e82] type=Unit
-expr e84 name(value) type=Any? ref=s3712
+expr e84 name(value) type=Any? ref=s3676
 expr e85 name(null) type=Nothing?
 expr e86 binary(equal) lhs=e84 rhs=e85 type=Boolean
 expr e87 name(IllegalArgumentException) type=_
 expr e88 call callee=e87 args=[] type=Class#1364 call=s1390 map=[] targs=[]
 expr e89 throw value=e88 type=Nothing
 expr e90 if cond=e86 then=e89 else=_ type=Unit
-expr e91 name(condition) type=Boolean ref=s3713
+expr e91 name(condition) type=Boolean ref=s3677
 expr e92 unary(not) operand=e91 type=Boolean
 expr e93 name(IllegalArgumentException) type=_
 expr e94 call callee=e93 args=[] type=Class#1364 call=s1390 map=[] targs=[]
@@ -3825,38 +3789,38 @@ expr e96 if cond=e92 then=e95 else=_ type=Unit
 expr e97 bool(true) type=Boolean
 expr e98 return value=e97 type=Nothing
 expr e99 string(hello) type=String
-expr e100 localDecl x mutable=0 type=t10 init=e99 type=Unit ref=s3715
+expr e100 localDecl x mutable=0 type=t10 init=e99 type=Unit ref=s3679
 expr e101 name(requireNonNull) type=_
-expr e102 name(x) type=String? ref=s3715
-expr e103 call callee=e101 args=[_:e102] type=Any call=s3703 map=[0->0] targs=[]
+expr e102 name(x) type=String? ref=s3679
+expr e103 call callee=e101 args=[_:e102] type=Any call=s3667 map=[0->0] targs=[]
 expr e104 name(println) type=_
-expr e105 name(x) type=String? ref=s3715
+expr e105 name(x) type=String? ref=s3679
 expr e106 memberCall recv=e105 callee=length args=[] type=<error>
 expr e107 call callee=e104 args=[_:e106] type=Unit call=s1742 map=[0->0] targs=[]
 expr e108 name(bareReturns) type=_
 expr e109 int(42) type=Int
-expr e110 call callee=e108 args=[_:e109] type=Unit call=s3705 map=[0->0] targs=[]
+expr e110 call callee=e108 args=[_:e109] type=Unit call=s3669 map=[0->0] targs=[]
 expr e111 name(returnsTrue) type=_
 expr e112 bool(true) type=Boolean
-expr e113 call callee=e111 args=[_:e112] type=Boolean call=s3707 map=[0->0] targs=[]
-expr e114 localDecl flag mutable=0 type=_ init=e113 type=Unit ref=s3716
+expr e113 call callee=e111 args=[_:e112] type=Boolean call=s3671 map=[0->0] targs=[]
+expr e114 localDecl flag mutable=0 type=_ init=e113 type=Unit ref=s3680
 expr e115 name(println) type=_
-expr e116 name(flag) type=Boolean ref=s3716
+expr e116 name(flag) type=Boolean ref=s3680
 expr e117 call callee=e115 args=[_:e116] type=Unit call=s1742 map=[0->0] targs=[]
 expr e118 name(returnsFalse) type=_
 expr e119 bool(false) type=Boolean
-expr e120 call callee=e118 args=[_:e119] type=Boolean call=s3709 map=[0->0] targs=[]
-expr e121 localDecl flag2 mutable=0 type=_ init=e120 type=Unit ref=s3717
+expr e120 call callee=e118 args=[_:e119] type=Boolean call=s3673 map=[0->0] targs=[]
+expr e121 localDecl flag2 mutable=0 type=_ init=e120 type=Unit ref=s3681
 expr e122 name(println) type=_
-expr e123 name(flag2) type=Boolean ref=s3717
+expr e123 name(flag2) type=Boolean ref=s3681
 expr e124 call callee=e122 args=[_:e123] type=Unit call=s1742 map=[0->0] targs=[]
 expr e125 string(world) type=String
-expr e126 localDecl y mutable=0 type=t11 init=e125 type=Unit ref=s3718
+expr e126 localDecl y mutable=0 type=t11 init=e125 type=Unit ref=s3682
 expr e127 name(multiEffect) type=_
-expr e128 name(y) type=String? ref=s3718
+expr e128 name(y) type=String? ref=s3682
 expr e129 bool(true) type=Boolean
-expr e130 call callee=e127 args=[_:e128,_:e129] type=Boolean call=s3711 map=[0->0,1->1] targs=[]
-expr e131 localDecl result mutable=0 type=_ init=e130 type=Unit ref=s3719
+expr e130 call callee=e127 args=[_:e128,_:e129] type=Boolean call=s3675 map=[0->0,1->1] targs=[]
+expr e131 localDecl result mutable=0 type=_ init=e130 type=Unit ref=s3683
 expr e132 name(println) type=_
-expr e133 name(result) type=Boolean ref=s3719
+expr e133 name(result) type=Boolean ref=s3683
 expr e134 call callee=e132 args=[_:e133] type=Unit call=s1742 map=[0->0] targs=[]
