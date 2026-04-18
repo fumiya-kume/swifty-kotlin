@@ -34,7 +34,6 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-
   smoke-tests:
     name: Smoke Tests
     runs-on: ubuntu-latest
@@ -69,21 +68,26 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-
   full-swift-tests:
     name: Full Swift Tests (${{ matrix.test-target }})
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
         include:
           - test-target: CompilerCoreTests
             test-filter: '^CompilerCoreTests\\.'
+            workers: "8"
+            build-jobs: "8"
           - test-target: RuntimeTests
             test-filter: '^RuntimeTests\\.'
+            workers: "1"
+            build-jobs: "4"
           - test-target: KSwiftKCLITests
             test-filter: '^KSwiftKCLITests\\.'
-    timeout-minutes: 3000
+            workers: "4"
+            build-jobs: "4"
     steps:
       - uses: actions/checkout@v4
       - name: Setup Swift and LLVM
@@ -103,8 +107,8 @@ jobs:
         run: swift build -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
       - name: Run full Swift test suite for ${{ matrix.test-target }}
         env:
-          SWIFT_TEST_WORKERS: "4"
-          SWIFT_TEST_BUILD_JOBS: "4"
+          SWIFT_TEST_WORKERS: "${{ matrix.workers }}"
+          SWIFT_TEST_BUILD_JOBS: "${{ matrix.build-jobs }}"
         run: bash Scripts/swift_test.sh --filter "${{ matrix.test-filter }}" -Xswiftc -swift-version -Xswiftc 6
       - name: Full test reproduce hint
         if: always()
@@ -112,7 +116,7 @@ jobs:
           {
             echo '## Full Swift test reproduce (${{ matrix.test-target }})'
             echo '```bash'
-            echo 'SWIFT_TEST_WORKERS=4 SWIFT_TEST_BUILD_JOBS=4 bash Scripts/swift_test.sh --filter "${{ matrix.test-filter }}" -Xswiftc -swift-version -Xswiftc 6'
+            echo "SWIFT_TEST_WORKERS=${{ matrix.workers }} SWIFT_TEST_BUILD_JOBS=${{ matrix.build-jobs }} bash Scripts/swift_test.sh --filter \"${{ matrix.test-filter }}\" -Xswiftc -swift-version -Xswiftc 6"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 

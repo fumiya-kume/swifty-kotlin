@@ -231,6 +231,26 @@ final class ABILoweringPass: LoweringPass {
                     guard let s = callSymbol else { return false }
                     return SyntheticSymbolScheme.isLikelySyntheticPropertyAccessor(s)
                 }()
+                // ABI-001: For synthetic setter accessor calls whose callee is still
+                // "set", derive the actual runtime store function name from the getter
+                // link registered on the original property symbol (e.g.
+                // kk_atomic_bool_load → kk_atomic_bool_store).
+                let rewrittenCallee: InternedString? = {
+                    guard isSyntheticAccessor,
+                          let s = callSymbol,
+                          SyntheticSymbolScheme.isLikelySyntheticSetterAccessor(s),
+                          callee == ctx.interner.intern("set"),
+                          let syms = symbols
+                    else { return nil }
+                    let propSym = SyntheticSymbolScheme.originalPropertySymbolFromSetterAccessor(s)
+                    guard let getterLink = syms.externalLinkName(for: propSym),
+                          getterLink.hasSuffix("_load")
+                    else { return nil }
+                    let storeLinkName = String(getterLink.dropLast("_load".count)) + "_store"
+                    return ctx.interner.intern(storeLinkName)
+                }()
+                let effectiveCallee = rewrittenCallee ?? callee
+                let effectiveCallSymbol: SymbolID? = rewrittenCallee != nil ? nil : callSymbol
                 // Stubs explicitly marked .throwingFunction (e.g. BigInteger.divide,
                 // BigInteger(String)) must always emit the outThrown channel regardless
                 // of whether their callee name appears in nonThrowingCallees.
@@ -242,18 +262,18 @@ final class ABILoweringPass: LoweringPass {
                 // internal kk_lambda_* targets) are registered as non-throwing by
                 // LambdaClosureConversionPass via module.nonThrowingClosureCallees.
                 // This avoids brittle string-prefix coupling between passes.
-                let isClosureRelatedCallee = module.nonThrowingClosureCallees.contains(callee)
+                let isClosureRelatedCallee = module.nonThrowingClosureCallees.contains(effectiveCallee)
                 let canThrow = isExplicitlyThrowing
                     || (!isSyntheticAccessor
                         && !isClosureRelatedCallee
-                        && !nonThrowingCallees.contains(callee))
+                        && !nonThrowingCallees.contains(effectiveCallee))
 
                 var signature: FunctionSignature?
-                if let symbols, let callSymbol {
-                    signature = symbols.functionSignature(for: callSymbol)
+                if let symbols, let effectiveCallSymbol {
+                    signature = symbols.functionSignature(for: effectiveCallSymbol)
                 }
                 if signature == nil {
-                    signature = signatureByName[callee]
+                    signature = signatureByName[effectiveCallee]
                 }
                 var boxedArguments: [KIRExprID]
                 if let signature, let types {
@@ -266,7 +286,7 @@ final class ABILoweringPass: LoweringPass {
                         types: types,
                         symbols: symbols,
                         boxCallees: boxCallees,
-                        callee: callee,
+                        callee: effectiveCallee,
                         interner: ctx.interner,
                         newBody: &newBody
                     )
@@ -279,7 +299,7 @@ final class ABILoweringPass: LoweringPass {
                 // These calls have no FunctionSignature so the normal
                 // argument-boxing path above leaves them untouched.
                 if signature == nil, let types, let result,
-                   inlineArithmeticCallees.contains(callee)
+                   inlineArithmeticCallees.contains(effectiveCallee)
                 {
                     for i in boxedArguments.indices {
                         boxedArguments[i] = unboxBinaryOperandIfNeeded(
@@ -291,8 +311,8 @@ final class ABILoweringPass: LoweringPass {
                 }
 
                 let resolvedUnbox = resolveUnboxForCall(
-                    callSymbol: callSymbol,
-                    callee: callee,
+                    callSymbol: effectiveCallSymbol,
+                    callee: effectiveCallee,
                     result: result,
                     signatureByName: signatureByName,
                     module: module,
@@ -307,8 +327,8 @@ final class ABILoweringPass: LoweringPass {
                         type: resolvedReturnType
                     )
                     newBody.append(.call(
-                        symbol: callSymbol,
-                        callee: callee,
+                        symbol: effectiveCallSymbol,
+                        callee: effectiveCallee,
                         arguments: boxedArguments,
                         result: tempResult,
                         canThrow: canThrow,
@@ -334,8 +354,8 @@ final class ABILoweringPass: LoweringPass {
                     ))
                 } else {
                     newBody.append(.call(
-                        symbol: callSymbol,
-                        callee: callee,
+                        symbol: effectiveCallSymbol,
+                        callee: effectiveCallee,
                         arguments: boxedArguments,
                         result: result,
                         canThrow: canThrow,

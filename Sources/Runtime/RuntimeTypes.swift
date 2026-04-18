@@ -118,6 +118,8 @@ final class RuntimeCancellationBox: RuntimeThrowableBox {
             "kotlin.CancellationException",
             "kotlinx.coroutines.CancellationException",
             "CancellationException",
+            "kotlin.IllegalStateException",
+            "kotlin.RuntimeException",
             "kotlin.Exception",
             "kotlin.Throwable",
         ]

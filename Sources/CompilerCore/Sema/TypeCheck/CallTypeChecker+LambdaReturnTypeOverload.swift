@@ -20,6 +20,7 @@ extension CallTypeChecker {
         preInferredNonLambdaArgTypes: [Int: TypeID] = [:],
         expectedTypeOverrides: [Int: TypeID] = [:],
         explicitTypeArgs: [TypeID] = [],
+        receiverType: TypeID? = nil,
         ctx: TypeInferenceContext,
         locals: inout LocalBindings
     ) -> PreparedCallArguments {
@@ -79,6 +80,7 @@ extension CallTypeChecker {
                     at: index,
                     candidates: expectedTypeCandidates,
                     explicitTypeArgs: explicitTypeArgs,
+                    receiverType: receiverType,
                     sema: sema
                 )
                 contextualArgExpectedTypes[index] = expectation.type
@@ -339,6 +341,53 @@ extension CallTypeChecker {
         )
     }
 
+    /// Substitutes the leading class type parameters of `signature` with the
+    /// concrete generic arguments of `receiverType` (if it is a generic class
+    /// type). This lets trailing-lambda expected types be computed with the
+    /// receiver's generic substitutions already applied, so `it` in
+    /// `xs.map { it.uppercase() }` is seen as `String` rather than `T`.
+    private func applyReceiverClassTypeArgs(
+        to parameterType: TypeID,
+        signature: FunctionSignature,
+        candidate: SymbolID,
+        receiverType: TypeID?,
+        sema: SemaModule
+    ) -> TypeID {
+        guard let receiverType,
+              signature.classTypeParameterCount > 0,
+              !signature.typeParameterSymbols.isEmpty,
+              sema.symbols.symbol(candidate)?.kind != .constructor,
+              case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType))
+        else {
+            return parameterType
+        }
+        let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+        var substitution: [TypeVarID: TypeID] = [:]
+        let count = min(
+            signature.classTypeParameterCount,
+            classType.args.count,
+            signature.typeParameterSymbols.count
+        )
+        for index in 0 ..< count {
+            let concreteType: TypeID = switch classType.args[index] {
+            case let .invariant(type), let .out(type), let .in(type):
+                type
+            case .star:
+                sema.types.anyType
+            }
+            let typeParamSymbol = signature.typeParameterSymbols[index]
+            if let typeVar = typeVarBySymbol[typeParamSymbol] {
+                substitution[typeVar] = concreteType
+            }
+        }
+        guard !substitution.isEmpty else { return parameterType }
+        return sema.types.substituteTypeParameters(
+            in: parameterType,
+            substitution: substitution,
+            typeVarBySymbol: typeVarBySymbol
+        )
+    }
+
     private func callableReferenceExpectedType(
         at index: Int,
         candidates: [SymbolID],
@@ -385,6 +434,7 @@ extension CallTypeChecker {
         at index: Int,
         candidates: [SymbolID],
         explicitTypeArgs: [TypeID] = [],
+        receiverType: TypeID? = nil,
         sema: SemaModule
     ) -> (type: TypeID?, isInputOnly: Bool, blocksRefinement: Bool) {
         if candidates.count == 1,
@@ -394,12 +444,19 @@ extension CallTypeChecker {
             let rawType = signature.parameterTypes[index]
             let isConstructor = sema.symbols.symbol(candidates[0])?.kind == .constructor
             let typeArgOffset = isConstructor ? 0 : signature.classTypeParameterCount
-            let substituted = applyExplicitTypeArgs(
+            let explicitSubstituted = applyExplicitTypeArgs(
                 to: rawType,
                 signature: signature,
                 candidate: candidates[0],
                 explicitTypeArgs: explicitTypeArgs,
                 typeArgOffset: typeArgOffset,
+                sema: sema
+            )
+            let substituted = applyReceiverClassTypeArgs(
+                to: explicitSubstituted,
+                signature: signature,
+                candidate: candidates[0],
+                receiverType: receiverType,
                 sema: sema
             )
             return (substituted, false, false)

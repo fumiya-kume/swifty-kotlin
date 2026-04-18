@@ -5488,6 +5488,7 @@ extension CallTypeChecker {
             candidates: candidates,
             preInferredNonLambdaArgTypes: cachedNonLambdaArgTypes,
             explicitTypeArgs: explicitTypeArgs,
+            receiverType: effectiveReceiverType,
             ctx: ctx,
             locals: &locals
         )
