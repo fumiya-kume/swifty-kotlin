@@ -1811,6 +1811,28 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // --- STDLIB-I18N-COMMON-001: String.format companion method ---
+        // Kotlin: String.format(format: String, vararg args: Any?) -> String
+        // This is a companion (static) method on the String class, not an extension.
+        let stringCompanionFQName = ensureStringCompanionSymbol(
+            ownerSymbol: stringClassSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerStringCompanionMethod(
+            named: "format",
+            externalLinkName: "kk_string_format",
+            returnType: stringType,
+            parameters: [
+                (name: "format", type: stringType),
+                (name: "args", type: types.nullableAnyType),
+            ],
+            isVararg: [false, true],
+            companionFQName: stringCompanionFQName,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-316: String.chunked / String.windowed ---
 
         registerSyntheticStringExtensionFunction(
@@ -2534,6 +2556,106 @@ extension DataFlowSemaPhase {
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
             ),
             for: ctorSymbol
+        )
+    }
+
+    // MARK: - String Companion Helpers
+
+    private func ensureStringCompanionSymbol(
+        ownerSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> [InternedString] {
+        if let existingCompanion = symbols.companionObjectSymbol(for: ownerSymbol),
+           let companionInfo = symbols.symbol(existingCompanion)
+        {
+            return companionInfo.fqName
+        }
+
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return []
+        }
+        let companionName = interner.intern("Companion")
+        let companionFQName = ownerInfo.fqName + [companionName]
+        let companionSymbol = symbols.define(
+            kind: .object,
+            name: companionName,
+            fqName: companionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .static]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: companionSymbol)
+        symbols.setCompanionObjectSymbol(companionSymbol, for: ownerSymbol)
+        return companionFQName
+    }
+
+    private func registerStringCompanionMethod(
+        named name: String,
+        externalLinkName: String,
+        returnType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        isVararg: [Bool],
+        companionFQName: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let memberName = interner.intern(name)
+        let memberFQName = companionFQName + [memberName]
+        guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.parameterTypes == parameters.map(\.type) &&
+                existingSignature.returnType == returnType
+        }) == nil else {
+            return
+        }
+
+        guard let companionSymbol = symbols.lookup(fqName: companionFQName) else {
+            return
+        }
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(companionSymbol, for: memberSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: memberFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+
+        let hasDefaults = Array(repeating: false, count: parameters.count)
+        let varargFlags = isVararg.count == parameters.count
+            ? isVararg
+            : Array(repeating: false, count: parameters.count)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: hasDefaults,
+                valueParameterIsVararg: varargFlags
+            ),
+            for: memberSymbol
         )
     }
 
