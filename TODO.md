@@ -43,6 +43,9 @@
 - [ ] STDLIB-GAP-PH1: ギャップ表の `kotlin` / `kotlin.text` / `Array` 周辺の未対応を潰す
 - [ ] STDLIB-004: `Array` / primitive array の生成・変換・境界挙動を整理する
 - [ ] STDLIB-005: `kotlin.text` の文字列変換・分割・置換の端ケースを揃える
+- [ ] STDLIB-TEXT-EDGE-001: `split(delimiter, limit)` overload を追加する
+- [ ] STDLIB-TEXT-EDGE-002: `trim(predicate)` / `trimStart(predicate)` / `trimEnd(predicate)` を追加する
+- [ ] STDLIB-TEXT-EDGE-003: `indexOf` / `lastIndexOf` の `ignoreCase = true` を追加する
 
 ### Phase 2: コレクション・Sequence・Range
 - [ ] STDLIB-GAP-PH2: `kotlin.collections` / `kotlin.sequences` / `kotlin.ranges` の未対応を潰す
@@ -58,6 +61,13 @@
 - [ ] STDLIB-IO-ENC-003: `Base64.encodeToByteArray(ByteArray)` / `decodeFromByteArray(ByteArray)` を追加する
 - [ ] STDLIB-IO-ENC-004: `Base64.withPadding(PaddingOption)` と MIME / URL-safe variant の挙動を追加する
 - [ ] STDLIB-032: `kotlin.time` の stable / experimental 境界を明文化
+- [ ] STDLIB-TIME-STABLE-001: `Duration.ZERO` / `Duration.INFINITE` constants を追加する
+- [ ] STDLIB-TIME-STABLE-002: `Duration.toIsoString()` / `Duration.parse()` / `Duration.parseOrNull()` を追加する
+- [ ] STDLIB-TIME-STABLE-003: `Duration.parseIsoString()` / `Duration.parseIsoStringOrNull()` を追加する
+- [ ] STDLIB-TIME-STABLE-004: `Duration.toComponents { ... }` overload 群を追加する
+- [ ] STDLIB-TIME-STABLE-005: `Double.seconds` など `Double` receiver の `Duration` extension properties を追加する
+- [ ] STDLIB-TIME-STABLE-006: `Duration / Duration -> Double` を追加する
+- [ ] STDLIB-TIME-STABLE-007: `Duration.inWholeDays` property を追加する
 - [ ] STDLIB-033: `kotlin.concurrent` / `kotlin.concurrent.atomics` / Native concurrent の parity を上げる
 
 ### Phase 4: リフレクション・数値・テキスト・その他 stdlib
