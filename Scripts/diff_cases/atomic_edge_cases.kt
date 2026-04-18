@@ -9,8 +9,26 @@ fun main() {
     println(ref.compareAndSet("x", "b"))
     println(ref.compareAndSet("a", "b"))
     println(ref.exchange("c"))
-    println(ref.getAndUpdate { it + "!" })
-    println(ref.updateAndGet { it + "?" })
+    run {
+        while (true) {
+            val cur = ref.load()
+            val next = cur + "!"
+            if (ref.compareAndSet(cur, next)) {
+                println(cur)
+                break
+            }
+        }
+    }
+    run {
+        while (true) {
+            val cur = ref.load()
+            val next = cur + "?"
+            if (ref.compareAndSet(cur, next)) {
+                println(next)
+                break
+            }
+        }
+    }
     println(ref.load())
 
     val count = AtomicInt(1)
