@@ -380,21 +380,18 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
         )
     }
 
-    func testMinOfWithComparatorOverloadIsRegistered_Gap() throws {
-        // TODO(STDLIB-COMP-001): minOf with Comparator is not yet registered in the sema layer.
-        // When implemented, flip to asserting the symbol exists with the correct arity.
+    func testMinOfWithComparatorOverloadIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let fq = ["kotlin", "comparisons", "minOf"].map { interner.intern($0) }
         let syms = sema.symbols.lookupAll(fqName: fq)
+        // 3-param overload: (T, T, Comparator<T>)
         let hasComparatorOverload = syms.contains { sym in
             guard let sig = sema.symbols.functionSignature(for: sym) else { return false }
             return sig.parameterTypes.count == 3
         }
-        // Documenting the gap: minOf(a, b, comparator) is not yet implemented.
-        // TODO(STDLIB-COMP-001): Change XCTAssertFalse to XCTAssertTrue when implemented.
-        XCTAssertFalse(
+        XCTAssertTrue(
             hasComparatorOverload,
-            "minOf(a, b, Comparator<T>) is not yet registered (expected gap)"
+            "kotlin.comparisons.minOf must have a 3-param (a, b, comparator) overload"
         )
     }
 
@@ -480,7 +477,7 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
         let factoryLinks: [(path: [String], expectedLinks: [String])] = [
             (
                 ["kotlin", "comparisons", "compareBy"],
-                ["kk_comparator_from_selector_primitive",
+                ["kk_comparator_from_selector",
                  "kk_comparator_from_multi_selectors",
                  "kk_comparator_from_multi_selectors3"]
             ),
