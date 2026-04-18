@@ -72,10 +72,16 @@
 - [ ] STDLIB-ANNO-002: annotation sema / diagnostics を整える
 - [ ] STDLIB-I18N-COMMON-001: `kotlin.text` / common のフォーマット・ロケール
 - [ ] STDLIB-TIME-EXP-001: `@ExperimentalTime` 系 API の整理（`Clock` / `TimeMark`）
-- [~] STDLIB-CORO-001: `kotlin.coroutines.intrinsics` / cancellation — 主要部分実装済み（`suspendCoroutineUninterceptedOrReturn`, `intercepted`, `CancellationException`）。`startCoroutineUninterceptedOrReturn` / `createCoroutineUnintercepted` の runtime entry point が未実装。
+- [~] STDLIB-CORO-001: `kotlin.coroutines.intrinsics` / cancellation — 主要部分実装済み（`suspendCoroutineUninterceptedOrReturn`, `intercepted`, `CancellationException`）。残課題は別チケットへ分割。
+- [ ] STDLIB-CORO-002: `kotlin.coroutines.intrinsics` の runtime entry point（`startCoroutineUninterceptedOrReturn`, `createCoroutineUnintercepted`）を追加する。対応 C ABI 名: `kk_start_coroutine_unintercepted_or_return`, `kk_create_coroutine_unintercepted`。
+- [ ] STDLIB-CORO-003: `kotlin.coroutines` の一部ランタイム経路をセマフォ待機から脱却する。対象: `RuntimeAsyncTask.awaitResult`, `RuntimeJobHandle.join`, `kk_with_context`, Channel send/receive, Sequence builder( `sequence`, `iterator` ) の待機部。
 - [ ] STDLIB-NATIVE-REF-001: `kotlin.native.ref` / `kotlin.native.runtime` の API 棚卸しを固定
 - [ ] STDLIB-NATIVE-REF-002: `kotlin.native.ref` / `kotlin.native.runtime` の sema 露出を整える
 - [ ] STDLIB-NATIVE-REF-003: `kotlin.native.ref` / `kotlin.native.runtime` の runtime / ABI を最小必要実装へ整理
+- [ ] STDLIB-NATIVE-REF-004: `kotlin.native.ref.WeakReference` API の runtime 実装を追加する（`kk_weak_ref_create / kk_weak_ref_get / kk_weak_ref_clear` 相当の入口追加）
+- [ ] STDLIB-NATIVE-REF-005: `kotlin.native.ref.createCleaner` API の runtime 実装を追加する（`kk_cleaner_*` API の追加）
+- [ ] STDLIB-NATIVE-REF-006: `kotlin.native.runtime.GC` の欠損プロパティと `schedule()` を runtime レベルで追加する（`targetHeapBytes`, `targetHeapUtilization`, `maxHeapBytes`, `schedule`）
+- [ ] STDLIB-NATIVE-REF-007: `kotlin.native.runtime.Debugging` の欠損トラッキング API を追加する（`gcSuspendCount`, `threadCount`, `globalObjectCount`）
 - [ ] STDLIB-SYSTEM-001: `kotlin.system` の対象 API 一覧を固定
 - [ ] STDLIB-SYSTEM-002: `kotlin.system` の sema / lowering を整える
 - [ ] STDLIB-SYSTEM-003: `kotlin.system` の runtime / 計測系テストを固定
