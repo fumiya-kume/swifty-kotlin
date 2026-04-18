@@ -384,6 +384,7 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
         let (sema, interner) = try makeSema()
         let fq = ["kotlin", "comparisons", "minOf"].map { interner.intern($0) }
         let syms = sema.symbols.lookupAll(fqName: fq)
+        // 3-param overload: (T, T, Comparator<T>)
         let hasComparatorOverload = syms.contains { sym in
             guard let sig = sema.symbols.functionSignature(for: sym) else { return false }
             return sig.parameterTypes.count == 3
