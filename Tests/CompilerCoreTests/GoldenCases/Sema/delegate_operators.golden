@@ -3562,48 +3562,62 @@ symbol s3560 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3561 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3559 params=[() -> T#3562] ret=T#3562 suspend=0 defaults=[0] vararg=[0]
 symbol s3562 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3563 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3564 kind=class fq=golden.sema.ReadOnlyDelegate vis=public flags=_
-symbol s3565 kind=constructor fq=golden.sema.ReadOnlyDelegate.<init> vis=public flags=_ sig=recv=Class#3564 params=[] ret=Class#3564 suspend=0 defaults=[] vararg=[]
-symbol s3566 kind=function fq=golden.sema.ReadOnlyDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#3564 params=[Any?,Class#9<*>] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3567 kind=valueParameter fq=golden.sema.ReadOnlyDelegate.getValue.$3566.thisRef vis=private flags=_
-symbol s3568 kind=valueParameter fq=golden.sema.ReadOnlyDelegate.getValue.$3566.property vis=private flags=_
-symbol s3569 kind=class fq=golden.sema.ReadWriteDelegate vis=public flags=_
-symbol s3570 kind=constructor fq=golden.sema.ReadWriteDelegate.<init> vis=public flags=_ sig=recv=Class#3569 params=[] ret=Class#3569 suspend=0 defaults=[] vararg=[]
-symbol s3571 kind=function fq=golden.sema.ReadWriteDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#3569 params=[Any?,Class#9<*>] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3572 kind=valueParameter fq=golden.sema.ReadWriteDelegate.getValue.$3571.thisRef vis=private flags=_
-symbol s3573 kind=valueParameter fq=golden.sema.ReadWriteDelegate.getValue.$3571.property vis=private flags=_
-symbol s3574 kind=function fq=golden.sema.ReadWriteDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#3569 params=[Any?,Class#9<*>,String] ret=Unit suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3575 kind=valueParameter fq=golden.sema.ReadWriteDelegate.setValue.$3574.thisRef vis=private flags=_
-symbol s3576 kind=valueParameter fq=golden.sema.ReadWriteDelegate.setValue.$3574.property vis=private flags=_
-symbol s3577 kind=valueParameter fq=golden.sema.ReadWriteDelegate.setValue.$3574.value vis=private flags=_
-symbol s3578 kind=property fq=golden.sema.ReadWriteDelegate.stored vis=private flags=mutable type=String
-symbol s3579 kind=class fq=golden.sema.DelegateProvider vis=public flags=_
-symbol s3580 kind=constructor fq=golden.sema.DelegateProvider.<init> vis=public flags=_ sig=recv=Class#3579 params=[] ret=Class#3579 suspend=0 defaults=[] vararg=[]
-symbol s3581 kind=function fq=golden.sema.DelegateProvider.provideDelegate vis=public flags=operatorFunction sig=recv=Class#3579 params=[Any?,Class#9<*>] ret=Class#3564 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3582 kind=valueParameter fq=golden.sema.DelegateProvider.provideDelegate.$3581.thisRef vis=private flags=_
-symbol s3583 kind=valueParameter fq=golden.sema.DelegateProvider.provideDelegate.$3581.prop vis=private flags=_
-symbol s3584 kind=property fq=golden.sema.readOnly vis=public flags=_ type=String
-symbol s3585 kind=property fq=golden.sema.readWrite vis=public flags=mutable type=String
-symbol s3586 kind=property fq=golden.sema.provided vis=public flags=_ type=String
+symbol s3564 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3565 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3566 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3566<T#3567>
+symbol s3567 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3568 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3566<T#3567> params=[] ret=T#3567? suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3570 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3571 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3572 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3572
+symbol s3573 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
+symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3578 kind=class fq=golden.sema.ReadOnlyDelegate vis=public flags=_
+symbol s3579 kind=constructor fq=golden.sema.ReadOnlyDelegate.<init> vis=public flags=_ sig=recv=Class#3578 params=[] ret=Class#3578 suspend=0 defaults=[] vararg=[]
+symbol s3580 kind=function fq=golden.sema.ReadOnlyDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#3578 params=[Any?,Class#9<*>] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3581 kind=valueParameter fq=golden.sema.ReadOnlyDelegate.getValue.$3580.thisRef vis=private flags=_
+symbol s3582 kind=valueParameter fq=golden.sema.ReadOnlyDelegate.getValue.$3580.property vis=private flags=_
+symbol s3583 kind=class fq=golden.sema.ReadWriteDelegate vis=public flags=_
+symbol s3584 kind=constructor fq=golden.sema.ReadWriteDelegate.<init> vis=public flags=_ sig=recv=Class#3583 params=[] ret=Class#3583 suspend=0 defaults=[] vararg=[]
+symbol s3585 kind=function fq=golden.sema.ReadWriteDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#3583 params=[Any?,Class#9<*>] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3586 kind=valueParameter fq=golden.sema.ReadWriteDelegate.getValue.$3585.thisRef vis=private flags=_
+symbol s3587 kind=valueParameter fq=golden.sema.ReadWriteDelegate.getValue.$3585.property vis=private flags=_
+symbol s3588 kind=function fq=golden.sema.ReadWriteDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#3583 params=[Any?,Class#9<*>,String] ret=Unit suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3589 kind=valueParameter fq=golden.sema.ReadWriteDelegate.setValue.$3588.thisRef vis=private flags=_
+symbol s3590 kind=valueParameter fq=golden.sema.ReadWriteDelegate.setValue.$3588.property vis=private flags=_
+symbol s3591 kind=valueParameter fq=golden.sema.ReadWriteDelegate.setValue.$3588.value vis=private flags=_
+symbol s3592 kind=property fq=golden.sema.ReadWriteDelegate.stored vis=private flags=mutable type=String
+symbol s3593 kind=class fq=golden.sema.DelegateProvider vis=public flags=_
+symbol s3594 kind=constructor fq=golden.sema.DelegateProvider.<init> vis=public flags=_ sig=recv=Class#3593 params=[] ret=Class#3593 suspend=0 defaults=[] vararg=[]
+symbol s3595 kind=function fq=golden.sema.DelegateProvider.provideDelegate vis=public flags=operatorFunction sig=recv=Class#3593 params=[Any?,Class#9<*>] ret=Class#3578 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3596 kind=valueParameter fq=golden.sema.DelegateProvider.provideDelegate.$3595.thisRef vis=private flags=_
+symbol s3597 kind=valueParameter fq=golden.sema.DelegateProvider.provideDelegate.$3595.prop vis=private flags=_
+symbol s3598 kind=property fq=golden.sema.readOnly vis=public flags=_ type=String
+symbol s3599 kind=property fq=golden.sema.readWrite vis=public flags=mutable type=String
+symbol s3600 kind=property fq=golden.sema.provided vis=public flags=_ type=String
 file f0 package=golden.sema
-  decl d1 class ReadOnlyDelegate sym=s3564
-  decl d5 class ReadWriteDelegate sym=s3569
-  decl d7 class DelegateProvider sym=s3579
-  decl d8 property readOnly var=0 sym=s3584
-  decl d9 property readWrite var=1 sym=s3585
-  decl d10 property provided var=0 sym=s3586
+  decl d1 class ReadOnlyDelegate sym=s3578
+  decl d5 class ReadWriteDelegate sym=s3583
+  decl d7 class DelegateProvider sym=s3593
+  decl d8 property readOnly var=0 sym=s3598
+  decl d9 property readWrite var=1 sym=s3599
+  decl d10 property provided var=0 sym=s3600
 expr e0 string(delegated) type=String
 expr e1 string() type=String
-expr e2 name(stored) type=String ref=s3578
+expr e2 name(stored) type=String ref=s3592
 expr e3 name(stored) type=_
-expr e4 name(value) type=String ref=s3577
-expr e5 localAssign stored value=e4 type=Unit ref=s3578
+expr e4 name(value) type=String ref=s3591
+expr e5 localAssign stored value=e4 type=Unit ref=s3592
 expr e6 name(ReadOnlyDelegate) type=_
-expr e7 call callee=e6 args=[] type=Class#3564 call=s3565 map=[] targs=[]
+expr e7 call callee=e6 args=[] type=Class#3578 call=s3579 map=[] targs=[]
 expr e8 return value=e7 type=Nothing
 expr e9 name(ReadOnlyDelegate) type=_
-expr e10 call callee=e9 args=[] type=Class#3564 call=s3565 map=[] targs=[]
+expr e10 call callee=e9 args=[] type=Class#3578 call=s3579 map=[] targs=[]
 expr e11 name(ReadWriteDelegate) type=_
-expr e12 call callee=e11 args=[] type=Class#3569 call=s3570 map=[] targs=[]
+expr e12 call callee=e11 args=[] type=Class#3583 call=s3584 map=[] targs=[]
 expr e13 name(DelegateProvider) type=_
-expr e14 call callee=e13 args=[] type=Class#3579 call=s3580 map=[] targs=[]
+expr e14 call callee=e13 args=[] type=Class#3593 call=s3594 map=[] targs=[]

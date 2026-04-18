@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "opt_in_property_getter.kt",
+      "range": {
+        "start": { "line": 13, "character": 12 },
+        "end": { "line": 13, "character": 33 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalPropertyApi' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalPropertyApi' or '@OptIn(golden.diagnostics.ExperimentalPropertyApi::class)'.",
+      "codeActions": []
+    }
+  ]
+}
