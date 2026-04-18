@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "opt_in_and_deprecated.kt",
+      "range": {
+        "start": { "line": 13, "character": 29 },
+        "end": { "line": 13, "character": 56 }
+      },
+      "severity": 2,
+      "severityLabel": "warning",
+      "code": "KSWIFTK-SEMA-DEPRECATED",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.experimentalAndDeprecated' is deprecated. Use stableReplacement Replace with: stableReplacement()",
+      "codeActions": [{ "title": "Replace with 'stableReplacement()'", "kind": "quickfix" }]
+    },
+    {
+      "file": "opt_in_and_deprecated.kt",
+      "range": {
+        "start": { "line": 16, "character": 32 },
+        "end": { "line": 16, "character": 59 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-OPT-IN",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.ExperimentalDeprecatedApi' requires opt-in. Annotate the usage with '@golden.diagnostics.ExperimentalDeprecatedApi' or '@OptIn(golden.diagnostics.ExperimentalDeprecatedApi::class)'.",
+      "codeActions": []
+    },
+    {
+      "file": "opt_in_and_deprecated.kt",
+      "range": {
+        "start": { "line": 16, "character": 32 },
+        "end": { "line": 16, "character": 59 }
+      },
+      "severity": 2,
+      "severityLabel": "warning",
+      "code": "KSWIFTK-SEMA-DEPRECATED",
+      "source": "kswiftk",
+      "message": "'golden.diagnostics.experimentalAndDeprecated' is deprecated. Use stableReplacement Replace with: stableReplacement()",
+      "codeActions": [{ "title": "Replace with 'stableReplacement()'", "kind": "quickfix" }]
+    }
+  ]
+}
