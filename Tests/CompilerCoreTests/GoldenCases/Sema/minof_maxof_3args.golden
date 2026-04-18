@@ -3562,41 +3562,55 @@ symbol s3560 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3561 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3559 params=[() -> T#3562] ret=T#3562 suspend=0 defaults=[0] vararg=[0]
 symbol s3562 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3563 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3564 kind=function fq=golden.sema.twoArgInt vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3565 kind=function fq=golden.sema.twoArgMinInt vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s3566 kind=function fq=golden.sema.threeArgMaxInt vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3567 kind=valueParameter fq=golden.sema.threeArgMaxInt.$3566.a vis=private flags=_
-symbol s3568 kind=valueParameter fq=golden.sema.threeArgMaxInt.$3566.b vis=private flags=_
-symbol s3569 kind=valueParameter fq=golden.sema.threeArgMaxInt.$3566.c vis=private flags=_
-symbol s3570 kind=function fq=golden.sema.threeArgMinInt vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3571 kind=valueParameter fq=golden.sema.threeArgMinInt.$3570.a vis=private flags=_
-symbol s3572 kind=valueParameter fq=golden.sema.threeArgMinInt.$3570.b vis=private flags=_
-symbol s3573 kind=valueParameter fq=golden.sema.threeArgMinInt.$3570.c vis=private flags=_
-symbol s3574 kind=function fq=golden.sema.threeArgMaxLong vis=public flags=_ sig=recv=_ params=[Long,Long,Long] ret=Long suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3575 kind=valueParameter fq=golden.sema.threeArgMaxLong.$3574.a vis=private flags=_
-symbol s3576 kind=valueParameter fq=golden.sema.threeArgMaxLong.$3574.b vis=private flags=_
-symbol s3577 kind=valueParameter fq=golden.sema.threeArgMaxLong.$3574.c vis=private flags=_
-symbol s3578 kind=function fq=golden.sema.threeArgMinLong vis=public flags=_ sig=recv=_ params=[Long,Long,Long] ret=Long suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3579 kind=valueParameter fq=golden.sema.threeArgMinLong.$3578.a vis=private flags=_
-symbol s3580 kind=valueParameter fq=golden.sema.threeArgMinLong.$3578.b vis=private flags=_
-symbol s3581 kind=valueParameter fq=golden.sema.threeArgMinLong.$3578.c vis=private flags=_
-symbol s3582 kind=function fq=golden.sema.threeArgMaxDouble vis=public flags=_ sig=recv=_ params=[Double,Double,Double] ret=Double suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3583 kind=valueParameter fq=golden.sema.threeArgMaxDouble.$3582.a vis=private flags=_
-symbol s3584 kind=valueParameter fq=golden.sema.threeArgMaxDouble.$3582.b vis=private flags=_
-symbol s3585 kind=valueParameter fq=golden.sema.threeArgMaxDouble.$3582.c vis=private flags=_
-symbol s3586 kind=function fq=golden.sema.threeArgMinDouble vis=public flags=_ sig=recv=_ params=[Double,Double,Double] ret=Double suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3587 kind=valueParameter fq=golden.sema.threeArgMinDouble.$3586.a vis=private flags=_
-symbol s3588 kind=valueParameter fq=golden.sema.threeArgMinDouble.$3586.b vis=private flags=_
-symbol s3589 kind=valueParameter fq=golden.sema.threeArgMinDouble.$3586.c vis=private flags=_
+symbol s3564 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3565 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3566 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3566<T#3567>
+symbol s3567 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3568 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3566<T#3567> params=[] ret=T#3567? suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3570 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3571 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3572 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3572
+symbol s3573 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
+symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3578 kind=function fq=golden.sema.twoArgInt vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3579 kind=function fq=golden.sema.twoArgMinInt vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3580 kind=function fq=golden.sema.threeArgMaxInt vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3581 kind=valueParameter fq=golden.sema.threeArgMaxInt.$3580.a vis=private flags=_
+symbol s3582 kind=valueParameter fq=golden.sema.threeArgMaxInt.$3580.b vis=private flags=_
+symbol s3583 kind=valueParameter fq=golden.sema.threeArgMaxInt.$3580.c vis=private flags=_
+symbol s3584 kind=function fq=golden.sema.threeArgMinInt vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3585 kind=valueParameter fq=golden.sema.threeArgMinInt.$3584.a vis=private flags=_
+symbol s3586 kind=valueParameter fq=golden.sema.threeArgMinInt.$3584.b vis=private flags=_
+symbol s3587 kind=valueParameter fq=golden.sema.threeArgMinInt.$3584.c vis=private flags=_
+symbol s3588 kind=function fq=golden.sema.threeArgMaxLong vis=public flags=_ sig=recv=_ params=[Long,Long,Long] ret=Long suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3589 kind=valueParameter fq=golden.sema.threeArgMaxLong.$3588.a vis=private flags=_
+symbol s3590 kind=valueParameter fq=golden.sema.threeArgMaxLong.$3588.b vis=private flags=_
+symbol s3591 kind=valueParameter fq=golden.sema.threeArgMaxLong.$3588.c vis=private flags=_
+symbol s3592 kind=function fq=golden.sema.threeArgMinLong vis=public flags=_ sig=recv=_ params=[Long,Long,Long] ret=Long suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3593 kind=valueParameter fq=golden.sema.threeArgMinLong.$3592.a vis=private flags=_
+symbol s3594 kind=valueParameter fq=golden.sema.threeArgMinLong.$3592.b vis=private flags=_
+symbol s3595 kind=valueParameter fq=golden.sema.threeArgMinLong.$3592.c vis=private flags=_
+symbol s3596 kind=function fq=golden.sema.threeArgMaxDouble vis=public flags=_ sig=recv=_ params=[Double,Double,Double] ret=Double suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3597 kind=valueParameter fq=golden.sema.threeArgMaxDouble.$3596.a vis=private flags=_
+symbol s3598 kind=valueParameter fq=golden.sema.threeArgMaxDouble.$3596.b vis=private flags=_
+symbol s3599 kind=valueParameter fq=golden.sema.threeArgMaxDouble.$3596.c vis=private flags=_
+symbol s3600 kind=function fq=golden.sema.threeArgMinDouble vis=public flags=_ sig=recv=_ params=[Double,Double,Double] ret=Double suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s3601 kind=valueParameter fq=golden.sema.threeArgMinDouble.$3600.a vis=private flags=_
+symbol s3602 kind=valueParameter fq=golden.sema.threeArgMinDouble.$3600.b vis=private flags=_
+symbol s3603 kind=valueParameter fq=golden.sema.threeArgMinDouble.$3600.c vis=private flags=_
 file f0 package=golden.sema
-  decl d0 fun twoArgInt suspend=0 inline=0 sym=s3564
-  decl d1 fun twoArgMinInt suspend=0 inline=0 sym=s3565
-  decl d2 fun threeArgMaxInt suspend=0 inline=0 sym=s3566
-  decl d3 fun threeArgMinInt suspend=0 inline=0 sym=s3570
-  decl d4 fun threeArgMaxLong suspend=0 inline=0 sym=s3574
-  decl d5 fun threeArgMinLong suspend=0 inline=0 sym=s3578
-  decl d6 fun threeArgMaxDouble suspend=0 inline=0 sym=s3582
-  decl d7 fun threeArgMinDouble suspend=0 inline=0 sym=s3586
+  decl d0 fun twoArgInt suspend=0 inline=0 sym=s3578
+  decl d1 fun twoArgMinInt suspend=0 inline=0 sym=s3579
+  decl d2 fun threeArgMaxInt suspend=0 inline=0 sym=s3580
+  decl d3 fun threeArgMinInt suspend=0 inline=0 sym=s3584
+  decl d4 fun threeArgMaxLong suspend=0 inline=0 sym=s3588
+  decl d5 fun threeArgMinLong suspend=0 inline=0 sym=s3592
+  decl d6 fun threeArgMaxDouble suspend=0 inline=0 sym=s3596
+  decl d7 fun threeArgMinDouble suspend=0 inline=0 sym=s3600
 expr e0 name(maxOf) type=_
 expr e1 int(3) type=Int
 expr e2 int(7) type=Int
@@ -3606,32 +3620,32 @@ expr e5 int(3) type=Int
 expr e6 int(7) type=Int
 expr e7 call callee=e4 args=[_:e5,_:e6] type=Int call=s625 map=[0->0,1->1] targs=[]
 expr e8 name(maxOf) type=_
-expr e9 name(a) type=Int ref=s3567
-expr e10 name(b) type=Int ref=s3568
-expr e11 name(c) type=Int ref=s3569
+expr e9 name(a) type=Int ref=s3581
+expr e10 name(b) type=Int ref=s3582
+expr e11 name(c) type=Int ref=s3583
 expr e12 call callee=e8 args=[_:e9,_:e10,_:e11] type=Int call=s634 map=[0->0,1->1,2->2] targs=[]
 expr e13 name(minOf) type=_
-expr e14 name(a) type=Int ref=s3571
-expr e15 name(b) type=Int ref=s3572
-expr e16 name(c) type=Int ref=s3573
+expr e14 name(a) type=Int ref=s3585
+expr e15 name(b) type=Int ref=s3586
+expr e16 name(c) type=Int ref=s3587
 expr e17 call callee=e13 args=[_:e14,_:e15,_:e16] type=Int call=s636 map=[0->0,1->1,2->2] targs=[]
 expr e18 name(maxOf) type=_
-expr e19 name(a) type=Long ref=s3575
-expr e20 name(b) type=Long ref=s3576
-expr e21 name(c) type=Long ref=s3577
+expr e19 name(a) type=Long ref=s3589
+expr e20 name(b) type=Long ref=s3590
+expr e21 name(c) type=Long ref=s3591
 expr e22 call callee=e18 args=[_:e19,_:e20,_:e21] type=Long call=s638 map=[0->0,1->1,2->2] targs=[]
 expr e23 name(minOf) type=_
-expr e24 name(a) type=Long ref=s3579
-expr e25 name(b) type=Long ref=s3580
-expr e26 name(c) type=Long ref=s3581
+expr e24 name(a) type=Long ref=s3593
+expr e25 name(b) type=Long ref=s3594
+expr e26 name(c) type=Long ref=s3595
 expr e27 call callee=e23 args=[_:e24,_:e25,_:e26] type=Long call=s639 map=[0->0,1->1,2->2] targs=[]
 expr e28 name(maxOf) type=_
-expr e29 name(a) type=Double ref=s3583
-expr e30 name(b) type=Double ref=s3584
-expr e31 name(c) type=Double ref=s3585
+expr e29 name(a) type=Double ref=s3597
+expr e30 name(b) type=Double ref=s3598
+expr e31 name(c) type=Double ref=s3599
 expr e32 call callee=e28 args=[_:e29,_:e30,_:e31] type=Double call=s640 map=[0->0,1->1,2->2] targs=[]
 expr e33 name(minOf) type=_
-expr e34 name(a) type=Double ref=s3587
-expr e35 name(b) type=Double ref=s3588
-expr e36 name(c) type=Double ref=s3589
+expr e34 name(a) type=Double ref=s3601
+expr e35 name(b) type=Double ref=s3602
+expr e36 name(c) type=Double ref=s3603
 expr e37 call callee=e33 args=[_:e34,_:e35,_:e36] type=Double call=s641 map=[0->0,1->1,2->2] targs=[]

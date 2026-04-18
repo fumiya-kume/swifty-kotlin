@@ -3562,29 +3562,43 @@ symbol s3560 kind=constructor fq=java.util.concurrent.locks.ReentrantReadWriteLo
 symbol s3561 kind=function fq=kotlin.concurrent.read vis=public flags=inlineFunction|synthetic sig=recv=Class#3559 params=[() -> T#3562] ret=T#3562 suspend=0 defaults=[0] vararg=[0]
 symbol s3562 kind=typeParameter fq=kotlin.concurrent.read.T vis=private flags=synthetic
 symbol s3563 kind=valueParameter fq=kotlin.concurrent.read.action vis=private flags=synthetic
-symbol s3564 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3565 kind=local fq=__local_3.f vis=private flags=_ type=Class#1836
-symbol s3566 kind=local fq=__local_9.content vis=private flags=_ type=String
-symbol s3567 kind=local fq=__local_15.lines vis=private flags=_ type=Class#123<out String>
+symbol s3564 kind=package fq=kotlin.native.ref vis=public flags=synthetic
+symbol s3565 kind=package fq=kotlin.native.runtime vis=public flags=synthetic
+symbol s3566 kind=class fq=kotlin.native.ref.WeakReference vis=public flags=synthetic type=Class#3566<T#3567>
+symbol s3567 kind=typeParameter fq=kotlin.native.ref.WeakReference.T vis=private flags=_
+symbol s3568 kind=function fq=kotlin.native.ref.WeakReference.get vis=public flags=synthetic sig=recv=Class#3566<T#3567> params=[] ret=T#3567? suspend=0 defaults=[] vararg=[]
+symbol s3569 kind=function fq=kotlin.native.ref.createCleaner vis=public flags=synthetic sig=recv=_ params=[Any,(Any) -> Unit] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3570 kind=valueParameter fq=kotlin.native.ref.createCleaner.value vis=private flags=synthetic
+symbol s3571 kind=valueParameter fq=kotlin.native.ref.createCleaner.block vis=private flags=synthetic
+symbol s3572 kind=object fq=kotlin.native.runtime.GC vis=public flags=synthetic type=Class#3572
+symbol s3573 kind=function fq=kotlin.native.runtime.GC.collect vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3574 kind=function fq=kotlin.native.runtime.GC.schedule vis=public flags=synthetic sig=recv=Class#3572 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3575 kind=object fq=kotlin.native.runtime.Debugging vis=public flags=synthetic type=Class#3575
+symbol s3576 kind=property fq=kotlin.native.runtime.Debugging.isThreadStateRunnable vis=public flags=synthetic type=Boolean
+symbol s3577 kind=property fq=kotlin.native.runtime.Debugging.gcSuspendCount vis=public flags=synthetic type=Int
+symbol s3578 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3579 kind=local fq=__local_3.f vis=private flags=_ type=Class#1836
+symbol s3580 kind=local fq=__local_9.content vis=private flags=_ type=String
+symbol s3581 kind=local fq=__local_15.lines vis=private flags=_ type=Class#123<out String>
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s3564
+  decl d0 fun main suspend=0 inline=0 sym=s3578
 expr e0 name(File) type=_
 expr e1 string(test.txt) type=String
 expr e2 call callee=e0 args=[_:e1] type=Class#1836 call=s1851 map=[0->0] targs=[]
-expr e3 localDecl f mutable=0 type=_ init=e2 type=Unit ref=s3565
-expr e4 name(f) type=Class#1836 ref=s3565
+expr e3 localDecl f mutable=0 type=_ init=e2 type=Unit ref=s3579
+expr e4 name(f) type=Class#1836 ref=s3579
 expr e5 string(hello world) type=String
 expr e6 memberCall recv=e4 callee=writeText args=[_:e5] type=Unit call=s1854 map=[0->0] targs=[]
-expr e7 name(f) type=Class#1836 ref=s3565
+expr e7 name(f) type=Class#1836 ref=s3579
 expr e8 memberCall recv=e7 callee=readText args=[] type=String call=s1853 map=[] targs=[]
-expr e9 localDecl content mutable=0 type=_ init=e8 type=Unit ref=s3566
+expr e9 localDecl content mutable=0 type=_ init=e8 type=Unit ref=s3580
 expr e10 name(println) type=_
-expr e11 name(content) type=String ref=s3566
+expr e11 name(content) type=String ref=s3580
 expr e12 call callee=e10 args=[_:e11] type=Unit call=s1720 map=[0->0] targs=[]
-expr e13 name(f) type=Class#1836 ref=s3565
+expr e13 name(f) type=Class#1836 ref=s3579
 expr e14 memberCall recv=e13 callee=readLines args=[] type=Class#123<out String> call=s1858 map=[] targs=[]
-expr e15 localDecl lines mutable=0 type=_ init=e14 type=Unit ref=s3567
+expr e15 localDecl lines mutable=0 type=_ init=e14 type=Unit ref=s3581
 expr e16 name(println) type=_
-expr e17 name(lines) type=Class#123<out String> ref=s3567
+expr e17 name(lines) type=Class#123<out String> ref=s3581
 expr e18 memberCall recv=e17 callee=size args=[] type=Int ref=s120
 expr e19 call callee=e16 args=[_:e18] type=Unit call=s1720 map=[0->0] targs=[]
