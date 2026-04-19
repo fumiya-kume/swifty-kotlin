@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+
 import kotlin.uuid.Uuid
 
 fun main() {

@@ -191,6 +191,31 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- Uuid.fromLongs(mostSignificantBits: Long, leastSignificantBits: Long) companion factory ---
+        registerUuidCompanionMethod(
+            named: "fromLongs",
+            externalLinkName: "kk_uuid_fromLongs",
+            returnType: uuidType,
+            parameters: [
+                (name: "mostSignificantBits", type: longType),
+                (name: "leastSignificantBits", type: longType)
+            ],
+            companionFQName: companionFQName,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- Uuid.fromByteArray(byteArray: ByteArray) companion factory ---
+        registerUuidCompanionMethod(
+            named: "fromByteArray",
+            externalLinkName: "kk_uuid_fromByteArray",
+            returnType: uuidType,
+            parameters: [(name: "byteArray", type: byteArrayType)],
+            companionFQName: companionFQName,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Uuid Helpers
