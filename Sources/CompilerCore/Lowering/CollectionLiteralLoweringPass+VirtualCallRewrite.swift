@@ -70,6 +70,7 @@ extension CollectionLiteralLoweringPass {
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, context: context,
             listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
+            sequenceExprIDs: &sequenceExprIDs,
             indexingIterableExprIDs: &indexingIterableExprIDs,
             loweredBody: &loweredBody
         ) { return true }
@@ -914,6 +915,7 @@ extension CollectionLiteralLoweringPass {
         context: VirtualCallRewriteContext,
         listExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
+        sequenceExprIDs: inout Set<Int32>,
         indexingIterableExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
@@ -924,6 +926,14 @@ extension CollectionLiteralLoweringPass {
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module, lookup: lookup,
             listExprIDs: &listExprIDs, loweredBody: &loweredBody
+        ) { return true }
+
+        if rewriteDestinationCollectionHOF(
+            callee: callee, receiver: receiver, arguments: arguments,
+            result: result, origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult, context: context,
+            listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
+            sequenceExprIDs: &sequenceExprIDs, loweredBody: &loweredBody
         ) { return true }
 
         if rewriteMapHOF(
@@ -1570,6 +1580,107 @@ extension CollectionLiteralLoweringPass {
         {
             mapExprIDs.insert(result.rawValue)
             mapExprIDs.insert(hofResult.rawValue)
+        }
+        return true
+    }
+
+    // STDLIB-021: toCollection and destination collection HOFs
+    private func rewriteDestinationCollectionHOF(
+        callee: InternedString,
+        receiver: KIRExprID,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        origCanThrow: Bool,
+        origThrownResult: KIRExprID?,
+        context: VirtualCallRewriteContext,
+        listExprIDs: inout Set<Int32>,
+        mapExprIDs: inout Set<Int32>,
+        sequenceExprIDs: inout Set<Int32>,
+        loweredBody: inout [KIRInstruction]
+    ) -> Bool {
+        let module = context.module
+        let lookup = context.lookup
+
+        if callee == lookup.toCollectionName {
+            guard arguments.count == 1,
+                  listExprIDs.contains(receiver.rawValue) || sequenceExprIDs.contains(receiver.rawValue)
+            else {
+                return false
+            }
+
+            let destID = arguments[0]
+            let hofResult = emitHOFCall(
+                kkName: lookup.kkCollectionToCollectionName,
+                receiver: receiver,
+                arguments: [destID],
+                result: result,
+                origCanThrow: false,
+                origThrownResult: nil,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            if let result, listExprIDs.contains(destID.rawValue) {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+            }
+            return true
+        }
+
+        guard callee == lookup.filterToName || callee == lookup.filterNotToName
+            || callee == lookup.mapToName || callee == lookup.flatMapToName
+            || callee == lookup.mapNotNullToName || callee == lookup.mapIndexedToName
+            || callee == lookup.flatMapIndexedToName || callee == lookup.associateToName
+        else {
+            return false
+        }
+
+        guard (arguments.count == 2 || arguments.count == 3),
+              listExprIDs.contains(receiver.rawValue) || sequenceExprIDs.contains(receiver.rawValue)
+        else {
+            return false
+        }
+
+        let destID = arguments[0]
+        let lambdaID = arguments[1]
+        let closureRawExpr: KIRExprID
+        if arguments.count == 3 {
+            closureRawExpr = arguments[2]
+        } else {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            closureRawExpr = zeroExpr
+        }
+
+        let kkName: InternedString = switch callee {
+        case lookup.filterToName: lookup.kkListFilterToName
+        case lookup.filterNotToName: lookup.kkListFilterNotToName
+        case lookup.mapToName: lookup.kkListMapToName
+        case lookup.flatMapToName: lookup.kkListFlatMapToName
+        case lookup.mapNotNullToName: lookup.kkListMapNotNullToName
+        case lookup.mapIndexedToName: lookup.kkListMapIndexedToName
+        case lookup.flatMapIndexedToName: lookup.kkListFlatMapIndexedToName
+        case lookup.associateToName: lookup.kkListAssociateToName
+        default: callee
+        }
+
+        let hofResult = emitHOFCall(
+            kkName: kkName,
+            receiver: receiver,
+            arguments: [destID, lambdaID, closureRawExpr],
+            result: result,
+            origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult,
+            module: module,
+            loweredBody: &loweredBody
+        )
+        if let result {
+            if listExprIDs.contains(destID.rawValue) {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+            } else if mapExprIDs.contains(destID.rawValue) {
+                mapExprIDs.insert(result.rawValue)
+                mapExprIDs.insert(hofResult.rawValue)
+            }
         }
         return true
     }

@@ -3099,6 +3099,101 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    // --- STDLIB-021: destination collection variants with [receiver, dest, lambda, closureRaw?] ---
+                    if callee == lookup.filterToName || callee == lookup.filterNotToName
+                        || callee == lookup.mapToName || callee == lookup.flatMapToName
+                        || callee == lookup.mapNotNullToName || callee == lookup.mapIndexedToName
+                        || callee == lookup.flatMapIndexedToName || callee == lookup.associateToName
+                    {
+                        if (arguments.count == 3 || arguments.count == 4),
+                           (listExprIDs.contains(arguments[0].rawValue)
+                            || setExprIDs.contains(arguments[0].rawValue)
+                            || sequenceExprIDs.contains(arguments[0].rawValue)
+                            || arrayExprIDs.contains(arguments[0].rawValue))
+                        {
+                            let receiverID = arguments[0]
+                            let destID = arguments[1]
+                            let lambdaID = arguments[2]
+                            let closureRawID: KIRExprID
+                            if arguments.count == 4 {
+                                closureRawID = arguments[3]
+                            } else {
+                                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                closureRawID = zeroExpr
+                            }
+                            let kkName: InternedString = switch callee {
+                            case lookup.filterToName: lookup.kkListFilterToName
+                            case lookup.filterNotToName: lookup.kkListFilterNotToName
+                            case lookup.mapToName: lookup.kkListMapToName
+                            case lookup.flatMapToName: lookup.kkListFlatMapToName
+                            case lookup.mapNotNullToName: lookup.kkListMapNotNullToName
+                            case lookup.mapIndexedToName: lookup.kkListMapIndexedToName
+                            case lookup.flatMapIndexedToName: lookup.kkListFlatMapIndexedToName
+                            case lookup.associateToName: lookup.kkListAssociateToName
+                            default: callee
+                            }
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkName,
+                                arguments: [receiverID, destID, lambdaID, closureRawID],
+                                result: hofResult,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            if let result {
+                                if listExprIDs.contains(destID.rawValue) {
+                                    listExprIDs.insert(result.rawValue)
+                                    listExprIDs.insert(hofResult.rawValue)
+                                } else if setExprIDs.contains(destID.rawValue) {
+                                    setExprIDs.insert(result.rawValue)
+                                    setExprIDs.insert(hofResult.rawValue)
+                                } else if mapExprIDs.contains(destID.rawValue) {
+                                    mapExprIDs.insert(result.rawValue)
+                                    mapExprIDs.insert(hofResult.rawValue)
+                                }
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
+                    if callee == lookup.toCollectionName, arguments.count == 2 {
+                        let receiverID = arguments[0]
+                        let destID = arguments[1]
+                        if listExprIDs.contains(receiverID.rawValue)
+                            || setExprIDs.contains(receiverID.rawValue)
+                            || sequenceExprIDs.contains(receiverID.rawValue)
+                            || arrayExprIDs.contains(receiverID.rawValue)
+                        {
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkCollectionToCollectionName,
+                                arguments: [receiverID, destID],
+                                result: hofResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                if listExprIDs.contains(destID.rawValue) {
+                                    listExprIDs.insert(result.rawValue)
+                                    listExprIDs.insert(hofResult.rawValue)
+                                } else if setExprIDs.contains(destID.rawValue) {
+                                    setExprIDs.insert(result.rawValue)
+                                    setExprIDs.insert(hofResult.rawValue)
+                                }
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
                     // --- STDLIB-535/536/537: *To variants with [receiver, dest, lambda, closureRaw?] ---
                     if callee == lookup.associateByToName || callee == lookup.associateWithToName
                         || callee == lookup.groupByToName

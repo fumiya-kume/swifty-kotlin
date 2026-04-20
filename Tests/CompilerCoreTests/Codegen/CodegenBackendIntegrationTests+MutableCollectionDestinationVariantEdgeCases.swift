@@ -21,13 +21,12 @@ import XCTest
 //  - Custom MutableCollection impl as destination — needs full interface dispatch (not yet lowered)
 //  - filterTo, mapTo, flatMapTo, associateTo, associateByTo, associateWithTo, groupByTo,
 //    filterNotTo, mapNotNullTo, filterIsInstanceTo, mapIndexedTo, flatMapIndexedTo,
-//    toCollection — all unresolved (KSWIFTK-SEMA-0024); skipped until implemented
+//    toCollection — covered by runtime rewrite paths below
 extension CodegenBackendIntegrationTests {
 
     // MARK: - STDLIB-021-01: filterTo appends matching elements to destination
 
     func testFilterToAppendsToDestination() throws {
-        throw XCTSkip("filterTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf(1, 2, 3, 4, 5)
@@ -43,7 +42,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-02: filterTo with empty source leaves destination unchanged
 
     func testFilterToEmptySourceLeavesDestination() throws {
-        throw XCTSkip("filterTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = emptyList<Int>()
@@ -59,7 +57,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-03: mapTo appends transformed elements to destination
 
     func testMapToAppendsToDestination() throws {
-        throw XCTSkip("mapTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf(1, 2, 3)
@@ -75,7 +72,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-04: mapTo with empty source leaves destination unchanged
 
     func testMapToEmptySourceLeavesDestination() throws {
-        throw XCTSkip("mapTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = emptyList<Int>()
@@ -91,7 +87,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-05: flatMapTo appends flattened elements to destination
 
     func testFlatMapToAppendsToDestination() throws {
-        throw XCTSkip("flatMapTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf(listOf(1, 2), listOf(3, 4))
@@ -107,7 +102,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-06: flatMapTo with empty source leaves destination unchanged
 
     func testFlatMapToEmptySourceLeavesDestination() throws {
-        throw XCTSkip("flatMapTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = emptyList<List<Int>>()
@@ -123,7 +117,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-07: associateTo puts all pairs into destination map
 
     func testAssociateToPopulatesDestination() throws {
-        throw XCTSkip("associateTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf("a", "bb", "ccc")
@@ -141,7 +134,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-08: associateTo overwrites on duplicate key
 
     func testAssociateToOverwritesDuplicateKey() throws {
-        throw XCTSkip("associateTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf("first", "second")
@@ -156,7 +148,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-09: associateByTo maps keys to original elements
 
     func testAssociateByToPopulatesDestination() throws {
-        throw XCTSkip("associateByTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf("apple", "banana", "cherry")
@@ -173,7 +164,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-10: associateByTo with keySelector and valueTransform
 
     func testAssociateByToWithValueTransform() throws {
-        throw XCTSkip("associateByTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf("apple", "banana")
@@ -189,7 +179,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-11: associateByTo overwrites on duplicate key
 
     func testAssociateByToOverwritesDuplicateKey() throws {
-        throw XCTSkip("associateByTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf("abc", "def")
@@ -204,7 +193,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-12: associateWithTo maps element to value
 
     func testAssociateWithToPopulatesDestination() throws {
-        throw XCTSkip("associateWithTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf(1, 2, 3)
@@ -222,7 +210,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-13: associateWithTo with pre-populated destination retains existing entries
 
     func testAssociateWithToRetainsExistingEntries() throws {
-        throw XCTSkip("associateWithTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf(2, 3)
@@ -239,7 +226,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-14: groupByTo groups elements into destination map buckets
 
     func testGroupByToPopulatesDestination() throws {
-        throw XCTSkip("groupByTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf(1, 2, 3, 4, 5, 6)
@@ -256,7 +242,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-15: groupByTo appends to existing buckets in destination
 
     func testGroupByToAppendsToBuckets() throws {
-        throw XCTSkip("groupByTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val first = listOf(1, 3)
@@ -273,7 +258,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-16: groupByTo with empty source leaves destination unchanged
 
     func testGroupByToEmptySourceLeavesDestination() throws {
-        throw XCTSkip("groupByTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = emptyList<Int>()
@@ -288,7 +272,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-17: groupByTo with keySelector and valueTransform
 
     func testGroupByToWithValueTransform() throws {
-        throw XCTSkip("groupByTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf("apple", "avocado", "banana")
@@ -351,7 +334,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-21: toCollection appends elements to destination collection
 
     func testToCollectionAppendsToDestination() throws {
-        throw XCTSkip("toCollection not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf(3, 4, 5)
@@ -367,7 +349,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-22: toCollection with empty source leaves destination unchanged
 
     func testToCollectionEmptySourceLeavesDestination() throws {
-        throw XCTSkip("toCollection not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = emptyList<Int>()
@@ -383,7 +364,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-23: toCollection into MutableSet deduplicates
 
     func testToCollectionIntoMutableSet() throws {
-        throw XCTSkip("toCollection not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf(1, 2, 2, 3, 3, 3)
@@ -492,7 +472,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-30: filterTo preserves insertion order in MutableList
 
     func testFilterToPreservesInsertionOrder() throws {
-        throw XCTSkip("filterTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf(5, 1, 4, 2, 3)
@@ -507,7 +486,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-31: mapTo preserves insertion order in MutableList
 
     func testMapToPreservesInsertionOrder() throws {
-        throw XCTSkip("mapTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf("c", "a", "b")
@@ -522,7 +500,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-32: associateTo with empty source leaves destination unchanged
 
     func testAssociateToEmptySourceLeavesDestination() throws {
-        throw XCTSkip("associateTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = emptyList<String>()
@@ -538,7 +515,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-33: filterTo into LinkedHashSet preserves insertion order and deduplicates
 
     func testFilterToLinkedHashSetPreservesOrder() throws {
-        throw XCTSkip("filterTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf(3, 1, 4, 1, 5, 9, 2, 6)
@@ -553,7 +529,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-34: mapNotNullTo filters nulls and appends non-null transformed values
 
     func testMapNotNullToFiltersNulls() throws {
-        throw XCTSkip("mapNotNullTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf("1", "abc", "2", "def", "3")
@@ -568,7 +543,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-35: filterNotTo appends non-matching elements to destination
 
     func testFilterNotToAppendsNonMatchingElements() throws {
-        throw XCTSkip("filterNotTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf(1, 2, 3, 4, 5)
@@ -584,7 +558,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-36: filterIsInstanceTo collects elements of given type
 
     func testFilterIsInstanceToCollectsTypedElements() throws {
-        throw XCTSkip("filterIsInstanceTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src: List<Any> = listOf(1, "hello", 2, "world", 3.0)
@@ -599,7 +572,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-37: mapIndexedTo appends indexed transformed elements
 
     func testMapIndexedToAppendsIndexedElements() throws {
-        throw XCTSkip("mapIndexedTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf("a", "b", "c")
@@ -614,12 +586,11 @@ extension CodegenBackendIntegrationTests {
     // MARK: - STDLIB-021-38: flatMapIndexedTo appends flattened indexed elements
 
     func testFlatMapIndexedToAppendsElements() throws {
-        throw XCTSkip("flatMapIndexedTo not yet implemented (KSWIFTK-SEMA-0024)")
         let source = """
         fun main() {
             val src = listOf("ab", "cd")
             val dest = mutableListOf<String>()
-            src.flatMapIndexedTo(dest) { idx, value -> value.map { idx.toString() + it.toString() } }
+            src.flatMapIndexedTo(dest) { idx, value -> listOf(idx.toString() + value, value.uppercase()) }
             println(dest)
         }
         """
