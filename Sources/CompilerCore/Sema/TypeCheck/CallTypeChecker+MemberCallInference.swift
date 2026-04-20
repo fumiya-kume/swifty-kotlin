@@ -1125,7 +1125,9 @@ extension CallTypeChecker {
             "fold", "foldRight", "reduce", "reduceOrNull", "reduceRight", "foldIndexed", "foldRightIndexed", "reduceIndexed", "reduceIndexedOrNull",
             "scan", "scanIndexed", "runningFold", "runningFoldIndexed", "runningReduce", "runningReduceIndexed", "scanReduce",
             "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
-            "associateBy", "associateWith", "associate", "associateByTo", "associateWithTo", "groupByTo", "forEachIndexed", "mapIndexed",
+            "associateBy", "associateWith", "associate", "associateTo", "associateByTo", "associateWithTo", "groupByTo",
+            "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo", "mapIndexedTo", "flatMapIndexedTo",
+            "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch",
@@ -1227,6 +1229,28 @@ extension CallTypeChecker {
             }
         }
 
+        if interner.resolve(calleeName) == "toCollection",
+           args.count == 1,
+           isCollectionReceiver
+        {
+            let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            sema.bindings.markCollectionExpr(id)
+            let finalType = safeCall ? sema.types.makeNullable(destinationType) : destinationType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
+        if interner.resolve(calleeName) == "filterIsInstanceTo",
+           args.count == 1,
+           isCollectionReceiver
+        {
+            let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            sema.bindings.markCollectionExpr(id)
+            let finalType = safeCall ? sema.types.makeNullable(destinationType) : destinationType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
         // --- Collection higher-order functions (STDLIB-005) ---
         if isCollectionHOF {
             let calleeStr = interner.resolve(calleeName)
@@ -1240,6 +1264,150 @@ extension CallTypeChecker {
             )
 
             let resultType: TypeID
+            let destinationCollectionHOFs: Set = [
+                "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo",
+                "mapIndexedTo", "flatMapIndexedTo", "associateTo",
+            ]
+            if destinationCollectionHOFs.contains(calleeStr), args.count == 2 {
+                let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                let nonNullableDestinationType = sema.types.makeNonNullable(destinationType)
+                let destinationElementType: TypeID = if case let .classType(destClassType) = sema.types.kind(of: nonNullableDestinationType),
+                                                          destClassType.args.count >= 1
+                {
+                    switch destClassType.args[0] {
+                    case let .invariant(id), let .out(id), let .in(id): id
+                    case .star: sema.types.anyType
+                    }
+                } else {
+                    sema.types.anyType
+                }
+                let destinationMapKeyType: TypeID = if case let .classType(destClassType) = sema.types.kind(of: nonNullableDestinationType),
+                                                          destClassType.args.count >= 2
+                {
+                    switch destClassType.args[0] {
+                    case let .invariant(id), let .out(id), let .in(id): id
+                    case .star: sema.types.anyType
+                    }
+                } else {
+                    sema.types.anyType
+                }
+                let destinationMapValueType: TypeID = if case let .classType(destClassType) = sema.types.kind(of: nonNullableDestinationType),
+                                                            destClassType.args.count >= 2
+                {
+                    switch destClassType.args[1] {
+                    case let .invariant(id), let .out(id), let .in(id): id
+                    case .star: sema.types.anyType
+                    }
+                } else {
+                    sema.types.anyType
+                }
+                let pairReturnType: TypeID = if calleeStr == "associateTo" {
+                    if let pairSymbol = lookupStdlibSymbol("Pair", symbols: sema.symbols, interner: interner) {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: pairSymbol,
+                            args: [.invariant(destinationMapKeyType), .invariant(destinationMapValueType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        sema.types.anyType
+                    }
+                } else {
+                    sema.types.anyType
+                }
+                let lambdaExpectedType: TypeID = switch calleeStr {
+                case "filterTo", "filterNotTo":
+                    sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType],
+                        returnType: sema.types.booleanType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                case "mapTo":
+                    sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType],
+                        returnType: destinationElementType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                case "flatMapTo":
+                    {
+                        if let collectionSymbol = lookupStdlibSymbol("Collection", symbols: sema.symbols, interner: interner) {
+                            let iterableType = sema.types.make(.classType(ClassType(
+                                classSymbol: collectionSymbol,
+                                args: [.invariant(destinationElementType)],
+                                nullability: .nonNull
+                            )))
+                            return sema.types.make(.functionType(FunctionType(
+                                params: [collectionElementType],
+                                returnType: iterableType,
+                                isSuspend: false,
+                                nullability: .nonNull
+                            )))
+                        } else {
+                            return sema.types.make(.functionType(FunctionType(
+                                params: [collectionElementType],
+                                returnType: sema.types.anyType,
+                                isSuspend: false,
+                                nullability: .nonNull
+                            )))
+                        }
+                    }()
+                case "mapNotNullTo":
+                    sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType],
+                        returnType: sema.types.makeNullable(destinationElementType),
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                case "mapIndexedTo":
+                    sema.types.make(.functionType(FunctionType(
+                        params: [sema.types.intType, collectionElementType],
+                        returnType: destinationElementType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                case "flatMapIndexedTo":
+                    {
+                        if let collectionSymbol = lookupStdlibSymbol("Collection", symbols: sema.symbols, interner: interner) {
+                            let iterableType = sema.types.make(.classType(ClassType(
+                                classSymbol: collectionSymbol,
+                                args: [.invariant(destinationElementType)],
+                                nullability: .nonNull
+                            )))
+                            return sema.types.make(.functionType(FunctionType(
+                                params: [sema.types.intType, collectionElementType],
+                                returnType: iterableType,
+                                isSuspend: false,
+                                nullability: .nonNull
+                            )))
+                        } else {
+                            return sema.types.make(.functionType(FunctionType(
+                                params: [sema.types.intType, collectionElementType],
+                                returnType: sema.types.anyType,
+                                isSuspend: false,
+                                nullability: .nonNull
+                            )))
+                        }
+                    }()
+                case "associateTo":
+                    sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType],
+                        returnType: pairReturnType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                default:
+                    sema.types.anyType
+                }
+                if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                }
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = destinationType
+                let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
             switch calleeStr {
             case "map", "filter", "filterNot", "filterKeys", "filterValues", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
                  "count", "first", "last", "find", "associateBy", "associateWith", "associate",
