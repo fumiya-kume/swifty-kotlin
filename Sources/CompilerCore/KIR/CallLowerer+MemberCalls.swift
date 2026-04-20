@@ -2970,6 +2970,40 @@ extension CallLowerer {
             }
         }
 
+        // String stdlib: removeRange(startIndex, endIndex) (STDLIB-TEXT-EDGE-008)
+        if args.count == 2, interner.resolve(calleeName) == "removeRange" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_removeRange"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: true,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // String stdlib: removeRange(range) (STDLIB-TEXT-EDGE-008)
+        if args.count == 1, interner.resolve(calleeName) == "removeRange" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_removeRange_range"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0]],
+                    result: result,
+                    canThrow: true,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         // String stdlib: replaceRange(range, replacement) (STDLIB-188)
         if args.count == 2, interner.resolve(calleeName) == "replaceRange" {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
