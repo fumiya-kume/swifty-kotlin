@@ -2119,6 +2119,35 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-TEXT-EDGE-009: CharSequence?.contentEquals ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "contentEquals",
+            externalLinkName: "kk_string_contentEquals",
+            receiverType: nullableStringType,
+            parameters: [
+                ("other", nullableStringType, false, false),
+            ],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "contentEquals",
+            externalLinkName: "kk_string_contentEquals_ignoreCase",
+            receiverType: nullableStringType,
+            parameters: [
+                ("other", nullableStringType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureKotlinTextPackage(

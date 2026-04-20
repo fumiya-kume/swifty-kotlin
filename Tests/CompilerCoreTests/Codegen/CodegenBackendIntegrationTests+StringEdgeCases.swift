@@ -62,4 +62,54 @@ extension CodegenBackendIntegrationTests {
             )
         }
     }
+
+    func testCodegenCompilesStringContentEqualsEdgeCases() throws {
+        let source = """
+        fun main() {
+            val a: String? = "hello"
+            val b: String? = "hello"
+            val c: String? = "HELLO"
+            val d: String? = null
+            val e: String? = null
+
+            // Basic contentEquals
+            println(a.contentEquals(b))
+            println(a.contentEquals(c))
+            println(a.contentEquals(d))
+            println(d.contentEquals(e))
+
+            // contentEquals with ignoreCase
+            println(a.contentEquals(c, true))
+            println(a.contentEquals(c, false))
+            println(d.contentEquals(e, true))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "StringContentEqualsEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                true
+                false
+                false
+                true
+                true
+                false
+                true
+                """
+                + "\n"
+            )
+        }
+    }
 }
