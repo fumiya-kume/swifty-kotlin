@@ -413,10 +413,12 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         let expectedCompanionLinks: Set<String> = [
             "kk_uuid_random",
             "kk_uuid_parse",
+            "kk_uuid_fromLongs",
+            "kk_uuid_fromByteArray",
             "kk_uuid_nameUUIDFromBytes",
         ]
         var foundLinks: Set<String> = []
-        for memberName in ["random", "parse", "nameUUIDFromBytes"] {
+        for memberName in ["random", "parse", "fromLongs", "fromByteArray", "nameUUIDFromBytes"] {
             let path = companionFQ + [memberName]
             let links = allExternalLinks(fqPath: path, sema: sema, interner: interner)
             foundLinks.formUnion(links)

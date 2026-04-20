@@ -111,6 +111,20 @@ final class UuidFromLongsFromByteArraySemaTests: XCTestCase {
             XCTFail("Uuid.fromByteArray has no signature"); return
         }
         XCTAssertEqual(sig.parameterTypes.count, 1, "Uuid.fromByteArray must take 1 parameter")
+        let byteArrayFQ = ["kotlin", "ByteArray"].map { interner.intern($0) }
+        guard let byteArraySym = sema.symbols.lookup(fqName: byteArrayFQ) else {
+            XCTFail("kotlin.ByteArray class symbol missing"); return
+        }
+        let expectedByteArrayType = sema.types.make(.classType(ClassType(
+            classSymbol: byteArraySym,
+            args: [],
+            nullability: .nonNull
+        )))
+        XCTAssertEqual(
+            sig.parameterTypes[0],
+            expectedByteArrayType,
+            "Uuid.fromByteArray parameter must be of type ByteArray"
+        )
     }
 
     func testUuidFromByteArrayReturnTypeIsUuid() throws {

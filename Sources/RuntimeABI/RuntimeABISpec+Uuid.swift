@@ -82,6 +82,24 @@ public extension RuntimeABISpec {
             section: "Uuid"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_uuid_fromLongs",
+            parameters: [
+                RuntimeABIParameter(name: "mostSignificantBits", type: .intptr),
+                RuntimeABIParameter(name: "leastSignificantBits", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Uuid"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uuid_fromByteArray",
+            parameters: [
+                RuntimeABIParameter(name: "byteArray", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Uuid"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_uuid_nameUUIDFromBytes",
             parameters: [
                 RuntimeABIParameter(name: "nameArray", type: .intptr),
