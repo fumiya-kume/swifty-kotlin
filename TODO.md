@@ -59,7 +59,7 @@
 ### Phase 2: コレクション・Sequence・Range
 - [ ] STDLIB-GAP-PH2: `kotlin.collections` / `kotlin.sequences` / `kotlin.ranges` の未対応を潰す
 - [x] STDLIB-020: `Sequence` の lazy 性と builder 系 API の評価順を固定
-- [ ] STDLIB-021: mutable collection 変換 API と destination variant の差分を潰す
+- [x] STDLIB-021: mutable collection 変換 API と destination variant の差分を潰す
 - [ ] STDLIB-SEQ-001: `Sequence.map/filter + take` の lazy short-circuit を追加する
 - [ ] STDLIB-SEQ-002: `generateSequence` の null 終端と infinite source + `take` を追加する
 - [ ] STDLIB-SEQ-003: `sequence { yieldAll(...) }` builder semantics を追加する

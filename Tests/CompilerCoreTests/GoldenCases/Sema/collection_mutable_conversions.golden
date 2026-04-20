@@ -3696,58 +3696,88 @@ symbol s3694 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public
 symbol s3695 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
 symbol s3696 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
 symbol s3697 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
-symbol s3698 kind=class fq=Temperature vis=public flags=_
-symbol s3699 kind=constructor fq=Temperature.<init> vis=public flags=_ sig=recv=Class#3698 params=[Int] ret=Class#3698 suspend=0 defaults=[0] vararg=[0]
-symbol s3700 kind=valueParameter fq=Temperature.<init>.$3699.degrees vis=private flags=_
-symbol s3701 kind=function fq=Temperature.compareTo vis=public flags=overrideMember sig=recv=Class#3698 params=[Class#3698] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s3702 kind=valueParameter fq=Temperature.compareTo.$3701.other vis=private flags=_
-symbol s3703 kind=property fq=Temperature.degrees vis=public flags=_ type=Int
-symbol s3704 kind=function fq=max vis=public flags=_ sig=recv=_ params=[T#3705,T#3705] ret=T#3705 suspend=0 defaults=[0,0] vararg=[0,0] bounds=[Class#134<T#3705>]
-symbol s3705 kind=typeParameter fq=max.$3704.T vis=private flags=_
-symbol s3706 kind=valueParameter fq=max.$3704.a vis=private flags=_
-symbol s3707 kind=valueParameter fq=max.$3704.b vis=private flags=_
-symbol s3708 kind=function fq=nullSafeCompare vis=public flags=_ sig=recv=_ params=[Class#3698?,Class#3698] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3709 kind=valueParameter fq=nullSafeCompare.$3708.a vis=private flags=_
-symbol s3710 kind=valueParameter fq=nullSafeCompare.$3708.b vis=private flags=_
-symbol s3711 kind=function fq=compareInts vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3712 kind=valueParameter fq=compareInts.$3711.a vis=private flags=_
-symbol s3713 kind=valueParameter fq=compareInts.$3711.b vis=private flags=_
-symbol s3714 kind=function fq=compareTemperatures vis=public flags=_ sig=recv=_ params=[Class#3698,Class#3698] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3715 kind=valueParameter fq=compareTemperatures.$3714.a vis=private flags=_
-symbol s3716 kind=valueParameter fq=compareTemperatures.$3714.b vis=private flags=_
-symbol s3717 kind=function fq=compareGe vis=public flags=_ sig=recv=_ params=[Class#3698,Class#3698] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3718 kind=valueParameter fq=compareGe.$3717.a vis=private flags=_
-symbol s3719 kind=valueParameter fq=compareGe.$3717.b vis=private flags=_
+symbol s3698 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3699 kind=local fq=__local_5.items vis=private flags=_ type=Class#104<Int>
+symbol s3700 kind=local fq=__local_8.ml1 vis=private flags=_ type=Class#254<Int>
+symbol s3701 kind=local fq=__local_17.ms1 vis=private flags=_ type=Class#283<Int>
+symbol s3702 kind=local fq=__local_28.hs1 vis=private flags=_ type=Class#283<Int>
+symbol s3703 kind=local fq=__local_42.col vis=private flags=_ type=Class#118<String>
+symbol s3704 kind=local fq=__local_45.ml2 vis=private flags=_ type=Class#254<String>
+symbol s3705 kind=local fq=__local_60.map vis=private flags=_ type=Class#292<String, out Int>
+symbol s3706 kind=local fq=__local_63.mm vis=private flags=_ type=Class#330<String, Int>
 file f0 package=_
-  decl d2 class Temperature sym=s3698
-  decl d3 fun max suspend=0 inline=0 sym=s3704
-  decl d4 fun nullSafeCompare suspend=0 inline=0 sym=s3708
-  decl d5 fun compareInts suspend=0 inline=0 sym=s3711
-  decl d6 fun compareTemperatures suspend=0 inline=0 sym=s3714
-  decl d7 fun compareGe suspend=0 inline=0 sym=s3717
-expr e0 this type=Class#3698
-expr e1 memberCall recv=e0 callee=degrees args=[] type=Int ref=s3703
-expr e2 name(other) type=Class#3698 ref=s3702
-expr e3 memberCall recv=e2 callee=degrees args=[] type=Int ref=s3703
-expr e4 binary(subtract) lhs=e1 rhs=e3 type=Int
-expr e5 name(a) type=T#3705 ref=s3706
-expr e6 name(b) type=T#3705 ref=s3707
-expr e7 binary(greaterThan) lhs=e5 rhs=e6 type=Boolean call=s136 map=[0->0] targs=[T#3705]
-expr e8 name(a) type=T#3705 ref=s3706
-expr e9 name(b) type=T#3705 ref=s3707
-expr e10 if cond=e7 then=e8 else=e9 type=T#3705
-expr e11 name(a) type=Class#3698? ref=s3709
-expr e12 name(b) type=Class#3698 ref=s3710
-expr e13 safeMemberCall recv=e11 callee=compareTo args=[_:e12] type=Int? call=s3701 map=[0->0] targs=[]
-expr e14 int(1) type=Int
-expr e15 unary(unaryMinus) operand=e14 type=Int
-expr e16 binary(elvis) lhs=e13 rhs=e15 type=Int
-expr e17 name(a) type=Int ref=s3712
-expr e18 name(b) type=Int ref=s3713
-expr e19 binary(lessThan) lhs=e17 rhs=e18 type=Boolean
-expr e20 name(a) type=Class#3698 ref=s3715
-expr e21 name(b) type=Class#3698 ref=s3716
-expr e22 binary(lessThan) lhs=e20 rhs=e21 type=<error>
-expr e23 name(a) type=Class#3698 ref=s3718
-expr e24 name(b) type=Class#3698 ref=s3719
-expr e25 binary(greaterOrEqual) lhs=e23 rhs=e24 type=<error>
+  decl d0 fun main suspend=0 inline=0 sym=s3698
+expr e0 name(listOf) type=_
+expr e1 int(1) type=Int
+expr e2 int(2) type=Int
+expr e3 int(3) type=Int
+expr e4 call callee=e0 args=[_:e1,_:e2,_:e3] type=Class#104<Int>
+expr e5 localDecl items mutable=0 type=t1 init=e4 type=Unit ref=s3699
+expr e6 name(items) type=Class#104<Int> ref=s3699
+expr e7 memberCall recv=e6 callee=toMutableList args=[] type=Class#254<Int> call=s327 map=[] targs=[]
+expr e8 localDecl ml1 mutable=0 type=t3 init=e7 type=Unit ref=s3700
+expr e9 name(ml1) type=Class#254<Int> ref=s3700
+expr e10 int(4) type=Int
+expr e11 memberCall recv=e9 callee=add args=[_:e10] type=Boolean call=s257 map=[0->0] targs=[Int]
+expr e12 name(println) type=_
+expr e13 name(ml1) type=Class#254<Int> ref=s3700
+expr e14 call callee=e12 args=[_:e13] type=Unit call=s1768 map=[0->0] targs=[]
+expr e15 name(items) type=Class#104<Int> ref=s3699
+expr e16 memberCall recv=e15 callee=toMutableSet args=[] type=Class#283<Int> call=s328 map=[] targs=[Int]
+expr e17 localDecl ms1 mutable=0 type=t5 init=e16 type=Unit ref=s3701
+expr e18 name(ms1) type=Class#283<Int> ref=s3701
+expr e19 int(4) type=Int
+expr e20 memberCall recv=e18 callee=add args=[_:e19] type=Boolean call=s285 map=[0->0] targs=[Int]
+expr e21 name(println) type=_
+expr e22 name(ms1) type=Class#283<Int> ref=s3701
+expr e23 int(4) type=Int
+expr e24 memberCall recv=e22 callee=contains args=[_:e23] type=Boolean call=s274 map=[0->0] targs=[]
+expr e25 call callee=e21 args=[_:e24] type=Unit call=s1768 map=[0->0] targs=[]
+expr e26 name(items) type=Class#104<Int> ref=s3699
+expr e27 memberCall recv=e26 callee=toHashSet args=[] type=Class#283<Int> call=s329 map=[] targs=[Int]
+expr e28 localDecl hs1 mutable=0 type=t7 init=e27 type=Unit ref=s3702
+expr e29 name(hs1) type=Class#283<Int> ref=s3702
+expr e30 int(5) type=Int
+expr e31 memberCall recv=e29 callee=add args=[_:e30] type=Boolean call=s285 map=[0->0] targs=[Int]
+expr e32 name(println) type=_
+expr e33 name(hs1) type=Class#283<Int> ref=s3702
+expr e34 int(5) type=Int
+expr e35 memberCall recv=e33 callee=contains args=[_:e34] type=Boolean call=s274 map=[0->0] targs=[]
+expr e36 call callee=e32 args=[_:e35] type=Unit call=s1768 map=[0->0] targs=[]
+expr e37 name(listOf) type=_
+expr e38 string(a) type=String
+expr e39 string(b) type=String
+expr e40 string(c) type=String
+expr e41 call callee=e37 args=[_:e38,_:e39,_:e40] type=Class#118<String>
+expr e42 localDecl col mutable=0 type=t9 init=e41 type=Unit ref=s3703
+expr e43 name(col) type=Class#118<String> ref=s3703
+expr e44 memberCall recv=e43 callee=toMutableList args=[] type=Class#254<String> call=s326 map=[] targs=[]
+expr e45 localDecl ml2 mutable=0 type=t11 init=e44 type=Unit ref=s3704
+expr e46 name(ml2) type=Class#254<String> ref=s3704
+expr e47 string(d) type=String
+expr e48 memberCall recv=e46 callee=add args=[_:e47] type=Boolean call=s257 map=[0->0] targs=[String]
+expr e49 name(println) type=_
+expr e50 name(ml2) type=Class#254<String> ref=s3704
+expr e51 call callee=e49 args=[_:e50] type=Unit call=s1768 map=[0->0] targs=[]
+expr e52 name(mapOf) type=_
+expr e53 string(x) type=String
+expr e54 int(1) type=Int
+expr e55 memberCall recv=e53 callee=to args=[_:e54] type=Class#75<String, Int>
+expr e56 string(y) type=String
+expr e57 int(2) type=Int
+expr e58 memberCall recv=e56 callee=to args=[_:e57] type=Class#75<String, Int>
+expr e59 call callee=e52 args=[_:e55,_:e58] type=Class#292<String, out Int>
+expr e60 localDecl map mutable=0 type=_ init=e59 type=Unit ref=s3705
+expr e61 name(map) type=Class#292<String, out Int> ref=s3705
+expr e62 memberCall recv=e61 callee=toMutableMap args=[] type=Class#330<String, Int> call=s339 map=[] targs=[String,Int]
+expr e63 localDecl mm mutable=0 type=t14 init=e62 type=Unit ref=s3706
+expr e64 name(mm) type=Class#330<String, Int> ref=s3706
+expr e65 string(z) type=String
+expr e66 indexedAccess receiver=e64 indices=[e65] type=_
+expr e67 int(3) type=Int
+expr e68 indexedAssign receiver=e64 indices=[e65] value=e67 type=Unit call=s333 map=[0->0,1->1] targs=[String,Int]
+expr e69 name(println) type=_
+expr e70 name(mm) type=Class#330<String, Int> ref=s3706
+expr e71 string(z) type=String
+expr e72 memberCall recv=e70 callee=containsKey args=[_:e71] type=Boolean call=s296 map=[0->0] targs=[]
+expr e73 call callee=e69 args=[_:e72] type=Unit call=s1768 map=[0->0] targs=[]

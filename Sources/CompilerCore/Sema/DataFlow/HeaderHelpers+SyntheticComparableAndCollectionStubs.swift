@@ -289,6 +289,9 @@ extension DataFlowSemaPhase {
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
 
+        // STDLIB-021: Iterable mutable conversion members are registered later once
+        // MutableList / MutableSet stubs exist — see calls below after those stubs.
+
         let collectionInterfaceSymbol = registerSyntheticCollectionStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
@@ -376,6 +379,39 @@ extension DataFlowSemaPhase {
             collectionInterfaceSymbol: collectionInterfaceSymbol,
             listInterfaceSymbol: listInterfaceSymbol
         )
+
+        // STDLIB-021: Collection.toMutableList() and Iterable mutable conversions
+        if let mutableListSym = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("MutableList")]
+        ),
+        let mutableSetSym = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("MutableSet")]
+        ) {
+            registerCollectionToMutableListMember(
+                symbols: symbols, types: types, interner: interner,
+                kotlinCollectionsPkg: kotlinCollectionsPkg,
+                collectionInterfaceSymbol: collectionInterfaceSymbol,
+                mutableListSymbol: mutableListSym
+            )
+            registerIterableToMutableListMember(
+                symbols: symbols, types: types, interner: interner,
+                kotlinCollectionsPkg: kotlinCollectionsPkg,
+                iterableInterfaceSymbol: iterableInterfaceSymbol,
+                mutableListSymbol: mutableListSym
+            )
+            registerIterableToMutableSetMember(
+                symbols: symbols, types: types, interner: interner,
+                kotlinCollectionsPkg: kotlinCollectionsPkg,
+                iterableInterfaceSymbol: iterableInterfaceSymbol,
+                mutableSetSymbol: mutableSetSym
+            )
+            registerIterableToHashSetMember(
+                symbols: symbols, types: types, interner: interner,
+                kotlinCollectionsPkg: kotlinCollectionsPkg,
+                iterableInterfaceSymbol: iterableInterfaceSymbol,
+                mutableSetSymbol: mutableSetSym
+            )
+        }
 
         registerSyntheticMutableMapStub(
             symbols: symbols, types: types, interner: interner,
@@ -1122,6 +1158,219 @@ extension DataFlowSemaPhase {
                 for: toCollectionSym
             )
         }
+    }
+
+    /// Register `Collection<E>.toMutableList(): MutableList<E>` (STDLIB-021).
+    private func registerCollectionToMutableListMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        collectionInterfaceSymbol: SymbolID,
+        mutableListSymbol: SymbolID
+    ) {
+        let collectionFQName = kotlinCollectionsPkg + [interner.intern("Collection")]
+        guard let typeParamSymbol = symbols.lookup(
+            fqName: collectionFQName + [interner.intern("E")]
+        ) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol, nullability: .nonNull
+        )))
+        let collectionReceiverType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let mutableListReturnType = types.make(.classType(ClassType(
+            classSymbol: mutableListSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let memberName = interner.intern("toMutableList")
+        let memberFQName = collectionFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(collectionInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_collection_toMutableList", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: collectionReceiverType,
+                parameterTypes: [],
+                returnType: mutableListReturnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.toMutableList(): MutableList<E>` (STDLIB-021).
+    private func registerIterableToMutableListMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        iterableInterfaceSymbol: SymbolID,
+        mutableListSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("toMutableList")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol, nullability: .nonNull
+        )))
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: mutableListSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_iterable_toMutableList", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.toMutableSet(): MutableSet<E>` (STDLIB-021).
+    private func registerIterableToMutableSetMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        iterableInterfaceSymbol: SymbolID,
+        mutableSetSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("toMutableSet")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol, nullability: .nonNull
+        )))
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: mutableSetSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_iterable_toMutableSet", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.toHashSet(): HashSet<E>` (STDLIB-021).
+    /// At runtime HashSet is backed by the same RuntimeSetBox as MutableSet.
+    private func registerIterableToHashSetMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        iterableInterfaceSymbol: SymbolID,
+        mutableSetSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("toHashSet")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol, nullability: .nonNull
+        )))
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        // Return MutableSet<E> (HashSet is a type alias for MutableSet at the runtime level)
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: mutableSetSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_iterable_toHashSet", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
     }
 
     private func registerSyntheticIterableStub(

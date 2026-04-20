@@ -2148,6 +2148,57 @@ public func kk_map_orEmpty(_ mapRaw: Int) -> Int {
     return mapRaw
 }
 
+// MARK: - Iterable / Collection mutable conversion APIs (STDLIB-021)
+
+/// Generic `Iterable<T>.toMutableList()` that accepts any collection handle (List, Set, etc.).
+@_cdecl("kk_iterable_toMutableList")
+public func kk_iterable_toMutableList(_ iterableRaw: Int) -> Int {
+    if let elements = runtimeCollectionElements(from: iterableRaw) {
+        return registerRuntimeObject(RuntimeListBox(elements: elements))
+    }
+    if let array = runtimeArrayBox(from: iterableRaw) {
+        return registerRuntimeObject(RuntimeListBox(elements: array.elements))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: []))
+}
+
+/// Generic `Iterable<T>.toMutableSet()` that accepts any collection handle (List, Set, etc.).
+@_cdecl("kk_iterable_toMutableSet")
+public func kk_iterable_toMutableSet(_ iterableRaw: Int) -> Int {
+    if let elements = runtimeCollectionElements(from: iterableRaw) {
+        return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(elements)))
+    }
+    if let array = runtimeArrayBox(from: iterableRaw) {
+        return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(array.elements)))
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: []))
+}
+
+/// Generic `Iterable<T>.toHashSet()` that accepts any collection handle (List, Set, etc.).
+/// Semantically equivalent to toMutableSet() at the runtime level.
+@_cdecl("kk_iterable_toHashSet")
+public func kk_iterable_toHashSet(_ iterableRaw: Int) -> Int {
+    if let elements = runtimeCollectionElements(from: iterableRaw) {
+        return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(elements)))
+    }
+    if let array = runtimeArrayBox(from: iterableRaw) {
+        return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(array.elements)))
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: []))
+}
+
+/// Generic `Collection<T>.toMutableList()` that accepts any collection handle (List, Set, etc.).
+@_cdecl("kk_collection_toMutableList")
+public func kk_collection_toMutableList(_ collRaw: Int) -> Int {
+    if let elements = runtimeCollectionElements(from: collRaw) {
+        return registerRuntimeObject(RuntimeListBox(elements: elements))
+    }
+    if let array = runtimeArrayBox(from: collRaw) {
+        return registerRuntimeObject(RuntimeListBox(elements: array.elements))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: []))
+}
+
 /// Generic `Iterable.asSequence()` that accepts any collection handle (List, Set, etc.).
 /// Falls back to fatalError only when the handle is truly unrecognized.
 @_cdecl("kk_iterable_asSequence")
