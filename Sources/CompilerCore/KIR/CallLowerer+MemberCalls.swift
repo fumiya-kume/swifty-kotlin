@@ -2594,12 +2594,16 @@ extension CallLowerer {
                     return result
                 }
                 if calleeName == interner.intern("zipWithNext") {
+                    // String.zipWithNext overload dispatch: no-arg → kk_string_zipWithNext,
+                    // transform → kk_string_zipWithNextTransform.
+                    let runtimeCallee = args.isEmpty ? "kk_string_zipWithNext" : "kk_string_zipWithNextTransform"
+                    let callArguments = args.isEmpty ? [loweredReceiverID] : [loweredReceiverID] + normalizedArgIDs
                     instructions.append(.call(
                         symbol: nil,
-                        callee: interner.intern("kk_string_zipWithNext"),
-                        arguments: [loweredReceiverID],
+                        callee: interner.intern(runtimeCallee),
+                        arguments: callArguments,
                         result: result,
-                        canThrow: false,
+                        canThrow: !args.isEmpty,
                         thrownResult: nil
                     ))
                     return result

@@ -2865,6 +2865,27 @@ final class CallTypeChecker {
                     interner: interner,
                     elementType: sema.types.make(.primitive(.char, .nonNull))
                 )
+                let pairCharCharType: TypeID = {
+                    let pairFQName: [InternedString] = [
+                        interner.intern("kotlin"),
+                        interner.intern("Pair"),
+                    ]
+                    guard let pairSymbol = sema.symbols.lookup(fqName: pairFQName) else {
+                        return sema.types.anyType
+                    }
+                    let charType = sema.types.make(.primitive(.char, .nonNull))
+                    return sema.types.make(.classType(ClassType(
+                        classSymbol: pairSymbol,
+                        args: [.out(charType), .out(charType)],
+                        nullability: .nonNull
+                    )))
+                }()
+                let listPairCharCharType = makeSyntheticListType(
+                    symbols: sema.symbols,
+                    types: sema.types,
+                    interner: interner,
+                    elementType: pairCharCharType
+                )
                 let iterableCharType = makeSyntheticIterableType(
                     symbols: sema.symbols,
                     types: sema.types,
@@ -2877,6 +2898,37 @@ final class CallTypeChecker {
                     interner: interner,
                     fqName: [interner.intern("kotlin"), interner.intern("CharArray")]
                 )
+                if name == "zipWithNext" {
+                    let charType = sema.types.make(.primitive(.char, .nonNull))
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [charType, charType],
+                        returnType: sema.types.anyType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                    if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    }
+                    let lambdaType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    let lambdaReturnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
+                        fnType.returnType
+                    } else {
+                        sema.bindings.exprTypes[args[0].expr].flatMap { typeID in
+                            if case let .functionType(fnType) = sema.types.kind(of: typeID) {
+                                return fnType.returnType
+                            }
+                            return nil
+                        } ?? sema.types.anyType
+                    }
+                    let resultType = makeSyntheticListType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: lambdaReturnType
+                    )
+                    sema.bindings.bindExprType(id, type: resultType)
+                    return resultType
+                }
                 var stringResultType: TypeID?
                 if args.isEmpty {
                     stringResultType = switch name {
@@ -2890,6 +2942,7 @@ final class CallTypeChecker {
                     case "indexOf", "lastIndexOf": sema.types.intType
                     case "reversed": sema.types.stringType
                     case "toList": listCharType
+                    case "zipWithNext": listPairCharCharType
                     case "toCharArray": charArrayType
                     case "asIterable": iterableCharType
                     default: nil

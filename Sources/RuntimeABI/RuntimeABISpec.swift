@@ -6035,6 +6035,26 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         // STDLIB-316: String.zipWithNext()
+        RuntimeABIFunctionSpec(
+            name: "kk_string_zipWithNext",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        // STDLIB-316: String.zipWithNext(transform: (Char, Char) -> R)
+        RuntimeABIFunctionSpec(
+            name: "kk_string_zipWithNextTransform",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         // STDLIB-317: String.asSequence / asIterable
         RuntimeABIFunctionSpec(
             name: "kk_string_asSequence",
