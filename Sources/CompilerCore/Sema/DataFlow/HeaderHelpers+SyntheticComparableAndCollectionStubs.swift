@@ -1046,6 +1046,7 @@ extension DataFlowSemaPhase {
     }
 
     /// Register `Collection<E>.toList(): List<E>` so that `keys.toList()` / `values.toList()` resolve.
+    /// Also registers `Collection<E>.toCollection(destination)` for destination appends.
     /// Must be called after both Collection and List stubs are registered.
     private func registerCollectionToListMember(
         symbols: SymbolTable,
@@ -1096,6 +1097,31 @@ extension DataFlowSemaPhase {
             ),
             for: memberSymbol
         )
+
+        let toCollectionName = interner.intern("toCollection")
+        let toCollectionFQName = collectionFQName + [toCollectionName]
+        if symbols.lookup(fqName: toCollectionFQName) == nil {
+            let toCollectionSym = symbols.define(
+                kind: .function,
+                name: toCollectionName,
+                fqName: toCollectionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(collectionInterfaceSymbol, for: toCollectionSym)
+            symbols.setExternalLinkName("kk_collection_toCollection", for: toCollectionSym)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: collectionReceiverType,
+                    parameterTypes: [collectionReceiverType],
+                    returnType: collectionReceiverType,
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: toCollectionSym
+            )
+        }
     }
 
     private func registerSyntheticIterableStub(
@@ -1583,7 +1609,8 @@ extension DataFlowSemaPhase {
             listFQName: listFQName,
             listInterfaceSymbol: listInterfaceSymbol,
             listTypeParamSymbol: listTypeParamSymbol,
-            listTypeParamType: listTypeParamType
+            listTypeParamType: listTypeParamType,
+            collectionInterfaceSymbol: collectionInterfaceSymbol
         )
         registerListAggregateMembers(
             symbols: symbols, types: types, interner: interner,
@@ -2448,7 +2475,9 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         listInterfaceSymbol: SymbolID,
-        mapInterfaceSymbol: SymbolID
+        mapInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID
     ) {
         let pairSymbol = symbols.lookup(
             fqName: [interner.intern("kotlin"), interner.intern("Pair")]
@@ -2519,6 +2548,77 @@ extension DataFlowSemaPhase {
                 classTypeParameterCount: 0
             ),
             for: memberSymbol
+        )
+
+        let associateToMemberName = interner.intern("associateTo")
+        let associateToMemberFQName = listFQName + [associateToMemberName]
+        guard symbols.lookup(fqName: associateToMemberFQName) == nil else { return }
+
+        let associateToKeyTypeParamName = interner.intern("K")
+        let associateToValueTypeParamName = interner.intern("V")
+        let associateToKeyTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: associateToKeyTypeParamName,
+            fqName: associateToMemberFQName + [associateToKeyTypeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let associateToValueTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: associateToValueTypeParamName,
+            fqName: associateToMemberFQName + [associateToValueTypeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let associateToKeyType = types.make(.typeParam(TypeParamType(
+            symbol: associateToKeyTypeParamSymbol, nullability: .nonNull
+        )))
+        let associateToValueType = types.make(.typeParam(TypeParamType(
+            symbol: associateToValueTypeParamSymbol, nullability: .nonNull
+        )))
+        let associateToReceiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let associateToDestinationType = types.make(.classType(ClassType(
+            classSymbol: mapInterfaceSymbol,
+            args: [.out(associateToKeyType), .out(associateToValueType)],
+            nullability: .nonNull
+        )))
+        let associateToTransformType = types.make(.functionType(FunctionType(
+            params: [listTypeParamType],
+            returnType: types.make(.classType(ClassType(
+                classSymbol: pairSymbol,
+                args: [.out(associateToKeyType), .out(associateToValueType)],
+                nullability: .nonNull
+            ))),
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let associateToMemberSymbol = symbols.define(
+            kind: .function,
+            name: associateToMemberName,
+            fqName: associateToMemberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(listInterfaceSymbol, for: associateToMemberSymbol)
+        symbols.setParentSymbol(associateToMemberSymbol, for: associateToKeyTypeParamSymbol)
+        symbols.setParentSymbol(associateToMemberSymbol, for: associateToValueTypeParamSymbol)
+        symbols.setExternalLinkName("kk_list_associateTo", for: associateToMemberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: associateToReceiverType,
+                parameterTypes: [associateToDestinationType, associateToTransformType],
+                returnType: associateToDestinationType,
+                typeParameterSymbols: [listTypeParamSymbol, associateToKeyTypeParamSymbol, associateToValueTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: associateToMemberSymbol
         )
     }
 
@@ -2626,7 +2726,8 @@ extension DataFlowSemaPhase {
         listFQName: [InternedString],
         listInterfaceSymbol: SymbolID,
         listTypeParamSymbol: SymbolID,
-        listTypeParamType: TypeID
+        listTypeParamType: TypeID,
+        collectionInterfaceSymbol: SymbolID
     ) {
         let receiverType = types.make(.classType(ClassType(
             classSymbol: listInterfaceSymbol,
@@ -2677,7 +2778,9 @@ extension DataFlowSemaPhase {
             parameterTypes: [TypeID],
             externalLinkName: String,
             returnTypeOverride: TypeID? = nil,
-            typeParameterUpperBoundsList: [[TypeID]]? = nil
+            typeParameterSymbols: [SymbolID]? = nil,
+            typeParameterUpperBoundsList: [[TypeID]]? = nil,
+            reifiedTypeParameterIndices: Set<Int> = []
         ) {
             let alreadyRegistered = symbols.lookupAll(fqName: memberFQName).contains { symbolID in
                 guard let sig = symbols.functionSignature(for: symbolID) else { return false }
@@ -2699,7 +2802,8 @@ extension DataFlowSemaPhase {
                     receiverType: receiverType,
                     parameterTypes: parameterTypes,
                     returnType: returnTypeOverride ?? listReturnType,
-                    typeParameterSymbols: [listTypeParamSymbol],
+                    typeParameterSymbols: typeParameterSymbols ?? [listTypeParamSymbol],
+                    reifiedTypeParameterIndices: reifiedTypeParameterIndices,
                     typeParameterUpperBoundsList: typeParameterUpperBoundsList ?? [],
                     classTypeParameterCount: 1
                 ),
@@ -2751,6 +2855,249 @@ extension DataFlowSemaPhase {
         }
 
         registerMember(name: "flatten", parameterTypes: [], externalLinkName: "kk_list_flatten")
+
+        let destinationCollectionType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        registerMemberOverload(
+            memberName: interner.intern("filterTo"),
+            memberFQName: listFQName + [interner.intern("filterTo")],
+            parameterTypes: [
+                destinationCollectionType,
+                types.make(.functionType(FunctionType(
+                    params: [listTypeParamType],
+                    returnType: types.booleanType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            ],
+            externalLinkName: "kk_list_filterTo",
+            returnTypeOverride: destinationCollectionType
+        )
+        registerMemberOverload(
+            memberName: interner.intern("filterNotTo"),
+            memberFQName: listFQName + [interner.intern("filterNotTo")],
+            parameterTypes: [
+                destinationCollectionType,
+                types.make(.functionType(FunctionType(
+                    params: [listTypeParamType],
+                    returnType: types.booleanType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            ],
+            externalLinkName: "kk_list_filterNotTo",
+            returnTypeOverride: destinationCollectionType
+        )
+
+        let mapToTypeParamName = interner.intern("R")
+        let mapToTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: mapToTypeParamName,
+            fqName: listFQName + [interner.intern("mapTo"), mapToTypeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let mapToTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: mapToTypeParamSymbol, nullability: .nonNull
+        )))
+        let mapToDestinationType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(mapToTypeParamType)],
+            nullability: .nonNull
+        )))
+        registerMemberOverload(
+            memberName: interner.intern("mapTo"),
+            memberFQName: listFQName + [interner.intern("mapTo")],
+            parameterTypes: [
+                mapToDestinationType,
+                types.make(.functionType(FunctionType(
+                    params: [listTypeParamType],
+                    returnType: mapToTypeParamType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            ],
+            externalLinkName: "kk_list_mapTo",
+            returnTypeOverride: mapToDestinationType,
+            typeParameterSymbols: [listTypeParamSymbol, mapToTypeParamSymbol]
+        )
+
+        let flatMapToTypeParamName = interner.intern("R")
+        let flatMapToTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: flatMapToTypeParamName,
+            fqName: listFQName + [interner.intern("flatMapTo"), flatMapToTypeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let flatMapToTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: flatMapToTypeParamSymbol, nullability: .nonNull
+        )))
+        let flatMapToDestinationType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(flatMapToTypeParamType)],
+            nullability: .nonNull
+        )))
+        let flatMapToLambdaReturnType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(flatMapToTypeParamType)],
+            nullability: .nonNull
+        )))
+        registerMemberOverload(
+            memberName: interner.intern("flatMapTo"),
+            memberFQName: listFQName + [interner.intern("flatMapTo")],
+            parameterTypes: [
+                flatMapToDestinationType,
+                types.make(.functionType(FunctionType(
+                    params: [listTypeParamType],
+                    returnType: flatMapToLambdaReturnType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            ],
+            externalLinkName: "kk_list_flatMapTo",
+            returnTypeOverride: flatMapToDestinationType,
+            typeParameterSymbols: [listTypeParamSymbol, flatMapToTypeParamSymbol]
+        )
+
+        let mapNotNullToTypeParamName = interner.intern("R")
+        let mapNotNullToTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: mapNotNullToTypeParamName,
+            fqName: listFQName + [interner.intern("mapNotNullTo"), mapNotNullToTypeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let mapNotNullToTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: mapNotNullToTypeParamSymbol, nullability: .nonNull
+        )))
+        let mapNotNullToDestinationType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(mapNotNullToTypeParamType)],
+            nullability: .nonNull
+        )))
+        registerMemberOverload(
+            memberName: interner.intern("mapNotNullTo"),
+            memberFQName: listFQName + [interner.intern("mapNotNullTo")],
+            parameterTypes: [
+                mapNotNullToDestinationType,
+                types.make(.functionType(FunctionType(
+                    params: [listTypeParamType],
+                    returnType: types.nullableAnyType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            ],
+            externalLinkName: "kk_list_mapNotNullTo",
+            returnTypeOverride: mapNotNullToDestinationType,
+            typeParameterSymbols: [listTypeParamSymbol, mapNotNullToTypeParamSymbol]
+        )
+
+        let mapIndexedToTypeParamName = interner.intern("R")
+        let mapIndexedToTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: mapIndexedToTypeParamName,
+            fqName: listFQName + [interner.intern("mapIndexedTo"), mapIndexedToTypeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let mapIndexedToTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: mapIndexedToTypeParamSymbol, nullability: .nonNull
+        )))
+        let mapIndexedToDestinationType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(mapIndexedToTypeParamType)],
+            nullability: .nonNull
+        )))
+        registerMemberOverload(
+            memberName: interner.intern("mapIndexedTo"),
+            memberFQName: listFQName + [interner.intern("mapIndexedTo")],
+            parameterTypes: [
+                mapIndexedToDestinationType,
+                types.make(.functionType(FunctionType(
+                    params: [types.intType, listTypeParamType],
+                    returnType: mapIndexedToTypeParamType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            ],
+            externalLinkName: "kk_list_mapIndexedTo",
+            returnTypeOverride: mapIndexedToDestinationType,
+            typeParameterSymbols: [listTypeParamSymbol, mapIndexedToTypeParamSymbol]
+        )
+
+        let flatMapIndexedToTypeParamName = interner.intern("R")
+        let flatMapIndexedToTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: flatMapIndexedToTypeParamName,
+            fqName: listFQName + [interner.intern("flatMapIndexedTo"), flatMapIndexedToTypeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let flatMapIndexedToTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: flatMapIndexedToTypeParamSymbol, nullability: .nonNull
+        )))
+        let flatMapIndexedToDestinationType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(flatMapIndexedToTypeParamType)],
+            nullability: .nonNull
+        )))
+        let flatMapIndexedToLambdaReturnType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(flatMapIndexedToTypeParamType)],
+            nullability: .nonNull
+        )))
+        registerMemberOverload(
+            memberName: interner.intern("flatMapIndexedTo"),
+            memberFQName: listFQName + [interner.intern("flatMapIndexedTo")],
+            parameterTypes: [
+                flatMapIndexedToDestinationType,
+                types.make(.functionType(FunctionType(
+                    params: [types.intType, listTypeParamType],
+                    returnType: flatMapIndexedToLambdaReturnType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            ],
+            externalLinkName: "kk_list_flatMapIndexedTo",
+            returnTypeOverride: flatMapIndexedToDestinationType,
+            typeParameterSymbols: [listTypeParamSymbol, flatMapIndexedToTypeParamSymbol]
+        )
+
+        let filterIsInstanceToTypeParamName = interner.intern("R")
+        let filterIsInstanceToTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: filterIsInstanceToTypeParamName,
+            fqName: listFQName + [interner.intern("filterIsInstanceTo"), filterIsInstanceToTypeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.reifiedTypeParameter]
+        )
+        let filterIsInstanceToTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: filterIsInstanceToTypeParamSymbol, nullability: .nonNull
+        )))
+        let filterIsInstanceToDestinationType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(filterIsInstanceToTypeParamType)],
+            nullability: .nonNull
+        )))
+        registerMemberOverload(
+            memberName: interner.intern("filterIsInstanceTo"),
+            memberFQName: listFQName + [interner.intern("filterIsInstanceTo")],
+            parameterTypes: [filterIsInstanceToDestinationType],
+            externalLinkName: "kk_list_filterIsInstanceTo",
+            returnTypeOverride: filterIsInstanceToDestinationType,
+            typeParameterSymbols: [listTypeParamSymbol, filterIsInstanceToTypeParamSymbol],
+            reifiedTypeParameterIndices: [1]
+        )
 
         // chunked(size: Int): List<List<E>> and windowed(size: Int, step: Int): List<List<E>>
         // These return List<List<E>>, not List<E>.
@@ -4068,7 +4415,9 @@ extension DataFlowSemaPhase {
         registerListToMapMember(
             symbols: symbols, types: types, interner: interner,
             listInterfaceSymbol: listInterfaceSymbol,
-            mapInterfaceSymbol: mapInterfaceSymbol
+            mapInterfaceSymbol: mapInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType
         )
         let iterableSymbolForOps = symbols.lookup(
             fqName: kotlinCollectionsPkg + [interner.intern("Iterable")]

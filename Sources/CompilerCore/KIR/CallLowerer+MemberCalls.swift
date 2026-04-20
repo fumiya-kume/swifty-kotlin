@@ -2349,6 +2349,36 @@ extension CallLowerer {
             return result
         }
 
+        // filterIsInstanceTo<R>(destination) — encode type token from result type (STDLIB-021)
+        if args.count == 1, interner.resolve(calleeName) == "filterIsInstanceTo" {
+            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            let nonNullResultType = sema.types.makeNonNullable(resultType)
+            // Extract element type from MutableCollection<R>
+            let elementType: TypeID = if case let .classType(classType) = sema.types.kind(of: nonNullResultType),
+                                         let firstArg = classType.args.first
+            {
+                switch firstArg {
+                case let .invariant(t), let .out(t), let .in(t): t
+                case .star: sema.types.anyType
+                }
+            } else {
+                sema.types.anyType
+            }
+            let encodedToken = RuntimeTypeCheckToken.encode(type: elementType, sema: sema, interner: interner)
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let tokenExpr = arena.appendExpr(.intLiteral(encodedToken), type: intType)
+            instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_list_filterIsInstanceTo"),
+                arguments: [loweredReceiverID, loweredArgIDs[0], tokenExpr],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
+
         // String stdlib: nullable-receiver 0-arg methods (NULL-002)
         // isNullOrEmpty/isNullOrBlank pass the raw (potentially null) receiver pointer to C runtime.
         if args.isEmpty {

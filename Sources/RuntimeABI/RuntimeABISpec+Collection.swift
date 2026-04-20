@@ -315,6 +315,15 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_collection_toCollection",
+            parameters: [
+                RuntimeABIParameter(name: "collRaw", type: .intptr),
+                RuntimeABIParameter(name: "destRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_collection_size",
             parameters: [
                 RuntimeABIParameter(name: "collRaw", type: .intptr),
@@ -1671,11 +1680,70 @@ public extension RuntimeABISpec {
             "kk_list_reduce", "kk_list_groupBy", "kk_list_sortedBy",
             "kk_list_count", "kk_list_first", "kk_list_last", "kk_list_find",
         ]
+        let destinationLambdaParams = [
+            RuntimeABIParameter(name: "listRaw", type: .intptr),
+            RuntimeABIParameter(name: "destRaw", type: .intptr),
+            RuntimeABIParameter(name: "fnPtr", type: .intptr),
+            RuntimeABIParameter(name: "closureRaw", type: .intptr),
+            RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+        ]
         let filterNotNullSpec = RuntimeABIFunctionSpec(
             name: "kk_list_filterNotNull",
             parameters: [
                 RuntimeABIParameter(name: "listRaw", type: .intptr),
             ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let filterIsInstanceToSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_filterIsInstanceTo",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "destRaw", type: .intptr),
+                RuntimeABIParameter(name: "typeToken", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let filterToSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_filterTo",
+            parameters: destinationLambdaParams,
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let filterNotToSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_filterNotTo",
+            parameters: destinationLambdaParams,
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let mapToSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_mapTo",
+            parameters: destinationLambdaParams,
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let flatMapToSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_flatMapTo",
+            parameters: destinationLambdaParams,
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let mapNotNullToSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_mapNotNullTo",
+            parameters: destinationLambdaParams,
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let mapIndexedToSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_mapIndexedTo",
+            parameters: destinationLambdaParams,
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let flatMapIndexedToSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_flatMapIndexedTo",
+            parameters: destinationLambdaParams,
             returnType: .intptr,
             section: "Collection"
         )
@@ -1709,6 +1777,12 @@ public extension RuntimeABISpec {
                 RuntimeABIParameter(name: "closureRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let associateToSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_associateTo",
+            parameters: destinationLambdaParams,
             returnType: .intptr,
             section: "Collection"
         )
@@ -1928,6 +2002,11 @@ public extension RuntimeABISpec {
         )
         return before.map { hofSpec($0) }
             + [filterNotNullSpec, foldSpec]
+            + [
+                filterIsInstanceToSpec,
+                filterToSpec, filterNotToSpec, mapToSpec, flatMapToSpec,
+                mapNotNullToSpec, mapIndexedToSpec, flatMapIndexedToSpec,
+            ]
             + genericAfter.flatMap { name in
                 if name == "kk_list_sortedBy" {
                     return [hofSpec(name), sortedByPrimitiveSpec]
@@ -1936,7 +2015,7 @@ public extension RuntimeABISpec {
             }
             + [reduceOrNullSpec, scanSpec, runningFoldSpec, runningReduceSpec, scanReduceSpec]
             + [
-                associateBySpec, associateWithSpec, associateSpec,
+                associateBySpec, associateWithSpec, associateSpec, associateToSpec,
                 RuntimeABIFunctionSpec(
                     name: "kk_list_associateByTo",
                     parameters: [
