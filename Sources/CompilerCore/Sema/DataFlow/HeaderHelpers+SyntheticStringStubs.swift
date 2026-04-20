@@ -539,6 +539,50 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-TEXT-EDGE-003: indexOf / lastIndexOf with ignoreCase
+        registerSyntheticStringExtensionFunction(
+            named: "indexOf",
+            externalLinkName: "kk_string_indexOf_ignoreCase",
+            receiverType: stringType,
+            parameters: [
+                ("string", stringType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "indexOf",
+            externalLinkName: "kk_string_indexOf_from_ignoreCase",
+            receiverType: stringType,
+            parameters: [
+                ("string", stringType, false, false),
+                ("startIndex", intType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "lastIndexOf",
+            externalLinkName: "kk_string_lastIndexOf_ignoreCase",
+            receiverType: stringType,
+            parameters: [
+                ("string", stringType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "repeat",
             externalLinkName: "kk_string_repeat",

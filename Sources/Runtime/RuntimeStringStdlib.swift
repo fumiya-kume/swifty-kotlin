@@ -1071,6 +1071,67 @@ public func kk_string_lastIndexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
     return lastIndex
 }
 
+// MARK: - STDLIB-TEXT-EDGE-003: indexOf / lastIndexOf with ignoreCase
+
+@_cdecl("kk_string_indexOf_ignoreCase")
+public func kk_string_indexOf_ignoreCase(_ strRaw: Int, _ otherRaw: Int, _ ignoreCaseRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let other = runtimeStringFromRawOrPanic(otherRaw, caller: #function)
+    if ignoreCaseRaw == 0 {
+        // case-sensitive: delegate to scalar-based implementation
+        return kk_string_indexOf(strRaw, otherRaw)
+    }
+    if other.isEmpty {
+        return 0
+    }
+    let sourceLower = source.lowercased()
+    let otherLower = other.lowercased()
+    guard let range = sourceLower.range(of: otherLower) else {
+        return -1
+    }
+    return sourceLower.distance(from: sourceLower.startIndex, to: range.lowerBound)
+}
+
+@_cdecl("kk_string_indexOf_from_ignoreCase")
+public func kk_string_indexOf_from_ignoreCase(
+    _ strRaw: Int, _ otherRaw: Int, _ startIndex: Int, _ ignoreCaseRaw: Int
+) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let other = runtimeStringFromRawOrPanic(otherRaw, caller: #function)
+    if ignoreCaseRaw == 0 {
+        return kk_string_indexOf_from(strRaw, otherRaw, startIndex)
+    }
+    if other.isEmpty {
+        return max(0, min(startIndex, source.count))
+    }
+    let sourceLower = source.lowercased()
+    let otherLower = other.lowercased()
+    let clampedStart = max(0, min(startIndex, sourceLower.count))
+    let startIdx = sourceLower.index(sourceLower.startIndex, offsetBy: clampedStart)
+    guard let range = sourceLower.range(of: otherLower, range: startIdx ..< sourceLower.endIndex) else {
+        return -1
+    }
+    return sourceLower.distance(from: sourceLower.startIndex, to: range.lowerBound)
+}
+
+@_cdecl("kk_string_lastIndexOf_ignoreCase")
+public func kk_string_lastIndexOf_ignoreCase(_ strRaw: Int, _ otherRaw: Int, _ ignoreCaseRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let other = runtimeStringFromRawOrPanic(otherRaw, caller: #function)
+    if ignoreCaseRaw == 0 {
+        return kk_string_lastIndexOf(strRaw, otherRaw)
+    }
+    if other.isEmpty {
+        return source.count
+    }
+    let sourceLower = source.lowercased()
+    let otherLower = other.lowercased()
+    guard let range = sourceLower.range(of: otherLower, options: .backwards) else {
+        return -1
+    }
+    return sourceLower.distance(from: sourceLower.startIndex, to: range.lowerBound)
+}
+
 @_cdecl("kk_string_get")
 public func kk_string_get(_ strRaw: Int, _ indexRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
