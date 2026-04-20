@@ -4129,6 +4129,36 @@ extension CallTypeChecker {
                     }
                 }
             }
+            // CharSequence stdlib: removePrefix / removeSuffix / removeSurrounding (STDLIB-185)
+            if args.count == 1 {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                let arg0Type = sema.types.makeNonNullable(argTypes[0])
+                let calleeStr = interner.resolve(calleeName)
+                if ["removePrefix", "removeSuffix", "removeSurrounding"].contains(calleeStr),
+                   isSyntheticStringLikeType(receiverTypeForCheck, sema: sema),
+                   isSyntheticStringLikeType(arg0Type, sema: sema)
+                {
+                    if let boundType = tryBindSyntheticStringMemberFallback(
+                        id,
+                        calleeName: calleeName,
+                        receiverType: receiverTypeForCheck,
+                        args: args,
+                        argTypes: argTypes,
+                        range: range,
+                        ctx: ctx,
+                        expectedType: expectedType,
+                        explicitTypeArgs: explicitTypeArgs,
+                        safeCall: safeCall
+                    ) {
+                        return boundType
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
             // String stdlib: 1-arg methods (STDLIB-006)
             if args.count == 1 {
                 let receiverTypeForCheck = safeCall
@@ -4146,8 +4176,6 @@ extension CallTypeChecker {
                         sema.types.anyType
                     case "indexOf", "lastIndexOf", "compareTo":
                         sema.types.make(.primitive(.int, .nonNull))
-                    case "removePrefix", "removeSuffix", "removeSurrounding":
-                        sema.types.stringType
                     case "substringBefore", "substringAfter", "substringBeforeLast", "substringAfterLast":
                         sema.types.stringType
                     case "prependIndent", "replaceIndent":
@@ -4284,16 +4312,16 @@ extension CallTypeChecker {
                     return finalType
                 }
             }
-            // String stdlib: 2-arg removeSurrounding(prefix, suffix) (STDLIB-185)
+            // CharSequence stdlib: 2-arg removeSurrounding(prefix, suffix) (STDLIB-185)
             if args.count == 2 {
                 let receiverTypeForCheck = safeCall
                     ? sema.types.makeNonNullable(lookupReceiverType)
                     : lookupReceiverType
                 let arg0Type = sema.types.makeNonNullable(argTypes[0])
                 let arg1Type = sema.types.makeNonNullable(argTypes[1])
-                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
-                   sema.types.isSubtype(arg0Type, sema.types.stringType),
-                   sema.types.isSubtype(arg1Type, sema.types.stringType),
+                if isSyntheticStringLikeType(receiverTypeForCheck, sema: sema),
+                   isSyntheticStringLikeType(arg0Type, sema: sema),
+                   isSyntheticStringLikeType(arg1Type, sema: sema),
                    interner.resolve(calleeName) == "removeSurrounding"
                 {
                     if let boundType = tryBindSyntheticStringMemberFallback(
@@ -6127,7 +6155,10 @@ extension CallTypeChecker {
         else {
             return false
         }
-        return signature.receiverType == sema.types.stringType
+        guard let receiverType = signature.receiverType else {
+            return false
+        }
+        return isSyntheticStringLikeType(receiverType, sema: sema)
     }
 
     private func bindSyntheticStringMemberDirectlyIfAvailable(
@@ -6138,15 +6169,24 @@ extension CallTypeChecker {
         sema: SemaModule,
         interner: StringInterner
     ) {
+        let normalizedReceiverType = sema.types.makeNonNullable(receiverType)
+        guard isSyntheticStringLikeType(normalizedReceiverType, sema: sema) else {
+            return
+        }
         let stringMemberFQName = [
             interner.intern("kotlin"),
             interner.intern("text"),
             calleeName,
         ]
-        guard sema.types.isSubtype(sema.types.makeNonNullable(receiverType), sema.types.stringType),
-              let chosen = sema.symbols.lookupAll(fqName: stringMemberFQName).first(where: { candidate in
-                  isSyntheticStringMemberCandidate(candidate, named: calleeName, sema: sema, interner: interner)
-              })
+        guard let chosen = sema.symbols.lookupAll(fqName: stringMemberFQName).first(where: { candidate in
+            guard isSyntheticStringMemberCandidate(candidate, named: calleeName, sema: sema, interner: interner),
+                  let signature = sema.symbols.functionSignature(for: candidate),
+                  let candidateReceiver = signature.receiverType
+            else {
+                return false
+            }
+            return sema.types.makeNonNullable(candidateReceiver) == normalizedReceiverType
+        })
         else {
             return
         }
@@ -6160,6 +6200,28 @@ extension CallTypeChecker {
             )
         )
         sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+    }
+
+    private func syntheticCharSequenceType(sema: SemaModule) -> TypeID? {
+        guard let charSequenceSymbol = sema.types.charSequenceInterfaceSymbol else {
+            return nil
+        }
+        return sema.types.make(.classType(ClassType(
+            classSymbol: charSequenceSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+    }
+
+    private func isSyntheticStringLikeType(_ type: TypeID, sema: SemaModule) -> Bool {
+        let nonNullType = sema.types.makeNonNullable(type)
+        if nonNullType == sema.types.stringType {
+            return true
+        }
+        guard let charSequenceType = syntheticCharSequenceType(sema: sema) else {
+            return false
+        }
+        return nonNullType == charSequenceType
     }
 
     private func getCollectionElementType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> TypeID {
