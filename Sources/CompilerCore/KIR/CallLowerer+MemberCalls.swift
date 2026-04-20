@@ -2684,6 +2684,8 @@ extension CallLowerer {
                 case "split":
                     if isRegexLikeType(sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType, sema: sema, interner: interner) {
                         ("kk_string_split_regex", [loweredReceiverID, loweredArgIDs[0]])
+                    } else if loweredArgIDs.count >= 2 {
+                        ("kk_string_split_limit", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])
                     } else {
                         ("kk_string_split", [loweredReceiverID, loweredArgIDs[0]])
                     }

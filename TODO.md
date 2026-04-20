@@ -43,7 +43,7 @@
 - [ ] STDLIB-GAP-PH1: ギャップ表の `kotlin` / `kotlin.text` / `Array` 周辺の未対応を潰す
 - [ ] STDLIB-004: `Array` / primitive array の生成・変換・境界挙動を整理する
 - [ ] STDLIB-005: `kotlin.text` の文字列変換・分割・置換の端ケースを揃える
-- [ ] STDLIB-TEXT-EDGE-001: `split(delimiter, limit)` overload を追加する
+- [x] STDLIB-TEXT-EDGE-001: `split(delimiter, limit)` overload を追加する
 - [ ] STDLIB-TEXT-EDGE-002: `trim(predicate)` / `trimStart(predicate)` / `trimEnd(predicate)` を追加する
 - [ ] STDLIB-TEXT-EDGE-003: `indexOf` / `lastIndexOf` の `ignoreCase = true` を追加する
 - [ ] STDLIB-TEXT-EDGE-004: `CharSequence.ifBlank(defaultValue)` を追加する

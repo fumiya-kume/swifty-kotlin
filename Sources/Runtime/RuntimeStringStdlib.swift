@@ -128,6 +128,19 @@ public func kk_string_split(_ strRaw: Int, _ delimRaw: Int) -> Int {
     return runtimeMakeStringListRaw(runtimeSplitString(source, delimiter: delimiter))
 }
 
+@_cdecl("kk_string_split_limit")
+public func kk_string_split_limit(_ strRaw: Int, _ delimRaw: Int, _ limitRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeStringFromRawOrPanic(delimRaw, caller: #function)
+    let limit = limitRaw
+
+    if delimiter.isEmpty {
+        return runtimeMakeStringListRaw([source])
+    }
+    let parts = runtimeSplitString(source, delimiter: delimiter, limit: limit)
+    return runtimeMakeStringListRaw(parts)
+}
+
 @_cdecl("kk_string_replace")
 public func kk_string_replace(_ strRaw: Int, _ oldRaw: Int, _ newRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
@@ -1806,7 +1819,7 @@ private func runtimeComparableScalar(from raw: Int) -> RuntimeComparableScalar? 
     return nil
 }
 
-private func runtimeSplitString(_ source: String, delimiter: String) -> [String] {
+private func runtimeSplitString(_ source: String, delimiter: String, limit: Int = 0) -> [String] {
     if source.isEmpty {
         return [""]
     }
@@ -1814,6 +1827,12 @@ private func runtimeSplitString(_ source: String, delimiter: String) -> [String]
     var result: [String] = []
     var cursor = source.startIndex
     while true {
+        // When limit > 0 and we have already collected (limit - 1) parts,
+        // append the remainder as the last element and stop.
+        if limit > 0 && result.count == limit - 1 {
+            result.append(String(source[cursor...]))
+            return result
+        }
         guard let match = source.range(of: delimiter, range: cursor ..< source.endIndex) else {
             result.append(String(source[cursor...]))
             return result

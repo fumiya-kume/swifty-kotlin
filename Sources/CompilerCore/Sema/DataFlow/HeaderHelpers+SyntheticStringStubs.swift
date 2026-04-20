@@ -218,6 +218,21 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-EDGE-001: split(delimiter, limit) overload ---
+        registerSyntheticStringExtensionFunction(
+            named: "split",
+            externalLinkName: "kk_string_split_limit",
+            receiverType: stringType,
+            parameters: [
+                ("delimiters", stringType, false, false),
+                ("limit", intType, true, false),
+            ],
+            returnType: listStringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "replace",
             externalLinkName: "kk_string_replace",
