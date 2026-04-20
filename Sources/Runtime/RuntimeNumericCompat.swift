@@ -2021,23 +2021,8 @@ public func kk_char_get(_ charValue: Int, _ index: Int) -> Int {
 }
 
 @_cdecl("kk_char_rangeTo")
-public func kk_char_rangeTo(_ startValue: Int, _ endValue: Int) -> UnsafeMutableRawPointer {
+public func kk_char_rangeTo(_ startValue: Int, _ endValue: Int) -> Int {
     let startChar = kk_unbox_char(startValue)
     let endChar = kk_unbox_char(endValue)
-
-    // Create a character range from start to end (inclusive)
-    let zeroScalar = UnicodeScalar(0)!
-    let startScalar = UnicodeScalar(startChar) ?? zeroScalar
-    let endScalar = UnicodeScalar(endChar) ?? zeroScalar
-
-    if startScalar <= endScalar {
-        let rangeString = (startScalar.value ... endScalar.value)
-            .compactMap(UnicodeScalar.init)
-            .map(String.init)
-            .joined()
-        return runtimeMakeStringPointer(rangeString)
-    } else {
-        // Empty range for invalid bounds
-        return runtimeMakeStringPointer("")
-    }
+    return registerRuntimeObject(RuntimeRangeBox(first: startChar, last: endChar, step: 1))
 }

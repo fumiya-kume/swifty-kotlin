@@ -165,7 +165,7 @@ extension CallLowerer {
         "reduce", "reduceRight", "reduceIndexed", "reduceIndexedOrNull",
         "scan", "scanIndexed", "runningFold", "runningFoldIndexed",
         "runningReduce", "runningReduceIndexed",
-        "groupBy", "groupingBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
+        "groupBy", "groupingBy", "sortedBy", "find", "findLast", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
         "eachCount",
         "withIndex", "forEachIndexed", "mapIndexed", "filterIndexed", "mapValues", "mapKeys", "filterKeys", "filterValues",
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull", "elementAt", "elementAtOrElse",
@@ -182,12 +182,12 @@ extension CallLowerer {
         "replaceFirstChar",
         "sort", "sortBy", "sortByDescending",
         "onEach", "onEachIndexed",
-        "copyOf", "copyOfRange", "fill",
+        "copyOf", "copyOfRange", "fill", "replaceAll", "removeIf",
         "firstOrNull", "lastOrNull", "singleOrNull",
         "addAll", "removeAll", "retainAll",
         "intersect", "union", "subtract",
         "toHashSet",
-        "containsAll", "binarySearch",
+        "containsAll", "binarySearch", "average",
         "addFirst", "addLast",
         "sum",
         "to", // FUNC-002
@@ -3173,6 +3173,17 @@ extension CallLowerer {
                 let sumOfName = interner.intern("sumOf")
                 let associateName = interner.intern("associate")
                 let associateByName = interner.intern("associateBy")
+                let associateWithName = interner.intern("associateWith")
+                let containsName = interner.intern("contains")
+                let indexOfName = interner.intern("indexOf")
+                let elementAtName = interner.intern("elementAt")
+                let elementAtOrNullName = interner.intern("elementAtOrNull")
+                let findLastName = interner.intern("findLast")
+                let partitionName = interner.intern("partition")
+                let minByOrNullName = interner.intern("minByOrNull")
+                let maxByOrNullName = interner.intern("maxByOrNull")
+                let minOfName = interner.intern("minOf")
+                let maxOfName = interner.intern("maxOf")
                 if calleeName == mapName {
                     runtimeCallee = "kk_sequence_map"
                 } else if calleeName == filterName {
@@ -3199,6 +3210,28 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_associate"
                 } else if calleeName == associateByName {
                     runtimeCallee = "kk_sequence_associateBy"
+                } else if calleeName == associateWithName {
+                    runtimeCallee = "kk_sequence_associateWith"
+                } else if calleeName == containsName {
+                    runtimeCallee = "kk_sequence_contains"
+                } else if calleeName == indexOfName {
+                    runtimeCallee = "kk_sequence_indexOf"
+                } else if calleeName == elementAtName {
+                    runtimeCallee = "kk_sequence_elementAt"
+                } else if calleeName == elementAtOrNullName {
+                    runtimeCallee = "kk_sequence_elementAtOrNull"
+                } else if calleeName == findLastName {
+                    runtimeCallee = "kk_sequence_findLast"
+                } else if calleeName == partitionName {
+                    runtimeCallee = "kk_sequence_partition"
+                } else if calleeName == minByOrNullName {
+                    runtimeCallee = "kk_sequence_minByOrNull"
+                } else if calleeName == maxByOrNullName {
+                    runtimeCallee = "kk_sequence_maxByOrNull"
+                } else if calleeName == minOfName {
+                    runtimeCallee = "kk_sequence_minOf"
+                } else if calleeName == maxOfName {
+                    runtimeCallee = "kk_sequence_maxOf"
                 } else if calleeName == interner.intern("find") {
                     runtimeCallee = "kk_sequence_find"
                 } else if calleeName == interner.intern("mapNotNull") {
@@ -3224,7 +3257,15 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_sumOf"
                         || runtimeCallee == "kk_sequence_associate"
                         || runtimeCallee == "kk_sequence_associateBy"
+                        || runtimeCallee == "kk_sequence_associateWith"
                         || runtimeCallee == "kk_sequence_find"
+                        || runtimeCallee == "kk_sequence_findLast"
+                        || runtimeCallee == "kk_sequence_elementAt"
+                        || runtimeCallee == "kk_sequence_minByOrNull"
+                        || runtimeCallee == "kk_sequence_maxByOrNull"
+                        || runtimeCallee == "kk_sequence_minOf"
+                        || runtimeCallee == "kk_sequence_maxOf"
+                        || runtimeCallee == "kk_sequence_partition"
                         || runtimeCallee == "kk_sequence_mapNotNull"
                         || runtimeCallee == "kk_sequence_mapIndexed"
                         || runtimeCallee == "kk_sequence_onEach"
@@ -3545,6 +3586,11 @@ extension CallLowerer {
                 let lastID = interner.intern("last")
                 let lastOrNullID = interner.intern("lastOrNull")
                 let countID = interner.intern("count")
+                let sumID = interner.intern("sum")
+                let averageID = interner.intern("average")
+                let toMutableListID = interner.intern("toMutableList")
+                let toMutableSetID = interner.intern("toMutableSet")
+                let unzipID = interner.intern("unzip")
 
                 let seqFirstCallee = interner.intern("kk_sequence_first")
                 let seqFirstOrNullCallee = interner.intern("kk_sequence_firstOrNull")
@@ -3577,6 +3623,16 @@ extension CallLowerer {
                     seqLastOrNullCallee
                 case countID:
                     seqCountCallee
+                case sumID:
+                    interner.intern("kk_sequence_sum")
+                case averageID:
+                    interner.intern("kk_sequence_average")
+                case toMutableListID:
+                    interner.intern("kk_sequence_toMutableList")
+                case toMutableSetID:
+                    interner.intern("kk_sequence_toMutableSet")
+                case unzipID:
+                    interner.intern("kk_sequence_unzip")
                 default:
                     nil
                 }
@@ -3831,7 +3887,7 @@ extension CallLowerer {
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch", "reduceIndexed", "reduceIndexedOrNull", "foldIndexed", "foldRightIndexed",
             "sortedByDescending", "sortedWith", "partition", "zipWithNext",
-            "takeWhile", "dropWhile", "filterNot", "findLast",
+            "takeWhile", "dropWhile", "filterNot", "findLast", "replaceAll", "removeIf",
             "replaceFirstChar",
             "sortBy", "sortByDescending",
             "onEach", "onEachIndexed",
@@ -5244,11 +5300,21 @@ extension CallLowerer {
             interner.intern("kk_map_getValue"),
             interner.intern("kk_sequence_mapNotNull"),
             interner.intern("kk_sequence_mapIndexed"),
+            interner.intern("kk_sequence_findLast"),
+            interner.intern("kk_sequence_elementAt"),
+            interner.intern("kk_sequence_minByOrNull"),
+            interner.intern("kk_sequence_maxByOrNull"),
+            interner.intern("kk_sequence_minOf"),
+            interner.intern("kk_sequence_maxOf"),
+            interner.intern("kk_sequence_partition"),
+            interner.intern("kk_sequence_associateWith"),
             interner.intern("kk_sequence_ifEmpty"),
             interner.intern("kk_sequence_first"),
             interner.intern("kk_sequence_last"),
             interner.intern("kk_sequence_firstOrNull"),
             interner.intern("kk_sequence_count"),
+            interner.intern("kk_mutable_list_replaceAll"),
+            interner.intern("kk_mutable_list_removeIf"),
             interner.intern("kk_list_binarySearch_compare"),
             interner.intern("kk_result_getOrThrow"),
             interner.intern("kk_reentrant_read_write_lock_read"),
@@ -6167,6 +6233,12 @@ extension CallLowerer {
                 return interner.intern("kk_mutable_list_removeAll")
             case "retainAll":
                 return interner.intern("kk_mutable_list_retainAll")
+            case "fill":
+                return interner.intern("kk_mutable_list_fill")
+            case "replaceAll":
+                return interner.intern("kk_mutable_list_replaceAll")
+            case "removeIf":
+                return interner.intern("kk_mutable_list_removeIf")
             default:
                 break
             }
@@ -6407,6 +6479,18 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_associate")
             case associateByName:
                 return interner.intern("kk_sequence_associateBy")
+            case interner.intern("associateWith"):
+                return interner.intern("kk_sequence_associateWith")
+            case interner.intern("contains"):
+                return interner.intern("kk_sequence_contains")
+            case interner.intern("indexOf"):
+                return interner.intern("kk_sequence_indexOf")
+            case interner.intern("elementAt"):
+                return interner.intern("kk_sequence_elementAt")
+            case interner.intern("elementAtOrNull"):
+                return interner.intern("kk_sequence_elementAtOrNull")
+            case interner.intern("findLast"):
+                return interner.intern("kk_sequence_findLast")
             case interner.intern("find"):
                 return interner.intern("kk_sequence_find")
             case interner.intern("mapNotNull"):
@@ -6439,6 +6523,26 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_lastOrNull")
             case countName:
                 return interner.intern("kk_sequence_count")
+            case interner.intern("sum"):
+                return interner.intern("kk_sequence_sum")
+            case interner.intern("average"):
+                return interner.intern("kk_sequence_average")
+            case interner.intern("toMutableList"):
+                return interner.intern("kk_sequence_toMutableList")
+            case interner.intern("toMutableSet"):
+                return interner.intern("kk_sequence_toMutableSet")
+            case interner.intern("partition"):
+                return interner.intern("kk_sequence_partition")
+            case interner.intern("minByOrNull"):
+                return interner.intern("kk_sequence_minByOrNull")
+            case interner.intern("maxByOrNull"):
+                return interner.intern("kk_sequence_maxByOrNull")
+            case interner.intern("minOf"):
+                return interner.intern("kk_sequence_minOf")
+            case interner.intern("maxOf"):
+                return interner.intern("kk_sequence_maxOf")
+            case interner.intern("unzip"):
+                return interner.intern("kk_sequence_unzip")
             case interner.intern("foldIndexed"):
                 return interner.intern("kk_sequence_foldIndexed")
             case interner.intern("reduceIndexed"):

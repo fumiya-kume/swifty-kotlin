@@ -17,7 +17,7 @@ func runtimeIndexedValueNew(index: Int, value: Int) -> Int {
     return raw
 }
 
-private func handleCollectionLambdaThrow(_ thrown: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+func handleCollectionLambdaThrow(_ thrown: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     if let outThrown = outThrown {
         outThrown.pointee = thrown
         return runtimeExceptionCaughtSentinel
