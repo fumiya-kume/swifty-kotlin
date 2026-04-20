@@ -779,6 +779,8 @@ extension CallTypeChecker {
             interner.intern("mapIndexedTo"),
             interner.intern("flatMapIndexedTo"),
             interner.intern("filterIsInstanceTo"),
+            interner.intern("filterIndexedTo"),
+            interner.intern("filterNotNullTo"),
             interner.intern("forEach"),
             interner.intern("flatMap"),
             interner.intern("any"),
@@ -1012,10 +1014,10 @@ extension CallTypeChecker {
              interner.intern("minWith"), interner.intern("minWithOrNull"),
              interner.intern("elementAt"):
             return argCount == 1
-        case interner.intern("toCollection"), interner.intern("filterIsInstanceTo"):
+        case interner.intern("toCollection"), interner.intern("filterIsInstanceTo"), interner.intern("filterNotNullTo"):
             return argCount == 1
         case interner.intern("filterTo"), interner.intern("filterNotTo"), interner.intern("mapTo"), interner.intern("flatMapTo"), interner.intern("mapNotNullTo"), interner.intern("mapIndexedTo"), interner.intern("flatMapIndexedTo"), interner.intern("associateTo"),
-             interner.intern("associateByTo"), interner.intern("associateWithTo"), interner.intern("groupByTo"):
+             interner.intern("associateByTo"), interner.intern("associateWithTo"), interner.intern("groupByTo"), interner.intern("filterIndexedTo"):
             return argCount == 2
         case interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
             return isSetReceiver && argCount == 1
@@ -1122,6 +1124,8 @@ extension CallTypeChecker {
             interner.intern("mapIndexedTo"),
             interner.intern("flatMapIndexedTo"),
             interner.intern("filterIsInstanceTo"),
+            interner.intern("filterIndexedTo"),
+            interner.intern("filterNotNullTo"),
             interner.intern("associateTo"),
             interner.intern("toCollection"),
             interner.intern("associateByTo"),
@@ -1604,6 +1608,7 @@ extension CallTypeChecker {
             interner.intern("mapIndexedTo"),
             interner.intern("flatMapIndexedTo"),
             interner.intern("associateTo"),
+            interner.intern("filterIndexedTo"),
         ]
         if mapOnlyMembers.contains(memberName) {
             guard isMapReceiver else {
@@ -1658,7 +1663,7 @@ extension CallTypeChecker {
                 sema.types.anyType
             }
             let destinationLambdaReturnType: TypeID = switch memberName {
-            case interner.intern("filterTo"), interner.intern("filterNotTo"):
+            case interner.intern("filterTo"), interner.intern("filterNotTo"), interner.intern("filterIndexedTo"):
                 sema.types.booleanType
             case interner.intern("mapNotNullTo"):
                 sema.types.nullableAnyType
@@ -1688,6 +1693,7 @@ extension CallTypeChecker {
             let expectedType: TypeID
             if memberName == interner.intern("mapIndexedTo")
                 || memberName == interner.intern("flatMapIndexedTo")
+                || memberName == interner.intern("filterIndexedTo")
             {
                 expectedType = sema.types.make(.functionType(FunctionType(
                     params: [sema.types.intType, receiverElementType],

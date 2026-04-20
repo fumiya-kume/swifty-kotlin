@@ -1127,6 +1127,7 @@ extension CallTypeChecker {
             "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "associateTo", "associateByTo", "associateWithTo", "groupByTo",
             "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo", "mapIndexedTo", "flatMapIndexedTo",
+            "filterIndexedTo", "filterNotNullTo",
             "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
@@ -1251,6 +1252,18 @@ extension CallTypeChecker {
             return finalType
         }
 
+        // filterNotNullTo(destination) — no lambda, returns destination type (STDLIB-SEQ-021)
+        if interner.resolve(calleeName) == "filterNotNullTo",
+           args.count == 1,
+           isCollectionReceiver || isSequenceReceiver
+        {
+            let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            sema.bindings.markCollectionExpr(id)
+            let finalType = safeCall ? sema.types.makeNullable(destinationType) : destinationType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
         // --- Collection higher-order functions (STDLIB-005) ---
         if isCollectionHOF {
             let calleeStr = interner.resolve(calleeName)
@@ -1267,6 +1280,7 @@ extension CallTypeChecker {
             let destinationCollectionHOFs: Set = [
                 "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo",
                 "mapIndexedTo", "flatMapIndexedTo", "associateTo",
+                "filterIndexedTo",
             ]
             if destinationCollectionHOFs.contains(calleeStr), args.count == 2 {
                 let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
@@ -1318,6 +1332,13 @@ extension CallTypeChecker {
                 case "filterTo", "filterNotTo":
                     sema.types.make(.functionType(FunctionType(
                         params: [collectionElementType],
+                        returnType: sema.types.booleanType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                case "filterIndexedTo":
+                    sema.types.make(.functionType(FunctionType(
+                        params: [sema.types.intType, collectionElementType],
                         returnType: sema.types.booleanType,
                         isSuspend: false,
                         nullability: .nonNull
