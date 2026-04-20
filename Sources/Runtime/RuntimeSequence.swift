@@ -384,7 +384,7 @@ private func runtimeSequenceTransformElement(
                 return !state.stop
             }
         }
-    case .source, .stringSource, .builder, .generator, .lazyBuilder:
+    case .source, .stringSource, .builder, .generator, .unseededGenerator, .lazyBuilder:
         runtimeSequenceTransformElement(
             element,
             steps: steps,
@@ -406,7 +406,7 @@ private func runtimeTraverseSequenceWithState(
 ) {
     let transformSteps = seq.steps.filter {
         switch $0 {
-        case .source, .stringSource, .builder, .generator, .lazyBuilder:
+        case .source, .stringSource, .builder, .generator, .unseededGenerator, .lazyBuilder:
             false
         default:
             true
@@ -478,6 +478,27 @@ private func runtimeTraverseSequenceWithState(
                 if unboxed == runtimeNullSentinelInt { return }
                 emit(unboxed)
                 current = unboxed
+                generatedCount += 1
+            }
+            if generatedCount >= kSequenceGeneratorHardLimit, !state.stop {
+                state.limitReached = true
+            }
+            return
+        case let .unseededGenerator(fnPtr, closureRaw):
+            // STDLIB-SEQ-002: Unseeded generator — nextFunction: () -> T? provides every element.
+            // The function takes no element argument: signature is (closureRaw, outThrown) -> T?
+            let nextFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+            var generatedCount = 0
+            while generatedCount < kSequenceGeneratorHardLimit, !state.stop {
+                var thrown = 0
+                let next = nextFn(closureRaw, &thrown)
+                if thrown != 0 {
+                    outThrown?.pointee = thrown
+                    return
+                }
+                let unboxed = maybeUnbox(next)
+                if unboxed == runtimeNullSentinelInt { return }
+                emit(unboxed)
                 generatedCount += 1
             }
             if generatedCount >= kSequenceGeneratorHardLimit, !state.stop {
@@ -711,7 +732,7 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
     }
     let hasTransformSteps = seq.steps.contains {
         switch $0 {
-        case .source, .stringSource, .builder, .generator, .lazyBuilder:
+        case .source, .stringSource, .builder, .generator, .unseededGenerator, .lazyBuilder:
             return false
         default:
             return true
@@ -757,12 +778,27 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
             elements = generated
             break
         }
+        // STDLIB-SEQ-002: Unseeded generator — nextFunction: () -> T? provides every element.
+        if case let .unseededGenerator(fnPtr, closureRaw) = step {
+            let nextFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+            var generated: [Int] = []
+            while generated.count < kSequenceGeneratorHardLimit {
+                var thrown = 0
+                let next = nextFn(closureRaw, &thrown)
+                if thrown != 0 { break }
+                let unboxed = maybeUnbox(next)
+                if unboxed == runtimeNullSentinelInt { break }
+                generated.append(unboxed)
+            }
+            elements = generated
+            break
+        }
     }
 
     // Apply transformation steps in order
     for step in seq.steps {
         switch step {
-        case .source, .stringSource, .builder, .generator, .lazyBuilder:
+        case .source, .stringSource, .builder, .generator, .unseededGenerator, .lazyBuilder:
             break
         case let .mapStep(fnPtr, closureRaw):
             elements = applyMapStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: nil)
@@ -886,6 +922,14 @@ public func kk_sequence_of_single(_ element: Int) -> Int {
 @_cdecl("kk_sequence_generate")
 public func kk_sequence_generate(_ seed: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
     let seq = RuntimeSequenceBox(steps: [.generator(seed: seed, fnPtr: fnPtr, closureRaw: closureRaw)])
+    return registerRuntimeObject(seq)
+}
+
+/// STDLIB-SEQ-002: Unseeded generateSequence — nextFunction: () -> T? drives all elements.
+/// The sequence ends when nextFunction returns null.
+@_cdecl("kk_sequence_generate_unseeded")
+public func kk_sequence_generate_unseeded(_ fnPtr: Int, _ closureRaw: Int) -> Int {
+    let seq = RuntimeSequenceBox(steps: [.unseededGenerator(fnPtr: fnPtr, closureRaw: closureRaw)])
     return registerRuntimeObject(seq)
 }
 

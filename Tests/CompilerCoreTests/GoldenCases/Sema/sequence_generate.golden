@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s0 kind=package fq=_root_ vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=class fq=kotlin.Any vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.Annotation vis=public flags=synthetic
@@ -3675,24 +3675,94 @@ symbol s3673 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public
 symbol s3674 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
 symbol s3675 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
 symbol s3676 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
-symbol s3677 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3678 kind=class fq=__ObjectLiteral_0_48_113 vis=private flags=synthetic
-symbol s3679 kind=property fq=__ObjectLiteral_0_48_113.x vis=public flags=synthetic type=Int
-symbol s3680 kind=property fq=__ObjectLiteral_0_48_113.y vis=public flags=synthetic type=String
-symbol s3681 kind=local fq=__local_5.obj vis=private flags=_ type=Class#3678
-file f0 package=golden.sema
-  decl d3 fun main suspend=0 inline=0 sym=s3677
-expr e0 int(42) type=Int
-expr e1 localDecl x mutable=0 type=_ init=e0 type=_
-expr e2 string(hello) type=String
-expr e3 localDecl y mutable=0 type=t0 init=e2 type=_
-expr e4 objectLiteral supers=[] type=Class#3678
-expr e5 localDecl obj mutable=0 type=_ init=e4 type=Unit ref=s3681
-expr e6 name(println) type=_
-expr e7 name(obj) type=Class#3678 ref=s3681
-expr e8 memberCall recv=e7 callee=x args=[] type=Int ref=s3679
-expr e9 call callee=e6 args=[_:e8] type=Unit call=s1746 map=[0->0] targs=[]
-expr e10 name(println) type=_
-expr e11 name(obj) type=Class#3678 ref=s3681
-expr e12 memberCall recv=e11 callee=y args=[] type=String ref=s3680
-expr e13 call callee=e10 args=[_:e12] type=Unit call=s1746 map=[0->0] targs=[]
+symbol s3677 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s3678 kind=local fq=__local_21.s1 vis=private flags=_ type=Class#123<Int>
+symbol s3679 kind=local fq=__local_38.s2 vis=private flags=_ type=Class#123<Int>
+symbol s3680 kind=local fq=__local_65.s3 vis=private flags=_ type=Class#123<Int>
+symbol s3681 kind=local fq=__local_72.fn vis=private flags=_ type=() -> Int?
+symbol s3682 kind=local fq=__local_79.s4 vis=private flags=_ type=Class#123<Int>
+file f0 package=_
+  decl d0 fun main suspend=0 inline=0 sym=s3677
+expr e0 name(generateSequence) type=_
+expr e1 int(1) type=Int
+expr e2 name(it) type=_
+expr e3 int(5) type=_
+expr e4 binary(lessThan) lhs=e2 rhs=e3 type=_
+expr e5 name(it) type=_
+expr e6 int(1) type=_
+expr e7 binary(add) lhs=e5 rhs=e6 type=_
+expr e8 name(null) type=_
+expr e9 if cond=e4 then=e7 else=e8 type=_
+expr e10 name(it) type=Int ref=s-1004608
+expr e11 int(5) type=Int
+expr e12 binary(lessThan) lhs=e10 rhs=e11 type=Boolean
+expr e13 name(it) type=Int ref=s-1004608
+expr e14 int(1) type=Int
+expr e15 binary(add) lhs=e13 rhs=e14 type=Int
+expr e16 name(null) type=Nothing?
+expr e17 if cond=e12 then=e15 else=e16 type=Int?
+expr e18 lambda params=[] body=e17 label=generateSequence type=(Int) -> Int?
+expr e19 call callee=e0 args=[_:e1,_:e18] type=Class#114<out Int>
+expr e20 memberCall recv=e19 callee=toList args=[] type=Class#123<Int> call=s1792 map=[] targs=[]
+expr e21 localDecl s1 mutable=0 type=_ init=e20 type=Unit ref=s3678
+expr e22 name(println) type=_
+expr e23 name(s1) type=Class#123<Int> ref=s3678
+expr e24 call callee=e22 args=[_:e23] type=Unit call=s1746 map=[0->0] targs=[]
+expr e25 name(generateSequence) type=_
+expr e26 int(1) type=Int
+expr e27 name(it) type=_
+expr e28 int(1) type=_
+expr e29 binary(add) lhs=e27 rhs=e28 type=_
+expr e30 name(it) type=Int ref=s-1008448
+expr e31 int(1) type=Int
+expr e32 binary(add) lhs=e30 rhs=e31 type=Int
+expr e33 lambda params=[] body=e32 label=generateSequence type=(Int) -> Int?
+expr e34 call callee=e25 args=[_:e26,_:e33] type=Class#114<out Int>
+expr e35 int(5) type=Int
+expr e36 memberCall recv=e34 callee=take args=[_:e35] type=Class#114<out Int>
+expr e37 memberCall recv=e36 callee=toList args=[] type=Class#123<Int> call=s1792 map=[] targs=[]
+expr e38 localDecl s2 mutable=0 type=_ init=e37 type=Unit ref=s3679
+expr e39 name(println) type=_
+expr e40 name(s2) type=Class#123<Int> ref=s3679
+expr e41 call callee=e39 args=[_:e40] type=Unit call=s1746 map=[0->0] targs=[]
+expr e42 name(generateSequence) type=_
+expr e43 int(10) type=_
+expr e44 int(10) type=Int
+expr e45 lambda params=[] body=e44 label=generateSequence type=() -> Int
+expr e46 name(it) type=_
+expr e47 int(1) type=_
+expr e48 binary(greaterThan) lhs=e46 rhs=e47 type=_
+expr e49 name(it) type=_
+expr e50 int(2) type=_
+expr e51 binary(divide) lhs=e49 rhs=e50 type=_
+expr e52 name(null) type=_
+expr e53 if cond=e48 then=e51 else=e52 type=_
+expr e54 name(it) type=Int ref=s-1015872
+expr e55 int(1) type=Int
+expr e56 binary(greaterThan) lhs=e54 rhs=e55 type=Boolean
+expr e57 name(it) type=Int ref=s-1015872
+expr e58 int(2) type=Int
+expr e59 binary(divide) lhs=e57 rhs=e58 type=Int
+expr e60 name(null) type=Nothing?
+expr e61 if cond=e56 then=e59 else=e60 type=Int?
+expr e62 lambda params=[] body=e61 label=generateSequence type=(Int) -> Int?
+expr e63 call callee=e42 args=[_:e45,_:e62] type=Class#114<out Int>
+expr e64 memberCall recv=e63 callee=toList args=[] type=Class#123<Int> call=s1792 map=[] targs=[]
+expr e65 localDecl s3 mutable=0 type=_ init=e64 type=Unit ref=s3680
+expr e66 name(println) type=_
+expr e67 name(s3) type=Class#123<Int> ref=s3680
+expr e68 call callee=e66 args=[_:e67] type=Unit call=s1746 map=[0->0] targs=[]
+expr e69 int(42) type=_
+expr e70 int(42) type=Int
+expr e71 lambda params=[] body=e70 type=() -> Int?
+expr e72 localDecl fn mutable=0 type=t1 init=e71 type=Unit ref=s3681
+expr e73 name(generateSequence) type=_
+expr e74 name(fn) type=() -> Int? ref=s3681
+expr e75 call callee=e73 args=[_:e74] type=Class#114<out Int> call=s1778 map=[0->0] targs=[Int]
+expr e76 int(3) type=Int
+expr e77 memberCall recv=e75 callee=take args=[_:e76] type=Class#114<out Int>
+expr e78 memberCall recv=e77 callee=toList args=[] type=Class#123<Int> call=s1792 map=[] targs=[]
+expr e79 localDecl s4 mutable=0 type=_ init=e78 type=Unit ref=s3682
+expr e80 name(println) type=_
+expr e81 name(s4) type=Class#123<Int> ref=s3682
+expr e82 call callee=e80 args=[_:e81] type=Unit call=s1746 map=[0->0] targs=[]

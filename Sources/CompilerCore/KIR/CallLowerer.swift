@@ -1179,6 +1179,31 @@ final class CallLowerer {
             return finalArgs
         }
 
+        // STDLIB-SEQ-002: generateSequence(nextFunction: () -> T?) — unseeded variant.
+        // Expand single lambda arg to (fnPtr, closureRaw).
+        if externalLinkName == "kk_sequence_generate_unseeded", loweredArguments.count == 1 {
+            var finalArgs: [KIRExprID] = []
+            let lambdaID = loweredArguments[0]
+            if let callableInfo = driver.ctx.callableValueInfo(for: lambdaID) {
+                let fnPtrExpr = arena.appendExpr(.symbolRef(callableInfo.symbol), type: sema.types.intType)
+                instructions.append(.constValue(result: fnPtrExpr, value: .symbolRef(callableInfo.symbol)))
+                finalArgs.append(fnPtrExpr)
+                if let closureRaw = callableInfo.captureArguments.first {
+                    finalArgs.append(closureRaw)
+                } else {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    finalArgs.append(zeroExpr)
+                }
+            } else {
+                finalArgs.append(lambdaID)
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArgs.append(zeroExpr)
+            }
+            return finalArgs
+        }
+
         let legacyNames: Set = ["kk_require_lazy", "kk_check_lazy", "kk_precondition_assert_lazy", "kk_sequence_generate"]
         if legacyNames.contains(externalLinkName), loweredArguments.count == 2 {
             var seedArgument = loweredArguments[0]

@@ -160,6 +160,17 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-SEQ-002: generateSequence(nextFunction: () -> T?) — unseeded variant
+        registerSyntheticGenerateSequenceUnseededFunction(
+            named: "generateSequence",
+            packageFQName: kotlinSequencesPkg,
+            sequenceSymbol: sequenceSymbol,
+            externalLinkName: "kk_sequence_generate_unseeded",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
         // STDLIB-331/564: iterator {} builder → Iterator<T>
         // Registered with SequenceScope<T> receiver so yield() resolves inside the lambda.
         registerSyntheticIteratorBuilderStub(
@@ -1569,6 +1580,96 @@ extension DataFlowSemaPhase {
                 valueParameterSymbols: [seedSymbol, nextFunctionSymbol],
                 valueParameterHasDefaultValues: [false, false],
                 valueParameterIsVararg: [false, false],
+                typeParameterSymbols: [typeParamSymbol]
+            ),
+            for: functionSymbol
+        )
+    }
+
+    // STDLIB-SEQ-002: generateSequence(nextFunction: () -> T?) — unseeded variant
+    private func registerSyntheticGenerateSequenceUnseededFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        sequenceSymbol: SymbolID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        // Skip if already registered with 1 parameter
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.parameterTypes.count == 1
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        let typeParamName = interner.intern("T")
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: functionFQName + [typeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: typeParamSymbol)
+
+        let elementType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let nullableElementType = types.makeNullable(elementType)
+        // nextFunction: () -> T?
+        let nextFunctionType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: nullableElementType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+
+        let nextFunctionName = interner.intern("nextFunction")
+        let nextFunctionSymbol = symbols.define(
+            kind: .valueParameter,
+            name: nextFunctionName,
+            fqName: functionFQName + [nextFunctionName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: nextFunctionSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [nextFunctionType],
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: [nextFunctionSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
                 typeParameterSymbols: [typeParamSymbol]
             ),
             for: functionSymbol
