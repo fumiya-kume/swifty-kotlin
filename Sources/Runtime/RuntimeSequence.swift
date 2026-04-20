@@ -2969,8 +2969,19 @@ public func kk_sequence_builder_yield(_ builderRaw: Int, _ value: Int) -> Int {
 public func kk_sequence_builder_yieldAll(_ builderRaw: Int, _ collectionRaw: Int) -> Int {
     // STDLIB-563: If the handle is a coroutine builder proxy, yield each element lazily.
     if let proxy = runtimeCoroutineBuilderProxy(from: builderRaw) {
-        if let elements = runtimeSequenceSourceElements(from: collectionRaw) {
-            for elem in elements {
+        if let seq = runtimeSequenceBox(from: collectionRaw) {
+            // Preserve outer lazy semantics: traverse nested sequence elements
+            // on demand instead of materializing them first.
+            runtimeTraverseSequence(seq, outThrown: nil) { elem in
+                proxy.coroutine.yieldValue(elem)
+                return true
+            }
+        } else if let list = runtimeListBox(from: collectionRaw) {
+            for elem in list.elements {
+                proxy.coroutine.yieldValue(elem)
+            }
+        } else if let array = runtimeArrayBox(from: collectionRaw) {
+            for elem in array.elements {
                 proxy.coroutine.yieldValue(elem)
             }
         } else if let set = runtimeSetBox(from: collectionRaw) {
