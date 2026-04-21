@@ -2869,6 +2869,171 @@ extension DataFlowSemaPhase {
             ),
             for: associateToMemberSymbol
         )
+
+        // STDLIB-COL-DEST-004: associateByTo(destination, keySelector) -> M
+        let associateByToMemberName = interner.intern("associateByTo")
+        let associateByToMemberFQName = listFQName + [associateByToMemberName]
+        if symbols.lookup(fqName: associateByToMemberFQName) == nil {
+            let associateByToKeyTypeParamName = interner.intern("K")
+            let associateByToKeyTypeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: associateByToKeyTypeParamName,
+                fqName: associateByToMemberFQName + [associateByToKeyTypeParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let associateByToKeyType = types.make(.typeParam(TypeParamType(
+                symbol: associateByToKeyTypeParamSymbol, nullability: .nonNull
+            )))
+            let associateByToReceiverType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.out(listTypeParamType)],
+                nullability: .nonNull
+            )))
+            let associateByToDestinationType = types.make(.classType(ClassType(
+                classSymbol: mapInterfaceSymbol,
+                args: [.out(associateByToKeyType), .out(listTypeParamType)],
+                nullability: .nonNull
+            )))
+            let associateByToKeySelectorType = types.make(.functionType(FunctionType(
+                params: [listTypeParamType],
+                returnType: associateByToKeyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let associateByToMemberSymbol = symbols.define(
+                kind: .function,
+                name: associateByToMemberName,
+                fqName: associateByToMemberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: associateByToMemberSymbol)
+            symbols.setParentSymbol(associateByToMemberSymbol, for: associateByToKeyTypeParamSymbol)
+            symbols.setExternalLinkName("kk_list_associateByTo", for: associateByToMemberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: associateByToReceiverType,
+                    parameterTypes: [associateByToDestinationType, associateByToKeySelectorType],
+                    returnType: associateByToDestinationType,
+                    typeParameterSymbols: [listTypeParamSymbol, associateByToKeyTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: associateByToMemberSymbol
+            )
+        }
+
+        // STDLIB-COL-DEST-004: associateWithTo(destination, valueSelector) -> M
+        let associateWithToMemberName = interner.intern("associateWithTo")
+        let associateWithToMemberFQName = listFQName + [associateWithToMemberName]
+        if symbols.lookup(fqName: associateWithToMemberFQName) == nil {
+            let associateWithToValueTypeParamName = interner.intern("V")
+            let associateWithToValueTypeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: associateWithToValueTypeParamName,
+                fqName: associateWithToMemberFQName + [associateWithToValueTypeParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let associateWithToValueType = types.make(.typeParam(TypeParamType(
+                symbol: associateWithToValueTypeParamSymbol, nullability: .nonNull
+            )))
+            let associateWithToReceiverType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.out(listTypeParamType)],
+                nullability: .nonNull
+            )))
+            let associateWithToDestinationType = types.make(.classType(ClassType(
+                classSymbol: mapInterfaceSymbol,
+                args: [.out(listTypeParamType), .out(associateWithToValueType)],
+                nullability: .nonNull
+            )))
+            let associateWithToValueSelectorType = types.make(.functionType(FunctionType(
+                params: [listTypeParamType],
+                returnType: associateWithToValueType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let associateWithToMemberSymbol = symbols.define(
+                kind: .function,
+                name: associateWithToMemberName,
+                fqName: associateWithToMemberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: associateWithToMemberSymbol)
+            symbols.setParentSymbol(associateWithToMemberSymbol, for: associateWithToValueTypeParamSymbol)
+            symbols.setExternalLinkName("kk_list_associateWithTo", for: associateWithToMemberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: associateWithToReceiverType,
+                    parameterTypes: [associateWithToDestinationType, associateWithToValueSelectorType],
+                    returnType: associateWithToDestinationType,
+                    typeParameterSymbols: [listTypeParamSymbol, associateWithToValueTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: associateWithToMemberSymbol
+            )
+        }
+
+        // STDLIB-COL-DEST-004: groupByTo(destination, keySelector) -> M
+        let groupByToMemberName = interner.intern("groupByTo")
+        let groupByToMemberFQName = listFQName + [groupByToMemberName]
+        if symbols.lookup(fqName: groupByToMemberFQName) == nil {
+            let groupByToKeyTypeParamName = interner.intern("K")
+            let groupByToKeyTypeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: groupByToKeyTypeParamName,
+                fqName: groupByToMemberFQName + [groupByToKeyTypeParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let groupByToKeyType = types.make(.typeParam(TypeParamType(
+                symbol: groupByToKeyTypeParamSymbol, nullability: .nonNull
+            )))
+            let groupByToReceiverType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.out(listTypeParamType)],
+                nullability: .nonNull
+            )))
+            let groupByToDestinationType = types.make(.classType(ClassType(
+                classSymbol: mapInterfaceSymbol,
+                args: [.out(groupByToKeyType), .out(listTypeParamType)],
+                nullability: .nonNull
+            )))
+            let groupByToKeySelectorType = types.make(.functionType(FunctionType(
+                params: [listTypeParamType],
+                returnType: groupByToKeyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let groupByToMemberSymbol = symbols.define(
+                kind: .function,
+                name: groupByToMemberName,
+                fqName: groupByToMemberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: groupByToMemberSymbol)
+            symbols.setParentSymbol(groupByToMemberSymbol, for: groupByToKeyTypeParamSymbol)
+            symbols.setExternalLinkName("kk_list_groupByTo", for: groupByToMemberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: groupByToReceiverType,
+                    parameterTypes: [groupByToDestinationType, groupByToKeySelectorType],
+                    returnType: groupByToDestinationType,
+                    typeParameterSymbols: [listTypeParamSymbol, groupByToKeyTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: groupByToMemberSymbol
+            )
+        }
     }
 
     /// Register `List<E>.asSequence(): Sequence<E>` member stub (STDLIB-471).

@@ -737,7 +737,8 @@ extension CollectionLiteralLoweringPass {
                     // --- Rewrite buildString/buildList/buildMap → kk_build_* (STDLIB-002) ---
                     if symbol == nil, lookup.builderDSLNames.contains(callee) {
                         let kkCallee: InternedString = switch callee {
-                        case lookup.buildStringName: lookup.kkBuildStringName
+                        case lookup.buildStringName:
+                            arguments.count == 2 ? lookup.kkBuildStringWithCapacityName : lookup.kkBuildStringName
                         case lookup.buildListName:
                             arguments.count == 2 ? lookup.kkBuildListWithCapacityName : lookup.kkBuildListName
                         case lookup.buildSetName: lookup.kkBuildSetName

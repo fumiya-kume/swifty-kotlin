@@ -1246,6 +1246,17 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        // buildString(capacity, builderAction) overload (STDLIB-TEXT-EDGE-007)
+        RuntimeABIFunctionSpec(
+            name: "kk_build_string_with_capacity",
+            parameters: [
+                RuntimeABIParameter(name: "capacity", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_build_list",
             parameters: [
