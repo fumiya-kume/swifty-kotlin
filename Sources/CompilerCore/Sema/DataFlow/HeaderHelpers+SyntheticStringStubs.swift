@@ -232,6 +232,37 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-EDGE-001: split with ignoreCase and limit ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "split",
+            externalLinkName: "kk_string_split_limit",
+            receiverType: stringType,
+            parameters: [
+                ("delimiters", stringType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: listStringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "split",
+            externalLinkName: "kk_string_split_limit",
+            receiverType: stringType,
+            parameters: [
+                ("delimiters", stringType, false, false),
+                ("ignoreCase", boolType, false, false),
+                ("limit", intType, false, false),
+            ],
+            returnType: listStringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "replace",
             externalLinkName: "kk_string_replace",
@@ -2126,6 +2157,76 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // String.zipWithNext(transform: (Char, Char) -> R)
+        let zipWithNextTransformFQName = kotlinTextPkg + [interner.intern("zipWithNext")]
+        let existingZipWithNextTransform = symbols.lookupAll(fqName: zipWithNextTransformFQName).first { symID in
+            guard let sig = symbols.functionSignature(for: symID) else {
+                return false
+            }
+            return sig.parameterTypes.count == 1
+        }
+        if let existingZipWithNextTransform {
+            symbols.setExternalLinkName("kk_string_zipWithNextTransform", for: existingZipWithNextTransform)
+        } else {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: zipWithNextTransformFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let transformFnType = types.make(.functionType(FunctionType(
+                params: [charType, charType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let transformResultType = makeListType(
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                elementType: rType
+            )
+            let transformMemberSymbol = symbols.define(
+                kind: .function,
+                name: interner.intern("zipWithNext"),
+                fqName: zipWithNextTransformFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+                symbols.setParentSymbol(packageSymbol, for: transformMemberSymbol)
+            }
+            symbols.setExternalLinkName("kk_string_zipWithNextTransform", for: transformMemberSymbol)
+            let transformParamName = interner.intern("transform")
+            let transformParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: transformParamName,
+                fqName: zipWithNextTransformFQName + [transformParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(transformMemberSymbol, for: transformParamSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: stringType,
+                    parameterTypes: [transformFnType],
+                    returnType: transformResultType,
+                    valueParameterSymbols: [transformParamSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [rSymbol],
+                    classTypeParameterCount: 0
+                ),
+                for: transformMemberSymbol
+            )
+        }
 
         // --- String.partition ---
         let pairStringStringType: TypeID

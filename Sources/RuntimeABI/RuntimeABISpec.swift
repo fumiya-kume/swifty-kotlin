@@ -70,7 +70,7 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
 
 // swiftlint:disable:next type_body_length
 public enum RuntimeABISpec {
-    public static let specVersion = "J30"
+    public static let specVersion = "J31"
 
     private static func deduplicatedFunctions(
         _ functions: [RuntimeABIFunctionSpec]
@@ -774,6 +774,17 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
                 RuntimeABIParameter(name: "delimRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_split_limit",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "delimRaw", type: .intptr),
+                RuntimeABIParameter(name: "ignoreCaseRaw", type: .intptr),
+                RuntimeABIParameter(name: "limitRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
@@ -6088,6 +6099,26 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         // STDLIB-316: String.zipWithNext()
+        RuntimeABIFunctionSpec(
+            name: "kk_string_zipWithNext",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        // STDLIB-316: String.zipWithNext(transform: (Char, Char) -> R)
+        RuntimeABIFunctionSpec(
+            name: "kk_string_zipWithNextTransform",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         // STDLIB-317: String.asSequence / asIterable
         RuntimeABIFunctionSpec(
             name: "kk_string_asSequence",
