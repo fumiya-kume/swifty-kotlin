@@ -143,6 +143,11 @@ private let groupingFoldOperationThrowingLambda: @convention(c) (Int, Int, Int, 
     return 0
 }
 
+private let groupingAggregateThrowingLambda: @convention(c) (Int, Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _, _, _, outThrown in
+    outThrown?.pointee = exceptionID
+    return 0
+}
+
 final class RuntimeCollectionHOFThrowTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -398,6 +403,25 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
             unsafeBitCast(groupingInitialValueSelectorThrowingLambda, to: Int.self),
             0,
             unsafeBitCast(groupingFoldOperationThrowingLambda, to: Int.self),
+            0,
+            &outThrown
+        )
+
+        XCTAssertEqual(outThrown, exceptionID)
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+    }
+
+    func testGroupingAggregateThrows() {
+        let grouping = kk_list_groupingBy(
+            makeList([1, 2, 3]),
+            unsafeBitCast(groupingByParity, to: Int.self),
+            0
+        )
+
+        var outThrown = 0
+        let result = kk_grouping_aggregate(
+            grouping,
+            unsafeBitCast(groupingAggregateThrowingLambda, to: Int.self),
             0,
             &outThrown
         )

@@ -2709,6 +2709,29 @@ public extension RuntimeABISpec {
                     section: "Collection"
                 ),
                 RuntimeABIFunctionSpec(
+                    name: "kk_grouping_aggregate",
+                    parameters: [
+                        RuntimeABIParameter(name: "groupingRaw", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_grouping_aggregateTo",
+                    parameters: [
+                        RuntimeABIParameter(name: "groupingRaw", type: .intptr),
+                        RuntimeABIParameter(name: "destRaw", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
                     name: "kk_grouping_fold",
                     parameters: [
                         RuntimeABIParameter(name: "groupingRaw", type: .intptr),

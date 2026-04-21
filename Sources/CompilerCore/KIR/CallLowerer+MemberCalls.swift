@@ -166,7 +166,7 @@ extension CallLowerer {
         "scan", "scanIndexed", "runningFold", "runningFoldIndexed",
         "runningReduce", "runningReduceIndexed",
         "groupBy", "groupingBy", "sortedBy", "find", "findLast", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
-        "eachCount",
+        "eachCount", "aggregate", "aggregateTo",
         "withIndex", "forEachIndexed", "mapIndexed", "filterIndexed", "mapValues", "mapKeys", "filterKeys", "filterValues",
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull", "elementAt", "elementAtOrElse",
         "putAll", "addAll",
@@ -4295,6 +4295,7 @@ extension CallLowerer {
             "map", "filter", "mapNotNull", "forEach", "flatMap",
             "any", "none", "all", "fold", "foldRight", "reduce", "reduceRight", "scan", "scanIndexed",
             "runningFold", "runningFoldIndexed", "runningReduce", "runningReduceIndexed", "groupBy", "groupingBy",
+            "aggregate", "aggregateTo",
             "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate",
             "forEachIndexed", "mapIndexed", "filterIndexed", "sumOf", "mapValues", "mapKeys", "filterKeys", "filterValues",
@@ -7236,6 +7237,10 @@ extension CallLowerer {
             switch memberName {
             case "eachCount":
                 return interner.intern("kk_grouping_eachCount")
+            case "aggregate":
+                return interner.intern("kk_grouping_aggregate")
+            case "aggregateTo":
+                return interner.intern("kk_grouping_aggregateTo")
             case "fold":
                 return interner.intern(argumentCount >= 4
                     ? "kk_grouping_fold_initialValueSelector"
