@@ -248,33 +248,47 @@ final class RuntimeFunctionValueBox {
 // MARK: - Collection Types (STDLIB-001)
 
 /// Runtime box for `listOf(...)` / `mutableListOf(...)`.
-/// Stores elements as an array of `Int` (opaque intptr_t values).
+/// Stores elements directly or as a lightweight view over another list/array.
 final class RuntimeListBox {
-    private var storedElements: [Int]
-    private let reversedViewBase: RuntimeListBox?
+    private enum Storage {
+        case direct([Int])
+        case reversedViewOf(RuntimeListBox)
+        case arrayViewOf(RuntimeArrayBox)
+    }
+
+    private var storage: Storage
 
     init(elements: [Int]) {
-        self.storedElements = elements
-        self.reversedViewBase = nil
+        storage = .direct(elements)
     }
 
     init(reversedViewOf base: RuntimeListBox) {
-        self.storedElements = []
-        self.reversedViewBase = base
+        storage = .reversedViewOf(base)
+    }
+
+    init(arrayViewOf base: RuntimeArrayBox) {
+        storage = .arrayViewOf(base)
     }
 
     var elements: [Int] {
         get {
-            if let base = reversedViewBase {
+            switch storage {
+            case .direct(let elements):
+                return elements
+            case .reversedViewOf(let base):
                 return Array(base.elements.reversed())
+            case .arrayViewOf(let base):
+                return base.elements
             }
-            return storedElements
         }
         set {
-            if let base = reversedViewBase {
+            switch storage {
+            case .direct:
+                storage = .direct(newValue)
+            case .reversedViewOf(let base):
                 base.elements = Array(newValue.reversed())
-            } else {
-                storedElements = newValue
+            case .arrayViewOf(let base):
+                base.elements = newValue
             }
         }
     }

@@ -8848,6 +8848,78 @@ extension DataFlowSemaPhase {
             }
         }
 
+        // Register asList() view methods for unsigned primitive arrays
+        let unsignedPrimitiveArrayNames = [
+            "UByteArray",
+            "UShortArray",
+            "UIntArray",
+            "ULongArray",
+        ]
+        for name in unsignedPrimitiveArrayNames {
+            let primName = interner.intern(name)
+            let fqName = kotlinPkg + [primName]
+            guard let arraySymbol = symbols.lookup(fqName: fqName), let listInterfaceSym = listInterfaceSym else {
+                continue
+            }
+
+            let asListName = interner.intern("asList")
+            let asListFQName = fqName + [asListName]
+            if symbols.lookup(fqName: asListFQName) == nil {
+                let asListSym = symbols.define(
+                    kind: .function,
+                    name: asListName,
+                    fqName: asListFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(arraySymbol, for: asListSym)
+
+                let externalLinkName: String = switch name {
+                case "UByteArray": "kk_uByteArray_asList"
+                case "UShortArray": "kk_uShortArray_asList"
+                case "UIntArray": "kk_uIntArray_asList"
+                case "ULongArray": "kk_uLongArray_asList"
+                default: "kk_array_toList"
+                }
+                symbols.setExternalLinkName(externalLinkName, for: asListSym)
+
+                let elementType: TypeID = switch name {
+                case "UByteArray": types.ubyteType
+                case "UShortArray": types.ushortType
+                case "UIntArray": types.uintType
+                case "ULongArray": types.ulongType
+                default: types.intType
+                }
+
+                let listReturnType = types.make(.classType(ClassType(
+                    classSymbol: listInterfaceSym,
+                    args: [.invariant(elementType)],
+                    nullability: .nonNull
+                )))
+
+                let arrayReceiverType = types.make(.classType(ClassType(
+                    classSymbol: arraySymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: arrayReceiverType,
+                        parameterTypes: [],
+                        returnType: listReturnType,
+                        isSuspend: false,
+                        valueParameterSymbols: [],
+                        valueParameterHasDefaultValues: [],
+                        valueParameterIsVararg: [],
+                        typeParameterSymbols: []
+                    ),
+                    for: asListSym
+                )
+            }
+        }
+
         let primitiveArrayFactoryTypes: [(String, String, TypeID)] = [
             ("intArrayOf", "IntArray", types.intType),
             ("longArrayOf", "LongArray", types.longType),

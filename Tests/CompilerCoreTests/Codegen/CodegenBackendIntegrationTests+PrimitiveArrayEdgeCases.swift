@@ -5,7 +5,8 @@ import XCTest
 // STDLIB-004: Primitive array edge case coverage
 // Covers IntArray/LongArray/ShortArray/ByteArray/CharArray/DoubleArray/FloatArray/BooleanArray
 // and unsigned variants, exercising zero-init constructor, fill, copyOf, contentEquals,
-// toList round-trip, and size-zero semantics — distinct from generic-array coverage in #1185.
+// toList round-trip, asList view semantics, and size-zero semantics — distinct from
+// generic-array coverage in #1185.
 extension CodegenBackendIntegrationTests {
 
     // MARK: - Zero-initialized constructor (IntArray(n) without lambda)
@@ -300,6 +301,35 @@ extension CodegenBackendIntegrationTests {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(out, "3\n10\n30\n2\n200\n")
+        }
+    }
+
+    // MARK: - asList view for unsigned primitive arrays
+
+    func testUnsignedPrimitiveArrayAsListViewReflectsMutations() throws {
+        let source = """
+        fun main() {
+            val uints = uintArrayOf(100u, 200u, 300u)
+            val uintView = uints.asList()
+            println(uintView.size)
+            println(uintView[1])
+            uints[1] = 900u
+            println(uintView[1])
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "UnsignedPrimitiveArrayAsListView",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "3\n200\n900\n")
         }
     }
 

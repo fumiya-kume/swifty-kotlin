@@ -937,6 +937,39 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        // Primitive array asList view conversions
+        RuntimeABIFunctionSpec(
+            name: "kk_uByteArray_asList",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uShortArray_asList",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uIntArray_asList",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uLongArray_asList",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
         // Primitive array size property
         RuntimeABIFunctionSpec(
             name: "kk_intArray_size",
