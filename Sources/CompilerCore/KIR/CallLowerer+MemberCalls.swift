@@ -3351,6 +3351,14 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_associateBy"
                 } else if calleeName == interner.intern("find") {
                     runtimeCallee = "kk_sequence_find"
+                } else if calleeName == interner.intern("findLast") {
+                    runtimeCallee = "kk_sequence_findLast"
+                } else if calleeName == interner.intern("any") {
+                    runtimeCallee = "kk_sequence_any"
+                } else if calleeName == interner.intern("all") {
+                    runtimeCallee = "kk_sequence_all"
+                } else if calleeName == interner.intern("none") {
+                    runtimeCallee = "kk_sequence_none"
                 } else if calleeName == interner.intern("mapNotNull") {
                     runtimeCallee = "kk_sequence_mapNotNull"
                 } else if calleeName == interner.intern("mapIndexed") {
@@ -3375,6 +3383,10 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_associate"
                         || runtimeCallee == "kk_sequence_associateBy"
                         || runtimeCallee == "kk_sequence_find"
+                        || runtimeCallee == "kk_sequence_findLast"
+                        || runtimeCallee == "kk_sequence_any"
+                        || runtimeCallee == "kk_sequence_all"
+                        || runtimeCallee == "kk_sequence_none"
                         || runtimeCallee == "kk_sequence_mapNotNull"
                         || runtimeCallee == "kk_sequence_mapIndexed"
                         || runtimeCallee == "kk_sequence_onEach"
@@ -3695,12 +3707,16 @@ extension CallLowerer {
                 let lastID = interner.intern("last")
                 let lastOrNullID = interner.intern("lastOrNull")
                 let countID = interner.intern("count")
+                let anyID = interner.intern("any")
+                let noneID = interner.intern("none")
 
                 let seqFirstCallee = interner.intern("kk_sequence_first")
                 let seqFirstOrNullCallee = interner.intern("kk_sequence_firstOrNull")
                 let seqLastCallee = interner.intern("kk_sequence_last")
                 let seqLastOrNullCallee = interner.intern("kk_sequence_lastOrNull")
                 let seqCountCallee = interner.intern("kk_sequence_count")
+                let seqAnyCallee = interner.intern("kk_sequence_any")
+                let seqNoneCallee = interner.intern("kk_sequence_none")
 
                 let runtimeCallee: InternedString? = switch calleeName {
                 case toListID:
@@ -3727,10 +3743,28 @@ extension CallLowerer {
                     seqLastOrNullCallee
                 case countID:
                     seqCountCallee
+                case anyID:
+                    seqAnyCallee
+                case noneID:
+                    seqNoneCallee
                 default:
                     nil
                 }
                 if let runtimeCallee {
+                    // any()/none() with no predicate: pass fnPtr=0, closure=0 sentinel
+                    if runtimeCallee == seqAnyCallee || runtimeCallee == seqNoneCallee {
+                        let zeroExpr = arena.appendExpr(.intLiteral(0), type: nil)
+                        instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: runtimeCallee,
+                            arguments: [loweredReceiverID, zeroExpr, zeroExpr],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        return result
+                    }
                     let canThrow = runtimeCallee == seqFirstCallee
                         || runtimeCallee == seqFirstOrNullCallee
                         || runtimeCallee == seqLastCallee
@@ -6595,6 +6629,14 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_associateBy")
             case interner.intern("find"):
                 return interner.intern("kk_sequence_find")
+            case interner.intern("findLast"):
+                return interner.intern("kk_sequence_findLast")
+            case interner.intern("any"):
+                return interner.intern("kk_sequence_any")
+            case interner.intern("all"):
+                return interner.intern("kk_sequence_all")
+            case interner.intern("none"):
+                return interner.intern("kk_sequence_none")
             case interner.intern("mapNotNull"):
                 return interner.intern("kk_sequence_mapNotNull")
             case interner.intern("filterNot"):
