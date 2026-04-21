@@ -959,7 +959,9 @@ extension DataFlowSemaPhase {
         patchKFunctionParametersType(symbols: symbols, types: types, interner: interner)
         registerSyntheticRangeProgressionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticRangeUntilStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
+        if types.comparableInterfaceSymbol == nil {
+            registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
+        }
         registerSyntheticBuilderDSLStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparatorStubs(symbols: symbols, types: types, interner: interner)
         patchArrayBinarySearchComparatorStub(symbols: symbols, types: types, interner: interner)
@@ -1025,7 +1027,6 @@ extension DataFlowSemaPhase {
         registerSyntheticNativeConcurrentStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExperimentalMarkerStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoroutinesABIStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticOpenEndRangeStub(symbols: symbols, types: types, interner: interner)
     }
 
     /// Register the synthetic `kotlin.Any` and `kotlin.Annotation` built-in stubs.

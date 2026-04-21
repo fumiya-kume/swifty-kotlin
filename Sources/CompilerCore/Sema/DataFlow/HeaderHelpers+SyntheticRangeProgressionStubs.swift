@@ -41,6 +41,14 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerSyntheticRangeInterfaceStubs(
+            rangesPackageSymbol: rangesPackageSymbol,
+            rangesFQName: rangesFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
         registerSyntheticProgressionStub(
             named: "IntProgression",
             elementType: types.intType,
