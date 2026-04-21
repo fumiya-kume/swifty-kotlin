@@ -1125,7 +1125,10 @@ extension CallTypeChecker {
             "fold", "foldRight", "reduce", "reduceOrNull", "reduceRight", "foldIndexed", "foldRightIndexed", "reduceIndexed", "reduceIndexedOrNull",
             "scan", "scanIndexed", "runningFold", "runningFoldIndexed", "runningReduce", "runningReduceIndexed", "scanReduce",
             "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
-            "associateBy", "associateWith", "associate", "associateByTo", "associateWithTo", "groupByTo", "forEachIndexed", "mapIndexed",
+            "associateBy", "associateWith", "associate", "associateTo", "associateByTo", "associateWithTo", "groupByTo",
+            "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo", "mapIndexedTo", "flatMapIndexedTo",
+            "filterIndexedTo", "filterNotNullTo",
+            "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch",
@@ -1227,6 +1230,40 @@ extension CallTypeChecker {
             }
         }
 
+        if interner.resolve(calleeName) == "toCollection",
+           args.count == 1,
+           isCollectionReceiver
+        {
+            let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            sema.bindings.markCollectionExpr(id)
+            let finalType = safeCall ? sema.types.makeNullable(destinationType) : destinationType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
+        if interner.resolve(calleeName) == "filterIsInstanceTo",
+           args.count == 1,
+           isCollectionReceiver
+        {
+            let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            sema.bindings.markCollectionExpr(id)
+            let finalType = safeCall ? sema.types.makeNullable(destinationType) : destinationType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
+        // filterNotNullTo(destination) — no lambda, returns destination type (STDLIB-SEQ-021)
+        if interner.resolve(calleeName) == "filterNotNullTo",
+           args.count == 1,
+           isCollectionReceiver || isSequenceReceiver
+        {
+            let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            sema.bindings.markCollectionExpr(id)
+            let finalType = safeCall ? sema.types.makeNullable(destinationType) : destinationType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
         // --- Collection higher-order functions (STDLIB-005) ---
         if isCollectionHOF {
             let calleeStr = interner.resolve(calleeName)
@@ -1240,6 +1277,158 @@ extension CallTypeChecker {
             )
 
             let resultType: TypeID
+            let destinationCollectionHOFs: Set = [
+                "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo",
+                "mapIndexedTo", "flatMapIndexedTo", "associateTo",
+                "filterIndexedTo",
+            ]
+            if destinationCollectionHOFs.contains(calleeStr), args.count == 2 {
+                let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                let nonNullableDestinationType = sema.types.makeNonNullable(destinationType)
+                let destinationElementType: TypeID = if case let .classType(destClassType) = sema.types.kind(of: nonNullableDestinationType),
+                                                          destClassType.args.count >= 1
+                {
+                    switch destClassType.args[0] {
+                    case let .invariant(id), let .out(id), let .in(id): id
+                    case .star: sema.types.anyType
+                    }
+                } else {
+                    sema.types.anyType
+                }
+                let destinationMapKeyType: TypeID = if case let .classType(destClassType) = sema.types.kind(of: nonNullableDestinationType),
+                                                          destClassType.args.count >= 2
+                {
+                    switch destClassType.args[0] {
+                    case let .invariant(id), let .out(id), let .in(id): id
+                    case .star: sema.types.anyType
+                    }
+                } else {
+                    sema.types.anyType
+                }
+                let destinationMapValueType: TypeID = if case let .classType(destClassType) = sema.types.kind(of: nonNullableDestinationType),
+                                                            destClassType.args.count >= 2
+                {
+                    switch destClassType.args[1] {
+                    case let .invariant(id), let .out(id), let .in(id): id
+                    case .star: sema.types.anyType
+                    }
+                } else {
+                    sema.types.anyType
+                }
+                let pairReturnType: TypeID = if calleeStr == "associateTo" {
+                    if let pairSymbol = lookupStdlibSymbol("Pair", symbols: sema.symbols, interner: interner) {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: pairSymbol,
+                            args: [.invariant(destinationMapKeyType), .invariant(destinationMapValueType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        sema.types.anyType
+                    }
+                } else {
+                    sema.types.anyType
+                }
+                let lambdaExpectedType: TypeID = switch calleeStr {
+                case "filterTo", "filterNotTo":
+                    sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType],
+                        returnType: sema.types.booleanType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                case "filterIndexedTo":
+                    sema.types.make(.functionType(FunctionType(
+                        params: [sema.types.intType, collectionElementType],
+                        returnType: sema.types.booleanType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                case "mapTo":
+                    sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType],
+                        returnType: destinationElementType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                case "flatMapTo":
+                    {
+                        if let collectionSymbol = lookupStdlibSymbol("Collection", symbols: sema.symbols, interner: interner) {
+                            let iterableType = sema.types.make(.classType(ClassType(
+                                classSymbol: collectionSymbol,
+                                args: [.invariant(destinationElementType)],
+                                nullability: .nonNull
+                            )))
+                            return sema.types.make(.functionType(FunctionType(
+                                params: [collectionElementType],
+                                returnType: iterableType,
+                                isSuspend: false,
+                                nullability: .nonNull
+                            )))
+                        } else {
+                            return sema.types.make(.functionType(FunctionType(
+                                params: [collectionElementType],
+                                returnType: sema.types.anyType,
+                                isSuspend: false,
+                                nullability: .nonNull
+                            )))
+                        }
+                    }()
+                case "mapNotNullTo":
+                    sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType],
+                        returnType: sema.types.makeNullable(destinationElementType),
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                case "mapIndexedTo":
+                    sema.types.make(.functionType(FunctionType(
+                        params: [sema.types.intType, collectionElementType],
+                        returnType: destinationElementType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                case "flatMapIndexedTo":
+                    {
+                        if let collectionSymbol = lookupStdlibSymbol("Collection", symbols: sema.symbols, interner: interner) {
+                            let iterableType = sema.types.make(.classType(ClassType(
+                                classSymbol: collectionSymbol,
+                                args: [.invariant(destinationElementType)],
+                                nullability: .nonNull
+                            )))
+                            return sema.types.make(.functionType(FunctionType(
+                                params: [sema.types.intType, collectionElementType],
+                                returnType: iterableType,
+                                isSuspend: false,
+                                nullability: .nonNull
+                            )))
+                        } else {
+                            return sema.types.make(.functionType(FunctionType(
+                                params: [sema.types.intType, collectionElementType],
+                                returnType: sema.types.anyType,
+                                isSuspend: false,
+                                nullability: .nonNull
+                            )))
+                        }
+                    }()
+                case "associateTo":
+                    sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType],
+                        returnType: pairReturnType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                default:
+                    sema.types.anyType
+                }
+                if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                }
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = destinationType
+                let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
             switch calleeStr {
             case "map", "filter", "filterNot", "filterKeys", "filterValues", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
                  "count", "first", "last", "find", "associateBy", "associateWith", "associate",
@@ -4129,6 +4318,36 @@ extension CallTypeChecker {
                     }
                 }
             }
+            // CharSequence stdlib: removePrefix / removeSuffix / removeSurrounding (STDLIB-185)
+            if args.count == 1 {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                let arg0Type = sema.types.makeNonNullable(argTypes[0])
+                let calleeStr = interner.resolve(calleeName)
+                if ["removePrefix", "removeSuffix", "removeSurrounding"].contains(calleeStr),
+                   isSyntheticStringLikeType(receiverTypeForCheck, sema: sema),
+                   isSyntheticStringLikeType(arg0Type, sema: sema)
+                {
+                    if let boundType = tryBindSyntheticStringMemberFallback(
+                        id,
+                        calleeName: calleeName,
+                        receiverType: receiverTypeForCheck,
+                        args: args,
+                        argTypes: argTypes,
+                        range: range,
+                        ctx: ctx,
+                        expectedType: expectedType,
+                        explicitTypeArgs: explicitTypeArgs,
+                        safeCall: safeCall
+                    ) {
+                        return boundType
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
             // String stdlib: 1-arg methods (STDLIB-006)
             if args.count == 1 {
                 let receiverTypeForCheck = safeCall
@@ -4146,8 +4365,6 @@ extension CallTypeChecker {
                         sema.types.anyType
                     case "indexOf", "lastIndexOf", "compareTo":
                         sema.types.make(.primitive(.int, .nonNull))
-                    case "removePrefix", "removeSuffix", "removeSurrounding":
-                        sema.types.stringType
                     case "substringBefore", "substringAfter", "substringBeforeLast", "substringAfterLast":
                         sema.types.stringType
                     case "prependIndent", "replaceIndent":
@@ -4284,16 +4501,16 @@ extension CallTypeChecker {
                     return finalType
                 }
             }
-            // String stdlib: 2-arg removeSurrounding(prefix, suffix) (STDLIB-185)
+            // CharSequence stdlib: 2-arg removeSurrounding(prefix, suffix) (STDLIB-185)
             if args.count == 2 {
                 let receiverTypeForCheck = safeCall
                     ? sema.types.makeNonNullable(lookupReceiverType)
                     : lookupReceiverType
                 let arg0Type = sema.types.makeNonNullable(argTypes[0])
                 let arg1Type = sema.types.makeNonNullable(argTypes[1])
-                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
-                   sema.types.isSubtype(arg0Type, sema.types.stringType),
-                   sema.types.isSubtype(arg1Type, sema.types.stringType),
+                if isSyntheticStringLikeType(receiverTypeForCheck, sema: sema),
+                   isSyntheticStringLikeType(arg0Type, sema: sema),
+                   isSyntheticStringLikeType(arg1Type, sema: sema),
                    interner.resolve(calleeName) == "removeSurrounding"
                 {
                     if let boundType = tryBindSyntheticStringMemberFallback(
@@ -6127,7 +6344,10 @@ extension CallTypeChecker {
         else {
             return false
         }
-        return signature.receiverType == sema.types.stringType
+        guard let receiverType = signature.receiverType else {
+            return false
+        }
+        return isSyntheticStringLikeType(receiverType, sema: sema)
     }
 
     private func bindSyntheticStringMemberDirectlyIfAvailable(
@@ -6138,15 +6358,24 @@ extension CallTypeChecker {
         sema: SemaModule,
         interner: StringInterner
     ) {
+        let normalizedReceiverType = sema.types.makeNonNullable(receiverType)
+        guard isSyntheticStringLikeType(normalizedReceiverType, sema: sema) else {
+            return
+        }
         let stringMemberFQName = [
             interner.intern("kotlin"),
             interner.intern("text"),
             calleeName,
         ]
-        guard sema.types.isSubtype(sema.types.makeNonNullable(receiverType), sema.types.stringType),
-              let chosen = sema.symbols.lookupAll(fqName: stringMemberFQName).first(where: { candidate in
-                  isSyntheticStringMemberCandidate(candidate, named: calleeName, sema: sema, interner: interner)
-              })
+        guard let chosen = sema.symbols.lookupAll(fqName: stringMemberFQName).first(where: { candidate in
+            guard isSyntheticStringMemberCandidate(candidate, named: calleeName, sema: sema, interner: interner),
+                  let signature = sema.symbols.functionSignature(for: candidate),
+                  let candidateReceiver = signature.receiverType
+            else {
+                return false
+            }
+            return sema.types.makeNonNullable(candidateReceiver) == normalizedReceiverType
+        })
         else {
             return
         }
@@ -6160,6 +6389,28 @@ extension CallTypeChecker {
             )
         )
         sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+    }
+
+    private func syntheticCharSequenceType(sema: SemaModule) -> TypeID? {
+        guard let charSequenceSymbol = sema.types.charSequenceInterfaceSymbol else {
+            return nil
+        }
+        return sema.types.make(.classType(ClassType(
+            classSymbol: charSequenceSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+    }
+
+    private func isSyntheticStringLikeType(_ type: TypeID, sema: SemaModule) -> Bool {
+        let nonNullType = sema.types.makeNonNullable(type)
+        if nonNullType == sema.types.stringType {
+            return true
+        }
+        guard let charSequenceType = syntheticCharSequenceType(sema: sema) else {
+            return false
+        }
+        return nonNullType == charSequenceType
     }
 
     private func getCollectionElementType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> TypeID {

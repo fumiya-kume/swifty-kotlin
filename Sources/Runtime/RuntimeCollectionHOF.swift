@@ -17,7 +17,7 @@ func runtimeIndexedValueNew(index: Int, value: Int) -> Int {
     return raw
 }
 
-private func handleCollectionLambdaThrow(_ thrown: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+func handleCollectionLambdaThrow(_ thrown: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     if let outThrown = outThrown {
         outThrown.pointee = thrown
         return runtimeExceptionCaughtSentinel
@@ -28,7 +28,7 @@ private func handleCollectionLambdaThrow(_ thrown: Int, _ outThrown: UnsafeMutab
 
 /// Panics when a collection HOF receives an invalid container handle.
 /// Replaces silent fallbacks (return empty list/map/0/false) that mask runtime corruption.
-private func invalidContainerPanic(_ caller: StaticString, _ kind: StaticString) -> Never {
+func invalidContainerPanic(_ caller: StaticString, _ kind: StaticString) -> Never {
     fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(caller) received invalid \(kind) handle")
 }
 
@@ -201,6 +201,112 @@ public func kk_list_mapNotNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
         }
     }
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
+@_cdecl("kk_list_filterTo")
+public func kk_list_filterTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
+    }
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    for elem in elements {
+        var thrown = 0
+        let predicate = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if runtimeCollectionBool(predicate) {
+            runtimeAppendToMutableCollection(destRaw, elem)
+        }
+    }
+    return destRaw
+}
+
+@_cdecl("kk_list_filterNotTo")
+public func kk_list_filterNotTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
+    }
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    for elem in elements {
+        var thrown = 0
+        let predicate = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if !runtimeCollectionBool(predicate) {
+            runtimeAppendToMutableCollection(destRaw, elem)
+        }
+    }
+    return destRaw
+}
+
+@_cdecl("kk_list_mapTo")
+public func kk_list_mapTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
+    }
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    for elem in elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        runtimeAppendToMutableCollection(destRaw, maybeUnbox(result))
+    }
+    return destRaw
+}
+
+@_cdecl("kk_list_flatMapTo")
+public func kk_list_flatMapTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
+    }
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    for elem in elements {
+        var thrown = 0
+        let flattened = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        guard let flattenedElements = runtimeCollectionElements(from: flattened) else {
+            invalidContainerPanic(#function, "collection")
+        }
+        for flattenedElement in flattenedElements {
+            runtimeAppendToMutableCollection(destRaw, flattenedElement)
+        }
+    }
+    return destRaw
+}
+
+@_cdecl("kk_list_mapNotNullTo")
+public func kk_list_mapNotNullTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
+    }
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    for elem in elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if result != runtimeNullSentinelInt {
+            runtimeAppendToMutableCollection(destRaw, maybeUnbox(result))
+        }
+    }
+    return destRaw
 }
 
 @_cdecl("kk_list_filterNotNull")
@@ -1035,6 +1141,25 @@ public func kk_list_associate(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
     return registerRuntimeObject(RuntimeMapBox(keys: normalized.0, values: normalized.1))
 }
 
+@_cdecl("kk_list_associateTo")
+public func kk_list_associateTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
+    }
+    guard runtimeMapBox(from: destRaw) != nil else {
+        invalidContainerPanic(#function, "map")
+    }
+    for elem in elements {
+        var thrown = 0
+        let pair = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        _ = kk_mutable_map_put(destRaw, kk_pair_first(pair), kk_pair_second(pair))
+    }
+    return destRaw
+}
+
 // MARK: - STDLIB-535/536/537: associateByTo / associateWithTo / groupByTo
 
 /// Builds a key-index dictionary from existing map keys for O(1) lookups.
@@ -1251,6 +1376,49 @@ public func kk_list_mapIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
         mapped.append(maybeUnbox(result))
     }
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
+@_cdecl("kk_list_mapIndexedTo")
+public func kk_list_mapIndexedTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
+    }
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    for (index, elem) in elements.enumerated() {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: index, rhs: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        runtimeAppendToMutableCollection(destRaw, maybeUnbox(result))
+    }
+    return destRaw
+}
+
+@_cdecl("kk_list_flatMapIndexedTo")
+public func kk_list_flatMapIndexedTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
+    }
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    for (index, elem) in elements.enumerated() {
+        var thrown = 0
+        let flattened = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: index, rhs: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        guard let flattenedElements = runtimeCollectionElements(from: flattened) else {
+            invalidContainerPanic(#function, "collection")
+        }
+        for flattenedElement in flattenedElements {
+            runtimeAppendToMutableCollection(destRaw, flattenedElement)
+        }
+    }
+    return destRaw
 }
 
 // MARK: - List *Indexed collection extensions
@@ -2203,6 +2371,20 @@ public func kk_list_filterIsInstance(_ listRaw: Int, _ typeToken: Int) -> Int {
         result.append(elem)
     }
     return registerRuntimeObject(RuntimeListBox(elements: result))
+}
+
+@_cdecl("kk_list_filterIsInstanceTo")
+public func kk_list_filterIsInstanceTo(_ listRaw: Int, _ destRaw: Int, _ typeToken: Int) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
+    }
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    for elem in elements where kk_op_is(elem, typeToken) != 0 {
+        runtimeAppendToMutableCollection(destRaw, elem)
+    }
+    return destRaw
 }
 
 // MARK: - Set sorted (STDLIB-115)

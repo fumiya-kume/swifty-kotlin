@@ -92,11 +92,21 @@ struct CollectionLiteralLookupTables {
     let kkListFilterNotName: InternedString
     let kkListMapNotNullName: InternedString
     let kkListFilterNotNullName: InternedString
+    let kkListFilterToName: InternedString
+    let kkListFilterNotToName: InternedString
+    let kkListMapToName: InternedString
+    let kkListFlatMapToName: InternedString
+    let kkListMapNotNullToName: InternedString
+    let kkListMapIndexedToName: InternedString
+    let kkListFlatMapIndexedToName: InternedString
+    let kkListAssociateToName: InternedString
+    let kkListFilterIsInstanceToName: InternedString
     let kkListForEachName: InternedString
     let kkListFlatMapName: InternedString
     let kkListAnyName: InternedString
     let kkListNoneName: InternedString
     let kkListAllName: InternedString
+    let kkCollectionToCollectionName: InternedString
 
     // Additional higher-order collection function ABI names (STDLIB-005)
     let kkListFoldName: InternedString
@@ -291,6 +301,13 @@ struct CollectionLiteralLookupTables {
     let kkSequenceMinusName: InternedString
     let kkSequenceOfSingleName: InternedString
 
+    // STDLIB-SEQ-021: Sequence destination-collection filter operations
+    let kkSequenceFilterToName: InternedString
+    let kkSequenceFilterNotToName: InternedString
+    let kkSequenceFilterIndexedToName: InternedString
+    let kkSequenceFilterNotNullToName: InternedString
+    let kkSequenceFilterIsInstanceToName: InternedString
+
     let kkMapOfName: InternedString
     let kkMapSizeName: InternedString
     let kkMapGetName: InternedString
@@ -445,6 +462,16 @@ struct CollectionLiteralLookupTables {
     let filterNotName: InternedString
     let mapNotNullName: InternedString
     let filterNotNullName: InternedString
+    let filterToName: InternedString
+    let filterNotToName: InternedString
+    let mapToName: InternedString
+    let flatMapToName: InternedString
+    let mapNotNullToName: InternedString
+    let mapIndexedToName: InternedString
+    let flatMapIndexedToName: InternedString
+    let filterIsInstanceToName: InternedString
+    let filterIndexedToName: InternedString
+    let filterNotNullToName: InternedString
     let forEachName: InternedString
     let flatMapName: InternedString
     let anyName: InternedString
@@ -468,6 +495,7 @@ struct CollectionLiteralLookupTables {
     let associateByName: InternedString
     let associateWithName: InternedString
     let associateName: InternedString
+    let associateToName: InternedString
     let associateByToName: InternedString
     let associateWithToName: InternedString
     let groupByToName: InternedString
@@ -548,6 +576,7 @@ struct CollectionLiteralLookupTables {
     // Sequence member names (STDLIB-003)
     let asSequenceName: InternedString
     let toListName: InternedString
+    let toCollectionName: InternedString
     let toULongArrayName: InternedString
     let toIntArrayName: InternedString
     let toLongArrayName: InternedString
@@ -792,11 +821,21 @@ struct CollectionLiteralLookupTables {
         kkListFilterNotName = interner.intern("kk_list_filterNot")
         kkListMapNotNullName = interner.intern("kk_list_mapNotNull")
         kkListFilterNotNullName = interner.intern("kk_list_filterNotNull")
+        kkListFilterToName = interner.intern("kk_list_filterTo")
+        kkListFilterNotToName = interner.intern("kk_list_filterNotTo")
+        kkListMapToName = interner.intern("kk_list_mapTo")
+        kkListFlatMapToName = interner.intern("kk_list_flatMapTo")
+        kkListMapNotNullToName = interner.intern("kk_list_mapNotNullTo")
+        kkListMapIndexedToName = interner.intern("kk_list_mapIndexedTo")
+        kkListFlatMapIndexedToName = interner.intern("kk_list_flatMapIndexedTo")
+        kkListAssociateToName = interner.intern("kk_list_associateTo")
+        kkListFilterIsInstanceToName = interner.intern("kk_list_filterIsInstanceTo")
         kkListForEachName = interner.intern("kk_list_forEach")
         kkListFlatMapName = interner.intern("kk_list_flatMap")
         kkListAnyName = interner.intern("kk_list_any")
         kkListNoneName = interner.intern("kk_list_none")
         kkListAllName = interner.intern("kk_list_all")
+        kkCollectionToCollectionName = interner.intern("kk_collection_toCollection")
 
         kkListFoldName = interner.intern("kk_list_fold")
         kkListFoldRightName = interner.intern("kk_list_foldRight")
@@ -985,6 +1024,13 @@ struct CollectionLiteralLookupTables {
         kkSequenceMinusName = interner.intern("kk_sequence_minus")
         kkSequenceOfSingleName = interner.intern("kk_sequence_of_single")
 
+        // STDLIB-SEQ-021: Sequence destination-collection filter operations
+        kkSequenceFilterToName = interner.intern("kk_sequence_filterTo")
+        kkSequenceFilterNotToName = interner.intern("kk_sequence_filterNotTo")
+        kkSequenceFilterIndexedToName = interner.intern("kk_sequence_filterIndexedTo")
+        kkSequenceFilterNotNullToName = interner.intern("kk_sequence_filterNotNullTo")
+        kkSequenceFilterIsInstanceToName = interner.intern("kk_sequence_filterIsInstanceTo")
+
         kkMapOfName = interner.intern("kk_map_of")
         kkMapSizeName = interner.intern("kk_map_size")
         kkMapGetName = interner.intern("kk_map_get")
@@ -1134,6 +1180,16 @@ struct CollectionLiteralLookupTables {
         filterNotName = interner.intern("filterNot")
         mapNotNullName = interner.intern("mapNotNull")
         filterNotNullName = interner.intern("filterNotNull")
+        filterToName = interner.intern("filterTo")
+        filterNotToName = interner.intern("filterNotTo")
+        mapToName = interner.intern("mapTo")
+        flatMapToName = interner.intern("flatMapTo")
+        mapNotNullToName = interner.intern("mapNotNullTo")
+        mapIndexedToName = interner.intern("mapIndexedTo")
+        flatMapIndexedToName = interner.intern("flatMapIndexedTo")
+        filterIsInstanceToName = interner.intern("filterIsInstanceTo")
+        filterIndexedToName = interner.intern("filterIndexedTo")
+        filterNotNullToName = interner.intern("filterNotNullTo")
         forEachName = interner.intern("forEach")
         flatMapName = interner.intern("flatMap")
         anyName = interner.intern("any")
@@ -1156,6 +1212,7 @@ struct CollectionLiteralLookupTables {
         associateByName = interner.intern("associateBy")
         associateWithName = interner.intern("associateWith")
         associateName = interner.intern("associate")
+        associateToName = interner.intern("associateTo")
         associateByToName = interner.intern("associateByTo")
         associateWithToName = interner.intern("associateWithTo")
         groupByToName = interner.intern("groupByTo")
@@ -1233,6 +1290,7 @@ struct CollectionLiteralLookupTables {
 
         asSequenceName = interner.intern("asSequence")
         toListName = interner.intern("toList")
+        toCollectionName = interner.intern("toCollection")
         toULongArrayName = interner.intern("toULongArray")
         toIntArrayName = interner.intern("toIntArray")
         toLongArrayName = interner.intern("toLongArray")
