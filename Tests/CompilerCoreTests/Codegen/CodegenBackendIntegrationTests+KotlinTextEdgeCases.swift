@@ -714,6 +714,66 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testKotlinTextRemovePrefixSuffixCharSequenceEdgeCases() throws {
+        let source = """
+        fun trimPrefix(value: CharSequence): String {
+            return value.removePrefix("foo")
+        }
+
+        fun trimAround(value: CharSequence): String {
+            return value.removeSurrounding("foo")
+        }
+
+        fun main() {
+            val cs: CharSequence = "foofoobarfoo"
+
+            // CharSequence receiver: removePrefix
+            println(cs.removePrefix("foo"))
+
+            // CharSequence receiver: removeSuffix
+            println(cs.removeSuffix("foo"))
+
+            // CharSequence receiver: removeSurrounding(delimiter)
+            println(cs.removeSurrounding("foo"))
+
+            // CharSequence receiver: removeSurrounding(prefix, suffix)
+            println(cs.removeSurrounding("foo", "foo"))
+
+            // String argument passed to a CharSequence parameter
+            println(trimPrefix("foofoobar"))
+
+            // String argument passed to a CharSequence parameter
+            println(trimAround("foofoobarfoo"))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextRemovePrefixSuffixCharSequenceEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                foobarfoo
+                foofoobar
+                foobar
+                foobar
+                foobar
+                foobar
+                """
+                + "\n"
+            )
+        }
+    }
+
     // MARK: - take / drop / takeLast / dropLast
 
     func testKotlinTextTakeDropEdgeCases() throws {
