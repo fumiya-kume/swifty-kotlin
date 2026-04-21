@@ -1,12 +1,28 @@
 import Foundation
 
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
+
 public final class LinkPhase: CompilerPhase {
     public static let name = "Link"
 
     /// Linux links share one Swift autolink stub per target triple under `TMPDIR/kswiftk-link-stubs`.
-    /// Parallel XCTest workers could otherwise race on `fileExists` + atomic write and hand
-    /// `swiftc` a torn or empty stub, causing flaky link failures (`outputUnavailable`).
-    private static let linuxAutolinkStubLock = NSLock()
+    /// Guard creation with a file lock so parallel Swift test workers in separate processes
+    /// cannot race on the same stub path and hand `swiftc` a torn or empty file.
+    private static let linuxAutolinkStubContents = """
+    import Dispatch
+    import Foundation
+
+    @inline(never)
+    private func _kswiftkRuntimeAutolinkAnchor() {
+        _ = NSLock()
+        _ = DispatchQueue.global(qos: .default)
+        _ = DispatchSemaphore(value: 0)
+    }
+    """
 
     public init() {}
 
@@ -80,35 +96,43 @@ public final class LinkPhase: CompilerPhase {
         }
     }
 
-    private func emitSwiftAutolinkStubIfNeeded(target: TargetTriple) throws -> String? {
+    func emitSwiftAutolinkStubIfNeeded(target: TargetTriple) throws -> String? {
         guard target.os.hasPrefix("linux") else {
             return nil
         }
-
-        Self.linuxAutolinkStubLock.lock()
-        defer { Self.linuxAutolinkStubLock.unlock() }
 
         let stubDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("kswiftk-link-stubs", isDirectory: true)
         try FileManager.default.createDirectory(at: stubDirectory, withIntermediateDirectories: true)
 
-        let stubName = "runtime-autolink-\(CodegenRuntimeSupport.stableFNV1a64Hex(CodegenRuntimeSupport.targetTripleString(target))).swift"
+        let targetKey = CodegenRuntimeSupport.stableFNV1a64Hex(CodegenRuntimeSupport.targetTripleString(target))
+        let stubName = "runtime-autolink-\(targetKey).swift"
         let stubURL = stubDirectory.appendingPathComponent(stubName)
-        let stubContents = """
-        import Dispatch
-        import Foundation
-
-        @inline(never)
-        private func _kswiftkRuntimeAutolinkAnchor() {
-            _ = NSLock()
-            _ = DispatchQueue.global(qos: .default)
-            _ = DispatchSemaphore(value: 0)
-        }
-        """
-        if !FileManager.default.fileExists(atPath: stubURL.path) {
-            try stubContents.write(to: stubURL, atomically: true, encoding: .utf8)
+        let lockURL = stubDirectory.appendingPathComponent("runtime-autolink-\(targetKey).lock")
+        try withFileLock(at: lockURL) {
+            let currentContents = try? String(contentsOf: stubURL, encoding: .utf8)
+            if currentContents != Self.linuxAutolinkStubContents {
+                try Self.linuxAutolinkStubContents.write(to: stubURL, atomically: true, encoding: .utf8)
+            }
         }
         return stubURL.path
+    }
+
+    private func withFileLock<T>(at lockURL: URL, body: () throws -> T) throws -> T {
+        let descriptor = lockURL.path.withCString { path in
+            open(path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)
+        }
+        guard descriptor >= 0 else {
+            throw LinkPhaseFileLockError.systemCallFailed("open", errno)
+        }
+        defer { close(descriptor) }
+
+        guard flock(descriptor, LOCK_EX) == 0 else {
+            throw LinkPhaseFileLockError.systemCallFailed("flock", errno)
+        }
+        defer { _ = flock(descriptor, LOCK_UN) }
+
+        return try body()
     }
 
     private func buildLinkInputs(
@@ -243,5 +267,16 @@ public final class LinkPhase: CompilerPhase {
             .filter { $0.hasSuffix(".o") }
             .sorted()
             .map { URL(fileURLWithPath: objectsDir).appendingPathComponent($0).path }
+    }
+}
+
+private enum LinkPhaseFileLockError: Error, CustomStringConvertible {
+    case systemCallFailed(String, Int32)
+
+    var description: String {
+        switch self {
+        case let .systemCallFailed(operation, errorCode):
+            return "\(operation) failed: \(String(cString: strerror(errorCode)))"
+        }
     }
 }
