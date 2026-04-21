@@ -52,7 +52,7 @@
 - [ ] STDLIB-TEXT-EDGE-007: `buildString(capacity, builderAction)` overload を追加する
 - [x] STDLIB-TEXT-EDGE-008: `CharSequence` / `String`.`removeRange(startIndex, endIndex)` / `removeRange(range)` overload 群を追加する
 - [x] STDLIB-TEXT-EDGE-009: `CharSequence?.contentEquals(other)` / `contentEquals(other, ignoreCase)` を追加する
-- [ ] STDLIB-TEXT-EDGE-010: `CharSequence.removePrefix` / `removeSuffix` / `removeSurrounding` overload 群を追加する
+- [x] STDLIB-TEXT-EDGE-010: `CharSequence.removePrefix` / `removeSuffix` / `removeSurrounding` overload 群を追加する
 - [ ] STDLIB-TEXT-EDGE-011: `CharSequence.zipWithNext()` / `zipWithNext(transform)` を追加する
 - [x] STDLIB-TEXT-EDGE-012: `Appendable.append(vararg CharSequence?)` と `StringBuilder.append(vararg String? / Any?)` を追加する
 
@@ -61,7 +61,7 @@
 - [x] STDLIB-020: `Sequence` の lazy 性と builder 系 API の評価順を固定
 - [ ] STDLIB-021: mutable collection 変換 API と destination variant の差分を潰す
 - [ ] STDLIB-SEQ-001: `Sequence.map/filter + take` の lazy short-circuit を追加する
-- [ ] STDLIB-SEQ-002: `generateSequence` の null 終端と infinite source + `take` を追加する
+- [x] STDLIB-SEQ-002: `generateSequence` の null 終端と infinite source + `take` を追加する
 - [ ] STDLIB-SEQ-003: `sequence { yieldAll(...) }` builder semantics を追加する
 - [ ] STDLIB-SEQ-004: `Sequence.flatMap` / `distinct` / `zip` / `drop` を追加する
 - [ ] STDLIB-SEQ-005: `Sequence.count` / `forEach` / `fold` / `first` / `firstOrNull` を追加する
