@@ -180,6 +180,83 @@ private func runtimeUnsignedRangeLastMatch(
     return 0
 }
 
+// MARK: - Range randomOrNull helpers
+
+private func runtimeRandomIndex(count: Int, randomRaw: Int?) -> Int {
+    if let randomRaw {
+        return kk_random_nextInt_until(randomRaw, count, nil)
+    }
+    return Int.random(in: 0 ..< count)
+}
+
+private func runtimeSignedRangeCount(_ range: RuntimeRangeBox) -> Int {
+    if range.step > 0 {
+        guard range.first <= range.last else { return 0 }
+        return (range.last &- range.first) / range.step &+ 1
+    } else if range.step < 0 {
+        guard range.first >= range.last else { return 0 }
+        return (range.first &- range.last) / (0 &- range.step) &+ 1
+    }
+    return 0
+}
+
+private func runtimeUnsignedRangeCount(_ range: RuntimeRangeBox) -> Int {
+    let first = UInt(bitPattern: range.first)
+    let last = UInt(bitPattern: range.last)
+    if range.step > 0 {
+        guard first <= last else { return 0 }
+        let uStep = UInt(bitPattern: range.step)
+        return Int(bitPattern: (last - first) / uStep + 1)
+    } else if range.step < 0 {
+        guard first >= last else { return 0 }
+        let uStep = UInt(range.step.magnitude)
+        return Int(bitPattern: (first - last) / uStep + 1)
+    }
+    return 0
+}
+
+private func runtimeCharRangeCount(_ range: RuntimeRangeBox) -> Int {
+    let first = kk_unbox_char(range.first)
+    let last = kk_unbox_char(range.last)
+    if range.step > 0 {
+        guard first <= last else { return 0 }
+        return (last &- first) / range.step &+ 1
+    } else if range.step < 0 {
+        guard first >= last else { return 0 }
+        return (first &- last) / (0 &- range.step) &+ 1
+    }
+    return 0
+}
+
+private func runtimeSignedRangeRandomOrNull(_ range: RuntimeRangeBox, randomRaw: Int?) -> Int {
+    let count = runtimeSignedRangeCount(range)
+    guard count > 0 else { return runtimeNullSentinelInt }
+    let index = runtimeRandomIndex(count: count, randomRaw: randomRaw)
+    return range.first &+ (range.step &* index)
+}
+
+private func runtimeUnsignedRangeRandomOrNull(_ range: RuntimeRangeBox, randomRaw: Int?) -> Int {
+    let count = runtimeUnsignedRangeCount(range)
+    guard count > 0 else { return runtimeNullSentinelInt }
+    let index = UInt(runtimeRandomIndex(count: count, randomRaw: randomRaw))
+    let first = UInt(bitPattern: range.first)
+    if range.step > 0 {
+        let step = UInt(bitPattern: range.step)
+        return Int(bitPattern: first &+ (step &* index))
+    }
+    let step = UInt(range.step.magnitude)
+    return Int(bitPattern: first &- (step &* index))
+}
+
+private func runtimeCharRangeRandomOrNull(_ range: RuntimeRangeBox, randomRaw: Int?) -> Int {
+    let count = runtimeCharRangeCount(range)
+    guard count > 0 else { return runtimeNullSentinelInt }
+    let index = runtimeRandomIndex(count: count, randomRaw: randomRaw)
+    let first = kk_unbox_char(range.first)
+    let value = first &+ (range.step &* index)
+    return kk_box_char(value)
+}
+
 @_cdecl("kk_op_notnull")
 public func kk_op_notnull(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -1171,6 +1248,22 @@ public func kk_range_firstOrNull(_ rangeRaw: Int) -> Int {
     return range.first >= range.last ? range.first : runtimeNullSentinelInt
 }
 
+@_cdecl("kk_range_randomOrNull")
+public func kk_range_randomOrNull(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_randomOrNull")
+    }
+    return runtimeSignedRangeRandomOrNull(range, randomRaw: nil)
+}
+
+@_cdecl("kk_range_randomOrNull_random")
+public func kk_range_randomOrNull_random(_ rangeRaw: Int, _ randomRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_randomOrNull_random")
+    }
+    return runtimeSignedRangeRandomOrNull(range, randomRaw: randomRaw)
+}
+
 @_cdecl("kk_range_last_predicate")
 public func kk_range_last_predicate(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
                          _ outThrown: UnsafeMutablePointer<Int>?) -> Int
@@ -1568,6 +1661,22 @@ public func kk_char_range_sorted(_ rangeRaw: Int) -> Int {
     }
     elements.sort { kk_unbox_char($0) < kk_unbox_char($1) }
     return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
+@_cdecl("kk_char_range_randomOrNull")
+public func kk_char_range_randomOrNull(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_char_range_randomOrNull")
+    }
+    return runtimeCharRangeRandomOrNull(range, randomRaw: nil)
+}
+
+@_cdecl("kk_char_range_randomOrNull_random")
+public func kk_char_range_randomOrNull_random(_ rangeRaw: Int, _ randomRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_char_range_randomOrNull_random")
+    }
+    return runtimeCharRangeRandomOrNull(range, randomRaw: randomRaw)
 }
 
 // MARK: - Progression fromClosedRange (STDLIB-RANGE-039)
@@ -2343,6 +2452,22 @@ public func kk_uint_range_lastOrNull(_ rangeRaw: Int) -> Int {
     return range.last
 }
 
+@_cdecl("kk_uint_range_randomOrNull")
+public func kk_uint_range_randomOrNull(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_randomOrNull")
+    }
+    return runtimeUnsignedRangeRandomOrNull(range, randomRaw: nil)
+}
+
+@_cdecl("kk_uint_range_randomOrNull_random")
+public func kk_uint_range_randomOrNull_random(_ rangeRaw: Int, _ randomRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_randomOrNull_random")
+    }
+    return runtimeUnsignedRangeRandomOrNull(range, randomRaw: randomRaw)
+}
+
 @_cdecl("kk_uint_range_any")
 public func kk_uint_range_any(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
                                _ outThrown: UnsafeMutablePointer<Int>?) -> Int
@@ -2895,6 +3020,22 @@ public func kk_ulong_range_lastOrNull(_ rangeRaw: Int) -> Int {
         return runtimeNullSentinelInt
     }
     return range.last
+}
+
+@_cdecl("kk_ulong_range_randomOrNull")
+public func kk_ulong_range_randomOrNull(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_randomOrNull")
+    }
+    return runtimeUnsignedRangeRandomOrNull(range, randomRaw: nil)
+}
+
+@_cdecl("kk_ulong_range_randomOrNull_random")
+public func kk_ulong_range_randomOrNull_random(_ rangeRaw: Int, _ randomRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_randomOrNull_random")
+    }
+    return runtimeUnsignedRangeRandomOrNull(range, randomRaw: randomRaw)
 }
 
 @_cdecl("kk_ulong_range_any")
@@ -3475,6 +3616,22 @@ public func kk_long_range_count(_ rangeRaw: Int) -> Int {
         return (range.first &- range.last) / (0 &- range.step) &+ 1
     }
     return 0
+}
+
+@_cdecl("kk_long_range_randomOrNull")
+public func kk_long_range_randomOrNull(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_randomOrNull")
+    }
+    return runtimeSignedRangeRandomOrNull(range, randomRaw: nil)
+}
+
+@_cdecl("kk_long_range_randomOrNull_random")
+public func kk_long_range_randomOrNull_random(_ rangeRaw: Int, _ randomRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_randomOrNull_random")
+    }
+    return runtimeSignedRangeRandomOrNull(range, randomRaw: randomRaw)
 }
 
 @_cdecl("kk_long_range_forEach")

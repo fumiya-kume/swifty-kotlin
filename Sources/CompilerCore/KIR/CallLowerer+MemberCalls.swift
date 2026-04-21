@@ -5803,6 +5803,7 @@ extension CallLowerer {
         let fallbackName = interner.resolve(fallback)
         let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        let isCharRange = sema.bindings.isCharRangeExpr(receiverExpr)
         let isProgressionReceiver: Bool = {
             guard case let .classType(classType) = sema.types.kind(of: nonNullReceiverType),
                   let symbol = sema.symbols.symbol(classType.classSymbol)
@@ -5860,6 +5861,30 @@ extension CallLowerer {
                     return interner.intern("kk_long_range_lastOrNull")
                 }
                 return interner.intern("kk_range_lastOrNull")
+            case "randomOrNull":
+                if isCharRange {
+                    return argumentCount == 1
+                        ? interner.intern("kk_char_range_randomOrNull_random")
+                        : interner.intern("kk_char_range_randomOrNull")
+                }
+                if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                    return argumentCount == 1
+                        ? interner.intern("kk_ulong_range_randomOrNull_random")
+                        : interner.intern("kk_ulong_range_randomOrNull")
+                }
+                if sema.bindings.isUIntRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.uintType {
+                    return argumentCount == 1
+                        ? interner.intern("kk_uint_range_randomOrNull_random")
+                        : interner.intern("kk_uint_range_randomOrNull")
+                }
+                if nonNullReceiverType == sema.types.longType {
+                    return argumentCount == 1
+                        ? interner.intern("kk_long_range_randomOrNull_random")
+                        : interner.intern("kk_long_range_randomOrNull")
+                }
+                return argumentCount == 1
+                    ? interner.intern("kk_range_randomOrNull_random")
+                    : interner.intern("kk_range_randomOrNull")
             default:
                 break
             }

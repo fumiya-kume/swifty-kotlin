@@ -401,6 +401,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        let randomType = syntheticNominalType(
+            named: "Random",
+            in: [interner.intern("kotlin"), interner.intern("random")],
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         for property in [
             ("start", "kk_uint_range_first"),
@@ -503,6 +510,26 @@ extension DataFlowSemaPhase {
             parameterTypes: [],
             returnType: types.makeNullable(types.uintType),
             externalLinkName: "kk_uint_range_lastOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "randomOrNull",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [],
+            returnType: types.makeNullable(types.uintType),
+            externalLinkName: "kk_uint_range_randomOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "randomOrNull",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [randomType],
+            returnType: types.makeNullable(types.uintType),
+            externalLinkName: "kk_uint_range_randomOrNull_random",
             symbols: symbols,
             interner: interner
         )
@@ -614,6 +641,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        let randomType = syntheticNominalType(
+            named: "Random",
+            in: [interner.intern("kotlin"), interner.intern("random")],
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         for property in [
             ("start", "kk_ulong_range_first"),
@@ -716,6 +750,26 @@ extension DataFlowSemaPhase {
             parameterTypes: [],
             returnType: types.makeNullable(types.ulongType),
             externalLinkName: "kk_ulong_range_lastOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "randomOrNull",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [],
+            returnType: types.makeNullable(types.ulongType),
+            externalLinkName: "kk_ulong_range_randomOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "randomOrNull",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [randomType],
+            returnType: types.makeNullable(types.ulongType),
+            externalLinkName: "kk_ulong_range_randomOrNull_random",
             symbols: symbols,
             interner: interner
         )
@@ -1068,6 +1122,35 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let randomType = syntheticNominalType(
+            named: "Random",
+            in: [interner.intern("kotlin"), interner.intern("random")],
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticIntRangeMethod(
+            named: "randomOrNull",
+            ownerSymbol: classSymbol,
+            classFQName: classFQName,
+            receiverType: intRangeType,
+            parameterTypes: [],
+            returnType: types.makeNullable(types.intType),
+            externalLinkName: "kk_range_randomOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticIntRangeMethod(
+            named: "randomOrNull",
+            ownerSymbol: classSymbol,
+            classFQName: classFQName,
+            receiverType: intRangeType,
+            parameterTypes: [randomType],
+            returnType: types.makeNullable(types.intType),
+            externalLinkName: "kk_range_randomOrNull_random",
+            symbols: symbols,
+            interner: interner
+        )
         registerSyntheticIntRangeMethod(
             named: "take",
             ownerSymbol: classSymbol,
@@ -1211,7 +1294,18 @@ extension DataFlowSemaPhase {
     ) {
         let functionName = interner.intern(name)
         let functionFQName = classFQName + [functionName]
-        guard symbols.lookup(fqName: functionFQName) == nil else { return }
+        if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.kind == .function,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes == parameterTypes
+        }) {
+            return
+        }
 
         let functionSymbol = symbols.define(
             kind: .function,
@@ -1414,6 +1508,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        let randomType = syntheticNominalType(
+            named: "Random",
+            in: [interner.intern("kotlin"), interner.intern("random")],
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         // Properties: start, end, first, last, step
         for property in [
@@ -1498,6 +1599,26 @@ extension DataFlowSemaPhase {
             parameterTypes: [],
             returnType: longArrayType,
             externalLinkName: "kk_long_range_toLongArray",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "randomOrNull",
+            ownerSymbol: classSymbol,
+            receiverType: longRangeType,
+            parameterTypes: [],
+            returnType: types.makeNullable(types.longType),
+            externalLinkName: "kk_long_range_randomOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "randomOrNull",
+            ownerSymbol: classSymbol,
+            receiverType: longRangeType,
+            parameterTypes: [randomType],
+            returnType: types.makeNullable(types.longType),
+            externalLinkName: "kk_long_range_randomOrNull_random",
             symbols: symbols,
             interner: interner
         )
@@ -1598,6 +1719,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        let randomType = syntheticNominalType(
+            named: "Random",
+            in: [interner.intern("kotlin"), interner.intern("random")],
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         for property in [
             ("start", "kk_range_first"),
@@ -1672,6 +1800,26 @@ extension DataFlowSemaPhase {
             parameterTypes: [],
             returnType: types.makeNullable(types.charType),
             externalLinkName: "kk_range_lastOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "randomOrNull",
+            ownerSymbol: classSymbol,
+            receiverType: charRangeType,
+            parameterTypes: [],
+            returnType: types.makeNullable(types.charType),
+            externalLinkName: "kk_char_range_randomOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "randomOrNull",
+            ownerSymbol: classSymbol,
+            receiverType: charRangeType,
+            parameterTypes: [randomType],
+            returnType: types.makeNullable(types.charType),
+            externalLinkName: "kk_char_range_randomOrNull_random",
             symbols: symbols,
             interner: interner
         )
