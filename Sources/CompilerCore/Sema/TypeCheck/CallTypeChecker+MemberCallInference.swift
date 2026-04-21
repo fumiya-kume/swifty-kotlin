@@ -1124,7 +1124,7 @@ extension CallTypeChecker {
             "map", "filter", "filterNot", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
             "fold", "foldRight", "reduce", "reduceOrNull", "reduceRight", "foldIndexed", "foldRightIndexed", "reduceIndexed", "reduceIndexedOrNull",
             "scan", "scanIndexed", "runningFold", "runningFoldIndexed", "runningReduce", "runningReduceIndexed", "scanReduce",
-            "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
+            "groupBy", "groupingBy", "reduceTo", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "associateTo", "associateByTo", "associateWithTo", "groupByTo",
             "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo", "mapIndexedTo", "flatMapIndexedTo",
             "filterIndexedTo", "filterNotNullTo",
@@ -2084,6 +2084,7 @@ extension CallTypeChecker {
                 } else {
                     resultType = sema.types.anyType
                 }
+                sema.bindings.markCollectionExpr(id)
 
             case "eachCount":
                 // Called on Grouping, returns Map<K, Int>
@@ -2105,6 +2106,46 @@ extension CallTypeChecker {
                 } else {
                     resultType = sema.types.anyType
                 }
+
+            case "reduceTo":
+                guard args.count == 2 else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0024",
+                        "reduceTo() expects 2 arguments (destination and lambda), but \(args.count) were supplied.",
+                        range: ast.arena.exprRange(id)
+                    )
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let destType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                let reduceToKeyType: TypeID
+                if case let .classType(ct) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+                   ct.args.count >= 2,
+                   case let .invariant(k) = ct.args[1] {
+                    reduceToKeyType = k
+                } else {
+                    reduceToKeyType = sema.types.anyType
+                }
+                let reduceToAccumulatorType: TypeID
+                if case let .classType(destCt) = sema.types.kind(of: sema.types.makeNonNullable(destType)),
+                   destCt.args.count >= 2 {
+                    switch destCt.args[1] {
+                    case let .invariant(id), let .out(id), let .in(id):
+                        reduceToAccumulatorType = id
+                    case .star:
+                        reduceToAccumulatorType = collectionElementType
+                    }
+                } else {
+                    reduceToAccumulatorType = collectionElementType
+                }
+                let reduceToLambdaType = sema.types.make(.functionType(FunctionType(
+                    params: [reduceToKeyType, reduceToAccumulatorType, collectionElementType],
+                    returnType: reduceToAccumulatorType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                }
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: reduceToLambdaType)
+                resultType = destType
 
             case "sortedBy", "sortedByDescending":
                 let lambdaExpectedType = sema.types.make(.functionType(FunctionType(

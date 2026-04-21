@@ -3426,6 +3426,44 @@ public func kk_grouping_fold(
     return registerRuntimeObject(RuntimeMapBox(keys: keys, values: accumulators))
 }
 
+/// `grouping.reduceTo(destination) { key, acc, element -> ... }` — reduces per key into a destination map.
+/// If the destination already contains a key, its current value is used as the initial accumulator.
+@_cdecl("kk_grouping_reduceTo")
+public func kk_grouping_reduceTo(
+    _ groupingRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let grouping = runtimeGroupingBox(from: groupingRaw) else {
+        invalidContainerPanic(#function, "grouping")
+    }
+    guard let dest = runtimeMapBox(from: destRaw) else {
+        invalidContainerPanic(#function, "map")
+    }
+    var keyIndex = buildKeyIndex(from: dest)
+    for elem in grouping.sourceElements {
+        var thrown = 0
+        let key = runtimeInvokeCollectionLambda1(
+            fnPtr: grouping.keyFnPtr, closureRaw: grouping.keyClosureRaw,
+            value: elem, outThrown: &thrown
+        )
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        let normalizedKey = RuntimeElementKey(value: maybeUnbox(key))
+        if let idx = keyIndex[normalizedKey.value] {
+            var thrown2 = 0
+            let next = maybeUnbox(runtimeInvokeCollectionLambda3(
+                fnPtr: fnPtr, closureRaw: closureRaw,
+                arg1: normalizedKey.value, arg2: dest.values[idx], arg3: elem, outThrown: &thrown2
+            ))
+            if thrown2 != 0 { return handleCollectionLambdaThrow(thrown2, outThrown) }
+            _ = mapInsertOrUpdate(dest: dest, keyIndex: &keyIndex, key: normalizedKey.value, value: next)
+        } else {
+            _ = mapInsertOrUpdate(dest: dest, keyIndex: &keyIndex, key: normalizedKey.value, value: maybeUnbox(elem))
+        }
+    }
+    return destRaw
+}
+
 /// `grouping.reduce { acc, element -> ... }` — reduces per key, returns Map<K, T>.
 /// The lambda receives (accumulator, element); the first element of each group becomes the initial accumulator.
 /// Keys are indexed via Dictionary for O(1) lookup per element.

@@ -138,6 +138,10 @@ private let groupingByStringKey: @convention(c) (Int, Int, UnsafeMutablePointer<
     runtimeStringRaw(value % 2 == 0 ? "even" : "odd")
 }
 
+private let groupingReduceToFold: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, key, acc, value, _ in
+    acc * 10 + value + key
+}
+
 // Lambda that returns value * 10 (for associateWithTo tests)
 private let valueTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     value * 10
@@ -433,6 +437,42 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(mapKeys(counts).map(runtimeStringValue), ["odd", "even"])
         XCTAssertEqual(kk_unbox_int(kk_map_get(counts, runtimeStringRaw("odd"))), 2)
         XCTAssertEqual(kk_unbox_int(kk_map_get(counts, runtimeStringRaw("even"))), 2)
+    }
+
+    func testGroupingReduceToUsesExistingDestinationAndAddsNewKeys() {
+        let source = makeList([1, 3, 2])
+        let grouping = kk_list_groupingBy(source, unsafeBitCast(groupByParity, to: Int.self), 0)
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [1], values: [10]))
+
+        let result = kk_grouping_reduceTo(
+            grouping,
+            dest,
+            unsafeBitCast(groupingReduceToFold, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(mapKeys(result), [1, 0])
+        XCTAssertEqual(kk_map_get(result, 1), 1024)
+        XCTAssertEqual(kk_map_get(result, 0), 2)
+    }
+
+    func testGroupingReduceToEmptySourceLeavesDestinationUnchanged() {
+        let grouping = kk_list_groupingBy(makeList([]), unsafeBitCast(groupByParity, to: Int.self), 0)
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [1], values: [10]))
+
+        let result = kk_grouping_reduceTo(
+            grouping,
+            dest,
+            unsafeBitCast(groupingReduceToFold, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(mapKeys(result), [1])
+        XCTAssertEqual(kk_map_get(result, 1), 10)
     }
 
     func testMapForEachFilterAndMapUsePairEntries() {

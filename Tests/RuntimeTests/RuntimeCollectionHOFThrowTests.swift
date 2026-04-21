@@ -49,6 +49,10 @@ private let lambdaThatThrows2: @convention(c) (Int, Int, Int, UnsafeMutablePoint
     return 0
 }
 
+private let groupByParity: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value % 2
+}
+
 private let blockThrowableMessage = "block failure"
 
 private let closeableBlockThrows: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, outThrown in
@@ -106,6 +110,11 @@ private func throwableBox(from handle: Int) -> RuntimeThrowableBox? {
 }
 
 private let groupingByThrowingLambda: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, outThrown in
+    outThrown?.pointee = exceptionID
+    return 0
+}
+
+private let groupingReduceToThrowingLambda: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _, _, outThrown in
     outThrown?.pointee = exceptionID
     return 0
 }
@@ -309,6 +318,23 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
 
         var outThrown = 0
         let result = kk_grouping_eachCount(grouping, &outThrown)
+
+        XCTAssertEqual(outThrown, exceptionID)
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+    }
+
+    func testGroupingReduceToThrows() {
+        let array = kk_array_new(3)
+        var thrown = 0
+        _ = _ = kk_array_set(array, 0, 1, &thrown)
+        _ = _ = kk_array_set(array, 1, 2, &thrown)
+        _ = _ = kk_array_set(array, 2, 3, &thrown)
+        let list = kk_list_of(array, 3)
+        let grouping = kk_list_groupingBy(list, unsafeBitCast(groupByParity, to: Int.self), 0)
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+
+        var outThrown = 0
+        let result = kk_grouping_reduceTo(grouping, dest, unsafeBitCast(groupingReduceToThrowingLambda, to: Int.self), 0, &outThrown)
 
         XCTAssertEqual(outThrown, exceptionID)
         XCTAssertEqual(result, runtimeExceptionCaughtSentinel)

@@ -2376,6 +2376,37 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+
+        // reduceTo(destination, operation) -> destination
+        let reduceToDestinationType: TypeID
+        if let mapSymbol {
+            reduceToDestinationType = types.make(.classType(ClassType(
+                classSymbol: mapSymbol,
+                args: [.out(types.anyType), .out(types.anyType)],
+                nullability: .nonNull
+            )))
+        } else {
+            reduceToDestinationType = types.anyType
+        }
+        let reduceToOperationType = types.make(.functionType(FunctionType(
+            params: [types.anyType, types.anyType, types.anyType],
+            returnType: types.anyType
+        )))
+        registerGroupingMember(
+            named: "reduceTo",
+            groupingFQName: groupingFQName,
+            groupingSymbol: groupingSymbol,
+            receiverType: groupingType,
+            parameters: [
+                (name: "destination", type: reduceToDestinationType),
+                (name: "operation", type: reduceToOperationType),
+            ],
+            returnType: reduceToDestinationType,
+            externalLinkName: "kk_grouping_reduceTo",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
     }
 
     private func registerGroupingMember(

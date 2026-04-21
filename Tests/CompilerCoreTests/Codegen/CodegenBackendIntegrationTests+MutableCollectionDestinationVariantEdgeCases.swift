@@ -596,4 +596,22 @@ extension CodegenBackendIntegrationTests {
         """
         try assertKotlinCompilesToKIR(source, moduleName: "STDLIB021_38")
     }
+
+    // MARK: - STDLIB-021-39: grouping reduceTo mutates the destination map
+
+    func testGroupingReduceToCompiles() throws {
+        let source = """
+        fun main() {
+            val src = listOf(1, 3, 2)
+            val dest = mutableMapOf(1 to 10)
+            val result = src.groupingBy { it % 2 }.reduceTo(dest) { key, acc, value ->
+                acc * 10 + value + key
+            }
+            println(result === dest)
+            println(result[1])
+            println(result[0])
+        }
+        """
+        try assertKotlinCompilesToKIR(source, moduleName: "STDLIB021_39")
+    }
 }
