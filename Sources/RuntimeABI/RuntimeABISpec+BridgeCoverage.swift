@@ -213,6 +213,16 @@ private let sequenceAndSetBridgeFunctions: [RuntimeABIFunctionSpec] = [
             ("outThrown", .nullableIntptrPointer),
         ]
     ),
+    bridgeSpec(
+        "kk_sequence_findLast",
+        section: "Sequence",
+        typedParams: [
+            ("seqRaw", .intptr),
+            ("fnPtr", .intptr),
+            ("closureRaw", .intptr),
+            ("outThrown", .nullableIntptrPointer),
+        ]
+    ),
     bridgeSpec("kk_sequence_takeWhile", section: "Sequence", params: ["seqRaw", "fnPtr", "closureRaw"]),
     bridgeSpec("kk_set_containsAll", section: "Collection", params: ["setRaw", "collectionRaw"]),
     bridgeSpec("kk_set_sorted", section: "Collection", params: ["setRaw"]),

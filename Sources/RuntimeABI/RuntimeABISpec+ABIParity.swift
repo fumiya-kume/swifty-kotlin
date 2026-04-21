@@ -1480,6 +1480,50 @@ public extension RuntimeABISpec {
             section: "ABIParity"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_sequence_findLast",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+                RuntimeABIParameter(name: "p1", type: .intptr),
+                RuntimeABIParameter(name: "p2", type: .intptr),
+                RuntimeABIParameter(name: "p3", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_any",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+                RuntimeABIParameter(name: "p1", type: .intptr),
+                RuntimeABIParameter(name: "p2", type: .intptr),
+                RuntimeABIParameter(name: "p3", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_all",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+                RuntimeABIParameter(name: "p1", type: .intptr),
+                RuntimeABIParameter(name: "p2", type: .intptr),
+                RuntimeABIParameter(name: "p3", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_none",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+                RuntimeABIParameter(name: "p1", type: .intptr),
+                RuntimeABIParameter(name: "p2", type: .intptr),
+                RuntimeABIParameter(name: "p3", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_sequence_asIterable",
             parameters: [
                 RuntimeABIParameter(name: "p0", type: .intptr),

@@ -1454,6 +1454,45 @@ public func kk_sequence_find(
     return found ? result : runtimeNullSentinelInt
 }
 
+@_cdecl("kk_sequence_findLast")
+public func kk_sequence_findLast(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var result = runtimeNullSentinelInt
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+            var thrown = 0
+            let predicateResult = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            if maybeUnbox(predicateResult) != 0 {
+                result = elem
+            }
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            var thrown = 0
+            let predicateResult = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return runtimeNullSentinelInt
+            }
+            if maybeUnbox(predicateResult) != 0 {
+                result = elem
+            }
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 { return runtimeNullSentinelInt }
+    return result
+}
+
 @_cdecl("kk_sequence_asIterable")
 public func kk_sequence_asIterable(_ seqRaw: Int) -> Int {
     // Sequence is already an Iterable, so return the same handle
