@@ -155,6 +155,17 @@ public enum GoldenHarness {
         try GoldenHarnessGoldenFileIO.loadExpectedGolden(caseFile: caseFile(sourcePath: sourcePath))
     }
 
+    /// Normalizes suite output before comparison so the checked-in golden can stay
+    /// stable even when a platform injects extra synthetic symbols into the dump.
+    public static func normalizedForComparison(suiteName: String, output: String) -> String {
+        switch suiteName {
+        case "Sema":
+            GoldenHarnessSemaComparisonNormalizer.normalize(output)
+        default:
+            output
+        }
+    }
+
     private static func suite(named suiteName: String) throws -> GoldenHarnessGoldenSuite {
         switch suiteName {
         case "Lexer":
@@ -250,6 +261,247 @@ public enum GoldenHarness {
             }
             accumulator.append(data)
         }
+    }
+}
+
+private enum GoldenHarnessSemaComparisonNormalizer {
+    private static let symbolReferenceRegex = try! NSRegularExpression(pattern: "(Class#|T#|s)(\\d+)")
+    private static let negativeSymbolReferenceRegex = try! NSRegularExpression(pattern: "s-(\\d+)")
+    private static let localScopeIDRegex = try! NSRegularExpression(pattern: "\\.\\$(\\d+)\\.")
+
+    static func normalize(_ output: String) -> String {
+        let hasTrailingNewline = output.hasSuffix("\n")
+        var lines = output.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        if hasTrailingNewline, lines.last == "" {
+            lines.removeLast()
+        }
+
+        var symbolLinesByID: [Int: String] = [:]
+        var symbolOrder: [Int] = []
+        var bodyLines: [String] = []
+        bodyLines.reserveCapacity(lines.count)
+
+        for line in lines {
+            if let symbolID = symbolID(from: line) {
+                symbolLinesByID[symbolID] = line
+                symbolOrder.append(symbolID)
+            } else {
+                bodyLines.append(line)
+            }
+        }
+
+        var requiredSymbols = Set<Int>()
+        var queue: [Int] = []
+
+        for line in bodyLines {
+            enqueueReferences(in: line, requiredSymbols: &requiredSymbols, queue: &queue)
+        }
+
+        var nextIndex = 0
+        while nextIndex < queue.count {
+            let symbolID = queue[nextIndex]
+            nextIndex += 1
+            guard let symbolLine = symbolLinesByID[symbolID] else {
+                continue
+            }
+            enqueueReferences(in: symbolLine, requiredSymbols: &requiredSymbols, queue: &queue)
+        }
+
+        let keptSymbolIDs = requiredSymbols.isEmpty
+            ? symbolOrder
+            : symbolOrder.filter { requiredSymbols.contains($0) }
+        let remappedIDs = Dictionary(uniqueKeysWithValues: keptSymbolIDs.enumerated().map { (rawID, symbolID) in
+            (symbolID, rawID)
+        })
+        let negativeSymbolIDOrder = orderedNegativeSymbolIDs(in: keptSymbolIDs.compactMap { symbolLinesByID[$0] } + bodyLines)
+        let remappedNegativeSymbolIDs = Dictionary(uniqueKeysWithValues: negativeSymbolIDOrder.enumerated().map { (rawID, negativeSymbolID) in
+            (negativeSymbolID, rawID)
+        })
+        let localScopeIDOrder = orderedLocalScopeIDs(in: keptSymbolIDs.compactMap { symbolLinesByID[$0] } + bodyLines)
+        let remappedLocalScopeIDs = Dictionary(uniqueKeysWithValues: localScopeIDOrder.enumerated().map { (rawID, localScopeID) in
+            (localScopeID, rawID)
+        })
+
+        var normalizedLines: [String] = []
+        normalizedLines.reserveCapacity(keptSymbolIDs.count + bodyLines.count)
+
+        for symbolID in keptSymbolIDs {
+            guard let symbolLine = symbolLinesByID[symbolID] else {
+                continue
+            }
+            normalizedLines.append(
+                rewrite(
+                    symbolLine,
+                    remappedIDs: remappedIDs,
+                    remappedNegativeSymbolIDs: remappedNegativeSymbolIDs,
+                    remappedLocalScopeIDs: remappedLocalScopeIDs
+                )
+            )
+        }
+
+        for line in bodyLines {
+            normalizedLines.append(
+                rewrite(
+                    line,
+                    remappedIDs: remappedIDs,
+                    remappedNegativeSymbolIDs: remappedNegativeSymbolIDs,
+                    remappedLocalScopeIDs: remappedLocalScopeIDs
+                )
+            )
+        }
+
+        let normalized = normalizedLines.joined(separator: "\n")
+        return hasTrailingNewline ? normalized + "\n" : normalized
+    }
+
+    private static func symbolID(from line: String) -> Int? {
+        guard line.hasPrefix("symbol s") else {
+            return nil
+        }
+
+        let start = line.index(line.startIndex, offsetBy: "symbol s".count)
+        var end = start
+        while end < line.endIndex, line[end].isNumber {
+            end = line.index(after: end)
+        }
+        guard end > start else {
+            return nil
+        }
+        return Int(line[start ..< end])
+    }
+
+    private static func enqueueReferences(
+        in line: String,
+        requiredSymbols: inout Set<Int>,
+        queue: inout [Int]
+    ) {
+        let nsLine = line as NSString
+        let range = NSRange(location: 0, length: nsLine.length)
+        for match in symbolReferenceRegex.matches(in: line, range: range) {
+            let idRange = match.range(at: 2)
+            guard idRange.location != NSNotFound,
+                  let symbolID = Int(nsLine.substring(with: idRange)),
+                  requiredSymbols.insert(symbolID).inserted
+            else {
+                continue
+            }
+            queue.append(symbolID)
+        }
+    }
+
+    private static func orderedNegativeSymbolIDs(in lines: [String]) -> [Int] {
+        var seen = Set<Int>()
+        var ordered: [Int] = []
+
+        for line in lines {
+            let nsLine = line as NSString
+            let range = NSRange(location: 0, length: nsLine.length)
+            for match in negativeSymbolReferenceRegex.matches(in: line, range: range) {
+                let idRange = match.range(at: 1)
+                guard idRange.location != NSNotFound,
+                      let negativeSymbolID = Int(nsLine.substring(with: idRange)),
+                      seen.insert(negativeSymbolID).inserted
+                else {
+                    continue
+                }
+                ordered.append(negativeSymbolID)
+            }
+        }
+
+        return ordered
+    }
+
+    private static func orderedLocalScopeIDs(in lines: [String]) -> [Int] {
+        var seen = Set<Int>()
+        var ordered: [Int] = []
+
+        for line in lines {
+            let nsLine = line as NSString
+            let range = NSRange(location: 0, length: nsLine.length)
+            for match in localScopeIDRegex.matches(in: line, range: range) {
+                let idRange = match.range(at: 1)
+                guard idRange.location != NSNotFound,
+                      let localScopeID = Int(nsLine.substring(with: idRange)),
+                      seen.insert(localScopeID).inserted
+                else {
+                    continue
+                }
+                ordered.append(localScopeID)
+            }
+        }
+
+        return ordered
+    }
+
+    private static func rewrite(
+        _ line: String,
+        remappedIDs: [Int: Int],
+        remappedNegativeSymbolIDs: [Int: Int],
+        remappedLocalScopeIDs: [Int: Int]
+    ) -> String {
+        let nsLine = line as NSString
+        let range = NSRange(location: 0, length: nsLine.length)
+        let matches = symbolReferenceRegex.matches(in: line, range: range)
+        let mutable = NSMutableString(string: line)
+
+        if !matches.isEmpty {
+            for match in matches.reversed() {
+                let prefixRange = match.range(at: 1)
+                let idRange = match.range(at: 2)
+                guard prefixRange.location != NSNotFound,
+                      idRange.location != NSNotFound,
+                      let oldID = Int(nsLine.substring(with: idRange)),
+                      let newID = remappedIDs[oldID]
+                else {
+                    continue
+                }
+                let prefix = nsLine.substring(with: prefixRange)
+                mutable.replaceCharacters(in: match.range, with: "\(prefix)\(newID)")
+            }
+        }
+
+        let rewrittenLine = mutable as String
+        let rewrittenNSString = rewrittenLine as NSString
+        let negativeMatches = negativeSymbolReferenceRegex.matches(
+            in: rewrittenLine,
+            range: NSRange(location: 0, length: rewrittenNSString.length)
+        )
+        let negativeMutable = NSMutableString(string: rewrittenLine)
+        if !negativeMatches.isEmpty {
+            for match in negativeMatches.reversed() {
+                let idRange = match.range(at: 1)
+                guard idRange.location != NSNotFound,
+                      let oldID = Int(rewrittenNSString.substring(with: idRange)),
+                      let newID = remappedNegativeSymbolIDs[oldID]
+                else {
+                    continue
+                }
+                negativeMutable.replaceCharacters(in: idRange, with: "\(newID)")
+            }
+        }
+
+        let negativeRewrittenLine = negativeMutable as String
+        let negativeRewrittenNSString = negativeRewrittenLine as NSString
+        let localMatches = localScopeIDRegex.matches(
+            in: negativeRewrittenLine,
+            range: NSRange(location: 0, length: negativeRewrittenNSString.length)
+        )
+        guard !localMatches.isEmpty else {
+            return negativeRewrittenLine
+        }
+
+        let localMutable = NSMutableString(string: negativeRewrittenLine)
+        for match in localMatches.reversed() {
+            let idRange = match.range(at: 1)
+            guard idRange.location != NSNotFound,
+                  let oldID = Int(negativeRewrittenNSString.substring(with: idRange)),
+                  let newID = remappedLocalScopeIDs[oldID]
+            else {
+                continue
+            }
+            localMutable.replaceCharacters(in: idRange, with: "\(newID)")
+        }
+        return localMutable as String
     }
 }
 
