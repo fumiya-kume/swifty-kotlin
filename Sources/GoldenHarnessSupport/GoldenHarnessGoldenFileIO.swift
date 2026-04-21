@@ -19,8 +19,12 @@ enum GoldenHarnessGoldenFileIO {
     /// When `UPDATE_GOLDEN=1`, writes `actual` to the `.golden` path and returns `true`.
     /// Otherwise returns `false` so the caller can load and compare.
     @discardableResult
-    static func persistIfUpdating(caseFile: GoldenHarnessCaseFile, actual: String) throws -> Bool {
-        guard isUpdateMode else {
+    static func persistIfUpdating(
+        caseFile: GoldenHarnessCaseFile,
+        actual: String,
+        updateMode: Bool
+    ) throws -> Bool {
+        guard updateMode else {
             return false
         }
         try actual.write(to: caseFile.goldenURL, atomically: false, encoding: .utf8)
