@@ -140,7 +140,9 @@ public func kk_string_split_limit(_ strRaw: Int, _ delimRaw: Int, _ ignoreCaseRa
     if delimiter.isEmpty {
         return runtimeMakeStringListRaw([source])
     }
-    return runtimeMakeStringListRaw(runtimeSplitStringLimit(source, delimiter: delimiter, ignoreCase: ignoreCase, limit: limit))
+    return runtimeMakeStringListRaw(
+        runtimeSplitStringLimit(source, delimiter: delimiter, ignoreCase: ignoreCase, limit: limit)
+    )
 }
 
 @_cdecl("kk_string_replace")
@@ -1731,6 +1733,46 @@ public func kk_string_replaceRange(
     return runtimeMakeStringRaw(before + replacement + after)
 }
 
+// MARK: - STDLIB-TEXT-EDGE-008: removeRange
+
+@_cdecl("kk_string_removeRange")
+public func kk_string_removeRange(
+    _ strRaw: Int,
+    _ startRaw: Int,
+    _ endRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    let length = scalars.count
+    let start = startRaw
+    let end = endRaw
+    if start < 0 || start > length || end < 0 || end > length || start > end {
+        runtimeSetThrown(
+            outThrown,
+            message: "StringIndexOutOfBoundsException: start=\(start), end=\(end), length=\(length)"
+        )
+        return 0
+    }
+    let before = runtimeStringFromScalars(scalars[0 ..< start])
+    let after = runtimeStringFromScalars(scalars[end...])
+    return runtimeMakeStringRaw(before + after)
+}
+
+@_cdecl("kk_string_removeRange_range")
+public func kk_string_removeRange_range(
+    _ strRaw: Int,
+    _ rangeRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        runtimeSetThrown(outThrown, message: "Invalid range for removeRange")
+        return 0
+    }
+    return kk_string_removeRange(strRaw, range.first, range.last + 1, outThrown)
+}
+
 @_cdecl("kk_compare_any")
 public func kk_compare_any(_ lhsRaw: Int, _ rhsRaw: Int) -> Int {
     if lhsRaw == rhsRaw {
@@ -1852,8 +1894,6 @@ private func runtimeSplitStringLimit(
     var result: [String] = []
     var cursor = source.startIndex
     while true {
-        // If limit is positive and we've already accumulated (limit - 1) pieces,
-        // append the remainder as the final piece and stop.
         if limit > 0, result.count == limit - 1 {
             result.append(String(source[cursor...]))
             return result

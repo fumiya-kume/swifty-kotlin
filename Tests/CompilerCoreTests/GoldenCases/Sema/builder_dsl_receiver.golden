@@ -1728,7 +1728,7 @@ symbol s1726 kind=function fq=kotlin.time.toKotlinDuration vis=public flags=synt
 symbol s1727 kind=function fq=kotlin.time.toJSDate vis=public flags=synthetic sig=recv=Class#1673 params=[] ret=Class#1722 suspend=0 defaults=[] vararg=[]
 symbol s1728 kind=function fq=kotlin.time.toKotlinInstant vis=public flags=synthetic sig=recv=Class#1722 params=[] ret=Class#1673 suspend=0 defaults=[] vararg=[]
 symbol s1729 kind=class fq=kotlin.text.StringBuilder vis=public flags=synthetic
-symbol s1730 kind=function fq=kotlin.text.StringBuilder.append vis=public flags=synthetic sig=recv=Class#1729 params=[Any?] ret=Class#1729 suspend=0 defaults=[0] vararg=[0]
+symbol s1730 kind=function fq=kotlin.text.StringBuilder.append vis=public flags=synthetic sig=recv=Class#1729 params=[String?] ret=Class#1729 suspend=0 defaults=[0] vararg=[1]
 symbol s1731 kind=valueParameter fq=kotlin.text.StringBuilder.append.value vis=private flags=synthetic
 symbol s1732 kind=function fq=kotlin.text.StringBuilder.toString vis=public flags=synthetic sig=recv=Class#1729 params=[] ret=String suspend=0 defaults=[] vararg=[]
 symbol s1733 kind=property fq=kotlin.text.StringBuilder.length vis=public flags=synthetic type=Int
