@@ -265,7 +265,9 @@ final class LinkPhaseIntegrationTests: XCTestCase {
     }
 
     func testLinuxAutolinkStubIsRewrittenWhenCorrupted() throws {
-        let linuxTarget = TargetTriple(arch: "x86_64", vendor: "unknown", os: "linux-gnu", osVersion: nil)
+        // Use a test-only triple so this corruption check never races with regular link tests
+        // that share the default Linux autolink stub path.
+        let linuxTarget = TargetTriple(arch: "x86_64", vendor: "kswiftkstubtest", os: "linux-gnu", osVersion: nil)
         let linkPhase = LinkPhase()
 
         let stubPath = try XCTUnwrap(linkPhase.emitSwiftAutolinkStubIfNeeded(target: linuxTarget))
