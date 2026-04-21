@@ -2857,6 +2857,34 @@ extension CallLowerer {
             }
         }
 
+        // STDLIB-TEXT-EDGE-001: split(delimiter, limit) — 2-arg overload
+        if args.count == 2, interner.resolve(calleeName) == "split" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let firstArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+            )
+            let secondArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[1].expr] ?? sema.types.anyType
+            )
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
+               sema.types.isSubtype(firstArgType, sema.types.stringType),
+               sema.types.isSubtype(secondArgType, sema.types.intType)
+            {
+                let falseExpr = arena.appendExpr(.intLiteral(0), type: sema.types.booleanType)
+                instructions.append(.constValue(result: falseExpr, value: .boolLiteral(false)))
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_split_limit"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], falseExpr, loweredArgIDs[1]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         // STDLIB-TEXT-EDGE-001: split(delimiter, ignoreCase) — 2-arg overload
         if args.count == 2, interner.resolve(calleeName) == "split" {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType

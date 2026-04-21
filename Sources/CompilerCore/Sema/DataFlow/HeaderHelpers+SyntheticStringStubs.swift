@@ -232,7 +232,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // --- STDLIB-TEXT-EDGE-001: split with ignoreCase and limit ---
+        // --- STDLIB-TEXT-EDGE-001: split with limit / ignoreCase ---
+        registerSyntheticStringExtensionFunction(
+            named: "split",
+            externalLinkName: "kk_string_split_limit",
+            receiverType: stringType,
+            parameters: [
+                ("delimiters", stringType, false, false),
+                ("limit", intType, false, false),
+            ],
+            returnType: listStringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticStringExtensionFunction(
             named: "split",

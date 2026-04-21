@@ -1964,7 +1964,7 @@ private func runtimeComparableScalar(from raw: Int) -> RuntimeComparableScalar? 
     return nil
 }
 
-private func runtimeSplitString(_ source: String, delimiter: String) -> [String] {
+private func runtimeSplitString(_ source: String, delimiter: String, limit: Int = 0) -> [String] {
     if source.isEmpty {
         return [""]
     }
@@ -1972,6 +1972,12 @@ private func runtimeSplitString(_ source: String, delimiter: String) -> [String]
     var result: [String] = []
     var cursor = source.startIndex
     while true {
+        // When limit > 0 and we have already collected (limit - 1) parts,
+        // append the remainder as the last element and stop.
+        if limit > 0 && result.count == limit - 1 {
+            result.append(String(source[cursor...]))
+            return result
+        }
         guard let match = source.range(of: delimiter, range: cursor ..< source.endIndex) else {
             result.append(String(source[cursor...]))
             return result
