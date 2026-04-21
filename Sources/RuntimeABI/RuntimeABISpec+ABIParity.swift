@@ -951,6 +951,20 @@ public extension RuntimeABISpec {
             section: "ABIParity"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_array_binarySearch_compare",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+                RuntimeABIParameter(name: "p1", type: .intptr),
+                RuntimeABIParameter(name: "p2", type: .intptr),
+                RuntimeABIParameter(name: "p3", type: .intptr),
+                RuntimeABIParameter(name: "p4", type: .intptr),
+                RuntimeABIParameter(name: "p5", type: .intptr),
+                RuntimeABIParameter(name: "p6", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_list_binarySearch_compare",
             parameters: [
                 RuntimeABIParameter(name: "p0", type: .intptr),

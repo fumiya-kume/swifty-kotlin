@@ -1412,6 +1412,20 @@ extension CallLowerer {
         return knownNames.isArrayLikeName(symbol.name)
     }
 
+    private func isGenericArrayLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return symbol.name == knownNames.array && classType.args.count == 1
+    }
+
     private func isSetLikeType(
         _ receiverType: TypeID,
         sema: SemaModule,
@@ -4430,7 +4444,9 @@ extension CallLowerer {
             instructions: instructions
         )
         guard let trampolineName else {
-            return nil
+            let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+            instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            return [loweredComparatorID, zeroExpr]
         }
 
         let fnPtrExpr = arena.appendExpr(
@@ -4501,6 +4517,27 @@ extension CallLowerer {
            )
         {
             return [finalArguments[0]] + comparatorArgs
+        }
+
+        let arrayBinarySearchCallee = interner.intern("kk_array_binarySearch_compare")
+        if loweredCallee == arrayBinarySearchCallee,
+           finalArguments.count >= 3,
+           sourceArgExprs.count >= 2,
+           let comparatorArgs = makeComparatorTrampolineArgument(
+               comparatorExprID: sourceArgExprs[1],
+               loweredComparatorID: finalArguments[2],
+               sema: sema,
+               arena: arena,
+               interner: interner,
+               instructions: &instructions
+           )
+        {
+            var adapted: [KIRExprID] = [finalArguments[0], finalArguments[1]]
+            adapted.append(contentsOf: comparatorArgs)
+            if finalArguments.count > 3 {
+                adapted.append(contentsOf: finalArguments.dropFirst(3))
+            }
+            return adapted
         }
 
         let comparatorSelectorCallees: Set<InternedString> = [
@@ -5284,6 +5321,18 @@ extension CallLowerer {
             interner: interner,
             instructions: &instructions
         )
+        if normalized.defaultMask != 0,
+           loweredCallee == interner.intern("kk_array_binarySearch_compare")
+        {
+            materializeArrayBinarySearchDefaultArguments(
+                normalized.defaultMask,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions,
+                arguments: &finalArguments
+            )
+        }
         if let primitiveKind = collectionElementPrimitiveCompareKind(
             of: sema.bindings.exprTypes[receiver.expr] ?? sema.types.anyType,
             sema: sema
@@ -5563,6 +5612,7 @@ extension CallLowerer {
             interner.intern("kk_mutable_list_replaceAll"),
             interner.intern("kk_mutable_list_removeIf"),
             interner.intern("kk_list_binarySearch_compare"),
+            interner.intern("kk_array_binarySearch_compare"),
             interner.intern("kk_result_getOrThrow"),
             interner.intern("kk_reentrant_read_write_lock_read"),
         ])
@@ -5659,6 +5709,41 @@ extension CallLowerer {
             let exprID = arena.appendExpr(.stringLiteral(interned), type: stringType)
             instructions.append(.constValue(result: exprID, value: .stringLiteral(interned)))
             arguments[argumentIndex] = exprID
+        }
+    }
+
+    private func materializeArrayBinarySearchDefaultArguments(
+        _ defaultMask: Int64,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction],
+        arguments: inout [KIRExprID]
+    ) {
+        guard arguments.count >= 6 else {
+            return
+        }
+
+        let intType = sema.types.intType
+        let fromIndexMaskBit = Int64(1) << 2
+        let toIndexMaskBit = Int64(1) << 3
+        if (defaultMask & fromIndexMaskBit) != 0 {
+            let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+            instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            arguments[4] = zeroExpr
+        }
+
+        if (defaultMask & toIndexMaskBit) != 0 {
+            let sizeExpr = arena.appendExpr(.temporary(Int32(clamping: arena.expressions.count)), type: intType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_size"),
+                arguments: [arguments[0]],
+                result: sizeExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            arguments[5] = sizeExpr
         }
     }
 
@@ -6538,6 +6623,10 @@ extension CallLowerer {
                 return interner.intern("kk_array_copyOf")
             case "fill":
                 return interner.intern("kk_array_fill")
+            case "binarySearch":
+                if isGenericArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                    return interner.intern("kk_array_binarySearch_compare")
+                }
             default:
                 break
             }

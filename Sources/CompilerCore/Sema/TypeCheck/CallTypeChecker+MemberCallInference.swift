@@ -1182,6 +1182,8 @@ extension CallTypeChecker {
         }
         let isCollectionHOF = activeCollectionHOFNames.contains(interner.resolve(calleeName))
             && isCollectionReceiver
+            && !(interner.resolve(calleeName) == "binarySearch"
+                 && isArrayLikeReceiver(receiverID: receiverID, sema: sema, interner: interner))
 
         if interner.resolve(calleeName) == "asFlow",
            args.isEmpty,
@@ -2616,10 +2618,9 @@ extension CallTypeChecker {
                     }
                  }
                  resultType = sema.types.makeNullable(selectorType)
-             case "binarySearch":
+            case "binarySearch":
                 // STDLIB-547: binarySearch(comparison: (T) -> Int) overload
                 guard args.count == 1 else {
-                    // Element-based overload (no lambda) — just return Int.
                     sema.bindings.bindExprType(id, type: sema.types.intType)
                     return sema.types.intType
                 }

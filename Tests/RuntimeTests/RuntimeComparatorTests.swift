@@ -116,6 +116,15 @@ private func makeList(_ elements: [Int]) -> Int {
     return registerRuntimeObject(box)
 }
 
+private func makeArray(_ elements: [Int]) -> Int {
+    let array = kk_array_new(elements.count)
+    var thrown = 0
+    for (index, element) in elements.enumerated() {
+        _ = kk_array_set(array, index, element, &thrown)
+    }
+    return array
+}
+
 private func listElements(_ listRaw: Int) -> [Int] {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: listRaw) else { return [] }
     guard let box = tryCast(ptr, to: RuntimeListBox.self) else { return [] }
@@ -391,6 +400,26 @@ final class RuntimeComparatorTests: XCTestCase {
         withComparatorObject(mode: 1) { comparatorRaw in
             let sorted = kk_list_sortedWith(source, comparatorRaw, 0, nil)
             XCTAssertEqual(listElements(sorted), [8, 5, 4, 3, 1])
+        }
+    }
+
+    func testArrayBinarySearchCompareWithComparatorObjectAndRange() {
+        let source = makeArray([1, 3, 5, 7, 9])
+
+        withComparatorObject(mode: 0) { comparatorRaw in
+            var thrown = 0
+
+            let found = kk_array_binarySearch_compare(source, comparatorRaw, 0, 5, 0, 5, &thrown)
+            XCTAssertEqual(found, 2)
+            XCTAssertEqual(thrown, 0)
+
+            let missing = kk_array_binarySearch_compare(source, comparatorRaw, 0, 4, 0, 5, &thrown)
+            XCTAssertEqual(missing, -3)
+            XCTAssertEqual(thrown, 0)
+
+            let ranged = kk_array_binarySearch_compare(source, comparatorRaw, 0, 7, 2, 5, &thrown)
+            XCTAssertEqual(ranged, 3)
+            XCTAssertEqual(thrown, 0)
         }
     }
 
