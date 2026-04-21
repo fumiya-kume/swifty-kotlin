@@ -2609,6 +2609,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // any(): Boolean
+        registerSequenceMemberStub(
+            named: "any",
+            externalLinkName: "kk_sequence_any",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: types.booleanType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // indexOf(element: T): Int
         registerSequenceMemberStub(
             named: "indexOf",
@@ -2637,6 +2651,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // none(): Boolean
+        registerSequenceMemberStub(
+            named: "none",
+            externalLinkName: "kk_sequence_none",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: types.booleanType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // elementAt(index: Int): T
         registerSequenceMemberStub(
             named: "elementAt",
@@ -2652,7 +2680,7 @@ extension DataFlowSemaPhase {
             canThrow: true
         )
 
-        // findLast(predicate): T?
+        // findLast(predicate: (T) -> Boolean): T?
         registerSequenceMemberStub(
             named: "findLast",
             externalLinkName: "kk_sequence_findLast",
