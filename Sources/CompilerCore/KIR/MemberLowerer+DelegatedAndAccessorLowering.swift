@@ -106,6 +106,13 @@ extension MemberLowerer {
                 .temporary(Int32(arena.expressions.count)),
                 type: propertyType
             )
+            let notNullThrows = delegateKind == .notNull
+            let thrownExprID: KIRExprID? = notNullThrows
+                ? arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: sema.types.nullableAnyType
+                )
+                : nil
             body.append(
                 .call(
                     symbol: delegateKind == .custom ? customGetValueSymbol : delegateStorageSymbol,
@@ -118,8 +125,8 @@ extension MemberLowerer {
                         body: &body
                     ) : [],
                     result: resultExprID,
-                    canThrow: false,
-                    thrownResult: nil
+                    canThrow: notNullThrows,
+                    thrownResult: thrownExprID
                 )
             )
             body.append(.returnValue(resultExprID))

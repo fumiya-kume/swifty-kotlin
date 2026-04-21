@@ -45,7 +45,7 @@
 - [ ] STDLIB-005: `kotlin.text` の文字列変換・分割・置換の端ケースを揃える
 - [ ] STDLIB-TEXT-EDGE-001: `split(delimiter, limit)` overload を追加する
 - [ ] STDLIB-TEXT-EDGE-002: `trim(predicate)` / `trimStart(predicate)` / `trimEnd(predicate)` を追加する
-- [ ] STDLIB-TEXT-EDGE-003: `indexOf` / `lastIndexOf` の `ignoreCase = true` を追加する
+- [x] STDLIB-TEXT-EDGE-003: `indexOf` / `lastIndexOf` の `ignoreCase = true` を追加する
 - [ ] STDLIB-TEXT-EDGE-004: `CharSequence.ifBlank(defaultValue)` を追加する
 - [ ] STDLIB-TEXT-EDGE-005: `CharSequence.ifEmpty(defaultValue)` を追加する
 - [ ] STDLIB-TEXT-EDGE-006: `ByteArray.decodeToString(startIndex, endIndex, throwOnInvalidSequence)` overload を追加する

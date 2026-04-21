@@ -49,14 +49,6 @@ final class KotlinAnnotationAPIInventoryTests: XCTestCase {
         sema.symbols.lookup(fqName: fqPath.map { interner.intern($0) })
     }
 
-    private func allSymbols(
-        fqPath: [String],
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> [SymbolID] {
-        sema.symbols.lookupAll(fqName: fqPath.map { interner.intern($0) })
-    }
-
     // MARK: - 1. Package hierarchy
 
     func testKotlinAnnotationPackageIsPresent() throws {

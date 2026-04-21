@@ -22,7 +22,7 @@ import XCTest
 //
 // Gap convention:
 //   APIs not yet registered by the sema layer are marked with `_Gap` suffix and
-//   assert the *current absence* with a TODO comment. Flip `XCTAssertNil` /
+//   assert the *current absence* with a short follow-up note. Flip `XCTAssertNil` /
 //   `XCTAssertTrue(links.isEmpty)` to the positive assertion once implemented.
 
 final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
@@ -490,9 +490,15 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
         let factoryLinks: [(path: [String], expectedLinks: [String])] = [
             (
                 ["kotlin", "comparisons", "compareBy"],
-                ["kk_comparator_from_selector",
-                 "kk_comparator_from_multi_selectors",
-                 "kk_comparator_from_multi_selectors3"]
+                [
+                    "kk_comparator_from_selector",
+                    "kk_comparator_from_multi_selectors",
+                    "kk_comparator_from_multi_selectors3",
+                ]
+            ),
+            (
+                ["kotlin", "comparisons", "compareByPrimitive"],
+                ["kk_comparator_from_selector_primitive"]
             ),
             (["kotlin", "comparisons", "naturalOrder"], ["kk_comparator_natural_order"]),
             (["kotlin", "comparisons", "reverseOrder"], ["kk_comparator_reverse_order"]),

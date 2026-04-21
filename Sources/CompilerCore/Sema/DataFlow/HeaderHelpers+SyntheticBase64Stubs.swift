@@ -1,0 +1,295 @@
+import Foundation
+
+/// Synthetic stubs for kotlin.io.encoding.Base64 (STDLIB-031-ABI-001).
+///
+/// Wires the three Kotlin Base64 variants (Default / UrlSafe / Mime) and their
+/// PaddingOption enum to the `kk_base64_*` ABI entry points in RuntimeBase64.swift.
+extension DataFlowSemaPhase {
+    func registerSyntheticBase64Stubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        // ── Package: kotlin.io.encoding ──────────────────────────────────────────
+        let ioEncodingPkg = ensureBase64Package(symbols: symbols, interner: interner)
+
+        // ── Types ────────────────────────────────────────────────────────────────
+        let stringType = types.stringType
+        let intType = types.intType
+        let byteArrayType = makeBase64ByteArrayType(symbols: symbols, types: types, interner: interner)
+
+        // PaddingOption is passed as a raw Int (enum ordinal) across the ABI.
+        // We model it as Int in function signatures to keep the ABI simple.
+        let paddingOptionType = intType
+
+        // ── Base64.PaddingOption enum constants ──────────────────────────────────
+        registerBase64PaddingOptionConstants(
+            pkg: ioEncodingPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        // ── encode / decode: Default ─────────────────────────────────────────────
+        registerBase64TopLevelFunction(
+            named: "kk_base64_encode_default_fn",
+            externalLinkName: "kk_base64_encode_default",
+            packageFQName: ioEncodingPkg,
+            parameters: [
+                ("bytes", byteArrayType, false),
+                ("padding", paddingOptionType, false),
+            ],
+            returnType: stringType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerBase64ThrowingTopLevelFunction(
+            named: "kk_base64_decode_default_fn",
+            externalLinkName: "kk_base64_decode_default",
+            packageFQName: ioEncodingPkg,
+            parameters: [
+                ("string", stringType, false),
+                ("padding", paddingOptionType, false),
+            ],
+            returnType: byteArrayType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        // ── encode / decode: UrlSafe ─────────────────────────────────────────────
+        registerBase64TopLevelFunction(
+            named: "kk_base64_encode_urlsafe_fn",
+            externalLinkName: "kk_base64_encode_urlsafe",
+            packageFQName: ioEncodingPkg,
+            parameters: [
+                ("bytes", byteArrayType, false),
+                ("padding", paddingOptionType, false),
+            ],
+            returnType: stringType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerBase64ThrowingTopLevelFunction(
+            named: "kk_base64_decode_urlsafe_fn",
+            externalLinkName: "kk_base64_decode_urlsafe",
+            packageFQName: ioEncodingPkg,
+            parameters: [
+                ("string", stringType, false),
+                ("padding", paddingOptionType, false),
+            ],
+            returnType: byteArrayType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        // ── encode / decode: Mime ────────────────────────────────────────────────
+        registerBase64TopLevelFunction(
+            named: "kk_base64_encode_mime_fn",
+            externalLinkName: "kk_base64_encode_mime",
+            packageFQName: ioEncodingPkg,
+            parameters: [
+                ("bytes", byteArrayType, false),
+                ("padding", paddingOptionType, false),
+            ],
+            returnType: stringType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerBase64ThrowingTopLevelFunction(
+            named: "kk_base64_decode_mime_fn",
+            externalLinkName: "kk_base64_decode_mime",
+            packageFQName: ioEncodingPkg,
+            parameters: [
+                ("string", stringType, false),
+                ("padding", paddingOptionType, false),
+            ],
+            returnType: byteArrayType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        // ── encodeToByteArray variants ───────────────────────────────────────────
+        for (name, link) in [
+            ("kk_base64_encodeToByteArray_default_fn", "kk_base64_encodeToByteArray_default"),
+            ("kk_base64_encodeToByteArray_urlsafe_fn", "kk_base64_encodeToByteArray_urlsafe"),
+            ("kk_base64_encodeToByteArray_mime_fn", "kk_base64_encodeToByteArray_mime"),
+        ] {
+            registerBase64TopLevelFunction(
+                named: name,
+                externalLinkName: link,
+                packageFQName: ioEncodingPkg,
+                parameters: [
+                    ("bytes", byteArrayType, false),
+                    ("padding", paddingOptionType, false),
+                ],
+                returnType: byteArrayType,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
+    }
+
+    // MARK: - Package helpers
+
+    private func ensureBase64Package(
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> [InternedString] {
+        let kotlinName = interner.intern("kotlin")
+        let ioName = interner.intern("io")
+        let encodingName = interner.intern("encoding")
+
+        let kotlinFQ: [InternedString] = [kotlinName]
+        if symbols.lookup(fqName: kotlinFQ) == nil {
+            _ = symbols.define(
+                kind: .package, name: kotlinName, fqName: kotlinFQ,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+        }
+        let ioFQ: [InternedString] = [kotlinName, ioName]
+        if symbols.lookup(fqName: ioFQ) == nil {
+            _ = symbols.define(
+                kind: .package, name: ioName, fqName: ioFQ,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+        }
+        let encodingFQ: [InternedString] = [kotlinName, ioName, encodingName]
+        if symbols.lookup(fqName: encodingFQ) == nil {
+            _ = symbols.define(
+                kind: .package, name: encodingName, fqName: encodingFQ,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+        }
+        return encodingFQ
+    }
+
+    private func makeBase64ByteArrayType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let fqName: [InternedString] = [interner.intern("kotlin"), interner.intern("ByteArray")]
+        if let sym = symbols.lookup(fqName: fqName) {
+            return types.make(.classType(ClassType(classSymbol: sym, args: [], nullability: .nonNull)))
+        }
+        return types.anyType
+    }
+
+    // MARK: - PaddingOption enum ordinal constants
+
+    /// Registers `Base64.PaddingOption.PRESENT / ABSENT / PRESENT_OPTIONAL / ABSENT_OPTIONAL`
+    /// as simple Int-valued synthetic properties in the `kotlin.io.encoding` package.
+    /// The raw value must match `Base64PaddingOption` in RuntimeBase64.swift.
+    private func registerBase64PaddingOptionConstants(
+        pkg: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let intType = types.intType
+        let entries: [(name: String, externalLinkName: String)] = [
+            ("Base64PaddingOptionPresent", "kk_base64_padding_present"),
+            ("Base64PaddingOptionAbsent", "kk_base64_padding_absent"),
+            ("Base64PaddingOptionPresentOptional", "kk_base64_padding_present_optional"),
+            ("Base64PaddingOptionAbsentOptional", "kk_base64_padding_absent_optional"),
+        ]
+        for entry in entries {
+            let name = interner.intern(entry.name)
+            let fqName = pkg + [name]
+            if symbols.lookup(fqName: fqName) != nil { continue }
+            let sym = symbols.define(
+                kind: .property, name: name, fqName: fqName,
+                declSite: nil, visibility: .public, flags: [.synthetic, .static]
+            )
+            if let pkgSym = symbols.lookup(fqName: pkg) {
+                symbols.setParentSymbol(pkgSym, for: sym)
+            }
+            symbols.setPropertyType(intType, for: sym)
+            symbols.setExternalLinkName(entry.externalLinkName, for: sym)
+        }
+    }
+
+    // MARK: - Function registration helpers
+
+    private func registerBase64TopLevelFunction(
+        named name: String,
+        externalLinkName: String,
+        packageFQName: [InternedString],
+        parameters: [(name: String, type: TypeID, hasDefault: Bool)],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        types _: TypeSystem,
+        interner: StringInterner
+    ) {
+        let funcName = interner.intern(name)
+        let fqName = packageFQName + [funcName]
+        if symbols.lookup(fqName: fqName) != nil { return }
+
+        let funcSym = symbols.define(
+            kind: .function, name: funcName, fqName: fqName,
+            declSite: nil, visibility: .public, flags: [.synthetic]
+        )
+        if let pkgSym = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(pkgSym, for: funcSym)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: funcSym)
+
+        var paramTypes: [TypeID] = []
+        var paramSymbols: [SymbolID] = []
+        for param in parameters {
+            let pName = interner.intern(param.name)
+            let pSym = symbols.define(
+                kind: .valueParameter, name: pName, fqName: fqName + [pName],
+                declSite: nil, visibility: .private, flags: [.synthetic]
+            )
+            symbols.setParentSymbol(funcSym, for: pSym)
+            paramTypes.append(param.type)
+            paramSymbols.append(pSym)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: paramTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: paramSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: paramSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: paramSymbols.count)
+            ),
+            for: funcSym
+        )
+    }
+
+    private func registerBase64ThrowingTopLevelFunction(
+        named name: String,
+        externalLinkName: String,
+        packageFQName: [InternedString],
+        parameters: [(name: String, type: TypeID, hasDefault: Bool)],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        // Throwing functions use the same ABI (outThrown pointer is handled by codegen).
+        registerBase64TopLevelFunction(
+            named: name,
+            externalLinkName: externalLinkName,
+            packageFQName: packageFQName,
+            parameters: parameters,
+            returnType: returnType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+}

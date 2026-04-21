@@ -88,7 +88,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - Infinite generateSequence + take terminates
 
     func testInfiniteGenerateSequenceWithTakeTerminates() throws {
-        throw XCTSkip("Infinite generateSequence with take not yet implemented")
         let source = """
         fun main() {
             val naturals = generateSequence(1) { it + 1 }
@@ -116,7 +115,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - generateSequence terminates on null
 
     func testGenerateSequenceTerminatesOnNull() throws {
-        throw XCTSkip("generateSequence null termination not yet implemented")
         let source = """
         fun main() {
             val counted = generateSequence(1) { current ->

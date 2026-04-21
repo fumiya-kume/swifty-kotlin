@@ -600,22 +600,22 @@ extension CodegenBackendIntegrationTests {
             println("hello".lines())
 
             // trailing newline — runtime includes trailing empty element
-            println("hello\n".lines())
+            println("hello\\n".lines())
 
             // CRLF line endings
-            println("a\r\nb\r\nc".lines())
+            println("a\\r\\nb\\r\\nc".lines())
 
             // mixed line endings (\n and \r)
-            println("a\nb\rc".lines())
+            println("a\\nb\\rc".lines())
 
             // only newlines
-            println("\n\n".lines())
+            println("\\n\\n".lines())
 
             // single newline
-            println("\n".lines())
+            println("\\n".lines())
 
             // Windows CRLF only
-            println("\r\n".lines())
+            println("\\r\\n".lines())
         }
         """
 

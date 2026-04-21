@@ -264,6 +264,26 @@ final class LinkPhaseIntegrationTests: XCTestCase {
         XCTAssertTrue(args.contains("-no-pie"))
     }
 
+    func testLinuxAutolinkStubIsRewrittenWhenCorrupted() throws {
+        // Use a test-only triple so this corruption check never races with regular link tests
+        // that share the default Linux autolink stub path.
+        let linuxTarget = TargetTriple(arch: "x86_64", vendor: "kswiftkstubtest", os: "linux-gnu", osVersion: nil)
+        let linkPhase = LinkPhase()
+
+        let stubPath = try XCTUnwrap(linkPhase.emitSwiftAutolinkStubIfNeeded(target: linuxTarget))
+        try "corrupted".write(toFile: stubPath, atomically: true, encoding: .utf8)
+
+        let repairedPath = try XCTUnwrap(linkPhase.emitSwiftAutolinkStubIfNeeded(target: linuxTarget))
+        XCTAssertEqual(repairedPath, stubPath)
+
+        let contents = try String(contentsOfFile: repairedPath, encoding: .utf8)
+        XCTAssertNotEqual(contents, "corrupted")
+        XCTAssertTrue(contents.contains("_kswiftkRuntimeAutolinkAnchor"))
+        XCTAssertTrue(contents.contains("NSLock()"))
+        XCTAssertTrue(contents.contains("DispatchQueue.global"))
+        XCTAssertTrue(contents.contains("DispatchSemaphore(value: 0)"))
+    }
+
     func testExecutableEmissionWithOutputExtensionUsesSeparateObjectPath() throws {
         let source = """
         fun main() {
