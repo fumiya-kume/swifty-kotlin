@@ -1462,9 +1462,13 @@ public func kk_sequence_findLast(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
-    var result = runtimeNullSentinelInt
+    var found = runtimeNullSentinelInt
+    var hasMatch = false
+    var traversalState: SequenceTraversalState?
     if let seq = runtimeSequenceBox(from: seqRaw) {
-        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+        let state = SequenceTraversalState()
+        traversalState = state
+        runtimeTraverseSequenceWithState(seq, state: state, outThrown: outThrown) { elem in
             var thrown = 0
             let predicateResult = lambda(closureRaw, elem, &thrown)
             if thrown != 0 {
@@ -1472,7 +1476,8 @@ public func kk_sequence_findLast(
                 return false
             }
             if maybeUnbox(predicateResult) != 0 {
-                result = elem
+                found = elem
+                hasMatch = true
             }
             return true
         }
@@ -1485,12 +1490,17 @@ public func kk_sequence_findLast(
                 return runtimeNullSentinelInt
             }
             if maybeUnbox(predicateResult) != 0 {
-                result = elem
+                found = elem
+                hasMatch = true
             }
         }
     }
     if let outThrown, outThrown.pointee != 0 { return runtimeNullSentinelInt }
-    return result
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return runtimeNullSentinelInt
+    }
+    return hasMatch ? found : runtimeNullSentinelInt
 }
 
 @_cdecl("kk_sequence_asIterable")
@@ -1582,6 +1592,112 @@ public func kk_sequence_count(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<I
         return 0
     }
     return count
+}
+
+// MARK: - Sequence Terminal Operations: contains/indexOf/elementAt/sum/average/toMutableList/toMutableSet/unzip
+
+@_cdecl("kk_sequence_contains")
+public func kk_sequence_contains(_ seqRaw: Int, _ element: Int) -> Int {
+    var found = false
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: nil) { elem in
+            if runtimeValuesEqual(elem, element) {
+                found = true
+                return false
+            }
+            return true
+        }
+    } else {
+        let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+        found = elements.contains { runtimeValuesEqual($0, element) }
+    }
+    return kk_box_bool(found ? 1 : 0)
+}
+
+@_cdecl("kk_sequence_indexOf")
+public func kk_sequence_indexOf(_ seqRaw: Int, _ element: Int) -> Int {
+    var index = -1
+    var currentIndex = 0
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: nil) { elem in
+            if runtimeValuesEqual(elem, element) {
+                index = currentIndex
+                return false
+            }
+            currentIndex += 1
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            if runtimeValuesEqual(elem, element) {
+                index = currentIndex
+                break
+            }
+            currentIndex += 1
+        }
+    }
+    return index
+}
+
+@_cdecl("kk_sequence_elementAtOrNull")
+public func kk_sequence_elementAtOrNull(_ seqRaw: Int, _ index: Int) -> Int {
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    guard elements.indices.contains(index) else {
+        return runtimeNullSentinelInt
+    }
+    return elements[index]
+}
+
+@_cdecl("kk_sequence_elementAt")
+public func kk_sequence_elementAt(_ seqRaw: Int, _ index: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    guard elements.indices.contains(index) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "Sequence index \(index) out of bounds for length \(elements.count)."
+        )
+        return runtimeNullSentinelInt
+    }
+    return elements[index]
+}
+
+@_cdecl("kk_sequence_sum")
+public func kk_sequence_sum(_ seqRaw: Int) -> Int {
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    return kk_list_sum(registerRuntimeObject(RuntimeListBox(elements: elements)))
+}
+
+@_cdecl("kk_sequence_average")
+public func kk_sequence_average(_ seqRaw: Int) -> Int {
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    return kk_list_average(registerRuntimeObject(RuntimeListBox(elements: elements)))
+}
+
+@_cdecl("kk_sequence_toMutableList")
+public func kk_sequence_toMutableList(_ seqRaw: Int) -> Int {
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
+@_cdecl("kk_sequence_toMutableSet")
+public func kk_sequence_toMutableSet(_ seqRaw: Int) -> Int {
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(elements)))
+}
+
+@_cdecl("kk_sequence_unzip")
+public func kk_sequence_unzip(_ seqRaw: Int) -> Int {
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    var firstValues: [Int] = []
+    var secondValues: [Int] = []
+    firstValues.reserveCapacity(elements.count)
+    secondValues.reserveCapacity(elements.count)
+    for pairRaw in elements {
+        firstValues.append(kk_pair_first(pairRaw))
+        secondValues.append(kk_pair_second(pairRaw))
+    }
+    let firstList = registerRuntimeObject(RuntimeListBox(elements: firstValues))
+    let secondList = registerRuntimeObject(RuntimeListBox(elements: secondValues))
+    return kk_pair_new(firstList, secondList)
 }
 
 // MARK: - Sequence Terminal Operations: any/all/none/fold/reduce (STDLIB-274)
@@ -2140,6 +2256,349 @@ public func kk_sequence_associateBy(
     }
     let normalized = runtimeNormalizeMapEntries(keys: keys, values: values)
     return registerRuntimeObject(RuntimeMapBox(keys: normalized.0, values: normalized.1))
+}
+
+@_cdecl("kk_sequence_partition")
+public func kk_sequence_partition(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var matching: [Int] = []
+    var nonMatching: [Int] = []
+    var traversalState: SequenceTraversalState?
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let state = SequenceTraversalState()
+        traversalState = state
+        runtimeTraverseSequenceWithState(seq, state: state, outThrown: outThrown) { elem in
+            var thrown = 0
+            let result = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            if maybeUnbox(result) != 0 {
+                matching.append(elem)
+            } else {
+                nonMatching.append(elem)
+            }
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            var thrown = 0
+            let result = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return 0
+            }
+            if maybeUnbox(result) != 0 {
+                matching.append(elem)
+            } else {
+                nonMatching.append(elem)
+            }
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return 0
+    }
+    let matchingList = registerRuntimeObject(RuntimeListBox(elements: matching))
+    let nonMatchingList = registerRuntimeObject(RuntimeListBox(elements: nonMatching))
+    return kk_pair_new(matchingList, nonMatchingList)
+}
+
+@_cdecl("kk_sequence_associateWith")
+public func kk_sequence_associateWith(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var keys: [Int] = []
+    var values: [Int] = []
+    var traversalState: SequenceTraversalState?
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let state = SequenceTraversalState()
+        traversalState = state
+        runtimeTraverseSequenceWithState(seq, state: state, outThrown: outThrown) { elem in
+            var thrown = 0
+            let value = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            keys.append(elem)
+            values.append(maybeUnbox(value))
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            var thrown = 0
+            let value = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+            }
+            keys.append(elem)
+            values.append(maybeUnbox(value))
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 {
+        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    }
+    let normalized = runtimeNormalizeMapEntries(keys: keys, values: values)
+    return registerRuntimeObject(RuntimeMapBox(keys: normalized.0, values: normalized.1))
+}
+
+@_cdecl("kk_sequence_minByOrNull")
+public func kk_sequence_minByOrNull(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var bestElement: Int?
+    var bestSelector: Int?
+    var traversalState: SequenceTraversalState?
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let state = SequenceTraversalState()
+        traversalState = state
+        runtimeTraverseSequenceWithState(seq, state: state, outThrown: outThrown) { elem in
+            var thrown = 0
+            let selector = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            let normalizedSelector = maybeUnbox(selector)
+            if let current = bestSelector {
+                if runtimeCompareValues(normalizedSelector, current) < 0 {
+                    bestSelector = normalizedSelector
+                    bestElement = elem
+                }
+            } else {
+                bestSelector = normalizedSelector
+                bestElement = elem
+            }
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            var thrown = 0
+            let selector = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return runtimeNullSentinelInt
+            }
+            let normalizedSelector = maybeUnbox(selector)
+            if let current = bestSelector {
+                if runtimeCompareValues(normalizedSelector, current) < 0 {
+                    bestSelector = normalizedSelector
+                    bestElement = elem
+                }
+            } else {
+                bestSelector = normalizedSelector
+                bestElement = elem
+            }
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 { return runtimeNullSentinelInt }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return runtimeNullSentinelInt
+    }
+    return bestElement ?? runtimeNullSentinelInt
+}
+
+@_cdecl("kk_sequence_maxByOrNull")
+public func kk_sequence_maxByOrNull(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var bestElement: Int?
+    var bestSelector: Int?
+    var traversalState: SequenceTraversalState?
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let state = SequenceTraversalState()
+        traversalState = state
+        runtimeTraverseSequenceWithState(seq, state: state, outThrown: outThrown) { elem in
+            var thrown = 0
+            let selector = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            let normalizedSelector = maybeUnbox(selector)
+            if let current = bestSelector {
+                if runtimeCompareValues(normalizedSelector, current) > 0 {
+                    bestSelector = normalizedSelector
+                    bestElement = elem
+                }
+            } else {
+                bestSelector = normalizedSelector
+                bestElement = elem
+            }
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            var thrown = 0
+            let selector = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return runtimeNullSentinelInt
+            }
+            let normalizedSelector = maybeUnbox(selector)
+            if let current = bestSelector {
+                if runtimeCompareValues(normalizedSelector, current) > 0 {
+                    bestSelector = normalizedSelector
+                    bestElement = elem
+                }
+            } else {
+                bestSelector = normalizedSelector
+                bestElement = elem
+            }
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 { return runtimeNullSentinelInt }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return runtimeNullSentinelInt
+    }
+    return bestElement ?? runtimeNullSentinelInt
+}
+
+@_cdecl("kk_sequence_minOf")
+public func kk_sequence_minOf(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var bestValue: Int?
+    var traversalState: SequenceTraversalState?
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let state = SequenceTraversalState()
+        traversalState = state
+        runtimeTraverseSequenceWithState(seq, state: state, outThrown: outThrown) { elem in
+            var thrown = 0
+            let selector = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            let normalizedSelector = maybeUnbox(selector)
+            if let current = bestValue {
+                if runtimeCompareValues(normalizedSelector, current) < 0 {
+                    bestValue = normalizedSelector
+                }
+            } else {
+                bestValue = normalizedSelector
+            }
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            var thrown = 0
+            let selector = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return runtimeNullSentinelInt
+            }
+            let normalizedSelector = maybeUnbox(selector)
+            if let current = bestValue {
+                if runtimeCompareValues(normalizedSelector, current) < 0 {
+                    bestValue = normalizedSelector
+                }
+            } else {
+                bestValue = normalizedSelector
+            }
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 { return runtimeNullSentinelInt }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return runtimeNullSentinelInt
+    }
+    guard let bestValue else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement)
+        return runtimeNullSentinelInt
+    }
+    return bestValue
+}
+
+@_cdecl("kk_sequence_maxOf")
+public func kk_sequence_maxOf(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var bestValue: Int?
+    var traversalState: SequenceTraversalState?
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let state = SequenceTraversalState()
+        traversalState = state
+        runtimeTraverseSequenceWithState(seq, state: state, outThrown: outThrown) { elem in
+            var thrown = 0
+            let selector = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            let normalizedSelector = maybeUnbox(selector)
+            if let current = bestValue {
+                if runtimeCompareValues(normalizedSelector, current) > 0 {
+                    bestValue = normalizedSelector
+                }
+            } else {
+                bestValue = normalizedSelector
+            }
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            var thrown = 0
+            let selector = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return runtimeNullSentinelInt
+            }
+            let normalizedSelector = maybeUnbox(selector)
+            if let current = bestValue {
+                if runtimeCompareValues(normalizedSelector, current) > 0 {
+                    bestValue = normalizedSelector
+                }
+            } else {
+                bestValue = normalizedSelector
+            }
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 { return runtimeNullSentinelInt }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return runtimeNullSentinelInt
+    }
+    guard let bestValue else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement)
+        return runtimeNullSentinelInt
+    }
+    return bestValue
 }
 
 // MARK: - Sequence Operations: chunked/windowed/onEach (STDLIB-276)

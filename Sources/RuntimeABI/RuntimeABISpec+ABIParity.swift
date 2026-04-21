@@ -1532,6 +1532,17 @@ public extension RuntimeABISpec {
             section: "ABIParity"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_sequence_partition",
+            parameters: [
+                RuntimeABIParameter(name: "p0", type: .intptr),
+                RuntimeABIParameter(name: "p1", type: .intptr),
+                RuntimeABIParameter(name: "p2", type: .intptr),
+                RuntimeABIParameter(name: "p3", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "ABIParity"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_measureTimedValue",
             parameters: [
                 RuntimeABIParameter(name: "p0", type: .intptr),
