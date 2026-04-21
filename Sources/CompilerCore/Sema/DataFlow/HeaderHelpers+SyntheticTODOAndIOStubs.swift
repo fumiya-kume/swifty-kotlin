@@ -160,12 +160,12 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // STDLIB-SEQ-002: generateSequence(nextFunction: () -> T?) — unseeded variant
-        registerSyntheticGenerateSequenceUnseededFunction(
+        // STDLIB-SEQ-002: 1-arg form generateSequence(nextFunction: () -> T?)
+        registerSyntheticGenerateSequenceNoArgFunction(
             named: "generateSequence",
             packageFQName: kotlinSequencesPkg,
             sequenceSymbol: sequenceSymbol,
-            externalLinkName: "kk_sequence_generate_unseeded",
+            externalLinkName: "kk_sequence_generate_noarg",
             symbols: symbols,
             types: types,
             interner: interner
@@ -1586,8 +1586,9 @@ extension DataFlowSemaPhase {
         )
     }
 
-    // STDLIB-SEQ-002: generateSequence(nextFunction: () -> T?) — unseeded variant
-    private func registerSyntheticGenerateSequenceUnseededFunction(
+    /// STDLIB-SEQ-002: Register the 1-arg overload `generateSequence(nextFunction: () -> T?)`.
+    /// This overload takes a no-argument function that is called repeatedly until it returns null.
+    private func registerSyntheticGenerateSequenceNoArgFunction(
         named name: String,
         packageFQName: [InternedString],
         sequenceSymbol: SymbolID,
@@ -1598,7 +1599,8 @@ extension DataFlowSemaPhase {
     ) {
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
-        // Skip if already registered with 1 parameter
+
+        // Skip if an overload with exactly 1 parameter already exists.
         if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
             guard let existingSignature = symbols.functionSignature(for: symbolID) else {
                 return false
@@ -1638,7 +1640,7 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         let nullableElementType = types.makeNullable(elementType)
-        // nextFunction: () -> T?
+        // The no-arg nextFunction type: () -> T?
         let nextFunctionType = types.make(.functionType(FunctionType(
             params: [],
             returnType: nullableElementType,

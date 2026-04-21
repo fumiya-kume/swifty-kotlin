@@ -2624,12 +2624,16 @@ extension CallLowerer {
                     return result
                 }
                 if calleeName == interner.intern("zipWithNext") {
+                    // String.zipWithNext overload dispatch: no-arg → kk_string_zipWithNext,
+                    // transform → kk_string_zipWithNextTransform.
+                    let runtimeCallee = args.isEmpty ? "kk_string_zipWithNext" : "kk_string_zipWithNextTransform"
+                    let callArguments = args.isEmpty ? [loweredReceiverID] : [loweredReceiverID] + normalizedArgIDs
                     instructions.append(.call(
                         symbol: nil,
-                        callee: interner.intern("kk_string_zipWithNext"),
-                        arguments: [loweredReceiverID],
+                        callee: interner.intern(runtimeCallee),
+                        arguments: callArguments,
                         result: result,
-                        canThrow: false,
+                        canThrow: !args.isEmpty,
                         thrownResult: nil
                     ))
                     return result
@@ -2809,6 +2813,12 @@ extension CallLowerer {
                     } else {
                         ("kk_string_padEnd_default", [loweredReceiverID, loweredArgIDs[0]])
                     }
+                case "removePrefix":
+                    ("kk_string_removePrefix", [loweredReceiverID, loweredArgIDs[0]])
+                case "removeSuffix":
+                    ("kk_string_removeSuffix", [loweredReceiverID, loweredArgIDs[0]])
+                case "removeSurrounding":
+                    ("kk_string_removeSurrounding", [loweredReceiverID, loweredArgIDs[0]])
                 default:
                     nil
                 }
@@ -2950,6 +2960,23 @@ extension CallLowerer {
                     arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1], hasEndExpr],
                     result: result,
                     canThrow: true,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // String stdlib: 2-arg removeSurrounding(prefix, suffix) (STDLIB-TEXT-EDGE-010 / STDLIB-185)
+        if args.count == 2, interner.resolve(calleeName) == "removeSurrounding" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_removeSurrounding_pair"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: false,
                     thrownResult: nil
                 ))
                 return result

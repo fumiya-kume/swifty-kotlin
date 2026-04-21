@@ -396,8 +396,9 @@ enum SequenceStepKind {
     case takeStep(count: Int)
     case builder(elements: [Int])
     case generator(seed: Int, fnPtr: Int, closureRaw: Int)
-    /// STDLIB-SEQ-002: Unseeded generator — nextFunction: () -> T? drives both seed and subsequent values.
-    case unseededGenerator(fnPtr: Int, closureRaw: Int)
+    /// STDLIB-SEQ-002: 1-arg form: `generateSequence { nextFunction() }`.
+    /// Calls `nextFunction` (no-arg) repeatedly; each non-null return value is an element.
+    case nullableGenerator(fnPtr: Int, closureRaw: Int)
     case dropStep(count: Int)
     case distinctStep
     case zipStep(otherElements: [Int])

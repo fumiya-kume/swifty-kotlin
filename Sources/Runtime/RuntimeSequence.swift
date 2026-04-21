@@ -384,7 +384,7 @@ private func runtimeSequenceTransformElement(
                 return !state.stop
             }
         }
-    case .source, .stringSource, .builder, .generator, .unseededGenerator, .lazyBuilder:
+    case .source, .stringSource, .builder, .generator, .nullableGenerator, .lazyBuilder:
         runtimeSequenceTransformElement(
             element,
             steps: steps,
@@ -406,7 +406,7 @@ private func runtimeTraverseSequenceWithState(
 ) {
     let transformSteps = seq.steps.filter {
         switch $0 {
-        case .source, .stringSource, .builder, .generator, .unseededGenerator, .lazyBuilder:
+        case .source, .stringSource, .builder, .generator, .nullableGenerator, .lazyBuilder:
             false
         default:
             true
@@ -484,14 +484,13 @@ private func runtimeTraverseSequenceWithState(
                 state.limitReached = true
             }
             return
-        case let .unseededGenerator(fnPtr, closureRaw):
-            // STDLIB-SEQ-002: Unseeded generator — nextFunction: () -> T? provides every element.
-            // The function takes no element argument: signature is (closureRaw, outThrown) -> T?
-            let nextFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+        case let .nullableGenerator(fnPtr, closureRaw):
+            // STDLIB-SEQ-002: 1-arg form — calls no-arg nextFunction repeatedly until null.
+            let noArgFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
             var generatedCount = 0
             while generatedCount < kSequenceGeneratorHardLimit, !state.stop {
                 var thrown = 0
-                let next = nextFn(closureRaw, &thrown)
+                let next = noArgFn(closureRaw, &thrown)
                 if thrown != 0 {
                     outThrown?.pointee = thrown
                     return
@@ -732,13 +731,19 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
     }
     let hasTransformSteps = seq.steps.contains {
         switch $0 {
-        case .source, .stringSource, .builder, .generator, .unseededGenerator, .lazyBuilder:
+        case .source, .stringSource, .builder, .generator, .nullableGenerator, .lazyBuilder:
             return false
         default:
             return true
         }
     }
-    if hasLazyBuilder, hasTransformSteps {
+    // STDLIB-SEQ-002: nullableGenerator also benefits from the traverse-based path so
+    // that take(N) short-circuits after N elements instead of materializing everything.
+    let hasNullableGenerator = seq.steps.contains {
+        if case .nullableGenerator = $0 { return true }
+        return false
+    }
+    if (hasLazyBuilder || hasNullableGenerator), hasTransformSteps {
         var result: [Int] = []
         runtimeTraverseSequence(seq, outThrown: nil) { elem in
             result.append(elem)
@@ -778,13 +783,13 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
             elements = generated
             break
         }
-        // STDLIB-SEQ-002: Unseeded generator — nextFunction: () -> T? provides every element.
-        if case let .unseededGenerator(fnPtr, closureRaw) = step {
-            let nextFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+        if case let .nullableGenerator(fnPtr, closureRaw) = step {
+            // STDLIB-SEQ-002: 1-arg form — no seed, call no-arg function until null.
+            let noArgFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
             var generated: [Int] = []
             while generated.count < kSequenceGeneratorHardLimit {
                 var thrown = 0
-                let next = nextFn(closureRaw, &thrown)
+                let next = noArgFn(closureRaw, &thrown)
                 if thrown != 0 { break }
                 let unboxed = maybeUnbox(next)
                 if unboxed == runtimeNullSentinelInt { break }
@@ -798,7 +803,7 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
     // Apply transformation steps in order
     for step in seq.steps {
         switch step {
-        case .source, .stringSource, .builder, .generator, .unseededGenerator, .lazyBuilder:
+        case .source, .stringSource, .builder, .generator, .nullableGenerator, .lazyBuilder:
             break
         case let .mapStep(fnPtr, closureRaw):
             elements = applyMapStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: nil)
@@ -925,11 +930,11 @@ public func kk_sequence_generate(_ seed: Int, _ fnPtr: Int, _ closureRaw: Int) -
     return registerRuntimeObject(seq)
 }
 
-/// STDLIB-SEQ-002: Unseeded generateSequence — nextFunction: () -> T? drives all elements.
-/// The sequence ends when nextFunction returns null.
-@_cdecl("kk_sequence_generate_unseeded")
-public func kk_sequence_generate_unseeded(_ fnPtr: Int, _ closureRaw: Int) -> Int {
-    let seq = RuntimeSequenceBox(steps: [.unseededGenerator(fnPtr: fnPtr, closureRaw: closureRaw)])
+/// STDLIB-SEQ-002: 1-arg form `generateSequence(nextFunction: () -> T?)`.
+/// Calls `nextFunction` (no-arg closure) repeatedly; stops when null is returned.
+@_cdecl("kk_sequence_generate_noarg")
+public func kk_sequence_generate_noarg(_ fnPtr: Int, _ closureRaw: Int) -> Int {
+    let seq = RuntimeSequenceBox(steps: [.nullableGenerator(fnPtr: fnPtr, closureRaw: closureRaw)])
     return registerRuntimeObject(seq)
 }
 

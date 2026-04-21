@@ -779,7 +779,7 @@ final class StdlibFunctionLowerer {
     }
     
     // MARK: - generateSequence関数
-    
+
     /// generateSequence関数を処理
     private func lowerGenerateSequenceFunction(
         exprID: ExprID,
@@ -790,33 +790,49 @@ final class StdlibFunctionLowerer {
         let arena = context.arena
         let interner = context.interner
         let boundType = sema.bindings.exprTypes[exprID]
-        
-        guard args.count == 2,
-              let callBinding = sema.bindings.callBindings[exprID],
+
+        guard let callBinding = sema.bindings.callBindings[exprID],
               let symbol = sema.symbols.symbol(callBinding.chosenCallee),
               interner.resolve(symbol.name) == "generateSequence" else {
             return nil
         }
-        
+
+        // STDLIB-SEQ-002: 1-arg form generateSequence(nextFunction: () -> T?)
+        if args.count == 1 {
+            let nextArgID = context.lowerSubExpr(args[0].expr, driver: coordinator.driver)
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+            context.append(.call(
+                symbol: callBinding.chosenCallee,
+                callee: interner.intern("kk_sequence_generate_noarg"),
+                arguments: [nextArgID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
+
+        guard args.count == 2 else { return nil }
+
         let seedFunctionType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
         guard case let .functionType(functionType) = sema.types.kind(of: sema.types.makeNonNullable(seedFunctionType)),
               functionType.params.isEmpty else {
             return nil
         }
-        
+
         let seedArgID = context.lowerSubExpr(args[0].expr, driver: coordinator.driver)
-        
+
         let nextArgID = context.lowerSubExpr(args[1].expr, driver: coordinator.driver)
-        
+
         guard let seedCallableInfo = coordinator.driver.ctx.callableValueInfo(for: seedArgID) else {
             return nil
         }
-        
+
         let seedResult = arena.appendExpr(
             .temporary(Int32(arena.expressions.count)),
             type: sema.types.makeNonNullable(functionType.returnType)
         )
-        
+
         context.append(.call(
             symbol: seedCallableInfo.symbol,
             callee: seedCallableInfo.callee,
@@ -825,7 +841,7 @@ final class StdlibFunctionLowerer {
             canThrow: false,
             thrownResult: nil
         ))
-        
+
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         context.append(.call(
             symbol: callBinding.chosenCallee,
@@ -835,7 +851,7 @@ final class StdlibFunctionLowerer {
             canThrow: false,
             thrownResult: nil
         ))
-        
+
         return result
     }
     

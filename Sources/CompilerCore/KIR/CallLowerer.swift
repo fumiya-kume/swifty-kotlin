@@ -487,6 +487,23 @@ final class CallLowerer {
             )
         }
         let knownNames = KnownCompilerNames(interner: interner)
+        // STDLIB-SEQ-002: 1-arg form generateSequence(nextFunction: () -> T?)
+        if sourceCalleeName == interner.intern("generateSequence"),
+           loweredArgIDs.count == 1,
+           let nextFunctionType = sema.bindings.exprTypes[args[0].expr],
+           case .functionType = sema.types.kind(of: sema.types.makeNonNullable(nextFunctionType))
+        {
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+            instructions.append(.call(
+                symbol: chosen,
+                callee: interner.intern("kk_sequence_generate_noarg"),
+                arguments: [loweredArgIDs[0]],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
         if sourceCalleeName == interner.intern("generateSequence"),
            loweredArgIDs.count == 2,
            let seedFunctionType = sema.bindings.exprTypes[args[0].expr],
@@ -1179,29 +1196,19 @@ final class CallLowerer {
             return finalArgs
         }
 
-        // STDLIB-SEQ-002: generateSequence(nextFunction: () -> T?) — unseeded variant.
-        // Expand single lambda arg to (fnPtr, closureRaw).
-        if externalLinkName == "kk_sequence_generate_unseeded", loweredArguments.count == 1 {
-            var finalArgs: [KIRExprID] = []
+        // STDLIB-SEQ-002: 1-arg generateSequence(nextFunction) → kk_sequence_generate_noarg(fnPtr, closureRaw)
+        if externalLinkName == "kk_sequence_generate_noarg", loweredArguments.count == 1 {
             let lambdaID = loweredArguments[0]
-            if let callableInfo = driver.ctx.callableValueInfo(for: lambdaID) {
-                let fnPtrExpr = arena.appendExpr(.symbolRef(callableInfo.symbol), type: sema.types.intType)
-                instructions.append(.constValue(result: fnPtrExpr, value: .symbolRef(callableInfo.symbol)))
-                finalArgs.append(fnPtrExpr)
-                if let closureRaw = callableInfo.captureArguments.first {
-                    finalArgs.append(closureRaw)
-                } else {
-                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                    finalArgs.append(zeroExpr)
-                }
+            if sema.bindings.isCollectionHOFLambdaExpr(originalArgs[0].expr),
+               let callableInfo = driver.ctx.callableValueInfo(for: lambdaID),
+               let closureRaw = callableInfo.captureArguments.first
+            {
+                return [lambdaID, closureRaw]
             } else {
-                finalArgs.append(lambdaID)
                 let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
                 instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                finalArgs.append(zeroExpr)
+                return [lambdaID, zeroExpr]
             }
-            return finalArgs
         }
 
         let legacyNames: Set = ["kk_require_lazy", "kk_check_lazy", "kk_precondition_assert_lazy", "kk_sequence_generate"]
