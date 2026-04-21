@@ -1029,6 +1029,7 @@ extension DataFlowSemaPhase {
         registerSyntheticNativeConcurrentStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExperimentalMarkerStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoroutinesABIStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticOpenEndRangeStub(symbols: symbols, types: types, interner: interner)
     }
 
     /// Register the synthetic `kotlin.Any` and `kotlin.Annotation` built-in stubs.

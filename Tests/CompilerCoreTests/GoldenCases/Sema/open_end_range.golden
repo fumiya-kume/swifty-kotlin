@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s0 kind=package fq=_root_ vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=class fq=kotlin.Any vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.Annotation vis=public flags=synthetic
@@ -3840,33 +3840,22 @@ symbol s3838 kind=property fq=kotlin.ranges.OpenEndRange.start vis=public flags=
 symbol s3839 kind=property fq=kotlin.ranges.OpenEndRange.endExclusive vis=public flags=synthetic type=T#3837
 symbol s3840 kind=function fq=kotlin.ranges.OpenEndRange.contains vis=public flags=synthetic|operatorFunction sig=recv=Class#3836<T#3837> params=[T#3837] ret=Boolean suspend=0 defaults=[] vararg=[]
 symbol s3841 kind=function fq=kotlin.ranges.OpenEndRange.isEmpty vis=public flags=synthetic sig=recv=Class#3836<T#3837> params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s3842 kind=class fq=golden.sema.LazyHolder vis=public flags=_
-symbol s3843 kind=constructor fq=golden.sema.LazyHolder.<init> vis=public flags=_ sig=recv=Class#3842 params=[] ret=Class#3842 suspend=0 defaults=[] vararg=[]
-symbol s3844 kind=property fq=golden.sema.LazyHolder.x vis=public flags=_ type=Int
-symbol s3845 kind=field fq=golden.sema.LazyHolder.$delegate_x vis=private flags=_
-symbol s3846 kind=class fq=golden.sema.CustomDelegate vis=public flags=_
-symbol s3847 kind=constructor fq=golden.sema.CustomDelegate.<init> vis=public flags=_ sig=recv=Class#3846 params=[] ret=Class#3846 suspend=0 defaults=[] vararg=[]
-symbol s3848 kind=function fq=golden.sema.CustomDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#3846 params=[Any?,Any?] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3849 kind=valueParameter fq=golden.sema.CustomDelegate.getValue.$3848.thisRef vis=private flags=_
-symbol s3850 kind=valueParameter fq=golden.sema.CustomDelegate.getValue.$3848.property vis=private flags=_
-symbol s3851 kind=function fq=golden.sema.CustomDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#3846 params=[Any?,Any?,String] ret=Unit suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3852 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$3851.thisRef vis=private flags=_
-symbol s3853 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$3851.property vis=private flags=_
-symbol s3854 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$3851.value vis=private flags=_
-symbol s3855 kind=class fq=golden.sema.Holder vis=public flags=_
-symbol s3856 kind=constructor fq=golden.sema.Holder.<init> vis=public flags=_ sig=recv=Class#3855 params=[] ret=Class#3855 suspend=0 defaults=[] vararg=[]
-symbol s3857 kind=property fq=golden.sema.Holder.name vis=public flags=_ type=String
-symbol s3858 kind=field fq=golden.sema.Holder.$delegate_name vis=private flags=_
-symbol s3859 kind=property fq=golden.sema.Holder.mutable vis=public flags=mutable type=String
-symbol s3860 kind=field fq=golden.sema.Holder.$delegate_mutable vis=private flags=_
-file f0 package=golden.sema
-  decl d1 class LazyHolder sym=s3842
-  decl d4 class CustomDelegate sym=s3846
-  decl d7 class Holder sym=s3855
-expr e0 name(lazy) type=Class#5 ref=s33
-expr e1 int(42) type=_
-expr e2 string(hello) type=String
-expr e3 name(CustomDelegate) type=_
-expr e4 call callee=e3 args=[] type=Class#3846 call=s3847 map=[] targs=[]
-expr e5 name(CustomDelegate) type=_
-expr e6 call callee=e5 args=[] type=Class#3846 call=s3847 map=[] targs=[]
+symbol s3842 kind=function fq=useOpenEndRange vis=public flags=_ sig=recv=_ params=[Class#3836<Int>,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3843 kind=valueParameter fq=useOpenEndRange.$3842.range vis=private flags=_
+symbol s3844 kind=valueParameter fq=useOpenEndRange.$3842.value vis=private flags=_
+file f0 package=_
+  decl d0 fun useOpenEndRange suspend=0 inline=0 sym=s3842
+expr e0 name(value) type=Int ref=s3844
+expr e1 name(range) type=Class#3836<Int> ref=s3843
+expr e2 inExpr lhs=e0 rhs=e1 type=Boolean call=s3840 map=[0->0] targs=[Int]
+expr e3 name(range) type=Class#3836<Int> ref=s3843
+expr e4 memberCall recv=e3 callee=isEmpty args=[] type=Boolean call=s3841 map=[] targs=[Int]
+expr e5 unary(not) operand=e4 type=Boolean
+expr e6 binary(logicalAnd) lhs=e2 rhs=e5 type=Boolean
+expr e7 name(range) type=Class#3836<Int> ref=s3843
+expr e8 memberCall recv=e7 callee=start args=[] type=T#3837 ref=s3838
+expr e9 name(range) type=Class#3836<Int> ref=s3843
+expr e10 memberCall recv=e9 callee=endExclusive args=[] type=T#3837 ref=s3839
+expr e11 binary(lessThan) lhs=e8 rhs=e10 type=Boolean call=s136 map=[0->0] targs=[T#3837]
+expr e12 binary(logicalAnd) lhs=e6 rhs=e11 type=Boolean
+expr e13 return value=e12 type=Nothing
