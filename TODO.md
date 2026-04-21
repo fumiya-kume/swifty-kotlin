@@ -54,7 +54,7 @@
 - [x] STDLIB-TEXT-EDGE-009: `CharSequence?.contentEquals(other)` / `contentEquals(other, ignoreCase)` を追加する
 - [ ] STDLIB-TEXT-EDGE-010: `CharSequence.removePrefix` / `removeSuffix` / `removeSurrounding` overload 群を追加する
 - [ ] STDLIB-TEXT-EDGE-011: `CharSequence.zipWithNext()` / `zipWithNext(transform)` を追加する
-- [ ] STDLIB-TEXT-EDGE-012: `Appendable.append(vararg CharSequence?)` と `StringBuilder.append(vararg String? / Any?)` を追加する
+- [x] STDLIB-TEXT-EDGE-012: `Appendable.append(vararg CharSequence?)` と `StringBuilder.append(vararg String? / Any?)` を追加する
 
 ### Phase 2: コレクション・Sequence・Range
 - [ ] STDLIB-GAP-PH2: `kotlin.collections` / `kotlin.sequences` / `kotlin.ranges` の未対応を潰す

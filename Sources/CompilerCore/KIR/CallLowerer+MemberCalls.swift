@@ -3787,6 +3787,42 @@ extension CallLowerer {
             }
         }
 
+        // StringBuilder: append(vararg value: String? / Any?) (STDLIB-TEXT-EDGE-012)
+        if interner.resolve(calleeName) == "append",
+           let chosenCallee = sema.bindings.callBindings[exprID]?.chosenCallee,
+           sema.symbols.externalLinkName(for: chosenCallee) == "kk_string_builder_append_vararg_obj"
+        {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                let intType = sema.types.make(.primitive(.int, .nonNull))
+                let packedArgs: KIRExprID
+                if loweredArgIDs.count == 1, args.first?.isSpread == true {
+                    packedArgs = loweredArgIDs[0]
+                } else {
+                    packedArgs = driver.callSupportLowerer.packVarargArguments(
+                        argIndices: Array(loweredArgIDs.indices),
+                        providedArguments: loweredArgIDs,
+                        spreadFlags: args.map(\.isSpread),
+                        arena: arena,
+                        interner: interner,
+                        intType: intType,
+                        anyType: sema.types.nullableAnyType,
+                        instructions: &instructions
+                    )
+                }
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_builder_append_vararg_obj"),
+                    arguments: [loweredReceiverID, packedArgs],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         let isSuperCall = sema.bindings.isSuperCallExpr(exprID)
         
         // Extract qualified super type information for super<Interface> calls
