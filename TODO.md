@@ -97,7 +97,7 @@
 - [ ] STDLIB-COL-U-005: `UByteArray` / `UShortArray` / `UIntArray` / `ULongArray` の `toTypedArray()` を追加する
 - [ ] STDLIB-COL-U-006: `UByteArray` / `UShortArray` / `UIntArray` / `ULongArray` の `copyOf(newSize, init)` overload 群を追加する
 - [ ] STDLIB-COL-U-007: `UByteArray` / `UShortArray` / `UIntArray` / `ULongArray` の `asList()` view surface を追加する
-- [ ] STDLIB-COL-GROUP-002: `Grouping.eachCountTo(destination)` を追加する
+- [x] STDLIB-COL-GROUP-002: `Grouping.eachCountTo(destination)` を追加する
 - [x] STDLIB-COL-GROUP-003: `Grouping.fold(initialValueSelector, operation)` overload を追加する
 - [x] STDLIB-COL-GROUP-004: `Grouping.foldTo(destination, initialValue, operation)` / `foldTo(destination, initialValueSelector, operation)` を追加する
 - [x] STDLIB-COL-GROUP-005: `Grouping.reduceTo(destination, operation)` を追加する

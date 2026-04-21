@@ -166,7 +166,7 @@ extension CallLowerer {
         "scan", "scanIndexed", "runningFold", "runningFoldIndexed",
         "runningReduce", "runningReduceIndexed",
         "groupBy", "groupingBy", "sortedBy", "find", "findLast", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
-        "eachCount", "aggregate", "aggregateTo",
+        "eachCount", "eachCountTo", "aggregate", "aggregateTo",
         "withIndex", "forEachIndexed", "mapIndexed", "filterIndexed", "mapValues", "mapKeys", "filterKeys", "filterValues",
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull", "elementAt", "elementAtOrElse",
         "putAll", "addAll",
@@ -7253,6 +7253,8 @@ extension CallLowerer {
             switch memberName {
             case "eachCount":
                 return interner.intern("kk_grouping_eachCount")
+            case "eachCountTo":
+                return interner.intern("kk_grouping_eachCountTo")
             case "aggregate":
                 return interner.intern("kk_grouping_aggregate")
             case "aggregateTo":

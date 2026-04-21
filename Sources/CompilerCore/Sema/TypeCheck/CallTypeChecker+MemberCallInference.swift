@@ -2536,6 +2536,38 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: reduceToLambdaType)
                 resultType = destType
 
+            case "eachCountTo":
+                // Called on Grouping, returns the destination MutableMap<in K, Int>
+                // and updates its counts in place.
+                guard args.count == 1 else {
+                    sema.bindings.bindExprType(id, type: sema.types.anyType)
+                    return sema.types.anyType
+                }
+                let eachCountToKeyType: TypeID
+                if case let .classType(ct) = sema.types.kind(of: receiverType),
+                   ct.args.count >= 2,
+                   case let .invariant(k) = ct.args[1] {
+                    eachCountToKeyType = k
+                } else {
+                    eachCountToKeyType = sema.types.anyType
+                }
+                let destinationExpectedType: TypeID? = if let mutableMapSymbol = lookupStdlibSymbol("MutableMap", symbols: sema.symbols, interner: interner) {
+                    sema.types.make(.classType(ClassType(
+                        classSymbol: mutableMapSymbol,
+                        args: [.in(eachCountToKeyType), .invariant(sema.types.intType)],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    nil
+                }
+                let destinationType = driver.inferExpr(
+                    args[0].expr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: destinationExpectedType
+                )
+                resultType = destinationType
+
             case "sortedBy", "sortedByDescending":
                 let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                     params: [collectionElementType],

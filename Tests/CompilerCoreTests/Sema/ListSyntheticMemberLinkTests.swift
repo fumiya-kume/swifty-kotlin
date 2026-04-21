@@ -1779,6 +1779,52 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testGroupingEachCountToUsesProjectedMutableMapParameterType() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let interner = ctx.interner
+            let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("Grouping"),
+                interner.intern("eachCountTo"),
+            ]))
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+            XCTAssertEqual(sema.symbols.externalLinkName(for: symbol), "kk_grouping_eachCountTo")
+            XCTAssertEqual(signature.parameterTypes.count, 1)
+            XCTAssertEqual(signature.returnType, signature.parameterTypes[0])
+
+            let receiverType = try XCTUnwrap(signature.receiverType)
+            guard case let .classType(receiverClassType) = sema.types.kind(of: receiverType) else {
+                return XCTFail("Expected Grouping.eachCountTo receiver to be a class type")
+            }
+            XCTAssertEqual(
+                try interner.resolve(XCTUnwrap(sema.symbols.symbol(receiverClassType.classSymbol)?.name)),
+                "Grouping"
+            )
+
+            let parameterType = try XCTUnwrap(signature.parameterTypes.first)
+            guard case let .classType(parameterClassType) = sema.types.kind(of: parameterType) else {
+                return XCTFail("Expected eachCountTo to take a MutableMap type")
+            }
+            XCTAssertEqual(
+                try interner.resolve(XCTUnwrap(sema.symbols.symbol(parameterClassType.classSymbol)?.name)),
+                "MutableMap"
+            )
+            XCTAssertEqual(parameterClassType.args.count, 2)
+            guard case let .in(keyProjection) = parameterClassType.args[0],
+                  case .typeParam = sema.types.kind(of: keyProjection),
+                  case let .invariant(valueType) = parameterClassType.args[1]
+            else {
+                return XCTFail("Expected eachCountTo parameter to use MutableMap<in K, Int>")
+            }
+            XCTAssertEqual(valueType, sema.types.intType)
+        }
+    }
+
     func testBuildListCapacityOverloadResolves() throws {
         let source = """
         fun render(): List<Int> = buildList(4) {

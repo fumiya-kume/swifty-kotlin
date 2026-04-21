@@ -2377,6 +2377,26 @@ extension DataFlowSemaPhase {
             typeParameterSymbols: groupingTypeParameterSymbols + [aggregateToRSymbol]
         )
 
+        // eachCountTo(destination: MutableMap<in K, Int>) -> MutableMap<in K, Int>
+        let eachCountToDestinationType: TypeID
+        if let mutableMapSymbol {
+            eachCountToDestinationType = types.make(.classType(ClassType(
+                classSymbol: mutableMapSymbol,
+                args: [.in(kTypeParam), .invariant(types.intType)],
+                nullability: .nonNull
+            )))
+        } else {
+            eachCountToDestinationType = types.anyType
+        }
+        registerGroupingMember(
+            named: "eachCountTo",
+            parameters: [
+                eachCountToDestinationType,
+            ],
+            returnType: eachCountToDestinationType,
+            externalLinkName: "kk_grouping_eachCountTo"
+        )
+
         // fold(initialValue: R, operation: (R, T) -> R) -> Map<K, R>
         let foldRName = interner.intern("R")
         let foldRFQName = groupingFQName + [foldRName]

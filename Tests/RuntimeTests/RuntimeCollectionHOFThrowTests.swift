@@ -429,4 +429,21 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
         XCTAssertEqual(outThrown, exceptionID)
         XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
     }
+
+    func testGroupingByEachCountToThrows() {
+        let array = kk_array_new(3)
+        var thrown = 0
+        _ = _ = kk_array_set(array, 0, 1, &thrown)
+        _ = _ = kk_array_set(array, 1, 2, &thrown)
+        _ = _ = kk_array_set(array, 2, 3, &thrown)
+        let list = kk_list_of(array, 3)
+        let grouping = kk_list_groupingBy(list, unsafeBitCast(groupingByThrowingLambda, to: Int.self), 0)
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+
+        var outThrown = 0
+        let result = kk_grouping_eachCountTo(grouping, dest, &outThrown)
+
+        XCTAssertEqual(outThrown, exceptionID)
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+    }
 }

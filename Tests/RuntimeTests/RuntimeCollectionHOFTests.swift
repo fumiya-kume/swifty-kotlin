@@ -661,6 +661,35 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_unbox_int(kk_map_get(aggregated, 0)), 6)
     }
 
+    func testGroupingByEachCountToAccumulatesIntoExistingDestination() {
+        let source = makeList([3, 1, 4, 2, 5])
+        let grouping = kk_list_groupingBy(source, unsafeBitCast(groupByParity, to: Int.self), 0)
+        let dest = makeMutableMap(keys: [1], values: [kk_box_int(7)])
+
+        let result = kk_grouping_eachCountTo(grouping, dest, nil)
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(mapKeys(result), [1, 0])
+        XCTAssertEqual(kk_unbox_int(kk_map_get(result, 1)), 10)
+        XCTAssertEqual(kk_unbox_int(kk_map_get(result, 0)), 2)
+    }
+
+    func testGroupingByEachCountToUsesValueEqualityForStringKeys() {
+        let source = makeList([1, 2, 3, 4])
+        let grouping = kk_list_groupingBy(source, unsafeBitCast(groupingByStringKey, to: Int.self), 0)
+        let dest = makeMutableMap(
+            keys: [runtimeStringRaw("odd")],
+            values: [kk_box_int(5)]
+        )
+
+        let result = kk_grouping_eachCountTo(grouping, dest, nil)
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(mapKeys(result).map(runtimeStringValue), ["odd", "even"])
+        XCTAssertEqual(kk_unbox_int(kk_map_get(result, runtimeStringRaw("odd"))), 7)
+        XCTAssertEqual(kk_unbox_int(kk_map_get(result, runtimeStringRaw("even"))), 2)
+    }
+
     func testMapForEachFilterAndMapUsePairEntries() {
         let keys = makeArray([1, 2, 3])
         let values = makeArray([10, 21, 32])
@@ -877,6 +906,10 @@ final class RuntimeCollectionHOFTests: XCTestCase {
     private func makeList(_ elements: [Int]) -> Int {
         let arrayRaw = makeArray(elements)
         return kk_list_of(arrayRaw, elements.count)
+    }
+
+    private func makeMutableMap(keys: [Int], values: [Int]) -> Int {
+        registerRuntimeObject(RuntimeMapBox(keys: keys, values: values))
     }
 
     private func listElements(_ listRaw: Int) -> [Int] {

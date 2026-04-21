@@ -1,0 +1,23 @@
+symbol s0 kind=interface fq=kotlin.collections.List vis=public flags=synthetic
+symbol s1 kind=interface fq=kotlin.collections.MutableMap vis=public flags=synthetic
+symbol s2 kind=function fq=kotlin.text.length vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3 kind=interface fq=kotlin.collections.Grouping vis=public flags=synthetic
+symbol s4 kind=function fq=render vis=public flags=_ sig=recv=_ params=[Class#0<String>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s5 kind=valueParameter fq=render.$0.values vis=private flags=_
+symbol s6 kind=local fq=__local_0.dest vis=private flags=_ type=Class#1<Int, Int>
+symbol s7 kind=local fq=__local_1.result vis=private flags=_ type=<error>
+file f0 package=_
+  decl d0 fun render suspend=0 inline=0 sym=s4
+expr e0 name(mutableMapOf) type=_
+expr e1 call callee=e0 args=[] type=Class#1<Int, Int>
+expr e2 localDecl dest mutable=0 type=_ init=e1 type=Unit ref=s6
+expr e3 name(values) type=Class#0<String> ref=s5
+expr e4 name(it) type=_
+expr e5 memberCall recv=e4 callee=length args=[] type=_
+expr e6 name(it) type=String ref=s-0
+expr e7 memberCall recv=e6 callee=length args=[] type=Int call=s2 map=[] targs=[]
+expr e8 lambda params=[] body=e7 label=groupingBy type=(String) -> Any
+expr e9 memberCall recv=e3 callee=groupingBy args=[_:e8] type=Class#3<String, Int>
+expr e10 name(dest) type=Class#1<Int, Int> ref=s6
+expr e11 memberCall recv=e9 callee=eachCountTo args=[_:e10] type=<error>
+expr e12 localDecl result mutable=0 type=_ init=e11 type=Unit ref=s7

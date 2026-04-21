@@ -3626,6 +3626,57 @@ public func kk_grouping_eachCount(_ groupingRaw: Int, _ outThrown: UnsafeMutable
     return registerRuntimeObject(RuntimeMapBox(keys: keys, values: counts.map { kk_box_int($0) }))
 }
 
+/// `grouping.eachCountTo(destination)` — counts elements per key into a destination map.
+@_cdecl("kk_grouping_eachCountTo")
+public func kk_grouping_eachCountTo(
+    _ groupingRaw: Int,
+    _ destRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let grouping = runtimeGroupingBox(from: groupingRaw) else {
+        invalidContainerPanic(#function, "grouping")
+    }
+    guard let dest = runtimeMapBox(from: destRaw) else {
+        invalidContainerPanic(#function, "map")
+    }
+    var keyIndex: [RuntimeElementKey: Int] = [:]
+    keyIndex.reserveCapacity(dest.keys.count)
+    for (index, key) in dest.keys.enumerated() {
+        keyIndex[RuntimeElementKey(value: key)] = index
+    }
+    for elem in grouping.sourceElements {
+        var thrown = 0
+        let key = runtimeInvokeCollectionLambda1(
+            fnPtr: grouping.keyFnPtr, closureRaw: grouping.keyClosureRaw,
+            value: elem, outThrown: &thrown
+        )
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        let normalizedKey = RuntimeElementKey(value: maybeUnbox(key))
+        if let index = keyIndex[normalizedKey] {
+            let currentCount: Int
+            if index < dest.values.count {
+                let currentValue = dest.values[index]
+                currentCount = currentValue == runtimeNullSentinelInt ? 0 : maybeUnbox(currentValue)
+            } else {
+                currentCount = 0
+            }
+            let updatedCount = currentCount + 1
+            if index < dest.values.count {
+                dest.values[index] = kk_box_int(updatedCount)
+            } else {
+                dest.values.append(kk_box_int(updatedCount))
+            }
+        } else {
+            let newIndex = dest.keys.count
+            keyIndex[normalizedKey] = newIndex
+            dest.keys.append(normalizedKey.value)
+            dest.values.append(kk_box_int(1))
+        }
+    }
+    return destRaw
+}
+
 /// `grouping.fold(initial) { acc, element -> ... }` — folds per key, returns Map<K, R>.
 @_cdecl("kk_grouping_fold")
 public func kk_grouping_fold(
