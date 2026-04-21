@@ -128,6 +128,23 @@ public func kk_string_split(_ strRaw: Int, _ delimRaw: Int) -> Int {
     return runtimeMakeStringListRaw(runtimeSplitString(source, delimiter: delimiter))
 }
 
+// MARK: - STDLIB-TEXT-EDGE-001: CharSequence.split with ignoreCase and limit
+
+@_cdecl("kk_string_split_limit")
+public func kk_string_split_limit(_ strRaw: Int, _ delimRaw: Int, _ ignoreCaseRaw: Int, _ limitRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeStringFromRawOrPanic(delimRaw, caller: #function)
+    let ignoreCase = ignoreCaseRaw != 0
+    let limit = limitRaw
+
+    if delimiter.isEmpty {
+        return runtimeMakeStringListRaw([source])
+    }
+    return runtimeMakeStringListRaw(
+        runtimeSplitStringLimit(source, delimiter: delimiter, ignoreCase: ignoreCase, limit: limit)
+    )
+}
+
 @_cdecl("kk_string_replace")
 public func kk_string_replace(_ strRaw: Int, _ oldRaw: Int, _ newRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
@@ -1884,6 +1901,33 @@ private func runtimeSplitString(_ source: String, delimiter: String) -> [String]
     var cursor = source.startIndex
     while true {
         guard let match = source.range(of: delimiter, range: cursor ..< source.endIndex) else {
+            result.append(String(source[cursor...]))
+            return result
+        }
+        result.append(String(source[cursor ..< match.lowerBound]))
+        cursor = match.upperBound
+    }
+}
+
+private func runtimeSplitStringLimit(
+    _ source: String,
+    delimiter: String,
+    ignoreCase: Bool,
+    limit: Int
+) -> [String] {
+    if source.isEmpty {
+        return [""]
+    }
+
+    let options: String.CompareOptions = ignoreCase ? [.caseInsensitive] : []
+    var result: [String] = []
+    var cursor = source.startIndex
+    while true {
+        if limit > 0, result.count == limit - 1 {
+            result.append(String(source[cursor...]))
+            return result
+        }
+        guard let match = source.range(of: delimiter, options: options, range: cursor ..< source.endIndex) else {
             result.append(String(source[cursor...]))
             return result
         }
