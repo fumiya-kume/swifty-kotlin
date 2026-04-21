@@ -14,6 +14,41 @@ private func runtimeDurationBox(from raw: Int) -> RuntimeDurationBox? {
     return tryCast(ptr, to: RuntimeDurationBox.self)
 }
 
+private func runtimeDurationIsInfinite(_ nanoseconds: Int64) -> Bool {
+    nanoseconds == Int64.max || nanoseconds == Int64.min
+}
+
+private func runtimeDurationHandle(fromNanoseconds nanoseconds: Int64) -> Int {
+    registerRuntimeObject(RuntimeDurationBox(nanoseconds: nanoseconds))
+}
+
+private func runtimeDurationNanoseconds(
+    fromDoubleBits valueBits: Int,
+    scale: Double
+) -> Int64 {
+    let value = kk_bits_to_double(valueBits)
+    guard value.isFinite else {
+        if value.isNaN {
+            return 0
+        }
+        return value.sign == .minus ? Int64.min : Int64.max
+    }
+
+    let scaled = value * scale
+    guard scaled.isFinite else {
+        return scaled.sign == .minus ? Int64.min : Int64.max
+    }
+
+    let rounded = scaled.rounded()
+    if rounded >= Double(Int64.max) {
+        return Int64.max
+    }
+    if rounded <= Double(Int64.min) {
+        return Int64.min
+    }
+    return Int64(rounded)
+}
+
 private func runtimeFormatScaledDuration(_ absNs: Int64, unitDivisor: Int64, suffix: String) -> String {
     let whole = absNs / unitDivisor
     let remainder = absNs % unitDivisor
@@ -42,6 +77,16 @@ func saturatingMultiply(_ a: Int64, _ b: Int64) -> Int64 {
         return (a ^ b) < 0 ? Int64.min : Int64.max
     }
     return result
+}
+
+@_cdecl("kk_duration_zero")
+public func kk_duration_zero() -> Int {
+    runtimeDurationHandle(fromNanoseconds: 0)
+}
+
+@_cdecl("kk_duration_infinite")
+public func kk_duration_infinite() -> Int {
+    runtimeDurationHandle(fromNanoseconds: Int64.max)
 }
 
 @_cdecl("kk_duration_from_seconds")
@@ -128,6 +173,41 @@ public func kk_duration_from_days_long(_ value: Int) -> Int {
     return registerRuntimeObject(box)
 }
 
+@_cdecl("kk_duration_from_seconds_double")
+public func kk_duration_from_seconds_double(_ valueBits: Int) -> Int {
+    runtimeDurationHandle(fromNanoseconds: runtimeDurationNanoseconds(fromDoubleBits: valueBits, scale: 1_000_000_000))
+}
+
+@_cdecl("kk_duration_from_milliseconds_double")
+public func kk_duration_from_milliseconds_double(_ valueBits: Int) -> Int {
+    runtimeDurationHandle(fromNanoseconds: runtimeDurationNanoseconds(fromDoubleBits: valueBits, scale: 1_000_000))
+}
+
+@_cdecl("kk_duration_from_microseconds_double")
+public func kk_duration_from_microseconds_double(_ valueBits: Int) -> Int {
+    runtimeDurationHandle(fromNanoseconds: runtimeDurationNanoseconds(fromDoubleBits: valueBits, scale: 1_000))
+}
+
+@_cdecl("kk_duration_from_nanoseconds_double")
+public func kk_duration_from_nanoseconds_double(_ valueBits: Int) -> Int {
+    runtimeDurationHandle(fromNanoseconds: runtimeDurationNanoseconds(fromDoubleBits: valueBits, scale: 1))
+}
+
+@_cdecl("kk_duration_from_minutes_double")
+public func kk_duration_from_minutes_double(_ valueBits: Int) -> Int {
+    runtimeDurationHandle(fromNanoseconds: runtimeDurationNanoseconds(fromDoubleBits: valueBits, scale: 60 * 1_000_000_000))
+}
+
+@_cdecl("kk_duration_from_hours_double")
+public func kk_duration_from_hours_double(_ valueBits: Int) -> Int {
+    runtimeDurationHandle(fromNanoseconds: runtimeDurationNanoseconds(fromDoubleBits: valueBits, scale: 3_600 * 1_000_000_000))
+}
+
+@_cdecl("kk_duration_from_days_double")
+public func kk_duration_from_days_double(_ valueBits: Int) -> Int {
+    runtimeDurationHandle(fromNanoseconds: runtimeDurationNanoseconds(fromDoubleBits: valueBits, scale: 86_400 * 1_000_000_000))
+}
+
 // MARK: - Duration properties
 
 @_cdecl("kk_duration_inWholeMilliseconds")
@@ -176,6 +256,14 @@ public func kk_duration_inWholeHours(_ durationRaw: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_duration_inWholeHours received invalid Duration handle")
     }
     return Int(box.nanoseconds / Int64(3_600_000_000_000))
+}
+
+@_cdecl("kk_duration_inWholeDays")
+public func kk_duration_inWholeDays(_ durationRaw: Int) -> Int {
+    guard let box = runtimeDurationBox(from: durationRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_duration_inWholeDays received invalid Duration handle")
+    }
+    return Int(box.nanoseconds / Int64(86_400_000_000_000))
 }
 
 @_cdecl("kk_duration_toString")
@@ -301,6 +389,21 @@ public func kk_duration_div_int(_ durationRaw: Int, _ scale: Int) -> Int {
         return registerRuntimeObject(RuntimeDurationBox(nanoseconds: ns))
     }
     return registerRuntimeObject(RuntimeDurationBox(nanoseconds: box.nanoseconds / Int64(scale)))
+}
+
+@_cdecl("kk_duration_div_duration")
+public func kk_duration_div_duration(_ lhsRaw: Int, _ rhsRaw: Int) -> Int {
+    guard let lhs = runtimeDurationBox(from: lhsRaw),
+          let rhs = runtimeDurationBox(from: rhsRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_duration_div_duration received invalid Duration handle")
+    }
+    let lhsValue = runtimeDurationIsInfinite(lhs.nanoseconds)
+        ? (lhs.nanoseconds > 0 ? Double.infinity : -Double.infinity)
+        : Double(lhs.nanoseconds)
+    let rhsValue = runtimeDurationIsInfinite(rhs.nanoseconds)
+        ? (rhs.nanoseconds > 0 ? Double.infinity : -Double.infinity)
+        : Double(rhs.nanoseconds)
+    return kk_double_to_bits(lhsValue / rhsValue)
 }
 
 @_cdecl("kk_duration_unary_minus")

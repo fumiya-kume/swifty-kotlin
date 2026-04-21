@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-04-19
+最終更新: 2026-04-22
 
 ---
 
@@ -121,20 +121,20 @@
 - [ ] STDLIB-RANGE-COERCE-001: `Byte` / `Short` / `UByte` / `UShort` / `UInt` / `ULong` の `coerceAtLeast` / `coerceAtMost` / `coerceIn` overload 群を追加する
 
 ### Phase 3: I/O・パス・時間・並行（common）
-- [ ] STDLIB-GAP-PH3: `kotlin.io`（common） / `kotlin.time` / `kotlin.concurrent` / `kotlin.concurrent.atomics` の未対応を潰す
+- [~] STDLIB-GAP-PH3: `kotlin.io`（common） / `kotlin.time` / `kotlin.concurrent` / `kotlin.concurrent.atomics` の未対応を潰す
 - [ ] STDLIB-030: `kotlin.io` common 範囲の file / buffered / `use` を仕様単位で締める
 - [ ] STDLIB-IO-ENC-001: `kotlin.io.encoding.Base64.Default` / `UrlSafe` / `Mime` / `PemMime` を追加する
 - [ ] STDLIB-IO-ENC-002: `Base64.encode(ByteArray)` / `decode(String)` を追加する
 - [ ] STDLIB-IO-ENC-003: `Base64.encodeToByteArray(ByteArray)` / `decodeFromByteArray(ByteArray)` を追加する
 - [ ] STDLIB-IO-ENC-004: `Base64.withPadding(PaddingOption)` と MIME / URL-safe variant の挙動を追加する
 - [ ] STDLIB-032: `kotlin.time` の stable / experimental 境界を明文化
-- [ ] STDLIB-TIME-STABLE-001: `Duration.ZERO` / `Duration.INFINITE` constants を追加する
+- [x] STDLIB-TIME-STABLE-001: `Duration.ZERO` / `Duration.INFINITE` constants を追加する
 - [ ] STDLIB-TIME-STABLE-002: `Duration.toIsoString()` / `Duration.parse()` / `Duration.parseOrNull()` を追加する
 - [ ] STDLIB-TIME-STABLE-003: `Duration.parseIsoString()` / `Duration.parseIsoStringOrNull()` を追加する
 - [ ] STDLIB-TIME-STABLE-004: `Duration.toComponents { ... }` overload 群を追加する
-- [ ] STDLIB-TIME-STABLE-005: `Double.seconds` など `Double` receiver の `Duration` extension properties を追加する
-- [ ] STDLIB-TIME-STABLE-006: `Duration / Duration -> Double` を追加する
-- [ ] STDLIB-TIME-STABLE-007: `Duration.inWholeDays` property を追加する
+- [x] STDLIB-TIME-STABLE-005: `Double.seconds` など `Double` receiver の `Duration` extension properties を追加する
+- [x] STDLIB-TIME-STABLE-006: `Duration / Duration -> Double` を追加する
+- [x] STDLIB-TIME-STABLE-007: `Duration.inWholeDays` property を追加する
 - [ ] STDLIB-033: `kotlin.concurrent` / `kotlin.concurrent.atomics` / Native concurrent の parity を上げる
 - [ ] STDLIB-PROP-001: `kotlin.properties.ObservableProperty<V>` abstract class を追加し、`beforeChange` / `afterChange` hook を `Delegates.observable` / `vetoable` と結び付ける
 - [ ] STDLIB-PROP-002: `kotlin.properties.PropertyDelegateProvider<T, D>` fun interface を追加し、provider 型付けと `provideDelegate` ベースの delegate factory surface を揃える

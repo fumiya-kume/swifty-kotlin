@@ -23,6 +23,9 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        guard let durationCompanionSymbol = symbols.companionObjectSymbol(for: durationSymbol) else {
+            return
+        }
         let durationType = types.make(.classType(ClassType(
             classSymbol: durationSymbol,
             args: [],
@@ -31,7 +34,27 @@ extension DataFlowSemaPhase {
 
         let intType = types.intType
         let longType = types.longType
+        let doubleType = types.doubleType
         let boolType = types.make(.primitive(.boolean, .nonNull))
+
+        // --- STDLIB-TIME-STABLE-001: Duration companion constants ---
+        registerDurationMemberProperty(
+            named: "ZERO",
+            externalLinkName: "kk_duration_zero",
+            ownerSymbol: durationCompanionSymbol,
+            returnType: durationType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberProperty(
+            named: "INFINITE",
+            externalLinkName: "kk_duration_infinite",
+            ownerSymbol: durationCompanionSymbol,
+            returnType: durationType,
+            symbols: symbols,
+            interner: interner
+        )
 
         // --- STDLIB-582/583/584: Duration.inWhole* properties ---
         registerDurationMemberProperty(
@@ -82,6 +105,15 @@ extension DataFlowSemaPhase {
         registerDurationMemberProperty(
             named: "inWholeHours",
             externalLinkName: "kk_duration_inWholeHours",
+            ownerSymbol: durationSymbol,
+            returnType: longType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberProperty(
+            named: "inWholeDays",
+            externalLinkName: "kk_duration_inWholeDays",
             ownerSymbol: durationSymbol,
             returnType: longType,
             symbols: symbols,
@@ -139,6 +171,7 @@ extension DataFlowSemaPhase {
             named: "plus",
             externalLinkName: "kk_duration_plus",
             ownerSymbol: durationSymbol,
+            ownerType: durationType,
             parameterTypes: [durationType],
             returnType: durationType,
             symbols: symbols,
@@ -149,6 +182,7 @@ extension DataFlowSemaPhase {
             named: "minus",
             externalLinkName: "kk_duration_minus",
             ownerSymbol: durationSymbol,
+            ownerType: durationType,
             parameterTypes: [durationType],
             returnType: durationType,
             symbols: symbols,
@@ -159,6 +193,7 @@ extension DataFlowSemaPhase {
             named: "times",
             externalLinkName: "kk_duration_times_int",
             ownerSymbol: durationSymbol,
+            ownerType: durationType,
             parameterTypes: [intType],
             returnType: durationType,
             symbols: symbols,
@@ -169,8 +204,20 @@ extension DataFlowSemaPhase {
             named: "div",
             externalLinkName: "kk_duration_div_int",
             ownerSymbol: durationSymbol,
+            ownerType: durationType,
             parameterTypes: [intType],
             returnType: durationType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberMethod(
+            named: "div",
+            externalLinkName: "kk_duration_div_duration",
+            ownerSymbol: durationSymbol,
+            ownerType: durationType,
+            parameterTypes: [durationType],
+            returnType: doubleType,
             symbols: symbols,
             interner: interner
         )
@@ -179,6 +226,7 @@ extension DataFlowSemaPhase {
             named: "compareTo",
             externalLinkName: "kk_duration_compareTo",
             ownerSymbol: durationSymbol,
+            ownerType: durationType,
             parameterTypes: [durationType],
             returnType: intType,
             symbols: symbols,
@@ -189,6 +237,7 @@ extension DataFlowSemaPhase {
             named: "unaryMinus",
             externalLinkName: "kk_duration_unary_minus",
             ownerSymbol: durationSymbol,
+            ownerType: durationType,
             parameterTypes: [],
             returnType: durationType,
             symbols: symbols,
@@ -370,6 +419,77 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-TIME-STABLE-005: Double receiver Duration factory extension properties ---
+        registerDurationFactoryExtensionProperty(
+            named: "seconds",
+            externalLinkName: "kk_duration_from_seconds_double",
+            receiverType: doubleType,
+            returnType: durationType,
+            companionFQName: durationCompanionFQName,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationFactoryExtensionProperty(
+            named: "milliseconds",
+            externalLinkName: "kk_duration_from_milliseconds_double",
+            receiverType: doubleType,
+            returnType: durationType,
+            companionFQName: durationCompanionFQName,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationFactoryExtensionProperty(
+            named: "microseconds",
+            externalLinkName: "kk_duration_from_microseconds_double",
+            receiverType: doubleType,
+            returnType: durationType,
+            companionFQName: durationCompanionFQName,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationFactoryExtensionProperty(
+            named: "nanoseconds",
+            externalLinkName: "kk_duration_from_nanoseconds_double",
+            receiverType: doubleType,
+            returnType: durationType,
+            companionFQName: durationCompanionFQName,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationFactoryExtensionProperty(
+            named: "minutes",
+            externalLinkName: "kk_duration_from_minutes_double",
+            receiverType: doubleType,
+            returnType: durationType,
+            companionFQName: durationCompanionFQName,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationFactoryExtensionProperty(
+            named: "hours",
+            externalLinkName: "kk_duration_from_hours_double",
+            receiverType: doubleType,
+            returnType: durationType,
+            companionFQName: durationCompanionFQName,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationFactoryExtensionProperty(
+            named: "days",
+            externalLinkName: "kk_duration_from_days_double",
+            receiverType: doubleType,
+            returnType: durationType,
+            companionFQName: durationCompanionFQName,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureDurationCompanionSymbol(
@@ -432,6 +552,7 @@ extension DataFlowSemaPhase {
         named name: String,
         externalLinkName: String,
         ownerSymbol: SymbolID,
+        ownerType: TypeID,
         parameterTypes: [TypeID],
         returnType: TypeID,
         symbols: SymbolTable,
@@ -448,6 +569,14 @@ extension DataFlowSemaPhase {
             return sig.parameterTypes == parameterTypes
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
+            if let existingSignature = symbols.functionSignature(for: existing),
+               existingSignature.receiverType != ownerType
+            {
+                symbols.setFunctionSignature(
+                    existingSignature.withReceiverType(ownerType),
+                    for: existing
+                )
+            }
             return
         }
 
@@ -457,7 +586,7 @@ extension DataFlowSemaPhase {
             fqName: functionFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: [.synthetic, .operatorFunction]
         )
         symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
         symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
@@ -486,7 +615,7 @@ extension DataFlowSemaPhase {
 
         symbols.setFunctionSignature(
             FunctionSignature(
-                receiverType: nil,
+                receiverType: ownerType,
                 parameterTypes: parameterTypes,
                 returnType: returnType,
                 isSuspend: false,
@@ -599,5 +728,25 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(propertySymbol, for: getterSymbol)
         symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
         symbols.setExternalLinkName(externalLinkName, for: getterSymbol)
+    }
+}
+
+private extension FunctionSignature {
+    func withReceiverType(_ receiverType: TypeID?) -> FunctionSignature {
+        FunctionSignature(
+            receiverType: receiverType,
+            parameterTypes: parameterTypes,
+            returnType: returnType,
+            isSuspend: isSuspend,
+            canThrow: canThrow,
+            valueParameterSymbols: valueParameterSymbols,
+            valueParameterHasDefaultValues: valueParameterHasDefaultValues,
+            valueParameterIsVararg: valueParameterIsVararg,
+            typeParameterSymbols: typeParameterSymbols,
+            reifiedTypeParameterIndices: reifiedTypeParameterIndices,
+            typeParameterUpperBounds: typeParameterUpperBounds,
+            typeParameterUpperBoundsList: typeParameterUpperBoundsList,
+            classTypeParameterCount: classTypeParameterCount
+        )
     }
 }
