@@ -239,7 +239,7 @@ extension DataFlowSemaPhase {
             receiverType: stringType,
             parameters: [
                 ("delimiters", stringType, false, false),
-                ("limit", intType, true, false),
+                ("limit", intType, false, false),
             ],
             returnType: listStringType,
             packageFQName: kotlinTextPkg,

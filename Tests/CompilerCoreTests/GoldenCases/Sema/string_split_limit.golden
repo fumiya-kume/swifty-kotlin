@@ -716,7 +716,7 @@ symbol s714 kind=function fq=kotlin.text.isNormalized vis=public flags=synthetic
 symbol s715 kind=valueParameter fq=kotlin.text.isNormalized.form vis=private flags=synthetic
 symbol s716 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String] ret=Class#123<out String> suspend=0 defaults=[0] vararg=[0]
 symbol s717 kind=valueParameter fq=kotlin.text.split.delimiters vis=private flags=synthetic
-symbol s718 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String,Int] ret=Class#123<out String> suspend=0 defaults=[0,1] vararg=[0,0]
+symbol s718 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String,Int] ret=Class#123<out String> suspend=0 defaults=[0,0] vararg=[0,0]
 symbol s719 kind=valueParameter fq=kotlin.text.split.limit vis=private flags=synthetic
 symbol s720 kind=function fq=kotlin.text.replace vis=public flags=synthetic sig=recv=String params=[String,String] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
 symbol s721 kind=valueParameter fq=kotlin.text.replace.oldValue vis=private flags=synthetic
@@ -3695,7 +3695,7 @@ expr e8 memberCall recv=e5 callee=split args=[_:e6,limit:e7] type=Class#123<out 
 expr e9 localDecl b mutable=0 type=_ init=e8 type=Unit ref=s3680
 expr e10 string(a,b,c,d) type=String
 expr e11 string(,) type=String
-expr e12 memberCall recv=e10 callee=split args=[_:e11] type=Class#123<out String>
+expr e12 memberCall recv=e10 callee=split args=[_:e11] type=Class#123<out String> call=s716 map=[0->0] targs=[]
 expr e13 localDecl c mutable=0 type=_ init=e12 type=Unit ref=s3681
 expr e14 string(one::two::three) type=String
 expr e15 string(::) type=String
