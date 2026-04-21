@@ -792,21 +792,44 @@ public func kk_list_binarySearch(_ listRaw: Int, _ element: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
         return -1
     }
-    var low = 0
-    var high = list.elements.count - 1
-    while low <= high {
-        let mid = (low + high) / 2
-        let midVal = list.elements[mid]
-        let cmp = runtimeCompareValues(midVal, element)
-        if cmp < 0 {
-            low = mid + 1
-        } else if cmp > 0 {
-            high = mid - 1
-        } else {
-            return mid
-        }
+    return runtimeBinarySearch(
+        elements: list.elements,
+        element: element,
+        fromIndex: 0,
+        toIndex: list.elements.count,
+        compare: runtimeCompareValues
+    )
+}
+
+// MARK: - Array binarySearch (STDLIB-COL-BSEARCH-003)
+
+@_cdecl("kk_array_binarySearch")
+public func kk_array_binarySearch(_ arrayRaw: Int, _ element: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return -1
     }
-    return -(low + 1)
+    return runtimeBinarySearch(
+        elements: array.elements,
+        element: element,
+        fromIndex: fromIndex,
+        toIndex: toIndex,
+        compare: runtimeCompareValues
+    )
+}
+
+@_cdecl("kk_array_binarySearch_primitive")
+public func kk_array_binarySearch_primitive(_ arrayRaw: Int, _ element: Int, _ fromIndex: Int, _ toIndex: Int, _ kindRaw: Int32) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return -1
+    }
+    let kind = runtimePrimitiveCompareKind(from: kindRaw)
+    return runtimeBinarySearch(
+        elements: array.elements,
+        element: element,
+        fromIndex: fromIndex,
+        toIndex: toIndex,
+        compare: { lhs, rhs in runtimeComparePrimitiveValues(lhs, rhs, kind: kind) }
+    )
 }
 
 // MARK: - List plus/minus operators (STDLIB-345)

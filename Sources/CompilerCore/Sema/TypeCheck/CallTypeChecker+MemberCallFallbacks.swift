@@ -2272,10 +2272,13 @@ extension CallTypeChecker {
         }
 
         let memberName = interner.resolve(calleeName)
-        if memberName == "binarySearch",
-           !isGenericArrayReceiver(receiverID: receiverID, sema: sema, interner: interner)
-        {
-            return nil
+        if memberName == "binarySearch" {
+            if isBooleanArrayReceiver(receiverID: receiverID, sema: sema, interner: interner) {
+                return nil
+            }
+            if !isGenericArrayReceiver(receiverID: receiverID, sema: sema, interner: interner) {
+                return nil
+            }
         }
         guard isSupportedArrayMember(memberName),
               isValidArrayMemberArity(memberName, argCount: args.count)
@@ -2285,42 +2288,73 @@ extension CallTypeChecker {
 
         // Extract the actual element type from the Array<T> receiver (TYPE-103).
         let receiverElementType = arrayFallbackElementType(receiverID: receiverID, sema: sema, interner: interner)
-        if memberName == "binarySearch",
-           args.indices.contains(1)
-        {
-            let comparatorArgExpr = args[1].expr
-            let comparatorArg = ctx.ast.arena.expr(comparatorArgExpr)
-            let comparatorExpectedType: TypeID
-            if comparatorArg?.isLambdaOrCallableRef ?? false {
-                sema.bindings.markCollectionHOFLambdaExpr(comparatorArgExpr)
-                comparatorExpectedType = sema.types.make(.functionType(FunctionType(
-                    params: [receiverElementType, receiverElementType],
-                    returnType: sema.types.intType,
-                    isSuspend: false,
-                    nullability: .nonNull
-                )))
-            } else if let comparatorSymbol = sema.symbols.lookupByShortName(interner.intern("Comparator")).first {
-                comparatorExpectedType = sema.types.make(.classType(ClassType(
-                    classSymbol: comparatorSymbol,
-                    args: [.invariant(receiverElementType)],
-                    nullability: .nonNull
-                )))
+        if memberName == "binarySearch" {
+            if isGenericArrayReceiver(receiverID: receiverID, sema: sema, interner: interner),
+               (2...4).contains(args.count),
+               args.indices.contains(1)
+            {
+                let comparatorArgExpr = args[1].expr
+                let comparatorArg = ctx.ast.arena.expr(comparatorArgExpr)
+                let comparatorExpectedType: TypeID
+                if comparatorArg?.isLambdaOrCallableRef ?? false {
+                    sema.bindings.markCollectionHOFLambdaExpr(comparatorArgExpr)
+                    comparatorExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [receiverElementType, receiverElementType],
+                        returnType: sema.types.intType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                } else if let comparatorSymbol = sema.symbols.lookupByShortName(interner.intern("Comparator")).first {
+                    comparatorExpectedType = sema.types.make(.classType(ClassType(
+                        classSymbol: comparatorSymbol,
+                        args: [.invariant(receiverElementType)],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    comparatorExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [receiverElementType, receiverElementType],
+                        returnType: sema.types.intType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                }
+                _ = driver.inferExpr(
+                    comparatorArgExpr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: comparatorExpectedType
+                )
             } else {
-                comparatorExpectedType = sema.types.make(.functionType(FunctionType(
-                    params: [receiverElementType, receiverElementType],
-                    returnType: sema.types.intType,
-                    isSuspend: false,
-                    nullability: .nonNull
-                )))
+                if args.indices.contains(0) {
+                    let firstArgExpr = args[0].expr
+                    if let lambdaExpr = ctx.ast.arena.expr(firstArgExpr), lambdaExpr.isLambdaOrCallableRef {
+                        return nil
+                    }
+                    _ = driver.inferExpr(
+                        firstArgExpr,
+                        ctx: ctx,
+                        locals: &locals,
+                        expectedType: receiverElementType
+                    )
+                }
+                if args.indices.contains(1) {
+                    _ = driver.inferExpr(
+                        args[1].expr,
+                        ctx: ctx,
+                        locals: &locals,
+                        expectedType: sema.types.intType
+                    )
+                }
+                if args.indices.contains(2) {
+                    _ = driver.inferExpr(
+                        args[2].expr,
+                        ctx: ctx,
+                        locals: &locals,
+                        expectedType: sema.types.intType
+                    )
+                }
             }
-            _ = driver.inferExpr(
-                comparatorArgExpr,
-                ctx: ctx,
-                locals: &locals,
-                expectedType: comparatorExpectedType
-            )
-        }
-        if let expectation = arrayMemberLambdaExpectation(
+        } else if let expectation = arrayMemberLambdaExpectation(
             memberName: memberName,
             argCount: args.count,
             receiverElementType: receiverElementType,
@@ -2370,7 +2404,7 @@ extension CallTypeChecker {
         case "map", "filter", "forEach", "any", "none", "fill", "get", "contains":
             argCount == 1
         case "binarySearch":
-            (2...4).contains(argCount)
+            (1...4).contains(argCount)
         case "copyOfRange":
             argCount == 2
         default:
@@ -2461,6 +2495,24 @@ extension CallTypeChecker {
     /// For generic `Array<T>`, returns `T`; for primitive arrays (IntArray, etc.)
     /// returns the corresponding primitive type.  Falls back to `Any` when the
     /// element type cannot be determined.
+    private func isBooleanArrayReceiver(
+        receiverID: ExprID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let receiverType = sema.bindings.exprTypes[receiverID]
+            ?? sema.bindings.identifierSymbol(for: receiverID).flatMap { sema.symbols.propertyType(for: $0) }
+            ?? sema.types.anyType
+        let nonNull = sema.types.makeNonNullable(receiverType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNull),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        let knownNames = KnownCompilerNames(interner: interner)
+        return symbol.name == knownNames.booleanArray
+    }
+
     private func arrayFallbackElementType(
         receiverID: ExprID,
         sema: SemaModule,
@@ -2497,6 +2549,8 @@ extension CallTypeChecker {
             (knownNames.byteArray, sema.types.intType),
             (knownNames.ubyteArray, sema.types.ubyteType),
             (knownNames.ushortArray, sema.types.ushortType),
+            (knownNames.uintArray, sema.types.uintType),
+            (knownNames.ulongArray, sema.types.ulongType),
             (knownNames.doubleArray, sema.types.doubleType),
             (knownNames.floatArray, sema.types.floatType),
             (knownNames.booleanArray, sema.types.booleanType),

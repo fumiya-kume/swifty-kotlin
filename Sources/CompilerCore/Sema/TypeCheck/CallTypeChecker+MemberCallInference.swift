@@ -1131,7 +1131,7 @@ extension CallTypeChecker {
             "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
-            "indexOfFirst", "indexOfLast", "binarySearch",
+            "indexOfFirst", "indexOfLast",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
@@ -1262,6 +1262,33 @@ extension CallTypeChecker {
             let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             sema.bindings.markCollectionExpr(id)
             let finalType = safeCall ? sema.types.makeNullable(destinationType) : destinationType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
+        if interner.resolve(calleeName) == "binarySearch",
+           isConcreteListLikeType(receiverType, sema: sema, interner: interner),
+           args.count == 1,
+           let lambdaExpr = ast.arena.expr(args[0].expr),
+           lambdaExpr.isLambdaOrCallableRef
+        {
+            let collectionElementType = resolvedCollectionElementType(
+                receiverID: receiverID,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner,
+                ctx: ctx,
+                locals: &locals
+            )
+            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [collectionElementType],
+                returnType: sema.types.intType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+            let finalType = safeCall ? sema.types.makeNullable(sema.types.intType) : sema.types.intType
             sema.bindings.bindExprType(id, type: finalType)
             return finalType
         }
@@ -2674,7 +2701,6 @@ extension CallTypeChecker {
                 }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = sema.types.intType
-
             case "distinctBy":
                  guard args.count == 1 else {
                      sema.bindings.bindExprType(id, type: sema.types.anyType)
@@ -6853,6 +6879,17 @@ extension CallTypeChecker {
             return false
         }
         return knownNames.isMapLikeSymbol(symbol) && classType.args.count == 2
+    }
+
+    private func isConcreteListLikeType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        let nonNullType = sema.types.makeNonNullable(type)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullType),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isConcreteListLikeSymbol(symbol) && classType.args.count == 1
     }
 
     private func makeSyntheticPairType(

@@ -1310,6 +1310,84 @@ extension CallLowerer {
         return primitiveCompareABIKind(for: elementType, sema: sema)
     }
 
+    private func arrayBinarySearchPrimitiveCompareKind(
+        of receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> PrimitiveCompareABIKind? {
+        if let kind = collectionElementPrimitiveCompareKind(of: receiverType, sema: sema) {
+            return kind
+        }
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return nil
+        }
+        let knownNames = KnownCompilerNames(interner: interner)
+        switch symbol.name {
+        case knownNames.intArray, knownNames.byteArray, knownNames.shortArray,
+             knownNames.ubyteArray, knownNames.ushortArray:
+            return .int
+        case knownNames.longArray:
+            return .long
+        case knownNames.uintArray:
+            return .uint
+        case knownNames.ulongArray:
+            return .ulong
+        case knownNames.booleanArray:
+            return .boolean
+        case knownNames.charArray:
+            return .char
+        case knownNames.floatArray:
+            return .float
+        case knownNames.doubleArray:
+            return .double
+        default:
+            return nil
+        }
+    }
+
+    private func arraySizeRuntimeCallee(
+        for receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> InternedString {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return interner.intern("kk_array_size")
+        }
+        let knownNames = KnownCompilerNames(interner: interner)
+        switch symbol.name {
+        case knownNames.intArray:
+            return interner.intern("kk_intArray_size")
+        case knownNames.longArray:
+            return interner.intern("kk_longArray_size")
+        case knownNames.byteArray:
+            return interner.intern("kk_byteArray_size")
+        case knownNames.shortArray:
+            return interner.intern("kk_shortArray_size")
+        case knownNames.uintArray:
+            return interner.intern("kk_uIntArray_size")
+        case knownNames.ulongArray:
+            return interner.intern("kk_uLongArray_size")
+        case knownNames.doubleArray:
+            return interner.intern("kk_doubleArray_size")
+        case knownNames.floatArray:
+            return interner.intern("kk_floatArray_size")
+        case knownNames.booleanArray:
+            return interner.intern("kk_booleanArray_size")
+        case knownNames.charArray:
+            return interner.intern("kk_charArray_size")
+        case knownNames.ubyteArray:
+            return interner.intern("kk_uByteArray_size")
+        case knownNames.ushortArray:
+            return interner.intern("kk_uShortArray_size")
+        default:
+            return interner.intern("kk_array_size")
+        }
+    }
+
     private func collectionSelectorPrimitiveCompareKind(
         of selectorExpr: ExprID?,
         sema: SemaModule
@@ -5356,6 +5434,45 @@ extension CallLowerer {
                 finalArguments.append(kindExpr)
             }
         }
+        if loweredCallee == interner.intern("kk_array_binarySearch")
+            || loweredCallee == interner.intern("kk_array_binarySearch_primitive")
+        {
+            let receiverType = sema.bindings.exprTypes[receiver.expr] ?? sema.types.anyType
+            let sizeRuntimeCallee = arraySizeRuntimeCallee(
+                for: receiverType,
+                sema: sema,
+                interner: interner
+            )
+            let memberArgumentCount = finalArguments.count - 1
+            if memberArgumentCount == 1 || memberArgumentCount == 2 {
+                let sizeExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.intType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: sizeRuntimeCallee,
+                    arguments: [receiver.loweredID],
+                    result: sizeExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                if memberArgumentCount == 1 {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    finalArguments.append(zeroExpr)
+                }
+                finalArguments.append(sizeExpr)
+            }
+            if loweredCallee == interner.intern("kk_array_binarySearch_primitive"),
+               let primitiveKind = arrayBinarySearchPrimitiveCompareKind(
+                   of: receiverType,
+                   sema: sema,
+                   interner: interner
+               )
+            {
+                let kindExpr = arena.appendExpr(.intLiteral(Int64(primitiveKind.rawValue)), type: sema.types.intType)
+                instructions.append(.constValue(result: kindExpr, value: .intLiteral(Int64(primitiveKind.rawValue))))
+                finalArguments.append(kindExpr)
+            }
+        }
         let comparatorOnlyCallees: Set<InternedString> = [
             interner.intern("kk_list_maxWith"),
             interner.intern("kk_list_maxWithOrNull"),
@@ -6662,6 +6779,14 @@ extension CallLowerer {
                 if isGenericArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
                     return interner.intern("kk_array_binarySearch_compare")
                 }
+                if arrayBinarySearchPrimitiveCompareKind(
+                    of: nonNullReceiverType,
+                    sema: sema,
+                    interner: interner
+                ) != nil {
+                    return interner.intern("kk_array_binarySearch_primitive")
+                }
+                return interner.intern("kk_array_binarySearch")
             default:
                 break
             }

@@ -176,6 +176,7 @@ struct KnownCompilerNames {
     let booleanArray: InternedString
     let charArray: InternedString
     let uintArray: InternedString
+    let ulongArray: InternedString
 
     let regex: InternedString
     let stringBuilder: InternedString
@@ -360,6 +361,7 @@ struct KnownCompilerNames {
         booleanArray = interner.intern("BooleanArray")
         charArray = interner.intern("CharArray")
         uintArray = interner.intern("UIntArray")
+        ulongArray = interner.intern("ULongArray")
 
         regex = interner.intern("Regex")
         stringBuilder = interner.intern("StringBuilder")
@@ -614,6 +616,7 @@ struct KnownCompilerNames {
             || name == booleanArray
             || name == charArray
             || name == uintArray
+            || name == ulongArray
     }
 
     /// Returns true if the name is a primitive array constructor type name
@@ -631,6 +634,7 @@ struct KnownCompilerNames {
             || name == booleanArray
             || name == charArray
             || name == uintArray
+            || name == ulongArray
     }
 
     /// The set of stdlib collection factory function names used for marking
@@ -639,7 +643,7 @@ struct KnownCompilerNames {
     static let stdlibCollectionFactoryNames: Set<String> = [
         "listOf", "mutableListOf", "emptyList",
         "arrayOf", "emptyArray", "intArrayOf", "longArrayOf",
-        "shortArrayOf", "byteArrayOf", "ubyteArrayOf", "ushortArrayOf", "uintArrayOf",
+        "shortArrayOf", "byteArrayOf", "ubyteArrayOf", "ushortArrayOf", "uintArrayOf", "ulongArrayOf",
         "doubleArrayOf", "floatArrayOf", "booleanArrayOf", "charArrayOf",
         "mapOf", "mutableMapOf", "emptyMap",
         "setOf", "mutableSetOf", "emptySet",

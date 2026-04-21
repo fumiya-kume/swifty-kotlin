@@ -1173,6 +1173,29 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_array_binarySearch",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "element", type: .intptr),
+                RuntimeABIParameter(name: "fromIndex", type: .intptr),
+                RuntimeABIParameter(name: "toIndex", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_array_binarySearch_primitive",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "element", type: .intptr),
+                RuntimeABIParameter(name: "fromIndex", type: .intptr),
+                RuntimeABIParameter(name: "toIndex", type: .intptr),
+                RuntimeABIParameter(name: "kindRaw", type: .int32),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
         // asSequence (STDLIB-471)
         RuntimeABIFunctionSpec(
             name: "kk_list_asSequence",
