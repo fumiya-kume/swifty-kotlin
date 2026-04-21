@@ -265,7 +265,10 @@ public enum GoldenHarness {
 }
 
 private enum GoldenHarnessSemaComparisonNormalizer {
-    private static let symbolReferenceRegex = try! NSRegularExpression(pattern: "(Class#|T#|s)(\\d+)")
+    private static let positiveSymbolReferenceRegex = try! NSRegularExpression(pattern: "(Class#|T#|s)(\\d+)")
+    private static let negativeSymbolReferenceRegex = try! NSRegularExpression(pattern: "(s-)(\\d+)")
+    private static let syntheticScopeOrdinalRegex = try! NSRegularExpression(pattern: "(\\.\\$)(\\d+)(?=\\.)")
+    private static let localNameOrdinalRegex = try! NSRegularExpression(pattern: "(__local_)(\\d+)")
 
     static func normalize(_ output: String) -> String {
         let hasTrailingNewline = output.hasSuffix("\n")
@@ -310,7 +313,7 @@ private enum GoldenHarnessSemaComparisonNormalizer {
         }
 
         let keptSymbolIDs = symbolOrder.filter { requiredSymbols.contains($0) }
-        let remappedIDs = Dictionary(uniqueKeysWithValues: keptSymbolIDs.enumerated().map { (rawID, symbolID) in
+        let remappedIDs = Dictionary(uniqueKeysWithValues: keptSymbolIDs.enumerated().map { rawID, symbolID in
             (symbolID, rawID)
         })
 
@@ -328,7 +331,19 @@ private enum GoldenHarnessSemaComparisonNormalizer {
             normalizedLines.append(rewrite(line, remappedIDs: remappedIDs))
         }
 
-        let normalized = normalizedLines.joined(separator: "\n")
+        var normalized = normalizedLines.joined(separator: "\n")
+        normalized = rewriteOrdinalMatches(
+            in: normalized,
+            regex: syntheticScopeOrdinalRegex
+        )
+        normalized = rewriteOrdinalMatches(
+            in: normalized,
+            regex: localNameOrdinalRegex
+        )
+        normalized = rewriteOrdinalMatches(
+            in: normalized,
+            regex: negativeSymbolReferenceRegex
+        )
         return hasTrailingNewline ? normalized + "\n" : normalized
     }
 
@@ -355,7 +370,7 @@ private enum GoldenHarnessSemaComparisonNormalizer {
     ) {
         let nsLine = line as NSString
         let range = NSRange(location: 0, length: nsLine.length)
-        for match in symbolReferenceRegex.matches(in: line, range: range) {
+        for match in positiveSymbolReferenceRegex.matches(in: line, range: range) {
             let idRange = match.range(at: 2)
             guard idRange.location != NSNotFound,
                   let symbolID = Int(nsLine.substring(with: idRange)),
@@ -370,7 +385,7 @@ private enum GoldenHarnessSemaComparisonNormalizer {
     private static func rewrite(_ line: String, remappedIDs: [Int: Int]) -> String {
         let nsLine = line as NSString
         let range = NSRange(location: 0, length: nsLine.length)
-        let matches = symbolReferenceRegex.matches(in: line, range: range)
+        let matches = positiveSymbolReferenceRegex.matches(in: line, range: range)
         guard !matches.isEmpty else {
             return line
         }
@@ -387,6 +402,47 @@ private enum GoldenHarnessSemaComparisonNormalizer {
                 continue
             }
             let prefix = nsLine.substring(with: prefixRange)
+            mutable.replaceCharacters(in: match.range, with: "\(prefix)\(newID)")
+        }
+        return mutable as String
+    }
+
+    private static func rewriteOrdinalMatches(
+        in text: String,
+        regex: NSRegularExpression
+    ) -> String {
+        let nsText = text as NSString
+        let range = NSRange(location: 0, length: nsText.length)
+        let matches = regex.matches(in: text, range: range)
+        guard !matches.isEmpty else {
+            return text
+        }
+
+        var remappedIDs: [Int: Int] = [:]
+        for match in matches {
+            let idRange = match.range(at: 2)
+            guard idRange.location != NSNotFound,
+                  let oldID = Int(nsText.substring(with: idRange))
+            else {
+                continue
+            }
+            if remappedIDs[oldID] == nil {
+                remappedIDs[oldID] = remappedIDs.count
+            }
+        }
+
+        let mutable = NSMutableString(string: text)
+        for match in matches.reversed() {
+            let prefixRange = match.range(at: 1)
+            let idRange = match.range(at: 2)
+            guard prefixRange.location != NSNotFound,
+                  idRange.location != NSNotFound,
+                  let oldID = Int(nsText.substring(with: idRange)),
+                  let newID = remappedIDs[oldID]
+            else {
+                continue
+            }
+            let prefix = nsText.substring(with: prefixRange)
             mutable.replaceCharacters(in: match.range, with: "\(prefix)\(newID)")
         }
         return mutable as String

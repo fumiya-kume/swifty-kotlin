@@ -49,12 +49,12 @@
 - [ ] STDLIB-TEXT-EDGE-004: `CharSequence.ifBlank(defaultValue)` を追加する
 - [ ] STDLIB-TEXT-EDGE-005: `CharSequence.ifEmpty(defaultValue)` を追加する
 - [ ] STDLIB-TEXT-EDGE-006: `ByteArray.decodeToString(startIndex, endIndex, throwOnInvalidSequence)` overload を追加する
-- [x] STDLIB-TEXT-EDGE-007: `buildString(capacity, builderAction)` overload を追加する
-- [ ] STDLIB-TEXT-EDGE-008: `CharSequence` / `String`.`removeRange(startIndex, endIndex)` / `removeRange(range)` overload 群を追加する
+- [ ] STDLIB-TEXT-EDGE-007: `buildString(capacity, builderAction)` overload を追加する
+- [x] STDLIB-TEXT-EDGE-008: `CharSequence` / `String`.`removeRange(startIndex, endIndex)` / `removeRange(range)` overload 群を追加する
 - [x] STDLIB-TEXT-EDGE-009: `CharSequence?.contentEquals(other)` / `contentEquals(other, ignoreCase)` を追加する
 - [ ] STDLIB-TEXT-EDGE-010: `CharSequence.removePrefix` / `removeSuffix` / `removeSurrounding` overload 群を追加する
 - [ ] STDLIB-TEXT-EDGE-011: `CharSequence.zipWithNext()` / `zipWithNext(transform)` を追加する
-- [ ] STDLIB-TEXT-EDGE-012: `Appendable.append(vararg CharSequence?)` と `StringBuilder.append(vararg String? / Any?)` を追加する
+- [x] STDLIB-TEXT-EDGE-012: `Appendable.append(vararg CharSequence?)` と `StringBuilder.append(vararg String? / Any?)` を追加する
 
 ### Phase 2: コレクション・Sequence・Range
 - [ ] STDLIB-GAP-PH2: `kotlin.collections` / `kotlin.sequences` / `kotlin.ranges` の未対応を潰す

@@ -55,5 +55,31 @@ struct GoldenHarnessSemaComparisonNormalizationTests {
         #expect(normalized.contains("call=s1"))
         #expect(!normalized.contains("sample.unused"))
     }
+
+    @Test
+    func normalizesGeneratedOrdinalsAndNegativeLocalRefs() {
+        let expected = """
+        symbol s10 kind=function fq=sample.wrap vis=public flags=synthetic sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+        symbol s20 kind=valueParameter fq=sample.wrap.$300.value vis=private flags=synthetic
+        symbol s30 kind=local fq=__local_14.tmp vis=private flags=_ type=Int
+        expr e0 name(value) type=Int ref=s20
+        expr e1 name(it) type=Int ref=s-1008192
+        expr e2 name(tmp) type=Int ref=s30
+        """
+
+        let actual = """
+        symbol s11 kind=function fq=sample.wrap vis=public flags=synthetic sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+        symbol s21 kind=valueParameter fq=sample.wrap.$301.value vis=private flags=synthetic
+        symbol s31 kind=local fq=__local_27.tmp vis=private flags=_ type=Int
+        expr e0 name(value) type=Int ref=s21
+        expr e1 name(it) type=Int ref=s-1008960
+        expr e2 name(tmp) type=Int ref=s31
+        """
+
+        #expect(
+            GoldenHarness.normalizedForComparison(suiteName: "Sema", output: actual)
+                == GoldenHarness.normalizedForComparison(suiteName: "Sema", output: expected)
+        )
+    }
 }
 #endif

@@ -235,6 +235,30 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // STDLIB-TEXT-EDGE-012: append(vararg value: String?): StringBuilder
+        registerStringBuilderMemberFunction(
+            named: "append",
+            externalLinkName: "kk_string_builder_append_vararg_obj",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("value", types.makeNullable(stringType), false, true)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // STDLIB-TEXT-EDGE-012: append(vararg value: Any?): StringBuilder
+        registerStringBuilderMemberFunction(
+            named: "append",
+            externalLinkName: "kk_string_builder_append_vararg_obj",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("value", nullableAnyType, false, true)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Private Helpers
