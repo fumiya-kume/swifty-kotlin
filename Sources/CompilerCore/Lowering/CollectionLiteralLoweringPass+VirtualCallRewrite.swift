@@ -2640,8 +2640,6 @@ extension CollectionLiteralLoweringPass {
         let isCharRange = charRangeExprIDs.contains(receiver.rawValue)
         let isULongRange = ulongRangeExprIDs.contains(receiver.rawValue)
         let isUIntRange = sema.map { module.arena.exprType(receiver) == $0.types.uintType } ?? false
-        let isLongRange = sema.map { module.arena.exprType(receiver) == $0.types.longType } ?? false
-        let randomOrNullName = interner.intern("randomOrNull")
 
         // step — simple property access (STDLIB-RANGE-037)
         if callee == lookup.stepName, arguments.isEmpty {
@@ -3056,31 +3054,6 @@ extension CollectionLiteralLoweringPass {
             )
             return true
         }
-        if callee == randomOrNullName, arguments.isEmpty || arguments.count == 1 {
-            let randomOrNullCallee: InternedString
-            if isCharRange {
-                randomOrNullCallee = arguments.isEmpty ? interner.intern("kk_char_range_randomOrNull")
-                    : interner.intern("kk_char_range_randomOrNull_random")
-            } else if isULongRange {
-                randomOrNullCallee = arguments.isEmpty ? interner.intern("kk_ulong_range_randomOrNull")
-                    : interner.intern("kk_ulong_range_randomOrNull_random")
-            } else if isUIntRange {
-                randomOrNullCallee = arguments.isEmpty ? interner.intern("kk_uint_range_randomOrNull")
-                    : interner.intern("kk_uint_range_randomOrNull_random")
-            } else if isLongRange {
-                randomOrNullCallee = arguments.isEmpty ? interner.intern("kk_long_range_randomOrNull")
-                    : interner.intern("kk_long_range_randomOrNull_random")
-            } else {
-                randomOrNullCallee = arguments.isEmpty ? interner.intern("kk_range_randomOrNull")
-                    : interner.intern("kk_range_randomOrNull_random")
-            }
-            loweredBody.append(.call(
-                symbol: nil, callee: randomOrNullCallee,
-                arguments: [receiver] + arguments, result: result,
-                canThrow: false, thrownResult: nil
-            ))
-            return true
-        }
         if (callee == lookup.anyName || callee == lookup.allName || callee == lookup.noneName), arguments.count == 1 {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
@@ -3122,6 +3095,7 @@ extension CollectionLiteralLoweringPass {
         }
 
         // take/drop/average/sorted — dispatch by range type (STDLIB-RANGE-TDS)
+        let isLongRange = sema.map { module.arena.exprType(receiver) == $0.types.longType } ?? false
         if callee == lookup.takeName, arguments.count == 1 {
             let takeName: InternedString
             if isULongRange {

@@ -127,7 +127,7 @@ extension CallTypeChecker {
             "toList", "toIntArray", "toLongArray", "toUIntArray", "toULongArray", "forEach", "map", "mapIndexed", "mapNotNull",
             "filter", "filterIndexed", "filterNot",
             "reduce", "reduceIndexed", "fold", "foldIndexed",
-            "find", "findLast", "firstOrNull", "lastOrNull", "randomOrNull",
+            "find", "findLast", "firstOrNull", "lastOrNull",
             "any", "all", "none",
             "chunked", "windowed",
             "reversed", "step", "isEmpty", "sum", "iterator",
@@ -153,8 +153,6 @@ extension CallTypeChecker {
              "take", "drop":
             argCount == 1
         case "firstOrNull", "lastOrNull":
-            argCount == 0 || argCount == 1
-        case "randomOrNull":
             argCount == 0 || argCount == 1
         case "fold", "foldIndexed":
             argCount == 2
@@ -217,7 +215,7 @@ extension CallTypeChecker {
             return elementType
         case "random":
             return elementType
-        case "firstOrNull", "lastOrNull", "randomOrNull", "find", "findLast":
+        case "firstOrNull", "lastOrNull", "find", "findLast":
             return sema.types.makeNullable(elementType)
         case "count":
             return sema.types.intType
