@@ -15,6 +15,9 @@ public final class TypeSystem {
     /// The symbol ID of the synthetic `kotlin.io.Closeable` interface, set during registration.
     public internal(set) var closeableInterfaceSymbol: SymbolID?
 
+    /// The symbol ID of the synthetic `kotlin.CharSequence` interface, set during registration.
+    public internal(set) var charSequenceInterfaceSymbol: SymbolID?
+
     /// Cached TypeID for `kotlin.io.Closeable` (non-null), set alongside `closeableInterfaceSymbol`.
     /// Avoids repeated `make(...)` allocations on the hot path in `isCloseableReceiver`.
     public internal(set) var closeableTypeID: TypeID?
