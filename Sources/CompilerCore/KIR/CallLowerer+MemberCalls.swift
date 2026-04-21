@@ -3444,6 +3444,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_chunked"
                 } else if calleeName == interner.intern("onEach") {
                     runtimeCallee = "kk_sequence_onEach"
+                } else if calleeName == interner.intern("onEachIndexed") {
+                    runtimeCallee = "kk_sequence_onEachIndexed"
                 } else if calleeName == interner.intern("ifEmpty") {
                     runtimeCallee = "kk_sequence_ifEmpty"
                 } else if calleeName == interner.intern("forEachIndexed") {
@@ -3474,6 +3476,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_mapNotNull"
                         || runtimeCallee == "kk_sequence_mapIndexed"
                         || runtimeCallee == "kk_sequence_onEach"
+                        || runtimeCallee == "kk_sequence_onEachIndexed"
                         || runtimeCallee == "kk_sequence_ifEmpty"
                         || runtimeCallee == "kk_sequence_zipWithNextTransform"
                     instructions.append(.call(
@@ -6892,6 +6895,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_windowed")
             case interner.intern("onEach"):
                 return interner.intern("kk_sequence_onEach")
+            case interner.intern("onEachIndexed"):
+                return interner.intern("kk_sequence_onEachIndexed")
             case interner.intern("ifEmpty"):
                 return interner.intern("kk_sequence_ifEmpty")
             case firstName:
