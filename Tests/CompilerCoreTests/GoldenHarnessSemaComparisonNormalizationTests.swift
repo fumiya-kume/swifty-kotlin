@@ -55,5 +55,53 @@ struct GoldenHarnessSemaComparisonNormalizationTests {
         #expect(normalized.contains("call=s1"))
         #expect(!normalized.contains("sample.unused"))
     }
+
+    @Test
+    func normalizesGeneratedLocalScopeIDsEmbeddedInSymbolFQNs() {
+        let expected = """
+        symbol s40 kind=function fq=sample.wrap vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+        symbol s41 kind=valueParameter fq=sample.wrap.$17.value vis=private flags=_
+        symbol s42 kind=function fq=sample.echo vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+        symbol s43 kind=valueParameter fq=sample.echo.$22.value vis=private flags=_
+        expr e0 name(value) type=Int ref=s41
+        expr e1 name(value) type=Int ref=s43
+        """
+
+        let actual = """
+        symbol s140 kind=function fq=sample.wrap vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+        symbol s141 kind=valueParameter fq=sample.wrap.$3706.value vis=private flags=_
+        symbol s142 kind=function fq=sample.echo vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+        symbol s143 kind=valueParameter fq=sample.echo.$3711.value vis=private flags=_
+        expr e0 name(value) type=Int ref=s141
+        expr e1 name(value) type=Int ref=s143
+        """
+
+        #expect(
+            GoldenHarness.normalizedForComparison(suiteName: "Sema", output: actual)
+                == GoldenHarness.normalizedForComparison(suiteName: "Sema", output: expected)
+        )
+    }
+
+    @Test
+    func normalizesGeneratedNegativeSymbolReferences() {
+        let expected = """
+        symbol s0 kind=class fq=sample.Widget vis=public flags=_
+        expr e0 name(value) type=Int ref=s-3
+        expr e1 name(other) type=Int ref=s-9
+        expr e2 binary(add) lhs=e0 rhs=e1 type=Int
+        """
+
+        let actual = """
+        symbol s40 kind=class fq=sample.Widget vis=public flags=_
+        expr e0 name(value) type=Int ref=s-43707
+        expr e1 name(other) type=Int ref=s-43713
+        expr e2 binary(add) lhs=e0 rhs=e1 type=Int
+        """
+
+        #expect(
+            GoldenHarness.normalizedForComparison(suiteName: "Sema", output: actual)
+                == GoldenHarness.normalizedForComparison(suiteName: "Sema", output: expected)
+        )
+    }
 }
 #endif
