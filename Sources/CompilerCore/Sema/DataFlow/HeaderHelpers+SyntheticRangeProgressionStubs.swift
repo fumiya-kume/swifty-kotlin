@@ -125,6 +125,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticClosedRangeStub(
+            rangesPackageSymbol: rangesPackageSymbol,
+            rangesFQName: rangesFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
     }
 
     private func registerSyntheticOpenEndRangeStub(
@@ -990,6 +997,7 @@ extension DataFlowSemaPhase {
         returnType: TypeID,
         externalLinkName: String? = nil,
         flags: SymbolFlags = [.synthetic],
+        typeParameterSymbols: [SymbolID] = [],
         classTypeParameterCount: Int = 0,
         symbols: SymbolTable,
         interner: StringInterner
@@ -1008,6 +1016,8 @@ extension DataFlowSemaPhase {
             }
             return signature.receiverType == receiverType
                 && signature.parameterTypes == parameterTypes
+                && signature.typeParameterSymbols == typeParameterSymbols
+                && signature.classTypeParameterCount == classTypeParameterCount
         }) {
             return
         }
@@ -1047,6 +1057,7 @@ extension DataFlowSemaPhase {
                 valueParameterSymbols: parameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
                 valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count),
+                typeParameterSymbols: typeParameterSymbols,
                 classTypeParameterCount: classTypeParameterCount
             ),
             for: functionSymbol
@@ -2050,6 +2061,150 @@ extension DataFlowSemaPhase {
         )
     }
 
+    // MARK: - ClosedRange stub (STDLIB-RANGE-IFACE-001)
+
+    private func registerSyntheticClosedRangeStub(
+        rangesPackageSymbol: SymbolID,
+        rangesFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let className = interner.intern("ClosedRange")
+        let classFQName = rangesFQName + [className]
+        let classSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: classFQName) {
+            classSymbol = existing
+        } else {
+            let created = symbols.define(
+                kind: .interface,
+                name: className,
+                fqName: classFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(rangesPackageSymbol, for: created)
+            classSymbol = created
+        }
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = classFQName + [typeParamName]
+        let typeParamSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: typeParamFQName) {
+            typeParamSymbol = existing
+        } else {
+            typeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: classSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: classSymbol)
+
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let rangeType = types.make(.classType(ClassType(
+            classSymbol: classSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        registerProgressionProperty(
+            named: "start",
+            ownerSymbol: classSymbol,
+            propertyType: typeParamType,
+            externalLinkName: "kk_range_start",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionProperty(
+            named: "endInclusive",
+            ownerSymbol: classSymbol,
+            propertyType: typeParamType,
+            externalLinkName: "kk_range_end",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "contains",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [typeParamType],
+            returnType: types.booleanType,
+            externalLinkName: "kk_op_contains",
+            flags: [.synthetic, .operatorFunction],
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "isEmpty",
+            ownerSymbol: classSymbol,
+            receiverType: rangeType,
+            parameterTypes: [],
+            returnType: types.booleanType,
+            externalLinkName: "kk_range_isEmpty",
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerClosedRangeImplementation(
+            named: "IntRange",
+            elementType: types.intType,
+            closedRangeSymbol: classSymbol,
+            rangesFQName: rangesFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerClosedRangeImplementation(
+            named: "LongRange",
+            elementType: types.longType,
+            closedRangeSymbol: classSymbol,
+            rangesFQName: rangesFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerClosedRangeImplementation(
+            named: "UIntRange",
+            elementType: types.uintType,
+            closedRangeSymbol: classSymbol,
+            rangesFQName: rangesFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerClosedRangeImplementation(
+            named: "ULongRange",
+            elementType: types.ulongType,
+            closedRangeSymbol: classSymbol,
+            rangesFQName: rangesFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerClosedRangeImplementation(
+            named: "CharRange",
+            elementType: types.charType,
+            closedRangeSymbol: classSymbol,
+            rangesFQName: rangesFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
     private func registerIterableSupertype(
         classSymbol: SymbolID,
         elementType: TypeID,
@@ -2140,5 +2295,67 @@ extension DataFlowSemaPhase {
         )))
         symbols.setTypeParameterUpperBounds([comparableUpperBound], for: typeParamSymbol)
         types.setNominalTypeParameterSymbols([typeParamSymbol], for: openEndRangeSymbol)
+    }
+
+    private func registerClosedRangeImplementation(
+        named name: String,
+        elementType: TypeID,
+        closedRangeSymbol: SymbolID,
+        rangesFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let className = interner.intern(name)
+        let classFQName = rangesFQName + [className]
+        guard let classSymbol = symbols.lookup(fqName: classFQName) else {
+            return
+        }
+        let iterableFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Iterable"),
+        ]
+        guard let iterableInterfaceSymbol = symbols.lookup(fqName: iterableFQName) else {
+            return
+        }
+        symbols.setDirectSupertypes([iterableInterfaceSymbol, closedRangeSymbol], for: classSymbol)
+        types.setNominalDirectSupertypes([iterableInterfaceSymbol, closedRangeSymbol], for: classSymbol)
+        symbols.setSupertypeTypeArgs([.out(elementType)], for: classSymbol, supertype: iterableInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(elementType)], for: classSymbol, supertype: iterableInterfaceSymbol)
+        symbols.setSupertypeTypeArgs([.invariant(elementType)], for: classSymbol, supertype: closedRangeSymbol)
+        types.setNominalSupertypeTypeArgs([.invariant(elementType)], for: classSymbol, supertype: closedRangeSymbol)
+    }
+
+    func patchSyntheticClosedRangeTypeParameterUpperBound(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        guard let comparableSymbol = types.comparableInterfaceSymbol else {
+            return
+        }
+        let closedRangeFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("ranges"),
+            interner.intern("ClosedRange"),
+        ]
+        guard symbols.lookup(fqName: closedRangeFQName) != nil else {
+            return
+        }
+        let typeParamFQName = closedRangeFQName + [interner.intern("T")]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else {
+            return
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let comparableType = types.make(.classType(ClassType(
+            classSymbol: comparableSymbol,
+            args: [.in(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setTypeParameterUpperBounds([comparableType], for: typeParamSymbol)
     }
 }

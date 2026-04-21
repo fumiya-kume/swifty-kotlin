@@ -5896,6 +5896,14 @@ extension CallLowerer {
             if let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
                !externalLinkName.isEmpty
             {
+                if let closedRangeRuntimeName = closedRangeInterfaceRuntimeName(
+                    memberName: fallbackName,
+                    receiverType: receiverType,
+                    sema: sema,
+                    interner: interner
+                ) {
+                    return closedRangeRuntimeName
+                }
                 if argumentCount == 1,
                    (externalLinkName == "kk_op_step"
                     || externalLinkName == "kk_uint_step"
@@ -6015,6 +6023,63 @@ extension CallLowerer {
             return unresolvedSynthetic
         }
         return fallback
+    }
+
+    private func closedRangeInterfaceRuntimeName(
+        memberName: String,
+        receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> InternedString? {
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullReceiverType),
+              let closedRangeSymbol = sema.symbols.lookup(fqName: [
+                  interner.intern("kotlin"),
+                  interner.intern("ranges"),
+                  interner.intern("ClosedRange"),
+              ]),
+              let liftedArgs = sema.types.liftedNominalSupertypeArgs(
+                  from: classType.classSymbol,
+                  childArgs: classType.args,
+                  to: closedRangeSymbol
+              ),
+              let typeArg = liftedArgs.first
+        else {
+            return nil
+        }
+        let elementType: TypeID
+        switch typeArg {
+        case let .invariant(type), let .out(type), let .in(type):
+            elementType = type
+        case .star:
+            return nil
+        }
+        switch memberName {
+        case "contains":
+            if elementType == sema.types.longType {
+                return interner.intern("kk_long_range_contains")
+            }
+            if elementType == sema.types.uintType {
+                return interner.intern("kk_uint_range_contains")
+            }
+            if elementType == sema.types.ulongType {
+                return interner.intern("kk_ulong_range_contains")
+            }
+            return nil
+        case "isEmpty":
+            if elementType == sema.types.longType {
+                return interner.intern("kk_long_range_isEmpty")
+            }
+            if elementType == sema.types.uintType {
+                return interner.intern("kk_uint_range_isEmpty")
+            }
+            if elementType == sema.types.ulongType {
+                return interner.intern("kk_ulong_range_isEmpty")
+            }
+            return nil
+        default:
+            return nil
+        }
     }
 
     // swiftlint:disable cyclomatic_complexity
