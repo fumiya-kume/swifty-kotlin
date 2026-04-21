@@ -277,6 +277,7 @@ extension ABILoweringPass {
             // IllegalArgumentException for step<=0 (STDLIB-022).
             interner.intern("kk_range_first"),
             interner.intern("kk_range_last"),
+            interner.intern("kk_range_endExclusive"),
             interner.intern("kk_range_count"),
             interner.intern("kk_range_isEmpty"),
             interner.intern("kk_range_sum"),

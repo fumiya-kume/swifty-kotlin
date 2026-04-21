@@ -709,6 +709,28 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         }
     }
 
+    func testRangeEndExclusiveRewrittenToKkRangeEndExclusive() throws {
+        let source = """
+        fun main() {
+            val range = 1..10
+            val exclusive = range.endExclusive
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "RangeEndExclusiveRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertFalse(callees.contains("endExclusive"), "range.endExclusive should be rewritten")
+            XCTAssertTrue(callees.contains("kk_range_endExclusive"), "range.endExclusive should become kk_range_endExclusive")
+        }
+    }
+
     func testRangeAsReversedIsNotRewrittenToKkRangeReversed() throws {
         let interner = StringInterner()
         let arena = KIRArena()

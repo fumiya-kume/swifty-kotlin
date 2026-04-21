@@ -55,6 +55,42 @@ struct TypeCheckHelpers {
         }
     }
 
+    func isRangeLikeType(
+        _ type: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(type)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        switch interner.resolve(symbol.name) {
+        case "OpenEndRange",
+             "IntRange", "IntProgression",
+             "LongRange", "LongProgression",
+             "UIntRange", "UIntProgression",
+             "ULongRange", "ULongProgression",
+             "CharRange":
+            return true
+        default:
+            return false
+        }
+    }
+
+    func isOpenEndRangeType(
+        _ type: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(type)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return interner.resolve(symbol.name) == "OpenEndRange"
+    }
+
     /// Returns the element type for iterating over the given type in a for-loop.
     /// Handles both array types and range/progression types (Int representing IntRange,
     /// UInt representing UIntRange (STDLIB-523), etc.).

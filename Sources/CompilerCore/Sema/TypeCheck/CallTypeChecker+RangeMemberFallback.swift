@@ -52,7 +52,7 @@ extension CallTypeChecker {
         let isULongRange = sema.bindings.isULongRangeExpr(receiverID) || receiverType == sema.types.ulongType
 
         if args.isEmpty,
-           ["step", "start", "end"].contains(memberName),
+           ["step", "start", "end", "endExclusive"].contains(memberName),
            let propertyResult = driver.helpers.lookupMemberProperty(
                named: calleeName,
                receiverType: sema.types.makeNonNullable(receiverType ?? sema.types.anyType),
@@ -122,7 +122,7 @@ extension CallTypeChecker {
 
     private func isSupportedRangeMember(_ memberName: String) -> Bool {
         let rangeMembers: Set = [
-            "start", "end", "endInclusive", "first", "last", "count", "contains",
+            "start", "end", "endInclusive", "endExclusive", "first", "last", "count", "contains",
             "iterator",
             "toList", "toIntArray", "toLongArray", "toUIntArray", "toULongArray", "forEach", "map", "mapIndexed", "mapNotNull",
             "filter", "filterIndexed", "filterNot",
@@ -138,7 +138,7 @@ extension CallTypeChecker {
 
     private func isValidRangeMemberArity(_ memberName: String, argCount: Int) -> Bool {
         switch memberName {
-        case "count", "start", "end", "endInclusive", "iterator", "toList", "toIntArray", "toLongArray", "toUIntArray", "toULongArray", "reversed", "isEmpty", "sum", "average", "sorted":
+        case "count", "start", "end", "endInclusive", "endExclusive", "iterator", "toList", "toIntArray", "toLongArray", "toUIntArray", "toULongArray", "reversed", "isEmpty", "sum", "average", "sorted":
             argCount == 0
         case "step":
             argCount == 0 || argCount == 1
@@ -210,7 +210,7 @@ extension CallTypeChecker {
             isULongRange: isULongRange
         )
         switch memberName {
-        case "first", "last", "start", "end", "endInclusive":
+        case "first", "last", "start", "end", "endInclusive", "endExclusive":
             return elementType
         case "firstOrNull", "lastOrNull", "randomOrNull", "find", "findLast":
             return sema.types.makeNullable(elementType)

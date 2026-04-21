@@ -1405,10 +1405,14 @@ extension CollectionLiteralLoweringPass {
                                 continue
                             }
                             if rangeExprIDs.contains(receiverID.rawValue),
-                               callee == lookup.firstName || callee == lookup.lastName
+                               callee == lookup.firstName || callee == lookup.lastName || callee == lookup.endExclusiveName
                             {
-                                let kkName = callee == lookup.firstName
-                                    ? lookup.kkRangeFirstName : lookup.kkRangeLastName
+                                let kkName: InternedString = switch callee {
+                                case lookup.firstName: lookup.kkRangeFirstName
+                                case lookup.lastName: lookup.kkRangeLastName
+                                case lookup.endExclusiveName: lookup.kkRangeEndExclusiveName
+                                default: callee
+                                }
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: kkName,
