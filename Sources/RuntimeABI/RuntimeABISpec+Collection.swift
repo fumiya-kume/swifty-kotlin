@@ -2510,6 +2510,19 @@ public extension RuntimeABISpec {
                     section: "Collection"
                 ),
                 RuntimeABIFunctionSpec(
+                    name: "kk_grouping_fold_initialValueSelector",
+                    parameters: [
+                        RuntimeABIParameter(name: "groupingRaw", type: .intptr),
+                        RuntimeABIParameter(name: "initialValueSelectorFnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "initialValueSelectorClosureRaw", type: .intptr),
+                        RuntimeABIParameter(name: "operationFnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "operationClosureRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
                     name: "kk_grouping_reduce",
                     parameters: [
                         RuntimeABIParameter(name: "groupingRaw", type: .intptr),

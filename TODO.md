@@ -99,7 +99,6 @@
 - [ ] STDLIB-COL-U-007: `UByteArray` / `UShortArray` / `UIntArray` / `ULongArray` の `asList()` view surface を追加する
 - [ ] STDLIB-COL-GROUP-001: `Grouping.aggregate()` / `aggregateTo(destination)` を追加する
 - [ ] STDLIB-COL-GROUP-002: `Grouping.eachCountTo(destination)` を追加する
-- [ ] STDLIB-COL-GROUP-003: `Grouping.fold(initialValueSelector, operation)` overload を追加する
 - [ ] STDLIB-COL-GROUP-004: `Grouping.foldTo(destination, initialValue, operation)` / `foldTo(destination, initialValueSelector, operation)` を追加する
 - [x] STDLIB-COL-GROUP-005: `Grouping.reduceTo(destination, operation)` を追加する
 - [ ] STDLIB-COL-BSEARCH-001: `List.binarySearchBy(key, fromIndex, toIndex, selector)` を追加する
