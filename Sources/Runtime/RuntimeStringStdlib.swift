@@ -1660,6 +1660,35 @@ public func kk_string_zipWithNext(_ strRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: pairs))
 }
 
+@_cdecl("kk_string_zipWithNextTransform")
+public func kk_string_zipWithNextTransform(_ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let scalars = Array(source.unicodeScalars)
+    guard scalars.count >= 2 else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    var results: [Int] = []
+    results.reserveCapacity(scalars.count - 1)
+    for i in 0 ..< scalars.count - 1 {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda2(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            lhs: kk_box_char(Int(scalars[i].value)),
+            rhs: kk_box_char(Int(scalars[i + 1].value)),
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            if let outThrown = outThrown {
+                outThrown.pointee = thrown
+            }
+            return 0
+        }
+        results.append(maybeUnbox(result))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: results))
+}
+
 // MARK: - STDLIB-192: equals(other, ignoreCase)
 
 @_cdecl("kk_string_equalsIgnoreCase")
