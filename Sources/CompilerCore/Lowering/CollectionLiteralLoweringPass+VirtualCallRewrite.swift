@@ -832,6 +832,26 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // reduceIndexedOrNull on sequence → kk_sequence_reduceIndexedOrNull (STDLIB-SEQ-015)
+        // Args: lambda (1 from Kotlin: operation)
+        if callee == lookup.reduceIndexedOrNullName, arguments.count == 1,
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            emitHOFCall(
+                kkName: lookup.kkSequenceReduceIndexedOrNullName,
+                receiver: receiver,
+                arguments: arguments + [zeroExpr],
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            return true
+        }
+
         // plus(other) on sequence → kk_sequence_plus (STDLIB-561)
         // Wrap single-element arguments in a one-element sequence so the
         // runtime ABI always receives a collection handle.

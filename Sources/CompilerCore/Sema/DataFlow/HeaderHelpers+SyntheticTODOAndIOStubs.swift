@@ -2833,6 +2833,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // reduceIndexedOrNull(operation): T?
+        registerSequenceMemberStub(
+            named: "reduceIndexedOrNull",
+            externalLinkName: "kk_sequence_reduceIndexedOrNull",
+            receiverType: receiverType,
+            parameters: [("operation", reduceIndexedOperationType)],
+            returnType: types.makeNullable(typeParamType),
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // partition(predicate): Pair<List<T>, List<T>>
         if let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")]) {
             let partitionReturnType = types.make(.classType(ClassType(

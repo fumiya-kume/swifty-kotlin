@@ -69,8 +69,17 @@ private let accumulatingSum: @convention(c) (Int, Int, Int, UnsafeMutablePointer
     acc + value
 }
 
+private let indexedAccumulatingSum: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, acc, value, _ in
+    acc + index * value
+}
+
 private let throwingAccumulator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _, outThrown in
     outThrown?.pointee = runtimeAllocateThrowable(message: "sequence accumulator failed")
+    return 0
+}
+
+private let throwingIndexedAccumulator: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _, _, outThrown in
+    outThrown?.pointee = runtimeAllocateThrowable(message: "sequence indexed accumulator failed")
     return 0
 }
 
@@ -441,6 +450,53 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
             seq,
             0,
             unsafeBitCast(accumulatingSum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
+    }
+
+    // MARK: - Sequence indexed reduction tests (STDLIB-556, STDLIB-SEQ-015)
+
+    func testReduceIndexedOrNullEmptySequenceReturnsNullSentinel() {
+        let seq = makeSequence([])
+        var thrown = 0
+
+        let result = kk_sequence_reduceIndexedOrNull(
+            seq,
+            unsafeBitCast(indexedAccumulatingSum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
+    func testReduceIndexedOrNullNonEmptySequenceAccumulatesWithIndex() {
+        let seq = makeSequence([1, 2, 3, 4])
+        var thrown = 0
+
+        let result = kk_sequence_reduceIndexedOrNull(
+            seq,
+            unsafeBitCast(indexedAccumulatingSum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 21)
+    }
+
+    func testReduceIndexedOrNullReturnsZeroWhenLambdaThrows() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_reduceIndexedOrNull(
+            seq,
+            unsafeBitCast(throwingIndexedAccumulator, to: Int.self),
             0,
             &thrown
         )

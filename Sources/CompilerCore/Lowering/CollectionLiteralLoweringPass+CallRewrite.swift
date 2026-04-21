@@ -4156,15 +4156,20 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
                     // reduceIndexedOrNull: args = [receiver, lambda, closureRaw?]
-                    if (callee == lookup.reduceIndexedOrNullName || callee == lookup.kkListReduceIndexedOrNullName),
+                    if (callee == lookup.reduceIndexedOrNullName
+                        || callee == lookup.kkListReduceIndexedOrNullName
+                        || callee == lookup.kkSequenceReduceIndexedOrNullName),
                        (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]; let lambdaID = arguments[1]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if listExprIDs.contains(receiverID.rawValue) || sequenceExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 3 { closureRawID = arguments[2] }
                             else { let z = module.arena.appendExpr(.intLiteral(0), type: nil); loweredBody.append(.constValue(result: z, value: .intLiteral(0))); closureRawID = z }
+                            let kkName = sequenceExprIDs.contains(receiverID.rawValue)
+                                ? lookup.kkSequenceReduceIndexedOrNullName
+                                : lookup.kkListReduceIndexedOrNullName
                             let callResult = result ?? module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)), type: nil)
-                            loweredBody.append(.call(symbol: nil, callee: lookup.kkListReduceIndexedOrNullName, arguments: [receiverID, lambdaID, closureRawID], result: callResult, canThrow: canThrow, thrownResult: thrownResult))
+                            loweredBody.append(.call(symbol: nil, callee: kkName, arguments: [receiverID, lambdaID, closureRawID], result: callResult, canThrow: canThrow, thrownResult: thrownResult))
                             continue
                         }
                     }

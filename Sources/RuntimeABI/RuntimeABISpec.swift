@@ -70,7 +70,7 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
 
 // swiftlint:disable:next type_body_length
 public enum RuntimeABISpec {
-    public static let specVersion = "J31"
+    public static let specVersion = "J32"
 
     private static func deduplicatedFunctions(
         _ functions: [RuntimeABIFunctionSpec]
