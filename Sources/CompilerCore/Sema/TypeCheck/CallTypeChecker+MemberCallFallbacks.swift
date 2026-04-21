@@ -462,6 +462,9 @@ extension CallTypeChecker {
         let interner = ctx.interner
 
         let memberName = interner.resolve(calleeName)
+        if sema.bindings.exprTypes[receiverID] == nil {
+            _ = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
+        }
         let isArrayReceiver = isArrayLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isIterableWindowedTransformCall: Bool = {
             guard memberName == "windowed",
@@ -485,11 +488,14 @@ extension CallTypeChecker {
             }
             return lastArgExprNode.isLambdaOrCallableRef
         }()
+        let isCollectionReceiver = isCollectionLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
+        let isSequenceReceiver = isSequenceLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         // Allow arrays to fall through to collection fallback only when
         // tryArrayMemberFallback does not handle the member (isSupportedArrayMember returns false).
         guard !isClassNameReceiver,
               !(isArrayReceiver && isSupportedArrayMember(memberName)),
-              isCollectionLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
+              isCollectionReceiver
+                || isSequenceReceiver
                 || isIterableWindowedTransformCall
                 || isIterableChunkedTransformCall
         else {
@@ -502,7 +508,6 @@ extension CallTypeChecker {
         let isMutableSetReceiver = isMutableSetCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMutableMapReceiver = isMutableMapCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isListReceiver = isConcreteListLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
-        let isSequenceReceiver = isSequenceLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         guard isSupportedCollectionFallbackMember(
             calleeName,
             isListReceiver: isListReceiver,
@@ -946,6 +951,7 @@ extension CallTypeChecker {
             interner.intern("filterNotNullTo"),
             interner.intern("forEach"),
             interner.intern("flatMap"),
+            interner.intern("flatMapIndexed"),
             interner.intern("any"),
             interner.intern("none"),
             interner.intern("all"),
@@ -1352,6 +1358,45 @@ extension CallTypeChecker {
                 args: [.invariant(receiverElementType)],
                 nullability: .nonNull
             )))
+        }
+
+        if memberName == interner.intern("flatMapIndexed") {
+            let lambdaReturnType: TypeID = if let firstArg = args.first,
+                                              case let .functionType(fnType) = sema.types.kind(
+                                                  of: sema.bindings.exprTypes[firstArg.expr] ?? sema.types.anyType
+                                              ) {
+                fnType.returnType
+            } else {
+                sema.types.anyType
+            }
+            let flattenedElementType: TypeID = if case let .classType(classType) = sema.types.kind(
+                of: sema.types.makeNonNullable(lambdaReturnType)
+            ), let firstArg = classType.args.first {
+                switch firstArg {
+                case let .invariant(type), let .out(type), let .in(type):
+                    type
+                case .star:
+                    sema.types.anyType
+                }
+            } else {
+                sema.types.anyType
+            }
+            if isSequenceReceiver {
+                return makeSyntheticSequenceType(
+                    symbols: sema.symbols,
+                    types: sema.types,
+                    interner: interner,
+                    elementType: flattenedElementType
+                )
+            }
+            if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                return sema.types.make(.classType(ClassType(
+                    classSymbol: listSymbol,
+                    args: [.invariant(flattenedElementType)],
+                    nullability: .nonNull
+                )))
+            }
+            return sema.types.anyType
         }
 
         if memberName == interner.intern("find") {
@@ -2079,6 +2124,16 @@ extension CallTypeChecker {
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [sema.types.intType, receiverElementType],
                 returnType: lambdaReturnType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 0, expectedType: expectedType)
+        }
+
+        if memberName == interner.intern("flatMapIndexed"), argCount == 1 {
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [sema.types.intType, receiverElementType],
+                returnType: sema.types.anyType,
                 isSuspend: false,
                 nullability: .nonNull
             )))

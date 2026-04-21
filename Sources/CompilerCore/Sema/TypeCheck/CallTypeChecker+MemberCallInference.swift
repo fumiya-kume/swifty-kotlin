@@ -514,6 +514,81 @@ extension CallTypeChecker {
             nil
         }
         let effectiveCallRecursiveReceiverType = recoveredReceiverType ?? receiverType
+        if interner.resolve(calleeName) == "flatMapIndexed",
+           args.count == 1,
+           isSequenceLikeType(receiverType, sema: sema, interner: interner)
+        {
+            let receiverElementType: TypeID = if case let .classType(classType) = sema.types.kind(
+                of: sema.types.makeNonNullable(receiverType)
+            ), let firstArg = classType.args.first {
+                switch firstArg {
+                case let .invariant(type), let .in(type), let .out(type):
+                    type
+                case .star:
+                    sema.types.anyType
+                }
+            } else {
+                sema.types.anyType
+            }
+            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [sema.types.intType, receiverElementType],
+                returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+            }
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+            let lambdaBodyType = inferredLambdaReturnType(
+                argExpr: args[0].expr,
+                ast: ast,
+                sema: sema
+            )
+            let flattenedElementType = getCollectionElementType(
+                lambdaBodyType,
+                sema: sema,
+                interner: interner
+            )
+            if let owner = driver.helpers.nominalSymbol(
+                of: sema.types.makeNonNullable(receiverType),
+                types: sema.types
+            ),
+               let ownerSymbol = sema.symbols.symbol(owner)
+            {
+                let memberFQName = ownerSymbol.fqName + [calleeName]
+                if let fallbackCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { candidate in
+                    guard let symbol = sema.symbols.symbol(candidate),
+                          symbol.kind == .function,
+                          sema.symbols.parentSymbol(for: candidate) == owner,
+                          let signature = sema.symbols.functionSignature(for: candidate)
+                    else {
+                        return false
+                    }
+                    return signature.parameterTypes.count == 1
+                }) {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: fallbackCallee,
+                        substitutedTypeArguments: [],
+                        parameterMapping: [0: 0]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(fallbackCallee))
+            }
+            }
+            sema.bindings.markCollectionExpr(id)
+            let resultType = makeSyntheticSequenceType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: flattenedElementType
+            )
+            let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
         if interner.resolve(calleeName) == "callRecursive",
            args.count == 1,
            case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(effectiveCallRecursiveReceiverType)),
@@ -1184,7 +1259,7 @@ extension CallTypeChecker {
             activeCollectionHOFNames.formUnion(mapOnlyCollectionHOFNames)
         }
         let isCollectionHOF = activeCollectionHOFNames.contains(interner.resolve(calleeName))
-            && isCollectionReceiver
+            && (isCollectionReceiver || isSequenceReceiver)
             && !(interner.resolve(calleeName) == "binarySearch"
                  && isArrayLikeReceiver(receiverID: receiverID, sema: sema, interner: interner))
 
@@ -1909,11 +1984,23 @@ extension CallTypeChecker {
                             resultType = sema.types.anyType
                         }
                     case "flatMapIndexed":
+                        let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                            params: [sema.types.intType, collectionElementType],
+                            returnType: sema.types.anyType,
+                            isSuspend: false,
+                            nullability: .nonNull
+                        )))
+                        if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                            sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                        }
+                        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                         let lambdaBodyType = inferredLambdaReturnType(
                             argExpr: args[0].expr, ast: ast, sema: sema
                         )
                         let innerElementType = extractIterableOrSequenceElementType(
-                            lambdaBodyType, sema: sema, interner: interner
+                            lambdaBodyType,
+                            sema: sema,
+                            interner: interner
                         )
                         if isSequenceReceiver {
                             resultType = makeSyntheticSequenceType(

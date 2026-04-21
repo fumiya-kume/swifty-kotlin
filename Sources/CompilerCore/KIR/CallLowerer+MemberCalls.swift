@@ -3641,6 +3641,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_requireNoNulls"
                 } else if calleeName == interner.intern("mapIndexed") {
                     runtimeCallee = "kk_sequence_mapIndexed"
+                } else if calleeName == interner.intern("flatMapIndexed") {
+                    runtimeCallee = "kk_sequence_flatMapIndexed"
                 } else if calleeName == interner.intern("windowed"), args.count == 4 {
                     runtimeCallee = "kk_sequence_windowed_transform"
                 } else if calleeName == interner.intern("chunked") {
@@ -7861,6 +7863,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_asIterable")
             case interner.intern("mapIndexed"):
                 return interner.intern("kk_sequence_mapIndexed")
+            case interner.intern("flatMapIndexed"):
+                return interner.intern("kk_sequence_flatMapIndexed")
             case interner.intern("withIndex"):
                 return interner.intern("kk_sequence_withIndex")
             case interner.intern("chunked"):

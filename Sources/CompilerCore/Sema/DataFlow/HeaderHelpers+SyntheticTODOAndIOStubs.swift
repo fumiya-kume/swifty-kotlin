@@ -2780,6 +2780,71 @@ extension DataFlowSemaPhase {
                 nullability: .nonNull
             )))
         }
+        func registerSequenceOverloadedMemberStub(
+            named name: String,
+            externalLinkName: String,
+            receiverType: TypeID,
+            parameters: [(name: String, type: TypeID)],
+            returnType: TypeID,
+            additionalTypeParameterSymbols: [SymbolID] = [],
+            additionalTypeParameterUpperBoundsList: [[TypeID]] = [],
+            canThrow: Bool = false
+        ) {
+            let memberName = interner.intern(name)
+            let memberFQName = sequenceFQName + [memberName]
+            let parameterTypes = parameters.map { $0.type }
+            let hasMatchingSignature = symbols.lookupAll(fqName: memberFQName).contains { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return sig.receiverType == receiverType
+                    && sig.parameterTypes == parameterTypes
+                    && sig.returnType == returnType
+            }
+            guard !hasMatchingSignature else { return }
+
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(sequenceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+
+            var parameterSymbols: [SymbolID] = []
+            for parameter in parameters {
+                let parameterName = interner.intern(parameter.name)
+                let parameterSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: parameterName,
+                    fqName: memberFQName + [parameterName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+                parameterSymbols.append(parameterSymbol)
+            }
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: parameterTypes,
+                    returnType: returnType,
+                    canThrow: canThrow,
+                    valueParameterSymbols: parameterSymbols,
+                    valueParameterHasDefaultValues: Array(repeating: false, count: parameters.count),
+                    valueParameterIsVararg: Array(repeating: false, count: parameters.count),
+                    typeParameterSymbols: [typeParamSymbol] + additionalTypeParameterSymbols,
+                    typeParameterUpperBoundsList: [[]] + additionalTypeParameterUpperBoundsList,
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
         let listReturnType = nominalCollectionType([
             interner.intern("kotlin"),
             interner.intern("collections"),
@@ -4057,6 +4122,69 @@ extension DataFlowSemaPhase {
             typeParamSymbol: typeParamSymbol,
             symbols: symbols,
             interner: interner
+        )
+
+        // flatMapIndexed(transform: (Int, T) -> Iterable<R>): Sequence<R>
+        // flatMapIndexed(transform: (Int, T) -> Sequence<R>): Sequence<R>
+        let flatMapIndexedName = interner.intern("flatMapIndexed")
+        let flatMapIndexedFQName = sequenceFQName + [flatMapIndexedName]
+        let flatMapIndexedTypeParamName = interner.intern("R")
+        let flatMapIndexedTypeParamSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: flatMapIndexedFQName + [flatMapIndexedTypeParamName]
+        ) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: flatMapIndexedTypeParamName,
+                fqName: flatMapIndexedFQName + [flatMapIndexedTypeParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let flatMapIndexedTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: flatMapIndexedTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let iterableFlatMapIndexedReturnType = makeSyntheticIterableType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: flatMapIndexedTypeParamType
+        )
+        let sequenceFlatMapIndexedReturnType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(flatMapIndexedTypeParamType)],
+            nullability: .nonNull
+        )))
+        let flatMapIndexedIterableTransformType = types.make(.functionType(FunctionType(
+            params: [types.intType, typeParamType],
+            returnType: iterableFlatMapIndexedReturnType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let flatMapIndexedSequenceTransformType = types.make(.functionType(FunctionType(
+            params: [types.intType, typeParamType],
+            returnType: sequenceFlatMapIndexedReturnType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerSequenceOverloadedMemberStub(
+            named: "flatMapIndexed",
+            externalLinkName: "kk_sequence_flatMapIndexed",
+            receiverType: receiverType,
+            parameters: [("transform", flatMapIndexedIterableTransformType)],
+            returnType: sequenceFlatMapIndexedReturnType,
+            additionalTypeParameterSymbols: [flatMapIndexedTypeParamSymbol]
+        )
+        registerSequenceOverloadedMemberStub(
+            named: "flatMapIndexed",
+            externalLinkName: "kk_sequence_flatMapIndexed",
+            receiverType: receiverType,
+            parameters: [("transform", flatMapIndexedSequenceTransformType)],
+            returnType: sequenceFlatMapIndexedReturnType,
+            additionalTypeParameterSymbols: [flatMapIndexedTypeParamSymbol]
         )
 
         // any(predicate: (T) -> Boolean): Boolean  (STDLIB-SEQ-007)

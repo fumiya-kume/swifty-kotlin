@@ -219,6 +219,45 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testSequenceFlatMapIndexedSupportsIterableAndSequenceTransforms() throws {
+        let source = """
+        fun main() {
+            val iterableResult = sequenceOf("a", "bc")
+                .flatMapIndexed { index, value -> listOf(index.toString() + ":" + value, value + value) }
+                .toList()
+
+            val sequenceResult = sequenceOf("x", "yz")
+                .flatMapIndexed { index, value -> sequenceOf(index.toString(), value) }
+                .toList()
+
+            println(iterableResult)
+            println(sequenceResult)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFlatMapIndexedEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [0:a, aa, 1:bc, bcbc]
+                [0, x, 1, yz]
+                """
+                + "\n"
+            )
+        }
+    }
+
     func testCodegenCompilesSequenceWindowedTransformOverload() throws {
         let source = """
         fun main() {
