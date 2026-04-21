@@ -3122,3 +3122,109 @@ public func kk_iterator_builder_next(_ iterRaw: Int) -> Int {
     }
     fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_iterator_builder_next received invalid iterator handle")
 }
+
+// MARK: - Sequence destination-collection filter operations (STDLIB-SEQ-021)
+
+/// `filterTo`: Evaluate the sequence and append elements matching the predicate to the destination.
+@_cdecl("kk_sequence_filterTo")
+public func kk_sequence_filterTo(
+    _ seqRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for elem in elements {
+        var thrown = 0
+        let predicate = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if runtimeCollectionBool(predicate) {
+            runtimeAppendToMutableCollection(destRaw, elem)
+        }
+    }
+    return destRaw
+}
+
+/// `filterNotTo`: Evaluate the sequence and append elements NOT matching the predicate to the destination.
+@_cdecl("kk_sequence_filterNotTo")
+public func kk_sequence_filterNotTo(
+    _ seqRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for elem in elements {
+        var thrown = 0
+        let predicate = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if !runtimeCollectionBool(predicate) {
+            runtimeAppendToMutableCollection(destRaw, elem)
+        }
+    }
+    return destRaw
+}
+
+/// `filterIndexedTo`: Evaluate the sequence and append elements matching the indexed predicate to the destination.
+@_cdecl("kk_sequence_filterIndexedTo")
+public func kk_sequence_filterIndexedTo(
+    _ seqRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for (idx, elem) in elements.enumerated() {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if maybeUnbox(result) != 0 {
+            runtimeAppendToMutableCollection(destRaw, elem)
+        }
+    }
+    return destRaw
+}
+
+/// `filterNotNullTo`: Evaluate the sequence and append non-null elements to the destination.
+@_cdecl("kk_sequence_filterNotNullTo")
+public func kk_sequence_filterNotNullTo(_ seqRaw: Int, _ destRaw: Int) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for elem in elements where runtimeNormalizeNullableCollectionValue(elem) != nil {
+        runtimeAppendToMutableCollection(destRaw, elem)
+    }
+    return destRaw
+}
+
+/// `filterIsInstanceTo`: Evaluate the sequence and append elements of the given runtime type to the destination.
+@_cdecl("kk_sequence_filterIsInstanceTo")
+public func kk_sequence_filterIsInstanceTo(_ seqRaw: Int, _ destRaw: Int, _ typeToken: Int) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for elem in elements where kk_op_is(elem, typeToken) != 0 {
+        runtimeAppendToMutableCollection(destRaw, elem)
+    }
+    return destRaw
+}
