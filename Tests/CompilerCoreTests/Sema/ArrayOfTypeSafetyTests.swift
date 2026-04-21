@@ -53,6 +53,37 @@ final class ArrayOfTypeSafetyTests: XCTestCase {
         }
     }
 
+    func testArrayBinarySearchWithComparatorResolvesWithoutError() throws {
+        let source = """
+        fun main() {
+            val arr = arrayOf(1, 2, 3, 4)
+            val idx = arr.binarySearch(3, compareBy<Int> { it })
+            println(idx)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+        }
+    }
+
+    func testProjectedArrayBinarySearchWithComparatorResolvesWithoutError() throws {
+        let source = """
+        fun main(values: Array<out Int>) {
+            val idx = values.binarySearch(3, compareBy<Int> { it })
+            println(idx)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+        }
+    }
+
     // MARK: - Negative: array members on Any should fail
 
     func testArrayGetOnAnyReceiverProducesError() throws {
@@ -83,6 +114,21 @@ final class ArrayOfTypeSafetyTests: XCTestCase {
                 $0.code == "KSWIFTK-SEMA-0024" || $0.code == "KSWIFTK-SEMA-FIELD"
             }
             XCTAssertTrue(hasDiag, "Expected unresolved member diagnostic for .size on Any, got: \(ctx.diagnostics.diagnostics.map(\.code))")
+        }
+    }
+
+    func testIntArrayBinarySearchProducesError() throws {
+        let source = """
+        fun main() {
+            val arr = intArrayOf(1, 2, 3)
+            val idx = arr.binarySearch(2, compareBy<Int> { it })
+            println(idx)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
         }
     }
 

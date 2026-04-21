@@ -2271,6 +2271,11 @@ extension CallTypeChecker {
         }
 
         let memberName = interner.resolve(calleeName)
+        if memberName == "binarySearch",
+           !isGenericArrayReceiver(receiverID: receiverID, sema: sema, interner: interner)
+        {
+            return nil
+        }
         guard isSupportedArrayMember(memberName),
               isValidArrayMemberArity(memberName, argCount: args.count)
         else {
@@ -2279,6 +2284,41 @@ extension CallTypeChecker {
 
         // Extract the actual element type from the Array<T> receiver (TYPE-103).
         let receiverElementType = arrayFallbackElementType(receiverID: receiverID, sema: sema, interner: interner)
+        if memberName == "binarySearch",
+           args.indices.contains(1)
+        {
+            let comparatorArgExpr = args[1].expr
+            let comparatorArg = ctx.ast.arena.expr(comparatorArgExpr)
+            let comparatorExpectedType: TypeID
+            if comparatorArg?.isLambdaOrCallableRef ?? false {
+                sema.bindings.markCollectionHOFLambdaExpr(comparatorArgExpr)
+                comparatorExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [receiverElementType, receiverElementType],
+                    returnType: sema.types.intType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            } else if let comparatorSymbol = sema.symbols.lookupByShortName(interner.intern("Comparator")).first {
+                comparatorExpectedType = sema.types.make(.classType(ClassType(
+                    classSymbol: comparatorSymbol,
+                    args: [.invariant(receiverElementType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                comparatorExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [receiverElementType, receiverElementType],
+                    returnType: sema.types.intType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            }
+            _ = driver.inferExpr(
+                comparatorArgExpr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: comparatorExpectedType
+            )
+        }
         if let expectation = arrayMemberLambdaExpectation(
             memberName: memberName,
             argCount: args.count,
@@ -2316,6 +2356,7 @@ extension CallTypeChecker {
             "map", "filter", "forEach", "any", "none",
             "copyOf", "copyOfRange", "fill",
             "size", "get", "contains", "isEmpty",
+            "binarySearch",
             "concatToString",
         ]
         return arrayMembers.contains(memberName)
@@ -2327,6 +2368,8 @@ extension CallTypeChecker {
             argCount == 0
         case "map", "filter", "forEach", "any", "none", "fill", "get", "contains":
             argCount == 1
+        case "binarySearch":
+            (2...4).contains(argCount)
         case "copyOfRange":
             argCount == 2
         default:
@@ -2350,6 +2393,8 @@ extension CallTypeChecker {
             return sema.types.stringType
         case "get":
             return elementType
+        case "binarySearch":
+            return sema.types.intType
         case "toList":
             if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
                 return sema.types.make(.classType(ClassType(
@@ -2371,6 +2416,21 @@ extension CallTypeChecker {
         default:
             return sema.types.anyType
         }
+    }
+
+    private func isGenericArrayReceiver(
+        receiverID: ExprID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        let knownNames = KnownCompilerNames(interner: interner)
+        return symbol.name == knownNames.array && classType.args.count == 1
     }
 
     private func arrayMemberLambdaExpectation(

@@ -8699,6 +8699,60 @@ extension DataFlowSemaPhase {
             symbols.setExternalLinkName("kk_array_contentHashCode", for: contentHashCodeSymbol)
         }
 
+        // Array.binarySearch(element, comparator, fromIndex, toIndex)
+        // The comparator overload is patched to kotlin.Comparator<T> after the
+        // Comparator synthetic stubs are registered.
+        let binarySearchName = interner.intern("binarySearch")
+        let binarySearchFQName = arrayFQName + [interner.intern(binarySearchCompareFQSuffix)]
+        if symbols.lookup(fqName: binarySearchFQName) == nil {
+            let arrayElementType = types.make(.typeParam(TypeParamType(
+                symbol: tParamSymbol,
+                nullability: .nonNull
+            )))
+            let arrayReceiverType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(arrayElementType)],
+                nullability: .nonNull
+            )))
+            let comparatorType = if let comparatorSymbol = symbols.lookupByShortName(interner.intern("Comparator")).first {
+                types.make(.classType(ClassType(
+                    classSymbol: comparatorSymbol,
+                    args: [.invariant(arrayElementType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                types.make(.functionType(FunctionType(
+                    params: [arrayElementType, arrayElementType],
+                    returnType: types.intType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: binarySearchName,
+                fqName: binarySearchFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(arraySymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_array_binarySearch_compare", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: arrayReceiverType,
+                    parameterTypes: [arrayElementType, comparatorType, types.intType, types.intType],
+                    returnType: types.intType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [false, false, true, true],
+                    valueParameterIsVararg: [false, false, false, false],
+                    typeParameterSymbols: [tParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
         // --- Primitive array types: IntArray, LongArray, etc. ---
         let primitiveArrayNames = [
             "IntArray",
@@ -8955,6 +9009,50 @@ extension DataFlowSemaPhase {
             )
         }
 
+    }
+
+    func patchArrayBinarySearchComparatorStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let arrayFQName = [interner.intern("kotlin"), interner.intern("Array")]
+        let binarySearchFQName = arrayFQName + [interner.intern(binarySearchCompareFQSuffix)]
+        let comparatorFQName = [interner.intern("kotlin"), interner.intern("Comparator")]
+        guard let binarySearchSymbol = symbols.lookup(fqName: binarySearchFQName),
+              let comparatorSymbol = symbols.lookup(fqName: comparatorFQName),
+              let signature = symbols.functionSignature(for: binarySearchSymbol)
+        else {
+            return
+        }
+
+        guard let elementType = signature.parameterTypes.first else {
+            return
+        }
+
+        let comparatorType = types.make(.classType(ClassType(
+            classSymbol: comparatorSymbol,
+            args: [.invariant(elementType)],
+            nullability: .nonNull
+        )))
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: signature.receiverType,
+                parameterTypes: [elementType, comparatorType, types.intType, types.intType],
+                returnType: signature.returnType,
+                isSuspend: signature.isSuspend,
+                canThrow: signature.canThrow,
+                valueParameterSymbols: signature.valueParameterSymbols,
+                valueParameterHasDefaultValues: signature.valueParameterHasDefaultValues,
+                valueParameterIsVararg: signature.valueParameterIsVararg,
+                typeParameterSymbols: signature.typeParameterSymbols,
+                reifiedTypeParameterIndices: signature.reifiedTypeParameterIndices,
+                typeParameterUpperBounds: signature.typeParameterUpperBounds,
+                typeParameterUpperBoundsList: signature.typeParameterUpperBoundsList,
+                classTypeParameterCount: signature.classTypeParameterCount
+            ),
+            for: binarySearchSymbol
+        )
     }
 
     private func registerSyntheticArrayFactoryFunction(

@@ -3028,6 +3028,43 @@ public func kk_array_none(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ ou
     return kk_box_bool(1)
 }
 
+@_cdecl("kk_array_binarySearch_compare")
+public func kk_array_binarySearch_compare(
+    _ arrayRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ element: Int,
+    _ fromIndex: Int,
+    _ toIndex: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        invalidContainerPanic(#function, "array")
+    }
+    let size = array.elements.count
+    let from = max(0, min(fromIndex, size))
+    let to = max(from, min(toIndex, size))
+    var low = from
+    var high = to - 1
+    let comparatorInvoke = runtimeSortedWithComparatorInvoke(fnPtr: fnPtr, closureRaw: closureRaw)
+    while low <= high {
+        let mid = low + (high - low) / 2
+        var thrown = 0
+        let cmp = comparatorInvoke(array.elements[mid], element, &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if cmp < 0 {
+            low = mid + 1
+        } else if cmp > 0 {
+            high = mid - 1
+        } else {
+            return mid
+        }
+    }
+    return -(low + 1)
+}
+
 @_cdecl("kk_array_mapIndexed")
 public func kk_array_mapIndexed(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else {
