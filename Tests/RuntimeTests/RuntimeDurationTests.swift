@@ -228,48 +228,6 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_duration_inWholeHours(handle), -5)
     }
 
-    // MARK: - Duration companion constants
-
-    func testDurationZeroAndInfiniteConstants() {
-        let zero = kk_duration_zero()
-        let infinite = kk_duration_infinite()
-
-        XCTAssertEqual(kk_duration_inWholeNanoseconds(zero), 0)
-        XCTAssertEqual(kk_duration_isFinite(zero), 1)
-        XCTAssertEqual(kk_duration_isInfinite(zero), 0)
-
-        XCTAssertEqual(kk_duration_isInfinite(infinite), 1)
-        XCTAssertEqual(kk_duration_isFinite(infinite), 0)
-    }
-
-    // MARK: - Double receiver factories
-
-    func testDoubleReceiverSecondsConvertsFractionalDuration() {
-        let handle = kk_duration_from_seconds_double(kk_double_to_bits(1.5))
-        XCTAssertEqual(kk_duration_inWholeMilliseconds(handle), 1_500)
-    }
-
-    func testDoubleReceiverDaysConvertsFractionalDuration() {
-        let handle = kk_duration_from_days_double(kk_double_to_bits(1.25))
-        XCTAssertEqual(kk_duration_inWholeHours(handle), 30)
-    }
-
-    // MARK: - Duration / Duration -> Double
-
-    func testDurationDivisionReturnsDoubleBits() {
-        let lhs = kk_duration_from_seconds(3)
-        let rhs = kk_duration_from_seconds(2)
-        let resultBits = kk_duration_div_duration(lhs, rhs)
-        XCTAssertEqual(kk_bits_to_double(resultBits), 1.5)
-    }
-
-    // MARK: - inWholeDays
-
-    func testInWholeDaysRoundTrip() {
-        let handle = kk_duration_from_days(2)
-        XCTAssertEqual(kk_duration_inWholeDays(handle), 2)
-    }
-
     // MARK: - Saturation on overflow
 
     func testFromSecondsLargeValueSaturates() {

@@ -54,18 +54,6 @@ extension ABIMismatchTests {
             "kk_instant_compare",
             "kk_instant_until",
             "kk_instant_elapsed",
-            // Duration
-            "kk_duration_zero",
-            "kk_duration_infinite",
-            "kk_duration_inWholeDays",
-            "kk_duration_from_seconds_double",
-            "kk_duration_from_milliseconds_double",
-            "kk_duration_from_microseconds_double",
-            "kk_duration_from_nanoseconds_double",
-            "kk_duration_from_minutes_double",
-            "kk_duration_from_hours_double",
-            "kk_duration_from_days_double",
-            "kk_duration_div_duration",
             "kk_synchronized",
             // Unsigned numeric coercion (STDLIB-500)
             "kk_ubyte_coerceIn",
