@@ -524,6 +524,30 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         kk_sequence_from_list(makeList(elements))
     }
 
+    // MARK: - Sequence mutable conversions (STDLIB-SEQ-025)
+
+    func testToMutableListReturnsIndependentCopy() {
+        let seq = makeSequence([3, 1, 2, 1, 3])
+        let copied = kk_sequence_toMutableList(seq)
+
+        XCTAssertEqual(listElements(copied), [3, 1, 2, 1, 3])
+        XCTAssertEqual(sequenceElements(seq), [3, 1, 2, 1, 3])
+    }
+
+    func testToMutableSetDeduplicatesPreservingOrder() {
+        let seq = makeSequence([3, 1, 2, 1, 3])
+        let copied = kk_sequence_toMutableSet(seq)
+
+        XCTAssertEqual(setElements(copied), [3, 1, 2])
+    }
+
+    func testToHashSetDeduplicatesPreservingOrder() {
+        let seq = makeSequence([3, 1, 2, 1, 3])
+        let copied = kk_sequence_toHashSet(seq)
+
+        XCTAssertEqual(setElements(copied), [3, 1, 2])
+    }
+
     // MARK: - Sequence.plus (STDLIB-561)
 
     func testPlusConcatenatesTwoSequences() {
@@ -1261,5 +1285,15 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         return (0 ..< size).map { index in
             kk_list_get(listRaw, index)
         }
+    }
+
+    private func setElements(_ setRaw: Int) -> [Int] {
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: setRaw) else {
+            return []
+        }
+        guard let box = try? XCTUnwrap(tryCast(ptr, to: RuntimeSetBox.self)) else {
+            return []
+        }
+        return box.elements
     }
 }

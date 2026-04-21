@@ -2808,6 +2808,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // toHashSet(): MutableSet<T>
+        registerSequenceMemberStub(
+            named: "toHashSet",
+            externalLinkName: "kk_sequence_toHashSet",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: mutableSetReturnType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // filterNot(predicate): Sequence<T>
         registerSequenceMemberStub(
             named: "filterNot",
