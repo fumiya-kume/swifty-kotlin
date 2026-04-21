@@ -584,6 +584,39 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testSequenceReduceIndexedOrNullUsesRuntimeExternalLink() throws {
+        let source = """
+        fun render(values: Sequence<Int>) {
+            println(values.reduceIndexedOrNull { index, acc, value -> acc + index * value })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let sequenceReduceIndexedOrNullSymbol = try XCTUnwrap(
+                sema.symbols.lookup(
+                    fqName: [
+                        ctx.interner.intern("kotlin"),
+                        ctx.interner.intern("sequences"),
+                        ctx.interner.intern("Sequence"),
+                        ctx.interner.intern("reduceIndexedOrNull"),
+                    ]
+                ),
+                "Expected synthetic Sequence.reduceIndexedOrNull member to be registered"
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: sequenceReduceIndexedOrNullSymbol),
+                "kk_sequence_reduceIndexedOrNull"
+            )
+        }
+    }
+
     func testMutableListMutationMembersUseRuntimeExternalLinks() throws {
         let source = """
         fun mutate(values: MutableList<Int>) {

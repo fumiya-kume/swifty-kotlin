@@ -5589,6 +5589,9 @@ extension CallLowerer {
             interner.intern("kk_long_progression_fromClosedRange"),
             interner.intern("kk_uint_progression_fromClosedRange"),
             interner.intern("kk_ulong_progression_fromClosedRange"),
+            interner.intern("kk_sequence_foldIndexed"),
+            interner.intern("kk_sequence_reduceIndexed"),
+            interner.intern("kk_sequence_reduceIndexedOrNull"),
             interner.intern("kk_sequence_sortedBy"),
             interner.intern("kk_sequence_sumOf"),
             interner.intern("kk_sequence_associate"),
@@ -6893,6 +6896,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_foldIndexed")
             case interner.intern("reduceIndexed"):
                 return interner.intern("kk_sequence_reduceIndexed")
+            case interner.intern("reduceIndexedOrNull"):
+                return interner.intern("kk_sequence_reduceIndexedOrNull")
             default:
                 break
             }

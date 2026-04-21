@@ -2021,7 +2021,7 @@ public func kk_sequence_runningReduce(
     return registerRuntimeObject(RuntimeListBox(elements: results))
 }
 
-// MARK: - Sequence foldIndexed / reduceIndexed (STDLIB-556, STDLIB-557)
+// MARK: - Sequence foldIndexed / reduceIndexed / reduceIndexedOrNull (STDLIB-556, STDLIB-557, STDLIB-SEQ-015)
 
 @_cdecl("kk_sequence_foldIndexed")
 public func kk_sequence_foldIndexed(
@@ -2121,6 +2121,63 @@ public func kk_sequence_reduceIndexed(
     if !hasAccumulator {
         outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceCannotReduce)
         return 0
+    }
+    return acc
+}
+
+@_cdecl("kk_sequence_reduceIndexedOrNull")
+public func kk_sequence_reduceIndexedOrNull(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    var hasAccumulator = false
+    var acc = 0
+    var index = 0
+    let visit: (Int) -> Bool = { elem in
+        if !hasAccumulator {
+            hasAccumulator = true
+            acc = maybeUnbox(elem)
+            index += 1
+            return true
+        }
+        var thrown = 0
+        let nextAcc = runtimeInvokeCollectionLambda3(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            arg1: index,
+            arg2: acc,
+            arg3: elem,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        acc = maybeUnbox(nextAcc)
+        index += 1
+        return true
+    }
+
+    var traversalState: SequenceTraversalState?
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let st = SequenceTraversalState()
+        traversalState = st
+        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown, yield: visit)
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            if !visit(elem) { break }
+        }
+    }
+
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return 0
+    }
+    if !hasAccumulator {
+        return runtimeNullSentinelInt
     }
     return acc
 }
