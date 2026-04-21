@@ -717,6 +717,23 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
+                    // --- STDLIB-SEQ-002: 1-arg form generateSequence(nextFunction) → kk_sequence_generate_noarg ---
+                    // arguments.count == 1: just the function value; the ABILoweringPass will expand to (fnPtr, closureRaw).
+                    if callee == lookup.generateSequenceName,
+                       arguments.count == 1
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkSequenceGenerateNoArgName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        if let result { sequenceExprIDs.insert(result.rawValue) }
+                        continue
+                    }
+
                     // --- Rewrite buildString/buildList/buildMap → kk_build_* (STDLIB-002) ---
                     if symbol == nil, lookup.builderDSLNames.contains(callee) {
                         let kkCallee: InternedString = switch callee {

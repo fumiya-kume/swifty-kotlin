@@ -216,6 +216,15 @@ extension ControlFlowTypeChecker {
         return symbol.flags.contains(.dataType)
     }
 
+    /// Resolve the effective upper bound for a type parameter, returning `Any?` when
+    /// no explicit bounds exist and an intersection type when multiple bounds exist.
+    private func effectiveUpperBound(for symbol: SymbolID, sema: SemaModule) -> TypeID {
+        let bounds = sema.symbols.typeParameterUpperBounds(for: symbol)
+        if bounds.isEmpty { return sema.types.nullableAnyType }
+        if bounds.count == 1 { return bounds[0] }
+        return sema.types.make(.intersection(bounds))
+    }
+
     /// Specialises the raw return type of a componentN() member by substituting
     /// the concrete class-level type arguments from the receiver.
     ///
@@ -263,8 +272,8 @@ extension ControlFlowTypeChecker {
             switch arg {
             case let .invariant(t): substitution[typeVar] = t
             case let .out(t):       substitution[typeVar] = t
-            case let .in(t):        substitution[typeVar] = t
-            case .star:             substitution[typeVar] = sema.types.nullableAnyType
+            case let .in(t):        substitution[typeVar] = effectiveUpperBound(for: tpSymbol, sema: sema)
+            case .star:             substitution[typeVar] = effectiveUpperBound(for: tpSymbol, sema: sema)
             }
         }
 

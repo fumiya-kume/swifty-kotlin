@@ -160,6 +160,17 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-SEQ-002: 1-arg form generateSequence(nextFunction: () -> T?)
+        registerSyntheticGenerateSequenceNoArgFunction(
+            named: "generateSequence",
+            packageFQName: kotlinSequencesPkg,
+            sequenceSymbol: sequenceSymbol,
+            externalLinkName: "kk_sequence_generate_noarg",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
         // STDLIB-331/564: iterator {} builder → Iterator<T>
         // Registered with SequenceScope<T> receiver so yield() resolves inside the lambda.
         registerSyntheticIteratorBuilderStub(
@@ -1575,6 +1586,98 @@ extension DataFlowSemaPhase {
         )
     }
 
+    /// STDLIB-SEQ-002: Register the 1-arg overload `generateSequence(nextFunction: () -> T?)`.
+    /// This overload takes a no-argument function that is called repeatedly until it returns null.
+    private func registerSyntheticGenerateSequenceNoArgFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        sequenceSymbol: SymbolID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+
+        // Skip if an overload with exactly 1 parameter already exists.
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.parameterTypes.count == 1
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        let typeParamName = interner.intern("T")
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: functionFQName + [typeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: typeParamSymbol)
+
+        let elementType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let nullableElementType = types.makeNullable(elementType)
+        // The no-arg nextFunction type: () -> T?
+        let nextFunctionType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: nullableElementType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+
+        let nextFunctionName = interner.intern("nextFunction")
+        let nextFunctionSymbol = symbols.define(
+            kind: .valueParameter,
+            name: nextFunctionName,
+            fqName: functionFQName + [nextFunctionName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: nextFunctionSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [nextFunctionType],
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: [nextFunctionSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [typeParamSymbol]
+            ),
+            for: functionSymbol
+        )
+    }
+
     private func registerSyntheticTopLevelFunction(
         named name: String,
         packageFQName: [InternedString],
@@ -2642,6 +2745,62 @@ extension DataFlowSemaPhase {
             receiverType: receiverType,
             parameters: [("action", forEachIndexedActionType)],
             returnType: types.unitType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // any(predicate: (T) -> Boolean): Boolean  (STDLIB-SEQ-007)
+        registerSequenceMemberStub(
+            named: "any",
+            externalLinkName: "kk_sequence_any",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: types.booleanType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // all(predicate: (T) -> Boolean): Boolean  (STDLIB-SEQ-007)
+        registerSequenceMemberStub(
+            named: "all",
+            externalLinkName: "kk_sequence_all",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: types.booleanType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // none(predicate: (T) -> Boolean): Boolean  (STDLIB-SEQ-007)
+        registerSequenceMemberStub(
+            named: "none",
+            externalLinkName: "kk_sequence_none",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: types.booleanType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // find(predicate: (T) -> Boolean): T?  (STDLIB-SEQ-007)
+        registerSequenceMemberStub(
+            named: "find",
+            externalLinkName: "kk_sequence_find",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: types.makeNullable(typeParamType),
             sequenceSymbol: sequenceSymbol,
             sequenceFQName: sequenceFQName,
             typeParamSymbol: typeParamSymbol,

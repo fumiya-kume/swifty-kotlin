@@ -459,6 +459,11 @@ extension CallTypeChecker {
                 receiverType: receiverType,
                 sema: sema
             )
+            if let externalLinkName = sema.symbols.externalLinkName(for: candidates[0]),
+               externalLinkName == "kk_string_zipWithNextTransform"
+            {
+                return (substituted, true, false)
+            }
             return (substituted, false, false)
         }
 

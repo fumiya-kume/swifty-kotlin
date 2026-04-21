@@ -13,6 +13,19 @@ extension DataFlowSemaPhase {
             classSymbol: sbSymbol, args: [], nullability: .nonNull
         )))
         let stringType = types.stringType
+        let kotlinPkg = ensurePackage(path: ["kotlin"], symbols: symbols, interner: interner)
+        let charSequenceSymbol = ensureInterfaceSymbol(
+            named: "CharSequence",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let charSequenceType = types.make(.classType(ClassType(
+            classSymbol: charSequenceSymbol, args: [], nullability: .nonNull
+        )))
+        if let kotlinPkgSymbol = symbols.lookup(fqName: kotlinPkg) {
+            symbols.setParentSymbol(kotlinPkgSymbol, for: charSequenceSymbol)
+        }
         let intType = types.intType
         let nullableAnyType = types.makeNullable(types.anyType)
         let charType = types.make(.primitive(.char, .nonNull))
@@ -148,17 +161,14 @@ extension DataFlowSemaPhase {
         )
 
         // appendRange(CharSequence, Int, Int): StringBuilder (STDLIB-580)
-        // Kotlin's signature uses CharSequence. This compiler does not model
-        // CharSequence as a separate type yet, so we use Any? to accept the
-        // widest range of inputs (matching Kotlin's flexibility).  The runtime
-        // converts the value to a String via runtimeElementToString.
-        // If/when CharSequence is added to the type system, update this type.
+        // The runtime still accepts raw string storage, but the surface type now
+        // matches Kotlin's CharSequence signature.
         registerStringBuilderMemberFunction(
             named: "appendRange",
             externalLinkName: "kk_string_builder_appendRange_obj",
             ownerSymbol: sbSymbol,
             ownerType: sbType,
-            parameters: [("value", nullableAnyType, false, false), ("startIndex", intType, false, false), ("endIndex", intType, false, false)],
+            parameters: [("value", charSequenceType, false, false), ("startIndex", intType, false, false), ("endIndex", intType, false, false)],
             returnType: sbType,
             symbols: symbols,
             interner: interner
@@ -222,6 +232,30 @@ extension DataFlowSemaPhase {
             ownerType: sbType,
             parameters: [],
             returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // STDLIB-TEXT-EDGE-012: append(vararg value: String?): StringBuilder
+        registerStringBuilderMemberFunction(
+            named: "append",
+            externalLinkName: "kk_string_builder_append_vararg_obj",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("value", types.makeNullable(stringType), false, true)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // STDLIB-TEXT-EDGE-012: append(vararg value: Any?): StringBuilder
+        registerStringBuilderMemberFunction(
+            named: "append",
+            externalLinkName: "kk_string_builder_append_vararg_obj",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("value", nullableAnyType, false, true)],
+            returnType: sbType,
             symbols: symbols,
             interner: interner
         )

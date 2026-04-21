@@ -7,7 +7,21 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) {
         let kotlinTextPkg = ensureKotlinTextPackage(symbols: symbols, interner: interner)
+        let kotlinRootPkg = ensurePackage(path: ["kotlin"], symbols: symbols, interner: interner)
         let stringType = types.stringType
+        let charSequenceSymbol = ensureInterfaceSymbol(
+            named: "CharSequence",
+            in: kotlinRootPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let charSequenceType = types.make(.classType(ClassType(
+            classSymbol: charSequenceSymbol, args: [], nullability: .nonNull
+        )))
+        types.charSequenceInterfaceSymbol = charSequenceSymbol
+        if let kotlinRootPkgSymbol = symbols.lookup(fqName: kotlinRootPkg) {
+            symbols.setParentSymbol(kotlinRootPkgSymbol, for: charSequenceSymbol)
+        }
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let nullableBoolType = types.make(.primitive(.boolean, .nullable))
         let intType = types.intType
@@ -714,6 +728,59 @@ extension DataFlowSemaPhase {
         registerSyntheticStringExtensionFunction(
             named: "removePrefix",
             externalLinkName: "kk_string_removePrefix",
+            receiverType: charSequenceType,
+            parameters: [
+                ("prefix", charSequenceType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "removeSuffix",
+            externalLinkName: "kk_string_removeSuffix",
+            receiverType: charSequenceType,
+            parameters: [
+                ("suffix", charSequenceType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "removeSurrounding",
+            externalLinkName: "kk_string_removeSurrounding",
+            receiverType: charSequenceType,
+            parameters: [
+                ("delimiter", charSequenceType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "removeSurrounding",
+            externalLinkName: "kk_string_removeSurrounding_pair",
+            receiverType: charSequenceType,
+            parameters: [
+                ("prefix", charSequenceType, false, false),
+                ("suffix", charSequenceType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "removePrefix",
+            externalLinkName: "kk_string_removePrefix",
             receiverType: stringType,
             parameters: [
                 ("prefix", stringType, false, false),
@@ -1170,6 +1237,35 @@ extension DataFlowSemaPhase {
             parameters: [
                 ("range", intType, false, false),
                 ("replacement", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-EDGE-008: removeRange ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "removeRange",
+            externalLinkName: "kk_string_removeRange",
+            receiverType: stringType,
+            parameters: [
+                ("startIndex", intType, false, false),
+                ("endIndex", intType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "removeRange",
+            externalLinkName: "kk_string_removeRange_range",
+            receiverType: stringType,
+            parameters: [
+                ("range", intType, false, false),
             ],
             returnType: stringType,
             packageFQName: kotlinTextPkg,
@@ -1791,6 +1887,11 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        if let kotlinPkgSymbol = symbols.lookup(fqName: kotlinPkg) {
+            symbols.setParentSymbol(kotlinPkgSymbol, for: stringClassSymbol)
+        }
+        symbols.setDirectSupertypes([charSequenceSymbol], for: stringClassSymbol)
+        types.setNominalDirectSupertypes([charSequenceSymbol], for: stringClassSymbol)
         for bytesType in [listIntType, byteArrayType] {
             registerStringConstructorFromBytes(
                 ownerSymbol: stringClassSymbol,
@@ -1981,6 +2082,76 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // String.zipWithNext(transform: (Char, Char) -> R)
+        let zipWithNextTransformFQName = kotlinTextPkg + [interner.intern("zipWithNext")]
+        let existingZipWithNextTransform = symbols.lookupAll(fqName: zipWithNextTransformFQName).first { symID in
+            guard let sig = symbols.functionSignature(for: symID) else {
+                return false
+            }
+            return sig.parameterTypes.count == 1
+        }
+        if let existingZipWithNextTransform {
+            symbols.setExternalLinkName("kk_string_zipWithNextTransform", for: existingZipWithNextTransform)
+        } else {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: zipWithNextTransformFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let transformFnType = types.make(.functionType(FunctionType(
+                params: [charType, charType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let transformResultType = makeListType(
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                elementType: rType
+            )
+            let transformMemberSymbol = symbols.define(
+                kind: .function,
+                name: interner.intern("zipWithNext"),
+                fqName: zipWithNextTransformFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+                symbols.setParentSymbol(packageSymbol, for: transformMemberSymbol)
+            }
+            symbols.setExternalLinkName("kk_string_zipWithNextTransform", for: transformMemberSymbol)
+            let transformParamName = interner.intern("transform")
+            let transformParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: transformParamName,
+                fqName: zipWithNextTransformFQName + [transformParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(transformMemberSymbol, for: transformParamSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: stringType,
+                    parameterTypes: [transformFnType],
+                    returnType: transformResultType,
+                    valueParameterSymbols: [transformParamSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [rSymbol],
+                    classTypeParameterCount: 0
+                ),
+                for: transformMemberSymbol
+            )
+        }
 
         // --- String.partition ---
         let pairStringStringType: TypeID
