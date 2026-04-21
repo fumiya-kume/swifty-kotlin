@@ -4687,26 +4687,6 @@ extension CallTypeChecker {
                         sema.bindings.bindExprType(id, type: finalType)
                         return finalType
                     }
-                    // STDLIB-TEXT-EDGE-008: removeRange(range: IntRange)
-                    if calleeStr == "removeRange", sema.bindings.isRangeExpr(args[0].expr) {
-                        if let boundType = tryBindSyntheticStringMemberFallback(
-                            id,
-                            calleeName: calleeName,
-                            receiverType: receiverTypeForCheck,
-                            args: args,
-                            argTypes: argTypes,
-                            range: range,
-                            ctx: ctx,
-                            expectedType: expectedType,
-                            explicitTypeArgs: explicitTypeArgs,
-                            safeCall: safeCall
-                        ) {
-                            return boundType
-                        }
-                        let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
-                        sema.bindings.bindExprType(id, type: finalType)
-                        return finalType
-                    }
                 }
             }
             // String stdlib: equals(other: String?) / equals(other, ignoreCase) (STDLIB-192)
@@ -4842,6 +4822,64 @@ extension CallTypeChecker {
                 if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
                    sema.types.isSubtype(rangeType, sema.types.intType),
                    sema.types.isSubtype(replacementType, sema.types.stringType)
+                {
+                    if let boundType = tryBindSyntheticStringMemberFallback(
+                        id,
+                        calleeName: calleeName,
+                        receiverType: receiverTypeForCheck,
+                        args: args,
+                        argTypes: argTypes,
+                        range: range,
+                        ctx: ctx,
+                        expectedType: expectedType,
+                        explicitTypeArgs: explicitTypeArgs,
+                        safeCall: safeCall
+                    ) {
+                        return boundType
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
+            // String stdlib: removeRange(startIndex, endIndex) (STDLIB-TEXT-EDGE-008)
+            if args.count == 2, interner.resolve(calleeName) == "removeRange" {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                let startType = sema.types.makeNonNullable(argTypes[0])
+                let endType = sema.types.makeNonNullable(argTypes[1])
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
+                   sema.types.isSubtype(startType, sema.types.intType),
+                   sema.types.isSubtype(endType, sema.types.intType)
+                {
+                    if let boundType = tryBindSyntheticStringMemberFallback(
+                        id,
+                        calleeName: calleeName,
+                        receiverType: receiverTypeForCheck,
+                        args: args,
+                        argTypes: argTypes,
+                        range: range,
+                        ctx: ctx,
+                        expectedType: expectedType,
+                        explicitTypeArgs: explicitTypeArgs,
+                        safeCall: safeCall
+                    ) {
+                        return boundType
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
+            // String stdlib: removeRange(range) (STDLIB-TEXT-EDGE-008)
+            if args.count == 1, interner.resolve(calleeName) == "removeRange" {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                let rangeType = sema.types.makeNonNullable(argTypes[0])
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
+                   sema.types.isSubtype(rangeType, sema.types.intType)
                 {
                     if let boundType = tryBindSyntheticStringMemberFallback(
                         id,
@@ -5109,8 +5147,6 @@ extension CallTypeChecker {
                     case "indexOf" where sema.types.isSubtype(arg1Type, sema.types.intType):
                         sema.types.intType
                     case "substring" where sema.types.isSubtype(arg1Type, sema.types.intType):
-                        sema.types.stringType
-                    case "removeRange" where sema.types.isSubtype(arg1Type, sema.types.intType):
                         sema.types.stringType
                     case "padStart" where arg1Type == sema.types.charType:
                         sema.types.stringType

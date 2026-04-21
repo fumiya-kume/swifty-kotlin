@@ -39,6 +39,48 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenCompilesStringBuilderAppendVarargInReceiverLambda() throws {
+        let source = """
+        fun buildGreeting(action: StringBuilder.() -> Unit): String {
+            val sb = StringBuilder()
+            sb.action()
+            return sb.toString()
+        }
+
+        fun main() {
+            val greeting = buildGreeting {
+                append("Hello")
+                append(", ")
+                append("World!")
+            }
+            println(greeting)
+
+            val result = with(StringBuilder()) {
+                append("Kotlin ")
+                append("is ")
+                append("fun")
+                toString()
+            }
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "StringBuilderAppendVarargReceiverLambda",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "Hello, World!\nKotlin is fun\n")
+        }
+    }
+
     func testCodegenCompilesUIntArrayConstructorIndexingAndFactory() throws {
         let source = """
         fun main() {

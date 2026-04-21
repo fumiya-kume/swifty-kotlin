@@ -1244,6 +1244,35 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-EDGE-008: removeRange ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "removeRange",
+            externalLinkName: "kk_string_removeRange",
+            receiverType: stringType,
+            parameters: [
+                ("startIndex", intType, false, false),
+                ("endIndex", intType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "removeRange",
+            externalLinkName: "kk_string_removeRange_range",
+            receiverType: stringType,
+            parameters: [
+                ("range", intType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-189: String HOF (filter, map, count, any, all, none) ---
         let charToBoolType = types.make(.functionType(FunctionType(
             params: [charType],
@@ -2114,36 +2143,6 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_string_orEmpty",
             receiverType: nullableStringType,
             parameters: [],
-            returnType: stringType,
-            packageFQName: kotlinTextPkg,
-            symbols: symbols,
-            interner: interner
-        )
-
-        // --- STDLIB-TEXT-EDGE-008: CharSequence/String removeRange ---
-
-        registerSyntheticStringExtensionFunction(
-            named: "removeRange",
-            externalLinkName: "kk_string_removeRange",
-            receiverType: stringType,
-            parameters: [
-                ("startIndex", intType, false, false),
-                ("endIndex", intType, false, false),
-            ],
-            returnType: stringType,
-            packageFQName: kotlinTextPkg,
-            symbols: symbols,
-            interner: interner
-        )
-
-        // IntRange overload: parameterType = intType (IntRange is modelled as Int at ABI level)
-        registerSyntheticStringExtensionFunction(
-            named: "removeRange",
-            externalLinkName: "kk_string_removeRange",
-            receiverType: stringType,
-            parameters: [
-                ("range", intType, false, false),
-            ],
             returnType: stringType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,

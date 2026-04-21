@@ -1149,34 +1149,6 @@ public func kk_string_contentEquals_ignoreCase(_ receiverRaw: Int, _ otherRaw: I
     return kk_box_bool(receiverStr.caseInsensitiveCompare(otherStr) == .orderedSame ? 1 : 0)
 }
 
-// MARK: - STDLIB-TEXT-EDGE-008: CharSequence/String removeRange
-
-@_cdecl("kk_string_removeRange")
-public func kk_string_removeRange(
-    _ strRaw: Int,
-    _ startRaw: Int,
-    _ endRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    outThrown?.pointee = 0
-    let scalars = runtimeStringScalars(strRaw)
-    let length = scalars.count
-    let start = startRaw
-    let end = endRaw
-
-    if start < 0 || start > length || end < 0 || end > length || start > end {
-        runtimeSetThrown(
-            outThrown,
-            message:
-            "StringIndexOutOfBoundsException: startIndex=\(start), endIndex=\(end), length=\(length)"
-        )
-        return 0
-    }
-
-    let result = runtimeStringFromScalars(Array(scalars[0 ..< start]) + Array(scalars[end ..< length]))
-    return runtimeMakeStringRaw(result)
-}
-
 @_cdecl("kk_string_toBoolean")
 public func kk_string_toBoolean(_ strRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
@@ -1742,6 +1714,46 @@ public func kk_string_replaceRange(
     let before = runtimeStringFromScalars(scalars[0 ..< first])
     let after = runtimeStringFromScalars(scalars[endIndex...])
     return runtimeMakeStringRaw(before + replacement + after)
+}
+
+// MARK: - STDLIB-TEXT-EDGE-008: removeRange
+
+@_cdecl("kk_string_removeRange")
+public func kk_string_removeRange(
+    _ strRaw: Int,
+    _ startRaw: Int,
+    _ endRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    let length = scalars.count
+    let start = startRaw
+    let end = endRaw
+    if start < 0 || start > length || end < 0 || end > length || start > end {
+        runtimeSetThrown(
+            outThrown,
+            message: "StringIndexOutOfBoundsException: start=\(start), end=\(end), length=\(length)"
+        )
+        return 0
+    }
+    let before = runtimeStringFromScalars(scalars[0 ..< start])
+    let after = runtimeStringFromScalars(scalars[end...])
+    return runtimeMakeStringRaw(before + after)
+}
+
+@_cdecl("kk_string_removeRange_range")
+public func kk_string_removeRange_range(
+    _ strRaw: Int,
+    _ rangeRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        runtimeSetThrown(outThrown, message: "Invalid range for removeRange")
+        return 0
+    }
+    return kk_string_removeRange(strRaw, range.first, range.last + 1, outThrown)
 }
 
 @_cdecl("kk_compare_any")

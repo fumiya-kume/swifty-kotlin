@@ -229,3 +229,23 @@ public func kk_string_builder_get(_ sbRaw: Int, _ index: Int) -> Int {
     let charValue = Int(sb.value[charIdx].unicodeScalars.first?.value ?? 0)
     return kk_box_char(charValue)
 }
+
+// MARK: - STDLIB-TEXT-EDGE-012: append(vararg) overloads
+
+/// Append each element in an array/list of values to the StringBuilder.
+/// Corresponds to StringBuilder.append(vararg value: String?) and
+/// StringBuilder.append(vararg value: Any?).
+///
+/// Some lowering paths still pass a single boxed/raw element instead of a packed
+/// list for singleton varargs, so we accept that form here as a one-element vararg.
+@_cdecl("kk_string_builder_append_vararg_obj")
+public func kk_string_builder_append_vararg_obj(_ sbRaw: Int, _ argsArrayRaw: Int) -> Int {
+    guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
+    let elements = runtimeArrayBox(from: argsArrayRaw)?.elements
+        ?? runtimeListBox(from: argsArrayRaw)?.elements
+        ?? [argsArrayRaw]
+    for element in elements {
+        sb.value.append(runtimeElementToString(element))
+    }
+    return sbRaw
+}
