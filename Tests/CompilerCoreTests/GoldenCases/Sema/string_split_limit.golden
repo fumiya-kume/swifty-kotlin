@@ -1,24 +1,49 @@
 symbol s0 kind=interface fq=kotlin.collections.List vis=public flags=synthetic
-symbol s1 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String,Boolean] ret=Class#0<out String> suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s2 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String,Boolean,Int] ret=Class#0<out String> suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s3 kind=function fq=golden.sema.useSplitIgnoreCase vis=public flags=_ sig=recv=_ params=[] ret=Class#0<String> suspend=0 defaults=[] vararg=[]
-symbol s4 kind=function fq=golden.sema.useSplitIgnoreCaseLimit vis=public flags=_ sig=recv=_ params=[] ret=Class#0<String> suspend=0 defaults=[] vararg=[]
-symbol s5 kind=function fq=golden.sema.useSplitLimit vis=public flags=_ sig=recv=_ params=[] ret=Class#0<String> suspend=0 defaults=[] vararg=[]
+symbol s1 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String] ret=Class#0<out String> suspend=0 defaults=[0] vararg=[0]
+symbol s2 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String,Int] ret=Class#0<out String> suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s3 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String,Boolean] ret=Class#0<out String> suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s4 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String,Boolean,Int] ret=Class#0<out String> suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s5 kind=function fq=golden.sema.useSplitLimitOnly vis=public flags=_ sig=recv=_ params=[] ret=Class#0<String> suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=golden.sema.useSplitLimitOnlyThree vis=public flags=_ sig=recv=_ params=[] ret=Class#0<String> suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=golden.sema.useSplitDefaultSplit vis=public flags=_ sig=recv=_ params=[] ret=Class#0<String> suspend=0 defaults=[] vararg=[]
+symbol s8 kind=function fq=golden.sema.useSplitMultiCharLimit vis=public flags=_ sig=recv=_ params=[] ret=Class#0<String> suspend=0 defaults=[] vararg=[]
+symbol s9 kind=function fq=golden.sema.useSplitIgnoreCase vis=public flags=_ sig=recv=_ params=[] ret=Class#0<String> suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=golden.sema.useSplitIgnoreCaseLimit vis=public flags=_ sig=recv=_ params=[] ret=Class#0<String> suspend=0 defaults=[] vararg=[]
+symbol s11 kind=function fq=golden.sema.useSplitLimit vis=public flags=_ sig=recv=_ params=[] ret=Class#0<String> suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 fun useSplitIgnoreCase suspend=0 inline=0 sym=s3
-  decl d1 fun useSplitIgnoreCaseLimit suspend=0 inline=0 sym=s4
-  decl d2 fun useSplitLimit suspend=0 inline=0 sym=s5
-expr e0 string(aXbXc) type=String
-expr e1 string(x) type=String
-expr e2 bool(true) type=Boolean
-expr e3 memberCall recv=e0 callee=split args=[_:e1,ignoreCase:e2] type=Class#0<out String> call=s1 map=[0->0,1->1] targs=[]
-expr e4 string(aXbXcXd) type=String
-expr e5 string(x) type=String
-expr e6 bool(true) type=Boolean
-expr e7 int(2) type=Int
-expr e8 memberCall recv=e4 callee=split args=[_:e5,ignoreCase:e6,limit:e7] type=Class#0<out String> call=s2 map=[0->0,1->1,2->2] targs=[]
-expr e9 string(a,b,c,d) type=String
-expr e10 string(,) type=String
-expr e11 bool(false) type=Boolean
-expr e12 int(3) type=Int
-expr e13 memberCall recv=e9 callee=split args=[_:e10,ignoreCase:e11,limit:e12] type=Class#0<out String> call=s2 map=[0->0,1->1,2->2] targs=[]
+  decl d0 fun useSplitLimitOnly suspend=0 inline=0 sym=s5
+  decl d1 fun useSplitLimitOnlyThree suspend=0 inline=0 sym=s6
+  decl d2 fun useSplitDefaultSplit suspend=0 inline=0 sym=s7
+  decl d3 fun useSplitMultiCharLimit suspend=0 inline=0 sym=s8
+  decl d4 fun useSplitIgnoreCase suspend=0 inline=0 sym=s9
+  decl d5 fun useSplitIgnoreCaseLimit suspend=0 inline=0 sym=s10
+  decl d6 fun useSplitLimit suspend=0 inline=0 sym=s11
+expr e0 string(a,b,c,d) type=String
+expr e1 string(,) type=String
+expr e2 int(2) type=Int
+expr e3 memberCall recv=e0 callee=split args=[_:e1,limit:e2] type=Class#0<out String> call=s2 map=[0->0,1->1] targs=[]
+expr e4 string(a,b,c,d) type=String
+expr e5 string(,) type=String
+expr e6 int(3) type=Int
+expr e7 memberCall recv=e4 callee=split args=[_:e5,limit:e6] type=Class#0<out String> call=s2 map=[0->0,1->1] targs=[]
+expr e8 string(a,b,c,d) type=String
+expr e9 string(,) type=String
+expr e10 memberCall recv=e8 callee=split args=[_:e9] type=Class#0<out String> call=s1 map=[0->0] targs=[]
+expr e11 string(one::two::three) type=String
+expr e12 string(::) type=String
+expr e13 int(2) type=Int
+expr e14 memberCall recv=e11 callee=split args=[_:e12,limit:e13] type=Class#0<out String> call=s2 map=[0->0,1->1] targs=[]
+expr e15 string(aXbXc) type=String
+expr e16 string(x) type=String
+expr e17 bool(true) type=Boolean
+expr e18 memberCall recv=e15 callee=split args=[_:e16,ignoreCase:e17] type=Class#0<out String> call=s3 map=[0->0,1->1] targs=[]
+expr e19 string(aXbXcXd) type=String
+expr e20 string(x) type=String
+expr e21 bool(true) type=Boolean
+expr e22 int(2) type=Int
+expr e23 memberCall recv=e19 callee=split args=[_:e20,ignoreCase:e21,limit:e22] type=Class#0<out String> call=s4 map=[0->0,1->1,2->2] targs=[]
+expr e24 string(a,b,c,d) type=String
+expr e25 string(,) type=String
+expr e26 bool(false) type=Boolean
+expr e27 int(3) type=Int
+expr e28 memberCall recv=e24 callee=split args=[_:e25,ignoreCase:e26,limit:e27] type=Class#0<out String> call=s4 map=[0->0,1->1,2->2] targs=[]
