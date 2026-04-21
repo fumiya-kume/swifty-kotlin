@@ -1108,7 +1108,7 @@ extension CollectionLiteralLoweringPass {
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, context: context,
-            listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
+            listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs, sequenceExprIDs: &sequenceExprIDs,
             loweredBody: &loweredBody
         ) { return true }
 
@@ -1803,6 +1803,7 @@ extension CollectionLiteralLoweringPass {
             closureRawExpr = zeroExpr
         }
 
+        let isSequenceReceiver = sequenceExprIDs.contains(receiver.rawValue)
         let kkName: InternedString = switch callee {
         case lookup.filterToName: lookup.kkListFilterToName
         case lookup.filterNotToName: lookup.kkListFilterNotToName
@@ -1811,7 +1812,8 @@ extension CollectionLiteralLoweringPass {
         case lookup.mapNotNullToName: lookup.kkListMapNotNullToName
         case lookup.mapIndexedToName: lookup.kkListMapIndexedToName
         case lookup.flatMapIndexedToName: lookup.kkListFlatMapIndexedToName
-        case lookup.associateToName: lookup.kkListAssociateToName
+        case lookup.associateToName:
+            isSequenceReceiver ? lookup.kkSequenceAssociateToName : lookup.kkListAssociateToName
         default: callee
         }
 
@@ -1837,7 +1839,7 @@ extension CollectionLiteralLoweringPass {
         return true
     }
 
-    // STDLIB-535/536/537: associateByTo / associateWithTo / groupByTo
+    // STDLIB-SEQ-023 / STDLIB-535/536/537: associateByTo / associateWithTo / groupByTo
     private func rewriteAssociateToHOF(
         callee: InternedString,
         receiver: KIRExprID,
@@ -1848,6 +1850,7 @@ extension CollectionLiteralLoweringPass {
         context: VirtualCallRewriteContext,
         listExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
+        sequenceExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         let module = context.module
@@ -1859,7 +1862,7 @@ extension CollectionLiteralLoweringPass {
         }
         // arguments: [destination, lambda] or [destination, lambda, closureRaw]
         guard (arguments.count == 2 || arguments.count == 3),
-              listExprIDs.contains(receiver.rawValue)
+              listExprIDs.contains(receiver.rawValue) || sequenceExprIDs.contains(receiver.rawValue)
         else { return false }
 
         let destID = arguments[0]
@@ -1874,10 +1877,14 @@ extension CollectionLiteralLoweringPass {
             closureRawExpr = zeroExpr
         }
 
+        let isSequenceReceiver = sequenceExprIDs.contains(receiver.rawValue)
         let kkName: InternedString = switch callee {
-        case lookup.associateByToName: lookup.kkListAssociateByToName
-        case lookup.associateWithToName: lookup.kkListAssociateWithToName
-        case lookup.groupByToName: lookup.kkListGroupByToName
+        case lookup.associateByToName:
+            isSequenceReceiver ? lookup.kkSequenceAssociateByToName : lookup.kkListAssociateByToName
+        case lookup.associateWithToName:
+            isSequenceReceiver ? lookup.kkSequenceAssociateWithToName : lookup.kkListAssociateWithToName
+        case lookup.groupByToName:
+            isSequenceReceiver ? lookup.kkSequenceGroupByToName : lookup.kkListGroupByToName
         default: callee
         }
 
