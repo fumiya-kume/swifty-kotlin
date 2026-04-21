@@ -193,6 +193,65 @@ extension CallTypeChecker {
             )
         case ("replaceFirstChar", 1):
             sema.types.stringType
+        case ("zipWithNext", 1): {
+            let charType = sema.types.make(.primitive(.char, .nonNull))
+            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [charType, charType],
+                returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            if let lambdaExpr = ctx.ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+            }
+            let lambdaType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+            let bodyType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
+                fnType.returnType
+            } else {
+                sema.bindings.exprTypes[args[0].expr].flatMap { typeID in
+                    if case let .functionType(fnType) = sema.types.kind(of: typeID) {
+                        return fnType.returnType
+                    }
+                    return nil
+                } ?? sema.types.anyType
+            }
+            let listType: TypeID = if let listSymbol = sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("List"),
+            ]) {
+                sema.types.make(.classType(ClassType(
+                    classSymbol: listSymbol,
+                    args: [.out(bodyType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                sema.types.anyType
+            }
+            let fqName = [
+                interner.intern("kotlin"),
+                interner.intern("text"),
+                calleeName,
+            ]
+            if let chosen = sema.symbols.lookupAll(fqName: fqName).first(where: { candidate in
+                guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                    return false
+                }
+                return signature.receiverType == sema.types.stringType
+                    && signature.parameterTypes.count == 1
+            }) {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: chosen,
+                        substitutedTypeArguments: [bodyType],
+                        parameterMapping: [0: 0]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+            }
+            return listType
+        }()
         case ("matches", 1), ("contains", 1):
             sema.types.booleanType
         case ("split", 1):
@@ -779,6 +838,8 @@ extension CallTypeChecker {
             interner.intern("mapIndexedTo"),
             interner.intern("flatMapIndexedTo"),
             interner.intern("filterIsInstanceTo"),
+            interner.intern("filterIndexedTo"),
+            interner.intern("filterNotNullTo"),
             interner.intern("forEach"),
             interner.intern("flatMap"),
             interner.intern("any"),
@@ -1012,10 +1073,10 @@ extension CallTypeChecker {
              interner.intern("minWith"), interner.intern("minWithOrNull"),
              interner.intern("elementAt"):
             return argCount == 1
-        case interner.intern("toCollection"), interner.intern("filterIsInstanceTo"):
+        case interner.intern("toCollection"), interner.intern("filterIsInstanceTo"), interner.intern("filterNotNullTo"):
             return argCount == 1
         case interner.intern("filterTo"), interner.intern("filterNotTo"), interner.intern("mapTo"), interner.intern("flatMapTo"), interner.intern("mapNotNullTo"), interner.intern("mapIndexedTo"), interner.intern("flatMapIndexedTo"), interner.intern("associateTo"),
-             interner.intern("associateByTo"), interner.intern("associateWithTo"), interner.intern("groupByTo"):
+             interner.intern("associateByTo"), interner.intern("associateWithTo"), interner.intern("groupByTo"), interner.intern("filterIndexedTo"):
             return argCount == 2
         case interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
             return isSetReceiver && argCount == 1
@@ -1122,6 +1183,8 @@ extension CallTypeChecker {
             interner.intern("mapIndexedTo"),
             interner.intern("flatMapIndexedTo"),
             interner.intern("filterIsInstanceTo"),
+            interner.intern("filterIndexedTo"),
+            interner.intern("filterNotNullTo"),
             interner.intern("associateTo"),
             interner.intern("toCollection"),
             interner.intern("associateByTo"),
@@ -1604,6 +1667,7 @@ extension CallTypeChecker {
             interner.intern("mapIndexedTo"),
             interner.intern("flatMapIndexedTo"),
             interner.intern("associateTo"),
+            interner.intern("filterIndexedTo"),
         ]
         if mapOnlyMembers.contains(memberName) {
             guard isMapReceiver else {
@@ -1658,7 +1722,7 @@ extension CallTypeChecker {
                 sema.types.anyType
             }
             let destinationLambdaReturnType: TypeID = switch memberName {
-            case interner.intern("filterTo"), interner.intern("filterNotTo"):
+            case interner.intern("filterTo"), interner.intern("filterNotTo"), interner.intern("filterIndexedTo"):
                 sema.types.booleanType
             case interner.intern("mapNotNullTo"):
                 sema.types.nullableAnyType
@@ -1688,6 +1752,7 @@ extension CallTypeChecker {
             let expectedType: TypeID
             if memberName == interner.intern("mapIndexedTo")
                 || memberName == interner.intern("flatMapIndexedTo")
+                || memberName == interner.intern("filterIndexedTo")
             {
                 expectedType = sema.types.make(.functionType(FunctionType(
                     params: [sema.types.intType, receiverElementType],

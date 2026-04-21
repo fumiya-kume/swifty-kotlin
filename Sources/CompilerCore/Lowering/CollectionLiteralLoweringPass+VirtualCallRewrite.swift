@@ -900,6 +900,121 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // STDLIB-SEQ-021: Sequence destination-collection filter operations
+        // filterTo / filterNotTo on sequence (2 args: destination, lambda)
+        if (callee == lookup.filterToName || callee == lookup.filterNotToName),
+           arguments.count == 2 || arguments.count == 3,
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let destID = arguments[0]
+            let lambdaID = arguments[1]
+            let closureRawExpr: KIRExprID
+            if arguments.count == 3 {
+                closureRawExpr = arguments[2]
+            } else {
+                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                closureRawExpr = zeroExpr
+            }
+            let kkName = callee == lookup.filterToName
+                ? lookup.kkSequenceFilterToName : lookup.kkSequenceFilterNotToName
+            let hofResult = emitHOFCall(
+                kkName: kkName,
+                receiver: receiver,
+                arguments: [destID, lambdaID, closureRawExpr],
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            if let result, listExprIDs.contains(destID.rawValue) {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+            }
+            return true
+        }
+
+        // filterIndexedTo on sequence (2 args: destination, indexed-lambda)
+        if callee == lookup.filterIndexedToName,
+           arguments.count == 2 || arguments.count == 3,
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let destID = arguments[0]
+            let lambdaID = arguments[1]
+            let closureRawExpr: KIRExprID
+            if arguments.count == 3 {
+                closureRawExpr = arguments[2]
+            } else {
+                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                closureRawExpr = zeroExpr
+            }
+            let hofResult = emitHOFCall(
+                kkName: lookup.kkSequenceFilterIndexedToName,
+                receiver: receiver,
+                arguments: [destID, lambdaID, closureRawExpr],
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            if let result, listExprIDs.contains(destID.rawValue) {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+            }
+            return true
+        }
+
+        // filterNotNullTo on sequence (1 arg: destination)
+        if callee == lookup.filterNotNullToName,
+           arguments.count == 1,
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let destID = arguments[0]
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkSequenceFilterNotNullToName,
+                arguments: [receiver, destID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result, listExprIDs.contains(destID.rawValue) {
+                listExprIDs.insert(result.rawValue)
+            }
+            return true
+        }
+
+        // filterIsInstanceTo on sequence (1 arg: destination, type token handled at call site)
+        if callee == lookup.filterIsInstanceToName,
+           arguments.count == 1 || arguments.count == 2,
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let destID = arguments[0]
+            let typeToken: KIRExprID
+            if arguments.count == 2 {
+                typeToken = arguments[1]
+            } else {
+                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                typeToken = zeroExpr
+            }
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkSequenceFilterIsInstanceToName,
+                arguments: [receiver, destID, typeToken],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result, listExprIDs.contains(destID.rawValue) {
+                listExprIDs.insert(result.rawValue)
+            }
+            return true
+        }
+
         return false
     }
 

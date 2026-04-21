@@ -384,7 +384,7 @@ private func runtimeSequenceTransformElement(
                 return !state.stop
             }
         }
-    case .source, .stringSource, .builder, .generator, .lazyBuilder:
+    case .source, .stringSource, .builder, .generator, .nullableGenerator, .lazyBuilder:
         runtimeSequenceTransformElement(
             element,
             steps: steps,
@@ -406,7 +406,7 @@ private func runtimeTraverseSequenceWithState(
 ) {
     let transformSteps = seq.steps.filter {
         switch $0 {
-        case .source, .stringSource, .builder, .generator, .lazyBuilder:
+        case .source, .stringSource, .builder, .generator, .nullableGenerator, .lazyBuilder:
             false
         default:
             true
@@ -478,6 +478,26 @@ private func runtimeTraverseSequenceWithState(
                 if unboxed == runtimeNullSentinelInt { return }
                 emit(unboxed)
                 current = unboxed
+                generatedCount += 1
+            }
+            if generatedCount >= kSequenceGeneratorHardLimit, !state.stop {
+                state.limitReached = true
+            }
+            return
+        case let .nullableGenerator(fnPtr, closureRaw):
+            // STDLIB-SEQ-002: 1-arg form — calls no-arg nextFunction repeatedly until null.
+            let noArgFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+            var generatedCount = 0
+            while generatedCount < kSequenceGeneratorHardLimit, !state.stop {
+                var thrown = 0
+                let next = noArgFn(closureRaw, &thrown)
+                if thrown != 0 {
+                    outThrown?.pointee = thrown
+                    return
+                }
+                let unboxed = maybeUnbox(next)
+                if unboxed == runtimeNullSentinelInt { return }
+                emit(unboxed)
                 generatedCount += 1
             }
             if generatedCount >= kSequenceGeneratorHardLimit, !state.stop {
@@ -711,13 +731,19 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
     }
     let hasTransformSteps = seq.steps.contains {
         switch $0 {
-        case .source, .stringSource, .builder, .generator, .lazyBuilder:
+        case .source, .stringSource, .builder, .generator, .nullableGenerator, .lazyBuilder:
             return false
         default:
             return true
         }
     }
-    if hasLazyBuilder, hasTransformSteps {
+    // STDLIB-SEQ-002: nullableGenerator also benefits from the traverse-based path so
+    // that take(N) short-circuits after N elements instead of materializing everything.
+    let hasNullableGenerator = seq.steps.contains {
+        if case .nullableGenerator = $0 { return true }
+        return false
+    }
+    if (hasLazyBuilder || hasNullableGenerator), hasTransformSteps {
         var result: [Int] = []
         runtimeTraverseSequence(seq, outThrown: nil) { elem in
             result.append(elem)
@@ -757,12 +783,27 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
             elements = generated
             break
         }
+        if case let .nullableGenerator(fnPtr, closureRaw) = step {
+            // STDLIB-SEQ-002: 1-arg form — no seed, call no-arg function until null.
+            let noArgFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+            var generated: [Int] = []
+            while generated.count < kSequenceGeneratorHardLimit {
+                var thrown = 0
+                let next = noArgFn(closureRaw, &thrown)
+                if thrown != 0 { break }
+                let unboxed = maybeUnbox(next)
+                if unboxed == runtimeNullSentinelInt { break }
+                generated.append(unboxed)
+            }
+            elements = generated
+            break
+        }
     }
 
     // Apply transformation steps in order
     for step in seq.steps {
         switch step {
-        case .source, .stringSource, .builder, .generator, .lazyBuilder:
+        case .source, .stringSource, .builder, .generator, .nullableGenerator, .lazyBuilder:
             break
         case let .mapStep(fnPtr, closureRaw):
             elements = applyMapStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: nil)
@@ -886,6 +927,14 @@ public func kk_sequence_of_single(_ element: Int) -> Int {
 @_cdecl("kk_sequence_generate")
 public func kk_sequence_generate(_ seed: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
     let seq = RuntimeSequenceBox(steps: [.generator(seed: seed, fnPtr: fnPtr, closureRaw: closureRaw)])
+    return registerRuntimeObject(seq)
+}
+
+/// STDLIB-SEQ-002: 1-arg form `generateSequence(nextFunction: () -> T?)`.
+/// Calls `nextFunction` (no-arg closure) repeatedly; stops when null is returned.
+@_cdecl("kk_sequence_generate_noarg")
+public func kk_sequence_generate_noarg(_ fnPtr: Int, _ closureRaw: Int) -> Int {
+    let seq = RuntimeSequenceBox(steps: [.nullableGenerator(fnPtr: fnPtr, closureRaw: closureRaw)])
     return registerRuntimeObject(seq)
 }
 
@@ -2623,4 +2672,110 @@ public func kk_iterator_builder_next(_ iterRaw: Int) -> Int {
         return value
     }
     fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_iterator_builder_next received invalid iterator handle")
+}
+
+// MARK: - Sequence destination-collection filter operations (STDLIB-SEQ-021)
+
+/// `filterTo`: Evaluate the sequence and append elements matching the predicate to the destination.
+@_cdecl("kk_sequence_filterTo")
+public func kk_sequence_filterTo(
+    _ seqRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for elem in elements {
+        var thrown = 0
+        let predicate = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if runtimeCollectionBool(predicate) {
+            runtimeAppendToMutableCollection(destRaw, elem)
+        }
+    }
+    return destRaw
+}
+
+/// `filterNotTo`: Evaluate the sequence and append elements NOT matching the predicate to the destination.
+@_cdecl("kk_sequence_filterNotTo")
+public func kk_sequence_filterNotTo(
+    _ seqRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for elem in elements {
+        var thrown = 0
+        let predicate = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if !runtimeCollectionBool(predicate) {
+            runtimeAppendToMutableCollection(destRaw, elem)
+        }
+    }
+    return destRaw
+}
+
+/// `filterIndexedTo`: Evaluate the sequence and append elements matching the indexed predicate to the destination.
+@_cdecl("kk_sequence_filterIndexedTo")
+public func kk_sequence_filterIndexedTo(
+    _ seqRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for (idx, elem) in elements.enumerated() {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if maybeUnbox(result) != 0 {
+            runtimeAppendToMutableCollection(destRaw, elem)
+        }
+    }
+    return destRaw
+}
+
+/// `filterNotNullTo`: Evaluate the sequence and append non-null elements to the destination.
+@_cdecl("kk_sequence_filterNotNullTo")
+public func kk_sequence_filterNotNullTo(_ seqRaw: Int, _ destRaw: Int) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for elem in elements where runtimeNormalizeNullableCollectionValue(elem) != nil {
+        runtimeAppendToMutableCollection(destRaw, elem)
+    }
+    return destRaw
+}
+
+/// `filterIsInstanceTo`: Evaluate the sequence and append elements of the given runtime type to the destination.
+@_cdecl("kk_sequence_filterIsInstanceTo")
+public func kk_sequence_filterIsInstanceTo(_ seqRaw: Int, _ destRaw: Int, _ typeToken: Int) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for elem in elements where kk_op_is(elem, typeToken) != 0 {
+        runtimeAppendToMutableCollection(destRaw, elem)
+    }
+    return destRaw
 }

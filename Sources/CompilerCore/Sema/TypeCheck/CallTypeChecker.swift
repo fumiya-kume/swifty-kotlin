@@ -109,14 +109,20 @@ final class CallTypeChecker {
                shouldUseBuilderDSLSpecialHandling(calleeName: calleeName, ctx: ctx, locals: locals)
             {
                 let lambdaArgumentIndex: Int? = switch builderKind {
-                case .buildString, .buildSet, .buildMap:
-                    args.count == 1 ? 0 : nil
+                case .buildString:
+                    switch args.count {
+                    case 1: 0
+                    case 2: 1
+                    default: nil
+                    }
                 case .buildList:
                     switch args.count {
                     case 1: 0
                     case 2: 1
                     default: nil
                     }
+                case .buildSet, .buildMap:
+                    args.count == 1 ? 0 : nil
                 }
                 guard let lambdaArgumentIndex else {
                     ctx.semaCtx.diagnostics.error(
@@ -127,7 +133,7 @@ final class CallTypeChecker {
                     sema.bindings.bindExprType(id, type: sema.types.errorType)
                     return sema.types.errorType
                 }
-                if builderKind == .buildList, args.count == 2 {
+                if builderKind == .buildList || builderKind == .buildString, args.count == 2 {
                     _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
                 }
                 let argumentExprID = args[lambdaArgumentIndex].expr
@@ -813,6 +819,30 @@ final class CallTypeChecker {
                 types: sema.types,
                 interner: interner,
                 elementType: seedType
+            )
+            sema.bindings.bindExprType(id, type: sequenceType)
+            return sequenceType
+        }
+
+        // STDLIB-SEQ-002: 1-arg form generateSequence(nextFunction: () -> T?)
+        if let calleeName,
+           interner.resolve(calleeName) == "generateSequence",
+           args.count == 1
+        {
+            // Infer the no-arg function type; deduce element type T from its return type.
+            let rawNextType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: nil)
+            let elementType: TypeID = if case let .functionType(functionType) = sema.types.kind(of: sema.types.makeNonNullable(rawNextType)) {
+                sema.types.makeNonNullable(functionType.returnType)
+            } else {
+                sema.types.anyType
+            }
+            sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+            sema.bindings.markCollectionExpr(id)
+            let sequenceType = makeSyntheticSequenceType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: elementType
             )
             sema.bindings.bindExprType(id, type: sequenceType)
             return sequenceType
@@ -2632,6 +2662,21 @@ final class CallTypeChecker {
                         interner: interner,
                         elementType: seedType
                     )
+                // STDLIB-SEQ-002: 1-arg form generateSequence(nextFunction: () -> T?)
+                } else if name == "generateSequence", args.count == 1 {
+                    let rawNextType = argTypes.first ?? sema.types.anyType
+                    let elementType: TypeID = if case let .functionType(functionType) = sema.types.kind(of: sema.types.makeNonNullable(rawNextType)) {
+                        sema.types.makeNonNullable(functionType.returnType)
+                    } else {
+                        sema.types.anyType
+                    }
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    collectionType = makeSyntheticSequenceType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: elementType
+                    )
                 // --- arrayOf / primitive array factories (TYPE-103) ---
                 } else if name == "arrayOf" {
                     if let explicitTypeArg = explicitTypeArgs.first {
@@ -2865,6 +2910,27 @@ final class CallTypeChecker {
                     interner: interner,
                     elementType: sema.types.make(.primitive(.char, .nonNull))
                 )
+                let pairCharCharType: TypeID = {
+                    let pairFQName: [InternedString] = [
+                        interner.intern("kotlin"),
+                        interner.intern("Pair"),
+                    ]
+                    guard let pairSymbol = sema.symbols.lookup(fqName: pairFQName) else {
+                        return sema.types.anyType
+                    }
+                    let charType = sema.types.make(.primitive(.char, .nonNull))
+                    return sema.types.make(.classType(ClassType(
+                        classSymbol: pairSymbol,
+                        args: [.out(charType), .out(charType)],
+                        nullability: .nonNull
+                    )))
+                }()
+                let listPairCharCharType = makeSyntheticListType(
+                    symbols: sema.symbols,
+                    types: sema.types,
+                    interner: interner,
+                    elementType: pairCharCharType
+                )
                 let iterableCharType = makeSyntheticIterableType(
                     symbols: sema.symbols,
                     types: sema.types,
@@ -2877,6 +2943,37 @@ final class CallTypeChecker {
                     interner: interner,
                     fqName: [interner.intern("kotlin"), interner.intern("CharArray")]
                 )
+                if name == "zipWithNext" {
+                    let charType = sema.types.make(.primitive(.char, .nonNull))
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [charType, charType],
+                        returnType: sema.types.anyType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                    if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    }
+                    let lambdaType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    let lambdaReturnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
+                        fnType.returnType
+                    } else {
+                        sema.bindings.exprTypes[args[0].expr].flatMap { typeID in
+                            if case let .functionType(fnType) = sema.types.kind(of: typeID) {
+                                return fnType.returnType
+                            }
+                            return nil
+                        } ?? sema.types.anyType
+                    }
+                    let resultType = makeSyntheticListType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: lambdaReturnType
+                    )
+                    sema.bindings.bindExprType(id, type: resultType)
+                    return resultType
+                }
                 var stringResultType: TypeID?
                 if args.isEmpty {
                     stringResultType = switch name {
@@ -2890,6 +2987,7 @@ final class CallTypeChecker {
                     case "indexOf", "lastIndexOf": sema.types.intType
                     case "reversed": sema.types.stringType
                     case "toList": listCharType
+                    case "zipWithNext": listPairCharCharType
                     case "toCharArray": charArrayType
                     case "asIterable": iterableCharType
                     default: nil

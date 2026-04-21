@@ -252,6 +252,7 @@ struct CollectionLiteralLookupTables {
     // Sequence ABI names (STDLIB-095/096/097)
     let kkSequenceOfName: InternedString
     let kkSequenceGenerateName: InternedString
+    let kkSequenceGenerateNoArgName: InternedString
     let kkSequenceForEachName: InternedString
     let kkSequenceFlatMapName: InternedString
     let kkSequenceDropName: InternedString
@@ -300,6 +301,13 @@ struct CollectionLiteralLookupTables {
     let kkSequencePlusName: InternedString
     let kkSequenceMinusName: InternedString
     let kkSequenceOfSingleName: InternedString
+
+    // STDLIB-SEQ-021: Sequence destination-collection filter operations
+    let kkSequenceFilterToName: InternedString
+    let kkSequenceFilterNotToName: InternedString
+    let kkSequenceFilterIndexedToName: InternedString
+    let kkSequenceFilterNotNullToName: InternedString
+    let kkSequenceFilterIsInstanceToName: InternedString
 
     let kkMapOfName: InternedString
     let kkMapSizeName: InternedString
@@ -463,6 +471,8 @@ struct CollectionLiteralLookupTables {
     let mapIndexedToName: InternedString
     let flatMapIndexedToName: InternedString
     let filterIsInstanceToName: InternedString
+    let filterIndexedToName: InternedString
+    let filterNotNullToName: InternedString
     let forEachName: InternedString
     let flatMapName: InternedString
     let anyName: InternedString
@@ -968,6 +978,7 @@ struct CollectionLiteralLookupTables {
 
         kkSequenceOfName = interner.intern("kk_sequence_of")
         kkSequenceGenerateName = interner.intern("kk_sequence_generate")
+        kkSequenceGenerateNoArgName = interner.intern("kk_sequence_generate_noarg")
         kkSequenceForEachName = interner.intern("kk_sequence_forEach")
         kkSequenceFlatMapName = interner.intern("kk_sequence_flatMap")
         kkSequenceDropName = interner.intern("kk_sequence_drop")
@@ -1014,6 +1025,13 @@ struct CollectionLiteralLookupTables {
         kkSequencePlusName = interner.intern("kk_sequence_plus")
         kkSequenceMinusName = interner.intern("kk_sequence_minus")
         kkSequenceOfSingleName = interner.intern("kk_sequence_of_single")
+
+        // STDLIB-SEQ-021: Sequence destination-collection filter operations
+        kkSequenceFilterToName = interner.intern("kk_sequence_filterTo")
+        kkSequenceFilterNotToName = interner.intern("kk_sequence_filterNotTo")
+        kkSequenceFilterIndexedToName = interner.intern("kk_sequence_filterIndexedTo")
+        kkSequenceFilterNotNullToName = interner.intern("kk_sequence_filterNotNullTo")
+        kkSequenceFilterIsInstanceToName = interner.intern("kk_sequence_filterIsInstanceTo")
 
         kkMapOfName = interner.intern("kk_map_of")
         kkMapSizeName = interner.intern("kk_map_size")
@@ -1172,6 +1190,8 @@ struct CollectionLiteralLookupTables {
         mapIndexedToName = interner.intern("mapIndexedTo")
         flatMapIndexedToName = interner.intern("flatMapIndexedTo")
         filterIsInstanceToName = interner.intern("filterIsInstanceTo")
+        filterIndexedToName = interner.intern("filterIndexedTo")
+        filterNotNullToName = interner.intern("filterNotNullTo")
         forEachName = interner.intern("forEach")
         flatMapName = interner.intern("flatMap")
         anyName = interner.intern("any")
@@ -1446,6 +1466,8 @@ struct CollectionLiteralLookupTables {
             interner.intern("kk_string_removePrefix"),
             interner.intern("kk_string_removeSuffix"),
             interner.intern("kk_string_removeSurrounding"),
+            interner.intern("kk_string_removeRange"),
+            interner.intern("kk_string_removeRange_range"),
             interner.intern("kk_string_substringBefore"),
             interner.intern("kk_string_substringAfter"),
             interner.intern("kk_string_substringBeforeLast"),
