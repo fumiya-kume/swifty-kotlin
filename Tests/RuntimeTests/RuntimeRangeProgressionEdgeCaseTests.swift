@@ -322,6 +322,18 @@ final class RuntimeRangeProgressionEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_long_range_last(rev), 1)
     }
 
+    func testLongProgressionFromClosedRange_negativeStep() {
+        // Exercise the signed descending helper path.
+        let progression = kk_long_progression_fromClosedRange(0, 10, 1, -3, nil)
+        XCTAssertEqual(kk_range_first(progression), 10)
+        XCTAssertEqual(kk_range_last(progression), 1)
+        XCTAssertEqual(kk_range_count(progression), 4)
+        let list = kk_long_range_toList(progression)
+        XCTAssertEqual(kk_list_size(list), 4)
+        XCTAssertEqual(kk_list_get(list, 0), 10)
+        XCTAssertEqual(kk_list_get(list, 3), 1)
+    }
+
     func testLongProgression_stepZeroThrows() {
         var thrown = 0
         _ = kk_long_progression_fromClosedRange(0, 1, 10, 0, &thrown)
@@ -416,6 +428,18 @@ final class RuntimeRangeProgressionEdgeCaseTests: IsolatedRuntimeXCTestCase {
         let list = kk_uint_range_toList(range)
         XCTAssertEqual(kk_list_get(list, 0), 5)
         XCTAssertEqual(kk_list_get(list, 4), 1)
+    }
+
+    func testUIntRange_downToStepAlignment() {
+        // (10u downTo 1u) step 3 -> 10,7,4,1
+        let range = kk_uint_step(kk_uint_downTo(10, 1), 3)
+        XCTAssertEqual(kk_range_first(range), 10)
+        XCTAssertEqual(kk_range_last(range), 1)
+        XCTAssertEqual(kk_range_count(range), 4)
+        let list = kk_uint_range_toList(range)
+        XCTAssertEqual(kk_list_size(list), 4)
+        XCTAssertEqual(kk_list_get(list, 0), 10)
+        XCTAssertEqual(kk_list_get(list, 3), 1)
     }
 
     func testUIntRange_downTo_isEmpty_whenFromLtTo() {
@@ -513,6 +537,18 @@ final class RuntimeRangeProgressionEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_list_size(list), 4)
         XCTAssertEqual(kk_list_get(list, 0), bigStart)
         XCTAssertEqual(kk_list_get(list, 3), bigEnd)
+    }
+
+    func testULongRange_untilHighValues() {
+        // Exercise the unsigned rangeUntil helper on values above Int.max.
+        let start = Int(bitPattern: UInt.max - 3)
+        let end = Int(bitPattern: UInt.max - 1)
+        let range = kk_op_ulong_rangeUntil(start, end)
+        XCTAssertEqual(kk_range_count(range), 2)
+        let list = kk_ulong_range_toList(range)
+        XCTAssertEqual(kk_list_size(list), 2)
+        XCTAssertEqual(kk_list_get(list, 0), start)
+        XCTAssertEqual(kk_list_get(list, 1), Int(bitPattern: UInt.max - 2))
     }
 
     // MARK: - ClosedRange contract (IntRange)

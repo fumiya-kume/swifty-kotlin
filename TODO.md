@@ -107,7 +107,6 @@
 - [ ] STDLIB-COL-BSEARCH-003: `Array` / primitive array / unsigned array の `binarySearch(element, fromIndex, toIndex)` overload 群を追加する
 - [ ] STDLIB-COL-BSEARCH-004: `Array.binarySearch(element, comparator, fromIndex, toIndex)` を追加する
 - [ ] STDLIB-COL-WIN-001: `Iterable.windowed(size, step, partialWindows, transform)` overload を追加する
-- [ ] STDLIB-022: range / progression / unsigned range の網羅性を上げる
 - [ ] STDLIB-RANGE-IFACE-001: `kotlin.ranges.ClosedRange<T>` interface surface を追加する
 - [ ] STDLIB-RANGE-IFACE-002: `kotlin.ranges.ClosedFloatingPointRange<T>` interface surface を追加する
 - [ ] STDLIB-RANGE-IFACE-003: `kotlin.ranges.OpenEndRange<T>` interface surface を追加する

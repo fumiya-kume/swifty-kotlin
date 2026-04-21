@@ -280,12 +280,30 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
+    func testCompile_uintRange_rangeUntil() throws {
+        try assertKotlinCompilesToKIR("""
+        fun main() {
+            val r = 1u..<10u
+            val contains = 5u in r
+        }
+        """)
+    }
+
     func testCompile_ulongRange_downTo_step() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
             for (i in 10UL downTo 1UL step 3) {
                 val x = i
             }
+        }
+        """)
+    }
+
+    func testCompile_ulongRange_rangeUntil() throws {
+        try assertKotlinCompilesToKIR("""
+        fun main() {
+            val r = 1UL..<10UL
+            val contains = 5UL in r
         }
         """)
     }
