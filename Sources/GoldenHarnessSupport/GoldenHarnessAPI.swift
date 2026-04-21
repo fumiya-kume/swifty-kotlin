@@ -147,8 +147,31 @@ public enum GoldenHarness {
     }
 
     @discardableResult
-    public static func persistIfUpdating(sourcePath: String, actual: String) throws -> Bool {
-        try GoldenHarnessGoldenFileIO.persistIfUpdating(caseFile: caseFile(sourcePath: sourcePath), actual: actual)
+    public static func persistIfUpdating(
+        suiteName: String,
+        sourcePath: String,
+        actual: String
+    ) throws -> Bool {
+        try persistIfUpdating(
+            suiteName: suiteName,
+            sourcePath: sourcePath,
+            actual: actual,
+            updateMode: GoldenHarnessGoldenFileIO.isUpdateMode
+        )
+    }
+
+    @discardableResult
+    static func persistIfUpdating(
+        suiteName: String,
+        sourcePath: String,
+        actual: String,
+        updateMode: Bool
+    ) throws -> Bool {
+        try GoldenHarnessGoldenFileIO.persistIfUpdating(
+            caseFile: caseFile(sourcePath: sourcePath),
+            actual: stableOutputForPersistence(suiteName: suiteName, output: actual),
+            updateMode: updateMode
+        )
     }
 
     public static func loadExpectedGolden(sourcePath: String) throws -> String {
@@ -164,6 +187,10 @@ public enum GoldenHarness {
         default:
             output
         }
+    }
+
+    static func stableOutputForPersistence(suiteName: String, output: String) -> String {
+        normalizedForComparison(suiteName: suiteName, output: output)
     }
 
     private static func suite(named suiteName: String) throws -> GoldenHarnessGoldenSuite {

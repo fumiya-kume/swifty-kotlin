@@ -15,7 +15,7 @@ struct GoldenLexerGoldenTests {
     @Test(arguments: GoldenHarnessStaticCases.lexer)
     func matchesGolden(caseFile: GoldenHarnessCase) throws {
         let renderedActual = try GoldenHarness.renderInSubprocess(suiteName: "Lexer", sourcePath: caseFile.sourcePath)
-        if try GoldenHarness.persistIfUpdating(sourcePath: caseFile.sourcePath, actual: renderedActual) {
+        if try GoldenHarness.persistIfUpdating(suiteName: "Lexer", sourcePath: caseFile.sourcePath, actual: renderedActual) {
             return
         }
         let actual = GoldenHarness.normalizedForComparison(
@@ -36,7 +36,7 @@ struct GoldenParserGoldenTests {
     @Test(arguments: GoldenHarnessStaticCases.parser)
     func matchesGolden(caseFile: GoldenHarnessCase) throws {
         let renderedActual = try GoldenHarness.renderInSubprocess(suiteName: "Parser", sourcePath: caseFile.sourcePath)
-        if try GoldenHarness.persistIfUpdating(sourcePath: caseFile.sourcePath, actual: renderedActual) {
+        if try GoldenHarness.persistIfUpdating(suiteName: "Parser", sourcePath: caseFile.sourcePath, actual: renderedActual) {
             return
         }
         let actual = GoldenHarness.normalizedForComparison(
@@ -57,7 +57,7 @@ struct GoldenSemaGoldenTests {
     @Test(arguments: GoldenHarnessStaticCases.sema)
     func matchesGolden(caseFile: GoldenHarnessCase) throws {
         let renderedActual = try GoldenHarness.renderInSubprocess(suiteName: "Sema", sourcePath: caseFile.sourcePath)
-        if try GoldenHarness.persistIfUpdating(sourcePath: caseFile.sourcePath, actual: renderedActual) {
+        if try GoldenHarness.persistIfUpdating(suiteName: "Sema", sourcePath: caseFile.sourcePath, actual: renderedActual) {
             return
         }
         let actual = GoldenHarness.normalizedForComparison(
@@ -78,7 +78,7 @@ struct GoldenDiagnosticsGoldenTests {
     @Test(arguments: GoldenHarnessStaticCases.diagnostics)
     func matchesGolden(caseFile: GoldenHarnessCase) throws {
         let renderedActual = try GoldenHarness.renderInSubprocess(suiteName: "Diagnostics", sourcePath: caseFile.sourcePath)
-        if try GoldenHarness.persistIfUpdating(sourcePath: caseFile.sourcePath, actual: renderedActual) {
+        if try GoldenHarness.persistIfUpdating(suiteName: "Diagnostics", sourcePath: caseFile.sourcePath, actual: renderedActual) {
             return
         }
         let actual = GoldenHarness.normalizedForComparison(
