@@ -252,6 +252,7 @@ struct CollectionLiteralLookupTables {
     // Sequence ABI names (STDLIB-095/096/097)
     let kkSequenceOfName: InternedString
     let kkSequenceGenerateName: InternedString
+    let kkSequenceGenerateNoArgName: InternedString
     let kkSequenceForEachName: InternedString
     let kkSequenceFlatMapName: InternedString
     let kkSequenceDropName: InternedString
@@ -977,6 +978,7 @@ struct CollectionLiteralLookupTables {
 
         kkSequenceOfName = interner.intern("kk_sequence_of")
         kkSequenceGenerateName = interner.intern("kk_sequence_generate")
+        kkSequenceGenerateNoArgName = interner.intern("kk_sequence_generate_noarg")
         kkSequenceForEachName = interner.intern("kk_sequence_forEach")
         kkSequenceFlatMapName = interner.intern("kk_sequence_flatMap")
         kkSequenceDropName = interner.intern("kk_sequence_drop")

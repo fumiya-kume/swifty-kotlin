@@ -2624,12 +2624,16 @@ extension CallLowerer {
                     return result
                 }
                 if calleeName == interner.intern("zipWithNext") {
+                    // String.zipWithNext overload dispatch: no-arg → kk_string_zipWithNext,
+                    // transform → kk_string_zipWithNextTransform.
+                    let runtimeCallee = args.isEmpty ? "kk_string_zipWithNext" : "kk_string_zipWithNextTransform"
+                    let callArguments = args.isEmpty ? [loweredReceiverID] : [loweredReceiverID] + normalizedArgIDs
                     instructions.append(.call(
                         symbol: nil,
-                        callee: interner.intern("kk_string_zipWithNext"),
-                        arguments: [loweredReceiverID],
+                        callee: interner.intern(runtimeCallee),
+                        arguments: callArguments,
                         result: result,
-                        canThrow: false,
+                        canThrow: !args.isEmpty,
                         thrownResult: nil
                     ))
                     return result
@@ -2714,8 +2718,6 @@ extension CallLowerer {
                 case "split":
                     if isRegexLikeType(sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType, sema: sema, interner: interner) {
                         ("kk_string_split_regex", [loweredReceiverID, loweredArgIDs[0]])
-                    } else if loweredArgIDs.count >= 2 {
-                        ("kk_string_split_limit", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])
                     } else {
                         ("kk_string_split", [loweredReceiverID, loweredArgIDs[0]])
                     }
@@ -2811,6 +2813,12 @@ extension CallLowerer {
                     } else {
                         ("kk_string_padEnd_default", [loweredReceiverID, loweredArgIDs[0]])
                     }
+                case "removePrefix":
+                    ("kk_string_removePrefix", [loweredReceiverID, loweredArgIDs[0]])
+                case "removeSuffix":
+                    ("kk_string_removeSuffix", [loweredReceiverID, loweredArgIDs[0]])
+                case "removeSurrounding":
+                    ("kk_string_removeSurrounding", [loweredReceiverID, loweredArgIDs[0]])
                 default:
                     nil
                 }
@@ -2846,6 +2854,93 @@ extension CallLowerer {
                     ))
                     return result
                 }
+            }
+        }
+
+        // STDLIB-TEXT-EDGE-001: split(delimiter, limit) — 2-arg overload
+        if args.count == 2, interner.resolve(calleeName) == "split" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let firstArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+            )
+            let secondArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[1].expr] ?? sema.types.anyType
+            )
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
+               sema.types.isSubtype(firstArgType, sema.types.stringType),
+               sema.types.isSubtype(secondArgType, sema.types.intType)
+            {
+                let falseExpr = arena.appendExpr(.intLiteral(0), type: sema.types.booleanType)
+                instructions.append(.constValue(result: falseExpr, value: .boolLiteral(false)))
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_split_limit"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], falseExpr, loweredArgIDs[1]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // STDLIB-TEXT-EDGE-001: split(delimiter, ignoreCase) — 2-arg overload
+        if args.count == 2, interner.resolve(calleeName) == "split" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let firstArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+            )
+            let secondArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[1].expr] ?? sema.types.anyType
+            )
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
+               sema.types.isSubtype(firstArgType, sema.types.stringType),
+               sema.types.isSubtype(secondArgType, sema.types.booleanType)
+            {
+                // limit = 0 means "no limit" for Kotlin's split overload.
+                let zeroLimitExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroLimitExpr, value: .intLiteral(0)))
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_split_limit"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1], zeroLimitExpr],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // STDLIB-TEXT-EDGE-001: split(delimiter, ignoreCase, limit) — 3-arg overload
+        if args.count == 3, interner.resolve(calleeName) == "split" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let firstArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+            )
+            let secondArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[1].expr] ?? sema.types.anyType
+            )
+            let thirdArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[2].expr] ?? sema.types.anyType
+            )
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
+               sema.types.isSubtype(firstArgType, sema.types.stringType),
+               sema.types.isSubtype(secondArgType, sema.types.booleanType),
+               sema.types.isSubtype(thirdArgType, sema.types.intType)
+            {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_split_limit"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1], loweredArgIDs[2]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
             }
         }
 
@@ -2952,6 +3047,23 @@ extension CallLowerer {
                     arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1], hasEndExpr],
                     result: result,
                     canThrow: true,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // String stdlib: 2-arg removeSurrounding(prefix, suffix) (STDLIB-TEXT-EDGE-010 / STDLIB-185)
+        if args.count == 2, interner.resolve(calleeName) == "removeSurrounding" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_removeSurrounding_pair"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: false,
                     thrownResult: nil
                 ))
                 return result
