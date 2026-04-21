@@ -3834,140 +3834,87 @@ symbol s3832 kind=constructor fq=kotlin.coroutines.AbstractCoroutineContextKey.<
 symbol s3833 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.baseKey vis=private flags=synthetic
 symbol s3834 kind=valueParameter fq=kotlin.coroutines.AbstractCoroutineContextKey.<init>.safeCast vis=private flags=synthetic
 symbol s3835 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3836 kind=local fq=__local_7.seq vis=private flags=_ type=Class#114<out Int>
-symbol s3837 kind=local fq=__destructuring_21.evens vis=private flags=_ type=Class#123<Int>
-symbol s3838 kind=local fq=__destructuring_21.odds vis=private flags=_ type=Class#123<Int>
-symbol s3839 kind=local fq=__local_30.emptySeq vis=private flags=_ type=Class#114<out Int>
-symbol s3840 kind=local fq=__destructuring_40.matchEmpty vis=private flags=_ type=Class#123<Int>
-symbol s3841 kind=local fq=__destructuring_40.noMatchEmpty vis=private flags=_ type=Class#123<Int>
-symbol s3842 kind=local fq=__local_54.list vis=private flags=_ type=Class#123<out Int>
-symbol s3843 kind=local fq=__destructuring_65.big vis=private flags=_ type=Class#123<Any>
-symbol s3844 kind=local fq=__destructuring_65.small vis=private flags=_ type=Class#123<Any>
-symbol s3845 kind=local fq=__local_89.allMatch vis=private flags=_ type=Class#75<Class#123<Int>, Class#123<Int>>
-symbol s3846 kind=local fq=__local_115.noneMatch vis=private flags=_ type=Class#75<Class#123<Int>, Class#123<Int>>
+symbol s3836 kind=local fq=__local_5.items vis=private flags=_ type=Class#104<Int>
+symbol s3837 kind=local fq=__local_8.ml1 vis=private flags=_ type=Class#254<Int>
+symbol s3838 kind=local fq=__local_17.ms1 vis=private flags=_ type=Class#286<Int>
+symbol s3839 kind=local fq=__local_28.hs1 vis=private flags=_ type=Class#286<Int>
+symbol s3840 kind=local fq=__local_42.col vis=private flags=_ type=Class#118<String>
+symbol s3841 kind=local fq=__local_45.ml2 vis=private flags=_ type=Class#254<String>
+symbol s3842 kind=local fq=__local_60.map vis=private flags=_ type=Class#295<String, out Int>
+symbol s3843 kind=local fq=__local_63.mm vis=private flags=_ type=Class#339<String, Int>
 file f0 package=_
   decl d0 fun main suspend=0 inline=0 sym=s3835
-expr e0 name(sequenceOf) type=_
+expr e0 name(listOf) type=_
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
 expr e3 int(3) type=Int
-expr e4 int(4) type=Int
-expr e5 int(5) type=Int
-expr e6 call callee=e0 args=[_:e1,_:e2,_:e3,_:e4,_:e5] type=Class#114<out Int> call=s1847 map=[0->0,1->0,2->0,3->0,4->0] targs=[Int]
-expr e7 localDecl seq mutable=0 type=_ init=e6 type=Unit ref=s3836
-expr e8 name(seq) type=Class#114<out Int> ref=s3836
-expr e9 name(it) type=_
-expr e10 int(2) type=_
-expr e11 binary(modulo) lhs=e9 rhs=e10 type=_
-expr e12 int(0) type=_
-expr e13 binary(equal) lhs=e11 rhs=e12 type=_
-expr e14 name(it) type=Int ref=s-1004864
-expr e15 int(2) type=Int
-expr e16 binary(modulo) lhs=e14 rhs=e15 type=Int
-expr e17 int(0) type=Int
-expr e18 binary(equal) lhs=e16 rhs=e17 type=Boolean
-expr e19 lambda params=[] body=e18 label=partition type=(Int) -> Boolean
-expr e20 memberCall recv=e8 callee=partition args=[_:e19] type=Class#75<Class#123<Int>, Class#123<Int>>
-expr e21 destructuringDecl names=[evens,odds] mutable=0 init=e20 type=Unit
-expr e22 name(println) type=_
-expr e23 name(evens) type=Class#123<Int> ref=s3837
-expr e24 call callee=e22 args=[_:e23] type=Unit call=s1824 map=[0->0] targs=[]
-expr e25 name(println) type=_
-expr e26 name(odds) type=Class#123<Int> ref=s3838
-expr e27 call callee=e25 args=[_:e26] type=Unit call=s1824 map=[0->0] targs=[]
-expr e28 name(emptySequence) type=_
-expr e29 call callee=e28 args=[] type=Class#114<out Int> call=s1850 map=[] targs=[Int]
-expr e30 localDecl emptySeq mutable=0 type=_ init=e29 type=Unit ref=s3839
-expr e31 name(emptySeq) type=Class#114<out Int> ref=s3839
-expr e32 name(it) type=_
-expr e33 int(0) type=_
-expr e34 binary(greaterThan) lhs=e32 rhs=e33 type=_
-expr e35 name(it) type=Int ref=s-1009728
-expr e36 int(0) type=Int
-expr e37 binary(greaterThan) lhs=e35 rhs=e36 type=Boolean
-expr e38 lambda params=[] body=e37 label=partition type=(Int) -> Boolean
-expr e39 memberCall recv=e31 callee=partition args=[_:e38] type=Class#75<Class#123<Int>, Class#123<Int>>
-expr e40 destructuringDecl names=[matchEmpty,noMatchEmpty] mutable=0 init=e39 type=Unit
-expr e41 name(println) type=_
-expr e42 name(matchEmpty) type=Class#123<Int> ref=s3840
-expr e43 call callee=e41 args=[_:e42] type=Unit call=s1824 map=[0->0] targs=[]
-expr e44 name(println) type=_
-expr e45 name(noMatchEmpty) type=Class#123<Int> ref=s3841
-expr e46 call callee=e44 args=[_:e45] type=Unit call=s1824 map=[0->0] targs=[]
-expr e47 name(listOf) type=_
-expr e48 int(10) type=Int
-expr e49 int(20) type=Int
-expr e50 int(30) type=Int
-expr e51 int(40) type=Int
-expr e52 int(50) type=Int
-expr e53 call callee=e47 args=[_:e48,_:e49,_:e50,_:e51,_:e52] type=Class#123<out Int>
-expr e54 localDecl list mutable=0 type=_ init=e53 type=Unit ref=s3842
-expr e55 name(list) type=Class#123<out Int> ref=s3842
-expr e56 memberCall recv=e55 callee=asSequence args=[] type=Any call=s320 map=[] targs=[]
-expr e57 name(it) type=_
-expr e58 int(30) type=_
-expr e59 binary(greaterOrEqual) lhs=e57 rhs=e58 type=_
-expr e60 name(it) type=Any ref=s-1016128
-expr e61 int(30) type=Int
-expr e62 binary(greaterOrEqual) lhs=e60 rhs=e61 type=Boolean
-expr e63 lambda params=[] body=e62 label=partition type=(Any) -> Boolean
-expr e64 memberCall recv=e56 callee=partition args=[_:e63] type=Class#75<Class#123<Any>, Class#123<Any>>
-expr e65 destructuringDecl names=[big,small] mutable=0 init=e64 type=Unit
-expr e66 name(println) type=_
-expr e67 name(big) type=Class#123<Any> ref=s3843
-expr e68 call callee=e66 args=[_:e67] type=Unit call=s1824 map=[0->0] targs=[]
+expr e4 call callee=e0 args=[_:e1,_:e2,_:e3] type=Class#104<Int>
+expr e5 localDecl items mutable=0 type=t1 init=e4 type=Unit ref=s3836
+expr e6 name(items) type=Class#104<Int> ref=s3836
+expr e7 memberCall recv=e6 callee=toMutableList args=[] type=Class#254<Int> call=s336 map=[] targs=[]
+expr e8 localDecl ml1 mutable=0 type=t3 init=e7 type=Unit ref=s3837
+expr e9 name(ml1) type=Class#254<Int> ref=s3837
+expr e10 int(4) type=Int
+expr e11 memberCall recv=e9 callee=add args=[_:e10] type=Boolean call=s257 map=[0->0] targs=[Int]
+expr e12 name(println) type=_
+expr e13 name(ml1) type=Class#254<Int> ref=s3837
+expr e14 call callee=e12 args=[_:e13] type=Unit call=s1824 map=[0->0] targs=[]
+expr e15 name(items) type=Class#104<Int> ref=s3836
+expr e16 memberCall recv=e15 callee=toMutableSet args=[] type=Class#286<Int> call=s337 map=[] targs=[Int]
+expr e17 localDecl ms1 mutable=0 type=t5 init=e16 type=Unit ref=s3838
+expr e18 name(ms1) type=Class#286<Int> ref=s3838
+expr e19 int(4) type=Int
+expr e20 memberCall recv=e18 callee=add args=[_:e19] type=Boolean call=s288 map=[0->0] targs=[Int]
+expr e21 name(println) type=_
+expr e22 name(ms1) type=Class#286<Int> ref=s3838
+expr e23 int(4) type=Int
+expr e24 memberCall recv=e22 callee=contains args=[_:e23] type=Boolean call=s277 map=[0->0] targs=[]
+expr e25 call callee=e21 args=[_:e24] type=Unit call=s1824 map=[0->0] targs=[]
+expr e26 name(items) type=Class#104<Int> ref=s3836
+expr e27 memberCall recv=e26 callee=toHashSet args=[] type=Class#286<Int> call=s338 map=[] targs=[Int]
+expr e28 localDecl hs1 mutable=0 type=t7 init=e27 type=Unit ref=s3839
+expr e29 name(hs1) type=Class#286<Int> ref=s3839
+expr e30 int(5) type=Int
+expr e31 memberCall recv=e29 callee=add args=[_:e30] type=Boolean call=s288 map=[0->0] targs=[Int]
+expr e32 name(println) type=_
+expr e33 name(hs1) type=Class#286<Int> ref=s3839
+expr e34 int(5) type=Int
+expr e35 memberCall recv=e33 callee=contains args=[_:e34] type=Boolean call=s277 map=[0->0] targs=[]
+expr e36 call callee=e32 args=[_:e35] type=Unit call=s1824 map=[0->0] targs=[]
+expr e37 name(listOf) type=_
+expr e38 string(a) type=String
+expr e39 string(b) type=String
+expr e40 string(c) type=String
+expr e41 call callee=e37 args=[_:e38,_:e39,_:e40] type=Class#118<String>
+expr e42 localDecl col mutable=0 type=t9 init=e41 type=Unit ref=s3840
+expr e43 name(col) type=Class#118<String> ref=s3840
+expr e44 memberCall recv=e43 callee=toMutableList args=[] type=Class#254<String> call=s335 map=[] targs=[]
+expr e45 localDecl ml2 mutable=0 type=t11 init=e44 type=Unit ref=s3841
+expr e46 name(ml2) type=Class#254<String> ref=s3841
+expr e47 string(d) type=String
+expr e48 memberCall recv=e46 callee=add args=[_:e47] type=Boolean call=s257 map=[0->0] targs=[String]
+expr e49 name(println) type=_
+expr e50 name(ml2) type=Class#254<String> ref=s3841
+expr e51 call callee=e49 args=[_:e50] type=Unit call=s1824 map=[0->0] targs=[]
+expr e52 name(mapOf) type=_
+expr e53 string(x) type=String
+expr e54 int(1) type=Int
+expr e55 memberCall recv=e53 callee=to args=[_:e54] type=Class#75<String, Int>
+expr e56 string(y) type=String
+expr e57 int(2) type=Int
+expr e58 memberCall recv=e56 callee=to args=[_:e57] type=Class#75<String, Int>
+expr e59 call callee=e52 args=[_:e55,_:e58] type=Class#295<String, out Int>
+expr e60 localDecl map mutable=0 type=_ init=e59 type=Unit ref=s3842
+expr e61 name(map) type=Class#295<String, out Int> ref=s3842
+expr e62 memberCall recv=e61 callee=toMutableMap args=[] type=Class#339<String, Int> call=s348 map=[] targs=[String,Int]
+expr e63 localDecl mm mutable=0 type=t14 init=e62 type=Unit ref=s3843
+expr e64 name(mm) type=Class#339<String, Int> ref=s3843
+expr e65 string(z) type=String
+expr e66 indexedAccess receiver=e64 indices=[e65] type=_
+expr e67 int(3) type=Int
+expr e68 indexedAssign receiver=e64 indices=[e65] value=e67 type=Unit call=s342 map=[0->0,1->1] targs=[String,Int]
 expr e69 name(println) type=_
-expr e70 name(small) type=Class#123<Any> ref=s3844
-expr e71 call callee=e69 args=[_:e70] type=Unit call=s1824 map=[0->0] targs=[]
-expr e72 name(sequenceOf) type=_
-expr e73 int(2) type=Int
-expr e74 int(4) type=Int
-expr e75 int(6) type=Int
-expr e76 call callee=e72 args=[_:e73,_:e74,_:e75] type=Class#114<out Int> call=s1847 map=[0->0,1->0,2->0] targs=[Int]
-expr e77 name(it) type=_
-expr e78 int(2) type=_
-expr e79 binary(modulo) lhs=e77 rhs=e78 type=_
-expr e80 int(0) type=_
-expr e81 binary(equal) lhs=e79 rhs=e80 type=_
-expr e82 name(it) type=Int ref=s-1022272
-expr e83 int(2) type=Int
-expr e84 binary(modulo) lhs=e82 rhs=e83 type=Int
-expr e85 int(0) type=Int
-expr e86 binary(equal) lhs=e84 rhs=e85 type=Boolean
-expr e87 lambda params=[] body=e86 label=partition type=(Int) -> Boolean
-expr e88 memberCall recv=e76 callee=partition args=[_:e87] type=Class#75<Class#123<Int>, Class#123<Int>>
-expr e89 localDecl allMatch mutable=0 type=_ init=e88 type=Unit ref=s3845
-expr e90 name(println) type=_
-expr e91 name(allMatch) type=Class#75<Class#123<Int>, Class#123<Int>> ref=s3845
-expr e92 memberCall recv=e91 callee=first args=[] type=T#76 ref=s83
-expr e93 call callee=e90 args=[_:e92] type=Unit call=s1824 map=[0->0] targs=[]
-expr e94 name(println) type=_
-expr e95 name(allMatch) type=Class#75<Class#123<Int>, Class#123<Int>> ref=s3845
-expr e96 memberCall recv=e95 callee=second args=[] type=T#77 ref=s84
-expr e97 call callee=e94 args=[_:e96] type=Unit call=s1824 map=[0->0] targs=[]
-expr e98 name(sequenceOf) type=_
-expr e99 int(1) type=Int
-expr e100 int(3) type=Int
-expr e101 int(5) type=Int
-expr e102 call callee=e98 args=[_:e99,_:e100,_:e101] type=Class#114<out Int> call=s1847 map=[0->0,1->0,2->0] targs=[Int]
-expr e103 name(it) type=_
-expr e104 int(2) type=_
-expr e105 binary(modulo) lhs=e103 rhs=e104 type=_
-expr e106 int(0) type=_
-expr e107 binary(equal) lhs=e105 rhs=e106 type=_
-expr e108 name(it) type=Int ref=s-1028928
-expr e109 int(2) type=Int
-expr e110 binary(modulo) lhs=e108 rhs=e109 type=Int
-expr e111 int(0) type=Int
-expr e112 binary(equal) lhs=e110 rhs=e111 type=Boolean
-expr e113 lambda params=[] body=e112 label=partition type=(Int) -> Boolean
-expr e114 memberCall recv=e102 callee=partition args=[_:e113] type=Class#75<Class#123<Int>, Class#123<Int>>
-expr e115 localDecl noneMatch mutable=0 type=_ init=e114 type=Unit ref=s3846
-expr e116 name(println) type=_
-expr e117 name(noneMatch) type=Class#75<Class#123<Int>, Class#123<Int>> ref=s3846
-expr e118 memberCall recv=e117 callee=first args=[] type=T#76 ref=s83
-expr e119 call callee=e116 args=[_:e118] type=Unit call=s1824 map=[0->0] targs=[]
-expr e120 name(println) type=_
-expr e121 name(noneMatch) type=Class#75<Class#123<Int>, Class#123<Int>> ref=s3846
-expr e122 memberCall recv=e121 callee=second args=[] type=T#77 ref=s84
-expr e123 call callee=e120 args=[_:e122] type=Unit call=s1824 map=[0->0] targs=[]
+expr e70 name(mm) type=Class#339<String, Int> ref=s3843
+expr e71 string(z) type=String
+expr e72 memberCall recv=e70 callee=containsKey args=[_:e71] type=Boolean call=s299 map=[0->0] targs=[]
+expr e73 call callee=e69 args=[_:e72] type=Unit call=s1824 map=[0->0] targs=[]
