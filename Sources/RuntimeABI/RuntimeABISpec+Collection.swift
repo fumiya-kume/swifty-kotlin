@@ -314,6 +314,42 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        // STDLIB-021: Collection<T>.toMutableList()
+        RuntimeABIFunctionSpec(
+            name: "kk_collection_toMutableList",
+            parameters: [
+                RuntimeABIParameter(name: "collRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        // STDLIB-021: Iterable<T>.toMutableList()
+        RuntimeABIFunctionSpec(
+            name: "kk_iterable_toMutableList",
+            parameters: [
+                RuntimeABIParameter(name: "iterableRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        // STDLIB-021: Iterable<T>.toMutableSet()
+        RuntimeABIFunctionSpec(
+            name: "kk_iterable_toMutableSet",
+            parameters: [
+                RuntimeABIParameter(name: "iterableRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        // STDLIB-021: Iterable<T>.toHashSet()
+        RuntimeABIFunctionSpec(
+            name: "kk_iterable_toHashSet",
+            parameters: [
+                RuntimeABIParameter(name: "iterableRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_collection_toCollection",
             parameters: [
