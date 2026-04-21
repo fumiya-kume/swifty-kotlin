@@ -3000,6 +3000,40 @@ extension CallLowerer {
             }
         }
 
+        // String stdlib: removeRange(startIndex, endIndex) (STDLIB-TEXT-EDGE-008)
+        if args.count == 2, interner.resolve(calleeName) == "removeRange" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_removeRange"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: true,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // String stdlib: removeRange(range) (STDLIB-TEXT-EDGE-008)
+        if args.count == 1, interner.resolve(calleeName) == "removeRange" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_removeRange_range"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0]],
+                    result: result,
+                    canThrow: true,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         // String stdlib: replaceRange(range, replacement) (STDLIB-188)
         if args.count == 2, interner.resolve(calleeName) == "replaceRange" {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
@@ -3229,12 +3263,6 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_associate"
                 } else if calleeName == associateByName {
                     runtimeCallee = "kk_sequence_associateBy"
-                } else if calleeName == interner.intern("any") {
-                    runtimeCallee = "kk_sequence_any"
-                } else if calleeName == interner.intern("all") {
-                    runtimeCallee = "kk_sequence_all"
-                } else if calleeName == interner.intern("none") {
-                    runtimeCallee = "kk_sequence_none"
                 } else if calleeName == interner.intern("find") {
                     runtimeCallee = "kk_sequence_find"
                 } else if calleeName == interner.intern("mapNotNull") {
@@ -3261,9 +3289,6 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_associate"
                         || runtimeCallee == "kk_sequence_associateBy"
                         || runtimeCallee == "kk_sequence_find"
-                        || runtimeCallee == "kk_sequence_any"
-                        || runtimeCallee == "kk_sequence_all"
-                        || runtimeCallee == "kk_sequence_none"
                         || runtimeCallee == "kk_sequence_mapNotNull"
                         || runtimeCallee == "kk_sequence_mapIndexed"
                         || runtimeCallee == "kk_sequence_onEach"
@@ -3635,26 +3660,6 @@ extension CallLowerer {
                     ))
                     return result
                 }
-                // STDLIB-SEQ-007: any() / none() no-predicate on sequences
-                // Pass fnPtr=0, closureRaw=0 to signal no-predicate variant
-                let anyID = interner.intern("any")
-                let noneID = interner.intern("none")
-                if calleeName == anyID || calleeName == noneID {
-                    let seqAnyNoneCallee = calleeName == anyID
-                        ? interner.intern("kk_sequence_any")
-                        : interner.intern("kk_sequence_none")
-                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                    instructions.append(.call(
-                        symbol: nil,
-                        callee: seqAnyNoneCallee,
-                        arguments: [loweredReceiverID, zeroExpr, zeroExpr],
-                        result: result,
-                        canThrow: true,
-                        thrownResult: nil
-                    ))
-                    return result
-                }
             }
             if isRegexLikeType(nonNullReceiverType, sema: sema, interner: interner),
                interner.resolve(calleeName) == "pattern"
@@ -3773,6 +3778,42 @@ extension CallLowerer {
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern("kk_string_format"),
+                    arguments: [loweredReceiverID, packedArgs],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // StringBuilder: append(vararg value: String? / Any?) (STDLIB-TEXT-EDGE-012)
+        if interner.resolve(calleeName) == "append",
+           let chosenCallee = sema.bindings.callBindings[exprID]?.chosenCallee,
+           sema.symbols.externalLinkName(for: chosenCallee) == "kk_string_builder_append_vararg_obj"
+        {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                let intType = sema.types.make(.primitive(.int, .nonNull))
+                let packedArgs: KIRExprID
+                if loweredArgIDs.count == 1, args.first?.isSpread == true {
+                    packedArgs = loweredArgIDs[0]
+                } else {
+                    packedArgs = driver.callSupportLowerer.packVarargArguments(
+                        argIndices: Array(loweredArgIDs.indices),
+                        providedArguments: loweredArgIDs,
+                        spreadFlags: args.map(\.isSpread),
+                        arena: arena,
+                        interner: interner,
+                        intType: intType,
+                        anyType: sema.types.nullableAnyType,
+                        instructions: &instructions
+                    )
+                }
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_builder_append_vararg_obj"),
                     arguments: [loweredReceiverID, packedArgs],
                     result: result,
                     canThrow: false,
@@ -6466,12 +6507,6 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_associate")
             case associateByName:
                 return interner.intern("kk_sequence_associateBy")
-            case interner.intern("any"):
-                return interner.intern("kk_sequence_any")
-            case interner.intern("all"):
-                return interner.intern("kk_sequence_all")
-            case interner.intern("none"):
-                return interner.intern("kk_sequence_none")
             case interner.intern("find"):
                 return interner.intern("kk_sequence_find")
             case interner.intern("mapNotNull"):
