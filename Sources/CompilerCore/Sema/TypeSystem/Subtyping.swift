@@ -79,6 +79,16 @@ extension TypeSystem {
             }
         }
 
+        // Treat Kotlin String as a subtype of kotlin.CharSequence so that
+        // the synthetic CharSequence overloads can reuse the String runtime ABI.
+        if case let .primitive(.string, lhsNullability) = lhs,
+           case let .classType(rhsClass) = rhs,
+           let charSequenceSym = charSequenceInterfaceSymbol,
+           rhsClass.classSymbol == charSequenceSym
+        {
+            return nullabilitySubtype(lhsNullability, rhsClass.nullability)
+        }
+
         // STDLIB-030-BUG-01: A type parameter T is a subtype of its upper bounds.
         // This allows `T : AutoCloseable` (which stores `Closeable` as its bound after
         // typealias expansion) to satisfy `T <: Closeable` in the constraint solver and
