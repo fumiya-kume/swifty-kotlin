@@ -874,6 +874,23 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // partition(predicate) on sequence → kk_sequence_partition (STDLIB-SEQ-012)
+        if callee == lookup.partitionName, arguments.count == 1, sequenceExprIDs.contains(receiver.rawValue) {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            emitHOFCall(
+                kkName: lookup.kkSequencePartitionName,
+                receiver: receiver,
+                arguments: arguments + [zeroExpr],
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            return true
+        }
+
         // minus(element) on sequence → kk_sequence_minus (STDLIB-562)
         // Only rewrite when the argument is a single element (not a collection).
         // Collection-removal is not yet supported at the ABI level.

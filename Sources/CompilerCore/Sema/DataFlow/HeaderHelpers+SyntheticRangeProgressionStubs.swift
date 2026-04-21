@@ -106,6 +106,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticCharRangeStub(
+            rangesPackageSymbol: rangesPackageSymbol,
+            rangesFQName: rangesFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
     }
 
     private func registerSyntheticProgressionStub(
@@ -164,6 +171,13 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+        registerIterableSupertype(
+            classSymbol: classSymbol,
+            elementType: elementType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         let companionType = types.make(.classType(ClassType(
             classSymbol: companionSymbol,
             args: [],
@@ -360,6 +374,13 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+        registerIterableSupertype(
+            classSymbol: classSymbol,
+            elementType: types.uintType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         let progressionType = syntheticNominalType(
             named: "UIntProgression",
             in: rangesFQName,
@@ -566,6 +587,13 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+        registerIterableSupertype(
+            classSymbol: classSymbol,
+            elementType: types.ulongType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         let progressionType = syntheticNominalType(
             named: "ULongProgression",
             in: rangesFQName,
@@ -781,6 +809,7 @@ extension DataFlowSemaPhase {
         parameterTypes: [TypeID],
         returnType: TypeID,
         externalLinkName: String,
+        flags: SymbolFlags = [.synthetic],
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -822,7 +851,7 @@ extension DataFlowSemaPhase {
             fqName: functionFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
         symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
@@ -886,6 +915,13 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+        registerIterableSupertype(
+            classSymbol: classSymbol,
+            elementType: types.intType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         registerSyntheticIntRangeConstructor(
             ownerSymbol: classSymbol,
@@ -1351,6 +1387,13 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+        registerIterableSupertype(
+            classSymbol: classSymbol,
+            elementType: types.longType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         let progressionType = syntheticNominalType(
             named: "LongProgression",
@@ -1510,5 +1553,208 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+    }
+
+    private func registerSyntheticCharRangeStub(
+        rangesPackageSymbol: SymbolID,
+        rangesFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let className = interner.intern("CharRange")
+        let classFQName = rangesFQName + [className]
+        let classSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: classFQName) {
+            classSymbol = existing
+        } else {
+            let created = symbols.define(
+                kind: .class,
+                name: className,
+                fqName: classFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(rangesPackageSymbol, for: created)
+            classSymbol = created
+        }
+
+        let charRangeType = types.make(.classType(ClassType(
+            classSymbol: classSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        registerIterableSupertype(
+            classSymbol: classSymbol,
+            elementType: types.charType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let iteratorType = syntheticIteratorType(
+            elementType: types.charType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        for property in [
+            ("start", "kk_range_first"),
+            ("end", "kk_range_last"),
+            ("endInclusive", "kk_range_last"),
+            ("first", "kk_range_first"),
+            ("last", "kk_range_last"),
+        ] {
+            registerProgressionProperty(
+                named: property.0,
+                ownerSymbol: classSymbol,
+                propertyType: types.charType,
+                externalLinkName: property.1,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+        registerProgressionProperty(
+            named: "step",
+            ownerSymbol: classSymbol,
+            propertyType: types.intType,
+            externalLinkName: "kk_range_step",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerProgressionMethod(
+            named: "contains",
+            ownerSymbol: classSymbol,
+            receiverType: charRangeType,
+            parameterTypes: [types.charType],
+            returnType: types.booleanType,
+            externalLinkName: "kk_op_contains",
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "isEmpty",
+            ownerSymbol: classSymbol,
+            receiverType: charRangeType,
+            parameterTypes: [],
+            returnType: types.booleanType,
+            externalLinkName: "kk_range_isEmpty",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "iterator",
+            ownerSymbol: classSymbol,
+            receiverType: charRangeType,
+            parameterTypes: [],
+            returnType: iteratorType,
+            externalLinkName: "kk_range_iterator",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "firstOrNull",
+            ownerSymbol: classSymbol,
+            receiverType: charRangeType,
+            parameterTypes: [],
+            returnType: types.makeNullable(types.charType),
+            externalLinkName: "kk_range_firstOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "lastOrNull",
+            ownerSymbol: classSymbol,
+            receiverType: charRangeType,
+            parameterTypes: [],
+            returnType: types.makeNullable(types.charType),
+            externalLinkName: "kk_range_lastOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "reversed",
+            ownerSymbol: classSymbol,
+            receiverType: charRangeType,
+            parameterTypes: [],
+            returnType: charRangeType,
+            externalLinkName: "kk_range_reversed",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "toList",
+            ownerSymbol: classSymbol,
+            receiverType: charRangeType,
+            parameterTypes: [],
+            returnType: syntheticListType(elementType: types.charType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_char_range_toList",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "take",
+            ownerSymbol: classSymbol,
+            receiverType: charRangeType,
+            parameterTypes: [types.intType],
+            returnType: syntheticListType(elementType: types.charType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_char_range_take",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "drop",
+            ownerSymbol: classSymbol,
+            receiverType: charRangeType,
+            parameterTypes: [types.intType],
+            returnType: syntheticListType(elementType: types.charType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_char_range_drop",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "sorted",
+            ownerSymbol: classSymbol,
+            receiverType: charRangeType,
+            parameterTypes: [],
+            returnType: syntheticListType(elementType: types.charType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_char_range_sorted",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticConstructor(
+            ownerSymbol: classSymbol,
+            ownerType: charRangeType,
+            parameterTypes: [types.charType, types.charType],
+            parameterNames: ["start", "endInclusive"],
+            externalLinkName: "kk_char_rangeTo",
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerIterableSupertype(
+        classSymbol: SymbolID,
+        elementType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let iterableFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Iterable"),
+        ]
+        guard let iterableInterfaceSymbol = symbols.lookup(fqName: iterableFQName) else {
+            return
+        }
+        symbols.setDirectSupertypes([iterableInterfaceSymbol], for: classSymbol)
+        types.setNominalDirectSupertypes([iterableInterfaceSymbol], for: classSymbol)
+        symbols.setSupertypeTypeArgs([.out(elementType)], for: classSymbol, supertype: iterableInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(elementType)], for: classSymbol, supertype: iterableInterfaceSymbol)
     }
 }

@@ -608,6 +608,17 @@ public func kk_mutable_list_clear(_ listRaw: Int) -> Int {
     return 0
 }
 
+@_cdecl("kk_mutable_list_fill")
+public func kk_mutable_list_fill(_ listRaw: Int, _ element: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return 0
+    }
+    for index in 0 ..< list.elements.count {
+        list.elements[index] = element
+    }
+    return 0
+}
+
 @_cdecl("kk_mutable_list_add_at")
 public func kk_mutable_list_add_at(_ listRaw: Int, _ index: Int, _ element: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -731,6 +742,47 @@ public func kk_mutable_list_retainAll(_ listRaw: Int, _ collectionRaw: Int) -> I
         !collectionElements.contains(where: { runtimeValuesEqual($0, elem) })
     }
     return kk_box_bool(list.elements.count != originalCount ? 1 : 0)
+}
+
+@_cdecl("kk_mutable_list_replaceAll")
+public func kk_mutable_list_replaceAll(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return 0
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for index in 0 ..< list.elements.count {
+        var thrown = 0
+        let result = lambda(closureRaw, list.elements[index], &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        list.elements[index] = maybeUnbox(result)
+    }
+    return 0
+}
+
+@_cdecl("kk_mutable_list_removeIf")
+public func kk_mutable_list_removeIf(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return kk_box_bool(0)
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var changed = false
+    var index = 0
+    while index < list.elements.count {
+        var thrown = 0
+        let result = lambda(closureRaw, list.elements[index], &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if maybeUnbox(result) != 0 {
+            list.elements.remove(at: index)
+            changed = true
+        } else {
+            index += 1
+        }
+    }
+    return kk_box_bool(changed ? 1 : 0)
 }
 
 // MARK: - List binarySearch (STDLIB-214)

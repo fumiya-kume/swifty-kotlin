@@ -302,6 +302,8 @@ struct CollectionLiteralLookupTables {
     let kkSequenceMinusName: InternedString
     let kkSequenceOfSingleName: InternedString
 
+    // STDLIB-SEQ-012: Sequence partition
+    let kkSequencePartitionName: InternedString
     // STDLIB-SEQ-021: Sequence destination-collection filter operations
     let kkSequenceFilterToName: InternedString
     let kkSequenceFilterNotToName: InternedString
@@ -1026,6 +1028,7 @@ struct CollectionLiteralLookupTables {
         kkSequencePlusName = interner.intern("kk_sequence_plus")
         kkSequenceMinusName = interner.intern("kk_sequence_minus")
         kkSequenceOfSingleName = interner.intern("kk_sequence_of_single")
+        kkSequencePartitionName = interner.intern("kk_sequence_partition")
 
         // STDLIB-SEQ-021: Sequence destination-collection filter operations
         kkSequenceFilterToName = interner.intern("kk_sequence_filterTo")
