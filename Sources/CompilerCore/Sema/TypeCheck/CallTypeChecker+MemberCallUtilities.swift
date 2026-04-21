@@ -11,6 +11,7 @@ extension CallTypeChecker {
             case "kk_list_contains", "kk_list_containsAll", "kk_list_indexOf", "kk_list_lastIndexOf",
                  "kk_list_getOrElse", "kk_list_elementAtOrElse",
                  "kk_list_binarySearch",
+                 "kk_array_binarySearch_compare",
                  "kk_list_filterIndexed", "kk_list_reduceIndexedOrNull",
                  "kk_list_foldRight", "kk_list_foldRightIndexed", "kk_list_reduceRight",
                  "kk_list_runningFoldIndexed", "kk_list_runningReduceIndexed", "kk_list_scanIndexed",

@@ -3209,12 +3209,14 @@ public func kk_array_none(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ ou
     return kk_box_bool(1)
 }
 
+// MARK: - Array binarySearch with comparator (STDLIB-COL-BSEARCH-004)
+
 @_cdecl("kk_array_binarySearch_compare")
 public func kk_array_binarySearch_compare(
     _ arrayRaw: Int,
+    _ element: Int,
     _ fnPtr: Int,
     _ closureRaw: Int,
-    _ element: Int,
     _ fromIndex: Int,
     _ toIndex: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
@@ -3222,12 +3224,12 @@ public func kk_array_binarySearch_compare(
     guard let array = runtimeArrayBox(from: arrayRaw) else {
         invalidContainerPanic(#function, "array")
     }
+    let comparatorInvoke = runtimeSortedWithComparatorInvoke(fnPtr: fnPtr, closureRaw: closureRaw)
     let size = array.elements.count
     let from = max(0, min(fromIndex, size))
     let to = max(from, min(toIndex, size))
     var low = from
     var high = to - 1
-    let comparatorInvoke = runtimeSortedWithComparatorInvoke(fnPtr: fnPtr, closureRaw: closureRaw)
     while low <= high {
         let mid = low + (high - low) / 2
         var thrown = 0

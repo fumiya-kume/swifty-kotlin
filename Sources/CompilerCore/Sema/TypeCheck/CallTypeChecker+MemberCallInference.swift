@@ -1166,6 +1166,7 @@ extension CallTypeChecker {
         let isFlowHOF = isFlowReceiver && flowHOFNames.contains(interner.resolve(calleeName))
         let isCollectionReceiver = sema.bindings.isCollectionExpr(receiverID)
             || isCollectionLikeType(receiverType, sema: sema, interner: interner)
+        let isArrayReceiver = isArrayLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMapReceiver = isMapLikeCollectionType(receiverType, sema: sema, interner: interner)
         let isMutableListReceiver = isMutableListType(receiverType, sema: sema, interner: interner)
         let isSyntheticSequenceReceiver = sema.bindings.isCollectionExpr(receiverID)
@@ -1540,6 +1541,38 @@ extension CallTypeChecker {
             default:
                 break
             }
+        }
+
+        if interner.resolve(calleeName) == "binarySearch",
+           isArrayReceiver
+        {
+            let arrayElementType = resolvedCollectionElementType(
+                receiverID: receiverID,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner,
+                ctx: ctx,
+                locals: &locals
+            )
+            if args.count == 4,
+               let comparatorSymbol = sema.symbols.lookup(fqName: [
+                   interner.intern("kotlin"),
+                   interner.intern("Comparator"),
+               ])
+            {
+                let comparatorExpectedType = sema.types.make(.classType(ClassType(
+                    classSymbol: comparatorSymbol,
+                    args: [.invariant(arrayElementType)],
+                    nullability: .nonNull
+                )))
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: arrayElementType)
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: comparatorExpectedType)
+                _ = driver.inferExpr(args[2].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+                _ = driver.inferExpr(args[3].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+            }
+            let finalType = safeCall ? sema.types.makeNullable(sema.types.intType) : sema.types.intType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
         }
 
         // --- Collection higher-order functions (STDLIB-005) ---

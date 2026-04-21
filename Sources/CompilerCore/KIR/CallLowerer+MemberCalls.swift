@@ -4768,6 +4768,27 @@ extension CallLowerer {
             return adapted
         }
 
+        let arrayBinarySearchComparatorCallees: Set<InternedString> = [
+            interner.intern("kk_array_binarySearch_compare"),
+        ]
+        if arrayBinarySearchComparatorCallees.contains(loweredCallee),
+           sourceArgExprs.count == 4,
+           finalArguments.count >= 5,
+           let comparatorArgs = makeComparatorTrampolineArgument(
+               comparatorExprID: sourceArgExprs[1],
+               loweredComparatorID: finalArguments[2],
+               sema: sema,
+               arena: arena,
+               interner: interner,
+               instructions: &instructions
+           )
+        {
+            var adapted: [KIRExprID] = [finalArguments[0], finalArguments[1]]
+            adapted.append(contentsOf: comparatorArgs)
+            adapted.append(contentsOf: finalArguments.dropFirst(3))
+            return adapted
+        }
+
         return finalArguments
     }
 
@@ -6298,6 +6319,12 @@ extension CallLowerer {
                 {
                     return interner.intern("kk_array_binarySearch_compare")
                 }
+                if externalLinkName == "kk_list_binarySearch",
+                   isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner),
+                   argumentCount == 5
+                {
+                    return interner.intern("kk_array_binarySearch_compare")
+                }
                 return interner.intern(externalLinkName)
             }
             if let unresolvedSynthetic = unresolvedSyntheticMemberCallee(
@@ -7261,6 +7288,11 @@ extension CallLowerer {
         case "containsAll":
             return interner.intern("kk_list_containsAll")
         case "binarySearch":
+            if argumentCount == 5,
+               isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner)
+            {
+                return interner.intern("kk_array_binarySearch_compare")
+            }
             if hasHOFLambdaArg && argumentCount == 2 {
                 return interner.intern("kk_list_binarySearch_compare")
             }

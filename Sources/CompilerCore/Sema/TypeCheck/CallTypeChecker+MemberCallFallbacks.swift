@@ -2559,6 +2559,21 @@ extension CallTypeChecker {
                 locals: &locals,
                 expectedType: expectation.expectedType
             )
+        } else if memberName == "binarySearch", args.count == 4,
+                  let comparatorSymbol = sema.symbols.lookup(fqName: [
+                      interner.intern("kotlin"),
+                      interner.intern("Comparator"),
+                  ])
+        {
+            let comparatorExpectedType = sema.types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.invariant(receiverElementType)],
+                nullability: .nonNull
+            )))
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: receiverElementType)
+            _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: comparatorExpectedType)
+            _ = driver.inferExpr(args[2].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+            _ = driver.inferExpr(args[3].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
         }
 
         // Mark result as collection if it returns a List
@@ -2606,6 +2621,8 @@ extension CallTypeChecker {
     private func arrayMemberResultType(memberName: String, elementType: TypeID, sema: SemaModule, interner: StringInterner) -> TypeID {
         switch memberName {
         case "size":
+            return sema.types.intType
+        case "binarySearch":
             return sema.types.intType
         case "isEmpty", "contains", "any", "none":
             return sema.types.booleanType

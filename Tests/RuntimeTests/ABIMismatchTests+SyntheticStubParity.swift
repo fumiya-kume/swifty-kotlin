@@ -94,6 +94,7 @@ extension ABIMismatchTests {
             "kk_charArray_binarySearch",
             "kk_uByteArray_binarySearch",
             "kk_uShortArray_binarySearch",
+            "kk_array_binarySearch_compare",
             // Atomic (kotlin.concurrent)
             "kk_atomic_int_create",
             "kk_atomic_int_load",
