@@ -453,11 +453,71 @@ extension TypeCheckHelpers {
                 else {
                     continue
                 }
-                return (candidate, propType)
+                return (
+                    candidate,
+                    resolveMemberPropertyType(
+                        propType,
+                        receiverType: receiverType,
+                        ownerSymbol: owner,
+                        sema: sema
+                    )
+                )
             }
             ownerQueue.append(contentsOf: sema.symbols.directSupertypes(for: owner))
         }
         return nil
+    }
+
+    private func resolveMemberPropertyType(
+        _ propertyType: TypeID,
+        receiverType: TypeID,
+        ownerSymbol: SymbolID,
+        sema: SemaModule
+    ) -> TypeID {
+        let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullReceiver),
+              sema.types.isNominalSubtypeSymbol(classType.classSymbol, of: ownerSymbol)
+        else {
+            return propertyType
+        }
+
+        guard let ownerTypeArgs = sema.types.liftedNominalSupertypeArgs(
+            from: classType.classSymbol,
+            childArgs: classType.args,
+            to: ownerSymbol
+        ) else {
+            return propertyType
+        }
+
+        let ownerTypeParamSymbols = sema.types.nominalTypeParameterSymbols(for: ownerSymbol)
+        guard !ownerTypeParamSymbols.isEmpty else {
+            return propertyType
+        }
+
+        let typeVarBySymbol = sema.types.makeTypeVarBySymbol(ownerTypeParamSymbols)
+        var substitution: [TypeVarID: TypeID] = [:]
+        for (index, typeParamSymbol) in ownerTypeParamSymbols.enumerated() {
+            guard index < ownerTypeArgs.count,
+                  let typeVar = typeVarBySymbol[typeParamSymbol]
+            else {
+                continue
+            }
+            switch ownerTypeArgs[index] {
+            case let .invariant(inner), let .out(inner), let .in(inner):
+                substitution[typeVar] = inner
+            case .star:
+                substitution[typeVar] = sema.types.nullableAnyType
+            }
+        }
+
+        guard !substitution.isEmpty else {
+            return propertyType
+        }
+        return sema.types.substituteTypeParameters(
+            in: propertyType,
+            substitution: substitution,
+            typeVarBySymbol: typeVarBySymbol
+        )
     }
 
     func enumOwnerSymbol(for entrySymbol: SemanticSymbol, symbols: SymbolTable) -> SymbolID? {

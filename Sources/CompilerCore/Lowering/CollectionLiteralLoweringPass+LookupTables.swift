@@ -378,6 +378,7 @@ struct CollectionLiteralLookupTables {
     let kkOpStepName: InternedString
     let kkRangeFirstName: InternedString
     let kkRangeLastName: InternedString
+    let kkRangeEndExclusiveName: InternedString
     let kkRangeCountName: InternedString
     let kkRangeToListName: InternedString
     let kkRangeForEachName: InternedString
@@ -451,6 +452,7 @@ struct CollectionLiteralLookupTables {
     let lastName: InternedString
     let startName: InternedString
     let endInclusiveName: InternedString
+    let endExclusiveName: InternedString
     let stepName: InternedString
     let iteratorName: InternedString
 
@@ -1101,6 +1103,7 @@ struct CollectionLiteralLookupTables {
         kkOpStepName = interner.intern("kk_op_step")
         kkRangeFirstName = interner.intern("kk_range_first")
         kkRangeLastName = interner.intern("kk_range_last")
+        kkRangeEndExclusiveName = interner.intern("kk_range_endExclusive")
         kkRangeCountName = interner.intern("kk_range_count")
         kkRangeToListName = interner.intern("kk_range_toList")
         kkRangeForEachName = interner.intern("kk_range_forEach")
@@ -1173,6 +1176,7 @@ struct CollectionLiteralLookupTables {
         lastName = interner.intern("last")
         startName = interner.intern("start")
         endInclusiveName = interner.intern("endInclusive")
+        endExclusiveName = interner.intern("endExclusive")
         stepName = interner.intern("step")
         iteratorName = interner.intern("iterator")
 

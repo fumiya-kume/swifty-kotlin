@@ -513,6 +513,14 @@ public func kk_range_end(_ rangeRaw: Int) -> Int {
     return range.last
 }
 
+@_cdecl("kk_range_endExclusive")
+public func kk_range_endExclusive(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_endExclusive")
+    }
+    return range.last &+ 1
+}
+
 // MARK: - IntRange take/drop/average/sorted (STDLIB-RANGE-TDS)
 
 @_cdecl("kk_range_take")

@@ -554,6 +554,14 @@ final class RuntimeRangeProgressionEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_range_contains(r, 6), 1, "end-1 must be contained in OpenEndRange")
     }
 
+    func testOpenEndRangeContract_endExclusiveMatchesUpperBound() {
+        let closed = kk_op_rangeTo(3, 7)
+        XCTAssertEqual(kk_range_endExclusive(closed), 8, "ClosedRange endExclusive should be last + 1")
+
+        let open = kk_op_rangeUntil(3, 7)
+        XCTAssertEqual(kk_range_endExclusive(open), 7, "OpenEndRange endExclusive should match the exclusive upper bound")
+    }
+
     // MARK: - Iterator protocol correctness
 
     func testIterator_stepsCorrectly_ascending() {

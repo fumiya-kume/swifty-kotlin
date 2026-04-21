@@ -33,6 +33,13 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic]
             )
         }
+        let openEndRangeSymbol = registerSyntheticOpenEndRangeStub(
+            rangesPackageSymbol: rangesPackageSymbol,
+            rangesFQName: rangesFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         registerSyntheticProgressionStub(
             named: "IntProgression",
@@ -70,6 +77,7 @@ extension DataFlowSemaPhase {
         registerSyntheticUIntRangeStub(
             rangesPackageSymbol: rangesPackageSymbol,
             rangesFQName: rangesFQName,
+            openEndRangeSymbol: openEndRangeSymbol,
             symbols: symbols,
             types: types,
             interner: interner
@@ -88,6 +96,7 @@ extension DataFlowSemaPhase {
         registerSyntheticULongRangeStub(
             rangesPackageSymbol: rangesPackageSymbol,
             rangesFQName: rangesFQName,
+            openEndRangeSymbol: openEndRangeSymbol,
             symbols: symbols,
             types: types,
             interner: interner
@@ -95,6 +104,7 @@ extension DataFlowSemaPhase {
         registerSyntheticIntRangeStub(
             rangesPackageSymbol: rangesPackageSymbol,
             rangesFQName: rangesFQName,
+            openEndRangeSymbol: openEndRangeSymbol,
             symbols: symbols,
             types: types,
             interner: interner
@@ -102,6 +112,7 @@ extension DataFlowSemaPhase {
         registerSyntheticLongRangeStub(
             rangesPackageSymbol: rangesPackageSymbol,
             rangesFQName: rangesFQName,
+            openEndRangeSymbol: openEndRangeSymbol,
             symbols: symbols,
             types: types,
             interner: interner
@@ -109,10 +120,105 @@ extension DataFlowSemaPhase {
         registerSyntheticCharRangeStub(
             rangesPackageSymbol: rangesPackageSymbol,
             rangesFQName: rangesFQName,
+            openEndRangeSymbol: openEndRangeSymbol,
             symbols: symbols,
             types: types,
             interner: interner
         )
+    }
+
+    private func registerSyntheticOpenEndRangeStub(
+        rangesPackageSymbol: SymbolID,
+        rangesFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> SymbolID {
+        let className = interner.intern("OpenEndRange")
+        let classFQName = rangesFQName + [className]
+        let classSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: classFQName) {
+            classSymbol = existing
+        } else {
+            let created = symbols.define(
+                kind: .interface,
+                name: className,
+                fqName: classFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(rangesPackageSymbol, for: created)
+            classSymbol = created
+        }
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = classFQName + [typeParamName]
+        let typeParamSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: typeParamFQName) {
+            typeParamSymbol = existing
+        } else {
+            let created = symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            symbols.setParentSymbol(classSymbol, for: created)
+            typeParamSymbol = created
+        }
+
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let openEndRangeType = types.make(.classType(ClassType(
+            classSymbol: classSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: classSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: classSymbol)
+
+        registerProgressionProperty(
+            named: "start",
+            ownerSymbol: classSymbol,
+            propertyType: typeParamType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionProperty(
+            named: "endExclusive",
+            ownerSymbol: classSymbol,
+            propertyType: typeParamType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "contains",
+            ownerSymbol: classSymbol,
+            receiverType: openEndRangeType,
+            parameterTypes: [typeParamType],
+            returnType: types.booleanType,
+            flags: [.synthetic, .operatorFunction],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "isEmpty",
+            ownerSymbol: classSymbol,
+            receiverType: openEndRangeType,
+            parameterTypes: [],
+            returnType: types.booleanType,
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+
+        return classSymbol
     }
 
     private func registerSyntheticProgressionStub(
@@ -347,6 +453,7 @@ extension DataFlowSemaPhase {
     private func registerSyntheticUIntRangeStub(
         rangesPackageSymbol: SymbolID,
         rangesFQName: [InternedString],
+        openEndRangeSymbol: SymbolID,
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
@@ -381,6 +488,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerOpenEndRangeConformance(
+            classSymbol: classSymbol,
+            elementType: types.uintType,
+            openEndRangeSymbol: openEndRangeSymbol,
+            symbols: symbols,
+            types: types
+        )
         let progressionType = syntheticNominalType(
             named: "UIntProgression",
             in: rangesFQName,
@@ -407,6 +521,7 @@ extension DataFlowSemaPhase {
             ("end", "kk_uint_range_last"),
             ("first", "kk_uint_range_first"),
             ("last", "kk_uint_range_last"),
+            ("endExclusive", "kk_range_endExclusive"),
         ] {
             registerProgressionProperty(
                 named: property.0,
@@ -560,6 +675,7 @@ extension DataFlowSemaPhase {
     private func registerSyntheticULongRangeStub(
         rangesPackageSymbol: SymbolID,
         rangesFQName: [InternedString],
+        openEndRangeSymbol: SymbolID,
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
@@ -594,6 +710,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerOpenEndRangeConformance(
+            classSymbol: classSymbol,
+            elementType: types.ulongType,
+            openEndRangeSymbol: openEndRangeSymbol,
+            symbols: symbols,
+            types: types
+        )
         let progressionType = syntheticNominalType(
             named: "ULongProgression",
             in: rangesFQName,
@@ -620,6 +743,7 @@ extension DataFlowSemaPhase {
             ("endInclusive", "kk_ulong_range_last"),
             ("first", "kk_ulong_range_first"),
             ("last", "kk_ulong_range_last"),
+            ("endExclusive", "kk_range_endExclusive"),
         ] {
             registerProgressionProperty(
                 named: property.0,
@@ -774,7 +898,7 @@ extension DataFlowSemaPhase {
         named name: String,
         ownerSymbol: SymbolID,
         propertyType: TypeID,
-        externalLinkName: String,
+        externalLinkName: String? = nil,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -799,7 +923,9 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setPropertyType(propertyType, for: propertySymbol)
-        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+        if let externalLinkName {
+            symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+        }
     }
 
     private func registerProgressionMethod(
@@ -808,8 +934,9 @@ extension DataFlowSemaPhase {
         receiverType: TypeID,
         parameterTypes: [TypeID],
         returnType: TypeID,
-        externalLinkName: String,
+        externalLinkName: String? = nil,
         flags: SymbolFlags = [.synthetic],
+        classTypeParameterCount: Int = 0,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -854,7 +981,9 @@ extension DataFlowSemaPhase {
             flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
-        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        if let externalLinkName {
+            symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        }
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: receiverType,
@@ -863,7 +992,8 @@ extension DataFlowSemaPhase {
                 isSuspend: false,
                 valueParameterSymbols: parameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
-                valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count)
+                valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count),
+                classTypeParameterCount: classTypeParameterCount
             ),
             for: functionSymbol
         )
@@ -888,6 +1018,7 @@ extension DataFlowSemaPhase {
     private func registerSyntheticIntRangeStub(
         rangesPackageSymbol: SymbolID,
         rangesFQName: [InternedString],
+        openEndRangeSymbol: SymbolID,
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
@@ -921,6 +1052,13 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner
+        )
+        registerOpenEndRangeConformance(
+            classSymbol: classSymbol,
+            elementType: types.intType,
+            openEndRangeSymbol: openEndRangeSymbol,
+            symbols: symbols,
+            types: types
         )
 
         registerSyntheticIntRangeConstructor(
@@ -965,6 +1103,15 @@ extension DataFlowSemaPhase {
             classFQName: classFQName,
             propertyType: types.intType,
             externalLinkName: "kk_range_last",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticIntRangeProperty(
+            named: "endExclusive",
+            ownerSymbol: classSymbol,
+            classFQName: classFQName,
+            propertyType: types.intType,
+            externalLinkName: "kk_range_endExclusive",
             symbols: symbols,
             interner: interner
         )
@@ -1360,6 +1507,7 @@ extension DataFlowSemaPhase {
     private func registerSyntheticLongRangeStub(
         rangesPackageSymbol: SymbolID,
         rangesFQName: [InternedString],
+        openEndRangeSymbol: SymbolID,
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
@@ -1394,6 +1542,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerOpenEndRangeConformance(
+            classSymbol: classSymbol,
+            elementType: types.longType,
+            openEndRangeSymbol: openEndRangeSymbol,
+            symbols: symbols,
+            types: types
+        )
 
         let progressionType = syntheticNominalType(
             named: "LongProgression",
@@ -1421,6 +1576,7 @@ extension DataFlowSemaPhase {
             ("endInclusive", "kk_long_range_last"),
             ("first", "kk_long_range_first"),
             ("last", "kk_long_range_last"),
+            ("endExclusive", "kk_range_endExclusive"),
         ] {
             registerProgressionProperty(
                 named: property.0,
@@ -1558,6 +1714,7 @@ extension DataFlowSemaPhase {
     private func registerSyntheticCharRangeStub(
         rangesPackageSymbol: SymbolID,
         rangesFQName: [InternedString],
+        openEndRangeSymbol: SymbolID,
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
@@ -1592,6 +1749,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerOpenEndRangeConformance(
+            classSymbol: classSymbol,
+            elementType: types.charType,
+            openEndRangeSymbol: openEndRangeSymbol,
+            symbols: symbols,
+            types: types
+        )
         let iteratorType = syntheticIteratorType(
             elementType: types.charType,
             symbols: symbols,
@@ -1605,6 +1769,7 @@ extension DataFlowSemaPhase {
             ("endInclusive", "kk_range_last"),
             ("first", "kk_range_first"),
             ("last", "kk_range_last"),
+            ("endExclusive", "kk_range_endExclusive"),
         ] {
             registerProgressionProperty(
                 named: property.0,
@@ -1752,9 +1917,80 @@ extension DataFlowSemaPhase {
         guard let iterableInterfaceSymbol = symbols.lookup(fqName: iterableFQName) else {
             return
         }
-        symbols.setDirectSupertypes([iterableInterfaceSymbol], for: classSymbol)
-        types.setNominalDirectSupertypes([iterableInterfaceSymbol], for: classSymbol)
-        symbols.setSupertypeTypeArgs([.out(elementType)], for: classSymbol, supertype: iterableInterfaceSymbol)
-        types.setNominalSupertypeTypeArgs([.out(elementType)], for: classSymbol, supertype: iterableInterfaceSymbol)
+        appendNominalSupertype(
+            classSymbol: classSymbol,
+            supertype: iterableInterfaceSymbol,
+            typeArgs: [.out(elementType)],
+            symbols: symbols,
+            types: types
+        )
+    }
+
+    private func registerOpenEndRangeConformance(
+        classSymbol: SymbolID,
+        elementType: TypeID,
+        openEndRangeSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem
+    ) {
+        appendNominalSupertype(
+            classSymbol: classSymbol,
+            supertype: openEndRangeSymbol,
+            typeArgs: [.invariant(elementType)],
+            symbols: symbols,
+            types: types
+        )
+    }
+
+    private func appendNominalSupertype(
+        classSymbol: SymbolID,
+        supertype: SymbolID,
+        typeArgs: [TypeArg],
+        symbols: SymbolTable,
+        types: TypeSystem
+    ) {
+        var directSupertypes = symbols.directSupertypes(for: classSymbol)
+        if !directSupertypes.contains(supertype) {
+            directSupertypes.append(supertype)
+            symbols.setDirectSupertypes(directSupertypes, for: classSymbol)
+        }
+        var nominalSupertypes = types.directNominalSupertypes(for: classSymbol)
+        if !nominalSupertypes.contains(supertype) {
+            nominalSupertypes.append(supertype)
+            types.setNominalDirectSupertypes(nominalSupertypes, for: classSymbol)
+        }
+        symbols.setSupertypeTypeArgs(typeArgs, for: classSymbol, supertype: supertype)
+        types.setNominalSupertypeTypeArgs(typeArgs, for: classSymbol, supertype: supertype)
+    }
+
+    func registerOpenEndRangeComparableUpperBound(
+        comparableSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let openEndRangeFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("ranges"),
+            interner.intern("OpenEndRange"),
+        ]
+        guard let openEndRangeSymbol = symbols.lookup(fqName: openEndRangeFQName) else {
+            return
+        }
+        let typeParamFQName = openEndRangeFQName + [interner.intern("T")]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else {
+            return
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let comparableUpperBound = types.make(.classType(ClassType(
+            classSymbol: comparableSymbol,
+            args: [.in(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setTypeParameterUpperBounds([comparableUpperBound], for: typeParamSymbol)
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: openEndRangeSymbol)
     }
 }

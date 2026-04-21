@@ -51,11 +51,20 @@ final class LocalDeclTypeChecker {
                     // Preserve the declared property type and skip constraining
                     // the delegate object itself to that property type.
                 } else {
-                    driver.emitSubtypeConstraint(
-                        left: initializerType, right: declaredType,
-                        range: range, solver: ConstraintSolver(),
-                        sema: sema, diagnostics: ctx.semaCtx.diagnostics
-                    )
+                    if let initializer,
+                       sema.bindings.isRangeExpr(initializer),
+                       driver.helpers.isRangeLikeType(declaredType, sema: sema, interner: interner)
+                    {
+                        // Range expressions keep their runtime representation separate from
+                        // the source-level range interface, so accept the annotation without
+                        // forcing a nominal subtype check.
+                    } else {
+                        driver.emitSubtypeConstraint(
+                            left: initializerType, right: declaredType,
+                            range: range, solver: ConstraintSolver(),
+                            sema: sema, diagnostics: ctx.semaCtx.diagnostics
+                        )
+                    }
                 }
             }
         } else if let initializerType {
@@ -85,20 +94,25 @@ final class LocalDeclTypeChecker {
             sema.bindings.markCollectionExpr(id)
             sema.bindings.markCollectionSymbol(localSymbol)
         }
-        if let initializer, sema.bindings.isRangeExpr(initializer) {
-            sema.bindings.markRangeExpr(id)
-            sema.bindings.markRangeSymbol(localSymbol)
-            if sema.bindings.isCharRangeExpr(initializer) {
-                sema.bindings.markCharRangeExpr(id)
-                sema.bindings.markCharRangeSymbol(localSymbol)
-            }
-            if sema.bindings.isUIntRangeExpr(initializer) {
-                sema.bindings.markUIntRangeExpr(id)
-                sema.bindings.markUIntRangeSymbol(localSymbol)
-            }
-            if sema.bindings.isULongRangeExpr(initializer) {
-                sema.bindings.markULongRangeExpr(id)
-                sema.bindings.markULongRangeSymbol(localSymbol)
+        let declaredOpenEndRange = declaredType.map {
+            driver.helpers.isOpenEndRangeType($0, sema: sema, interner: interner)
+        } ?? false
+        if let initializer {
+            if sema.bindings.isRangeExpr(initializer) || declaredOpenEndRange {
+                sema.bindings.markRangeExpr(id)
+                sema.bindings.markRangeSymbol(localSymbol)
+                if sema.bindings.isCharRangeExpr(initializer) {
+                    sema.bindings.markCharRangeExpr(id)
+                    sema.bindings.markCharRangeSymbol(localSymbol)
+                }
+                if sema.bindings.isUIntRangeExpr(initializer) {
+                    sema.bindings.markUIntRangeExpr(id)
+                    sema.bindings.markUIntRangeSymbol(localSymbol)
+                }
+                if sema.bindings.isULongRangeExpr(initializer) {
+                    sema.bindings.markULongRangeExpr(id)
+                    sema.bindings.markULongRangeSymbol(localSymbol)
+                }
             }
         }
         if let initializer, sema.bindings.isFlowExpr(initializer) {
