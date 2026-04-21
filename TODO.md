@@ -50,11 +50,11 @@
 - [ ] STDLIB-TEXT-EDGE-005: `CharSequence.ifEmpty(defaultValue)` を追加する
 - [ ] STDLIB-TEXT-EDGE-006: `ByteArray.decodeToString(startIndex, endIndex, throwOnInvalidSequence)` overload を追加する
 - [ ] STDLIB-TEXT-EDGE-007: `buildString(capacity, builderAction)` overload を追加する
-- [ ] STDLIB-TEXT-EDGE-008: `CharSequence` / `String`.`removeRange(startIndex, endIndex)` / `removeRange(range)` overload 群を追加する
+- [x] STDLIB-TEXT-EDGE-008: `CharSequence` / `String`.`removeRange(startIndex, endIndex)` / `removeRange(range)` overload 群を追加する
 - [x] STDLIB-TEXT-EDGE-009: `CharSequence?.contentEquals(other)` / `contentEquals(other, ignoreCase)` を追加する
 - [ ] STDLIB-TEXT-EDGE-010: `CharSequence.removePrefix` / `removeSuffix` / `removeSurrounding` overload 群を追加する
 - [ ] STDLIB-TEXT-EDGE-011: `CharSequence.zipWithNext()` / `zipWithNext(transform)` を追加する
-- [ ] STDLIB-TEXT-EDGE-012: `Appendable.append(vararg CharSequence?)` と `StringBuilder.append(vararg String? / Any?)` を追加する
+- [x] STDLIB-TEXT-EDGE-012: `Appendable.append(vararg CharSequence?)` と `StringBuilder.append(vararg String? / Any?)` を追加する
 
 ### Phase 2: コレクション・Sequence・Range
 - [ ] STDLIB-GAP-PH2: `kotlin.collections` / `kotlin.sequences` / `kotlin.ranges` の未対応を潰す
@@ -80,14 +80,14 @@
 - [ ] STDLIB-SEQ-018: `Sequence.zipWithNext(transform)` overload を追加する
 - [ ] STDLIB-SEQ-019: `Sequence.shuffled()` / `Sequence.shuffled(random)` を追加する
 - [ ] STDLIB-SEQ-020: `Sequence.flatMapIndexed(transform)` の `Iterable` / `Sequence` overload 群を追加する
-- [ ] STDLIB-SEQ-021: `Sequence.filterTo` / `filterNotTo` / `filterIndexedTo` / `filterIsInstanceTo` / `filterNotNullTo` を追加する
+- [x] STDLIB-SEQ-021: `Sequence.filterTo` / `filterNotTo` / `filterIndexedTo` / `filterIsInstanceTo` / `filterNotNullTo` を追加する
 - [ ] STDLIB-SEQ-022: `Sequence.mapTo` / `mapIndexedNotNullTo` を追加する
 - [ ] STDLIB-SEQ-023: `Sequence.associateTo` / `associateByTo` / `associateWithTo` / `groupByTo` を追加する
 - [ ] STDLIB-SEQ-024: `Sequence.toCollection(destination)` を追加する
 - [ ] STDLIB-SEQ-025: `Sequence.toMutableList()` / `toMutableSet()` / `toHashSet()` を追加する
 - [ ] STDLIB-COL-DEST-001: `filterTo` / `filterNotTo` / `filterIsInstanceTo` を追加する
 - [ ] STDLIB-COL-DEST-002: `mapTo` / `mapIndexedTo` / `mapNotNullTo` を追加する
-- [ ] STDLIB-COL-DEST-003: `flatMapTo` / `flatMapIndexedTo` を追加する
+- [x] STDLIB-COL-DEST-003: `flatMapTo` / `flatMapIndexedTo` を追加する
 - [ ] STDLIB-COL-DEST-004: `associateTo` / `associateByTo` / `associateWithTo` / `groupByTo` を追加する
 - [ ] STDLIB-COL-DEST-005: `toCollection(destination)` を追加する
 - [ ] STDLIB-COL-U-001: `Collection<UByte>` / `Collection<UShort>` / `Collection<UInt>` / `Collection<ULong>` の `toU*Array()` conversion を追加する

@@ -334,6 +334,40 @@ public func kk_list_to_mutable_set(_ listRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(list.elements)))
 }
 
+@inline(__always)
+func runtimeMutableCollectionExists(_ destRaw: Int) -> Bool {
+    runtimeListBox(from: destRaw) != nil || runtimeSetBox(from: destRaw) != nil
+}
+
+@inline(__always)
+func runtimeAppendToMutableCollection(_ destRaw: Int, _ element: Int) {
+    if let list = runtimeListBox(from: destRaw) {
+        list.elements.append(element)
+        return
+    }
+    if let set = runtimeSetBox(from: destRaw) {
+        if !set.elements.contains(where: { runtimeValuesEqual($0, element) }) {
+            set.elements.append(element)
+        }
+        return
+    }
+    invalidContainerPanic(#function, "mutable collection")
+}
+
+@_cdecl("kk_collection_toCollection")
+public func kk_collection_toCollection(_ collRaw: Int, _ destRaw: Int) -> Int {
+    guard let elements = runtimeCollectionElements(from: collRaw) else {
+        invalidContainerPanic(#function, "collection")
+    }
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    for element in elements {
+        runtimeAppendToMutableCollection(destRaw, element)
+    }
+    return destRaw
+}
+
 @_cdecl("kk_set_to_mutable_set")
 public func kk_set_to_mutable_set(_ setRaw: Int) -> Int {
     guard let set = runtimeSetBox(from: setRaw) else {

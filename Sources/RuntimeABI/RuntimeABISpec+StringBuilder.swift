@@ -169,5 +169,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "StringBuilder"
         ),
+        // STDLIB-TEXT-EDGE-012: append(vararg) overloads
+        RuntimeABIFunctionSpec(
+            name: "kk_string_builder_append_vararg_obj",
+            parameters: [
+                RuntimeABIParameter(name: "sbRaw", type: .intptr),
+                RuntimeABIParameter(name: "argsArrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "StringBuilder"
+        ),
     ]
 }

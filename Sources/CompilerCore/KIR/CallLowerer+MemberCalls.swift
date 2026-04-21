@@ -2349,6 +2349,36 @@ extension CallLowerer {
             return result
         }
 
+        // filterIsInstanceTo<R>(destination) — encode type token from result type (STDLIB-021)
+        if args.count == 1, interner.resolve(calleeName) == "filterIsInstanceTo" {
+            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            let nonNullResultType = sema.types.makeNonNullable(resultType)
+            // Extract element type from MutableCollection<R>
+            let elementType: TypeID = if case let .classType(classType) = sema.types.kind(of: nonNullResultType),
+                                         let firstArg = classType.args.first
+            {
+                switch firstArg {
+                case let .invariant(t), let .out(t), let .in(t): t
+                case .star: sema.types.anyType
+                }
+            } else {
+                sema.types.anyType
+            }
+            let encodedToken = RuntimeTypeCheckToken.encode(type: elementType, sema: sema, interner: interner)
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let tokenExpr = arena.appendExpr(.intLiteral(encodedToken), type: intType)
+            instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_list_filterIsInstanceTo"),
+                arguments: [loweredReceiverID, loweredArgIDs[0], tokenExpr],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
+
         // String stdlib: nullable-receiver 0-arg methods (NULL-002)
         // isNullOrEmpty/isNullOrBlank pass the raw (potentially null) receiver pointer to C runtime.
         if args.isEmpty {
@@ -2964,6 +2994,40 @@ extension CallLowerer {
                     arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
                     result: result,
                     canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // String stdlib: removeRange(startIndex, endIndex) (STDLIB-TEXT-EDGE-008)
+        if args.count == 2, interner.resolve(calleeName) == "removeRange" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_removeRange"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: true,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // String stdlib: removeRange(range) (STDLIB-TEXT-EDGE-008)
+        if args.count == 1, interner.resolve(calleeName) == "removeRange" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_removeRange_range"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0]],
+                    result: result,
+                    canThrow: true,
                     thrownResult: nil
                 ))
                 return result
@@ -3714,6 +3778,42 @@ extension CallLowerer {
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern("kk_string_format"),
+                    arguments: [loweredReceiverID, packedArgs],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // StringBuilder: append(vararg value: String? / Any?) (STDLIB-TEXT-EDGE-012)
+        if interner.resolve(calleeName) == "append",
+           let chosenCallee = sema.bindings.callBindings[exprID]?.chosenCallee,
+           sema.symbols.externalLinkName(for: chosenCallee) == "kk_string_builder_append_vararg_obj"
+        {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                let intType = sema.types.make(.primitive(.int, .nonNull))
+                let packedArgs: KIRExprID
+                if loweredArgIDs.count == 1, args.first?.isSpread == true {
+                    packedArgs = loweredArgIDs[0]
+                } else {
+                    packedArgs = driver.callSupportLowerer.packVarargArguments(
+                        argIndices: Array(loweredArgIDs.indices),
+                        providedArguments: loweredArgIDs,
+                        spreadFlags: args.map(\.isSpread),
+                        arena: arena,
+                        interner: interner,
+                        intType: intType,
+                        anyType: sema.types.nullableAnyType,
+                        instructions: &instructions
+                    )
+                }
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_builder_append_vararg_obj"),
                     arguments: [loweredReceiverID, packedArgs],
                     result: result,
                     canThrow: false,
