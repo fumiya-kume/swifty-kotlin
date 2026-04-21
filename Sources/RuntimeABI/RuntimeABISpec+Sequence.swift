@@ -146,6 +146,16 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
+        // STDLIB-SEQ-002: 1-arg form generateSequence(nextFunction: () -> T?)
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_generate_noarg",
+            parameters: [
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
         // Terminal operations (STDLIB-095)
         RuntimeABIFunctionSpec(
             name: "kk_sequence_forEach",

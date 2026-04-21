@@ -818,6 +818,30 @@ final class CallTypeChecker {
             return sequenceType
         }
 
+        // STDLIB-SEQ-002: 1-arg form generateSequence(nextFunction: () -> T?)
+        if let calleeName,
+           interner.resolve(calleeName) == "generateSequence",
+           args.count == 1
+        {
+            // Infer the no-arg function type; deduce element type T from its return type.
+            let rawNextType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: nil)
+            let elementType: TypeID = if case let .functionType(functionType) = sema.types.kind(of: sema.types.makeNonNullable(rawNextType)) {
+                sema.types.makeNonNullable(functionType.returnType)
+            } else {
+                sema.types.anyType
+            }
+            sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+            sema.bindings.markCollectionExpr(id)
+            let sequenceType = makeSyntheticSequenceType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: elementType
+            )
+            sema.bindings.bindExprType(id, type: sequenceType)
+            return sequenceType
+        }
+
         // --- Stdlib repeat(times) { ... } (STDLIB-008) ---
         // Infer the lambda argument with the expected `(Int) -> Unit` type so
         // implicit `it` resolves to the loop index.
@@ -2631,6 +2655,21 @@ final class CallTypeChecker {
                         types: sema.types,
                         interner: interner,
                         elementType: seedType
+                    )
+                // STDLIB-SEQ-002: 1-arg form generateSequence(nextFunction: () -> T?)
+                } else if name == "generateSequence", args.count == 1 {
+                    let rawNextType = argTypes.first ?? sema.types.anyType
+                    let elementType: TypeID = if case let .functionType(functionType) = sema.types.kind(of: sema.types.makeNonNullable(rawNextType)) {
+                        sema.types.makeNonNullable(functionType.returnType)
+                    } else {
+                        sema.types.anyType
+                    }
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    collectionType = makeSyntheticSequenceType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: elementType
                     )
                 // --- arrayOf / primitive array factories (TYPE-103) ---
                 } else if name == "arrayOf" {
