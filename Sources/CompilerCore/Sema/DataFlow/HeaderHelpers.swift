@@ -958,6 +958,7 @@ extension DataFlowSemaPhase {
         // List<Any?> so that `.size` resolves correctly on the parameters property.
         patchKFunctionParametersType(symbols: symbols, types: types, interner: interner)
         registerSyntheticRangeProgressionStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticRangeUntilStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
         registerSyntheticBuilderDSLStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparatorStubs(symbols: symbols, types: types, interner: interner)
