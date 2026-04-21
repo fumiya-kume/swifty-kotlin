@@ -118,11 +118,11 @@ expr e88 memberCall recv=e76 callee=partition args=[_:e87] type=Class#0<Class#6<
 expr e89 localDecl allMatch mutable=0 type=_ init=e88 type=Unit ref=s24
 expr e90 name(println) type=_
 expr e91 name(allMatch) type=Class#0<Class#6<Int>, Class#6<Int>> ref=s24
-expr e92 memberCall recv=e91 callee=first args=[] type=Class#6<Int> ref=s3
+expr e92 memberCall recv=e91 callee=first args=[] type=T#1 ref=s3
 expr e93 call callee=e90 args=[_:e92] type=Unit call=s9 map=[0->0] targs=[]
 expr e94 name(println) type=_
 expr e95 name(allMatch) type=Class#0<Class#6<Int>, Class#6<Int>> ref=s24
-expr e96 memberCall recv=e95 callee=second args=[] type=Class#6<Int> ref=s4
+expr e96 memberCall recv=e95 callee=second args=[] type=T#2 ref=s4
 expr e97 call callee=e94 args=[_:e96] type=Unit call=s9 map=[0->0] targs=[]
 expr e98 name(sequenceOf) type=_
 expr e99 int(1) type=Int
@@ -144,9 +144,9 @@ expr e114 memberCall recv=e102 callee=partition args=[_:e113] type=Class#0<Class
 expr e115 localDecl noneMatch mutable=0 type=_ init=e114 type=Unit ref=s25
 expr e116 name(println) type=_
 expr e117 name(noneMatch) type=Class#0<Class#6<Int>, Class#6<Int>> ref=s25
-expr e118 memberCall recv=e117 callee=first args=[] type=Class#6<Int> ref=s3
+expr e118 memberCall recv=e117 callee=first args=[] type=T#1 ref=s3
 expr e119 call callee=e116 args=[_:e118] type=Unit call=s9 map=[0->0] targs=[]
 expr e120 name(println) type=_
 expr e121 name(noneMatch) type=Class#0<Class#6<Int>, Class#6<Int>> ref=s25
-expr e122 memberCall recv=e121 callee=second args=[] type=Class#6<Int> ref=s4
+expr e122 memberCall recv=e121 callee=second args=[] type=T#2 ref=s4
 expr e123 call callee=e120 args=[_:e122] type=Unit call=s9 map=[0->0] targs=[]

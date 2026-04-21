@@ -394,7 +394,7 @@ Legend: **implemented** = sema stub + lowering + runtime; **partial** = sema stu
 | `CharRange` | partial | handled via fallback logic; no first-class sema stub |
 | `CharProgression` | gap | not implemented |
 | `ClosedRange<T>` (generic) | gap | no generic interface stub |
-| `OpenEndRange<T>` (generic) | implemented | interface stub added; `..<` operator typing still partial |
+| `OpenEndRange<T>` (generic) | gap | introduced in Kotlin 1.9; `..<` operator resolves but type is untyped |
 
 ### Range Operators and Extension Functions
 
@@ -450,4 +450,4 @@ Legend: **implemented** = sema stub + lowering + runtime; **partial** = sema stu
 4. **`kotlin.collections`**: `Grouping<T,K>` + `groupingBy/eachCount` – needed for aggregate grouping patterns
 5. **`kotlin.collections`**: `sortWith/fill/replaceAll/removeIf` on `MutableList`
 6. **`kotlin.ranges`**: `CharRange` first-class stub + `CharProgression`
-7. **`kotlin.ranges`**: `ClosedRange<T>` generic interface
+7. **`kotlin.ranges`**: `ClosedRange<T>` and `OpenEndRange<T>` generic interfaces

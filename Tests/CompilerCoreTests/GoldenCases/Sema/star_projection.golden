@@ -9,16 +9,16 @@ symbol s7 kind=function fq=golden.sema.eraseType vis=public flags=_ sig=recv=_ p
 symbol s8 kind=valueParameter fq=golden.sema.eraseType.$1.list vis=private flags=_
 symbol s9 kind=function fq=golden.sema.acceptAny vis=public flags=_ sig=recv=_ params=[Class#2<*>] ret=Unit suspend=0 defaults=[0] vararg=[0]
 symbol s10 kind=valueParameter fq=golden.sema.acceptAny.$2.c vis=private flags=_
-symbol s11 kind=local fq=__local_0.v vis=private flags=_ type=Any?
+symbol s11 kind=local fq=__local_0.v vis=private flags=_ type=T#3
 file f0 package=golden.sema
   decl d1 class Container sym=s2
   decl d2 fun readContainer suspend=0 inline=0 sym=s5
   decl d3 fun eraseType suspend=0 inline=0 sym=s7
   decl d4 fun acceptAny suspend=0 inline=0 sym=s9
 expr e0 name(c) type=Class#2<*> ref=s6
-expr e1 memberCall recv=e0 callee=item args=[] type=Any? ref=s4
+expr e1 memberCall recv=e0 callee=item args=[] type=T#3 ref=s4
 expr e2 name(list) type=Class#1<*> ref=s8
 expr e3 memberCall recv=e2 callee=size args=[] type=Int ref=s0
 expr e4 name(c) type=Class#2<*> ref=s10
-expr e5 memberCall recv=e4 callee=item args=[] type=Any? ref=s4
+expr e5 memberCall recv=e4 callee=item args=[] type=T#3 ref=s4
 expr e6 localDecl v mutable=0 type=_ init=e5 type=Unit ref=s11
