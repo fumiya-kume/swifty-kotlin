@@ -7,7 +7,21 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) {
         let kotlinTextPkg = ensureKotlinTextPackage(symbols: symbols, interner: interner)
+        let kotlinRootPkg = ensurePackage(path: ["kotlin"], symbols: symbols, interner: interner)
         let stringType = types.stringType
+        let charSequenceSymbol = ensureInterfaceSymbol(
+            named: "CharSequence",
+            in: kotlinRootPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let charSequenceType = types.make(.classType(ClassType(
+            classSymbol: charSequenceSymbol, args: [], nullability: .nonNull
+        )))
+        types.charSequenceInterfaceSymbol = charSequenceSymbol
+        if let kotlinRootPkgSymbol = symbols.lookup(fqName: kotlinRootPkg) {
+            symbols.setParentSymbol(kotlinRootPkgSymbol, for: charSequenceSymbol)
+        }
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let nullableBoolType = types.make(.primitive(.boolean, .nullable))
         let intType = types.intType
@@ -742,6 +756,59 @@ extension DataFlowSemaPhase {
         )
 
         // --- STDLIB-185: removePrefix / removeSuffix / removeSurrounding ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "removePrefix",
+            externalLinkName: "kk_string_removePrefix",
+            receiverType: charSequenceType,
+            parameters: [
+                ("prefix", charSequenceType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "removeSuffix",
+            externalLinkName: "kk_string_removeSuffix",
+            receiverType: charSequenceType,
+            parameters: [
+                ("suffix", charSequenceType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "removeSurrounding",
+            externalLinkName: "kk_string_removeSurrounding",
+            receiverType: charSequenceType,
+            parameters: [
+                ("delimiter", charSequenceType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "removeSurrounding",
+            externalLinkName: "kk_string_removeSurrounding_pair",
+            receiverType: charSequenceType,
+            parameters: [
+                ("prefix", charSequenceType, false, false),
+                ("suffix", charSequenceType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticStringExtensionFunction(
             named: "removePrefix",
@@ -1823,6 +1890,11 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        if let kotlinPkgSymbol = symbols.lookup(fqName: kotlinPkg) {
+            symbols.setParentSymbol(kotlinPkgSymbol, for: stringClassSymbol)
+        }
+        symbols.setDirectSupertypes([charSequenceSymbol], for: stringClassSymbol)
+        types.setNominalDirectSupertypes([charSequenceSymbol], for: stringClassSymbol)
         for bytesType in [listIntType, byteArrayType] {
             registerStringConstructorFromBytes(
                 ownerSymbol: stringClassSymbol,
