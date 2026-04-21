@@ -12,14 +12,12 @@ extension CallTypeChecker {
         }
         guard [
             "kk_op_rangeTo",
-            "kk_op_rangeUntil",
             "kk_uint_rangeTo",
             "kk_char_rangeTo",
             "kk_int_progression_fromClosedRange",
             "kk_long_progression_fromClosedRange",
             "kk_uint_progression_fromClosedRange",
             "kk_ulong_progression_fromClosedRange",
-            "kk_op_ulong_rangeUntil",
         ].contains(externalLinkName) else {
             return
         }
@@ -27,16 +25,13 @@ extension CallTypeChecker {
         sema.bindings.markRangeExpr(id)
         if externalLinkName == "kk_uint_rangeTo"
             || externalLinkName == "kk_uint_progression_fromClosedRange"
-            || (externalLinkName == "kk_op_rangeUntil" && returnType == sema.types.uintType)
         {
             sema.bindings.markUIntRangeExpr(id)
         }
         if externalLinkName == "kk_char_rangeTo" {
             sema.bindings.markCharRangeExpr(id)
         }
-        if externalLinkName == "kk_ulong_progression_fromClosedRange"
-            || externalLinkName == "kk_op_ulong_rangeUntil"
-        {
+        if externalLinkName == "kk_ulong_progression_fromClosedRange" {
             sema.bindings.markULongRangeExpr(id)
         }
     }
