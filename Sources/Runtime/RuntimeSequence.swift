@@ -3651,6 +3651,30 @@ public func kk_sequence_filterNotTo(
     return destRaw
 }
 
+/// `mapTo`: Evaluate the sequence and append transformed elements to the destination.
+@_cdecl("kk_sequence_mapTo")
+public func kk_sequence_mapTo(
+    _ seqRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for elem in elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        runtimeAppendToMutableCollection(destRaw, maybeUnbox(result))
+    }
+    return destRaw
+}
+
 /// `filterIndexedTo`: Evaluate the sequence and append elements matching the indexed predicate to the destination.
 @_cdecl("kk_sequence_filterIndexedTo")
 public func kk_sequence_filterIndexedTo(
@@ -3672,6 +3696,32 @@ public func kk_sequence_filterIndexedTo(
         }
         if maybeUnbox(result) != 0 {
             runtimeAppendToMutableCollection(destRaw, elem)
+        }
+    }
+    return destRaw
+}
+
+/// `mapIndexedNotNullTo`: Evaluate the sequence, apply the indexed transform, and append non-null results.
+@_cdecl("kk_sequence_mapIndexedNotNullTo")
+public func kk_sequence_mapIndexedNotNullTo(
+    _ seqRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for (idx, elem) in elements.enumerated() {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if result != runtimeNullSentinelInt {
+            runtimeAppendToMutableCollection(destRaw, maybeUnbox(result))
         }
     }
     return destRaw

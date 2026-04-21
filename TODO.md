@@ -81,7 +81,7 @@
 - [ ] STDLIB-SEQ-019: `Sequence.shuffled()` / `Sequence.shuffled(random)` を追加する
 - [ ] STDLIB-SEQ-020: `Sequence.flatMapIndexed(transform)` の `Iterable` / `Sequence` overload 群を追加する
 - [x] STDLIB-SEQ-021: `Sequence.filterTo` / `filterNotTo` / `filterIndexedTo` / `filterIsInstanceTo` / `filterNotNullTo` を追加する
-- [ ] STDLIB-SEQ-022: `Sequence.mapTo` / `mapIndexedNotNullTo` を追加する
+- [x] STDLIB-SEQ-022: `Sequence.mapTo` / `mapIndexedNotNullTo` を追加する
 - [x] STDLIB-SEQ-023: `Sequence.associateTo` / `associateByTo` / `associateWithTo` / `groupByTo` を追加する
 - [x] STDLIB-SEQ-024: `Sequence.toCollection(destination)` を追加する
 - [x] STDLIB-SEQ-025: `Sequence.toMutableList()` / `toMutableSet()` / `toHashSet()` を追加する

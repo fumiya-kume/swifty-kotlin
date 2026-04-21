@@ -1113,6 +1113,26 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         )
     }
 
+    func testVirtualCallOnSequenceTypedParameterRewritesToKkSequenceMapTo() throws {
+        let callees = try buildAndLowerVirtualCallWithArgs(
+            receiverTypeName: "Sequence", callee: "mapTo", argCount: 2
+        )
+        XCTAssertTrue(
+            callees.contains("kk_sequence_mapTo"),
+            "virtualCall(mapTo) on Sequence-typed parameter should be rewritten to kk_sequence_mapTo, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnSequenceTypedParameterRewritesToKkSequenceMapIndexedNotNullTo() throws {
+        let callees = try buildAndLowerVirtualCallWithArgs(
+            receiverTypeName: "Sequence", callee: "mapIndexedNotNullTo", argCount: 2
+        )
+        XCTAssertTrue(
+            callees.contains("kk_sequence_mapIndexedNotNullTo"),
+            "virtualCall(mapIndexedNotNullTo) on Sequence-typed parameter should be rewritten to kk_sequence_mapIndexedNotNullTo, got: \(callees)"
+        )
+    }
+
     func testWithoutSemaContextVirtualCallIsNotRewritten() throws {
         let interner = StringInterner()
         let arena = KIRArena()

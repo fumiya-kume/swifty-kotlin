@@ -1127,7 +1127,7 @@ extension CallTypeChecker {
             "groupBy", "groupingBy", "reduceTo", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "associateTo", "associateByTo", "associateWithTo", "groupByTo",
             "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo", "mapIndexedTo", "flatMapIndexedTo",
-            "filterIndexedTo", "filterNotNullTo",
+            "mapIndexedNotNullTo", "filterIndexedTo", "filterNotNullTo",
             "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
@@ -1557,7 +1557,7 @@ extension CallTypeChecker {
             let resultType: TypeID
             let destinationCollectionHOFs: Set = [
                 "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo",
-                "mapIndexedTo", "flatMapIndexedTo", "associateTo",
+                "mapIndexedTo", "mapIndexedNotNullTo", "flatMapIndexedTo", "associateTo",
                 "filterIndexedTo",
             ]
             if destinationCollectionHOFs.contains(calleeStr), args.count == 2 {
@@ -1662,6 +1662,13 @@ extension CallTypeChecker {
                     sema.types.make(.functionType(FunctionType(
                         params: [sema.types.intType, collectionElementType],
                         returnType: destinationElementType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                case "mapIndexedNotNullTo":
+                    sema.types.make(.functionType(FunctionType(
+                        params: [sema.types.intType, collectionElementType],
+                        returnType: sema.types.makeNullable(destinationElementType),
                         isSuspend: false,
                         nullability: .nonNull
                     )))

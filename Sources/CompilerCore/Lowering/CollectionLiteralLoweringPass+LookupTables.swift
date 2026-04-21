@@ -317,6 +317,9 @@ struct CollectionLiteralLookupTables {
     // STDLIB-SEQ-021: Sequence destination-collection filter operations
     let kkSequenceFilterToName: InternedString
     let kkSequenceFilterNotToName: InternedString
+    // STDLIB-SEQ-022: Sequence destination-collection mapping operations
+    let kkSequenceMapToName: InternedString
+    let kkSequenceMapIndexedNotNullToName: InternedString
     let kkSequenceFilterIndexedToName: InternedString
     let kkSequenceFilterNotNullToName: InternedString
     let kkSequenceFilterIsInstanceToName: InternedString
@@ -483,6 +486,7 @@ struct CollectionLiteralLookupTables {
     let flatMapToName: InternedString
     let mapNotNullToName: InternedString
     let mapIndexedToName: InternedString
+    let mapIndexedNotNullToName: InternedString
     let flatMapIndexedToName: InternedString
     let filterIsInstanceToName: InternedString
     let filterIndexedToName: InternedString
@@ -1056,6 +1060,8 @@ struct CollectionLiteralLookupTables {
         // STDLIB-SEQ-021: Sequence destination-collection filter operations
         kkSequenceFilterToName = interner.intern("kk_sequence_filterTo")
         kkSequenceFilterNotToName = interner.intern("kk_sequence_filterNotTo")
+        kkSequenceMapToName = interner.intern("kk_sequence_mapTo")
+        kkSequenceMapIndexedNotNullToName = interner.intern("kk_sequence_mapIndexedNotNullTo")
         kkSequenceFilterIndexedToName = interner.intern("kk_sequence_filterIndexedTo")
         kkSequenceFilterNotNullToName = interner.intern("kk_sequence_filterNotNullTo")
         kkSequenceFilterIsInstanceToName = interner.intern("kk_sequence_filterIsInstanceTo")
@@ -1217,6 +1223,7 @@ struct CollectionLiteralLookupTables {
         flatMapToName = interner.intern("flatMapTo")
         mapNotNullToName = interner.intern("mapNotNullTo")
         mapIndexedToName = interner.intern("mapIndexedTo")
+        mapIndexedNotNullToName = interner.intern("mapIndexedNotNullTo")
         flatMapIndexedToName = interner.intern("flatMapIndexedTo")
         filterIsInstanceToName = interner.intern("filterIsInstanceTo")
         filterIndexedToName = interner.intern("filterIndexedTo")

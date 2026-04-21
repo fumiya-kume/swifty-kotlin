@@ -1552,6 +1552,44 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(_lazySequenceOnEachIndexedTrace, [10, 120, 230])
     }
 
+    func testSequenceMapToAppendsToDestination() {
+        let seq = makeSequence([1, 2, 3])
+        let dest = makeList([99])
+        let mapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value * 10
+        }
+
+        let result = kk_sequence_mapTo(
+            seq,
+            dest,
+            unsafeBitCast(mapFn, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(listElements(result), [99, 10, 20, 30])
+    }
+
+    func testSequenceMapIndexedNotNullToAppendsOnlyNonNullResults() {
+        let seq = makeSequence([1, 2, 3, 4])
+        let dest = makeList([50])
+        let mapFn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
+            index % 2 == 0 ? index + value : runtimeNullSentinelInt
+        }
+
+        let result = kk_sequence_mapIndexedNotNullTo(
+            seq,
+            dest,
+            unsafeBitCast(mapFn, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(listElements(result), [50, 1, 5])
+    }
+
     func testSequenceWithIndexCorrectness() {
         // Test correctness of withIndex
         let seq = makeSequence([10, 20, 30])

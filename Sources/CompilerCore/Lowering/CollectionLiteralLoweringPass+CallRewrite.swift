@@ -3104,6 +3104,49 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    // --- STDLIB-SEQ-022: sequence destination-collection mapping variants ---
+                    if (callee == lookup.mapToName || callee == lookup.mapIndexedNotNullToName),
+                       (arguments.count == 3 || arguments.count == 4),
+                       sequenceExprIDs.contains(arguments[0].rawValue)
+                    {
+                        let receiverID = arguments[0]
+                        let destID = arguments[1]
+                        let lambdaID = arguments[2]
+                        let closureRawID: KIRExprID
+                        if arguments.count == 4 {
+                            closureRawID = arguments[3]
+                        } else {
+                            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                            closureRawID = zeroExpr
+                        }
+                        let kkName = callee == lookup.mapToName
+                            ? lookup.kkSequenceMapToName
+                            : lookup.kkSequenceMapIndexedNotNullToName
+                        let hofResult = module.arena.appendExpr(
+                            .temporary(Int32(module.arena.expressions.count)), type: nil
+                        )
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkName,
+                            arguments: [receiverID, destID, lambdaID, closureRawID],
+                            result: hofResult,
+                            canThrow: canThrow,
+                            thrownResult: thrownResult
+                        ))
+                        if let result {
+                            if listExprIDs.contains(destID.rawValue) {
+                                listExprIDs.insert(result.rawValue)
+                                listExprIDs.insert(hofResult.rawValue)
+                            } else if setExprIDs.contains(destID.rawValue) {
+                                setExprIDs.insert(result.rawValue)
+                                setExprIDs.insert(hofResult.rawValue)
+                            }
+                            loweredBody.append(.copy(from: hofResult, to: result))
+                        }
+                        continue
+                    }
+
                     // --- STDLIB-021: destination collection variants with [receiver, dest, lambda, closureRaw?] ---
                     if callee == lookup.filterToName || callee == lookup.filterNotToName
                         || callee == lookup.mapToName || callee == lookup.flatMapToName
