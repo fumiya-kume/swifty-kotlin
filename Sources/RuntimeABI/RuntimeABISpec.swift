@@ -779,6 +779,17 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_string_split_limit",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "delimRaw", type: .intptr),
+                RuntimeABIParameter(name: "ignoreCaseRaw", type: .intptr),
+                RuntimeABIParameter(name: "limitRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_toInt",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),

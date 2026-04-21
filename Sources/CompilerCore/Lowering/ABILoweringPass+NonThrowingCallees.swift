@@ -80,6 +80,7 @@ extension ABILoweringPass {
             interner.intern("kk_string_endsWith"),
             interner.intern("kk_string_contains_str"),
             interner.intern("kk_string_split"),
+            interner.intern("kk_string_split_limit"),
             interner.intern("kk_string_chunked"),
             interner.intern("kk_string_zipWithNext"),
             interner.intern("kk_string_windowed_default"),
@@ -813,6 +814,8 @@ extension ABILoweringPass {
             interner.intern("kk_result_getOrNull"),
             interner.intern("kk_result_getOrDefault"),
             interner.intern("kk_result_exceptionOrNull"),
+            // buildString(capacity, builderAction) overload (STDLIB-TEXT-EDGE-007)
+            interner.intern("kk_build_string_with_capacity"),
             // StringBuilder enhancements (STDLIB-311) — buildString DSL helpers
             interner.intern("kk_string_builder_append"),
             interner.intern("kk_string_builder_append_line"),

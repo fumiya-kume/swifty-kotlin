@@ -2857,6 +2857,65 @@ extension CallLowerer {
             }
         }
 
+        // STDLIB-TEXT-EDGE-001: split(delimiter, ignoreCase) — 2-arg overload
+        if args.count == 2, interner.resolve(calleeName) == "split" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let firstArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+            )
+            let secondArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[1].expr] ?? sema.types.anyType
+            )
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
+               sema.types.isSubtype(firstArgType, sema.types.stringType),
+               sema.types.isSubtype(secondArgType, sema.types.booleanType)
+            {
+                // limit = 0 means "no limit" for Kotlin's split overload.
+                let zeroLimitExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroLimitExpr, value: .intLiteral(0)))
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_split_limit"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1], zeroLimitExpr],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // STDLIB-TEXT-EDGE-001: split(delimiter, ignoreCase, limit) — 3-arg overload
+        if args.count == 3, interner.resolve(calleeName) == "split" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let firstArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+            )
+            let secondArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[1].expr] ?? sema.types.anyType
+            )
+            let thirdArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[2].expr] ?? sema.types.anyType
+            )
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
+               sema.types.isSubtype(firstArgType, sema.types.stringType),
+               sema.types.isSubtype(secondArgType, sema.types.booleanType),
+               sema.types.isSubtype(thirdArgType, sema.types.intType)
+            {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_split_limit"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1], loweredArgIDs[2]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         // String stdlib: 2-arg overloads (STDLIB-009, STDLIB-549)
         // KNOWN LIMITATION: The dispatch below matches purely on function name + receiver
         // type (String). User-defined extension functions with the same name (e.g.
@@ -3292,6 +3351,14 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_associateBy"
                 } else if calleeName == interner.intern("find") {
                     runtimeCallee = "kk_sequence_find"
+                } else if calleeName == interner.intern("findLast") {
+                    runtimeCallee = "kk_sequence_findLast"
+                } else if calleeName == interner.intern("any") {
+                    runtimeCallee = "kk_sequence_any"
+                } else if calleeName == interner.intern("all") {
+                    runtimeCallee = "kk_sequence_all"
+                } else if calleeName == interner.intern("none") {
+                    runtimeCallee = "kk_sequence_none"
                 } else if calleeName == interner.intern("mapNotNull") {
                     runtimeCallee = "kk_sequence_mapNotNull"
                 } else if calleeName == interner.intern("mapIndexed") {
@@ -3316,6 +3383,10 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_associate"
                         || runtimeCallee == "kk_sequence_associateBy"
                         || runtimeCallee == "kk_sequence_find"
+                        || runtimeCallee == "kk_sequence_findLast"
+                        || runtimeCallee == "kk_sequence_any"
+                        || runtimeCallee == "kk_sequence_all"
+                        || runtimeCallee == "kk_sequence_none"
                         || runtimeCallee == "kk_sequence_mapNotNull"
                         || runtimeCallee == "kk_sequence_mapIndexed"
                         || runtimeCallee == "kk_sequence_onEach"
@@ -3636,12 +3707,16 @@ extension CallLowerer {
                 let lastID = interner.intern("last")
                 let lastOrNullID = interner.intern("lastOrNull")
                 let countID = interner.intern("count")
+                let anyID = interner.intern("any")
+                let noneID = interner.intern("none")
 
                 let seqFirstCallee = interner.intern("kk_sequence_first")
                 let seqFirstOrNullCallee = interner.intern("kk_sequence_firstOrNull")
                 let seqLastCallee = interner.intern("kk_sequence_last")
                 let seqLastOrNullCallee = interner.intern("kk_sequence_lastOrNull")
                 let seqCountCallee = interner.intern("kk_sequence_count")
+                let seqAnyCallee = interner.intern("kk_sequence_any")
+                let seqNoneCallee = interner.intern("kk_sequence_none")
 
                 let runtimeCallee: InternedString? = switch calleeName {
                 case toListID:
@@ -3668,10 +3743,28 @@ extension CallLowerer {
                     seqLastOrNullCallee
                 case countID:
                     seqCountCallee
+                case anyID:
+                    seqAnyCallee
+                case noneID:
+                    seqNoneCallee
                 default:
                     nil
                 }
                 if let runtimeCallee {
+                    // any()/none() with no predicate: pass fnPtr=0, closure=0 sentinel
+                    if runtimeCallee == seqAnyCallee || runtimeCallee == seqNoneCallee {
+                        let zeroExpr = arena.appendExpr(.intLiteral(0), type: nil)
+                        instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: runtimeCallee,
+                            arguments: [loweredReceiverID, zeroExpr, zeroExpr],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        return result
+                    }
                     let canThrow = runtimeCallee == seqFirstCallee
                         || runtimeCallee == seqFirstOrNullCallee
                         || runtimeCallee == seqLastCallee
@@ -6536,6 +6629,14 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_associateBy")
             case interner.intern("find"):
                 return interner.intern("kk_sequence_find")
+            case interner.intern("findLast"):
+                return interner.intern("kk_sequence_findLast")
+            case interner.intern("any"):
+                return interner.intern("kk_sequence_any")
+            case interner.intern("all"):
+                return interner.intern("kk_sequence_all")
+            case interner.intern("none"):
+                return interner.intern("kk_sequence_none")
             case interner.intern("mapNotNull"):
                 return interner.intern("kk_sequence_mapNotNull")
             case interner.intern("filterNot"):
