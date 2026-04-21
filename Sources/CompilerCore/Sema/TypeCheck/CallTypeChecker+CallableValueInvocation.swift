@@ -24,6 +24,8 @@ extension CallTypeChecker {
         if let externalLinkName = sema.symbols.externalLinkName(for: chosen),
            [
                "kk_op_rangeTo",
+               "kk_op_rangeUntil",
+               "kk_op_ulong_rangeUntil",
                "kk_int_progression_fromClosedRange",
                "kk_long_progression_fromClosedRange",
                "kk_uint_progression_fromClosedRange",
@@ -35,6 +37,9 @@ extension CallTypeChecker {
                 sema.bindings.markUIntRangeExpr(id)
             }
             if externalLinkName == "kk_ulong_progression_fromClosedRange" {
+                sema.bindings.markULongRangeExpr(id)
+            }
+            if externalLinkName == "kk_op_ulong_rangeUntil" {
                 sema.bindings.markULongRangeExpr(id)
             }
         }
