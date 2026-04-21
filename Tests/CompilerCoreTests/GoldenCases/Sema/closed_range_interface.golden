@@ -1,0 +1,68 @@
+symbol s0 kind=interface fq=kotlin.ranges.ClosedRange vis=public flags=synthetic
+symbol s1 kind=typeParameter fq=kotlin.ranges.ClosedRange.T vis=private flags=_
+symbol s2 kind=property fq=kotlin.ranges.ClosedRange.start vis=public flags=synthetic type=T#1
+symbol s3 kind=property fq=kotlin.ranges.ClosedRange.endInclusive vis=public flags=synthetic type=T#1
+symbol s4 kind=function fq=kotlin.ranges.ClosedRange.contains vis=public flags=synthetic|operatorFunction sig=recv=Class#0<T#1> params=[T#1] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s5 kind=function fq=kotlin.ranges.ClosedRange.isEmpty vis=public flags=synthetic sig=recv=Class#0<T#1> params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=golden.sema.intClosedRangeValue vis=public flags=_ sig=recv=_ params=[] ret=Class#0<Int> suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=golden.sema.longClosedRangeValue vis=public flags=_ sig=recv=_ params=[] ret=Class#0<Long> suspend=0 defaults=[] vararg=[]
+symbol s8 kind=function fq=golden.sema.uintClosedRangeValue vis=public flags=_ sig=recv=_ params=[] ret=Class#0<UInt> suspend=0 defaults=[] vararg=[]
+symbol s9 kind=function fq=golden.sema.ulongClosedRangeValue vis=public flags=_ sig=recv=_ params=[] ret=Class#0<ULong> suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=golden.sema.charClosedRangeValue vis=public flags=_ sig=recv=_ params=[] ret=Class#0<Char> suspend=0 defaults=[] vararg=[]
+symbol s11 kind=function fq=golden.sema.intClosedRangeContains vis=public flags=_ sig=recv=_ params=[Class#0<Int>,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s12 kind=valueParameter fq=golden.sema.intClosedRangeContains.$0.range vis=private flags=_
+symbol s13 kind=valueParameter fq=golden.sema.intClosedRangeContains.$0.value vis=private flags=_
+symbol s14 kind=function fq=golden.sema.longClosedRangeContains vis=public flags=_ sig=recv=_ params=[Class#0<Long>,Long] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s15 kind=valueParameter fq=golden.sema.longClosedRangeContains.$1.range vis=private flags=_
+symbol s16 kind=valueParameter fq=golden.sema.longClosedRangeContains.$1.value vis=private flags=_
+symbol s17 kind=function fq=golden.sema.longClosedRangeIsEmpty vis=public flags=_ sig=recv=_ params=[Class#0<Long>] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s18 kind=valueParameter fq=golden.sema.longClosedRangeIsEmpty.$2.range vis=private flags=_
+symbol s19 kind=function fq=golden.sema.uintClosedRangeContains vis=public flags=_ sig=recv=_ params=[Class#0<UInt>,UInt] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s20 kind=valueParameter fq=golden.sema.uintClosedRangeContains.$3.range vis=private flags=_
+symbol s21 kind=valueParameter fq=golden.sema.uintClosedRangeContains.$3.value vis=private flags=_
+symbol s22 kind=function fq=golden.sema.ulongClosedRangeStart vis=public flags=_ sig=recv=_ params=[Class#0<ULong>] ret=ULong suspend=0 defaults=[0] vararg=[0]
+symbol s23 kind=valueParameter fq=golden.sema.ulongClosedRangeStart.$4.range vis=private flags=_
+symbol s24 kind=function fq=golden.sema.charClosedRangeEnd vis=public flags=_ sig=recv=_ params=[Class#0<Char>] ret=Char suspend=0 defaults=[0] vararg=[0]
+symbol s25 kind=valueParameter fq=golden.sema.charClosedRangeEnd.$5.range vis=private flags=_
+file f0 package=golden.sema
+  decl d0 fun intClosedRangeValue suspend=0 inline=0 sym=s6
+  decl d1 fun longClosedRangeValue suspend=0 inline=0 sym=s7
+  decl d2 fun uintClosedRangeValue suspend=0 inline=0 sym=s8
+  decl d3 fun ulongClosedRangeValue suspend=0 inline=0 sym=s9
+  decl d4 fun charClosedRangeValue suspend=0 inline=0 sym=s10
+  decl d5 fun intClosedRangeContains suspend=0 inline=0 sym=s11
+  decl d6 fun longClosedRangeContains suspend=0 inline=0 sym=s14
+  decl d7 fun longClosedRangeIsEmpty suspend=0 inline=0 sym=s17
+  decl d8 fun uintClosedRangeContains suspend=0 inline=0 sym=s19
+  decl d9 fun ulongClosedRangeStart suspend=0 inline=0 sym=s22
+  decl d10 fun charClosedRangeEnd suspend=0 inline=0 sym=s24
+expr e0 int(1) type=Int
+expr e1 int(10) type=Int
+expr e2 binary(rangeTo) lhs=e0 rhs=e1 type=Int
+expr e3 long(1) type=Long
+expr e4 long(10) type=Long
+expr e5 binary(rangeTo) lhs=e3 rhs=e4 type=Long
+expr e6 uint(1) type=UInt
+expr e7 uint(10) type=UInt
+expr e8 binary(rangeTo) lhs=e6 rhs=e7 type=UInt
+expr e9 ulong(1) type=ULong
+expr e10 ulong(10) type=ULong
+expr e11 binary(rangeTo) lhs=e9 rhs=e10 type=ULong
+expr e12 char(97) type=Char
+expr e13 char(122) type=Char
+expr e14 binary(rangeTo) lhs=e12 rhs=e13 type=Int
+expr e15 name(value) type=Int ref=s13
+expr e16 name(range) type=Class#0<Int> ref=s12
+expr e17 inExpr lhs=e15 rhs=e16 type=Boolean call=s4 map=[0->0] targs=[Int]
+expr e18 name(range) type=Class#0<Long> ref=s15
+expr e19 name(value) type=Long ref=s16
+expr e20 memberCall recv=e18 callee=contains args=[_:e19] type=Boolean call=s4 map=[0->0] targs=[Long]
+expr e21 name(range) type=Class#0<Long> ref=s18
+expr e22 memberCall recv=e21 callee=isEmpty args=[] type=Boolean call=s5 map=[] targs=[Long]
+expr e23 name(value) type=UInt ref=s21
+expr e24 name(range) type=Class#0<UInt> ref=s20
+expr e25 inExpr lhs=e23 rhs=e24 type=Boolean call=s4 map=[0->0] targs=[UInt]
+expr e26 name(range) type=Class#0<ULong> ref=s23
+expr e27 memberCall recv=e26 callee=start args=[] type=T#1 ref=s2
+expr e28 name(range) type=Class#0<Char> ref=s25
+expr e29 memberCall recv=e28 callee=endInclusive args=[] type=T#1 ref=s3

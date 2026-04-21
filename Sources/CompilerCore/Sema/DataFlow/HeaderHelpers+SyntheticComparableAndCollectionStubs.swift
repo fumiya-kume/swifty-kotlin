@@ -69,9 +69,10 @@ extension DataFlowSemaPhase {
             tParamSymbol: tParamSymbol,
             tParamType: tParamType
         )
-        
+
         // Set up primitive types to implement Comparable<Self>
         setupPrimitiveComparableImplementations(symbols: symbols, types: types, interner: interner, comparableSymbol: comparableSymbol)
+        patchSyntheticClosedRangeTypeParameterUpperBound(symbols: symbols, types: types, interner: interner)
     }
 
     /// Set up primitive types to implement Comparable<Self>
