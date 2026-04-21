@@ -66,7 +66,7 @@
 - [ ] STDLIB-SEQ-004: `Sequence.flatMap` / `distinct` / `zip` / `drop` を追加する
 - [ ] STDLIB-SEQ-005: `Sequence.count` / `forEach` / `fold` / `first` / `firstOrNull` を追加する
 - [ ] STDLIB-SEQ-006: `Iterable.asSequence()` と `Sequence.constrainOnce()` を追加する
-- [ ] STDLIB-SEQ-007: `Sequence.any` / `all` / `find` の short-circuit を追加する
+- [x] STDLIB-SEQ-007: `Sequence.any` / `all` / `find` の short-circuit を追加する
 - [ ] STDLIB-SEQ-008: `Sequence.chunked(size, transform)` overload を追加する
 - [ ] STDLIB-SEQ-009: `Sequence.windowed(size, step, partialWindows, transform)` overload を追加する
 - [ ] STDLIB-SEQ-010: `Sequence.onEachIndexed(action)` を追加する

@@ -632,6 +632,7 @@ struct CollectionLiteralLookupTables {
     let buildSetName: InternedString
     let buildMapName: InternedString
     let kkBuildStringName: InternedString
+    let kkBuildStringWithCapacityName: InternedString
     let kkBuildListName: InternedString
     let kkBuildListWithCapacityName: InternedString
     let kkBuildSetName: InternedString
@@ -1342,6 +1343,7 @@ struct CollectionLiteralLookupTables {
         buildSetName = interner.intern("buildSet")
         buildMapName = interner.intern("buildMap")
         kkBuildStringName = interner.intern("kk_build_string")
+        kkBuildStringWithCapacityName = interner.intern("kk_build_string_with_capacity")
         kkBuildListName = interner.intern("kk_build_list")
         kkBuildListWithCapacityName = interner.intern("kk_build_list_with_capacity")
         kkBuildSetName = interner.intern("kk_build_set")
@@ -1478,6 +1480,7 @@ struct CollectionLiteralLookupTables {
             interner.intern("kk_string_replaceIndent"),
             kkStringFilterName,
             interner.intern("kk_build_string"),
+            interner.intern("kk_build_string_with_capacity"),
         ]
     }
 }

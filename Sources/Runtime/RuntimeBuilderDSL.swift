@@ -310,6 +310,20 @@ public func kk_build_string(_ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>
     return runtimeMakeStringRaw(frame.value)
 }
 
+@_cdecl("kk_build_string_with_capacity")
+public func kk_build_string_with_capacity(
+    _ capacity: Int,
+    _ fnPtr: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    // capacity is an optimization hint only; no semantic difference from kk_build_string.
+    if capacity < 0 {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: capacity must be non-negative.")
+        return 0
+    }
+    return kk_build_string(fnPtr, outThrown)
+}
+
 @_cdecl("kk_builder_list_add")
 public func kk_builder_list_add(_ elem: Int) -> Int {
     runtimeBuilderState.appendListElement(elem)
