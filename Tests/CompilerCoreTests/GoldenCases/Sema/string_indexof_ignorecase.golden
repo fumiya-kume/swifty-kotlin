@@ -3698,7 +3698,32 @@ symbol s3696 kind=annotationClass fq=kotlin.ExperimentalSubclassOptIn vis=public
 symbol s3697 kind=annotationClass fq=kotlin.uuid.ExperimentalUuidApi vis=public flags=synthetic
 symbol s3698 kind=package fq=kotlin.io.encoding vis=public flags=synthetic
 symbol s3699 kind=annotationClass fq=kotlin.io.encoding.ExperimentalEncodingApi vis=public flags=synthetic
-symbol s3700 kind=property fq=golden.sema.unused vis=public flags=_ type=Int
-file f0 package=golden.sema annotations=[@file:Suppress("UNUSED"),@file:JvmName("CustomName")]
-  decl d0 property unused var=0 sym=s3700
-expr e0 int(42) type=Int
+symbol s3700 kind=function fq=golden.sema.useIndexOfIgnoreCase vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3701 kind=function fq=golden.sema.useLastIndexOfIgnoreCase vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3702 kind=function fq=golden.sema.useIndexOfIgnoreCaseFalse vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3703 kind=function fq=golden.sema.useLastIndexOfIgnoreCaseFalse vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+file f0 package=golden.sema
+  decl d0 fun useIndexOfIgnoreCase suspend=0 inline=0 sym=s3700
+  decl d1 fun useLastIndexOfIgnoreCase suspend=0 inline=0 sym=s3701
+  decl d2 fun useIndexOfIgnoreCaseFalse suspend=0 inline=0 sym=s3702
+  decl d3 fun useLastIndexOfIgnoreCaseFalse suspend=0 inline=0 sym=s3703
+expr e0 string(Hello World) type=String
+expr e1 string(world) type=String
+expr e2 int(0) type=Int
+expr e3 bool(true) type=Boolean
+expr e4 memberCall recv=e0 callee=indexOf args=[_:e1,_:e2,ignoreCase:e3] type=Int call=s778 map=[0->0,1->1,2->2] targs=[]
+expr e5 string(Hello World Hello) type=String
+expr e6 string(hello) type=String
+expr e7 int(20) type=Int
+expr e8 bool(true) type=Boolean
+expr e9 memberCall recv=e5 callee=lastIndexOf args=[_:e6,_:e7,ignoreCase:e8] type=Int call=s780 map=[0->0,1->1,2->2] targs=[]
+expr e10 string(Hello World) type=String
+expr e11 string(world) type=String
+expr e12 int(0) type=Int
+expr e13 bool(false) type=Boolean
+expr e14 memberCall recv=e10 callee=indexOf args=[_:e11,_:e12,ignoreCase:e13] type=Int call=s778 map=[0->0,1->1,2->2] targs=[]
+expr e15 string(Hello World Hello) type=String
+expr e16 string(Hello) type=String
+expr e17 int(20) type=Int
+expr e18 bool(false) type=Boolean
+expr e19 memberCall recv=e15 callee=lastIndexOf args=[_:e16,_:e17,ignoreCase:e18] type=Int call=s780 map=[0->0,1->1,2->2] targs=[]
