@@ -172,7 +172,7 @@ extension CallLowerer {
         "putAll", "addAll",
         "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
         "plus", "minus",
-        "asSequence", "asIterable", "toList", "toSet", "toMap", "toMutableList", "toMutableSet", "toTypedArray",
+        "asSequence", "asIterable", "toList", "toSet", "toMap", "toCollection", "toMutableList", "toMutableSet", "toTypedArray",
         "toIntArray", "toLongArray", "toByteArray",
         "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect", "subList",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
@@ -6908,6 +6908,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_sum")
             case interner.intern("average"):
                 return interner.intern("kk_sequence_average")
+            case interner.intern("toCollection"):
+                return interner.intern("kk_sequence_toCollection")
             case interner.intern("toMutableList"):
                 return interner.intern("kk_sequence_toMutableList")
             case interner.intern("toMutableSet"):

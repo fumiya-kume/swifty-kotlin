@@ -1234,7 +1234,7 @@ extension CallTypeChecker {
 
         if interner.resolve(calleeName) == "toCollection",
            args.count == 1,
-           isCollectionReceiver
+           isCollectionReceiver || isSequenceReceiver
         {
             let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             sema.bindings.markCollectionExpr(id)
