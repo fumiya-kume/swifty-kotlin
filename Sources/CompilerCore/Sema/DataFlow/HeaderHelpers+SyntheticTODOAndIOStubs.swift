@@ -2578,6 +2578,104 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // any(): Boolean
+        registerSequenceMemberStub(
+            named: "any",
+            externalLinkName: "kk_sequence_any",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: types.booleanType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // any(predicate: (T) -> Boolean): Boolean
+        registerSequenceMemberStub(
+            named: "any",
+            externalLinkName: "kk_sequence_any",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: types.booleanType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // all(predicate: (T) -> Boolean): Boolean
+        registerSequenceMemberStub(
+            named: "all",
+            externalLinkName: "kk_sequence_all",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: types.booleanType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // none(): Boolean
+        registerSequenceMemberStub(
+            named: "none",
+            externalLinkName: "kk_sequence_none",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: types.booleanType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // none(predicate: (T) -> Boolean): Boolean
+        registerSequenceMemberStub(
+            named: "none",
+            externalLinkName: "kk_sequence_none",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: types.booleanType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // find(predicate: (T) -> Boolean): T?
+        registerSequenceMemberStub(
+            named: "find",
+            externalLinkName: "kk_sequence_find",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: types.makeNullable(typeParamType),
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // findLast(predicate: (T) -> Boolean): T?
+        registerSequenceMemberStub(
+            named: "findLast",
+            externalLinkName: "kk_sequence_findLast",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: types.makeNullable(typeParamType),
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // toList(): List<T>
         registerSequenceMemberStub(
             named: "toList",
@@ -2745,6 +2843,62 @@ extension DataFlowSemaPhase {
             receiverType: receiverType,
             parameters: [("action", forEachIndexedActionType)],
             returnType: types.unitType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // any(predicate: (T) -> Boolean): Boolean  (STDLIB-SEQ-007)
+        registerSequenceMemberStub(
+            named: "any",
+            externalLinkName: "kk_sequence_any",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: types.booleanType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // all(predicate: (T) -> Boolean): Boolean  (STDLIB-SEQ-007)
+        registerSequenceMemberStub(
+            named: "all",
+            externalLinkName: "kk_sequence_all",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: types.booleanType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // none(predicate: (T) -> Boolean): Boolean  (STDLIB-SEQ-007)
+        registerSequenceMemberStub(
+            named: "none",
+            externalLinkName: "kk_sequence_none",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: types.booleanType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // find(predicate: (T) -> Boolean): T?  (STDLIB-SEQ-007)
+        registerSequenceMemberStub(
+            named: "find",
+            externalLinkName: "kk_sequence_find",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: types.makeNullable(typeParamType),
             sequenceSymbol: sequenceSymbol,
             sequenceFQName: sequenceFQName,
             typeParamSymbol: typeParamSymbol,

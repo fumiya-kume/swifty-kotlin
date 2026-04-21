@@ -554,5 +554,50 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
+        // STDLIB-SEQ-007: any/all/none/find with short-circuit semantics
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_any",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_all",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_none",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_find",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
     ]
 }
