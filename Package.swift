@@ -24,9 +24,6 @@ let package = Package(
         .systemLibrary(
             name: "CLLVM"
         ),
-        .systemLibrary(
-            name: "CSQLite"
-        ),
         .target(
             name: "RuntimeABI"
         ),
@@ -61,8 +58,7 @@ let package = Package(
             path: "Sources/GoldenHarnessWorker"
         ),
         .target(
-            name: "Runtime",
-            dependencies: ["CSQLite"]
+            name: "Runtime"
         ),
         .testTarget(
             name: "CompilerCoreTests",
@@ -71,14 +67,6 @@ let package = Package(
             exclude: [
                 "GoldenCases",
                 "Integration/ClassDelegationSmokeTest.kt",
-                "Integration/GoldenHarnessCaseDiscovery.swift",
-                "Integration/GoldenHarnessDump.swift",
-                "Integration/GoldenHarnessExprFormat.swift",
-                "Integration/GoldenHarnessGoldenFileIO.swift",
-                "Integration/GoldenHarnessGoldenSuiteKind.swift",
-                "Integration/GoldenHarnessPaths.swift",
-                "Integration/GoldenHarnessSemaFormat.swift",
-                "Integration/GoldenHarnessSyntaxFormat.swift",
             ]
         ),
         .testTarget(
