@@ -1,3 +1,4 @@
+// SKIP-DIFF: kotlinc 2.3.10 treats Duration.isNegative/isPositive/isFinite/isInfinite as functions, not properties
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
