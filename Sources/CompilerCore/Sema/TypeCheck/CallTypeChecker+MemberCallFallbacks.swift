@@ -193,6 +193,8 @@ extension CallTypeChecker {
             )
         case ("replaceFirstChar", 1):
             sema.types.stringType
+        case ("ifBlank", 1):
+            sema.types.stringType
         case ("zipWithNext", 1): {
             let charType = sema.types.make(.primitive(.char, .nonNull))
             let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
@@ -370,6 +372,18 @@ extension CallTypeChecker {
                 )
                 sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
             }
+        }
+        if memberName == "ifBlank", args.indices.contains(0) {
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [],
+                returnType: sema.types.stringType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            if let lambdaExpr = ctx.ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+            }
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: expectedType)
         }
         if memberName == "chunked", args.indices.contains(0) {
             _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)

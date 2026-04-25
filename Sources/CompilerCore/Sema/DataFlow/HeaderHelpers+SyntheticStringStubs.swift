@@ -34,6 +34,12 @@ extension DataFlowSemaPhase {
         let nullableCharType = types.make(.primitive(.char, .nullable))
         let floatType = types.floatType
         let doubleType = types.doubleType
+        let stringProducerType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: stringType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         let listStringType = makeListOfStringType(symbols: symbols, types: types, interner: interner)
         let listCharType = makeListType(
             symbols: symbols,
@@ -1121,6 +1127,21 @@ extension DataFlowSemaPhase {
             receiverType: stringType,
             parameters: [],
             returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-EDGE-004: CharSequence.ifBlank(defaultValue) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "ifBlank",
+            externalLinkName: "kk_string_ifBlank",
+            receiverType: charSequenceType,
+            parameters: [
+                ("defaultValue", stringProducerType, false, false),
+            ],
+            returnType: stringType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
