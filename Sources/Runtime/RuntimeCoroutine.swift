@@ -58,11 +58,6 @@ private final class RuntimeResumeContinuationBox: @unchecked Sendable {
     }
 }
 
-private final class RuntimeCoroutineExceptionHandlerBox: @unchecked Sendable {
-    let handler: (Error) -> Void
-    init(_ handler: @escaping (Error) -> Void) { self.handler = handler }
-}
-
 // MARK: - CORO-004 Migration Plan: DispatchSemaphore -> Continuation Model
 //
 // The suspend-entry loop (`runSuspendEntryLoopWithContinuation`) has already
@@ -1979,29 +1974,6 @@ private final class RuntimeFlowCollectContext {
     var emittedEvents: [RuntimeFlowEvent] = []
     var cancelled = false
     var emitHandler: ((Int) -> Int)?
-    var processor: ((RuntimeFlowEvent) -> RuntimeFlowProcessorAction)?
-    var processorFailed = false
-}
-
-private final class RuntimeFlowLockedBox<T>: @unchecked Sendable {
-    private let lock = NSLock()
-    private var value: T
-
-    init(_ value: T) {
-        self.value = value
-    }
-
-    func withLock<R>(_ body: (inout T) -> R) -> R {
-        lock.lock()
-        defer { lock.unlock() }
-        return body(&value)
-    }
-}
-
-private enum RuntimeFlowProcessorAction {
-    case `continue`
-    case stop
-    case fail
 }
 
 /// Opaque flow handle. Immutable operation chain; source emitter is re-executed
@@ -2069,10 +2041,6 @@ private func runtimeFlowCollectStackBox() -> RuntimeFlowCollectStackBox {
     return box
 }
 
-private func runtimeFlowCollectStack() -> [RuntimeFlowCollectContext] {
-    runtimeFlowCollectStackBox().stack
-}
-
 private func runtimeFlowPushCollectContext(_ context: RuntimeFlowCollectContext) {
     runtimeFlowCollectStackBox().stack.append(context)
 }
@@ -2087,59 +2055,6 @@ private func runtimeFlowPopCollectContext() {
 
 private func runtimeFlowCurrentCollectContext() -> RuntimeFlowCollectContext? {
     runtimeFlowCollectStackBox().stack.last
-}
-
-private func runtimeFlowSourceEvents(_ flow: RuntimeFlowHandle) -> [RuntimeFlowEvent]? {
-    if let fixedValues = flow.fixedValues {
-        return fixedValues.enumerated().map { index, value in
-            RuntimeFlowEvent(value: value, timestamp: UInt64(index))
-        }
-    }
-
-    guard flow.emitterFnPtr != 0 else {
-        return []
-    }
-
-    let context = RuntimeFlowCollectContext()
-    runtimeFlowPushCollectContext(context)
-    defer { runtimeFlowPopCollectContext() }
-
-    let emitter = unsafeBitCast(
-        flow.emitterFnPtr,
-        to: (@convention(c) (UnsafeMutablePointer<Int>?) -> Int).self
-    )
-    var outThrown = 0
-    _ = emitter(&outThrown)
-    guard outThrown == 0 else {
-        return nil
-    }
-    return context.emittedEvents
-}
-
-private func runtimeFlowCallUnary(_ fnPtr: Int, value: Int) -> (result: Int, thrown: Bool) {
-    guard fnPtr != 0 else {
-        return (value, false)
-    }
-    let function = unsafeBitCast(
-        fnPtr,
-        to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
-    )
-    var thrown = 0
-    let result = function(0, value, &thrown)
-    return (runtimeFlowMaybeUnbox(result), thrown != 0)
-}
-
-private func runtimeFlowCallBinary(_ fnPtr: Int, lhs: Int, rhs: Int) -> (result: Int, thrown: Bool) {
-    guard fnPtr != 0 else {
-        return (rhs, false)
-    }
-    let function = unsafeBitCast(
-        fnPtr,
-        to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
-    )
-    var thrown = 0
-    let result = function(0, lhs, rhs, &thrown)
-    return (runtimeFlowMaybeUnbox(result), thrown != 0)
 }
 
 private func runtimeFlowSortEvents(_ events: [RuntimeFlowEvent]) -> [RuntimeFlowEvent] {
@@ -2157,166 +2072,6 @@ private func runtimeFlowIsStreamLevelOp(_ kind: RuntimeFlowTag) -> Bool {
         return true
     default:
         return false
-    }
-}
-
-private struct RuntimeFlowElementState {
-    var takeCounters: [Int: Int]
-    var lastValues: [Int: Int] = [:]
-    var dropWhileFinished: [Int: Bool] = [:]
-}
-
-private func runtimeFlowInitElementState(_ ops: [RuntimeFlowOp]) -> RuntimeFlowElementState {
-    var takeCounters: [Int: Int] = [:]
-    for (index, op) in ops.enumerated() where op.kind == .take {
-        takeCounters[index] = max(0, runtimeFlowMaybeUnbox(op.argument))
-    }
-    return RuntimeFlowElementState(takeCounters: takeCounters)
-}
-
-private func runtimeFlowElementStateHasExhaustedTake(_ state: RuntimeFlowElementState) -> Bool {
-    state.takeCounters.values.contains { $0 <= 0 }
-}
-
-private enum RuntimeFlowElementEventResult {
-    case emit(RuntimeFlowEvent)
-    case emitAndStop(RuntimeFlowEvent)
-    case filtered
-    case done
-    case thrown
-}
-
-private func runtimeFlowApplyElementOp(
-    _ event: RuntimeFlowEvent,
-    ops: [RuntimeFlowOp],
-    state: inout RuntimeFlowElementState
-) -> RuntimeFlowElementEventResult {
-    var current = event
-    for (index, op) in ops.enumerated() {
-        switch op.kind {
-        case .emit, .buffer, .conflate, .flowOn, .debounce, .sample, .delayEach, .onCompletion:
-            continue
-        case .map, .transform:
-            let result = runtimeFlowCallUnary(op.argument, value: current.value)
-            if result.thrown {
-                return .thrown
-            }
-            current = RuntimeFlowEvent(value: result.result, timestamp: current.timestamp)
-        case .filter:
-            let result = runtimeFlowCallUnary(op.argument, value: current.value)
-            if result.thrown {
-                return .thrown
-            }
-            if result.result == 0 {
-                return .filtered
-            }
-        case .take:
-            let remaining = state.takeCounters[index, default: max(0, runtimeFlowMaybeUnbox(op.argument))]
-            if remaining <= 0 {
-                return .done
-            }
-            state.takeCounters[index] = remaining - 1
-        case .onEach:
-            let result = runtimeFlowCallUnary(op.argument, value: current.value)
-            if result.thrown {
-                return .thrown
-            }
-        case .distinctUntilChanged:
-            if let last = state.lastValues[index], last == current.value {
-                return .filtered
-            }
-            state.lastValues[index] = current.value
-        case .takeWhile:
-            let result = runtimeFlowCallUnary(op.argument, value: current.value)
-            if result.thrown {
-                return .thrown
-            }
-            if result.result == 0 {
-                return .done
-            }
-        case .dropWhile:
-            if state.dropWhileFinished[index, default: false] {
-                continue
-            }
-            let result = runtimeFlowCallUnary(op.argument, value: current.value)
-            if result.thrown {
-                return .thrown
-            }
-            if result.result != 0 {
-                return .filtered
-            }
-            state.dropWhileFinished[index] = true
-        case .catchHandler, .retry, .retryWhen, .onErrorReturn, .onErrorResume:
-            continue
-        }
-    }
-    if runtimeFlowElementStateHasExhaustedTake(state) {
-        return .emitAndStop(current)
-    }
-    return .emit(current)
-}
-
-private func runtimeFlowEvaluateLazyElementOnly(
-    _ flow: RuntimeFlowHandle
-) -> [RuntimeFlowEvent]? {
-    guard !flow.opChain.contains(where: { runtimeFlowIsStreamLevelOp($0.kind) }) else {
-        return nil
-    }
-
-    var state = runtimeFlowInitElementState(flow.opChain)
-    var collected: [RuntimeFlowEvent] = []
-    let context = RuntimeFlowCollectContext()
-    context.processor = { event in
-        switch runtimeFlowApplyElementOp(event, ops: flow.opChain, state: &state) {
-        case .emit(let output):
-            collected.append(output)
-            return .continue
-        case .emitAndStop(let output):
-            collected.append(output)
-            return .stop
-        case .filtered:
-            return .continue
-        case .done:
-            return .stop
-        case .thrown:
-            return .fail
-        }
-    }
-
-    switch flow.source {
-    case .emitter(let emitterFnPtr):
-        runtimeFlowPushCollectContext(context)
-        defer { runtimeFlowPopCollectContext() }
-        guard emitterFnPtr != 0 else { return [] }
-        let emitter = unsafeBitCast(
-            emitterFnPtr,
-            to: (@convention(c) (UnsafeMutablePointer<Int>?) -> Int).self
-        )
-        var outThrown = 0
-        _ = emitter(&outThrown)
-        if outThrown != 0 || context.processorFailed {
-            return nil
-        }
-        return collected
-    case .fixed(let events):
-        for event in events {
-            switch runtimeFlowApplyElementOp(event, ops: flow.opChain, state: &state) {
-            case .emit(let output):
-                collected.append(output)
-            case .emitAndStop(let output):
-                collected.append(output)
-                return collected
-            case .filtered:
-                continue
-            case .done:
-                return collected
-            case .thrown:
-                return nil
-            }
-        }
-        return collected
-    default:
-        return nil
     }
 }
 
@@ -2454,64 +2209,6 @@ private func runtimeFlowApplyStreamOps(
         }
     }
     return runtimeFlowSortEvents(currentEvents)
-}
-
-private func runtimeFlowCollectLazyElementOnly(
-    _ flow: RuntimeFlowHandle,
-    collectorFnPtr: Int,
-    continuation: Int
-) -> Bool? {
-    guard !flow.opChain.contains(where: { runtimeFlowIsStreamLevelOp($0.kind) }) else {
-        return nil
-    }
-
-    var state = runtimeFlowInitElementState(flow.opChain)
-    var collected: [RuntimeFlowEvent] = []
-    let context = RuntimeFlowCollectContext()
-    context.processor = { event in
-        switch runtimeFlowApplyElementOp(event, ops: flow.opChain, state: &state) {
-        case .emit(let output):
-            collected.append(output)
-            return .continue
-        case .emitAndStop(let output):
-            collected.append(output)
-            return .stop
-        case .filtered:
-            return .continue
-        case .done:
-            return .stop
-        case .thrown:
-            return .fail
-        }
-    }
-
-    switch flow.source {
-    case .emitter(let emitterFnPtr):
-        runtimeFlowPushCollectContext(context)
-        defer { runtimeFlowPopCollectContext() }
-        guard emitterFnPtr != 0 else { return true }
-        let emitter = unsafeBitCast(
-            emitterFnPtr,
-            to: (@convention(c) (UnsafeMutablePointer<Int>?) -> Int).self
-        )
-        var outThrown = 0
-        _ = emitter(&outThrown)
-        return outThrown == 0 && !context.processorFailed
-    case .fixed(let events):
-        for event in events {
-            switch context.processor?(event) ?? .continue {
-            case .continue:
-                continue
-            case .stop:
-                return true
-            case .fail:
-                return false
-            }
-        }
-        return true
-    default:
-        return nil
-    }
 }
 
 private func runtimeFlowMaybeUnbox(_ value: Int) -> Int {
@@ -3529,33 +3226,6 @@ public func kk_flow_release(_ flowHandle: Int) -> Int {
 }
 
 // MARK: - Flow Terminal Operators (STDLIB-088)
-
-/// Collect source emissions for one cold-flow attempt, preserving any failure
-/// that happens after partial emission.
-private func runtimeFlowSourceResult(_ flow: RuntimeFlowHandle) -> RuntimeFlowExecutionResult {
-    if let fixed = flow.fixedValues {
-        return RuntimeFlowExecutionResult(values: fixed, failure: nil)
-    }
-    let context = RuntimeFlowCollectContext()
-    runtimeFlowPushCollectContext(context)
-
-    guard flow.emitterFnPtr != 0 else {
-        runtimeFlowPopCollectContext()
-        return RuntimeFlowExecutionResult(values: [], failure: nil)
-    }
-
-    let emitter = unsafeBitCast(
-        flow.emitterFnPtr,
-        to: (@convention(c) (UnsafeMutablePointer<Int>?) -> Int).self
-    )
-    var outThrown = 0
-    _ = emitter(&outThrown)
-    runtimeFlowPopCollectContext()
-    return RuntimeFlowExecutionResult(
-        values: context.emittedValues,
-        failure: outThrown == 0 ? nil : outThrown
-    )
-}
 
 /// Prepare take counters for the given op chain.
 private func runtimeFlowInitTakeCounters(_ ops: [RuntimeFlowOp]) -> [Int: Int] {

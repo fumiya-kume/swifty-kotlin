@@ -256,11 +256,6 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterSymbols([ackBSymbol, ackESymbol], for: ackSymbol)
         types.setNominalTypeParameterVariances([.invariant, .invariant], for: ackSymbol)
 
-        let ackKeyType = types.make(.classType(ClassType(
-            classSymbol: coroutineContextKeySymbol,
-            args: [.invariant(ackEType)],
-            nullability: .nonNull
-        )))
         let ackType = types.make(.classType(ClassType(
             classSymbol: ackSymbol,
             args: [],

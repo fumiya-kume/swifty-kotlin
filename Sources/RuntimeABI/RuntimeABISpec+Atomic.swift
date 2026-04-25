@@ -217,27 +217,6 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Atomic"
         ),
-        // AtomicInt getAndUpdate / updateAndGet
-        RuntimeABIFunctionSpec(
-            name: "kk_atomic_int_getAndUpdate",
-            parameters: [
-                RuntimeABIParameter(name: "receiver", type: .intptr),
-                RuntimeABIParameter(name: "updateFn", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Atomic"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_atomic_int_updateAndGet",
-            parameters: [
-                RuntimeABIParameter(name: "receiver", type: .intptr),
-                RuntimeABIParameter(name: "updateFn", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Atomic"
-        ),
         // AtomicLong getAndUpdate / updateAndGet
         RuntimeABIFunctionSpec(
             name: "kk_atomic_long_getAndUpdate",

@@ -24,6 +24,28 @@ private var _lazyTestYieldCounter: Int {
     }
 }
 
+private let lazySequenceOnEachIndexedTraceLock = NSLock()
+nonisolated(unsafe) private var __lazySequenceOnEachIndexedTrace: [Int] = []
+
+private var _lazySequenceOnEachIndexedTrace: [Int] {
+    get {
+        lazySequenceOnEachIndexedTraceLock.lock()
+        defer { lazySequenceOnEachIndexedTraceLock.unlock() }
+        return __lazySequenceOnEachIndexedTrace
+    }
+    set {
+        lazySequenceOnEachIndexedTraceLock.lock()
+        defer { lazySequenceOnEachIndexedTraceLock.unlock() }
+        __lazySequenceOnEachIndexedTrace = newValue
+    }
+}
+
+private func appendLazySequenceOnEachIndexedTrace(_ value: Int) {
+    lazySequenceOnEachIndexedTraceLock.lock()
+    defer { lazySequenceOnEachIndexedTraceLock.unlock() }
+    __lazySequenceOnEachIndexedTrace.append(value)
+}
+
 private let lazyYieldAllInnerThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
     _lazyTestYieldCounter += 1
     _ = kk_sequence_builder_yield(builderRaw, 10)
@@ -88,6 +110,11 @@ private let throwingSequenceGenerator: @convention(c) (Int, Int, UnsafeMutablePo
     return 0
 }
 
+private let recordingOnEachIndexedAction: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
+    appendLazySequenceOnEachIndexedTrace(index * 100 + value)
+    return 0
+}
+
 private func runtimeTestStringHandle(_ value: String) -> Int {
     let bytes = Array(value.utf8)
     return bytes.withUnsafeBufferPointer { buffer in
@@ -100,6 +127,7 @@ private func runtimeTestStringHandle(_ value: String) -> Int {
 final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
     override func resetIsolatedRuntimeTestState() {
         _lazyTestYieldCounter = 0
+        _lazySequenceOnEachIndexedTrace = []
     }
 
     func testSortedByUsesRuntimeValueComparisonForSelectorKeys() {
@@ -1081,6 +1109,51 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
             "mapIndexed should be lazy; got \(_lazyTestYieldCounter) yields")
     }
 
+    func testSequenceOnEachIndexedLazy() {
+        _lazyTestYieldCounter = 0
+        _lazySequenceOnEachIndexedTrace = []
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 10)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 20)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+
+        let onEachIndexed = kk_sequence_onEachIndexed(
+            seqHandle,
+            unsafeBitCast(recordingOnEachIndexedAction, to: Int.self),
+            0,
+            nil
+        )
+
+        let taken = kk_sequence_take(onEachIndexed, 1)
+        let result = sequenceElements(taken)
+        XCTAssertEqual(result, [10])
+        XCTAssertEqual(_lazySequenceOnEachIndexedTrace, [10])
+        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 2,
+            "onEachIndexed should be lazy; got \(_lazyTestYieldCounter) yields")
+    }
+
+    func testSequenceOnEachIndexedSourceBackedSequenceIsLazy() {
+        _lazySequenceOnEachIndexedTrace = []
+        let seq = makeSequence([10, 20, 30])
+
+        let onEachIndexed = kk_sequence_onEachIndexed(
+            seq,
+            unsafeBitCast(recordingOnEachIndexedAction, to: Int.self),
+            0,
+            nil
+        )
+
+        let taken = kk_sequence_take(onEachIndexed, 2)
+        let result = sequenceElements(taken)
+        XCTAssertEqual(result, [10, 20])
+        XCTAssertEqual(_lazySequenceOnEachIndexedTrace, [10, 120])
+    }
+
     func testSequenceWithIndexLazy() {
         // Test withIndex with lazy evaluation
         _lazyTestYieldCounter = 0
@@ -1231,6 +1304,20 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         )
         let result = sequenceElements(mapped)
         XCTAssertEqual(result, [10, 21, 32]) // [0+10, 1+20, 2+30]
+    }
+
+    func testSequenceOnEachIndexedCorrectness() {
+        let seq = makeSequence([10, 20, 30])
+        _lazySequenceOnEachIndexedTrace = []
+        let transformed = kk_sequence_onEachIndexed(
+            seq,
+            unsafeBitCast(recordingOnEachIndexedAction, to: Int.self),
+            0,
+            nil
+        )
+        let result = sequenceElements(transformed)
+        XCTAssertEqual(result, [10, 20, 30])
+        XCTAssertEqual(_lazySequenceOnEachIndexedTrace, [10, 120, 230])
     }
 
     func testSequenceWithIndexCorrectness() {

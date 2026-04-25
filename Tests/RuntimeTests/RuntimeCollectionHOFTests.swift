@@ -70,12 +70,28 @@ private let flatMapPair: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -
     return kk_list_of(array, 2)
 }
 
+private let windowSum: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, windowRaw, _ in
+    guard let windowBox = runtimeListBox(from: windowRaw) else { return 0 }
+    return windowBox.elements.reduce(0, +)
+}
+
 private let foldSum: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, acc, value, _ in
     acc + value
 }
 
 private let foldOrder: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, acc, value, _ in
     acc * 10 + value
+}
+
+private let groupingFoldToInitialValueSelector: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
+    _, key, element, _ in
+    gHOFState.addCall()
+    return key * 100 + element
+}
+
+private let groupingFoldToSelectorOperation: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
+    _, key, accumulator, element, _ in
+    accumulator + key + element
 }
 
 private let addCapture: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { closureRaw, value, outThrown in
@@ -243,6 +259,74 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
         let sorted = kk_list_sortedBy(makeList([22, 12, 21, 11]), unsafeBitCast(sortedByTens, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(sorted), [12, 11, 22, 21])
+    }
+
+    func testWindowedTransformReturnsExpectedWindows() {
+        let source = makeList([1, 2, 3, 4, 5])
+
+        let defaultStep = kk_list_windowed_transform(
+            source,
+            3,
+            1,
+            0,
+            unsafeBitCast(windowSum, to: Int.self),
+            0,
+            nil as UnsafeMutablePointer<Int>?
+        )
+        XCTAssertEqual(listElements(defaultStep), [6, 9, 12])
+
+        let explicitStep = kk_list_windowed_transform(
+            source,
+            3,
+            2,
+            0,
+            unsafeBitCast(windowSum, to: Int.self),
+            0,
+            nil as UnsafeMutablePointer<Int>?
+        )
+        XCTAssertEqual(listElements(explicitStep), [6, 12])
+
+        let partialWindows = kk_list_windowed_transform(
+            source,
+            3,
+            2,
+            1,
+            unsafeBitCast(windowSum, to: Int.self),
+            0,
+            nil as UnsafeMutablePointer<Int>?
+        )
+        XCTAssertEqual(listElements(partialWindows), [6, 12, 5])
+
+        let arraySource = makeArray([1, 2, 3, 4, 5])
+        let arrayWindows = kk_list_windowed_transform(
+            arraySource,
+            3,
+            1,
+            0,
+            unsafeBitCast(windowSum, to: Int.self),
+            0,
+            nil as UnsafeMutablePointer<Int>?
+        )
+        XCTAssertEqual(listElements(arrayWindows), [6, 9, 12])
+
+    }
+
+    func testWindowedTransformPropagatesThrowingLambda() {
+        let source = makeList([1, 2, 3, 4, 5])
+        var thrown = 0
+
+        let result = kk_list_windowed_transform(
+            source,
+            3,
+            2,
+            1,
+            unsafeBitCast(throwingHOFLambda, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     func testCollectionMapNotNullPassesSentinelInputsToTransform() {
@@ -473,6 +557,48 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(result, dest)
         XCTAssertEqual(mapKeys(result), [1])
         XCTAssertEqual(kk_map_get(result, 1), 10)
+    }
+
+    func testGroupingFoldToWithInitialValueMutatesDestination() {
+        let source = makeList([3, 1, 4, 2, 5])
+        let grouping = kk_list_groupingBy(source, unsafeBitCast(groupByParity, to: Int.self), 0)
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [1], values: [1000]))
+
+        let result = kk_grouping_foldTo(
+            grouping,
+            dest,
+            10,
+            unsafeBitCast(foldSum, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(mapKeys(result), [1, 0])
+        XCTAssertEqual(kk_map_get(result, 1), 1009)
+        XCTAssertEqual(kk_map_get(result, 0), 16)
+    }
+
+    func testGroupingFoldToWithInitialValueSelectorUsesExistingValues() {
+        let source = makeList([3, 1, 4, 2])
+        let grouping = kk_list_groupingBy(source, unsafeBitCast(groupByParity, to: Int.self), 0)
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [0], values: [500]))
+
+        let result = kk_grouping_foldTo_selector(
+            grouping,
+            dest,
+            unsafeBitCast(groupingFoldToInitialValueSelector, to: Int.self),
+            0,
+            unsafeBitCast(groupingFoldToSelectorOperation, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(mapKeys(result), [0, 1])
+        XCTAssertEqual(kk_map_get(result, 0), 506)
+        XCTAssertEqual(kk_map_get(result, 1), 109)
+        XCTAssertEqual(gHOFState.callsSnapshot(), 1)
     }
 
     func testMapForEachFilterAndMapUsePairEntries() {

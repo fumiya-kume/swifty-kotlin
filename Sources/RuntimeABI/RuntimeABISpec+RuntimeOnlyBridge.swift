@@ -83,8 +83,6 @@ private let numericOnlyBridgeFunctions: [RuntimeABIFunctionSpec] =
 
 private let coroutineOnlyBridgeFunctions: [RuntimeABIFunctionSpec] = [
     bridgeSpec("kk_flow_stopped", section: "Coroutine"),
-    bridgeSpec("kk_continuation_intercepted", section: "Coroutine", params: ["continuationRaw"]),
-    bridgeSpec("kk_continuation_interceptor_intercept_continuation", section: "Coroutine", params: ["interceptorRaw", "continuationRaw"]),
     bridgeSpec("kk_kxmini_run_loop", section: "Coroutine", params: ["entryPointRaw", "functionID"]),
     bridgeSpec("kk_supervisor_scope_new", section: "Coroutine"),
 ]
@@ -101,30 +99,7 @@ private let kclassBridgeFunctions = [
     "kk_kclass_is_value_class",
 ].map { bridgeSpec($0, section: "TypeCheck", params: ["kclassRaw"]) }
 
-private let kfunctionBridgeFunctions: [RuntimeABIFunctionSpec] =
-    [bridgeSpec("kk_kfunction_create", section: "TypeCheck",
-                params: ["nameRaw", "arity", "returnTypeRaw", "isSuspend", "fnPtr", "closureRaw"])]
-    + ["kk_kfunction_get_arity", "kk_kfunction_get_name", "kk_kfunction_get_parameters",
-       "kk_kfunction_get_return_type", "kk_kfunction_is_suspend"].map {
-        bridgeSpec($0, section: "TypeCheck", params: ["kfunctionRaw"])
-    }
-    + [
-        bridgeSpec("kk_kfunction_call_0", section: "TypeCheck",
-                   typedParams: [("kfunctionRaw", .intptr), ("outThrown", .nullableIntptrPointer)]),
-        bridgeSpec("kk_kfunction_call_1", section: "TypeCheck",
-                   typedParams: [("kfunctionRaw", .intptr), ("arg", .intptr), ("outThrown", .nullableIntptrPointer)]),
-        bridgeSpec("kk_kfunction_call_2", section: "TypeCheck",
-                   typedParams: [("kfunctionRaw", .intptr), ("arg1", .intptr), ("arg2", .intptr), ("outThrown", .nullableIntptrPointer)]),
-        bridgeSpec("kk_kfunction_call_3", section: "TypeCheck",
-                   typedParams: [("kfunctionRaw", .intptr), ("arg1", .intptr), ("arg2", .intptr), ("arg3", .intptr), ("outThrown", .nullableIntptrPointer)]),
-        bridgeSpec("kk_kfunction_call_vararg", section: "TypeCheck",
-                   typedParams: [("kfunctionRaw", .intptr), ("argsListRaw", .intptr), ("outThrown", .nullableIntptrPointer)]),
-    ]
-
 private let sequenceHOFBridgeNames = [
-    "kk_sequence_all",
-    "kk_sequence_any",
-    "kk_sequence_none",
     "kk_sequence_reduce",
 ]
 

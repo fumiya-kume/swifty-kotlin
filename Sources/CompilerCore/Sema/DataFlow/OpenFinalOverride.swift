@@ -823,21 +823,6 @@ extension DataFlowSemaPhase {
         return true
     }
 
-    // MARK: - Helper: get member symbol
-
-    private func getMemberSymbol(
-        named memberName: InternedString,
-        in ownerSymbol: SymbolID,
-        ctx: OpenFinalOverrideContext
-    ) -> SymbolID? {
-        guard let ownerSym = ctx.symbols.symbol(ownerSymbol) else { return nil }
-
-        return ctx.symbols.children(ofFQName: ownerSym.fqName).first { childID in
-            guard let child = ctx.symbols.symbol(childID) else { return false }
-            return child.name == memberName && (child.kind == .function || child.kind == .property)
-        }
-    }
-
     /// Child functions named `memberName` in `ownerSymbol` (overload set).
     private func childFunctions(
         named memberName: InternedString,
@@ -1061,98 +1046,6 @@ extension DataFlowSemaPhase {
         }
     }
     
-    private func actuallyOverridesParentMember(
-        memberName: InternedString,
-        ownerSymbol: SymbolID,
-        parentMembers: [OFOInheritedMember],
-        ctx: OpenFinalOverrideContext
-    ) -> Bool {
-        let childOverloads = childFunctions(named: memberName, in: ownerSymbol, ctx: ctx)
-
-        for childID in childOverloads {
-            guard let currentSignature = ctx.symbols.functionSignature(for: childID) else { continue }
-            let currentFuncType = ctx.types.make(.functionType(FunctionType(
-                params: currentSignature.parameterTypes,
-                returnType: currentSignature.returnType,
-                isSuspend: currentSignature.isSuspend,
-                nullability: .nonNull
-            )))
-            guard case let .functionType(currentFunctionType) = ctx.types.kind(of: currentFuncType) else {
-                continue
-            }
-            for parent in parentMembers {
-                guard let parentSignature = ctx.symbols.functionSignature(for: parent.memberID) else {
-                    continue
-                }
-                let parentFuncType = ctx.types.make(.functionType(FunctionType(
-                    params: parentSignature.parameterTypes,
-                    returnType: parentSignature.returnType,
-                    isSuspend: parentSignature.isSuspend,
-                    nullability: .nonNull
-                )))
-                guard case let .functionType(parentFunctionType) = ctx.types.kind(of: parentFuncType) else {
-                    continue
-                }
-                if areSignaturesCompatible(current: currentFunctionType, parent: parentFunctionType, ctx: ctx) {
-                    return true
-                }
-            }
-        }
-
-        return false
-    }
-    
-    // MARK: - Helper: FunctionSignature to FunctionType conversion
-    
-    private func functionType(from signature: FunctionSignature) -> FunctionType {
-        return FunctionType(
-            contextReceivers: [],
-            receiver: signature.receiverType,
-            params: signature.parameterTypes,
-            returnType: signature.returnType,
-            isSuspend: signature.isSuspend,
-            nullability: .nonNull, // Default nullability
-            throws: [] // FunctionSignature uses canThrow instead
-        )
-    }
-    
-    private func areSignaturesCompatible(
-        current: FunctionType,
-        parent: FunctionType,
-        ctx: OpenFinalOverrideContext
-    ) -> Bool {
-        // Check parameter count
-        guard current.params.count == parent.params.count else { return false }
-        
-        // Parameter types: Kotlin override uses contravariance in the declared parameter types.
-        for (currentParam, parentParam) in zip(current.params, parent.params) {
-            if !ctx.types.isSubtype(parentParam, currentParam) {
-                return false
-            }
-        }
-        
-        // Check return type covariance (child can be subtype of parent)
-        if !ctx.types.isSubtype(current.returnType, parent.returnType) {
-            return false
-        }
-        
-        // Check receiver type (if present)
-        if let currentReceiver = current.receiver,
-           let parentReceiver = parent.receiver {
-            if currentReceiver != parentReceiver {
-                return false
-            }
-        } else if current.receiver != nil || parent.receiver != nil {
-            // One has receiver, other doesn't
-            return false
-        }
-        
-        // Note: Exception type covariance would be checked separately
-        // For override detection, we're primarily concerned with the basic signature
-        
-        return true
-    }
-
     // MARK: - Overridability check
 
     /// A member is overridable when it belongs to an interface,
