@@ -3098,7 +3098,7 @@ extension CallTypeChecker {
                 : receiverType
             let stringHOFCalleeStr = interner.resolve(calleeName)
             let isStringHOFReceiver = sema.types.isSubtype(stringHOFReceiverType, sema.types.stringType)
-                || (stringHOFCalleeStr == "ifBlank"
+                || ((stringHOFCalleeStr == "ifBlank" || stringHOFCalleeStr == "zipWithNext")
                     && isSyntheticStringLikeType(stringHOFReceiverType, sema: sema))
             if isStringHOFReceiver,
                [
@@ -3198,7 +3198,13 @@ extension CallTypeChecker {
                         interner.intern("text"),
                         calleeName,
                     ]).first(where: { candidate in
-                        isSyntheticStringMemberCandidate(candidate, named: calleeName, sema: sema, interner: interner)
+                        isSyntheticStringMemberCandidate(
+                            candidate,
+                            named: calleeName,
+                            receiverType: stringHOFReceiverType,
+                            sema: sema,
+                            interner: interner
+                        )
                             && (sema.symbols.functionSignature(for: candidate)?.parameterTypes.count ?? Int.max) == args.count
                     }) {
                         sema.bindings.bindCall(
@@ -5382,7 +5388,7 @@ extension CallTypeChecker {
                     : lookupReceiverType
                 let calleeStr = interner.resolve(calleeName)
                 let isStringHOFReceiver = sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType)
-                    || (calleeStr == "ifBlank"
+                    || ((calleeStr == "ifBlank" || calleeStr == "zipWithNext")
                         && isSyntheticStringLikeType(receiverTypeForCheck, sema: sema))
                 if isStringHOFReceiver,
                    [
@@ -5457,7 +5463,13 @@ extension CallTypeChecker {
                             interner.intern("text"),
                             calleeName,
                         ]).first(where: { candidate in
-                            isSyntheticStringMemberCandidate(candidate, named: calleeName, sema: sema, interner: interner)
+                            isSyntheticStringMemberCandidate(
+                                candidate,
+                                named: calleeName,
+                                receiverType: receiverTypeForCheck,
+                                sema: sema,
+                                interner: interner
+                            )
                                 && (sema.symbols.functionSignature(for: candidate)?.parameterTypes.count ?? Int.max) == args.count
                         }) {
                             sema.bindings.bindCall(
@@ -6801,7 +6813,13 @@ extension CallTypeChecker {
         let sema = ctx.sema
         let interner = ctx.interner
         var candidates = ctx.cachedScopeLookup(calleeName).filter { candidate in
-            isSyntheticStringMemberCandidate(candidate, named: calleeName, sema: sema, interner: interner)
+            isSyntheticStringMemberCandidate(
+                candidate,
+                named: calleeName,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner
+            )
         }
         if candidates.isEmpty {
             let stringMemberFQName = [
@@ -6810,7 +6828,13 @@ extension CallTypeChecker {
                 calleeName,
             ]
             candidates = sema.symbols.lookupAll(fqName: stringMemberFQName).filter { candidate in
-                isSyntheticStringMemberCandidate(candidate, named: calleeName, sema: sema, interner: interner)
+                isSyntheticStringMemberCandidate(
+                    candidate,
+                    named: calleeName,
+                    receiverType: receiverType,
+                    sema: sema,
+                    interner: interner
+                )
             }
         }
         guard !candidates.isEmpty else {
@@ -6925,6 +6949,7 @@ extension CallTypeChecker {
     private func isSyntheticStringMemberCandidate(
         _ symbolID: SymbolID,
         named calleeName: InternedString,
+        receiverType actualReceiverType: TypeID? = nil,
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
@@ -6938,10 +6963,19 @@ extension CallTypeChecker {
         else {
             return false
         }
-        guard let receiverType = signature.receiverType else {
+        guard let candidateReceiverType = signature.receiverType else {
             return false
         }
-        return isSyntheticStringLikeType(receiverType, sema: sema)
+        guard isSyntheticStringLikeType(candidateReceiverType, sema: sema) else {
+            return false
+        }
+        if let actualReceiverType {
+            return sema.types.isSubtype(
+                sema.types.makeNonNullable(actualReceiverType),
+                sema.types.makeNonNullable(candidateReceiverType)
+            )
+        }
+        return true
     }
 
     private func bindSyntheticStringMemberDirectlyIfAvailable(
@@ -6961,9 +6995,14 @@ extension CallTypeChecker {
             interner.intern("text"),
             calleeName,
         ]
-        guard sema.types.isSubtype(sema.types.makeNonNullable(receiverType), sema.types.stringType),
-              let chosen = sema.symbols.lookupAll(fqName: stringMemberFQName).first(where: { candidate in
-                  isSyntheticStringMemberCandidate(candidate, named: calleeName, sema: sema, interner: interner)
+        guard let chosen = sema.symbols.lookupAll(fqName: stringMemberFQName).first(where: { candidate in
+                  isSyntheticStringMemberCandidate(
+                      candidate,
+                      named: calleeName,
+                      receiverType: normalizedReceiverType,
+                      sema: sema,
+                      interner: interner
+                  )
                       && (sema.symbols.functionSignature(for: candidate)?.parameterTypes.count ?? Int.max) == argumentCount
               })
         else {

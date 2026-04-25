@@ -5741,6 +5741,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_last"),
             interner.intern("kk_sequence_firstOrNull"),
             interner.intern("kk_sequence_count"),
+            interner.intern("kk_string_zipWithNextTransform"),
             interner.intern("kk_list_windowed_transform"),
             interner.intern("kk_mutable_list_replaceAll"),
             interner.intern("kk_mutable_list_removeIf"),

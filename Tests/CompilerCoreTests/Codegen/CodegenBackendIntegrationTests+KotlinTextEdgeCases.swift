@@ -815,6 +815,58 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testKotlinTextCharSequenceZipWithNextEdgeCases() throws {
+        let source = """
+        fun pairCount(value: CharSequence): Int {
+            return value.zipWithNext().size
+        }
+
+        fun labels(value: CharSequence): List<String> {
+            return value.zipWithNext { a, b -> "" + a + b }
+        }
+
+        fun main() {
+            val cs: CharSequence = "abcd"
+            val pairs = cs.zipWithNext()
+            println(pairs.size)
+
+            val transformed = cs.zipWithNext { a, b -> "" + a + b }
+            println(transformed.size)
+            println(transformed[0])
+            println(transformed[2])
+
+            println(pairCount("xy"))
+            println(labels("xy")[0])
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextCharSequenceZipWithNextEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                3
+                3
+                ab
+                cd
+                1
+                xy
+                """
+                + "\n"
+            )
+        }
+    }
+
     // MARK: - take / drop / takeLast / dropLast
 
     func testKotlinTextTakeDropEdgeCases() throws {
