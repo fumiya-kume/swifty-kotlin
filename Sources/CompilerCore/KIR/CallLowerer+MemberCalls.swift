@@ -172,7 +172,7 @@ extension CallLowerer {
         "putAll", "addAll",
         "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
         "plus", "minus",
-        "asSequence", "asIterable", "toList", "toSet", "toMap", "toMutableList", "toMutableSet", "toTypedArray",
+        "asSequence", "asIterable", "toList", "toSet", "toMap", "toCollection", "toMutableList", "toMutableSet", "toTypedArray",
         "toIntArray", "toLongArray", "toByteArray",
         "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect", "subList",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
@@ -1018,7 +1018,14 @@ extension CallLowerer {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
                 let argExprID = args[0].expr
-                if sema.bindings.isRangeExpr(argExprID) {
+                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+                if let rangeElementType = coerceInRangeElementType(
+                    for: argExprID,
+                    sema: sema,
+                    interner: interner
+                ),
+                rangeElementType == nonNullReceiverType
+                {
                     let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.nullableAnyType
                     let result = arena.appendExpr(
                         .temporary(Int32(arena.expressions.count)),
@@ -2035,7 +2042,7 @@ extension CallLowerer {
             }
         }
 
-        // Int/Long/Double/Float.coerceIn(min, max) (STDLIB-150, STDLIB-500)
+        // Int/Long/Byte/Short/UByte/UShort/UInt/ULong.coerceIn(min, max) (STDLIB-150, STDLIB-500)
         if interner.resolve(calleeName) == "coerceIn", args.count == 2 {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
@@ -2051,16 +2058,25 @@ extension CallLowerer {
             }
         }
 
-        // Int/Long/Double/Float.coerceIn(range) — single ClosedRange argument (STDLIB-525, STDLIB-CONV-006)
-        // Decompose the range into first/last and delegate to kk_{int,long,double,float}_coerceIn.
-        // All numeric types are supported; the shared emitCoerceInRange helper types the
-        // extracted bounds as the non-nullable receiver type and kk_range_first/kk_range_last
-        // return the range's element type.
+        // Int/Long/UInt/ULong.coerceIn(range) — single ClosedRange argument (STDLIB-525, STDLIB-CONV-006)
+        // Decompose the range into first/last and delegate to kk_{int,long,uint,ulong}_coerceIn.
+        // The shared emitCoerceInRange helper types the extracted bounds as the non-nullable
+        // receiver type and kk_range_first/kk_range_last return the range's element type.
         if interner.resolve(calleeName) == "coerceIn", args.count == 1 {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
-            if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
+            let intType = sema.types.intType
+            let longType = sema.types.longType
+            let uintType = sema.types.uintType
+            let ulongType = sema.types.ulongType
+            let supportsRangeCoercion = receiverType == intType || receiverType == longType
+                || receiverType == uintType || receiverType == ulongType
+            if supportsRangeCoercion,
+               let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
                 let argExprID = args[0].expr
-                if sema.bindings.isRangeExpr(argExprID) {
+                let argType = sema.bindings.exprTypes[argExprID] ?? sema.types.anyType
+                if sema.bindings.isRangeExpr(argExprID)
+                    || nominalRangeElementType(for: argType, sema: sema, interner: interner) != nil
+                {
                     emitCoerceInRange(
                         prefix: prefix,
                         receiverType: receiverType,
@@ -2077,7 +2093,8 @@ extension CallLowerer {
             }
         }
 
-        // Int/Long/Double/Float.coerceAtLeast(min) / coerceAtMost(max) (STDLIB-150, STDLIB-500)
+        // Int/Long/Double/Float/Byte/Short/UByte/UShort/UInt/ULong.coerceAtLeast(min)
+        // / coerceAtMost(max) (STDLIB-150, STDLIB-500)
         if args.count == 1 {
             let calleeStr = interner.resolve(calleeName)
             if calleeStr == "coerceAtLeast" || calleeStr == "coerceAtMost" {
@@ -2715,8 +2732,18 @@ extension CallLowerer {
         if args.count == 1 {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
-            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
-                let calleeStr = interner.resolve(calleeName)
+            let calleeStr = interner.resolve(calleeName)
+            let isCharSequenceReceiver: Bool = {
+                guard let charSequenceSymbol = sema.types.charSequenceInterfaceSymbol,
+                      case let .classType(classType) = sema.types.kind(of: nonNullReceiverType)
+                else {
+                    return false
+                }
+                return classType.classSymbol == charSequenceSymbol
+            }()
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType)
+                || (calleeStr == "ifBlank" && isCharSequenceReceiver)
+            {
                 if calleeStr == "toInt" {
                     instructions.append(.call(
                         symbol: nil,
@@ -2821,6 +2848,8 @@ extension CallLowerer {
                     ("kk_string_findLast", [loweredReceiverID] + normalizedArgIDs)
                 case "partition":
                     ("kk_string_partition", [loweredReceiverID] + normalizedArgIDs)
+                case "ifBlank":
+                    ("kk_string_ifBlank", [loweredReceiverID] + normalizedArgIDs)
                 case "take":
                     ("kk_string_take", [loweredReceiverID, loweredArgIDs[0]])
                 case "drop":
@@ -2876,6 +2905,7 @@ extension CallLowerer {
                         || calleeStr == "indexOfFirst"
                         || calleeStr == "indexOfLast"
                         || calleeStr == "partition"
+                        || calleeStr == "ifBlank"
                         || calleeStr == "take"
                         || calleeStr == "drop"
                         || calleeStr == "takeLast"
@@ -3400,6 +3430,10 @@ extension CallLowerer {
                 let associateName = interner.intern("associate")
                 let associateByName = interner.intern("associateBy")
                 let associateWithName = interner.intern("associateWith")
+                let associateToName = interner.intern("associateTo")
+                let associateByToName = interner.intern("associateByTo")
+                let associateWithToName = interner.intern("associateWithTo")
+                let groupByToName = interner.intern("groupByTo")
                 let containsName = interner.intern("contains")
                 let indexOfName = interner.intern("indexOf")
                 let elementAtName = interner.intern("elementAt")
@@ -3438,6 +3472,14 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_associateBy"
                 } else if calleeName == associateWithName {
                     runtimeCallee = "kk_sequence_associateWith"
+                } else if calleeName == associateToName {
+                    runtimeCallee = "kk_sequence_associateTo"
+                } else if calleeName == associateByToName {
+                    runtimeCallee = "kk_sequence_associateByTo"
+                } else if calleeName == associateWithToName {
+                    runtimeCallee = "kk_sequence_associateWithTo"
+                } else if calleeName == groupByToName {
+                    runtimeCallee = "kk_sequence_groupByTo"
                 } else if calleeName == containsName {
                     runtimeCallee = "kk_sequence_contains"
                 } else if calleeName == indexOfName {
@@ -3493,7 +3535,11 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_sumOf"
                         || runtimeCallee == "kk_sequence_associate"
                         || runtimeCallee == "kk_sequence_associateBy"
+                        || runtimeCallee == "kk_sequence_associateTo"
+                        || runtimeCallee == "kk_sequence_associateByTo"
+                        || runtimeCallee == "kk_sequence_associateWithTo"
                         || runtimeCallee == "kk_sequence_associateWith"
+                        || runtimeCallee == "kk_sequence_groupByTo"
                         || runtimeCallee == "kk_sequence_find"
                         || runtimeCallee == "kk_sequence_findLast"
                         || runtimeCallee == "kk_sequence_elementAt"
@@ -4200,6 +4246,7 @@ extension CallLowerer {
             "sortBy", "sortByDescending",
             "onEach", "onEachIndexed",
             "ifEmpty",
+            "ifBlank",
             "chunked", "windowed",
             "onSuccess", "onFailure", "recover",
         ].contains(interner.resolve(calleeName))
@@ -5673,6 +5720,8 @@ extension CallLowerer {
             interner.intern("kk_sequence_sumOf"),
             interner.intern("kk_sequence_associate"),
             interner.intern("kk_sequence_associateBy"),
+            interner.intern("kk_sequence_associateTo"),
+            interner.intern("kk_sequence_associateByTo"),
             interner.intern("kk_map_getValue"),
             interner.intern("kk_sequence_mapNotNull"),
             interner.intern("kk_sequence_mapIndexed"),
@@ -5684,7 +5733,10 @@ extension CallLowerer {
             interner.intern("kk_sequence_maxOf"),
             interner.intern("kk_sequence_partition"),
             interner.intern("kk_sequence_associateWith"),
+            interner.intern("kk_sequence_associateWithTo"),
+            interner.intern("kk_sequence_groupByTo"),
             interner.intern("kk_sequence_ifEmpty"),
+            interner.intern("kk_string_ifBlank"),
             interner.intern("kk_sequence_first"),
             interner.intern("kk_sequence_last"),
             interner.intern("kk_sequence_firstOrNull"),
@@ -6941,7 +6993,9 @@ extension CallLowerer {
             case "eachCount":
                 return interner.intern("kk_grouping_eachCount")
             case "fold":
-                return interner.intern("kk_grouping_fold")
+                return interner.intern(argumentCount >= 4
+                    ? "kk_grouping_fold_initialValueSelector"
+                    : "kk_grouping_fold")
             case "foldTo":
                 return interner.intern(hasHOFLambdaArg
                     ? "kk_grouping_foldTo_selector"
@@ -7018,8 +7072,16 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_associate")
             case associateByName:
                 return interner.intern("kk_sequence_associateBy")
+            case interner.intern("associateTo"):
+                return interner.intern("kk_sequence_associateTo")
+            case interner.intern("associateByTo"):
+                return interner.intern("kk_sequence_associateByTo")
             case interner.intern("associateWith"):
                 return interner.intern("kk_sequence_associateWith")
+            case interner.intern("associateWithTo"):
+                return interner.intern("kk_sequence_associateWithTo")
+            case interner.intern("groupByTo"):
+                return interner.intern("kk_sequence_groupByTo")
             case interner.intern("contains"):
                 return interner.intern("kk_sequence_contains")
             case interner.intern("indexOf"):
@@ -7076,6 +7138,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_sum")
             case interner.intern("average"):
                 return interner.intern("kk_sequence_average")
+            case interner.intern("toCollection"):
+                return interner.intern("kk_sequence_toCollection")
             case interner.intern("toMutableList"):
                 return interner.intern("kk_sequence_toMutableList")
             case interner.intern("toMutableSet"):

@@ -24,6 +24,18 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         return try XCTUnwrap(result)
     }
 
+    private func allExprIDs(in ast: ASTModule, where predicate: (ExprID, Expr) -> Bool) -> [ExprID] {
+        var results: [ExprID] = []
+        for index in ast.arena.exprs.indices {
+            let exprID = ExprID(rawValue: Int32(index))
+            guard let expr = ast.arena.expr(exprID) else { continue }
+            if predicate(exprID, expr) {
+                results.append(exprID)
+            }
+        }
+        return results
+    }
+
     func testExistingStringStubsRetainCorrectExternalLinks() throws {
         let (sema, interner) = try makeSema()
 
@@ -199,6 +211,51 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                 expectedLink,
                 "String.\(member) should link to \(expectedLink)"
             )
+        }
+    }
+
+    func testIfBlankStubHasCorrectExternalLink() throws {
+        let (sema, interner) = try makeSema()
+
+        XCTAssertEqual(
+            externalLink(for: "ifBlank", sema: sema, interner: interner),
+            "kk_string_ifBlank",
+            "CharSequence.ifBlank should link to kk_string_ifBlank"
+        )
+    }
+
+    func testIfBlankResolvesInCallExpressions() throws {
+        let source = """
+        fun choose(value: CharSequence): String {
+            return value.ifBlank { "fallback" }
+        }
+
+        fun chooseString(value: String): String {
+            return value.ifBlank { "fallback" }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExprs = allExprIDs(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "ifBlank"
+            }
+            XCTAssertEqual(callExprs.count, 2)
+            for callExpr in callExprs {
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected call binding for ifBlank"
+                )
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    "kk_string_ifBlank",
+                    "Expected ifBlank to resolve to kk_string_ifBlank"
+                )
+            }
         }
     }
 

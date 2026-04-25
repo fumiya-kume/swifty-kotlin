@@ -110,6 +110,23 @@ private let throwingSequenceGenerator: @convention(c) (Int, Int, UnsafeMutablePo
     return 0
 }
 
+private let sequenceAssociatePair: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    kk_pair_new(value * 2, value * 10)
+}
+
+private let sequenceParitySelector: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value % 2
+}
+
+private let sequenceValueTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value * 10
+}
+
+private let throwingSequenceDestinationLambda: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, outThrown in
+    outThrown?.pointee = runtimeAllocateThrowable(message: "sequence destination transform failed")
+    return 0
+}
+
 private let recordingOnEachIndexedAction: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
     appendLazySequenceOnEachIndexedTrace(index * 100 + value)
     return 0
@@ -166,6 +183,149 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         )
 
         XCTAssertEqual(extractString(from: UnsafeMutableRawPointer(bitPattern: renderedRaw)), "[1:2:3]")
+    }
+
+    func testAssociateToPopulatesExistingDestinationMap() {
+        let seq = makeSequence([1, 2, 3])
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [99], values: [999]))
+
+        let result = kk_sequence_associateTo(
+            seq,
+            dest,
+            unsafeBitCast(sequenceAssociatePair, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(kk_map_get(result, 99), 999)
+        XCTAssertEqual(kk_map_get(result, 2), 10)
+        XCTAssertEqual(kk_map_get(result, 4), 20)
+        XCTAssertEqual(kk_map_get(result, 6), 30)
+    }
+
+    func testAssociateByToUsesLastWriteForDuplicateKeys() {
+        let seq = makeSequence([1, 2, 3])
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+
+        let result = kk_sequence_associateByTo(
+            seq,
+            dest,
+            unsafeBitCast(sequenceParitySelector, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(mapKeys(result), [1, 0])
+        XCTAssertEqual(kk_map_get(result, 1), 3)
+        XCTAssertEqual(kk_map_get(result, 0), 2)
+    }
+
+    func testAssociateWithToUsesElementsAsKeys() {
+        let seq = makeSequence([1, 2, 3])
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [50], values: [500]))
+
+        let result = kk_sequence_associateWithTo(
+            seq,
+            dest,
+            unsafeBitCast(sequenceValueTimesTen, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(kk_map_get(result, 50), 500)
+        XCTAssertEqual(kk_map_get(result, 1), 10)
+        XCTAssertEqual(kk_map_get(result, 2), 20)
+        XCTAssertEqual(kk_map_get(result, 3), 30)
+    }
+
+    func testGroupByToAppendsIntoExistingBuckets() {
+        let seq = makeSequence([1, 3, 4])
+        let existingList = registerRuntimeObject(RuntimeListBox(elements: [100]))
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [1], values: [existingList]))
+
+        let result = kk_sequence_groupByTo(
+            seq,
+            dest,
+            unsafeBitCast(sequenceParitySelector, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(mapKeys(result), [1, 0])
+        XCTAssertEqual(listElements(kk_map_get(result, 1)), [100, 1, 3])
+        XCTAssertEqual(listElements(kk_map_get(result, 0)), [4])
+    }
+
+    func testAssociateToThrowingLambdaReturnsSentinelAndSetsOutThrown() {
+        let seq = makeSequence([1, 2, 3])
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        var thrown = 0
+
+        let result = kk_sequence_associateTo(
+            seq,
+            dest,
+            unsafeBitCast(throwingSequenceDestinationLambda, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testAssociateByToThrowingLambdaReturnsSentinelAndSetsOutThrown() {
+        let seq = makeSequence([1, 2, 3])
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        var thrown = 0
+
+        let result = kk_sequence_associateByTo(
+            seq,
+            dest,
+            unsafeBitCast(throwingSequenceDestinationLambda, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testAssociateWithToThrowingLambdaReturnsSentinelAndSetsOutThrown() {
+        let seq = makeSequence([1, 2, 3])
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        var thrown = 0
+
+        let result = kk_sequence_associateWithTo(
+            seq,
+            dest,
+            unsafeBitCast(throwingSequenceDestinationLambda, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testGroupByToThrowingLambdaReturnsSentinelAndSetsOutThrown() {
+        let seq = makeSequence([1, 2, 3])
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        var thrown = 0
+
+        let result = kk_sequence_groupByTo(
+            seq,
+            dest,
+            unsafeBitCast(throwingSequenceDestinationLambda, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     // MARK: - Iterator Builder Tests (STDLIB-331/564)
@@ -1382,5 +1542,14 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
             return []
         }
         return box.elements
+    }
+
+    private func mapKeys(_ mapRaw: Int) -> [Int] {
+        let iterator = kk_map_iterator(mapRaw)
+        var keys: [Int] = []
+        while kk_map_iterator_hasNext(iterator) != 0 {
+            keys.append(kk_map_iterator_next(iterator))
+        }
+        return keys
     }
 }

@@ -28,6 +28,13 @@ fun main() {
     val grouped = listOf(3, 1, 4, 2, 5).groupBy { it % 2 }
     println(grouped)
     println(grouped.get(1))
+    val grouping: Grouping<Int, Int> = listOf(3, 1, 4, 2, 5).groupingBy { value: Int -> value % 2 }
+    println(
+        grouping.fold(
+            initialValueSelector = { key: Int, element: Int -> key * 100 + element },
+            operation = { key: Int, accumulator: Int, element: Int -> accumulator + key + element }
+        )
+    )
 
     println(listOf(21, 11, 12, 22).sortedBy { it / 10 })
 }

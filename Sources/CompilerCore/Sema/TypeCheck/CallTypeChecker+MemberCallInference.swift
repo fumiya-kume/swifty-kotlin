@@ -1234,7 +1234,7 @@ extension CallTypeChecker {
 
         if interner.resolve(calleeName) == "toCollection",
            args.count == 1,
-           isCollectionReceiver
+           isCollectionReceiver || isSequenceReceiver
         {
             let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             sema.bindings.markCollectionExpr(id)
@@ -1264,6 +1264,22 @@ extension CallTypeChecker {
             let finalType = safeCall ? sema.types.makeNullable(destinationType) : destinationType
             sema.bindings.bindExprType(id, type: finalType)
             return finalType
+        }
+
+        if let groupingType = tryGroupingMemberCall(
+            id,
+            calleeName: calleeName,
+            receiverID: receiverID,
+            receiverType: receiverType,
+            args: args,
+            safeCall: safeCall,
+            expectedType: expectedType,
+            ast: ast,
+            sema: sema,
+            ctx: ctx,
+            locals: &locals
+        ) {
+            return groupingType
         }
 
         let isGroupingReceiver: Bool = {
@@ -1841,24 +1857,114 @@ extension CallTypeChecker {
                 }
 
             case "fold":
-                guard args.count == 2 else {
-                    ctx.semaCtx.diagnostics.error(
-                        "KSWIFTK-SEMA-0024",
-                        "No viable overload found for call.",
-                        range: ast.arena.exprRange(id)
-                    )
-                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                if let groupingKeyType = resolvedGroupingKeyType(of: receiverType, sema: sema, interner: interner) {
+                    guard args.count == 2 else {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-0024",
+                            "No viable overload found for call.",
+                            range: ast.arena.exprRange(id)
+                        )
+                        return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                    }
+                    let expectedGroupingValueType: TypeID = if let expectedType,
+                                                               case let .classType(expectedClassType) = sema.types.kind(of: sema.types.makeNonNullable(expectedType)),
+                                                               let expectedSymbol = sema.symbols.symbol(expectedClassType.classSymbol),
+                                                               knownNames.isMapLikeSymbol(expectedSymbol),
+                                                               expectedClassType.args.count >= 2
+                    {
+                        switch expectedClassType.args[1] {
+                        case let .invariant(id), let .out(id), let .in(id): id
+                        case .star: sema.types.anyType
+                        }
+                    } else {
+                        sema.types.anyType
+                    }
+                    let firstArgLabel = args[0].label.map { interner.resolve($0) }
+                    let useInitialValueSelectorOverload = if let firstArgLabel {
+                        firstArgLabel == "initialValueSelector"
+                    } else if case .lambdaLiteral = ast.arena.expr(args[0].expr) {
+                        true
+                    } else {
+                        ast.arena.expr(args[0].expr)?.isLambdaOrCallableRef ?? false
+                    }
+                    if useInitialValueSelectorOverload {
+                        let initialValueSelectorExpectedType = sema.types.make(.functionType(FunctionType(
+                            params: [groupingKeyType, collectionElementType],
+                            returnType: expectedGroupingValueType
+                        )))
+                        let initialValueSelectorType = driver.inferExpr(
+                            args[0].expr,
+                            ctx: ctx,
+                            locals: &locals,
+                            expectedType: initialValueSelectorExpectedType
+                        )
+                        if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                            sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                        }
+                        let groupingResultValueType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: initialValueSelectorType) {
+                            fnType.returnType
+                        } else if expectedGroupingValueType != sema.types.anyType {
+                            expectedGroupingValueType
+                        } else {
+                            sema.types.anyType
+                        }
+                        let operationExpectedType = sema.types.make(.functionType(FunctionType(
+                            params: [groupingKeyType, groupingResultValueType, collectionElementType],
+                            returnType: groupingResultValueType
+                        )))
+                        if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef {
+                            sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                        }
+                        _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: operationExpectedType)
+                        if let mapSymbol = lookupStdlibSymbol("Map", symbols: sema.symbols, interner: interner) {
+                            resultType = sema.types.make(.classType(ClassType(
+                                classSymbol: mapSymbol,
+                                args: [.invariant(groupingKeyType), .invariant(groupingResultValueType)],
+                                nullability: .nonNull
+                            )))
+                        } else {
+                            resultType = sema.types.anyType
+                        }
+                    } else {
+                        let initialType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: expectedGroupingValueType)
+                        let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                            params: [groupingKeyType, initialType, collectionElementType],
+                            returnType: initialType
+                        )))
+                        if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef {
+                            sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                        }
+                        _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                        if let mapSymbol = lookupStdlibSymbol("Map", symbols: sema.symbols, interner: interner) {
+                            resultType = sema.types.make(.classType(ClassType(
+                                classSymbol: mapSymbol,
+                                args: [.invariant(groupingKeyType), .invariant(initialType)],
+                                nullability: .nonNull
+                            )))
+                        } else {
+                            resultType = sema.types.anyType
+                        }
+                    }
+                } else {
+                    guard args.count == 2 else {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-0024",
+                            "No viable overload found for call.",
+                            range: ast.arena.exprRange(id)
+                        )
+                        return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                    }
+                    let initialType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [initialType, collectionElementType],
+                        returnType: initialType
+                    )))
+                    if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                    }
+                    _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    resultType = initialType
                 }
-                let initialType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
-                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
-                    params: [initialType, collectionElementType],
-                    returnType: initialType
-                )))
-                if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef {
-                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
-                }
-                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
-                resultType = initialType
 
             case "foldIndexed":
                 guard args.count == 2 else {
@@ -1940,23 +2046,51 @@ extension CallTypeChecker {
                 resultType = collectionElementType
 
             case "reduce":
-                guard args.count == 1 else {
-                    ctx.semaCtx.diagnostics.error(
-                        "KSWIFTK-SEMA-0024",
-                        "No viable overload found for call.",
-                        range: ast.arena.exprRange(id)
-                    )
-                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                if let groupingKeyType = resolvedGroupingKeyType(of: receiverType, sema: sema, interner: interner) {
+                    guard args.count == 1 else {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-0024",
+                            "No viable overload found for call.",
+                            range: ast.arena.exprRange(id)
+                        )
+                        return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                    }
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType, collectionElementType],
+                        returnType: collectionElementType
+                    )))
+                    if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    }
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    if let mapSymbol = lookupStdlibSymbol("Map", symbols: sema.symbols, interner: interner) {
+                        resultType = sema.types.make(.classType(ClassType(
+                            classSymbol: mapSymbol,
+                            args: [.invariant(groupingKeyType), .invariant(collectionElementType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        resultType = sema.types.anyType
+                    }
+                } else {
+                    guard args.count == 1 else {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-0024",
+                            "No viable overload found for call.",
+                            range: ast.arena.exprRange(id)
+                        )
+                        return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                    }
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType, collectionElementType],
+                        returnType: collectionElementType
+                    )))
+                    if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    }
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    resultType = collectionElementType
                 }
-                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
-                    params: [collectionElementType, collectionElementType],
-                    returnType: collectionElementType
-                )))
-                if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
-                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
-                }
-                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
-                resultType = collectionElementType
 
             case "reduceOrNull":
                 guard args.count == 1 else {
@@ -2239,15 +2373,8 @@ extension CallTypeChecker {
             case "eachCount":
                 // Called on Grouping, returns Map<K, Int>
                 // Extract key type K from receiver's Grouping<T, K> type args
-                let eachCountKeyType: TypeID
-                if case let .classType(ct) = sema.types.kind(of: receiverType),
-                   ct.args.count >= 2,
-                   case let .invariant(k) = ct.args[1] {
-                    eachCountKeyType = k
-                } else {
-                    eachCountKeyType = sema.types.anyType
-                }
-                if let mapSymbol = sema.symbols.lookupByShortName(interner.intern("Map")).first {
+                let eachCountKeyType = resolvedGroupingKeyType(of: receiverType, sema: sema, interner: interner) ?? sema.types.anyType
+                if let mapSymbol = lookupStdlibSymbol("Map", symbols: sema.symbols, interner: interner) {
                     resultType = sema.types.make(.classType(ClassType(
                         classSymbol: mapSymbol,
                         args: [.invariant(eachCountKeyType), .invariant(sema.types.intType)],
@@ -2970,7 +3097,10 @@ extension CallTypeChecker {
                 ? sema.types.makeNonNullable(receiverType)
                 : receiverType
             let stringHOFCalleeStr = interner.resolve(calleeName)
-            if sema.types.isSubtype(stringHOFReceiverType, sema.types.stringType),
+            let isStringHOFReceiver = sema.types.isSubtype(stringHOFReceiverType, sema.types.stringType)
+                || (stringHOFCalleeStr == "ifBlank"
+                    && isSyntheticStringLikeType(stringHOFReceiverType, sema: sema))
+            if isStringHOFReceiver,
                [
                    "filter", "map", "count", "any", "all", "none",
                    "indexOfFirst", "indexOfLast",
@@ -2978,6 +3108,7 @@ extension CallTypeChecker {
                    "takeWhile", "dropWhile", "find", "findLast", "splitToSequence",
                    "zipWithNext",
                    "partition",
+                   "ifBlank",
                ].contains(stringHOFCalleeStr)
             {
                 let charType = sema.types.make(.primitive(.char, .nonNull))
@@ -3012,6 +3143,13 @@ extension CallTypeChecker {
                         sema.types.make(.functionType(FunctionType(
                             params: [charType, charType],
                             returnType: sema.types.anyType,
+                            isSuspend: false,
+                            nullability: .nonNull
+                        )))
+                    case "ifBlank":
+                        sema.types.make(.functionType(FunctionType(
+                            params: [],
+                            returnType: sema.types.stringType,
                             isSuspend: false,
                             nullability: .nonNull
                         )))
@@ -3150,6 +3288,7 @@ extension CallTypeChecker {
                 case "find", "findLast": sema.types.make(.primitive(.char, .nullable))
                 case "splitToSequence": sequenceStringType
                 case "partition": pairStringStringTypeEarly
+                case "ifBlank": sema.types.stringType
                 default: sema.types.anyType
                 }
                 let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
@@ -3410,17 +3549,23 @@ extension CallTypeChecker {
         // link name into codegen; the old early-return bound only the result type, so
         // the linker saw raw "_isNaN"/"_nextUp" symbols.
 
-        // Int/Long/Double/Float.coerceIn(min, max) (STDLIB-150, STDLIB-500)
+        // Int/Long/Byte/Short/UByte/UShort/UInt/ULong.coerceIn(min, max) (STDLIB-150, STDLIB-500)
         if interner.resolve(calleeName) == "coerceIn", args.count == 2 {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let doubleType = sema.types.make(.primitive(.double, .nonNull))
             let floatType = sema.types.make(.primitive(.float, .nonNull))
+            let ubyteType = sema.types.ubyteType
+            let ushortType = sema.types.ushortType
+            let uintType = sema.types.uintType
+            let ulongType = sema.types.ulongType
             let receiverForCheck = safeCall
                 ? sema.types.makeNonNullable(lookupReceiverType)
                 : lookupReceiverType
             if receiverForCheck == intType || receiverForCheck == longType
-                || receiverForCheck == doubleType || receiverForCheck == floatType {
+                || receiverForCheck == doubleType || receiverForCheck == floatType
+                || receiverForCheck == ubyteType || receiverForCheck == ushortType
+                || receiverForCheck == uintType || receiverForCheck == ulongType {
                 _ = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals, expectedType: receiverForCheck) }
                 let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
                 sema.bindings.bindExprType(id, type: finalType)
@@ -3428,22 +3573,37 @@ extension CallTypeChecker {
             }
         }
 
-        // Int/Long.coerceIn(range) (STDLIB-525)
+        // Int/Long/UInt/ULong.coerceIn(range) (STDLIB-525)
         if interner.resolve(calleeName) == "coerceIn", args.count == 1 {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
+            let uintType = sema.types.uintType
+            let ulongType = sema.types.ulongType
             let receiverForCheck = safeCall
                 ? sema.types.makeNonNullable(lookupReceiverType)
                 : lookupReceiverType
-            if receiverForCheck == intType || receiverForCheck == longType {
-                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: receiverForCheck)
-                let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
-                sema.bindings.bindExprType(id, type: finalType)
-                return finalType
+            let supportsRangeCoercion = receiverForCheck == intType || receiverForCheck == longType
+                || receiverForCheck == uintType || receiverForCheck == ulongType
+            if supportsRangeCoercion {
+                let inferredArgType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                let nominalRangeElementType = nominalRangeElementType(
+                    for: inferredArgType,
+                    sema: sema,
+                    interner: interner
+                )
+                let isRangeArg = sema.bindings.isRangeExpr(args[0].expr)
+                if isRangeArg || nominalRangeElementType == receiverForCheck {
+                    if isRangeArg {
+                        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: receiverForCheck)
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
             }
         }
 
-        // Int/Long/Double/Float.coerceAtLeast(min) / coerceAtMost(max) (STDLIB-150, STDLIB-500)
+        // Int/Long/Byte/Short/UByte/UShort/UInt/ULong.coerceAtLeast(min) / coerceAtMost(max) (STDLIB-150, STDLIB-500)
         if args.count == 1 {
             let calleeStr = interner.resolve(calleeName)
             if calleeStr == "coerceAtLeast" || calleeStr == "coerceAtMost" {
@@ -3451,11 +3611,20 @@ extension CallTypeChecker {
                 let longType = sema.types.make(.primitive(.long, .nonNull))
                 let doubleType = sema.types.make(.primitive(.double, .nonNull))
                 let floatType = sema.types.make(.primitive(.float, .nonNull))
+                let ubyteType = sema.types.ubyteType
+                let ushortType = sema.types.ushortType
+                let uintType = sema.types.uintType
+                let ulongType = sema.types.ulongType
                 let receiverForCheck = safeCall
                     ? sema.types.makeNonNullable(lookupReceiverType)
                     : lookupReceiverType
-                if receiverForCheck == intType || receiverForCheck == longType
-                    || receiverForCheck == doubleType || receiverForCheck == floatType {
+                let isRangeArg = sema.bindings.isRangeExpr(args[0].expr)
+                let supportsRangeCoercion = receiverForCheck == intType || receiverForCheck == longType
+                    || receiverForCheck == doubleType || receiverForCheck == floatType
+                let supportsValueCoercion = supportsRangeCoercion
+                    || receiverForCheck == ubyteType || receiverForCheck == ushortType
+                    || receiverForCheck == uintType || receiverForCheck == ulongType
+                if (!isRangeArg && supportsValueCoercion) || (isRangeArg && supportsRangeCoercion) {
                     _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: receiverForCheck)
                     let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
                     sema.bindings.bindExprType(id, type: finalType)
@@ -5212,7 +5381,10 @@ extension CallTypeChecker {
                     ? sema.types.makeNonNullable(lookupReceiverType)
                     : lookupReceiverType
                 let calleeStr = interner.resolve(calleeName)
-                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
+                let isStringHOFReceiver = sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType)
+                    || (calleeStr == "ifBlank"
+                        && isSyntheticStringLikeType(receiverTypeForCheck, sema: sema))
+                if isStringHOFReceiver,
                    [
                        "filter", "map", "count", "any", "all", "none",
                        "indexOfFirst", "indexOfLast",
@@ -5220,6 +5392,7 @@ extension CallTypeChecker {
                        "takeWhile", "dropWhile", "find", "findLast", "splitToSequence",
                        "zipWithNext",
                        "partition",
+                       "ifBlank",
                    ].contains(calleeStr)
                 {
                     let charType = sema.types.make(.primitive(.char, .nonNull))
@@ -5234,6 +5407,8 @@ extension CallTypeChecker {
                             lambdaParamTypes = [intType, charType]
                         case "zipWithNext":
                             lambdaParamTypes = [charType, charType]
+                        case "ifBlank":
+                            lambdaParamTypes = []
                         default:
                             lambdaParamTypes = [charType]
                         }
@@ -5245,6 +5420,8 @@ extension CallTypeChecker {
                             lambdaReturnType = sema.types.nullableAnyType
                         case "zipWithNext":
                             lambdaReturnType = sema.types.anyType
+                        case "ifBlank":
+                            lambdaReturnType = sema.types.stringType
                         default:
                             lambdaReturnType = sema.types.booleanType
                         }
@@ -5347,6 +5524,7 @@ extension CallTypeChecker {
                     case "find", "findLast": sema.types.make(.primitive(.char, .nullable))
                     case "splitToSequence": sequenceStringType
                     case "partition": pairStringStringType
+                    case "ifBlank": sema.types.stringType
                     default: sema.types.anyType
                     }
                     // For "partition", skip the fallback resolver (which may fail due to
@@ -6873,6 +7051,189 @@ extension CallTypeChecker {
             }
         }
         return sema.types.anyType
+    }
+
+    private func resolvedGroupingKeyType(
+        of type: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        let knownNames = KnownCompilerNames(interner: interner)
+        let nonNullType = sema.types.makeNonNullable(type)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullType),
+              let symbol = sema.symbols.symbol(classType.classSymbol),
+              knownNames.isGroupingSymbol(symbol),
+              classType.args.count >= 2
+        else {
+            return nil
+        }
+        return switch classType.args[1] {
+        case let .invariant(id), let .out(id), let .in(id):
+            id
+        case .star:
+            sema.types.anyType
+        }
+    }
+
+    func tryGroupingMemberCall(
+        _ id: ExprID,
+        calleeName: InternedString,
+        receiverID: ExprID,
+        receiverType: TypeID,
+        args: [CallArgument],
+        safeCall: Bool,
+        expectedType: TypeID?,
+        ast: ASTModule,
+        sema: SemaModule,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let interner = ctx.interner
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard let groupingKeyType = resolvedGroupingKeyType(of: receiverType, sema: sema, interner: interner) else {
+            return nil
+        }
+        let groupingElementType = resolvedCollectionElementType(
+            receiverID: receiverID,
+            receiverType: receiverType,
+            sema: sema,
+            interner: interner,
+            ctx: ctx,
+            locals: &locals
+        )
+        let calleeStr = interner.resolve(calleeName)
+        let mapSymbol = lookupStdlibSymbol("Map", symbols: sema.symbols, interner: interner)
+
+        func makeMapType(valueType: TypeID) -> TypeID {
+            guard let mapSymbol else {
+                return sema.types.anyType
+            }
+            return sema.types.make(.classType(ClassType(
+                classSymbol: mapSymbol,
+                args: [.invariant(groupingKeyType), .invariant(valueType)],
+                nullability: .nonNull
+            )))
+        }
+
+        switch calleeStr {
+        case "eachCount":
+            guard args.isEmpty else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0024",
+                    "No viable overload found for call.",
+                    range: ast.arena.exprRange(id)
+                )
+                return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+            }
+            let resultType = makeMapType(valueType: sema.types.intType)
+            let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+
+        case "fold":
+            guard args.count == 2 else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0024",
+                    "No viable overload found for call.",
+                    range: ast.arena.exprRange(id)
+                )
+                return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+            }
+            let expectedGroupingValueType: TypeID = if let expectedType,
+                                                       case let .classType(expectedClassType) = sema.types.kind(of: sema.types.makeNonNullable(expectedType)),
+                                                       let expectedSymbol = sema.symbols.symbol(expectedClassType.classSymbol),
+                                                       knownNames.isMapLikeSymbol(expectedSymbol),
+                                                       expectedClassType.args.count >= 2
+            {
+                switch expectedClassType.args[1] {
+                case let .invariant(id), let .out(id), let .in(id): id
+                case .star: sema.types.anyType
+                }
+            } else {
+                sema.types.anyType
+            }
+            let firstArgLabel = args[0].label.map { interner.resolve($0) }
+            let useInitialValueSelectorOverload = if let firstArgLabel {
+                firstArgLabel == "initialValueSelector"
+            } else if case .lambdaLiteral = ast.arena.expr(args[0].expr) {
+                true
+            } else {
+                ast.arena.expr(args[0].expr)?.isLambdaOrCallableRef ?? false
+            }
+            if useInitialValueSelectorOverload {
+                let initialValueSelectorExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [groupingKeyType, groupingElementType],
+                    returnType: expectedGroupingValueType
+                )))
+                let initialValueSelectorType = driver.inferExpr(
+                    args[0].expr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: initialValueSelectorExpectedType
+                )
+                if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                let groupingResultValueType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: initialValueSelectorType) {
+                    fnType.returnType
+                } else if expectedGroupingValueType != sema.types.anyType {
+                    expectedGroupingValueType
+                } else {
+                    sema.types.anyType
+                }
+                let operationExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [groupingKeyType, groupingResultValueType, groupingElementType],
+                    returnType: groupingResultValueType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                }
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: operationExpectedType)
+                let resultType = makeMapType(valueType: groupingResultValueType)
+                let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            } else {
+                let initialType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: expectedGroupingValueType)
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [groupingKeyType, initialType, groupingElementType],
+                    returnType: initialType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                }
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                let resultType = makeMapType(valueType: initialType)
+                let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+
+        case "reduce":
+            guard args.count == 1 else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0024",
+                    "No viable overload found for call.",
+                    range: ast.arena.exprRange(id)
+                )
+                return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+            }
+            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [groupingElementType, groupingElementType],
+                returnType: groupingElementType
+            )))
+            if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+            }
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+            let resultType = makeMapType(valueType: groupingElementType)
+            let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+
+        default:
+            return nil
+        }
     }
 
     /// Extract the inferred return type from a lambda argument.

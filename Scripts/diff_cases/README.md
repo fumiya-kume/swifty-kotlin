@@ -56,7 +56,7 @@ Cases:
 - `mock_objects.kt`: mock / spy パターン（stubbing, verification, any/eq matcher）の parity
 - `comparator_basic.kt`: Comparator 合成（compareBy / compareByDescending / thenBy / thenByDescending / thenComparator / nullsFirst / nullsLast / naturalOrder / reverseOrder / reversed）の parity
 - `sequence_lazy.kt`: `Sequence<T>` lazy evaluation chain（`asSequence` → `map` → `filter` → `toList`）の parity
-- `stdlib_collection_hof.kt`: collection HOF（map/filter/flatMap/fold/reduce/any/all/none/groupBy/sortedBy/find/count/first/last）と capture lambda の parity
+- `stdlib_collection_hof.kt`: collection HOF（map/filter/flatMap/fold/reduce/any/all/none/groupBy/groupingBy.fold/sortedBy/find/count/first/last）と capture lambda の parity
 - `list_binary_search_by.kt`: `List.binarySearchBy(key, fromIndex, toIndex, selector)` の parity
 - `stdlib_string_ops.kt`: String stdlib parity（`trim/split/replace/startsWith/endsWith/contains/toInt/toDouble/format/substring/lowercase/uppercase/toIntOrNull/toDoubleOrNull/indexOf/lastIndexOf/padStart/padEnd/repeat/reversed/toList/toCharArray/drop/take/dropLast/takeLast`）
 - `symmetric_crypto.kt`: `Cipher` / `SecretKeySpec` / `IvParameterSpec` parity across AES/DES/3DES, ECB/CBC/CFB/OFB/CTR, PKCS5Padding/NoPadding

@@ -46,7 +46,7 @@
 - [x] STDLIB-TEXT-EDGE-001: `split(delimiter, limit)` overload を追加する
 - [ ] STDLIB-TEXT-EDGE-002: `trim(predicate)` / `trimStart(predicate)` / `trimEnd(predicate)` を追加する
 - [x] STDLIB-TEXT-EDGE-003: `indexOf` / `lastIndexOf` の `ignoreCase = true` を追加する
-- [ ] STDLIB-TEXT-EDGE-004: `CharSequence.ifBlank(defaultValue)` を追加する
+- [x] STDLIB-TEXT-EDGE-004: `CharSequence.ifBlank(defaultValue)` を追加する
 - [ ] STDLIB-TEXT-EDGE-005: `CharSequence.ifEmpty(defaultValue)` を追加する
 - [ ] STDLIB-TEXT-EDGE-006: `ByteArray.decodeToString(startIndex, endIndex, throwOnInvalidSequence)` overload を追加する
 - [ ] STDLIB-TEXT-EDGE-007: `buildString(capacity, builderAction)` overload を追加する
@@ -82,7 +82,7 @@
 - [ ] STDLIB-SEQ-020: `Sequence.flatMapIndexed(transform)` の `Iterable` / `Sequence` overload 群を追加する
 - [x] STDLIB-SEQ-021: `Sequence.filterTo` / `filterNotTo` / `filterIndexedTo` / `filterIsInstanceTo` / `filterNotNullTo` を追加する
 - [ ] STDLIB-SEQ-022: `Sequence.mapTo` / `mapIndexedNotNullTo` を追加する
-- [ ] STDLIB-SEQ-023: `Sequence.associateTo` / `associateByTo` / `associateWithTo` / `groupByTo` を追加する
+- [x] STDLIB-SEQ-023: `Sequence.associateTo` / `associateByTo` / `associateWithTo` / `groupByTo` を追加する
 - [ ] STDLIB-SEQ-024: `Sequence.toCollection(destination)` を追加する
 - [x] STDLIB-SEQ-025: `Sequence.toMutableList()` / `toMutableSet()` / `toHashSet()` を追加する
 - [x] STDLIB-COL-DEST-001: `filterTo` / `filterNotTo` / `filterIsInstanceTo` を追加する
@@ -109,7 +109,8 @@
 - [x] STDLIB-COL-WIN-001: `Iterable.windowed(size, step, partialWindows, transform)` overload を追加する
 - [ ] STDLIB-022: range / progression / unsigned range の網羅性を上げる
 - [x] STDLIB-RANGE-IFACE-001: `kotlin.ranges.ClosedRange<T>` interface surface を追加する
-- [ ] STDLIB-RANGE-IFACE-002: `kotlin.ranges.ClosedFloatingPointRange<T>` interface surface を追加する
+- [x] STDLIB-RANGE-IFACE-002: `kotlin.ranges.ClosedFloatingPointRange<T>` interface surface を追加する
+- [x] STDLIB-RANGE-IFACE-003: `kotlin.ranges.OpenEndRange<T>` interface surface を追加する
 - [ ] STDLIB-RANGE-CHAR-001: `kotlin.ranges.CharProgression` / `CharRange` type surface を追加する
 - [ ] STDLIB-RANGE-OPEN-001: `kotlin.ranges.rangeUntil` operator surface を `OpenEndRange` 戻り値で追加する
 - [ ] STDLIB-RANGE-RANDOM-001: `CharRange` / `IntRange` / `LongRange` / `UIntRange` / `ULongRange`.`random()` overload 群を追加する

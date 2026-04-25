@@ -2,8 +2,8 @@ symbol s0 kind=interface fq=kotlin.ranges.ClosedRange vis=public flags=synthetic
 symbol s1 kind=typeParameter fq=kotlin.ranges.ClosedRange.T vis=private flags=_
 symbol s2 kind=property fq=kotlin.ranges.ClosedRange.start vis=public flags=synthetic type=T#1
 symbol s3 kind=property fq=kotlin.ranges.ClosedRange.endInclusive vis=public flags=synthetic type=T#1
-symbol s4 kind=function fq=kotlin.ranges.ClosedRange.contains vis=public flags=synthetic|operatorFunction sig=recv=Class#0<T#1> params=[T#1] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s5 kind=function fq=kotlin.ranges.ClosedRange.isEmpty vis=public flags=synthetic sig=recv=Class#0<T#1> params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s4 kind=function fq=kotlin.ranges.ClosedRange.contains vis=public flags=synthetic|operatorFunction sig=recv=Class#0<T#1> params=[T#1] ret=Boolean suspend=0 defaults=[0] vararg=[0] type=(T#1) -> Boolean
+symbol s5 kind=function fq=kotlin.ranges.ClosedRange.isEmpty vis=public flags=synthetic sig=recv=Class#0<T#1> params=[] ret=Boolean suspend=0 defaults=[] vararg=[] type=() -> Boolean
 symbol s6 kind=function fq=golden.sema.intClosedRangeValue vis=public flags=_ sig=recv=_ params=[] ret=Class#0<Int> suspend=0 defaults=[] vararg=[]
 symbol s7 kind=function fq=golden.sema.longClosedRangeValue vis=public flags=_ sig=recv=_ params=[] ret=Class#0<Long> suspend=0 defaults=[] vararg=[]
 symbol s8 kind=function fq=golden.sema.uintClosedRangeValue vis=public flags=_ sig=recv=_ params=[] ret=Class#0<UInt> suspend=0 defaults=[] vararg=[]
@@ -63,6 +63,6 @@ expr e23 name(value) type=UInt ref=s21
 expr e24 name(range) type=Class#0<UInt> ref=s20
 expr e25 inExpr lhs=e23 rhs=e24 type=Boolean call=s4 map=[0->0] targs=[UInt]
 expr e26 name(range) type=Class#0<ULong> ref=s23
-expr e27 memberCall recv=e26 callee=start args=[] type=T#1 ref=s2
+expr e27 memberCall recv=e26 callee=start args=[] type=ULong ref=s2
 expr e28 name(range) type=Class#0<Char> ref=s25
-expr e29 memberCall recv=e28 callee=endInclusive args=[] type=T#1 ref=s3
+expr e29 memberCall recv=e28 callee=endInclusive args=[] type=Char ref=s3

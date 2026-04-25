@@ -1103,6 +1103,16 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         )
     }
 
+    func testVirtualCallOnSequenceTypedParameterRewritesToKkSequenceToCollection() throws {
+        let callees = try buildAndLowerVirtualCallWithArgs(
+            receiverTypeName: "Sequence", callee: "toCollection", argCount: 1
+        )
+        XCTAssertTrue(
+            callees.contains("kk_sequence_toCollection"),
+            "virtualCall(toCollection) on Sequence-typed parameter should be rewritten to kk_sequence_toCollection, got: \(callees)"
+        )
+    }
+
     func testWithoutSemaContextVirtualCallIsNotRewritten() throws {
         let interner = StringInterner()
         let arena = KIRArena()

@@ -11,6 +11,8 @@ struct CollectionLiteralLookupTables {
     let emptyArrayName: InternedString
     let intArrayOfName: InternedString
     let longArrayOfName: InternedString
+    let shortArrayOfName: InternedString
+    let byteArrayOfName: InternedString
     let uintArrayOfName: InternedString
     let doubleArrayOfName: InternedString
     let floatArrayOfName: InternedString
@@ -270,6 +272,9 @@ struct CollectionLiteralLookupTables {
     let kkSequenceSumOfName: InternedString
     let kkSequenceAssociateName: InternedString
     let kkSequenceAssociateByName: InternedString
+    let kkSequenceAssociateToName: InternedString
+    let kkSequenceAssociateByToName: InternedString
+    let kkSequenceAssociateWithToName: InternedString
     let kkSequenceChunkedName: InternedString
     let kkSequenceWindowedName: InternedString
     let kkSequenceOnEachName: InternedString
@@ -291,7 +296,9 @@ struct CollectionLiteralLookupTables {
     // STDLIB-470: Sequence terminal ops
     let kkSequenceToSetName: InternedString
     let kkSequenceToMapName: InternedString
+    let kkSequenceToCollectionName: InternedString
     let kkSequenceGroupByName: InternedString
+    let kkSequenceGroupByToName: InternedString
     let kkSequenceMaxOrNullName: InternedString
     let kkSequenceMinOrNullName: InternedString
     let kkSequenceFlattenName: InternedString
@@ -754,6 +761,8 @@ struct CollectionLiteralLookupTables {
         emptyArrayName = interner.intern("emptyArray")
         intArrayOfName = interner.intern("intArrayOf")
         longArrayOfName = interner.intern("longArrayOf")
+        shortArrayOfName = interner.intern("shortArrayOf")
+        byteArrayOfName = interner.intern("byteArrayOf")
         uintArrayOfName = interner.intern("uintArrayOf")
         doubleArrayOfName = interner.intern("doubleArrayOf")
         floatArrayOfName = interner.intern("floatArrayOf")
@@ -1004,6 +1013,9 @@ struct CollectionLiteralLookupTables {
         kkSequenceSumOfName = interner.intern("kk_sequence_sumOf")
         kkSequenceAssociateName = interner.intern("kk_sequence_associate")
         kkSequenceAssociateByName = interner.intern("kk_sequence_associateBy")
+        kkSequenceAssociateToName = interner.intern("kk_sequence_associateTo")
+        kkSequenceAssociateByToName = interner.intern("kk_sequence_associateByTo")
+        kkSequenceAssociateWithToName = interner.intern("kk_sequence_associateWithTo")
         kkSequenceChunkedName = interner.intern("kk_sequence_chunked")
         kkSequenceWindowedName = interner.intern("kk_sequence_windowed")
         kkSequenceOnEachName = interner.intern("kk_sequence_onEach")
@@ -1023,7 +1035,9 @@ struct CollectionLiteralLookupTables {
 
         kkSequenceToSetName = interner.intern("kk_sequence_toSet")
         kkSequenceToMapName = interner.intern("kk_sequence_toMap")
+        kkSequenceToCollectionName = interner.intern("kk_sequence_toCollection")
         kkSequenceGroupByName = interner.intern("kk_sequence_groupBy")
+        kkSequenceGroupByToName = interner.intern("kk_sequence_groupByTo")
         kkSequenceMaxOrNullName = interner.intern("kk_sequence_maxOrNull")
         kkSequenceMinOrNullName = interner.intern("kk_sequence_minOrNull")
         kkSequenceFlattenName = interner.intern("kk_sequence_flatten")
@@ -1455,7 +1469,7 @@ struct CollectionLiteralLookupTables {
         mutableListConstructorNames = [arrayListName]
         mutableSetConstructorNames = [hashSetName, linkedHashSetName]
         mutableMapConstructorNames = [hashMapName, linkedHashMapName]
-        arrayOfFactoryNames = [arrayOfName, emptyArrayName, intArrayOfName, longArrayOfName, uintArrayOfName, doubleArrayOfName, floatArrayOfName, booleanArrayOfName, charArrayOfName]
+        arrayOfFactoryNames = [arrayOfName, emptyArrayName, intArrayOfName, longArrayOfName, shortArrayOfName, byteArrayOfName, uintArrayOfName, doubleArrayOfName, floatArrayOfName, booleanArrayOfName, charArrayOfName]
         builderDSLNames = [buildStringName, buildListName, buildSetName, buildMapName]
 
         stringProducingCallees = [
