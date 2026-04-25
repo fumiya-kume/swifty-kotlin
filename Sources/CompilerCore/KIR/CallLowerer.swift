@@ -8,8 +8,8 @@ final class CallLowerer {
     }
 
     /// Maps a numeric receiver type (nullable or non-nullable) to its runtime
-    /// symbol prefix (e.g. "kk_int", "kk_long", "kk_double", "kk_float"), or
-    /// nil if the receiver is not one of the four coercion-eligible numeric
+    /// symbol prefix (e.g. "kk_int", "kk_long", "kk_uint", "kk_ulong"),
+    /// or nil if the receiver is not one of the coercion-eligible numeric
     /// types. Nullable receivers are normalized to non-nullable for dispatch.
     /// Shared by both normal and safe-call member lowering paths.
     func numericCoercionRuntimePrefix(
@@ -21,17 +21,25 @@ final class CallLowerer {
         let longType = sema.types.make(.primitive(.long, .nonNull))
         let doubleType = sema.types.make(.primitive(.double, .nonNull))
         let floatType = sema.types.make(.primitive(.float, .nonNull))
+        let ubyteType = sema.types.ubyteType
+        let ushortType = sema.types.ushortType
+        let uintType = sema.types.uintType
+        let ulongType = sema.types.ulongType
         if nonNull == intType { return "kk_int" }
         if nonNull == longType { return "kk_long" }
         if nonNull == doubleType { return "kk_double" }
         if nonNull == floatType { return "kk_float" }
+        if nonNull == ubyteType { return "kk_ubyte" }
+        if nonNull == ushortType { return "kk_ushort" }
+        if nonNull == uintType { return "kk_uint" }
+        if nonNull == ulongType { return "kk_ulong" }
         return nil
     }
 
     /// Shared helper for coerceIn(range) lowering (STDLIB-525, STDLIB-CONV-006).
     /// Decomposes a range argument into first/last bounds and emits a call to
-    /// kk_{int,long,double,float}_coerceIn. Used by both normal and safe-call member lowering
-    /// paths to avoid duplication. Supports all numeric types: Int, Long, Double, Float.
+    /// kk_{int,long,uint,ulong}_coerceIn. Used by both normal and safe-call member lowering
+    /// paths to avoid duplication for the numeric types that expose range coercion.
     func emitCoerceInRange(
         prefix: String,
         receiverType: TypeID,

@@ -172,7 +172,7 @@ extension CallLowerer {
         "putAll", "addAll",
         "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
         "plus", "minus",
-        "asSequence", "asIterable", "toList", "toSet", "toMap", "toMutableList", "toMutableSet", "toTypedArray",
+        "asSequence", "asIterable", "toList", "toSet", "toMap", "toCollection", "toMutableList", "toMutableSet", "toTypedArray",
         "toIntArray", "toLongArray", "toByteArray",
         "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect", "subList",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
@@ -1018,7 +1018,14 @@ extension CallLowerer {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
                 let argExprID = args[0].expr
-                if sema.bindings.isRangeExpr(argExprID) {
+                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+                if let rangeElementType = coerceInRangeElementType(
+                    for: argExprID,
+                    sema: sema,
+                    interner: interner
+                ),
+                rangeElementType == nonNullReceiverType
+                {
                     let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.nullableAnyType
                     let result = arena.appendExpr(
                         .temporary(Int32(arena.expressions.count)),
@@ -2035,7 +2042,7 @@ extension CallLowerer {
             }
         }
 
-        // Int/Long/Double/Float.coerceIn(min, max) (STDLIB-150, STDLIB-500)
+        // Int/Long/Byte/Short/UByte/UShort/UInt/ULong.coerceIn(min, max) (STDLIB-150, STDLIB-500)
         if interner.resolve(calleeName) == "coerceIn", args.count == 2 {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
@@ -2051,16 +2058,25 @@ extension CallLowerer {
             }
         }
 
-        // Int/Long/Double/Float.coerceIn(range) — single ClosedRange argument (STDLIB-525, STDLIB-CONV-006)
-        // Decompose the range into first/last and delegate to kk_{int,long,double,float}_coerceIn.
-        // All numeric types are supported; the shared emitCoerceInRange helper types the
-        // extracted bounds as the non-nullable receiver type and kk_range_first/kk_range_last
-        // return the range's element type.
+        // Int/Long/UInt/ULong.coerceIn(range) — single ClosedRange argument (STDLIB-525, STDLIB-CONV-006)
+        // Decompose the range into first/last and delegate to kk_{int,long,uint,ulong}_coerceIn.
+        // The shared emitCoerceInRange helper types the extracted bounds as the non-nullable
+        // receiver type and kk_range_first/kk_range_last return the range's element type.
         if interner.resolve(calleeName) == "coerceIn", args.count == 1 {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
-            if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
+            let intType = sema.types.intType
+            let longType = sema.types.longType
+            let uintType = sema.types.uintType
+            let ulongType = sema.types.ulongType
+            let supportsRangeCoercion = receiverType == intType || receiverType == longType
+                || receiverType == uintType || receiverType == ulongType
+            if supportsRangeCoercion,
+               let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
                 let argExprID = args[0].expr
-                if sema.bindings.isRangeExpr(argExprID) {
+                let argType = sema.bindings.exprTypes[argExprID] ?? sema.types.anyType
+                if sema.bindings.isRangeExpr(argExprID)
+                    || nominalRangeElementType(for: argType, sema: sema, interner: interner) != nil
+                {
                     emitCoerceInRange(
                         prefix: prefix,
                         receiverType: receiverType,
@@ -2077,7 +2093,8 @@ extension CallLowerer {
             }
         }
 
-        // Int/Long/Double/Float.coerceAtLeast(min) / coerceAtMost(max) (STDLIB-150, STDLIB-500)
+        // Int/Long/Double/Float/Byte/Short/UByte/UShort/UInt/ULong.coerceAtLeast(min)
+        // / coerceAtMost(max) (STDLIB-150, STDLIB-500)
         if args.count == 1 {
             let calleeStr = interner.resolve(calleeName)
             if calleeStr == "coerceAtLeast" || calleeStr == "coerceAtMost" {
@@ -6876,7 +6893,9 @@ extension CallLowerer {
             case "eachCount":
                 return interner.intern("kk_grouping_eachCount")
             case "fold":
-                return interner.intern("kk_grouping_fold")
+                return interner.intern(argumentCount >= 4
+                    ? "kk_grouping_fold_initialValueSelector"
+                    : "kk_grouping_fold")
             case "foldTo":
                 return interner.intern(hasHOFLambdaArg
                     ? "kk_grouping_foldTo_selector"
@@ -7011,6 +7030,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_sum")
             case interner.intern("average"):
                 return interner.intern("kk_sequence_average")
+            case interner.intern("toCollection"):
+                return interner.intern("kk_sequence_toCollection")
             case interner.intern("toMutableList"):
                 return interner.intern("kk_sequence_toMutableList")
             case interner.intern("toMutableSet"):

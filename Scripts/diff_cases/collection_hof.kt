@@ -17,4 +17,11 @@ fun main() {
     println(list.find { it > 10 })
     println(listOf(3, 1, 4, 1, 5).sortedBy { it })
     println(listOf(1, 2, 3, 4, 5, 6).groupBy { it % 2 })
+    val grouping: Grouping<Int, Int> = listOf(3, 1, 4, 2, 5).groupingBy { value: Int -> value % 2 }
+    println(
+        grouping.fold(
+            initialValueSelector = { key: Int, element: Int -> key * 100 + element },
+            operation = { key: Int, accumulator: Int, element: Int -> accumulator + key + element }
+        )
+    )
 }

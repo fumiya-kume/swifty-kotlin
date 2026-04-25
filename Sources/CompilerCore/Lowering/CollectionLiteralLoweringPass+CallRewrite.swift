@@ -3152,17 +3152,24 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.toCollectionName, arguments.count == 2 {
                         let receiverID = arguments[0]
                         let destID = arguments[1]
+                        let runtimeCallee: InternedString?
                         if listExprIDs.contains(receiverID.rawValue)
                             || setExprIDs.contains(receiverID.rawValue)
-                            || sequenceExprIDs.contains(receiverID.rawValue)
                             || arrayExprIDs.contains(receiverID.rawValue)
                         {
+                            runtimeCallee = lookup.kkCollectionToCollectionName
+                        } else if sequenceExprIDs.contains(receiverID.rawValue) {
+                            runtimeCallee = lookup.kkSequenceToCollectionName
+                        } else {
+                            runtimeCallee = nil
+                        }
+                        if let runtimeCallee {
                             let hofResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
                             loweredBody.append(.call(
                                 symbol: nil,
-                                callee: lookup.kkCollectionToCollectionName,
+                                callee: runtimeCallee,
                                 arguments: [receiverID, destID],
                                 result: hofResult,
                                 canThrow: false,

@@ -1864,15 +1864,21 @@ extension CollectionLiteralLoweringPass {
         let lookup = context.lookup
 
         if callee == lookup.toCollectionName {
-            guard arguments.count == 1,
-                  listExprIDs.contains(receiver.rawValue) || sequenceExprIDs.contains(receiver.rawValue)
-            else {
+            guard arguments.count == 1 else {
                 return false
             }
 
             let destID = arguments[0]
+            let kkName: InternedString
+            if listExprIDs.contains(receiver.rawValue) {
+                kkName = lookup.kkCollectionToCollectionName
+            } else if sequenceExprIDs.contains(receiver.rawValue) {
+                kkName = lookup.kkSequenceToCollectionName
+            } else {
+                return false
+            }
             let hofResult = emitHOFCall(
-                kkName: lookup.kkCollectionToCollectionName,
+                kkName: kkName,
                 receiver: receiver,
                 arguments: [destID],
                 result: result,

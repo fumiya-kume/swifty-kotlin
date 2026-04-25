@@ -74,6 +74,46 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testSequenceToCollectionAppendsIntoDestination() throws {
+        let source = """
+        fun main() {
+            val seq = sequenceOf(1, 2, 2, 3)
+
+            val listDest = mutableListOf(0)
+            val listResult = seq.toCollection(listDest)
+            listResult.add(4)
+            println(listDest)
+
+            val setDest = mutableSetOf(10, 2)
+            val setResult = sequenceOf(1, 2, 2, 3).toCollection(setDest)
+            setResult.add(4)
+            println(setDest)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceToCollectionEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [0, 1, 2, 2, 3, 4]
+                [10, 2, 1, 3, 4]
+                """
+                + "\n"
+            )
+        }
+    }
+
     func testSequenceOnEachIndexedPreservesElementsAndLaziness() throws {
         let source = """
         fun main() {

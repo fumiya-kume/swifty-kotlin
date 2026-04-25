@@ -108,8 +108,9 @@
 - [ ] STDLIB-COL-BSEARCH-004: `Array.binarySearch(element, comparator, fromIndex, toIndex)` を追加する
 - [x] STDLIB-COL-WIN-001: `Iterable.windowed(size, step, partialWindows, transform)` overload を追加する
 - [ ] STDLIB-022: range / progression / unsigned range の網羅性を上げる
-- [ ] STDLIB-RANGE-IFACE-001: `kotlin.ranges.ClosedRange<T>` interface surface を追加する
-- [ ] STDLIB-RANGE-IFACE-002: `kotlin.ranges.ClosedFloatingPointRange<T>` interface surface を追加する
+- [x] STDLIB-RANGE-IFACE-001: `kotlin.ranges.ClosedRange<T>` interface surface を追加する
+- [x] STDLIB-RANGE-IFACE-002: `kotlin.ranges.ClosedFloatingPointRange<T>` interface surface を追加する
+- [x] STDLIB-RANGE-IFACE-003: `kotlin.ranges.OpenEndRange<T>` interface surface を追加する
 - [ ] STDLIB-RANGE-CHAR-001: `kotlin.ranges.CharProgression` / `CharRange` type surface を追加する
 - [ ] STDLIB-RANGE-OPEN-001: `kotlin.ranges.rangeUntil` operator surface を `OpenEndRange` 戻り値で追加する
 - [ ] STDLIB-RANGE-RANDOM-001: `CharRange` / `IntRange` / `LongRange` / `UIntRange` / `ULongRange`.`random()` overload 群を追加する
