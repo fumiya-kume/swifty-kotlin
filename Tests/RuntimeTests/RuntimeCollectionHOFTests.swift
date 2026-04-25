@@ -158,6 +158,14 @@ private let groupingReduceToFold: @convention(c) (Int, Int, Int, Int, UnsafeMuta
     acc * 10 + value + key
 }
 
+private let groupingInitialValueSelector: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, key, element, _ in
+    key * 100 + element
+}
+
+private let groupingFoldOperation: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, key, accumulator, element, _ in
+    accumulator + key + element
+}
+
 // Lambda that returns value * 10 (for associateWithTo tests)
 private let valueTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     value * 10
@@ -557,6 +565,23 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(result, dest)
         XCTAssertEqual(mapKeys(result), [1])
         XCTAssertEqual(kk_map_get(result, 1), 10)
+    }
+
+    func testGroupingFoldInitialValueSelectorUsesKeyAndFirstElement() {
+        let source = makeList([3, 1, 4, 2, 5])
+        let grouping = kk_list_groupingBy(source, unsafeBitCast(groupByParity, to: Int.self), 0)
+        let folded = kk_grouping_fold_initialValueSelector(
+            grouping,
+            unsafeBitCast(groupingInitialValueSelector, to: Int.self),
+            0,
+            unsafeBitCast(groupingFoldOperation, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(mapKeys(folded), [1, 0])
+        XCTAssertEqual(kk_unbox_int(kk_map_get(folded, 1)), 115)
+        XCTAssertEqual(kk_unbox_int(kk_map_get(folded, 0)), 10)
     }
 
     func testGroupingFoldToWithInitialValueMutatesDestination() {
