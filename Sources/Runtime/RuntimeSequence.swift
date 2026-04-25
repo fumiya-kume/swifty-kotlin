@@ -2087,7 +2087,64 @@ public func kk_sequence_runningReduce(
 }
 
 // MARK: - Sequence foldIndexed / runningFoldIndexed / scanIndexed / reduceIndexed / reduceIndexedOrNull
-// MARK: - (STDLIB-556, STDLIB-557, STDLIB-SEQ-015, STDLIB-SEQ-016)
+// MARK: - (STDLIB-556, STDLIB-557, STDLIB-SEQ-015, STDLIB-SEQ-016, STDLIB-SEQ-017)
+
+@_cdecl("kk_sequence_runningReduceIndexed")
+public func kk_sequence_runningReduceIndexed(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    var hasAccumulator = false
+    var acc = 0
+    var index = 0
+    var results: [Int] = []
+    let visit: (Int) -> Bool = { elem in
+        if !hasAccumulator {
+            hasAccumulator = true
+            acc = maybeUnbox(elem)
+            results.append(acc)
+            index += 1
+            return true
+        }
+        var thrown = 0
+        let nextAcc = runtimeInvokeCollectionLambda3(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            arg1: index,
+            arg2: acc,
+            arg3: elem,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        acc = maybeUnbox(nextAcc)
+        results.append(acc)
+        index += 1
+        return true
+    }
+
+    var traversalState: SequenceTraversalState?
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let st = SequenceTraversalState()
+        traversalState = st
+        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown, yield: visit)
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            if !visit(elem) { break }
+        }
+    }
+
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return 0
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: results))
+}
 
 @_cdecl("kk_sequence_foldIndexed")
 public func kk_sequence_foldIndexed(

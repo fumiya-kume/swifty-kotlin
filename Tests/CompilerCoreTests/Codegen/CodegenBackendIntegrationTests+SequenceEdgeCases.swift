@@ -74,6 +74,35 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testSequenceRunningReduceIndexedAccumulatesWithIndex() throws {
+        let source = """
+        fun main() {
+            val reduced = sequenceOf(1, 2, 3, 4)
+                .runningReduceIndexed { index, acc, value -> acc + index * value }
+            val empty = emptySequence<Int>()
+                .runningReduceIndexed { index, acc, value -> acc + index * value }
+
+            println(reduced)
+            println(empty)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceRunningReduceIndexed",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 3, 9, 21]\n[]\n")
+        }
+    }
+
     func testSequenceToCollectionAppendsIntoDestination() throws {
         let source = """
         fun main() {

@@ -604,6 +604,53 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(listElements(result), [42])
     }
 
+    // MARK: - Sequence runningReduceIndexed tests (STDLIB-SEQ-017)
+
+    func testRunningReduceIndexedAccumulatesWithIndex() {
+        let seq = makeSequence([1, 2, 3, 4])
+        var thrown = 0
+
+        let result = kk_sequence_runningReduceIndexed(
+            seq,
+            unsafeBitCast(indexedAccumulatingSum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(listElements(result), [1, 3, 9, 21])
+    }
+
+    func testRunningReduceIndexedReturnsEmptyListForEmptySequence() {
+        let seq = makeSequence([])
+        var thrown = 0
+
+        let result = kk_sequence_runningReduceIndexed(
+            seq,
+            unsafeBitCast(indexedAccumulatingSum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(listElements(result), [])
+    }
+
+    func testRunningReduceIndexedReturnsZeroWhenLambdaThrows() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_runningReduceIndexed(
+            seq,
+            unsafeBitCast(throwingIndexedAccumulator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
+    }
+
     func testScanReturnsZeroWhenLambdaThrows() {
         let seq = makeSequence([1, 2, 3])
         var thrown = 0

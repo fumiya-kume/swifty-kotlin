@@ -3597,6 +3597,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_onEachIndexed"
                 } else if calleeName == interner.intern("plus") || calleeName == interner.intern("plusElement") {
                     runtimeCallee = "kk_sequence_plus_element"
+                } else if calleeName == interner.intern("runningReduceIndexed") {
+                    runtimeCallee = "kk_sequence_runningReduceIndexed"
                 } else if calleeName == interner.intern("ifEmpty") {
                     runtimeCallee = "kk_sequence_ifEmpty"
                 } else if calleeName == interner.intern("forEachIndexed") {
@@ -3632,6 +3634,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_mapIndexed"
                         || runtimeCallee == "kk_sequence_onEach"
                         || runtimeCallee == "kk_sequence_onEachIndexed"
+                        || runtimeCallee == "kk_sequence_runningReduceIndexed"
                         || runtimeCallee == "kk_sequence_ifEmpty"
                         || runtimeCallee == "kk_sequence_zipWithNextTransform"
                     instructions.append(.call(
@@ -5859,6 +5862,7 @@ extension CallLowerer {
             interner.intern("kk_long_range_random"),
             interner.intern("kk_uint_range_random"),
             interner.intern("kk_ulong_range_random"),
+            interner.intern("kk_sequence_runningReduceIndexed"),
             interner.intern("kk_sequence_sortedBy"),
             interner.intern("kk_sequence_sumOf"),
             interner.intern("kk_sequence_associate"),
@@ -7435,6 +7439,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_reduceIndexed")
             case interner.intern("reduceIndexedOrNull"):
                 return interner.intern("kk_sequence_reduceIndexedOrNull")
+            case interner.intern("runningReduceIndexed"):
+                return interner.intern("kk_sequence_runningReduceIndexed")
             default:
                 break
             }

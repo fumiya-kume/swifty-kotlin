@@ -675,6 +675,18 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
+        // STDLIB-SEQ-017: runningReduceIndexed
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_runningReduceIndexed",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
         // STDLIB-470: toSet, toMap, groupBy, maxOrNull, minOrNull, flatten
         RuntimeABIFunctionSpec(
             name: "kk_sequence_toSet",
