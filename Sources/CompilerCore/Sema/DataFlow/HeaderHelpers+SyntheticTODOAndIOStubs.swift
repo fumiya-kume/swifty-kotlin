@@ -3280,6 +3280,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // onEachIndexed(action: (Int, T) -> Unit): Sequence<T>
+        registerSequenceMemberStub(
+            named: "onEachIndexed",
+            externalLinkName: "kk_sequence_onEachIndexed",
+            receiverType: receiverType,
+            parameters: [("action", forEachIndexedActionType)],
+            returnType: receiverType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // any(predicate: (T) -> Boolean): Boolean  (STDLIB-SEQ-007)
         registerSequenceMemberStub(
             named: "any",
