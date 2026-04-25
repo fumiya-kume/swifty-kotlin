@@ -6100,6 +6100,12 @@ extension CallLowerer {
                 if externalLinkName == "kk_list_binarySearch" && hasHOFLambdaArg {
                     return interner.intern("kk_list_binarySearch_compare")
                 }
+                if (externalLinkName == "kk_list_binarySearch" || externalLinkName == "kk_array_binarySearch"),
+                   isGenericArrayLikeType(nonNullReceiverType, sema: sema, interner: interner),
+                   argumentCount == 5
+                {
+                    return interner.intern("kk_array_binarySearch_compare")
+                }
                 return interner.intern(externalLinkName)
             }
             if let unresolvedSynthetic = unresolvedSyntheticMemberCallee(
@@ -6651,6 +6657,11 @@ extension CallLowerer {
                interner: interner
            )
         {
+            if argumentCount == 5,
+               isGenericArrayLikeType(nonNullReceiverType, sema: sema, interner: interner)
+            {
+                return interner.intern("kk_array_binarySearch_compare")
+            }
             return runtimeName
         }
 

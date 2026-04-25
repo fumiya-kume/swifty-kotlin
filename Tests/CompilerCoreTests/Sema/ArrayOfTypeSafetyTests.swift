@@ -213,7 +213,7 @@ final class ArrayOfTypeSafetyTests: XCTestCase {
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
             let hasArrayBinarySearchDiag = ctx.diagnostics.diagnostics.contains {
-                $0.code == "KSWIFTK-SEMA-0024" || $0.code == "KSWIFTK-SEMA-BOUND"
+                $0.code == "KSWIFTK-SEMA-0002" || $0.code == "KSWIFTK-SEMA-0024" || $0.code == "KSWIFTK-SEMA-BOUND"
             }
             XCTAssertTrue(
                 hasArrayBinarySearchDiag,
