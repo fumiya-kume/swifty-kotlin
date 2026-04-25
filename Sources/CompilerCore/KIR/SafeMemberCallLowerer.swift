@@ -121,9 +121,10 @@ final class SafeMemberCallLowerer {
             return anyResult
         }
         
-        // 数値強制の特殊処理
+        // Special handling for numeric coercion calls.
         if let coercionResult = handleNumericCoercion(
             effectiveCalleeName: effectiveCalleeName,
+            sourceArgs: args,
             args: loweredArgIDs,
             loweredReceiverID: loweredReceiverID,
             result: result,
@@ -497,9 +498,10 @@ final class SafeMemberCallLowerer {
         return nil
     }
     
-    /// 数値強制のセーフコールを処理
+    /// Handles safe calls for numeric coercion functions.
     private func handleNumericCoercion(
         effectiveCalleeName: InternedString,
+        sourceArgs: [CallArgument],
         args: [KIRExprID],
         loweredReceiverID: KIRExprID,
         result: KIRExprID,
@@ -511,7 +513,7 @@ final class SafeMemberCallLowerer {
         let interner = shared.interner
         let calleeStr = interner.resolve(effectiveCalleeName)
         
-        // coerceIn の処理
+        // Handle coerceIn.
         if calleeStr == "coerceIn" {
             if args.count == 2 {
                 let receiverType = arena.exprType(loweredReceiverID) ?? sema.types.anyType
@@ -527,40 +529,49 @@ final class SafeMemberCallLowerer {
                 }
             } else if args.count == 1 {
                 let receiverType = arena.exprType(loweredReceiverID) ?? sema.types.anyType
+                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
                 let intType = sema.types.intType
                 let longType = sema.types.longType
                 let uintType = sema.types.uintType
                 let ulongType = sema.types.ulongType
-                let supportsRangeCoercion = receiverType == intType || receiverType == longType
-                    || receiverType == uintType || receiverType == ulongType
+                let supportsRangeCoercion = nonNullReceiverType == intType || nonNullReceiverType == longType
+                    || nonNullReceiverType == uintType || nonNullReceiverType == ulongType
                 if supportsRangeCoercion,
                    let prefix = CallLoweringHelpers.numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
-
-                    // rangeベースの強制（単一引数の coerceIn はRange引数を期待する）
-                    let callLabel = coordinator.driver.ctx.makeLoopLabel()
-                    let endLabel = coordinator.driver.ctx.makeLoopLabel()
-                    let nullExpr = shared.arena.appendExpr(.null, type: sema.types.nullableAnyType)
-
-                    instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: callLabel))
-                    instructions.append(.constValue(result: nullExpr, value: .null))
-                    instructions.append(.copy(from: nullExpr, to: result))
-                    instructions.append(.jump(endLabel))
-
-                    instructions.append(.label(callLabel))
-                    CallLoweringHelpers.emitCoerceInRange(
-                        prefix: prefix,
-                        receiverType: receiverType,
-                        loweredReceiverID: loweredReceiverID,
-                        loweredRangeArgID: args[0],
-                        result: result,
+                    let rangeArgExpr = sourceArgs[0].expr
+                    if let rangeElementType = coerceInRangeElementType(
+                        for: rangeArgExpr,
                         sema: sema,
-                        arena: shared.arena,
-                        interner: interner,
-                        instructions: &instructions.instructions
-                    )
-                    instructions.append(.label(endLabel))
+                        interner: interner
+                    ), rangeElementType == nonNullReceiverType
+                    {
 
-                    return result
+                        // Single-argument coerceIn expects a range argument.
+                        let callLabel = coordinator.driver.ctx.makeLoopLabel()
+                        let endLabel = coordinator.driver.ctx.makeLoopLabel()
+                        let nullExpr = shared.arena.appendExpr(.null, type: sema.types.nullableAnyType)
+
+                        instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: callLabel))
+                        instructions.append(.constValue(result: nullExpr, value: .null))
+                        instructions.append(.copy(from: nullExpr, to: result))
+                        instructions.append(.jump(endLabel))
+
+                        instructions.append(.label(callLabel))
+                        CallLoweringHelpers.emitCoerceInRange(
+                            prefix: prefix,
+                            receiverType: receiverType,
+                            loweredReceiverID: loweredReceiverID,
+                            loweredRangeArgID: args[0],
+                            result: result,
+                            sema: sema,
+                            arena: shared.arena,
+                            interner: interner,
+                            instructions: &instructions.instructions
+                        )
+                        instructions.append(.label(endLabel))
+
+                        return result
+                    }
                 }
             }
         }

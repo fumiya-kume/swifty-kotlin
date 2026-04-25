@@ -90,6 +90,64 @@ final class UnsignedPrimitiveMemberCallTests: XCTestCase {
         }
     }
 
+    func testUnsignedCoercionMemberCallsAcceptRangeTypedParameters() throws {
+        let source = """
+        import kotlin.ranges.UIntRange
+        import kotlin.ranges.ULongRange
+
+        fun sample(ui: UInt, ul: ULong, ur: UIntRange, lr: ULongRange) {
+            ui.coerceIn(ur)
+            ul.coerceIn(lr)
+        }
+        """
+
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let sema = try XCTUnwrap(ctx.sema)
+        let uintRangeType = try nominalRangeType(named: "UIntRange", sema: sema, interner: ctx.interner)
+        let ulongRangeType = try nominalRangeType(named: "ULongRange", sema: sema, interner: ctx.interner)
+
+        let checks: [(receiverType: TypeID, argumentType: TypeID)] = [
+            (sema.types.uintType, uintRangeType),
+            (sema.types.ulongType, ulongRangeType),
+        ]
+
+        for check in checks {
+            let callExpr = try XCTUnwrap(
+                firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(receiver, callee, _, args, _) = expr else {
+                        return false
+                    }
+                    return ctx.interner.resolve(callee) == "coerceIn"
+                        && args.count == 1
+                        && sema.bindings.exprTypes[receiver] == check.receiverType
+                },
+                "Expected a range-typed coerceIn call"
+            )
+            guard case let .memberCall(receiver, _, _, args, _) = ast.arena.expr(callExpr) else {
+                XCTFail("Expected member call expression")
+                continue
+            }
+            XCTAssertEqual(sema.bindings.exprTypes[receiver], check.receiverType)
+            XCTAssertEqual(sema.bindings.exprTypes[args[0].expr], check.argumentType)
+            XCTAssertEqual(sema.bindings.exprTypes[callExpr], check.receiverType)
+        }
+    }
+
+    func testUnsignedCoercionMemberCallsRejectScalarRangeArguments() {
+        let source = """
+        fun sample(ui: UInt, ul: ULong) {
+            ui.coerceIn(5u)
+            ul.coerceIn(5uL)
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        assertDiagnosticCount("KSWIFTK-SEMA-0002", expected: 2, in: ctx)
+    }
+
     func testUnsignedMemberCallsRejectMixedWidths() {
         let source = """
         fun sample(ub: UByte, us: UShort) {
@@ -146,6 +204,27 @@ final class UnsignedPrimitiveMemberCallTests: XCTestCase {
         try runSema(ctx)
 
         XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected unsigned safe inv calls to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    private func nominalRangeType(
+        named name: String,
+        sema: SemaModule,
+        interner: StringInterner,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws -> TypeID {
+        let fqName = ["kotlin", "ranges", name].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected synthetic range type \(name)",
+            file: file,
+            line: line
+        )
+        return sema.types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
+            nullability: .nonNull
+        )))
     }
 
     private func runSemaCollectingDiagnostics(_ source: String) -> CompilationContext {

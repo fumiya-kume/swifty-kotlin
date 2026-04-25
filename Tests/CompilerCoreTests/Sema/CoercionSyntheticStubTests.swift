@@ -24,6 +24,27 @@ final class CoercionSyntheticStubTests: XCTestCase {
         return sema.symbols.lookupAll(fqName: fq)
     }
 
+    private func nominalRangeType(
+        named name: String,
+        sema: SemaModule,
+        interner: StringInterner,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws -> TypeID {
+        let fqName = ["kotlin", "ranges", name].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected synthetic range type \(name)",
+            file: file,
+            line: line
+        )
+        return sema.types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+    }
+
     private func assertCoercionStub(
         member: String,
         receiverType: TypeID,
@@ -383,11 +404,9 @@ final class CoercionSyntheticStubTests: XCTestCase {
             ("coerceAtLeast", sema.types.ushortType, [sema.types.ushortType], "kk_ushort_coerceAtLeast"),
             ("coerceAtMost", sema.types.ushortType, [sema.types.ushortType], "kk_ushort_coerceAtMost"),
             ("coerceIn", sema.types.uintType, [sema.types.uintType, sema.types.uintType], "kk_uint_coerceIn"),
-            ("coerceIn", sema.types.uintType, [sema.types.uintType], "kk_uint_coerceIn"),
             ("coerceAtLeast", sema.types.uintType, [sema.types.uintType], "kk_uint_coerceAtLeast"),
             ("coerceAtMost", sema.types.uintType, [sema.types.uintType], "kk_uint_coerceAtMost"),
             ("coerceIn", sema.types.ulongType, [sema.types.ulongType, sema.types.ulongType], "kk_ulong_coerceIn"),
-            ("coerceIn", sema.types.ulongType, [sema.types.ulongType], "kk_ulong_coerceIn"),
             ("coerceAtLeast", sema.types.ulongType, [sema.types.ulongType], "kk_ulong_coerceAtLeast"),
             ("coerceAtMost", sema.types.ulongType, [sema.types.ulongType], "kk_ulong_coerceAtMost"),
         ]
@@ -403,6 +422,24 @@ final class CoercionSyntheticStubTests: XCTestCase {
                 interner: interner
             )
         }
+    }
+
+    func testUnsignedRangeCoerceInDoesNotRegisterSyntheticStubs() throws {
+        let (sema, interner) = try makeSema()
+        let uintRangeType = try nominalRangeType(named: "UIntRange", sema: sema, interner: interner)
+        let ulongRangeType = try nominalRangeType(named: "ULongRange", sema: sema, interner: interner)
+        let symbols = coercionSymbols(for: "coerceIn", sema: sema, interner: interner)
+
+        let hasRangeStub = symbols.contains { symbolID in
+            guard let sig = sema.symbols.functionSignature(for: symbolID) else { return false }
+            return (sig.receiverType == sema.types.uintType && sig.parameterTypes == [uintRangeType])
+                || (sig.receiverType == sema.types.ulongType && sig.parameterTypes == [ulongRangeType])
+        }
+
+        XCTAssertFalse(
+            hasRangeStub,
+            "UInt/ULong coerceIn(range) should be handled by the type-checker range fast path, not synthetic stubs"
+        )
     }
 
     // MARK: - Cross-type: all numeric types register distinct overloads

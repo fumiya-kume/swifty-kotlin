@@ -1018,7 +1018,14 @@ extension CallLowerer {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
                 let argExprID = args[0].expr
-                if sema.bindings.isRangeExpr(argExprID) {
+                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+                if let rangeElementType = coerceInRangeElementType(
+                    for: argExprID,
+                    sema: sema,
+                    interner: interner
+                ),
+                rangeElementType == nonNullReceiverType
+                {
                     let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.nullableAnyType
                     let result = arena.appendExpr(
                         .temporary(Int32(arena.expressions.count)),
@@ -2034,7 +2041,10 @@ extension CallLowerer {
             if supportsRangeCoercion,
                let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
                 let argExprID = args[0].expr
-                if sema.bindings.isRangeExpr(argExprID) {
+                let argType = sema.bindings.exprTypes[argExprID] ?? sema.types.anyType
+                if sema.bindings.isRangeExpr(argExprID)
+                    || nominalRangeElementType(for: argType, sema: sema, interner: interner) != nil
+                {
                     emitCoerceInRange(
                         prefix: prefix,
                         receiverType: receiverType,

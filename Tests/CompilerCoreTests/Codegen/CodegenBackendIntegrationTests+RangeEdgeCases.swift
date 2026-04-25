@@ -204,22 +204,33 @@ extension CodegenBackendIntegrationTests {
         throw XCTSkip("Unsigned coercion test temporarily disabled on Linux")
         #endif
         let source = """
+        import kotlin.ranges.UIntRange
+        import kotlin.ranges.ULongRange
+
         fun main() {
             println(5u.coerceIn(1u, 10u))
             println(0u.coerceAtLeast(1u))
             println(15u.coerceAtMost(10u))
             println(5u.coerceIn(1u..10u))
 
+            val uintRange = UIntRange(1u, 10u)
+            println(5u.coerceIn(uintRange))
+
             val ui: UInt? = 5u
             println(ui?.coerceIn(1u..10u))
+            println(ui?.coerceIn(uintRange))
 
             println(5uL.coerceIn(1uL, 10uL))
             println(0uL.coerceAtLeast(1uL))
             println(15uL.coerceAtMost(10uL))
             println(5uL.coerceIn(1uL..10uL))
 
+            val ulongRange = ULongRange(1uL, 10uL)
+            println(5uL.coerceIn(ulongRange))
+
             val ul: ULong? = 5uL
             println(ul?.coerceIn(1uL..10uL))
+            println(ul?.coerceIn(ulongRange))
         }
         """
 
@@ -244,8 +255,12 @@ extension CodegenBackendIntegrationTests {
                 5
                 5
                 5
+                5
+                5
                 1
                 10
+                5
+                5
                 5
                 5
                 """ + "\n"

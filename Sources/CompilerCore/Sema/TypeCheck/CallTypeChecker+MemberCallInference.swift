@@ -3235,14 +3235,24 @@ extension CallTypeChecker {
             let receiverForCheck = safeCall
                 ? sema.types.makeNonNullable(lookupReceiverType)
                 : lookupReceiverType
-            if sema.bindings.isRangeExpr(args[0].expr)
-                && (receiverForCheck == intType || receiverForCheck == longType
-                    || receiverForCheck == uintType || receiverForCheck == ulongType)
-            {
-                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: receiverForCheck)
-                let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
-                sema.bindings.bindExprType(id, type: finalType)
-                return finalType
+            let supportsRangeCoercion = receiverForCheck == intType || receiverForCheck == longType
+                || receiverForCheck == uintType || receiverForCheck == ulongType
+            if supportsRangeCoercion {
+                let inferredArgType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                let nominalRangeElementType = nominalRangeElementType(
+                    for: inferredArgType,
+                    sema: sema,
+                    interner: interner
+                )
+                let isRangeArg = sema.bindings.isRangeExpr(args[0].expr)
+                if isRangeArg || nominalRangeElementType == receiverForCheck {
+                    if isRangeArg {
+                        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: receiverForCheck)
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
             }
         }
 

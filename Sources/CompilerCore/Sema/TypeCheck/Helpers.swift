@@ -1,5 +1,50 @@
 import Foundation
 
+/// Returns the element type for a nominal range class such as `UIntRange`.
+func nominalRangeElementType(
+    for rangeType: TypeID,
+    sema: SemaModule,
+    interner: StringInterner
+) -> TypeID? {
+    let nonNullType = sema.types.makeNonNullable(rangeType)
+    guard case let .classType(classType) = sema.types.kind(of: nonNullType),
+          let symbol = sema.symbols.symbol(classType.classSymbol)
+    else {
+        return nil
+    }
+
+    switch interner.resolve(symbol.name) {
+    case "IntRange":
+        return sema.types.intType
+    case "LongRange":
+        return sema.types.longType
+    case "UIntRange":
+        return sema.types.uintType
+    case "ULongRange":
+        return sema.types.ulongType
+    default:
+        return nil
+    }
+}
+
+/// Returns the element type for a range-like argument expression.
+/// Prefers explicit `UIntRange` / `ULongRange` markers when available so
+/// locals derived from range constructors still lower correctly.
+func coerceInRangeElementType(
+    for expr: ExprID,
+    sema: SemaModule,
+    interner: StringInterner
+) -> TypeID? {
+    if sema.bindings.isUIntRangeExpr(expr) {
+        return sema.types.uintType
+    }
+    if sema.bindings.isULongRangeExpr(expr) {
+        return sema.types.ulongType
+    }
+    let exprType = sema.bindings.exprTypes[expr] ?? sema.types.anyType
+    return nominalRangeElementType(for: exprType, sema: sema, interner: interner)
+}
+
 struct TypeCheckHelpers {
     private func syntheticCoroutineNominalType(
         packageName: [InternedString],
