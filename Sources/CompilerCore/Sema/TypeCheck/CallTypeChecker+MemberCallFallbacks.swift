@@ -191,7 +191,10 @@ extension CallTypeChecker {
                 interner: interner,
                 elementType: sema.types.charType
             )
-        case ("replaceFirstChar", 1):
+        case ("replaceFirstChar", 1),
+             ("trim", 1),
+             ("trimStart", 1),
+             ("trimEnd", 1):
             sema.types.stringType
         case ("ifBlank", 1), ("ifEmpty", 1):
             sema.types.stringType
@@ -327,7 +330,9 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: expectedType)
             }
         }
-        if memberName == "indexOfFirst" || memberName == "indexOfLast" {
+        if memberName == "indexOfFirst" || memberName == "indexOfLast"
+            || memberName == "trim" || memberName == "trimStart" || memberName == "trimEnd"
+        {
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [charType],
                 returnType: sema.types.booleanType,
