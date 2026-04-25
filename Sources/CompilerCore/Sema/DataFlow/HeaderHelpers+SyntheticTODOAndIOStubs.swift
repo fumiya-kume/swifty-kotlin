@@ -2634,6 +2634,48 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // fold(initial: R, operation: (R, T) -> R): R
+        let foldName = interner.intern("fold")
+        let foldFQName = sequenceFQName + [foldName]
+        if symbols.lookup(fqName: foldFQName) == nil {
+            let foldRName = interner.intern("R")
+            let foldRSymbol = symbols.define(
+                kind: .typeParameter,
+                name: foldRName,
+                fqName: foldFQName + [foldRName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let foldRType = types.make(.typeParam(TypeParamType(
+                symbol: foldRSymbol,
+                nullability: .nonNull
+            )))
+            let foldOperationType = types.make(.functionType(FunctionType(
+                params: [foldRType, typeParamType],
+                returnType: foldRType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "fold",
+                externalLinkName: "kk_sequence_fold",
+                receiverType: receiverType,
+                parameters: [
+                    ("initial", foldRType),
+                    ("operation", foldOperationType),
+                ],
+                returnType: foldRType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                additionalTypeParameterSymbols: [foldRSymbol]
+            )
+        }
+
         // contains(element: T): Boolean
         registerSequenceMemberStub(
             named: "contains",

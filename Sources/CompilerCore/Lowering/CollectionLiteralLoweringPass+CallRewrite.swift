@@ -3963,12 +3963,12 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
                     // fold: args = [receiver, initial, lambda, closureRaw?]
-                    // Runtime expects (listRaw, initial, fnPtr, closureRaw, outThrown)
+                    // Runtime expects (collectionRaw, initial, fnPtr, closureRaw, outThrown)
                     if callee == lookup.foldName, (3 ... 4).contains(arguments.count) {
                         let receiverID = arguments[0]
                         let initialID = arguments[1]
                         let lambdaID = arguments[2]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if listExprIDs.contains(receiverID.rawValue) || sequenceExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 4 {
                                 closureRawID = arguments[3]
@@ -3980,9 +3980,12 @@ extension CollectionLiteralLoweringPass {
                             let hofResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
+                            let foldCallee = sequenceExprIDs.contains(receiverID.rawValue)
+                                ? lookup.kkSequenceFoldName
+                                : lookup.kkListFoldName
                             loweredBody.append(.call(
                                 symbol: nil,
-                                callee: lookup.kkListFoldName,
+                                callee: foldCallee,
                                 arguments: [receiverID, initialID, lambdaID, closureRawID],
                                 result: hofResult,
                                 canThrow: canThrow,

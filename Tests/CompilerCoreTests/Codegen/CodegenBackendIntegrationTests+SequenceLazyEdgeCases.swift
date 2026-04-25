@@ -336,7 +336,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - terminal ops: count, forEach, fold
 
     func testSequenceTerminalOps() throws {
-        throw XCTSkip("Sequence terminal ops (count/forEach/fold) not yet implemented")
         let source = """
         fun main() {
             val seq = sequenceOf(1, 2, 3, 4, 5)
@@ -378,7 +377,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - empty sequence terminals
 
     func testEmptySequenceTerminals() throws {
-        throw XCTSkip("Empty sequence terminal ops not yet implemented")
         let source = """
         fun main() {
             val empty = emptySequence<Int>()
@@ -415,7 +413,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - first() on empty throws NoSuchElementException
 
     func testSequenceFirstOnEmptyThrows() throws {
-        throw XCTSkip("Sequence first() on empty NoSuchElementException not yet implemented")
         let source = """
         fun main() {
             try {
@@ -446,7 +443,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - firstOrNull returns null on empty
 
     func testSequenceFirstOrNullOnEmpty() throws {
-        throw XCTSkip("Sequence firstOrNull on empty not yet implemented")
         let source = """
         fun main() {
             val result = emptySequence<Int>().firstOrNull()
