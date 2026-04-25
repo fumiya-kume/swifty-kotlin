@@ -60,6 +60,7 @@ extension CollectionLiteralLoweringPass {
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module, lookup: lookup,
+            context: context,
             listExprIDs: &listExprIDs, setExprIDs: &setExprIDs, mapExprIDs: &mapExprIDs, sequenceExprIDs: &sequenceExprIDs,
             arrayExprIDs: arrayExprIDs,
             loweredBody: &loweredBody
@@ -291,6 +292,7 @@ extension CollectionLiteralLoweringPass {
         origThrownResult: KIRExprID?,
         module: KIRModule,
         lookup: CollectionLiteralLookupTables,
+        context: VirtualCallRewriteContext,
         listExprIDs: inout Set<Int32>,
         setExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
@@ -615,16 +617,122 @@ extension CollectionLiteralLoweringPass {
         }
 
         if callee == lookup.windowedName, arguments.count == 3, listExprIDs.contains(receiver.rawValue) {
+            let thirdArgType = module.arena.exprType(arguments[2])
+            let thirdArgIsBoolean = context.sema.map { thirdArgType == $0.types.booleanType } ?? false
+            if thirdArgIsBoolean {
+                let transformResult = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                )
+                loweredBody.append(.call(
+                    symbol: nil,
+                    callee: lookup.kkListWindowedPartialName,
+                    arguments: [receiver] + arguments,
+                    result: transformResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                if let result {
+                    listExprIDs.insert(result.rawValue)
+                    listExprIDs.insert(transformResult.rawValue)
+                    loweredBody.append(.copy(from: transformResult, to: result))
+                }
+                return true
+            }
+        }
+
+        // windowed(size, transform) HOF overload — 3 args after closure expansion [size, fnPtr, closureRaw]
+        if callee == lookup.windowedName, arguments.count == 3,
+           supportsIterableWindowedTransformReceiver(
+               receiver: receiver,
+               context: context,
+               listExprIDs: listExprIDs,
+               setExprIDs: setExprIDs,
+               arrayExprIDs: arrayExprIDs
+           )
+        {
             let transformResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            let oneExpr = module.arena.appendExpr(.intLiteral(1), type: nil)
+            loweredBody.append(.constValue(result: oneExpr, value: .intLiteral(1)))
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let thrownExpr = module.arena.appendExpr(
                 .temporary(Int32(module.arena.expressions.count)), type: nil
             )
             loweredBody.append(.call(
                 symbol: nil,
-                callee: lookup.kkListWindowedPartialName,
+                callee: lookup.kkListWindowedTransformName,
+                arguments: [receiver, arguments[0], oneExpr, zeroExpr, arguments[1], arguments[2]],
+                result: transformResult,
+                canThrow: true,
+                thrownResult: thrownExpr
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(transformResult.rawValue)
+                loweredBody.append(.copy(from: transformResult, to: result))
+            }
+            return true
+        }
+
+        // windowed(size, step, transform) HOF overload — 4 args after closure expansion [size, step, fnPtr, closureRaw]
+        if callee == lookup.windowedName, arguments.count == 4,
+           supportsIterableWindowedTransformReceiver(
+               receiver: receiver,
+               context: context,
+               listExprIDs: listExprIDs,
+               setExprIDs: setExprIDs,
+               arrayExprIDs: arrayExprIDs
+           )
+        {
+            let transformResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let thrownExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListWindowedTransformName,
+                arguments: [receiver, arguments[0], arguments[1], zeroExpr, arguments[2], arguments[3]],
+                result: transformResult,
+                canThrow: true,
+                thrownResult: thrownExpr
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(transformResult.rawValue)
+                loweredBody.append(.copy(from: transformResult, to: result))
+            }
+            return true
+        }
+
+        // windowed(size, step, partialWindows, transform) HOF overload — 5 args after closure expansion [size, step, partialWindows, fnPtr, closureRaw]
+        if callee == lookup.windowedName, arguments.count == 5,
+           supportsIterableWindowedTransformReceiver(
+               receiver: receiver,
+               context: context,
+               listExprIDs: listExprIDs,
+               setExprIDs: setExprIDs,
+               arrayExprIDs: arrayExprIDs
+           )
+        {
+            let transformResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            let thrownExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListWindowedTransformName,
                 arguments: [receiver] + arguments,
                 result: transformResult,
-                canThrow: false,
-                thrownResult: nil
+                canThrow: true,
+                thrownResult: thrownExpr
             ))
             if let result {
                 listExprIDs.insert(result.rawValue)
@@ -1077,6 +1185,7 @@ extension CollectionLiteralLoweringPass {
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module, lookup: lookup,
+            context: context,
             listExprIDs: &listExprIDs, loweredBody: &loweredBody
         ) { return true }
 
@@ -1250,6 +1359,7 @@ extension CollectionLiteralLoweringPass {
         origThrownResult: KIRExprID?,
         module: KIRModule,
         lookup: CollectionLiteralLookupTables,
+        context: VirtualCallRewriteContext,
         listExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
@@ -3140,6 +3250,37 @@ extension CollectionLiteralLoweringPass {
             sequenceExprIDs.insert(raw)
         default:
             break
+        }
+    }
+
+    private func supportsIterableWindowedTransformReceiver(
+        receiver: KIRExprID,
+        context: VirtualCallRewriteContext,
+        listExprIDs: Set<Int32>,
+        setExprIDs: Set<Int32>,
+        arrayExprIDs: Set<Int32>
+    ) -> Bool {
+        let raw = receiver.rawValue
+        if listExprIDs.contains(raw) || setExprIDs.contains(raw) || arrayExprIDs.contains(raw) {
+            return true
+        }
+        guard let sema = context.sema,
+              let typeID = context.module.arena.exprType(receiver)
+        else {
+            return false
+        }
+        let nonNullType = sema.types.makeNonNullable(typeID)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullType),
+              let symbol = sema.symbols.symbol(classType.classSymbol),
+              let simpleName = symbol.fqName.last
+        else {
+            return false
+        }
+        switch context.interner.resolve(simpleName) {
+        case "Iterable", "Collection", "MutableCollection":
+            return true
+        default:
+            return false
         }
     }
 }

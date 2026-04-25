@@ -309,6 +309,13 @@ extension DataFlowSemaPhase {
             collectionInterfaceSymbol: collectionInterfaceSymbol
         )
 
+        registerIterableWindowedTransformMember(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            iterableInterfaceSymbol: iterableInterfaceSymbol,
+            listInterfaceSymbol: listInterfaceSymbol
+        )
+
         // --- STDLIB-533: List?.orEmpty() ---
         let listTypeParamSymbols = types.nominalTypeParameterSymbols(for: listInterfaceSymbol)
         let listTypeParamType = types.make(.typeParam(TypeParamType(
@@ -1645,6 +1652,90 @@ extension DataFlowSemaPhase {
             ),
             for: memberSymbol
         )
+    }
+
+    /// Register `Iterable<E>.windowed(size, step, partialWindows, transform)` HOF overload (STDLIB-COL-WIN-001).
+    ///
+    /// Kotlin signature:
+    /// `fun <T, R> Iterable<T>.windowed(size: Int, step: Int = 1, partialWindows: Boolean = false, transform: (List<T>) -> R): List<R>`
+    ///
+    /// The runtime ABI erases `R`, so the return type is modeled as `List<Any>`.
+    private func registerIterableWindowedTransformMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        iterableInterfaceSymbol: SymbolID,
+        listInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("windowed")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let listFQName = symbols.symbol(listInterfaceSymbol)?.fqName ?? kotlinCollectionsPkg + [interner.intern("List")]
+        let listTypeParamFQName = listFQName + [interner.intern("E")]
+        guard let listTypeParamSymbol = symbols.lookup(fqName: listTypeParamFQName) else { return }
+        let listTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: listTypeParamSymbol,
+            nullability: .nonNull
+        )))
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let transformParameterType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.invariant(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let transformType = types.make(.functionType(FunctionType(
+            params: [transformParameterType],
+            returnType: types.anyType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let listOfAnyReturnType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(types.anyType)],
+            nullability: .nonNull
+        )))
+
+        func registerWindowedTransformOverload(_ parameterTypes: [TypeID]) {
+            let existingOverloads = symbols.lookupAll(fqName: memberFQName)
+            let alreadyRegistered = existingOverloads.contains { symID in
+                guard let sig = symbols.functionSignature(for: symID) else { return false }
+                return sig.parameterTypes == parameterTypes
+                    && symbols.externalLinkName(for: symID) == "kk_list_windowed_transform"
+            }
+            guard !alreadyRegistered else { return }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_windowed_transform", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: parameterTypes,
+                    returnType: listOfAnyReturnType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        registerWindowedTransformOverload([types.intType, transformType])
+        registerWindowedTransformOverload([types.intType, types.intType, transformType])
+        registerWindowedTransformOverload([types.intType, types.intType, types.booleanType, transformType])
     }
 
     func registerLateListIndexedMembers(
@@ -3452,6 +3543,56 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_list_windowed_partial",
             returnTypeOverride: listOfListReturnType
         )
+
+        // STDLIB-COL-WIN-001: windowed(size, step, partialWindows, transform)
+        // The transform overload erases R at the ABI level, so it returns List<Any>.
+        do {
+            let windowedTransformName = interner.intern("windowed")
+            let windowedTransformFQName = listFQName + [windowedTransformName]
+            let existingWindowedOverloads = symbols.lookupAll(fqName: windowedTransformFQName)
+            let hasFourParamWindowed = existingWindowedOverloads.contains { symID in
+                guard let sig = symbols.functionSignature(for: symID) else { return false }
+                return sig.parameterTypes.count == 4
+            }
+            if !hasFourParamWindowed {
+                let invariantListType = types.make(.classType(ClassType(
+                    classSymbol: listInterfaceSymbol,
+                    args: [.invariant(listTypeParamType)],
+                    nullability: .nonNull
+                )))
+                let transformType = types.make(.functionType(FunctionType(
+                    params: [invariantListType],
+                    returnType: types.anyType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                let listOfAnyReturnType = types.make(.classType(ClassType(
+                    classSymbol: listInterfaceSymbol,
+                    args: [.out(types.anyType)],
+                    nullability: .nonNull
+                )))
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: windowedTransformName,
+                    fqName: windowedTransformFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName("kk_list_windowed_transform", for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [types.intType, types.intType, types.booleanType, transformType],
+                        returnType: listOfAnyReturnType,
+                        typeParameterSymbols: [listTypeParamSymbol],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+        }
         registerMember(
             name: "sortedDescending",
             parameterTypes: [],

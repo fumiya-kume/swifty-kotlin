@@ -1918,7 +1918,8 @@ public func kk_list_sum(_ listRaw: Int) -> Int {
     guard let listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     var total = 0
     for element in listBox.elements {
-        total &+= element
+        // Lists produced by compiled Kotlin code store boxed primitives.
+        total &+= maybeUnbox(element)
     }
     return total
 }
@@ -2254,6 +2255,43 @@ public func kk_list_windowed_partial(_ listRaw: Int, _ size: Int, _ step: Int, _
         i += clampedStep
     }
     return registerRuntimeObject(RuntimeListBox(elements: windows))
+}
+
+@_cdecl("kk_list_windowed_transform")
+public func kk_list_windowed_transform(
+    _ listRaw: Int,
+    _ size: Int,
+    _ step: Int,
+    _ partialWindows: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) ?? runtimeArrayBox(from: listRaw)?.elements else {
+        invalidContainerPanic(#function, "collection")
+    }
+    let clampedSize = max(1, size)
+    let clampedStep = max(1, step)
+    let partial = partialWindows != 0
+    var result: [Int] = []
+    var i = 0
+    while i < elements.count {
+        let end = min(i + clampedSize, elements.count)
+        if !partial && end - i < clampedSize { break }
+        let window = Array(elements[i ..< end])
+        let windowList = registerRuntimeObject(RuntimeListBox(elements: window))
+        var thrown = 0
+        let transformed = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: windowList,
+            outThrown: &thrown
+        )
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        result.append(maybeUnbox(transformed))
+        i += clampedStep
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: result))
 }
 
 @_cdecl("kk_list_indexOf")

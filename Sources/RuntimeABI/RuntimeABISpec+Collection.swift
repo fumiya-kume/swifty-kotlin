@@ -2293,6 +2293,20 @@ public extension RuntimeABISpec {
                     section: "Collection"
                 ),
                 RuntimeABIFunctionSpec(
+                    name: "kk_list_windowed_transform",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "size", type: .intptr),
+                        RuntimeABIParameter(name: "step", type: .intptr),
+                        RuntimeABIParameter(name: "partialWindows", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
                     name: "kk_list_sortedDescending",
                     parameters: [
                         RuntimeABIParameter(name: "listRaw", type: .intptr),
