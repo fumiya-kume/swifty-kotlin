@@ -1018,7 +1018,14 @@ extension CallLowerer {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
                 let argExprID = args[0].expr
-                if sema.bindings.isRangeExpr(argExprID) {
+                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+                if let rangeElementType = coerceInRangeElementType(
+                    for: argExprID,
+                    sema: sema,
+                    interner: interner
+                ),
+                rangeElementType == nonNullReceiverType
+                {
                     let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.nullableAnyType
                     let result = arena.appendExpr(
                         .temporary(Int32(arena.expressions.count)),
@@ -2035,7 +2042,7 @@ extension CallLowerer {
             }
         }
 
-        // Int/Long/Double/Float.coerceIn(min, max) (STDLIB-150, STDLIB-500)
+        // Int/Long/Byte/Short/UByte/UShort/UInt/ULong.coerceIn(min, max) (STDLIB-150, STDLIB-500)
         if interner.resolve(calleeName) == "coerceIn", args.count == 2 {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
@@ -2051,16 +2058,25 @@ extension CallLowerer {
             }
         }
 
-        // Int/Long/Double/Float.coerceIn(range) — single ClosedRange argument (STDLIB-525, STDLIB-CONV-006)
-        // Decompose the range into first/last and delegate to kk_{int,long,double,float}_coerceIn.
-        // All numeric types are supported; the shared emitCoerceInRange helper types the
-        // extracted bounds as the non-nullable receiver type and kk_range_first/kk_range_last
-        // return the range's element type.
+        // Int/Long/UInt/ULong.coerceIn(range) — single ClosedRange argument (STDLIB-525, STDLIB-CONV-006)
+        // Decompose the range into first/last and delegate to kk_{int,long,uint,ulong}_coerceIn.
+        // The shared emitCoerceInRange helper types the extracted bounds as the non-nullable
+        // receiver type and kk_range_first/kk_range_last return the range's element type.
         if interner.resolve(calleeName) == "coerceIn", args.count == 1 {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
-            if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
+            let intType = sema.types.intType
+            let longType = sema.types.longType
+            let uintType = sema.types.uintType
+            let ulongType = sema.types.ulongType
+            let supportsRangeCoercion = receiverType == intType || receiverType == longType
+                || receiverType == uintType || receiverType == ulongType
+            if supportsRangeCoercion,
+               let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
                 let argExprID = args[0].expr
-                if sema.bindings.isRangeExpr(argExprID) {
+                let argType = sema.bindings.exprTypes[argExprID] ?? sema.types.anyType
+                if sema.bindings.isRangeExpr(argExprID)
+                    || nominalRangeElementType(for: argType, sema: sema, interner: interner) != nil
+                {
                     emitCoerceInRange(
                         prefix: prefix,
                         receiverType: receiverType,
@@ -2077,7 +2093,8 @@ extension CallLowerer {
             }
         }
 
-        // Int/Long/Double/Float.coerceAtLeast(min) / coerceAtMost(max) (STDLIB-150, STDLIB-500)
+        // Int/Long/Double/Float/Byte/Short/UByte/UShort/UInt/ULong.coerceAtLeast(min)
+        // / coerceAtMost(max) (STDLIB-150, STDLIB-500)
         if args.count == 1 {
             let calleeStr = interner.resolve(calleeName)
             if calleeStr == "coerceAtLeast" || calleeStr == "coerceAtMost" {

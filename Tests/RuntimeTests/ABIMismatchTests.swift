@@ -163,7 +163,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testPrimitiveNumericConversionFunctionCount() {
         // Includes signed/unsigned/char conversions plus coercion helpers.
-        XCTAssertEqual(RuntimeABISpec.primitiveNumericConversionFunctions.count, 63)
+        XCTAssertEqual(RuntimeABISpec.primitiveNumericConversionFunctions.count, 75)
     }
 
     func testMathFunctionCount() {

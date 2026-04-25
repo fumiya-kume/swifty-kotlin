@@ -204,6 +204,152 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- Unsigned coercion (STDLIB-500) ---
+        registerSyntheticCoercionFunction(
+            named: "coerceIn",
+            externalLinkName: "kk_ubyte_coerceIn",
+            receiverType: types.ubyteType,
+            parameters: [
+                (name: "minimumValue", type: types.ubyteType),
+                (name: "maximumValue", type: types.ubyteType),
+            ],
+            returnType: types.ubyteType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceAtLeast",
+            externalLinkName: "kk_ubyte_coerceAtLeast",
+            receiverType: types.ubyteType,
+            parameters: [(name: "minimumValue", type: types.ubyteType)],
+            returnType: types.ubyteType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceAtMost",
+            externalLinkName: "kk_ubyte_coerceAtMost",
+            receiverType: types.ubyteType,
+            parameters: [(name: "maximumValue", type: types.ubyteType)],
+            returnType: types.ubyteType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceIn",
+            externalLinkName: "kk_ushort_coerceIn",
+            receiverType: types.ushortType,
+            parameters: [
+                (name: "minimumValue", type: types.ushortType),
+                (name: "maximumValue", type: types.ushortType),
+            ],
+            returnType: types.ushortType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceAtLeast",
+            externalLinkName: "kk_ushort_coerceAtLeast",
+            receiverType: types.ushortType,
+            parameters: [(name: "minimumValue", type: types.ushortType)],
+            returnType: types.ushortType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceAtMost",
+            externalLinkName: "kk_ushort_coerceAtMost",
+            receiverType: types.ushortType,
+            parameters: [(name: "maximumValue", type: types.ushortType)],
+            returnType: types.ushortType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceIn",
+            externalLinkName: "kk_uint_coerceIn",
+            receiverType: types.uintType,
+            parameters: [
+                (name: "minimumValue", type: types.uintType),
+                (name: "maximumValue", type: types.uintType),
+            ],
+            returnType: types.uintType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceAtLeast",
+            externalLinkName: "kk_uint_coerceAtLeast",
+            receiverType: types.uintType,
+            parameters: [(name: "minimumValue", type: types.uintType)],
+            returnType: types.uintType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceAtMost",
+            externalLinkName: "kk_uint_coerceAtMost",
+            receiverType: types.uintType,
+            parameters: [(name: "maximumValue", type: types.uintType)],
+            returnType: types.uintType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceIn",
+            externalLinkName: "kk_ulong_coerceIn",
+            receiverType: types.ulongType,
+            parameters: [
+                (name: "minimumValue", type: types.ulongType),
+                (name: "maximumValue", type: types.ulongType),
+            ],
+            returnType: types.ulongType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceAtLeast",
+            externalLinkName: "kk_ulong_coerceAtLeast",
+            receiverType: types.ulongType,
+            parameters: [(name: "minimumValue", type: types.ulongType)],
+            returnType: types.ulongType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceAtMost",
+            externalLinkName: "kk_ulong_coerceAtMost",
+            receiverType: types.ulongType,
+            parameters: [(name: "maximumValue", type: types.ulongType)],
+            returnType: types.ulongType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-510..511: roundToInt / roundToLong extension functions ---
         let kotlinMathPkg = kotlinPkg + [interner.intern("math")]
         if symbols.lookup(fqName: kotlinMathPkg) == nil {
