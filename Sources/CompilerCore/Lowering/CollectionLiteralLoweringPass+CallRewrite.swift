@@ -2593,7 +2593,7 @@ extension CollectionLiteralLoweringPass {
                     }
 
                     // sequence { ... } builder → kk_sequence_builder_build
-                    if callee == lookup.sequenceName, arguments.count == 1 {
+                    if callee == lookup.sequenceName, arguments.count == 1 || arguments.count == 2 {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: lookup.kkSequenceBuilderBuildName,

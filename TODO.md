@@ -62,7 +62,7 @@
 - [x] STDLIB-021: mutable collection 変換 API と destination variant の差分を潰す
 - [ ] STDLIB-SEQ-001: `Sequence.map/filter + take` の lazy short-circuit を追加する
 - [x] STDLIB-SEQ-002: `generateSequence` の null 終端と infinite source + `take` を追加する
-- [ ] STDLIB-SEQ-003: `sequence { yieldAll(...) }` builder semantics を追加する
+- [x] STDLIB-SEQ-003: `sequence { yieldAll(...) }` builder semantics を追加する
 - [ ] STDLIB-SEQ-004: `Sequence.flatMap` / `distinct` / `zip` / `drop` を追加する
 - [ ] STDLIB-SEQ-005: `Sequence.count` / `forEach` / `fold` / `first` / `firstOrNull` を追加する
 - [ ] STDLIB-SEQ-006: `Iterable.asSequence()` と `Sequence.constrainOnce()` を追加する

@@ -473,8 +473,9 @@ final class RuntimeSequenceBuilderBox {
 // next()/hasNext() as suspend points in the consumer, using the continuation
 // model so neither side blocks a thread while waiting for the other.
 final class RuntimeSequenceCoroutine: @unchecked Sendable {
-    /// The builder lambda function pointer (closureThunk convention).
+    /// The builder lambda function pointer: (closureRaw, builderRaw, outThrown) -> Int.
     let fnPtr: Int
+    let closureRaw: Int
 
     /// Semaphore the producer waits on after yielding a value.
     /// Signaled by the consumer when it wants the next element.
@@ -502,8 +503,9 @@ final class RuntimeSequenceCoroutine: @unchecked Sendable {
     /// Whether the coroutine has been fully exhausted.
     private var fullyMaterialized = false
 
-    init(fnPtr: Int) {
+    init(fnPtr: Int, closureRaw: Int) {
         self.fnPtr = fnPtr
+        self.closureRaw = closureRaw
     }
 
     /// Called by the producer (background thread) to yield a value.
@@ -638,8 +640,11 @@ final class RuntimeSequenceCoroutine: @unchecked Sendable {
             )
 
             var thrown = 0
-            let fn = unsafeBitCast(coroutine.fnPtr, to: KKClosureThunkEntryPoint.self)
-            _ = fn(builderHandle, &thrown)
+            let fn = unsafeBitCast(
+                coroutine.fnPtr,
+                to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+            )
+            _ = fn(coroutine.closureRaw, builderHandle, &thrown)
 
             if thrown != 0 {
                 fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: sequence lambda threw but no outThrown available")

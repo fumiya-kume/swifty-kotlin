@@ -3412,12 +3412,12 @@ public func kk_sequence_builder_yieldAll(_ builderRaw: Int, _ collectionRaw: Int
 }
 
 @_cdecl("kk_sequence_builder_build")
-public func kk_sequence_builder_build(_ fnPtr: Int) -> Int {
+public func kk_sequence_builder_build(_ fnPtr: Int, _ closureRaw: Int = 0) -> Int {
     // STDLIB-563: Use continuation-based lazy evaluation.
     // The coroutine runs the builder lambda on a background thread;
     // yield() suspends the producer and the elements are materialized
     // on demand when the sequence is consumed by a terminal operation.
-    let coroutine = RuntimeSequenceCoroutine(fnPtr: fnPtr)
+    let coroutine = RuntimeSequenceCoroutine(fnPtr: fnPtr, closureRaw: closureRaw)
     let seq = RuntimeSequenceBox(steps: [.lazyBuilder(coroutine: coroutine)])
     return registerRuntimeObject(seq)
 }

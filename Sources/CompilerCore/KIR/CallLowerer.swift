@@ -1219,6 +1219,97 @@ final class CallLowerer {
             }
         }
 
+        // sequence { ... } builder: expand the receiver lambda to (fnPtr, closureRaw).
+        // Capturing builder lambdas need the same closure-aware adapter shape as
+        // collection HOFs so the runtime can call (closureRaw, builderRaw, outThrown).
+        if externalLinkName == "kk_sequence_builder_build", loweredArguments.count == 1 {
+            let lambdaID = loweredArguments[0]
+            var loweredCallableID = lambdaID
+            var callableInfo = driver.ctx.callableValueInfo(for: lambdaID)
+
+            if let originalCallableInfo = callableInfo,
+               !originalCallableInfo.hasClosureParam,
+               let adapted = makeCollectionHOFCallableAdapter(
+                    callableInfo: originalCallableInfo,
+                    loweredArgID: lambdaID,
+                    argExprID: originalArgs[0].expr,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner
+               )
+            {
+                let adaptedExpr = arena.appendExpr(
+                    .symbolRef(adapted.symbol),
+                    type: arena.exprType(lambdaID) ?? sema.types.anyType
+                )
+                instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adapted.symbol)))
+                loweredCallableID = adaptedExpr
+                callableInfo = adapted
+            }
+
+            var finalArgs: [KIRExprID] = [loweredCallableID]
+            if let callableInfo {
+                if callableInfo.captureArguments.count >= 2 {
+                    let slotCountExpr = arena.appendExpr(
+                        .intLiteral(Int64(2 + callableInfo.captureArguments.count)),
+                        type: sema.types.intType
+                    )
+                    instructions.append(.constValue(
+                        result: slotCountExpr,
+                        value: .intLiteral(Int64(2 + callableInfo.captureArguments.count))
+                    ))
+                    let classIDExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: classIDExpr, value: .intLiteral(0)))
+                    let closureObjExpr = arena.appendExpr(
+                        .temporary(Int32(clamping: arena.expressions.count)),
+                        type: sema.types.anyType
+                    )
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_object_new"),
+                        arguments: [slotCountExpr, classIDExpr],
+                        result: closureObjExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    for (captureIndex, captureArg) in callableInfo.captureArguments.enumerated() {
+                        let offsetExpr = arena.appendExpr(
+                            .intLiteral(Int64(captureIndex + 2)),
+                            type: sema.types.intType
+                        )
+                        instructions.append(.constValue(
+                            result: offsetExpr,
+                            value: .intLiteral(Int64(captureIndex + 2))
+                        ))
+                        let unusedResult = arena.appendExpr(
+                            .temporary(Int32(clamping: arena.expressions.count)),
+                            type: sema.types.anyType
+                        )
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: interner.intern("kk_array_set"),
+                            arguments: [closureObjExpr, offsetExpr, captureArg],
+                            result: unusedResult,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                    }
+                    finalArgs.append(closureObjExpr)
+                } else if let closureRaw = callableInfo.captureArguments.first {
+                    finalArgs.append(closureRaw)
+                } else {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    finalArgs.append(zeroExpr)
+                }
+            } else {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArgs.append(zeroExpr)
+            }
+            return finalArgs
+        }
+
         let legacyNames: Set = ["kk_require_lazy", "kk_check_lazy", "kk_precondition_assert_lazy", "kk_sequence_generate"]
         if legacyNames.contains(externalLinkName), loweredArguments.count == 2 {
             var seedArgument = loweredArguments[0]
