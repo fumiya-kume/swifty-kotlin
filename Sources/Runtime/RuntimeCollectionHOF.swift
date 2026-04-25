@@ -3669,6 +3669,62 @@ public func kk_grouping_reduceTo(
     return destRaw
 }
 
+/// `grouping.fold(initialValueSelector) { key, accumulator, element -> ... }` — folds per key, returns Map<K, R>.
+/// The initial selector computes the seed accumulator and the operation then
+/// runs for the first element as well as subsequent elements.
+@_cdecl("kk_grouping_fold_initialValueSelector")
+public func kk_grouping_fold_initialValueSelector(
+    _ groupingRaw: Int,
+    _ initialValueSelectorFnPtr: Int,
+    _ initialValueSelectorClosureRaw: Int,
+    _ operationFnPtr: Int,
+    _ operationClosureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let grouping = runtimeGroupingBox(from: groupingRaw) else {
+        invalidContainerPanic(#function, "grouping")
+    }
+    var keys: [Int] = []
+    var accumulators: [Int] = []
+    var keyIndex: [RuntimeElementKey: Int] = [:]  // normalizedKey -> index (value-based lookup)
+    for elem in grouping.sourceElements {
+        var thrown = 0
+        let key = runtimeInvokeCollectionLambda1(
+            fnPtr: grouping.keyFnPtr, closureRaw: grouping.keyClosureRaw,
+            value: elem, outThrown: &thrown
+        )
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        let normalizedKey = RuntimeElementKey(value: maybeUnbox(key))
+        if let idx = keyIndex[normalizedKey] {
+            var thrown2 = 0
+            accumulators[idx] = maybeUnbox(runtimeInvokeCollectionLambda3(
+                fnPtr: operationFnPtr, closureRaw: operationClosureRaw,
+                arg1: keys[idx], arg2: accumulators[idx], arg3: elem, outThrown: &thrown2
+            ))
+            if thrown2 != 0 { return handleCollectionLambdaThrow(thrown2, outThrown) }
+        } else {
+            let newIdx = keys.count
+            keyIndex[normalizedKey] = newIdx
+            keys.append(normalizedKey.value)
+            var thrown2 = 0
+            let initialAccumulator = maybeUnbox(runtimeInvokeCollectionLambda2(
+                fnPtr: initialValueSelectorFnPtr, closureRaw: initialValueSelectorClosureRaw,
+                lhs: normalizedKey.value, rhs: elem, outThrown: &thrown2
+            ))
+            if thrown2 != 0 { return handleCollectionLambdaThrow(thrown2, outThrown) }
+            var thrown3 = 0
+            let firstAccumulator = maybeUnbox(runtimeInvokeCollectionLambda3(
+                fnPtr: operationFnPtr, closureRaw: operationClosureRaw,
+                arg1: normalizedKey.value, arg2: initialAccumulator, arg3: elem, outThrown: &thrown3
+            ))
+            if thrown3 != 0 { return handleCollectionLambdaThrow(thrown3, outThrown) }
+            accumulators.append(firstAccumulator)
+        }
+    }
+    return registerRuntimeObject(RuntimeMapBox(keys: keys, values: accumulators))
+}
+
 /// `grouping.foldTo(destination, initialValue) { accumulator, element -> ... }`
 /// folds each group into the given destination map, updating entries in place.
 @_cdecl("kk_grouping_foldTo")

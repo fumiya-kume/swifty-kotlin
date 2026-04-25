@@ -1405,6 +1405,89 @@ public func kk_float_coerceAtMost(_ value: Int, _ maximum: Int) -> Int {
     return v > hi ? maximum : value
 }
 
+// Unsigned coercion helpers compare the raw intptr_t payload as UInt so the
+// runtime preserves the bit pattern for UByte/UShort/UInt/ULong values.
+@inline(__always)
+private func runtimeUnsignedCoerceIn(_ value: Int, _ minimum: Int, _ maximum: Int) -> Int {
+    let v = UInt(bitPattern: value)
+    let lo = UInt(bitPattern: minimum)
+    let hi = UInt(bitPattern: maximum)
+    precondition(!(lo > hi), "Cannot coerce value to an empty range: maximum \(hi) is less than minimum \(lo).")
+    if v < lo { return minimum }
+    if v > hi { return maximum }
+    return value
+}
+
+@inline(__always)
+private func runtimeUnsignedCoerceAtLeast(_ value: Int, _ minimum: Int) -> Int {
+    UInt(bitPattern: value) < UInt(bitPattern: minimum) ? minimum : value
+}
+
+@inline(__always)
+private func runtimeUnsignedCoerceAtMost(_ value: Int, _ maximum: Int) -> Int {
+    UInt(bitPattern: value) > UInt(bitPattern: maximum) ? maximum : value
+}
+
+@_cdecl("kk_ubyte_coerceIn")
+public func kk_ubyte_coerceIn(_ value: Int, _ minimum: Int, _ maximum: Int) -> Int {
+    runtimeUnsignedCoerceIn(value, minimum, maximum)
+}
+
+@_cdecl("kk_ubyte_coerceAtLeast")
+public func kk_ubyte_coerceAtLeast(_ value: Int, _ minimum: Int) -> Int {
+    runtimeUnsignedCoerceAtLeast(value, minimum)
+}
+
+@_cdecl("kk_ubyte_coerceAtMost")
+public func kk_ubyte_coerceAtMost(_ value: Int, _ maximum: Int) -> Int {
+    runtimeUnsignedCoerceAtMost(value, maximum)
+}
+
+@_cdecl("kk_ushort_coerceIn")
+public func kk_ushort_coerceIn(_ value: Int, _ minimum: Int, _ maximum: Int) -> Int {
+    runtimeUnsignedCoerceIn(value, minimum, maximum)
+}
+
+@_cdecl("kk_ushort_coerceAtLeast")
+public func kk_ushort_coerceAtLeast(_ value: Int, _ minimum: Int) -> Int {
+    runtimeUnsignedCoerceAtLeast(value, minimum)
+}
+
+@_cdecl("kk_ushort_coerceAtMost")
+public func kk_ushort_coerceAtMost(_ value: Int, _ maximum: Int) -> Int {
+    runtimeUnsignedCoerceAtMost(value, maximum)
+}
+
+@_cdecl("kk_uint_coerceIn")
+public func kk_uint_coerceIn(_ value: Int, _ minimum: Int, _ maximum: Int) -> Int {
+    runtimeUnsignedCoerceIn(value, minimum, maximum)
+}
+
+@_cdecl("kk_uint_coerceAtLeast")
+public func kk_uint_coerceAtLeast(_ value: Int, _ minimum: Int) -> Int {
+    runtimeUnsignedCoerceAtLeast(value, minimum)
+}
+
+@_cdecl("kk_uint_coerceAtMost")
+public func kk_uint_coerceAtMost(_ value: Int, _ maximum: Int) -> Int {
+    runtimeUnsignedCoerceAtMost(value, maximum)
+}
+
+@_cdecl("kk_ulong_coerceIn")
+public func kk_ulong_coerceIn(_ value: Int, _ minimum: Int, _ maximum: Int) -> Int {
+    runtimeUnsignedCoerceIn(value, minimum, maximum)
+}
+
+@_cdecl("kk_ulong_coerceAtLeast")
+public func kk_ulong_coerceAtLeast(_ value: Int, _ minimum: Int) -> Int {
+    runtimeUnsignedCoerceAtLeast(value, minimum)
+}
+
+@_cdecl("kk_ulong_coerceAtMost")
+public func kk_ulong_coerceAtMost(_ value: Int, _ maximum: Int) -> Int {
+    runtimeUnsignedCoerceAtMost(value, maximum)
+}
+
 // MARK: - Range-based coercion functions (STDLIB-CONV-006)
 
 /// Double.coerceIn(range) — range object argument

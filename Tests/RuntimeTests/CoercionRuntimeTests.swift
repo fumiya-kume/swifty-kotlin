@@ -11,6 +11,8 @@ final class CoercionRuntimeTests: XCTestCase {
     private func floatToBits(_ value: Float) -> Int { kk_float_to_bits(value) }
     private func bitsToDouble(_ bits: Int) -> Double { kk_bits_to_double(bits) }
     private func bitsToFloat(_ bits: Int) -> Float { kk_bits_to_float(bits) }
+    private func unsignedToBits(_ value: UInt) -> Int { Int(bitPattern: value) }
+    private func bitsToUnsigned(_ bits: Int) -> UInt { UInt(bitPattern: bits) }
 
     // MARK: - Int Coercion Runtime Tests
 
@@ -179,6 +181,50 @@ final class CoercionRuntimeTests: XCTestCase {
         let clampedBits = kk_float_coerceAtMost(aboveBits, maxBits)
         let clamped = bitsToFloat(clampedBits)
         XCTAssertEqual(clamped, 10.0, accuracy: 1e-6, "Float above maximum should be clamped")
+    }
+
+    // MARK: - Unsigned Coercion Runtime Tests
+
+    func testUnsignedCoerceRuntimeBehavior() {
+        // UByte and UShort values stay in the non-negative Int range, but we
+        // still compare them through the same unsigned clamping helpers.
+        XCTAssertEqual(kk_ubyte_coerceIn(5, 1, 10), 5, "UByte within range should remain unchanged")
+        XCTAssertEqual(kk_ubyte_coerceIn(0, 1, 10), 1, "UByte below minimum should be clamped to minimum")
+        XCTAssertEqual(kk_ubyte_coerceIn(15, 1, 10), 10, "UByte above maximum should be clamped to maximum")
+        XCTAssertEqual(kk_ubyte_coerceAtLeast(5, 10), 10, "UByte below minimum should be clamped")
+        XCTAssertEqual(kk_ubyte_coerceAtMost(15, 10), 10, "UByte above maximum should be clamped")
+
+        XCTAssertEqual(kk_ushort_coerceIn(500, 100, 900), 500, "UShort within range should remain unchanged")
+        XCTAssertEqual(kk_ushort_coerceIn(50, 100, 900), 100, "UShort below minimum should be clamped to minimum")
+        XCTAssertEqual(kk_ushort_coerceIn(1000, 100, 900), 900, "UShort above maximum should be clamped to maximum")
+        XCTAssertEqual(kk_ushort_coerceAtLeast(50, 100), 100, "UShort below minimum should be clamped")
+        XCTAssertEqual(kk_ushort_coerceAtMost(1000, 900), 900, "UShort above maximum should be clamped")
+
+        // UInt / ULong values can cross Int.max, so verify raw bit-pattern
+        // comparisons instead of signed Int ordering.
+        let lower = UInt(Int.max) + 10
+        let upper = lower + 20
+        let middle = lower + 7
+        let below = lower &- 1
+        let above = upper &+ 1
+
+        let lowerBits = unsignedToBits(lower)
+        let upperBits = unsignedToBits(upper)
+        let middleBits = unsignedToBits(middle)
+        let belowBits = unsignedToBits(below)
+        let aboveBits = unsignedToBits(above)
+
+        XCTAssertEqual(bitsToUnsigned(kk_uint_coerceIn(middleBits, lowerBits, upperBits)), middle, "UInt within range should remain unchanged")
+        XCTAssertEqual(bitsToUnsigned(kk_uint_coerceIn(belowBits, lowerBits, upperBits)), lower, "UInt below minimum should be clamped to minimum")
+        XCTAssertEqual(bitsToUnsigned(kk_uint_coerceIn(aboveBits, lowerBits, upperBits)), upper, "UInt above maximum should be clamped to maximum")
+        XCTAssertEqual(bitsToUnsigned(kk_uint_coerceAtLeast(belowBits, lowerBits)), lower, "UInt below minimum should be clamped")
+        XCTAssertEqual(bitsToUnsigned(kk_uint_coerceAtMost(aboveBits, upperBits)), upper, "UInt above maximum should be clamped")
+
+        XCTAssertEqual(bitsToUnsigned(kk_ulong_coerceIn(middleBits, lowerBits, upperBits)), middle, "ULong within range should remain unchanged")
+        XCTAssertEqual(bitsToUnsigned(kk_ulong_coerceIn(belowBits, lowerBits, upperBits)), lower, "ULong below minimum should be clamped to minimum")
+        XCTAssertEqual(bitsToUnsigned(kk_ulong_coerceIn(aboveBits, lowerBits, upperBits)), upper, "ULong above maximum should be clamped to maximum")
+        XCTAssertEqual(bitsToUnsigned(kk_ulong_coerceAtLeast(belowBits, lowerBits)), lower, "ULong below minimum should be clamped")
+        XCTAssertEqual(bitsToUnsigned(kk_ulong_coerceAtMost(aboveBits, upperBits)), upper, "ULong above maximum should be clamped")
     }
 
     // MARK: - Boundary Value Tests

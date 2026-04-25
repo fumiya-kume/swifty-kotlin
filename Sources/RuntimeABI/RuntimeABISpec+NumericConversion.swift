@@ -431,6 +431,119 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "NumericConversion"
         ),
+        // Unsigned coercion (STDLIB-500)
+        RuntimeABIFunctionSpec(
+            name: "kk_ubyte_coerceIn",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "minimum", type: .intptr),
+                RuntimeABIParameter(name: "maximum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ubyte_coerceAtLeast",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "minimum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ubyte_coerceAtMost",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "maximum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ushort_coerceIn",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "minimum", type: .intptr),
+                RuntimeABIParameter(name: "maximum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ushort_coerceAtLeast",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "minimum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ushort_coerceAtMost",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "maximum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uint_coerceIn",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "minimum", type: .intptr),
+                RuntimeABIParameter(name: "maximum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uint_coerceAtLeast",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "minimum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_uint_coerceAtMost",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "maximum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ulong_coerceIn",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "minimum", type: .intptr),
+                RuntimeABIParameter(name: "maximum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ulong_coerceAtLeast",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "minimum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ulong_coerceAtMost",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "maximum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
         // Range-based coercion functions (STDLIB-CONV-006)
         RuntimeABIFunctionSpec(
             name: "kk_int_coerceIn_range",

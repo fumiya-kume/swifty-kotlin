@@ -41,6 +41,14 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerSyntheticRangeInterfaceStubs(
+            rangesPackageSymbol: rangesPackageSymbol,
+            rangesFQName: rangesFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
         // Byte and Short collapse to intType internally; mixed Int/Long calls widen to Long.
         registerSyntheticRangeUntilStub(
             ownerSymbol: rangesPackageSymbol,

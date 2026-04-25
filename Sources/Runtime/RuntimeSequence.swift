@@ -1737,6 +1737,18 @@ public func kk_sequence_toHashSet(_ seqRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(elements)))
 }
 
+@_cdecl("kk_sequence_toCollection")
+public func kk_sequence_toCollection(_ seqRaw: Int, _ destRaw: Int) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for elem in elements {
+        runtimeAppendToMutableCollection(destRaw, elem)
+    }
+    return destRaw
+}
+
 @_cdecl("kk_sequence_unzip")
 public func kk_sequence_unzip(_ seqRaw: Int) -> Int {
     let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)

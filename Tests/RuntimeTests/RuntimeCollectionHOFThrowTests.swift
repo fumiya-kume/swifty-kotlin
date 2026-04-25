@@ -109,12 +109,36 @@ private func throwableBox(from handle: Int) -> RuntimeThrowableBox? {
     return tryCast(ptr, to: RuntimeThrowableBox.self)
 }
 
+private func makeList(_ elements: [Int]) -> Int {
+    let array = kk_array_new(elements.count)
+    var thrown = 0
+    for (index, element) in elements.enumerated() {
+        _ = _ = kk_array_set(array, index, element, &thrown)
+        XCTAssertEqual(thrown, 0)
+    }
+    return kk_list_of(array, elements.count)
+}
+
+private let groupingByParity: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value % 2
+}
+
 private let groupingByThrowingLambda: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, outThrown in
     outThrown?.pointee = exceptionID
     return 0
 }
 
 private let groupingReduceToThrowingLambda: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _, _, outThrown in
+    outThrown?.pointee = exceptionID
+    return 0
+}
+
+private let groupingInitialValueSelectorThrowingLambda: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _, outThrown in
+    outThrown?.pointee = exceptionID
+    return 0
+}
+
+private let groupingFoldOperationThrowingLambda: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _, _, outThrown in
     outThrown?.pointee = exceptionID
     return 0
 }
@@ -335,6 +359,48 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
 
         var outThrown = 0
         let result = kk_grouping_reduceTo(grouping, dest, unsafeBitCast(groupingReduceToThrowingLambda, to: Int.self), 0, &outThrown)
+
+        XCTAssertEqual(outThrown, exceptionID)
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+    }
+
+    func testGroupingFoldInitialValueSelectorThrows() {
+        let grouping = kk_list_groupingBy(
+            makeList([1, 2]),
+            unsafeBitCast(groupingByParity, to: Int.self),
+            0
+        )
+
+        var outThrown = 0
+        let result = kk_grouping_fold_initialValueSelector(
+            grouping,
+            unsafeBitCast(groupingInitialValueSelectorThrowingLambda, to: Int.self),
+            0,
+            unsafeBitCast(groupingFoldOperationThrowingLambda, to: Int.self),
+            0,
+            &outThrown
+        )
+
+        XCTAssertEqual(outThrown, exceptionID)
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+    }
+
+    func testGroupingFoldOperationThrows() {
+        let grouping = kk_list_groupingBy(
+            makeList([1, 3]),
+            unsafeBitCast(groupingByParity, to: Int.self),
+            0
+        )
+
+        var outThrown = 0
+        let result = kk_grouping_fold_initialValueSelector(
+            grouping,
+            unsafeBitCast(groupingInitialValueSelectorThrowingLambda, to: Int.self),
+            0,
+            unsafeBitCast(groupingFoldOperationThrowingLambda, to: Int.self),
+            0,
+            &outThrown
+        )
 
         XCTAssertEqual(outThrown, exceptionID)
         XCTAssertEqual(result, runtimeExceptionCaughtSentinel)

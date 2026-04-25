@@ -291,6 +291,7 @@ struct CollectionLiteralLookupTables {
     // STDLIB-470: Sequence terminal ops
     let kkSequenceToSetName: InternedString
     let kkSequenceToMapName: InternedString
+    let kkSequenceToCollectionName: InternedString
     let kkSequenceGroupByName: InternedString
     let kkSequenceMaxOrNullName: InternedString
     let kkSequenceMinOrNullName: InternedString
@@ -1023,6 +1024,7 @@ struct CollectionLiteralLookupTables {
 
         kkSequenceToSetName = interner.intern("kk_sequence_toSet")
         kkSequenceToMapName = interner.intern("kk_sequence_toMap")
+        kkSequenceToCollectionName = interner.intern("kk_sequence_toCollection")
         kkSequenceGroupByName = interner.intern("kk_sequence_groupBy")
         kkSequenceMaxOrNullName = interner.intern("kk_sequence_maxOrNull")
         kkSequenceMinOrNullName = interner.intern("kk_sequence_minOrNull")
