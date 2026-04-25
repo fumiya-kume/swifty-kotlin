@@ -49,7 +49,7 @@ private let lambdaThatThrows2: @convention(c) (Int, Int, Int, UnsafeMutablePoint
     return 0
 }
 
-private let groupByParity: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+private let throwingGroupByParity: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     value % 2
 }
 
@@ -359,7 +359,7 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
         _ = _ = kk_array_set(array, 1, 2, &thrown)
         _ = _ = kk_array_set(array, 2, 3, &thrown)
         let list = kk_list_of(array, 3)
-        let grouping = kk_list_groupingBy(list, unsafeBitCast(groupByParity, to: Int.self), 0)
+        let grouping = kk_list_groupingBy(list, unsafeBitCast(throwingGroupByParity, to: Int.self), 0)
         let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
 
         var outThrown = 0
