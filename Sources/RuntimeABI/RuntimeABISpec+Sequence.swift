@@ -786,6 +786,16 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
+        // STDLIB-SEQ-013: Sequence.plus(element) / plusElement(element)
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_plus_element",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "element", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
         // STDLIB-562: Sequence.minus(element)
         RuntimeABIFunctionSpec(
             name: "kk_sequence_minus",

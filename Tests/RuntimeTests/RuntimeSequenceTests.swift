@@ -845,6 +845,12 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(sequenceElements(combined), [99])
     }
 
+    func testPlusElementAppendsSingleElement() {
+        let seq = makeSequence([1, 2, 3])
+        let combined = kk_sequence_plus_element(seq, 42)
+        XCTAssertEqual(sequenceElements(combined), [1, 2, 3, 42])
+    }
+
     // MARK: - Lazy Sequence Builder Tests (STDLIB-563)
 
     func testSequenceBuilderBuildYieldsElementsInOrder() {

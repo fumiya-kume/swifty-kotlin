@@ -72,7 +72,7 @@
 - [ ] STDLIB-SEQ-010: `Sequence.onEachIndexed(action)` を追加する
 - [ ] STDLIB-SEQ-011: `Sequence<T>?.orEmpty()` を追加する
 - [x] STDLIB-SEQ-012: `Sequence.partition(predicate)` を追加する
-- [ ] STDLIB-SEQ-013: `Sequence.plus(element)` / `Sequence.plusElement(element)` を追加する
+- [x] STDLIB-SEQ-013: `Sequence.plus(element)` / `Sequence.plusElement(element)` を追加する
 - [ ] STDLIB-SEQ-014: `Sequence.requireNoNulls()` を追加する
 - [ ] STDLIB-SEQ-015: `Sequence.reduceIndexedOrNull()` を追加する
 - [ ] STDLIB-SEQ-016: `Sequence.runningFoldIndexed()` を追加する

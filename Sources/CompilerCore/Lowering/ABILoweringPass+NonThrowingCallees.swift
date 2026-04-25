@@ -762,6 +762,7 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_flatten"),
             // Sequence plus/minus (STDLIB-561/562)
             interner.intern("kk_sequence_plus"),
+            interner.intern("kk_sequence_plus_element"),
             interner.intern("kk_sequence_minus"),
             // Regex (STDLIB-100/101/102/103)
             interner.intern("kk_regex_create"),
