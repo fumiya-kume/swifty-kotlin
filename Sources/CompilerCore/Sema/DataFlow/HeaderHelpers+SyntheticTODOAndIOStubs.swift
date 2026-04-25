@@ -2914,6 +2914,90 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // runningFoldIndexed(initial, operation): Sequence<R>
+        let runningFoldIndexedName = interner.intern("runningFoldIndexed")
+        let runningFoldIndexedFQName = sequenceFQName + [runningFoldIndexedName]
+        if symbols.lookup(fqName: runningFoldIndexedFQName) == nil {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: runningFoldIndexedFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(
+                params: [types.intType, rType, typeParamType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let sequenceRType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "runningFoldIndexed",
+                externalLinkName: "kk_sequence_runningFoldIndexed",
+                receiverType: receiverType,
+                parameters: [("initial", rType), ("operation", operationType)],
+                returnType: sequenceRType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                additionalTypeParameterSymbols: [rSymbol],
+                additionalTypeParameterUpperBoundsList: [[]]
+            )
+        }
+
+        // scanIndexed(initial, operation): Sequence<R>
+        let scanIndexedName = interner.intern("scanIndexed")
+        let scanIndexedFQName = sequenceFQName + [scanIndexedName]
+        if symbols.lookup(fqName: scanIndexedFQName) == nil {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: scanIndexedFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(
+                params: [types.intType, rType, typeParamType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let sequenceRType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "scanIndexed",
+                externalLinkName: "kk_sequence_scanIndexed",
+                receiverType: receiverType,
+                parameters: [("initial", rType), ("operation", operationType)],
+                returnType: sequenceRType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                additionalTypeParameterSymbols: [rSymbol],
+                additionalTypeParameterUpperBoundsList: [[]]
+            )
+        }
+
         // partition(predicate): Pair<List<T>, List<T>>
         if let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")]) {
             let partitionReturnType = types.make(.classType(ClassType(
