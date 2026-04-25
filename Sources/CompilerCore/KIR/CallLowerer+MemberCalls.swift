@@ -1426,6 +1426,38 @@ extension CallLowerer {
         return symbol.name == knownNames.array && classType.args.count == 1
     }
 
+    private func arrayBinarySearchRuntimeName(
+        for receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> InternedString? {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return nil
+        }
+
+        let runtimeName: String
+        switch symbol.name {
+        case knownNames.array: runtimeName = "kk_array_binarySearch"
+        case knownNames.intArray: runtimeName = "kk_intArray_binarySearch"
+        case knownNames.longArray: runtimeName = "kk_longArray_binarySearch"
+        case knownNames.byteArray: runtimeName = "kk_byteArray_binarySearch"
+        case knownNames.shortArray: runtimeName = "kk_shortArray_binarySearch"
+        case knownNames.uintArray: runtimeName = "kk_uIntArray_binarySearch"
+        case knownNames.ulongArray: runtimeName = "kk_uLongArray_binarySearch"
+        case knownNames.doubleArray: runtimeName = "kk_doubleArray_binarySearch"
+        case knownNames.floatArray: runtimeName = "kk_floatArray_binarySearch"
+        case knownNames.booleanArray: runtimeName = "kk_booleanArray_binarySearch"
+        case knownNames.charArray: runtimeName = "kk_charArray_binarySearch"
+        case knownNames.ubyteArray: runtimeName = "kk_uByteArray_binarySearch"
+        case knownNames.ushortArray: runtimeName = "kk_uShortArray_binarySearch"
+        default: return nil
+        }
+        return interner.intern(runtimeName)
+    }
+
     private func isSetLikeType(
         _ receiverType: TypeID,
         sema: SemaModule,
@@ -6460,6 +6492,16 @@ extension CallLowerer {
             default:
                 break
             }
+        }
+
+        if memberName == "binarySearch",
+           let runtimeName = arrayBinarySearchRuntimeName(
+               for: nonNullReceiverType,
+               sema: sema,
+               interner: interner
+           )
+        {
+            return runtimeName
         }
 
         if isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner) {

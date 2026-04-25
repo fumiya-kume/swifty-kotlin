@@ -8466,6 +8466,10 @@ extension DataFlowSemaPhase {
         )
         types.setNominalTypeParameterSymbols([tParamSymbol], for: arraySymbol)
         types.setNominalTypeParameterVariances([.invariant], for: arraySymbol)
+        let arrayTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol,
+            nullability: .nonNull
+        )))
 
         // Register size property for Array<T>
         let sizeReturnType = types.intType
@@ -8759,6 +8763,51 @@ extension DataFlowSemaPhase {
             )
         }
 
+        if types.comparableInterfaceSymbol == nil {
+            registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
+        }
+        let comparableElementBounds: [TypeID] = if let comparableSymbol = types.comparableInterfaceSymbol {
+            [types.make(.classType(ClassType(
+                classSymbol: comparableSymbol,
+                args: [.in(arrayTypeParamType)],
+                nullability: .nonNull
+            )))]
+        } else {
+            []
+        }
+
+        // binarySearch(element, fromIndex, toIndex)
+        let elementBinarySearchName = interner.intern("binarySearch")
+        let elementBinarySearchFQName = arrayFQName + [elementBinarySearchName]
+        if symbols.lookup(fqName: elementBinarySearchFQName) == nil {
+            let binarySearchSymbol = symbols.define(
+                kind: .function,
+                name: elementBinarySearchName,
+                fqName: elementBinarySearchFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(arraySymbol, for: binarySearchSymbol)
+            symbols.setExternalLinkName("kk_array_binarySearch", for: binarySearchSymbol)
+            let binarySearchReceiverType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.out(arrayTypeParamType)],
+                nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: binarySearchReceiverType,
+                    parameterTypes: [arrayTypeParamType, types.intType, types.intType],
+                    returnType: types.intType,
+                    typeParameterSymbols: [tParamSymbol],
+                    typeParameterUpperBoundsList: [comparableElementBounds],
+                    classTypeParameterCount: 1
+                ),
+                for: binarySearchSymbol
+            )
+        }
+
         // --- Primitive array types: IntArray, LongArray, etc. ---
         let primitiveArrayNames = [
             "IntArray",
@@ -8773,7 +8822,6 @@ extension DataFlowSemaPhase {
             "ShortArray",
             "UByteArray",
             "UShortArray",
-            "UIntArray",
         ]
         for name in primitiveArrayNames {
             let primName = interner.intern(name)
@@ -8976,6 +9024,78 @@ extension DataFlowSemaPhase {
                         typeParameterSymbols: []
                     ),
                     for: asListSym
+                )
+            }
+        }
+
+        // Register binarySearch(element, fromIndex, toIndex) for primitive arrays.
+        for name in primitiveArrayNames {
+            let primName = interner.intern(name)
+            let fqName = kotlinPkg + [primName]
+            guard let arraySymbol = symbols.lookup(fqName: fqName) else {
+                continue
+            }
+
+            let binarySearchName = interner.intern("binarySearch")
+            let binarySearchFQName = fqName + [binarySearchName]
+            if symbols.lookup(fqName: binarySearchFQName) == nil {
+                let binarySearchSym = symbols.define(
+                    kind: .function,
+                    name: binarySearchName,
+                    fqName: binarySearchFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(arraySymbol, for: binarySearchSym)
+
+                let externalLinkName: String = switch name {
+                case "IntArray": "kk_intArray_binarySearch"
+                case "LongArray": "kk_longArray_binarySearch"
+                case "ByteArray": "kk_byteArray_binarySearch"
+                case "ShortArray": "kk_shortArray_binarySearch"
+                case "UIntArray": "kk_uIntArray_binarySearch"
+                case "ULongArray": "kk_uLongArray_binarySearch"
+                case "DoubleArray": "kk_doubleArray_binarySearch"
+                case "FloatArray": "kk_floatArray_binarySearch"
+                case "BooleanArray": "kk_booleanArray_binarySearch"
+                case "CharArray": "kk_charArray_binarySearch"
+                case "UByteArray": "kk_uByteArray_binarySearch"
+                case "UShortArray": "kk_uShortArray_binarySearch"
+                default: "kk_array_binarySearch"
+                }
+                symbols.setExternalLinkName(externalLinkName, for: binarySearchSym)
+
+                let elementType: TypeID = switch name {
+                case "IntArray": types.intType
+                case "LongArray": types.longType
+                case "ByteArray": types.intType
+                case "ShortArray": types.intType
+                case "UIntArray": types.uintType
+                case "ULongArray": types.ulongType
+                case "DoubleArray": types.doubleType
+                case "FloatArray": types.floatType
+                case "BooleanArray": types.booleanType
+                case "CharArray": types.charType
+                case "UByteArray": types.ubyteType
+                case "UShortArray": types.ushortType
+                default: types.intType
+                }
+
+                let arrayReceiverType = types.make(.classType(ClassType(
+                    classSymbol: arraySymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: arrayReceiverType,
+                        parameterTypes: [elementType, types.intType, types.intType],
+                        returnType: types.intType,
+                        isSuspend: false
+                    ),
+                    for: binarySearchSym
                 )
             }
         }
