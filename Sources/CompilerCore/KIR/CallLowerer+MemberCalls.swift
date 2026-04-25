@@ -5573,6 +5573,27 @@ extension CallLowerer {
                 finalArguments.insert(zeroExpr, at: 3)
             }
         }
+        if loweredCallee == interner.intern("kk_sequence_windowed"),
+           hasHOFLambdaArg
+        {
+            loweredCallee = interner.intern("kk_sequence_windowed_transform")
+            let originalArgumentCount = finalArguments.count
+            if originalArgumentCount == 4 {
+                // `windowed(size, transform)` expands to `windowed(size, 1, false, transform)`.
+                let oneExpr = arena.appendExpr(.intLiteral(1), type: sema.types.intType)
+                instructions.append(.constValue(result: oneExpr, value: .intLiteral(1)))
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArguments.insert(oneExpr, at: 2)
+                finalArguments.insert(zeroExpr, at: 3)
+            } else if originalArgumentCount == 5 {
+                // `windowed(size, step, transform)` expands to
+                // `windowed(size, step, false, transform)`.
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArguments.insert(zeroExpr, at: 3)
+            }
+        }
         if let primitiveKind = collectionElementPrimitiveCompareKind(
             of: sema.bindings.exprTypes[receiver.expr] ?? sema.types.anyType,
             sema: sema

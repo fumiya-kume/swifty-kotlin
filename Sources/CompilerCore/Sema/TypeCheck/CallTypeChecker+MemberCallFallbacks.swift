@@ -511,7 +511,6 @@ extension CallTypeChecker {
             isMutableMapReceiver: isMutableMapReceiver,
             isMutableSetReceiver: isMutableSetReceiver,
             isMutableListReceiver: isMutableListReceiver,
-            isSequenceReceiver: isSequenceReceiver,
             interner: interner
         )
         else {
@@ -1133,7 +1132,6 @@ extension CallTypeChecker {
         isMutableMapReceiver: Bool,
         isMutableSetReceiver: Bool = false,
         isMutableListReceiver: Bool,
-        isSequenceReceiver: Bool,
         interner: StringInterner
     ) -> Bool {
         let knownNames = KnownCompilerNames(interner: interner)

@@ -116,7 +116,6 @@ extension CallTypeChecker {
             let flowType = driver.helpers.makeFlowType(
                 elementType: receiverElementType, sema: sema, interner: ctx.interner
             ) ?? sema.types.anyType
-            let finalType = safeCall ? sema.types.makeNullable(flowType) : flowType
             let resultType = safeCall ? sema.types.makeNullable(flowType) : flowType
             sema.bindings.bindExprType(id, type: resultType)
             return resultType
