@@ -3430,6 +3430,10 @@ extension CallLowerer {
                 let associateName = interner.intern("associate")
                 let associateByName = interner.intern("associateBy")
                 let associateWithName = interner.intern("associateWith")
+                let associateToName = interner.intern("associateTo")
+                let associateByToName = interner.intern("associateByTo")
+                let associateWithToName = interner.intern("associateWithTo")
+                let groupByToName = interner.intern("groupByTo")
                 let containsName = interner.intern("contains")
                 let indexOfName = interner.intern("indexOf")
                 let elementAtName = interner.intern("elementAt")
@@ -3468,6 +3472,14 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_associateBy"
                 } else if calleeName == associateWithName {
                     runtimeCallee = "kk_sequence_associateWith"
+                } else if calleeName == associateToName {
+                    runtimeCallee = "kk_sequence_associateTo"
+                } else if calleeName == associateByToName {
+                    runtimeCallee = "kk_sequence_associateByTo"
+                } else if calleeName == associateWithToName {
+                    runtimeCallee = "kk_sequence_associateWithTo"
+                } else if calleeName == groupByToName {
+                    runtimeCallee = "kk_sequence_groupByTo"
                 } else if calleeName == containsName {
                     runtimeCallee = "kk_sequence_contains"
                 } else if calleeName == indexOfName {
@@ -3523,7 +3535,11 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_sumOf"
                         || runtimeCallee == "kk_sequence_associate"
                         || runtimeCallee == "kk_sequence_associateBy"
+                        || runtimeCallee == "kk_sequence_associateTo"
+                        || runtimeCallee == "kk_sequence_associateByTo"
+                        || runtimeCallee == "kk_sequence_associateWithTo"
                         || runtimeCallee == "kk_sequence_associateWith"
+                        || runtimeCallee == "kk_sequence_groupByTo"
                         || runtimeCallee == "kk_sequence_find"
                         || runtimeCallee == "kk_sequence_findLast"
                         || runtimeCallee == "kk_sequence_elementAt"
@@ -5704,6 +5720,8 @@ extension CallLowerer {
             interner.intern("kk_sequence_sumOf"),
             interner.intern("kk_sequence_associate"),
             interner.intern("kk_sequence_associateBy"),
+            interner.intern("kk_sequence_associateTo"),
+            interner.intern("kk_sequence_associateByTo"),
             interner.intern("kk_map_getValue"),
             interner.intern("kk_sequence_mapNotNull"),
             interner.intern("kk_sequence_mapIndexed"),
@@ -5715,6 +5733,8 @@ extension CallLowerer {
             interner.intern("kk_sequence_maxOf"),
             interner.intern("kk_sequence_partition"),
             interner.intern("kk_sequence_associateWith"),
+            interner.intern("kk_sequence_associateWithTo"),
+            interner.intern("kk_sequence_groupByTo"),
             interner.intern("kk_sequence_ifEmpty"),
             interner.intern("kk_string_ifBlank"),
             interner.intern("kk_sequence_first"),
@@ -6987,8 +7007,16 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_associate")
             case associateByName:
                 return interner.intern("kk_sequence_associateBy")
+            case interner.intern("associateTo"):
+                return interner.intern("kk_sequence_associateTo")
+            case interner.intern("associateByTo"):
+                return interner.intern("kk_sequence_associateByTo")
             case interner.intern("associateWith"):
                 return interner.intern("kk_sequence_associateWith")
+            case interner.intern("associateWithTo"):
+                return interner.intern("kk_sequence_associateWithTo")
+            case interner.intern("groupByTo"):
+                return interner.intern("kk_sequence_groupByTo")
             case interner.intern("contains"):
                 return interner.intern("kk_sequence_contains")
             case interner.intern("indexOf"):

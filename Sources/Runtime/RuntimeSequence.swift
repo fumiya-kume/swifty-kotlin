@@ -2481,6 +2481,239 @@ public func kk_sequence_associateWith(
     return registerRuntimeObject(RuntimeMapBox(keys: normalized.0, values: normalized.1))
 }
 
+// MARK: - Sequence destination map operations (STDLIB-SEQ-023)
+
+@_cdecl("kk_sequence_associateTo")
+public func kk_sequence_associateTo(
+    _ seqRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeMapBox(from: destRaw) != nil else {
+        invalidContainerPanic(#function, "map")
+    }
+    var traversalState: SequenceTraversalState?
+    var didThrow = false
+    let visit: (Int) -> Bool = { elem in
+        var thrown = 0
+        let pair = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: elem,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            _ = handleCollectionLambdaThrow(thrown, outThrown)
+            didThrow = true
+            return false
+        }
+        _ = kk_mutable_map_put(destRaw, kk_pair_first(pair), kk_pair_second(pair))
+        return true
+    }
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let state = SequenceTraversalState()
+        traversalState = state
+        runtimeTraverseSequenceWithState(seq, state: state, outThrown: outThrown, yield: visit)
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            if !visit(elem) { break }
+        }
+    }
+    if didThrow {
+        return runtimeExceptionCaughtSentinel
+    }
+    if let traversalState, traversalState.limitReached {
+        return handleCollectionLambdaThrow(
+            runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached),
+            outThrown
+        )
+    }
+    return destRaw
+}
+
+@_cdecl("kk_sequence_associateByTo")
+public func kk_sequence_associateByTo(
+    _ seqRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeMapBox(from: destRaw) != nil else {
+        invalidContainerPanic(#function, "map")
+    }
+    var traversalState: SequenceTraversalState?
+    var didThrow = false
+    let visit: (Int) -> Bool = { elem in
+        var thrown = 0
+        let key = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: elem,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            _ = handleCollectionLambdaThrow(thrown, outThrown)
+            didThrow = true
+            return false
+        }
+        _ = kk_mutable_map_put(destRaw, maybeUnbox(key), elem)
+        return true
+    }
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let state = SequenceTraversalState()
+        traversalState = state
+        runtimeTraverseSequenceWithState(seq, state: state, outThrown: outThrown, yield: visit)
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            if !visit(elem) { break }
+        }
+    }
+    if didThrow {
+        return runtimeExceptionCaughtSentinel
+    }
+    if let traversalState, traversalState.limitReached {
+        return handleCollectionLambdaThrow(
+            runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached),
+            outThrown
+        )
+    }
+    return destRaw
+}
+
+@_cdecl("kk_sequence_associateWithTo")
+public func kk_sequence_associateWithTo(
+    _ seqRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeMapBox(from: destRaw) != nil else {
+        invalidContainerPanic(#function, "map")
+    }
+    var traversalState: SequenceTraversalState?
+    var didThrow = false
+    let visit: (Int) -> Bool = { elem in
+        var thrown = 0
+        let value = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: elem,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            _ = handleCollectionLambdaThrow(thrown, outThrown)
+            didThrow = true
+            return false
+        }
+        _ = kk_mutable_map_put(destRaw, elem, maybeUnbox(value))
+        return true
+    }
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let state = SequenceTraversalState()
+        traversalState = state
+        runtimeTraverseSequenceWithState(seq, state: state, outThrown: outThrown, yield: visit)
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            if !visit(elem) { break }
+        }
+    }
+    if didThrow {
+        return runtimeExceptionCaughtSentinel
+    }
+    if let traversalState, traversalState.limitReached {
+        return handleCollectionLambdaThrow(
+            runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached),
+            outThrown
+        )
+    }
+    return destRaw
+}
+
+@_cdecl("kk_sequence_groupByTo")
+public func kk_sequence_groupByTo(
+    _ seqRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let dest = runtimeMapBox(from: destRaw) else {
+        invalidContainerPanic(#function, "map")
+    }
+    var keyIndex: [RuntimeElementKey: Int] = [:]
+    var cachedLists: [Int: RuntimeListBox] = [:]
+    for (index, key) in dest.keys.enumerated() {
+        keyIndex[RuntimeElementKey(value: key)] = index
+        if index < dest.values.count, let existingList = runtimeListBox(from: dest.values[index]) {
+            cachedLists[index] = existingList
+        }
+    }
+
+    var traversalState: SequenceTraversalState?
+    var didThrow = false
+    let visit: (Int) -> Bool = { elem in
+        var thrown = 0
+        let key = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: elem,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            _ = handleCollectionLambdaThrow(thrown, outThrown)
+            didThrow = true
+            return false
+        }
+        let normalizedKey = RuntimeElementKey(value: maybeUnbox(key))
+        if let index = keyIndex[normalizedKey] {
+            if let existingList = cachedLists[index] {
+                existingList.elements.append(elem)
+            } else {
+                guard index < dest.values.count,
+                      let existingList = runtimeListBox(from: dest.values[index])
+                else {
+                    invalidContainerPanic(#function, "MutableList")
+                }
+                cachedLists[index] = existingList
+                existingList.elements.append(elem)
+            }
+        } else {
+            let newIndex = dest.keys.count
+            let newList = RuntimeListBox(elements: [elem])
+            dest.keys.append(normalizedKey.value)
+            dest.values.append(registerRuntimeObject(newList))
+            keyIndex[normalizedKey] = newIndex
+            cachedLists[newIndex] = newList
+        }
+        return true
+    }
+
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let state = SequenceTraversalState()
+        traversalState = state
+        runtimeTraverseSequenceWithState(seq, state: state, outThrown: outThrown, yield: visit)
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            if !visit(elem) { break }
+        }
+    }
+
+    if didThrow {
+        return runtimeExceptionCaughtSentinel
+    }
+    if let traversalState, traversalState.limitReached {
+        return handleCollectionLambdaThrow(
+            runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached),
+            outThrown
+        )
+    }
+    return destRaw
+}
+
 @_cdecl("kk_sequence_minByOrNull")
 public func kk_sequence_minByOrNull(
     _ seqRaw: Int,

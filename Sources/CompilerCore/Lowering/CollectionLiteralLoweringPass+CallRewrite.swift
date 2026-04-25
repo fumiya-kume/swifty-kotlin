@@ -3110,6 +3110,7 @@ extension CollectionLiteralLoweringPass {
                                 loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                                 closureRawID = zeroExpr
                             }
+                            let isSequenceReceiver = sequenceExprIDs.contains(receiverID.rawValue)
                             let kkName: InternedString = switch callee {
                             case lookup.filterToName: lookup.kkListFilterToName
                             case lookup.filterNotToName: lookup.kkListFilterNotToName
@@ -3118,7 +3119,8 @@ extension CollectionLiteralLoweringPass {
                             case lookup.mapNotNullToName: lookup.kkListMapNotNullToName
                             case lookup.mapIndexedToName: lookup.kkListMapIndexedToName
                             case lookup.flatMapIndexedToName: lookup.kkListFlatMapIndexedToName
-                            case lookup.associateToName: lookup.kkListAssociateToName
+                            case lookup.associateToName:
+                                isSequenceReceiver ? lookup.kkSequenceAssociateToName : lookup.kkListAssociateToName
                             default: callee
                             }
                             let hofResult = module.arena.appendExpr(
@@ -3189,12 +3191,13 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    // --- STDLIB-535/536/537: *To variants with [receiver, dest, lambda, closureRaw?] ---
+                    // --- STDLIB-SEQ-023 / STDLIB-535/536/537: sequence/list *To variants with [receiver, dest, lambda, closureRaw?] ---
                     if callee == lookup.associateByToName || callee == lookup.associateWithToName
                         || callee == lookup.groupByToName
                     {
                         if (arguments.count == 3 || arguments.count == 4),
-                           listExprIDs.contains(arguments[0].rawValue)
+                           (listExprIDs.contains(arguments[0].rawValue)
+                            || sequenceExprIDs.contains(arguments[0].rawValue))
                         {
                             let receiverID = arguments[0]
                             let destID = arguments[1]
@@ -3207,10 +3210,14 @@ extension CollectionLiteralLoweringPass {
                                 loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                                 closureRawID = zeroExpr
                             }
+                            let isSequenceReceiver = sequenceExprIDs.contains(receiverID.rawValue)
                             let kkName: InternedString = switch callee {
-                            case lookup.associateByToName: lookup.kkListAssociateByToName
-                            case lookup.associateWithToName: lookup.kkListAssociateWithToName
-                            case lookup.groupByToName: lookup.kkListGroupByToName
+                            case lookup.associateByToName:
+                                isSequenceReceiver ? lookup.kkSequenceAssociateByToName : lookup.kkListAssociateByToName
+                            case lookup.associateWithToName:
+                                isSequenceReceiver ? lookup.kkSequenceAssociateWithToName : lookup.kkListAssociateWithToName
+                            case lookup.groupByToName:
+                                isSequenceReceiver ? lookup.kkSequenceGroupByToName : lookup.kkListGroupByToName
                             default: callee
                             }
                             let hofResult = module.arena.appendExpr(

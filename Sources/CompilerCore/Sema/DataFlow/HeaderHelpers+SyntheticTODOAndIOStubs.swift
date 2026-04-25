@@ -2990,6 +2990,194 @@ extension DataFlowSemaPhase {
             }
         }
 
+        if let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")]),
+           let mutableMapSymbol = symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("collections"),
+               interner.intern("MutableMap"),
+           ])
+        {
+            let associateToName = interner.intern("associateTo")
+            let associateToFQName = sequenceFQName + [associateToName]
+            if symbols.lookup(fqName: associateToFQName) == nil {
+                let keyTypeParamName = interner.intern("K")
+                let keyTypeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: keyTypeParamName,
+                    fqName: associateToFQName + [keyTypeParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+                let valueTypeParamName = interner.intern("V")
+                let valueTypeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: valueTypeParamName,
+                    fqName: associateToFQName + [valueTypeParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+                let keyType = types.make(.typeParam(TypeParamType(symbol: keyTypeParamSymbol, nullability: .nonNull)))
+                let valueType = types.make(.typeParam(TypeParamType(symbol: valueTypeParamSymbol, nullability: .nonNull)))
+                let destinationType = types.make(.classType(ClassType(
+                    classSymbol: mutableMapSymbol,
+                    args: [.out(keyType), .out(valueType)],
+                    nullability: .nonNull
+                )))
+                let transformType = types.make(.functionType(FunctionType(
+                    params: [typeParamType],
+                    returnType: types.make(.classType(ClassType(
+                        classSymbol: pairSymbol,
+                        args: [.out(keyType), .out(valueType)],
+                        nullability: .nonNull
+                    ))),
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                registerSequenceMemberStub(
+                    named: "associateTo",
+                    externalLinkName: "kk_sequence_associateTo",
+                    receiverType: receiverType,
+                    parameters: [("destination", destinationType), ("transform", transformType)],
+                    returnType: destinationType,
+                    sequenceSymbol: sequenceSymbol,
+                    sequenceFQName: sequenceFQName,
+                    typeParamSymbol: typeParamSymbol,
+                    symbols: symbols,
+                    interner: interner,
+                    canThrow: true,
+                    additionalTypeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol]
+                )
+            }
+
+            let associateByToName = interner.intern("associateByTo")
+            let associateByToFQName = sequenceFQName + [associateByToName]
+            if symbols.lookup(fqName: associateByToFQName) == nil {
+                let keyTypeParamName = interner.intern("K")
+                let keyTypeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: keyTypeParamName,
+                    fqName: associateByToFQName + [keyTypeParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+                let keyType = types.make(.typeParam(TypeParamType(symbol: keyTypeParamSymbol, nullability: .nonNull)))
+                let destinationType = types.make(.classType(ClassType(
+                    classSymbol: mutableMapSymbol,
+                    args: [.out(keyType), .out(typeParamType)],
+                    nullability: .nonNull
+                )))
+                let keySelectorType = types.make(.functionType(FunctionType(
+                    params: [typeParamType],
+                    returnType: keyType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                registerSequenceMemberStub(
+                    named: "associateByTo",
+                    externalLinkName: "kk_sequence_associateByTo",
+                    receiverType: receiverType,
+                    parameters: [("destination", destinationType), ("keySelector", keySelectorType)],
+                    returnType: destinationType,
+                    sequenceSymbol: sequenceSymbol,
+                    sequenceFQName: sequenceFQName,
+                    typeParamSymbol: typeParamSymbol,
+                    symbols: symbols,
+                    interner: interner,
+                    canThrow: true,
+                    additionalTypeParameterSymbols: [keyTypeParamSymbol]
+                )
+            }
+
+            let associateWithToName = interner.intern("associateWithTo")
+            let associateWithToFQName = sequenceFQName + [associateWithToName]
+            if symbols.lookup(fqName: associateWithToFQName) == nil {
+                let valueTypeParamName = interner.intern("V")
+                let valueTypeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: valueTypeParamName,
+                    fqName: associateWithToFQName + [valueTypeParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+                let valueType = types.make(.typeParam(TypeParamType(symbol: valueTypeParamSymbol, nullability: .nonNull)))
+                let destinationType = types.make(.classType(ClassType(
+                    classSymbol: mutableMapSymbol,
+                    args: [.out(typeParamType), .out(valueType)],
+                    nullability: .nonNull
+                )))
+                let valueSelectorType = types.make(.functionType(FunctionType(
+                    params: [typeParamType],
+                    returnType: valueType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                registerSequenceMemberStub(
+                    named: "associateWithTo",
+                    externalLinkName: "kk_sequence_associateWithTo",
+                    receiverType: receiverType,
+                    parameters: [("destination", destinationType), ("valueSelector", valueSelectorType)],
+                    returnType: destinationType,
+                    sequenceSymbol: sequenceSymbol,
+                    sequenceFQName: sequenceFQName,
+                    typeParamSymbol: typeParamSymbol,
+                    symbols: symbols,
+                    interner: interner,
+                    canThrow: true,
+                    additionalTypeParameterSymbols: [valueTypeParamSymbol]
+                )
+            }
+        }
+
+        if let mutableMapSymbol = symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("MutableMap"),
+        ]) {
+            let groupByToName = interner.intern("groupByTo")
+            let groupByToFQName = sequenceFQName + [groupByToName]
+            if symbols.lookup(fqName: groupByToFQName) == nil {
+                let keyTypeParamName = interner.intern("K")
+                let keyTypeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: keyTypeParamName,
+                    fqName: groupByToFQName + [keyTypeParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+                let keyType = types.make(.typeParam(TypeParamType(symbol: keyTypeParamSymbol, nullability: .nonNull)))
+                let destinationType = types.make(.classType(ClassType(
+                    classSymbol: mutableMapSymbol,
+                    args: [.out(keyType), .out(mutableListReturnType)],
+                    nullability: .nonNull
+                )))
+                let keySelectorType = types.make(.functionType(FunctionType(
+                    params: [typeParamType],
+                    returnType: keyType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                registerSequenceMemberStub(
+                    named: "groupByTo",
+                    externalLinkName: "kk_sequence_groupByTo",
+                    receiverType: receiverType,
+                    parameters: [("destination", destinationType), ("keySelector", keySelectorType)],
+                    returnType: destinationType,
+                    sequenceSymbol: sequenceSymbol,
+                    sequenceFQName: sequenceFQName,
+                    typeParamSymbol: typeParamSymbol,
+                    symbols: symbols,
+                    interner: interner,
+                    canThrow: true,
+                    additionalTypeParameterSymbols: [keyTypeParamSymbol]
+                )
+            }
+        }
+
         // maxByOrNull / minByOrNull / maxOf / minOf (STDLIB-301)
         do {
             func registerComparableSelectorMember(
