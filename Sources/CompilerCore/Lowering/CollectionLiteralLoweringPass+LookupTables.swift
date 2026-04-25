@@ -11,6 +11,8 @@ struct CollectionLiteralLookupTables {
     let emptyArrayName: InternedString
     let intArrayOfName: InternedString
     let longArrayOfName: InternedString
+    let shortArrayOfName: InternedString
+    let byteArrayOfName: InternedString
     let uintArrayOfName: InternedString
     let doubleArrayOfName: InternedString
     let floatArrayOfName: InternedString
@@ -755,6 +757,8 @@ struct CollectionLiteralLookupTables {
         emptyArrayName = interner.intern("emptyArray")
         intArrayOfName = interner.intern("intArrayOf")
         longArrayOfName = interner.intern("longArrayOf")
+        shortArrayOfName = interner.intern("shortArrayOf")
+        byteArrayOfName = interner.intern("byteArrayOf")
         uintArrayOfName = interner.intern("uintArrayOf")
         doubleArrayOfName = interner.intern("doubleArrayOf")
         floatArrayOfName = interner.intern("floatArrayOf")
@@ -1457,7 +1461,7 @@ struct CollectionLiteralLookupTables {
         mutableListConstructorNames = [arrayListName]
         mutableSetConstructorNames = [hashSetName, linkedHashSetName]
         mutableMapConstructorNames = [hashMapName, linkedHashMapName]
-        arrayOfFactoryNames = [arrayOfName, emptyArrayName, intArrayOfName, longArrayOfName, uintArrayOfName, doubleArrayOfName, floatArrayOfName, booleanArrayOfName, charArrayOfName]
+        arrayOfFactoryNames = [arrayOfName, emptyArrayName, intArrayOfName, longArrayOfName, shortArrayOfName, byteArrayOfName, uintArrayOfName, doubleArrayOfName, floatArrayOfName, booleanArrayOfName, charArrayOfName]
         builderDSLNames = [buildStringName, buildListName, buildSetName, buildMapName]
 
         stringProducingCallees = [
