@@ -63,7 +63,7 @@
 - [x] STDLIB-SEQ-001: `Sequence.map/filter + take` の lazy short-circuit を追加する
 - [x] STDLIB-SEQ-002: `generateSequence` の null 終端と infinite source + `take` を追加する
 - [x] STDLIB-SEQ-003: `sequence { yieldAll(...) }` builder semantics を追加する
-- [ ] STDLIB-SEQ-004: `Sequence.flatMap` / `distinct` / `zip` / `drop` を追加する
+- [x] STDLIB-SEQ-004: `Sequence.flatMap` / `distinct` / `zip` / `drop` を追加する
 - [x] STDLIB-SEQ-005: `Sequence.count` / `forEach` / `fold` / `first` / `firstOrNull` を追加する
 - [ ] STDLIB-SEQ-006: `Iterable.asSequence()` と `Sequence.constrainOnce()` を追加する
 - [x] STDLIB-SEQ-007: `Sequence.any` / `all` / `find` の short-circuit を追加する

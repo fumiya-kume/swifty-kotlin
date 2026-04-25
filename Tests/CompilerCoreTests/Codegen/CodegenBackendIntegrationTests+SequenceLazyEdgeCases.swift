@@ -209,7 +209,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - flatMap laziness
 
     func testSequenceFlatMapIsLazy() throws {
-        throw XCTSkip("Sequence flatMap laziness not yet implemented")
         let source = """
         var counter = 0
 
@@ -249,7 +248,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - distinct preserves first occurrence
 
     func testSequenceDistinctPreservesOrder() throws {
-        throw XCTSkip("Sequence distinct not yet implemented")
         let source = """
         fun main() {
             val result = sequenceOf(3, 1, 2, 1, 3, 4).distinct().toList()
@@ -276,7 +274,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - zip stops at shorter sequence
 
     func testSequenceZipStopsAtShorterSequence() throws {
-        throw XCTSkip("Sequence zip not yet implemented")
         let source = """
         fun main() {
             val result = sequenceOf(1, 2, 3, 4)
@@ -305,7 +302,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - drop skips first N
 
     func testSequenceDropSkipsFirstN() throws {
-        throw XCTSkip("Sequence drop laziness not yet implemented")
         let source = """
         fun main() {
             val result = sequenceOf(1, 2, 3, 4, 5).drop(2).toList()
