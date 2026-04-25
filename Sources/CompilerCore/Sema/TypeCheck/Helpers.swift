@@ -35,13 +35,23 @@ func coerceInRangeElementType(
     sema: SemaModule,
     interner: StringInterner
 ) -> TypeID? {
+    let exprType = sema.bindings.exprTypes[expr] ?? sema.types.anyType
+    let nonNullExprType = sema.types.makeNonNullable(exprType)
+    if sema.bindings.isRangeExpr(expr) {
+        if nonNullExprType == sema.types.intType
+            || nonNullExprType == sema.types.longType
+            || nonNullExprType == sema.types.uintType
+            || nonNullExprType == sema.types.ulongType
+        {
+            return nonNullExprType
+        }
+    }
     if sema.bindings.isUIntRangeExpr(expr) {
         return sema.types.uintType
     }
     if sema.bindings.isULongRangeExpr(expr) {
         return sema.types.ulongType
     }
-    let exprType = sema.bindings.exprTypes[expr] ?? sema.types.anyType
     return nominalRangeElementType(for: exprType, sema: sema, interner: interner)
 }
 
