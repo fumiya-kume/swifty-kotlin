@@ -48,8 +48,6 @@ private let listClosureBridgeNames = [
     "kk_list_reduceIndexed",
     "kk_list_reduceIndexedOrNull",
     "kk_list_runningReduceIndexed",
-    "kk_list_sortedBy_primitive",
-    "kk_list_sortedByDescending_primitive",
 ]
 
 private let listClosureBridgeFunctions = listClosureBridgeNames.map {
@@ -155,10 +153,9 @@ private let mutableListBridgeFunctions: [RuntimeABIFunctionSpec] =
         "kk_mutable_list_sortBy_primitive",
         "kk_mutable_list_sortByDescending",
         "kk_mutable_list_sortByDescending_primitive",
-        "kk_mutable_list_sortDescending_primitive",
     ].map {
         switch $0 {
-        case "kk_mutable_list_sort_primitive", "kk_mutable_list_sortDescending_primitive":
+        case "kk_mutable_list_sort_primitive":
             return bridgeSpec(
                 $0,
                 section: "Collection",
@@ -197,32 +194,9 @@ private let sequenceAndSetBridgeFunctions: [RuntimeABIFunctionSpec] = [
     bridgeSpec("kk_range_hasNext", section: "Range", params: ["iterRaw"]),
     bridgeSpec("kk_range_iterator", section: "Range", params: ["rangeRaw"]),
     bridgeSpec("kk_range_next", section: "Range", params: ["iterRaw"]),
-    bridgeSpec("kk_uint_range_hasNext", section: "Range", params: ["iterRaw"]),
-    bridgeSpec("kk_uint_range_iterator", section: "Range", params: ["rangeRaw"]),
-    bridgeSpec("kk_uint_range_next", section: "Range", params: ["iterRaw"]),
     bridgeSpec("kk_sequence_asIterable", section: "Sequence", params: ["seqRaw"]),
     bridgeSpec("kk_sequence_dropWhile", section: "Sequence", params: ["seqRaw", "fnPtr", "closureRaw"]),
     bridgeSpec("kk_sequence_filterNot", section: "Sequence", params: ["seqRaw", "fnPtr", "closureRaw"]),
-    bridgeSpec(
-        "kk_sequence_find",
-        section: "Sequence",
-        typedParams: [
-            ("seqRaw", .intptr),
-            ("fnPtr", .intptr),
-            ("closureRaw", .intptr),
-            ("outThrown", .nullableIntptrPointer),
-        ]
-    ),
-    bridgeSpec(
-        "kk_sequence_findLast",
-        section: "Sequence",
-        typedParams: [
-            ("seqRaw", .intptr),
-            ("fnPtr", .intptr),
-            ("closureRaw", .intptr),
-            ("outThrown", .nullableIntptrPointer),
-        ]
-    ),
     bridgeSpec("kk_sequence_takeWhile", section: "Sequence", params: ["seqRaw", "fnPtr", "closureRaw"]),
     bridgeSpec("kk_set_containsAll", section: "Collection", params: ["setRaw", "collectionRaw"]),
     bridgeSpec("kk_set_sorted", section: "Collection", params: ["setRaw"]),
@@ -240,9 +214,6 @@ public extension RuntimeABISpec {
             "kk_char_toInt",
             "kk_char_toIntOrNull",
         ].map { bridgeSpec($0, section: "Char", params: ["value"]) }
-        + [
-            bridgeSpec("kk_char_minus", section: "Char", params: ["lhsRaw", "rhsRaw"]),
-        ]
         + [
             bridgeSpec("kk_double_fromBits", section: "NumericConversion", params: ["bits"]),
             bridgeSpec("kk_double_isFinite", section: "NumericConversion", params: ["value"]),
@@ -313,12 +284,6 @@ public extension RuntimeABISpec {
             bridgeSpec("kk_println_double", section: "ConsolePrint", params: ["value"], returnType: .void),
             bridgeSpec("kk_println_float", section: "ConsolePrint", params: ["value"], returnType: .void),
             bridgeSpec("kk_println_long", section: "ConsolePrint", params: ["value"], returnType: .void),
-            bridgeSpec("kk_ulong_range_contains", section: "Range", params: ["rangeRaw", "value"]),
-            bridgeSpec("kk_ulong_range_first", section: "Range", params: ["rangeRaw"]),
-            bridgeSpec("kk_ulong_range_isEmpty", section: "Range", params: ["rangeRaw"]),
-            bridgeSpec("kk_ulong_range_last", section: "Range", params: ["rangeRaw"]),
-            bridgeSpec("kk_ulong_range_step", section: "Range", params: ["rangeRaw"]),
-            bridgeSpec("kk_ulong_range_toULongArray", section: "Range", params: ["rangeRaw"]),
         ]
 
     static let collectionBridgeFunctions: [RuntimeABIFunctionSpec] =
@@ -338,10 +303,8 @@ public extension RuntimeABISpec {
             bridgeSpec("kk_duration_isInfinite", section: "Duration", params: ["durationRaw"]),
             bridgeSpec("kk_duration_isNegative", section: "Duration", params: ["durationRaw"]),
             bridgeSpec("kk_duration_isPositive", section: "Duration", params: ["durationRaw"]),
-            bridgeSpec("kk_duration_to_java_duration", section: "Duration", params: ["durationRaw"]),
             bridgeSpec("kk_duration_times_int", section: "Duration", params: ["durationRaw", "scale"]),
             bridgeSpec("kk_duration_unary_minus", section: "Duration", params: ["durationRaw"]),
-            bridgeSpec("kk_java_duration_to_kotlin_duration", section: "Duration", params: ["durationRaw"]),
             bridgeSpec("kk_instant_compare", section: "System", params: ["aRaw", "bRaw"]),
             bridgeSpec("kk_instant_epoch_seconds", section: "System", params: ["instantRaw"]),
             bridgeSpec("kk_instant_from_epoch_millis", section: "System", params: ["millis"]),
@@ -350,11 +313,7 @@ public extension RuntimeABISpec {
             bridgeSpec("kk_instant_nano_of_second", section: "System", params: ["instantRaw"]),
             bridgeSpec("kk_instant_now", section: "System"),
             bridgeSpec("kk_instant_plus_duration", section: "System", params: ["instantRaw", "durationRaw"]),
-            bridgeSpec("kk_instant_to_java_instant", section: "System", params: ["instantRaw"]),
-            bridgeSpec("kk_instant_to_js_date", section: "System", params: ["instantRaw"]),
             bridgeSpec("kk_instant_until", section: "System", params: ["fromRaw", "toRaw"]),
-            bridgeSpec("kk_java_instant_to_kotlin_instant", section: "System", params: ["instantRaw"]),
-            bridgeSpec("kk_js_date_to_kotlin_instant", section: "System", params: ["dateRaw"]),
             // STDLIB-TIME-181: java.time.Instant accessors
             bridgeSpec("kk_java_instant_epoch_seconds", section: "System", params: ["instantRaw"]),
             bridgeSpec("kk_java_instant_nano_of_second", section: "System", params: ["instantRaw"]),
@@ -383,64 +342,14 @@ public extension RuntimeABISpec {
             // STDLIB-TIME-181: Type-safe epoch conversion helpers
             bridgeSpec("kk_instant_to_epoch_millis", section: "System", params: ["instantRaw"]),
             bridgeSpec("kk_instant_from_epoch_seconds", section: "System", params: ["epochSeconds", "nanoOfSecond"]),
-            bridgeSpec("kk_platform_canAccessUnaligned", section: "System", params: ["platformRaw"]),
-            bridgeSpec("kk_platform_isLittleEndian", section: "System", params: ["platformRaw"]),
-            bridgeSpec("kk_platform_osFamily", section: "System", params: ["platformRaw"]),
-            bridgeSpec("kk_platform_cpuArchitecture", section: "System", params: ["platformRaw"]),
-            bridgeSpec("kk_platform_getAvailableProcessors", section: "System", params: ["platformRaw"]),
             bridgeSpec("kk_platform_memoryModel", section: "System", params: ["platformRaw"]),
             bridgeSpec("kk_platform_isDebugBinary", section: "System", params: ["platformRaw"]),
-            bridgeSpec("kk_time_source_mark_now", section: "Duration", params: ["receiver"]),
-            bridgeSpec("kk_time_source_monotonic_mark_now", section: "Duration", params: ["receiver"]),
-            bridgeSpec("kk_time_mark_elapsed_now", section: "Duration", params: ["markRaw"]),
-            bridgeSpec("kk_time_mark_has_passed_now", section: "Duration", params: ["markRaw"]),
-            bridgeSpec("kk_time_mark_has_not_passed_now", section: "Duration", params: ["markRaw"]),
-            bridgeSpec("kk_time_mark_plus_duration", section: "Duration", params: ["markRaw", "durationRaw"]),
-            bridgeSpec("kk_time_mark_minus_duration", section: "Duration", params: ["markRaw", "durationRaw"]),
-            bridgeSpec("kk_time_mark_minus_mark", section: "Duration", params: ["lhsRaw", "rhsRaw"]),
-            bridgeSpec("kk_time_mark_compare", section: "Duration", params: ["lhsRaw", "rhsRaw"]),
-            bridgeSpec("kk_clock_now", section: "System", params: ["receiver"]),
-            bridgeSpec("kk_clock_system_now", section: "System"),
-            bridgeSpec("kk_path_deleteIfExists", section: "FileIO", params: ["pathRaw"]),
-            bridgeSpec("kk_path_exists", section: "FileIO", params: ["pathRaw"]),
-            bridgeSpec("kk_path_isDirectory", section: "FileIO", params: ["pathRaw"]),
-            bridgeSpec("kk_path_isRegularFile", section: "FileIO", params: ["pathRaw"]),
-            bridgeSpec("kk_path_name", section: "FileIO", params: ["pathRaw"]),
-            bridgeSpec("kk_path_new", section: "FileIO", params: ["pathStringRaw"]),
-            bridgeSpec("kk_path_parent", section: "FileIO", params: ["pathRaw"]),
-            bridgeSpec("kk_path_resolve_path", section: "FileIO", params: ["pathRaw", "otherRaw"]),
-            bridgeSpec("kk_path_resolve_string", section: "FileIO", params: ["pathRaw", "otherRaw"]),
-            bridgeSpec("kk_path_toString", section: "FileIO", params: ["pathRaw"]),
             bridgeSpec("kk_result_component1", section: "Result", params: ["resultRaw"]),
             bridgeSpec("kk_result_component2", section: "Result", params: ["resultRaw"]),
             bridgeSpec("kk_with_timeout", section: "Coroutine", params: ["timeoutMillis", "entryPointRaw", "continuation"]),
             bridgeSpec("kk_with_timeout_or_null", section: "Coroutine", params: ["timeoutMillis", "entryPointRaw", "continuation"]),
         ]
         + [
-            "kk_path_createDirectories",
-            "kk_path_listDirectoryEntries",
-            "kk_path_readLines",
-            "kk_path_readText",
-        ].map {
-            bridgeSpec(
-                $0,
-                section: "FileIO",
-                typedParams: [
-                    ("pathRaw", .intptr),
-                    ("outThrown", .nullableIntptrPointer),
-                ]
-            )
-        }
-        + [
-            bridgeSpec(
-                "kk_path_writeText",
-                section: "FileIO",
-                typedParams: [
-                    ("pathRaw", .intptr),
-                    ("textRaw", .intptr),
-                    ("outThrown", .nullableIntptrPointer),
-                ]
-            ),
             bridgeSpec(
                 "kk_result_recoverCatching",
                 section: "Result",

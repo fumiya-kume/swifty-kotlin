@@ -120,18 +120,33 @@ extension CodegenRuntimeSupport {
     }
 
     private static func discoverRuntimeObjectPaths(target: TargetTriple) -> [String] {
-        var candidates = collectObjectPaths(in: runtimeBuildDirectory(target: target))
+        let searchRoots = [
+            runtimeBuildDirectory(target: target),
+            packageRootURL()
+                .appendingPathComponent(".build", isDirectory: true)
+                .appendingPathComponent(runtimeBuildCacheDirectoryComponent(target: target), isDirectory: true),
+            runtimeBuildRootDirectory(target: target),
+        ]
+        for searchRoot in searchRoots {
+            if let candidates = discoverRuntimeObjectPaths(in: searchRoot), !candidates.isEmpty {
+                return candidates
+            }
+        }
+        return []
+    }
+
+    private static func discoverRuntimeObjectPaths(in searchRoot: URL) -> [String]? {
+        var candidates = collectObjectPaths(in: searchRoot)
         if !candidates.isEmpty {
             return candidates
         }
 
-        let buildRoot = runtimeBuildRootDirectory(target: target)
         guard let enumerator = FileManager.default.enumerator(
-            at: buildRoot,
+            at: searchRoot,
             includingPropertiesForKeys: [.isDirectoryKey],
             options: [.skipsHiddenFiles]
         ) else {
-            return []
+            return nil
         }
 
         for case let directoryURL as URL in enumerator {
@@ -143,7 +158,7 @@ extension CodegenRuntimeSupport {
                 return candidates
             }
         }
-        return []
+        return nil
     }
 
     private static func collectObjectPaths(in directory: URL) -> [String] {
@@ -172,11 +187,16 @@ extension CodegenRuntimeSupport {
             .appendingPathComponent(runtimeBuildCacheKey(target: target), isDirectory: true)
     }
 
+    private static func runtimeBuildCacheDirectoryComponent(target: TargetTriple) -> String {
+        targetTripleString(target)
+    }
+
     private static func swiftBuildArguments(target: TargetTriple) -> [String] {
         var arguments = [
             "build",
             "--target", "Runtime",
             "--disable-code-coverage",
+            "--disable-sandbox",
             "--scratch-path", runtimeBuildScratchDirectory(target: target).path,
         ]
         if target != TargetTriple.hostDefault() {

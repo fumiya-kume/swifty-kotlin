@@ -291,6 +291,48 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    func testArrayBinarySearchLowersToRuntimeCall() throws {
+        let source = """
+        fun main(): Int {
+            val arr = arrayOf(1, 3, 4, 7, 9)
+            return arr.binarySearch(4, 1, 4)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callNames.contains("kk_array_binarySearch"), "\(callNames)")
+            XCTAssertFalse(callNames.contains("binarySearch"))
+        }
+    }
+
+    func testULongArrayBinarySearchLowersToUnsignedRuntimeCall() throws {
+        let source = """
+        fun main(): Int {
+            val arr = ULongArray(3) { it.toULong() }
+            return arr.binarySearch(1uL, 0, 3)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callNames.contains("kk_uLongArray_binarySearch"), "\(callNames)")
+            XCTAssertFalse(callNames.contains("binarySearch"))
+        }
+    }
+
     func testMapGetValueLoweringMarksRuntimeCallAsThrowing() throws {
         let source = """
         fun main(): Int {

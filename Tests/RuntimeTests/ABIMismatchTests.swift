@@ -92,7 +92,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 162)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 159)
     }
 
     func testRegexFunctionCount() {
@@ -239,9 +239,18 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.networkFunctions,
             RuntimeABISpec.abiParityFunctions,
         ]
+        let sectionNames = sections.flatMap { $0.map(\.name) }
+        let duplicateNames = Dictionary(grouping: sectionNames, by: { $0 })
+            .filter { $0.value.count > 1 }
+            .keys
+            .sorted()
+        XCTAssertTrue(
+            duplicateNames.isEmpty,
+            "RuntimeABISpec section lists should not contain duplicate names: \(duplicateNames.joined(separator: ", "))"
+        )
         XCTAssertEqual(
             RuntimeABISpec.allFunctions.count,
-            Set(sections.flatMap { $0.map(\.name) }).count
+            Set(sectionNames).count
         )
     }
 
