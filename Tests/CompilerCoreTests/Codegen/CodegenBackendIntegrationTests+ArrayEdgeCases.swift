@@ -5,6 +5,7 @@ import XCTest
 extension CodegenBackendIntegrationTests {
     func testCodegenCompilesArrayEdgeCases() throws {
         let source = """
+        @OptIn(ExperimentalUnsignedTypes::class)
         fun main() {
             val empty = emptyArray<Int>()
             println(empty.size)
@@ -19,6 +20,25 @@ extension CodegenBackendIntegrationTests {
 
             val ints = intArrayOf(4, 5, 6)
             println(ints[1])
+
+            val stringArray = arrayOf("a", "c", "e", "g")
+            println(stringArray.binarySearch("c"))
+            println(stringArray.binarySearch("d", 1))
+            println(stringArray.binarySearch("g", 1, 4))
+
+            println(ints.binarySearch(5))
+            println(ints.binarySearch(7, 1))
+            println(ints.binarySearch(6, 1, 3))
+
+            val uintArray = uintArrayOf(10u, 20u, 30u, 40u)
+            println(uintArray.binarySearch(30u))
+            println(uintArray.binarySearch(15u, 1))
+            println(uintArray.binarySearch(40u, 1, 4))
+
+            val ulongArray = ulongArrayOf(10uL, 20uL, 30uL, 40uL)
+            println(ulongArray.binarySearch(30uL))
+            println(ulongArray.binarySearch(15uL, 1))
+            println(ulongArray.binarySearch(40uL, 1, 4))
 
             val boxed: Array<Any> = arrayOf<Any>(1, "two", 3)
             println(boxed[1])
@@ -59,6 +79,18 @@ extension CodegenBackendIntegrationTests {
                 2
                 3
                 5
+                1
+                -3
+                3
+                1
+                -4
+                2
+                2
+                -2
+                3
+                2
+                -2
+                3
                 two
                 oob-get
                 oob-set

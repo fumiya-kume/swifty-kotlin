@@ -792,21 +792,13 @@ public func kk_list_binarySearch(_ listRaw: Int, _ element: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
         return -1
     }
-    var low = 0
-    var high = list.elements.count - 1
-    while low <= high {
-        let mid = (low + high) / 2
-        let midVal = list.elements[mid]
-        let cmp = runtimeCompareValues(midVal, element)
-        if cmp < 0 {
-            low = mid + 1
-        } else if cmp > 0 {
-            high = mid - 1
-        } else {
-            return mid
-        }
-    }
-    return -(low + 1)
+    return runtimeBinarySearch(
+        elements: list.elements,
+        element: element,
+        fromIndex: 0,
+        toIndex: list.elements.count,
+        compare: runtimeCompareValues
+    )
 }
 
 // MARK: - List plus/minus operators (STDLIB-345)
@@ -1987,36 +1979,6 @@ public func kk_uShortArray_size(_ arrayRaw: Int) -> Int {
 }
 
 // MARK: - Array binarySearch overloads (TYPE-103)
-
-@inline(__always)
-private func runtimeBinarySearch(
-    elements: [Int],
-    element: Int,
-    fromIndex: Int,
-    toIndex: Int,
-    compare: (Int, Int) -> Int
-) -> Int {
-    // Match the runtime's existing range helpers by clamping the search window.
-    let size = elements.count
-    let from = max(0, min(fromIndex, size))
-    let to = max(from, min(toIndex, size))
-
-    var low = from
-    var high = to - 1
-    while low <= high {
-        let mid = low + (high - low) / 2
-        let midVal = elements[mid]
-        let cmp = compare(midVal, element)
-        if cmp < 0 {
-            low = mid + 1
-        } else if cmp > 0 {
-            high = mid - 1
-        } else {
-            return mid
-        }
-    }
-    return -(low + 1)
-}
 
 @inline(__always)
 private func runtimeArrayBinarySearch(

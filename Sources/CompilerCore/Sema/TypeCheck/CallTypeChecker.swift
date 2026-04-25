@@ -2735,6 +2735,7 @@ final class CallTypeChecker {
                         "ushortArrayOf": "UShortArray",
                         "ubyteArrayOf": "UByteArray",
                         "uintArrayOf": "UIntArray",
+                        "ulongArrayOf": "ULongArray",
                         "doubleArrayOf": "DoubleArray",
                         "floatArrayOf": "FloatArray",
                         "booleanArrayOf": "BooleanArray",

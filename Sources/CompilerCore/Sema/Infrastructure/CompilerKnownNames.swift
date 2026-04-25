@@ -643,7 +643,7 @@ struct KnownCompilerNames {
     static let stdlibCollectionFactoryNames: Set<String> = [
         "listOf", "mutableListOf", "emptyList",
         "arrayOf", "emptyArray", "intArrayOf", "longArrayOf",
-        "shortArrayOf", "byteArrayOf", "ubyteArrayOf", "ushortArrayOf", "uintArrayOf",
+        "shortArrayOf", "byteArrayOf", "ubyteArrayOf", "ushortArrayOf", "uintArrayOf", "ulongArrayOf",
         "doubleArrayOf", "floatArrayOf", "booleanArrayOf", "charArrayOf",
         "mapOf", "mutableMapOf", "emptyMap",
         "setOf", "mutableSetOf", "emptySet",

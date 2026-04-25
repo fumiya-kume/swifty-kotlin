@@ -1266,6 +1266,118 @@ extension CallTypeChecker {
             return finalType
         }
 
+        if interner.resolve(calleeName) == "binarySearch",
+           isConcreteListLikeType(receiverType, sema: sema, interner: interner),
+           args.count == 1,
+           let lambdaExpr = ast.arena.expr(args[0].expr),
+           lambdaExpr.isLambdaOrCallableRef
+        {
+            let collectionElementType = resolvedCollectionElementType(
+                receiverID: receiverID,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner,
+                ctx: ctx,
+                locals: &locals
+            )
+            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [collectionElementType],
+                returnType: sema.types.intType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+            let finalType = safeCall ? sema.types.makeNullable(sema.types.intType) : sema.types.intType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
+        if interner.resolve(calleeName) == "binarySearch",
+           isArrayLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
+        {
+            let knownNames = KnownCompilerNames(interner: interner)
+            let receiverClassName: InternedString? = {
+                guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+                      let symbol = sema.symbols.symbol(classType.classSymbol)
+                else {
+                    return nil
+                }
+                return symbol.name
+            }()
+            let isGenericArrayReceiver = receiverClassName == knownNames.array
+            if receiverClassName == knownNames.booleanArray {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0002",
+                    "No viable overload found for call.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+            let arrayElementType = resolvedCollectionElementType(
+                receiverID: receiverID,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner,
+                ctx: ctx,
+                locals: &locals
+            )
+            if args.count == 4,
+               let comparatorSymbol = sema.symbols.lookup(fqName: [
+                   interner.intern("kotlin"),
+                   interner.intern("Comparator"),
+               ])
+            {
+                guard isGenericArrayReceiver else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0002",
+                        "No viable overload found for call.",
+                        range: range
+                    )
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
+                let comparatorExpectedType = sema.types.make(.classType(ClassType(
+                    classSymbol: comparatorSymbol,
+                    args: [.invariant(arrayElementType)],
+                    nullability: .nonNull
+                )))
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: arrayElementType)
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: comparatorExpectedType)
+                _ = driver.inferExpr(args[2].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+                _ = driver.inferExpr(args[3].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+            } else if !isGenericArrayReceiver {
+                if args.indices.contains(0) {
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: arrayElementType)
+                }
+                if args.indices.contains(1) {
+                    _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+                    if let chosen = sema.bindings.callBinding(for: args[1].expr)?.chosenCallee {
+                        let chosenName = sema.symbols.symbol(chosen).map { interner.resolve($0.name) }
+                        let externalLinkName = sema.symbols.externalLinkName(for: chosen)
+                        let isComparatorFactory = externalLinkName?.hasPrefix("kk_comparator_") == true
+                            || ["compareBy", "compareByDescending", "naturalOrder", "reverseOrder"].contains(chosenName ?? "")
+                        if isComparatorFactory {
+                            ctx.semaCtx.diagnostics.error(
+                                "KSWIFTK-SEMA-0002",
+                                "No viable overload found for call.",
+                                range: range
+                            )
+                            sema.bindings.bindExprType(id, type: sema.types.errorType)
+                            return sema.types.errorType
+                        }
+                    }
+                }
+                if args.indices.contains(2) {
+                    _ = driver.inferExpr(args[2].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+                }
+            }
+            let finalType = safeCall ? sema.types.makeNullable(sema.types.intType) : sema.types.intType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
         if let groupingType = tryGroupingMemberCall(
             id,
             calleeName: calleeName,
@@ -7462,6 +7574,17 @@ extension CallTypeChecker {
             return false
         }
         return knownNames.isMapLikeSymbol(symbol) && classType.args.count == 2
+    }
+
+    private func isConcreteListLikeType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        let nonNullType = sema.types.makeNonNullable(type)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullType),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isConcreteListLikeSymbol(symbol) && classType.args.count == 1
     }
 
     private func makeSyntheticPairType(
