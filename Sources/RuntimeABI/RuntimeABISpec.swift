@@ -72,18 +72,6 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
 public enum RuntimeABISpec {
     public static let specVersion = "J32"
 
-    private static func deduplicatedFunctions(
-        _ functions: [RuntimeABIFunctionSpec]
-    ) -> [RuntimeABIFunctionSpec] {
-        var seenNames: Set<String> = []
-        var deduplicated: [RuntimeABIFunctionSpec] = []
-        deduplicated.reserveCapacity(functions.count)
-        for function in functions where seenNames.insert(function.name).inserted {
-            deduplicated.append(function)
-        }
-        return deduplicated
-    }
-
     public static let memoryFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
             name: "kk_alloc",
@@ -914,38 +902,6 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
                 RuntimeABIParameter(name: "otherRaw", type: .intptr),
                 RuntimeABIParameter(name: "startIndex", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
-        // STDLIB-TEXT-EDGE-003: indexOf / lastIndexOf with ignoreCase
-        RuntimeABIFunctionSpec(
-            name: "kk_string_indexOf_ignoreCase",
-            parameters: [
-                RuntimeABIParameter(name: "strRaw", type: .intptr),
-                RuntimeABIParameter(name: "otherRaw", type: .intptr),
-                RuntimeABIParameter(name: "ignoreCaseRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_string_indexOf_from_ignoreCase",
-            parameters: [
-                RuntimeABIParameter(name: "strRaw", type: .intptr),
-                RuntimeABIParameter(name: "otherRaw", type: .intptr),
-                RuntimeABIParameter(name: "startIndex", type: .intptr),
-                RuntimeABIParameter(name: "ignoreCaseRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_string_lastIndexOf_ignoreCase",
-            parameters: [
-                RuntimeABIParameter(name: "strRaw", type: .intptr),
-                RuntimeABIParameter(name: "otherRaw", type: .intptr),
-                RuntimeABIParameter(name: "ignoreCaseRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
@@ -7562,7 +7518,7 @@ public enum RuntimeABISpec {
         ),
     ]
 
-    public static let allFunctions: [RuntimeABIFunctionSpec] = deduplicatedFunctions(
+    public static let allFunctions: [RuntimeABIFunctionSpec] =
         memoryFunctions
             + exceptionFunctions
             + testFunctions
@@ -7612,7 +7568,6 @@ public enum RuntimeABISpec {
             + serializationFunctions
             + networkFunctions
             + abiParityFunctions
-    )
 
     public static func generateCHeader() -> String {
         var lines: [String] = []

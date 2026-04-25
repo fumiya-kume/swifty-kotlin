@@ -1301,55 +1301,6 @@ extension DataFlowSemaPhase {
         )
     }
 
-    private func registerSyntheticVarargFunction(
-        named name: String,
-        packageFQName: [InternedString],
-        returnType: TypeID,
-        externalLinkName: String,
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner
-    ) {
-        let functionName = interner.intern(name)
-        let functionFQName = packageFQName + [functionName]
-
-        let functionSymbol = symbols.define(
-            kind: .function,
-            name: functionName,
-            fqName: functionFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic]
-        )
-        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
-            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
-        }
-        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
-
-        let paramNameID = interner.intern("elements")
-        let paramSymbol = symbols.define(
-            kind: .valueParameter,
-            name: paramNameID,
-            fqName: functionFQName + [paramNameID],
-            declSite: nil,
-            visibility: .private,
-            flags: [.synthetic]
-        )
-        symbols.setParentSymbol(functionSymbol, for: paramSymbol)
-
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                parameterTypes: [types.anyType],
-                returnType: returnType,
-                isSuspend: false,
-                valueParameterSymbols: [paramSymbol],
-                valueParameterHasDefaultValues: [false],
-                valueParameterIsVararg: [true]
-            ),
-            for: functionSymbol
-        )
-    }
-
     private func registerSyntheticGenericSequenceVarargFunction(
         named name: String,
         packageFQName: [InternedString],
@@ -3530,27 +3481,6 @@ extension DataFlowSemaPhase {
             ),
             for: memberSymbol
         )
-    }
-
-    private func makeSyntheticIterableType(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        elementType: TypeID
-    ) -> TypeID {
-        let iterableFQName: [InternedString] = [
-            interner.intern("kotlin"),
-            interner.intern("collections"),
-            interner.intern("Iterable"),
-        ]
-        guard let iterableSymbol = symbols.lookup(fqName: iterableFQName) else {
-            return types.anyType
-        }
-        return types.make(.classType(ClassType(
-            classSymbol: iterableSymbol,
-            args: [.out(elementType)],
-            nullability: .nonNull
-        )))
     }
 
     private func registerSyntheticDurationMember(

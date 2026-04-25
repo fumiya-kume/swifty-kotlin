@@ -34,11 +34,6 @@ private func runtimeFileBox(from raw: Int) -> RuntimeFileBox? {
     return tryCast(ptr, to: RuntimeFileBox.self)
 }
 
-private func runtimeResourceInputStreamBox(from raw: Int) -> RuntimeResourceInputStreamBox? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
-    return tryCast(ptr, to: RuntimeResourceInputStreamBox.self)
-}
-
 private func resourceRootDirectory() -> URL {
     if let env = ProcessInfo.processInfo.environment["KSWIFTK_RESOURCE_ROOT"], !env.isEmpty {
         return URL(fileURLWithPath: env, isDirectory: true)

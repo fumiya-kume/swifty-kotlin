@@ -202,7 +202,6 @@ extension DataFlowSemaPhase {
 
         guard symbols.lookup(fqName: functionFQName) == nil else { return }
 
-        let nullableTParamType = types.makeNullable(tParamType)
         let nullableIntType = types.makeNullable(types.intType)
 
         let functionSymbol = symbols.define(
@@ -462,109 +461,6 @@ extension DataFlowSemaPhase {
         )
     }
     
-    /// Register toList methods for primitive arrays
-    private func registerArrayToListMethods(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner
-    ) {
-        let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
-        
-        // --- Primitive arrays toList() ---
-        let primitiveArrayNames = [
-            "IntArray", "LongArray", "UIntArray", "ULongArray", "DoubleArray", 
-            "FloatArray", "BooleanArray", "CharArray", "ByteArray", "ShortArray",
-            "UByteArray", "UShortArray"
-        ]
-        
-        for name in primitiveArrayNames {
-            let primName = interner.intern(name)
-            let fqName = kotlinPkg + [primName]
-            guard let sym = symbols.lookup(fqName: fqName) else { 
-                continue 
-            }
-            
-            let primToListName = interner.intern("toList")
-            let primToListFQName = fqName + [primToListName]
-            if symbols.lookup(fqName: primToListFQName) == nil {
-                let primToListSym = symbols.define(
-                    kind: .function,
-                    name: primToListName,
-                    fqName: primToListFQName,
-                    declSite: nil,
-                    visibility: .public,
-                    flags: [.synthetic]
-                )
-                symbols.setParentSymbol(sym, for: primToListSym)
-                
-                let externalLinkName: String = switch name {
-                case "IntArray": "kk_intArray_toList"
-                case "LongArray": "kk_longArray_toList"
-                case "ByteArray": "kk_byteArray_toList"
-                case "ShortArray": "kk_shortArray_toList"
-                case "UIntArray": "kk_uIntArray_toList"
-                case "ULongArray": "kk_uLongArray_toList"
-                case "DoubleArray": "kk_doubleArray_toList"
-                case "FloatArray": "kk_floatArray_toList"
-                case "BooleanArray": "kk_booleanArray_toList"
-                case "CharArray": "kk_charArray_toList"
-                case "UByteArray": "kk_uByteArray_toList"
-                case "UShortArray": "kk_uShortArray_toList"
-                default: "kk_array_toList"
-                }
-                symbols.setExternalLinkName(externalLinkName, for: primToListSym)
-                
-                let listFQName = [interner.intern("kotlin"), interner.intern("collections"), interner.intern("List")]
-                guard let listSymbol = symbols.lookup(fqName: listFQName) else {
-                    // Don't return, continue to next array
-                    continue
-                }
-                
-                let elementType: TypeID = switch name {
-                case "IntArray": types.intType
-                case "LongArray": types.longType
-                case "ByteArray": types.intType
-                case "ShortArray": types.intType
-                case "UIntArray": types.uintType
-                case "ULongArray": types.ulongType
-                case "DoubleArray": types.doubleType
-                case "FloatArray": types.floatType
-                case "BooleanArray": types.booleanType
-                case "CharArray": types.charType
-                case "UByteArray": types.ubyteType
-                case "UShortArray": types.ushortType
-                default: types.intType
-                }
-                
-                let listReturnType = types.make(.classType(ClassType(
-                    classSymbol: listSymbol,
-                    args: [.invariant(elementType)],
-                    nullability: .nonNull
-                )))
-                
-                let arrayReceiverType = types.make(.classType(ClassType(
-                    classSymbol: sym,
-                    args: [],
-                    nullability: .nonNull
-                )))
-                
-                symbols.setFunctionSignature(
-                    FunctionSignature(
-                        receiverType: arrayReceiverType,
-                        parameterTypes: [],
-                        returnType: listReturnType,
-                        isSuspend: false,
-                        valueParameterSymbols: [],
-                        valueParameterHasDefaultValues: [],
-                        valueParameterIsVararg: [],
-                        typeParameterSymbols: []
-                    ),
-                    for: primToListSym
-                )
-                }
-        }
-    }
-
     private func registerSyntheticPairStub(
         symbols: SymbolTable,
         types: TypeSystem,
