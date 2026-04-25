@@ -257,6 +257,99 @@ private func runtimeCharRangeRandomOrNull(_ range: RuntimeRangeBox, randomRaw: I
     return kk_box_char(value)
 }
 
+// MARK: - Range.random(Random) implementation (rejection sampling; STDLIB-RANGE-RANDOM-001/002)
+
+private func runtimeRandomBitsFromKotlinRandom(from randomRaw: Int) -> UInt64 {
+    UInt64(bitPattern: Int64(kk_random_nextLong(randomRaw)))
+}
+
+private func runtimeRandomIndexUniform(upperBound: UInt64, randomRaw: Int) -> UInt64 {
+    precondition(upperBound > 0)
+    if upperBound == 1 {
+        return 0
+    }
+    let rejectionLimit = UInt64.max - (UInt64.max % upperBound)
+    var candidate = runtimeRandomBitsFromKotlinRandom(from: randomRaw)
+    while candidate >= rejectionLimit {
+        candidate = runtimeRandomBitsFromKotlinRandom(from: randomRaw)
+    }
+    return candidate % upperBound
+}
+
+private func runtimeSignedRangeRandom(
+    first: Int,
+    last: Int,
+    step: Int,
+    randomRaw: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard step != 0 else {
+        return runtimeRangeRandomErrorForThrowingRandom(outThrown)
+    }
+    let ascending = step > 0
+    guard ascending ? first <= last : first >= last else {
+        return runtimeRangeRandomErrorForThrowingRandom(outThrown)
+    }
+    let absStep = UInt64(step.magnitude)
+    let signMask = UInt64(1) << 63
+    let firstOrdered = UInt64(bitPattern: Int64(first)) ^ signMask
+    let lastOrdered = UInt64(bitPattern: Int64(last)) ^ signMask
+    if absStep == 1 {
+        if ascending && firstOrdered == 0 && lastOrdered == UInt64.max {
+            return Int(bitPattern: UInt(truncatingIfNeeded: runtimeRandomBitsFromKotlinRandom(from: randomRaw)))
+        }
+        if !ascending && firstOrdered == UInt64.max && lastOrdered == 0 {
+            return Int(bitPattern: UInt(truncatingIfNeeded: runtimeRandomBitsFromKotlinRandom(from: randomRaw)))
+        }
+    }
+    let distance = ascending ? lastOrdered &- firstOrdered : firstOrdered &- lastOrdered
+    let count = distance / absStep + 1
+    let index = runtimeRandomIndexUniform(upperBound: count, randomRaw: randomRaw)
+    let offset = index &* absStep
+    let chosenOrdered = ascending ? firstOrdered &+ offset : firstOrdered &- offset
+    return Int(bitPattern: UInt(truncatingIfNeeded: chosenOrdered ^ signMask))
+}
+
+private func runtimeUnsignedRangeRandom(
+    first: UInt,
+    last: UInt,
+    step: Int,
+    randomRaw: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard step != 0 else {
+        return runtimeRangeRandomErrorForThrowingRandom(outThrown)
+    }
+    let ascending = step > 0
+    guard ascending ? first <= last : first >= last else {
+        return runtimeRangeRandomErrorForThrowingRandom(outThrown)
+    }
+    let absStep = UInt64(step.magnitude)
+    let first64 = UInt64(first)
+    let last64 = UInt64(last)
+    if absStep == 1 {
+        if ascending && first64 == 0 && last64 == UInt64.max {
+            return Int(bitPattern: UInt(truncatingIfNeeded: runtimeRandomBitsFromKotlinRandom(from: randomRaw)))
+        }
+        if !ascending && first64 == UInt64.max && last64 == 0 {
+            return Int(bitPattern: UInt(truncatingIfNeeded: runtimeRandomBitsFromKotlinRandom(from: randomRaw)))
+        }
+    }
+    let distance = ascending ? last64 &- first64 : first64 &- last64
+    let count = distance / absStep + 1
+    let index = runtimeRandomIndexUniform(upperBound: count, randomRaw: randomRaw)
+    let offset = index &* absStep
+    let chosen = ascending ? first64 &+ offset : first64 &- offset
+    return Int(bitPattern: UInt(truncatingIfNeeded: chosen))
+}
+
+private func runtimeRangeRandomErrorForThrowingRandom(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchElementException: Range is empty.")
+    return 0
+}
+
 @_cdecl("kk_op_notnull")
 public func kk_op_notnull(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -1351,6 +1444,21 @@ public func kk_range_lastOrNull(_ rangeRaw: Int) -> Int {
         return range.first <= range.last ? range.last : runtimeNullSentinelInt
     }
     return range.first >= range.last ? range.last : runtimeNullSentinelInt
+}
+
+@_cdecl("kk_range_random")
+public func kk_range_random(_ rangeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_random")
+    }
+    return runtimeSignedRangeRandom(
+        first: range.first,
+        last: range.last,
+        step: range.step,
+        randomRaw: 0,
+        outThrown: outThrown
+    )
 }
 
 @_cdecl("kk_range_any")
@@ -2476,6 +2584,21 @@ public func kk_uint_range_randomOrNull_random(_ rangeRaw: Int, _ randomRaw: Int)
     return runtimeUnsignedRangeRandomOrNull(range, randomRaw: randomRaw)
 }
 
+@_cdecl("kk_uint_range_random")
+public func kk_uint_range_random(_ rangeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_uint_range_random")
+    }
+    return runtimeUnsignedRangeRandom(
+        first: UInt(bitPattern: range.first),
+        last: UInt(bitPattern: range.last),
+        step: range.step,
+        randomRaw: 0,
+        outThrown: outThrown
+    )
+}
+
 @_cdecl("kk_uint_range_any")
 public func kk_uint_range_any(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
                                _ outThrown: UnsafeMutablePointer<Int>?) -> Int
@@ -3044,6 +3167,21 @@ public func kk_ulong_range_randomOrNull_random(_ rangeRaw: Int, _ randomRaw: Int
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_randomOrNull_random")
     }
     return runtimeUnsignedRangeRandomOrNull(range, randomRaw: randomRaw)
+}
+
+@_cdecl("kk_ulong_range_random")
+public func kk_ulong_range_random(_ rangeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_random")
+    }
+    return runtimeUnsignedRangeRandom(
+        first: UInt(bitPattern: range.first),
+        last: UInt(bitPattern: range.last),
+        step: range.step,
+        randomRaw: 0,
+        outThrown: outThrown
+    )
 }
 
 @_cdecl("kk_ulong_range_any")
@@ -3697,6 +3835,21 @@ public func kk_long_range_map(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
         }
     }
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
+@_cdecl("kk_long_range_random")
+public func kk_long_range_random(_ rangeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_random")
+    }
+    return runtimeSignedRangeRandom(
+        first: range.first,
+        last: range.last,
+        step: range.step,
+        randomRaw: 0,
+        outThrown: outThrown
+    )
 }
 
 @_cdecl("kk_long_range_take")

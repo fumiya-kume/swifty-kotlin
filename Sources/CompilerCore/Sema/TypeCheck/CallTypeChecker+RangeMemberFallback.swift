@@ -131,6 +131,7 @@ extension CallTypeChecker {
             "any", "all", "none",
             "chunked", "windowed",
             "reversed", "step", "isEmpty", "sum", "iterator",
+            "random",
             "take", "drop", "average", "sorted",
         ]
         return rangeMembers.contains(memberName)
@@ -139,6 +140,8 @@ extension CallTypeChecker {
     private func isValidRangeMemberArity(_ memberName: String, argCount: Int) -> Bool {
         switch memberName {
         case "count", "start", "end", "endInclusive", "endExclusive", "iterator", "toList", "toIntArray", "toLongArray", "toUIntArray", "toULongArray", "reversed", "isEmpty", "sum", "average", "sorted":
+            argCount == 0
+        case "random":
             argCount == 0
         case "step":
             argCount == 0 || argCount == 1
@@ -211,6 +214,8 @@ extension CallTypeChecker {
         )
         switch memberName {
         case "first", "last", "start", "end", "endInclusive", "endExclusive":
+            return elementType
+        case "random":
             return elementType
         case "firstOrNull", "lastOrNull", "randomOrNull", "find", "findLast":
             return sema.types.makeNullable(elementType)

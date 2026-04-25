@@ -113,7 +113,7 @@
 - [x] STDLIB-RANGE-IFACE-003: `kotlin.ranges.OpenEndRange<T>` interface surface を追加する
 - [ ] STDLIB-RANGE-CHAR-001: `kotlin.ranges.CharProgression` / `CharRange` type surface を追加する
 - [ ] STDLIB-RANGE-OPEN-001: `kotlin.ranges.rangeUntil` operator surface を `OpenEndRange` 戻り値で追加する
-- [ ] STDLIB-RANGE-RANDOM-001: `CharRange` / `IntRange` / `LongRange` / `UIntRange` / `ULongRange`.`random()` overload 群を追加する
+- [x] STDLIB-RANGE-RANDOM-001: `CharRange` / `IntRange` / `LongRange` / `UIntRange` / `ULongRange`.`random()` overload 群を追加する
 - [ ] STDLIB-RANGE-RANDOM-002: `CharRange` / `IntRange` / `LongRange` / `UIntRange` / `ULongRange`.`random(random: Random)` overload 群を追加する
 - [x] STDLIB-RANGE-UNTIL-001: `Byte` / `Short` / `Int` / `Long` と `UByte` / `UShort` / `UInt` / `ULong` の `until(to)` infix surface を追加する
 - [ ] STDLIB-RANGE-RANDOM-003: `CharRange` / `IntRange` / `LongRange` / `UIntRange` / `ULongRange`.`randomOrNull()` / `randomOrNull(random: Random)` overload 群を追加する
