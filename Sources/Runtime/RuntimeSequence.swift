@@ -413,42 +413,6 @@ private func runtimeSequenceTransformElement(
             outThrown: outThrown,
             yield: yield
         )
-    case let .flatMapIndexedStep(fnPtr, closureRaw):
-        let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
-        let index = state.takeCounts[stepIndex, default: 0]
-        state.takeCounts[stepIndex] = index + 1
-        var thrown = 0
-        let subRaw = lambda(closureRaw, index, element, &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
-            state.stop = true
-            return
-        }
-        if let subList = runtimeListBox(from: subRaw) {
-            for subElem in subList.elements {
-                runtimeSequenceTransformElement(
-                    subElem,
-                    steps: steps,
-                    stepIndex: stepIndex + 1,
-                    state: state,
-                    outThrown: outThrown,
-                    yield: yield
-                )
-                if state.stop { return }
-            }
-        } else if let subSeq = runtimeSequenceBox(from: subRaw) {
-            runtimeTraverseSequence(subSeq, outThrown: outThrown) { subElem in
-                runtimeSequenceTransformElement(
-                    subElem,
-                    steps: steps,
-                    stepIndex: stepIndex + 1,
-                    state: state,
-                    outThrown: outThrown,
-                    yield: yield
-                )
-                return !state.stop
-            }
-        }
     case .withIndexStep:
         let index = state.takeCounts[stepIndex, default: 0]
         state.takeCounts[stepIndex] = index + 1
@@ -873,28 +837,6 @@ private func applyOnEachIndexedStep(_ elements: [Int], fnPtr: Int, closureRaw: I
         }
     }
     return elements
-}
-
-/// Applies a flatMapIndexed transformation: maps each element with its index to
-/// a collection/sequence and flattens the result.
-private func applyFlatMapIndexedStep(_ elements: [Int], fnPtr: Int, closureRaw: Int, outThrown: UnsafeMutablePointer<Int>?) -> [Int] {
-    var result: [Int] = []
-    for (idx, elem) in elements.enumerated() {
-        var thrown = 0
-        let subRaw = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown)
-        if thrown != 0 {
-            if let outThrown = outThrown {
-                outThrown.pointee = thrown
-            }
-            return []
-        }
-        if let subList = runtimeListBox(from: subRaw) {
-            result.append(contentsOf: subList.elements)
-        } else if let subSeq = runtimeSequenceBox(from: subRaw) {
-            result.append(contentsOf: evaluateSequence(subSeq))
-        }
-    }
-    return result
 }
 
 /// Applies a withIndex transformation: creates pairs of (index, element).
@@ -1443,22 +1385,6 @@ public func kk_sequence_onEachIndexed(
     return registerRuntimeObject(newSeq)
 }
 
-@_cdecl("kk_sequence_flatMapIndexed")
-public func kk_sequence_flatMapIndexed(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
-    guard let seq = runtimeSequenceBox(from: seqRaw) else {
-        let sourceElements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
-        let newSeq = RuntimeSequenceBox(steps: [
-            .source(elements: sourceElements),
-            .flatMapIndexedStep(fnPtr: fnPtr, closureRaw: closureRaw),
-        ])
-        return registerRuntimeObject(newSeq)
-    }
-    var newSteps = seq.steps
-    newSteps.append(.flatMapIndexedStep(fnPtr: fnPtr, closureRaw: closureRaw))
-    let newSeq = RuntimeSequenceBox(steps: newSteps)
-    return registerRuntimeObject(newSeq)
-}
-
 @_cdecl("kk_sequence_withIndex")
 public func kk_sequence_withIndex(_ seqRaw: Int) -> Int {
     guard let seq = runtimeSequenceBox(from: seqRaw) else {
@@ -1598,7 +1524,7 @@ public func kk_sequence_flatMapIndexed(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw
     }
     var newSteps = seq.steps
     newSteps.append(.flatMapIndexedStep(fnPtr: fnPtr, closureRaw: closureRaw))
-    let newSeq = RuntimeSequenceBox(steps: newSteps)
+    let newSeq = RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState)
     return registerRuntimeObject(newSeq)
 }
 

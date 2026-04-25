@@ -5068,4 +5068,25 @@ extension DataFlowSemaPhase {
             for: curriedSymbol
         )
     }
+
+    private func makeSyntheticIterableType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID {
+        let iterableFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Iterable"),
+        ]
+        guard let iterableSymbol = symbols.lookup(fqName: iterableFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: iterableSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+    }
 }

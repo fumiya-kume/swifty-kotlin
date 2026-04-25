@@ -425,7 +425,6 @@ enum SequenceStepKind {
     case filterNotNullStep
     case requireNoNullsStep
     case mapIndexedStep(fnPtr: Int, closureRaw: Int)
-    case flatMapIndexedStep(fnPtr: Int, closureRaw: Int)
     case withIndexStep
     case flatMapStep(fnPtr: Int, closureRaw: Int)
     case flatMapIndexedStep(fnPtr: Int, closureRaw: Int)
