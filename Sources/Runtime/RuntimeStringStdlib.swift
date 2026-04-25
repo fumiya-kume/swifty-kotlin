@@ -1021,6 +1021,34 @@ public func kk_string_isNotBlank(_ strRaw: Int) -> Int {
     return kk_box_bool(source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : 1)
 }
 
+// MARK: - STDLIB-TEXT-EDGE-004: CharSequence.ifBlank(defaultValue)
+
+@_cdecl("kk_string_ifBlank")
+public func kk_string_ifBlank(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        return strRaw
+    }
+    guard fnPtr != 0 else {
+        return runtimeMakeStringRaw("")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var thrown = 0
+    let result = lambda(closureRaw, &thrown)
+    if thrown != 0 {
+        runtimePropagateThrownOrTrap(
+            thrown,
+            outThrown: outThrown,
+            context: "ifBlank defaultValue"
+        )
+        return runtimeMakeStringRaw("")
+    }
+    return result
+}
+
 // MARK: - STDLIB-186: substringBefore / substringAfter / substringBeforeLast / substringAfterLast
 
 @_cdecl("kk_string_substringBefore")

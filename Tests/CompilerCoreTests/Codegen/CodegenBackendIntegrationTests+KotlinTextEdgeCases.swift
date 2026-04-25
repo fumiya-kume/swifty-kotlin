@@ -774,6 +774,47 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testKotlinTextIfBlankEdgeCases() throws {
+        let source = """
+        fun choose(value: CharSequence): String {
+            return value.ifBlank { "fallback" }
+        }
+
+        fun main() {
+            println("[" + "abc".ifBlank { "fallback" } + "]")
+            println("[" + "   ".ifBlank { "fallback" } + "]")
+            println("[" + "".ifBlank { "empty" } + "]")
+
+            val cs: CharSequence = "   "
+            println("[" + choose(cs) + "]")
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextIfBlankEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                [abc]
+                [fallback]
+                [empty]
+                [fallback]
+                """
+                + "\n"
+            )
+        }
+    }
+
     // MARK: - take / drop / takeLast / dropLast
 
     func testKotlinTextTakeDropEdgeCases() throws {

@@ -2732,8 +2732,18 @@ extension CallLowerer {
         if args.count == 1 {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
-            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
-                let calleeStr = interner.resolve(calleeName)
+            let calleeStr = interner.resolve(calleeName)
+            let isCharSequenceReceiver: Bool = {
+                guard let charSequenceSymbol = sema.types.charSequenceInterfaceSymbol,
+                      case let .classType(classType) = sema.types.kind(of: nonNullReceiverType)
+                else {
+                    return false
+                }
+                return classType.classSymbol == charSequenceSymbol
+            }()
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType)
+                || (calleeStr == "ifBlank" && isCharSequenceReceiver)
+            {
                 if calleeStr == "toInt" {
                     instructions.append(.call(
                         symbol: nil,
@@ -2838,6 +2848,8 @@ extension CallLowerer {
                     ("kk_string_findLast", [loweredReceiverID] + normalizedArgIDs)
                 case "partition":
                     ("kk_string_partition", [loweredReceiverID] + normalizedArgIDs)
+                case "ifBlank":
+                    ("kk_string_ifBlank", [loweredReceiverID] + normalizedArgIDs)
                 case "take":
                     ("kk_string_take", [loweredReceiverID, loweredArgIDs[0]])
                 case "drop":
@@ -2893,6 +2905,7 @@ extension CallLowerer {
                         || calleeStr == "indexOfFirst"
                         || calleeStr == "indexOfLast"
                         || calleeStr == "partition"
+                        || calleeStr == "ifBlank"
                         || calleeStr == "take"
                         || calleeStr == "drop"
                         || calleeStr == "takeLast"
@@ -4217,6 +4230,7 @@ extension CallLowerer {
             "sortBy", "sortByDescending",
             "onEach", "onEachIndexed",
             "ifEmpty",
+            "ifBlank",
             "chunked", "windowed",
             "onSuccess", "onFailure", "recover",
         ].contains(interner.resolve(calleeName))
@@ -5702,6 +5716,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_partition"),
             interner.intern("kk_sequence_associateWith"),
             interner.intern("kk_sequence_ifEmpty"),
+            interner.intern("kk_string_ifBlank"),
             interner.intern("kk_sequence_first"),
             interner.intern("kk_sequence_last"),
             interner.intern("kk_sequence_firstOrNull"),

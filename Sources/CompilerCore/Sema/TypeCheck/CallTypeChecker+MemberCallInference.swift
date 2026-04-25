@@ -3097,7 +3097,10 @@ extension CallTypeChecker {
                 ? sema.types.makeNonNullable(receiverType)
                 : receiverType
             let stringHOFCalleeStr = interner.resolve(calleeName)
-            if sema.types.isSubtype(stringHOFReceiverType, sema.types.stringType),
+            let isStringHOFReceiver = sema.types.isSubtype(stringHOFReceiverType, sema.types.stringType)
+                || (stringHOFCalleeStr == "ifBlank"
+                    && isSyntheticStringLikeType(stringHOFReceiverType, sema: sema))
+            if isStringHOFReceiver,
                [
                    "filter", "map", "count", "any", "all", "none",
                    "indexOfFirst", "indexOfLast",
@@ -3105,6 +3108,7 @@ extension CallTypeChecker {
                    "takeWhile", "dropWhile", "find", "findLast", "splitToSequence",
                    "zipWithNext",
                    "partition",
+                   "ifBlank",
                ].contains(stringHOFCalleeStr)
             {
                 let charType = sema.types.make(.primitive(.char, .nonNull))
@@ -3139,6 +3143,13 @@ extension CallTypeChecker {
                         sema.types.make(.functionType(FunctionType(
                             params: [charType, charType],
                             returnType: sema.types.anyType,
+                            isSuspend: false,
+                            nullability: .nonNull
+                        )))
+                    case "ifBlank":
+                        sema.types.make(.functionType(FunctionType(
+                            params: [],
+                            returnType: sema.types.stringType,
                             isSuspend: false,
                             nullability: .nonNull
                         )))
@@ -3277,6 +3288,7 @@ extension CallTypeChecker {
                 case "find", "findLast": sema.types.make(.primitive(.char, .nullable))
                 case "splitToSequence": sequenceStringType
                 case "partition": pairStringStringTypeEarly
+                case "ifBlank": sema.types.stringType
                 default: sema.types.anyType
                 }
                 let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
@@ -5369,7 +5381,10 @@ extension CallTypeChecker {
                     ? sema.types.makeNonNullable(lookupReceiverType)
                     : lookupReceiverType
                 let calleeStr = interner.resolve(calleeName)
-                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
+                let isStringHOFReceiver = sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType)
+                    || (calleeStr == "ifBlank"
+                        && isSyntheticStringLikeType(receiverTypeForCheck, sema: sema))
+                if isStringHOFReceiver,
                    [
                        "filter", "map", "count", "any", "all", "none",
                        "indexOfFirst", "indexOfLast",
@@ -5377,6 +5392,7 @@ extension CallTypeChecker {
                        "takeWhile", "dropWhile", "find", "findLast", "splitToSequence",
                        "zipWithNext",
                        "partition",
+                       "ifBlank",
                    ].contains(calleeStr)
                 {
                     let charType = sema.types.make(.primitive(.char, .nonNull))
@@ -5391,6 +5407,8 @@ extension CallTypeChecker {
                             lambdaParamTypes = [intType, charType]
                         case "zipWithNext":
                             lambdaParamTypes = [charType, charType]
+                        case "ifBlank":
+                            lambdaParamTypes = []
                         default:
                             lambdaParamTypes = [charType]
                         }
@@ -5402,6 +5420,8 @@ extension CallTypeChecker {
                             lambdaReturnType = sema.types.nullableAnyType
                         case "zipWithNext":
                             lambdaReturnType = sema.types.anyType
+                        case "ifBlank":
+                            lambdaReturnType = sema.types.stringType
                         default:
                             lambdaReturnType = sema.types.booleanType
                         }
@@ -5504,6 +5524,7 @@ extension CallTypeChecker {
                     case "find", "findLast": sema.types.make(.primitive(.char, .nullable))
                     case "splitToSequence": sequenceStringType
                     case "partition": pairStringStringType
+                    case "ifBlank": sema.types.stringType
                     default: sema.types.anyType
                     }
                     // For "partition", skip the fallback resolver (which may fail due to
