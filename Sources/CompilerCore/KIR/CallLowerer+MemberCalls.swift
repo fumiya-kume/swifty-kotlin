@@ -1317,43 +1317,6 @@ extension CallLowerer {
         return primitiveCompareABIKind(for: elementType, sema: sema)
     }
 
-    private func arrayBinarySearchPrimitiveCompareKind(
-        of receiverType: TypeID,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> PrimitiveCompareABIKind? {
-        if let kind = collectionElementPrimitiveCompareKind(of: receiverType, sema: sema) {
-            return kind
-        }
-        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
-              let symbol = sema.symbols.symbol(classType.classSymbol)
-        else {
-            return nil
-        }
-        let knownNames = KnownCompilerNames(interner: interner)
-        switch symbol.name {
-        case knownNames.intArray, knownNames.byteArray, knownNames.shortArray,
-             knownNames.ubyteArray, knownNames.ushortArray:
-            return .int
-        case knownNames.longArray:
-            return .long
-        case knownNames.uintArray:
-            return .uint
-        case knownNames.ulongArray:
-            return .ulong
-        case knownNames.booleanArray:
-            return .boolean
-        case knownNames.charArray:
-            return .char
-        case knownNames.floatArray:
-            return .float
-        case knownNames.doubleArray:
-            return .double
-        default:
-            return nil
-        }
-    }
-
     private func arraySizeRuntimeCallee(
         for receiverType: TypeID,
         sema: SemaModule,
@@ -1541,6 +1504,28 @@ extension CallLowerer {
         default: return nil
         }
         return interner.intern(runtimeName)
+    }
+
+    private func isArrayBinarySearchRuntimeCallee(
+        _ callee: InternedString,
+        interner: StringInterner
+    ) -> Bool {
+        let names = [
+            "kk_array_binarySearch",
+            "kk_intArray_binarySearch",
+            "kk_longArray_binarySearch",
+            "kk_byteArray_binarySearch",
+            "kk_shortArray_binarySearch",
+            "kk_uIntArray_binarySearch",
+            "kk_uLongArray_binarySearch",
+            "kk_doubleArray_binarySearch",
+            "kk_floatArray_binarySearch",
+            "kk_booleanArray_binarySearch",
+            "kk_charArray_binarySearch",
+            "kk_uByteArray_binarySearch",
+            "kk_uShortArray_binarySearch",
+        ]
+        return names.contains { callee == interner.intern($0) }
     }
 
     private func isSetLikeType(
@@ -5523,9 +5508,7 @@ extension CallLowerer {
                 finalArguments.append(kindExpr)
             }
         }
-        if loweredCallee == interner.intern("kk_array_binarySearch")
-            || loweredCallee == interner.intern("kk_array_binarySearch_primitive")
-        {
+        if isArrayBinarySearchRuntimeCallee(loweredCallee, interner: interner) {
             let receiverType = sema.bindings.exprTypes[receiver.expr] ?? sema.types.anyType
             let sizeRuntimeCallee = arraySizeRuntimeCallee(
                 for: receiverType,
@@ -5549,17 +5532,6 @@ extension CallLowerer {
                     finalArguments.append(zeroExpr)
                 }
                 finalArguments.append(sizeExpr)
-            }
-            if loweredCallee == interner.intern("kk_array_binarySearch_primitive"),
-               let primitiveKind = arrayBinarySearchPrimitiveCompareKind(
-                   of: receiverType,
-                   sema: sema,
-                   interner: interner
-               )
-            {
-                let kindExpr = arena.appendExpr(.intLiteral(Int64(primitiveKind.rawValue)), type: sema.types.intType)
-                instructions.append(.constValue(result: kindExpr, value: .intLiteral(Int64(primitiveKind.rawValue))))
-                finalArguments.append(kindExpr)
             }
         }
         let comparatorOnlyCallees: Set<InternedString> = [
@@ -6890,17 +6862,11 @@ extension CallLowerer {
             case "fill":
                 return interner.intern("kk_array_fill")
             case "binarySearch":
-                if isGenericArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
-                    return interner.intern("kk_array_binarySearch_compare")
-                }
-                if arrayBinarySearchPrimitiveCompareKind(
-                    of: nonNullReceiverType,
+                return arrayBinarySearchRuntimeName(
+                    for: nonNullReceiverType,
                     sema: sema,
                     interner: interner
-                ) != nil {
-                    return interner.intern("kk_array_binarySearch_primitive")
-                }
-                return interner.intern("kk_array_binarySearch")
+                )
             default:
                 break
             }

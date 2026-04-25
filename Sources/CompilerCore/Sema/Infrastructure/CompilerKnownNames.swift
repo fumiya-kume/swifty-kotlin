@@ -177,7 +177,6 @@ struct KnownCompilerNames {
     let booleanArray: InternedString
     let charArray: InternedString
     let uintArray: InternedString
-    let ulongArray: InternedString
 
     let regex: InternedString
     let stringBuilder: InternedString
@@ -363,7 +362,6 @@ struct KnownCompilerNames {
         booleanArray = interner.intern("BooleanArray")
         charArray = interner.intern("CharArray")
         uintArray = interner.intern("UIntArray")
-        ulongArray = interner.intern("ULongArray")
 
         regex = interner.intern("Regex")
         stringBuilder = interner.intern("StringBuilder")
@@ -619,7 +617,6 @@ struct KnownCompilerNames {
             || name == booleanArray
             || name == charArray
             || name == uintArray
-            || name == ulongArray
     }
 
     /// Returns true if the name is a primitive array constructor type name
@@ -638,7 +635,6 @@ struct KnownCompilerNames {
             || name == booleanArray
             || name == charArray
             || name == uintArray
-            || name == ulongArray
     }
 
     /// The set of stdlib collection factory function names used for marking
