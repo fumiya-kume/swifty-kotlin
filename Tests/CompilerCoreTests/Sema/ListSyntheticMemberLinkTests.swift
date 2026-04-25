@@ -383,6 +383,120 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListBinarySearchByUsesComparableKeyAndRuntimeOverloads() throws {
+        let source = """
+        data class Person(val name: String, val age: Int)
+
+        fun render(values: List<Person>) {
+            values.binarySearchBy(35) { it.age }
+            values.binarySearchBy(35, 1) { it.age }
+            values.binarySearchBy(35, 1, 4) { it.age }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let expectedOverloads: [(externalLinkName: String, parameterCount: Int)] = [
+                ("kk_list_binarySearchBy", 2),
+                ("kk_list_binarySearchBy_fromIndex", 3),
+                ("kk_list_binarySearchBy_range", 4),
+            ]
+
+            let callExprIDs = ast.arena.exprs.indices.compactMap { index -> ExprID? in
+                let exprID = ExprID(rawValue: Int32(index))
+                guard let expr = ast.arena.expr(exprID),
+                      case let .memberCall(_, callee, _, _, _) = expr,
+                      ctx.interner.resolve(callee) == "binarySearchBy"
+                else {
+                    return nil
+                }
+                return exprID
+            }
+            XCTAssertEqual(callExprIDs.count, expectedOverloads.count, "Expected three binarySearchBy calls")
+
+            for (index, callExprID) in callExprIDs.enumerated() {
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExprID)?.chosenCallee,
+                    "Expected a chosen callee for binarySearchBy overload \(index)"
+                )
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    expectedOverloads[index].externalLinkName,
+                    "Expected binarySearchBy overload \(index) to resolve to \(expectedOverloads[index].externalLinkName)"
+                )
+                XCTAssertEqual(
+                    sema.bindings.exprType(for: callExprID),
+                    sema.types.intType,
+                    "Expected binarySearchBy overload \(index) to return Int"
+                )
+            }
+
+            let listFQName: [InternedString] = [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("List"),
+                ctx.interner.intern("binarySearchBy"),
+            ]
+
+            for overload in expectedOverloads {
+                let symbolID = try XCTUnwrap(
+                    sema.symbols.lookupAll(fqName: listFQName).first(where: {
+                        sema.symbols.externalLinkName(for: $0) == overload.externalLinkName
+                    }),
+                    "Expected synthetic List member \(overload.externalLinkName) to be registered"
+                )
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+                XCTAssertEqual(signature.returnType, sema.types.intType)
+                XCTAssertEqual(signature.parameterTypes.count, overload.parameterCount)
+                XCTAssertEqual(signature.typeParameterSymbols.count, 2)
+                XCTAssertEqual(signature.typeParameterUpperBoundsList.count, 2)
+
+                let selectorType = try XCTUnwrap(signature.parameterTypes.last)
+                guard case let .functionType(functionType) = sema.types.kind(of: selectorType) else {
+                    return XCTFail("Expected selector parameter for \(overload.externalLinkName) to be a function type")
+                }
+                XCTAssertEqual(functionType.params.count, 1)
+
+                let expectedListElementType = sema.types.make(.typeParam(TypeParamType(
+                    symbol: signature.typeParameterSymbols[0],
+                    nullability: .nonNull
+                )))
+                XCTAssertEqual(functionType.params[0], expectedListElementType)
+                XCTAssertEqual(functionType.returnType, signature.parameterTypes[0])
+
+                let keyUpperBounds = signature.typeParameterUpperBoundsList[1]
+                XCTAssertEqual(keyUpperBounds.count, 1, "Expected Comparable upper bound for \(overload.externalLinkName) key type")
+                guard case let .classType(boundType) = sema.types.kind(of: keyUpperBounds[0]) else {
+                    return XCTFail("Expected \(overload.externalLinkName) upper bound to be a class type")
+                }
+                XCTAssertEqual(boundType.classSymbol, sema.types.comparableInterfaceSymbol)
+                XCTAssertEqual(boundType.args.count, 1)
+
+                guard case let .invariant(argumentType) = boundType.args[0] else {
+                    return XCTFail("Expected \(overload.externalLinkName) upper bound to reference invariant key type")
+                }
+
+                let expectedKeyType = sema.types.make(.typeParam(TypeParamType(
+                    symbol: signature.typeParameterSymbols[1],
+                    nullability: .nonNull
+                )))
+                XCTAssertEqual(argumentType, expectedKeyType)
+                XCTAssertEqual(signature.parameterTypes[0], sema.types.makeNullable(expectedKeyType))
+
+                if overload.parameterCount >= 3 {
+                    XCTAssertEqual(signature.parameterTypes[1], sema.types.intType)
+                }
+                if overload.parameterCount == 4 {
+                    XCTAssertEqual(signature.parameterTypes[2], sema.types.intType)
+                }
+            }
+        }
+    }
+
     func testListSortedAndSortedDescendingHaveComparableUpperBound() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])

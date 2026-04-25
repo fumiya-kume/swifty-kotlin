@@ -65,21 +65,6 @@ struct BigIntValue: Equatable {
         return twosComplementBytes()
     }
 
-    // MARK: - Comparison helpers
-
-    /// Returns -1, 0, or 1 for absolute value comparison (no sign consideration)
-    private static func compareAbsolute(_ a: [UInt32], _ b: [UInt32]) -> Int {
-        if a.count != b.count {
-            return a.count < b.count ? -1 : 1
-        }
-        for i in stride(from: a.count - 1, through: 0, by: -1) {
-            if a[i] != b[i] {
-                return a[i] < b[i] ? -1 : 1
-            }
-        }
-        return 0
-    }
-
     // MARK: - Digit array arithmetic (base 10^9 for simplicity)
 
     private static let base: UInt64 = 1_000_000_000

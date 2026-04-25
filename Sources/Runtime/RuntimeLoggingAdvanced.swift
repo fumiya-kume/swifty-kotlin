@@ -80,20 +80,6 @@ struct RuntimeLogRecord {
     let mdc: [String: String]
 }
 
-// MARK: - Console Appender
-
-private final class RuntimeConsoleAppender: RuntimeAppender, @unchecked Sendable {
-    func append(record: RuntimeLogRecord) {
-        print(renderText(record))
-    }
-
-    private func renderText(_ r: RuntimeLogRecord) -> String {
-        var line = "[\(r.level)] \(r.loggerName): \(r.message)"
-        if let t = r.throwableMessage { line += " | \(t)" }
-        return line
-    }
-}
-
 // MARK: - File Appender
 
 final class RuntimeFileAppenderBox: RuntimeAppender, @unchecked Sendable {

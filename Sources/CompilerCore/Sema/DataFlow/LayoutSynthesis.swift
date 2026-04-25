@@ -144,13 +144,6 @@ extension DataFlowSemaPhase {
         }
     }
 
-    private func isDirectMemberSymbol(_ member: SemanticSymbol, of owner: SemanticSymbol) -> Bool {
-        guard member.fqName.count == owner.fqName.count + 1 else {
-            return false
-        }
-        return zip(owner.fqName, member.fqName).allSatisfy { $0 == $1 }
-    }
-
     private func collectInterfaceSupertypes(of symbol: SymbolID, symbols: SymbolTable) -> [SymbolID] {
         var stack: [SymbolID] = symbols.directSupertypes(for: symbol)
         var visited: Set<SymbolID> = []

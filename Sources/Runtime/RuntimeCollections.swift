@@ -2009,6 +2009,215 @@ public func kk_uShortArray_size(_ arrayRaw: Int) -> Int {
     return array.elements.count
 }
 
+// MARK: - Array binarySearch overloads (TYPE-103)
+
+@inline(__always)
+private func runtimeBinarySearch(
+    elements: [Int],
+    element: Int,
+    fromIndex: Int,
+    toIndex: Int,
+    compare: (Int, Int) -> Int
+) -> Int {
+    // Match the runtime's existing range helpers by clamping the search window.
+    let size = elements.count
+    let from = max(0, min(fromIndex, size))
+    let to = max(from, min(toIndex, size))
+
+    var low = from
+    var high = to - 1
+    while low <= high {
+        let mid = low + (high - low) / 2
+        let midVal = elements[mid]
+        let cmp = compare(midVal, element)
+        if cmp < 0 {
+            low = mid + 1
+        } else if cmp > 0 {
+            high = mid - 1
+        } else {
+            return mid
+        }
+    }
+    return -(low + 1)
+}
+
+@inline(__always)
+private func runtimeArrayBinarySearch(
+    _ arrayRaw: Int,
+    element: Int,
+    fromIndex: Int,
+    toIndex: Int,
+    compare: (Int, Int) -> Int,
+    functionName: String
+) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in \(functionName)")
+    }
+    return runtimeBinarySearch(
+        elements: array.elements,
+        element: element,
+        fromIndex: fromIndex,
+        toIndex: toIndex,
+        compare: compare
+    )
+}
+
+@_cdecl("kk_array_binarySearch")
+public func kk_array_binarySearch(_ arrayRaw: Int, _ element: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    runtimeArrayBinarySearch(
+        arrayRaw,
+        element: element,
+        fromIndex: fromIndex,
+        toIndex: toIndex,
+        compare: runtimeCompareValues,
+        functionName: "kk_array_binarySearch"
+    )
+}
+
+@_cdecl("kk_intArray_binarySearch")
+public func kk_intArray_binarySearch(_ arrayRaw: Int, _ element: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    runtimeArrayBinarySearch(
+        arrayRaw,
+        element: element,
+        fromIndex: fromIndex,
+        toIndex: toIndex,
+        compare: { lhs, rhs in runtimeComparePrimitiveValues(lhs, rhs, kind: .int) },
+        functionName: "kk_intArray_binarySearch"
+    )
+}
+
+@_cdecl("kk_longArray_binarySearch")
+public func kk_longArray_binarySearch(_ arrayRaw: Int, _ element: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    runtimeArrayBinarySearch(
+        arrayRaw,
+        element: element,
+        fromIndex: fromIndex,
+        toIndex: toIndex,
+        compare: { lhs, rhs in runtimeComparePrimitiveValues(lhs, rhs, kind: .long) },
+        functionName: "kk_longArray_binarySearch"
+    )
+}
+
+@_cdecl("kk_byteArray_binarySearch")
+public func kk_byteArray_binarySearch(_ arrayRaw: Int, _ element: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    runtimeArrayBinarySearch(
+        arrayRaw,
+        element: element,
+        fromIndex: fromIndex,
+        toIndex: toIndex,
+        compare: { lhs, rhs in runtimeComparePrimitiveValues(lhs, rhs, kind: .int) },
+        functionName: "kk_byteArray_binarySearch"
+    )
+}
+
+@_cdecl("kk_shortArray_binarySearch")
+public func kk_shortArray_binarySearch(_ arrayRaw: Int, _ element: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    runtimeArrayBinarySearch(
+        arrayRaw,
+        element: element,
+        fromIndex: fromIndex,
+        toIndex: toIndex,
+        compare: { lhs, rhs in runtimeComparePrimitiveValues(lhs, rhs, kind: .int) },
+        functionName: "kk_shortArray_binarySearch"
+    )
+}
+
+@_cdecl("kk_uIntArray_binarySearch")
+public func kk_uIntArray_binarySearch(_ arrayRaw: Int, _ element: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    runtimeArrayBinarySearch(
+        arrayRaw,
+        element: element,
+        fromIndex: fromIndex,
+        toIndex: toIndex,
+        compare: { lhs, rhs in runtimeComparePrimitiveValues(lhs, rhs, kind: .uint) },
+        functionName: "kk_uIntArray_binarySearch"
+    )
+}
+
+@_cdecl("kk_uLongArray_binarySearch")
+public func kk_uLongArray_binarySearch(_ arrayRaw: Int, _ element: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    runtimeArrayBinarySearch(
+        arrayRaw,
+        element: element,
+        fromIndex: fromIndex,
+        toIndex: toIndex,
+        compare: { lhs, rhs in runtimeComparePrimitiveValues(lhs, rhs, kind: .ulong) },
+        functionName: "kk_uLongArray_binarySearch"
+    )
+}
+
+@_cdecl("kk_doubleArray_binarySearch")
+public func kk_doubleArray_binarySearch(_ arrayRaw: Int, _ element: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    runtimeArrayBinarySearch(
+        arrayRaw,
+        element: element,
+        fromIndex: fromIndex,
+        toIndex: toIndex,
+        compare: { lhs, rhs in runtimeComparePrimitiveValues(lhs, rhs, kind: .double) },
+        functionName: "kk_doubleArray_binarySearch"
+    )
+}
+
+@_cdecl("kk_floatArray_binarySearch")
+public func kk_floatArray_binarySearch(_ arrayRaw: Int, _ element: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    runtimeArrayBinarySearch(
+        arrayRaw,
+        element: element,
+        fromIndex: fromIndex,
+        toIndex: toIndex,
+        compare: { lhs, rhs in runtimeComparePrimitiveValues(lhs, rhs, kind: .float) },
+        functionName: "kk_floatArray_binarySearch"
+    )
+}
+
+@_cdecl("kk_booleanArray_binarySearch")
+public func kk_booleanArray_binarySearch(_ arrayRaw: Int, _ element: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    runtimeArrayBinarySearch(
+        arrayRaw,
+        element: element,
+        fromIndex: fromIndex,
+        toIndex: toIndex,
+        compare: { lhs, rhs in runtimeComparePrimitiveValues(lhs, rhs, kind: .boolean) },
+        functionName: "kk_booleanArray_binarySearch"
+    )
+}
+
+@_cdecl("kk_charArray_binarySearch")
+public func kk_charArray_binarySearch(_ arrayRaw: Int, _ element: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    runtimeArrayBinarySearch(
+        arrayRaw,
+        element: element,
+        fromIndex: fromIndex,
+        toIndex: toIndex,
+        compare: { lhs, rhs in runtimeComparePrimitiveValues(lhs, rhs, kind: .char) },
+        functionName: "kk_charArray_binarySearch"
+    )
+}
+
+@_cdecl("kk_uByteArray_binarySearch")
+public func kk_uByteArray_binarySearch(_ arrayRaw: Int, _ element: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    runtimeArrayBinarySearch(
+        arrayRaw,
+        element: element,
+        fromIndex: fromIndex,
+        toIndex: toIndex,
+        compare: { lhs, rhs in runtimeComparePrimitiveValues(lhs, rhs, kind: .uint) },
+        functionName: "kk_uByteArray_binarySearch"
+    )
+}
+
+@_cdecl("kk_uShortArray_binarySearch")
+public func kk_uShortArray_binarySearch(_ arrayRaw: Int, _ element: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    runtimeArrayBinarySearch(
+        arrayRaw,
+        element: element,
+        fromIndex: fromIndex,
+        toIndex: toIndex,
+        compare: { lhs, rhs in runtimeComparePrimitiveValues(lhs, rhs, kind: .uint) },
+        functionName: "kk_uShortArray_binarySearch"
+    )
+}
+
 // MARK: - ArrayDeque Functions (STDLIB-240)
 
 @_cdecl("kk_arraydeque_new")

@@ -1131,7 +1131,7 @@ extension CallTypeChecker {
             "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
-            "indexOfFirst", "indexOfLast",
+            "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
@@ -1291,6 +1291,154 @@ extension CallTypeChecker {
             let finalType = safeCall ? sema.types.makeNullable(sema.types.intType) : sema.types.intType
             sema.bindings.bindExprType(id, type: finalType)
             return finalType
+        }
+
+        let isGroupingReceiver: Bool = {
+            let knownNames = KnownCompilerNames(interner: interner)
+            guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return false
+            }
+            return knownNames.isGroupingSymbol(symbol)
+        }()
+        let calleeStr = interner.resolve(calleeName)
+
+        if isGroupingReceiver {
+            let groupingTypeInfo: (element: TypeID, key: TypeID) = {
+                if let receiverExpr = ast.arena.expr(receiverID),
+                   case let .memberCall(innerReceiverID, innerCallee, _, innerArgs, _) = receiverExpr,
+                   interner.resolve(innerCallee) == "groupingBy",
+                   innerArgs.count == 1
+                {
+                    let innerReceiverType = sema.bindings.exprType(for: innerReceiverID)
+                        ?? driver.inferExpr(innerReceiverID, ctx: ctx, locals: &locals)
+                    let sourceElementType = resolvedCollectionElementType(
+                        receiverID: innerReceiverID,
+                        receiverType: innerReceiverType,
+                        sema: sema,
+                        interner: interner,
+                        ctx: ctx,
+                        locals: &locals
+                    )
+                    let keyType = inferredLambdaReturnType(
+                        argExpr: innerArgs[0].expr, ast: ast, sema: sema
+                    )
+                    return (sourceElementType, keyType)
+                }
+
+                let receiverTypeToInspect = sema.bindings.exprType(for: receiverID)
+                    ?? driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
+                let elementType: TypeID = if case let .classType(ct) = sema.types.kind(of: receiverTypeToInspect),
+                                                    ct.args.count >= 1
+                {
+                    switch ct.args[0] {
+                    case let .invariant(id), let .out(id), let .in(id): id
+                    case .star: sema.types.anyType
+                    }
+                } else {
+                    sema.types.anyType
+                }
+                let keyType: TypeID = if case let .classType(ct) = sema.types.kind(of: receiverTypeToInspect),
+                                               ct.args.count >= 2
+                {
+                    switch ct.args[1] {
+                    case let .invariant(id), let .out(id), let .in(id): id
+                    case .star: sema.types.anyType
+                    }
+                } else {
+                    sema.types.anyType
+                }
+                return (elementType, keyType)
+            }()
+            switch calleeStr {
+            case "eachCount":
+                let groupingKeyType = groupingTypeInfo.key
+                if let mapSymbol = sema.symbols.lookupByShortName(interner.intern("Map")).first {
+                    let resultType = sema.types.make(.classType(ClassType(
+                        classSymbol: mapSymbol,
+                        args: [.invariant(groupingKeyType), .invariant(sema.types.intType)],
+                        nullability: .nonNull
+                    )))
+                    sema.bindings.bindExprType(id, type: resultType)
+                    return resultType
+                }
+                sema.bindings.bindExprType(id, type: sema.types.anyType)
+                return sema.types.anyType
+
+            case "foldTo":
+                guard args.count == 3 else {
+                    sema.bindings.bindExprType(id, type: sema.types.anyType)
+                    return sema.types.anyType
+                }
+                let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                let nonNullableDestinationType = sema.types.makeNonNullable(destinationType)
+                let destinationMapKeyType: TypeID = if case let .classType(destClassType) = sema.types.kind(of: nonNullableDestinationType),
+                                                       destClassType.args.count >= 2
+                {
+                    switch destClassType.args[0] {
+                    case let .invariant(id), let .out(id), let .in(id): id
+                    case .star: sema.types.anyType
+                    }
+                } else {
+                    sema.types.anyType
+                }
+                let destinationMapValueType: TypeID = if case let .classType(destClassType) = sema.types.kind(of: nonNullableDestinationType),
+                                                           destClassType.args.count >= 2
+                {
+                    switch destClassType.args[1] {
+                    case let .invariant(id), let .out(id), let .in(id): id
+                    case .star: sema.types.anyType
+                    }
+                } else {
+                    sema.types.anyType
+                }
+                let groupingElementType = groupingTypeInfo.element
+                let groupingKeyType = groupingTypeInfo.key == sema.types.anyType
+                    ? destinationMapKeyType
+                    : groupingTypeInfo.key
+                if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef {
+                    let initialValueSelectorType = sema.types.make(.functionType(FunctionType(
+                        params: [groupingKeyType, groupingElementType],
+                        returnType: destinationMapValueType
+                    )))
+                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                    _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: initialValueSelectorType)
+                    let initialValueType = destinationMapValueType == sema.types.anyType
+                        ? inferredLambdaReturnType(argExpr: args[1].expr, ast: ast, sema: sema)
+                        : destinationMapValueType
+                    let operationExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [groupingKeyType, initialValueType, groupingElementType],
+                        returnType: initialValueType
+                    )))
+                    if let operationLambdaExpr = ast.arena.expr(args[2].expr), operationLambdaExpr.isLambdaOrCallableRef {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[2].expr)
+                    }
+                    _ = driver.inferExpr(args[2].expr, ctx: ctx, locals: &locals, expectedType: operationExpectedType)
+                } else {
+                    let initialValueType: TypeID
+                    if destinationMapValueType == sema.types.anyType {
+                        initialValueType = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals)
+                    } else {
+                        initialValueType = driver.inferExpr(
+                            args[1].expr, ctx: ctx, locals: &locals, expectedType: destinationMapValueType
+                        )
+                    }
+                    let operationExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [initialValueType, groupingElementType],
+                        returnType: initialValueType
+                    )))
+                    if let operationLambdaExpr = ast.arena.expr(args[2].expr), operationLambdaExpr.isLambdaOrCallableRef {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[2].expr)
+                    }
+                    _ = driver.inferExpr(args[2].expr, ctx: ctx, locals: &locals, expectedType: operationExpectedType)
+                }
+                sema.bindings.bindExprType(id, type: destinationType)
+                return destinationType
+
+            default:
+                break
+            }
         }
 
         // --- Collection higher-order functions (STDLIB-005) ---
@@ -2701,6 +2849,67 @@ extension CallTypeChecker {
                 }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = sema.types.intType
+
+            case "binarySearchBy":
+                guard (2...4).contains(args.count) else {
+                    sema.bindings.bindExprType(id, type: sema.types.intType)
+                    return sema.types.intType
+                }
+                let keyType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                if args.count >= 3 {
+                    _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+                }
+                if args.count == 4 {
+                    _ = driver.inferExpr(args[2].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+                }
+                let selectorReturnType: TypeID = if keyType == sema.types.errorType {
+                    sema.types.nullableAnyType
+                } else {
+                    switch sema.types.kind(of: keyType) {
+                    case .nothing:
+                        sema.types.nullableAnyType
+                    default:
+                        sema.types.makeNullable(keyType)
+                    }
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: selectorReturnType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                if let lambdaExpr = ast.arena.expr(args[args.count - 1].expr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[args.count - 1].expr)
+                }
+                _ = driver.inferExpr(args[args.count - 1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = sema.types.intType
+
+                let knownNames = KnownCompilerNames(interner: interner)
+                let memberFQName = knownNames.kotlinCollectionsListFQName + [calleeName]
+                if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { candidate in
+                    guard let signature = sema.symbols.functionSignature(for: candidate) else { return false }
+                    return signature.parameterTypes.count == args.count
+                }) {
+                    let keySubstitution: TypeID = if keyType == sema.types.errorType {
+                        sema.types.nullableAnyType
+                    } else {
+                        switch sema.types.kind(of: keyType) {
+                        case .nothing:
+                            sema.types.nullableAnyType
+                        default:
+                            keyType
+                        }
+                    }
+                    let substitutedTypeArguments = [collectionElementType, keySubstitution]
+                    let parameterMapping = Dictionary(uniqueKeysWithValues: args.indices.map { ($0, $0) })
+                    sema.bindings.bindCall(id, binding: CallBinding(
+                        chosenCallee: chosenCallee,
+                        substitutedTypeArguments: substitutedTypeArguments,
+                        parameterMapping: parameterMapping
+                    ))
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
+                }
+
             case "distinctBy":
                  guard args.count == 1 else {
                      sema.bindings.bindExprType(id, type: sema.types.anyType)

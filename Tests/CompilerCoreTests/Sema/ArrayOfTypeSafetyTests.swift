@@ -197,7 +197,7 @@ final class ArrayOfTypeSafetyTests: XCTestCase {
         try withTemporaryFile(contents: source) { path in
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
-            assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertHasDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
         }
     }
 
@@ -467,6 +467,38 @@ final class ArrayOfTypeSafetyTests: XCTestCase {
 
             XCTAssertTrue(foundUByteArray, "Expected ubyteArrayOf(...) to produce UByteArray.")
             XCTAssertTrue(foundIndexedUByte, "Expected indexed access to produce UByte.")
+        }
+    }
+
+    func testArrayBinarySearchResolvesWithoutError() throws {
+        let source = """
+        fun main() {
+            val arr = arrayOf(1, 3, 4, 7, 9)
+            val index = arr.binarySearch(4, 1, 4)
+            println(index)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+        }
+    }
+
+    func testULongArrayBinarySearchResolvesWithoutError() throws {
+        let source = """
+        fun main() {
+            val arr = ULongArray(3) { it.toULong() }
+            val index = arr.binarySearch(1uL, 0, 3)
+            println(index)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
         }
     }
 }
