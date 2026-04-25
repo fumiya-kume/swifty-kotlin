@@ -41,6 +41,52 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerSyntheticRangeInterfaceStubs(
+            rangesPackageSymbol: rangesPackageSymbol,
+            rangesFQName: rangesFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        // Byte and Short collapse to intType internally; mixed Int/Long calls widen to Long.
+        registerSyntheticRangeUntilStub(
+            ownerSymbol: rangesPackageSymbol,
+            receiverType: types.intType,
+            parameterType: types.intType,
+            returnType: types.intType,
+            externalLinkName: "kk_op_rangeUntil",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticRangeUntilStub(
+            ownerSymbol: rangesPackageSymbol,
+            receiverType: types.intType,
+            parameterType: types.longType,
+            returnType: types.longType,
+            externalLinkName: "kk_op_rangeUntil",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticRangeUntilStub(
+            ownerSymbol: rangesPackageSymbol,
+            receiverType: types.longType,
+            parameterType: types.intType,
+            returnType: types.longType,
+            externalLinkName: "kk_op_rangeUntil",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticRangeUntilStub(
+            ownerSymbol: rangesPackageSymbol,
+            receiverType: types.longType,
+            parameterType: types.longType,
+            returnType: types.longType,
+            externalLinkName: "kk_op_rangeUntil",
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticProgressionStub(
             named: "IntProgression",
             elementType: types.intType,
@@ -219,6 +265,69 @@ extension DataFlowSemaPhase {
         )
 
         return classSymbol
+    }
+
+    private func registerSyntheticRangeUntilStub(
+        ownerSymbol: SymbolID,
+        receiverType: TypeID,
+        parameterType: TypeID,
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+
+        let functionName = interner.intern("until")
+        let functionFQName = ownerInfo.fqName + [functionName]
+        if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.kind == .function,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes == [parameterType]
+                && signature.returnType == returnType
+        }) {
+            return
+        }
+
+        let parameterName = interner.intern("to")
+        let parameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: parameterName,
+            fqName: functionFQName + [parameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+        symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [parameterType],
+                returnType: returnType,
+                valueParameterSymbols: [parameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false]
+            ),
+            for: functionSymbol
+        )
     }
 
     private func registerSyntheticProgressionStub(

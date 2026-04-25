@@ -195,6 +195,7 @@ struct CollectionLiteralLookupTables {
     let kkListWindowedDefaultName: InternedString
     let kkListWindowedName: InternedString
     let kkListWindowedPartialName: InternedString
+    let kkListWindowedTransformName: InternedString
     let kkListSortedDescendingName: InternedString
     let kkListSortedByDescendingName: InternedString
     let kkListSortedWithName: InternedString
@@ -293,6 +294,7 @@ struct CollectionLiteralLookupTables {
     // STDLIB-470: Sequence terminal ops
     let kkSequenceToSetName: InternedString
     let kkSequenceToMapName: InternedString
+    let kkSequenceToCollectionName: InternedString
     let kkSequenceGroupByName: InternedString
     let kkSequenceGroupByToName: InternedString
     let kkSequenceMaxOrNullName: InternedString
@@ -934,6 +936,7 @@ struct CollectionLiteralLookupTables {
         kkListWindowedDefaultName = interner.intern("kk_list_windowed_default")
         kkListWindowedName = interner.intern("kk_list_windowed")
         kkListWindowedPartialName = interner.intern("kk_list_windowed_partial")
+        kkListWindowedTransformName = interner.intern("kk_list_windowed_transform")
         kkListSortedDescendingName = interner.intern("kk_list_sortedDescending")
         kkListSortedByDescendingName = interner.intern("kk_list_sortedByDescending")
         kkListSortedWithName = interner.intern("kk_list_sortedWith")
@@ -1028,6 +1031,7 @@ struct CollectionLiteralLookupTables {
 
         kkSequenceToSetName = interner.intern("kk_sequence_toSet")
         kkSequenceToMapName = interner.intern("kk_sequence_toMap")
+        kkSequenceToCollectionName = interner.intern("kk_sequence_toCollection")
         kkSequenceGroupByName = interner.intern("kk_sequence_groupBy")
         kkSequenceGroupByToName = interner.intern("kk_sequence_groupByTo")
         kkSequenceMaxOrNullName = interner.intern("kk_sequence_maxOrNull")

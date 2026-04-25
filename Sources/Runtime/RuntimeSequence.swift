@@ -289,6 +289,25 @@ private func runtimeSequenceTransformElement(
             outThrown: outThrown,
             yield: yield
         )
+    case let .onEachIndexedStep(fnPtr, closureRaw):
+        let action = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+        let index = state.takeCounts[stepIndex, default: 0]
+        state.takeCounts[stepIndex] = index + 1
+        var thrown = 0
+        _ = action(closureRaw, index, element, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            state.stop = true
+            return
+        }
+        runtimeSequenceTransformElement(
+            element,
+            steps: steps,
+            stepIndex: stepIndex + 1,
+            state: state,
+            outThrown: outThrown,
+            yield: yield
+        )
     case let .mapNotNullStep(fnPtr, closureRaw):
         let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
         var thrown = 0
@@ -504,7 +523,7 @@ private func runtimeTraverseSequenceWithState(
                 state.limitReached = true
             }
             return
-        case .mapStep, .filterStep, .filterNotStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep, .mapNotNullStep, .filterNotNullStep, .mapIndexedStep, .withIndexStep, .flatMapStep:
+        case .mapStep, .filterStep, .filterNotStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep, .onEachIndexedStep, .mapNotNullStep, .filterNotNullStep, .mapIndexedStep, .withIndexStep, .flatMapStep:
             continue
         }
     }
@@ -687,6 +706,21 @@ private func applyMapIndexedStep(_ elements: [Int], fnPtr: Int, closureRaw: Int,
     return mapped
 }
 
+/// Applies an onEachIndexed transformation: runs a side effect with index and value.
+private func applyOnEachIndexedStep(_ elements: [Int], fnPtr: Int, closureRaw: Int, outThrown: UnsafeMutablePointer<Int>?) -> [Int] {
+    for (idx, elem) in elements.enumerated() {
+        var thrown = 0
+        _ = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown)
+        if thrown != 0 {
+            if let outThrown = outThrown {
+                outThrown.pointee = thrown
+            }
+            return []
+        }
+    }
+    return elements
+}
+
 /// Applies a withIndex transformation: creates pairs of (index, element).
 private func applyWithIndexStep(_ elements: [Int]) -> [Int] {
     var pairs: [Int] = []
@@ -721,14 +755,6 @@ private func applyFlatMapStep(_ elements: [Int], fnPtr: Int, closureRaw: Int, ou
 /// Evaluates the lazy sequence chain and returns the materialized elements.
 /// This is the core of lazy semantics: steps are only executed here.
 private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
-    // STDLIB-563: When the source is a lazyBuilder and there are transformation
-    // steps (take, filter, etc.), delegate to the traverse-based path which
-    // iterates elements one at a time from the coroutine. This ensures that
-    // short-circuiting steps like take(N) only compute N elements.
-    let hasLazyBuilder = seq.steps.contains {
-        if case .lazyBuilder = $0 { return true }
-        return false
-    }
     let hasTransformSteps = seq.steps.contains {
         switch $0 {
         case .source, .stringSource, .builder, .generator, .nullableGenerator, .lazyBuilder:
@@ -737,13 +763,11 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
             return true
         }
     }
-    // STDLIB-SEQ-002: nullableGenerator also benefits from the traverse-based path so
-    // that take(N) short-circuits after N elements instead of materializing everything.
-    let hasNullableGenerator = seq.steps.contains {
-        if case .nullableGenerator = $0 { return true }
-        return false
-    }
-    if (hasLazyBuilder || hasNullableGenerator), hasTransformSteps {
+    // Preserve Kotlin sequence laziness even for source-backed sequences.
+    // Without the traversal path, intermediate steps like onEachIndexed would
+    // eagerly touch every source element before downstream take()/first()
+    // short-circuits, which is observably incorrect.
+    if hasTransformSteps {
         var result: [Int] = []
         runtimeTraverseSequence(seq, outThrown: nil) { elem in
             result.append(elem)
@@ -844,6 +868,8 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
                 _ = action(closureRaw, elem, &thrown)
                 if thrown != 0 { return [] }
             }
+        case let .onEachIndexedStep(fnPtr, closureRaw):
+            elements = applyOnEachIndexedStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: nil)
         case let .mapNotNullStep(fnPtr, closureRaw):
             elements = applyMapNotNullStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: nil)
         case .filterNotNullStep:
@@ -1132,6 +1158,27 @@ public func kk_sequence_mapIndexed(
     }
     var newSteps = seq.steps
     newSteps.append(.mapIndexedStep(fnPtr: fnPtr, closureRaw: closureRaw))
+    let newSeq = RuntimeSequenceBox(steps: newSteps)
+    return registerRuntimeObject(newSeq)
+}
+
+@_cdecl("kk_sequence_onEachIndexed")
+public func kk_sequence_onEachIndexed(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let seq = runtimeSequenceBox(from: seqRaw) else {
+        let sourceElements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+        let newSeq = RuntimeSequenceBox(steps: [
+            .source(elements: sourceElements),
+            .onEachIndexedStep(fnPtr: fnPtr, closureRaw: closureRaw),
+        ])
+        return registerRuntimeObject(newSeq)
+    }
+    var newSteps = seq.steps
+    newSteps.append(.onEachIndexedStep(fnPtr: fnPtr, closureRaw: closureRaw))
     let newSeq = RuntimeSequenceBox(steps: newSteps)
     return registerRuntimeObject(newSeq)
 }
@@ -1688,6 +1735,18 @@ public func kk_sequence_toMutableSet(_ seqRaw: Int) -> Int {
 public func kk_sequence_toHashSet(_ seqRaw: Int) -> Int {
     let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(elements)))
+}
+
+@_cdecl("kk_sequence_toCollection")
+public func kk_sequence_toCollection(_ seqRaw: Int, _ destRaw: Int) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for elem in elements {
+        runtimeAppendToMutableCollection(destRaw, elem)
+    }
+    return destRaw
 }
 
 @_cdecl("kk_sequence_unzip")

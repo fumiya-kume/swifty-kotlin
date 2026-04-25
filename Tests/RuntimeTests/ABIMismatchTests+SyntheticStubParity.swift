@@ -63,6 +63,33 @@ extension ABIMismatchTests {
             "kk_duration_from_days_double",
             "kk_duration_div_duration",
             "kk_synchronized",
+            // Unsigned numeric coercion (STDLIB-500)
+            "kk_ubyte_coerceIn",
+            "kk_ubyte_coerceAtLeast",
+            "kk_ubyte_coerceAtMost",
+            "kk_ushort_coerceIn",
+            "kk_ushort_coerceAtLeast",
+            "kk_ushort_coerceAtMost",
+            "kk_uint_coerceIn",
+            "kk_uint_coerceAtLeast",
+            "kk_uint_coerceAtMost",
+            "kk_ulong_coerceIn",
+            "kk_ulong_coerceAtLeast",
+            "kk_ulong_coerceAtMost",
+            // Array binarySearch overloads (TYPE-103)
+            "kk_array_binarySearch",
+            "kk_intArray_binarySearch",
+            "kk_longArray_binarySearch",
+            "kk_byteArray_binarySearch",
+            "kk_shortArray_binarySearch",
+            "kk_uIntArray_binarySearch",
+            "kk_uLongArray_binarySearch",
+            "kk_doubleArray_binarySearch",
+            "kk_floatArray_binarySearch",
+            "kk_booleanArray_binarySearch",
+            "kk_charArray_binarySearch",
+            "kk_uByteArray_binarySearch",
+            "kk_uShortArray_binarySearch",
             // Atomic (kotlin.concurrent)
             "kk_atomic_int_create",
             "kk_atomic_int_load",
@@ -162,6 +189,10 @@ extension ABIMismatchTests {
             "kk_json_encodeToString",
             "kk_json_decodeFromString",
             "kk_json_encodeMapToString",
+            // Collection binarySearchBy (STDLIB-COL-BSEARCH-001)
+            "kk_list_binarySearchBy",
+            "kk_list_binarySearchBy_fromIndex",
+            "kk_list_binarySearchBy_range",
         ]
 
         for linkName in syntheticLinkNames {

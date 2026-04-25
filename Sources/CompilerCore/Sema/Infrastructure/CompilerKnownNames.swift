@@ -171,6 +171,7 @@ struct KnownCompilerNames {
     let byteArray: InternedString
     let ubyteArray: InternedString
     let ushortArray: InternedString
+    let ulongArray: InternedString
     let doubleArray: InternedString
     let floatArray: InternedString
     let booleanArray: InternedString
@@ -355,6 +356,7 @@ struct KnownCompilerNames {
         byteArray = interner.intern("ByteArray")
         ubyteArray = interner.intern("UByteArray")
         ushortArray = interner.intern("UShortArray")
+        ulongArray = interner.intern("ULongArray")
         doubleArray = interner.intern("DoubleArray")
         floatArray = interner.intern("FloatArray")
         booleanArray = interner.intern("BooleanArray")
@@ -609,6 +611,7 @@ struct KnownCompilerNames {
             || name == byteArray
             || name == ubyteArray
             || name == ushortArray
+            || name == ulongArray
             || name == doubleArray
             || name == floatArray
             || name == booleanArray
@@ -626,6 +629,7 @@ struct KnownCompilerNames {
             || name == byteArray
             || name == ubyteArray
             || name == ushortArray
+            || name == ulongArray
             || name == doubleArray
             || name == floatArray
             || name == booleanArray

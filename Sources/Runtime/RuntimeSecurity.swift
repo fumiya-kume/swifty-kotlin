@@ -773,10 +773,6 @@ private func runtimeKeyPairGeneratorCreate(
     return registerRuntimeObject(RuntimeKeyPairBox(publicKeyRaw: publicRaw, privateKeyRaw: privateRaw))
 }
 
-private func runtimeSignatureAlgorithmFromKey(_ algorithm: RuntimeSignatureAlgorithm) -> SecKeyAlgorithm? {
-    algorithm.secKeyAlgorithm
-}
-
 private func runtimeSignatureTransform(
     signature: RuntimeSignatureBox,
     outThrown: UnsafeMutablePointer<Int>?,
@@ -1063,17 +1059,6 @@ private func runtimeCipherInitialize(
         }
         return 0
     }
-}
-
-private func runtimeKeyPairGeneratorInitialize(
-    generatorRaw: Int,
-    keySizeInBits: Int
-) -> Bool {
-    guard let generator = runtimeKeyPairGeneratorBox(from: generatorRaw) else {
-        return false
-    }
-    generator.keySizeInBits = keySizeInBits
-    return true
 }
 
 @_cdecl("kk_secretkeyspec_new")

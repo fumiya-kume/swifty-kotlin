@@ -45,11 +45,6 @@ private func runtimeInstantBox(from raw: Int) -> RuntimeInstantBox? {
     return tryCast(ptr, to: RuntimeInstantBox.self)
 }
 
-private func runtimeDurationBox(from raw: Int) -> RuntimeDurationBox? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
-    return tryCast(ptr, to: RuntimeDurationBox.self)
-}
-
 private func saturatingAdd(_ a: Int64, _ b: Int64) -> Int64 {
     let (result, overflow) = a.addingReportingOverflow(b)
     if overflow {

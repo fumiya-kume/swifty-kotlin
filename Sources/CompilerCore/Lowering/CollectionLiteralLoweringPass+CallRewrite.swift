@@ -26,40 +26,6 @@ extension CollectionLiteralLoweringPass {
         }
     }
 
-    private func collectionFactoryElementType(
-        symbol: SymbolID?,
-        result: KIRExprID?,
-        module: KIRModule,
-        ctx: KIRContext
-    ) -> TypeID? {
-        if let symbol,
-           let returnType = ctx.sema?.symbols.functionSignature(for: symbol)?.returnType
-        {
-            return collectionElementType(from: returnType, ctx: ctx)
-        }
-        if let result,
-           let resultType = module.arena.exprType(result)
-        {
-            return collectionElementType(from: resultType, ctx: ctx)
-        }
-        return nil
-    }
-
-    private func collectionElementType(from type: TypeID, ctx: KIRContext) -> TypeID? {
-        guard let types = ctx.sema?.types else { return nil }
-        guard case let .classType(classType) = types.kind(of: type),
-              let firstArg = classType.args.first
-        else {
-            return nil
-        }
-        switch firstArg {
-        case let .invariant(elementType), let .out(elementType), let .in(elementType):
-            return elementType
-        case .star:
-            return types.nullableAnyType
-        }
-    }
-
     /// Returns true when the resolved symbol's FQN matches one of the known
     /// `kotlin.collections.*` factory FQNs.  When the symbol is nil (unresolved)
     /// we conservatively allow the rewrite – the name check already passed and
@@ -3188,17 +3154,24 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.toCollectionName, arguments.count == 2 {
                         let receiverID = arguments[0]
                         let destID = arguments[1]
+                        let runtimeCallee: InternedString?
                         if listExprIDs.contains(receiverID.rawValue)
                             || setExprIDs.contains(receiverID.rawValue)
-                            || sequenceExprIDs.contains(receiverID.rawValue)
                             || arrayExprIDs.contains(receiverID.rawValue)
                         {
+                            runtimeCallee = lookup.kkCollectionToCollectionName
+                        } else if sequenceExprIDs.contains(receiverID.rawValue) {
+                            runtimeCallee = lookup.kkSequenceToCollectionName
+                        } else {
+                            runtimeCallee = nil
+                        }
+                        if let runtimeCallee {
                             let hofResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
                             loweredBody.append(.call(
                                 symbol: nil,
-                                callee: lookup.kkCollectionToCollectionName,
+                                callee: runtimeCallee,
                                 arguments: [receiverID, destID],
                                 result: hofResult,
                                 canThrow: false,

@@ -119,23 +119,6 @@ extension CoroutineLoweringPass {
         return thunkBody
     }
 
-    /// Returns true if the callee of a call is a known dispatcher factory function.
-    private func isDispatcherCalleeExpr(
-        _ exprID: KIRExprID,
-        module: KIRModule
-    ) -> Bool {
-        // A dispatcher is produced by one of kk_dispatcher_default/io/main.
-        // In KIR these appear as constValue(.intLiteral) carrying the dispatcher tag,
-        // or as a call result from kk_dispatcher_*. Since they are Int-typed constants
-        // we cannot distinguish them from a regular Int constant at this stage.
-        // The heuristic we use: if the expression has NO known symbol reference
-        // (i.e. it is not pointing at a suspend function symbol), treat it as a
-        // potential dispatcher expression when the callee name is "launch".
-        // This is validated downstream by the fact that the *next* argument must
-        // resolve to a suspend function.
-        return true // Intentionally broad; validated by caller.
-    }
-
     func rewriteLauncherCall(
         call: CallRewriteInput,
         symbolByExprRaw: [Int32: SymbolID],

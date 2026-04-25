@@ -1301,55 +1301,6 @@ extension DataFlowSemaPhase {
         )
     }
 
-    private func registerSyntheticVarargFunction(
-        named name: String,
-        packageFQName: [InternedString],
-        returnType: TypeID,
-        externalLinkName: String,
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner
-    ) {
-        let functionName = interner.intern(name)
-        let functionFQName = packageFQName + [functionName]
-
-        let functionSymbol = symbols.define(
-            kind: .function,
-            name: functionName,
-            fqName: functionFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic]
-        )
-        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
-            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
-        }
-        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
-
-        let paramNameID = interner.intern("elements")
-        let paramSymbol = symbols.define(
-            kind: .valueParameter,
-            name: paramNameID,
-            fqName: functionFQName + [paramNameID],
-            declSite: nil,
-            visibility: .private,
-            flags: [.synthetic]
-        )
-        symbols.setParentSymbol(functionSymbol, for: paramSymbol)
-
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                parameterTypes: [types.anyType],
-                returnType: returnType,
-                isSuspend: false,
-                valueParameterSymbols: [paramSymbol],
-                valueParameterHasDefaultValues: [false],
-                valueParameterIsVararg: [true]
-            ),
-            for: functionSymbol
-        )
-    }
-
     private func registerSyntheticGenericSequenceVarargFunction(
         named name: String,
         packageFQName: [InternedString],
@@ -2279,102 +2230,194 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterSymbols([tParamSymbol, kParamSymbol], for: groupingSymbol)
         types.setNominalTypeParameterVariances([.out, .out], for: groupingSymbol)
 
+        let tTypeParam = types.make(.typeParam(TypeParamType(symbol: tParamSymbol)))
+        let kTypeParam = types.make(.typeParam(TypeParamType(symbol: kParamSymbol)))
+
         let groupingType = types.make(.classType(ClassType(
             classSymbol: groupingSymbol,
             args: [],
             nullability: .nonNull
         )))
 
-        // Build Map<K, V> return types when Map symbol is available
+        // Build Map<K, V> return types when Map symbol is available.
         let mapName = interner.intern("Map")
         let mapSymbol = symbols.lookup(fqName: collectionsPkg + [mapName])
             ?? symbols.lookupByShortName(mapName).first
 
-        let kTypeParam = types.make(.typeParam(TypeParamType(symbol: kParamSymbol)))
+        let groupingTypeParameterSymbols: [SymbolID] = [tParamSymbol, kParamSymbol]
 
-        // eachCount() -> Map<K, Int>
-        let eachCountReturnType: TypeID
-        if let mapSymbol {
-            eachCountReturnType = types.make(.classType(ClassType(
+        func makeMapType(valueType: TypeID) -> TypeID {
+            guard let mapSymbol else {
+                return types.anyType
+            }
+            return types.make(.classType(ClassType(
                 classSymbol: mapSymbol,
-                args: [.invariant(kTypeParam), .invariant(types.intType)],
+                args: [.invariant(kTypeParam), .invariant(valueType)],
                 nullability: .nonNull
             )))
-        } else {
-            eachCountReturnType = types.anyType
         }
+
+        func registerGroupingMember(
+            named name: String,
+            parameters: [TypeID],
+            returnType: TypeID,
+            externalLinkName: String,
+            typeParameterSymbols: [SymbolID] = groupingTypeParameterSymbols,
+            classTypeParameterCount: Int = 2
+        ) {
+            let memberName = interner.intern(name)
+            let memberFQName = groupingFQName + [memberName]
+            let memberSignature = FunctionSignature(
+                receiverType: groupingType,
+                parameterTypes: parameters,
+                returnType: returnType,
+                typeParameterSymbols: typeParameterSymbols,
+                classTypeParameterCount: classTypeParameterCount
+            )
+            if let existing = symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+                symbols.functionSignature(for: symbolID) == memberSignature
+            }) {
+                if symbols.externalLinkName(for: existing) != externalLinkName {
+                    symbols.setExternalLinkName(externalLinkName, for: existing)
+                }
+                return
+            }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(groupingSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            symbols.setFunctionSignature(memberSignature, for: memberSymbol)
+        }
+
+        // eachCount() -> Map<K, Int>
         registerGroupingMember(
             named: "eachCount",
-            groupingFQName: groupingFQName,
-            groupingSymbol: groupingSymbol,
-            receiverType: groupingType,
             parameters: [],
-            returnType: eachCountReturnType,
-            externalLinkName: "kk_grouping_eachCount",
-            symbols: symbols,
-            types: types,
-            interner: interner
+            returnType: makeMapType(valueType: types.intType),
+            externalLinkName: "kk_grouping_eachCount"
         )
 
         // fold(initialValue: R, operation: (R, T) -> R) -> Map<K, R>
-        let foldOperationType = types.make(.functionType(FunctionType(
-            params: [types.anyType, types.anyType],
-            returnType: types.anyType
-        )))
-        let foldReturnType: TypeID
-        if let mapSymbol {
-            foldReturnType = types.make(.classType(ClassType(
-                classSymbol: mapSymbol,
-                args: [.invariant(kTypeParam), .invariant(types.anyType)],
-                nullability: .nonNull
-            )))
+        let foldRName = interner.intern("R")
+        let foldRFQName = groupingFQName + [foldRName]
+        let foldRSymbol: SymbolID = if let existing = symbols.lookup(fqName: foldRFQName) {
+            existing
         } else {
-            foldReturnType = types.anyType
+            symbols.define(
+                kind: .typeParameter,
+                name: foldRName,
+                fqName: foldRFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
         }
+        let foldRType = types.make(.typeParam(TypeParamType(symbol: foldRSymbol)))
+        let foldOperationType = types.make(.functionType(FunctionType(
+            params: [foldRType, tTypeParam],
+            returnType: foldRType
+        )))
         registerGroupingMember(
             named: "fold",
-            groupingFQName: groupingFQName,
-            groupingSymbol: groupingSymbol,
-            receiverType: groupingType,
             parameters: [
-                (name: "initialValue", type: types.anyType),
-                (name: "operation", type: foldOperationType),
+                foldRType,
+                foldOperationType,
             ],
-            returnType: foldReturnType,
+            returnType: makeMapType(valueType: foldRType),
             externalLinkName: "kk_grouping_fold",
-            symbols: symbols,
-            types: types,
-            interner: interner
+            typeParameterSymbols: groupingTypeParameterSymbols + [foldRSymbol]
+        )
+
+        // fold(initialValueSelector: (K, T) -> R, operation: (K, R, T) -> R) -> Map<K, R>
+        let foldInitialValueSelectorType = types.make(.functionType(FunctionType(
+            params: [kTypeParam, tTypeParam],
+            returnType: foldRType
+        )))
+        let foldWithSelectorOperationType = types.make(.functionType(FunctionType(
+            params: [kTypeParam, foldRType, tTypeParam],
+            returnType: foldRType
+        )))
+        registerGroupingMember(
+            named: "fold",
+            parameters: [
+                foldInitialValueSelectorType,
+                foldWithSelectorOperationType,
+            ],
+            returnType: makeMapType(valueType: foldRType),
+            externalLinkName: "kk_grouping_fold_initialValueSelector",
+            typeParameterSymbols: groupingTypeParameterSymbols + [foldRSymbol]
+        )
+
+        // foldTo(destination, initialValue, operation) -> destination
+        let foldToOperationType = types.make(.functionType(FunctionType(
+            params: [types.anyType, tTypeParam],
+            returnType: types.anyType
+        )))
+        registerGroupingMember(
+            named: "foldTo",
+            parameters: [
+                types.anyType,
+                types.anyType,
+                foldToOperationType,
+            ],
+            returnType: types.anyType,
+            externalLinkName: "kk_grouping_foldTo"
+        )
+
+        // foldTo(destination, initialValueSelector, operation) -> destination
+        let foldToInitialValueSelectorType = types.make(.functionType(FunctionType(
+            params: [kTypeParam, tTypeParam],
+            returnType: types.anyType
+        )))
+        let foldToKeyedOperationType = types.make(.functionType(FunctionType(
+            params: [kTypeParam, types.anyType, tTypeParam],
+            returnType: types.anyType
+        )))
+        registerGroupingMember(
+            named: "foldTo",
+            parameters: [
+                types.anyType,
+                foldToInitialValueSelectorType,
+                foldToKeyedOperationType,
+            ],
+            returnType: types.anyType,
+            externalLinkName: "kk_grouping_foldTo_selector"
         )
 
         // reduce(operation: (S, T) -> S) -> Map<K, S>
-        let reduceOperationType = types.make(.functionType(FunctionType(
-            params: [types.anyType, types.anyType],
-            returnType: types.anyType
-        )))
-        let reduceReturnType: TypeID
-        if let mapSymbol {
-            reduceReturnType = types.make(.classType(ClassType(
-                classSymbol: mapSymbol,
-                args: [.invariant(kTypeParam), .invariant(types.anyType)],
-                nullability: .nonNull
-            )))
+        let reduceSName = interner.intern("S")
+        let reduceSFQName = groupingFQName + [reduceSName]
+        let reduceSSymbol: SymbolID = if let existing = symbols.lookup(fqName: reduceSFQName) {
+            existing
         } else {
-            reduceReturnType = types.anyType
+            symbols.define(
+                kind: .typeParameter,
+                name: reduceSName,
+                fqName: reduceSFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
         }
+        let reduceSType = types.make(.typeParam(TypeParamType(symbol: reduceSSymbol)))
+        let reduceOperationType = types.make(.functionType(FunctionType(
+            params: [reduceSType, tTypeParam],
+            returnType: reduceSType
+        )))
         registerGroupingMember(
             named: "reduce",
-            groupingFQName: groupingFQName,
-            groupingSymbol: groupingSymbol,
-            receiverType: groupingType,
             parameters: [
-                (name: "operation", type: reduceOperationType),
+                reduceOperationType,
             ],
-            returnType: reduceReturnType,
+            returnType: makeMapType(valueType: reduceSType),
             externalLinkName: "kk_grouping_reduce",
-            symbols: symbols,
-            types: types,
-            interner: interner
+            typeParameterSymbols: groupingTypeParameterSymbols + [reduceSSymbol]
         )
 
         // reduceTo(destination, operation) -> destination
@@ -2394,53 +2437,13 @@ extension DataFlowSemaPhase {
         )))
         registerGroupingMember(
             named: "reduceTo",
-            groupingFQName: groupingFQName,
-            groupingSymbol: groupingSymbol,
-            receiverType: groupingType,
             parameters: [
-                (name: "destination", type: reduceToDestinationType),
-                (name: "operation", type: reduceToOperationType),
+                reduceToDestinationType,
+                reduceToOperationType,
             ],
             returnType: reduceToDestinationType,
             externalLinkName: "kk_grouping_reduceTo",
-            symbols: symbols,
-            types: types,
-            interner: interner
-        )
-    }
-
-    private func registerGroupingMember(
-        named name: String,
-        groupingFQName: [InternedString],
-        groupingSymbol: SymbolID,
-        receiverType: TypeID,
-        parameters: [(name: String, type: TypeID)],
-        returnType: TypeID,
-        externalLinkName: String,
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner
-    ) {
-        let memberName = interner.intern(name)
-        let memberFQName = groupingFQName + [memberName]
-        guard symbols.lookup(fqName: memberFQName) == nil else { return }
-        let memberSymbol = symbols.define(
-            kind: .function,
-            name: memberName,
-            fqName: memberFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic]
-        )
-        symbols.setParentSymbol(groupingSymbol, for: memberSymbol)
-        symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                receiverType: receiverType,
-                parameterTypes: parameters.map(\.type),
-                returnType: returnType
-            ),
-            for: memberSymbol
+            typeParameterSymbols: groupingTypeParameterSymbols
         )
     }
 
@@ -2531,6 +2534,11 @@ extension DataFlowSemaPhase {
             interner.intern("collections"),
             interner.intern("MutableList"),
         ], elementType: typeParamType, invariant: true)
+        let collectionReturnType = nominalCollectionType([
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Collection"),
+        ], elementType: typeParamType)
         let setReturnType = nominalCollectionType([
             interner.intern("kotlin"),
             interner.intern("collections"),
@@ -2815,6 +2823,20 @@ extension DataFlowSemaPhase {
             receiverType: receiverType,
             parameters: [],
             returnType: mutableSetReturnType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // toCollection(destination): Collection<T>
+        registerSequenceMemberStub(
+            named: "toCollection",
+            externalLinkName: "kk_sequence_toCollection",
+            receiverType: receiverType,
+            parameters: [("destination", collectionReturnType)],
+            returnType: collectionReturnType,
             sequenceSymbol: sequenceSymbol,
             sequenceFQName: sequenceFQName,
             typeParamSymbol: typeParamSymbol,
@@ -3410,6 +3432,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // onEachIndexed(action: (Int, T) -> Unit): Sequence<T>
+        registerSequenceMemberStub(
+            named: "onEachIndexed",
+            externalLinkName: "kk_sequence_onEachIndexed",
+            receiverType: receiverType,
+            parameters: [("action", forEachIndexedActionType)],
+            returnType: receiverType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // any(predicate: (T) -> Boolean): Boolean  (STDLIB-SEQ-007)
         registerSequenceMemberStub(
             named: "any",
@@ -3646,27 +3682,6 @@ extension DataFlowSemaPhase {
             ),
             for: memberSymbol
         )
-    }
-
-    private func makeSyntheticIterableType(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        elementType: TypeID
-    ) -> TypeID {
-        let iterableFQName: [InternedString] = [
-            interner.intern("kotlin"),
-            interner.intern("collections"),
-            interner.intern("Iterable"),
-        ]
-        guard let iterableSymbol = symbols.lookup(fqName: iterableFQName) else {
-            return types.anyType
-        }
-        return types.make(.classType(ClassType(
-            classSymbol: iterableSymbol,
-            args: [.out(elementType)],
-            nullability: .nonNull
-        )))
     }
 
     private func registerSyntheticDurationMember(

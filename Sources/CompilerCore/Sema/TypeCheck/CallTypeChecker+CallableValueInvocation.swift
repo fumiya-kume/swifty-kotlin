@@ -1,6 +1,46 @@
 import Foundation
 
 extension CallTypeChecker {
+    func markRangeCallBindings(
+        _ id: ExprID,
+        chosen: SymbolID,
+        returnType: TypeID,
+        sema: SemaModule
+    ) {
+        guard let externalLinkName = sema.symbols.externalLinkName(for: chosen) else {
+            return
+        }
+        guard [
+            "kk_op_rangeTo",
+            "kk_op_rangeUntil",
+            "kk_uint_rangeTo",
+            "kk_char_rangeTo",
+            "kk_int_progression_fromClosedRange",
+            "kk_long_progression_fromClosedRange",
+            "kk_uint_progression_fromClosedRange",
+            "kk_ulong_progression_fromClosedRange",
+            "kk_op_ulong_rangeUntil",
+        ].contains(externalLinkName) else {
+            return
+        }
+
+        sema.bindings.markRangeExpr(id)
+        if externalLinkName == "kk_uint_rangeTo"
+            || externalLinkName == "kk_uint_progression_fromClosedRange"
+            || (externalLinkName == "kk_op_rangeUntil" && returnType == sema.types.uintType)
+        {
+            sema.bindings.markUIntRangeExpr(id)
+        }
+        if externalLinkName == "kk_char_rangeTo" {
+            sema.bindings.markCharRangeExpr(id)
+        }
+        if externalLinkName == "kk_ulong_progression_fromClosedRange"
+            || externalLinkName == "kk_op_ulong_rangeUntil"
+        {
+            sema.bindings.markULongRangeExpr(id)
+        }
+    }
+
     func bindCallAndResolveReturnType(
         _ id: ExprID,
         chosen: SymbolID,
@@ -21,37 +61,19 @@ extension CallTypeChecker {
         if sema.symbols.externalLinkName(for: chosen) == "kk_string_split" {
             sema.bindings.markCollectionExpr(id)
         }
-        if let externalLinkName = sema.symbols.externalLinkName(for: chosen),
-           [
-               "kk_op_rangeTo",
-               "kk_op_rangeUntil",
-               "kk_op_ulong_rangeUntil",
-               "kk_int_progression_fromClosedRange",
-               "kk_long_progression_fromClosedRange",
-               "kk_uint_progression_fromClosedRange",
-               "kk_ulong_progression_fromClosedRange",
-           ].contains(externalLinkName)
-        {
-            sema.bindings.markRangeExpr(id)
-            if externalLinkName == "kk_uint_progression_fromClosedRange" {
-                sema.bindings.markUIntRangeExpr(id)
-            }
-            if externalLinkName == "kk_ulong_progression_fromClosedRange" {
-                sema.bindings.markULongRangeExpr(id)
-            }
-            if externalLinkName == "kk_op_ulong_rangeUntil" {
-                sema.bindings.markULongRangeExpr(id)
-            }
-        }
+        let returnType: TypeID
         if let signature = sema.symbols.functionSignature(for: chosen) {
             let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
-            return sema.types.substituteTypeParameters(
+            returnType = sema.types.substituteTypeParameters(
                 in: signature.returnType,
                 substitution: resolved.substitutedTypeArguments,
                 typeVarBySymbol: typeVarBySymbol
             )
+        } else {
+            returnType = sema.types.anyType
         }
-        return sema.types.anyType
+        markRangeCallBindings(id, chosen: chosen, returnType: returnType, sema: sema)
+        return returnType
     }
 
     func inferCallableValueInvocation(
