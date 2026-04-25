@@ -419,6 +419,7 @@ enum SequenceStepKind {
     case takeWhileStep(fnPtr: Int, closureRaw: Int)
     case dropWhileStep(fnPtr: Int, closureRaw: Int)
     case onEachStep(fnPtr: Int, closureRaw: Int)
+    case onEachIndexedStep(fnPtr: Int, closureRaw: Int)
     /// STDLIB-HOF-022: Additional lazy transformation steps
     case mapNotNullStep(fnPtr: Int, closureRaw: Int)
     case filterNotNullStep

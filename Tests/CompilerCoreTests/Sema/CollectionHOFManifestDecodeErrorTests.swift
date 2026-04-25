@@ -48,6 +48,49 @@ final class CollectionHOFManifestDecodeErrorTests: XCTestCase {
         }
     }
 
+    func testCollectionWindowedTransformSyntheticStubResolvesWithoutExternalMetadata() throws {
+        let source = """
+        fun test(values: List<Int>) {
+            values.windowed(3, 2, true) { window ->
+                window.size
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let listFQ: [InternedString] = [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("List"),
+            ]
+            let windowedCandidates = sema.symbols.lookupAll(
+                fqName: listFQ + [ctx.interner.intern("windowed")]
+            )
+            let windowedTransform = windowedCandidates.first { symID in
+                guard let sig = sema.symbols.functionSignature(for: symID) else {
+                    return false
+                }
+                return sig.parameterTypes.count == 4
+            }
+
+            XCTAssertNotNil(
+                windowedTransform,
+                "Synthetic stub for List.windowed(size, step, partialWindows, transform) must exist"
+            )
+            if let windowedTransform {
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: windowedTransform),
+                    "kk_list_windowed_transform"
+                )
+            }
+
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+        }
+    }
+
     /// Verify that invalid/non-existent search paths do not cause crashes
     /// and that the compiler falls back to synthetic stubs gracefully.
     func testInvalidSearchPathDoesNotCrash() throws {
