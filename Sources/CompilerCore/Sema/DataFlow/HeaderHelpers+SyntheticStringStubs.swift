@@ -1147,6 +1147,21 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-EDGE-005: CharSequence.ifEmpty(defaultValue) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "ifEmpty",
+            externalLinkName: "kk_string_ifEmpty",
+            receiverType: charSequenceType,
+            parameters: [
+                ("defaultValue", stringProducerType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-190: first / last / single / firstOrNull / lastOrNull ---
 
         registerSyntheticStringExtensionFunction(

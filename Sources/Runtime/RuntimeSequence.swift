@@ -1288,7 +1288,7 @@ public func kk_sequence_zipWithNextTransform(_ seqRaw: Int, _ fnPtr: Int, _ clos
         }
         results.append(maybeUnbox(result))
     }
-    return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: results)]))
+    return registerRuntimeObject(RuntimeListBox(elements: results))
 }
 
 @_cdecl("kk_sequence_flatMap")

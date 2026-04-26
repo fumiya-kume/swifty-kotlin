@@ -2805,7 +2805,7 @@ extension CallLowerer {
                 return classType.classSymbol == charSequenceSymbol
             }()
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType)
-                || (calleeStr == "ifBlank" && isCharSequenceReceiver)
+                || ((calleeStr == "ifBlank" || calleeStr == "ifEmpty") && isCharSequenceReceiver)
             {
                 if calleeStr == "toInt" {
                     instructions.append(.call(
@@ -2913,6 +2913,8 @@ extension CallLowerer {
                     ("kk_string_partition", [loweredReceiverID] + normalizedArgIDs)
                 case "ifBlank":
                     ("kk_string_ifBlank", [loweredReceiverID] + normalizedArgIDs)
+                case "ifEmpty":
+                    ("kk_string_ifEmpty", [loweredReceiverID] + normalizedArgIDs)
                 case "take":
                     ("kk_string_take", [loweredReceiverID, loweredArgIDs[0]])
                 case "drop":
@@ -2969,6 +2971,7 @@ extension CallLowerer {
                         || calleeStr == "indexOfLast"
                         || calleeStr == "partition"
                         || calleeStr == "ifBlank"
+                        || calleeStr == "ifEmpty"
                         || calleeStr == "take"
                         || calleeStr == "drop"
                         || calleeStr == "takeLast"
@@ -5864,6 +5867,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_groupByTo"),
             interner.intern("kk_sequence_ifEmpty"),
             interner.intern("kk_string_ifBlank"),
+            interner.intern("kk_string_ifEmpty"),
             interner.intern("kk_sequence_first"),
             interner.intern("kk_sequence_last"),
             interner.intern("kk_sequence_firstOrNull"),

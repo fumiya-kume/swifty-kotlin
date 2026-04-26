@@ -193,7 +193,7 @@ extension CallTypeChecker {
             )
         case ("replaceFirstChar", 1):
             sema.types.stringType
-        case ("ifBlank", 1):
+        case ("ifBlank", 1), ("ifEmpty", 1):
             sema.types.stringType
         case ("zipWithNext", 1): {
             let charType = sema.types.make(.primitive(.char, .nonNull))
@@ -373,7 +373,7 @@ extension CallTypeChecker {
                 sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
             }
         }
-        if memberName == "ifBlank", args.indices.contains(0) {
+        if (memberName == "ifBlank" || memberName == "ifEmpty"), args.indices.contains(0) {
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [],
                 returnType: sema.types.stringType,

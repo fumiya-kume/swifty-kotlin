@@ -224,6 +224,16 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         )
     }
 
+    func testIfEmptyStubHasCorrectExternalLink() throws {
+        let (sema, interner) = try makeSema()
+
+        XCTAssertEqual(
+            externalLink(for: "ifEmpty", sema: sema, interner: interner),
+            "kk_string_ifEmpty",
+            "CharSequence.ifEmpty should link to kk_string_ifEmpty"
+        )
+    }
+
     func testIfBlankResolvesInCallExpressions() throws {
         let source = """
         fun choose(value: CharSequence): String {
@@ -256,6 +266,34 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                     "Expected ifBlank to resolve to kk_string_ifBlank"
                 )
             }
+        }
+    }
+
+    func testIfEmptyResolvesInCallExpressions() throws {
+        let source = """
+        fun choose(value: CharSequence): String {
+            return value.ifEmpty { "fallback" }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "ifEmpty"
+            }, "Expected member call to ifEmpty in AST")
+            let chosenCallee = try XCTUnwrap(
+                sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                "Expected call binding for ifEmpty"
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenCallee),
+                "kk_string_ifEmpty",
+                "Expected ifEmpty to resolve to kk_string_ifEmpty"
+            )
         }
     }
 
