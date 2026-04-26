@@ -9350,6 +9350,62 @@ extension DataFlowSemaPhase {
             }
         }
 
+        // Register signed primitive array to unsigned primitive array view conversions.
+        let unsignedViewConversions: [(source: String, target: String, member: String, external: String)] = [
+            ("ByteArray", "UByteArray", "asUByteArray", "kk_byteArray_asUByteArray"),
+            ("ShortArray", "UShortArray", "asUShortArray", "kk_shortArray_asUShortArray"),
+            ("IntArray", "UIntArray", "asUIntArray", "kk_intArray_asUIntArray"),
+            ("LongArray", "ULongArray", "asULongArray", "kk_longArray_asULongArray"),
+        ]
+        for conversion in unsignedViewConversions {
+            let sourceFQName = kotlinPkg + [interner.intern(conversion.source)]
+            let targetFQName = kotlinPkg + [interner.intern(conversion.target)]
+            guard let sourceSymbol = symbols.lookup(fqName: sourceFQName),
+                  let targetSymbol = symbols.lookup(fqName: targetFQName)
+            else {
+                continue
+            }
+
+            let memberName = interner.intern(conversion.member)
+            let memberFQName = sourceFQName + [memberName]
+            if symbols.lookup(fqName: memberFQName) == nil {
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: memberName,
+                    fqName: memberFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(sourceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName(conversion.external, for: memberSymbol)
+
+                let receiverType = types.make(.classType(ClassType(
+                    classSymbol: sourceSymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+                let returnType = types.make(.classType(ClassType(
+                    classSymbol: targetSymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [],
+                        returnType: returnType,
+                        isSuspend: false,
+                        valueParameterSymbols: [],
+                        valueParameterHasDefaultValues: [],
+                        valueParameterIsVararg: [],
+                        typeParameterSymbols: []
+                    ),
+                    for: memberSymbol
+                )
+            }
+        }
+
         // Register toTypedArray() for unsigned primitive arrays.
         if let genericArraySymbol = symbols.lookup(fqName: arrayFQName) {
             for name in unsignedPrimitiveArrayNames {

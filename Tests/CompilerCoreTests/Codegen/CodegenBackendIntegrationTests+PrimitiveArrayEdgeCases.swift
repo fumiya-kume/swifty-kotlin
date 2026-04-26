@@ -252,6 +252,50 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testUnsignedArrayViewConversions() throws {
+        let source = """
+        fun main() {
+            val bytes = byteArrayOf(1, 2, 3)
+            val ubytes = bytes.asUByteArray()
+            bytes[1] = 9
+            println(ubytes.toList())
+
+            val shorts = shortArrayOf(10, 20)
+            println(shorts.asUShortArray().toList())
+
+            val ints = intArrayOf(100, 200)
+            println(ints.asUIntArray().toList())
+
+            val longs = longArrayOf(1000L, 2000L)
+            println(longs.asULongArray().toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "UnsignedArrayViewConversions",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [1, 9, 3]
+                [10, 20]
+                [100, 200]
+                [1000, 2000]
+                """
+                + "\n"
+            )
+        }
+    }
+
     func testUnsignedCollectionToPrimitiveArrayConversions() throws {
         let source = """
         fun main() {

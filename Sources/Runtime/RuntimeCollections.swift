@@ -1884,6 +1884,42 @@ public func kk_uShortArray_toList(_ arrayRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
 }
 
+/// ByteArray.asUByteArray(): UByteArray view
+@_cdecl("kk_byteArray_asUByteArray")
+public func kk_byteArray_asUByteArray(_ arrayRaw: Int) -> Int {
+    guard runtimeArrayBox(from: arrayRaw) != nil else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_byteArray_asUByteArray")
+    }
+    return arrayRaw
+}
+
+/// ShortArray.asUShortArray(): UShortArray view
+@_cdecl("kk_shortArray_asUShortArray")
+public func kk_shortArray_asUShortArray(_ arrayRaw: Int) -> Int {
+    guard runtimeArrayBox(from: arrayRaw) != nil else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_shortArray_asUShortArray")
+    }
+    return arrayRaw
+}
+
+/// IntArray.asUIntArray(): UIntArray view
+@_cdecl("kk_intArray_asUIntArray")
+public func kk_intArray_asUIntArray(_ arrayRaw: Int) -> Int {
+    guard runtimeArrayBox(from: arrayRaw) != nil else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_intArray_asUIntArray")
+    }
+    return arrayRaw
+}
+
+/// LongArray.asULongArray(): ULongArray view
+@_cdecl("kk_longArray_asULongArray")
+public func kk_longArray_asULongArray(_ arrayRaw: Int) -> Int {
+    guard runtimeArrayBox(from: arrayRaw) != nil else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_longArray_asULongArray")
+    }
+    return arrayRaw
+}
+
 /// UByteArray.asList(): List<UByte>
 @_cdecl("kk_uByteArray_asList")
 public func kk_uByteArray_asList(_ arrayRaw: Int) -> Int {
