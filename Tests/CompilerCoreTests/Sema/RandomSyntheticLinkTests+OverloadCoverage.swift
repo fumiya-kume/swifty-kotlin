@@ -170,6 +170,29 @@ extension RandomSyntheticLinkTests {
                      "change to XCTAssertNotNil once added")
     }
 
+    // MARK: - nextBits member
+
+    /// nextBits(bitCount: Int) is registered and linked to kk_random_nextBits.
+    func testNextBitsMemberIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fq = ["kotlin", "random", "Random", "nextBits"].map { interner.intern($0) }
+        let candidates = sema.symbols.lookupAll(fqName: fq)
+
+        let nextBits = candidates.first { id in
+            guard let sig = sema.symbols.functionSignature(for: id) else { return false }
+            return sig.parameterTypes == [sema.types.intType] &&
+                sig.returnType == sema.types.intType
+        }
+        XCTAssertNotNil(nextBits, "nextBits(bitCount: Int) member must be registered")
+        if let nextBits,
+           let signature = sema.symbols.functionSignature(for: nextBits)
+        {
+            XCTAssertEqual(sema.symbols.externalLinkName(for: nextBits), "kk_random_nextBits")
+            XCTAssertTrue(signature.canThrow, "nextBits(bitCount) must expose its bitCount bounds checks")
+        }
+    }
+
     // MARK: - nextInt(IntRange) extension
 
     /// nextInt(range: IntRange) extension function is a documented gap.
