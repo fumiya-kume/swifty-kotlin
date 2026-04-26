@@ -904,6 +904,59 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(sequenceElements(kk_sequence_shuffled_random(makeSequence([42]), 0)), [42])
     }
 
+    // MARK: - STDLIB-SEQ-014: Sequence.requireNoNulls()
+
+    func testSequenceRequireNoNullsPreservesNonNullElements() {
+        let seq = makeSequence([1, 2, 3])
+        let checked = kk_sequence_requireNoNulls(seq)
+        var thrown = 0
+        let list = kk_sequence_to_list(checked, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(listElements(list), [1, 2, 3])
+    }
+
+    func testSequenceRequireNoNullsThrowsOnNullDuringTraversal() throws {
+        let seq = makeSequence([1, runtimeNullSentinelInt, 3])
+        let checked = kk_sequence_requireNoNulls(seq)
+        var thrown = 0
+        let list = kk_sequence_to_list(checked, &thrown)
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(listElements(list), [])
+        let box = try XCTUnwrap(throwableBox(from: thrown))
+        XCTAssertEqual(box.exceptionFQName, "kotlin.IllegalArgumentException")
+    }
+
+    func testSequenceRequireNoNullsIsLazyUntilNullIsReached() {
+        let seq = makeSequence([1, runtimeNullSentinelInt, 3])
+        let checked = kk_sequence_requireNoNulls(seq)
+        let firstOnly = kk_sequence_take(checked, 1)
+        var thrown = 0
+        let list = kk_sequence_to_list(firstOnly, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(listElements(list), [1])
+    }
+
+    func testSequenceRequireNoNullsPropagatesThroughEagerConsumers() throws {
+        let seq = makeSequence([1, runtimeNullSentinelInt, 3])
+        let checked = kk_sequence_requireNoNulls(seq)
+        var thrown = 0
+
+        let result = kk_sequence_zipWithNextTransform(
+            checked,
+            unsafeBitCast(sequenceAdjacentDifference, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, 0)
+        XCTAssertNotEqual(thrown, 0)
+        let box = try XCTUnwrap(throwableBox(from: thrown))
+        XCTAssertEqual(box.exceptionFQName, "kotlin.IllegalArgumentException")
+    }
+
     // MARK: - Sequence mutable conversions (STDLIB-SEQ-025)
 
     func testToMutableListReturnsIndependentCopy() {
@@ -1919,6 +1972,13 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
             return []
         }
         return box.elements
+    }
+
+    private func throwableBox(from handle: Int) -> RuntimeThrowableBox? {
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+            return nil
+        }
+        return try? XCTUnwrap(tryCast(ptr, to: RuntimeThrowableBox.self))
     }
 
     private func mapKeys(_ mapRaw: Int) -> [Int] {

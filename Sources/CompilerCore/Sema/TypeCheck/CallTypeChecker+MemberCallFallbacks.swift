@@ -1106,7 +1106,7 @@ extension CallTypeChecker {
         interner: StringInterner
     ) -> Bool {
         let collectionReturningMembers: Set = [
-            interner.intern("asSequence"), interner.intern("asIterable"), interner.intern("map"), interner.intern("filter"), interner.intern("filterNot"), interner.intern("mapNotNull"), interner.intern("filterNotNull"),
+            interner.intern("asSequence"), interner.intern("asIterable"), interner.intern("map"), interner.intern("filter"), interner.intern("filterNot"), interner.intern("mapNotNull"), interner.intern("filterNotNull"), interner.intern("requireNoNulls"),
             interner.intern("filterTo"), interner.intern("filterNotTo"), interner.intern("mapTo"), interner.intern("flatMapTo"), interner.intern("mapNotNullTo"), interner.intern("filterIsInstanceTo"), interner.intern("mapIndexedTo"), interner.intern("mapIndexedNotNullTo"), interner.intern("flatMapIndexedTo"),
             interner.intern("flatMap"), interner.intern("flatMapIndexed"), interner.intern("sortedBy"), interner.intern("groupBy"), interner.intern("groupingBy"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associateTo"), interner.intern("associateByTo"), interner.intern("associateWithTo"), interner.intern("groupByTo"), interner.intern("reduceTo"),
             interner.intern("associate"), interner.intern("zip"), interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("take"), interner.intern("drop"), interner.intern("reversed"), interner.intern("asReversed"),
@@ -1165,7 +1165,8 @@ extension CallTypeChecker {
              interner.intern("distinct"), interner.intern("flatten"), interner.intern("withIndex"),
              interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"),
              interner.intern("firstOrNull"), interner.intern("lastOrNull"), interner.intern("singleOrNull"), interner.intern("sort"),
-             interner.intern("toMutableList"), interner.intern("sum"), interner.intern("average"):
+             interner.intern("toMutableList"), interner.intern("sum"), interner.intern("average"),
+             interner.intern("requireNoNulls"):
             return argCount == 0
         case interner.intern("joinToString"):
             return (0 ... 3).contains(argCount)
@@ -1280,6 +1281,15 @@ extension CallTypeChecker {
                 )))
             }
             return sema.types.anyType
+        }
+
+        if memberName == interner.intern("requireNoNulls"), isSequenceReceiver {
+            return makeSyntheticSequenceType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: sema.types.makeNonNullable(receiverElementType)
+            )
         }
 
         let boolReturningMembers: Set = [

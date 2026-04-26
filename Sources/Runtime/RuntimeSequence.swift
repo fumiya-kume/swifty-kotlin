@@ -100,6 +100,8 @@ private let kEmptySequenceCannotReduce = "UnsupportedOperationException: Empty s
 /// Error message when a generator sequence exceeds the traversal hard limit.
 private let kSequenceGeneratorLimitReached = "IllegalStateException: Sequence generator exceeded traversal hard limit (\(kSequenceGeneratorHardLimit))."
 private let kSequenceConstrainedOnceConsumed = "This sequence can be consumed only once."
+/// Error message for `Sequence.requireNoNulls()` when a null element is encountered.
+private let kSequenceRequireNoNullsFoundNull = "null element found in sequence."
 
 private func runtimeSequenceBeginTraversal(
     _ seq: RuntimeSequenceBox,
@@ -378,6 +380,20 @@ private func runtimeSequenceTransformElement(
                 yield: yield
             )
         }
+    case .requireNoNullsStep:
+        if runtimeNormalizeNullableCollectionValue(element) == nil {
+            outThrown?.pointee = runtimeAllocateIllegalArgumentException(message: kSequenceRequireNoNullsFoundNull)
+            state.stop = true
+            return
+        }
+        runtimeSequenceTransformElement(
+            element,
+            steps: steps,
+            stepIndex: stepIndex + 1,
+            state: state,
+            outThrown: outThrown,
+            yield: yield
+        )
     case let .mapIndexedStep(fnPtr, closureRaw):
         let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
         let index = state.takeCounts[stepIndex, default: 0]
@@ -604,7 +620,7 @@ private func runtimeTraverseSequenceWithState(
                 state.limitReached = true
             }
             return
-        case .mapStep, .filterStep, .filterNotStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep, .onEachIndexedStep, .mapNotNullStep, .filterNotNullStep, .mapIndexedStep, .withIndexStep, .flatMapStep, .flatMapIndexedStep:
+        case .mapStep, .filterStep, .filterNotStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep, .onEachIndexedStep, .mapNotNullStep, .filterNotNullStep, .requireNoNullsStep, .mapIndexedStep, .withIndexStep, .flatMapStep, .flatMapIndexedStep:
             continue
         }
     }
@@ -776,6 +792,20 @@ private func applyFilterNotNullStep(_ elements: [Int]) -> [Int] {
     return elements.filter { runtimeNormalizeNullableCollectionValue($0) != nil }
 }
 
+/// Applies a requireNoNulls transformation: fails on the first null element.
+private func applyRequireNoNullsStep(_ elements: [Int], outThrown: UnsafeMutablePointer<Int>?) -> [Int] {
+    for elem in elements where runtimeNormalizeNullableCollectionValue(elem) == nil {
+        let thrown = runtimeAllocateIllegalArgumentException(message: kSequenceRequireNoNullsFoundNull)
+        if let outThrown {
+            outThrown.pointee = thrown
+        } else {
+            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: Sequence.requireNoNulls encountered null but no outThrown was available.")
+        }
+        return []
+    }
+    return elements
+}
+
 /// Applies a mapIndexed transformation: maps elements with their index.
 private func applyMapIndexedStep(_ elements: [Int], fnPtr: Int, closureRaw: Int, outThrown: UnsafeMutablePointer<Int>?) -> [Int] {
     var mapped: [Int] = []
@@ -834,7 +864,8 @@ private func applyFlatMapStep(_ elements: [Int], fnPtr: Int, closureRaw: Int, ou
         if let subList = runtimeListBox(from: subRaw) {
             result.append(contentsOf: subList.elements)
         } else if let subSeq = runtimeSequenceBox(from: subRaw) {
-            result.append(contentsOf: evaluateSequence(subSeq))
+            result.append(contentsOf: evaluateSequence(subSeq, outThrown: outThrown))
+            if let outThrown, outThrown.pointee != 0 { return [] }
         }
     }
     return result
@@ -855,7 +886,8 @@ private func applyFlatMapIndexedStep(_ elements: [Int], fnPtr: Int, closureRaw: 
         if let subElements = runtimeCollectionElements(from: subRaw) {
             result.append(contentsOf: subElements)
         } else if let subSeq = runtimeSequenceBox(from: subRaw) {
-            result.append(contentsOf: evaluateSequence(subSeq))
+            result.append(contentsOf: evaluateSequence(subSeq, outThrown: outThrown))
+            if let outThrown, outThrown.pointee != 0 { return [] }
         }
     }
     return result
@@ -890,6 +922,7 @@ private func evaluateSequence(
             result.append(elem)
             return true
         }
+        if let outThrown, outThrown.pointee != 0 { return [] }
         return result
     }
 
@@ -975,31 +1008,40 @@ private func evaluateSequence(
             }
             elements = zipped
         case let .takeWhileStep(fnPtr, closureRaw):
-            elements = applyTakeWhileStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: nil)
+            elements = applyTakeWhileStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
         case let .dropWhileStep(fnPtr, closureRaw):
-            elements = applyDropWhileStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: nil)
+            elements = applyDropWhileStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
         case let .onEachStep(fnPtr, closureRaw):
             let action = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
             for elem in elements {
                 var thrown = 0
                 _ = action(closureRaw, elem, &thrown)
-                if thrown != 0 { return [] }
+                if thrown != 0 {
+                    if let outThrown {
+                        outThrown.pointee = thrown
+                        return []
+                    }
+                    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: sequence onEach lambda threw but no outThrown available")
+                }
             }
         case let .onEachIndexedStep(fnPtr, closureRaw):
-            elements = applyOnEachIndexedStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: nil)
+            elements = applyOnEachIndexedStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
         case let .mapNotNullStep(fnPtr, closureRaw):
-            elements = applyMapNotNullStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: nil)
+            elements = applyMapNotNullStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
         case .filterNotNullStep:
             elements = applyFilterNotNullStep(elements)
+        case .requireNoNullsStep:
+            elements = applyRequireNoNullsStep(elements, outThrown: outThrown)
         case let .mapIndexedStep(fnPtr, closureRaw):
-            elements = applyMapIndexedStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: nil)
+            elements = applyMapIndexedStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
         case .withIndexStep:
             elements = applyWithIndexStep(elements)
         case let .flatMapStep(fnPtr, closureRaw):
-            elements = applyFlatMapStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: nil)
+            elements = applyFlatMapStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
         case let .flatMapIndexedStep(fnPtr, closureRaw):
-            elements = applyFlatMapIndexedStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: nil)
+            elements = applyFlatMapIndexedStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
         }
+        if let outThrown, outThrown.pointee != 0 { return [] }
     }
 
     return elements
@@ -1285,6 +1327,22 @@ public func kk_sequence_filterNotNull(_ seqRaw: Int) -> Int {
     return registerRuntimeObject(newSeq)
 }
 
+@_cdecl("kk_sequence_requireNoNulls")
+public func kk_sequence_requireNoNulls(_ seqRaw: Int) -> Int {
+    guard let seq = runtimeSequenceBox(from: seqRaw) else {
+        let sourceElements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+        let newSeq = RuntimeSequenceBox(steps: [
+            .source(elements: sourceElements),
+            .requireNoNullsStep,
+        ])
+        return registerRuntimeObject(newSeq)
+    }
+    var newSteps = seq.steps
+    newSteps.append(.requireNoNullsStep)
+    let newSeq = RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState)
+    return registerRuntimeObject(newSeq)
+}
+
 @_cdecl("kk_sequence_mapIndexed")
 public func kk_sequence_mapIndexed(
     _ seqRaw: Int,
@@ -1412,7 +1470,10 @@ public func kk_sequence_zipWithNext(_ seqRaw: Int) -> Int {
 public func kk_sequence_zipWithNextTransform(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     let elements: [Int]
     if let seq = runtimeSequenceBox(from: seqRaw) {
-        elements = evaluateSequence(seq)
+        elements = evaluateSequence(seq, outThrown: outThrown)
+        if let outThrown, outThrown.pointee != 0 {
+            return 0
+        }
     } else {
         elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
     }
