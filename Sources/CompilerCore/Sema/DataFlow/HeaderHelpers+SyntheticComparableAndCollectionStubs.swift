@@ -5120,6 +5120,42 @@ extension DataFlowSemaPhase {
             arrayPackage: kotlinPkg,
             externalLinkName: "kk_list_toByteArray"
         )
+        registerListToPrimitiveArrayMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            memberName: "toUByteArray",
+            arrayTypeName: "UByteArray",
+            arrayPackage: kotlinPkg,
+            externalLinkName: "kk_list_toUByteArray"
+        )
+        registerListToPrimitiveArrayMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            memberName: "toUShortArray",
+            arrayTypeName: "UShortArray",
+            arrayPackage: kotlinPkg,
+            externalLinkName: "kk_list_toUShortArray"
+        )
+        registerListToPrimitiveArrayMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            memberName: "toUIntArray",
+            arrayTypeName: "UIntArray",
+            arrayPackage: kotlinPkg,
+            externalLinkName: "kk_list_toUIntArray"
+        )
+        registerListToPrimitiveArrayMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            memberName: "toULongArray",
+            arrayTypeName: "ULongArray",
+            arrayPackage: kotlinPkg,
+            externalLinkName: "kk_list_toULongArray"
+        )
     }
 
     /// Register a `List<E>.toXxxArray(): XxxArray` conversion member stub.

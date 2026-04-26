@@ -2584,6 +2584,36 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    let unsignedArrayCallee: InternedString? = switch callee {
+                    case lookup.toUByteArrayName: lookup.kkListToUByteArrayName
+                    case lookup.toUShortArrayName: lookup.kkListToUShortArrayName
+                    case lookup.toUIntArrayName: lookup.kkListToUIntArrayName
+                    case lookup.toULongArrayName: lookup.kkListToULongArrayName
+                    default: nil
+                    }
+                    if let unsignedArrayCallee, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let toArrayResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: unsignedArrayCallee,
+                                arguments: [receiverID],
+                                result: toArrayResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                arrayExprIDs.insert(result.rawValue)
+                                arrayExprIDs.insert(toArrayResult.rawValue)
+                                loweredBody.append(.copy(from: toArrayResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
                     // copyOf / copyOfRange / fill on array (STDLIB-089)
                     if callee == lookup.copyOfName, arguments.count == 1 {
                         let receiverID = arguments[0]

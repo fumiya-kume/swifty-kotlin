@@ -200,6 +200,33 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        let unsignedArrayCallee: InternedString? = switch callee {
+        case lookup.toUByteArrayName: lookup.kkListToUByteArrayName
+        case lookup.toUShortArrayName: lookup.kkListToUShortArrayName
+        case lookup.toUIntArrayName: lookup.kkListToUIntArrayName
+        case lookup.toULongArrayName: lookup.kkListToULongArrayName
+        default: nil
+        }
+        if let unsignedArrayCallee, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
+            let toArrayResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: unsignedArrayCallee,
+                arguments: [receiver],
+                result: toArrayResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                arrayExprIDs.insert(result.rawValue)
+                arrayExprIDs.insert(toArrayResult.rawValue)
+                loweredBody.append(.copy(from: toArrayResult, to: result))
+            }
+            return true
+        }
+
         // --- Rewrite File member virtual calls (STDLIB-320) ---
         if fileExprIDs.contains(receiver.rawValue) {
             if rewriteFileMemberVirtualCall(

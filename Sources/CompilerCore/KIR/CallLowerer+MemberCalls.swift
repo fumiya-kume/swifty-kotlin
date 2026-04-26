@@ -173,7 +173,7 @@ extension CallLowerer {
         "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
         "plus", "plusElement", "minus",
         "asSequence", "asIterable", "toList", "toSet", "toMap", "toCollection", "toMutableList", "toMutableSet", "toTypedArray",
-        "toIntArray", "toLongArray", "toByteArray",
+        "toIntArray", "toLongArray", "toByteArray", "toUByteArray", "toUShortArray", "toUIntArray", "toULongArray",
         "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect", "subList",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
         "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
@@ -2308,6 +2308,8 @@ extension CallLowerer {
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
             let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
+            let ubyteType = sema.types.make(.primitive(.ubyte, .nonNull))
+            let ushortType = sema.types.make(.primitive(.ushort, .nonNull))
             let floatType = sema.types.make(.primitive(.float, .nonNull))
             let doubleType = sema.types.make(.primitive(.double, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
@@ -2348,6 +2350,14 @@ extension CallLowerer {
             case ("toByte", longType, intType): interner.intern("kk_long_to_byte")
             case ("toShort", intType, intType): interner.intern("kk_int_to_short")
             case ("toShort", longType, intType): interner.intern("kk_long_to_short")
+            case ("toUByte", intType, ubyteType): interner.intern("kk_int_to_ubyte")
+            case ("toUByte", longType, ubyteType): interner.intern("kk_long_to_ubyte")
+            case ("toUByte", uintType, ubyteType): interner.intern("kk_uint_to_ubyte")
+            case ("toUByte", ulongType, ubyteType): interner.intern("kk_ulong_to_ubyte")
+            case ("toUShort", intType, ushortType): interner.intern("kk_int_to_ushort")
+            case ("toUShort", longType, ushortType): interner.intern("kk_long_to_ushort")
+            case ("toUShort", uintType, ushortType): interner.intern("kk_uint_to_ushort")
+            case ("toUShort", ulongType, ushortType): interner.intern("kk_ulong_to_ushort")
             default: nil
             }
             if let callee = conversionCallee {
@@ -2367,10 +2377,11 @@ extension CallLowerer {
                     || (calleeStr == "toULong" && nonNullReceiverType == longType && nonNullResultType == ulongType)
                     || (calleeStr == "toInt" && nonNullReceiverType == sema.types.charType && nonNullResultType == intType)
                     || (calleeStr == "toChar" && nonNullReceiverType == intType && nonNullResultType == sema.types.charType)
-            if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble", "toChar"].contains(calleeStr),
+            if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble", "toUByte", "toUShort", "toChar"].contains(calleeStr),
                nonNullReceiverType == nonNullResultType || isRepresentationPreservingConversion,
                nonNullReceiverType == intType || nonNullReceiverType == longType
                || nonNullReceiverType == uintType || nonNullReceiverType == ulongType
+               || nonNullReceiverType == ubyteType || nonNullReceiverType == ushortType
                || nonNullReceiverType == floatType || nonNullReceiverType == doubleType
                || nonNullReceiverType == sema.types.charType
             {

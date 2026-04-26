@@ -173,6 +173,43 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testUnsignedCollectionToPrimitiveArrayConversions() throws {
+        let source = """
+        fun main() {
+            val ubytes = listOf(1.toUByte(), 255.toUByte()).toUByteArray()
+            println(ubytes.size)
+            println(ubytes[0])
+            println(ubytes[1])
+
+            val ushorts = listOf(1.toUShort(), 65535.toUShort()).toUShortArray()
+            println(ushorts.size)
+            println(ushorts[1])
+
+            val uints = listOf(1u, 4000000000u).toUIntArray()
+            println(uints.size)
+            println(uints[1])
+
+            val ulongs = listOf(1uL, 4000000000uL).toULongArray()
+            println(ulongs.size)
+            println(ulongs[1])
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "UnsignedCollectionToPrimitiveArrayConversions",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "2\n1\n255\n2\n65535\n2\n4000000000\n2\n4000000000\n")
+        }
+    }
+
     // MARK: - fill on primitive array
 
     func testPrimitiveArrayFill() throws {

@@ -893,6 +893,13 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(reduceOrNullResult, reduceResult, "reduceOrNull should produce same result as reduce for non-empty lists")
     }
 
+    func testUnsignedListToPrimitiveArrayConversionsCopyElements() {
+        XCTAssertEqual(arrayElements(kk_list_toUByteArray(makeList([1, 255]))), [1, 255])
+        XCTAssertEqual(arrayElements(kk_list_toUShortArray(makeList([1, 65_535]))), [1, 65_535])
+        XCTAssertEqual(arrayElements(kk_list_toUIntArray(makeList([1, 4_000_000_000]))), [1, 4_000_000_000])
+        XCTAssertEqual(arrayElements(kk_list_toULongArray(makeList([1, -1]))), [1, -1])
+    }
+
     private func makeArray(_ elements: [Int]) -> Int {
         let arrayRaw = kk_array_new(elements.count)
         var thrown = 0
@@ -920,6 +927,13 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         return (0 ..< size).map { index in
             kk_list_get(listRaw, index)
         }
+    }
+
+    private func arrayElements(_ arrayRaw: Int) -> [Int] {
+        guard let array = runtimeArrayBox(from: arrayRaw) else {
+            return []
+        }
+        return array.elements
     }
 
     private func setElements(_ setRaw: Int) -> [Int] {
