@@ -2398,6 +2398,45 @@ public func kk_list_binarySearch_compare(_ listRaw: Int, _ fnPtr: Int, _ closure
     return -(low + 1)
 }
 
+@_cdecl("kk_list_binarySearch_comparator")
+public func kk_list_binarySearch_comparator(_ listRaw: Int, _ element: Int, _ fnPtr: Int, _ closureRaw: Int, _ fromIndex: Int, _ toIndex: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let size = list.elements.count
+    if fromIndex > toIndex {
+        runtimeSetThrown(
+            outThrown,
+            runtimeAllocateThrowable(message: "IllegalArgumentException: fromIndex \(fromIndex) must not be greater than toIndex \(toIndex)")
+        )
+        return 0
+    }
+    if fromIndex < 0 || toIndex < 0 || fromIndex > size || toIndex > size {
+        runtimeSetThrown(
+            outThrown,
+            runtimeAllocateThrowable(message: "IndexOutOfBoundsException: fromIndex=\(fromIndex), toIndex=\(toIndex), size=\(size)")
+        )
+        return 0
+    }
+
+    let comparatorInvoke = runtimeSortedWithComparatorInvoke(fnPtr: fnPtr, closureRaw: closureRaw)
+    var low = fromIndex
+    var high = toIndex - 1
+    while low <= high {
+        let mid = low + (high - low) / 2
+        var thrown = 0
+        let cmp = comparatorInvoke(list.elements[mid], element, &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        let cmpVal = maybeUnbox(cmp)
+        if cmpVal < 0 {
+            low = mid + 1
+        } else if cmpVal > 0 {
+            high = mid - 1
+        } else {
+            return mid
+        }
+    }
+    return -(low + 1)
+}
+
 // MARK: - binarySearchBy (STDLIB-COL-BSEARCH-001)
 
 @inline(__always)
@@ -3667,6 +3706,110 @@ public func kk_grouping_reduceTo(
         }
     }
     return destRaw
+}
+
+/// `grouping.aggregate { key, accumulator, element, first -> ... }` — aggregates per key.
+@_cdecl("kk_grouping_aggregate")
+public func kk_grouping_aggregate(
+    _ groupingRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let grouping = runtimeGroupingBox(from: groupingRaw) else {
+        invalidContainerPanic(#function, "grouping")
+    }
+    var keys: [Int] = []
+    var accumulators: [Int] = []
+    var keyIndex: [RuntimeElementKey: Int] = [:]
+    for elem in grouping.sourceElements {
+        var thrown = 0
+        let key = runtimeInvokeCollectionLambda1(
+            fnPtr: grouping.keyFnPtr, closureRaw: grouping.keyClosureRaw,
+            value: elem, outThrown: &thrown
+        )
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        let normalizedKey = RuntimeElementKey(value: maybeUnbox(key))
+        if let index = keyIndex[normalizedKey] {
+            var thrown2 = 0
+            let nextValue = runtimeInvokeCollectionLambda4(
+                fnPtr: fnPtr,
+                closureRaw: closureRaw,
+                arg1: normalizedKey.value,
+                arg2: accumulators[index],
+                arg3: elem,
+                arg4: 0,
+                outThrown: &thrown2
+            )
+            if thrown2 != 0 { return handleCollectionLambdaThrow(thrown2, outThrown) }
+            accumulators[index] = maybeUnbox(nextValue)
+        } else {
+            keyIndex[normalizedKey] = keys.count
+            keys.append(normalizedKey.value)
+            var thrown2 = 0
+            let nextValue = runtimeInvokeCollectionLambda4(
+                fnPtr: fnPtr,
+                closureRaw: closureRaw,
+                arg1: normalizedKey.value,
+                arg2: runtimeNullSentinelInt,
+                arg3: elem,
+                arg4: 1,
+                outThrown: &thrown2
+            )
+            if thrown2 != 0 { return handleCollectionLambdaThrow(thrown2, outThrown) }
+            accumulators.append(maybeUnbox(nextValue))
+        }
+    }
+    return registerRuntimeObject(RuntimeMapBox(keys: keys, values: accumulators))
+}
+
+/// `grouping.aggregateTo(destination) { key, accumulator, element, first -> ... }` mutates the destination map.
+@_cdecl("kk_grouping_aggregateTo")
+public func kk_grouping_aggregateTo(
+    _ groupingRaw: Int,
+    _ destinationRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let grouping = runtimeGroupingBox(from: groupingRaw) else {
+        invalidContainerPanic(#function, "grouping")
+    }
+    guard let destination = runtimeMapBox(from: destinationRaw) else {
+        invalidContainerPanic(#function, "map")
+    }
+    var keyIndex = runtimeGroupingKeyIndex(from: destination)
+    for elem in grouping.sourceElements {
+        var thrown = 0
+        let key = runtimeInvokeCollectionLambda1(
+            fnPtr: grouping.keyFnPtr, closureRaw: grouping.keyClosureRaw,
+            value: elem, outThrown: &thrown
+        )
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        let normalizedKey = RuntimeElementKey(value: maybeUnbox(key))
+        let existingIndex = keyIndex[normalizedKey]
+        let currentAccumulator = existingIndex.map { destination.values[$0] } ?? runtimeNullSentinelInt
+        var thrown2 = 0
+        let nextValue = maybeUnbox(runtimeInvokeCollectionLambda4(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            arg1: normalizedKey.value,
+            arg2: currentAccumulator,
+            arg3: elem,
+            arg4: existingIndex == nil ? 1 : 0,
+            outThrown: &thrown2
+        ))
+        if thrown2 != 0 { return handleCollectionLambdaThrow(thrown2, outThrown) }
+        runtimeGroupingMapInsertOrUpdate(
+            dest: destination,
+            keyIndex: &keyIndex,
+            key: normalizedKey,
+            value: nextValue
+        )
+    }
+    return destinationRaw
 }
 
 /// `grouping.fold(initialValueSelector) { key, accumulator, element -> ... }` — folds per key, returns Map<K, R>.

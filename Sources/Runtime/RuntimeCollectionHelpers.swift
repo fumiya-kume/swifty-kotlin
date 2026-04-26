@@ -467,6 +467,7 @@ func runtimeElementToString(_ elem: Int) -> String {
 typealias RuntimeCollectionLambda1 = @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int
 typealias RuntimeCollectionLambda2 = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 typealias RuntimeCollectionLambda3 = @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
+typealias RuntimeCollectionLambda4 = @convention(c) (Int, Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 typealias ComparatorLambda = RuntimeCollectionLambda2
 
 /// Retains an object and registers it as a runtime handle.
@@ -551,6 +552,27 @@ func runtimeInvokeCollectionLambda3(
 }
 
 @inline(__always)
+func runtimeInvokeCollectionLambda4(
+    fnPtr: Int,
+    closureRaw: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let fn = unsafeBitCast(fnPtr, to: RuntimeCollectionLambda4.self)
+    return fn(
+        maybeUnbox(closureRaw),
+        maybeUnbox(arg1),
+        maybeUnbox(arg2),
+        maybeUnbox(arg3),
+        maybeUnbox(arg4),
+        outThrown
+    )
+}
+
+@inline(__always)
 func runtimeInvokeClosureThunk(
     fnPtr: Int,
     closureRaw: Int,
@@ -598,6 +620,32 @@ func runtimeCompareValues(_ lhs: Int, _ rhs: Int) -> Int {
         return 0
     }
     return lhsRendered < rhsRendered ? -1 : 1
+}
+
+@inline(__always)
+func runtimeBinarySearch(
+    elements: [Int],
+    element: Int,
+    fromIndex: Int,
+    toIndex: Int,
+    compare: (Int, Int) -> Int
+) -> Int {
+    let lowerBound = max(0, min(fromIndex, elements.count))
+    let upperBound = max(lowerBound, min(toIndex, elements.count))
+    var low = lowerBound
+    var high = upperBound - 1
+    while low <= high {
+        let mid = (low + high) / 2
+        let cmp = compare(elements[mid], element)
+        if cmp < 0 {
+            low = mid + 1
+        } else if cmp > 0 {
+            high = mid - 1
+        } else {
+            return mid
+        }
+    }
+    return -(low + 1)
 }
 
 @inline(__always)

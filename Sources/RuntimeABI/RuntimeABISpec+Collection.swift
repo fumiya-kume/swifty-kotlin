@@ -2230,6 +2230,20 @@ public extension RuntimeABISpec {
                     section: "Collection"
                 ),
                 hofSpec("kk_list_binarySearch_compare"),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_binarySearch_comparator",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "element", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                        RuntimeABIParameter(name: "fromIndex", type: .intptr),
+                        RuntimeABIParameter(name: "toIndex", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
                 hofSpec("kk_list_indexOfFirst"),
                 hofSpec("kk_list_indexOfLast"),
                 RuntimeABIFunctionSpec(
@@ -2689,6 +2703,29 @@ public extension RuntimeABISpec {
                     name: "kk_grouping_eachCount",
                     parameters: [
                         RuntimeABIParameter(name: "groupingRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_grouping_aggregate",
+                    parameters: [
+                        RuntimeABIParameter(name: "groupingRaw", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_grouping_aggregateTo",
+                    parameters: [
+                        RuntimeABIParameter(name: "groupingRaw", type: .intptr),
+                        RuntimeABIParameter(name: "destRaw", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
                         RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
                     ],
                     returnType: .intptr,

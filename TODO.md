@@ -44,23 +44,23 @@
 - [ ] STDLIB-004: `Array` / primitive array の生成・変換・境界挙動を整理する
 - [ ] STDLIB-005: `kotlin.text` の文字列変換・分割・置換の端ケースを揃える
 - [x] STDLIB-TEXT-EDGE-001: `split(delimiter, limit)` overload を追加する
-- [ ] STDLIB-TEXT-EDGE-002: `trim(predicate)` / `trimStart(predicate)` / `trimEnd(predicate)` を追加する
+- [x] STDLIB-TEXT-EDGE-002: `trim(predicate)` / `trimStart(predicate)` / `trimEnd(predicate)` を追加する
 - [x] STDLIB-TEXT-EDGE-003: `indexOf` / `lastIndexOf` の `ignoreCase = true` を追加する
 - [x] STDLIB-TEXT-EDGE-004: `CharSequence.ifBlank(defaultValue)` を追加する
-- [ ] STDLIB-TEXT-EDGE-005: `CharSequence.ifEmpty(defaultValue)` を追加する
+- [x] STDLIB-TEXT-EDGE-005: `CharSequence.ifEmpty(defaultValue)` を追加する
 - [ ] STDLIB-TEXT-EDGE-006: `ByteArray.decodeToString(startIndex, endIndex, throwOnInvalidSequence)` overload を追加する
-- [ ] STDLIB-TEXT-EDGE-007: `buildString(capacity, builderAction)` overload を追加する
+- [x] STDLIB-TEXT-EDGE-007: `buildString(capacity, builderAction)` overload を追加する
 - [x] STDLIB-TEXT-EDGE-008: `CharSequence` / `String`.`removeRange(startIndex, endIndex)` / `removeRange(range)` overload 群を追加する
 - [x] STDLIB-TEXT-EDGE-009: `CharSequence?.contentEquals(other)` / `contentEquals(other, ignoreCase)` を追加する
 - [x] STDLIB-TEXT-EDGE-010: `CharSequence.removePrefix` / `removeSuffix` / `removeSurrounding` overload 群を追加する
-- [ ] STDLIB-TEXT-EDGE-011: `CharSequence.zipWithNext()` / `zipWithNext(transform)` を追加する
+- [x] STDLIB-TEXT-EDGE-011: `CharSequence.zipWithNext()` / `zipWithNext(transform)` を追加する
 - [x] STDLIB-TEXT-EDGE-012: `Appendable.append(vararg CharSequence?)` と `StringBuilder.append(vararg String? / Any?)` を追加する
 
 ### Phase 2: コレクション・Sequence・Range
 - [ ] STDLIB-GAP-PH2: `kotlin.collections` / `kotlin.sequences` / `kotlin.ranges` の未対応を潰す
 - [x] STDLIB-020: `Sequence` の lazy 性と builder 系 API の評価順を固定
 - [x] STDLIB-021: mutable collection 変換 API と destination variant の差分を潰す
-- [ ] STDLIB-SEQ-001: `Sequence.map/filter + take` の lazy short-circuit を追加する
+- [x] STDLIB-SEQ-001: `Sequence.map/filter + take` の lazy short-circuit を追加する
 - [x] STDLIB-SEQ-002: `generateSequence` の null 終端と infinite source + `take` を追加する
 - [x] STDLIB-SEQ-003: `sequence { yieldAll(...) }` builder semantics を追加する
 - [ ] STDLIB-SEQ-004: `Sequence.flatMap` / `distinct` / `zip` / `drop` を追加する
@@ -72,24 +72,24 @@
 - [ ] STDLIB-SEQ-010: `Sequence.onEachIndexed(action)` を追加する
 - [ ] STDLIB-SEQ-011: `Sequence<T>?.orEmpty()` を追加する
 - [x] STDLIB-SEQ-012: `Sequence.partition(predicate)` を追加する
-- [ ] STDLIB-SEQ-013: `Sequence.plus(element)` / `Sequence.plusElement(element)` を追加する
+- [x] STDLIB-SEQ-013: `Sequence.plus(element)` / `Sequence.plusElement(element)` を追加する
 - [ ] STDLIB-SEQ-014: `Sequence.requireNoNulls()` を追加する
 - [ ] STDLIB-SEQ-015: `Sequence.reduceIndexedOrNull()` を追加する
-- [ ] STDLIB-SEQ-016: `Sequence.runningFoldIndexed()` を追加する
+- [x] STDLIB-SEQ-016: `Sequence.runningFoldIndexed()` を追加する
 - [ ] STDLIB-SEQ-017: `Sequence.runningReduceIndexed()` を追加する
-- [ ] STDLIB-SEQ-018: `Sequence.zipWithNext(transform)` overload を追加する
+- [x] STDLIB-SEQ-018: `Sequence.zipWithNext(transform)` overload を追加する
 - [ ] STDLIB-SEQ-019: `Sequence.shuffled()` / `Sequence.shuffled(random)` を追加する
 - [ ] STDLIB-SEQ-020: `Sequence.flatMapIndexed(transform)` の `Iterable` / `Sequence` overload 群を追加する
 - [x] STDLIB-SEQ-021: `Sequence.filterTo` / `filterNotTo` / `filterIndexedTo` / `filterIsInstanceTo` / `filterNotNullTo` を追加する
 - [ ] STDLIB-SEQ-022: `Sequence.mapTo` / `mapIndexedNotNullTo` を追加する
 - [x] STDLIB-SEQ-023: `Sequence.associateTo` / `associateByTo` / `associateWithTo` / `groupByTo` を追加する
-- [ ] STDLIB-SEQ-024: `Sequence.toCollection(destination)` を追加する
+- [x] STDLIB-SEQ-024: `Sequence.toCollection(destination)` を追加する
 - [x] STDLIB-SEQ-025: `Sequence.toMutableList()` / `toMutableSet()` / `toHashSet()` を追加する
 - [x] STDLIB-COL-DEST-001: `filterTo` / `filterNotTo` / `filterIsInstanceTo` を追加する
-- [ ] STDLIB-COL-DEST-002: `mapTo` / `mapIndexedTo` / `mapNotNullTo` を追加する
+- [x] STDLIB-COL-DEST-002: `mapTo` / `mapIndexedTo` / `mapNotNullTo` を追加する
 - [x] STDLIB-COL-DEST-003: `flatMapTo` / `flatMapIndexedTo` を追加する
 - [x] STDLIB-COL-DEST-004: `associateTo` / `associateByTo` / `associateWithTo` / `groupByTo` を追加する
-- [ ] STDLIB-COL-DEST-005: `toCollection(destination)` を追加する
+- [x] STDLIB-COL-DEST-005: `toCollection(destination)` を追加する
 - [ ] STDLIB-COL-U-001: `Collection<UByte>` / `Collection<UShort>` / `Collection<UInt>` / `Collection<ULong>` の `toU*Array()` conversion を追加する
 - [ ] STDLIB-COL-U-002: `ByteArray.asUByteArray()` / `ShortArray.asUShortArray()` / `IntArray.asUIntArray()` / `LongArray.asULongArray()` view conversion を追加する
 - [ ] STDLIB-COL-U-003: `UByteArray.asByteArray()` / `UShortArray.asShortArray()` / `UIntArray.asIntArray()` / `ULongArray.asLongArray()` view conversion を追加する
@@ -97,13 +97,12 @@
 - [ ] STDLIB-COL-U-005: `UByteArray` / `UShortArray` / `UIntArray` / `ULongArray` の `toTypedArray()` を追加する
 - [ ] STDLIB-COL-U-006: `UByteArray` / `UShortArray` / `UIntArray` / `ULongArray` の `copyOf(newSize, init)` overload 群を追加する
 - [ ] STDLIB-COL-U-007: `UByteArray` / `UShortArray` / `UIntArray` / `ULongArray` の `asList()` view surface を追加する
-- [ ] STDLIB-COL-GROUP-001: `Grouping.aggregate()` / `aggregateTo(destination)` を追加する
 - [ ] STDLIB-COL-GROUP-002: `Grouping.eachCountTo(destination)` を追加する
-- [ ] STDLIB-COL-GROUP-003: `Grouping.fold(initialValueSelector, operation)` overload を追加する
+- [x] STDLIB-COL-GROUP-003: `Grouping.fold(initialValueSelector, operation)` overload を追加する
 - [x] STDLIB-COL-GROUP-004: `Grouping.foldTo(destination, initialValue, operation)` / `foldTo(destination, initialValueSelector, operation)` を追加する
 - [x] STDLIB-COL-GROUP-005: `Grouping.reduceTo(destination, operation)` を追加する
 - [x] STDLIB-COL-BSEARCH-001: `List.binarySearchBy(key, fromIndex, toIndex, selector)` を追加する
-- [ ] STDLIB-COL-BSEARCH-002: `List.binarySearch(element, comparator, fromIndex, toIndex)` を追加する
+- [x] STDLIB-COL-BSEARCH-002: `List.binarySearch(element, comparator, fromIndex, toIndex)` を追加する
 - [ ] STDLIB-COL-BSEARCH-003: `Array` / primitive array / unsigned array の `binarySearch(element, fromIndex, toIndex)` overload 群を追加する
 - [ ] STDLIB-COL-BSEARCH-004: `Array.binarySearch(element, comparator, fromIndex, toIndex)` を追加する
 - [x] STDLIB-COL-WIN-001: `Iterable.windowed(size, step, partialWindows, transform)` overload を追加する
@@ -111,14 +110,14 @@
 - [x] STDLIB-RANGE-IFACE-001: `kotlin.ranges.ClosedRange<T>` interface surface を追加する
 - [x] STDLIB-RANGE-IFACE-002: `kotlin.ranges.ClosedFloatingPointRange<T>` interface surface を追加する
 - [x] STDLIB-RANGE-IFACE-003: `kotlin.ranges.OpenEndRange<T>` interface surface を追加する
-- [ ] STDLIB-RANGE-CHAR-001: `kotlin.ranges.CharProgression` / `CharRange` type surface を追加する
-- [ ] STDLIB-RANGE-OPEN-001: `kotlin.ranges.rangeUntil` operator surface を `OpenEndRange` 戻り値で追加する
-- [ ] STDLIB-RANGE-RANDOM-001: `CharRange` / `IntRange` / `LongRange` / `UIntRange` / `ULongRange`.`random()` overload 群を追加する
+- [x] STDLIB-RANGE-CHAR-001: `kotlin.ranges.CharProgression` / `CharRange` type surface を追加する
+- [x] STDLIB-RANGE-OPEN-001: `kotlin.ranges.rangeUntil` operator surface を `OpenEndRange` 戻り値で追加する
+- [x] STDLIB-RANGE-RANDOM-001: `CharRange` / `IntRange` / `LongRange` / `UIntRange` / `ULongRange`.`random()` overload 群を追加する
 - [ ] STDLIB-RANGE-RANDOM-002: `CharRange` / `IntRange` / `LongRange` / `UIntRange` / `ULongRange`.`random(random: Random)` overload 群を追加する
 - [x] STDLIB-RANGE-UNTIL-001: `Byte` / `Short` / `Int` / `Long` と `UByte` / `UShort` / `UInt` / `ULong` の `until(to)` infix surface を追加する
-- [ ] STDLIB-RANGE-RANDOM-003: `CharRange` / `IntRange` / `LongRange` / `UIntRange` / `ULongRange`.`randomOrNull()` / `randomOrNull(random: Random)` overload 群を追加する
+- [x] STDLIB-RANGE-RANDOM-003: `CharRange` / `IntRange` / `LongRange` / `UIntRange` / `ULongRange`.`randomOrNull()` / `randomOrNull(random: Random)` overload 群を追加する
 - [ ] STDLIB-RANGE-UNTIL-002: `Byte` / `Short` / `Int` / `Long` 間の mixed-width `until(to)` overload 行列を追加する
-- [ ] STDLIB-RANGE-COERCE-001: `Byte` / `Short` / `UByte` / `UShort` / `UInt` / `ULong` の `coerceAtLeast` / `coerceAtMost` / `coerceIn` overload 群を追加する
+- [x] STDLIB-RANGE-COERCE-001: `Byte` / `Short` / `UByte` / `UShort` / `UInt` / `ULong` の `coerceAtLeast` / `coerceAtMost` / `coerceIn` overload 群を追加する
 
 ### Phase 3: I/O・パス・時間・並行（common）
 - [~] STDLIB-GAP-PH3: `kotlin.io`（common） / `kotlin.time` / `kotlin.concurrent` / `kotlin.concurrent.atomics` の未対応を潰す

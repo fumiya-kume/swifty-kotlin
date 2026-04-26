@@ -2241,8 +2241,11 @@ extension DataFlowSemaPhase {
 
         // Build Map<K, V> return types when Map symbol is available.
         let mapName = interner.intern("Map")
+        let mutableMapName = interner.intern("MutableMap")
         let mapSymbol = symbols.lookup(fqName: collectionsPkg + [mapName])
             ?? symbols.lookupByShortName(mapName).first
+        let mutableMapSymbol = symbols.lookup(fqName: collectionsPkg + [mutableMapName])
+            ?? symbols.lookupByShortName(mutableMapName).first
 
         let groupingTypeParameterSymbols: [SymbolID] = [tParamSymbol, kParamSymbol]
 
@@ -2301,6 +2304,77 @@ extension DataFlowSemaPhase {
             parameters: [],
             returnType: makeMapType(valueType: types.intType),
             externalLinkName: "kk_grouping_eachCount"
+        )
+
+        // aggregate(operation: (K, R?, T, Boolean) -> R) -> Map<K, R>
+        let aggregateRName = interner.intern("AggregateR")
+        let aggregateRFQName = groupingFQName + [interner.intern("aggregate"), aggregateRName]
+        let aggregateRSymbol: SymbolID = if let existing = symbols.lookup(fqName: aggregateRFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: aggregateRName,
+                fqName: aggregateRFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let aggregateRType = types.make(.typeParam(TypeParamType(symbol: aggregateRSymbol)))
+        let aggregateOperationType = types.make(.functionType(FunctionType(
+            params: [kTypeParam, types.makeNullable(aggregateRType), tTypeParam, types.booleanType],
+            returnType: aggregateRType
+        )))
+        registerGroupingMember(
+            named: "aggregate",
+            parameters: [
+                aggregateOperationType,
+            ],
+            returnType: makeMapType(valueType: aggregateRType),
+            externalLinkName: "kk_grouping_aggregate",
+            typeParameterSymbols: groupingTypeParameterSymbols + [aggregateRSymbol]
+        )
+
+        // aggregateTo(destination, operation) -> destination
+        let aggregateToRName = interner.intern("AggregateToR")
+        let aggregateToRFQName = groupingFQName + [interner.intern("aggregateTo"), aggregateToRName]
+        let aggregateToRSymbol: SymbolID = if let existing = symbols.lookup(fqName: aggregateToRFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: aggregateToRName,
+                fqName: aggregateToRFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let aggregateToRType = types.make(.typeParam(TypeParamType(symbol: aggregateToRSymbol)))
+        let aggregateToDestinationType: TypeID
+        if let mutableMapSymbol {
+            aggregateToDestinationType = types.make(.classType(ClassType(
+                classSymbol: mutableMapSymbol,
+                args: [.invariant(kTypeParam), .invariant(aggregateToRType)],
+                nullability: .nonNull
+            )))
+        } else {
+            aggregateToDestinationType = types.anyType
+        }
+        let aggregateToOperationType = types.make(.functionType(FunctionType(
+            params: [kTypeParam, types.makeNullable(aggregateToRType), tTypeParam, types.booleanType],
+            returnType: aggregateToRType
+        )))
+        registerGroupingMember(
+            named: "aggregateTo",
+            parameters: [
+                aggregateToDestinationType,
+                aggregateToOperationType,
+            ],
+            returnType: aggregateToDestinationType,
+            externalLinkName: "kk_grouping_aggregateTo",
+            typeParameterSymbols: groupingTypeParameterSymbols + [aggregateToRSymbol]
         )
 
         // fold(initialValue: R, operation: (R, T) -> R) -> Map<K, R>
@@ -2872,6 +2946,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // plusElement(element: T): Sequence<T> (STDLIB-SEQ-013)
+        registerSequenceMemberStub(
+            named: "plusElement",
+            externalLinkName: "kk_sequence_plus_element",
+            receiverType: receiverType,
+            parameters: [("element", typeParamType)],
+            returnType: receiverType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // foldIndexed(initial, operation): R
         registerSequenceMemberStub(
             named: "foldIndexed",
@@ -2913,6 +3001,90 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // runningFoldIndexed(initial, operation): Sequence<R>
+        let runningFoldIndexedName = interner.intern("runningFoldIndexed")
+        let runningFoldIndexedFQName = sequenceFQName + [runningFoldIndexedName]
+        if symbols.lookup(fqName: runningFoldIndexedFQName) == nil {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: runningFoldIndexedFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(
+                params: [types.intType, rType, typeParamType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let sequenceRType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "runningFoldIndexed",
+                externalLinkName: "kk_sequence_runningFoldIndexed",
+                receiverType: receiverType,
+                parameters: [("initial", rType), ("operation", operationType)],
+                returnType: sequenceRType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                additionalTypeParameterSymbols: [rSymbol],
+                additionalTypeParameterUpperBoundsList: [[]]
+            )
+        }
+
+        // scanIndexed(initial, operation): Sequence<R>
+        let scanIndexedName = interner.intern("scanIndexed")
+        let scanIndexedFQName = sequenceFQName + [scanIndexedName]
+        if symbols.lookup(fqName: scanIndexedFQName) == nil {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: scanIndexedFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(
+                params: [types.intType, rType, typeParamType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let sequenceRType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "scanIndexed",
+                externalLinkName: "kk_sequence_scanIndexed",
+                receiverType: receiverType,
+                parameters: [("initial", rType), ("operation", operationType)],
+                returnType: sequenceRType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                additionalTypeParameterSymbols: [rSymbol],
+                additionalTypeParameterUpperBoundsList: [[]]
+            )
+        }
 
         // partition(predicate): Pair<List<T>, List<T>>
         if let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")]) {

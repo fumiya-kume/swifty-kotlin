@@ -340,6 +340,51 @@ final class RuntimeRangeProgressionEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(thrown, 0, "step=0 must throw for LongProgression")
     }
 
+    // MARK: - CharProgression fromClosedRange
+
+    func testCharProgressionFromClosedRange_positiveStep() {
+        let a = kk_box_char(Int(Unicode.Scalar("a").value))
+        let g = kk_box_char(Int(Unicode.Scalar("g").value))
+        let progression = kk_char_progression_fromClosedRange(0, a, g, 2, nil)
+        let list = kk_char_range_toList(progression)
+
+        XCTAssertEqual(kk_list_size(list), 4)
+        XCTAssertEqual(kk_unbox_char(kk_range_first(progression)), Int(Unicode.Scalar("a").value))
+        XCTAssertEqual(kk_unbox_char(kk_range_last(progression)), Int(Unicode.Scalar("g").value))
+        XCTAssertEqual(kk_range_step(progression), 2)
+    }
+
+    func testCharProgressionFromClosedRange_negativeStep() {
+        let g = kk_box_char(Int(Unicode.Scalar("g").value))
+        let a = kk_box_char(Int(Unicode.Scalar("a").value))
+        let progression = kk_char_progression_fromClosedRange(0, g, a, -2, nil)
+        let list = kk_char_range_toList(progression)
+
+        XCTAssertEqual(kk_list_size(list), 4)
+        XCTAssertEqual(kk_unbox_char(kk_range_first(progression)), Int(Unicode.Scalar("g").value))
+        XCTAssertEqual(kk_unbox_char(kk_range_last(progression)), Int(Unicode.Scalar("a").value))
+        XCTAssertEqual(kk_range_step(progression), -2)
+    }
+
+    func testCharProgressionFromClosedRange_stepZeroThrows() {
+        let a = kk_box_char(Int(Unicode.Scalar("a").value))
+        let g = kk_box_char(Int(Unicode.Scalar("g").value))
+        var thrown = 0
+        _ = kk_char_progression_fromClosedRange(0, a, g, 0, &thrown)
+        XCTAssertNotEqual(thrown, 0, "step=0 must throw for CharProgression")
+    }
+
+    func testCharProgressionStepRealignsLast() {
+        let a = kk_box_char(Int(Unicode.Scalar("a").value))
+        let h = kk_box_char(Int(Unicode.Scalar("h").value))
+        let progression = kk_char_progression_fromClosedRange(0, a, h, 1, nil)
+        let stepped = kk_char_range_step(progression, 3, nil)
+
+        XCTAssertEqual(kk_unbox_char(kk_range_last(stepped)), Int(Unicode.Scalar("g").value))
+        XCTAssertEqual(kk_list_size(kk_char_range_toList(stepped)), 3)
+        XCTAssertEqual(kk_char_range_isEmpty(stepped), 0)
+    }
+
     // MARK: - CharRange edge cases
 
     func testCharRange_toListAscending() {

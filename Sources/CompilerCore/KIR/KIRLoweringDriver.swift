@@ -12,7 +12,6 @@ final class KIRLoweringDriver {
     // Delegates (lazy to break initialization ordering; each holds unowned back-reference)
     private(set) lazy var exprLowerer = ExprLowerer(driver: self)
     private(set) lazy var callLowerer = CallLowerer(driver: self)
-    private(set) lazy var callLoweringCoordinator = CallLoweringCoordinator(driver: self)
     private(set) lazy var controlFlowLowerer = ControlFlowLowerer(driver: self)
     private(set) lazy var memberLowerer = MemberLowerer(driver: self)
     private(set) lazy var lambdaLowerer = LambdaLowerer(driver: self)

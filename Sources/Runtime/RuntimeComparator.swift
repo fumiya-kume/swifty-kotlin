@@ -23,7 +23,7 @@ private final class RuntimePrimitiveComparatorBox {
 }
 
 @inline(__always)
-private func runtimePrimitiveCompareKind(from raw: Int32) -> RuntimePrimitiveCompareKind {
+func runtimePrimitiveCompareKind(from raw: Int32) -> RuntimePrimitiveCompareKind {
     switch raw {
     case 1: return .long
     case 2: return .uint

@@ -114,6 +114,38 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testSequenceZipWithNextTransformReturnsAdjacentResults() throws {
+        let source = """
+        fun main() {
+            val transformed = sequenceOf(1, 2, 4, 8)
+                .zipWithNext { left, right -> right - left }
+            val empty = emptySequence<Int>()
+                .zipWithNext { left, right -> right - left }
+            val single = sequenceOf(42)
+                .zipWithNext { left, right -> right - left }
+
+            println(transformed)
+            println(empty)
+            println(single)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceZipWithNextTransform",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 2, 4]\n[]\n[]\n")
+        }
+    }
+
     func testSequenceOnEachIndexedPreservesElementsAndLaziness() throws {
         let source = """
         fun main() {
@@ -148,6 +180,34 @@ extension CodegenBackendIntegrationTests {
                 """
                 + "\n"
             )
+        }
+    }
+
+    func testSequencePlusOperatorAndPlusElementAppendElements() throws {
+        let source = """
+        fun main() {
+            val withPlus = sequenceOf(1, 2) + 3
+            val result = withPlus
+                .plusElement(4)
+                .toList()
+
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequencePlusElement",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 2, 3, 4]\n")
         }
     }
 }

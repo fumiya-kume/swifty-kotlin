@@ -9,27 +9,36 @@ symbol s7 kind=class fq=kotlin.ranges.LongProgression vis=public flags=synthetic
 symbol s8 kind=object fq=kotlin.ranges.LongProgression.Companion vis=public flags=synthetic|static
 symbol s9 kind=function fq=kotlin.ranges.LongProgression.Companion.fromClosedRange vis=public flags=synthetic|static sig=recv=Class#8 params=[Long,Long,Int] ret=Class#7 suspend=0 defaults=[0,0,0] vararg=[0,0,0]
 symbol s10 kind=function fq=kotlin.ranges.LongProgression.toList vis=public flags=synthetic sig=recv=Class#7 params=[] ret=Class#0<out Long> suspend=0 defaults=[] vararg=[]
-symbol s11 kind=class fq=kotlin.ranges.UIntProgression vis=public flags=synthetic
-symbol s12 kind=object fq=kotlin.ranges.UIntProgression.Companion vis=public flags=synthetic|static
-symbol s13 kind=function fq=kotlin.ranges.UIntProgression.Companion.fromClosedRange vis=public flags=synthetic|static sig=recv=Class#12 params=[UInt,UInt,Int] ret=Class#11 suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s14 kind=function fq=kotlin.ranges.UIntProgression.toList vis=public flags=synthetic sig=recv=Class#11 params=[] ret=Class#0<out UInt> suspend=0 defaults=[] vararg=[]
-symbol s15 kind=class fq=kotlin.ranges.ULongProgression vis=public flags=synthetic
-symbol s16 kind=object fq=kotlin.ranges.ULongProgression.Companion vis=public flags=synthetic|static
-symbol s17 kind=function fq=kotlin.ranges.ULongProgression.Companion.fromClosedRange vis=public flags=synthetic|static sig=recv=Class#16 params=[ULong,ULong,Int] ret=Class#15 suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s18 kind=function fq=kotlin.ranges.ULongProgression.toList vis=public flags=synthetic sig=recv=Class#15 params=[] ret=Class#0<out ULong> suspend=0 defaults=[] vararg=[]
-symbol s19 kind=function fq=testIntProgression vis=public flags=_ sig=recv=_ params=[] ret=Class#0<Int> suspend=0 defaults=[] vararg=[]
-symbol s20 kind=function fq=testLongProgression vis=public flags=_ sig=recv=_ params=[] ret=Class#0<Long> suspend=0 defaults=[] vararg=[]
-symbol s21 kind=function fq=testUIntProgression vis=public flags=_ sig=recv=_ params=[] ret=Class#0<UInt> suspend=0 defaults=[] vararg=[]
-symbol s22 kind=function fq=testULongProgression vis=public flags=_ sig=recv=_ params=[] ret=Class#0<ULong> suspend=0 defaults=[] vararg=[]
-symbol s23 kind=function fq=testIntProgressionReversed vis=public flags=_ sig=recv=_ params=[] ret=Class#0<Int> suspend=0 defaults=[] vararg=[]
-symbol s24 kind=function fq=testIntProgressionIsEmpty vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s11 kind=class fq=kotlin.ranges.CharProgression vis=public flags=synthetic
+symbol s12 kind=object fq=kotlin.ranges.CharProgression.Companion vis=public flags=synthetic|static
+symbol s13 kind=function fq=kotlin.ranges.CharProgression.Companion.fromClosedRange vis=public flags=synthetic|static sig=recv=Class#12 params=[Char,Char,Int] ret=Class#11 suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s14 kind=function fq=kotlin.ranges.CharProgression.toList vis=public flags=synthetic sig=recv=Class#11 params=[] ret=Class#0<out Char> suspend=0 defaults=[] vararg=[]
+symbol s15 kind=function fq=kotlin.ranges.CharProgression.step vis=public flags=synthetic sig=recv=Class#11 params=[Int] ret=Class#11 suspend=0 defaults=[0] vararg=[0]
+symbol s16 kind=class fq=kotlin.ranges.UIntProgression vis=public flags=synthetic
+symbol s17 kind=object fq=kotlin.ranges.UIntProgression.Companion vis=public flags=synthetic|static
+symbol s18 kind=function fq=kotlin.ranges.UIntProgression.Companion.fromClosedRange vis=public flags=synthetic|static sig=recv=Class#17 params=[UInt,UInt,Int] ret=Class#16 suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s19 kind=function fq=kotlin.ranges.UIntProgression.toList vis=public flags=synthetic sig=recv=Class#16 params=[] ret=Class#0<out UInt> suspend=0 defaults=[] vararg=[]
+symbol s20 kind=class fq=kotlin.ranges.ULongProgression vis=public flags=synthetic
+symbol s21 kind=object fq=kotlin.ranges.ULongProgression.Companion vis=public flags=synthetic|static
+symbol s22 kind=function fq=kotlin.ranges.ULongProgression.Companion.fromClosedRange vis=public flags=synthetic|static sig=recv=Class#21 params=[ULong,ULong,Int] ret=Class#20 suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s23 kind=function fq=kotlin.ranges.ULongProgression.toList vis=public flags=synthetic sig=recv=Class#20 params=[] ret=Class#0<out ULong> suspend=0 defaults=[] vararg=[]
+symbol s24 kind=function fq=testIntProgression vis=public flags=_ sig=recv=_ params=[] ret=Class#0<Int> suspend=0 defaults=[] vararg=[]
+symbol s25 kind=function fq=testLongProgression vis=public flags=_ sig=recv=_ params=[] ret=Class#0<Long> suspend=0 defaults=[] vararg=[]
+symbol s26 kind=function fq=testCharProgression vis=public flags=_ sig=recv=_ params=[] ret=Class#0<Char> suspend=0 defaults=[] vararg=[]
+symbol s27 kind=function fq=testUIntProgression vis=public flags=_ sig=recv=_ params=[] ret=Class#0<UInt> suspend=0 defaults=[] vararg=[]
+symbol s28 kind=function fq=testULongProgression vis=public flags=_ sig=recv=_ params=[] ret=Class#0<ULong> suspend=0 defaults=[] vararg=[]
+symbol s29 kind=function fq=testCharProgressionStep vis=public flags=_ sig=recv=_ params=[] ret=Class#0<Char> suspend=0 defaults=[] vararg=[]
+symbol s30 kind=function fq=testIntProgressionReversed vis=public flags=_ sig=recv=_ params=[] ret=Class#0<Int> suspend=0 defaults=[] vararg=[]
+symbol s31 kind=function fq=testIntProgressionIsEmpty vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
 file f0 package=_
-  decl d0 fun testIntProgression suspend=0 inline=0 sym=s19
-  decl d1 fun testLongProgression suspend=0 inline=0 sym=s20
-  decl d2 fun testUIntProgression suspend=0 inline=0 sym=s21
-  decl d3 fun testULongProgression suspend=0 inline=0 sym=s22
-  decl d4 fun testIntProgressionReversed suspend=0 inline=0 sym=s23
-  decl d5 fun testIntProgressionIsEmpty suspend=0 inline=0 sym=s24
+  decl d0 fun testIntProgression suspend=0 inline=0 sym=s24
+  decl d1 fun testLongProgression suspend=0 inline=0 sym=s25
+  decl d2 fun testCharProgression suspend=0 inline=0 sym=s26
+  decl d3 fun testUIntProgression suspend=0 inline=0 sym=s27
+  decl d4 fun testULongProgression suspend=0 inline=0 sym=s28
+  decl d5 fun testCharProgressionStep suspend=0 inline=0 sym=s29
+  decl d6 fun testIntProgressionReversed suspend=0 inline=0 sym=s30
+  decl d7 fun testIntProgressionIsEmpty suspend=0 inline=0 sym=s31
 expr e0 name(IntProgression) type=Class#2 ref=s1
 expr e1 int(1) type=Int
 expr e2 int(10) type=Int
@@ -42,28 +51,42 @@ expr e8 long(10) type=Long
 expr e9 int(3) type=Int
 expr e10 memberCall recv=e6 callee=fromClosedRange args=[_:e7,_:e8,_:e9] type=Class#7 call=s9 map=[0->0,1->1,2->2] targs=[]
 expr e11 memberCall recv=e10 callee=toList args=[] type=Class#0<out Long> call=s10 map=[] targs=[]
-expr e12 name(UIntProgression) type=Class#12 ref=s11
-expr e13 uint(1) type=UInt
-expr e14 uint(10) type=UInt
+expr e12 name(CharProgression) type=Class#12 ref=s11
+expr e13 char(97) type=Char
+expr e14 char(103) type=Char
 expr e15 int(2) type=Int
 expr e16 memberCall recv=e12 callee=fromClosedRange args=[_:e13,_:e14,_:e15] type=Class#11 call=s13 map=[0->0,1->1,2->2] targs=[]
-expr e17 memberCall recv=e16 callee=toList args=[] type=Class#0<out UInt> call=s14 map=[] targs=[]
-expr e18 name(ULongProgression) type=Class#16 ref=s15
-expr e19 ulong(1) type=ULong
-expr e20 ulong(10) type=ULong
-expr e21 int(3) type=Int
-expr e22 memberCall recv=e18 callee=fromClosedRange args=[_:e19,_:e20,_:e21] type=Class#15 call=s17 map=[0->0,1->1,2->2] targs=[]
-expr e23 memberCall recv=e22 callee=toList args=[] type=Class#0<out ULong> call=s18 map=[] targs=[]
-expr e24 name(IntProgression) type=Class#2 ref=s1
-expr e25 int(1) type=Int
-expr e26 int(9) type=Int
-expr e27 int(2) type=Int
-expr e28 memberCall recv=e24 callee=fromClosedRange args=[_:e25,_:e26,_:e27] type=Class#1 call=s3 map=[0->0,1->1,2->2] targs=[]
-expr e29 memberCall recv=e28 callee=reversed args=[] type=Class#1 call=s5 map=[] targs=[]
-expr e30 memberCall recv=e29 callee=toList args=[] type=Class#0<out Int> call=s4 map=[] targs=[]
-expr e31 name(IntProgression) type=Class#2 ref=s1
-expr e32 int(10) type=Int
+expr e17 memberCall recv=e16 callee=toList args=[] type=Class#0<out Char> call=s14 map=[] targs=[]
+expr e18 name(UIntProgression) type=Class#17 ref=s16
+expr e19 uint(1) type=UInt
+expr e20 uint(10) type=UInt
+expr e21 int(2) type=Int
+expr e22 memberCall recv=e18 callee=fromClosedRange args=[_:e19,_:e20,_:e21] type=Class#16 call=s18 map=[0->0,1->1,2->2] targs=[]
+expr e23 memberCall recv=e22 callee=toList args=[] type=Class#0<out UInt> call=s19 map=[] targs=[]
+expr e24 name(ULongProgression) type=Class#21 ref=s20
+expr e25 ulong(1) type=ULong
+expr e26 ulong(10) type=ULong
+expr e27 int(3) type=Int
+expr e28 memberCall recv=e24 callee=fromClosedRange args=[_:e25,_:e26,_:e27] type=Class#20 call=s22 map=[0->0,1->1,2->2] targs=[]
+expr e29 memberCall recv=e28 callee=toList args=[] type=Class#0<out ULong> call=s23 map=[] targs=[]
+expr e30 name(CharProgression) type=Class#12 ref=s11
+expr e31 char(97) type=Char
+expr e32 char(104) type=Char
 expr e33 int(1) type=Int
-expr e34 int(1) type=Int
-expr e35 memberCall recv=e31 callee=fromClosedRange args=[_:e32,_:e33,_:e34] type=Class#1 call=s3 map=[0->0,1->1,2->2] targs=[]
-expr e36 memberCall recv=e35 callee=isEmpty args=[] type=Boolean call=s6 map=[] targs=[]
+expr e34 memberCall recv=e30 callee=fromClosedRange args=[_:e31,_:e32,_:e33] type=Class#11 call=s13 map=[0->0,1->1,2->2] targs=[]
+expr e35 int(3) type=Int
+expr e36 memberCall recv=e34 callee=step args=[_:e35] type=Class#11 call=s15 map=[0->0] targs=[]
+expr e37 memberCall recv=e36 callee=toList args=[] type=Class#0<out Char> call=s14 map=[] targs=[]
+expr e38 name(IntProgression) type=Class#2 ref=s1
+expr e39 int(1) type=Int
+expr e40 int(9) type=Int
+expr e41 int(2) type=Int
+expr e42 memberCall recv=e38 callee=fromClosedRange args=[_:e39,_:e40,_:e41] type=Class#1 call=s3 map=[0->0,1->1,2->2] targs=[]
+expr e43 memberCall recv=e42 callee=reversed args=[] type=Class#1 call=s5 map=[] targs=[]
+expr e44 memberCall recv=e43 callee=toList args=[] type=Class#0<out Int> call=s4 map=[] targs=[]
+expr e45 name(IntProgression) type=Class#2 ref=s1
+expr e46 int(10) type=Int
+expr e47 int(1) type=Int
+expr e48 int(1) type=Int
+expr e49 memberCall recv=e45 callee=fromClosedRange args=[_:e46,_:e47,_:e48] type=Class#1 call=s3 map=[0->0,1->1,2->2] targs=[]
+expr e50 memberCall recv=e49 callee=isEmpty args=[] type=Boolean call=s6 map=[] targs=[]
