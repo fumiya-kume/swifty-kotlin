@@ -28,6 +28,21 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+        let paddingOptionSymbol = ensureBase64PaddingOptionEnum(
+            base64Symbol: base64Symbol,
+            symbols: symbols,
+            interner: interner
+        )
+        let paddingOptionType = types.make(.classType(ClassType(
+            classSymbol: paddingOptionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        setBase64PaddingOptionEntryTypes(
+            enumSymbol: paddingOptionSymbol,
+            enumType: paddingOptionType,
+            symbols: symbols
+        )
 
         registerBase64VariantObjects(
             base64Symbol: base64Symbol,
@@ -88,9 +103,22 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerBase64MemberFunction(
+            named: "withPadding",
+            externalLinkName: "kk_base64_withPadding_instance",
+            ownerSymbol: base64Symbol,
+            receiverType: base64Type,
+            parameters: [
+                ("option", paddingOptionType),
+            ],
+            returnType: base64Type,
+            symbols: symbols,
+            interner: interner
+        )
+
         // PaddingOption is passed as a raw Int (enum ordinal) across the ABI.
         // We model it as Int in function signatures to keep the ABI simple.
-        let paddingOptionType = intType
+        let rawPaddingOptionType = intType
 
         // ── Base64.PaddingOption enum constants ──────────────────────────────────
         registerBase64PaddingOptionConstants(
@@ -107,7 +135,7 @@ extension DataFlowSemaPhase {
             packageFQName: ioEncodingPkg,
             parameters: [
                 ("bytes", byteArrayType, false),
-                ("padding", paddingOptionType, false),
+                ("padding", rawPaddingOptionType, false),
             ],
             returnType: stringType,
             symbols: symbols,
@@ -121,7 +149,7 @@ extension DataFlowSemaPhase {
             packageFQName: ioEncodingPkg,
             parameters: [
                 ("string", stringType, false),
-                ("padding", paddingOptionType, false),
+                ("padding", rawPaddingOptionType, false),
             ],
             returnType: byteArrayType,
             symbols: symbols,
@@ -136,7 +164,7 @@ extension DataFlowSemaPhase {
             packageFQName: ioEncodingPkg,
             parameters: [
                 ("bytes", byteArrayType, false),
-                ("padding", paddingOptionType, false),
+                ("padding", rawPaddingOptionType, false),
             ],
             returnType: stringType,
             symbols: symbols,
@@ -150,7 +178,7 @@ extension DataFlowSemaPhase {
             packageFQName: ioEncodingPkg,
             parameters: [
                 ("string", stringType, false),
-                ("padding", paddingOptionType, false),
+                ("padding", rawPaddingOptionType, false),
             ],
             returnType: byteArrayType,
             symbols: symbols,
@@ -165,7 +193,7 @@ extension DataFlowSemaPhase {
             packageFQName: ioEncodingPkg,
             parameters: [
                 ("bytes", byteArrayType, false),
-                ("padding", paddingOptionType, false),
+                ("padding", rawPaddingOptionType, false),
             ],
             returnType: stringType,
             symbols: symbols,
@@ -179,7 +207,7 @@ extension DataFlowSemaPhase {
             packageFQName: ioEncodingPkg,
             parameters: [
                 ("string", stringType, false),
-                ("padding", paddingOptionType, false),
+                ("padding", rawPaddingOptionType, false),
             ],
             returnType: byteArrayType,
             symbols: symbols,
@@ -199,7 +227,7 @@ extension DataFlowSemaPhase {
                 packageFQName: ioEncodingPkg,
                 parameters: [
                     ("bytes", byteArrayType, false),
-                    ("padding", paddingOptionType, false),
+                    ("padding", rawPaddingOptionType, false),
                 ],
                 returnType: byteArrayType,
                 symbols: symbols,
@@ -253,6 +281,68 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(base64Symbol, for: objectSymbol)
         return objectSymbol
+    }
+
+    private func ensureBase64PaddingOptionEnum(
+        base64Symbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        guard let base64Info = symbols.symbol(base64Symbol) else {
+            return base64Symbol
+        }
+        let name = interner.intern("PaddingOption")
+        let fqName = base64Info.fqName + [name]
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
+        }
+
+        let enumSymbol = symbols.define(
+            kind: .enumClass,
+            name: name,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(base64Symbol, for: enumSymbol)
+
+        for entry in ["PRESENT", "ABSENT", "PRESENT_OPTIONAL", "ABSENT_OPTIONAL"] {
+            let entryName = interner.intern(entry)
+            let entryFQName = fqName + [entryName]
+            if symbols.lookup(fqName: entryFQName) != nil {
+                continue
+            }
+            let entrySymbol = symbols.define(
+                kind: .field,
+                name: entryName,
+                fqName: entryFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+        }
+        return enumSymbol
+    }
+
+    private func setBase64PaddingOptionEntryTypes(
+        enumSymbol: SymbolID,
+        enumType: TypeID,
+        symbols: SymbolTable
+    ) {
+        guard let enumInfo = symbols.symbol(enumSymbol) else { return }
+        let children = symbols.children(ofFQName: enumInfo.fqName)
+        for child in children {
+            guard let childSym = symbols.symbol(child),
+                  childSym.kind == .field
+            else {
+                continue
+            }
+            if symbols.propertyType(for: child) == nil {
+                symbols.setPropertyType(enumType, for: child)
+            }
+        }
     }
 
     private func ensureBase64Package(

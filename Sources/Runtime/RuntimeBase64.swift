@@ -15,11 +15,44 @@ enum Base64PaddingOption: Int {
     case absentOptional = 3
 }
 
+private enum Base64RuntimeVariant {
+    case standard
+    case urlSafe
+    case mime
+}
+
+private final class RuntimeBase64Box {
+    let variant: Base64RuntimeVariant
+    let paddingOption: Base64PaddingOption
+
+    init(variant: Base64RuntimeVariant, paddingOption: Base64PaddingOption) {
+        self.variant = variant
+        self.paddingOption = paddingOption
+    }
+}
+
 // MARK: - Private Helpers
 
 /// Converts a PaddingOption raw Int to the enum, defaulting to .present.
 private func paddingOption(from raw: Int) -> Base64PaddingOption {
     Base64PaddingOption(rawValue: raw) ?? .present
+}
+
+private func registerBase64Box(variant: Base64RuntimeVariant, paddingOptionRaw: Int) -> Int {
+    registerRuntimeObject(RuntimeBase64Box(
+        variant: variant,
+        paddingOption: paddingOption(from: paddingOptionRaw)
+    ))
+}
+
+private func base64Box(from raw: Int) -> RuntimeBase64Box? {
+    if raw == runtimeNullSentinelInt { return nil }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeBase64Box.self)
+}
+
+private func base64BoxOrDefault(from raw: Int) -> RuntimeBase64Box {
+    base64Box(from: raw) ?? RuntimeBase64Box(variant: .standard, paddingOption: .present)
 }
 
 /// Extracts a Swift String from a runtime raw Int.
@@ -93,6 +126,29 @@ public func kk_base64_padding_present_optional() -> Int { Base64PaddingOption.pr
 @_cdecl("kk_base64_padding_absent_optional")
 public func kk_base64_padding_absent_optional() -> Int { Base64PaddingOption.absentOptional.rawValue }
 
+// MARK: - Configured Base64 instances
+
+@_cdecl("kk_base64_withPadding_default")
+public func kk_base64_withPadding_default(_ paddingOptionRaw: Int) -> Int {
+    registerBase64Box(variant: .standard, paddingOptionRaw: paddingOptionRaw)
+}
+
+@_cdecl("kk_base64_withPadding_urlsafe")
+public func kk_base64_withPadding_urlsafe(_ paddingOptionRaw: Int) -> Int {
+    registerBase64Box(variant: .urlSafe, paddingOptionRaw: paddingOptionRaw)
+}
+
+@_cdecl("kk_base64_withPadding_mime")
+public func kk_base64_withPadding_mime(_ paddingOptionRaw: Int) -> Int {
+    registerBase64Box(variant: .mime, paddingOptionRaw: paddingOptionRaw)
+}
+
+@_cdecl("kk_base64_withPadding_instance")
+public func kk_base64_withPadding_instance(_ instanceRaw: Int, _ paddingOptionRaw: Int) -> Int {
+    let existing = base64BoxOrDefault(from: instanceRaw)
+    return registerBase64Box(variant: existing.variant, paddingOptionRaw: paddingOptionRaw)
+}
+
 // MARK: - Default (RFC 4648 §4) Alphabet  `+/`
 
 @_cdecl("kk_base64_encode_default")
@@ -139,7 +195,7 @@ public func kk_base64_encode_urlsafe(_ bytesRaw: Int, _ paddingOptionRaw: Int) -
     var result = Data(bytes).base64EncodedString()
         .replacingOccurrences(of: "+", with: "-")
         .replacingOccurrences(of: "/", with: "_")
-    // URL-safe default: no padding (Kotlin default is ABSENT for UrlSafe)
+    // Predefined UrlSafe uses PRESENT padding; custom instances choose via option.
     switch option {
     case .present, .presentOptional:
         break
@@ -293,6 +349,68 @@ public func kk_base64_decodeFromByteArray_mime(
         return runtimeNullSentinelInt
     }
     return kk_base64_decode_mime(strRaw, paddingOptionRaw, outThrown)
+}
+
+// MARK: - Configured instance dispatch
+
+@_cdecl("kk_base64_encode_instance")
+public func kk_base64_encode_instance(_ instanceRaw: Int, _ bytesRaw: Int) -> Int {
+    let box = base64BoxOrDefault(from: instanceRaw)
+    switch box.variant {
+    case .standard:
+        return kk_base64_encode_default(bytesRaw, box.paddingOption.rawValue)
+    case .urlSafe:
+        return kk_base64_encode_urlsafe(bytesRaw, box.paddingOption.rawValue)
+    case .mime:
+        return kk_base64_encode_mime(bytesRaw, box.paddingOption.rawValue)
+    }
+}
+
+@_cdecl("kk_base64_decode_instance")
+public func kk_base64_decode_instance(
+    _ instanceRaw: Int,
+    _ strRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let box = base64BoxOrDefault(from: instanceRaw)
+    switch box.variant {
+    case .standard:
+        return kk_base64_decode_default(strRaw, box.paddingOption.rawValue, outThrown)
+    case .urlSafe:
+        return kk_base64_decode_urlsafe(strRaw, box.paddingOption.rawValue, outThrown)
+    case .mime:
+        return kk_base64_decode_mime(strRaw, box.paddingOption.rawValue, outThrown)
+    }
+}
+
+@_cdecl("kk_base64_encodeToByteArray_instance")
+public func kk_base64_encodeToByteArray_instance(_ instanceRaw: Int, _ bytesRaw: Int) -> Int {
+    let box = base64BoxOrDefault(from: instanceRaw)
+    switch box.variant {
+    case .standard:
+        return kk_base64_encodeToByteArray_default(bytesRaw, box.paddingOption.rawValue)
+    case .urlSafe:
+        return kk_base64_encodeToByteArray_urlsafe(bytesRaw, box.paddingOption.rawValue)
+    case .mime:
+        return kk_base64_encodeToByteArray_mime(bytesRaw, box.paddingOption.rawValue)
+    }
+}
+
+@_cdecl("kk_base64_decodeFromByteArray_instance")
+public func kk_base64_decodeFromByteArray_instance(
+    _ instanceRaw: Int,
+    _ bytesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let box = base64BoxOrDefault(from: instanceRaw)
+    switch box.variant {
+    case .standard:
+        return kk_base64_decodeFromByteArray_default(bytesRaw, box.paddingOption.rawValue, outThrown)
+    case .urlSafe:
+        return kk_base64_decodeFromByteArray_urlsafe(bytesRaw, box.paddingOption.rawValue, outThrown)
+    case .mime:
+        return kk_base64_decodeFromByteArray_mime(bytesRaw, box.paddingOption.rawValue, outThrown)
+    }
 }
 
 // MARK: - Shared Decode Implementation

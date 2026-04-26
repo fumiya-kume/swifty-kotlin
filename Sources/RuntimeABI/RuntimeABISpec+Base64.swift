@@ -25,6 +25,39 @@ public extension RuntimeABISpec {
             section: "Base64"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_base64_withPadding_default",
+            parameters: [
+                RuntimeABIParameter(name: "paddingOptionRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Base64"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_base64_withPadding_urlsafe",
+            parameters: [
+                RuntimeABIParameter(name: "paddingOptionRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Base64"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_base64_withPadding_mime",
+            parameters: [
+                RuntimeABIParameter(name: "paddingOptionRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Base64"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_base64_withPadding_instance",
+            parameters: [
+                RuntimeABIParameter(name: "instanceRaw", type: .intptr),
+                RuntimeABIParameter(name: "paddingOptionRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Base64"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_base64_encode_default",
             parameters: [
                 RuntimeABIParameter(name: "bytesRaw", type: .intptr),
@@ -133,6 +166,44 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "bytesRaw", type: .intptr),
                 RuntimeABIParameter(name: "paddingOptionRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Base64"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_base64_encode_instance",
+            parameters: [
+                RuntimeABIParameter(name: "instanceRaw", type: .intptr),
+                RuntimeABIParameter(name: "bytesRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Base64"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_base64_decode_instance",
+            parameters: [
+                RuntimeABIParameter(name: "instanceRaw", type: .intptr),
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Base64"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_base64_encodeToByteArray_instance",
+            parameters: [
+                RuntimeABIParameter(name: "instanceRaw", type: .intptr),
+                RuntimeABIParameter(name: "bytesRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Base64"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_base64_decodeFromByteArray_instance",
+            parameters: [
+                RuntimeABIParameter(name: "instanceRaw", type: .intptr),
+                RuntimeABIParameter(name: "bytesRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
