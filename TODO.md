@@ -122,7 +122,7 @@
 ### Phase 3: I/O・パス・時間・並行（common）
 - [~] STDLIB-GAP-PH3: `kotlin.io`（common） / `kotlin.time` / `kotlin.concurrent` / `kotlin.concurrent.atomics` の未対応を潰す
 - [ ] STDLIB-030: `kotlin.io` common 範囲の file / buffered / `use` を仕様単位で締める
-- [ ] STDLIB-IO-ENC-001: `kotlin.io.encoding.Base64.Default` / `UrlSafe` / `Mime` / `PemMime` を追加する
+- [x] STDLIB-IO-ENC-001: `kotlin.io.encoding.Base64.Default` / `UrlSafe` / `Mime` / `PemMime` を追加する
 - [ ] STDLIB-IO-ENC-002: `Base64.encode(ByteArray)` / `decode(String)` を追加する
 - [ ] STDLIB-IO-ENC-003: `Base64.encodeToByteArray(ByteArray)` / `decodeFromByteArray(ByteArray)` を追加する
 - [ ] STDLIB-IO-ENC-004: `Base64.withPadding(PaddingOption)` と MIME / URL-safe variant の挙動を追加する

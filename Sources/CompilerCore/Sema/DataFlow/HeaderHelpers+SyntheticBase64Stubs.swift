@@ -2,8 +2,8 @@ import Foundation
 
 /// Synthetic stubs for kotlin.io.encoding.Base64 (STDLIB-031-ABI-001).
 ///
-/// Wires the three Kotlin Base64 variants (Default / UrlSafe / Mime) and their
-/// PaddingOption enum to the `kk_base64_*` ABI entry points in RuntimeBase64.swift.
+/// Wires the Kotlin Base64 variants (Default / UrlSafe / Mime / Pem / PemMime)
+/// and their PaddingOption enum to the `kk_base64_*` ABI entry points in RuntimeBase64.swift.
 extension DataFlowSemaPhase {
     func registerSyntheticBase64Stubs(
         symbols: SymbolTable,
@@ -14,9 +14,22 @@ extension DataFlowSemaPhase {
         let ioEncodingPkg = ensureBase64Package(symbols: symbols, interner: interner)
 
         // ── Types ────────────────────────────────────────────────────────────────
+        let base64Symbol = ensureClassSymbol(
+            named: "Base64",
+            in: ioEncodingPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let stringType = types.stringType
         let intType = types.intType
         let byteArrayType = makeBase64ByteArrayType(symbols: symbols, types: types, interner: interner)
+
+        registerBase64VariantObjects(
+            base64Symbol: base64Symbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         // PaddingOption is passed as a raw Int (enum ordinal) across the ABI.
         // We model it as Int in function signatures to keep the ABI simple.
@@ -140,6 +153,50 @@ extension DataFlowSemaPhase {
     }
 
     // MARK: - Package helpers
+
+    private func registerBase64VariantObjects(
+        base64Symbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        for variant in ["Default", "UrlSafe", "Mime", "Pem", "PemMime"] {
+            let objectSymbol = ensureBase64VariantObject(
+                named: variant,
+                base64Symbol: base64Symbol,
+                symbols: symbols,
+                interner: interner
+            )
+            symbols.setDirectSupertypes([base64Symbol], for: objectSymbol)
+            types.setNominalDirectSupertypes([base64Symbol], for: objectSymbol)
+        }
+    }
+
+    private func ensureBase64VariantObject(
+        named name: String,
+        base64Symbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        guard let base64Info = symbols.symbol(base64Symbol) else {
+            return base64Symbol
+        }
+        let objectName = interner.intern(name)
+        let objectFQName = base64Info.fqName + [objectName]
+        if let existing = symbols.lookup(fqName: objectFQName) {
+            return existing
+        }
+        let objectSymbol = symbols.define(
+            kind: .object,
+            name: objectName,
+            fqName: objectFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .static]
+        )
+        symbols.setParentSymbol(base64Symbol, for: objectSymbol)
+        return objectSymbol
+    }
 
     private func ensureBase64Package(
         symbols: SymbolTable,
