@@ -91,8 +91,8 @@
 - [x] STDLIB-COL-DEST-004: `associateTo` / `associateByTo` / `associateWithTo` / `groupByTo` を追加する
 - [x] STDLIB-COL-DEST-005: `toCollection(destination)` を追加する
 - [x] STDLIB-COL-U-001: `Collection<UByte>` / `Collection<UShort>` / `Collection<UInt>` / `Collection<ULong>` の `toU*Array()` conversion を追加する
-- [ ] STDLIB-COL-U-002: `ByteArray.asUByteArray()` / `ShortArray.asUShortArray()` / `IntArray.asUIntArray()` / `LongArray.asULongArray()` view conversion を追加する
 - [x] STDLIB-COL-U-003: `UByteArray.asByteArray()` / `UShortArray.asShortArray()` / `UIntArray.asIntArray()` / `ULongArray.asLongArray()` view conversion を追加する
+- [x] STDLIB-COL-U-002: `ByteArray.asUByteArray()` / `ShortArray.asUShortArray()` / `IntArray.asUIntArray()` / `LongArray.asULongArray()` view conversion を追加する
 - [x] STDLIB-COL-U-004: `UByteArray` / `UShortArray` / `UIntArray` / `ULongArray` の `copyOfRange(fromIndex, toIndex)` を追加する
 - [x] STDLIB-COL-U-005: `UByteArray` / `UShortArray` / `UIntArray` / `ULongArray` の `toTypedArray()` を追加する
 - [x] STDLIB-COL-U-006: `UByteArray` / `UShortArray` / `UIntArray` / `ULongArray` の `copyOf(newSize, init)` overload 群を追加する
