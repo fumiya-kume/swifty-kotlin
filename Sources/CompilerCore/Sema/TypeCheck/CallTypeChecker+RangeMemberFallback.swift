@@ -142,7 +142,7 @@ extension CallTypeChecker {
         case "count", "start", "end", "endInclusive", "endExclusive", "iterator", "toList", "toIntArray", "toLongArray", "toUIntArray", "toULongArray", "reversed", "isEmpty", "sum", "average", "sorted":
             argCount == 0
         case "random":
-            argCount == 0
+            argCount == 0 || argCount == 1
         case "step":
             argCount == 0 || argCount == 1
         case "first", "last":

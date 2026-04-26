@@ -63,6 +63,51 @@ final class RangeRandomSyntheticLinkTests: XCTestCase {
         }
     }
 
+    private func assertRandomOverloads(
+        typeName: String,
+        noArgLink: String,
+        randomLink: String,
+        expectedElementType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner,
+        randomSymbol: SymbolID
+    ) {
+        let fq = ["kotlin", "ranges", typeName, "random"].map { interner.intern($0) }
+        let symbols = sema.symbols.lookupAll(fqName: fq)
+        XCTAssertFalse(symbols.isEmpty, "\(typeName).random must be registered")
+
+        let noArg = symbols.first {
+            sema.symbols.functionSignature(for: $0)?.parameterTypes.isEmpty == true
+        }
+        XCTAssertNotNil(noArg, "\(typeName).random() overload missing")
+        if let noArg {
+            XCTAssertEqual(sema.symbols.externalLinkName(for: noArg), noArgLink)
+            XCTAssertEqual(sema.symbols.functionSignature(for: noArg)?.returnType, expectedElementType)
+        }
+
+        let seeded = symbols.first {
+            sema.symbols.functionSignature(for: $0)?.parameterTypes.count == 1
+        }
+        XCTAssertNotNil(seeded, "\(typeName).random(random: Random) overload missing")
+        if let seeded {
+            XCTAssertEqual(sema.symbols.externalLinkName(for: seeded), randomLink)
+            guard let sig = sema.symbols.functionSignature(for: seeded) else {
+                XCTFail("\(typeName).random(random: Random) has no signature")
+                return
+            }
+            XCTAssertEqual(sig.returnType, expectedElementType)
+            guard case .classType(let classType) = sema.types.kind(of: sig.parameterTypes[0]) else {
+                XCTFail("\(typeName).random(random: Random) parameter is not a class type")
+                return
+            }
+            XCTAssertEqual(
+                classType.classSymbol,
+                randomSymbol,
+                "\(typeName).random(random: Random) must take kotlin.random.Random"
+            )
+        }
+    }
+
     func testRangeRandomOrNullOverloadsAreRegistered() throws {
         let (sema, interner) = try makeSema()
 
@@ -112,6 +157,62 @@ final class RangeRandomSyntheticLinkTests: XCTestCase {
             typeName: "CharRange",
             noArgLink: "kk_char_range_randomOrNull",
             randomLink: "kk_char_range_randomOrNull_random",
+            expectedElementType: sema.types.charType,
+            sema: sema,
+            interner: interner,
+            randomSymbol: randomSymbol
+        )
+    }
+
+    func testRangeRandomOverloadsAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let randomFQ = ["kotlin", "random", "Random"].map { interner.intern($0) }
+        let randomSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: randomFQ),
+            "kotlin.random.Random must be registered"
+        )
+
+        assertRandomOverloads(
+            typeName: "IntRange",
+            noArgLink: "kk_range_random",
+            randomLink: "kk_range_random_random",
+            expectedElementType: sema.types.intType,
+            sema: sema,
+            interner: interner,
+            randomSymbol: randomSymbol
+        )
+        assertRandomOverloads(
+            typeName: "LongRange",
+            noArgLink: "kk_long_range_random",
+            randomLink: "kk_long_range_random_random",
+            expectedElementType: sema.types.longType,
+            sema: sema,
+            interner: interner,
+            randomSymbol: randomSymbol
+        )
+        assertRandomOverloads(
+            typeName: "UIntRange",
+            noArgLink: "kk_uint_range_random",
+            randomLink: "kk_uint_range_random_random",
+            expectedElementType: sema.types.uintType,
+            sema: sema,
+            interner: interner,
+            randomSymbol: randomSymbol
+        )
+        assertRandomOverloads(
+            typeName: "ULongRange",
+            noArgLink: "kk_ulong_range_random",
+            randomLink: "kk_ulong_range_random_random",
+            expectedElementType: sema.types.ulongType,
+            sema: sema,
+            interner: interner,
+            randomSymbol: randomSymbol
+        )
+        assertRandomOverloads(
+            typeName: "CharRange",
+            noArgLink: "kk_range_random",
+            randomLink: "kk_char_range_random_random",
             expectedElementType: sema.types.charType,
             sema: sema,
             interner: interner,

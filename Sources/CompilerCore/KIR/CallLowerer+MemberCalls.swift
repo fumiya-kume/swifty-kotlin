@@ -6581,6 +6581,21 @@ extension CallLowerer {
         if sema.bindings.isRangeExpr(receiverExpr) || isCharProgressionReceiver {
             switch memberName {
             case "random":
+                if argumentCount == 1 {
+                    if sema.bindings.isCharRangeExpr(receiverExpr) || isCharProgressionReceiver {
+                        return interner.intern("kk_char_range_random_random")
+                    }
+                    if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                        return interner.intern("kk_ulong_range_random_random")
+                    }
+                    if sema.bindings.isUIntRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.uintType {
+                        return interner.intern("kk_uint_range_random_random")
+                    }
+                    if nonNullReceiverType == sema.types.longType {
+                        return interner.intern("kk_long_range_random_random")
+                    }
+                    return interner.intern("kk_range_random_random")
+                }
                 if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
                     return interner.intern("kk_ulong_range_random")
                 }

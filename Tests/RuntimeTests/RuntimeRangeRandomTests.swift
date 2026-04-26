@@ -72,4 +72,41 @@ final class RuntimeRangeRandomTests: IsolatedRuntimeXCTestCase {
         _ = kk_ulong_range_random(range, &thrown)
         XCTAssertEqual(thrown, 0)
     }
+
+    func testRangeRandomWithRandomOverloadsReturnValuesInsideBounds() {
+        let random = kk_random_create_seeded(123)
+        var thrown = 0
+
+        let intValue = kk_range_random_random(kk_op_rangeTo(1, 5), random, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(intValue, 1)
+        XCTAssertLessThanOrEqual(intValue, 5)
+
+        let longValue = kk_long_range_random_random(kk_long_rangeTo(10, 15), random, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(longValue, 10)
+        XCTAssertLessThanOrEqual(longValue, 15)
+
+        let charValue = kk_char_range_random_random(
+            kk_char_rangeTo(
+                kk_box_char(Int(Unicode.Scalar("a").value)),
+                kk_box_char(Int(Unicode.Scalar("f").value))
+            ),
+            random,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(charValue, Int(Unicode.Scalar("a").value))
+        XCTAssertLessThanOrEqual(charValue, Int(Unicode.Scalar("f").value))
+
+        let uintValue = kk_uint_range_random_random(kk_uint_rangeTo(1, 5), random, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(UInt(bitPattern: uintValue), 1)
+        XCTAssertLessThanOrEqual(UInt(bitPattern: uintValue), 5)
+
+        let ulongValue = kk_ulong_range_random_random(kk_ulong_rangeTo(1, 5), random, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(UInt(bitPattern: ulongValue), 1)
+        XCTAssertLessThanOrEqual(UInt(bitPattern: ulongValue), 5)
+    }
 }

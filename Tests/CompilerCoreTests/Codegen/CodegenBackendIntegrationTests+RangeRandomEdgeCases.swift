@@ -88,4 +88,36 @@ extension CodegenBackendIntegrationTests {
             )
         }
     }
+
+    func testCodegenCompilesRangeRandomWithRandomOverloads() throws {
+        let source = """
+        import kotlin.random.Random
+        import kotlin.ranges.*
+
+        fun useRandom(r: Random): Boolean {
+            val intValue = (1..5).random(r)
+            val longValue = (10L..15L).random(r)
+            val charValue = ('a'..'f').random(r)
+            val uintValue = (1u..5u).random(r)
+            val ulongValue = (1uL..5uL).random(r)
+            return intValue >= 1 &&
+                longValue >= 10L &&
+                charValue >= 'a' &&
+                uintValue >= 1u &&
+                ulongValue >= 1uL
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "RangeRandomWithRandomOverloads",
+                emit: .object,
+                outputPath: outputBase
+            )
+            let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
+        }
+    }
 }
