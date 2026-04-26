@@ -507,10 +507,10 @@ extension CallTypeChecker {
             argCount: args.count,
             isMapReceiver: isMapReceiver,
             isSetReceiver: isSetReceiver,
+            isSequenceReceiver: isSequenceReceiver,
             isMutableMapReceiver: isMutableMapReceiver,
             isMutableSetReceiver: isMutableSetReceiver,
             isMutableListReceiver: isMutableListReceiver,
-            isSequenceReceiver: isSequenceReceiver,
             interner: interner
         )
         else {
@@ -1128,10 +1128,10 @@ extension CallTypeChecker {
         argCount: Int,
         isMapReceiver: Bool,
         isSetReceiver: Bool,
+        isSequenceReceiver: Bool,
         isMutableMapReceiver: Bool,
         isMutableSetReceiver: Bool = false,
         isMutableListReceiver: Bool,
-        isSequenceReceiver: Bool,
         interner: StringInterner
     ) -> Bool {
         let knownNames = KnownCompilerNames(interner: interner)
@@ -1690,6 +1690,26 @@ extension CallTypeChecker {
                 args: [.out(receiverElementType)],
                 nullability: .nonNull
             )))
+        }
+
+        if isSequenceReceiver,
+           memberName == interner.intern("windowed"),
+           args.count == 4
+        {
+            let transformExpr = args[3].expr
+            let transformType = sema.bindings.exprTypes[transformExpr] ?? sema.types.anyType
+            let transformedElementType: TypeID
+            if case let .functionType(fnType) = sema.types.kind(of: sema.types.makeNonNullable(transformType)) {
+                transformedElementType = fnType.returnType
+            } else {
+                transformedElementType = sema.types.anyType
+            }
+            return makeSyntheticSequenceType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: transformedElementType
+            )
         }
 
         return sema.types.anyType

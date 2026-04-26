@@ -3590,6 +3590,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_mapNotNull"
                 } else if calleeName == interner.intern("mapIndexed") {
                     runtimeCallee = "kk_sequence_mapIndexed"
+                } else if calleeName == interner.intern("windowed"), args.count == 4 {
+                    runtimeCallee = "kk_sequence_windowed_transform"
                 } else if calleeName == interner.intern("chunked") {
                     runtimeCallee = "kk_sequence_chunked"
                 } else if calleeName == interner.intern("onEach") {
@@ -3633,6 +3635,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_none"
                         || runtimeCallee == "kk_sequence_mapNotNull"
                         || runtimeCallee == "kk_sequence_mapIndexed"
+                        || runtimeCallee == "kk_sequence_windowed_transform"
                         || runtimeCallee == "kk_sequence_onEach"
                         || runtimeCallee == "kk_sequence_onEachIndexed"
                         || runtimeCallee == "kk_sequence_runningReduceIndexed"
@@ -5567,6 +5570,27 @@ extension CallLowerer {
                 finalArguments.insert(oneExpr, at: 2)
                 finalArguments.insert(zeroExpr, at: 3)
             } else if originalArgumentCount == 4 {
+                // `windowed(size, step, transform)` expands to
+                // `windowed(size, step, false, transform)`.
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArguments.insert(zeroExpr, at: 3)
+            }
+        }
+        if loweredCallee == interner.intern("kk_sequence_windowed"),
+           hasHOFLambdaArg
+        {
+            loweredCallee = interner.intern("kk_sequence_windowed_transform")
+            let originalArgumentCount = finalArguments.count
+            if originalArgumentCount == 4 {
+                // `windowed(size, transform)` expands to `windowed(size, 1, false, transform)`.
+                let oneExpr = arena.appendExpr(.intLiteral(1), type: sema.types.intType)
+                instructions.append(.constValue(result: oneExpr, value: .intLiteral(1)))
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArguments.insert(oneExpr, at: 2)
+                finalArguments.insert(zeroExpr, at: 3)
+            } else if originalArgumentCount == 5 {
                 // `windowed(size, step, transform)` expands to
                 // `windowed(size, step, false, transform)`.
                 let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)

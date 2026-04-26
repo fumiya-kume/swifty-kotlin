@@ -143,6 +143,44 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenCompilesSequenceWindowedTransformOverload() throws {
+        let source = """
+        fun main() {
+            val sums = sequenceOf(1, 2, 3, 4, 5).windowed(3, 2, true) { window ->
+                window[0] + window.size
+            }
+            println(sums.toList())
+
+            val labels = sequenceOf("ab", "cd", "ef", "gh").windowed(2, 3, true) { window ->
+                window.joinToString("|")
+            }
+            println(labels.toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceWindowedTransformEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [4, 6, 6]
+                [ab|cd, gh]
+                """
+                + "\n"
+            )
+        }
+    }
+
     func testSequenceZipWithNextTransformReturnsAdjacentResults() throws {
         let source = """
         fun main() {

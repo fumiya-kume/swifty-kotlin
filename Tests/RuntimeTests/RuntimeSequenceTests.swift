@@ -141,6 +141,21 @@ private let recordingOnEachIndexedAction: @convention(c) (Int, Int, Int, UnsafeM
     return 0
 }
 
+private let summingWindowTransform: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, windowRaw, _ in
+    let size = kk_list_size(windowRaw)
+    guard size > 0 else { return 0 }
+    var sum = 0
+    for index in 0 ..< size {
+        sum += kk_list_get(windowRaw, index)
+    }
+    return sum
+}
+
+private let throwingWindowTransform: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, outThrown in
+    outThrown?.pointee = runtimeAllocateThrowable(message: "window transform failed")
+    return 0
+}
+
 private func runtimeTestStringHandle(_ value: String) -> Int {
     let bytes = Array(value.utf8)
     return bytes.withUnsafeBufferPointer { buffer in
@@ -1635,6 +1650,38 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         )
         let result = sequenceElements(flatMapped)
         XCTAssertEqual(result, [1, 10, 2, 20]) // [1, 10] + [2, 20]
+    }
+
+    func testSequenceWindowedTransformCorrectness() {
+        let seq = makeSequence([1, 2, 3, 4, 5])
+        let transformed = kk_sequence_windowed_transform(
+            seq,
+            3,
+            2,
+            1,
+            unsafeBitCast(summingWindowTransform, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(sequenceElements(transformed), [6, 12, 5])
+    }
+
+    func testSequenceWindowedTransformPropagatesThrowables() {
+        let seq = makeSequence([1, 2, 3, 4])
+        var thrown = 0
+        let transformed = kk_sequence_windowed_transform(
+            seq,
+            2,
+            1,
+            0,
+            unsafeBitCast(throwingWindowTransform, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(transformed, 0)
     }
 
     // MARK: - Helpers

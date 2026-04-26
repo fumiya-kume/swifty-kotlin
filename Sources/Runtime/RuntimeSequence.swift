@@ -3162,6 +3162,38 @@ public func kk_sequence_windowed(_ seqRaw: Int, _ size: Int, _ step: Int, _ part
     return registerRuntimeObject(resultSeq)
 }
 
+@_cdecl("kk_sequence_windowed_transform")
+public func kk_sequence_windowed_transform(
+    _ seqRaw: Int,
+    _ size: Int,
+    _ step: Int,
+    _ partialWindows: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let windowsRaw = kk_sequence_windowed(seqRaw, size, step, partialWindows)
+    let windows = runtimeSequenceSourceElementsOrPanic(from: windowsRaw, caller: #function)
+    var results: [Int] = []
+    results.reserveCapacity(windows.count)
+    for windowRaw in windows {
+        var thrown = 0
+        let transformed = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: windowRaw,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        results.append(maybeUnbox(transformed))
+    }
+    let resultSeq = RuntimeSequenceBox(steps: [.source(elements: results)])
+    return registerRuntimeObject(resultSeq)
+}
+
 @_cdecl("kk_sequence_onEach")
 public func kk_sequence_onEach(
     _ seqRaw: Int,
