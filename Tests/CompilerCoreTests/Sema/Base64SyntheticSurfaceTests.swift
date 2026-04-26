@@ -2,8 +2,10 @@
 import XCTest
 
 final class Base64SyntheticSurfaceTests: XCTestCase {
-    private func makeSema(source: String = "fun noop() {}") throws -> (SemaModule, StringInterner) {
-        var result: (SemaModule, StringInterner)?
+    private func makeSema(
+        source: String = "fun noop() {}"
+    ) throws -> (SemaModule, StringInterner, ASTModule) {
+        var result: (SemaModule, StringInterner, ASTModule)?
         try withTemporaryFile(contents: source) { path in
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
@@ -11,9 +13,12 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
                 ctx.diagnostics.hasError,
                 "Base64 surface should resolve without diagnostics: \(ctx.diagnostics.diagnostics.map(\.message))"
             )
-            result = try (XCTUnwrap(ctx.sema), ctx.interner)
+            result = try (XCTUnwrap(ctx.sema), ctx.interner, XCTUnwrap(ctx.ast))
         }
-        return try XCTUnwrap(result)
+        return try XCTUnwrap(
+            result,
+            "makeSema failed: semantic context was not created for source: \(source)"
+        )
     }
 
     private func base64Symbol(sema: SemaModule, interner: StringInterner) throws -> SymbolID {
@@ -53,7 +58,7 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
     }
 
     func testBase64VariantObjectsAreRegisteredAsBase64Subtypes() throws {
-        let (sema, interner) = try makeSema()
+        let (sema, interner, _) = try makeSema()
         let base64 = try base64Symbol(sema: sema, interner: interner)
 
         for variant in ["Default", "UrlSafe", "Mime", "Pem"] {
@@ -75,7 +80,7 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
     }
 
     func testBase64PaddingOptionEnumEntriesAreRegistered() throws {
-        let (sema, interner) = try makeSema()
+        let (sema, interner, _) = try makeSema()
         let paddingOption = try XCTUnwrap(sema.symbols.lookup(fqName: [
             interner.intern("kotlin"),
             interner.intern("io"),
@@ -108,7 +113,7 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
         fun mimeVariant(): Base64 = Base64.Mime
         fun pemVariant(): Base64 = Base64.Pem
         """
-        let (sema, interner) = try makeSema(source: source)
+        let (sema, interner, _) = try makeSema(source: source)
         let base64 = try base64Symbol(sema: sema, interner: interner)
         let base64Type = sema.types.make(.classType(ClassType(
             classSymbol: base64,
@@ -137,7 +142,7 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
     }
 
     func testBase64EncodeDecodeMemberLinksAreRegistered() throws {
-        let (sema, interner) = try makeSema()
+        let (sema, interner, _) = try makeSema()
         let base64 = try base64Symbol(sema: sema, interner: interner)
         let base64Type = sema.types.make(.classType(ClassType(
             classSymbol: base64,
@@ -248,6 +253,123 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
         }
         """
 
-        _ = try makeSema(source: source)
+        let (sema, interner, ast) = try makeSema(source: source)
+        let defaultBase64Symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("io"),
+                interner.intern("encoding"),
+                interner.intern("Base64"),
+                interner.intern("Default"),
+            ])
+        )
+        let defaultBase64Type = sema.types.make(.classType(ClassType(
+            classSymbol: defaultBase64Symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let urlSafeBase64Symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("io"),
+                interner.intern("encoding"),
+                interner.intern("Base64"),
+                interner.intern("UrlSafe"),
+            ])
+        )
+        let urlSafeBase64Type = sema.types.make(.classType(ClassType(
+            classSymbol: urlSafeBase64Symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let defaultEncode = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("io"),
+                interner.intern("encoding"),
+                interner.intern("Base64"),
+                interner.intern("Default"),
+                interner.intern("encode"),
+            ]),
+            "Expected Base64.Default.encode to be registered"
+        )
+        let defaultDecode = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("io"),
+                interner.intern("encoding"),
+                interner.intern("Base64"),
+                interner.intern("Default"),
+                interner.intern("decode"),
+            ]),
+            "Expected Base64.Default.decode to be registered"
+        )
+        let urlSafeEncode = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("io"),
+                interner.intern("encoding"),
+                interner.intern("Base64"),
+                interner.intern("UrlSafe"),
+                interner.intern("encode"),
+            ]),
+            "Expected Base64.UrlSafe.encode to be registered"
+        )
+
+        let defaultEncodeCall = try XCTUnwrap(
+            firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(receiver, callee, _, _, _) = expr else { return false }
+                return sema.bindings.exprTypes[receiver] == defaultBase64Type
+                    && interner.resolve(callee) == "encode"
+            },
+            "Expected Base64.Default.encode call in AST"
+        )
+        let defaultDecodeCall = try XCTUnwrap(
+            firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(receiver, callee, _, _, _) = expr else { return false }
+                return sema.bindings.exprTypes[receiver] == defaultBase64Type
+                    && interner.resolve(callee) == "decode"
+            },
+            "Expected Base64.Default.decode call in AST"
+        )
+        let urlSafeEncodeCall = try XCTUnwrap(
+            firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(receiver, callee, _, _, _) = expr else { return false }
+                return sema.bindings.exprTypes[receiver] == urlSafeBase64Type
+                    && interner.resolve(callee) == "encode"
+            },
+            "Expected Base64.UrlSafe.encode call in AST"
+        )
+
+        XCTAssertEqual(
+            try XCTUnwrap(sema.bindings.callBinding(for: defaultEncodeCall)?.chosenCallee),
+            defaultEncode,
+            "Base64.Default.encode must resolve to the default encode member"
+        )
+        XCTAssertEqual(
+            sema.bindings.exprTypes[defaultEncodeCall],
+            sema.types.stringType,
+            "Base64.Default.encode should return String"
+        )
+        XCTAssertEqual(
+            try XCTUnwrap(sema.bindings.callBinding(for: defaultDecodeCall)?.chosenCallee),
+            defaultDecode,
+            "Base64.Default.decode must resolve to the default decode member"
+        )
+        XCTAssertEqual(
+            sema.bindings.exprTypes[defaultDecodeCall],
+            try byteArrayType(sema: sema, interner: interner),
+            "Base64.Default.decode should return ByteArray"
+        )
+        XCTAssertEqual(
+            try XCTUnwrap(sema.bindings.callBinding(for: urlSafeEncodeCall)?.chosenCallee),
+            urlSafeEncode,
+            "Base64.UrlSafe.encode must resolve to the url-safe encode member"
+        )
+        XCTAssertEqual(
+            sema.bindings.exprTypes[urlSafeEncodeCall],
+            sema.types.stringType,
+            "Base64.UrlSafe.encode should return String"
+        )
     }
 }

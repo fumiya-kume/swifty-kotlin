@@ -541,7 +541,7 @@ extension DataFlowSemaPhase {
                 returnType: returnType,
                 isSuspend: false,
                 valueParameterSymbols: paramSymbols,
-                valueParameterHasDefaultValues: Array(repeating: false, count: paramSymbols.count),
+                valueParameterHasDefaultValues: parameters.map(\.hasDefault),
                 valueParameterIsVararg: Array(repeating: false, count: paramSymbols.count)
             ),
             for: funcSym
@@ -558,7 +558,8 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner
     ) {
-        // Throwing functions use the same ABI (outThrown pointer is handled by codegen).
+        // TODO(STDLIB-IO-ENC-001): Keep this wrapper as a seam for future throwing-specific
+        // ABI or signature metadata once a dedicated marker is introduced.
         registerBase64TopLevelFunction(
             named: name,
             externalLinkName: externalLinkName,
