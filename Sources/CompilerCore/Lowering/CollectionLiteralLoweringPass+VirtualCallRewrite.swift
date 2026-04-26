@@ -927,7 +927,7 @@ extension CollectionLiteralLoweringPass {
         {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-            emitHOFCall(
+            let hofResult = emitHOFCall(
                 kkName: lookup.kkSequenceRunningFoldIndexedName,
                 receiver: receiver,
                 arguments: [arguments[0]] + [arguments[1]] + [zeroExpr],
@@ -937,6 +937,7 @@ extension CollectionLiteralLoweringPass {
                 module: module,
                 loweredBody: &loweredBody
             )
+            if let result { listExprIDs.insert(result.rawValue); listExprIDs.insert(hofResult.rawValue) }
             return true
         }
 
