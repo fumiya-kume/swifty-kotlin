@@ -251,6 +251,62 @@ extension RandomSyntheticLinkTests {
         }
     }
 
+    /// nextUBytes(size/array/range) overloads are registered and linked correctly.
+    func testNextUBytesOverloadsAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fq = ["kotlin", "random", "Random", "nextUBytes"].map { interner.intern($0) }
+        let candidates = sema.symbols.lookupAll(fqName: fq)
+
+        func isUByteArray(_ type: TypeID) -> Bool {
+            guard case let .classType(classType) = sema.types.kind(of: type),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else { return false }
+            return interner.resolve(symbol.name) == "UByteArray"
+        }
+
+        let sizeOverload = candidates.first { id in
+            guard let sig = sema.symbols.functionSignature(for: id) else { return false }
+            return sig.parameterTypes == [sema.types.intType] && isUByteArray(sig.returnType)
+        }
+        let arrayOverload = candidates.first { id in
+            guard let sig = sema.symbols.functionSignature(for: id) else { return false }
+            return sig.parameterTypes.count == 1 &&
+                isUByteArray(sig.parameterTypes[0]) &&
+                isUByteArray(sig.returnType)
+        }
+        let rangeOverload = candidates.first { id in
+            guard let sig = sema.symbols.functionSignature(for: id) else { return false }
+            return sig.parameterTypes.count == 3 &&
+                isUByteArray(sig.parameterTypes[0]) &&
+                sig.parameterTypes[1] == sema.types.intType &&
+                sig.parameterTypes[2] == sema.types.intType &&
+                isUByteArray(sig.returnType)
+        }
+
+        XCTAssertNotNil(sizeOverload, "nextUBytes(size: Int) must be registered")
+        XCTAssertNotNil(arrayOverload, "nextUBytes(array: UByteArray) must be registered")
+        XCTAssertNotNil(rangeOverload, "nextUBytes(array, fromIndex, toIndex) must be registered")
+        if let sizeOverload,
+           let signature = sema.symbols.functionSignature(for: sizeOverload)
+        {
+            XCTAssertEqual(sema.symbols.externalLinkName(for: sizeOverload), "kk_random_nextUBytes_size")
+            XCTAssertTrue(signature.canThrow, "nextUBytes(size) must expose negative-size failures")
+        }
+        if let arrayOverload,
+           let signature = sema.symbols.functionSignature(for: arrayOverload)
+        {
+            XCTAssertEqual(sema.symbols.externalLinkName(for: arrayOverload), "kk_random_nextUBytes")
+            XCTAssertFalse(signature.canThrow)
+        }
+        if let rangeOverload,
+           let signature = sema.symbols.functionSignature(for: rangeOverload)
+        {
+            XCTAssertEqual(sema.symbols.externalLinkName(for: rangeOverload), "kk_random_nextUBytes_range")
+            XCTAssertTrue(signature.canThrow, "nextUBytes(array, fromIndex, toIndex) must expose bounds failures")
+        }
+    }
+
     // MARK: - nextBits member
 
     /// nextBits(bitCount: Int) is registered and linked to kk_random_nextBits.

@@ -316,6 +316,49 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        let uByteArrayType = makePrimitiveArrayType(
+            named: "UByteArray",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextUBytes",
+            externalLinkName: "kk_random_nextUBytes_size",
+            returnType: uByteArrayType,
+            parameters: [(name: "size", type: intType)],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextUBytes",
+            externalLinkName: "kk_random_nextUBytes",
+            returnType: uByteArrayType,
+            parameters: [(name: "array", type: uByteArrayType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextUBytes",
+            externalLinkName: "kk_random_nextUBytes_range",
+            returnType: uByteArrayType,
+            parameters: [
+                (name: "array", type: uByteArrayType),
+                (name: "fromIndex", type: intType),
+                (name: "toIndex", type: intType),
+            ],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticRandomMember(
             ownerSymbol: randomSymbol,
             ownerType: randomType,
@@ -720,6 +763,26 @@ extension DataFlowSemaPhase {
             }
         }
         return fqName
+    }
+
+    private func makePrimitiveArrayType(
+        named name: String,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
+        let symbol = ensureClassSymbol(
+            named: name,
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        return types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
+            nullability: .nonNull
+        )))
     }
 
     /// Build a `List<Int>` type, which is the internal representation of ByteArray.

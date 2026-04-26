@@ -208,6 +208,60 @@ extension CodegenBackendIntegrationTests {
                 true
                 true
                 true
+                true
+                true
+                """ + "\n"
+            )
+        }
+    }
+
+    func testCodegenCompilesRandomNextUBytesOverloads() throws {
+        let source = """
+        import kotlin.random.Random
+
+        fun main() {
+            val r = Random(7)
+            val sized = r.nextUBytes(4)
+            println(sized.size == 4)
+
+            val filled = ubyteArrayOf(1.toUByte(), 2.toUByte(), 3.toUByte())
+            val returned = r.nextUBytes(filled)
+            println(returned.size == 3)
+
+            val ranged = ubyteArrayOf(11.toUByte(), 22.toUByte(), 33.toUByte(), 44.toUByte(), 55.toUByte())
+            r.nextUBytes(ranged, 1, 4)
+            println(ranged[0] == 11.toUByte())
+            println(ranged[4] == 55.toUByte())
+
+            try {
+                r.nextUBytes(ranged, 3, 6)
+                println(false)
+            } catch (e: IllegalArgumentException) {
+                println(true)
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "RandomNextUBytesOverloads",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                true
+                true
+                true
+                true
+                true
                 """ + "\n"
             )
         }
