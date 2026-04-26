@@ -2576,6 +2576,12 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
+        let actionType = types.make(.functionType(FunctionType(
+            params: [typeParamType],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         let foldIndexedOperationType = types.make(.functionType(FunctionType(
             params: [types.intType, types.anyType, typeParamType],
             returnType: types.anyType,
@@ -2706,6 +2712,59 @@ extension DataFlowSemaPhase {
             typeParamSymbol: typeParamSymbol,
             symbols: symbols,
             interner: interner
+        )
+
+        // forEach(action: (T) -> Unit): Unit
+        registerSequenceMemberStub(
+            named: "forEach",
+            externalLinkName: "kk_sequence_forEach",
+            receiverType: receiverType,
+            parameters: [("action", actionType)],
+            returnType: types.unitType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // fold(initial: R, operation: (R, T) -> R): R
+        let foldName = interner.intern("fold")
+        let foldRName = interner.intern("R")
+        let foldRFQName = sequenceFQName + [foldName, foldRName]
+        let foldRSymbol: SymbolID = if let existing = symbols.lookup(fqName: foldRFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: foldRName,
+                fqName: foldRFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let foldRType = types.make(.typeParam(TypeParamType(symbol: foldRSymbol, nullability: .nonNull)))
+        let foldOperationType = types.make(.functionType(FunctionType(
+            params: [foldRType, typeParamType],
+            returnType: foldRType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerSequenceMemberStub(
+            named: "fold",
+            externalLinkName: "kk_sequence_fold",
+            receiverType: receiverType,
+            parameters: [("initial", foldRType), ("operation", foldOperationType)],
+            returnType: foldRType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            canThrow: true,
+            additionalTypeParameterSymbols: [foldRSymbol],
+            additionalTypeParameterUpperBoundsList: [[]]
         )
 
         // contains(element: T): Boolean

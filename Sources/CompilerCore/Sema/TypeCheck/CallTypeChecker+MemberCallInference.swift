@@ -1139,7 +1139,7 @@ extension CallTypeChecker {
             "map", "filter", "filterNot", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
             "fold", "foldRight", "reduce", "reduceOrNull", "reduceRight", "foldIndexed", "foldRightIndexed", "reduceIndexed", "reduceIndexedOrNull",
             "scan", "scanIndexed", "runningFold", "runningFoldIndexed", "runningReduce", "runningReduceIndexed", "scanReduce",
-            "groupBy", "groupingBy", "reduceTo", "sortedBy", "count", "first", "last", "find",
+            "groupBy", "groupingBy", "reduceTo", "sortedBy", "count", "first", "firstOrNull", "last", "find",
             "associateBy", "associateWith", "associate", "associateTo", "associateByTo", "associateWithTo", "groupByTo",
             "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo", "mapIndexedTo", "flatMapIndexedTo",
             "filterIndexedTo", "filterNotNullTo",
@@ -1724,7 +1724,7 @@ extension CallTypeChecker {
             }
             switch calleeStr {
             case "map", "filter", "filterNot", "filterKeys", "filterValues", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
-                 "count", "first", "last", "find", "associateBy", "associateWith", "associate",
+                 "count", "first", "firstOrNull", "last", "find", "associateBy", "associateWith", "associate",
                  "mapValues", "mapKeys", "takeWhile", "dropWhile", "onEach":
                 // any(), none(), count(), first(), last() can be called with no args
                 if args.isEmpty {
@@ -1732,6 +1732,7 @@ extension CallTypeChecker {
                     case "any", "none": resultType = sema.types.booleanType
                     case "count": resultType = sema.types.intType
                     case "first", "last": resultType = sema.types.makeNullable(collectionElementType)
+                    case "firstOrNull": resultType = sema.types.makeNullable(collectionElementType)
                     default: resultType = sema.types.anyType
                     }
                 } else {
@@ -1837,7 +1838,7 @@ extension CallTypeChecker {
                         }
                     case "any", "none", "all": resultType = sema.types.booleanType
                     case "count": resultType = sema.types.intType
-                    case "first", "last", "find": resultType = sema.types.makeNullable(collectionElementType)
+                    case "first", "firstOrNull", "last", "find": resultType = sema.types.makeNullable(collectionElementType)
                     case "associateBy":
                         if let mapSymbol = lookupStdlibSymbol("Map", symbols: sema.symbols, interner: interner) {
                             let keyType = inferredLambdaReturnType(

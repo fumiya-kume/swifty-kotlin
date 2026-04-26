@@ -3536,6 +3536,8 @@ extension CallLowerer {
                 let maxByOrNullName = interner.intern("maxByOrNull")
                 let minOfName = interner.intern("minOf")
                 let maxOfName = interner.intern("maxOf")
+                let foldName = interner.intern("fold")
+                let firstOrNullName = interner.intern("firstOrNull")
                 if calleeName == mapName {
                     runtimeCallee = "kk_sequence_map"
                 } else if calleeName == filterName {
@@ -3544,6 +3546,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_take"
                 } else if calleeName == forEachName {
                     runtimeCallee = "kk_sequence_forEach"
+                } else if calleeName == foldName {
+                    runtimeCallee = "kk_sequence_fold"
                 } else if calleeName == flatMapName {
                     runtimeCallee = "kk_sequence_flatMap"
                 } else if calleeName == dropName {
@@ -3594,6 +3598,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_maxOf"
                 } else if calleeName == interner.intern("find") {
                     runtimeCallee = "kk_sequence_find"
+                } else if calleeName == firstOrNullName {
+                    runtimeCallee = "kk_sequence_find"
                 } else if calleeName == interner.intern("findLast") {
                     runtimeCallee = "kk_sequence_findLast"
                 } else if calleeName == interner.intern("any") {
@@ -3635,6 +3641,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_associateWith"
                         || runtimeCallee == "kk_sequence_groupByTo"
                         || runtimeCallee == "kk_sequence_find"
+                        || runtimeCallee == "kk_sequence_fold"
                         || runtimeCallee == "kk_sequence_findLast"
                         || runtimeCallee == "kk_sequence_elementAt"
                         || runtimeCallee == "kk_sequence_minByOrNull"
@@ -7568,6 +7575,7 @@ extension CallLowerer {
             let firstName = interner.intern("first")
             let firstOrNullName = interner.intern("firstOrNull")
             let lastName = interner.intern("last")
+            let foldName = interner.intern("fold")
             let countName = interner.intern("count")
             switch internedMemberName {
             case mapName:
@@ -7580,6 +7588,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_to_list")
             case forEachName:
                 return interner.intern("kk_sequence_forEach")
+            case foldName:
+                return interner.intern("kk_sequence_fold")
             case flatMapName:
                 return interner.intern("kk_sequence_flatMap")
             case dropName:
