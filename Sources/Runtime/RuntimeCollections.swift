@@ -1920,30 +1920,28 @@ public func kk_uLongArray_asList(_ arrayRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(arrayViewOf: array))
 }
 
-/// UByteArray.asByteArray(): ByteArray copy with signed byte values.
+// MARK: - Unsigned primitive array to signed primitive array views
+//
+// Kotlin `asByteArray` / `asShortArray` (and the other width-matched pairs below) are
+// *views* on the same storage: the signed and unsigned array types re-use the same
+// underlying runtime array; mutations are shared and bit patterns are not reencoded.
+
+/// UByteArray.asByteArray(): ByteArray
 @_cdecl("kk_uByteArray_asByteArray")
 public func kk_uByteArray_asByteArray(_ arrayRaw: Int) -> Int {
-    guard let array = runtimeArrayBox(from: arrayRaw) else {
+    guard runtimeArrayBox(from: arrayRaw) != nil else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_uByteArray_asByteArray")
     }
-    let box = RuntimeArrayBox(length: array.elements.count)
-    for (i, value) in array.elements.enumerated() {
-        box.elements[i] = Int(Int8(truncatingIfNeeded: value))
-    }
-    return registerRuntimeObject(box)
+    return arrayRaw
 }
 
-/// UShortArray.asShortArray(): ShortArray copy with signed short values.
+/// UShortArray.asShortArray(): ShortArray
 @_cdecl("kk_uShortArray_asShortArray")
 public func kk_uShortArray_asShortArray(_ arrayRaw: Int) -> Int {
-    guard let array = runtimeArrayBox(from: arrayRaw) else {
+    guard runtimeArrayBox(from: arrayRaw) != nil else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_uShortArray_asShortArray")
     }
-    let box = RuntimeArrayBox(length: array.elements.count)
-    for (i, value) in array.elements.enumerated() {
-        box.elements[i] = Int(Int16(truncatingIfNeeded: value))
-    }
-    return registerRuntimeObject(box)
+    return arrayRaw
 }
 
 /// UIntArray.asIntArray(): IntArray view

@@ -31,22 +31,18 @@ final class RuntimeUnsignedArrayAsListTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(arrayElements(from: kk_array_copyOfRange(ulongRaw, 0, 1)), [1000])
     }
 
-    func testUnsignedPrimitiveArraySignedConversionsUseExpectedStorage() {
-        let ubyteRaw = makeRuntimeArray([1, 255])
+    func testUnsignedPrimitiveArraySignedViewsShareBackingStorage() {
+        let ubyteRaw = makeRuntimeArray([1, 2])
         let byteRaw = kk_uByteArray_asByteArray(ubyteRaw)
-        XCTAssertNotEqual(byteRaw, ubyteRaw)
-        XCTAssertEqual(arrayElements(from: byteRaw), [1, -1])
-        runtimeArrayBox(from: byteRaw)?.elements[1] = -2
-        XCTAssertEqual(arrayElements(from: byteRaw), [1, -2])
-        XCTAssertEqual(arrayElements(from: ubyteRaw), [1, 255])
+        XCTAssertEqual(byteRaw, ubyteRaw)
+        runtimeArrayBox(from: byteRaw)?.elements[1] = 127
+        XCTAssertEqual(arrayElements(from: ubyteRaw), [1, 127])
 
-        let ushortRaw = makeRuntimeArray([10, 65_535])
+        let ushortRaw = makeRuntimeArray([10, 20])
         let shortRaw = kk_uShortArray_asShortArray(ushortRaw)
-        XCTAssertNotEqual(shortRaw, ushortRaw)
-        XCTAssertEqual(arrayElements(from: shortRaw), [10, -1])
-        runtimeArrayBox(from: shortRaw)?.elements[0] = Int(Int16(truncatingIfNeeded: -2))
-        XCTAssertEqual(arrayElements(from: shortRaw), [Int(Int16(truncatingIfNeeded: -2)), -1])
-        XCTAssertEqual(arrayElements(from: ushortRaw), [10, 65_535])
+        XCTAssertEqual(shortRaw, ushortRaw)
+        runtimeArrayBox(from: shortRaw)?.elements[0] = 32_767
+        XCTAssertEqual(arrayElements(from: ushortRaw), [32_767, 20])
 
         let uintRaw = makeRuntimeArray([100, 200])
         let intRaw = kk_uIntArray_asIntArray(uintRaw)
