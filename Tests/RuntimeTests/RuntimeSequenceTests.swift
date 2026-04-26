@@ -939,6 +939,24 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(listElements(list), [1])
     }
 
+    func testSequenceRequireNoNullsPropagatesThroughEagerConsumers() throws {
+        let seq = makeSequence([1, runtimeNullSentinelInt, 3])
+        let checked = kk_sequence_requireNoNulls(seq)
+        var thrown = 0
+
+        let result = kk_sequence_zipWithNextTransform(
+            checked,
+            unsafeBitCast(sequenceAdjacentDifference, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, 0)
+        XCTAssertNotEqual(thrown, 0)
+        let box = try XCTUnwrap(throwableBox(from: thrown))
+        XCTAssertEqual(box.exceptionFQName, "kotlin.IllegalArgumentException")
+    }
+
     // MARK: - Sequence mutable conversions (STDLIB-SEQ-025)
 
     func testToMutableListReturnsIndependentCopy() {
