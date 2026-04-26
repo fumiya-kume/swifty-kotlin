@@ -42,6 +42,15 @@ extension DataFlowSemaPhase {
 
         symbols.setPropertyType(randomType, for: randomSymbol)
 
+        registerSyntheticRandomProperty(
+            ownerSymbol: randomSymbol,
+            name: "Default",
+            externalLinkName: "kk_random_default",
+            propertyType: randomType,
+            symbols: symbols,
+            interner: interner
+        )
+
         let intType = types.intType
         let longType = types.longType
         let floatType = types.floatType
@@ -561,6 +570,32 @@ extension DataFlowSemaPhase {
             ),
             for: memberSymbol
         )
+    }
+
+    private func registerSyntheticRandomProperty(
+        ownerSymbol: SymbolID,
+        name: String,
+        externalLinkName: String,
+        propertyType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerInfo.fqName + [propertyName]
+        let propertySymbol = symbols.lookup(fqName: propertyFQName) ?? symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+        symbols.setPropertyType(propertyType, for: propertySymbol)
     }
 
     private func ensureSyntheticPackage(

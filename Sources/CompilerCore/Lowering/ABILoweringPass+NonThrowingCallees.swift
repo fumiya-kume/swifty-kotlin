@@ -246,6 +246,7 @@ extension ABILoweringPass {
             interner.intern("kk_math_cosh_float"),
             interner.intern("kk_math_tanh_float"),
             interner.intern("kk_math_cbrt_float"),
+            interner.intern("kk_random_default"),
             interner.intern("kk_random_create_seeded"),
             interner.intern("kk_random_nextInt"),
             interner.intern("kk_random_nextLong"),

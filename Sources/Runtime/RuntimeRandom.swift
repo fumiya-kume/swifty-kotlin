@@ -185,6 +185,11 @@ public func kk_secure_random_next_bytes(_ receiver: Int, _ arrayRaw: Int) -> Int
 
 // MARK: - Random (STDLIB-165, STDLIB-514, STDLIB-515, STDLIB-516, STDLIB-653, STDLIB-654, STDLIB-655)
 
+@_cdecl("kk_random_default")
+public func kk_random_default() -> Int {
+    0
+}
+
 @_cdecl("kk_random_nextInt")
 public func kk_random_nextInt(_ receiver: Int) -> Int {
     if let box = seededBox(from: receiver) {
