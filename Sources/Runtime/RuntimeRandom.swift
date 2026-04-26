@@ -75,6 +75,10 @@ final class SeededRandomBox {
     func nextULongBits() -> UInt64 {
         nextBits()
     }
+
+    func nextUInt32Bits() -> UInt64 {
+        nextBits() & UInt64(UInt32.max)
+    }
 }
 
 // MARK: - SecureRandom (STDLIB-101)
@@ -154,6 +158,35 @@ private func runtimeRandomULongBelow(_ upperBound: UInt64, receiver: Int) -> UIn
 private func runtimeRandomULongRange(receiver: Int, from: UInt64, until: UInt64) -> UInt64 {
     let width = until &- from
     return from &+ runtimeRandomULongBelow(width, receiver: receiver)
+}
+
+private func uint32Payload(_ raw: Int) -> UInt64 {
+    UInt64(UInt(bitPattern: raw) & UInt(UInt32.max))
+}
+
+private func runtimeRandomUInt32Bits(receiver: Int) -> UInt64 {
+    if let box = seededBox(from: receiver) {
+        return box.nextUInt32Bits()
+    }
+    return UInt64(UInt32.random(in: UInt32.min ... UInt32.max))
+}
+
+private func runtimeRandomUIntBelow(_ upperBound: UInt64, receiver: Int) -> UInt64 {
+    precondition(upperBound > 0 && upperBound <= (UInt64(UInt32.max) + 1))
+    if upperBound == 1 {
+        return 0
+    }
+    let space = UInt64(UInt32.max) + 1
+    let rejectionLimit = space - (space % upperBound)
+    var candidate = runtimeRandomUInt32Bits(receiver: receiver)
+    while candidate >= rejectionLimit {
+        candidate = runtimeRandomUInt32Bits(receiver: receiver)
+    }
+    return candidate % upperBound
+}
+
+private func runtimeRandomUIntRange(receiver: Int, from: UInt64, until: UInt64) -> UInt64 {
+    from + runtimeRandomUIntBelow(until - from, receiver: receiver)
 }
 
 // MARK: - Constructor
@@ -347,6 +380,51 @@ public func kk_random_nextULong_ulongRange(_ receiver: Int, _ rangeRaw: Int, _ o
         ? runtimeRandomULongBits(receiver: receiver)
         : first &+ runtimeRandomULongBelow(width, receiver: receiver)
     return Int(bitPattern: UInt(truncatingIfNeeded: value))
+}
+
+@_cdecl("kk_random_nextUInt")
+public func kk_random_nextUInt(_ receiver: Int) -> Int {
+    Int(runtimeRandomUInt32Bits(receiver: receiver))
+}
+
+@_cdecl("kk_random_nextUInt_until")
+public func kk_random_nextUInt_until(_ receiver: Int, _ until: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let upper = uint32Payload(until)
+    guard upper > 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: 0..\(until).")
+        return 0
+    }
+    return Int(runtimeRandomUIntBelow(upper, receiver: receiver))
+}
+
+@_cdecl("kk_random_nextUInt_range")
+public func kk_random_nextUInt_range(_ receiver: Int, _ from: Int, _ until: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let lower = uint32Payload(from)
+    let upper = uint32Payload(until)
+    guard upper > lower else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: \(from)..\(until).")
+        return Int(lower)
+    }
+    return Int(runtimeRandomUIntRange(receiver: receiver, from: lower, until: upper))
+}
+
+@_cdecl("kk_random_nextUInt_uintRange")
+public func kk_random_nextUInt_uintRange(_ receiver: Int, _ rangeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random.nextUInt expected a UIntRange.")
+        return 0
+    }
+    let first = uint32Payload(range.first)
+    let last = uint32Payload(range.last)
+    guard range.step != 0, first <= last else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchElementException: Range is empty.")
+        return Int(first)
+    }
+    let exclusiveUpper = last == UInt64(UInt32.max) ? UInt64(UInt32.max) + 1 : last + 1
+    return Int(runtimeRandomUIntRange(receiver: receiver, from: first, until: exclusiveUpper))
 }
 
 @_cdecl("kk_random_nextFloat")

@@ -303,6 +303,7 @@ extension ABILoweringPass {
             interner.intern("kk_random_nextInt"),
             interner.intern("kk_random_nextLong"),
             interner.intern("kk_random_nextULong"),
+            interner.intern("kk_random_nextUInt"),
             interner.intern("kk_random_nextFloat"),
             interner.intern("kk_random_nextDouble"),
             interner.intern("kk_random_nextBoolean"),
