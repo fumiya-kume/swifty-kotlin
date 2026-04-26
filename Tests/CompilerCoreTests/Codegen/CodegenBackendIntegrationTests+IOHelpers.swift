@@ -32,6 +32,42 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenBuildStringCapacityProducesCorrectly() throws {
+        let source = """
+        fun main() {
+            val positional = buildString(16) {
+                append("hello")
+                append(" world")
+            }
+            val named = buildString(capacity = 4) {
+                append("cap")
+            }
+            println(positional)
+            println(named)
+            try {
+                println(buildString(-1) { append("bad") })
+            } catch (e: Throwable) {
+                println("caught")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "BuildStringCapacityRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "hello world\ncap\ncaught\n")
+        }
+    }
+
     func testCodegenPrintlnNoArgUsesRuntimeNewlineHelper() throws {
         let source = """
         fun main() {
