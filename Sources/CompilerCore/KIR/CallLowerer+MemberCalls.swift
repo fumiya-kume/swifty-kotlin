@@ -6162,21 +6162,43 @@ extension CallLowerer {
         interner: StringInterner
     ) -> Base64RuntimeReceiverKind? {
         let nonNullReceiver = sema.types.makeNonNullable(receiverType)
-        guard case let .classType(classType) = sema.types.kind(of: nonNullReceiver),
-              let symbol = sema.symbols.symbol(classType.classSymbol)
-        else {
+        switch sema.types.kind(of: nonNullReceiver) {
+        case let .classType(classType):
+            guard let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return nil
+            }
+
+            let fqName = symbol.fqName.map { interner.resolve($0) }
+            let base64FQName = ["kotlin", "io", "encoding", "Base64"]
+            if fqName == base64FQName {
+                return .instance
+            }
+            if let suffix = base64RuntimeVariantSuffix(forSymbol: classType.classSymbol, sema: sema, interner: interner) {
+                return .variant(suffix)
+            }
+            return nil
+        case let .typeParam(typeParam):
+            guard let base64Symbol = sema.symbols.lookup(fqName: ["kotlin", "io", "encoding", "Base64"]),
+                  let base64Info = sema.symbols.symbol(base64Symbol),
+                  base64Info.kind == .class
+            else {
+                return nil
+            }
+            let base64Type = sema.types.make(.classType(ClassType(
+                classSymbol: base64Symbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            guard sema.symbols.typeParameterUpperBounds(for: typeParam.symbol).contains(where: {
+                sema.types.isSubtype(sema.types.makeNonNullable($0), base64Type)
+            }) else {
+                return nil
+            }
+            return .instance
+        default:
             return nil
         }
-
-        let fqName = symbol.fqName.map { interner.resolve($0) }
-        let base64FQName = ["kotlin", "io", "encoding", "Base64"]
-        if fqName == base64FQName {
-            return .instance
-        }
-        if let suffix = base64RuntimeVariantSuffix(forSymbol: classType.classSymbol, sema: sema, interner: interner) {
-            return .variant(suffix)
-        }
-        return nil
     }
 
     private func base64RuntimeVariantSuffix(
