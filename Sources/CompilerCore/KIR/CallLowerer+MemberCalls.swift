@@ -6069,7 +6069,18 @@ extension CallLowerer {
                 paddingArg = arena.appendExpr(.intLiteral(Int64(rawValue)), type: sema.types.intType)
                 instructions.append(.constValue(result: paddingArg, value: .intLiteral(Int64(rawValue))))
             } else {
-                paddingArg = loweredArgIDs[0]
+                paddingArg = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: sema.types.intType
+                )
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_unbox_int"),
+                    arguments: [loweredArgIDs[0]],
+                    result: paddingArg,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
             }
             switch receiverKind {
             case .variant(let suffix):
@@ -6160,7 +6171,7 @@ extension CallLowerer {
         let fqName = symbol.fqName.map { interner.resolve($0) }
         let base64FQName = ["kotlin", "io", "encoding", "Base64"]
         if fqName == base64FQName {
-            return nil
+            return .instance
         }
         if let suffix = base64RuntimeVariantSuffix(forSymbol: classType.classSymbol, sema: sema, interner: interner) {
             return .variant(suffix)
