@@ -47,7 +47,7 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
-        registerBase64VariantObjects(
+        let variantSymbols = registerBase64VariantObjects(
             base64Symbol: base64Symbol,
             symbols: symbols,
             types: types,
@@ -118,6 +118,81 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        for (variant, suffix) in [
+            ("Default", "default"),
+            ("UrlSafe", "urlsafe"),
+            ("Mime", "mime"),
+            ("Pem", "mime"),
+        ] {
+            guard let variantSymbol = variantSymbols[variant] else { continue }
+            let variantType = types.make(.classType(ClassType(
+                classSymbol: variantSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+
+            registerBase64MemberFunction(
+                named: "encode",
+                externalLinkName: "kk_base64_encode_\(suffix)",
+                ownerSymbol: variantSymbol,
+                receiverType: variantType,
+                parameters: [
+                    ("source", byteArrayType),
+                ],
+                returnType: stringType,
+                symbols: symbols,
+                interner: interner
+            )
+            registerBase64MemberFunction(
+                named: "decode",
+                externalLinkName: "kk_base64_decode_\(suffix)",
+                ownerSymbol: variantSymbol,
+                receiverType: variantType,
+                parameters: [
+                    ("source", stringType),
+                ],
+                returnType: byteArrayType,
+                symbols: symbols,
+                interner: interner
+            )
+            registerBase64MemberFunction(
+                named: "encodeToByteArray",
+                externalLinkName: "kk_base64_encodeToByteArray_\(suffix)",
+                ownerSymbol: variantSymbol,
+                receiverType: variantType,
+                parameters: [
+                    ("source", byteArrayType),
+                ],
+                returnType: byteArrayType,
+                symbols: symbols,
+                interner: interner
+            )
+            registerBase64MemberFunction(
+                named: "decodeFromByteArray",
+                externalLinkName: "kk_base64_decodeFromByteArray_\(suffix)",
+                ownerSymbol: variantSymbol,
+                receiverType: variantType,
+                parameters: [
+                    ("source", byteArrayType),
+                ],
+                returnType: byteArrayType,
+                symbols: symbols,
+                interner: interner
+            )
+            registerBase64MemberFunction(
+                named: "withPadding",
+                externalLinkName: "kk_base64_withPadding_\(suffix)",
+                ownerSymbol: variantSymbol,
+                receiverType: variantType,
+                parameters: [
+                    ("option", paddingOptionType),
+                ],
+                returnType: base64Type,
+                symbols: symbols,
+                interner: interner
+            )
+        }
 
         // PaddingOption is passed as a raw Int (enum ordinal) across the ABI.
         // We model it as Int in function signatures to keep the ABI simple.
@@ -247,7 +322,8 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
-    ) {
+    ) -> [String: SymbolID] {
+        var variantSymbols: [String: SymbolID] = [:]
         for variant in ["Default", "UrlSafe", "Mime", "Pem"] {
             let objectSymbol = ensureBase64VariantObject(
                 named: variant,
@@ -257,7 +333,9 @@ extension DataFlowSemaPhase {
             )
             symbols.setDirectSupertypes([base64Symbol], for: objectSymbol)
             types.setNominalDirectSupertypes([base64Symbol], for: objectSymbol)
+            variantSymbols[variant] = objectSymbol
         }
+        return variantSymbols
     }
 
     private func ensureBase64VariantObject(

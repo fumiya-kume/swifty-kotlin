@@ -1668,11 +1668,18 @@ extension CallLowerer {
             )
         }()
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+        let chosenBase64Callee: SymbolID? = {
+            guard let selected = sema.bindings.callBindings[exprID]?.chosenCallee, selected != .invalid else {
+                return nil
+            }
+            return selected
+        }()
 
         if tryLowerBase64MemberCall(
             receiverExpr: receiverExpr,
             loweredReceiverID: loweredReceiverID,
             calleeName: calleeName,
+            chosenCallee: chosenBase64Callee,
             argExprIDs: args.map(\.expr),
             loweredArgIDs: loweredArgIDs,
             argInstructionStart: argInstructionStart,
@@ -6029,6 +6036,7 @@ extension CallLowerer {
         receiverExpr: ExprID,
         loweredReceiverID: KIRExprID,
         calleeName: InternedString,
+        chosenCallee: SymbolID?,
         argExprIDs: [ExprID],
         loweredArgIDs: [KIRExprID],
         argInstructionStart: Int,
@@ -6038,7 +6046,15 @@ extension CallLowerer {
         interner: StringInterner,
         instructions: inout [KIRInstruction]
     ) -> Bool {
+        let isResolvedBase64SyntheticMember = chosenCallee.map {
+            isBase64SyntheticMemberSymbol(
+                $0,
+                sema: sema,
+                interner: interner
+            )
+        } ?? true
         guard loweredArgIDs.count == 1,
+              isResolvedBase64SyntheticMember,
               let receiverType = sema.bindings.exprTypes[receiverExpr],
               let receiverKind = base64RuntimeReceiverKind(
                   for: receiverType,
@@ -6149,6 +6165,30 @@ extension CallLowerer {
         return true
     }
 
+    private func isBase64SyntheticMemberSymbol(
+        _ symbol: SymbolID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard let symbolInfo = sema.symbols.symbol(symbol),
+              symbolInfo.flags.contains(.synthetic),
+              let ownerSymbol = sema.symbols.parentSymbol(for: symbol),
+              let ownerInfo = sema.symbols.symbol(ownerSymbol),
+              ownerInfo.kind == .class || ownerInfo.kind == .object,
+              let externalLink = sema.symbols.externalLinkName(for: symbol),
+              externalLink.hasPrefix("kk_base64_"),
+              !externalLink.hasSuffix("_fn")
+        else {
+            return false
+        }
+
+        let ownerFQName = ownerInfo.fqName.map { interner.resolve($0) }
+        let base64FQName = ["kotlin", "io", "encoding", "Base64"]
+        return ownerFQName == base64FQName
+            || (ownerFQName.count == base64FQName.count + 1
+                && Array(ownerFQName.prefix(base64FQName.count)) == base64FQName)
+    }
+
     private enum Base64RuntimeReceiverKind {
         case variant(String)
         case instance
@@ -6179,7 +6219,12 @@ extension CallLowerer {
             }
             return nil
         case let .typeParam(typeParam):
-            guard let base64Symbol = sema.symbols.lookup(fqName: ["kotlin", "io", "encoding", "Base64"]),
+            guard let base64Symbol = sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("io"),
+                interner.intern("encoding"),
+                interner.intern("Base64"),
+            ]),
                   let base64Info = sema.symbols.symbol(base64Symbol),
                   base64Info.kind == .class
             else {
