@@ -587,6 +587,31 @@ public func kk_duration_parseOrNull(_ valueRaw: Int) -> Int {
     return runtimeDurationHandle(fromNanoseconds: nanoseconds)
 }
 
+@_cdecl("kk_duration_parseIsoString")
+public func kk_duration_parseIsoString(_ valueRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let value = runtimeDurationString(from: valueRaw),
+          let nanoseconds = runtimeDurationParseISO(value)
+    else {
+        let displayValue = runtimeDurationString(from: valueRaw) ?? "<null>"
+        outThrown?.pointee = runtimeAllocateIllegalArgumentException(
+            message: "Invalid ISO duration string format: '\(displayValue)'."
+        )
+        return runtimeNullSentinelInt
+    }
+    return runtimeDurationHandle(fromNanoseconds: nanoseconds)
+}
+
+@_cdecl("kk_duration_parseIsoStringOrNull")
+public func kk_duration_parseIsoStringOrNull(_ valueRaw: Int) -> Int {
+    guard let value = runtimeDurationString(from: valueRaw),
+          let nanoseconds = runtimeDurationParseISO(value)
+    else {
+        return runtimeNullSentinelInt
+    }
+    return runtimeDurationHandle(fromNanoseconds: nanoseconds)
+}
+
 // MARK: - Duration advanced operations (STDLIB-TIME-082)
 
 @_cdecl("kk_duration_absoluteValue")

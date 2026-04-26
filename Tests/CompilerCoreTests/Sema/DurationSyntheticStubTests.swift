@@ -108,5 +108,29 @@ final class DurationSyntheticStubTests: XCTestCase {
                 && signature.returnType == sema.types.makeNullable(durationType)
         })
         XCTAssertEqual(sema.symbols.externalLinkName(for: parseOrNullSymbol), "kk_duration_parseOrNull")
+
+        let parseIsoFQName = companionFQName + [interner.intern("parseIsoString")]
+        let parseIsoSymbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: parseIsoFQName).first { symbolID in
+            guard let signature = sema.symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.parameterTypes == [sema.types.stringType]
+                && signature.returnType == durationType
+        })
+        XCTAssertEqual(sema.symbols.externalLinkName(for: parseIsoSymbol), "kk_duration_parseIsoString")
+        XCTAssertTrue(
+            sema.symbols.symbol(parseIsoSymbol)?.flags.contains(.throwingFunction) == true,
+            "Duration.parseIsoString should use the thrown channel for invalid input"
+        )
+
+        let parseIsoOrNullFQName = companionFQName + [interner.intern("parseIsoStringOrNull")]
+        let parseIsoOrNullSymbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: parseIsoOrNullFQName).first { symbolID in
+            guard let signature = sema.symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.parameterTypes == [sema.types.stringType]
+                && signature.returnType == sema.types.makeNullable(durationType)
+        })
+        XCTAssertEqual(sema.symbols.externalLinkName(for: parseIsoOrNullSymbol), "kk_duration_parseIsoStringOrNull")
     }
 }

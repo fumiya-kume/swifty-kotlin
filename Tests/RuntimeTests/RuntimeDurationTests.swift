@@ -457,6 +457,21 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(invalid, runtimeNullSentinelInt)
     }
 
+    func testParseIsoStringRejectsDefaultFormat() {
+        var thrown = 0
+        let parsed = kk_duration_parseIsoString(stringHandle("1h 30m"), &thrown)
+        XCTAssertEqual(parsed, runtimeNullSentinelInt)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testParseIsoStringOrNullAcceptsOnlyIsoFormat() {
+        let valid = kk_duration_parseIsoStringOrNull(stringHandle("P1DT2H3M4.005S"))
+        XCTAssertEqual(kk_duration_inWholeSeconds(valid), 93_784)
+
+        let invalid = kk_duration_parseIsoStringOrNull(stringHandle("1h 30m"))
+        XCTAssertEqual(invalid, runtimeNullSentinelInt)
+    }
+
     // MARK: - Multiple independent durations
 
     func testMultipleDurationsAreIndependent() {

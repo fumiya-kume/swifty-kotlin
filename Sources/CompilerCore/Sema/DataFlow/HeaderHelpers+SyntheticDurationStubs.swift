@@ -78,6 +78,27 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerDurationCompanionMethod(
+            named: "parseIsoString",
+            externalLinkName: "kk_duration_parseIsoString",
+            ownerSymbol: durationCompanionSymbol,
+            parameterTypes: [stringType],
+            returnType: durationType,
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationCompanionMethod(
+            named: "parseIsoStringOrNull",
+            externalLinkName: "kk_duration_parseIsoStringOrNull",
+            ownerSymbol: durationCompanionSymbol,
+            parameterTypes: [stringType],
+            returnType: types.makeNullable(durationType),
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-582/583/584: Duration.inWhole* properties ---
         registerDurationMemberProperty(
             named: "inWholeMilliseconds",

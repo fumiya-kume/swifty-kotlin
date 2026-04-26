@@ -15,7 +15,6 @@ import XCTest
 //   - Comparison operators: < > <= >= on Duration (compareTo-desugared)
 //
 // Known gaps (not yet lowered in this compiler):
-//   - parseIsoString() / parseIsoStringOrNull()
 //   - toComponents { days, hours, minutes, seconds, nanoseconds -> ... }
 
 extension CodegenBackendIntegrationTests {
@@ -320,6 +319,33 @@ extension CodegenBackendIntegrationTests {
                 true
                 """ + "\n"
             )
+        }
+    }
+
+    func testDurationStableParseIsoString() throws {
+        let source = """
+        import kotlin.time.Duration
+
+        fun main() {
+            println(Duration.parseIsoString("P1DT2H3M4.005S").inWholeSeconds)
+            println(Duration.parseIsoStringOrNull("PT1H30M") == null)
+            println(Duration.parseIsoStringOrNull("1h 30m") == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "DurationStableParseIsoString",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "93784\nfalse\ntrue\n")
         }
     }
 
