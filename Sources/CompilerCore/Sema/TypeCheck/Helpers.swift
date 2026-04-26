@@ -126,7 +126,7 @@ struct TypeCheckHelpers {
              "LongRange", "LongProgression",
              "UIntRange", "UIntProgression",
              "ULongRange", "ULongProgression",
-             "CharRange":
+             "CharRange", "CharProgression":
             return true
         default:
             return false
@@ -186,6 +186,8 @@ struct TypeCheckHelpers {
                 return sema.types.uintType
             case "ULongRange", "ULongProgression":
                 return sema.types.ulongType
+            case "CharRange", "CharProgression":
+                return sema.types.charType
             default:
                 break
             }
