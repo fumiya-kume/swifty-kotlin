@@ -25,20 +25,6 @@ final class RuntimeUnsignedArrayAsListTests: IsolatedRuntimeXCTestCase {
         runtimeListBox(from: raw)?.elements ?? []
     }
 
-    func testUnsignedPrimitiveArrayCopyOfRangeCopiesElements() {
-        let ubyteRaw = makeRuntimeArray([1, 2, 3, 4])
-        XCTAssertEqual(arrayElements(from: kk_array_copyOfRange(ubyteRaw, 1, 3)), [2, 3])
-
-        let ushortRaw = makeRuntimeArray([10, 20, 30, 40])
-        XCTAssertEqual(arrayElements(from: kk_array_copyOfRange(ushortRaw, 0, 2)), [10, 20])
-
-        let uintRaw = makeRuntimeArray([100, 200, 300])
-        XCTAssertEqual(arrayElements(from: kk_array_copyOfRange(uintRaw, 1, 3)), [200, 300])
-
-        let ulongRaw = makeRuntimeArray([1000, 2000, 3000])
-        XCTAssertEqual(arrayElements(from: kk_array_copyOfRange(ulongRaw, 0, 1)), [1000])
-    }
-
     func testUnsignedPrimitiveArraySignedViewsShareBackingStorage() {
         let ubyteRaw = makeRuntimeArray([1, 2])
         let byteRaw = kk_uByteArray_asByteArray(ubyteRaw)
@@ -160,5 +146,29 @@ final class RuntimeUnsignedArrayAsListTests: IsolatedRuntimeXCTestCase {
 
         let shrunkRaw = kk_array_copyOf_newSize_init(arrayRaw, 1, fnPtr, 0, nil)
         XCTAssertEqual(arrayElements(from: shrunkRaw), [7])
+    }
+
+    func testUnsignedPrimitiveArrayCopyOfRangeCopiesElements() {
+        let ubyteRaw = makeRuntimeArray([1, 2, 3])
+        let ubyteCopy = kk_array_copyOfRange(ubyteRaw, 1, 3)
+        XCTAssertNotEqual(ubyteCopy, ubyteRaw)
+        XCTAssertEqual(arrayElements(from: ubyteCopy), [2, 3])
+
+        let ushortRaw = makeRuntimeArray([10, 20, 30])
+        let ushortCopy = kk_array_copyOfRange(ushortRaw, 0, 2)
+        XCTAssertNotEqual(ushortCopy, ushortRaw)
+        XCTAssertEqual(arrayElements(from: ushortCopy), [10, 20])
+
+        let uintRaw = makeRuntimeArray([100, 200, 300])
+        let uintCopy = kk_array_copyOfRange(uintRaw, 1, 3)
+        runtimeArrayBox(from: uintCopy)?.elements[0] = 900
+        XCTAssertEqual(arrayElements(from: uintRaw), [100, 200, 300])
+        XCTAssertEqual(arrayElements(from: uintCopy), [900, 300])
+
+        let ulongRaw = makeRuntimeArray([1000, 2000, 3000])
+        let ulongCopy = kk_array_copyOfRange(ulongRaw, 0, 2)
+        runtimeArrayBox(from: ulongCopy)?.elements[1] = 9000
+        XCTAssertEqual(arrayElements(from: ulongRaw), [1000, 2000, 3000])
+        XCTAssertEqual(arrayElements(from: ulongCopy), [1000, 9000])
     }
 }

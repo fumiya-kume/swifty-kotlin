@@ -9560,6 +9560,50 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // Register copyOfRange(fromIndex, toIndex) for unsigned primitive arrays.
+        for name in unsignedPrimitiveArrayNames {
+            let primName = interner.intern(name)
+            let fqName = kotlinPkg + [primName]
+            guard let arraySymbol = symbols.lookup(fqName: fqName) else {
+                continue
+            }
+
+            let copyOfRangeName = interner.intern("copyOfRange")
+            let copyOfRangeFQName = fqName + [copyOfRangeName]
+            if symbols.lookup(fqName: copyOfRangeFQName) == nil {
+                let copyOfRangeSym = symbols.define(
+                    kind: .function,
+                    name: copyOfRangeName,
+                    fqName: copyOfRangeFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(arraySymbol, for: copyOfRangeSym)
+                symbols.setExternalLinkName("kk_array_copyOfRange", for: copyOfRangeSym)
+
+                let arrayType = types.make(.classType(ClassType(
+                    classSymbol: arraySymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: arrayType,
+                        parameterTypes: [types.intType, types.intType],
+                        returnType: arrayType,
+                        isSuspend: false,
+                        valueParameterSymbols: [],
+                        valueParameterHasDefaultValues: [],
+                        valueParameterIsVararg: [],
+                        typeParameterSymbols: []
+                    ),
+                    for: copyOfRangeSym
+                )
+            }
+        }
+
         // Register binarySearch(element, fromIndex, toIndex) for primitive arrays.
         for name in primitiveArrayNames {
             let primName = interner.intern(name)
