@@ -109,6 +109,43 @@ final class ComparisonSyntheticTopLevelTests: XCTestCase {
         }
     }
 
+    func testCompareByDescendingComparatorSelectorResolvesToSyntheticFunction() throws {
+        let source = """
+        fun sample() {
+            val cmp = compareByDescending<String, Int>(compareBy<Int> { it }) { it.length }
+            println(listOf("pear", "fig", "apple").sortedWith(cmp))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let interner = ctx.interner
+
+            let callExpr = try XCTUnwrap(
+                firstExprID(in: ast) { _, expr in
+                    guard case let .call(calleeExpr, args, _, _) = expr,
+                          args.count == 2,
+                          case let .nameRef(calleeName, _) = ast.arena.expr(calleeExpr)
+                    else {
+                        return false
+                    }
+                    return interner.resolve(calleeName) == "compareByDescending"
+                },
+                "Expected compareByDescending(comparator, selector) call"
+            )
+
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenCallee),
+                "kk_comparator_from_comparator_selector_descending"
+            )
+        }
+    }
+
     // STDLIB-614: 3-arg minOf / maxOf overloads
     func testThreeArgMaxOfMinOfResolveToSyntheticComparisonFunctions() throws {
         let source = """

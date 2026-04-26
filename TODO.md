@@ -173,7 +173,7 @@
 - [ ] STDLIB-COMP-002: `Comparator` 合成の sema / lowering を整える
 - [ ] STDLIB-COMP-003: `Comparator` runtime と failure path を固定
 - [ ] STDLIB-COMP-004: `compareBy(comparator, selector)` overload を追加する
-- [ ] STDLIB-COMP-005: `compareByDescending(comparator, selector)` overload を追加する
+- [x] STDLIB-COMP-005: `compareByDescending(comparator, selector)` overload を追加する
 - [ ] STDLIB-COMP-006: `compareBy(vararg selectors)` の一般 vararg surface を追加する（現状は 1/2/3 selector special-case のみ）
 - [ ] STDLIB-COMP-007: `compareValuesBy(a, b, comparator, selector)` overload を追加する
 - [ ] STDLIB-COMP-008: `compareValuesBy(a, b, vararg selectors)` の一般 vararg surface を追加する（現状は 1/2/3 selector special-case のみ）
