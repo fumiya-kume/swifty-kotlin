@@ -1096,6 +1096,9 @@ extension CallTypeChecker {
         if memberName == interner.intern("flatMapIndexed") {
             return isSequenceReceiver
         }
+        if memberName == interner.intern("requireNoNulls") {
+            return isSequenceReceiver
+        }
         return collectionMembers.contains(memberName)
     }
 
@@ -1172,7 +1175,7 @@ extension CallTypeChecker {
             return (0 ... 3).contains(argCount)
         case interner.intern("shuffled"):
             return argCount == 0 || argCount == 1
-        case interner.intern("filterNotNull"), interner.intern("unzip"), interner.intern("eachCount"):
+        case interner.intern("filterNotNull"), interner.intern("requireNoNulls"), interner.intern("unzip"), interner.intern("eachCount"):
             return argCount == 0
         case interner.intern("get"), interner.intern("getOrNull"), interner.intern("elementAtOrNull"),
              interner.intern("contains"), interner.intern("containsAll"), interner.intern("indexOf"), interner.intern("lastIndexOf"), interner.intern("indexOfFirst"), interner.intern("indexOfLast"), interner.intern("binarySearch"),
