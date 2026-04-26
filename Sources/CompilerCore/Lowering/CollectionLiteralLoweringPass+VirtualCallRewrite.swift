@@ -937,7 +937,7 @@ extension CollectionLiteralLoweringPass {
                 module: module,
                 loweredBody: &loweredBody
             )
-            if let result { listExprIDs.insert(result.rawValue); listExprIDs.insert(hofResult.rawValue) }
+            if let result { sequenceExprIDs.insert(result.rawValue); sequenceExprIDs.insert(hofResult.rawValue) }
             return true
         }
 

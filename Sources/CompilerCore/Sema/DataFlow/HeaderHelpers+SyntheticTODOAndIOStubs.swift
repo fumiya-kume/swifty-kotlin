@@ -2974,54 +2974,6 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // runningFoldIndexed(initial, operation): List<R>
-        do {
-            let memberName = interner.intern("runningFoldIndexed")
-            let memberFQName = sequenceFQName + [memberName]
-            if symbols.lookup(fqName: memberFQName) == nil {
-                let rName = interner.intern("R")
-                let rFQName = memberFQName + [rName]
-                let rSymbol = symbols.define(
-                    kind: .typeParameter,
-                    name: rName,
-                    fqName: rFQName,
-                    declSite: nil,
-                    visibility: .private,
-                    flags: []
-                )
-                let rType = types.make(.typeParam(TypeParamType(
-                    symbol: rSymbol,
-                    nullability: .nonNull
-                )))
-                let operationType = types.make(.functionType(FunctionType(
-                    params: [types.intType, rType, typeParamType],
-                    returnType: rType,
-                    isSuspend: false,
-                    nullability: .nonNull
-                )))
-                let listRReturnType = nominalCollectionType([
-                    interner.intern("kotlin"),
-                    interner.intern("collections"),
-                    interner.intern("List"),
-                ], elementType: rType)
-                registerSequenceMemberStub(
-                    named: "runningFoldIndexed",
-                    externalLinkName: "kk_sequence_runningFoldIndexed",
-                    receiverType: receiverType,
-                    parameters: [("initial", rType), ("operation", operationType)],
-                    returnType: listRReturnType,
-                    sequenceSymbol: sequenceSymbol,
-                    sequenceFQName: sequenceFQName,
-                    typeParamSymbol: typeParamSymbol,
-                    symbols: symbols,
-                    interner: interner,
-                    canThrow: true,
-                    additionalTypeParameterSymbols: [rSymbol],
-                    additionalTypeParameterUpperBoundsList: [[]]
-                )
-            }
-        }
-
         // reduceIndexed(operation): T
         registerSequenceMemberStub(
             named: "reduceIndexed",

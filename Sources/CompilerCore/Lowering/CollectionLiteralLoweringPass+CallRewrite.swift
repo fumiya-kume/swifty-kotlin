@@ -4133,8 +4133,8 @@ extension CollectionLiteralLoweringPass {
                             if let result {
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
-                            listExprIDs.insert(hofResult.rawValue)
-                            if let result { listExprIDs.insert(result.rawValue) }
+                            sequenceExprIDs.insert(hofResult.rawValue)
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
