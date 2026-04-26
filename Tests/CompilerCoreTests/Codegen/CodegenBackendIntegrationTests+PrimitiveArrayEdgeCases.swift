@@ -489,6 +489,56 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    // MARK: - copyOf(newSize, init) for unsigned primitive arrays
+
+    func testUnsignedPrimitiveArrayCopyOfNewSizeAndInit() throws {
+        let source = """
+        fun main() {
+            val ubytes = ubyteArrayOf()
+            val ubyteGrow = ubytes.copyOf(2)
+            println(ubyteGrow.size)
+
+            val ushorts = ushortArrayOf()
+            val ushortGrow = ushorts.copyOf(1)
+            println(ushortGrow.size)
+
+            val uints = uintArrayOf(10u, 20u)
+            val uintGrow = uints.copyOf(4) { 700u }
+            println(uintGrow.size)
+            println(uintGrow[0])
+            println(uintGrow[1])
+            println(uintGrow[2])
+            println(uintGrow[3])
+            uintGrow[0] = 99u
+            println(uints[0])
+
+            val uintShrink = uints.copyOf(1)
+            println(uintShrink.size)
+            println(uintShrink[0])
+
+            val ulongs = ulongArrayOf(100uL)
+            val ulongGrow = ulongs.copyOf(3) { 9000uL }
+            println(ulongGrow[0])
+            println(ulongGrow[1])
+            println(ulongGrow[2])
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "UnsignedPrimitiveArrayCopyOfNewSizeAndInit",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "2\n1\n4\n10\n20\n700\n700\n10\n1\n10\n100\n9000\n9000\n")
+        }
+    }
+
     // MARK: - toIntArray from List round-trip
 
     func testListToIntArrayRoundTrip() throws {

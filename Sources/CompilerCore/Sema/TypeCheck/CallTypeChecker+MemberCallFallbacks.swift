@@ -2687,39 +2687,50 @@ extension CallTypeChecker {
                     )
                 }
             }
-        } else if let expectation = arrayMemberLambdaExpectation(
-            memberName: memberName,
-            argCount: args.count,
-            receiverElementType: receiverElementType,
-            sema: sema
-        ),
-            args.indices.contains(expectation.argumentIndex)
-        {
-            let lambdaArgExpr = args[expectation.argumentIndex].expr
-            if let lambdaExpr = ctx.ast.arena.expr(lambdaArgExpr), lambdaExpr.isLambdaOrCallableRef {
-                sema.bindings.markCollectionHOFLambdaExpr(lambdaArgExpr)
+        } else {
+            if memberName == "copyOf", args.indices.contains(0) {
+                _ = driver.inferExpr(
+                    args[0].expr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: sema.types.intType
+                )
             }
-            _ = driver.inferExpr(
-                lambdaArgExpr,
-                ctx: ctx,
-                locals: &locals,
-                expectedType: expectation.expectedType
-            )
-        } else if memberName == "binarySearch", args.count == 4,
-                  let comparatorSymbol = sema.symbols.lookup(fqName: [
-                      interner.intern("kotlin"),
-                      interner.intern("Comparator"),
-                  ])
-        {
-            let comparatorExpectedType = sema.types.make(.classType(ClassType(
-                classSymbol: comparatorSymbol,
-                args: [.invariant(receiverElementType)],
-                nullability: .nonNull
-            )))
-            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: receiverElementType)
-            _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: comparatorExpectedType)
-            _ = driver.inferExpr(args[2].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
-            _ = driver.inferExpr(args[3].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+            if let expectation = arrayMemberLambdaExpectation(
+                memberName: memberName,
+                argCount: args.count,
+                receiverElementType: receiverElementType,
+                sema: sema
+            ),
+                args.indices.contains(expectation.argumentIndex)
+            {
+                let lambdaArgExpr = args[expectation.argumentIndex].expr
+                if let lambdaExpr = ctx.ast.arena.expr(lambdaArgExpr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(lambdaArgExpr)
+                }
+                _ = driver.inferExpr(
+                    lambdaArgExpr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: expectation.expectedType
+                )
+            }
+            if memberName == "binarySearch", args.count == 4,
+               let comparatorSymbol = sema.symbols.lookup(fqName: [
+                   interner.intern("kotlin"),
+                   interner.intern("Comparator"),
+               ])
+            {
+                let comparatorExpectedType = sema.types.make(.classType(ClassType(
+                    classSymbol: comparatorSymbol,
+                    args: [.invariant(receiverElementType)],
+                    nullability: .nonNull
+                )))
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: receiverElementType)
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: comparatorExpectedType)
+                _ = driver.inferExpr(args[2].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+                _ = driver.inferExpr(args[3].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+            }
         }
 
         // Mark result as collection if it returns a List
@@ -2727,7 +2738,13 @@ extension CallTypeChecker {
             sema.bindings.markCollectionExpr(id)
         }
 
-        let resultType = arrayMemberResultType(memberName: memberName, elementType: receiverElementType, sema: sema, interner: interner)
+        let resultType = arrayMemberResultType(
+            memberName: memberName,
+            receiverID: receiverID,
+            elementType: receiverElementType,
+            sema: sema,
+            interner: interner
+        )
         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
@@ -2747,8 +2764,10 @@ extension CallTypeChecker {
 
     private func isValidArrayMemberArity(_ memberName: String, argCount: Int) -> Bool {
         switch memberName {
-        case "toList", "toMutableList", "copyOf", "size", "isEmpty", "concatToString":
+        case "toList", "toMutableList", "size", "isEmpty", "concatToString":
             argCount == 0
+        case "copyOf":
+            (0...2).contains(argCount)
         case "map", "filter", "forEach", "any", "none", "fill", "get", "contains":
             argCount == 1
         case "binarySearch":
@@ -2764,7 +2783,13 @@ extension CallTypeChecker {
         ["toList", "toMutableList", "map", "filter", "copyOf", "copyOfRange"].contains(memberName)
     }
 
-    private func arrayMemberResultType(memberName: String, elementType: TypeID, sema: SemaModule, interner: StringInterner) -> TypeID {
+    private func arrayMemberResultType(
+        memberName: String,
+        receiverID: ExprID,
+        elementType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID {
         switch memberName {
         case "size":
             return sema.types.intType
@@ -2778,6 +2803,11 @@ extension CallTypeChecker {
             return sema.types.stringType
         case "get":
             return elementType
+        case "copyOf", "copyOfRange":
+            let receiverType = sema.bindings.exprTypes[receiverID]
+                ?? sema.bindings.identifierSymbol(for: receiverID).flatMap { sema.symbols.propertyType(for: $0) }
+                ?? sema.types.anyType
+            return sema.types.makeNonNullable(receiverType)
         case "toList":
             if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
                 return sema.types.make(.classType(ClassType(
@@ -2824,6 +2854,15 @@ extension CallTypeChecker {
     ) -> (argumentIndex: Int, expectedType: TypeID)? {
         let boolPredicateMembers: Set = ["filter", "any", "none"]
         let oneParamMembers: Set = ["map", "filter", "forEach", "any", "none"]
+        if memberName == "copyOf", argCount == 2 {
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [sema.types.intType],
+                returnType: receiverElementType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 1, expectedType: expectedType)
+        }
         guard oneParamMembers.contains(memberName), argCount == 1 else {
             return nil
         }

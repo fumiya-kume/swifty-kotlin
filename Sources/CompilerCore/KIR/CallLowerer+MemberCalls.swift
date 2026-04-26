@@ -3797,21 +3797,66 @@ extension CallLowerer {
             }
         }
 
-        if args.count == 2 {
+        if args.count == 1 {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner),
-               interner.resolve(calleeName) == "copyOfRange"
+               interner.resolve(calleeName) == "copyOf"
             {
                 instructions.append(.call(
                     symbol: nil,
-                    callee: interner.intern("kk_array_copyOfRange"),
+                    callee: interner.intern("kk_array_copyOf_newSize"),
                     arguments: [loweredReceiverID] + normalizedArgIDs,
                     result: result,
                     canThrow: false,
                     thrownResult: nil
                 ))
                 return result
+            }
+        }
+
+        if args.count == 2 {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                if interner.resolve(calleeName) == "copyOf" {
+                    let fnPtrExpr: KIRExprID
+                    let envPtrExpr: KIRExprID
+                    if normalizedArgIDs.count >= 3 {
+                        fnPtrExpr = normalizedArgIDs[1]
+                        envPtrExpr = normalizedArgIDs[2]
+                    } else {
+                        let split = splitCallableLambdaArgument(
+                            normalizedArgIDs[1],
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                        fnPtrExpr = split.fnPtrExpr
+                        envPtrExpr = split.envPtrExpr
+                    }
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_array_copyOf_newSize_init"),
+                        arguments: [loweredReceiverID, normalizedArgIDs[0], fnPtrExpr, envPtrExpr],
+                        result: result,
+                        canThrow: true,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if interner.resolve(calleeName) == "copyOfRange" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_array_copyOfRange"),
+                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
             }
             // List.elementAtOrElse(index, defaultValue) — 2 args (STDLIB-214)
             if isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner),
@@ -4366,7 +4411,7 @@ extension CallLowerer {
             "onEach", "onEachIndexed",
             "ifEmpty",
             "ifBlank",
-            "chunked", "windowed",
+            "chunked", "windowed", "copyOf",
             "onSuccess", "onFailure", "recover",
         ].contains(interner.resolve(calleeName))
     }
@@ -5666,6 +5711,18 @@ extension CallLowerer {
             finalArguments[2] = fnPtrExpr
             finalArguments.append(envPtrExpr)
         }
+        if loweredCallee == interner.intern("kk_array_copyOf_newSize_init"),
+           finalArguments.count == 3
+        {
+            let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                finalArguments[2],
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = [finalArguments[0], finalArguments[1], fnPtrExpr, envPtrExpr]
+        }
         if let primitiveKind = collectionElementPrimitiveCompareKind(
             of: sema.bindings.exprTypes[receiver.expr] ?? sema.types.anyType,
             sema: sema
@@ -5987,6 +6044,7 @@ extension CallLowerer {
             interner.intern("kk_list_windowed_transform"),
             interner.intern("kk_sequence_chunked_transform"),
             interner.intern("kk_sequence_runningFoldIndexed"),
+            interner.intern("kk_array_copyOf_newSize_init"),
             interner.intern("kk_mutable_list_replaceAll"),
             interner.intern("kk_mutable_list_removeIf"),
             interner.intern("kk_list_binarySearch_compare"),
@@ -7258,7 +7316,16 @@ extension CallLowerer {
             case "none":
                 return interner.intern("kk_array_none")
             case "copyOf":
-                return interner.intern("kk_array_copyOf")
+                switch argumentCount {
+                case 0:
+                    return interner.intern("kk_array_copyOf")
+                case 1:
+                    return interner.intern("kk_array_copyOf_newSize")
+                case 2:
+                    return interner.intern("kk_array_copyOf_newSize_init")
+                default:
+                    break
+                }
             case "fill":
                 return interner.intern("kk_array_fill")
             case "binarySearch":
