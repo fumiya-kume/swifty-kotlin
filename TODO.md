@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-04-22
+最終更新: 2026-04-26
 
 ---
 
@@ -194,6 +194,7 @@
 - [ ] STDLIB-I18N-COMMON-004: `Char.uppercase(Locale)` を追加する
 - [ ] STDLIB-I18N-COMMON-005: `Char.lowercase(Locale)` を追加する
 - [ ] STDLIB-I18N-COMMON-006: `String.toIntOrNull(radix: Int)` を追加する
+- [ ] STDLIB-I18N-COMMON-007: `Char.directionality` を `CharDirectionality` enum で露出する（現状は `Int` placeholder）
 - [ ] STDLIB-TIME-EXP-001: `@ExperimentalTime` 系 API の整理（`Clock` / `TimeMark`）
 - [~] STDLIB-CORO-001: `kotlin.coroutines.intrinsics` / cancellation — 主要部分実装済み（`suspendCoroutineUninterceptedOrReturn`, `intercepted`, `CancellationException`）。残課題は別チケットへ分割。
 - [ ] STDLIB-CORO-002: `kotlin.coroutines.intrinsics` の runtime entry point（`startCoroutineUninterceptedOrReturn`, `createCoroutineUnintercepted`）を追加する。対応 C ABI 名: `kk_start_coroutine_unintercepted_or_return`, `kk_create_coroutine_unintercepted`。

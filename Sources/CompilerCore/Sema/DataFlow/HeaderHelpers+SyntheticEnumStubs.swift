@@ -27,26 +27,18 @@ extension DataFlowSemaPhase {
         let enumName = interner.intern("Enum")
         let enumFQName = kotlinPkg + [enumName]
         let enumSymbol = ensureEnumClassSymbol(symbols: symbols, interner: interner, kotlinPkg: kotlinPkg)
-        let tParamSymbol = ensureEnumTypeParameter(symbols: symbols, types: types, interner: interner, enumFQName: enumFQName)
-        let tParamType = types.make(.typeParam(TypeParamType(symbol: tParamSymbol, nullability: .nonNull)))
-        let enumType = types.make(.classType(ClassType(
-            classSymbol: enumSymbol,
-            args: [.invariant(tParamType)],
-            nullability: .nonNull
-        )))
+        _ = ensureEnumTypeParameter(symbols: symbols, interner: interner, enumFQName: enumFQName)
         registerEnumNameOrdinalProperties(
             symbols: symbols,
             types: types,
             interner: interner,
             enumSymbol: enumSymbol,
-            enumFQName: kotlinPkg + [interner.intern("Enum")],
-            receiverType: enumType
+            enumFQName: kotlinPkg + [interner.intern("Enum")]
         )
 
         // kotlin.collections.EnumEntries<T> — List-like read-only container for enum entries
         _ = ensureEnumEntriesInterface(
             symbols: symbols,
-            types: types,
             interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg
         )
@@ -56,8 +48,7 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner,
-            kotlinPkg: kotlinPkg,
-            kotlinCollectionsPkg: kotlinCollectionsPkg
+            kotlinPkg: kotlinPkg
         )
 
         // enumValueOf<T>(name: String): T — top-level inline reified
@@ -104,7 +95,6 @@ extension DataFlowSemaPhase {
 
     private func ensureEnumTypeParameter(
         symbols: SymbolTable,
-        types _: TypeSystem,
         interner: StringInterner,
         enumFQName: [InternedString]
     ) -> SymbolID {
@@ -128,8 +118,7 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         enumSymbol: SymbolID,
-        enumFQName: [InternedString],
-        receiverType _: TypeID
+        enumFQName: [InternedString]
     ) {
         let stringType = types.make(.primitive(.string, .nonNull))
         let intType = types.make(.primitive(.int, .nonNull))
@@ -158,7 +147,6 @@ extension DataFlowSemaPhase {
 
     private func ensureEnumEntriesInterface(
         symbols: SymbolTable,
-        types _: TypeSystem,
         interner: StringInterner,
         kotlinCollectionsPkg: [InternedString]
     ) -> SymbolID {
@@ -195,8 +183,7 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
-        kotlinPkg: [InternedString],
-        kotlinCollectionsPkg _: [InternedString]
+        kotlinPkg: [InternedString]
     ) {
         let enumValuesName = interner.intern("enumValues")
         let enumValuesFQName = kotlinPkg + [enumValuesName]
@@ -371,7 +358,6 @@ extension DataFlowSemaPhase {
     func collectSyntheticEnumEntryProperties(
         ownerSymbol: SymbolID,
         ownerFQName: [InternedString],
-        enumType _: TypeID,
         symbols: SymbolTable,
         types: TypeSystem,
         scope: Scope,

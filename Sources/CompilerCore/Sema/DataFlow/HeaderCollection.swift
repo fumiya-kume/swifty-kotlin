@@ -393,7 +393,6 @@ extension DataFlowSemaPhase {
                 collectSyntheticEnumEntryProperties(
                     ownerSymbol: symbol,
                     ownerFQName: fqName,
-                    enumType: classType,
                     symbols: symbols,
                     types: types,
                     scope: classScope,

@@ -28,11 +28,7 @@ let args = Array(ProcessInfo.processInfo.arguments.dropFirst())
 
 do {
     let options = try CLIParser.parse(args: args)
-    let defaultVersion = CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil)
-    let driver = CompilerDriver(
-        version: defaultVersion,
-        kotlinVersion: .v2_3_10
-    )
+    let driver = CompilerDriver()
     let exitCode = driver.run(options: options)
     exit(Int32(exitCode))
 } catch let error as CLIParseError {
