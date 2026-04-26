@@ -2711,6 +2711,60 @@ extension DataFlowSemaPhase {
             }
         }
 
+        // windowed(size[, step[, partialWindows]], transform): Sequence<Any>
+        do {
+            let windowedName = interner.intern("windowed")
+            let windowedFQName = sequenceFQName + [windowedName]
+            let windowListType = nominalCollectionType([
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("List"),
+            ], elementType: types.anyType, invariant: true)
+            let transformType = types.make(.functionType(FunctionType(
+                params: [windowListType],
+                returnType: types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let sequenceAnyType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(types.anyType)],
+                nullability: .nonNull
+            )))
+            func registerWindowedTransformOverload(_ parameterTypes: [TypeID]) {
+                let alreadyRegistered = symbols.lookupAll(fqName: windowedFQName).contains { symID in
+                    guard let sig = symbols.functionSignature(for: symID) else { return false }
+                    return sig.parameterTypes == parameterTypes
+                        && symbols.externalLinkName(for: symID) == "kk_sequence_windowed_transform"
+                }
+                guard !alreadyRegistered else { return }
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: windowedName,
+                    fqName: windowedFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                symbols.setParentSymbol(sequenceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName("kk_sequence_windowed_transform", for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: parameterTypes,
+                        returnType: sequenceAnyType,
+                        canThrow: true,
+                        typeParameterSymbols: [typeParamSymbol],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+            registerWindowedTransformOverload([types.intType, transformType])
+            registerWindowedTransformOverload([types.intType, types.intType, transformType])
+            registerWindowedTransformOverload([types.intType, types.intType, types.booleanType, transformType])
+        }
+
         // first(): T
         registerSequenceMemberStub(
             named: "first",

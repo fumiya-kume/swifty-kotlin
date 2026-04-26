@@ -1272,6 +1272,41 @@ extension CallTypeChecker {
             )
         }
 
+        if memberName == interner.intern("windowed") && isSequenceReceiver {
+            let lastArgIsFunctionLike: Bool = if let lastExpr = args.last?.expr,
+                                                 let lastExprNode = ctx.ast.arena.expr(lastExpr) {
+                lastExprNode.isLambdaOrCallableRef
+            } else {
+                false
+            }
+            let sequenceElementType: TypeID
+            if lastArgIsFunctionLike, let transformExpr = args.last?.expr {
+                if case let .lambdaLiteral(_, bodyExpr, _, _) = ctx.ast.arena.expr(transformExpr) {
+                    sequenceElementType = sema.bindings.exprTypes[bodyExpr] ?? sema.types.anyType
+                } else if let lambdaType = sema.bindings.exprTypes[transformExpr],
+                          case let .functionType(fnType) = sema.types.kind(of: lambdaType)
+                {
+                    sequenceElementType = fnType.returnType
+                } else {
+                    sequenceElementType = sema.types.anyType
+                }
+            } else if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                sequenceElementType = sema.types.make(.classType(ClassType(
+                    classSymbol: listSymbol,
+                    args: [.out(receiverElementType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                sequenceElementType = sema.types.anyType
+            }
+            return makeSyntheticSequenceType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: sequenceElementType
+            )
+        }
+
         if memberName == interner.intern("chunked") && args.count == 2 && !isSequenceReceiver {
             if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
                 return sema.types.make(.classType(ClassType(

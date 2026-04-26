@@ -360,6 +360,41 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    // MARK: - windowed transform returns a transformed sequence
+
+    func testSequenceWindowedTransform() throws {
+        let source = """
+        fun main() {
+            val result = sequenceOf(1, 2, 3, 4, 5)
+                .windowed(3, 2, true) { window ->
+                    window.size
+                }
+                .toList()
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceWindowedTransform",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [3, 3, 1]
+                """ + "\n"
+            )
+        }
+    }
+
     // MARK: - terminal ops: count, forEach, fold
 
     func testSequenceTerminalOps() throws {

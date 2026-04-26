@@ -5571,7 +5571,9 @@ extension CallLowerer {
                 arguments: &finalArguments
             )
         }
-        if loweredCallee == interner.intern("kk_list_windowed_transform") {
+        if loweredCallee == interner.intern("kk_list_windowed_transform")
+            || loweredCallee == interner.intern("kk_sequence_windowed_transform")
+        {
             let originalArgumentCount = finalArguments.count
             if originalArgumentCount >= 3 {
                 let lambdaArgIndex = originalArgumentCount - 1
@@ -5932,6 +5934,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_mapNotNull"),
             interner.intern("kk_sequence_mapIndexed"),
             interner.intern("kk_sequence_chunked_transform"),
+            interner.intern("kk_sequence_windowed_transform"),
             interner.intern("kk_sequence_findLast"),
             interner.intern("kk_sequence_elementAt"),
             interner.intern("kk_sequence_minByOrNull"),

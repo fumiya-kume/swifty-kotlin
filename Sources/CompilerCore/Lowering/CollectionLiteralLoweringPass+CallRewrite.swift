@@ -1717,6 +1717,7 @@ extension CollectionLiteralLoweringPass {
                         || callee == lookup.kkSequenceZipName
                         || callee == lookup.kkSequenceConstrainOnceName
                         || callee == lookup.kkSequenceChunkedName || callee == lookup.kkSequenceChunkedTransformName
+                        || callee == lookup.kkSequenceWindowedName || callee == lookup.kkSequenceWindowedTransformName
                         || callee == lookup.kkSequencePlusName || callee == lookup.kkSequenceMinusName
                     {
                         loweredBody.append(instruction)
@@ -2008,6 +2009,23 @@ extension CollectionLiteralLoweringPass {
                                 arguments: arguments,
                                 result: result,
                                 canThrow: arguments.count == 4,
+                                thrownResult: thrownResult
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
+
+                    // windowed(size, step, partialWindows, transform) on sequence -> kk_sequence_windowed_transform
+                    if callee == lookup.windowedName, arguments.count == 6 {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkSequenceWindowedTransformName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: true,
                                 thrownResult: thrownResult
                             ))
                             if let result { sequenceExprIDs.insert(result.rawValue) }

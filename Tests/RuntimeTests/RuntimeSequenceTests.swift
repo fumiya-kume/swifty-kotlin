@@ -135,6 +135,15 @@ private let throwingSequenceChunkTransform: @convention(c) (Int, Int, UnsafeMuta
     return 0
 }
 
+private let sequenceWindowSizeTransform: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, windowRaw, _ in
+    kk_list_size(windowRaw)
+}
+
+private let throwingSequenceWindowTransform: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, outThrown in
+    outThrown?.pointee = runtimeAllocateThrowable(message: "sequence windowed transform failed")
+    return 0
+}
+
 private let throwingSequenceAdjacentTransform: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _, outThrown in
     outThrown?.pointee = runtimeAllocateThrowable(message: "sequence zipWithNext transform failed")
     return 0
@@ -753,6 +762,62 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
             seq,
             10,
             unsafeBitCast(throwingSequenceChunkTransform, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+    }
+
+    // MARK: - Sequence windowed transform tests (STDLIB-SEQ-009)
+
+    func testWindowedTransformAppliesLambdaToEachWindow() {
+        let seq = makeSequence([1, 2, 3, 4])
+        var thrown = 0
+
+        let result = kk_sequence_windowed_transform(
+            seq,
+            2,
+            1,
+            0,
+            unsafeBitCast(sequenceWindowSizeTransform, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(sequenceElements(result), [2, 2, 2])
+    }
+
+    func testWindowedTransformIncludesPartialWindows() {
+        let seq = makeSequence([1, 2, 3, 4, 5])
+        var thrown = 0
+
+        let result = kk_sequence_windowed_transform(
+            seq,
+            3,
+            2,
+            1,
+            unsafeBitCast(sequenceWindowSizeTransform, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(sequenceElements(result), [3, 3, 1])
+    }
+
+    func testWindowedTransformReturnsSentinelWhenLambdaThrows() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_windowed_transform(
+            seq,
+            2,
+            1,
+            0,
+            unsafeBitCast(throwingSequenceWindowTransform, to: Int.self),
             0,
             &thrown
         )

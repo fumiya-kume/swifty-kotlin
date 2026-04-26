@@ -3200,6 +3200,84 @@ public func kk_sequence_windowed(_ seqRaw: Int, _ size: Int, _ step: Int, _ part
     return registerRuntimeObject(resultSeq)
 }
 
+@_cdecl("kk_sequence_windowed_transform")
+public func kk_sequence_windowed_transform(
+    _ seqRaw: Int,
+    _ size: Int,
+    _ step: Int,
+    _ partialWindows: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let clampedSize = max(1, size)
+    let clampedStep = max(1, step)
+    let includePartial = partialWindows != 0
+    var buffer: [Int] = []
+    var transformedWindows: [Int] = []
+    var elementIndex = 0
+    var nextWindowStart = 0
+    var traversalThrown = 0
+    var transformThrown = 0
+
+    func transformWindow(_ window: [Int]) -> Bool {
+        let windowList = registerRuntimeObject(RuntimeListBox(elements: window))
+        var lambdaThrown = 0
+        let transformed = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: windowList,
+            outThrown: &lambdaThrown
+        )
+        if lambdaThrown != 0 {
+            transformThrown = lambdaThrown
+            return false
+        }
+        transformedWindows.append(maybeUnbox(transformed))
+        return true
+    }
+
+    func emitReadyWindows() -> Bool {
+        while nextWindowStart + clampedSize <= elementIndex {
+            let window = Array(buffer[nextWindowStart ..< (nextWindowStart + clampedSize)])
+            guard transformWindow(window) else { return false }
+            nextWindowStart += clampedStep
+        }
+        return true
+    }
+
+    func visit(_ elem: Int) -> Bool {
+        buffer.append(elem)
+        elementIndex += 1
+        return emitReadyWindows()
+    }
+
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: &traversalThrown, yield: visit)
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            if !visit(elem) { break }
+        }
+    }
+
+    var thrown = transformThrown != 0 ? transformThrown : traversalThrown
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+
+    if includePartial {
+        while nextWindowStart < elementIndex {
+            let end = min(nextWindowStart + clampedSize, elementIndex)
+            let window = Array(buffer[nextWindowStart ..< end])
+            guard transformWindow(window) else {
+                thrown = transformThrown
+                return handleCollectionLambdaThrow(thrown, outThrown)
+            }
+            nextWindowStart += clampedStep
+        }
+    }
+
+    return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: transformedWindows)]))
+}
+
 @_cdecl("kk_sequence_onEach")
 public func kk_sequence_onEach(
     _ seqRaw: Int,

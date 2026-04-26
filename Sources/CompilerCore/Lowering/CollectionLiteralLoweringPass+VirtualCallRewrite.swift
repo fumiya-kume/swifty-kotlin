@@ -640,6 +640,23 @@ extension CollectionLiteralLoweringPass {
             }
         }
 
+        // windowed(size, step, partialWindows, transform) on sequence -> kk_sequence_windowed_transform
+        if callee == lookup.windowedName,
+           arguments.count == 5,
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkSequenceWindowedTransformName,
+                arguments: [receiver] + arguments,
+                result: result,
+                canThrow: true,
+                thrownResult: origThrownResult
+            ))
+            if let result { sequenceExprIDs.insert(result.rawValue) }
+            return true
+        }
+
         // windowed(size, transform) HOF overload — 3 args after closure expansion [size, fnPtr, closureRaw]
         if callee == lookup.windowedName, arguments.count == 3,
            supportsIterableWindowedTransformReceiver(
