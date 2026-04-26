@@ -37,6 +37,21 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
         )))
     }
 
+    private func paddingOptionType(sema: SemaModule, interner: StringInterner) throws -> TypeID {
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("io"),
+            interner.intern("encoding"),
+            interner.intern("Base64"),
+            interner.intern("PaddingOption"),
+        ]))
+        return sema.types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+    }
+
     func testBase64VariantObjectsAreRegisteredAsBase64Subtypes() throws {
         let (sema, interner) = try makeSema()
         let base64 = try base64Symbol(sema: sema, interner: interner)
@@ -56,6 +71,31 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
                 sema.symbols.directSupertypes(for: variantSymbol).contains(base64),
                 "Base64.\(variant) must inherit Base64"
             )
+        }
+    }
+
+    func testBase64PaddingOptionEnumEntriesAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let paddingOption = try XCTUnwrap(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("io"),
+            interner.intern("encoding"),
+            interner.intern("Base64"),
+            interner.intern("PaddingOption"),
+        ]))
+        let enumType = try paddingOptionType(sema: sema, interner: interner)
+
+        for entry in ["PRESENT", "ABSENT", "PRESENT_OPTIONAL", "ABSENT_OPTIONAL"] {
+            let entrySymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("io"),
+                interner.intern("encoding"),
+                interner.intern("Base64"),
+                interner.intern("PaddingOption"),
+                interner.intern(entry),
+            ]), "Base64.PaddingOption.\(entry) must be registered")
+            XCTAssertEqual(sema.symbols.parentSymbol(for: entrySymbol), paddingOption)
+            XCTAssertEqual(sema.symbols.propertyType(for: entrySymbol), enumType)
         }
     }
 
@@ -106,6 +146,7 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
             nullability: .nonNull
         )))
         let byteArray = try byteArrayType(sema: sema, interner: interner)
+        let paddingOption = try paddingOptionType(sema: sema, interner: interner)
 
         let encode = try XCTUnwrap(sema.symbols.lookup(fqName: [
             interner.intern("kotlin"),
@@ -164,6 +205,19 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
             sema.symbols.externalLinkName(for: decodeFromByteArray),
             "kk_base64_decodeFromByteArray_default"
         )
+
+        let withPadding = try XCTUnwrap(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("io"),
+            interner.intern("encoding"),
+            interner.intern("Base64"),
+            interner.intern("withPadding"),
+        ]))
+        let withPaddingSignature = try XCTUnwrap(sema.symbols.functionSignature(for: withPadding))
+        XCTAssertEqual(withPaddingSignature.receiverType, base64Type)
+        XCTAssertEqual(withPaddingSignature.parameterTypes, [paddingOption])
+        XCTAssertEqual(withPaddingSignature.returnType, base64Type)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: withPadding), "kk_base64_withPadding_instance")
     }
 
     func testBase64EncodeDecodeCallsTypeCheckOnVariants() throws {
@@ -185,6 +239,13 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
         fun useBase64ByteArray(source: ByteArray): ByteArray {
             val encoded: ByteArray = Base64.Default.encodeToByteArray(source)
             return Base64.Default.decodeFromByteArray(encoded)
+        }
+
+        @OptIn(ExperimentalEncodingApi::class)
+        fun useCustomPadding(source: ByteArray): ByteArray {
+            val custom: Base64 = Base64.UrlSafe.withPadding(Base64.PaddingOption.ABSENT_OPTIONAL)
+            val encoded: String = custom.encode(source)
+            return custom.decode(encoded)
         }
         """
 

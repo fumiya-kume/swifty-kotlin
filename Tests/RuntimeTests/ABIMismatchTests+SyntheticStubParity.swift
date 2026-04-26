@@ -207,6 +207,10 @@ extension ABIMismatchTests {
             "kk_base64_padding_absent",
             "kk_base64_padding_present_optional",
             "kk_base64_padding_absent_optional",
+            "kk_base64_withPadding_default",
+            "kk_base64_withPadding_urlsafe",
+            "kk_base64_withPadding_mime",
+            "kk_base64_withPadding_instance",
             "kk_base64_encode_default",
             "kk_base64_decode_default",
             "kk_base64_encode_urlsafe",
@@ -219,6 +223,10 @@ extension ABIMismatchTests {
             "kk_base64_decodeFromByteArray_default",
             "kk_base64_decodeFromByteArray_urlsafe",
             "kk_base64_decodeFromByteArray_mime",
+            "kk_base64_encode_instance",
+            "kk_base64_decode_instance",
+            "kk_base64_encodeToByteArray_instance",
+            "kk_base64_decodeFromByteArray_instance",
         ]
 
         for linkName in syntheticLinkNames {
