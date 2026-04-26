@@ -171,7 +171,7 @@ extension CallLowerer {
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull", "elementAt", "elementAtOrElse",
         "putAll", "addAll",
         "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
-        "plus", "minus",
+        "plus", "plusElement", "minus",
         "asSequence", "asIterable", "toList", "toSet", "toMap", "toCollection", "toMutableList", "toMutableSet", "toTypedArray",
         "toIntArray", "toLongArray", "toByteArray",
         "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect", "subList",
@@ -3586,6 +3586,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_onEach"
                 } else if calleeName == interner.intern("onEachIndexed") {
                     runtimeCallee = "kk_sequence_onEachIndexed"
+                } else if calleeName == interner.intern("plus") || calleeName == interner.intern("plusElement") {
+                    runtimeCallee = "kk_sequence_plus_element"
                 } else if calleeName == interner.intern("ifEmpty") {
                     runtimeCallee = "kk_sequence_ifEmpty"
                 } else if calleeName == interner.intern("forEachIndexed") {
@@ -7370,6 +7372,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_onEach")
             case interner.intern("onEachIndexed"):
                 return interner.intern("kk_sequence_onEachIndexed")
+            case interner.intern("plus"), interner.intern("plusElement"):
+                return interner.intern("kk_sequence_plus_element")
             case interner.intern("ifEmpty"):
                 return interner.intern("kk_sequence_ifEmpty")
             case firstName:

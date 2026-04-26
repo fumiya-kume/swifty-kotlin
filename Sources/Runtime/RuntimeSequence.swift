@@ -3371,6 +3371,12 @@ public func kk_sequence_plus(_ seqRaw: Int, _ otherRaw: Int) -> Int {
     return registerRuntimeObject(newSeq)
 }
 
+@_cdecl("kk_sequence_plus_element")
+public func kk_sequence_plus_element(_ seqRaw: Int, _ element: Int) -> Int {
+    let wrappedElement = kk_sequence_of_single(element)
+    return kk_sequence_plus(seqRaw, wrappedElement)
+}
+
 @_cdecl("kk_sequence_minus")
 public func kk_sequence_minus(_ seqRaw: Int, _ element: Int) -> Int {
     let elements: [Int]
