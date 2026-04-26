@@ -166,6 +166,13 @@ private let groupingFoldOperation: @convention(c) (Int, Int, Int, Int, UnsafeMut
     accumulator + key + element
 }
 
+private let aggregateGroupingLambda: @convention(c) (Int, Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, key, accumulator, element, first, _ in
+    if first != 0 {
+        return key * 10 + element
+    }
+    return accumulator + key + element
+}
+
 // Lambda that returns value * 10 (for associateWithTo tests)
 private let valueTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     value * 10
@@ -624,6 +631,34 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_map_get(result, 0), 506)
         XCTAssertEqual(kk_map_get(result, 1), 109)
         XCTAssertEqual(gHOFState.callsSnapshot(), 1)
+    }
+
+    func testGroupingAggregatePreservesKeyOrderAndAccumulatorValues() {
+        let source = makeList([3, 1, 4, 2, 5])
+        let grouping = kk_list_groupingBy(source, unsafeBitCast(groupByParity, to: Int.self), 0)
+        let aggregated = kk_grouping_aggregate(grouping, unsafeBitCast(aggregateGroupingLambda, to: Int.self), 0, nil)
+
+        XCTAssertEqual(mapKeys(aggregated), [1, 0])
+        XCTAssertEqual(kk_unbox_int(kk_map_get(aggregated, 1)), 21)
+        XCTAssertEqual(kk_unbox_int(kk_map_get(aggregated, 0)), 6)
+    }
+
+    func testGroupingAggregateToUpdatesDestinationAndPreservesKeyOrder() {
+        let source = makeList([3, 1, 4, 2, 5])
+        let grouping = kk_list_groupingBy(source, unsafeBitCast(groupByParity, to: Int.self), 0)
+        let destination = kk_map_of(makeArray([1]), makeArray([100]), 1)
+        let aggregated = kk_grouping_aggregateTo(
+            grouping,
+            destination,
+            unsafeBitCast(aggregateGroupingLambda, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(aggregated, destination)
+        XCTAssertEqual(mapKeys(aggregated), [1, 0])
+        XCTAssertEqual(kk_unbox_int(kk_map_get(aggregated, 1)), 112)
+        XCTAssertEqual(kk_unbox_int(kk_map_get(aggregated, 0)), 6)
     }
 
     func testMapForEachFilterAndMapUsePairEntries() {

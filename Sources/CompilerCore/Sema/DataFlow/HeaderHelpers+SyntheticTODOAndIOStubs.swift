@@ -2241,8 +2241,11 @@ extension DataFlowSemaPhase {
 
         // Build Map<K, V> return types when Map symbol is available.
         let mapName = interner.intern("Map")
+        let mutableMapName = interner.intern("MutableMap")
         let mapSymbol = symbols.lookup(fqName: collectionsPkg + [mapName])
             ?? symbols.lookupByShortName(mapName).first
+        let mutableMapSymbol = symbols.lookup(fqName: collectionsPkg + [mutableMapName])
+            ?? symbols.lookupByShortName(mutableMapName).first
 
         let groupingTypeParameterSymbols: [SymbolID] = [tParamSymbol, kParamSymbol]
 
@@ -2301,6 +2304,77 @@ extension DataFlowSemaPhase {
             parameters: [],
             returnType: makeMapType(valueType: types.intType),
             externalLinkName: "kk_grouping_eachCount"
+        )
+
+        // aggregate(operation: (K, R?, T, Boolean) -> R) -> Map<K, R>
+        let aggregateRName = interner.intern("AggregateR")
+        let aggregateRFQName = groupingFQName + [interner.intern("aggregate"), aggregateRName]
+        let aggregateRSymbol: SymbolID = if let existing = symbols.lookup(fqName: aggregateRFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: aggregateRName,
+                fqName: aggregateRFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let aggregateRType = types.make(.typeParam(TypeParamType(symbol: aggregateRSymbol)))
+        let aggregateOperationType = types.make(.functionType(FunctionType(
+            params: [kTypeParam, types.makeNullable(aggregateRType), tTypeParam, types.booleanType],
+            returnType: aggregateRType
+        )))
+        registerGroupingMember(
+            named: "aggregate",
+            parameters: [
+                aggregateOperationType,
+            ],
+            returnType: makeMapType(valueType: aggregateRType),
+            externalLinkName: "kk_grouping_aggregate",
+            typeParameterSymbols: groupingTypeParameterSymbols + [aggregateRSymbol]
+        )
+
+        // aggregateTo(destination, operation) -> destination
+        let aggregateToRName = interner.intern("AggregateToR")
+        let aggregateToRFQName = groupingFQName + [interner.intern("aggregateTo"), aggregateToRName]
+        let aggregateToRSymbol: SymbolID = if let existing = symbols.lookup(fqName: aggregateToRFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: aggregateToRName,
+                fqName: aggregateToRFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let aggregateToRType = types.make(.typeParam(TypeParamType(symbol: aggregateToRSymbol)))
+        let aggregateToDestinationType: TypeID
+        if let mutableMapSymbol {
+            aggregateToDestinationType = types.make(.classType(ClassType(
+                classSymbol: mutableMapSymbol,
+                args: [.invariant(kTypeParam), .invariant(aggregateToRType)],
+                nullability: .nonNull
+            )))
+        } else {
+            aggregateToDestinationType = types.anyType
+        }
+        let aggregateToOperationType = types.make(.functionType(FunctionType(
+            params: [kTypeParam, types.makeNullable(aggregateToRType), tTypeParam, types.booleanType],
+            returnType: aggregateToRType
+        )))
+        registerGroupingMember(
+            named: "aggregateTo",
+            parameters: [
+                aggregateToDestinationType,
+                aggregateToOperationType,
+            ],
+            returnType: aggregateToDestinationType,
+            externalLinkName: "kk_grouping_aggregateTo",
+            typeParameterSymbols: groupingTypeParameterSymbols + [aggregateToRSymbol]
         )
 
         // fold(initialValue: R, operation: (R, T) -> R) -> Map<K, R>

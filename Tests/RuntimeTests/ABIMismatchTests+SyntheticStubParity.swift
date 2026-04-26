@@ -174,6 +174,11 @@ extension ABIMismatchTests {
             "kk_read_write_lock_create",
             "kk_read_write_lock_read",
             "kk_read_write_lock_write",
+            "kk_grouping_aggregate",
+            "kk_grouping_aggregateTo",
+            "kk_grouping_eachCount",
+            "kk_grouping_fold",
+            "kk_grouping_reduce",
             // Read/write lock (java.util.concurrent.locks / kotlin.concurrent)
             "kk_reentrant_read_write_lock_new",
             "kk_reentrant_read_write_lock_read",
