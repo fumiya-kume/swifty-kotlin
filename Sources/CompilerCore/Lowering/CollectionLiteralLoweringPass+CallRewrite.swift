@@ -4147,6 +4147,43 @@ extension CollectionLiteralLoweringPass {
                             continue
                         }
                     }
+                    // runningFoldIndexed on sequence: args = [receiver, initial, lambda, closureRaw?]
+                    if (callee == lookup.runningFoldIndexedName
+                        || callee == lookup.kkListRunningFoldIndexedName
+                        || callee == lookup.kkSequenceRunningFoldIndexedName),
+                       (3 ... 4).contains(arguments.count) {
+                        let receiverID = arguments[0]
+                        let initialID = arguments[1]
+                        let lambdaID = arguments[2]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            let closureRawID: KIRExprID
+                            if arguments.count == 4 {
+                                closureRawID = arguments[3]
+                            } else {
+                                let z = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: z, value: .intLiteral(0)))
+                                closureRawID = z
+                            }
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)),
+                                type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkSequenceRunningFoldIndexedName,
+                                arguments: [receiverID, initialID, lambdaID, closureRawID],
+                                result: hofResult,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            if let result {
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            sequenceExprIDs.insert(hofResult.rawValue)
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
                     // foldRight: args = [receiver, initial, lambda, closureRaw?]
                     if (callee == lookup.foldRightName || callee == lookup.kkListFoldRightName), (arguments.count == 3 || arguments.count == 4) {
                         let receiverID = arguments[0]

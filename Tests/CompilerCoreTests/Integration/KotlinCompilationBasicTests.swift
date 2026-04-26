@@ -364,4 +364,18 @@ final class KotlinCompilationBasicTests: XCTestCase {
         }
         """)
     }
+
+    func testCompile_sequence_runningFoldIndexed() throws {
+        try assertKotlinCompilesToKIR("""
+        fun main() {
+            val ints = listOf(1, 2, 3).asSequence()
+                .runningFoldIndexed(10) { index, acc, value -> acc + index + value }
+            println(ints.toList())
+
+            val strings = listOf(1, 2, 3).asSequence()
+                .runningFoldIndexed("") { index, acc, value -> acc + "$index:$value;" }
+            println(strings.toList())
+        }
+        """)
+    }
 }
