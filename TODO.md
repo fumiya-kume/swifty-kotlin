@@ -68,7 +68,7 @@
 - [x] STDLIB-SEQ-006: `Iterable.asSequence()` と `Sequence.constrainOnce()` を追加する
 - [x] STDLIB-SEQ-007: `Sequence.any` / `all` / `find` の short-circuit を追加する
 - [x] STDLIB-SEQ-008: `Sequence.chunked(size, transform)` overload を追加する
-- [ ] STDLIB-SEQ-009: `Sequence.windowed(size, step, partialWindows, transform)` overload を追加する
+- [x] STDLIB-SEQ-009: `Sequence.windowed(size, step, partialWindows, transform)` overload を追加する
 - [x] STDLIB-SEQ-010: `Sequence.onEachIndexed(action)` を追加する
 - [x] STDLIB-SEQ-011: `Sequence<T>?.orEmpty()` を追加する
 - [x] STDLIB-SEQ-012: `Sequence.partition(predicate)` を追加する
