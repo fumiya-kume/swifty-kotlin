@@ -128,7 +128,7 @@
 - [x] STDLIB-IO-ENC-004: `Base64.withPadding(PaddingOption)` と MIME / URL-safe variant の挙動を追加する
 - [ ] STDLIB-032: `kotlin.time` の stable / experimental 境界を明文化
 - [x] STDLIB-TIME-STABLE-001: `Duration.ZERO` / `Duration.INFINITE` constants を追加する
-- [ ] STDLIB-TIME-STABLE-002: `Duration.toIsoString()` / `Duration.parse()` / `Duration.parseOrNull()` を追加する
+- [x] STDLIB-TIME-STABLE-002: `Duration.toIsoString()` / `Duration.parse()` / `Duration.parseOrNull()` を追加する
 - [ ] STDLIB-TIME-STABLE-003: `Duration.parseIsoString()` / `Duration.parseIsoStringOrNull()` を追加する
 - [ ] STDLIB-TIME-STABLE-004: `Duration.toComponents { ... }` overload 群を追加する
 - [x] STDLIB-TIME-STABLE-005: `Double.seconds` など `Double` receiver の `Duration` extension properties を追加する

@@ -15,8 +15,7 @@ import XCTest
 //   - Comparison operators: < > <= >= on Duration (compareTo-desugared)
 //
 // Known gaps (not yet lowered in this compiler):
-//   - toIsoString() / parseIsoString() / parseIsoStringOrNull()
-//   - parse() / parseOrNull()
+//   - parseIsoString() / parseIsoStringOrNull()
 //   - toComponents { days, hours, minutes, seconds, nanoseconds -> ... }
 
 extension CodegenBackendIntegrationTests {
@@ -282,6 +281,45 @@ extension CodegenBackendIntegrationTests {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "0\ntrue\ntrue\n")
+        }
+    }
+
+    func testDurationStableIsoStringAndParse() throws {
+        let source = """
+        import kotlin.time.Duration
+        import kotlin.time.Duration.Companion.nanoseconds
+
+        fun main() {
+            println(3.nanoseconds.toIsoString())
+            println(Duration.parse("PT1H30M").toIsoString())
+            println(Duration.parse("PT1H30M").inWholeMinutes)
+            println(Duration.parse("1.5h").inWholeMinutes)
+            println(Duration.parseOrNull("1 hour 30 minutes") == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "DurationStableIsoStringAndParse",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                PT0.000000003S
+                PT1H30M
+                90
+                90
+                true
+                """ + "\n"
+            )
         }
     }
 

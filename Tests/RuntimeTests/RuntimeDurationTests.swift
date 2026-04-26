@@ -82,6 +82,13 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
         return extractString(from: ptr)
     }
 
+    private func stringHandle(_ value: String) -> Int {
+        let utf8 = Array(value.utf8)
+        return utf8.withUnsafeBufferPointer { buffer in
+            Int(bitPattern: kk_string_from_utf8(buffer.baseAddress!, Int32(buffer.count)))
+        }
+    }
+
     // MARK: - Factory: kk_duration_from_nanoseconds
 
     func testFromNanosecondsStoresExactValue() {
@@ -392,6 +399,62 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
         let handle = kk_duration_from_hours(1)
         let result = kk_duration_toString(handle)
         XCTAssertEqual(stringFromHandle(result), "1h")
+    }
+
+    // MARK: - toIsoString / parse
+
+    func testToIsoStringFormatsZeroAndFractionalSeconds() {
+        let zero = kk_duration_from_nanoseconds(0)
+        XCTAssertEqual(stringFromHandle(kk_duration_toIsoString(zero)), "PT0S")
+
+        let fractional = kk_duration_from_nanoseconds(25)
+        XCTAssertEqual(stringFromHandle(kk_duration_toIsoString(fractional)), "PT0.000000025S")
+    }
+
+    func testToIsoStringFormatsCompositeAndNegativeDurations() {
+        let composite = kk_duration_plus(kk_duration_from_hours(1), kk_duration_from_seconds(30))
+        XCTAssertEqual(stringFromHandle(kk_duration_toIsoString(composite)), "PT1H0M30S")
+
+        let negative = kk_duration_from_seconds(-330)
+        XCTAssertEqual(stringFromHandle(kk_duration_toIsoString(negative)), "-PT5M30S")
+    }
+
+    func testToIsoStringFormatsInfiniteDuration() {
+        let infinite = kk_duration_infinite()
+        XCTAssertEqual(stringFromHandle(kk_duration_toIsoString(infinite)), "PT9999999999999H")
+    }
+
+    func testParseAcceptsIsoAndDefaultFormats() {
+        var thrown = 0
+        let iso = kk_duration_parse(stringHandle("PT1H30M"), &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_duration_inWholeMinutes(iso), 90)
+
+        let defaultFormat = kk_duration_parse(stringHandle("1h 30m"), &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_duration_inWholeMinutes(defaultFormat), 90)
+    }
+
+    func testParseAcceptsSingleUnitDecimalFormat() {
+        var thrown = 0
+        let parsed = kk_duration_parse(stringHandle("1.5h"), &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_duration_inWholeMinutes(parsed), 90)
+    }
+
+    func testParseInvalidStringSetsThrownChannel() {
+        var thrown = 0
+        let parsed = kk_duration_parse(stringHandle("1 hour 30 minutes"), &thrown)
+        XCTAssertEqual(parsed, runtimeNullSentinelInt)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testParseOrNullReturnsDurationOrNullSentinel() {
+        let valid = kk_duration_parseOrNull(stringHandle("PT0.120300S"))
+        XCTAssertEqual(kk_duration_inWholeMicroseconds(valid), 120_300)
+
+        let invalid = kk_duration_parseOrNull(stringHandle("1 hour 30 minutes"))
+        XCTAssertEqual(invalid, runtimeNullSentinelInt)
     }
 
     // MARK: - Multiple independent durations
