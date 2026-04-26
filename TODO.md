@@ -117,7 +117,7 @@
 - [x] STDLIB-RANGE-UNTIL-001: `Byte` / `Short` / `Int` / `Long` と `UByte` / `UShort` / `UInt` / `ULong` の `until(to)` infix surface を追加する
 - [ ] STDLIB-RANGE-RANDOM-003: `CharRange` / `IntRange` / `LongRange` / `UIntRange` / `ULongRange`.`randomOrNull()` / `randomOrNull(random: Random)` overload 群を追加する
 - [ ] STDLIB-RANGE-UNTIL-002: `Byte` / `Short` / `Int` / `Long` 間の mixed-width `until(to)` overload 行列を追加する
-- [ ] STDLIB-RANGE-COERCE-001: `Byte` / `Short` / `UByte` / `UShort` / `UInt` / `ULong` の `coerceAtLeast` / `coerceAtMost` / `coerceIn` overload 群を追加する
+- [x] STDLIB-RANGE-COERCE-001: `Byte` / `Short` / `UByte` / `UShort` / `UInt` / `ULong` の `coerceAtLeast` / `coerceAtMost` / `coerceIn` overload 群を追加する
 
 ### Phase 3: I/O・パス・時間・並行（common）
 - [~] STDLIB-GAP-PH3: `kotlin.io`（common） / `kotlin.time` / `kotlin.concurrent` / `kotlin.concurrent.atomics` の未対応を潰す
