@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-04-22
+最終更新: 2026-04-26
 
 ---
 
@@ -63,18 +63,18 @@
 - [x] STDLIB-SEQ-001: `Sequence.map/filter + take` の lazy short-circuit を追加する
 - [x] STDLIB-SEQ-002: `generateSequence` の null 終端と infinite source + `take` を追加する
 - [x] STDLIB-SEQ-003: `sequence { yieldAll(...) }` builder semantics を追加する
-- [ ] STDLIB-SEQ-004: `Sequence.flatMap` / `distinct` / `zip` / `drop` を追加する
+- [x] STDLIB-SEQ-004: `Sequence.flatMap` / `distinct` / `zip` / `drop` を追加する
 - [x] STDLIB-SEQ-005: `Sequence.count` / `forEach` / `fold` / `first` / `firstOrNull` を追加する
-- [ ] STDLIB-SEQ-006: `Iterable.asSequence()` と `Sequence.constrainOnce()` を追加する
+- [x] STDLIB-SEQ-006: `Iterable.asSequence()` と `Sequence.constrainOnce()` を追加する
 - [x] STDLIB-SEQ-007: `Sequence.any` / `all` / `find` の short-circuit を追加する
 - [ ] STDLIB-SEQ-008: `Sequence.chunked(size, transform)` overload を追加する
 - [ ] STDLIB-SEQ-009: `Sequence.windowed(size, step, partialWindows, transform)` overload を追加する
-- [ ] STDLIB-SEQ-010: `Sequence.onEachIndexed(action)` を追加する
+- [x] STDLIB-SEQ-010: `Sequence.onEachIndexed(action)` を追加する
 - [ ] STDLIB-SEQ-011: `Sequence<T>?.orEmpty()` を追加する
 - [x] STDLIB-SEQ-012: `Sequence.partition(predicate)` を追加する
 - [x] STDLIB-SEQ-013: `Sequence.plus(element)` / `Sequence.plusElement(element)` を追加する
 - [ ] STDLIB-SEQ-014: `Sequence.requireNoNulls()` を追加する
-- [ ] STDLIB-SEQ-015: `Sequence.reduceIndexedOrNull()` を追加する
+- [x] STDLIB-SEQ-015: `Sequence.reduceIndexedOrNull()` を追加する
 - [x] STDLIB-SEQ-016: `Sequence.runningFoldIndexed()` を追加する
 - [x] STDLIB-SEQ-017: `Sequence.runningReduceIndexed()` を追加する
 - [x] STDLIB-SEQ-018: `Sequence.zipWithNext(transform)` overload を追加する
@@ -90,14 +90,14 @@
 - [x] STDLIB-COL-DEST-003: `flatMapTo` / `flatMapIndexedTo` を追加する
 - [x] STDLIB-COL-DEST-004: `associateTo` / `associateByTo` / `associateWithTo` / `groupByTo` を追加する
 - [x] STDLIB-COL-DEST-005: `toCollection(destination)` を追加する
-- [ ] STDLIB-COL-U-001: `Collection<UByte>` / `Collection<UShort>` / `Collection<UInt>` / `Collection<ULong>` の `toU*Array()` conversion を追加する
+- [x] STDLIB-COL-U-001: `Collection<UByte>` / `Collection<UShort>` / `Collection<UInt>` / `Collection<ULong>` の `toU*Array()` conversion を追加する
 - [ ] STDLIB-COL-U-002: `ByteArray.asUByteArray()` / `ShortArray.asUShortArray()` / `IntArray.asUIntArray()` / `LongArray.asULongArray()` view conversion を追加する
 - [ ] STDLIB-COL-U-003: `UByteArray.asByteArray()` / `UShortArray.asShortArray()` / `UIntArray.asIntArray()` / `ULongArray.asLongArray()` view conversion を追加する
 - [ ] STDLIB-COL-U-004: `UByteArray` / `UShortArray` / `UIntArray` / `ULongArray` の `copyOfRange(fromIndex, toIndex)` を追加する
-- [ ] STDLIB-COL-U-005: `UByteArray` / `UShortArray` / `UIntArray` / `ULongArray` の `toTypedArray()` を追加する
+- [x] STDLIB-COL-U-005: `UByteArray` / `UShortArray` / `UIntArray` / `ULongArray` の `toTypedArray()` を追加する
 - [ ] STDLIB-COL-U-006: `UByteArray` / `UShortArray` / `UIntArray` / `ULongArray` の `copyOf(newSize, init)` overload 群を追加する
-- [ ] STDLIB-COL-U-007: `UByteArray` / `UShortArray` / `UIntArray` / `ULongArray` の `asList()` view surface を追加する
 - [x] STDLIB-COL-GROUP-002: `Grouping.eachCountTo(destination)` を追加する
+- [x] STDLIB-COL-U-007: `UByteArray` / `UShortArray` / `UIntArray` / `ULongArray` の `asList()` view surface を追加する
 - [x] STDLIB-COL-GROUP-003: `Grouping.fold(initialValueSelector, operation)` overload を追加する
 - [x] STDLIB-COL-GROUP-004: `Grouping.foldTo(destination, initialValue, operation)` / `foldTo(destination, initialValueSelector, operation)` を追加する
 - [x] STDLIB-COL-GROUP-005: `Grouping.reduceTo(destination, operation)` を追加する
@@ -194,6 +194,7 @@
 - [ ] STDLIB-I18N-COMMON-004: `Char.uppercase(Locale)` を追加する
 - [ ] STDLIB-I18N-COMMON-005: `Char.lowercase(Locale)` を追加する
 - [ ] STDLIB-I18N-COMMON-006: `String.toIntOrNull(radix: Int)` を追加する
+- [ ] STDLIB-I18N-COMMON-007: `Char.directionality` を `CharDirectionality` enum で露出する（現状は `Int` placeholder）
 - [ ] STDLIB-TIME-EXP-001: `@ExperimentalTime` 系 API の整理（`Clock` / `TimeMark`）
 - [~] STDLIB-CORO-001: `kotlin.coroutines.intrinsics` / cancellation — 主要部分実装済み（`suspendCoroutineUninterceptedOrReturn`, `intercepted`, `CancellationException`）。残課題は別チケットへ分割。
 - [ ] STDLIB-CORO-002: `kotlin.coroutines.intrinsics` の runtime entry point（`startCoroutineUninterceptedOrReturn`, `createCoroutineUnintercepted`）を追加する。対応 C ABI 名: `kk_start_coroutine_unintercepted_or_return`, `kk_create_coroutine_unintercepted`。

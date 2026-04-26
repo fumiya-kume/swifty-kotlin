@@ -436,11 +436,17 @@ enum SequenceStepKind {
 
 /// Runtime box for `Sequence<T>`.
 /// Stores a chain of lazy steps that are only evaluated on terminal operations.
+final class RuntimeSequenceConstrainOnceState {
+    var consumed = false
+}
+
 final class RuntimeSequenceBox {
     var steps: [SequenceStepKind]
+    let constrainOnceState: RuntimeSequenceConstrainOnceState?
 
-    init(steps: [SequenceStepKind]) {
+    init(steps: [SequenceStepKind], constrainOnceState: RuntimeSequenceConstrainOnceState? = nil) {
         self.steps = steps
+        self.constrainOnceState = constrainOnceState
     }
 }
 

@@ -1,21 +1,21 @@
 symbol s0 kind=interface fq=kotlin.collections.List vis=public flags=synthetic
-symbol s1 kind=class fq=kotlin.UIntArray vis=public flags=synthetic
-symbol s2 kind=class fq=kotlin.ULongArray vis=public flags=synthetic
-symbol s3 kind=class fq=kotlin.UByteArray vis=public flags=synthetic
-symbol s4 kind=class fq=kotlin.UShortArray vis=public flags=synthetic
-symbol s5 kind=function fq=kotlin.UByteArray.asList vis=public flags=synthetic sig=recv=Class#3 params=[] ret=Class#0<UByte> suspend=0 defaults=[] vararg=[]
-symbol s6 kind=function fq=kotlin.UShortArray.asList vis=public flags=synthetic sig=recv=Class#4 params=[] ret=Class#0<UShort> suspend=0 defaults=[] vararg=[]
-symbol s7 kind=function fq=kotlin.UIntArray.asList vis=public flags=synthetic sig=recv=Class#1 params=[] ret=Class#0<UInt> suspend=0 defaults=[] vararg=[]
-symbol s8 kind=function fq=kotlin.ULongArray.asList vis=public flags=synthetic sig=recv=Class#2 params=[] ret=Class#0<ULong> suspend=0 defaults=[] vararg=[]
-symbol s9 kind=function fq=kotlin.ubyteArrayOf vis=public flags=synthetic sig=recv=_ params=[UByte] ret=Class#3 suspend=0 defaults=[0] vararg=[1]
-symbol s10 kind=function fq=kotlin.ushortArrayOf vis=public flags=synthetic sig=recv=_ params=[UShort] ret=Class#4 suspend=0 defaults=[0] vararg=[1]
-symbol s11 kind=function fq=kotlin.uintArrayOf vis=public flags=synthetic sig=recv=_ params=[UInt] ret=Class#1 suspend=0 defaults=[0] vararg=[1]
+symbol s1 kind=class fq=kotlin.UByteArray vis=public flags=synthetic
+symbol s2 kind=class fq=kotlin.UShortArray vis=public flags=synthetic
+symbol s3 kind=class fq=kotlin.UIntArray vis=public flags=synthetic
+symbol s4 kind=class fq=kotlin.ULongArray vis=public flags=synthetic
+symbol s5 kind=function fq=kotlin.UByteArray.asList vis=public flags=synthetic sig=recv=Class#1 params=[] ret=Class#0<UByte> suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=kotlin.UShortArray.asList vis=public flags=synthetic sig=recv=Class#2 params=[] ret=Class#0<UShort> suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.UIntArray.asList vis=public flags=synthetic sig=recv=Class#3 params=[] ret=Class#0<UInt> suspend=0 defaults=[] vararg=[]
+symbol s8 kind=function fq=kotlin.ULongArray.asList vis=public flags=synthetic sig=recv=Class#4 params=[] ret=Class#0<ULong> suspend=0 defaults=[] vararg=[]
+symbol s9 kind=function fq=kotlin.ubyteArrayOf vis=public flags=synthetic sig=recv=_ params=[UByte] ret=Class#1 suspend=0 defaults=[0] vararg=[1]
+symbol s10 kind=function fq=kotlin.ushortArrayOf vis=public flags=synthetic sig=recv=_ params=[UShort] ret=Class#2 suspend=0 defaults=[0] vararg=[1]
+symbol s11 kind=function fq=kotlin.uintArrayOf vis=public flags=synthetic sig=recv=_ params=[UInt] ret=Class#3 suspend=0 defaults=[0] vararg=[1]
 symbol s12 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
 symbol s13 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s14 kind=local fq=__local_0.ubytes vis=private flags=_ type=Class#3
-symbol s15 kind=local fq=__local_1.ushorts vis=private flags=_ type=Class#4
-symbol s16 kind=local fq=__local_2.uints vis=private flags=_ type=Class#1
-symbol s17 kind=local fq=__local_3.ulongs vis=private flags=_ type=Class#2
+symbol s14 kind=local fq=__local_0.ubytes vis=private flags=_ type=Class#1
+symbol s15 kind=local fq=__local_1.ushorts vis=private flags=_ type=Class#2
+symbol s16 kind=local fq=__local_2.uints vis=private flags=_ type=Class#3
+symbol s17 kind=local fq=__local_3.ulongs vis=private flags=_ type=Class#4
 symbol s18 kind=local fq=__local_4.ubyteList vis=private flags=_ type=Class#0<UByte>
 symbol s19 kind=local fq=__local_5.ushortList vis=private flags=_ type=Class#0<UShort>
 symbol s20 kind=local fq=__local_6.uintList vis=private flags=_ type=Class#0<UInt>
@@ -29,7 +29,7 @@ expr e3 int(2) type=Int
 expr e4 memberCall recv=e3 callee=toUByte args=[] type=UByte
 expr e5 int(3) type=Int
 expr e6 memberCall recv=e5 callee=toUByte args=[] type=UByte
-expr e7 call callee=e0 args=[_:e2,_:e4,_:e6] type=Class#3 call=s9 map=[0->0,1->0,2->0] targs=[]
+expr e7 call callee=e0 args=[_:e2,_:e4,_:e6] type=Class#1 call=s9 map=[0->0,1->0,2->0] targs=[]
 expr e8 localDecl ubytes mutable=0 type=_ init=e7 type=Unit ref=s14
 expr e9 name(ushortArrayOf) type=_
 expr e10 int(4) type=Int
@@ -38,29 +38,29 @@ expr e12 int(5) type=Int
 expr e13 memberCall recv=e12 callee=toUShort args=[] type=UShort
 expr e14 int(6) type=Int
 expr e15 memberCall recv=e14 callee=toUShort args=[] type=UShort
-expr e16 call callee=e9 args=[_:e11,_:e13,_:e15] type=Class#4 call=s10 map=[0->0,1->0,2->0] targs=[]
+expr e16 call callee=e9 args=[_:e11,_:e13,_:e15] type=Class#2 call=s10 map=[0->0,1->0,2->0] targs=[]
 expr e17 localDecl ushorts mutable=0 type=_ init=e16 type=Unit ref=s15
 expr e18 name(uintArrayOf) type=_
 expr e19 uint(7) type=UInt
 expr e20 uint(8) type=UInt
 expr e21 uint(9) type=UInt
-expr e22 call callee=e18 args=[_:e19,_:e20,_:e21] type=Class#1 call=s11 map=[0->0,1->0,2->0] targs=[]
+expr e22 call callee=e18 args=[_:e19,_:e20,_:e21] type=Class#3 call=s11 map=[0->0,1->0,2->0] targs=[]
 expr e23 localDecl uints mutable=0 type=_ init=e22 type=Unit ref=s16
 expr e24 ulong(10) type=ULong
 expr e25 ulong(12) type=ULong
 expr e26 binary(rangeTo) lhs=e24 rhs=e25 type=ULong
-expr e27 memberCall recv=e26 callee=toULongArray args=[] type=Class#2
+expr e27 memberCall recv=e26 callee=toULongArray args=[] type=Class#4
 expr e28 localDecl ulongs mutable=0 type=_ init=e27 type=Unit ref=s17
-expr e29 name(ubytes) type=Class#3 ref=s14
+expr e29 name(ubytes) type=Class#1 ref=s14
 expr e30 memberCall recv=e29 callee=asList args=[] type=Class#0<UByte> call=s5 map=[] targs=[]
 expr e31 localDecl ubyteList mutable=0 type=_ init=e30 type=Unit ref=s18
-expr e32 name(ushorts) type=Class#4 ref=s15
+expr e32 name(ushorts) type=Class#2 ref=s15
 expr e33 memberCall recv=e32 callee=asList args=[] type=Class#0<UShort> call=s6 map=[] targs=[]
 expr e34 localDecl ushortList mutable=0 type=_ init=e33 type=Unit ref=s19
-expr e35 name(uints) type=Class#1 ref=s16
+expr e35 name(uints) type=Class#3 ref=s16
 expr e36 memberCall recv=e35 callee=asList args=[] type=Class#0<UInt> call=s7 map=[] targs=[]
 expr e37 localDecl uintList mutable=0 type=_ init=e36 type=Unit ref=s20
-expr e38 name(ulongs) type=Class#2 ref=s17
+expr e38 name(ulongs) type=Class#4 ref=s17
 expr e39 memberCall recv=e38 callee=asList args=[] type=Class#0<ULong> call=s8 map=[] targs=[]
 expr e40 localDecl ulongList mutable=0 type=_ init=e39 type=Unit ref=s21
 expr e41 name(println) type=_

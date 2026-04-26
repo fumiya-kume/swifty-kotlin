@@ -2907,6 +2907,21 @@ extension DataFlowSemaPhase {
             sequenceFQName: sequenceFQName,
             typeParamSymbol: typeParamSymbol,
             symbols: symbols,
+            interner: interner,
+            canThrow: true
+        )
+
+        // STDLIB-SEQ-006: constrainOnce(): Sequence<T>
+        registerSequenceMemberStub(
+            named: "constrainOnce",
+            externalLinkName: "kk_sequence_constrainOnce",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: receiverType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
             interner: interner
         )
 

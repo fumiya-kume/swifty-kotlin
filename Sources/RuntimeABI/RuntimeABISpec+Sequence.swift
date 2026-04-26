@@ -47,6 +47,15 @@ public extension RuntimeABISpec {
             name: "kk_sequence_to_list",
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_constrainOnce",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Sequence"

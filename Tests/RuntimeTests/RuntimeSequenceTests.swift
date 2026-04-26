@@ -180,7 +180,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
             nil
         )
 
-        XCTAssertEqual(listElements(kk_sequence_to_list(sorted)), [2, 1, 3])
+        XCTAssertEqual(listElements(kk_sequence_to_list(sorted, nil)), [2, 1, 3])
     }
 
     func testSortedByPropagatesSelectorThrowables() {
@@ -194,7 +194,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         )
 
         XCTAssertNotEqual(thrown, 0)
-        XCTAssertEqual(listElements(kk_sequence_to_list(sorted)), [])
+        XCTAssertEqual(listElements(kk_sequence_to_list(sorted, nil)), [])
     }
 
     func testJoinToStringUsesSeparatorPrefixAndPostfix() {
@@ -573,6 +573,22 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(listElements(result), [5, 6, 8, 11])
     }
 
+    func testRunningFoldIndexedIncludesInitialAccumulatorAndIndex() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_runningFoldIndexed(
+            seq,
+            10,
+            unsafeBitCast(indexedAccumulatingSum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(sequenceElements(result), [10, 10, 12, 18])
+    }
+
     func testRunningReduceEmptySequenceReturnsEmptyList() {
         let seq = makeSequence([])
         var thrown = 0
@@ -674,6 +690,22 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
             seq,
             0,
             unsafeBitCast(throwingAccumulator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
+    }
+
+    func testRunningFoldIndexedReturnsZeroWhenLambdaThrows() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_runningFoldIndexed(
+            seq,
+            0,
+            unsafeBitCast(throwingIndexedAccumulator, to: Int.self),
             0,
             &thrown
         )
@@ -840,6 +872,21 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         kk_sequence_from_list(makeList(elements))
     }
 
+    // MARK: - Sequence.constrainOnce (STDLIB-SEQ-006)
+
+    func testConstrainOnceReportsIllegalStateOnSecondToList() {
+        let seq = kk_sequence_constrainOnce(makeSequence([1, 2, 3]))
+        var firstThrown = 0
+        let firstList = kk_sequence_to_list(seq, &firstThrown)
+        XCTAssertEqual(firstThrown, 0)
+        XCTAssertEqual(listElements(firstList), [1, 2, 3])
+
+        var secondThrown = 0
+        let secondList = kk_sequence_to_list(seq, &secondThrown)
+        XCTAssertNotEqual(secondThrown, 0)
+        XCTAssertEqual(secondList, runtimeNullSentinelInt)
+    }
+
     // MARK: - Sequence mutable conversions (STDLIB-SEQ-025)
 
     func testToMutableListReturnsIndependentCopy() {
@@ -912,7 +959,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let seq1 = makeSequence([1, 2])
         let seq2 = makeSequence([3, 4])
         let combined = kk_sequence_plus(seq1, seq2)
-        let asList = kk_sequence_to_list(combined)
+        let asList = kk_sequence_to_list(combined, nil)
         XCTAssertEqual(listElements(asList), [1, 2, 3, 4])
     }
 
@@ -920,7 +967,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         // Verify the result of minus can be chained with other sequence operations
         let seq = makeSequence([1, 2, 3])
         let reduced = kk_sequence_minus(seq, 2)
-        let asList = kk_sequence_to_list(reduced)
+        let asList = kk_sequence_to_list(reduced, nil)
         XCTAssertEqual(listElements(asList), [1, 3])
     }
 
@@ -1794,7 +1841,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
     // MARK: - Helpers
 
     private func sequenceElements(_ seqRaw: Int) -> [Int] {
-        listElements(kk_sequence_to_list(seqRaw))
+        listElements(kk_sequence_to_list(seqRaw, nil))
     }
 
     private func listElements(_ listRaw: Int) -> [Int] {

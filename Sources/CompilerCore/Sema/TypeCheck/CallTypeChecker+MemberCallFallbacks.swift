@@ -982,6 +982,10 @@ extension CallTypeChecker {
             interner.intern("toIntArray"),
             interner.intern("toLongArray"),
             interner.intern("toByteArray"),
+            interner.intern("toUByteArray"),
+            interner.intern("toUShortArray"),
+            interner.intern("toUIntArray"),
+            interner.intern("toULongArray"),
             interner.intern("take"),
             interner.intern("drop"),
             interner.intern("reversed"),
@@ -1465,6 +1469,58 @@ extension CallTypeChecker {
         {
             return sema.types.make(.classType(ClassType(
                 classSymbol: byteArraySymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        }
+
+        if memberName == interner.intern("toUByteArray"),
+           let ubyteArraySymbol = sema.symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("UByteArray"),
+           ])
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: ubyteArraySymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        }
+
+        if memberName == interner.intern("toUShortArray"),
+           let ushortArraySymbol = sema.symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("UShortArray"),
+           ])
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: ushortArraySymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        }
+
+        if memberName == interner.intern("toUIntArray"),
+           let uintArraySymbol = sema.symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("UIntArray"),
+           ])
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: uintArraySymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        }
+
+        if memberName == interner.intern("toULongArray"),
+           let ulongArraySymbol = sema.symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("ULongArray"),
+           ])
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: ulongArraySymbol,
                 args: [],
                 nullability: .nonNull
             )))

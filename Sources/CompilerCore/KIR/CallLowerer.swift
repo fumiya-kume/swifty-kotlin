@@ -1140,7 +1140,7 @@ final class CallLowerer {
             callee: runtimeCallee,
             arguments: loweredArgIDs,
             result: result,
-            canThrow: false,
+            canThrow: runtimeCallee == interner.intern("kk_sequence_to_list"),
             thrownResult: nil
         ))
         return result

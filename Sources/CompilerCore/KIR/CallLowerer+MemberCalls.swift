@@ -173,7 +173,7 @@ extension CallLowerer {
         "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
         "plus", "plusElement", "minus",
         "asSequence", "asIterable", "toList", "toSet", "toMap", "toCollection", "toMutableList", "toMutableSet", "toTypedArray",
-        "toIntArray", "toLongArray", "toByteArray",
+        "toIntArray", "toLongArray", "toByteArray", "toUByteArray", "toUShortArray", "toUIntArray", "toULongArray",
         "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect", "subList",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
         "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
@@ -2308,6 +2308,8 @@ extension CallLowerer {
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
             let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
+            let ubyteType = sema.types.make(.primitive(.ubyte, .nonNull))
+            let ushortType = sema.types.make(.primitive(.ushort, .nonNull))
             let floatType = sema.types.make(.primitive(.float, .nonNull))
             let doubleType = sema.types.make(.primitive(.double, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
@@ -2348,6 +2350,14 @@ extension CallLowerer {
             case ("toByte", longType, intType): interner.intern("kk_long_to_byte")
             case ("toShort", intType, intType): interner.intern("kk_int_to_short")
             case ("toShort", longType, intType): interner.intern("kk_long_to_short")
+            case ("toUByte", intType, ubyteType): interner.intern("kk_int_to_ubyte")
+            case ("toUByte", longType, ubyteType): interner.intern("kk_long_to_ubyte")
+            case ("toUByte", uintType, ubyteType): interner.intern("kk_uint_to_ubyte")
+            case ("toUByte", ulongType, ubyteType): interner.intern("kk_ulong_to_ubyte")
+            case ("toUShort", intType, ushortType): interner.intern("kk_int_to_ushort")
+            case ("toUShort", longType, ushortType): interner.intern("kk_long_to_ushort")
+            case ("toUShort", uintType, ushortType): interner.intern("kk_uint_to_ushort")
+            case ("toUShort", ulongType, ushortType): interner.intern("kk_ulong_to_ushort")
             default: nil
             }
             if let callee = conversionCallee {
@@ -2367,10 +2377,11 @@ extension CallLowerer {
                     || (calleeStr == "toULong" && nonNullReceiverType == longType && nonNullResultType == ulongType)
                     || (calleeStr == "toInt" && nonNullReceiverType == sema.types.charType && nonNullResultType == intType)
                     || (calleeStr == "toChar" && nonNullReceiverType == intType && nonNullResultType == sema.types.charType)
-            if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble", "toChar"].contains(calleeStr),
+            if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble", "toUByte", "toUShort", "toChar"].contains(calleeStr),
                nonNullReceiverType == nonNullResultType || isRepresentationPreservingConversion,
                nonNullReceiverType == intType || nonNullReceiverType == longType
                || nonNullReceiverType == uintType || nonNullReceiverType == ulongType
+               || nonNullReceiverType == ubyteType || nonNullReceiverType == ushortType
                || nonNullReceiverType == floatType || nonNullReceiverType == doubleType
                || nonNullReceiverType == sema.types.charType
             {
@@ -3910,6 +3921,8 @@ extension CallLowerer {
                     "kk_array_toList"
                 case "toMutableList":
                     "kk_array_toMutableList"
+                case "toTypedArray":
+                    "kk_array_copyOf"
                 case "copyOf":
                     "kk_array_copyOf"
                 case "concatToString":
@@ -3955,6 +3968,7 @@ extension CallLowerer {
                 || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
             {
                 let toListID = interner.intern("toList")
+                let constrainOnceID = interner.intern("constrainOnce")
                 let distinctID = interner.intern("distinct")
                 let sortedID = interner.intern("sorted")
                 let sortedDescendingID = interner.intern("sortedDescending")
@@ -3982,10 +3996,13 @@ extension CallLowerer {
                 let seqCountCallee = interner.intern("kk_sequence_count")
                 let seqAnyCallee = interner.intern("kk_sequence_any")
                 let seqNoneCallee = interner.intern("kk_sequence_none")
+                let seqToListCallee = interner.intern("kk_sequence_to_list")
 
                 let runtimeCallee: InternedString? = switch calleeName {
                 case toListID:
-                    interner.intern("kk_sequence_to_list")
+                    seqToListCallee
+                case constrainOnceID:
+                    interner.intern("kk_sequence_constrainOnce")
                 case distinctID:
                     interner.intern("kk_sequence_distinct")
                 case sortedID:
@@ -4047,6 +4064,7 @@ extension CallLowerer {
                         || runtimeCallee == seqLastCallee
                         || runtimeCallee == seqLastOrNullCallee
                         || runtimeCallee == seqCountCallee
+                        || runtimeCallee == seqToListCallee
                     instructions.append(.call(
                         symbol: nil,
                         callee: runtimeCallee,
@@ -5939,7 +5957,9 @@ extension CallLowerer {
             interner.intern("kk_sequence_firstOrNull"),
             interner.intern("kk_sequence_count"),
             interner.intern("kk_string_zipWithNextTransform"),
+            interner.intern("kk_sequence_to_list"),
             interner.intern("kk_list_windowed_transform"),
+            interner.intern("kk_sequence_runningFoldIndexed"),
             interner.intern("kk_mutable_list_replaceAll"),
             interner.intern("kk_mutable_list_removeIf"),
             interner.intern("kk_list_binarySearch_compare"),
@@ -7202,6 +7222,8 @@ extension CallLowerer {
                 return interner.intern("kk_array_toList")
             case "toMutableList":
                 return interner.intern("kk_array_toMutableList")
+            case "toTypedArray":
+                return interner.intern("kk_array_copyOf")
             case "forEach":
                 return interner.intern("kk_array_forEach")
             case "any":
@@ -7402,6 +7424,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_take")
             case toListName:
                 return interner.intern("kk_sequence_to_list")
+            case interner.intern("constrainOnce"):
+                return interner.intern("kk_sequence_constrainOnce")
             case forEachName:
                 return interner.intern("kk_sequence_forEach")
             case flatMapName:

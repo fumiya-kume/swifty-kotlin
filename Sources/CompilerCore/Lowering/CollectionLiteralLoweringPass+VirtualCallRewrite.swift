@@ -116,6 +116,27 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // toTypedArray() on array → kk_array_copyOf (result is Array)
+        if callee == lookup.toTypedArrayName, arguments.isEmpty, arrayExprIDs.contains(receiver.rawValue) {
+            let toArrayResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkArrayCopyOfName,
+                arguments: [receiver],
+                result: toArrayResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                arrayExprIDs.insert(result.rawValue)
+                arrayExprIDs.insert(toArrayResult.rawValue)
+                loweredBody.append(.copy(from: toArrayResult, to: result))
+            }
+            return true
+        }
+
         // toIntArray() on list → kk_list_toIntArray (STDLIB-LIST-PRIM-ARRAY)
         if callee == lookup.toIntArrayName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
             let toArrayResult = module.arena.appendExpr(
@@ -166,6 +187,33 @@ extension CollectionLiteralLoweringPass {
             loweredBody.append(.call(
                 symbol: nil,
                 callee: lookup.kkListToByteArrayName,
+                arguments: [receiver],
+                result: toArrayResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                arrayExprIDs.insert(result.rawValue)
+                arrayExprIDs.insert(toArrayResult.rawValue)
+                loweredBody.append(.copy(from: toArrayResult, to: result))
+            }
+            return true
+        }
+
+        let unsignedArrayCallee: InternedString? = switch callee {
+        case lookup.toUByteArrayName: lookup.kkListToUByteArrayName
+        case lookup.toUShortArrayName: lookup.kkListToUShortArrayName
+        case lookup.toUIntArrayName: lookup.kkListToUIntArrayName
+        case lookup.toULongArrayName: lookup.kkListToULongArrayName
+        default: nil
+        }
+        if let unsignedArrayCallee, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
+            let toArrayResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: unsignedArrayCallee,
                 arguments: [receiver],
                 result: toArrayResult,
                 canThrow: false,
@@ -790,7 +838,7 @@ extension CollectionLiteralLoweringPass {
                         callee: lookup.kkSequenceToListName,
                         arguments: [receiver],
                         result: toListResult,
-                        canThrow: false,
+                        canThrow: true,
                         thrownResult: nil
                     ))
                     listExprIDs.insert(result.rawValue)
@@ -802,7 +850,7 @@ extension CollectionLiteralLoweringPass {
                         callee: lookup.kkSequenceToListName,
                         arguments: [receiver],
                         result: nil,
-                        canThrow: false,
+                        canThrow: true,
                         thrownResult: nil
                     ))
                 }
@@ -836,6 +884,22 @@ extension CollectionLiteralLoweringPass {
                 }
                 return true
             }
+        }
+
+        // constrainOnce() on sequence -> kk_sequence_constrainOnce
+        if callee == lookup.constrainOnceName, arguments.isEmpty, sequenceExprIDs.contains(receiver.rawValue) {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkSequenceConstrainOnceName,
+                arguments: [receiver],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                sequenceExprIDs.insert(result.rawValue)
+            }
+            return true
         }
 
         // toSet() on sequence → kk_sequence_toSet (STDLIB-470)
@@ -934,6 +998,27 @@ extension CollectionLiteralLoweringPass {
                 module: module,
                 loweredBody: &loweredBody
             )
+            return true
+        }
+
+        // runningFoldIndexed on sequence → kk_sequence_runningFoldIndexed (STDLIB-SEQ-016)
+        // Args: initial, lambda (2 from Kotlin: initial + operation)
+        if callee == lookup.runningFoldIndexedName, arguments.count == 2,
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(
+                kkName: lookup.kkSequenceRunningFoldIndexedName,
+                receiver: receiver,
+                arguments: [arguments[0]] + [arguments[1]] + [zeroExpr],
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            if let result { sequenceExprIDs.insert(result.rawValue); sequenceExprIDs.insert(hofResult.rawValue) }
             return true
         }
 

@@ -5120,6 +5120,42 @@ extension DataFlowSemaPhase {
             arrayPackage: kotlinPkg,
             externalLinkName: "kk_list_toByteArray"
         )
+        registerListToPrimitiveArrayMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            memberName: "toUByteArray",
+            arrayTypeName: "UByteArray",
+            arrayPackage: kotlinPkg,
+            externalLinkName: "kk_list_toUByteArray"
+        )
+        registerListToPrimitiveArrayMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            memberName: "toUShortArray",
+            arrayTypeName: "UShortArray",
+            arrayPackage: kotlinPkg,
+            externalLinkName: "kk_list_toUShortArray"
+        )
+        registerListToPrimitiveArrayMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            memberName: "toUIntArray",
+            arrayTypeName: "UIntArray",
+            arrayPackage: kotlinPkg,
+            externalLinkName: "kk_list_toUIntArray"
+        )
+        registerListToPrimitiveArrayMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            memberName: "toULongArray",
+            arrayTypeName: "ULongArray",
+            arrayPackage: kotlinPkg,
+            externalLinkName: "kk_list_toULongArray"
+        )
     }
 
     /// Register a `List<E>.toXxxArray(): XxxArray` conversion member stub.
@@ -9246,6 +9282,64 @@ extension DataFlowSemaPhase {
                     ),
                     for: asListSym
                 )
+            }
+        }
+
+        // Register toTypedArray() for unsigned primitive arrays.
+        if let genericArraySymbol = symbols.lookup(fqName: arrayFQName) {
+            for name in unsignedPrimitiveArrayNames {
+                let primName = interner.intern(name)
+                let fqName = kotlinPkg + [primName]
+                guard let arraySymbol = symbols.lookup(fqName: fqName) else {
+                    continue
+                }
+
+                let toTypedArrayName = interner.intern("toTypedArray")
+                let toTypedArrayFQName = fqName + [toTypedArrayName]
+                if symbols.lookup(fqName: toTypedArrayFQName) == nil {
+                    let toTypedArraySym = symbols.define(
+                        kind: .function,
+                        name: toTypedArrayName,
+                        fqName: toTypedArrayFQName,
+                        declSite: nil,
+                        visibility: .public,
+                        flags: [.synthetic]
+                    )
+                    symbols.setParentSymbol(arraySymbol, for: toTypedArraySym)
+                    symbols.setExternalLinkName("kk_array_copyOf", for: toTypedArraySym)
+
+                    let elementType: TypeID = switch name {
+                    case "UByteArray": types.ubyteType
+                    case "UShortArray": types.ushortType
+                    case "UIntArray": types.uintType
+                    case "ULongArray": types.ulongType
+                    default: types.intType
+                    }
+                    let receiverType = types.make(.classType(ClassType(
+                        classSymbol: arraySymbol,
+                        args: [],
+                        nullability: .nonNull
+                    )))
+                    let returnType = types.make(.classType(ClassType(
+                        classSymbol: genericArraySymbol,
+                        args: [.invariant(elementType)],
+                        nullability: .nonNull
+                    )))
+
+                    symbols.setFunctionSignature(
+                        FunctionSignature(
+                            receiverType: receiverType,
+                            parameterTypes: [],
+                            returnType: returnType,
+                            isSuspend: false,
+                            valueParameterSymbols: [],
+                            valueParameterHasDefaultValues: [],
+                            valueParameterIsVararg: [],
+                            typeParameterSymbols: []
+                        ),
+                        for: toTypedArraySym
+                    )
+                }
             }
         }
 
