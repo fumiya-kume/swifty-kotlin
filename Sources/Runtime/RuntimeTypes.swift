@@ -429,6 +429,9 @@ enum SequenceStepKind {
     case flatMapStep(fnPtr: Int, closureRaw: Int)
     case flatMapIndexedStep(fnPtr: Int, closureRaw: Int)
     case chunkedTransformStep(size: Int, fnPtr: Int, closureRaw: Int)
+    /// STDLIB-SEQ-019: Random shuffle of the full upstream result. Each full iteration
+    /// of the returned sequence re-shuffles (intermediate, stateful; matches Kotlin).
+    case shuffledStep(randomRaw: Int?)
     /// STDLIB-563: Lazy continuation-based builder.
     /// The coroutine runs the builder lambda on a background thread;
     /// each `yield()` suspends the producer until the consumer requests

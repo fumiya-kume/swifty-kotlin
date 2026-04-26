@@ -427,7 +427,7 @@ private func runtimeSequenceTransformElement(
             outThrown: outThrown,
             yield: yield
         )
-    case let .flatMapStep(fnPtr, closureRaw):
+        case let .flatMapStep(fnPtr, closureRaw):
         let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
         var thrown = 0
         let subRaw = lambda(closureRaw, element, &thrown)
@@ -498,6 +498,8 @@ private func runtimeSequenceTransformElement(
                 return !state.stop
             }
         }
+    case .shuffledStep:
+        return
     case .source, .stringSource, .builder, .generator, .nullableGenerator, .lazyBuilder:
         runtimeSequenceTransformElement(
             element,
@@ -593,6 +595,30 @@ private func runtimeTraverseSequenceWithState(
         return
     }
 
+    if let shuffledIndex = seq.steps.firstIndex(where: { step in
+        if case .shuffledStep = step { return true }
+        return false
+    }) {
+        let prefix = Array(seq.steps[..<shuffledIndex])
+        let rest: [SequenceStepKind] =
+            (shuffledIndex + 1) < seq.steps.endIndex
+            ? Array(seq.steps[(shuffledIndex + 1)...])
+            : []
+        guard case let .shuffledStep(randomOpt) = seq.steps[shuffledIndex] else {
+            return
+        }
+        let prefixBox = RuntimeSequenceBox(steps: prefix)
+        var materialized = evaluateSequence(prefixBox)
+        materialized = runtimeShuffleElementHandles(materialized, randomRaw: randomOpt)
+        var newSteps: [SequenceStepKind] = [.source(elements: materialized)]
+        newSteps.append(contentsOf: rest)
+        return runtimeTraverseSequenceWithState(
+            RuntimeSequenceBox(steps: newSteps),
+            state: state,
+            outThrown: outThrown,
+            yield: yield
+        )
+    }
     let transformSteps = seq.steps.filter {
         switch $0 {
         case .source, .stringSource, .builder, .generator, .nullableGenerator, .lazyBuilder:
@@ -740,7 +766,7 @@ private func runtimeTraverseSequenceWithState(
                 )
             }
             return
-        case .mapStep, .filterStep, .filterNotStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep, .onEachIndexedStep, .mapNotNullStep, .filterNotNullStep, .requireNoNullsStep, .mapIndexedStep, .withIndexStep, .flatMapStep, .flatMapIndexedStep, .chunkedTransformStep:
+        case .mapStep, .filterStep, .filterNotStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep, .onEachIndexedStep, .mapNotNullStep, .filterNotNullStep, .requireNoNullsStep, .mapIndexedStep, .withIndexStep, .flatMapStep, .flatMapIndexedStep, .chunkedTransformStep, .shuffledStep:
             continue
         }
     }
@@ -1077,6 +1103,21 @@ private func applyChunkedTransformStep(
     return result
 }
 
+/// Shuffles a snapshot of element handles. `randomRaw == nil` uses the same
+/// default behaviour as [Int].`shuffled()`.
+private func runtimeShuffleElementHandles(_ elements: [Int], randomRaw: Int?) -> [Int] {
+    guard elements.count > 1 else { return elements }
+    if let randomRaw {
+        var out = elements
+        for i in stride(from: out.count - 1, through: 1, by: -1) {
+            let j = kk_random_nextInt_until(randomRaw, i + 1, nil)
+            out.swapAt(i, j)
+        }
+        return out
+    }
+    return elements.shuffled()
+}
+
 /// Evaluates the lazy sequence chain and returns the materialized elements.
 /// This is the core of lazy semantics: steps are only executed here.
 private func evaluateSequence(
@@ -1226,6 +1267,8 @@ private func evaluateSequence(
             elements = applyFlatMapIndexedStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
         case let .chunkedTransformStep(size, fnPtr, closureRaw):
             elements = applyChunkedTransformStep(elements, size: size, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
+        case let .shuffledStep(randomOpt):
+            elements = runtimeShuffleElementHandles(elements, randomRaw: randomOpt)
         }
         if let outThrown, outThrown.pointee != 0 { return [] }
     }
@@ -1795,22 +1838,32 @@ public func kk_sequence_sortedDescending(_ seqRaw: Int) -> Int {
 
 @_cdecl("kk_sequence_shuffled")
 public func kk_sequence_shuffled(_ seqRaw: Int) -> Int {
-    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
-    let seq = RuntimeSequenceBox(steps: [.source(elements: elements.shuffled())])
-    return registerRuntimeObject(seq)
+    guard let seq = runtimeSequenceBox(from: seqRaw) else {
+        let sourceElements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+        let newSeq = RuntimeSequenceBox(steps: [
+            .source(elements: sourceElements),
+            .shuffledStep(randomRaw: nil),
+        ])
+        return registerRuntimeObject(newSeq)
+    }
+    var newSteps = seq.steps
+    newSteps.append(.shuffledStep(randomRaw: nil))
+    return registerRuntimeObject(RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState))
 }
 
 @_cdecl("kk_sequence_shuffled_random")
 public func kk_sequence_shuffled_random(_ seqRaw: Int, _ randomRaw: Int) -> Int {
-    var elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
-    guard elements.count > 1 else {
-        return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: elements)]))
+    guard let seq = runtimeSequenceBox(from: seqRaw) else {
+        let sourceElements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+        let newSeq = RuntimeSequenceBox(steps: [
+            .source(elements: sourceElements),
+            .shuffledStep(randomRaw: randomRaw),
+        ])
+        return registerRuntimeObject(newSeq)
     }
-    for i in stride(from: elements.count - 1, through: 1, by: -1) {
-        let j = kk_random_nextInt_until(randomRaw, i + 1, nil)
-        elements.swapAt(i, j)
-    }
-    return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: elements)]))
+    var newSteps = seq.steps
+    newSteps.append(.shuffledStep(randomRaw: randomRaw))
+    return registerRuntimeObject(RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState))
 }
 // MARK: - Sequence Terminal Operations: first/firstOrNull/last/count (STDLIB-273)
 
