@@ -1535,6 +1535,28 @@ public func kk_sequence_sortedDescending(_ seqRaw: Int) -> Int {
     let seq = RuntimeSequenceBox(steps: [.source(elements: sorted)])
     return registerRuntimeObject(seq)
 }
+
+// MARK: - Sequence Shuffling Operations (STDLIB-SEQ-019)
+
+@_cdecl("kk_sequence_shuffled")
+public func kk_sequence_shuffled(_ seqRaw: Int) -> Int {
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    let seq = RuntimeSequenceBox(steps: [.source(elements: elements.shuffled())])
+    return registerRuntimeObject(seq)
+}
+
+@_cdecl("kk_sequence_shuffled_random")
+public func kk_sequence_shuffled_random(_ seqRaw: Int, _ randomRaw: Int) -> Int {
+    var elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    guard elements.count > 1 else {
+        return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: elements)]))
+    }
+    for i in stride(from: elements.count - 1, through: 1, by: -1) {
+        let j = kk_random_nextInt_until(randomRaw, i + 1, nil)
+        elements.swapAt(i, j)
+    }
+    return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: elements)]))
+}
 // MARK: - Sequence Terminal Operations: first/firstOrNull/last/count (STDLIB-273)
 
 @_cdecl("kk_sequence_first")

@@ -330,6 +330,7 @@ extension CollectionLiteralLoweringPass {
             || callee == lookup.kkSequenceFlatMapIndexedName
             || callee == lookup.kkSequenceDropName || callee == lookup.kkSequenceDistinctName
             || callee == lookup.kkSequenceZipName
+            || callee == lookup.kkSequenceShuffledName || callee == lookup.kkSequenceShuffledRandomName
         {
             // The KIR builder's sequence HOF handler may emit kk_sequence_*
             // directly.  Track these results as sequence expressions so that
@@ -410,6 +411,7 @@ extension CollectionLiteralLoweringPass {
             } else if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.takeName
                 || callee == lookup.flatMapName || callee == lookup.flatMapIndexedName || callee == lookup.dropName
                 || callee == lookup.distinctName || callee == lookup.zipName
+                || callee == lookup.shuffledName
             {
                 if let result { sequenceExprIDs.insert(result.rawValue) }
             }

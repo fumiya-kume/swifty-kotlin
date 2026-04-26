@@ -3616,6 +3616,10 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_plus_element"
                 } else if calleeName == interner.intern("runningReduceIndexed") {
                     runtimeCallee = "kk_sequence_runningReduceIndexed"
+                } else if calleeName == interner.intern("shuffled") {
+                    runtimeCallee = normalizedArgIDs.isEmpty
+                        ? "kk_sequence_shuffled"
+                        : "kk_sequence_shuffled_random"
                 } else if calleeName == interner.intern("ifEmpty") {
                     runtimeCallee = "kk_sequence_ifEmpty"
                 } else if calleeName == interner.intern("forEachIndexed") {
@@ -4009,6 +4013,8 @@ extension CallLowerer {
                     interner.intern("kk_sequence_sorted")
                 case sortedDescendingID:
                     interner.intern("kk_sequence_sortedDescending")
+                case interner.intern("shuffled"):
+                    interner.intern("kk_sequence_shuffled")
                 case filterNotNullID:
                     interner.intern("kk_sequence_filterNotNull")
                 case asIterableID:
@@ -7448,6 +7454,10 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_sortedBy")
             case sortedDescendingName:
                 return interner.intern("kk_sequence_sortedDescending")
+            case interner.intern("shuffled"):
+                return argumentCount >= 2
+                    ? interner.intern("kk_sequence_shuffled_random")
+                    : interner.intern("kk_sequence_shuffled")
             case joinToStringName:
                 return interner.intern("kk_sequence_joinToString")
             case sumOfName:

@@ -991,6 +991,7 @@ extension CallTypeChecker {
             interner.intern("reversed"),
             interner.intern("asReversed"),
             interner.intern("sorted"),
+            interner.intern("shuffled"),
             interner.intern("distinct"),
             interner.intern("distinctBy"),
             interner.intern("flatten"),
@@ -1098,6 +1099,7 @@ extension CallTypeChecker {
             interner.intern("flatMap"), interner.intern("flatMapIndexed"), interner.intern("sortedBy"), interner.intern("groupBy"), interner.intern("groupingBy"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associateTo"), interner.intern("associateByTo"), interner.intern("associateWithTo"), interner.intern("groupByTo"), interner.intern("reduceTo"),
             interner.intern("associate"), interner.intern("zip"), interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("take"), interner.intern("drop"), interner.intern("reversed"), interner.intern("asReversed"),
             interner.intern("sorted"), interner.intern("distinct"), interner.intern("distinctBy"), interner.intern("flatten"), interner.intern("chunked"), interner.intern("windowed"), interner.intern("withIndex"), interner.intern("mapIndexed"),
+            interner.intern("shuffled"),
             interner.intern("sortedDescending"), interner.intern("sortedByDescending"), interner.intern("sortedWith"),
             interner.intern("onEach"), interner.intern("onEachIndexed"),
             interner.intern("filterIsInstance"),
@@ -1155,6 +1157,8 @@ extension CallTypeChecker {
             return argCount == 0
         case interner.intern("joinToString"):
             return (0 ... 3).contains(argCount)
+        case interner.intern("shuffled"):
+            return argCount == 0 || argCount == 1
         case interner.intern("filterNotNull"), interner.intern("unzip"), interner.intern("eachCount"):
             return argCount == 0
         case interner.intern("get"), interner.intern("getOrNull"), interner.intern("elementAtOrNull"),
@@ -1622,11 +1626,20 @@ extension CallTypeChecker {
             interner.intern("sorted"),
             interner.intern("sortedDescending"),
             interner.intern("sortedWith"),
+            interner.intern("shuffled"),
             interner.intern("reversed"),
             interner.intern("asReversed"),
             interner.intern("distinct"),
             interner.intern("distinctBy"),
         ]
+        if memberName == interner.intern("shuffled"), isSequenceReceiver {
+            return makeSyntheticSequenceType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: receiverElementType
+            )
+        }
         if listPreservingMembers.contains(memberName),
            let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
         {

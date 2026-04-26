@@ -252,6 +252,24 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
+        // STDLIB-SEQ-019: shuffled / shuffled(random)
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_shuffled",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_shuffled_random",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "randomRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
         // Higher-order operations (STDLIB-271)
         RuntimeABIFunctionSpec(
             name: "kk_sequence_mapNotNull",

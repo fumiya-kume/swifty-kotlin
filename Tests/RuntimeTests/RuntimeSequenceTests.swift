@@ -887,6 +887,23 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(secondList, runtimeNullSentinelInt)
     }
 
+    // MARK: - Sequence shuffled tests (STDLIB-SEQ-019)
+
+    func testSequenceShuffledPreservesElements() {
+        let seq = makeSequence([1, 2, 3, 4])
+        let shuffled = kk_sequence_shuffled(seq)
+        XCTAssertEqual(sequenceElements(shuffled).sorted(), [1, 2, 3, 4])
+    }
+
+    func testSequenceShuffledRandomPreservesElementsAndHandlesSmallSequences() {
+        let seq = makeSequence([1, 2, 3, 4])
+        let shuffled = kk_sequence_shuffled_random(seq, 0)
+        XCTAssertEqual(sequenceElements(shuffled).sorted(), [1, 2, 3, 4])
+
+        XCTAssertEqual(sequenceElements(kk_sequence_shuffled_random(makeSequence([]), 0)), [])
+        XCTAssertEqual(sequenceElements(kk_sequence_shuffled_random(makeSequence([42]), 0)), [42])
+    }
+
     // MARK: - Sequence mutable conversions (STDLIB-SEQ-025)
 
     func testToMutableListReturnsIndependentCopy() {

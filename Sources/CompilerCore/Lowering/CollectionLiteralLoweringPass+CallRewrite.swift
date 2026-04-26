@@ -1716,6 +1716,7 @@ extension CollectionLiteralLoweringPass {
                         || callee == lookup.kkSequenceDropName || callee == lookup.kkSequenceDistinctName
                         || callee == lookup.kkSequenceZipName
                         || callee == lookup.kkSequenceConstrainOnceName
+                        || callee == lookup.kkSequenceShuffledName || callee == lookup.kkSequenceShuffledRandomName
                         || callee == lookup.kkSequencePlusName || callee == lookup.kkSequenceMinusName
                     {
                         loweredBody.append(instruction)
@@ -1988,6 +1989,26 @@ extension CollectionLiteralLoweringPass {
                                 symbol: nil,
                                 callee: lookup.kkSequenceDistinctName,
                                 arguments: [receiverID],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
+
+                    // shuffled([random]) on sequence -> kk_sequence_shuffled(_random)
+                    if callee == lookup.shuffledName, arguments.count == 1 || arguments.count == 2 {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            let kkName = arguments.count == 2
+                                ? lookup.kkSequenceShuffledRandomName
+                                : lookup.kkSequenceShuffledName
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkName,
+                                arguments: arguments,
                                 result: result,
                                 canThrow: false,
                                 thrownResult: nil

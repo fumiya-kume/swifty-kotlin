@@ -3099,6 +3099,85 @@ extension DataFlowSemaPhase {
             registerFlatMapIndexedOverload(transformReturnType: sequenceRType)
         }
 
+        // shuffled() / shuffled(random): Sequence<T> (STDLIB-SEQ-019)
+        do {
+            let shuffledName = interner.intern("shuffled")
+            let shuffledFQName = sequenceFQName + [shuffledName]
+
+            func registerShuffledOverload(
+                parameters: [(name: String, type: TypeID)],
+                externalLinkName: String
+            ) {
+                let alreadyRegistered = symbols.lookupAll(fqName: shuffledFQName).contains { symbolID in
+                    guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                    return signature.parameterTypes.count == parameters.count
+                        && symbols.externalLinkName(for: symbolID) == externalLinkName
+                }
+                guard !alreadyRegistered else { return }
+
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: shuffledName,
+                    fqName: shuffledFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .operatorFunction]
+                )
+                symbols.setParentSymbol(sequenceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+
+                var parameterTypes: [TypeID] = []
+                var parameterSymbols: [SymbolID] = []
+                for parameter in parameters {
+                    let parameterName = interner.intern(parameter.name)
+                    let parameterSymbol = symbols.define(
+                        kind: .valueParameter,
+                        name: parameterName,
+                        fqName: shuffledFQName + [parameterName],
+                        declSite: nil,
+                        visibility: .private,
+                        flags: [.synthetic]
+                    )
+                    symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+                    parameterTypes.append(parameter.type)
+                    parameterSymbols.append(parameterSymbol)
+                }
+
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: parameterTypes,
+                        returnType: receiverType,
+                        valueParameterSymbols: parameterSymbols,
+                        valueParameterHasDefaultValues: Array(repeating: false, count: parameters.count),
+                        valueParameterIsVararg: Array(repeating: false, count: parameters.count),
+                        typeParameterSymbols: [typeParamSymbol],
+                        typeParameterUpperBoundsList: [[]],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+
+            registerShuffledOverload(parameters: [], externalLinkName: "kk_sequence_shuffled")
+
+            if let randomSymbol = symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("random"),
+                interner.intern("Random"),
+            ]) {
+                let randomType = types.make(.classType(ClassType(
+                    classSymbol: randomSymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+                registerShuffledOverload(
+                    parameters: [("random", randomType)],
+                    externalLinkName: "kk_sequence_shuffled_random"
+                )
+            }
+        }
+
         // partition(predicate: (T) -> Boolean): Pair<List<T>, List<T>> (STDLIB-SEQ-012)
         registerSequenceMemberStub(
             named: "partition",
@@ -3112,7 +3191,6 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-
         // plusElement(element: T): Sequence<T> (STDLIB-SEQ-013)
         registerSequenceMemberStub(
             named: "plusElement",

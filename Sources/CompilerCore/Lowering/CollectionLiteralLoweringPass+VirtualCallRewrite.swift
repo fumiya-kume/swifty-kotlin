@@ -536,6 +536,25 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        if callee == lookup.shuffledName,
+           (arguments.isEmpty || arguments.count == 1),
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let kkName = arguments.isEmpty
+                ? lookup.kkSequenceShuffledName
+                : lookup.kkSequenceShuffledRandomName
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: kkName,
+                arguments: [receiver] + arguments,
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result { sequenceExprIDs.insert(result.rawValue) }
+            return true
+        }
+
         if callee == lookup.shuffledName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
             let transformResult = module.arena.appendExpr(
                 .temporary(Int32(module.arena.expressions.count)), type: nil

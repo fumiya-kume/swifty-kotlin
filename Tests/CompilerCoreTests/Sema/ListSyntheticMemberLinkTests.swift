@@ -829,6 +829,38 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testSequenceShuffledUsesRuntimeExternalLinks() throws {
+        let source = """
+        import kotlin.random.Random
+
+        fun render(values: Sequence<Int>) {
+            values.shuffled()
+            values.shuffled(Random)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let fqName = [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("sequences"),
+                ctx.interner.intern("Sequence"),
+                ctx.interner.intern("shuffled"),
+            ]
+            let externalLinks = Set(sema.symbols.lookupAll(fqName: fqName).compactMap {
+                sema.symbols.externalLinkName(for: $0)
+            })
+            XCTAssertTrue(externalLinks.contains("kk_sequence_shuffled"))
+            XCTAssertTrue(externalLinks.contains("kk_sequence_shuffled_random"))
+        }
+    }
+
     func testMutableListMutationMembersUseRuntimeExternalLinks() throws {
         let source = """
         fun mutate(values: MutableList<Int>) {
