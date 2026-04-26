@@ -21,10 +21,7 @@ final class DriverIncrementalTests: XCTestCase {
     }
 
     private func makeDriver() -> CompilerDriver {
-        CompilerDriver(
-            version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
-            kotlinVersion: .v2_3_10
-        )
+        CompilerDriver()
     }
 
     // MARK: - time-phases flag

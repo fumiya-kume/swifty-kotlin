@@ -63,16 +63,18 @@ public final class CodegenPhase: CompilerPhase {
 
             case .executable:
                 let path = executableObjectPath(base: ctx.options.outputPath)
-                try backend.emitObject(
-                    module: kir,
-                    runtime: runtime,
-                    outputObjectPath: path,
-                    interner: ctx.interner,
-                    sourceManager: ctx.sourceManager,
-                    fileFacadeNamesByFileID: fileFacadeNamesByFileID,
-                    reflectionMetadataRecords: reflectionRecords,
-                    reflectionMetadataSymbolPrefix: ctx.options.moduleName
-                )
+                try CodegenCriticalSection.withLinuxExecutableToolchainLock(target: ctx.options.target) {
+                    try backend.emitObject(
+                        module: kir,
+                        runtime: runtime,
+                        outputObjectPath: path,
+                        interner: ctx.interner,
+                        sourceManager: ctx.sourceManager,
+                        fileFacadeNamesByFileID: fileFacadeNamesByFileID,
+                        reflectionMetadataRecords: reflectionRecords,
+                        reflectionMetadataSymbolPrefix: ctx.options.moduleName
+                    )
+                }
                 ctx.storeGeneratedObjectPath(path)
 
             case .library:

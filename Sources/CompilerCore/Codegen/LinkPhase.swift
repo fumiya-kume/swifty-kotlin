@@ -59,7 +59,9 @@ public final class LinkPhase: CompilerPhase {
             )
             throw CompilerPipelineError.outputUnavailable
         }
-        try performLink(objectPath: objectPath, entrySymbol: entrySymbol, ctx: ctx)
+        try CodegenCriticalSection.withLinuxExecutableToolchainLock(target: ctx.options.target) {
+            try performLink(objectPath: objectPath, entrySymbol: entrySymbol, ctx: ctx)
+        }
     }
 
     private func performLink(objectPath: String, entrySymbol: String, ctx: CompilationContext) throws {

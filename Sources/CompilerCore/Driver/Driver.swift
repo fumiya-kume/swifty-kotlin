@@ -7,12 +7,7 @@ public final class CompilerDriver {
         let incrementalEnabled: Bool
     }
 
-    private let version: CompilerVersion
-    private let kotlinVersion: KotlinLanguageVersion
-
-    public init(version: CompilerVersion, kotlinVersion: KotlinLanguageVersion) {
-        self.version = version
-        self.kotlinVersion = kotlinVersion
+    public init() {
     }
 
     public func run(options: CompilerOptions) -> Int {

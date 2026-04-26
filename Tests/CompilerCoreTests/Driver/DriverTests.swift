@@ -37,10 +37,7 @@ final class DriverTests: XCTestCase {
     // MARK: - runForTesting
 
     func testRunForTestingWithNoInputsEmitsError() {
-        let driver = CompilerDriver(
-            version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
-            kotlinVersion: .v2_3_10
-        )
+        let driver = CompilerDriver()
         let options = CompilerOptions(
             moduleName: "Test",
             inputs: [],
@@ -54,10 +51,7 @@ final class DriverTests: XCTestCase {
     }
 
     func testRunForTestingWithNonExistentInputEmitsError() {
-        let driver = CompilerDriver(
-            version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
-            kotlinVersion: .v2_3_10
-        )
+        let driver = CompilerDriver()
         let options = CompilerOptions(
             moduleName: "Test",
             inputs: ["/nonexistent/path.kt"],
@@ -71,10 +65,7 @@ final class DriverTests: XCTestCase {
 
     func testRunForTestingWithValidKirDump() throws {
         try withTemporaryFile(contents: "fun main() {}") { path in
-            let driver = CompilerDriver(
-                version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
-                kotlinVersion: .v2_3_10
-            )
+            let driver = CompilerDriver()
             let options = CompilerOptions(
                 moduleName: "Test",
                 inputs: [path],
@@ -90,10 +81,7 @@ final class DriverTests: XCTestCase {
 
     func testRunForTestingReturnsDiagnosticsForInvalidProgram() throws {
         try withTemporaryFile(contents: "fun main() { val x: Int = \"wrong\" }") { path in
-            let driver = CompilerDriver(
-                version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
-                kotlinVersion: .v2_3_10
-            )
+            let driver = CompilerDriver()
             let options = CompilerOptions(
                 moduleName: "Test",
                 inputs: [path],
@@ -110,10 +98,7 @@ final class DriverTests: XCTestCase {
     // MARK: - run
 
     func testRunReturnsExitCode() {
-        let driver = CompilerDriver(
-            version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
-            kotlinVersion: .v2_3_10
-        )
+        let driver = CompilerDriver()
         let options = CompilerOptions(
             moduleName: "Test",
             inputs: [],
@@ -129,8 +114,7 @@ final class DriverTests: XCTestCase {
     // MARK: - CompilerDriver Init
 
     func testCompilerDriverInit() {
-        let version = CompilerVersion(major: 1, minor: 2, patch: 3, gitHash: "abc123")
-        let driver = CompilerDriver(version: version, kotlinVersion: .v2_3_10)
+        let driver = CompilerDriver()
         // Verify the driver works by running with empty inputs
         let options = CompilerOptions(
             moduleName: "Test",

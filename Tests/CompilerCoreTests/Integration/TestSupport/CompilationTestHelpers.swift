@@ -4,10 +4,7 @@ import XCTest
 
 /// Create a ``CompilerDriver`` instance configured for testing.
 func makeTestDriver() -> CompilerDriver {
-    CompilerDriver(
-        version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
-        kotlinVersion: .v2_3_10
-    )
+    CompilerDriver()
 }
 
 /// Build ``CompilerOptions`` for test compilation.
