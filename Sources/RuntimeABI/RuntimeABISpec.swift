@@ -7605,6 +7605,7 @@ public enum RuntimeABISpec {
             + runtimeOnlyBridgeFunctions
             + sequenceFunctions
             + regexFunctions
+            + base64Functions
             + hexFormatFunctions
             + comparatorFunctions
             + resultFunctions

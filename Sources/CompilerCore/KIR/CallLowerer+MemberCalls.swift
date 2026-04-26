@@ -1668,6 +1668,19 @@ extension CallLowerer {
         }()
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
 
+        if tryLowerBase64MemberCall(
+            receiverExpr: receiverExpr,
+            calleeName: calleeName,
+            loweredArgIDs: loweredArgIDs,
+            result: result,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &instructions
+        ) {
+            return result
+        }
+
         if args.count == 1,
            interner.resolve(calleeName) == "sortedWith"
         {
@@ -5809,6 +5822,9 @@ extension CallLowerer {
     /// invocations to avoid repeated interning in the hot lowering path.
     private static func throwingMemberCalleeNames(interner: StringInterner) -> Set<InternedString> {
         Set([
+            interner.intern("kk_base64_decode_default"),
+            interner.intern("kk_base64_decode_urlsafe"),
+            interner.intern("kk_base64_decode_mime"),
             interner.intern("kk_list_random"),
             interner.intern("kk_list_elementAt"),
             interner.intern("kk_list_maxOf"),
@@ -5888,6 +5904,85 @@ extension CallLowerer {
             interner.intern("kk_result_getOrThrow"),
             interner.intern("kk_reentrant_read_write_lock_read"),
         ])
+    }
+
+    private func tryLowerBase64MemberCall(
+        receiverExpr: ExprID,
+        calleeName: InternedString,
+        loweredArgIDs: [KIRExprID],
+        result: KIRExprID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> Bool {
+        guard loweredArgIDs.count == 1,
+              let receiverType = sema.bindings.exprTypes[receiverExpr],
+              let variantSuffix = base64RuntimeVariantSuffix(
+                  for: receiverType,
+                  sema: sema,
+                  interner: interner
+              )
+        else {
+            return false
+        }
+
+        let operation: String
+        switch interner.resolve(calleeName) {
+        case "encode":
+            operation = "encode"
+        case "decode":
+            operation = "decode"
+        default:
+            return false
+        }
+
+        let paddingPresent = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+        instructions.append(.constValue(result: paddingPresent, value: .intLiteral(0)))
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_base64_\(operation)_\(variantSuffix)"),
+            arguments: [loweredArgIDs[0], paddingPresent],
+            result: result,
+            canThrow: operation == "decode",
+            thrownResult: nil
+        ))
+        return true
+    }
+
+    private func base64RuntimeVariantSuffix(
+        for receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> String? {
+        let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullReceiver),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return nil
+        }
+
+        let fqName = symbol.fqName.map { interner.resolve($0) }
+        let base64FQName = ["kotlin", "io", "encoding", "Base64"]
+        if fqName == base64FQName {
+            return "default"
+        }
+        guard fqName.count == base64FQName.count + 1,
+              Array(fqName.prefix(base64FQName.count)) == base64FQName
+        else {
+            return nil
+        }
+
+        switch fqName.last {
+        case "Default":
+            return "default"
+        case "UrlSafe":
+            return "urlsafe"
+        case "Mime", "Pem", "PemMime":
+            return "mime"
+        default:
+            return nil
+        }
     }
 
     private func splitCallableLambdaArgument(
