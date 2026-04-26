@@ -1333,6 +1333,18 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(iterable, seq)
     }
 
+    func testSequenceOrEmptyReturnsEmptySequenceForNull() {
+        let seq = kk_sequence_orEmpty(runtimeNullSentinelInt)
+
+        XCTAssertEqual(sequenceElements(seq), [])
+    }
+
+    func testSequenceOrEmptyReturnsExistingSequenceForNonNull() {
+        let seq = makeSequence([1, 2, 3])
+
+        XCTAssertEqual(kk_sequence_orEmpty(seq), seq)
+    }
+
     func testSequenceFilterNotLazy() {
         // Test that filterNot is lazy by using a sequence builder
         _lazyTestYieldCounter = 0

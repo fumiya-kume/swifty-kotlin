@@ -6406,7 +6406,7 @@ extension CallTypeChecker {
                 }
             }
 
-            // STDLIB-532/533/534: orEmpty() on nullable String?, List?, Map? receivers
+            // STDLIB-532/533/534, STDLIB-SEQ-011: orEmpty() on nullable receivers
             if interner.resolve(calleeName) == "orEmpty", args.isEmpty {
                 let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
                 let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
@@ -6416,6 +6416,11 @@ extension CallTypeChecker {
                     return resultType
                 }
                 if isListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                    let resultType = nonNullReceiverType
+                    sema.bindings.bindExprType(id, type: resultType)
+                    return resultType
+                }
+                if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner) {
                     let resultType = nonNullReceiverType
                     sema.bindings.bindExprType(id, type: resultType)
                     return resultType

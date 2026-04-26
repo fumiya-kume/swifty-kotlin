@@ -759,6 +759,7 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_chunked"),
             interner.intern("kk_sequence_windowed"),
             interner.intern("kk_empty_sequence"),
+            interner.intern("kk_sequence_orEmpty"),
             // NOTE: kk_sequence_firstOrNull and kk_sequence_count are NOT
             // non-throwing — they accept an outThrown parameter for lazy
             // pipeline exception propagation.

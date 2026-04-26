@@ -1869,7 +1869,108 @@ extension DataFlowSemaPhase {
             }
         }
 
+        let sequenceElementType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let nullableReceiverType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(sequenceElementType)],
+            nullability: .nullable
+        )))
+        let nonNullReceiverType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(sequenceElementType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticSequenceExtensionFunction(
+            named: "orEmpty",
+            externalLinkName: "kk_sequence_orEmpty",
+            receiverType: nullableReceiverType,
+            parameters: [],
+            returnType: nonNullReceiverType,
+            typeParameterSymbols: [typeParamSymbol],
+            packageFQName: packageFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
         return sequenceSymbol
+    }
+
+    private func registerSyntheticSequenceExtensionFunction(
+        named name: String,
+        externalLinkName: String,
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID, hasDefault: Bool, isVararg: Bool)],
+        returnType: TypeID,
+        typeParameterSymbols: [SymbolID] = [],
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.receiverType == receiverType
+                && existingSignature.parameterTypes == parameters.map { $0.type }
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var parameterTypes: [TypeID] = []
+        var parameterSymbols: [SymbolID] = []
+        var parameterDefaults: [Bool] = []
+        var parameterVarargs: [Bool] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            parameterTypes.append(parameter.type)
+            parameterSymbols.append(parameterSymbol)
+            parameterDefaults.append(parameter.hasDefault)
+            parameterVarargs.append(parameter.isVararg)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: parameterDefaults,
+                valueParameterIsVararg: parameterVarargs,
+                typeParameterSymbols: typeParameterSymbols
+            ),
+            for: functionSymbol
+        )
     }
 
     private func registerSyntheticSequenceBuilderStub(
