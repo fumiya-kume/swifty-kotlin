@@ -62,6 +62,32 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerBase64MemberFunction(
+            named: "encodeToByteArray",
+            externalLinkName: "kk_base64_encodeToByteArray_default",
+            ownerSymbol: base64Symbol,
+            receiverType: base64Type,
+            parameters: [
+                ("source", byteArrayType),
+            ],
+            returnType: byteArrayType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerBase64MemberFunction(
+            named: "decodeFromByteArray",
+            externalLinkName: "kk_base64_decodeFromByteArray_default",
+            ownerSymbol: base64Symbol,
+            receiverType: base64Type,
+            parameters: [
+                ("source", byteArrayType),
+            ],
+            returnType: byteArrayType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // PaddingOption is passed as a raw Int (enum ordinal) across the ABI.
         // We model it as Int in function signatures to keep the ABI simple.
         let paddingOptionType = intType

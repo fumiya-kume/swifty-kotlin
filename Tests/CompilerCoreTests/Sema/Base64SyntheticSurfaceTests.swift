@@ -132,6 +132,38 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
         XCTAssertEqual(decodeSignature.parameterTypes, [sema.types.stringType])
         XCTAssertEqual(decodeSignature.returnType, byteArray)
         XCTAssertEqual(sema.symbols.externalLinkName(for: decode), "kk_base64_decode_default")
+
+        let encodeToByteArray = try XCTUnwrap(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("io"),
+            interner.intern("encoding"),
+            interner.intern("Base64"),
+            interner.intern("encodeToByteArray"),
+        ]))
+        let encodeToByteArraySignature = try XCTUnwrap(sema.symbols.functionSignature(for: encodeToByteArray))
+        XCTAssertEqual(encodeToByteArraySignature.receiverType, base64Type)
+        XCTAssertEqual(encodeToByteArraySignature.parameterTypes, [byteArray])
+        XCTAssertEqual(encodeToByteArraySignature.returnType, byteArray)
+        XCTAssertEqual(
+            sema.symbols.externalLinkName(for: encodeToByteArray),
+            "kk_base64_encodeToByteArray_default"
+        )
+
+        let decodeFromByteArray = try XCTUnwrap(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("io"),
+            interner.intern("encoding"),
+            interner.intern("Base64"),
+            interner.intern("decodeFromByteArray"),
+        ]))
+        let decodeFromByteArraySignature = try XCTUnwrap(sema.symbols.functionSignature(for: decodeFromByteArray))
+        XCTAssertEqual(decodeFromByteArraySignature.receiverType, base64Type)
+        XCTAssertEqual(decodeFromByteArraySignature.parameterTypes, [byteArray])
+        XCTAssertEqual(decodeFromByteArraySignature.returnType, byteArray)
+        XCTAssertEqual(
+            sema.symbols.externalLinkName(for: decodeFromByteArray),
+            "kk_base64_decodeFromByteArray_default"
+        )
     }
 
     func testBase64EncodeDecodeCallsTypeCheckOnVariants() throws {
@@ -148,6 +180,12 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
         @OptIn(ExperimentalEncodingApi::class)
         fun useUrlSafe(source: ByteArray): String =
             Base64.UrlSafe.encode(source)
+
+        @OptIn(ExperimentalEncodingApi::class)
+        fun useBase64ByteArray(source: ByteArray): ByteArray {
+            val encoded: ByteArray = Base64.Default.encodeToByteArray(source)
+            return Base64.Default.decodeFromByteArray(encoded)
+        }
         """
 
         _ = try makeSema(source: source)
