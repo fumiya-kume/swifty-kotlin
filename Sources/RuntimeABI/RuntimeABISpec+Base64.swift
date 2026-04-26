@@ -108,5 +108,35 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Base64"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_base64_decodeFromByteArray_default",
+            parameters: [
+                RuntimeABIParameter(name: "bytesRaw", type: .intptr),
+                RuntimeABIParameter(name: "paddingOptionRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Base64"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_base64_decodeFromByteArray_urlsafe",
+            parameters: [
+                RuntimeABIParameter(name: "bytesRaw", type: .intptr),
+                RuntimeABIParameter(name: "paddingOptionRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Base64"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_base64_decodeFromByteArray_mime",
+            parameters: [
+                RuntimeABIParameter(name: "bytesRaw", type: .intptr),
+                RuntimeABIParameter(name: "paddingOptionRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Base64"
+        ),
     ]
 }

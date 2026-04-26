@@ -237,6 +237,64 @@ public func kk_base64_encodeToByteArray_mime(_ bytesRaw: Int, _ paddingOptionRaw
     return base64MakeByteArrayRaw(Array(str.utf8))
 }
 
+// MARK: - decodeFromByteArray variants (input is ASCII ByteArray)
+
+private func base64StringRawFromByteArray(
+    _ bytesRaw: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let bytes = base64BytesFromRaw(bytesRaw),
+          let string = String(bytes: bytes, encoding: .utf8)
+    else {
+        outThrown?.pointee = runtimeAllocateIllegalArgumentException(
+            message: "Invalid base64 byte array")
+        return runtimeNullSentinelInt
+    }
+    return base64MakeStringRaw(string)
+}
+
+@_cdecl("kk_base64_decodeFromByteArray_default")
+public func kk_base64_decodeFromByteArray_default(
+    _ bytesRaw: Int,
+    _ paddingOptionRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let strRaw = base64StringRawFromByteArray(bytesRaw, outThrown: outThrown)
+    if let outThrown, outThrown.pointee != 0 {
+        return runtimeNullSentinelInt
+    }
+    return kk_base64_decode_default(strRaw, paddingOptionRaw, outThrown)
+}
+
+@_cdecl("kk_base64_decodeFromByteArray_urlsafe")
+public func kk_base64_decodeFromByteArray_urlsafe(
+    _ bytesRaw: Int,
+    _ paddingOptionRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let strRaw = base64StringRawFromByteArray(bytesRaw, outThrown: outThrown)
+    if let outThrown, outThrown.pointee != 0 {
+        return runtimeNullSentinelInt
+    }
+    return kk_base64_decode_urlsafe(strRaw, paddingOptionRaw, outThrown)
+}
+
+@_cdecl("kk_base64_decodeFromByteArray_mime")
+public func kk_base64_decodeFromByteArray_mime(
+    _ bytesRaw: Int,
+    _ paddingOptionRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let strRaw = base64StringRawFromByteArray(bytesRaw, outThrown: outThrown)
+    if let outThrown, outThrown.pointee != 0 {
+        return runtimeNullSentinelInt
+    }
+    return kk_base64_decode_mime(strRaw, paddingOptionRaw, outThrown)
+}
+
 // MARK: - Shared Decode Implementation
 
 private enum Base64Alphabet {

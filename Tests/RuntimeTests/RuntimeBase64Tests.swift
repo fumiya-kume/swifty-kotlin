@@ -267,6 +267,32 @@ final class RuntimeBase64Tests: XCTestCase {
         XCTAssertTrue(str.contains("\r\n"))
     }
 
+    // MARK: - decodeFromByteArray
+
+    func testDecodeFromByteArrayDefaultRoundTrip() {
+        let encoded = makeByteArrayFromString("Zm9v")
+        var thrown = 0
+        let result = byteArrayToUInt8s(kk_base64_decodeFromByteArray_default(encoded, paddingPresentOptional, &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(String(bytes: result, encoding: .utf8), "foo")
+    }
+
+    func testDecodeFromByteArrayUrlSafeRoundTrip() {
+        let encoded = makeByteArrayFromString("4KC-")
+        var thrown = 0
+        let result = byteArrayToUInt8s(kk_base64_decodeFromByteArray_urlsafe(encoded, paddingAbsentOptional, &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(String(bytes: result, encoding: .utf8), "\u{083E}")
+    }
+
+    func testDecodeFromByteArrayMimeToleratesWhitespace() {
+        let encoded = makeByteArrayFromString("Zm9v\r\nYmFy")
+        var thrown = 0
+        let result = byteArrayToUInt8s(kk_base64_decodeFromByteArray_mime(encoded, paddingPresentOptional, &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(String(bytes: result, encoding: .utf8), "foobar")
+    }
+
     // MARK: - Error cases
 
     func testDecodeInvalidCharacterThrows() {

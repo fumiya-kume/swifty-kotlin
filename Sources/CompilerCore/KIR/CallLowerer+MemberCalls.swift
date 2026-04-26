@@ -5931,6 +5931,9 @@ extension CallLowerer {
             interner.intern("kk_base64_decode_default"),
             interner.intern("kk_base64_decode_urlsafe"),
             interner.intern("kk_base64_decode_mime"),
+            interner.intern("kk_base64_decodeFromByteArray_default"),
+            interner.intern("kk_base64_decodeFromByteArray_urlsafe"),
+            interner.intern("kk_base64_decodeFromByteArray_mime"),
             interner.intern("kk_list_random"),
             interner.intern("kk_list_elementAt"),
             interner.intern("kk_list_maxOf"),
@@ -6038,11 +6041,20 @@ extension CallLowerer {
         }
 
         let operation: String
+        let canThrow: Bool
         switch interner.resolve(calleeName) {
         case "encode":
             operation = "encode"
+            canThrow = false
         case "decode":
             operation = "decode"
+            canThrow = true
+        case "encodeToByteArray":
+            operation = "encodeToByteArray"
+            canThrow = false
+        case "decodeFromByteArray":
+            operation = "decodeFromByteArray"
+            canThrow = true
         default:
             return false
         }
@@ -6054,7 +6066,7 @@ extension CallLowerer {
             callee: interner.intern("kk_base64_\(operation)_\(variantSuffix)"),
             arguments: [loweredArgIDs[0], paddingPresent],
             result: result,
-            canThrow: operation == "decode",
+            canThrow: canThrow,
             thrownResult: nil
         ))
         return true

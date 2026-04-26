@@ -124,7 +124,7 @@
 - [ ] STDLIB-030: `kotlin.io` common 範囲の file / buffered / `use` を仕様単位で締める
 - [x] STDLIB-IO-ENC-001: `kotlin.io.encoding.Base64.Default` / `UrlSafe` / `Mime` / `PemMime` を追加する
 - [x] STDLIB-IO-ENC-002: `Base64.encode(ByteArray)` / `decode(String)` を追加する
-- [ ] STDLIB-IO-ENC-003: `Base64.encodeToByteArray(ByteArray)` / `decodeFromByteArray(ByteArray)` を追加する
+- [x] STDLIB-IO-ENC-003: `Base64.encodeToByteArray(ByteArray)` / `decodeFromByteArray(ByteArray)` を追加する
 - [ ] STDLIB-IO-ENC-004: `Base64.withPadding(PaddingOption)` と MIME / URL-safe variant の挙動を追加する
 - [ ] STDLIB-032: `kotlin.time` の stable / experimental 境界を明文化
 - [x] STDLIB-TIME-STABLE-001: `Duration.ZERO` / `Duration.INFINITE` constants を追加する

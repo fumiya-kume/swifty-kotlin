@@ -222,6 +222,9 @@ extension ABIMismatchTests {
             "kk_base64_encodeToByteArray_default",
             "kk_base64_encodeToByteArray_urlsafe",
             "kk_base64_encodeToByteArray_mime",
+            "kk_base64_decodeFromByteArray_default",
+            "kk_base64_decodeFromByteArray_urlsafe",
+            "kk_base64_decodeFromByteArray_mime",
         ]
 
         for linkName in syntheticLinkNames {
