@@ -122,6 +122,15 @@ private let sequenceValueTimesTen: @convention(c) (Int, Int, UnsafeMutablePointe
     value * 10
 }
 
+private let sequenceAdjacentDifference: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, left, right, _ in
+    right - left
+}
+
+private let throwingSequenceAdjacentTransform: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _, outThrown in
+    outThrown?.pointee = runtimeAllocateThrowable(message: "sequence zipWithNext transform failed")
+    return 0
+}
+
 private let throwingSequenceDestinationLambda: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, outThrown in
     outThrown?.pointee = runtimeAllocateThrowable(message: "sequence destination transform failed")
     return 0
@@ -685,6 +694,63 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let result = kk_sequence_reduceIndexedOrNull(
             seq,
             unsafeBitCast(throwingIndexedAccumulator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
+    }
+
+    // MARK: - Sequence zipWithNext transform tests (STDLIB-SEQ-018)
+
+    func testZipWithNextTransformAppliesLambdaToAdjacentElements() {
+        let seq = makeSequence([1, 2, 4, 8])
+        var thrown = 0
+
+        let result = kk_sequence_zipWithNextTransform(
+            seq,
+            unsafeBitCast(sequenceAdjacentDifference, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(listElements(result), [1, 2, 4])
+    }
+
+    func testZipWithNextTransformReturnsEmptyListForShortSequences() {
+        let empty = makeSequence([])
+        let single = makeSequence([42])
+        var emptyThrown = 0
+        var singleThrown = 0
+
+        let emptyResult = kk_sequence_zipWithNextTransform(
+            empty,
+            unsafeBitCast(sequenceAdjacentDifference, to: Int.self),
+            0,
+            &emptyThrown
+        )
+        let singleResult = kk_sequence_zipWithNextTransform(
+            single,
+            unsafeBitCast(sequenceAdjacentDifference, to: Int.self),
+            0,
+            &singleThrown
+        )
+
+        XCTAssertEqual(emptyThrown, 0)
+        XCTAssertEqual(singleThrown, 0)
+        XCTAssertEqual(listElements(emptyResult), [])
+        XCTAssertEqual(listElements(singleResult), [])
+    }
+
+    func testZipWithNextTransformReturnsZeroWhenLambdaThrows() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_zipWithNextTransform(
+            seq,
+            unsafeBitCast(throwingSequenceAdjacentTransform, to: Int.self),
             0,
             &thrown
         )
