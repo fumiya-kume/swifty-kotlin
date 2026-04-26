@@ -3086,6 +3086,21 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // runningReduceIndexed(operation): List<T>
+        registerSequenceMemberStub(
+            named: "runningReduceIndexed",
+            externalLinkName: "kk_sequence_runningReduceIndexed",
+            receiverType: receiverType,
+            parameters: [("operation", reduceIndexedOperationType)],
+            returnType: listReturnType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            canThrow: true
+        )
+
         // partition(predicate): Pair<List<T>, List<T>>
         if let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")]) {
             let partitionReturnType = types.make(.classType(ClassType(

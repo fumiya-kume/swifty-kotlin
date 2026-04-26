@@ -76,7 +76,7 @@
 - [ ] STDLIB-SEQ-014: `Sequence.requireNoNulls()` を追加する
 - [ ] STDLIB-SEQ-015: `Sequence.reduceIndexedOrNull()` を追加する
 - [x] STDLIB-SEQ-016: `Sequence.runningFoldIndexed()` を追加する
-- [ ] STDLIB-SEQ-017: `Sequence.runningReduceIndexed()` を追加する
+- [x] STDLIB-SEQ-017: `Sequence.runningReduceIndexed()` を追加する
 - [x] STDLIB-SEQ-018: `Sequence.zipWithNext(transform)` overload を追加する
 - [ ] STDLIB-SEQ-019: `Sequence.shuffled()` / `Sequence.shuffled(random)` を追加する
 - [ ] STDLIB-SEQ-020: `Sequence.flatMapIndexed(transform)` の `Iterable` / `Sequence` overload 群を追加する
