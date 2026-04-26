@@ -6160,16 +6160,7 @@ extension CallLowerer {
         let fqName = symbol.fqName.map { interner.resolve($0) }
         let base64FQName = ["kotlin", "io", "encoding", "Base64"]
         if fqName == base64FQName {
-            if case let .symbolRef(symbolID) = arena.expr(loweredReceiverID),
-               let symbolRefSuffix = base64RuntimeVariantSuffix(
-                   forSymbol: symbolID,
-                   sema: sema,
-                   interner: interner
-               )
-            {
-                return .variant(symbolRefSuffix)
-            }
-            return .instance
+            return nil
         }
         if let suffix = base64RuntimeVariantSuffix(forSymbol: classType.classSymbol, sema: sema, interner: interner) {
             return .variant(suffix)
@@ -6198,7 +6189,7 @@ extension CallLowerer {
             return "default"
         case "UrlSafe":
             return "urlsafe"
-        case "Mime", "Pem", "PemMime":
+        case "Mime", "Pem":
             return "mime"
         default:
             return nil

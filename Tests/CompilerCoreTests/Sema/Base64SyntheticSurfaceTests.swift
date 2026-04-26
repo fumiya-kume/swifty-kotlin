@@ -56,7 +56,7 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
         let (sema, interner) = try makeSema()
         let base64 = try base64Symbol(sema: sema, interner: interner)
 
-        for variant in ["Default", "UrlSafe", "Mime", "Pem", "PemMime"] {
+        for variant in ["Default", "UrlSafe", "Mime", "Pem"] {
             let variantSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
                 interner.intern("kotlin"),
                 interner.intern("io"),
@@ -107,7 +107,6 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
         fun urlSafeVariant(): Base64 = Base64.UrlSafe
         fun mimeVariant(): Base64 = Base64.Mime
         fun pemVariant(): Base64 = Base64.Pem
-        fun pemMimeVariant(): Base64 = Base64.PemMime
         """
         let (sema, interner) = try makeSema(source: source)
         let base64 = try base64Symbol(sema: sema, interner: interner)
@@ -117,7 +116,7 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
             nullability: .nonNull
         )))
 
-        for variant in ["Default", "UrlSafe", "Mime", "Pem", "PemMime"] {
+        for variant in ["Default", "UrlSafe", "Mime", "Pem"] {
             let variantSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
                 interner.intern("kotlin"),
                 interner.intern("io"),

@@ -2,7 +2,7 @@ import Foundation
 
 /// Synthetic stubs for kotlin.io.encoding.Base64 (STDLIB-031-ABI-001).
 ///
-/// Wires the Kotlin Base64 variants (Default / UrlSafe / Mime / Pem / PemMime)
+/// Wires the Kotlin Base64 variants (Default / UrlSafe / Mime / Pem)
 /// and their PaddingOption enum to the `kk_base64_*` ABI entry points in RuntimeBase64.swift.
 extension DataFlowSemaPhase {
     func registerSyntheticBase64Stubs(
@@ -20,6 +20,9 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        if let ioEncodingPkgSymbol = symbols.lookup(fqName: ioEncodingPkg) {
+            symbols.setParentSymbol(ioEncodingPkgSymbol, for: base64Symbol)
+        }
         let stringType = types.stringType
         let intType = types.intType
         let byteArrayType = makeBase64ByteArrayType(symbols: symbols, types: types, interner: interner)
@@ -245,7 +248,7 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner
     ) {
-        for variant in ["Default", "UrlSafe", "Mime", "Pem", "PemMime"] {
+        for variant in ["Default", "UrlSafe", "Mime", "Pem"] {
             let objectSymbol = ensureBase64VariantObject(
                 named: variant,
                 base64Symbol: base64Symbol,
@@ -448,7 +451,7 @@ extension DataFlowSemaPhase {
                 return false
             }
             return signature.receiverType == receiverType
-                && signature.parameterTypes == parameters.map(\.type)
+                && signature.parameterTypes == parameters.map { $0.type }
                 && signature.returnType == returnType
         }) {
             return

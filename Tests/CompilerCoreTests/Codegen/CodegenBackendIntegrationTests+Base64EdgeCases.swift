@@ -16,7 +16,7 @@ extension CodegenBackendIntegrationTests {
             println(Base64.Default.decode(encoded).decodeToString())
             println(Base64.UrlSafe.encode("\\u083e".encodeToByteArray()))
             println(Base64.Mime.decode("Zm9v\\r\\nYmFy").decodeToString())
-            println(Base64.PemMime.decode("Zm9v\\r\\nYmFy").decodeToString())
+            println(Base64.Pem.decode("Zm9v\\r\\nYmFy").decodeToString())
             val encodedBytes = Base64.Default.encodeToByteArray(bytes)
             println(Base64.Default.encode(Base64.Default.decodeFromByteArray(encodedBytes)))
             println(Base64.UrlSafe.encode(Base64.UrlSafe.decodeFromByteArray(Base64.UrlSafe.encodeToByteArray("\\u083e".encodeToByteArray()))))
