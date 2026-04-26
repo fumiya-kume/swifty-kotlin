@@ -6,6 +6,10 @@ fun main() {
     println(intProg.last)
     println(intProg.step)
     println(intProg.toList())
+
+    val openEnd = 0.rangeUntil(10)
+    println("rangeUntil endExclusive")
+    println(openEnd.endExclusive)
     
     // Test LongProgression.fromClosedRange
     println("\n=== LongProgression.fromClosedRange ===")
