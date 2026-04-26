@@ -26,6 +26,101 @@ final class RangeUntilSyntheticTopLevelLinkTests: XCTestCase {
         }
     }
 
+    private func assertOpenEndRange(
+        _ type: TypeID,
+        elementType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws {
+        guard case let .classType(classType) = sema.types.kind(of: type),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            XCTFail("Expected OpenEndRange class type, got \(sema.types.renderType(type))", file: file, line: line)
+            return
+        }
+        XCTAssertEqual(interner.resolve(symbol.name), "OpenEndRange", file: file, line: line)
+        XCTAssertEqual(classType.args.count, 1, file: file, line: line)
+        guard let argument = classType.args.first else {
+            return
+        }
+        switch argument {
+        case let .invariant(actual), let .out(actual), let .in(actual):
+            XCTAssertEqual(actual, elementType, file: file, line: line)
+        case .star:
+            XCTFail("Expected concrete OpenEndRange type argument", file: file, line: line)
+        }
+    }
+
+    func testRangeUntilOperatorSurfaceReturnsOpenEndRange() throws {
+        let (sema, interner) = try makeSema()
+        let rangeUntilFQName = ["kotlin", "ranges", "rangeUntil"].map { interner.intern($0) }
+        let candidates = sema.symbols.lookupAll(fqName: rangeUntilFQName)
+
+        XCTAssertEqual(candidates.count, 1, "rangeUntil should register the generic OpenEndRange-returning operator")
+        let rangeUntilSymbol = try XCTUnwrap(candidates.first)
+        let symbol = try XCTUnwrap(sema.symbols.symbol(rangeUntilSymbol))
+        XCTAssertTrue(symbol.flags.contains(.operatorFunction))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: rangeUntilSymbol), "kk_op_rangeUntil")
+
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: rangeUntilSymbol))
+        XCTAssertEqual(signature.typeParameterSymbols.count, 1)
+        let typeParameter = try XCTUnwrap(signature.typeParameterSymbols.first)
+        let typeParameterType = sema.types.make(.typeParam(TypeParamType(
+            symbol: typeParameter,
+            nullability: .nonNull
+        )))
+        XCTAssertEqual(signature.receiverType, typeParameterType)
+        XCTAssertEqual(signature.parameterTypes, [typeParameterType])
+        try assertOpenEndRange(
+            signature.returnType,
+            elementType: typeParameterType,
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    func testRangeUntilCallReturnsOpenEndRangeAndEndExclusiveResolves() throws {
+        let source = """
+        fun sample(): Int {
+            val range = 0.rangeUntil(10)
+            return range.endExclusive
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "rangeUntil should resolve without diagnostics: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let interner = ctx.interner
+
+            let rangeUntilCalls = memberCallExprIDs(named: "rangeUntil", in: ast, interner: interner)
+            XCTAssertEqual(rangeUntilCalls.count, 1)
+            let rangeUntilCall = try XCTUnwrap(rangeUntilCalls.first)
+            let rangeUntilType = try XCTUnwrap(sema.bindings.exprType(for: rangeUntilCall))
+            try assertOpenEndRange(
+                rangeUntilType,
+                elementType: sema.types.intType,
+                sema: sema,
+                interner: interner
+            )
+            XCTAssertTrue(sema.bindings.isRangeExpr(rangeUntilCall))
+
+            let endExclusiveCalls = memberCallExprIDs(named: "endExclusive", in: ast, interner: interner)
+            XCTAssertEqual(endExclusiveCalls.count, 1)
+            if let endExclusiveCall = endExclusiveCalls.first {
+                XCTAssertEqual(sema.bindings.exprType(for: endExclusiveCall), sema.types.intType)
+            }
+        }
+    }
+
     func testRangeUntilOverloadMatrixIsRegistered() throws {
         let (sema, interner) = try makeSema()
 
