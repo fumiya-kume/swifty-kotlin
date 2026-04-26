@@ -13,6 +13,11 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         return sema.symbols.externalLinkName(for: sym)
     }
 
+    private func externalLinks(for member: String, sema: SemaModule, interner: StringInterner) -> Set<String> {
+        let fq = ["kotlin", "text", member].map { interner.intern($0) }
+        return Set(sema.symbols.lookupAll(fqName: fq).compactMap { sema.symbols.externalLinkName(for: $0) })
+    }
+
     private func makeSema() throws -> (SemaModule, StringInterner) {
         var result: (SemaModule, StringInterner)?
         try withTemporaryFile(contents: "fun noop() {}") { path in
@@ -294,6 +299,63 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                 "kk_string_ifEmpty",
                 "Expected ifEmpty to resolve to kk_string_ifEmpty"
             )
+        }
+    }
+
+    func testTrimPredicateStubsHaveCorrectExternalLinks() throws {
+        let (sema, interner) = try makeSema()
+
+        let expected: [String: Set<String>] = [
+            "trim": ["kk_string_trim", "kk_string_trim_predicate"],
+            "trimStart": ["kk_string_trimStart", "kk_string_trimStart_predicate"],
+            "trimEnd": ["kk_string_trimEnd", "kk_string_trimEnd_predicate"],
+        ]
+
+        for (member, expectedLinks) in expected {
+            XCTAssertTrue(
+                externalLinks(for: member, sema: sema, interner: interner).isSuperset(of: expectedLinks),
+                "String.\(member) should expose no-arg and predicate overload ABI links"
+            )
+        }
+    }
+
+    func testTrimPredicateMembersResolveInCallExpressions() throws {
+        let source = """
+        fun trimEdges(s: String): String {
+            val a = s.trim { it == 'x' }
+            val b = s.trimStart { it == 'x' }
+            val c = s.trimEnd { it == 'x' }
+            return a + b + c
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let expectedLinks: [String: String] = [
+                "trim": "kk_string_trim_predicate",
+                "trimStart": "kk_string_trimStart_predicate",
+                "trimEnd": "kk_string_trimEnd_predicate",
+            ]
+
+            for (memberName, externalLinkName) in expectedLinks {
+                let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName
+                }, "Expected member call to \(memberName) in AST")
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected call binding for \(memberName)"
+                )
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    externalLinkName,
+                    "Expected \(memberName) predicate overload to resolve to \(externalLinkName)"
+                )
+            }
         }
     }
 

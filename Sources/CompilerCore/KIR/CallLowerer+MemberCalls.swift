@@ -2903,6 +2903,12 @@ extension CallLowerer {
                     ("kk_string_takeWhile", [loweredReceiverID] + normalizedArgIDs)
                 case "dropWhile":
                     ("kk_string_dropWhile", [loweredReceiverID] + normalizedArgIDs)
+                case "trim":
+                    ("kk_string_trim_predicate", [loweredReceiverID] + normalizedArgIDs)
+                case "trimStart":
+                    ("kk_string_trimStart_predicate", [loweredReceiverID] + normalizedArgIDs)
+                case "trimEnd":
+                    ("kk_string_trimEnd_predicate", [loweredReceiverID] + normalizedArgIDs)
                 case "splitToSequence":
                     ("kk_string_splitToSequence", [loweredReceiverID] + normalizedArgIDs)
                 case "find":
@@ -2972,6 +2978,9 @@ extension CallLowerer {
                         || calleeStr == "partition"
                         || calleeStr == "ifBlank"
                         || calleeStr == "ifEmpty"
+                        || calleeStr == "trim"
+                        || calleeStr == "trimStart"
+                        || calleeStr == "trimEnd"
                         || calleeStr == "take"
                         || calleeStr == "drop"
                         || calleeStr == "takeLast"
@@ -4313,6 +4322,7 @@ extension CallLowerer {
             "sortedByDescending", "sortedWith", "partition", "zipWithNext",
             "takeWhile", "dropWhile", "filterNot", "findLast", "replaceAll", "removeIf",
             "replaceFirstChar",
+            "trim", "trimStart", "trimEnd",
             "sortBy", "sortByDescending",
             "onEach", "onEachIndexed",
             "ifEmpty",
