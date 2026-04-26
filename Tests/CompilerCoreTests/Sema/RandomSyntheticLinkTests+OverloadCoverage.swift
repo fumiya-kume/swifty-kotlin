@@ -35,9 +35,8 @@ extension RandomSyntheticLinkTests {
         }
     }
 
-    /// Random(seed: Long) overload is a documented gap: only Int seed is registered.
-    /// When STDLIB-RANDOM-002 adds Long seed support this test should be updated.
-    func testRandomLongSeedConstructorGap() throws {
+    /// Random(seed: Long) factory constructor is registered and linked correctly.
+    func testRandomLongSeedConstructorIsRegistered() throws {
         let (sema, interner) = try makeSema()
 
         let ctorFQ = ["kotlin", "random", "Random", "<init>"].map { interner.intern($0) }
@@ -48,10 +47,13 @@ extension RandomSyntheticLinkTests {
             return sig.parameterTypes.count == 1 &&
                 sig.parameterTypes.first == sema.types.longType
         }
-        // GAP: Random(seed: Long) overload not yet registered.
-        XCTAssertNil(longSeedCtor,
-                     "GAP(STDLIB-RANDOM-001): Random(seed: Long) not yet registered; " +
-                     "change to XCTAssertNotNil once added")
+        XCTAssertNotNil(longSeedCtor, "Random(seed: Long) constructor must exist")
+
+        if let ctor = longSeedCtor {
+            let link = sema.symbols.externalLinkName(for: ctor)
+            XCTAssertEqual(link, "kk_random_create_seeded",
+                           "Random(seed: Long) must link to kk_random_create_seeded")
+        }
     }
 
     // MARK: - Random.Default singleton

@@ -45,4 +45,26 @@ extension CodegenBackendIntegrationTests {
             )
         }
     }
+
+    func testCodegenCompilesRandomLongSeedConstructor() throws {
+        let source = """
+        import kotlin.random.Random
+
+        fun makeRandom(seed: Long): Random {
+            return Random(seed)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "RandomLongSeedConstructor",
+                emit: .object,
+                outputPath: outputBase
+            )
+            let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
+        }
+    }
 }

@@ -61,6 +61,14 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticRandomConstructor(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            externalLinkName: "kk_random_create_seeded",
+            parameters: [(name: "seed", type: longType)],
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticRandomMember(
             ownerSymbol: randomSymbol,

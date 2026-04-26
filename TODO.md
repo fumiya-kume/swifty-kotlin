@@ -159,7 +159,7 @@
 - [ ] STDLIB-RANDOM-001: `kotlin.random` の対象 API 一覧を固定
 - [ ] STDLIB-RANDOM-002: `kotlin.random` の sema / lowering を整える
 - [ ] STDLIB-RANDOM-003: `kotlin.random` の runtime / seed / 境界値を固定
-- [ ] STDLIB-RANDOM-004: `Random(seed: Long)` constructor を追加する
+- [x] STDLIB-RANDOM-004: `Random(seed: Long)` constructor を追加する
 - [ ] STDLIB-RANDOM-005: `Random.Default` singleton を sema から露出する
 - [ ] STDLIB-RANDOM-006: `Random.nextBytes(size: Int)` overload を追加する
 - [ ] STDLIB-RANDOM-007: `Random.nextInt(range: IntRange)` extension を追加する
