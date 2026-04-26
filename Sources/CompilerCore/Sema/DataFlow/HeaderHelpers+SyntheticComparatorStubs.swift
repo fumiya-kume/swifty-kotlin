@@ -2,7 +2,7 @@ import Foundation
 
 /// Synthetic stubs for Comparator, compareBy, compareByDescending (STDLIB-175),
 /// thenBy, thenByDescending, thenDescending, thenComparator, reversed (STDLIB-176),
-/// naturalOrder, reverseOrder (STDLIB-177).
+/// naturalOrder, reverseOrder (STDLIB-177), Array.binarySearch (STDLIB-COL-BSEARCH-004).
 extension DataFlowSemaPhase {
     func registerSyntheticComparatorStubs(
         symbols: SymbolTable,
@@ -59,6 +59,13 @@ extension DataFlowSemaPhase {
             interner: interner,
             comparisonsPkg: comparisonsPkg,
             comparisonsPackageSymbol: comparisonsPackageSymbol,
+            comparatorSymbol: comparatorSymbol
+        )
+
+        registerArrayBinarySearchComparator(
+            symbols: symbols,
+            types: types,
+            interner: interner,
             comparatorSymbol: comparatorSymbol
         )
 
@@ -656,6 +663,120 @@ extension DataFlowSemaPhase {
                 for: funcSymbol
             )
         }
+    }
+
+    private func registerArrayBinarySearchComparator(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparatorSymbol: SymbolID
+    ) {
+        let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
+        let arrayName = interner.intern("Array")
+        let arrayFQName = kotlinPkg + [arrayName]
+        guard let arraySymbol = symbols.lookup(fqName: arrayFQName) else {
+            return
+        }
+        let tParamName = interner.intern("T")
+        let tParamFQName = arrayFQName + [tParamName]
+        guard let tParamSymbol = symbols.lookup(fqName: tParamFQName) else {
+            return
+        }
+        let tParamType = types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol, nullability: .nonNull
+        )))
+        let comparatorType = types.make(.classType(ClassType(
+            classSymbol: comparatorSymbol,
+            args: [.invariant(tParamType)],
+            nullability: .nonNull
+        )))
+
+        let memberName = interner.intern("binarySearch")
+        let memberFQName = arrayFQName + [memberName]
+        let expectedParameterTypes: [TypeID] = [
+            tParamType,
+            comparatorType,
+            types.intType,
+            types.intType,
+        ]
+        if symbols.lookupAll(fqName: memberFQName).contains(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+            return signature.parameterTypes == expectedParameterTypes
+                && signature.returnType == types.intType
+        }) {
+            return
+        }
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(arraySymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_array_binarySearch_compare", for: memberSymbol)
+
+        let elementParamName = interner.intern("element")
+        let comparatorParamName = interner.intern("comparator")
+        let fromIndexParamName = interner.intern("fromIndex")
+        let toIndexParamName = interner.intern("toIndex")
+        let valueParameters: [SymbolID] = [
+            symbols.define(
+                kind: .valueParameter,
+                name: elementParamName,
+                fqName: memberFQName + [elementParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            ),
+            symbols.define(
+                kind: .valueParameter,
+                name: comparatorParamName,
+                fqName: memberFQName + [comparatorParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            ),
+            symbols.define(
+                kind: .valueParameter,
+                name: fromIndexParamName,
+                fqName: memberFQName + [fromIndexParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            ),
+            symbols.define(
+                kind: .valueParameter,
+                name: toIndexParamName,
+                fqName: memberFQName + [toIndexParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            ),
+        ]
+
+        for parameterSymbol in valueParameters {
+            symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+        }
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: types.make(.classType(ClassType(
+                    classSymbol: arraySymbol,
+                    args: [.invariant(tParamType)],
+                    nullability: .nonNull
+                ))),
+                parameterTypes: expectedParameterTypes,
+                returnType: types.intType,
+                valueParameterSymbols: valueParameters,
+                valueParameterHasDefaultValues: [false, false, false, false],
+                valueParameterIsVararg: [false, false, false, false],
+                typeParameterSymbols: [tParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
     }
 
 }

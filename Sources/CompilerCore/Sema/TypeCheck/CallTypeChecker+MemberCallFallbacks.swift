@@ -2484,6 +2484,18 @@ extension CallTypeChecker {
                 return nil
             }
             if !isGenericArrayReceiver(receiverID: receiverID, sema: sema, interner: interner) {
+                if args.indices.contains(1) {
+                    let secondArgumentType = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals)
+                    if !sema.types.isSubtype(secondArgumentType, sema.types.intType) {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-0002",
+                            "No viable overload found for call.",
+                            range: ctx.ast.arena.exprRange(id)
+                        )
+                        sema.bindings.bindExprType(id, type: sema.types.errorType)
+                        return sema.types.errorType
+                    }
+                }
                 return nil
             }
         }
@@ -2579,6 +2591,21 @@ extension CallTypeChecker {
                 locals: &locals,
                 expectedType: expectation.expectedType
             )
+        } else if memberName == "binarySearch", args.count == 4,
+                  let comparatorSymbol = sema.symbols.lookup(fqName: [
+                      interner.intern("kotlin"),
+                      interner.intern("Comparator"),
+                  ])
+        {
+            let comparatorExpectedType = sema.types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.invariant(receiverElementType)],
+                nullability: .nonNull
+            )))
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: receiverElementType)
+            _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: comparatorExpectedType)
+            _ = driver.inferExpr(args[2].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+            _ = driver.inferExpr(args[3].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
         }
 
         // Mark result as collection if it returns a List
@@ -2627,6 +2654,8 @@ extension CallTypeChecker {
         switch memberName {
         case "size":
             return sema.types.intType
+        case "binarySearch":
+            return sema.types.intType
         case "isEmpty", "contains", "any", "none":
             return sema.types.booleanType
         case "forEach", "fill":
@@ -2635,8 +2664,6 @@ extension CallTypeChecker {
             return sema.types.stringType
         case "get":
             return elementType
-        case "binarySearch":
-            return sema.types.intType
         case "toList":
             if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
                 return sema.types.make(.classType(ClassType(

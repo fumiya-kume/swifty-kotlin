@@ -409,15 +409,15 @@ final class RuntimeComparatorTests: XCTestCase {
         withComparatorObject(mode: 0) { comparatorRaw in
             var thrown = 0
 
-            let found = kk_array_binarySearch_compare(source, comparatorRaw, 0, 5, 0, 5, &thrown)
+            let found = kk_array_binarySearch_compare(source, 5, comparatorRaw, 0, 0, 5, &thrown)
             XCTAssertEqual(found, 2)
             XCTAssertEqual(thrown, 0)
 
-            let missing = kk_array_binarySearch_compare(source, comparatorRaw, 0, 4, 0, 5, &thrown)
+            let missing = kk_array_binarySearch_compare(source, 4, comparatorRaw, 0, 0, 5, &thrown)
             XCTAssertEqual(missing, -3)
             XCTAssertEqual(thrown, 0)
 
-            let ranged = kk_array_binarySearch_compare(source, comparatorRaw, 0, 7, 2, 5, &thrown)
+            let ranged = kk_array_binarySearch_compare(source, 7, comparatorRaw, 0, 2, 5, &thrown)
             XCTAssertEqual(ranged, 3)
             XCTAssertEqual(thrown, 0)
         }
@@ -515,6 +515,18 @@ final class RuntimeComparatorTests: XCTestCase {
         let comparatorRaw = kk_comparator_from_selector_primitive_descending(selectorPtr(selectIdentity), 0, 0)
         let sorted = kk_list_sortedWith(source, comparatorRaw, 0, nil)
         XCTAssertEqual(listElements(sorted), [8, 5, 4, 3, 1])
+    }
+
+    func testArrayBinarySearchCompareObjectDispatchesThroughVtable() {
+        let source = makeArray([1, 3, 4, 9])
+
+        withComparatorObject(mode: 0) { comparatorRaw in
+            let hit = kk_array_binarySearch_compare(source, 4, comparatorRaw, 0, 0, 4, nil)
+            XCTAssertEqual(hit, 2)
+
+            let miss = kk_array_binarySearch_compare(source, 5, comparatorRaw, 0, 1, 3, nil)
+            XCTAssertEqual(miss, -4)
+        }
     }
 
     func testMutableListPrimitiveSortAscending() {

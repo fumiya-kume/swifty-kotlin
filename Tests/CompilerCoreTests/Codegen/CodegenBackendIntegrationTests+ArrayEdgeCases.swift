@@ -99,4 +99,36 @@ extension CodegenBackendIntegrationTests {
             )
         }
     }
+
+    func testCodegenCompilesArrayBinarySearchWithComparator() throws {
+        let source = """
+        fun main() {
+            val values = arrayOf(1, 3, 4, 9)
+            val comparator = naturalOrder<Int>()
+            println(values.binarySearch(4, comparator, 0, 4))
+            println(values.binarySearch(5, comparator, 1, 3))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArrayBinarySearchComparator",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                2
+                -4
+                """ + "\n"
+            )
+        }
+    }
 }
