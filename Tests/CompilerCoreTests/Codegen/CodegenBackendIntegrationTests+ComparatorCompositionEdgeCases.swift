@@ -27,6 +27,30 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenCompilesCompareByComparatorSelector() throws {
+        let source = """
+        fun main() {
+            val byLength = compareBy<String, Int>(compareBy<Int> { it }) { it.length }
+            println(listOf("pear", "fig", "apple").sortedWith(byLength))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "CompareByComparatorSelector",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[fig, pear, apple]\n")
+        }
+    }
+
     func testCodegenCompilesComparatorCompositionEdgeCases() throws {
         throw XCTSkip("Comparator composition not yet implemented")
         let source = """

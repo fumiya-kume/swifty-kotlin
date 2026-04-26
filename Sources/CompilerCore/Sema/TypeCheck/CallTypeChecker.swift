@@ -1522,12 +1522,13 @@ final class CallTypeChecker {
             }
         }
 
-        // --- compareByDescending(comparator, selector) (STDLIB-COMP-005) ---
+        // --- compareBy/compareByDescending(comparator, selector) (STDLIB-COMP-004/005) ---
         if let calleeName,
            args.count == 2,
-           interner.resolve(calleeName) == "compareByDescending",
+           ["compareBy", "compareByDescending"].contains(interner.resolve(calleeName)),
            !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
         {
+            let calleeNameStr = interner.resolve(calleeName)
             let comparatorFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Comparator")]
             let comparatorSymbol = sema.symbols.lookup(fqName: comparatorFQName)
             let elementType: TypeID = if let explicitT = explicitTypeArgs.first {
@@ -1542,7 +1543,11 @@ final class CallTypeChecker {
             } else {
                 sema.types.anyType
             }
-            let keyType: TypeID = explicitTypeArgs.count >= 2 ? explicitTypeArgs[1] : sema.types.anyType
+            let keyType: TypeID = if explicitTypeArgs.count >= 2 {
+                explicitTypeArgs[1]
+            } else {
+                sema.types.anyType
+            }
             let keyComparatorType: TypeID = if let comparatorSymbol {
                 sema.types.make(.classType(ClassType(
                     classSymbol: comparatorSymbol,
@@ -1576,10 +1581,13 @@ final class CallTypeChecker {
             }
             let comparisonsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("comparisons")]
             let funcFQName = comparisonsPkg + [calleeName]
+            let expectedExternalLink = calleeNameStr == "compareBy"
+                ? "kk_comparator_from_comparator_selector"
+                : "kk_comparator_from_comparator_selector_descending"
             if let chosen = sema.symbols.lookupAll(fqName: funcFQName).first(where: { candidate in
                 guard let sig = sema.symbols.functionSignature(for: candidate) else { return false }
                 return sig.parameterTypes.count == 2 &&
-                    sema.symbols.externalLinkName(for: candidate) == "kk_comparator_from_comparator_selector_descending"
+                    sema.symbols.externalLinkName(for: candidate) == expectedExternalLink
             }) {
                 sema.bindings.bindCall(
                     id,
