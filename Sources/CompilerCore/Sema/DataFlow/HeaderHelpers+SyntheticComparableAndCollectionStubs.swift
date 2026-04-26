@@ -3156,8 +3156,9 @@ extension DataFlowSemaPhase {
             []
         }
 
-        // Register a synthetic member on List. Short-circuits when a symbol
-        // with the same fully-qualified name already exists (first-wins).
+        // Register a synthetic member on List. Skips only when a symbol with the
+        // same fully-qualified name and matching parameter list already exists
+        // (overloads with distinct signatures are all registered).
         func registerMember(
             name: String,
             parameterTypes: [TypeID],
@@ -3167,7 +3168,11 @@ extension DataFlowSemaPhase {
         ) {
             let memberName = interner.intern(name)
             let memberFQName = listFQName + [memberName]
-            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let alreadySameSignature = symbols.lookupAll(fqName: memberFQName).contains { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                return sig.parameterTypes == parameterTypes
+            }
+            guard !alreadySameSignature else { return }
             registerMemberOverload(
                 memberName: memberName,
                 memberFQName: memberFQName,
