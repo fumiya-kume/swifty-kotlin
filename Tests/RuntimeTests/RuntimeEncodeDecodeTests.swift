@@ -187,4 +187,44 @@ final class RuntimeEncodeDecodeTests: IsolatedRuntimeXCTestCase {
         let result = kk_bytearray_decodeToString_charset(byteArray, 0)
         XCTAssertEqual(extractSwiftString(result), "Hello")
     }
+
+    // MARK: - decodeToString(startIndex, endIndex, throwOnInvalidSequence)
+
+    func testDecodeToStringRange() {
+        var thrown = 0
+        let byteArray = makeListRaw([65, 66, 67, 68, 69]) // "ABCDE"
+        let result = kk_bytearray_decodeToString_range(byteArray, 1, 4, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(extractSwiftString(result), "BCD")
+    }
+
+    func testDecodeToStringRangeAcceptsArrayBox() {
+        var thrown = 0
+        let byteArray = makeArrayRaw([65, 66, 67, 68, 69]) // "ABCDE"
+        let result = kk_bytearray_decodeToString_range(byteArray, 0, 5, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(extractSwiftString(result), "ABCDE")
+    }
+
+    func testDecodeToStringRangeInvalidBoundsThrows() {
+        var thrown = 0
+        let byteArray = makeListRaw([65, 66, 67])
+        _ = kk_bytearray_decodeToString_range(byteArray, 2, 4, &thrown)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testDecodeToStringRangeStrictMalformedUTF8Throws() {
+        var thrown = 0
+        let byteArray = makeListRaw([0xC3, 0x28])
+        _ = kk_bytearray_decodeToString_range_throw(byteArray, 0, 2, 1, &thrown)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testDecodeToStringRangeNonStrictMalformedUTF8UsesReplacement() {
+        var thrown = 0
+        let byteArray = makeListRaw([0xC3, 0x28])
+        let result = kk_bytearray_decodeToString_range_throw(byteArray, 0, 2, 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(extractSwiftString(result), "\u{FFFD}(")
+    }
 }

@@ -477,4 +477,49 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             )
         }
     }
+
+    func testByteArrayDecodeToStringRangeMembersResolveInCallExpressions() throws {
+        let source = """
+        fun decode(bytes: ByteArray): String {
+            val sliced = bytes.decodeToString(1, 4)
+            val strict = bytes.decodeToString(0, 4, true)
+            return sliced + strict
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let expectedLinks = [
+                "kk_bytearray_decodeToString_range",
+                "kk_bytearray_decodeToString_range_throw",
+            ]
+
+            let callExprIDs = ast.arena.exprs.indices.compactMap { index -> ExprID? in
+                let exprID = ExprID(rawValue: Int32(index))
+                guard let expr = ast.arena.expr(exprID),
+                      case let .memberCall(_, callee, _, _, _) = expr,
+                      ctx.interner.resolve(callee) == "decodeToString"
+                else {
+                    return nil
+                }
+                return exprID
+            }
+            XCTAssertEqual(callExprIDs.count, expectedLinks.count, "Expected two decodeToString range calls")
+
+            for (index, callExprID) in callExprIDs.enumerated() {
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExprID)?.chosenCallee,
+                    "Expected call binding for decodeToString overload \(index)"
+                )
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    expectedLinks[index],
+                    "Expected decodeToString overload \(index) to resolve to \(expectedLinks[index])"
+                )
+            }
+        }
+    }
 }
