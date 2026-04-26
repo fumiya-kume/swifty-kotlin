@@ -1002,6 +1002,20 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // plusElement(element) on sequence -> kk_sequence_plus_element (STDLIB-SEQ-013)
+        if callee == lookup.plusElementName, arguments.count == 1, sequenceExprIDs.contains(receiver.rawValue) {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkSequencePlusElementName,
+                arguments: [receiver, arguments[0]],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result { sequenceExprIDs.insert(result.rawValue) }
+            return true
+        }
+
         // partition(predicate) on sequence → kk_sequence_partition (STDLIB-SEQ-012)
         if callee == lookup.partitionName, arguments.count == 1, sequenceExprIDs.contains(receiver.rawValue) {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)

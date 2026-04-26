@@ -377,9 +377,40 @@ extension CodegenBackendIntegrationTests {
     }
 
     func testKotlinTextTrimPredicateEdgeCases() throws {
-        // trim { predicate }, trimStart { predicate }, trimEnd { predicate }
-        // are not yet implemented in the runtime stubs.
-        throw XCTSkip("trim/trimStart/trimEnd with predicate not yet implemented")
+        let source = """
+        fun main() {
+            println("[" + "xxhelloxy".trim { it == 'x' || it == 'y' } + "]")
+            println("[" + "xxhelloxy".trimStart { it == 'x' || it == 'y' } + "]")
+            println("[" + "xxhelloxy".trimEnd { it == 'x' || it == 'y' } + "]")
+            println("[" + "".trim { it == 'x' } + "]")
+            println("[" + "aba".trim { it == 'a' } + "]")
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextTrimPredicateEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                [hello]
+                [helloxy]
+                [xxhello]
+                []
+                [b]
+                """
+                + "\n"
+            )
+        }
     }
 
     // MARK: - padStart / padEnd
@@ -809,6 +840,99 @@ extension CodegenBackendIntegrationTests {
                 [fallback]
                 [empty]
                 [fallback]
+                """
+                + "\n"
+            )
+        }
+    }
+
+    func testKotlinTextIfEmptyEdgeCases() throws {
+        let source = """
+        fun choose(value: CharSequence): String {
+            return value.ifEmpty { "fallback" }
+        }
+
+        fun main() {
+            println("[" + "abc".ifEmpty { "fallback" } + "]")
+            println("[" + "   ".ifEmpty { "fallback" } + "]")
+            println("[" + "".ifEmpty { "empty" } + "]")
+
+            val cs: CharSequence = ""
+            println("[" + choose(cs) + "]")
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextIfEmptyEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                [abc]
+                [   ]
+                [empty]
+                [fallback]
+                """
+                + "\n"
+            )
+        }
+    }
+
+    func testKotlinTextCharSequenceZipWithNextEdgeCases() throws {
+        let source = """
+        fun pairCount(value: CharSequence): Int {
+            return value.zipWithNext().size
+        }
+
+        fun labels(value: CharSequence): List<String> {
+            return value.zipWithNext { a, b -> "" + a + b }
+        }
+
+        fun main() {
+            val cs: CharSequence = "abcd"
+            val pairs = cs.zipWithNext()
+            println(pairs.size)
+
+            val transformed = cs.zipWithNext { a, b -> "" + a + b }
+            println(transformed.size)
+            println(transformed[0])
+            println(transformed[2])
+
+            println(pairCount("xy"))
+            println(labels("xy")[0])
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextCharSequenceZipWithNextEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                3
+                3
+                ab
+                cd
+                1
+                xy
                 """
                 + "\n"
             )

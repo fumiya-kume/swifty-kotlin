@@ -298,6 +298,7 @@ extension ABILoweringPass {
             interner.intern("kk_ulong_range_next"),
             interner.intern("kk_range_step"),
             interner.intern("kk_range_reversed"),
+            interner.intern("kk_char_range_isEmpty"),
             interner.intern("kk_char_range_toList"),
             // UIntRange properties and HOFs (STDLIB-RANGE-036)
             interner.intern("kk_uint_range_contains"),
@@ -762,6 +763,7 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_flatten"),
             // Sequence plus/minus (STDLIB-561/562)
             interner.intern("kk_sequence_plus"),
+            interner.intern("kk_sequence_plus_element"),
             interner.intern("kk_sequence_minus"),
             // Regex (STDLIB-100/101/102/103)
             interner.intern("kk_regex_create"),
@@ -824,8 +826,6 @@ extension ABILoweringPass {
             interner.intern("kk_result_getOrNull"),
             interner.intern("kk_result_getOrDefault"),
             interner.intern("kk_result_exceptionOrNull"),
-            // buildString(capacity, builderAction) overload (STDLIB-TEXT-EDGE-007)
-            interner.intern("kk_build_string_with_capacity"),
             // StringBuilder enhancements (STDLIB-311) — buildString DSL helpers
             interner.intern("kk_string_builder_append"),
             interner.intern("kk_string_builder_append_line"),

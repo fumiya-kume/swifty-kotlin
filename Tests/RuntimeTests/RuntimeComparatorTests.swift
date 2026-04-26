@@ -423,6 +423,86 @@ final class RuntimeComparatorTests: XCTestCase {
         }
     }
 
+    func testBinarySearchComparatorWithExplicitRange() {
+        let source = makeList([1, 3, 5, 7, 9])
+        var thrown = 0
+
+        let found = kk_list_binarySearch_comparator(
+            source,
+            5,
+            comparatorPtr(comparatorNatural),
+            0,
+            1,
+            4,
+            &thrown
+        )
+        XCTAssertEqual(found, 2)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        let missing = kk_list_binarySearch_comparator(
+            source,
+            6,
+            comparatorPtr(comparatorNatural),
+            0,
+            1,
+            4,
+            &thrown
+        )
+        XCTAssertEqual(missing, -4)
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testBinarySearchComparatorObjectDispatchesThroughVtable() {
+        let ascending = makeList([1, 3, 5, 7, 9])
+        withComparatorObject(mode: 0) { comparatorRaw in
+            var thrown = 0
+            let found = kk_list_binarySearch_comparator(
+                ascending,
+                7,
+                comparatorRaw,
+                0,
+                0,
+                5,
+                &thrown
+            )
+            XCTAssertEqual(found, 3)
+            XCTAssertEqual(thrown, 0)
+        }
+
+        let descending = makeList([9, 7, 5, 3, 1])
+        withComparatorObject(mode: 1) { comparatorRaw in
+            var thrown = 0
+            let found = kk_list_binarySearch_comparator(
+                descending,
+                5,
+                comparatorRaw,
+                0,
+                0,
+                5,
+                &thrown
+            )
+            XCTAssertEqual(found, 2)
+            XCTAssertEqual(thrown, 0)
+        }
+    }
+
+    func testBinarySearchComparatorRangeValidationThrows() {
+        let source = makeList([1, 3, 5, 7, 9])
+        var thrown = 0
+        let result = kk_list_binarySearch_comparator(
+            source,
+            5,
+            comparatorPtr(comparatorNatural),
+            0,
+            4,
+            2,
+            &thrown
+        )
+        XCTAssertEqual(result, 0)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     func testSortedWithPrimitiveComparatorObjectDispatchesThroughITable() {
         let source = makeList([5, 3, 8, 1, 4])
         let comparatorRaw = kk_comparator_from_selector_primitive(selectorPtr(selectIdentity), 0, 0)

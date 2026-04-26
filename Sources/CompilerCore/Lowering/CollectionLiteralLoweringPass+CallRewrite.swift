@@ -2020,6 +2020,23 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    // plusElement(element) on sequence -> kk_sequence_plus_element (STDLIB-SEQ-013)
+                    if callee == lookup.plusElementName, arguments.count == 2 {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkSequencePlusElementName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
+
                     // minus(element) on sequence → kk_sequence_minus (STDLIB-562)
                     // Only rewrite when the argument is a single element (not a
                     // collection).  Collection-removal is not yet supported at the

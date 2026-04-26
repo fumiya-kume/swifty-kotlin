@@ -14,6 +14,59 @@ private func runtimeStringFromScalars(_ scalars: some Sequence<UnicodeScalar>) -
     String(String.UnicodeScalarView(scalars))
 }
 
+private func runtimeStringTrimWithPredicate(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?,
+    trimLeading: Bool,
+    trimTrailing: Bool,
+    context: String
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard fnPtr != 0 else {
+        return runtimeMakeStringRaw(runtimeStringFromScalars(scalars))
+    }
+
+    func shouldTrim(_ scalar: UnicodeScalar) -> Bool? {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: Int(scalar.value),
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            runtimePropagateThrownOrTrap(thrown, outThrown: outThrown, context: context)
+            return nil
+        }
+        return maybeUnbox(result) != 0
+    }
+
+    var start = 0
+    var end = scalars.count
+    if trimLeading {
+        while start < end {
+            guard let matches = shouldTrim(scalars[start]) else {
+                return runtimeMakeStringRaw("")
+            }
+            guard matches else { break }
+            start += 1
+        }
+    }
+    if trimTrailing {
+        while end > start {
+            guard let matches = shouldTrim(scalars[end - 1]) else {
+                return runtimeMakeStringRaw("")
+            }
+            guard matches else { break }
+            end -= 1
+        }
+    }
+    return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[start ..< end]))
+}
+
 // MARK: - STDLIB-006/009/013 String Functions
 
 @_cdecl("kk_string_trim")
@@ -21,6 +74,24 @@ public func kk_string_trim(_ strRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
     return runtimeMakeStringRaw(trimmed)
+}
+
+@_cdecl("kk_string_trim_predicate")
+public func kk_string_trim_predicate(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeStringTrimWithPredicate(
+        strRaw,
+        fnPtr,
+        closureRaw,
+        outThrown,
+        trimLeading: true,
+        trimTrailing: true,
+        context: "trim predicate"
+    )
 }
 
 @_cdecl("kk_string_lowercase")
@@ -1049,6 +1120,34 @@ public func kk_string_ifBlank(
     return result
 }
 
+// MARK: - STDLIB-TEXT-EDGE-005: CharSequence.ifEmpty(defaultValue)
+
+@_cdecl("kk_string_ifEmpty")
+public func kk_string_ifEmpty(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard source.isEmpty else {
+        return strRaw
+    }
+    guard fnPtr != 0 else {
+        return runtimeMakeStringRaw("")
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var thrown = 0
+    let result = lambda(closureRaw, &thrown)
+    if thrown != 0 {
+        runtimePropagateThrownOrTrap(
+            thrown,
+            outThrown: outThrown,
+            context: "ifEmpty defaultValue"
+        )
+        return runtimeMakeStringRaw("")
+    }
+    return result
+}
+
 // MARK: - STDLIB-186: substringBefore / substringAfter / substringBeforeLast / substringAfterLast
 
 @_cdecl("kk_string_substringBefore")
@@ -1369,10 +1468,46 @@ public func kk_string_trimStart(_ strRaw: Int) -> Int {
     return runtimeMakeStringRaw(String(source.drop { $0.isWhitespace }))
 }
 
+@_cdecl("kk_string_trimStart_predicate")
+public func kk_string_trimStart_predicate(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeStringTrimWithPredicate(
+        strRaw,
+        fnPtr,
+        closureRaw,
+        outThrown,
+        trimLeading: true,
+        trimTrailing: false,
+        context: "trimStart predicate"
+    )
+}
+
 @_cdecl("kk_string_trimEnd")
 public func kk_string_trimEnd(_ strRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     return runtimeMakeStringRaw(String(source.reversed().drop { $0.isWhitespace }.reversed()))
+}
+
+@_cdecl("kk_string_trimEnd_predicate")
+public func kk_string_trimEnd_predicate(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeStringTrimWithPredicate(
+        strRaw,
+        fnPtr,
+        closureRaw,
+        outThrown,
+        trimLeading: false,
+        trimTrailing: true,
+        context: "trimEnd predicate"
+    )
 }
 
 @_cdecl("kk_string_toByteArray")

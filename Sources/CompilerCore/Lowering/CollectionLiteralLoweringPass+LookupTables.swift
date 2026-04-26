@@ -309,6 +309,7 @@ struct CollectionLiteralLookupTables {
 
     // STDLIB-561/562: Sequence plus/minus
     let kkSequencePlusName: InternedString
+    let kkSequencePlusElementName: InternedString
     let kkSequenceMinusName: InternedString
     let kkSequenceOfSingleName: InternedString
 
@@ -586,6 +587,7 @@ struct CollectionLiteralLookupTables {
 
     // Sequence plus/minus member names (STDLIB-561/562)
     let plusMemberName: InternedString
+    let plusElementName: InternedString
     let minusMemberName: InternedString
 
     // Sequence member names (STDLIB-003)
@@ -1048,6 +1050,7 @@ struct CollectionLiteralLookupTables {
         kkSequenceReduceIndexedOrNullName = interner.intern("kk_sequence_reduceIndexedOrNull")
 
         kkSequencePlusName = interner.intern("kk_sequence_plus")
+        kkSequencePlusElementName = interner.intern("kk_sequence_plus_element")
         kkSequenceMinusName = interner.intern("kk_sequence_minus")
         kkSequenceOfSingleName = interner.intern("kk_sequence_of_single")
         kkSequencePartitionName = interner.intern("kk_sequence_partition")
@@ -1316,6 +1319,7 @@ struct CollectionLiteralLookupTables {
         fillName = interner.intern("fill")
 
         plusMemberName = interner.intern("plus")
+        plusElementName = interner.intern("plusElement")
         minusMemberName = interner.intern("minus")
 
         asSequenceName = interner.intern("asSequence")

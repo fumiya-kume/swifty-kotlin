@@ -8,7 +8,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - Lazy counter: map + take touches exactly N elements
 
     func testSequenceMapTakeEvaluatesOnlyNeededElements() throws {
-        throw XCTSkip("Sequence lazy map+take counter not yet implemented")
         let source = """
         var counter = 0
 
@@ -48,7 +47,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - Lazy counter: filter + take short-circuits
 
     func testSequenceFilterTakeEvaluatesOnlyNeededElements() throws {
-        throw XCTSkip("Sequence lazy filter+take counter not yet implemented")
         let source = """
         var counter = 0
 

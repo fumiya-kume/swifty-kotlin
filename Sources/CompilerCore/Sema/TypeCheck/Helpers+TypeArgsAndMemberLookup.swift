@@ -324,7 +324,17 @@ extension TypeCheckHelpers {
                 if requireReceiverSubtype,
                    !sema.types.isSubtype(receiverType, signatureReceiverType)
                 {
-                    continue
+                    let isRangeUntil = calleeName == interner.intern("rangeUntil")
+                        && ownerFQName == [interner.intern("kotlin"), interner.intern("ranges")]
+                    let genericReceiver = if isRangeUntil,
+                                             case .typeParam = sema.types.kind(of: sema.types.makeNonNullable(signatureReceiverType)) {
+                        true
+                    } else {
+                        false
+                    }
+                    if !genericReceiver {
+                        continue
+                    }
                 }
                 let key = MemberDispatchKey(
                     name: calleeName,

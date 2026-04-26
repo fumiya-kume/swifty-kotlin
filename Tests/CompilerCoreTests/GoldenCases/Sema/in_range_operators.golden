@@ -1,25 +1,37 @@
-symbol s0 kind=function fq=checkIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s1 kind=valueParameter fq=checkIn.$0.x vis=private flags=_
-symbol s2 kind=function fq=checkNotIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s3 kind=valueParameter fq=checkNotIn.$1.x vis=private flags=_
-symbol s4 kind=function fq=rangeUntilExpr vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s5 kind=valueParameter fq=rangeUntilExpr.$2.n vis=private flags=_
+symbol s0 kind=interface fq=kotlin.Comparable vis=public flags=synthetic
+symbol s1 kind=interface fq=kotlin.ranges.OpenEndRange vis=public flags=synthetic
+symbol s2 kind=typeParameter fq=kotlin.ranges.OpenEndRange.T vis=private flags=_
+symbol s3 kind=property fq=kotlin.ranges.OpenEndRange.endExclusive vis=public flags=synthetic type=T#2
+symbol s4 kind=typeParameter fq=kotlin.ranges.rangeUntil.T vis=private flags=_
+symbol s5 kind=function fq=kotlin.ranges.rangeUntil vis=public flags=synthetic|operatorFunction sig=recv=T#4 params=[T#4] ret=Class#1<T#4> suspend=0 defaults=[0] vararg=[0] bounds=[Class#0<in T#4>]
+symbol s6 kind=function fq=checkIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s7 kind=valueParameter fq=checkIn.$0.x vis=private flags=_
+symbol s8 kind=function fq=checkNotIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s9 kind=valueParameter fq=checkNotIn.$1.x vis=private flags=_
+symbol s10 kind=function fq=rangeUntilExpr vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s11 kind=valueParameter fq=rangeUntilExpr.$2.n vis=private flags=_
+symbol s12 kind=function fq=rangeUntilEndExclusive vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=_
-  decl d0 fun checkIn suspend=0 inline=0 sym=s0
-  decl d1 fun checkNotIn suspend=0 inline=0 sym=s2
-  decl d2 fun rangeUntilExpr suspend=0 inline=0 sym=s4
-expr e0 name(x) type=Int ref=s1
+  decl d0 fun checkIn suspend=0 inline=0 sym=s6
+  decl d1 fun checkNotIn suspend=0 inline=0 sym=s8
+  decl d2 fun rangeUntilExpr suspend=0 inline=0 sym=s10
+  decl d3 fun rangeUntilEndExclusive suspend=0 inline=0 sym=s12
+expr e0 name(x) type=Int ref=s7
 expr e1 int(1) type=Int
 expr e2 int(10) type=Int
 expr e3 binary(rangeTo) lhs=e1 rhs=e2 type=Int
 expr e4 inExpr lhs=e0 rhs=e3 type=Boolean
-expr e5 name(x) type=Int ref=s3
+expr e5 name(x) type=Int ref=s9
 expr e6 int(1) type=Int
 expr e7 int(10) type=Int
 expr e8 binary(rangeTo) lhs=e6 rhs=e7 type=Int
 expr e9 notInExpr lhs=e5 rhs=e8 type=Boolean
-expr e10 name(n) type=Int ref=s5
+expr e10 name(n) type=Int ref=s11
 expr e11 int(0) type=Int
 expr e12 int(10) type=Int
 expr e13 binary(rangeUntil) lhs=e11 rhs=e12 type=Int
 expr e14 inExpr lhs=e10 rhs=e13 type=Boolean
+expr e15 int(0) type=Int
+expr e16 int(10) type=Int
+expr e17 memberCall recv=e15 callee=rangeUntil args=[_:e16] type=Class#1<Int> call=s5 map=[0->0] targs=[Int]
+expr e18 memberCall recv=e17 callee=endExclusive args=[] type=Int ref=s3

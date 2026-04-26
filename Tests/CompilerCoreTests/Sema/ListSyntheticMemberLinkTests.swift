@@ -383,6 +383,61 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListBinarySearchComparatorOverloadHasDefaultedRange() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let listSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: [
+                    ctx.interner.intern("kotlin"),
+                    ctx.interner.intern("collections"),
+                    ctx.interner.intern("List"),
+                ])
+            )
+            let symbolID = try XCTUnwrap(
+                sema.symbols.lookupByShortName(ctx.interner.intern("binarySearch")).first(where: { candidate in
+                    sema.symbols.parentSymbol(for: candidate) == listSymbol
+                        && sema.symbols.externalLinkName(for: candidate) == "kk_list_binarySearch_comparator"
+                }),
+                "Expected synthetic List member binarySearch comparator overload to be registered"
+            )
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+            XCTAssertEqual(signature.parameterTypes.count, 4)
+            XCTAssertEqual(signature.valueParameterSymbols.count, 4)
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false, false, true, true])
+            XCTAssertEqual(signature.typeParameterSymbols.count, 1)
+            XCTAssertEqual(signature.classTypeParameterCount, 1)
+            XCTAssertTrue(signature.typeParameterUpperBoundsList.isEmpty)
+
+            let parameterNames = signature.valueParameterSymbols.compactMap { paramSymbol in
+                sema.symbols.symbol(paramSymbol)?.name
+            }.map { ctx.interner.resolve($0) }
+            XCTAssertEqual(parameterNames, ["element", "comparator", "fromIndex", "toIndex"])
+
+            XCTAssertEqual(signature.parameterTypes[0], sema.types.make(.typeParam(TypeParamType(
+                symbol: signature.typeParameterSymbols[0],
+                nullability: .nonNull
+            ))))
+            XCTAssertEqual(signature.parameterTypes[2], sema.types.intType)
+            XCTAssertEqual(signature.parameterTypes[3], sema.types.intType)
+
+            if let comparatorSymbol = sema.symbols.lookupByShortName(ctx.interner.intern("Comparator")).first,
+               case let .classType(comparatorClassType) = sema.types.kind(of: signature.parameterTypes[1])
+            {
+                XCTAssertEqual(comparatorClassType.classSymbol, comparatorSymbol)
+                XCTAssertEqual(comparatorClassType.args.count, 1)
+            } else {
+                guard case let .functionType(comparatorFunctionType) = sema.types.kind(of: signature.parameterTypes[1]) else {
+                    return XCTFail("Expected binarySearch comparator parameter to be Comparator<T> or a comparator function type")
+                }
+                XCTAssertEqual(comparatorFunctionType.params.count, 2)
+                XCTAssertEqual(comparatorFunctionType.returnType, sema.types.intType)
+            }
+        }
+    }
+
     func testListBinarySearchByUsesComparableKeyAndRuntimeOverloads() throws {
         let source = """
         data class Person(val name: String, val age: Int)

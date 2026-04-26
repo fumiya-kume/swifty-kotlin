@@ -6,6 +6,10 @@ fun main() {
     println(intProg.last)
     println(intProg.step)
     println(intProg.toList())
+
+    val openEnd = 0.rangeUntil(10)
+    println("rangeUntil endExclusive")
+    println(openEnd.endExclusive)
     
     // Test LongProgression.fromClosedRange
     println("\n=== LongProgression.fromClosedRange ===")
@@ -14,6 +18,20 @@ fun main() {
     println(longProg.last)
     println(longProg.step)
     println(longProg.toList())
+
+    // Test CharProgression.fromClosedRange
+    println("\n=== CharProgression.fromClosedRange ===")
+    val charProg = CharProgression.fromClosedRange('a', 'g', 2)
+    println(charProg.first)
+    println(charProg.last)
+    println(charProg.step)
+    println(charProg.toList())
+
+    val charStep = CharProgression.fromClosedRange('a', 'h', 1).step(3)
+    println(charStep.first)
+    println(charStep.last)
+    println(charStep.step)
+    println(charStep.toList())
     
     // Test UIntProgression.fromClosedRange
     println("\n=== UIntProgression.fromClosedRange ===")

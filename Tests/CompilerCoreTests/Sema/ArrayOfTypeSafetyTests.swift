@@ -84,6 +84,75 @@ final class ArrayOfTypeSafetyTests: XCTestCase {
         }
     }
 
+    func testArrayBinarySearchOverloadsResolveToInt() throws {
+        let source = """
+        fun main() {
+            val stringArray = arrayOf("a", "c", "e", "g")
+            val stringIndex = stringArray.binarySearch("c")
+            val stringRangeIndex = stringArray.binarySearch("d", 1, 4)
+
+            val boolArray = arrayOf(false, true)
+            val boolIndex = boolArray.binarySearch(false)
+
+            val intArray = intArrayOf(10, 20, 30, 40)
+            val intIndex = intArray.binarySearch(20)
+            val intFromIndex = intArray.binarySearch(30, 1)
+
+            val uintArray = uintArrayOf(10u, 20u, 30u, 40u)
+            val uintIndex = uintArray.binarySearch(30u)
+
+            val ulongArray = ulongArrayOf(10uL, 20uL, 30uL, 40uL)
+            val ulongRangeIndex = ulongArray.binarySearch(40uL, 1, 4)
+
+            println(stringIndex)
+            println(stringRangeIndex)
+            println(boolIndex)
+            println(intIndex)
+            println(intFromIndex)
+            println(uintIndex)
+            println(ulongRangeIndex)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+            let mainBody = try XCTUnwrap(findMainBodyStatements(in: ast, interner: ctx.interner))
+            let expectedNames: Set<String> = [
+                "stringIndex",
+                "stringRangeIndex",
+                "boolIndex",
+                "intIndex",
+                "intFromIndex",
+                "uintIndex",
+                "ulongRangeIndex",
+            ]
+            var seenNames: Set<String> = []
+            for exprID in mainBody {
+                guard let expr = ast.arena.expr(exprID),
+                      case let .localDecl(name, _, _, initializer, _, _) = expr,
+                      let initializer,
+                      let boundType = sema.bindings.exprType(for: initializer)
+                else { continue }
+
+                let localName = ctx.interner.resolve(name)
+                guard expectedNames.contains(localName) else { continue }
+
+                XCTAssertEqual(
+                    boundType,
+                    sema.types.intType,
+                    "Expected \(localName) to be typed as Int."
+                )
+                seenNames.insert(localName)
+            }
+            XCTAssertEqual(seenNames, expectedNames)
+        }
+    }
+
     // MARK: - Negative: array members on Any should fail
 
     func testArrayGetOnAnyReceiverProducesError() throws {
@@ -117,7 +186,7 @@ final class ArrayOfTypeSafetyTests: XCTestCase {
         }
     }
 
-    func testIntArrayBinarySearchProducesError() throws {
+    func testIntArrayBinarySearchWithComparatorProducesError() throws {
         let source = """
         fun main() {
             val arr = intArrayOf(1, 2, 3)
@@ -129,6 +198,27 @@ final class ArrayOfTypeSafetyTests: XCTestCase {
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
             assertHasDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+        }
+    }
+
+    func testBooleanArrayBinarySearchIsRejected() throws {
+        let source = """
+        fun main() {
+            val arr = booleanArrayOf(true, false)
+            val idx = arr.binarySearch(true)
+            println(idx)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let hasArrayBinarySearchDiag = ctx.diagnostics.diagnostics.contains {
+                $0.code == "KSWIFTK-SEMA-0002" || $0.code == "KSWIFTK-SEMA-0024" || $0.code == "KSWIFTK-SEMA-BOUND"
+            }
+            XCTAssertTrue(
+                hasArrayBinarySearchDiag,
+                "Expected booleanArrayOf().binarySearch(...) to be rejected, got: \(ctx.diagnostics.diagnostics.map(\.code))"
+            )
         }
     }
 

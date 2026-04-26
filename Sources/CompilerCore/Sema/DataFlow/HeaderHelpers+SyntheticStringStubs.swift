@@ -1147,6 +1147,21 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-EDGE-005: CharSequence.ifEmpty(defaultValue) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "ifEmpty",
+            externalLinkName: "kk_string_ifEmpty",
+            receiverType: charSequenceType,
+            parameters: [
+                ("defaultValue", stringProducerType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-190: first / last / single / firstOrNull / lastOrNull ---
 
         registerSyntheticStringExtensionFunction(
@@ -1377,6 +1392,18 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
+
+        registerSyntheticStringExtensionFunction(
+            named: "trim",
+            externalLinkName: "kk_string_trim_predicate",
+            receiverType: stringType,
+            parameters: [("predicate", charToBoolType, false, false)],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         let charToCharType = types.make(.functionType(FunctionType(
             params: [charType],
             returnType: charType,
@@ -1725,10 +1752,32 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticStringExtensionFunction(
+            named: "trimStart",
+            externalLinkName: "kk_string_trimStart_predicate",
+            receiverType: stringType,
+            parameters: [("predicate", charToBoolType, false, false)],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
             named: "trimEnd",
             externalLinkName: "kk_string_trimEnd",
             receiverType: stringType,
             parameters: [],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "trimEnd",
+            externalLinkName: "kk_string_trimEnd_predicate",
+            receiverType: stringType,
+            parameters: [("predicate", charToBoolType, false, false)],
             returnType: stringType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
@@ -2146,7 +2195,7 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // --- STDLIB-316: String.zipWithNext ---
+        // --- STDLIB-316: String/CharSequence.zipWithNext ---
 
         let pairFQName: [InternedString] = [
             interner.intern("kotlin"),
@@ -2180,17 +2229,31 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // String.zipWithNext(transform: (Char, Char) -> R)
+        registerSyntheticStringExtensionFunction(
+            named: "zipWithNext",
+            externalLinkName: "kk_string_zipWithNext",
+            receiverType: charSequenceType,
+            parameters: [],
+            returnType: listPairCharCharType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // String/CharSequence.zipWithNext(transform: (Char, Char) -> R)
         let zipWithNextTransformFQName = kotlinTextPkg + [interner.intern("zipWithNext")]
-        let existingZipWithNextTransform = symbols.lookupAll(fqName: zipWithNextTransformFQName).first { symID in
-            guard let sig = symbols.functionSignature(for: symID) else {
-                return false
+        func registerZipWithNextTransform(receiverType: TypeID) {
+            let existingZipWithNextTransform = symbols.lookupAll(fqName: zipWithNextTransformFQName).first { symID in
+                guard let sig = symbols.functionSignature(for: symID) else {
+                    return false
+                }
+                return sig.receiverType == receiverType && sig.parameterTypes.count == 1
             }
-            return sig.parameterTypes.count == 1
-        }
-        if let existingZipWithNextTransform {
-            symbols.setExternalLinkName("kk_string_zipWithNextTransform", for: existingZipWithNextTransform)
-        } else {
+            if let existingZipWithNextTransform {
+                symbols.setExternalLinkName("kk_string_zipWithNextTransform", for: existingZipWithNextTransform)
+                return
+            }
+
             let rName = interner.intern("R")
             let rSymbol = symbols.define(
                 kind: .typeParameter,
@@ -2237,7 +2300,7 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(transformMemberSymbol, for: transformParamSymbol)
             symbols.setFunctionSignature(
                 FunctionSignature(
-                    receiverType: stringType,
+                    receiverType: receiverType,
                     parameterTypes: [transformFnType],
                     returnType: transformResultType,
                     valueParameterSymbols: [transformParamSymbol],
@@ -2249,6 +2312,8 @@ extension DataFlowSemaPhase {
                 for: transformMemberSymbol
             )
         }
+        registerZipWithNextTransform(receiverType: stringType)
+        registerZipWithNextTransform(receiverType: charSequenceType)
 
         // --- String.partition ---
         let pairStringStringType: TypeID

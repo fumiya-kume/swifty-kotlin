@@ -1,9 +1,10 @@
 // swiftlint:disable file_length
 import Foundation
 
-/// Centralized FQ-name suffix used to discriminate the comparison-based
-/// `binarySearch` overload from the element-based one.
+/// Centralized FQ-name suffixes used to discriminate the binarySearch
+/// overloads from the element-based one.
 private let binarySearchCompareFQSuffix = "binarySearch$compare"
+private let binarySearchComparatorFQSuffix = "binarySearch$comparator"
 
 extension DataFlowSemaPhase {
     /// Register `kotlin.Comparable<in T>` interface stub with `operator fun compareTo(other: T): Int`.
@@ -75,9 +76,9 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
-        
         // Set up primitive types to implement Comparable<Self>
         setupPrimitiveComparableImplementations(symbols: symbols, types: types, interner: interner, comparableSymbol: comparableSymbol)
+        patchSyntheticClosedRangeTypeParameterUpperBound(symbols: symbols, types: types, interner: interner)
     }
 
     /// Set up primitive types to implement Comparable<Self>
@@ -4452,6 +4453,76 @@ extension DataFlowSemaPhase {
                     receiverType: receiverType,
                     parameterTypes: [comparisonType],
                     returnType: types.intType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // STDLIB-COL-BSEARCH-002: binarySearch(element, comparator, fromIndex, toIndex)
+        // comparator object overload with defaulted search range.
+        let binarySearchComparatorName = interner.intern("binarySearch")
+        let binarySearchComparatorFQName = listFQName + [interner.intern(binarySearchComparatorFQSuffix)]
+        if symbols.lookup(fqName: binarySearchComparatorFQName) == nil {
+            let comparatorType: TypeID = if let comparatorSymbol = symbols.lookupByShortName(interner.intern("Comparator")).first {
+                types.make(.classType(ClassType(
+                    classSymbol: comparatorSymbol,
+                    args: [.invariant(listTypeParamType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                types.make(.functionType(FunctionType(
+                    params: [listTypeParamType, listTypeParamType],
+                    returnType: types.intType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: binarySearchComparatorName,
+                fqName: binarySearchComparatorFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_binarySearch_comparator", for: memberSymbol)
+
+            let parameterSpecs: [(name: String, type: TypeID, hasDefault: Bool)] = [
+                ("element", listTypeParamType, false),
+                ("comparator", comparatorType, false),
+                ("fromIndex", types.intType, true),
+                ("toIndex", types.intType, true),
+            ]
+            var parameterTypes: [TypeID] = []
+            var parameterSymbols: [SymbolID] = []
+            var parameterDefaults: [Bool] = []
+            for parameter in parameterSpecs {
+                let parameterName = interner.intern(parameter.name)
+                let parameterSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: parameterName,
+                    fqName: binarySearchComparatorFQName + [parameterName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+                parameterTypes.append(parameter.type)
+                parameterSymbols.append(parameterSymbol)
+                parameterDefaults.append(parameter.hasDefault)
+            }
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: parameterTypes,
+                    returnType: types.intType,
+                    valueParameterSymbols: parameterSymbols,
+                    valueParameterHasDefaultValues: parameterDefaults,
+                    valueParameterIsVararg: Array(repeating: false, count: parameterSpecs.count),
                     typeParameterSymbols: [listTypeParamSymbol],
                     classTypeParameterCount: 1
                 ),
@@ -9262,6 +9333,7 @@ extension DataFlowSemaPhase {
             ("ubyteArrayOf", "UByteArray", types.ubyteType),
             ("ushortArrayOf", "UShortArray", types.ushortType),
             ("uintArrayOf", "UIntArray", types.uintType),
+            ("ulongArrayOf", "ULongArray", types.ulongType),
         ]
         for (factoryName, arrayName, elementType) in primitiveArrayFactoryTypes {
             guard let primitiveArraySymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern(arrayName)]) else {
