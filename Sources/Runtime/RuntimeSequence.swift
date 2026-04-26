@@ -100,6 +100,8 @@ private let kEmptySequenceCannotReduce = "UnsupportedOperationException: Empty s
 /// Error message when a generator sequence exceeds the traversal hard limit.
 private let kSequenceGeneratorLimitReached = "IllegalStateException: Sequence generator exceeded traversal hard limit (\(kSequenceGeneratorHardLimit))."
 private let kSequenceConstrainedOnceConsumed = "This sequence can be consumed only once."
+/// Error message for `Sequence.requireNoNulls()` when a null element is encountered.
+private let kSequenceRequireNoNullsFoundNull = "null element found in sequence."
 
 private func runtimeSequenceBeginTraversal(
     _ seq: RuntimeSequenceBox,
@@ -378,6 +380,20 @@ private func runtimeSequenceTransformElement(
                 yield: yield
             )
         }
+    case .requireNoNullsStep:
+        if runtimeNormalizeNullableCollectionValue(element) == nil {
+            outThrown?.pointee = runtimeAllocateIllegalArgumentException(message: kSequenceRequireNoNullsFoundNull)
+            state.stop = true
+            return
+        }
+        runtimeSequenceTransformElement(
+            element,
+            steps: steps,
+            stepIndex: stepIndex + 1,
+            state: state,
+            outThrown: outThrown,
+            yield: yield
+        )
     case let .mapIndexedStep(fnPtr, closureRaw):
         let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
         let index = state.takeCounts[stepIndex, default: 0]
@@ -604,7 +620,7 @@ private func runtimeTraverseSequenceWithState(
                 state.limitReached = true
             }
             return
-        case .mapStep, .filterStep, .filterNotStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep, .onEachIndexedStep, .mapNotNullStep, .filterNotNullStep, .mapIndexedStep, .withIndexStep, .flatMapStep, .flatMapIndexedStep:
+        case .mapStep, .filterStep, .filterNotStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep, .onEachIndexedStep, .mapNotNullStep, .filterNotNullStep, .requireNoNullsStep, .mapIndexedStep, .withIndexStep, .flatMapStep, .flatMapIndexedStep:
             continue
         }
     }
@@ -774,6 +790,15 @@ private func applyMapNotNullStep(_ elements: [Int], fnPtr: Int, closureRaw: Int,
 /// Applies a filterNotNull transformation: filters out null values.
 private func applyFilterNotNullStep(_ elements: [Int]) -> [Int] {
     return elements.filter { runtimeNormalizeNullableCollectionValue($0) != nil }
+}
+
+/// Applies a requireNoNulls transformation: fails on the first null element.
+private func applyRequireNoNullsStep(_ elements: [Int], outThrown: UnsafeMutablePointer<Int>?) -> [Int] {
+    for elem in elements where runtimeNormalizeNullableCollectionValue(elem) == nil {
+        outThrown?.pointee = runtimeAllocateIllegalArgumentException(message: kSequenceRequireNoNullsFoundNull)
+        return []
+    }
+    return elements
 }
 
 /// Applies a mapIndexed transformation: maps elements with their index.
@@ -991,6 +1016,8 @@ private func evaluateSequence(
             elements = applyMapNotNullStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: nil)
         case .filterNotNullStep:
             elements = applyFilterNotNullStep(elements)
+        case .requireNoNullsStep:
+            elements = applyRequireNoNullsStep(elements, outThrown: nil)
         case let .mapIndexedStep(fnPtr, closureRaw):
             elements = applyMapIndexedStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: nil)
         case .withIndexStep:
@@ -1273,6 +1300,22 @@ public func kk_sequence_filterNotNull(_ seqRaw: Int) -> Int {
     }
     var newSteps = seq.steps
     newSteps.append(.filterNotNullStep)
+    let newSeq = RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState)
+    return registerRuntimeObject(newSeq)
+}
+
+@_cdecl("kk_sequence_requireNoNulls")
+public func kk_sequence_requireNoNulls(_ seqRaw: Int) -> Int {
+    guard let seq = runtimeSequenceBox(from: seqRaw) else {
+        let sourceElements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+        let newSeq = RuntimeSequenceBox(steps: [
+            .source(elements: sourceElements),
+            .requireNoNullsStep,
+        ])
+        return registerRuntimeObject(newSeq)
+    }
+    var newSteps = seq.steps
+    newSteps.append(.requireNoNullsStep)
     let newSeq = RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState)
     return registerRuntimeObject(newSeq)
 }

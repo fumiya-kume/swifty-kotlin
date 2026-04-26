@@ -291,6 +291,14 @@ public extension RuntimeABISpec {
             section: "Sequence"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_sequence_requireNoNulls",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_sequence_mapIndexed",
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),

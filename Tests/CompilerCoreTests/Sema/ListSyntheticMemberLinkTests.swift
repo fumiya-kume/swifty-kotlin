@@ -861,6 +861,34 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testSequenceRequireNoNullsSyntheticStubHasRuntimeExternalLink() throws {
+        let source = """
+        fun render(values: Sequence<Int?>) {
+            val result: Sequence<Int> = values.requireNoNulls()
+            println(result.toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let fqName = [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("sequences"),
+                ctx.interner.intern("Sequence"),
+                ctx.interner.intern("requireNoNulls"),
+            ]
+            XCTAssertTrue(sema.symbols.lookupAll(fqName: fqName).contains { candidate in
+                sema.symbols.externalLinkName(for: candidate) == "kk_sequence_requireNoNulls"
+            })
+        }
+    }
+
     func testMutableListMutationMembersUseRuntimeExternalLinks() throws {
         let source = """
         fun mutate(values: MutableList<Int>) {

@@ -3239,6 +3239,25 @@ extension DataFlowSemaPhase {
             }
         }
 
+        // requireNoNulls(): Sequence<T> (STDLIB-SEQ-014)
+        let nullableElementSequenceType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(types.makeNullable(typeParamType))],
+            nullability: .nonNull
+        )))
+        registerSequenceMemberStub(
+            named: "requireNoNulls",
+            externalLinkName: "kk_sequence_requireNoNulls",
+            receiverType: nullableElementSequenceType,
+            parameters: [],
+            returnType: receiverType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // partition(predicate: (T) -> Boolean): Pair<List<T>, List<T>> (STDLIB-SEQ-012)
         registerSequenceMemberStub(
             named: "partition",
