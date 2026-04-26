@@ -61,6 +61,8 @@ extension ABIMismatchTests {
             "kk_duration_toIsoString",
             "kk_duration_parse",
             "kk_duration_parseOrNull",
+            "kk_duration_parseIsoString",
+            "kk_duration_parseIsoStringOrNull",
             "kk_duration_from_seconds_double",
             "kk_duration_from_milliseconds_double",
             "kk_duration_from_microseconds_double",
