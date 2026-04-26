@@ -1944,8 +1944,13 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
             &thrown
         )
 
-        XCTAssertNotEqual(thrown, 0)
-        XCTAssertEqual(transformed, 0)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertNotEqual(transformed, 0)
+
+        var iterationThrown = 0
+        let materialized = kk_sequence_to_list(transformed, &iterationThrown)
+        XCTAssertNotEqual(iterationThrown, 0)
+        XCTAssertEqual(materialized, runtimeNullSentinelInt)
     }
 
     // MARK: - Helpers

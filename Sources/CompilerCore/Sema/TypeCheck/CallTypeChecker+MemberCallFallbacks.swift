@@ -1272,11 +1272,28 @@ extension CallTypeChecker {
             return receiverElementType
         }
 
-        if memberName == interner.intern("chunked") && args.count == 2 && !isSequenceReceiver {
+        if memberName == interner.intern("chunked") && args.count == 2 {
+            let transformExpr = args[1].expr
+            let lambdaReturnType: TypeID = if let transformType = sema.bindings.exprTypes[transformExpr],
+                                               case let .functionType(fnType) = sema.types.kind(of: transformType) {
+                fnType.returnType
+            } else {
+                sema.types.anyType
+            }
+
+            if isSequenceReceiver {
+                return makeSyntheticSequenceType(
+                    symbols: sema.symbols,
+                    types: sema.types,
+                    interner: interner,
+                    elementType: lambdaReturnType
+                )
+            }
+
             if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
                 return sema.types.make(.classType(ClassType(
                     classSymbol: listSymbol,
-                    args: [.out(sema.types.anyType)],
+                    args: [.out(lambdaReturnType)],
                     nullability: .nonNull
                 )))
             }
@@ -2087,9 +2104,8 @@ extension CallTypeChecker {
 
         // chunked(size, transform): transform receives List<T> and returns R
         if memberName == interner.intern("chunked"), argCount == 2 {
-            // Build List<Any> for the lambda parameter type; the transform receives
-            // a List<T> chunk, which we approximate as List<Any> in the fallback path
-            // (consistent with the synthetic stub's transform parameter type).
+            // Build List<T> for the lambda parameter type; the transform receives
+            // a List<T> chunk.
             let listType: TypeID
             if let listSymbol = sema.symbols.lookup(fqName: [
                 interner.intern("kotlin"),
@@ -2098,7 +2114,7 @@ extension CallTypeChecker {
             ]) {
                 listType = sema.types.make(.classType(ClassType(
                     classSymbol: listSymbol,
-                    args: [.invariant(sema.types.anyType)],
+                    args: [.invariant(receiverElementType)],
                     nullability: .nonNull
                 )))
             } else {

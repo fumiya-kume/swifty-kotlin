@@ -72,6 +72,7 @@ private func runtimeSequenceSourceElementsOrPanic(from rawValue: Int, caller: St
 
 private final class SequenceTraversalState {
     var stop = false
+    var stopByDownstream = false
     var limitReached = false
     var takeCounts: [Int: Int] = [:]
     var dropCounts: [Int: Int] = [:]
@@ -133,6 +134,7 @@ private func runtimeSequenceTransformElement(
     if state.stop { return }
     if stepIndex >= steps.count {
         state.stop = !yield(element)
+        state.stopByDownstream = state.stop
         return
     }
 
@@ -547,7 +549,7 @@ private func runtimeSequenceFlushChunkedTransforms(
     yield: @escaping (Int) -> Bool
 ) {
     for stepIndex in steps.indices {
-        if state.stop { return }
+        if state.stopByDownstream { return }
         guard case let .chunkedTransformStep(_, fnPtr, closureRaw) = steps[stepIndex] else {
             continue
         }
@@ -1011,6 +1013,70 @@ private func applyFlatMapIndexedStep(_ elements: [Int], fnPtr: Int, closureRaw: 
     return result
 }
 
+/// Applies a chunked transform step eagerly by grouping elements, applying the transform,
+/// and including any trailing partial chunk.
+private func applyChunkedTransformStep(
+    _ elements: [Int],
+    size: Int,
+    fnPtr: Int,
+    closureRaw: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> [Int] {
+    guard !elements.isEmpty else { return [] }
+
+    let chunkSize = max(1, size)
+    let expectedChunkCount = (elements.count + chunkSize - 1) / chunkSize
+    var result: [Int] = []
+    result.reserveCapacity(expectedChunkCount)
+
+    var buffer: [Int] = []
+    buffer.reserveCapacity(chunkSize)
+
+    for element in elements {
+        buffer.append(element)
+        if buffer.count != chunkSize { continue }
+
+        let chunk = RuntimeListBox(elements: buffer)
+        let chunkRaw = registerRuntimeObject(chunk)
+        var thrown = 0
+        let transformed = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: chunkRaw,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            if let outThrown = outThrown {
+                outThrown.pointee = thrown
+            }
+            return []
+        }
+        result.append(maybeUnbox(transformed))
+        buffer = []
+    }
+
+    if !buffer.isEmpty {
+        let chunk = RuntimeListBox(elements: buffer)
+        let chunkRaw = registerRuntimeObject(chunk)
+        var thrown = 0
+        let transformed = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: chunkRaw,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            if let outThrown = outThrown {
+                outThrown.pointee = thrown
+            }
+            return []
+        }
+        result.append(maybeUnbox(transformed))
+    }
+
+    return result
+}
+
 /// Evaluates the lazy sequence chain and returns the materialized elements.
 /// This is the core of lazy semantics: steps are only executed here.
 private func evaluateSequence(
@@ -1158,8 +1224,8 @@ private func evaluateSequence(
             elements = applyFlatMapStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
         case let .flatMapIndexedStep(fnPtr, closureRaw):
             elements = applyFlatMapIndexedStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
-        case .chunkedTransformStep:
-            break
+        case let .chunkedTransformStep(size, fnPtr, closureRaw):
+            elements = applyChunkedTransformStep(elements, size: size, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
         }
         if let outThrown, outThrown.pointee != 0 { return [] }
     }
