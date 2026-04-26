@@ -9464,6 +9464,102 @@ extension DataFlowSemaPhase {
             }
         }
 
+        // Register copyOf(newSize) and copyOf(newSize, init) for unsigned primitive arrays.
+        for name in unsignedPrimitiveArrayNames {
+            let primName = interner.intern(name)
+            let fqName = kotlinPkg + [primName]
+            guard let arraySymbol = symbols.lookup(fqName: fqName) else {
+                continue
+            }
+
+            let elementType: TypeID = switch name {
+            case "UByteArray": types.ubyteType
+            case "UShortArray": types.ushortType
+            case "UIntArray": types.uintType
+            case "ULongArray": types.ulongType
+            default: types.intType
+            }
+            let arrayReceiverType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let initFunctionType = types.make(.functionType(FunctionType(
+                params: [types.intType],
+                returnType: elementType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let copyOfName = interner.intern("copyOf")
+            let copyOfFQName = fqName + [copyOfName]
+
+            func registerCopyOfOverload(
+                parameterTypes: [TypeID],
+                parameterNames: [String],
+                parameterFQNameSuffix: String,
+                externalLinkName: String,
+                flags: SymbolFlags = [.synthetic]
+            ) {
+                let alreadyRegistered = symbols.lookupAll(fqName: copyOfFQName).contains { symbolID in
+                    guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                    return sig.receiverType == arrayReceiverType
+                        && sig.parameterTypes == parameterTypes
+                        && sig.returnType == arrayReceiverType
+                }
+                guard !alreadyRegistered else { return }
+                let copyOfSym = symbols.define(
+                    kind: .function,
+                    name: copyOfName,
+                    fqName: copyOfFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: flags
+                )
+                symbols.setParentSymbol(arraySymbol, for: copyOfSym)
+                symbols.setExternalLinkName(externalLinkName, for: copyOfSym)
+                let parameterSymbols = parameterNames.map { parameterName -> SymbolID in
+                    let internedParameterName = interner.intern(parameterName)
+                    let parameterSymbol = symbols.define(
+                        kind: .valueParameter,
+                        name: internedParameterName,
+                        fqName: copyOfFQName + [interner.intern("\(parameterName)$\(parameterFQNameSuffix)")],
+                        declSite: nil,
+                        visibility: .private,
+                        flags: [.synthetic]
+                    )
+                    symbols.setParentSymbol(copyOfSym, for: parameterSymbol)
+                    return parameterSymbol
+                }
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: arrayReceiverType,
+                        parameterTypes: parameterTypes,
+                        returnType: arrayReceiverType,
+                        isSuspend: false,
+                        valueParameterSymbols: parameterSymbols,
+                        valueParameterHasDefaultValues: Array(repeating: false, count: parameterTypes.count),
+                        valueParameterIsVararg: Array(repeating: false, count: parameterTypes.count),
+                        typeParameterSymbols: []
+                    ),
+                    for: copyOfSym
+                )
+            }
+
+            registerCopyOfOverload(
+                parameterTypes: [types.intType],
+                parameterNames: ["newSize"],
+                parameterFQNameSuffix: "newSize",
+                externalLinkName: "kk_array_copyOf_newSize"
+            )
+            registerCopyOfOverload(
+                parameterTypes: [types.intType, initFunctionType],
+                parameterNames: ["newSize", "init"],
+                parameterFQNameSuffix: "newSizeInit",
+                externalLinkName: "kk_array_copyOf_newSize_init",
+                flags: [.synthetic, .inlineFunction, .throwingFunction]
+            )
+        }
+
         // Register binarySearch(element, fromIndex, toIndex) for primitive arrays.
         for name in primitiveArrayNames {
             let primName = interner.intern(name)

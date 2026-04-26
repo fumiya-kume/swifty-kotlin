@@ -2375,6 +2375,55 @@ public func kk_array_copyOf(_ arrayRaw: Int) -> Int {
     return registerRuntimeObject(box)
 }
 
+@_cdecl("kk_array_copyOf_newSize")
+public func kk_array_copyOf_newSize(_ arrayRaw: Int, _ newSize: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_array_copyOf_newSize")
+    }
+    let targetSize = max(0, newSize)
+    let box = RuntimeArrayBox(length: targetSize)
+    let copiedCount = min(array.elements.count, targetSize)
+    for i in 0 ..< copiedCount {
+        box.elements[i] = array.elements[i]
+    }
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_array_copyOf_newSize_init")
+public func kk_array_copyOf_newSize_init(
+    _ arrayRaw: Int,
+    _ newSize: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_array_copyOf_newSize_init")
+    }
+    let targetSize = max(0, newSize)
+    let box = RuntimeArrayBox(length: targetSize)
+    let copiedCount = min(array.elements.count, targetSize)
+    for i in 0 ..< copiedCount {
+        box.elements[i] = array.elements[i]
+    }
+    if copiedCount < targetSize {
+        for index in copiedCount ..< targetSize {
+            var thrown = 0
+            let value = runtimeInvokeCollectionLambda1(
+                fnPtr: fnPtr,
+                closureRaw: closureRaw,
+                value: index,
+                outThrown: &thrown
+            )
+            if thrown != 0 {
+                return handleCollectionLambdaThrow(thrown, outThrown)
+            }
+            box.elements[index] = maybeUnbox(value)
+        }
+    }
+    return registerRuntimeObject(box)
+}
+
 @_cdecl("kk_array_copyOfRange")
 public func kk_array_copyOfRange(_ arrayRaw: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else {

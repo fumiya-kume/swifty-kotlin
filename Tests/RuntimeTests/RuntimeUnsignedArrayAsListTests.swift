@@ -2,6 +2,14 @@ import Foundation
 @testable import Runtime
 import XCTest
 
+private let unsignedArrayCopyInitThunk: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, _ in
+    index * 10
+}
+
+private func collectionLambdaPointer(_ fn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int) -> Int {
+    Int(bitPattern: unsafeBitCast(fn, to: UnsafeRawPointer.self))
+}
+
 final class RuntimeUnsignedArrayAsListTests: IsolatedRuntimeXCTestCase {
     private func makeRuntimeArray(_ elements: [Int]) -> Int {
         let box = RuntimeArrayBox(length: elements.count)
@@ -9,12 +17,12 @@ final class RuntimeUnsignedArrayAsListTests: IsolatedRuntimeXCTestCase {
         return registerRuntimeObject(box)
     }
 
-    private func listElements(from raw: Int) -> [Int] {
-        runtimeListBox(from: raw)?.elements ?? []
-    }
-
     private func arrayElements(from raw: Int) -> [Int] {
         runtimeArrayBox(from: raw)?.elements ?? []
+    }
+
+    private func listElements(from raw: Int) -> [Int] {
+        runtimeListBox(from: raw)?.elements ?? []
     }
 
     func testUnsignedPrimitiveArrayCopyOfRangeCopiesElements() {
@@ -118,5 +126,33 @@ final class RuntimeUnsignedArrayAsListTests: IsolatedRuntimeXCTestCase {
         runtimeArrayBox(from: ulongCopy)?.elements[0] = 9000
         XCTAssertEqual(arrayElements(from: ulongRaw), [1000, 2000])
         XCTAssertEqual(arrayElements(from: ulongCopy), [9000, 2000])
+    }
+
+    func testUnsignedPrimitiveArrayCopyOfNewSizeFillsZerosAndCopiesElements() {
+        let arrayRaw = makeRuntimeArray([5, 6, 7])
+
+        let grownRaw = kk_array_copyOf_newSize(arrayRaw, 5)
+        XCTAssertEqual(arrayElements(from: grownRaw), [5, 6, 7, 0, 0])
+
+        let shrunkRaw = kk_array_copyOf_newSize(arrayRaw, 2)
+        XCTAssertEqual(arrayElements(from: shrunkRaw), [5, 6])
+
+        guard let grownBox = runtimeArrayBox(from: grownRaw) else {
+            XCTFail("Expected a runtime array box.")
+            return
+        }
+        grownBox.elements[0] = 99
+        XCTAssertEqual(arrayElements(from: arrayRaw), [5, 6, 7])
+    }
+
+    func testUnsignedPrimitiveArrayCopyOfNewSizeInitFillsAddedElements() {
+        let arrayRaw = makeRuntimeArray([7, 8])
+        let fnPtr = collectionLambdaPointer(unsignedArrayCopyInitThunk)
+
+        let grownRaw = kk_array_copyOf_newSize_init(arrayRaw, 5, fnPtr, 0, nil)
+        XCTAssertEqual(arrayElements(from: grownRaw), [7, 8, 20, 30, 40])
+
+        let shrunkRaw = kk_array_copyOf_newSize_init(arrayRaw, 1, fnPtr, 0, nil)
+        XCTAssertEqual(arrayElements(from: shrunkRaw), [7])
     }
 }

@@ -2490,18 +2490,42 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // copyOf on array → kk_array_copyOf (result is Array)
-        if callee == lookup.copyOfName, arguments.isEmpty {
+        // copyOf on array → kk_array_copyOf* (result is Array)
+        if callee == lookup.copyOfName, arguments.isEmpty || arguments.count == 1 || arguments.count == 2 || arguments.count == 3 {
             let copyResult = module.arena.appendExpr(
                 .temporary(Int32(module.arena.expressions.count)), type: nil
             )
+            let runtimeCallee: InternedString
+            let runtimeArguments: [KIRExprID]
+            let canThrow: Bool
+            if arguments.isEmpty {
+                runtimeCallee = lookup.kkArrayCopyOfName
+                runtimeArguments = [receiver]
+                canThrow = false
+            } else if arguments.count == 1 {
+                runtimeCallee = lookup.kkArrayCopyOfNewSizeName
+                runtimeArguments = [receiver] + arguments
+                canThrow = false
+            } else {
+                let closureRawExpr: KIRExprID
+                if arguments.count == 3 {
+                    closureRawExpr = arguments[2]
+                } else {
+                    let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                    loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    closureRawExpr = zeroExpr
+                }
+                runtimeCallee = lookup.kkArrayCopyOfNewSizeInitName
+                runtimeArguments = [receiver, arguments[0], arguments[1], closureRawExpr]
+                canThrow = true
+            }
             loweredBody.append(.call(
                 symbol: nil,
-                callee: lookup.kkArrayCopyOfName,
-                arguments: [receiver],
+                callee: runtimeCallee,
+                arguments: runtimeArguments,
                 result: copyResult,
-                canThrow: false,
-                thrownResult: nil
+                canThrow: canThrow,
+                thrownResult: canThrow ? origThrownResult : nil
             ))
             if let result {
                 arrayExprIDs.insert(result.rawValue)
