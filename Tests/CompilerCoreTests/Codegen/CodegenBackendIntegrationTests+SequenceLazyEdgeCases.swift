@@ -141,7 +141,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - sequence builder: yield and yieldAll
 
     func testSequenceBuilderYieldAndYieldAll() throws {
-        throw XCTSkip("sequence { yield; yieldAll } builder not yet implemented")
         let source = """
         fun main() {
             val seq = sequence {
@@ -172,7 +171,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - sequence builder: yieldAll preserves lazy nested sequence
 
     func testSequenceBuilderYieldAllPreservesLazyNested() throws {
-        throw XCTSkip("sequence yieldAll lazy nested sequence not yet implemented")
         let source = """
         var counter = 0
 

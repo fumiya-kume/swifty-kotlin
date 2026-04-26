@@ -1,4 +1,9 @@
 import Foundation
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
 
 public struct KTypeInfo {
     public let fqName: UnsafePointer<CChar>
@@ -450,6 +455,41 @@ final class RuntimeSequenceBuilderBox {
     var elements: [Int] = []
 }
 
+private let runtimeSequenceCoroutineRegistryLock = NSLock()
+nonisolated(unsafe) private var runtimeSequenceCoroutineRegistry: [RuntimeSequenceCoroutine] = []
+nonisolated(unsafe) private var runtimeSequenceCoroutineExitHookInstalled = false
+nonisolated(unsafe) private var runtimeSequenceCoroutineShutdownInProgress = false
+
+private func runtimeRegisterSequenceCoroutineForShutdown(_ coroutine: RuntimeSequenceCoroutine) {
+    runtimeSequenceCoroutineRegistryLock.lock()
+    if !runtimeSequenceCoroutineExitHookInstalled {
+        runtimeSequenceCoroutineExitHookInstalled = true
+        atexit {
+            runtimeShutdownActiveSequenceCoroutines()
+        }
+    }
+    runtimeSequenceCoroutineRegistry.append(coroutine)
+    runtimeSequenceCoroutineRegistryLock.unlock()
+}
+
+private func runtimeShutdownActiveSequenceCoroutines() {
+    runtimeSequenceCoroutineRegistryLock.lock()
+    runtimeSequenceCoroutineShutdownInProgress = true
+    let coroutines = runtimeSequenceCoroutineRegistry
+    runtimeSequenceCoroutineRegistryLock.unlock()
+
+    for coroutine in coroutines {
+        coroutine.requestProcessExitShutdown()
+    }
+}
+
+func runtimeSequenceCoroutineShutdownIsInProgress() -> Bool {
+    runtimeSequenceCoroutineRegistryLock.lock()
+    let inProgress = runtimeSequenceCoroutineShutdownInProgress
+    runtimeSequenceCoroutineRegistryLock.unlock()
+    return inProgress
+}
+
 /// STDLIB-563: Continuation-based lazy sequence coroutine.
 ///
 /// Runs the builder lambda on a background thread. Each call to `yield(value)`
@@ -475,6 +515,12 @@ final class RuntimeSequenceBuilderBox {
 final class RuntimeSequenceCoroutine: @unchecked Sendable {
     /// The builder lambda function pointer (closureThunk convention).
     let fnPtr: Int
+
+    /// Captured environment for builder lambdas that need the closure ABI.
+    let closureRaw: Int
+
+    /// Whether `fnPtr` expects `(closureRaw, builderRaw, outThrown)`.
+    let hasClosureParam: Bool
 
     /// Semaphore the producer waits on after yielding a value.
     /// Signaled by the consumer when it wants the next element.
@@ -502,14 +548,31 @@ final class RuntimeSequenceCoroutine: @unchecked Sendable {
     /// Whether the coroutine has been fully exhausted.
     private var fullyMaterialized = false
 
-    init(fnPtr: Int) {
+    /// Set during process teardown so blocked producer/consumer pairs can exit.
+    private var processExitShutdownRequested = false
+
+    init(fnPtr: Int, closureRaw: Int = 0, hasClosureParam: Bool = false) {
         self.fnPtr = fnPtr
+        self.closureRaw = closureRaw
+        self.hasClosureParam = hasClosureParam
+        runtimeRegisterSequenceCoroutineForShutdown(self)
+    }
+
+    private var isProcessExitShutdownRequested: Bool {
+        stateLock.lock()
+        let requested = processExitShutdownRequested
+        stateLock.unlock()
+        return requested
     }
 
     /// Called by the producer (background thread) to yield a value.
     /// Suspends the producer until the consumer requests the next element.
     func yieldValue(_ value: Int) {
         stateLock.lock()
+        if processExitShutdownRequested {
+            stateLock.unlock()
+            return
+        }
         yieldedValue = value
         stateLock.unlock()
 
@@ -517,6 +580,11 @@ final class RuntimeSequenceCoroutine: @unchecked Sendable {
         consumerSemaphore.signal()
         // Wait for the consumer to request the next element
         producerSemaphore.wait()
+
+        stateLock.lock()
+        let shouldStop = processExitShutdownRequested
+        stateLock.unlock()
+        if shouldStop { return }
     }
 
     /// Called by the producer when it finishes (normally or via exception).
@@ -553,7 +621,7 @@ final class RuntimeSequenceCoroutine: @unchecked Sendable {
             return .value(elem)
         }
         // If fully materialized and no more cached elements, we're done.
-        if fullyMaterialized {
+        if fullyMaterialized || processExitShutdownRequested {
             stateLock.unlock()
             return .done
         }
@@ -566,6 +634,10 @@ final class RuntimeSequenceCoroutine: @unchecked Sendable {
         consumerSemaphore.wait()
 
         stateLock.lock()
+        if processExitShutdownRequested {
+            stateLock.unlock()
+            return .done
+        }
         if finished {
             fullyMaterialized = true
             stateLock.unlock()
@@ -607,6 +679,11 @@ final class RuntimeSequenceCoroutine: @unchecked Sendable {
             consumerSemaphore.wait()
 
             stateLock.lock()
+            if processExitShutdownRequested {
+                let elems = materializedElements
+                stateLock.unlock()
+                return elems
+            }
             if finished {
                 fullyMaterialized = true
                 let elems = materializedElements
@@ -632,14 +709,23 @@ final class RuntimeSequenceCoroutine: @unchecked Sendable {
         DispatchQueue.global(qos: .userInitiated).async {
             // Wait for the first consumer request before starting
             coroutine.producerSemaphore.wait()
+            if coroutine.isProcessExitShutdownRequested {
+                coroutine.markFinished()
+                return
+            }
 
             let builderHandle = registerRuntimeObject(
                 RuntimeSequenceCoroutineBuilderProxy(coroutine: coroutine)
             )
 
             var thrown = 0
-            let fn = unsafeBitCast(coroutine.fnPtr, to: KKClosureThunkEntryPoint.self)
-            _ = fn(builderHandle, &thrown)
+            if coroutine.hasClosureParam {
+                let fn = unsafeBitCast(coroutine.fnPtr, to: KKClosureFunctionEntryPoint1.self)
+                _ = fn(coroutine.closureRaw, builderHandle, &thrown)
+            } else {
+                let fn = unsafeBitCast(coroutine.fnPtr, to: KKClosureThunkEntryPoint.self)
+                _ = fn(builderHandle, &thrown)
+            }
 
             if thrown != 0 {
                 fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: sequence lambda threw but no outThrown available")
@@ -647,6 +733,20 @@ final class RuntimeSequenceCoroutine: @unchecked Sendable {
 
             coroutine.markFinished()
         }
+    }
+
+    /// Unblock producer/consumer semaphores during process exit.
+    ///
+    /// Short-circuiting terminal operations such as `take(1)` intentionally leave
+    /// a builder coroutine suspended so the same sequence can be resumed later.
+    /// At process teardown there will be no later consumer, so wake both sides and
+    /// make future `yield`/`next` calls no-op.
+    func requestProcessExitShutdown() {
+        stateLock.lock()
+        processExitShutdownRequested = true
+        stateLock.unlock()
+        producerSemaphore.signal()
+        consumerSemaphore.signal()
     }
 }
 

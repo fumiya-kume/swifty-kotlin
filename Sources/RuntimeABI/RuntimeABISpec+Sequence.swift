@@ -81,6 +81,8 @@ public extension RuntimeABISpec {
             name: "kk_sequence_builder_build",
             parameters: [
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "hasClosureParam", type: .intptr),
             ],
             returnType: .intptr,
             section: "Sequence"

@@ -1204,6 +1204,37 @@ final class CallLowerer {
             return finalArgs
         }
 
+        // STDLIB-SEQ-003: sequence { ... } builder blocks may capture values.
+        // Runtime needs both the closure environment and whether the thunk uses it.
+        if externalLinkName == "kk_sequence_builder_build", loweredArguments.count == 1 {
+            let lambdaID = loweredArguments[0]
+            var finalArgs: [KIRExprID] = [lambdaID]
+            if let callableInfo = driver.ctx.callableValueInfo(for: lambdaID) {
+                if let closureRaw = callableInfo.captureArguments.first {
+                    finalArgs.append(closureRaw)
+                } else {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    finalArgs.append(zeroExpr)
+                }
+                let hasClosureParamRaw: Int64 = (callableInfo.hasClosureParam || !callableInfo.captureArguments.isEmpty) ? 1 : 0
+                let hasClosureParamExpr = arena.appendExpr(.intLiteral(hasClosureParamRaw), type: sema.types.intType)
+                instructions.append(.constValue(
+                    result: hasClosureParamExpr,
+                    value: .intLiteral(hasClosureParamRaw)
+                ))
+                finalArgs.append(hasClosureParamExpr)
+            } else {
+                let zeroClosureExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroClosureExpr, value: .intLiteral(0)))
+                finalArgs.append(zeroClosureExpr)
+                let noClosureParamExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: noClosureParamExpr, value: .intLiteral(0)))
+                finalArgs.append(noClosureParamExpr)
+            }
+            return finalArgs
+        }
+
         // STDLIB-SEQ-002: 1-arg generateSequence(nextFunction) → kk_sequence_generate_noarg(fnPtr, closureRaw)
         if externalLinkName == "kk_sequence_generate_noarg", loweredArguments.count == 1 {
             let lambdaID = loweredArguments[0]

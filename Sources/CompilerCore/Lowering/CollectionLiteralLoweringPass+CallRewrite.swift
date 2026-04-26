@@ -2610,11 +2610,21 @@ extension CollectionLiteralLoweringPass {
                     }
 
                     // sequence { ... } builder → kk_sequence_builder_build
-                    if callee == lookup.sequenceName, arguments.count == 1 {
+                    if callee == lookup.sequenceName, arguments.count == 1 || arguments.count == 3 {
+                        let runtimeArguments: [KIRExprID]
+                        if arguments.count == 1 {
+                            let zeroClosureRaw = module.arena.appendExpr(.intLiteral(0), type: nil)
+                            loweredBody.append(.constValue(result: zeroClosureRaw, value: .intLiteral(0)))
+                            let noClosureParam = module.arena.appendExpr(.intLiteral(0), type: nil)
+                            loweredBody.append(.constValue(result: noClosureParam, value: .intLiteral(0)))
+                            runtimeArguments = arguments + [zeroClosureRaw, noClosureParam]
+                        } else {
+                            runtimeArguments = arguments
+                        }
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: lookup.kkSequenceBuilderBuildName,
-                            arguments: arguments,
+                            arguments: runtimeArguments,
                             result: result,
                             canThrow: canThrow,
                             thrownResult: thrownResult

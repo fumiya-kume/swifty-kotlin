@@ -3434,6 +3434,9 @@ public func kk_sequence_builder_yield(_ builderRaw: Int, _ value: Int) -> Int {
     if runtimeIteratorBuilderBox(from: builderRaw) != nil {
         return kk_iterator_builder_yield(builderRaw, value)
     }
+    if runtimeSequenceCoroutineShutdownIsInProgress() {
+        return 0
+    }
     fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yield received invalid builder handle")
 }
 
@@ -3462,12 +3465,17 @@ public func kk_sequence_builder_yieldAll(_ builderRaw: Int, _ collectionRaw: Int
             for elem in set.elements {
                 proxy.coroutine.yieldValue(elem)
             }
+        } else if runtimeSequenceCoroutineShutdownIsInProgress() {
+            return 0
         } else {
             fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yieldAll received invalid collection handle (expected List, Array, Set, or Sequence)")
         }
         return 0
     }
     guard let builder = runtimeSequenceBuilderBox(from: builderRaw) else {
+        if runtimeSequenceCoroutineShutdownIsInProgress() {
+            return 0
+        }
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yieldAll received invalid builder handle")
     }
     // Accept List, Array, Set, or Sequence as the iterable source.
@@ -3475,6 +3483,8 @@ public func kk_sequence_builder_yieldAll(_ builderRaw: Int, _ collectionRaw: Int
         builder.elements.append(contentsOf: elements)
     } else if let set = runtimeSetBox(from: collectionRaw) {
         builder.elements.append(contentsOf: set.elements)
+    } else if runtimeSequenceCoroutineShutdownIsInProgress() {
+        return 0
     } else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yieldAll received invalid collection handle (expected List, Array, Set, or Sequence)")
     }
@@ -3482,14 +3492,22 @@ public func kk_sequence_builder_yieldAll(_ builderRaw: Int, _ collectionRaw: Int
 }
 
 @_cdecl("kk_sequence_builder_build")
-public func kk_sequence_builder_build(_ fnPtr: Int) -> Int {
+public func kk_sequence_builder_build(_ fnPtr: Int, _ closureRaw: Int, _ hasClosureParamRaw: Int) -> Int {
     // STDLIB-563: Use continuation-based lazy evaluation.
     // The coroutine runs the builder lambda on a background thread;
     // yield() suspends the producer and the elements are materialized
     // on demand when the sequence is consumed by a terminal operation.
-    let coroutine = RuntimeSequenceCoroutine(fnPtr: fnPtr)
+    let coroutine = RuntimeSequenceCoroutine(
+        fnPtr: fnPtr,
+        closureRaw: closureRaw,
+        hasClosureParam: hasClosureParamRaw != 0
+    )
     let seq = RuntimeSequenceBox(steps: [.lazyBuilder(coroutine: coroutine)])
     return registerRuntimeObject(seq)
+}
+
+public func kk_sequence_builder_build(_ fnPtr: Int) -> Int {
+    kk_sequence_builder_build(fnPtr, 0, 0)
 }
 
 // MARK: - Iterator Builder (iterator { yield(x) }) (STDLIB-331/564)
