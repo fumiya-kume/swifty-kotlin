@@ -190,6 +190,12 @@ final class RuntimeBase64Tests: XCTestCase {
         XCTAssertTrue(result.contains("-") || result.contains("_"), "URL-safe must use - or _")
     }
 
+    func testUrlSafePresentPaddingKeepsPad() {
+        let raw = makeByteArrayFromString("foob")
+        let result = runtimeString(kk_base64_encode_urlsafe(raw, paddingPresent))
+        XCTAssertEqual(result, "Zm9vYg==")
+    }
+
     func testUrlSafeRoundTrip() {
         let input = "Hello, World! \u{1F30D}"
         let rawBytes = makeByteArrayFromString(input)
@@ -243,6 +249,60 @@ final class RuntimeBase64Tests: XCTestCase {
         XCTAssertEqual(String(bytes: decoded, encoding: .utf8), input)
     }
 
+    // MARK: - withPadding configured instances
+
+    func testWithPaddingDefaultInstanceOmitsPadding() {
+        let instance = kk_base64_withPadding_default(paddingAbsent)
+        let raw = makeByteArrayFromString("foob")
+        let encoded = runtimeString(kk_base64_encode_instance(instance, raw))
+        XCTAssertEqual(encoded, "Zm9vYg")
+
+        var thrown = 0
+        let decoded = byteArrayToUInt8s(
+            kk_base64_decode_instance(instance, makeRuntimeString(encoded), &thrown)
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(String(bytes: decoded, encoding: .utf8), "foob")
+    }
+
+    func testWithPaddingInstanceCanChangeExistingPaddingMode() {
+        let absent = kk_base64_withPadding_default(paddingAbsent)
+        let presentOptional = kk_base64_withPadding_instance(absent, paddingPresentOptional)
+        let raw = makeByteArrayFromString("foob")
+        let encoded = runtimeString(kk_base64_encode_instance(presentOptional, raw))
+        XCTAssertEqual(encoded, "Zm9vYg==")
+    }
+
+    func testWithPaddingUrlSafeInstancePreservesAlphabet() {
+        let instance = kk_base64_withPadding_urlsafe(paddingAbsentOptional)
+        let raw = makeByteArray([0xE0, 0xA0, 0xBE, 0x21])
+        let encoded = runtimeString(kk_base64_encode_instance(instance, raw))
+        XCTAssertEqual(encoded, "4KC-IQ")
+        XCTAssertFalse(encoded.contains("+"))
+        XCTAssertFalse(encoded.contains("/"))
+
+        var thrown = 0
+        let decoded = byteArrayToUInt8s(
+            kk_base64_decode_instance(instance, makeRuntimeString("4KC-IQ=="), &thrown)
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(decoded, [0xE0, 0xA0, 0xBE, 0x21])
+    }
+
+    func testWithPaddingMimeInstanceKeepsWhitespaceTolerance() {
+        let instance = kk_base64_withPadding_mime(paddingAbsent)
+        let raw = makeByteArrayFromString("foob")
+        let encoded = runtimeString(kk_base64_encode_instance(instance, raw))
+        XCTAssertEqual(encoded, "Zm9vYg")
+
+        var thrown = 0
+        let decoded = byteArrayToUInt8s(
+            kk_base64_decode_instance(instance, makeRuntimeString("Zm9v\r\nYg"), &thrown)
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(String(bytes: decoded, encoding: .utf8), "foob")
+    }
+
     // MARK: - encodeToByteArray
 
     func testEncodeToByteArrayDefaultProducesAsciiBytes() {
@@ -265,6 +325,32 @@ final class RuntimeBase64Tests: XCTestCase {
         let result = byteArrayToUInt8s(kk_base64_encodeToByteArray_mime(raw, paddingPresent))
         let str = String(bytes: result, encoding: .utf8) ?? ""
         XCTAssertTrue(str.contains("\r\n"))
+    }
+
+    // MARK: - decodeFromByteArray
+
+    func testDecodeFromByteArrayDefaultRoundTrip() {
+        let encoded = makeByteArrayFromString("Zm9v")
+        var thrown = 0
+        let result = byteArrayToUInt8s(kk_base64_decodeFromByteArray_default(encoded, paddingPresentOptional, &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(String(bytes: result, encoding: .utf8), "foo")
+    }
+
+    func testDecodeFromByteArrayUrlSafeRoundTrip() {
+        let encoded = makeByteArrayFromString("4KC-")
+        var thrown = 0
+        let result = byteArrayToUInt8s(kk_base64_decodeFromByteArray_urlsafe(encoded, paddingAbsentOptional, &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(String(bytes: result, encoding: .utf8), "\u{083E}")
+    }
+
+    func testDecodeFromByteArrayMimeToleratesWhitespace() {
+        let encoded = makeByteArrayFromString("Zm9v\r\nYmFy")
+        var thrown = 0
+        let result = byteArrayToUInt8s(kk_base64_decodeFromByteArray_mime(encoded, paddingPresentOptional, &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(String(bytes: result, encoding: .utf8), "foobar")
     }
 
     // MARK: - Error cases
