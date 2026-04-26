@@ -488,6 +488,25 @@ final class RuntimeRandomBoundaryTests: XCTestCase {
                       "nextLong(-1000, -1) result must be in [-1000, -1), got \(result)")
     }
 
+    func testNextLongRangeObjectReturnsValueInsideBounds() {
+        let r = makeSeeded(42)
+        let range = kk_long_rangeTo(-1000, -1)
+        var thrown: Int = 0
+        let result = kk_random_nextLong_rangeObject(r, range, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertTrue(result >= -1000 && result <= -1,
+                      "nextLong(LongRange) result must be in [-1000, -1], got \(result)")
+    }
+
+    func testNextLongRangeObjectThrowsForEmptyRange() {
+        let r = makeSeeded(42)
+        let range = kk_long_rangeTo(20, 10)
+        var thrown: Int = 0
+        let result = kk_random_nextLong_rangeObject(r, range, &thrown)
+        XCTAssertEqual(result, 0)
+        XCTAssertNotEqual(thrown, 0, "nextLong(LongRange) must throw for an empty range")
+    }
+
     func testNextLongSeedReproducibility() {
         let r1 = makeSeeded(31416)
         let r2 = makeSeeded(31416)

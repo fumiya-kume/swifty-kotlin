@@ -5636,6 +5636,12 @@ extension CallLowerer {
             sema: sema,
             interner: interner
         )
+        if loweredCallee == interner.intern("kk_random_nextLong_until"),
+           sourceArgExprs.count == 1,
+           sema.bindings.isRangeExpr(sourceArgExprs[0])
+        {
+            loweredCallee = interner.intern("kk_random_nextLong_rangeObject")
+        }
         if loweredCallee == interner.intern("kk_list_binarySearch_comparator") {
             materializeBinarySearchDefaultArguments(
                 normalized.defaultMask,
@@ -6062,6 +6068,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_reduceIndexed"),
             interner.intern("kk_sequence_reduceIndexedOrNull"),
             interner.intern("kk_long_range_random"),
+            interner.intern("kk_random_nextLong_rangeObject"),
             interner.intern("kk_uint_range_random"),
             interner.intern("kk_ulong_range_random"),
             interner.intern("kk_sequence_runningReduceIndexed"),

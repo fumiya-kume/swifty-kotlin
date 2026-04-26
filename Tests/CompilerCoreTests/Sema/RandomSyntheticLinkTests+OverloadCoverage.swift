@@ -131,6 +131,31 @@ extension RandomSyntheticLinkTests {
         }
     }
 
+    /// nextLong(range: LongRange) extension-style overload is registered on Random.
+    func testNextLongLongRangeExtensionIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fq = ["kotlin", "random", "Random", "nextLong"].map { interner.intern($0) }
+        let candidates = sema.symbols.lookupAll(fqName: fq)
+
+        let longRangeOverload = candidates.first { id in
+            guard let sig = sema.symbols.functionSignature(for: id),
+                  sig.parameterTypes.count == 1,
+                  let paramType = sig.parameterTypes.first
+            else { return false }
+            if case .primitive = sema.types.kind(of: paramType) { return false }
+            return true
+        }
+        XCTAssertNotNil(longRangeOverload, "nextLong(range: LongRange) overload must be registered")
+        if let longRangeOverload,
+           let signature = sema.symbols.functionSignature(for: longRangeOverload)
+        {
+            XCTAssertEqual(sema.symbols.externalLinkName(for: longRangeOverload), "kk_random_nextLong_rangeObject")
+            XCTAssertEqual(signature.returnType, sema.types.longType)
+            XCTAssertTrue(signature.canThrow, "nextLong(range) must expose the empty-range throw path")
+        }
+    }
+
     /// nextInt(from, until) and nextInt(until) are distinct symbols (no collision).
     func testNextIntOverloadsAreDistinct() throws {
         let (sema, interner) = try makeSema()
