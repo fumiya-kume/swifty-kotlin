@@ -2019,6 +2019,37 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // STDLIB-TEXT-EDGE-006: ByteArray.decodeToString(startIndex, endIndex, throwOnInvalidSequence)
+        for receiverType in [listIntType, byteArrayType] {
+            registerSyntheticStringExtensionFunction(
+                named: "decodeToString",
+                externalLinkName: "kk_bytearray_decodeToString_range_default",
+                receiverType: receiverType,
+                parameters: [
+                    ("startIndex", intType, false, false),
+                    ("endIndex", intType, false, false),
+                ],
+                returnType: stringType,
+                packageFQName: kotlinTextPkg,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticStringExtensionFunction(
+                named: "decodeToString",
+                externalLinkName: "kk_bytearray_decodeToString_range",
+                receiverType: receiverType,
+                parameters: [
+                    ("startIndex", intType, false, false),
+                    ("endIndex", intType, false, false),
+                    ("throwOnInvalidSequence", boolType, false, false),
+                ],
+                returnType: stringType,
+                packageFQName: kotlinTextPkg,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         // STDLIB-STR-125: String(ByteArray, Charset) constructor
         // Allows decoding a byte array with an explicit charset: String(bytes, Charsets.UTF_8)
         // Register on both List<Int> (internal representation) and ByteArray (user-facing type)

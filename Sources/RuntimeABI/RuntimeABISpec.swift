@@ -1172,6 +1172,31 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "ByteArray"
         ),
+        // STDLIB-TEXT-EDGE-006: ByteArray.decodeToString(startIndex, endIndex)
+        RuntimeABIFunctionSpec(
+            name: "kk_bytearray_decodeToString_range_default",
+            parameters: [
+                RuntimeABIParameter(name: "arrRaw", type: .intptr),
+                RuntimeABIParameter(name: "startIndex", type: .intptr),
+                RuntimeABIParameter(name: "endIndex", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "ByteArray"
+        ),
+        // STDLIB-TEXT-EDGE-006: ByteArray.decodeToString(startIndex, endIndex, throwOnInvalidSequence)
+        RuntimeABIFunctionSpec(
+            name: "kk_bytearray_decodeToString_range",
+            parameters: [
+                RuntimeABIParameter(name: "arrRaw", type: .intptr),
+                RuntimeABIParameter(name: "startIndex", type: .intptr),
+                RuntimeABIParameter(name: "endIndex", type: .intptr),
+                RuntimeABIParameter(name: "throwOnInvalidSequence", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "ByteArray"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_char_isDigit",
             parameters: [

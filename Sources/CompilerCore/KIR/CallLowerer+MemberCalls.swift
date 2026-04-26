@@ -5862,6 +5862,8 @@ extension CallLowerer {
             interner.intern("kk_base64_decodeFromByteArray_mime"),
             interner.intern("kk_base64_decode_instance"),
             interner.intern("kk_base64_decodeFromByteArray_instance"),
+            interner.intern("kk_bytearray_decodeToString_range_default"),
+            interner.intern("kk_bytearray_decodeToString_range"),
             interner.intern("kk_duration_toComponents_days"),
             interner.intern("kk_duration_toComponents_hours"),
             interner.intern("kk_duration_toComponents_minutes"),

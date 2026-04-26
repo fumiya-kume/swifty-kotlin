@@ -11,6 +11,23 @@ extension CodegenBackendIntegrationTests {
             val encoded = original.encodeToByteArray()
             println(encoded.decodeToString())
 
+            val asciiRange = "abcdef".encodeToByteArray()
+            println(asciiRange.decodeToString(1, 4))
+            println(asciiRange.decodeToString(1, 4, true))
+
+            val malformed = byteArrayOf((-1).toByte())
+            println(malformed.decodeToString(0, 1, false).length)
+            try {
+                println(malformed.decodeToString(0, 1, true))
+            } catch (e: Throwable) {
+                println("strict")
+            }
+            try {
+                println(asciiRange.decodeToString(-1, 2, false))
+            } catch (e: Throwable) {
+                println("range")
+            }
+
             val ascii = "ABC".encodeToByteArray()
             println(String(ascii, Charsets.US_ASCII))
 
@@ -41,6 +58,11 @@ extension CodegenBackendIntegrationTests {
                 normalizedStdout,
                 """
                 こんにちは
+                bcd
+                bcd
+                3
+                strict
+                range
                 ABC
                 000000ff
                 255

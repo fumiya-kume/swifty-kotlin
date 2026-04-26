@@ -4708,7 +4708,7 @@ extension CallTypeChecker {
                     }
                 }
             }
-            // STDLIB-574: ByteArray.decodeToString() / ByteArray.decodeToString(charset)
+            // STDLIB-574 / STDLIB-TEXT-EDGE-006: ByteArray.decodeToString overloads.
             do {
                 let receiverTypeForCheck = safeCall
                     ? sema.types.makeNonNullable(lookupReceiverType)
@@ -4719,23 +4719,36 @@ extension CallTypeChecker {
                    ct.classSymbol == baSymbol
                 {
                     let calleeStr = interner.resolve(calleeName)
-                    if calleeStr == "decodeToString" && (args.count == 0 || args.count == 1) {
+                    if calleeStr == "decodeToString" && args.count <= 3 {
                         let resultType = sema.types.stringType
                         // Try to bind to the synthetic extension function symbol
                         let kotlinTextPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("text")]
                         let decodeToStringFQName = kotlinTextPkg + [interner.intern("decodeToString")]
                         let candidates = sema.symbols.lookupAll(fqName: decodeToStringFQName)
+                        let intType = sema.types.intType
+                        let booleanType = sema.types.booleanType
+                        let charsetFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("text"), interner.intern("Charset")]
+                        let charsetExpectedType: TypeID? = {
+                            guard let sym = sema.symbols.lookup(fqName: charsetFQName) else { return nil }
+                            return sema.symbols.propertyType(for: sym)
+                        }()
                         if let chosen = candidates.first(where: { candidate in
                             guard let sig = sema.symbols.functionSignature(for: candidate) else { return false }
+                            guard sig.receiverType == receiverTypeForCheck else { return false }
                             if sig.parameterTypes.count != args.count { return false }
-                            // For the 1-arg overload, verify the parameter is Charset type
-                            if args.count == 1, let paramType = sig.parameterTypes.first {
-                                let charsetFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("text"), interner.intern("Charset")]
-                                guard let charsetSym = sema.symbols.lookup(fqName: charsetFQName),
-                                      case .classType(let ct) = sema.types.kind(of: paramType),
-                                      ct.classSymbol == charsetSym else { return false }
+                            switch args.count {
+                            case 0:
+                                return true
+                            case 1:
+                                // Existing charset overload.
+                                return charsetExpectedType.map { sig.parameterTypes == [$0] } ?? false
+                            case 2:
+                                return sig.parameterTypes == [intType, intType]
+                            case 3:
+                                return sig.parameterTypes == [intType, intType, booleanType]
+                            default:
+                                return false
                             }
-                            return true
                         }) {
                             _ = bindCallAndResolveReturnType(
                                 id,
@@ -4748,19 +4761,23 @@ extension CallTypeChecker {
                                 ),
                                 sema: sema
                             )
+                            switch args.count {
+                            case 1:
+                                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: charsetExpectedType)
+                            case 2:
+                                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: intType)
+                                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: intType)
+                            case 3:
+                                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: intType)
+                                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: intType)
+                                _ = driver.inferExpr(args[2].expr, ctx: ctx, locals: &locals, expectedType: booleanType)
+                            default:
+                                break
+                            }
+                            let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                            sema.bindings.bindExprType(id, type: finalType)
+                            return finalType
                         }
-                        // Infer charset argument if present, passing Charset expected type
-                        if args.count == 1 {
-                            let charsetFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("text"), interner.intern("Charset")]
-                            let charsetExpectedType: TypeID? = {
-                                guard let sym = sema.symbols.lookup(fqName: charsetFQName) else { return nil }
-                                return sema.symbols.propertyType(for: sym)
-                            }()
-                            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: charsetExpectedType)
-                        }
-                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
-                        sema.bindings.bindExprType(id, type: finalType)
-                        return finalType
                     }
                 }
             }

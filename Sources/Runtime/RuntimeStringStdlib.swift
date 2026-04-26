@@ -1657,13 +1657,82 @@ public func kk_bytearray_decodeToString(_ arrRaw: Int) -> Int {
     guard let elements = runtimeByteArrayElements(from: arrRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_bytearray_decodeToString received invalid byte array handle \(arrRaw)")
     }
+    return runtimeDecodeByteArrayRange(
+        elements,
+        startIndex: 0,
+        endIndex: elements.count,
+        throwOnInvalidSequence: false,
+        outThrown: nil
+    )
+}
+
+private func runtimeDecodeByteArrayRange(
+    _ elements: [Int],
+    startIndex: Int,
+    endIndex: Int,
+    throwOnInvalidSequence: Bool,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard startIndex >= 0, endIndex >= startIndex, endIndex <= elements.count else {
+        runtimeSetThrown(
+            outThrown,
+            message: "IndexOutOfBoundsException: startIndex=\(startIndex), endIndex=\(endIndex), size=\(elements.count)"
+        )
+        return runtimeMakeStringRaw("")
+    }
+
     // Use truncating conversion to match Kotlin's signed-byte semantics:
     // negative values (e.g. -1) become their unsigned equivalent (255).
-    let bytes = elements.map { UInt8(truncatingIfNeeded: $0) }
-    // Use String(decoding:as:) for UTF-8 replacement decoding: malformed
-    // sequences produce U+FFFD instead of returning nil/empty.
+    let bytes = elements[startIndex..<endIndex].map { UInt8(truncatingIfNeeded: $0) }
+    if throwOnInvalidSequence, String(data: Data(bytes), encoding: .utf8) == nil {
+        runtimeSetThrown(outThrown, message: "CharacterCodingException: malformed UTF-8 input")
+        return runtimeMakeStringRaw("")
+    }
+    // Use String(decoding:as:) for UTF-8 replacement decoding when strict mode is off.
     let decoded = String(decoding: bytes, as: UTF8.self)
     return runtimeMakeStringRaw(decoded)
+}
+
+// STDLIB-TEXT-EDGE-006: ByteArray.decodeToString(startIndex, endIndex)
+@_cdecl("kk_bytearray_decodeToString_range_default")
+public func kk_bytearray_decodeToString_range_default(
+    _ arrRaw: Int,
+    _ startIndex: Int,
+    _ endIndex: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let elements = runtimeByteArrayElements(from: arrRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_bytearray_decodeToString_range_default received invalid byte array handle \(arrRaw)")
+    }
+    return runtimeDecodeByteArrayRange(
+        elements,
+        startIndex: startIndex,
+        endIndex: endIndex,
+        throwOnInvalidSequence: false,
+        outThrown: outThrown
+    )
+}
+
+// STDLIB-TEXT-EDGE-006: ByteArray.decodeToString(startIndex, endIndex, throwOnInvalidSequence)
+@_cdecl("kk_bytearray_decodeToString_range")
+public func kk_bytearray_decodeToString_range(
+    _ arrRaw: Int,
+    _ startIndex: Int,
+    _ endIndex: Int,
+    _ throwOnInvalidSequenceRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let elements = runtimeByteArrayElements(from: arrRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_bytearray_decodeToString_range received invalid byte array handle \(arrRaw)")
+    }
+    return runtimeDecodeByteArrayRange(
+        elements,
+        startIndex: startIndex,
+        endIndex: endIndex,
+        throwOnInvalidSequence: throwOnInvalidSequenceRaw != 0,
+        outThrown: outThrown
+    )
 }
 
 // STDLIB-574: ByteArray.decodeToString(charset)

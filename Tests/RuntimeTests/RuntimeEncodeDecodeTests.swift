@@ -116,6 +116,38 @@ final class RuntimeEncodeDecodeTests: IsolatedRuntimeXCTestCase {
                       "Malformed UTF-8 should produce replacement character, got: \(decoded ?? "nil")")
     }
 
+    func testDecodeToStringRangeDefaultDecodesSubrange() {
+        let byteArray = makeListRaw([65, 66, 67, 68]) // "ABCD"
+        var thrown = -1
+        let result = kk_bytearray_decodeToString_range_default(byteArray, 1, 3, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(extractSwiftString(result), "BC")
+    }
+
+    func testDecodeToStringRangeStrictFlagControlsMalformedUTF8() {
+        let byteArray = makeListRaw([0xFF])
+
+        var looseThrown = -1
+        let loose = kk_bytearray_decodeToString_range(byteArray, 0, 1, 0, &looseThrown)
+        XCTAssertEqual(looseThrown, 0)
+        XCTAssertEqual(extractSwiftString(loose), "\u{FFFD}")
+
+        var strictThrown = -1
+        let strict = kk_bytearray_decodeToString_range(byteArray, 0, 1, 1, &strictThrown)
+        XCTAssertNotEqual(strictThrown, 0)
+        XCTAssertEqual(extractSwiftString(strict), "")
+    }
+
+    func testDecodeToStringRangeInvalidBoundsThrow() {
+        let byteArray = makeListRaw([65, 66, 67])
+        var thrown = -1
+        let result = kk_bytearray_decodeToString_range_default(byteArray, -1, 2, &thrown)
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(extractSwiftString(result), "")
+    }
+
     // MARK: - decodeToString: empty array
 
     func testDecodeToStringEmptyArray() {

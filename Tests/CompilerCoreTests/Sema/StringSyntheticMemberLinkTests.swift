@@ -267,6 +267,69 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testByteArrayDecodeRangeStubsHaveCorrectSignatures() throws {
+        let (sema, interner) = try makeSema()
+        let decodeFQName = ["kotlin", "text", "decodeToString"].map { interner.intern($0) }
+        let byteArraySymbol = try XCTUnwrap(sema.symbols.lookup(fqName: ["kotlin", "ByteArray"].map { interner.intern($0) }))
+        let byteArrayType = try XCTUnwrap(sema.symbols.propertyType(for: byteArraySymbol))
+
+        let expected: [(link: String, params: [TypeID])] = [
+            ("kk_bytearray_decodeToString_range_default", [sema.types.intType, sema.types.intType]),
+            ("kk_bytearray_decodeToString_range", [sema.types.intType, sema.types.intType, sema.types.booleanType]),
+        ]
+
+        for item in expected {
+            let symbol = try XCTUnwrap(
+                sema.symbols.lookupAll(fqName: decodeFQName).first {
+                    guard sema.symbols.externalLinkName(for: $0) == item.link,
+                          let signature = sema.symbols.functionSignature(for: $0)
+                    else { return false }
+                    return signature.receiverType == byteArrayType
+                },
+                "ByteArray.decodeToString overload should link to \(item.link)"
+            )
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+            XCTAssertEqual(signature.parameterTypes, item.params)
+            XCTAssertEqual(signature.returnType, sema.types.stringType)
+        }
+    }
+
+    func testByteArrayDecodeRangeMembersResolveInCallExpressions() throws {
+        let source = """
+        fun decode(bytes: ByteArray): String {
+            val middle = bytes.decodeToString(1, 3)
+            val strict = bytes.decodeToString(1, 3, true)
+            return middle + strict
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let expectedLinksByArgCount: [Int: String] = [
+                2: "kk_bytearray_decodeToString_range_default",
+                3: "kk_bytearray_decodeToString_range",
+            ]
+
+            for (argCount, expectedLink) in expectedLinksByArgCount {
+                let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, args, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == "decodeToString" && args.count == argCount
+                }, "Expected decodeToString call with \(argCount) args")
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected call binding for decodeToString with \(argCount) args"
+                )
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    expectedLink
+                )
+            }
+        }
+    }
+
     func testNewSlicingStubsHaveCorrectExternalLinks() throws {
         let (sema, interner) = try makeSema()
 
