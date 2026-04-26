@@ -2,6 +2,12 @@
 import XCTest
 
 final class RuntimeRandomTests: IsolatedRuntimeXCTestCase {
+    // MARK: - Default
+
+    func testRandomDefaultReturnsDefaultReceiver() {
+        XCTAssertEqual(kk_random_default(), 0)
+    }
+
     // MARK: - nextLong
 
     func testNextLongReturnsValueIn64BitRange() {

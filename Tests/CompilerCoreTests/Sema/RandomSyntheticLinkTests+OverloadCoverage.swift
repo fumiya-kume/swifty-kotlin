@@ -58,16 +58,28 @@ extension RandomSyntheticLinkTests {
 
     // MARK: - Random.Default singleton
 
-    /// Random.Default property is a documented gap.
-    func testRandomDefaultSingletonGap() throws {
+    /// Random.Default property is registered as the default Random singleton.
+    func testRandomDefaultSingletonIsRegistered() throws {
         let (sema, interner) = try makeSema()
 
         let defaultFQ = ["kotlin", "random", "Random", "Default"].map { interner.intern($0) }
         let defaultSym = sema.symbols.lookup(fqName: defaultFQ)
-        // GAP: Random.Default companion singleton not yet registered.
-        XCTAssertNil(defaultSym,
-                     "GAP(STDLIB-RANDOM-001): Random.Default singleton not yet registered; " +
-                     "change to XCTAssertNotNil once added")
+        XCTAssertNotNil(defaultSym, "Random.Default singleton must be registered")
+
+        if let defaultSym {
+            let randomFQ = ["kotlin", "random", "Random"].map { interner.intern($0) }
+            let randomSym = sema.symbols.lookup(fqName: randomFQ)
+            XCTAssertNotNil(randomSym, "Random object must be registered")
+            if let randomSym {
+                let expectedType = sema.types.make(.classType(ClassType(
+                    classSymbol: randomSym,
+                    args: [],
+                    nullability: .nonNull
+                )))
+                XCTAssertEqual(sema.symbols.propertyType(for: defaultSym), expectedType)
+            }
+            XCTAssertEqual(sema.symbols.externalLinkName(for: defaultSym), "kk_random_default")
+        }
     }
 
     // MARK: - nextInt overload selection

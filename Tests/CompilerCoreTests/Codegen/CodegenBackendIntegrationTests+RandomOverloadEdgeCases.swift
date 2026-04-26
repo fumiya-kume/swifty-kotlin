@@ -49,6 +49,33 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenCompilesRandomDefaultSingleton() throws {
+        let source = """
+        import kotlin.random.Random
+
+        fun main() {
+            val r = Random.Default
+            val value = r.nextInt(10)
+            println(value >= 0 && value < 10)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "RandomDefaultSingleton",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "true\n")
+        }
+    }
+
     func testCodegenCompilesRandomOverloadEdgeCases() throws {
         let source = """
         import kotlin.random.Random
