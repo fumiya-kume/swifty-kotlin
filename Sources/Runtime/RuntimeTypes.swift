@@ -428,6 +428,7 @@ enum SequenceStepKind {
     case withIndexStep
     case flatMapStep(fnPtr: Int, closureRaw: Int)
     case flatMapIndexedStep(fnPtr: Int, closureRaw: Int)
+    case chunkedTransformStep(size: Int, fnPtr: Int, closureRaw: Int)
     /// STDLIB-563: Lazy continuation-based builder.
     /// The coroutine runs the builder lambda on a background thread;
     /// each `yield()` suspends the producer until the consumer requests

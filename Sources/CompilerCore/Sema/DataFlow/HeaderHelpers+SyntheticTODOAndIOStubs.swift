@@ -4025,6 +4025,60 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-SEQ-008: chunked(size, transform): Sequence<R>
+        do {
+            let chunkedName = interner.intern("chunked")
+            let chunkedFQName = sequenceFQName + [chunkedName]
+            let rName = interner.intern("R")
+            let rFQName = chunkedFQName + [rName]
+            let rSymbol: SymbolID = if let existing = symbols.lookup(fqName: rFQName) {
+                existing
+            } else {
+                symbols.define(
+                    kind: .typeParameter,
+                    name: rName,
+                    fqName: rFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+            }
+            let rType = types.make(.typeParam(TypeParamType(
+                symbol: rSymbol,
+                nullability: .nonNull
+            )))
+            let invariantChunkListType = nominalCollectionType([
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("List"),
+            ], elementType: typeParamType, invariant: true)
+            let transformType = types.make(.functionType(FunctionType(
+                params: [invariantChunkListType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let sequenceRType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "chunked",
+                externalLinkName: "kk_sequence_chunked_transform",
+                receiverType: receiverType,
+                parameters: [("size", types.intType), ("transform", transformType)],
+                returnType: sequenceRType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                additionalTypeParameterSymbols: [rSymbol]
+            )
+        }
+
         // forEachIndexed(action: (Int, T) -> Unit): Unit
         let forEachIndexedActionType = types.make(.functionType(FunctionType(
             params: [types.intType, typeParamType],

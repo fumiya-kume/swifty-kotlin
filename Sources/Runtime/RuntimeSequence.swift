@@ -72,11 +72,13 @@ private func runtimeSequenceSourceElementsOrPanic(from rawValue: Int, caller: St
 
 private final class SequenceTraversalState {
     var stop = false
+    var stopByDownstream = false
     var limitReached = false
     var takeCounts: [Int: Int] = [:]
     var dropCounts: [Int: Int] = [:]
     var distinctSeen: [Int: [Int]] = [:]
     var zipIndices: [Int: Int] = [:]
+    var chunkedBuffers: [Int: [Int]] = [:]
 }
 
 // MARK: - Shared constants
@@ -132,6 +134,7 @@ private func runtimeSequenceTransformElement(
     if state.stop { return }
     if stepIndex >= steps.count {
         state.stop = !yield(element)
+        state.stopByDownstream = state.stop
         return
     }
 
@@ -504,6 +507,76 @@ private func runtimeSequenceTransformElement(
             outThrown: outThrown,
             yield: yield
         )
+    case let .chunkedTransformStep(size, fnPtr, closureRaw):
+        let chunkSize = max(1, size)
+        var buffer = state.chunkedBuffers[stepIndex, default: []]
+        buffer.append(element)
+        if buffer.count < chunkSize {
+            state.chunkedBuffers[stepIndex] = buffer
+            return
+        }
+
+        state.chunkedBuffers[stepIndex] = []
+        let chunk = RuntimeListBox(elements: buffer)
+        let chunkRaw = registerRuntimeObject(chunk)
+        var thrown = 0
+        let transformed = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: chunkRaw,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            state.stop = true
+            return
+        }
+        runtimeSequenceTransformElement(
+            maybeUnbox(transformed),
+            steps: steps,
+            stepIndex: stepIndex + 1,
+            state: state,
+            outThrown: outThrown,
+            yield: yield
+        )
+    }
+}
+
+private func runtimeSequenceFlushChunkedTransforms(
+    _ steps: [SequenceStepKind],
+    state: SequenceTraversalState,
+    outThrown: UnsafeMutablePointer<Int>?,
+    yield: @escaping (Int) -> Bool
+) {
+    for stepIndex in steps.indices {
+        if state.stopByDownstream { return }
+        guard case let .chunkedTransformStep(_, fnPtr, closureRaw) = steps[stepIndex] else {
+            continue
+        }
+        guard let buffer = state.chunkedBuffers.removeValue(forKey: stepIndex), !buffer.isEmpty else { continue }
+
+        let chunk = RuntimeListBox(elements: buffer)
+        let chunkRaw = registerRuntimeObject(chunk)
+        var thrown = 0
+        let transformed = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: chunkRaw,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            state.stop = true
+            return
+        }
+        runtimeSequenceTransformElement(
+            maybeUnbox(transformed),
+            steps: steps,
+            stepIndex: stepIndex + 1,
+            state: state,
+            outThrown: outThrown,
+            yield: yield
+        )
     }
 }
 
@@ -544,7 +617,15 @@ private func runtimeTraverseSequenceWithState(
         case let .source(sourceElements), let .builder(sourceElements):
             for element in sourceElements {
                 emit(element)
-                if state.stop { return }
+                if state.stop { break }
+            }
+            if !state.limitReached, (outThrown?.pointee ?? 0) == 0 {
+                runtimeSequenceFlushChunkedTransforms(
+                    transformSteps,
+                    state: state,
+                    outThrown: outThrown,
+                    yield: yield
+                )
             }
             return
         case let .lazyBuilder(coroutine):
@@ -553,16 +634,27 @@ private func runtimeTraverseSequenceWithState(
             // short-circuiting operations (take, first, etc.) only
             // compute the elements they actually need.
             coroutine.resetIteration()
+            var done = false
             while true {
+                if state.stop || done { break }
                 let next = coroutine.nextElement()
                 switch next {
                 case let .value(element):
                     emit(element)
-                    if state.stop { return }
                 case .done:
-                    return
+                    done = true
                 }
+                if state.stop { break }
             }
+            if !state.limitReached, (outThrown?.pointee ?? 0) == 0 {
+                runtimeSequenceFlushChunkedTransforms(
+                    transformSteps,
+                    state: state,
+                    outThrown: outThrown,
+                    yield: yield
+                )
+            }
+            return
         case let .stringSource(strRaw):
             // Lazy: iterate string characters on demand without pre-materializing.
             // NOTE: Kotlin Char is a UTF-16 code unit (16-bit). Iterating unicodeScalars
@@ -573,7 +665,15 @@ private func runtimeTraverseSequenceWithState(
             let str = runtimeStringFromRawOrPanic(strRaw, caller: "kk_string_asSequence")
             for codeUnit in str.utf16 {
                 emit(kk_box_char(Int(codeUnit)))
-                if state.stop { return }
+                if state.stop { break }
+            }
+            if !state.limitReached, (outThrown?.pointee ?? 0) == 0 {
+                runtimeSequenceFlushChunkedTransforms(
+                    transformSteps,
+                    state: state,
+                    outThrown: outThrown,
+                    yield: yield
+                )
             }
             return
         case let .generator(seed, fnPtr, closureRaw):
@@ -588,16 +688,26 @@ private func runtimeTraverseSequenceWithState(
                 let next = nextFn(closureRaw, current, &thrown)
                 if thrown != 0 {
                     outThrown?.pointee = thrown
+                    state.stop = true
                     return
                 }
                 let unboxed = maybeUnbox(next)
-                if unboxed == runtimeNullSentinelInt { return }
+                if unboxed == runtimeNullSentinelInt { break }
                 emit(unboxed)
                 current = unboxed
                 generatedCount += 1
             }
             if generatedCount >= kSequenceGeneratorHardLimit, !state.stop {
                 state.limitReached = true
+                return
+            }
+            if !state.limitReached, (outThrown?.pointee ?? 0) == 0 {
+                runtimeSequenceFlushChunkedTransforms(
+                    transformSteps,
+                    state: state,
+                    outThrown: outThrown,
+                    yield: yield
+                )
             }
             return
         case let .nullableGenerator(fnPtr, closureRaw):
@@ -609,18 +719,28 @@ private func runtimeTraverseSequenceWithState(
                 let next = noArgFn(closureRaw, &thrown)
                 if thrown != 0 {
                     outThrown?.pointee = thrown
+                    state.stop = true
                     return
                 }
                 let unboxed = maybeUnbox(next)
-                if unboxed == runtimeNullSentinelInt { return }
+                if unboxed == runtimeNullSentinelInt { break }
                 emit(unboxed)
                 generatedCount += 1
             }
             if generatedCount >= kSequenceGeneratorHardLimit, !state.stop {
                 state.limitReached = true
+                return
+            }
+            if !state.limitReached, (outThrown?.pointee ?? 0) == 0 {
+                runtimeSequenceFlushChunkedTransforms(
+                    transformSteps,
+                    state: state,
+                    outThrown: outThrown,
+                    yield: yield
+                )
             }
             return
-        case .mapStep, .filterStep, .filterNotStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep, .onEachIndexedStep, .mapNotNullStep, .filterNotNullStep, .requireNoNullsStep, .mapIndexedStep, .withIndexStep, .flatMapStep, .flatMapIndexedStep:
+        case .mapStep, .filterStep, .filterNotStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep, .onEachIndexedStep, .mapNotNullStep, .filterNotNullStep, .requireNoNullsStep, .mapIndexedStep, .withIndexStep, .flatMapStep, .flatMapIndexedStep, .chunkedTransformStep:
             continue
         }
     }
@@ -893,6 +1013,70 @@ private func applyFlatMapIndexedStep(_ elements: [Int], fnPtr: Int, closureRaw: 
     return result
 }
 
+/// Applies a chunked transform step eagerly by grouping elements, applying the transform,
+/// and including any trailing partial chunk.
+private func applyChunkedTransformStep(
+    _ elements: [Int],
+    size: Int,
+    fnPtr: Int,
+    closureRaw: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> [Int] {
+    guard !elements.isEmpty else { return [] }
+
+    let chunkSize = max(1, size)
+    let expectedChunkCount = (elements.count + chunkSize - 1) / chunkSize
+    var result: [Int] = []
+    result.reserveCapacity(expectedChunkCount)
+
+    var buffer: [Int] = []
+    buffer.reserveCapacity(chunkSize)
+
+    for element in elements {
+        buffer.append(element)
+        if buffer.count != chunkSize { continue }
+
+        let chunk = RuntimeListBox(elements: buffer)
+        let chunkRaw = registerRuntimeObject(chunk)
+        var thrown = 0
+        let transformed = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: chunkRaw,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            if let outThrown = outThrown {
+                outThrown.pointee = thrown
+            }
+            return []
+        }
+        result.append(maybeUnbox(transformed))
+        buffer = []
+    }
+
+    if !buffer.isEmpty {
+        let chunk = RuntimeListBox(elements: buffer)
+        let chunkRaw = registerRuntimeObject(chunk)
+        var thrown = 0
+        let transformed = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: chunkRaw,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            if let outThrown = outThrown {
+                outThrown.pointee = thrown
+            }
+            return []
+        }
+        result.append(maybeUnbox(transformed))
+    }
+
+    return result
+}
+
 /// Evaluates the lazy sequence chain and returns the materialized elements.
 /// This is the core of lazy semantics: steps are only executed here.
 private func evaluateSequence(
@@ -1040,6 +1224,8 @@ private func evaluateSequence(
             elements = applyFlatMapStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
         case let .flatMapIndexedStep(fnPtr, closureRaw):
             elements = applyFlatMapIndexedStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
+        case let .chunkedTransformStep(size, fnPtr, closureRaw):
+            elements = applyChunkedTransformStep(elements, size: size, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
         }
         if let outThrown, outThrown.pointee != 0 { return [] }
     }
@@ -3371,25 +3557,16 @@ public func kk_sequence_chunked_transform(
     _ closureRaw: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    let chunksRaw = kk_sequence_chunked(seqRaw, size)
-    let chunks = runtimeSequenceSourceElementsOrPanic(from: chunksRaw, caller: #function)
-    var results: [Int] = []
-    results.reserveCapacity(chunks.count)
-    for chunkRaw in chunks {
-        var thrown = 0
-        let transformed = runtimeInvokeCollectionLambda1(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            value: chunkRaw,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            outThrown?.pointee = thrown
-            return 0
-        }
-        results.append(maybeUnbox(transformed))
+    guard let seq = runtimeSequenceBox(from: seqRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid sequence in kk_sequence_chunked_transform")
     }
-    let resultSeq = RuntimeSequenceBox(steps: [.source(elements: results)])
+
+    let chunkedTransform = SequenceStepKind.chunkedTransformStep(
+        size: max(1, size),
+        fnPtr: fnPtr,
+        closureRaw: closureRaw
+    )
+    let resultSeq = RuntimeSequenceBox(steps: seq.steps + [chunkedTransform])
     return registerRuntimeObject(resultSeq)
 }
 
