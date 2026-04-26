@@ -25,6 +25,18 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
         ]))
     }
 
+    private func byteArrayType(sema: SemaModule, interner: StringInterner) throws -> TypeID {
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("ByteArray"),
+        ]))
+        return sema.types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+    }
+
     func testBase64VariantObjectsAreRegisteredAsBase64Subtypes() throws {
         let (sema, interner) = try makeSema()
         let base64 = try base64Symbol(sema: sema, interner: interner)
@@ -83,5 +95,61 @@ final class Base64SyntheticSurfaceTests: XCTestCase {
                 "Base64.\(variant) must be assignable to Base64"
             )
         }
+    }
+
+    func testBase64EncodeDecodeMemberLinksAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let base64 = try base64Symbol(sema: sema, interner: interner)
+        let base64Type = sema.types.make(.classType(ClassType(
+            classSymbol: base64,
+            args: [],
+            nullability: .nonNull
+        )))
+        let byteArray = try byteArrayType(sema: sema, interner: interner)
+
+        let encode = try XCTUnwrap(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("io"),
+            interner.intern("encoding"),
+            interner.intern("Base64"),
+            interner.intern("encode"),
+        ]))
+        let encodeSignature = try XCTUnwrap(sema.symbols.functionSignature(for: encode))
+        XCTAssertEqual(encodeSignature.receiverType, base64Type)
+        XCTAssertEqual(encodeSignature.parameterTypes, [byteArray])
+        XCTAssertEqual(encodeSignature.returnType, sema.types.stringType)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: encode), "kk_base64_encode_default")
+
+        let decode = try XCTUnwrap(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("io"),
+            interner.intern("encoding"),
+            interner.intern("Base64"),
+            interner.intern("decode"),
+        ]))
+        let decodeSignature = try XCTUnwrap(sema.symbols.functionSignature(for: decode))
+        XCTAssertEqual(decodeSignature.receiverType, base64Type)
+        XCTAssertEqual(decodeSignature.parameterTypes, [sema.types.stringType])
+        XCTAssertEqual(decodeSignature.returnType, byteArray)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: decode), "kk_base64_decode_default")
+    }
+
+    func testBase64EncodeDecodeCallsTypeCheckOnVariants() throws {
+        let source = """
+        import kotlin.io.encoding.Base64
+        import kotlin.io.encoding.ExperimentalEncodingApi
+
+        @OptIn(ExperimentalEncodingApi::class)
+        fun useBase64(source: ByteArray): ByteArray {
+            val encoded: String = Base64.Default.encode(source)
+            return Base64.Default.decode(encoded)
+        }
+
+        @OptIn(ExperimentalEncodingApi::class)
+        fun useUrlSafe(source: ByteArray): String =
+            Base64.UrlSafe.encode(source)
+        """
+
+        _ = try makeSema(source: source)
     }
 }

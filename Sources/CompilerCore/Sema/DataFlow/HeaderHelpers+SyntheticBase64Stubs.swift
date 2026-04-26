@@ -23,11 +23,42 @@ extension DataFlowSemaPhase {
         let stringType = types.stringType
         let intType = types.intType
         let byteArrayType = makeBase64ByteArrayType(symbols: symbols, types: types, interner: interner)
+        let base64Type = types.make(.classType(ClassType(
+            classSymbol: base64Symbol,
+            args: [],
+            nullability: .nonNull
+        )))
 
         registerBase64VariantObjects(
             base64Symbol: base64Symbol,
             symbols: symbols,
             types: types,
+            interner: interner
+        )
+
+        registerBase64MemberFunction(
+            named: "encode",
+            externalLinkName: "kk_base64_encode_default",
+            ownerSymbol: base64Symbol,
+            receiverType: base64Type,
+            parameters: [
+                ("source", byteArrayType),
+            ],
+            returnType: stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerBase64MemberFunction(
+            named: "decode",
+            externalLinkName: "kk_base64_decode_default",
+            ownerSymbol: base64Symbol,
+            receiverType: base64Type,
+            parameters: [
+                ("source", stringType),
+            ],
+            returnType: byteArrayType,
+            symbols: symbols,
             interner: interner
         )
 
@@ -277,6 +308,77 @@ extension DataFlowSemaPhase {
     }
 
     // MARK: - Function registration helpers
+
+    private func registerBase64MemberFunction(
+        named name: String,
+        externalLinkName: String,
+        ownerSymbol: SymbolID,
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let funcName = interner.intern(name)
+        let fqName = ownerInfo.fqName + [funcName]
+        if symbols.lookupAll(fqName: fqName).contains(where: { candidate in
+            guard let symbol = symbols.symbol(candidate),
+                  symbol.kind == .function,
+                  let signature = symbols.functionSignature(for: candidate)
+            else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes == parameters.map(\.type)
+                && signature.returnType == returnType
+        }) {
+            return
+        }
+
+        let funcSym = symbols.define(
+            kind: .function,
+            name: funcName,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: funcSym)
+        symbols.setExternalLinkName(externalLinkName, for: funcSym)
+
+        var paramTypes: [TypeID] = []
+        var paramSymbols: [SymbolID] = []
+        for param in parameters {
+            let pName = interner.intern(param.name)
+            let pSym = symbols.define(
+                kind: .valueParameter,
+                name: pName,
+                fqName: fqName + [pName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(funcSym, for: pSym)
+            paramTypes.append(param.type)
+            paramSymbols.append(pSym)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: paramTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: paramSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: paramSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: paramSymbols.count)
+            ),
+            for: funcSym
+        )
+    }
 
     private func registerBase64TopLevelFunction(
         named name: String,

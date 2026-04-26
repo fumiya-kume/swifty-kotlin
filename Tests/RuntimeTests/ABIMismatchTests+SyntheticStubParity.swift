@@ -208,6 +208,20 @@ extension ABIMismatchTests {
             "kk_list_binarySearchBy",
             "kk_list_binarySearchBy_fromIndex",
             "kk_list_binarySearchBy_range",
+            // Base64 (kotlin.io.encoding)
+            "kk_base64_padding_present",
+            "kk_base64_padding_absent",
+            "kk_base64_padding_present_optional",
+            "kk_base64_padding_absent_optional",
+            "kk_base64_encode_default",
+            "kk_base64_decode_default",
+            "kk_base64_encode_urlsafe",
+            "kk_base64_decode_urlsafe",
+            "kk_base64_encode_mime",
+            "kk_base64_decode_mime",
+            "kk_base64_encodeToByteArray_default",
+            "kk_base64_encodeToByteArray_urlsafe",
+            "kk_base64_encodeToByteArray_mime",
         ]
 
         for linkName in syntheticLinkNames {
