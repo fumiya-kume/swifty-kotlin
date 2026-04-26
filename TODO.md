@@ -69,7 +69,7 @@
 - [x] STDLIB-SEQ-007: `Sequence.any` / `all` / `find` の short-circuit を追加する
 - [x] STDLIB-SEQ-008: `Sequence.chunked(size, transform)` overload を追加する
 - [x] STDLIB-SEQ-009: `Sequence.windowed(size, step, partialWindows, transform)` overload を追加する
-- [ ] STDLIB-SEQ-010: `Sequence.onEachIndexed(action)` を追加する
+- [x] STDLIB-SEQ-010: `Sequence.onEachIndexed(action)` を追加する
 - [ ] STDLIB-SEQ-011: `Sequence<T>?.orEmpty()` を追加する
 - [x] STDLIB-SEQ-012: `Sequence.partition(predicate)` を追加する
 - [x] STDLIB-SEQ-013: `Sequence.plus(element)` / `Sequence.plusElement(element)` を追加する
