@@ -102,7 +102,7 @@
 - [x] STDLIB-COL-GROUP-004: `Grouping.foldTo(destination, initialValue, operation)` / `foldTo(destination, initialValueSelector, operation)` を追加する
 - [x] STDLIB-COL-GROUP-005: `Grouping.reduceTo(destination, operation)` を追加する
 - [x] STDLIB-COL-BSEARCH-001: `List.binarySearchBy(key, fromIndex, toIndex, selector)` を追加する
-- [ ] STDLIB-COL-BSEARCH-002: `List.binarySearch(element, comparator, fromIndex, toIndex)` を追加する
+- [x] STDLIB-COL-BSEARCH-002: `List.binarySearch(element, comparator, fromIndex, toIndex)` を追加する
 - [ ] STDLIB-COL-BSEARCH-003: `Array` / primitive array / unsigned array の `binarySearch(element, fromIndex, toIndex)` overload 群を追加する
 - [ ] STDLIB-COL-BSEARCH-004: `Array.binarySearch(element, comparator, fromIndex, toIndex)` を追加する
 - [x] STDLIB-COL-WIN-001: `Iterable.windowed(size, step, partialWindows, transform)` overload を追加する
