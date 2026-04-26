@@ -298,6 +298,7 @@ extension ABILoweringPass {
             interner.intern("kk_ulong_range_next"),
             interner.intern("kk_range_step"),
             interner.intern("kk_range_reversed"),
+            interner.intern("kk_char_range_isEmpty"),
             interner.intern("kk_char_range_toList"),
             // UIntRange properties and HOFs (STDLIB-RANGE-036)
             interner.intern("kk_uint_range_contains"),

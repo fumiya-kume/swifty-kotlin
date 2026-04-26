@@ -1646,6 +1646,49 @@ public func kk_range_windowed(_ rangeRaw: Int, _ size: Int, _ step: Int, _ parti
 
 // MARK: - CharRange HOFs (STDLIB-290)
 
+@_cdecl("kk_char_range_isEmpty")
+public func kk_char_range_isEmpty(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_char_range_isEmpty")
+    }
+    let first = kk_unbox_char(range.first)
+    let last = kk_unbox_char(range.last)
+    if range.step > 0 {
+        return first > last ? 1 : 0
+    } else if range.step < 0 {
+        return first < last ? 1 : 0
+    }
+    return 1
+}
+
+@_cdecl("kk_char_range_step")
+public func kk_char_range_step(_ rangeRaw: Int, _ stepValue: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard stepValue > 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: Step must be positive, was: \(stepValue)."
+        )
+        return rangeRaw
+    }
+    guard stepValue != Int.min else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: Step must be positive, was: \(stepValue)."
+        )
+        return rangeRaw
+    }
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        return rangeRaw
+    }
+    if range.step == 0 {
+        return rangeRaw
+    }
+    let first = kk_unbox_char(range.first)
+    let last = kk_unbox_char(range.last)
+    let nextStep = range.step < 0 ? (0 &- stepValue) : stepValue
+    let alignedLast = runtimeSignedProgressionLast(start: first, end: last, step: nextStep)
+    return registerRuntimeObject(RuntimeRangeBox(first: first, last: alignedLast, step: nextStep))
+}
+
 @_cdecl("kk_char_range_toList")
 public func kk_char_range_toList(_ rangeRaw: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
@@ -1891,6 +1934,24 @@ public func kk_ulong_progression_fromClosedRange(_ receiverRaw: Int, _ rangeStar
     }
     let alignedLast = runtimeUnsignedProgressionLast(start: rangeStart, end: rangeEnd, step: step)
     return registerRuntimeObject(RuntimeRangeBox(first: rangeStart, last: alignedLast, step: step))
+}
+
+@_cdecl("kk_char_progression_fromClosedRange")
+public func kk_char_progression_fromClosedRange(_ receiverRaw: Int, _ rangeStart: Int, _ rangeEnd: Int, _ step: Int,
+                                                _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = receiverRaw
+    guard step != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Step must be non-zero.")
+        return 0
+    }
+    guard step != Int.min else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Step must be greater than Int.MIN_VALUE to avoid overflow on negation.")
+        return 0
+    }
+    let startChar = kk_unbox_char(rangeStart)
+    let endChar = kk_unbox_char(rangeEnd)
+    let alignedLast = runtimeSignedProgressionLast(start: startChar, end: endChar, step: step)
+    return registerRuntimeObject(RuntimeRangeBox(first: startChar, last: alignedLast, step: step))
 }
 
 // MARK: - UIntProgression operations (STDLIB-RANGE-039)

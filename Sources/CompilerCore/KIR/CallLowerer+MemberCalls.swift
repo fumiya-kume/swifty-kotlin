@@ -1714,6 +1714,7 @@ extension CallLowerer {
                 return name == "IntProgression"
                     || name == "LongProgression"
                     || name == "LongRange"
+                    || name == "CharProgression"
                     || name == "UIntRange"
                     || name == "UIntProgression"
                     || name == "ULongProgression"
@@ -6160,6 +6161,7 @@ extension CallLowerer {
         let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
         let isCharRange = sema.bindings.isCharRangeExpr(receiverExpr)
+        var isCharProgressionReceiver = false
         let isProgressionReceiver: Bool = {
             guard case let .classType(classType) = sema.types.kind(of: nonNullReceiverType),
                   let symbol = sema.symbols.symbol(classType.classSymbol)
@@ -6167,9 +6169,11 @@ extension CallLowerer {
                 return false
             }
             let name = interner.resolve(symbol.name)
+            isCharProgressionReceiver = name == "CharProgression"
             return name == "IntProgression"
                 || name == "LongProgression"
                 || name == "LongRange"
+                || name == "CharProgression"
                 || name == "UIntRange"
                 || name == "UIntProgression"
                 || name == "ULongProgression"
@@ -6179,6 +6183,9 @@ extension CallLowerer {
            fallbackName == "step",
            argumentCount <= 1
         {
+            if isCharRange || isCharProgressionReceiver {
+                return interner.intern("kk_char_range_step")
+            }
             if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
                 return interner.intern("kk_ulong_range_step")
             }
@@ -6458,7 +6465,15 @@ extension CallLowerer {
         interner: StringInterner
     ) -> InternedString? {
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
-        if sema.bindings.isRangeExpr(receiverExpr) {
+        let isCharProgressionReceiver: Bool = {
+            guard case let .classType(classType) = sema.types.kind(of: nonNullReceiverType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return false
+            }
+            return interner.resolve(symbol.name) == "CharProgression"
+        }()
+        if sema.bindings.isRangeExpr(receiverExpr) || isCharProgressionReceiver {
             switch memberName {
             case "random":
                 if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
@@ -6483,6 +6498,9 @@ extension CallLowerer {
                 }
                 return interner.intern("kk_op_contains")
             case "isEmpty":
+                if sema.bindings.isCharRangeExpr(receiverExpr) || isCharProgressionReceiver {
+                    return interner.intern("kk_char_range_isEmpty")
+                }
                 if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
                     return interner.intern("kk_ulong_range_isEmpty")
                 }
@@ -6512,6 +6530,9 @@ extension CallLowerer {
                 }
                 return interner.intern("kk_range_count")
             case "toList":
+                if sema.bindings.isCharRangeExpr(receiverExpr) || isCharProgressionReceiver {
+                    return interner.intern("kk_char_range_toList")
+                }
                 if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
                     return interner.intern("kk_ulong_range_toList")
                 }
@@ -6851,6 +6872,9 @@ extension CallLowerer {
                 return interner.intern("kk_range_reversed")
             case "step":
                 if argumentCount <= 1 {
+                    if sema.bindings.isCharRangeExpr(receiverExpr) || isCharProgressionReceiver {
+                        return interner.intern("kk_char_range_step")
+                    }
                     if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
                         return interner.intern("kk_ulong_range_step")
                     }
@@ -6867,6 +6891,9 @@ extension CallLowerer {
                 }
                 if sema.bindings.isUIntRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.uintType {
                     return interner.intern("kk_uint_step")
+                }
+                if sema.bindings.isCharRangeExpr(receiverExpr) || isCharProgressionReceiver {
+                    return interner.intern("kk_char_range_step")
                 }
                 return interner.intern("kk_op_step")
             default:

@@ -4376,6 +4376,18 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Range"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_progression_fromClosedRange",
+            parameters: [
+                RuntimeABIParameter(name: "receiverRaw", type: .intptr),
+                RuntimeABIParameter(name: "rangeStart", type: .intptr),
+                RuntimeABIParameter(name: "rangeEnd", type: .intptr),
+                RuntimeABIParameter(name: "step", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
         // LongRange (STDLIB-RANGE-035)
         RuntimeABIFunctionSpec(
             name: "kk_long_rangeTo",
@@ -4620,6 +4632,24 @@ public enum RuntimeABISpec {
             section: "Range"
         ),
         // CharRange (STDLIB-290)
+        RuntimeABIFunctionSpec(
+            name: "kk_char_range_isEmpty",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_range_step",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+                RuntimeABIParameter(name: "stepVal", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_char_range_toList",
             parameters: [

@@ -118,6 +118,17 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         registerSyntheticProgressionStub(
+            named: "CharProgression",
+            elementType: types.charType,
+            stepType: types.intType,
+            externalLinkName: "kk_char_progression_fromClosedRange",
+            rangesPackageSymbol: rangesPackageSymbol,
+            rangesFQName: rangesFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticProgressionStub(
             named: "UIntProgression",
             elementType: types.uintType,
             stepType: types.intType,
@@ -587,6 +598,7 @@ extension DataFlowSemaPhase {
         case "UIntProgression": isEmptyRuntime = "kk_uint_range_isEmpty"
         case "ULongProgression": isEmptyRuntime = "kk_ulong_range_isEmpty"
         case "LongProgression": isEmptyRuntime = "kk_long_range_isEmpty"
+        case "CharProgression": isEmptyRuntime = "kk_char_range_isEmpty"
         default: isEmptyRuntime = "kk_range_isEmpty"
         }
         let reversedRuntime: String
@@ -601,6 +613,9 @@ extension DataFlowSemaPhase {
         case "LongProgression":
             reversedRuntime = "kk_long_range_reversed"
             toListRuntime = "kk_long_range_toList"
+        case "CharProgression":
+            reversedRuntime = "kk_range_reversed"
+            toListRuntime = "kk_char_range_toList"
         default:
             reversedRuntime = "kk_range_reversed"
             toListRuntime = "kk_range_toList"
@@ -666,7 +681,7 @@ extension DataFlowSemaPhase {
             receiverType: progressionType,
             parameterTypes: [stepType],
             returnType: progressionType,
-            externalLinkName: name == "ULongProgression" ? "kk_ulong_step" : (name == "UIntProgression" ? "kk_uint_step" : "kk_op_step"),
+            externalLinkName: name == "ULongProgression" ? "kk_ulong_step" : (name == "UIntProgression" ? "kk_uint_step" : (name == "CharProgression" ? "kk_char_range_step" : "kk_op_step")),
             symbols: symbols,
             interner: interner
         )

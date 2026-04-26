@@ -1120,7 +1120,7 @@ final class CallLowerer {
                 interner.intern("kk_long_range_toList")
             case interner.intern("ULongRange"):
                 interner.intern("kk_ulong_range_toList")
-            case interner.intern("CharRange"):
+            case interner.intern("CharRange"), interner.intern("CharProgression"):
                 interner.intern("kk_char_range_toList")
             case knownNames.string:
                 interner.intern("kk_string_toList")
