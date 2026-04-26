@@ -35,6 +35,7 @@ extension DataFlowSemaPhase {
         let intType = types.intType
         let longType = types.longType
         let doubleType = types.doubleType
+        let stringType = types.stringType
         let boolType = types.make(.primitive(.boolean, .nonNull))
 
         // --- STDLIB-TIME-STABLE-001: Duration companion constants ---
@@ -52,6 +53,48 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_duration_infinite",
             ownerSymbol: durationCompanionSymbol,
             returnType: durationType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationCompanionMethod(
+            named: "parse",
+            externalLinkName: "kk_duration_parse",
+            ownerSymbol: durationCompanionSymbol,
+            parameterTypes: [stringType],
+            returnType: durationType,
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationCompanionMethod(
+            named: "parseOrNull",
+            externalLinkName: "kk_duration_parseOrNull",
+            ownerSymbol: durationCompanionSymbol,
+            parameterTypes: [stringType],
+            returnType: types.makeNullable(durationType),
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationCompanionMethod(
+            named: "parseIsoString",
+            externalLinkName: "kk_duration_parseIsoString",
+            ownerSymbol: durationCompanionSymbol,
+            parameterTypes: [stringType],
+            returnType: durationType,
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationCompanionMethod(
+            named: "parseIsoStringOrNull",
+            externalLinkName: "kk_duration_parseIsoStringOrNull",
+            ownerSymbol: durationCompanionSymbol,
+            parameterTypes: [stringType],
+            returnType: types.makeNullable(durationType),
             symbols: symbols,
             interner: interner
         )
@@ -162,6 +205,18 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_duration_isFinite",
             ownerSymbol: durationSymbol,
             returnType: boolType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberMethod(
+            named: "toIsoString",
+            externalLinkName: "kk_duration_toIsoString",
+            ownerSymbol: durationSymbol,
+            ownerType: durationType,
+            parameterTypes: [],
+            returnType: stringType,
+            isOperator: false,
             symbols: symbols,
             interner: interner
         )
@@ -555,6 +610,7 @@ extension DataFlowSemaPhase {
         ownerType: TypeID,
         parameterTypes: [TypeID],
         returnType: TypeID,
+        isOperator: Bool = true,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -569,6 +625,9 @@ extension DataFlowSemaPhase {
             return sig.parameterTypes == parameterTypes
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
+            if isOperator {
+                symbols.insertFlags([.operatorFunction], for: existing)
+            }
             if let existingSignature = symbols.functionSignature(for: existing),
                existingSignature.receiverType != ownerType
             {
@@ -580,13 +639,17 @@ extension DataFlowSemaPhase {
             return
         }
 
+        var flags: SymbolFlags = [.synthetic]
+        if isOperator {
+            flags.insert(.operatorFunction)
+        }
         let functionSymbol = symbols.define(
             kind: .function,
             name: functionName,
             fqName: functionFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic, .operatorFunction]
+            flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
         symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
@@ -623,6 +686,99 @@ extension DataFlowSemaPhase {
                 valueParameterHasDefaultValues: paramDefaults,
                 valueParameterIsVararg: paramVarargs,
                 typeParameterSymbols: []
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerDurationCompanionMethod(
+        named name: String,
+        externalLinkName: String,
+        ownerSymbol: SymbolID,
+        parameterTypes: [TypeID],
+        returnType: TypeID,
+        canThrow: Bool = false,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
+        let functionName = interner.intern(name)
+        let functionFQName = ownerInfo.fqName + [functionName]
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard symbols.symbol(symbolID)?.kind == .function,
+                  let sig = symbols.functionSignature(for: symbolID) else { return false }
+            return sig.parameterTypes == parameterTypes
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            if canThrow {
+                symbols.insertFlags([.throwingFunction], for: existing)
+            }
+            if let existingSignature = symbols.functionSignature(for: existing),
+               existingSignature.returnType != returnType
+            {
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: existingSignature.receiverType,
+                        parameterTypes: existingSignature.parameterTypes,
+                        returnType: returnType,
+                        isSuspend: existingSignature.isSuspend,
+                        canThrow: existingSignature.canThrow || canThrow,
+                        valueParameterSymbols: existingSignature.valueParameterSymbols,
+                        valueParameterHasDefaultValues: existingSignature.valueParameterHasDefaultValues,
+                        valueParameterIsVararg: existingSignature.valueParameterIsVararg,
+                        typeParameterSymbols: existingSignature.typeParameterSymbols,
+                        reifiedTypeParameterIndices: existingSignature.reifiedTypeParameterIndices,
+                        typeParameterUpperBounds: existingSignature.typeParameterUpperBounds,
+                        typeParameterUpperBoundsList: existingSignature.typeParameterUpperBoundsList,
+                        classTypeParameterCount: existingSignature.classTypeParameterCount
+                    ),
+                    for: existing
+                )
+            }
+            return
+        }
+
+        var flags: SymbolFlags = [.synthetic]
+        if canThrow {
+            flags.insert(.throwingFunction)
+        }
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: flags
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var paramSymbols: [SymbolID] = []
+        for (idx, paramType) in parameterTypes.enumerated() {
+            let paramName = interner.intern("p\(idx)")
+            let paramFQName = functionFQName + [paramName]
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: paramName,
+                fqName: paramFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: paramSymbol)
+            symbols.setPropertyType(paramType, for: paramSymbol)
+            paramSymbols.append(paramSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                canThrow: canThrow,
+                valueParameterSymbols: paramSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: paramSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: paramSymbols.count)
             ),
             for: functionSymbol
         )
