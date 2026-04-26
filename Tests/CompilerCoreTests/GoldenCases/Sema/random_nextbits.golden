@@ -1,30 +1,31 @@
 symbol s0 kind=object fq=kotlin.random.Random vis=public flags=synthetic type=Class#0
 symbol s1 kind=constructor fq=kotlin.random.Random.<init> vis=public flags=synthetic sig=recv=_ params=[Int] ret=Class#0 suspend=0 defaults=[0] vararg=[0]
-symbol s2 kind=function fq=useRandomNextBits vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3 kind=local fq=__local_0.r vis=private flags=_ type=Class#0
-symbol s4 kind=local fq=__local_1.a vis=private flags=_ type=<error>
-symbol s5 kind=local fq=__local_2.b vis=private flags=_ type=<error>
-symbol s6 kind=local fq=__local_3.c vis=private flags=_ type=<error>
-symbol s7 kind=local fq=__local_4.d vis=private flags=_ type=<error>
+symbol s2 kind=function fq=kotlin.random.Random.nextBits vis=public flags=synthetic sig=recv=Class#0 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s3 kind=function fq=useRandomNextBits vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s4 kind=local fq=__local_0.r vis=private flags=_ type=Class#0
+symbol s5 kind=local fq=__local_1.a vis=private flags=_ type=Int
+symbol s6 kind=local fq=__local_2.b vis=private flags=_ type=Int
+symbol s7 kind=local fq=__local_3.c vis=private flags=_ type=Int
+symbol s8 kind=local fq=__local_4.d vis=private flags=_ type=Int
 file f0 package=_
-  decl d0 fun useRandomNextBits suspend=0 inline=0 sym=s2
+  decl d0 fun useRandomNextBits suspend=0 inline=0 sym=s3
 expr e0 name(Random) type=_
 expr e1 int(42) type=Int
 expr e2 call callee=e0 args=[_:e1] type=Class#0 call=s1 map=[0->0] targs=[]
-expr e3 localDecl r mutable=0 type=_ init=e2 type=Unit ref=s3
-expr e4 name(r) type=Class#0 ref=s3
+expr e3 localDecl r mutable=0 type=_ init=e2 type=Unit ref=s4
+expr e4 name(r) type=Class#0 ref=s4
 expr e5 int(8) type=Int
-expr e6 memberCall recv=e4 callee=nextBits args=[_:e5] type=<error>
-expr e7 localDecl a mutable=0 type=_ init=e6 type=Unit ref=s4
-expr e8 name(r) type=Class#0 ref=s3
+expr e6 memberCall recv=e4 callee=nextBits args=[_:e5] type=Int call=s2 map=[0->0] targs=[]
+expr e7 localDecl a mutable=0 type=_ init=e6 type=Unit ref=s5
+expr e8 name(r) type=Class#0 ref=s4
 expr e9 int(16) type=Int
-expr e10 memberCall recv=e8 callee=nextBits args=[_:e9] type=<error>
-expr e11 localDecl b mutable=0 type=_ init=e10 type=Unit ref=s5
-expr e12 name(r) type=Class#0 ref=s3
+expr e10 memberCall recv=e8 callee=nextBits args=[_:e9] type=Int call=s2 map=[0->0] targs=[]
+expr e11 localDecl b mutable=0 type=_ init=e10 type=Unit ref=s6
+expr e12 name(r) type=Class#0 ref=s4
 expr e13 int(32) type=Int
-expr e14 memberCall recv=e12 callee=nextBits args=[_:e13] type=<error>
-expr e15 localDecl c mutable=0 type=_ init=e14 type=Unit ref=s6
+expr e14 memberCall recv=e12 callee=nextBits args=[_:e13] type=Int call=s2 map=[0->0] targs=[]
+expr e15 localDecl c mutable=0 type=_ init=e14 type=Unit ref=s7
 expr e16 name(Random) type=Class#0 ref=s0
 expr e17 int(1) type=Int
-expr e18 memberCall recv=e16 callee=nextBits args=[_:e17] type=<error>
-expr e19 localDecl d mutable=0 type=_ init=e18 type=Unit ref=s7
+expr e18 memberCall recv=e16 callee=nextBits args=[_:e17] type=Int call=s2 map=[0->0] targs=[]
+expr e19 localDecl d mutable=0 type=_ init=e18 type=Unit ref=s8

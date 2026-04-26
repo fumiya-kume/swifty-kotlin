@@ -235,6 +235,18 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextBits",
+            externalLinkName: "kk_random_nextBits",
+            returnType: intType,
+            parameters: [(name: "bitCount", type: intType)],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
         // SecureRandom basic support
         let secureRandomSymbol = ensureClassSymbol(
             named: "SecureRandom",
@@ -482,6 +494,7 @@ extension DataFlowSemaPhase {
         externalLinkName: String,
         returnType: TypeID,
         parameters: [(name: String, type: TypeID)],
+        canThrow: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -499,13 +512,17 @@ extension DataFlowSemaPhase {
         }) == nil else {
             return
         }
+        var flags: SymbolFlags = [.synthetic]
+        if canThrow {
+            flags.insert(.throwingFunction)
+        }
         let memberSymbol = symbols.define(
             kind: .function,
             name: memberName,
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
         symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
@@ -529,6 +546,7 @@ extension DataFlowSemaPhase {
                 parameterTypes: parameters.map(\.type),
                 returnType: returnType,
                 isSuspend: false,
+                canThrow: canThrow,
                 valueParameterSymbols: valueParameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
