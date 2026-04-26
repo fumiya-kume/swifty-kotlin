@@ -1522,6 +1522,79 @@ final class CallTypeChecker {
             }
         }
 
+        // --- compareByDescending(comparator, selector) (STDLIB-COMP-005) ---
+        if let calleeName,
+           args.count == 2,
+           interner.resolve(calleeName) == "compareByDescending",
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
+        {
+            let comparatorFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Comparator")]
+            let comparatorSymbol = sema.symbols.lookup(fqName: comparatorFQName)
+            let elementType: TypeID = if let explicitT = explicitTypeArgs.first {
+                explicitT
+            } else if let expectedType,
+                      case let .classType(classType) = sema.types.kind(of: expectedType),
+                      let firstArg = classType.args.first {
+                switch firstArg {
+                case let .invariant(t), let .out(t), let .in(t): t
+                case .star: sema.types.anyType
+                }
+            } else {
+                sema.types.anyType
+            }
+            let keyType: TypeID = explicitTypeArgs.count >= 2 ? explicitTypeArgs[1] : sema.types.anyType
+            let keyComparatorType: TypeID = if let comparatorSymbol {
+                sema.types.make(.classType(ClassType(
+                    classSymbol: comparatorSymbol,
+                    args: [.invariant(keyType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                sema.types.anyType
+            }
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: keyComparatorType)
+
+            let selectorExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [elementType],
+                returnType: keyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            if let lambdaExpr = ast.arena.expr(args[1].expr), case .lambdaLiteral = lambdaExpr {
+                sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+            }
+            _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: selectorExpectedType)
+
+            let resultType: TypeID = if let comparatorSymbol {
+                sema.types.make(.classType(ClassType(
+                    classSymbol: comparatorSymbol,
+                    args: [.invariant(elementType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                sema.types.anyType
+            }
+            let comparisonsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("comparisons")]
+            let funcFQName = comparisonsPkg + [calleeName]
+            if let chosen = sema.symbols.lookupAll(fqName: funcFQName).first(where: { candidate in
+                guard let sig = sema.symbols.functionSignature(for: candidate) else { return false }
+                return sig.parameterTypes.count == 2 &&
+                    sema.symbols.externalLinkName(for: candidate) == "kk_comparator_from_comparator_selector_descending"
+            }) {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: chosen,
+                        substitutedTypeArguments: [elementType, keyType],
+                        parameterMapping: [0: 0, 1: 1]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+            }
+            sema.bindings.bindExprType(id, type: resultType)
+            return resultType
+        }
+
         // --- Comparator factory functions: compareBy, compareByDescending (STDLIB-649) ---
         if let calleeName,
            args.count == 1,
