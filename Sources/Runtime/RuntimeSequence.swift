@@ -3090,6 +3090,68 @@ public func kk_sequence_chunked(_ seqRaw: Int, _ size: Int) -> Int {
     return registerRuntimeObject(resultSeq)
 }
 
+@_cdecl("kk_sequence_chunked_transform")
+public func kk_sequence_chunked_transform(
+    _ seqRaw: Int,
+    _ size: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let chunkSize = max(1, size)
+    var transformedChunks: [Int] = []
+    var currentChunk: [Int] = []
+    var traversalThrown = 0
+    var transformThrown = 0
+
+    func transformChunk(_ chunk: [Int]) -> Int? {
+        let chunkList = registerRuntimeObject(RuntimeListBox(elements: chunk))
+        var lambdaThrown = 0
+        let transformed = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: chunkList,
+            outThrown: &lambdaThrown
+        )
+        if lambdaThrown != 0 {
+            transformThrown = lambdaThrown
+            return nil
+        }
+        return maybeUnbox(transformed)
+    }
+
+    func visit(_ elem: Int) -> Bool {
+        currentChunk.append(elem)
+        if currentChunk.count == chunkSize {
+            let chunk = currentChunk
+            currentChunk.removeAll(keepingCapacity: true)
+            guard let transformed = transformChunk(chunk) else { return false }
+            transformedChunks.append(transformed)
+        }
+        return true
+    }
+
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: &traversalThrown, yield: visit)
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            if !visit(elem) { break }
+        }
+    }
+    let thrown = transformThrown != 0 ? transformThrown : traversalThrown
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    if !currentChunk.isEmpty {
+        let chunk = currentChunk
+        currentChunk.removeAll(keepingCapacity: true)
+        guard let transformed = transformChunk(chunk) else {
+            return handleCollectionLambdaThrow(transformThrown, outThrown)
+        }
+        transformedChunks.append(transformed)
+    }
+    let resultSeq = RuntimeSequenceBox(steps: [.source(elements: transformedChunks)])
+    return registerRuntimeObject(resultSeq)
+}
+
 @_cdecl("kk_sequence_windowed")
 public func kk_sequence_windowed(_ seqRaw: Int, _ size: Int, _ step: Int, _ partialWindows: Int) -> Int {
     let clampedSize = max(1, size)

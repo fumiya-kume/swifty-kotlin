@@ -913,6 +913,26 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // chunked(size[, transform]) on sequence -> kk_sequence_chunked(_transform)
+        if callee == lookup.chunkedName,
+           (arguments.count == 1 || arguments.count == 3),
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let kkName = arguments.count == 3
+                ? lookup.kkSequenceChunkedTransformName
+                : lookup.kkSequenceChunkedName
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: kkName,
+                arguments: [receiver] + arguments,
+                result: result,
+                canThrow: arguments.count == 3,
+                thrownResult: arguments.count == 3 ? origThrownResult : nil
+            ))
+            if let result { sequenceExprIDs.insert(result.rawValue) }
+            return true
+        }
+
         // foldIndexed on sequence → kk_sequence_foldIndexed (STDLIB-557)
         // Args: initial, lambda (2 from Kotlin: initial + operation)
         if callee == lookup.foldIndexedName, arguments.count == 2,

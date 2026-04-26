@@ -1716,6 +1716,7 @@ extension CollectionLiteralLoweringPass {
                         || callee == lookup.kkSequenceDropName || callee == lookup.kkSequenceDistinctName
                         || callee == lookup.kkSequenceZipName
                         || callee == lookup.kkSequenceConstrainOnceName
+                        || callee == lookup.kkSequenceChunkedName || callee == lookup.kkSequenceChunkedTransformName
                         || callee == lookup.kkSequencePlusName || callee == lookup.kkSequenceMinusName
                     {
                         loweredBody.append(instruction)
@@ -1988,6 +1989,26 @@ extension CollectionLiteralLoweringPass {
                                 result: result,
                                 canThrow: false,
                                 thrownResult: nil
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
+
+                    // chunked(size[, transform]) on sequence → kk_sequence_chunked(_transform)
+                    if callee == lookup.chunkedName, arguments.count == 2 || arguments.count == 4 {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            let kkName = arguments.count == 4
+                                ? lookup.kkSequenceChunkedTransformName
+                                : lookup.kkSequenceChunkedName
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: arguments.count == 4,
+                                thrownResult: thrownResult
                             ))
                             if let result { sequenceExprIDs.insert(result.rawValue) }
                             continue

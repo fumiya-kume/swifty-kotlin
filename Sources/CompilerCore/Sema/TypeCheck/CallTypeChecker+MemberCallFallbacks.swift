@@ -1149,7 +1149,7 @@ extension CallTypeChecker {
              interner.intern("map"), interner.intern("filter"), interner.intern("filterNot"), interner.intern("mapNotNull"), interner.intern("forEach"), interner.intern("flatMap"),
              interner.intern("any"), interner.intern("none"), interner.intern("all"),
              interner.intern("groupBy"), interner.intern("groupingBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("reduceOrNull"), interner.intern("reduceIndexedOrNull"), interner.intern("runningReduce"), interner.intern("runningReduceIndexed"), interner.intern("scanReduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
-             interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("filterIndexed"), interner.intern("sumOf"), interner.intern("chunked"), interner.intern("onEach"), interner.intern("onEachIndexed"),
+             interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("filterIndexed"), interner.intern("sumOf"), interner.intern("onEach"), interner.intern("onEachIndexed"),
              interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"),
              interner.intern("takeWhile"), interner.intern("dropWhile"),
              interner.intern("sortBy"), interner.intern("sortByDescending"), interner.intern("distinctBy"),
@@ -1201,7 +1201,7 @@ extension CallTypeChecker {
         case interner.intern("windowed"):
             return argCount == 1 || argCount == 2 || argCount == 3 || argCount == 4
         case interner.intern("chunked"):
-            return argCount == 1 || (!isSequenceReceiver && argCount == 2)
+            return argCount == 1 || argCount == 2
         case interner.intern("count"), interner.intern("first"), interner.intern("last"),
              interner.intern("single"):
             return argCount == 0 || argCount == 1
@@ -1240,6 +1240,36 @@ extension CallTypeChecker {
         // sum() returns the element type (Int for List<Int>, Long for List<Long>, etc.)
         if memberName == interner.intern("sum") {
             return receiverElementType
+        }
+
+        if memberName == interner.intern("chunked") && isSequenceReceiver {
+            let sequenceElementType: TypeID
+            if args.count == 2 {
+                let transformExpr = args[1].expr
+                if case let .lambdaLiteral(_, bodyExpr, _, _) = ctx.ast.arena.expr(transformExpr) {
+                    sequenceElementType = sema.bindings.exprTypes[bodyExpr] ?? sema.types.anyType
+                } else if let lambdaType = sema.bindings.exprTypes[transformExpr],
+                          case let .functionType(fnType) = sema.types.kind(of: lambdaType)
+                {
+                    sequenceElementType = fnType.returnType
+                } else {
+                    sequenceElementType = sema.types.anyType
+                }
+            } else if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                sequenceElementType = sema.types.make(.classType(ClassType(
+                    classSymbol: listSymbol,
+                    args: [.out(receiverElementType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                sequenceElementType = sema.types.anyType
+            }
+            return makeSyntheticSequenceType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: sequenceElementType
+            )
         }
 
         if memberName == interner.intern("chunked") && args.count == 2 && !isSequenceReceiver {
@@ -1938,9 +1968,6 @@ extension CallTypeChecker {
 
         // chunked(size, transform): transform receives List<T> and returns R
         if memberName == interner.intern("chunked"), argCount == 2 {
-            // Build List<Any> for the lambda parameter type; the transform receives
-            // a List<T> chunk, which we approximate as List<Any> in the fallback path
-            // (consistent with the synthetic stub's transform parameter type).
             let listType: TypeID
             if let listSymbol = sema.symbols.lookup(fqName: [
                 interner.intern("kotlin"),
@@ -1949,7 +1976,7 @@ extension CallTypeChecker {
             ]) {
                 listType = sema.types.make(.classType(ClassType(
                     classSymbol: listSymbol,
-                    args: [.invariant(sema.types.anyType)],
+                    args: [.invariant(receiverElementType)],
                     nullability: .nonNull
                 )))
             } else {

@@ -2630,6 +2630,87 @@ extension DataFlowSemaPhase {
             interner.intern("MutableSet"),
         ], elementType: typeParamType, invariant: true)
 
+        // chunked(size): Sequence<List<T>>
+        // chunked(size, transform): Sequence<Any>
+        do {
+            let chunkedName = interner.intern("chunked")
+            let chunkedFQName = sequenceFQName + [chunkedName]
+            func hasChunkedOverload(parameterCount: Int) -> Bool {
+                symbols.lookupAll(fqName: chunkedFQName).contains { symID in
+                    guard let sig = symbols.functionSignature(for: symID) else { return false }
+                    return sig.parameterTypes.count == parameterCount
+                }
+            }
+
+            if !hasChunkedOverload(parameterCount: 1) {
+                let sequenceOfListReturnType = types.make(.classType(ClassType(
+                    classSymbol: sequenceSymbol,
+                    args: [.out(listReturnType)],
+                    nullability: .nonNull
+                )))
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: chunkedName,
+                    fqName: chunkedFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(sequenceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName("kk_sequence_chunked", for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [types.intType],
+                        returnType: sequenceOfListReturnType,
+                        typeParameterSymbols: [typeParamSymbol],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+
+            if !hasChunkedOverload(parameterCount: 2) {
+                let chunkListType = nominalCollectionType([
+                    interner.intern("kotlin"),
+                    interner.intern("collections"),
+                    interner.intern("List"),
+                ], elementType: types.anyType, invariant: true)
+                let transformType = types.make(.functionType(FunctionType(
+                    params: [chunkListType],
+                    returnType: types.anyType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                let sequenceAnyType = types.make(.classType(ClassType(
+                    classSymbol: sequenceSymbol,
+                    args: [.out(types.anyType)],
+                    nullability: .nonNull
+                )))
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: chunkedName,
+                    fqName: chunkedFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                symbols.setParentSymbol(sequenceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName("kk_sequence_chunked_transform", for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [types.intType, transformType],
+                        returnType: sequenceAnyType,
+                        canThrow: true,
+                        typeParameterSymbols: [typeParamSymbol],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+        }
+
         // first(): T
         registerSequenceMemberStub(
             named: "first",

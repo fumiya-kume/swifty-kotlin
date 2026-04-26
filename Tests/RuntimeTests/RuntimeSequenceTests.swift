@@ -126,6 +126,15 @@ private let sequenceAdjacentDifference: @convention(c) (Int, Int, Int, UnsafeMut
     right - left
 }
 
+private let sequenceChunkSizeTransform: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, chunkRaw, _ in
+    kk_list_size(chunkRaw)
+}
+
+private let throwingSequenceChunkTransform: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, outThrown in
+    outThrown?.pointee = runtimeAllocateThrowable(message: "sequence chunked transform failed")
+    return 0
+}
+
 private let throwingSequenceAdjacentTransform: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _, outThrown in
     outThrown?.pointee = runtimeAllocateThrowable(message: "sequence zipWithNext transform failed")
     return 0
@@ -700,6 +709,56 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
         XCTAssertNotEqual(thrown, 0)
         XCTAssertEqual(result, 0)
+    }
+
+    // MARK: - Sequence chunked transform tests (STDLIB-SEQ-008)
+
+    func testChunkedTransformAppliesLambdaToEachChunk() {
+        let seq = makeSequence([1, 2, 3, 4, 5])
+        var thrown = 0
+
+        let result = kk_sequence_chunked_transform(
+            seq,
+            2,
+            unsafeBitCast(sequenceChunkSizeTransform, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(sequenceElements(result), [2, 2, 1])
+    }
+
+    func testChunkedTransformReturnsSentinelWhenLambdaThrows() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_chunked_transform(
+            seq,
+            2,
+            unsafeBitCast(throwingSequenceChunkTransform, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+    }
+
+    func testChunkedTransformReturnsSentinelWhenFinalPartialLambdaThrows() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_chunked_transform(
+            seq,
+            10,
+            unsafeBitCast(throwingSequenceChunkTransform, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
     }
 
     // MARK: - Sequence zipWithNext transform tests (STDLIB-SEQ-018)

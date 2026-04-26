@@ -325,6 +325,41 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    // MARK: - chunked transform returns a transformed sequence
+
+    func testSequenceChunkedTransform() throws {
+        let source = """
+        fun main() {
+            val result = sequenceOf(1, 2, 3, 4, 5)
+                .chunked(2) { chunk ->
+                    chunk.size
+                }
+                .toList()
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceChunkedTransform",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [2, 2, 1]
+                """ + "\n"
+            )
+        }
+    }
+
     // MARK: - terminal ops: count, forEach, fold
 
     func testSequenceTerminalOps() throws {
