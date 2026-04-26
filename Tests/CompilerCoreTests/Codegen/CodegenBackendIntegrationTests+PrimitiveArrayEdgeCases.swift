@@ -583,6 +583,50 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testUnsignedPrimitiveArrayCopyOfRangeReturnsUnsignedArrays() throws {
+        let source = """
+        fun main() {
+            val ubytes = ubyteArrayOf()
+            val ubyteCopy = ubytes.copyOfRange(0, 0)
+            println(ubyteCopy.size)
+
+            val ushorts = ushortArrayOf()
+            val ushortCopy = ushorts.copyOfRange(0, 0)
+            println(ushortCopy.size)
+
+            val uints = uintArrayOf(100u, 200u, 300u)
+            val uintCopy = uints.copyOfRange(1, 3)
+            println(uintCopy.size)
+            println(uintCopy[0])
+            uintCopy[0] = 900u
+            println(uints[1])
+            println(uintCopy[0])
+
+            val ulongs = ulongArrayOf(1000uL, 2000uL, 3000uL)
+            val ulongCopy = ulongs.copyOfRange(0, 2)
+            println(ulongCopy.size)
+            println(ulongCopy[1])
+            ulongCopy[1] = 9000uL
+            println(ulongs[1])
+            println(ulongCopy[1])
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "UnsignedPrimitiveArrayCopyOfRangeReturnsUnsignedArrays",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "0\n0\n2\n200\n200\n900\n2\n2000\n2000\n9000\n")
+        }
+    }
+
     // MARK: - toIntArray from List round-trip
 
     func testListToIntArrayRoundTrip() throws {
