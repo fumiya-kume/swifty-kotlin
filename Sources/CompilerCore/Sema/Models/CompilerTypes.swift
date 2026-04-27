@@ -136,6 +136,33 @@ public struct CompilerOptions: Equatable {
         self.diagnosticsFormat = diagnosticsFormat
     }
 
+    /// Marker annotations accepted by compiler-wide `-opt-in=<fqName>` flags.
+    public var optInMarkerNames: [String] {
+        Self.optInMarkerNames(from: frontendFlags)
+    }
+
+    public static func optInMarkerNames(from frontendFlags: [String]) -> [String] {
+        var names: [String] = []
+        for flag in frontendFlags {
+            let trimmed = flag.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else {
+                continue
+            }
+            let prefixes = ["opt-in=", "opt-in:"]
+            guard let prefix = prefixes.first(where: { trimmed.hasPrefix($0) }) else {
+                continue
+            }
+            let rawValue = String(trimmed.dropFirst(prefix.count))
+            for name in rawValue.split(separator: ",") {
+                let normalized = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !normalized.isEmpty {
+                    names.append(normalized)
+                }
+            }
+        }
+        return names
+    }
+
     /// The number of frontend parallel jobs parsed from `-Xfrontend jobs=N`.
     /// Controls **BuildASTPhase** concurrency only; LexPhase and ParsePhase
     /// always submit all file tasks concurrently (unchanged from pre-PR

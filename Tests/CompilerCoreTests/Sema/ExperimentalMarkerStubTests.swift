@@ -8,6 +8,7 @@ import XCTest
 // missing in PR #1231 are now synthesised correctly:
 //
 //   • ExperimentalUnsignedTypes  — kotlin          — severity ERROR
+//   • ExperimentalVersionOverloading — kotlin       — severity ERROR
 //   • ExperimentalUuidApi        — kotlin.uuid      — severity ERROR
 //   • ExperimentalEncodingApi    — kotlin.io.encoding — severity ERROR
 //   • ExperimentalMultiplatform  — kotlin           — severity ERROR
@@ -104,6 +105,29 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         let (sema, interner) = try makeSema()
         assertHasRequiresOptIn(
             fqPath: ["kotlin", "ExperimentalUnsignedTypes"],
+            expectedSeverity: "ERROR",
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    // MARK: - ExperimentalVersionOverloading (kotlin, ERROR)
+
+    func testExperimentalVersionOverloadingIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let sym = lookupSymbol(fqPath: ["kotlin", "ExperimentalVersionOverloading"], sema: sema, interner: interner)
+        XCTAssertNotNil(sym, "kotlin.ExperimentalVersionOverloading must be registered in the symbol table")
+    }
+
+    func testExperimentalVersionOverloadingIsAnnotationClass() throws {
+        let (sema, interner) = try makeSema()
+        assertIsAnnotationClass(fqPath: ["kotlin", "ExperimentalVersionOverloading"], sema: sema, interner: interner)
+    }
+
+    func testExperimentalVersionOverloadingHasRequiresOptInWithErrorSeverity() throws {
+        let (sema, interner) = try makeSema()
+        assertHasRequiresOptIn(
+            fqPath: ["kotlin", "ExperimentalVersionOverloading"],
             expectedSeverity: "ERROR",
             sema: sema,
             interner: interner
@@ -238,6 +262,7 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         }
 
         XCTAssertEqual(severity(fqPath: ["kotlin", "ExperimentalUnsignedTypes"]), "ERROR")
+        XCTAssertEqual(severity(fqPath: ["kotlin", "ExperimentalVersionOverloading"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "uuid", "ExperimentalUuidApi"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "io", "encoding", "ExperimentalEncodingApi"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "ExperimentalMultiplatform"]), "ERROR")

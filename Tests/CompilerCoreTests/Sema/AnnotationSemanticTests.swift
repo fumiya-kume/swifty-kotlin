@@ -744,6 +744,76 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Opt-in diagnostics should be errors")
     }
 
+    func testCompilerOptInFlagAllowsExperimentalStdlibApiUsage() {
+        let source = """
+        fun hex(): String = 255.toHexString()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(
+            source,
+            frontendFlags: ["opt-in=kotlin.ExperimentalStdlibApi"]
+        )
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected compiler -opt-in flag to suppress stdlib opt-in diagnostics, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testExperimentalVersionOverloadingAnnotationRequiresOptIn() {
+        let source = """
+        import kotlin.ExperimentalVersionOverloading
+
+        @ExperimentalVersionOverloading
+        annotation class Versioned
+
+        @Versioned
+        fun api() {}
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one ExperimentalVersionOverloading opt-in diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "ExperimentalVersionOverloading opt-in diagnostics should be errors")
+    }
+
+    func testExperimentalVersionOverloadingAnnotationAcceptsOptIn() {
+        let source = """
+        import kotlin.ExperimentalVersionOverloading
+
+        @ExperimentalVersionOverloading
+        annotation class Versioned
+
+        @OptIn(ExperimentalVersionOverloading::class)
+        @Versioned
+        fun api() {}
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected @OptIn to suppress ExperimentalVersionOverloading diagnostics, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testExperimentalVersionOverloadingAnnotationAcceptsCompilerOptInFlag() {
+        let source = """
+        import kotlin.ExperimentalVersionOverloading
+
+        @ExperimentalVersionOverloading
+        annotation class Versioned
+
+        @Versioned
+        fun api() {}
+        """
+
+        let ctx = runSemaCollectingDiagnostics(
+            source,
+            frontendFlags: ["opt-in=kotlin.ExperimentalVersionOverloading"]
+        )
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected compiler -opt-in flag to suppress ExperimentalVersionOverloading diagnostics, got: \(ctx.diagnostics.diagnostics)")
+    }
+
     func testSubclassOptInRequiredRejectsSubclassWithoutOptIn() {
         let source = """
         @RequiresOptIn
@@ -842,13 +912,27 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.isEmpty, "Expected OPT_IN_USAGE suppression alias to suppress opt-in diagnostics, got: \(ctx.diagnostics.diagnostics)")
     }
 
-    func runSemaCollectingDiagnostics(_ source: String) -> CompilationContext {
-        let ctx = makeContextFromSource(source)
+    func runSemaCollectingDiagnostics(
+        _ source: String,
+        frontendFlags: [String] = []
+    ) -> CompilationContext {
+        let ctx = makeAnnotationSemanticContext(source, frontendFlags: frontendFlags)
         do {
             try runSema(ctx)
         } catch {
             // Error diagnostics are asserted by each test.
         }
+        return ctx
+    }
+
+    private func makeAnnotationSemanticContext(
+        _ source: String,
+        frontendFlags: [String]
+    ) -> CompilationContext {
+        let fakePath = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".kt").path
+        let ctx = makeCompilationContext(inputs: [fakePath], frontendFlags: frontendFlags)
+        _ = ctx.sourceManager.addFile(path: fakePath, contents: Data(source.utf8))
         return ctx
     }
 

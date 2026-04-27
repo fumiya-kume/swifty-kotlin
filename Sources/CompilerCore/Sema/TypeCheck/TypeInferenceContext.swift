@@ -47,6 +47,8 @@ struct TypeInferenceContext {
     let useUnrestrictedBuilderInference: Bool
     /// Mirrors Kotlin's `ProperTypeInferenceConstraintsProcessing`.
     let useProperTypeInferenceConstraintsProcessing: Bool
+    /// Marker annotations accepted through compiler-wide `-opt-in=<fqName>`.
+    let globalOptInMarkerNames: [String]
     /// Set of DslMarker annotation FQ names active on the current implicit receiver.
     /// When a nested lambda introduces a receiver whose class carries the same
     /// DslMarker annotation as an outer receiver, the outer receiver is hidden

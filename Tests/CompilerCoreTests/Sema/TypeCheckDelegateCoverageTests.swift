@@ -623,7 +623,8 @@ private struct TypeCheckFixture {
             semaCacheContext: nil,
             useNewInference: false,
             useUnrestrictedBuilderInference: false,
-            useProperTypeInferenceConstraintsProcessing: false
+            useProperTypeInferenceConstraintsProcessing: false,
+            globalOptInMarkerNames: []
         )
     }
 }

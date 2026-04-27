@@ -24,6 +24,7 @@ enum CLIParser {
       -l <name>              Link library
       --target <triple>      Target triple (arch-vendor-os[-version])
       -Xfrontend <flag>      Frontend feature flag (e.g. time-phases)
+      -opt-in=<fqname>       Opt in to an experimental API marker
       -Xnew-inference        Enable the new type inference pipeline
       -Xunrestricted-builder-inference
                              Enable unrestricted builder inference
@@ -87,6 +88,13 @@ enum CLIParser {
                     throw CLIParseError.invalidTargetTriple(value)
                 }
                 target = parsed
+            case "-opt-in", "-Xopt-in":
+                let value = try requireValue(option: arg, args: args, index: &index)
+                frontendFlags.append("opt-in=\(value)")
+            case _ where arg.hasPrefix("-opt-in="):
+                frontendFlags.append("opt-in=\(String(arg.dropFirst("-opt-in=".count)))")
+            case _ where arg.hasPrefix("-Xopt-in="):
+                frontendFlags.append("opt-in=\(String(arg.dropFirst("-Xopt-in=".count)))")
             case "-Xfrontend":
                 try frontendFlags.append(requireValue(option: arg, args: args, index: &index))
             case "-Xnew-inference":

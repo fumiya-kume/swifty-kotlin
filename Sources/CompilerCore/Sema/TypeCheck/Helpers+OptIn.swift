@@ -286,8 +286,19 @@ extension TypeCheckHelpers {
 
     private func activeOptInMarkers(in ctx: TypeInferenceContext) -> Set<SymbolID> {
         var markers: Set<SymbolID> = []
+        let file = currentFile(in: ctx)
 
-        if let file = currentFile(in: ctx) {
+        for markerName in ctx.globalOptInMarkerNames {
+            if let markerSymbol = resolveAnnotationClassSymbol(
+                named: markerName,
+                file: file,
+                ctx: ctx
+            ) {
+                markers.insert(markerSymbol)
+            }
+        }
+
+        if let file {
             collectOptInMarkers(
                 from: file.annotations,
                 file: file,

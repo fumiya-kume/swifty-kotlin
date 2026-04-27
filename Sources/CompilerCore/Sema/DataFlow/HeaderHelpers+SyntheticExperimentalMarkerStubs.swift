@@ -1,6 +1,6 @@
 import Foundation
 
-/// Synthetic stubs for five Kotlin stdlib experimental opt-in markers discovered
+/// Synthetic stubs for Kotlin stdlib experimental opt-in markers discovered
 /// missing in STDLIB-EXPERIMENTAL-ABI-001.
 ///
 /// Each marker is an annotation class annotated with `@RequiresOptIn` at the declared
@@ -9,6 +9,7 @@ import Foundation
 /// | Annotation                | Package              | Severity |
 /// |---------------------------|----------------------|----------|
 /// | ExperimentalUnsignedTypes | kotlin               | ERROR    |
+/// | ExperimentalVersionOverloading | kotlin          | ERROR    |
 /// | ExperimentalUuidApi       | kotlin.uuid          | ERROR    |
 /// | ExperimentalEncodingApi   | kotlin.io.encoding   | ERROR    |
 /// | ExperimentalMultiplatform | kotlin               | ERROR    |
@@ -31,6 +32,16 @@ extension DataFlowSemaPhase {
         // --- kotlin.ExperimentalUnsignedTypes (ERROR) ---
         registerSyntheticExperimentalMarker(
             named: "ExperimentalUnsignedTypes",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            severity: "ERROR",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- kotlin.ExperimentalVersionOverloading (ERROR) ---
+        registerSyntheticExperimentalMarker(
+            named: "ExperimentalVersionOverloading",
             packageFQName: kotlinPkg,
             packageSymbol: kotlinPkgSymbol,
             severity: "ERROR",

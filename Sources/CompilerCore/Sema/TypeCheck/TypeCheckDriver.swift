@@ -22,6 +22,7 @@ final class TypeCheckDriver {
     let useNewInference: Bool
     let useUnrestrictedBuilderInference: Bool
     let useProperTypeInferenceConstraintsProcessing: Bool
+    let globalOptInMarkerNames: [String]
 
     // Delegates (lazy to break initialization ordering; each holds unowned back-reference)
     private(set) lazy var exprChecker = ExprTypeChecker(driver: self)
@@ -50,7 +51,8 @@ final class TypeCheckDriver {
         semaCacheContext: SemaCacheContext? = nil,
         useNewInference: Bool = false,
         useUnrestrictedBuilderInference: Bool = false,
-        useProperTypeInferenceConstraintsProcessing: Bool = false
+        useProperTypeInferenceConstraintsProcessing: Bool = false,
+        globalOptInMarkerNames: [String] = []
     ) {
         self.ast = ast
         self.sema = sema
@@ -64,6 +66,7 @@ final class TypeCheckDriver {
         self.useNewInference = useNewInference
         self.useUnrestrictedBuilderInference = useUnrestrictedBuilderInference
         self.useProperTypeInferenceConstraintsProcessing = useProperTypeInferenceConstraintsProcessing
+        self.globalOptInMarkerNames = globalOptInMarkerNames
     }
 
     // MARK: - Main Recursive Dispatch Entry Point
@@ -104,7 +107,8 @@ final class TypeCheckDriver {
                 semaCacheContext: semaCacheContext,
                 useNewInference: useNewInference,
                 useUnrestrictedBuilderInference: useUnrestrictedBuilderInference,
-                useProperTypeInferenceConstraintsProcessing: useProperTypeInferenceConstraintsProcessing
+                useProperTypeInferenceConstraintsProcessing: useProperTypeInferenceConstraintsProcessing,
+                globalOptInMarkerNames: globalOptInMarkerNames
             )
             for declID in file.topLevelDecls {
                 guard let decl = ast.arena.decl(declID),

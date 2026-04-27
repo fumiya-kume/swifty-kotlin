@@ -70,6 +70,30 @@ final class CLIParserTests: XCTestCase {
         XCTAssertTrue(options.useProperTypeInferenceConstraintsProcessing)
     }
 
+    func testParsesOptInFlag() throws {
+        let options = try CLIParser.parse(args: [
+            "-opt-in=kotlin.ExperimentalVersionOverloading",
+            "main.kt",
+        ])
+
+        XCTAssertEqual(options.frontendFlags, ["opt-in=kotlin.ExperimentalVersionOverloading"])
+        XCTAssertEqual(options.optInMarkerNames, ["kotlin.ExperimentalVersionOverloading"])
+    }
+
+    func testParsesOptInFlagWithSeparateValue() throws {
+        let options = try CLIParser.parse(args: [
+            "-opt-in",
+            "kotlin.ExperimentalVersionOverloading,kotlin.ExperimentalStdlibApi",
+            "main.kt",
+        ])
+
+        XCTAssertEqual(options.frontendFlags, ["opt-in=kotlin.ExperimentalVersionOverloading,kotlin.ExperimentalStdlibApi"])
+        XCTAssertEqual(
+            options.optInMarkerNames,
+            ["kotlin.ExperimentalVersionOverloading", "kotlin.ExperimentalStdlibApi"]
+        )
+    }
+
     func testThrowsMissingValue() {
         XCTAssertThrowsError(try CLIParser.parse(args: ["-o"])) { error in
             XCTAssertEqual(error as? CLIParseError, .missingValue("-o"))
