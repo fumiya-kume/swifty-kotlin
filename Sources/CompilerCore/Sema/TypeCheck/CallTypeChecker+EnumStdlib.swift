@@ -107,7 +107,7 @@ extension CallTypeChecker {
             }
             let enumEntriesInterfaceSymbol = sema.symbols.lookup(fqName: [
                 interner.intern("kotlin"),
-                interner.intern("collections"),
+                interner.intern("enums"),
                 interner.intern("EnumEntries"),
             ])
             guard let enumEntriesInterfaceSymbol else {

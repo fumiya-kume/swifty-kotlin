@@ -22,6 +22,13 @@ extension DataFlowSemaPhase {
                 declSite: nil, visibility: .public, flags: [.synthetic]
             )
         }
+        let kotlinEnumsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("enums")]
+        if symbols.lookup(fqName: kotlinEnumsPkg) == nil {
+            _ = symbols.define(
+                kind: .package, name: interner.intern("enums"), fqName: kotlinEnumsPkg,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+        }
 
         // kotlin.Enum<T> with name: String, ordinal: Int
         let enumName = interner.intern("Enum")
@@ -36,11 +43,11 @@ extension DataFlowSemaPhase {
             enumFQName: kotlinPkg + [interner.intern("Enum")]
         )
 
-        // kotlin.collections.EnumEntries<T> — List-like read-only container for enum entries
+        // kotlin.enums.EnumEntries<T> — List-like read-only container for enum entries
         _ = ensureEnumEntriesInterface(
             symbols: symbols,
             interner: interner,
-            kotlinCollectionsPkg: kotlinCollectionsPkg
+            kotlinEnumsPkg: kotlinEnumsPkg
         )
 
         // enumValues<T>(): Array<T> — top-level inline reified
@@ -65,7 +72,7 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner,
             kotlinPkg: kotlinPkg,
-            kotlinCollectionsPkg: kotlinCollectionsPkg
+            kotlinEnumsPkg: kotlinEnumsPkg
         )
     }
 
@@ -148,10 +155,10 @@ extension DataFlowSemaPhase {
     private func ensureEnumEntriesInterface(
         symbols: SymbolTable,
         interner: StringInterner,
-        kotlinCollectionsPkg: [InternedString]
+        kotlinEnumsPkg: [InternedString]
     ) -> SymbolID {
         let enumEntriesName = interner.intern("EnumEntries")
-        let enumEntriesFQName = kotlinCollectionsPkg + [enumEntriesName]
+        let enumEntriesFQName = kotlinEnumsPkg + [enumEntriesName]
         if let existing = symbols.lookup(fqName: enumEntriesFQName) {
             return existing
         }
@@ -173,7 +180,7 @@ extension DataFlowSemaPhase {
             visibility: .public,
             flags: [.synthetic]
         )
-        if let pkg = symbols.lookup(fqName: kotlinCollectionsPkg), pkg != .invalid {
+        if let pkg = symbols.lookup(fqName: kotlinEnumsPkg), pkg != .invalid {
             symbols.setParentSymbol(pkg, for: enumEntriesSymbol)
         }
         return enumEntriesSymbol
@@ -301,14 +308,14 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         kotlinPkg: [InternedString],
-        kotlinCollectionsPkg: [InternedString]
+        kotlinEnumsPkg: [InternedString]
     ) {
         let enumEntriesName = interner.intern("enumEntries")
         let enumEntriesFQName = kotlinPkg + [enumEntriesName]
         guard symbols.lookupAll(fqName: enumEntriesFQName).isEmpty else { return }
 
         let enumEntriesInterfaceName = interner.intern("EnumEntries")
-        let enumEntriesInterfaceFQName = kotlinCollectionsPkg + [enumEntriesInterfaceName]
+        let enumEntriesInterfaceFQName = kotlinEnumsPkg + [enumEntriesInterfaceName]
         guard let enumEntriesInterfaceSymbol = symbols.lookup(fqName: enumEntriesInterfaceFQName) else { return }
 
         let tParamName = interner.intern("T")
@@ -443,7 +450,7 @@ extension DataFlowSemaPhase {
 
         // entries: EnumEntries<T>
         let enumEntriesName = interner.intern("EnumEntries")
-        let enumEntriesFQName = [interner.intern("kotlin"), interner.intern("collections"), enumEntriesName]
+        let enumEntriesFQName = [interner.intern("kotlin"), interner.intern("enums"), enumEntriesName]
         guard let enumEntriesSymbol = symbols.lookup(fqName: enumEntriesFQName) else { return }
 
         let entriesName = interner.intern("entries")
