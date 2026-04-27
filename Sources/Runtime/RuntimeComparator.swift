@@ -163,6 +163,34 @@ public func kk_comparator_from_selector_descending(_ selectorFn: Int, _ selector
     return raw
 }
 
+@_cdecl("kk_comparator_from_comparator_selector")
+public func kk_comparator_from_comparator_selector(
+    _ comparatorRaw: Int,
+    _ selectorFn: Int,
+    _ selectorClosure: Int
+) -> Int {
+    let box = RuntimeTripleBox(first: comparatorRaw, second: selectorFn, third: selectorClosure)
+    let raw = registerRuntimeObject(box)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_from_comparator_selector_trampoline)
+    return raw
+}
+
+@_cdecl("kk_comparator_from_comparator_selector_trampoline")
+public func kk_comparator_from_comparator_selector_trampoline(
+    _ closureRaw: Int,
+    _ a: Int,
+    _ b: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    comparatorFromComparatorSelectorCompare(
+        closureRaw,
+        a,
+        b,
+        outThrown,
+        invalidClosureMessage: "Invalid comparator selector closure"
+    )
+}
+
 @_cdecl("kk_comparator_from_comparator_selector_descending")
 public func kk_comparator_from_comparator_selector_descending(
     _ comparatorRaw: Int,
@@ -182,11 +210,29 @@ public func kk_comparator_from_comparator_selector_descending_trampoline(
     _ b: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
+    let result = comparatorFromComparatorSelectorCompare(
+        closureRaw,
+        a,
+        b,
+        outThrown,
+        invalidClosureMessage: "Invalid descending comparator selector closure"
+    )
+    if outThrown?.pointee != 0 { return 0 }
+    return result == 0 ? 0 : -result
+}
+
+private func comparatorFromComparatorSelectorCompare(
+    _ closureRaw: Int,
+    _ a: Int,
+    _ b: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?,
+    invalidClosureMessage: String
+) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
           runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let box = tryCast(ptr, to: RuntimeTripleBox.self)
     else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid descending comparator selector closure")
+        outThrown?.pointee = runtimeAllocateThrowable(message: invalidClosureMessage)
         return 0
     }
 
@@ -208,9 +254,7 @@ public func kk_comparator_from_comparator_selector_descending_trampoline(
         return 0
     }
     let compareFn = unsafeBitCast(compareFnPtr, to: RuntimeCollectionLambda2.self)
-    let result = compareFn(box.first, maybeUnbox(keyA), maybeUnbox(keyB), outThrown)
-    if outThrown?.pointee != 0 { return 0 }
-    return result == 0 ? 0 : -result
+    return compareFn(box.first, maybeUnbox(keyA), maybeUnbox(keyB), outThrown)
 }
 
 // MARK: - Multi-selector compareBy (STDLIB-613)

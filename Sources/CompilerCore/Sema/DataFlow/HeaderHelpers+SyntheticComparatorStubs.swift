@@ -318,57 +318,65 @@ extension DataFlowSemaPhase {
             )
         }
 
-        let kParamName = interner.intern("K")
-        let compareByDescendingComparatorFQName = comparisonsPkg + [interner.intern("compareByDescending")]
-        let kParamFQName = compareByDescendingComparatorFQName + [kParamName]
-        let kParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: kParamFQName) {
-            existing
-        } else {
-            symbols.define(
-                kind: .typeParameter,
-                name: kParamName,
-                fqName: kParamFQName,
-                declSite: nil,
-                visibility: .private,
-                flags: []
-            )
-        }
-        let kParamType = types.make(.typeParam(TypeParamType(
-            symbol: kParamSymbol,
-            nullability: .nonNull
-        )))
-        let keyComparatorType = types.make(.classType(ClassType(
-            classSymbol: comparatorSymbol,
-            args: [.invariant(kParamType)],
-            nullability: .nonNull
-        )))
-        let keySelectorType = types.make(.functionType(FunctionType(
-            params: [tParamType],
-            returnType: kParamType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-        if !symbols.lookupAll(fqName: compareByDescendingComparatorFQName).contains(where: { symbolID in
-            guard let sig = symbols.functionSignature(for: symbolID) else { return false }
-            return sig.parameterTypes == [keyComparatorType, keySelectorType] &&
-                sig.returnType == comparatorType
-        }) {
+        for (name, extLink) in [
+            ("compareBy", "kk_comparator_from_comparator_selector"),
+            ("compareByDescending", "kk_comparator_from_comparator_selector_descending"),
+        ] {
+            let functionName = interner.intern(name)
+            let functionFQName = comparisonsPkg + [functionName]
+            let kParamName = interner.intern("K")
+            let kParamFQName = functionFQName + [kParamName]
+            let kParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: kParamFQName) {
+                existing
+            } else {
+                symbols.define(
+                    kind: .typeParameter,
+                    name: kParamName,
+                    fqName: kParamFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+            }
+            let kParamType = types.make(.typeParam(TypeParamType(
+                symbol: kParamSymbol,
+                nullability: .nonNull
+            )))
+            let keyComparatorType = types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.invariant(kParamType)],
+                nullability: .nonNull
+            )))
+            let keySelectorType = types.make(.functionType(FunctionType(
+                params: [tParamType],
+                returnType: kParamType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                return sig.parameterTypes == [keyComparatorType, keySelectorType] &&
+                    sig.returnType == comparatorType
+            }) {
+                continue
+            }
+
             let funcSymbol = symbols.define(
                 kind: .function,
-                name: interner.intern("compareByDescending"),
-                fqName: compareByDescendingComparatorFQName,
+                name: functionName,
+                fqName: functionFQName,
                 declSite: nil,
                 visibility: .public,
                 flags: [.synthetic, .inlineFunction]
             )
             symbols.setParentSymbol(comparisonsPackageSymbol, for: funcSymbol)
-            symbols.setExternalLinkName("kk_comparator_from_comparator_selector_descending", for: funcSymbol)
+            symbols.setExternalLinkName(extLink, for: funcSymbol)
 
             let comparatorParamName = interner.intern("comparator")
             let comparatorParamSymbol = symbols.define(
                 kind: .valueParameter,
                 name: comparatorParamName,
-                fqName: compareByDescendingComparatorFQName + [comparatorParamName],
+                fqName: functionFQName + [comparatorParamName],
                 declSite: nil,
                 visibility: .private,
                 flags: [.synthetic]
@@ -377,7 +385,7 @@ extension DataFlowSemaPhase {
             let selectorParamSymbol = symbols.define(
                 kind: .valueParameter,
                 name: selectorParamName,
-                fqName: compareByDescendingComparatorFQName + [selectorParamName],
+                fqName: functionFQName + [selectorParamName],
                 declSite: nil,
                 visibility: .private,
                 flags: [.synthetic]

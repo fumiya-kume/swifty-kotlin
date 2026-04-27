@@ -1616,7 +1616,8 @@ final class CallLowerer {
             return finalArgs
         }
 
-        if externalLinkName == "kk_comparator_from_comparator_selector_descending",
+        if (externalLinkName == "kk_comparator_from_comparator_selector" ||
+            externalLinkName == "kk_comparator_from_comparator_selector_descending"),
            loweredArguments.count == 2
         {
             var finalArgs: [KIRExprID] = [loweredArguments[0]]
