@@ -547,6 +547,40 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
     }
 
+    func testExposedCopyVisibilityResolvesAndTargetsClasses() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("ExposedCopyVisibility"),
+            ]),
+            "kotlin.ExposedCopyVisibility must be registered"
+        )
+        let annotations = sema.symbols.annotations(for: symbol)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == ["AnnotationTarget.CLASS"]
+            },
+            "ExposedCopyVisibility should target classes, got: \(annotations)"
+        )
+    }
+
+    func testExposedCopyVisibilityRejectsFunctionUse() {
+        let source = """
+        @ExposedCopyVisibility
+        fun bad() {}
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected class-only annotation target diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
     func testPrivateDataClassCopyVisibilityMigrationWarnsAndKeepsPublicCopy() throws {
         let source = """
         package test
@@ -583,6 +617,25 @@ final class AnnotationSemanticTests: XCTestCase {
             try symbolVisibility(["test", "Secret", "copy"], in: ctx),
             .private,
             "Annotated data class copy() should use the private primary constructor visibility"
+        )
+    }
+
+    func testExposedCopyVisibilitySuppressesWarningAndKeepsPublicCopy() throws {
+        let source = """
+        package test
+
+        @ExposedCopyVisibility
+        data class Secret private constructor(val value: Int)
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-DATA-COPY-VISIBILITY", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected ExposedCopyVisibility to suppress migration warning, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertEqual(
+            try symbolVisibility(["test", "Secret", "copy"], in: ctx),
+            .public,
+            "ExposedCopyVisibility should keep copy() public"
         )
     }
 

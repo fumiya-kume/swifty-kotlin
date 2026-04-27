@@ -283,6 +283,10 @@ extension DataFlowSemaPhase {
         hasCompilerAnnotation(.consistentCopyVisibility, on: classDecl.annotations)
     }
 
+    func dataClassUsesExposedCopyVisibility(_ classDecl: ClassDecl) -> Bool {
+        hasCompilerAnnotation(.exposedCopyVisibility, on: classDecl.annotations)
+    }
+
     func dataClassCopyVisibility(
         for classDecl: ClassDecl,
         classSymbol: SemanticSymbol?

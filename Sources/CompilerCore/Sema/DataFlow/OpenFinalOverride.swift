@@ -114,7 +114,8 @@ extension DataFlowSemaPhase {
         ctx: OpenFinalOverrideContext
     ) {
         guard classDecl.hasPrimaryConstructorSyntax,
-              !dataClassUsesConsistentCopyVisibility(classDecl)
+              !dataClassUsesConsistentCopyVisibility(classDecl),
+              !dataClassUsesExposedCopyVisibility(classDecl)
         else {
             return
         }
@@ -133,7 +134,7 @@ extension DataFlowSemaPhase {
         let visibilityName = renderVisibility(constructorVisibility)
         ctx.diagnostics.warning(
             "KSWIFTK-SEMA-DATA-COPY-VISIBILITY",
-            "Data class '\(className)' has a \(visibilityName) primary constructor; generated copy() remains public unless '@ConsistentCopyVisibility' is applied.",
+            "Data class '\(className)' has a \(visibilityName) primary constructor; generated copy() remains public unless '@ConsistentCopyVisibility' or '@ExposedCopyVisibility' is applied.",
             range: classDecl.range
         )
     }
