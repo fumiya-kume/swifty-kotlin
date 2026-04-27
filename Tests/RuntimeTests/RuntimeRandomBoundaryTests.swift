@@ -19,6 +19,14 @@ final class RuntimeRandomBoundaryTests: XCTestCase {
         kk_bits_to_float(bits)
     }
 
+    private func ulongRaw(_ value: UInt64) -> Int {
+        Int(bitPattern: UInt(truncatingIfNeeded: value))
+    }
+
+    private func ulongPayload(_ raw: Int) -> UInt64 {
+        UInt64(UInt(bitPattern: raw))
+    }
+
     // MARK: - Seed Reproducibility: nextInt
 
     func testSeedReproducibilityNextInt() {
@@ -492,5 +500,71 @@ final class RuntimeRandomBoundaryTests: XCTestCase {
             XCTAssertEqual(thrown2, 0)
             XCTAssertEqual(v1, v2, "nextLong(range): same seed must produce identical sequence")
         }
+    }
+
+    // MARK: - nextULong: boundary values
+
+    func testNextULongFullRangeSeedReproducibility() {
+        let r1 = makeSeeded(41416)
+        let r2 = makeSeeded(41416)
+        for _ in 0..<20 {
+            XCTAssertEqual(kk_random_nextULong(r1), kk_random_nextULong(r2))
+        }
+    }
+
+    func testNextULongUntil() {
+        let r = makeSeeded(42)
+        var thrown: Int = 0
+        for _ in 0..<50 {
+            let value = ulongPayload(kk_random_nextULong_until(r, ulongRaw(10), &thrown))
+            XCTAssertEqual(thrown, 0)
+            XCTAssertLessThan(value, 10)
+        }
+    }
+
+    func testNextULongRange() {
+        let r = makeSeeded(42)
+        var thrown: Int = 0
+        for _ in 0..<50 {
+            let value = ulongPayload(kk_random_nextULong_range(r, ulongRaw(10), ulongRaw(20), &thrown))
+            XCTAssertEqual(thrown, 0)
+            XCTAssertGreaterThanOrEqual(value, 10)
+            XCTAssertLessThan(value, 20)
+        }
+    }
+
+    func testNextULongULongRange() {
+        let r = makeSeeded(42)
+        let range = registerRuntimeObject(RuntimeRangeBox(first: ulongRaw(30), last: ulongRaw(35), step: 1))
+        var thrown: Int = 0
+        for _ in 0..<50 {
+            let value = ulongPayload(kk_random_nextULong_ulongRange(r, range, &thrown))
+            XCTAssertEqual(thrown, 0)
+            XCTAssertGreaterThanOrEqual(value, 30)
+            XCTAssertLessThanOrEqual(value, 35)
+        }
+    }
+
+    func testNextULongUntilThrowsOnZero() {
+        let r = makeSeeded(1)
+        var thrown: Int = 0
+        _ = kk_random_nextULong_until(r, 0, &thrown)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testNextULongRangeThrowsWhenFromEqualsUntil() {
+        let r = makeSeeded(1)
+        var thrown: Int = 0
+        _ = kk_random_nextULong_range(r, ulongRaw(7), ulongRaw(7), &thrown)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testNextULongRangeSupportsUInt64MaxExclusiveUpper() {
+        let r = makeSeeded(2)
+        var thrown: Int = 0
+        let value = ulongPayload(kk_random_nextULong_range(r, ulongRaw(UInt64.max - 2), ulongRaw(UInt64.max), &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(value, UInt64.max - 2)
+        XCTAssertLessThan(value, UInt64.max)
     }
 }

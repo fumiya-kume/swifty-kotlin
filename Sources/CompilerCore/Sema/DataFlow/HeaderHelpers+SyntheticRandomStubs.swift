@@ -53,9 +53,16 @@ extension DataFlowSemaPhase {
 
         let intType = types.intType
         let longType = types.longType
+        let ulongType = types.ulongType
         let floatType = types.floatType
         let doubleType = types.doubleType
         let boolType = types.make(.primitive(.boolean, .nonNull))
+        let ulongRangeType = makeRangeType(
+            named: "ULongRange",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         // Random(seed: Int) constructor (STDLIB-516)
         // In Kotlin, Random(seed) is a top-level factory function, but from
@@ -147,6 +154,56 @@ extension DataFlowSemaPhase {
                 (name: "from", type: longType),
                 (name: "until", type: longType),
             ],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextULong",
+            externalLinkName: "kk_random_nextULong",
+            returnType: ulongType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextULong",
+            externalLinkName: "kk_random_nextULong_until",
+            returnType: ulongType,
+            parameters: [(name: "until", type: ulongType)],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextULong",
+            externalLinkName: "kk_random_nextULong_range",
+            returnType: ulongType,
+            parameters: [
+                (name: "from", type: ulongType),
+                (name: "until", type: ulongType),
+            ],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextULong",
+            externalLinkName: "kk_random_nextULong_ulongRange",
+            returnType: ulongType,
+            parameters: [(name: "range", type: ulongRangeType)],
+            canThrow: true,
             symbols: symbols,
             interner: interner
         )
@@ -648,6 +705,29 @@ extension DataFlowSemaPhase {
         return types.make(.classType(ClassType(
             classSymbol: listSymbol,
             args: [.out(types.intType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func makeRangeType(
+        named name: String,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let rangesPkg = ensureSyntheticPackage(
+            path: [interner.intern("kotlin"), interner.intern("ranges")],
+            symbols: symbols
+        )
+        let symbol = ensureClassSymbol(
+            named: name,
+            in: rangesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        return types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
             nullability: .nonNull
         )))
     }

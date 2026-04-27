@@ -116,6 +116,60 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenCompilesRandomNextULongOverloads() throws {
+        let source = """
+        import kotlin.random.Random
+        import kotlin.ranges.ULongRange
+
+        fun main() {
+            val r = Random(7)
+            val full = r.nextULong()
+            println(full >= 0uL)
+
+            val until = r.nextULong(10uL)
+            println(until < 10uL)
+
+            val ranged = r.nextULong(10uL, 20uL)
+            println(ranged >= 10uL && ranged < 20uL)
+
+            val rangeObj = ULongRange(30uL, 35uL)
+            val inRange = r.nextULong(rangeObj)
+            println(inRange >= 30uL && inRange <= 35uL)
+
+            try {
+                r.nextULong(0uL)
+                println(false)
+            } catch (e: IllegalArgumentException) {
+                println(true)
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "RandomNextULongOverloads",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                true
+                true
+                true
+                true
+                true
+                """ + "\n"
+            )
+        }
+    }
+
     func testCodegenCompilesRandomOverloadEdgeCases() throws {
         let source = """
         import kotlin.random.Random

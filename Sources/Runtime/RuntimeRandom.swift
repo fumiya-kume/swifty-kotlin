@@ -71,6 +71,10 @@ final class SeededRandomBox {
     func nextBoolean() -> Bool {
         (nextBits() & 1) != 0
     }
+
+    func nextULongBits() -> UInt64 {
+        nextBits()
+    }
 }
 
 // MARK: - SecureRandom (STDLIB-101)
@@ -121,6 +125,35 @@ private func secureRandomBox(from raw: Int) -> SecureRandomBox? {
         return nil
     }
     return Unmanaged<SecureRandomBox>.fromOpaque(ptr).takeUnretainedValue()
+}
+
+private func ulongPayload(_ raw: Int) -> UInt64 {
+    UInt64(UInt(bitPattern: raw))
+}
+
+private func runtimeRandomULongBits(receiver: Int) -> UInt64 {
+    if let box = seededBox(from: receiver) {
+        return box.nextULongBits()
+    }
+    var rng = SystemRandomNumberGenerator()
+    return rng.next()
+}
+
+private func runtimeRandomULongBelow(_ upperBound: UInt64, receiver: Int) -> UInt64 {
+    precondition(upperBound > 0)
+    if let box = seededBox(from: receiver) {
+        return box.nextULongBits() % upperBound
+    }
+    if upperBound == UInt64.max {
+        var rng = SystemRandomNumberGenerator()
+        return rng.next() % upperBound
+    }
+    return UInt64.random(in: 0 ..< upperBound)
+}
+
+private func runtimeRandomULongRange(receiver: Int, from: UInt64, until: UInt64) -> UInt64 {
+    let width = until &- from
+    return from &+ runtimeRandomULongBelow(width, receiver: receiver)
 }
 
 // MARK: - Constructor
@@ -256,6 +289,64 @@ public func kk_random_nextLong_range(_ receiver: Int, _ from: Int, _ until: Int,
         return box.nextIntRange(from: from, until: until)
     }
     return Int.random(in: from ..< until)
+}
+
+@_cdecl("kk_random_nextULong")
+public func kk_random_nextULong(_ receiver: Int) -> Int {
+    Int(bitPattern: UInt(truncatingIfNeeded: runtimeRandomULongBits(receiver: receiver)))
+}
+
+@_cdecl("kk_random_nextULong_until")
+public func kk_random_nextULong_until(_ receiver: Int, _ until: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let upper = ulongPayload(until)
+    guard upper > 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: Random range is empty: until must be positive, but was \(upper)."
+        )
+        return 0
+    }
+    let value = runtimeRandomULongBelow(upper, receiver: receiver)
+    return Int(bitPattern: UInt(truncatingIfNeeded: value))
+}
+
+@_cdecl("kk_random_nextULong_range")
+public func kk_random_nextULong_range(_ receiver: Int, _ from: Int, _ until: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let lower = ulongPayload(from)
+    let upper = ulongPayload(until)
+    guard upper > lower else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: Random range is empty: \(lower)..\(upper)."
+        )
+        return 0
+    }
+    let value = runtimeRandomULongRange(receiver: receiver, from: lower, until: upper)
+    return Int(bitPattern: UInt(truncatingIfNeeded: value))
+}
+
+@_cdecl("kk_random_nextULong_ulongRange")
+public func kk_random_nextULong_ulongRange(_ receiver: Int, _ rangeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: Random range is empty."
+        )
+        return 0
+    }
+    let first = ulongPayload(range.first)
+    let last = ulongPayload(range.last)
+    guard last >= first else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: Random range is empty: \(first)..\(last)."
+        )
+        return 0
+    }
+    let width = last &- first &+ 1
+    let value = width == 0
+        ? runtimeRandomULongBits(receiver: receiver)
+        : first &+ runtimeRandomULongBelow(width, receiver: receiver)
+    return Int(bitPattern: UInt(truncatingIfNeeded: value))
 }
 
 @_cdecl("kk_random_nextFloat")
