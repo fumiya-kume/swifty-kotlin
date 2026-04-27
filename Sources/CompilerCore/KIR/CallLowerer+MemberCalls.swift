@@ -159,7 +159,7 @@ extension CallLowerer {
         "size", "get", "contains", "containsAll", "containsKey", "containsValue",
         "isEmpty", "first", "last", "indexOf", "lastIndexOf", "indexOfFirst", "indexOfLast",
         "count", "iterator",
-        "map", "filter", "filterNot", "mapNotNull", "filterNotNull", "forEach", "flatMap",
+        "map", "filter", "filterNot", "mapNotNull", "filterNotNull", "requireNoNulls", "forEach", "flatMap",
         "any", "none", "all",
         "fold", "foldIndexed", "foldRight", "foldRightIndexed",
         "reduce", "reduceRight", "reduceIndexed", "reduceIndexedOrNull",
@@ -4064,6 +4064,7 @@ extension CallLowerer {
                 let sortedID = interner.intern("sorted")
                 let sortedDescendingID = interner.intern("sortedDescending")
                 let filterNotNullID = interner.intern("filterNotNull")
+                let requireNoNullsID = interner.intern("requireNoNulls")
                 let asIterableID = interner.intern("asIterable")
                 let withIndexID = interner.intern("withIndex")
                 let firstID = interner.intern("first")
@@ -4104,6 +4105,8 @@ extension CallLowerer {
                     interner.intern("kk_sequence_shuffled")
                 case filterNotNullID:
                     interner.intern("kk_sequence_filterNotNull")
+                case requireNoNullsID:
+                    interner.intern("kk_sequence_requireNoNulls")
                 case asIterableID:
                     interner.intern("kk_sequence_asIterable")
                 case withIndexID:

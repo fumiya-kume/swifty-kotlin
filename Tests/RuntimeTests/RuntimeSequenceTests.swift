@@ -1713,6 +1713,26 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, [1, 3, 5]) // Only non-null values
     }
 
+    func testSequenceRequireNoNullsPassesNonNullElements() {
+        let seq = makeSequence([1, 3, 5])
+        let required = kk_sequence_requireNoNulls(seq)
+        var thrown = 0
+        let list = kk_sequence_to_list(required, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(listElements(list), [1, 3, 5])
+    }
+
+    func testSequenceRequireNoNullsThrowsOnNullElement() {
+        let seq = makeSequence([1, runtimeNullSentinelInt, 5])
+        let required = kk_sequence_requireNoNulls(seq)
+        var thrown = 0
+        let list = kk_sequence_to_list(required, &thrown)
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(list, runtimeNullSentinelInt)
+    }
+
     func testSequenceMapIndexedCorrectness() {
         // Test correctness of mapIndexed
         let seq = makeSequence([10, 20, 30])
