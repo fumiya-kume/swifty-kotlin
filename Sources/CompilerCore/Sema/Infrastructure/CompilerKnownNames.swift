@@ -21,6 +21,7 @@ enum KnownCompilerAnnotation {
     case dslMarker
     case wasExperimental
     case optIn
+    case subclassOptInRequired
     case experimentalTypeInference
     case overloadResolutionByLambdaReturnType
 
@@ -66,6 +67,8 @@ enum KnownCompilerAnnotation {
             "WasExperimental"
         case .optIn:
             "OptIn"
+        case .subclassOptInRequired:
+            "SubclassOptInRequired"
         case .experimentalTypeInference:
             "ExperimentalTypeInference"
         case .overloadResolutionByLambdaReturnType:
@@ -115,6 +118,8 @@ enum KnownCompilerAnnotation {
             "kotlin.WasExperimental"
         case .optIn:
             "kotlin.OptIn"
+        case .subclassOptInRequired:
+            "kotlin.SubclassOptInRequired"
         case .experimentalTypeInference:
             "kotlin.experimental.ExperimentalTypeInference"
         case .overloadResolutionByLambdaReturnType:

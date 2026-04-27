@@ -68,6 +68,39 @@ extension TypeCheckHelpers {
         )
     }
 
+    func checkSubclassOptInRequirements(
+        forClassLike symbol: SymbolID,
+        ctx: TypeInferenceContext,
+        range: SourceRange?,
+        diagnostics: DiagnosticEngine
+    ) {
+        var visitedSupertypes: Set<SymbolID> = []
+        var queuedSupertypes = ctx.sema.symbols.directSupertypes(for: symbol)
+        let optedInMarkers = activeOptInMarkers(in: ctx)
+
+        while let supertype = queuedSupertypes.first {
+            queuedSupertypes.removeFirst()
+            guard visitedSupertypes.insert(supertype).inserted else {
+                continue
+            }
+
+            for annotation in ctx.sema.symbols.annotations(for: supertype)
+                where KnownCompilerAnnotation.subclassOptInRequired.matches(annotation.annotationFQName)
+            {
+                validateSubclassOptInRequirement(
+                    annotation,
+                    inheritedFrom: supertype,
+                    optedInMarkers: optedInMarkers,
+                    ctx: ctx,
+                    range: range,
+                    diagnostics: diagnostics
+                )
+            }
+
+            queuedSupertypes.append(contentsOf: ctx.sema.symbols.directSupertypes(for: supertype))
+        }
+    }
+
     private func checkOptInForType(
         _ type: TypeID,
         ctx: TypeInferenceContext,
@@ -209,6 +242,46 @@ extension TypeCheckHelpers {
             )
         }
         return nil
+    }
+
+    private func validateSubclassOptInRequirement(
+        _ annotation: MetadataAnnotationRecord,
+        inheritedFrom supertype: SymbolID,
+        optedInMarkers: Set<SymbolID>,
+        ctx: TypeInferenceContext,
+        range: SourceRange?,
+        diagnostics: DiagnosticEngine
+    ) {
+        let markerNames = parseOptInMarkerNames(annotation.arguments)
+        guard let markerName = markerNames.first,
+              let markerSymbol = resolveAnnotationClassSymbol(
+                named: markerName,
+                file: sourceFile(for: supertype, ctx: ctx) ?? currentFile(in: ctx),
+                ctx: ctx
+              ),
+              let requirement = optInRequirement(forMarkerAnnotation: markerSymbol, ctx: ctx)
+        else {
+            diagnostics.error(
+                "KSWIFTK-SEMA-SUBCLASS-OPT-IN",
+                "'@SubclassOptInRequired' markerClass must reference an opt-in marker annotation.",
+                range: range
+            )
+            return
+        }
+
+        guard !optedInMarkers.contains(requirement.markerSymbol) else {
+            return
+        }
+
+        let supertypeName = renderSymbolName(supertype, ctx: ctx)
+        let message = "Subclassing '\(supertypeName)' requires opt-in to '\(requirement.markerName)'. " +
+            "Annotate the subclass with '@\(requirement.markerName)' or '@OptIn(\(requirement.markerName)::class)'."
+        switch requirement.level {
+        case .warning:
+            diagnostics.warning("KSWIFTK-SEMA-SUBCLASS-OPT-IN", message, range: range)
+        case .error:
+            diagnostics.error("KSWIFTK-SEMA-SUBCLASS-OPT-IN", message, range: range)
+        }
     }
 
     private func activeOptInMarkers(in ctx: TypeInferenceContext) -> Set<SymbolID> {

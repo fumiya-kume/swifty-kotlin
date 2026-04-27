@@ -270,6 +270,30 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected OptIn smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
     }
 
+    func testSubclassOptInRequiredResolves() {
+        let source = """
+        fun marker(x: SubclassOptInRequired?): Int = 0
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected SubclassOptInRequired smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testSubclassOptInRequiredMarkerClassPropertyIsRegistered() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+        let valueSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("SubclassOptInRequired"),
+                ctx.interner.intern("markerClass"),
+            ]),
+            "kotlin.SubclassOptInRequired.markerClass must be registered"
+        )
+        XCTAssertNotNil(sema.symbols.propertyType(for: valueSymbol), "markerClass must have a property type")
+    }
+
     func testTargetAnnotationIsRejectedOnRegularClass() {
         let source = """
         @Target(AnnotationTarget.CLASS)
@@ -718,6 +742,79 @@ final class AnnotationSemanticTests: XCTestCase {
 
         XCTAssertEqual(diagnostics.count, 2, "Expected opt-in diagnostics for HexFormat.Default and toHexString(), got: \(ctx.diagnostics.diagnostics)")
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Opt-in diagnostics should be errors")
+    }
+
+    func testSubclassOptInRequiredRejectsSubclassWithoutOptIn() {
+        let source = """
+        @RequiresOptIn
+        annotation class ExperimentalBase
+
+        @SubclassOptInRequired(ExperimentalBase::class)
+        open class Base
+
+        class Child : Base()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-SUBCLASS-OPT-IN", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one subclass opt-in diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.contains(where: isError), "Subclass opt-in diagnostic should follow ERROR marker severity")
+    }
+
+    func testSubclassOptInRequiredAllowsSubclassWithOptIn() {
+        let source = """
+        @RequiresOptIn
+        annotation class ExperimentalBase
+
+        @SubclassOptInRequired(ExperimentalBase::class)
+        open class Base
+
+        @OptIn(ExperimentalBase::class)
+        class Child : Base()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-SUBCLASS-OPT-IN", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected @OptIn to satisfy subclass opt-in requirement, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testSubclassOptInRequiredPropagatesThroughSupertypeChain() {
+        let source = """
+        @RequiresOptIn
+        annotation class ExperimentalBase
+
+        @SubclassOptInRequired(ExperimentalBase::class)
+        open class Base
+
+        @OptIn(ExperimentalBase::class)
+        open class Middle : Base()
+
+        class Child : Middle()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-SUBCLASS-OPT-IN", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected inherited subclass opt-in requirement to reach Child, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testSubclassOptInRequiredRejectsNonOptInMarkerClass() {
+        let source = """
+        annotation class PlainMarker
+
+        @SubclassOptInRequired(PlainMarker::class)
+        open class Base
+
+        class Child : Base()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-SUBCLASS-OPT-IN", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected misuse diagnostic for non opt-in marker, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.first?.message.contains("markerClass") == true)
     }
 
     func testFileLevelOptInAllowsExperimentalStdlibApiUsage() {

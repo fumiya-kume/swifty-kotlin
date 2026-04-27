@@ -149,6 +149,13 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticJvmAnnotationClass(
+            named: "SubclassOptInRequired",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticJvmAnnotationClass(
             named: "ExperimentalStdlibApi",
@@ -384,6 +391,24 @@ extension DataFlowSemaPhase {
                 ownerSymbol: requiresOptInSymbol,
                 ownerFQName: kotlinPkg + [interner.intern("RequiresOptIn")],
                 packageSymbol: kotlinPkgSymbol,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
+
+        if let subclassOptInSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("SubclassOptInRequired")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: ["AnnotationTarget.CLASS"]
+                ),
+                to: subclassOptInSymbol,
+                symbols: symbols
+            )
+            registerSyntheticSubclassOptInRequiredMarkerClassProperty(
+                ownerSymbol: subclassOptInSymbol,
+                ownerFQName: kotlinPkg + [interner.intern("SubclassOptInRequired")],
                 symbols: symbols,
                 types: types,
                 interner: interner
@@ -729,6 +754,45 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(levelSymbol, for: entrySymbol)
             symbols.setPropertyType(levelType, for: entrySymbol)
         }
+    }
+
+    private func registerSyntheticSubclassOptInRequiredMarkerClassProperty(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let valueName = interner.intern("markerClass")
+        let valueFQName = ownerFQName + [valueName]
+        let valueSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: valueFQName) {
+            valueSymbol = existing
+        } else {
+            valueSymbol = symbols.define(
+                kind: .property,
+                name: valueName,
+                fqName: valueFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        symbols.setParentSymbol(ownerSymbol, for: valueSymbol)
+
+        let annotationFQName = [interner.intern("kotlin"), interner.intern("Annotation")]
+        let annotationType: TypeID
+        if let annotationSymbol = symbols.lookup(fqName: annotationFQName) {
+            annotationType = types.make(.classType(ClassType(
+                classSymbol: annotationSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        } else {
+            annotationType = types.anyType
+        }
+        symbols.setPropertyType(types.makeKClassType(argument: annotationType), for: valueSymbol)
     }
 
     private func appendSyntheticAnnotation(

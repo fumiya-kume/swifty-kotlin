@@ -74,6 +74,12 @@ final class DeclTypeChecker {
             )))
             validateOptInTypeUsage(supertype, ctx: ctx, range: range)
         }
+        driver.helpers.checkSubclassOptInRequirements(
+            forClassLike: symbol,
+            ctx: ctx,
+            range: range,
+            diagnostics: ctx.semaCtx.diagnostics
+        )
     }
 
     // MARK: - Function Body Type Inference
