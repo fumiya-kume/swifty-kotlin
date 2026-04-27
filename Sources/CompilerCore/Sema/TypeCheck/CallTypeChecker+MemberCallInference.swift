@@ -3692,12 +3692,12 @@ extension CallTypeChecker {
         // These need the Comparator<T> receiver type so the lambda gets the correct
         // contextual function signature before the general resolution path runs.
         if args.count == 2,
-           interner.resolve(calleeName) == "thenBy",
+           ["thenBy", "thenByDescending"].contains(interner.resolve(calleeName)),
            let comparatorElementType = resolvedComparatorElementType(
                of: receiverType,
                sema: sema,
                interner: interner
-           )
+            )
         {
             let keyComparatorType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             if let keyType = resolvedComparatorElementType(of: keyComparatorType, sema: sema, interner: interner) {
@@ -8507,7 +8507,7 @@ extension CallTypeChecker {
         }
 
         let calleeStr = interner.resolve(calleeName)
-        if args.count == 2, calleeStr == "thenBy" {
+        if args.count == 2, ["thenBy", "thenByDescending"].contains(calleeStr) {
             let keyComparatorType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             guard let keyType = resolvedComparatorElementType(
                 of: keyComparatorType,
@@ -8534,8 +8534,14 @@ extension CallTypeChecker {
                 interner.intern("Comparator"),
                 calleeName,
             ]
+            let externalLinkName = switch calleeStr {
+            case "thenBy":
+                "kk_comparator_then_by_comparator_selector"
+            default:
+                "kk_comparator_then_by_descending_comparator_selector"
+            }
             guard let chosen = sema.symbols.lookupAll(fqName: comparatorMemberFQName).first(where: { candidate in
-                sema.symbols.externalLinkName(for: candidate) == "kk_comparator_then_by_comparator_selector"
+                sema.symbols.externalLinkName(for: candidate) == externalLinkName
             }) else {
                 return nil
             }

@@ -4628,6 +4628,8 @@ extension CallLowerer {
                 return "kk_comparator_then_by_comparator_selector_trampoline"
             case "kk_comparator_then_by_descending":
                 return "kk_comparator_then_by_descending_trampoline"
+            case "kk_comparator_then_by_descending_comparator_selector":
+                return "kk_comparator_then_by_descending_comparator_selector_trampoline"
             case "kk_comparator_then_descending":
                 return "kk_comparator_then_descending_trampoline"
             case "kk_comparator_then_comparator":
@@ -5685,7 +5687,8 @@ extension CallLowerer {
             interner: interner,
             instructions: &instructions
         )
-        if loweredCallee == interner.intern("kk_comparator_then_by_comparator_selector"),
+        if (loweredCallee == interner.intern("kk_comparator_then_by_comparator_selector")
+            || loweredCallee == interner.intern("kk_comparator_then_by_descending_comparator_selector")),
            finalArguments.count == 3,
            sourceArgExprs.count == 2,
            let primaryComparatorArgs = makeComparatorTrampolineArgument(

@@ -114,14 +114,18 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
 
     func testComparatorThenByDescendingIsRegisteredWithCorrectLink() throws {
         let (sema, interner) = try makeSema()
-        let link = externalLink(
+        let links = allExternalLinks(
             fqPath: ["kotlin", "Comparator", "thenByDescending"],
             sema: sema,
             interner: interner
         )
-        XCTAssertEqual(
-            link, "kk_comparator_then_by_descending",
-            "Comparator.thenByDescending must link to kk_comparator_then_by_descending"
+        XCTAssertTrue(
+            links.contains("kk_comparator_then_by_descending"),
+            "Comparator.thenByDescending must link to kk_comparator_then_by_descending; found: \(links)"
+        )
+        XCTAssertTrue(
+            links.contains("kk_comparator_then_by_descending_comparator_selector"),
+            "Comparator.thenByDescending(comparator, selector) must link to kk_comparator_then_by_descending_comparator_selector; found: \(links)"
         )
     }
 
@@ -474,6 +478,7 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
             (["kotlin", "Comparator", "thenBy"], "kk_comparator_then_by"),
             (["kotlin", "Comparator", "thenBy"], "kk_comparator_then_by_comparator_selector"),
             (["kotlin", "Comparator", "thenByDescending"], "kk_comparator_then_by_descending"),
+            (["kotlin", "Comparator", "thenByDescending"], "kk_comparator_then_by_descending_comparator_selector"),
             (["kotlin", "Comparator", "thenComparator"], "kk_comparator_then_comparator"),
             (["kotlin", "Comparator", "thenDescending"], "kk_comparator_then_descending"),
             (["kotlin", "Comparator", "reversed"], "kk_comparator_reversed"),
