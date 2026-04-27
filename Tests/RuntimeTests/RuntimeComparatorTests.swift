@@ -352,6 +352,25 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertGreaterThan(result2, 0)
     }
 
+    func testComparatorThenByComparatorSelector() {
+        let keyComparatorRaw = kk_comparator_from_selector_primitive(selectorPtr(selectIdentity), 0, 0)
+        let closureRaw = kk_comparator_then_by_comparator_selector(
+            comparatorPtr(comparatorByModTen),
+            0,
+            keyComparatorRaw,
+            selectorPtr(selectIdentity),
+            0
+        )
+
+        var thrown = 0
+        XCTAssertLessThan(kk_comparator_then_by_comparator_selector_trampoline(closureRaw, 13, 23, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThan(kk_comparator_then_by_comparator_selector_trampoline(closureRaw, 23, 13, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThan(kk_comparator_then_by_comparator_selector_trampoline(closureRaw, 15, 23, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+    }
+
     // MARK: - reversed
 
     func testComparatorReversed() {

@@ -95,14 +95,18 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
 
     func testComparatorThenByIsRegisteredWithCorrectLink() throws {
         let (sema, interner) = try makeSema()
-        let link = externalLink(
+        let links = allExternalLinks(
             fqPath: ["kotlin", "Comparator", "thenBy"],
             sema: sema,
             interner: interner
         )
-        XCTAssertEqual(
-            link, "kk_comparator_then_by",
-            "Comparator.thenBy must link to kk_comparator_then_by"
+        XCTAssertTrue(
+            links.contains("kk_comparator_then_by"),
+            "Comparator.thenBy must link to kk_comparator_then_by; found: \(links)"
+        )
+        XCTAssertTrue(
+            links.contains("kk_comparator_then_by_comparator_selector"),
+            "Comparator.thenBy(comparator, selector) must link to kk_comparator_then_by_comparator_selector; found: \(links)"
         )
     }
 
@@ -468,6 +472,7 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
         // Comparator members
         let comparatorMembers: [(path: [String], link: String)] = [
             (["kotlin", "Comparator", "thenBy"], "kk_comparator_then_by"),
+            (["kotlin", "Comparator", "thenBy"], "kk_comparator_then_by_comparator_selector"),
             (["kotlin", "Comparator", "thenByDescending"], "kk_comparator_then_by_descending"),
             (["kotlin", "Comparator", "thenComparator"], "kk_comparator_then_comparator"),
             (["kotlin", "Comparator", "thenDescending"], "kk_comparator_then_descending"),
@@ -477,9 +482,9 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
         ]
 
         for entry in comparatorMembers {
-            let link = externalLink(fqPath: entry.path, sema: sema, interner: interner)
-            XCTAssertEqual(
-                link, entry.link,
+            let links = allExternalLinks(fqPath: entry.path, sema: sema, interner: interner)
+            XCTAssertTrue(
+                links.contains(entry.link),
                 "Missing or mislinked: \(entry.path.joined(separator: ".")) -> \(entry.link)"
             )
         }
