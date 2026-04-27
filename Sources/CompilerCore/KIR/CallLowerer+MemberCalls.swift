@@ -5543,6 +5543,7 @@ extension CallLowerer {
             fallback: calleeName,
             receiverExpr: receiver.expr,
             argumentCount: finalArguments.count,
+            sourceArgumentCount: sourceArgExprs.count,
             hasHOFLambdaArg: hasHOFLambdaArg,
             sema: sema,
             interner: interner
@@ -6252,10 +6253,12 @@ extension CallLowerer {
         fallback: InternedString,
         receiverExpr: ExprID,
         argumentCount: Int,
+        sourceArgumentCount: Int? = nil,
         hasHOFLambdaArg: Bool = false,
         sema: SemaModule,
         interner: StringInterner
     ) -> InternedString {
+        let callArgumentCount = sourceArgumentCount ?? argumentCount
         let fallbackName = interner.resolve(fallback)
         let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
@@ -6280,7 +6283,7 @@ extension CallLowerer {
 
         if (sema.bindings.isRangeExpr(receiverExpr) || isProgressionReceiver),
            fallbackName == "step",
-           argumentCount <= 1
+           callArgumentCount <= 1
         {
             if isCharRange || isCharProgressionReceiver {
                 return interner.intern("kk_char_range_step")
@@ -6301,6 +6304,30 @@ extension CallLowerer {
            !hasHOFLambdaArg
         {
             switch fallbackName {
+            case "random":
+                if isCharRange {
+                    return callArgumentCount == 1
+                        ? interner.intern("kk_char_range_random_random")
+                        : interner.intern("kk_range_random")
+                }
+                if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
+                    return callArgumentCount == 1
+                        ? interner.intern("kk_ulong_range_random_random")
+                        : interner.intern("kk_ulong_range_random")
+                }
+                if sema.bindings.isUIntRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.uintType {
+                    return callArgumentCount == 1
+                        ? interner.intern("kk_uint_range_random_random")
+                        : interner.intern("kk_uint_range_random")
+                }
+                if nonNullReceiverType == sema.types.longType {
+                    return callArgumentCount == 1
+                        ? interner.intern("kk_long_range_random_random")
+                        : interner.intern("kk_long_range_random")
+                }
+                return callArgumentCount == 1
+                    ? interner.intern("kk_range_random_random")
+                    : interner.intern("kk_range_random")
             case "firstOrNull":
                 if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
                     return interner.intern("kk_ulong_range_firstOrNull")
@@ -6325,26 +6352,26 @@ extension CallLowerer {
                 return interner.intern("kk_range_lastOrNull")
             case "randomOrNull":
                 if isCharRange {
-                    return argumentCount == 1
+                    return callArgumentCount == 1
                         ? interner.intern("kk_char_range_randomOrNull_random")
                         : interner.intern("kk_char_range_randomOrNull")
                 }
                 if sema.bindings.isULongRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.ulongType {
-                    return argumentCount == 1
+                    return callArgumentCount == 1
                         ? interner.intern("kk_ulong_range_randomOrNull_random")
                         : interner.intern("kk_ulong_range_randomOrNull")
                 }
                 if sema.bindings.isUIntRangeExpr(receiverExpr) || nonNullReceiverType == sema.types.uintType {
-                    return argumentCount == 1
+                    return callArgumentCount == 1
                         ? interner.intern("kk_uint_range_randomOrNull_random")
                         : interner.intern("kk_uint_range_randomOrNull")
                 }
                 if nonNullReceiverType == sema.types.longType {
-                    return argumentCount == 1
+                    return callArgumentCount == 1
                         ? interner.intern("kk_long_range_randomOrNull_random")
                         : interner.intern("kk_long_range_randomOrNull")
                 }
-                return argumentCount == 1
+                return callArgumentCount == 1
                     ? interner.intern("kk_range_randomOrNull_random")
                     : interner.intern("kk_range_randomOrNull")
             default:
@@ -6364,7 +6391,7 @@ extension CallLowerer {
                 ) {
                     return closedRangeRuntimeName
                 }
-                if argumentCount == 1,
+                if callArgumentCount == 1,
                    (externalLinkName == "kk_op_step"
                     || externalLinkName == "kk_uint_step"
                     || externalLinkName == "kk_ulong_step")
@@ -6409,7 +6436,7 @@ extension CallLowerer {
                 memberName: fallbackName,
                 receiverExpr: receiverExpr,
                 receiverType: receiverType,
-                argumentCount: argumentCount,
+                argumentCount: callArgumentCount,
                 hasHOFLambdaArg: hasHOFLambdaArg,
                 sema: sema,
                 interner: interner
