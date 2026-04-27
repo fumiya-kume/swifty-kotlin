@@ -666,85 +666,173 @@ extension DataFlowSemaPhase {
         }
 
         let kParamName = interner.intern("K")
-        let thenByFQName = comparatorFQName + [interner.intern("thenBy")]
-        let kParamFQName = thenByFQName + [kParamName]
-        let kParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: kParamFQName) {
-            existing
-        } else {
-            symbols.define(
-                kind: .typeParameter,
-                name: kParamName,
-                fqName: kParamFQName,
-                declSite: nil,
-                visibility: .private,
-                flags: []
-            )
+        do {
+            let thenByFQName = comparatorFQName + [interner.intern("thenBy")]
+            let thenByKParamFQName = thenByFQName + [kParamName]
+            let thenByKParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: thenByKParamFQName) {
+                existing
+            } else {
+                symbols.define(
+                    kind: .typeParameter,
+                    name: kParamName,
+                    fqName: thenByKParamFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+            }
+            let thenByKParamType = types.make(.typeParam(TypeParamType(
+                symbol: thenByKParamSymbol,
+                nullability: .nonNull
+            )))
+            let keyComparatorType = types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.invariant(thenByKParamType)],
+                nullability: .nonNull
+            )))
+            let keySelectorType = types.make(.functionType(FunctionType(
+                params: [tParamType],
+                returnType: thenByKParamType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            if !symbols.lookupAll(fqName: thenByFQName).contains(where: { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                return sig.parameterTypes == [keyComparatorType, keySelectorType] &&
+                    sig.returnType == receiverType
+            }) {
+                let comparatorParamName = interner.intern("comparator")
+                let comparatorParamSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: comparatorParamName,
+                    fqName: thenByFQName + [interner.intern("comparator_with_selector")],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                let selectorParamName = interner.intern("selector")
+                let selectorParamSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: selectorParamName,
+                    fqName: thenByFQName + [interner.intern("selector_with_comparator")],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: interner.intern("thenBy"),
+                    fqName: thenByFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                symbols.setParentSymbol(comparatorSymbol, for: memberSymbol)
+                symbols.setParentSymbol(memberSymbol, for: comparatorParamSymbol)
+                symbols.setParentSymbol(memberSymbol, for: selectorParamSymbol)
+                symbols.setExternalLinkName("kk_comparator_then_by_comparator_selector", for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [keyComparatorType, keySelectorType],
+                        returnType: receiverType,
+                        isSuspend: false,
+                        valueParameterSymbols: [comparatorParamSymbol, selectorParamSymbol],
+                        valueParameterHasDefaultValues: [false, false],
+                        valueParameterIsVararg: [false, false],
+                        typeParameterSymbols: [tParamSymbol, thenByKParamSymbol],
+                        typeParameterUpperBoundsList: [[], []],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
         }
-        let kParamType = types.make(.typeParam(TypeParamType(
-            symbol: kParamSymbol,
-            nullability: .nonNull
-        )))
-        let keyComparatorType = types.make(.classType(ClassType(
-            classSymbol: comparatorSymbol,
-            args: [.invariant(kParamType)],
-            nullability: .nonNull
-        )))
-        let keySelectorType = types.make(.functionType(FunctionType(
-            params: [tParamType],
-            returnType: kParamType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-        if !symbols.lookupAll(fqName: thenByFQName).contains(where: { symbolID in
-            guard let sig = symbols.functionSignature(for: symbolID) else { return false }
-            return sig.parameterTypes == [keyComparatorType, keySelectorType] &&
-                sig.returnType == receiverType
-        }) {
-            let comparatorParamName = interner.intern("comparator")
-            let comparatorParamSymbol = symbols.define(
-                kind: .valueParameter,
-                name: comparatorParamName,
-                fqName: thenByFQName + [interner.intern("comparator_with_selector")],
-                declSite: nil,
-                visibility: .private,
-                flags: [.synthetic]
-            )
-            let selectorParamName = interner.intern("selector")
-            let selectorParamSymbol = symbols.define(
-                kind: .valueParameter,
-                name: selectorParamName,
-                fqName: thenByFQName + [interner.intern("selector_with_comparator")],
-                declSite: nil,
-                visibility: .private,
-                flags: [.synthetic]
-            )
-            let memberSymbol = symbols.define(
-                kind: .function,
-                name: interner.intern("thenBy"),
-                fqName: thenByFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic, .inlineFunction]
-            )
-            symbols.setParentSymbol(comparatorSymbol, for: memberSymbol)
-            symbols.setParentSymbol(memberSymbol, for: comparatorParamSymbol)
-            symbols.setParentSymbol(memberSymbol, for: selectorParamSymbol)
-            symbols.setExternalLinkName("kk_comparator_then_by_comparator_selector", for: memberSymbol)
-            symbols.setFunctionSignature(
-                FunctionSignature(
-                    receiverType: receiverType,
-                    parameterTypes: [keyComparatorType, keySelectorType],
-                    returnType: receiverType,
-                    isSuspend: false,
-                    valueParameterSymbols: [comparatorParamSymbol, selectorParamSymbol],
-                    valueParameterHasDefaultValues: [false, false],
-                    valueParameterIsVararg: [false, false],
-                    typeParameterSymbols: [tParamSymbol, kParamSymbol],
-                    typeParameterUpperBoundsList: [[], []],
-                    classTypeParameterCount: 1
-                ),
-                for: memberSymbol
-            )
+
+        do {
+            let thenByDescendingFQName = comparatorFQName + [interner.intern("thenByDescending")]
+            let thenByDescendingKParamFQName = thenByDescendingFQName + [kParamName]
+            let thenByDescendingKParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: thenByDescendingKParamFQName) {
+                existing
+            } else {
+                symbols.define(
+                    kind: .typeParameter,
+                    name: kParamName,
+                    fqName: thenByDescendingKParamFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+            }
+            let thenByDescendingKParamType = types.make(.typeParam(TypeParamType(
+                symbol: thenByDescendingKParamSymbol,
+                nullability: .nonNull
+            )))
+            let keyComparatorType = types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.invariant(thenByDescendingKParamType)],
+                nullability: .nonNull
+            )))
+            let keySelectorType = types.make(.functionType(FunctionType(
+                params: [tParamType],
+                returnType: thenByDescendingKParamType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            if !symbols.lookupAll(fqName: thenByDescendingFQName).contains(where: { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                return sig.parameterTypes == [keyComparatorType, keySelectorType] &&
+                    sig.returnType == receiverType
+            }) {
+                let comparatorParamName = interner.intern("comparator")
+                let comparatorParamSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: comparatorParamName,
+                    fqName: thenByDescendingFQName + [interner.intern("comparator_with_selector")],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                let selectorParamName = interner.intern("selector")
+                let selectorParamSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: selectorParamName,
+                    fqName: thenByDescendingFQName + [interner.intern("selector_with_comparator")],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: interner.intern("thenByDescending"),
+                    fqName: thenByDescendingFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                symbols.setParentSymbol(comparatorSymbol, for: memberSymbol)
+                symbols.setParentSymbol(memberSymbol, for: comparatorParamSymbol)
+                symbols.setParentSymbol(memberSymbol, for: selectorParamSymbol)
+                symbols.setExternalLinkName(
+                    "kk_comparator_then_by_descending_comparator_selector",
+                    for: memberSymbol
+                )
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [keyComparatorType, keySelectorType],
+                        returnType: receiverType,
+                        isSuspend: false,
+                        valueParameterSymbols: [comparatorParamSymbol, selectorParamSymbol],
+                        valueParameterHasDefaultValues: [false, false],
+                        valueParameterIsVararg: [false, false],
+                        typeParameterSymbols: [tParamSymbol, thenByDescendingKParamSymbol],
+                        typeParameterUpperBoundsList: [[], []],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
         }
 
         let reversedName = interner.intern("reversed")

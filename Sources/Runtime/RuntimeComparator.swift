@@ -415,6 +415,20 @@ public func kk_comparator_then_by_comparator_selector(
     return raw
 }
 
+@_cdecl("kk_comparator_then_by_descending_comparator_selector")
+public func kk_comparator_then_by_descending_comparator_selector(
+    _ c1Fn: Int,
+    _ c1Closure: Int,
+    _ keyComparatorRaw: Int,
+    _ selectorFn: Int,
+    _ selectorClosure: Int
+) -> Int {
+    let box = RuntimeListBox(elements: [c1Fn, c1Closure, keyComparatorRaw, selectorFn, selectorClosure])
+    let raw = registerRuntimeObject(box)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_then_by_descending_comparator_selector_trampoline)
+    return raw
+}
+
 /// Trampoline for thenBy.
 @_cdecl("kk_comparator_then_by_trampoline")
 public func kk_comparator_then_by_trampoline(
@@ -603,6 +617,61 @@ public func kk_comparator_then_by_descending_trampoline(
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }
     let r2 = runtimeCompareValues(keyA, keyB)
     return r2 == 0 ? 0 : -r2
+}
+
+@_cdecl("kk_comparator_then_by_descending_comparator_selector_trampoline")
+public func kk_comparator_then_by_descending_comparator_selector_trampoline(
+    _ closureRaw: Int,
+    _ a: Int,
+    _ b: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let box = tryCast(ptr, to: RuntimeListBox.self),
+          box.elements.count == 5
+    else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator closure")
+        return 0
+    }
+
+    let elements = box.elements
+    var thrown = 0
+    let primaryResult = runtimeInvokeCollectionLambda2(
+        fnPtr: elements[0],
+        closureRaw: elements[1],
+        lhs: a,
+        rhs: b,
+        outThrown: &thrown
+    )
+    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    if primaryResult != 0 { return primaryResult }
+
+    let keyA = runtimeInvokeCollectionLambda1(
+        fnPtr: elements[3],
+        closureRaw: elements[4],
+        value: a,
+        outThrown: &thrown
+    )
+    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    let keyB = runtimeInvokeCollectionLambda1(
+        fnPtr: elements[3],
+        closureRaw: elements[4],
+        value: b,
+        outThrown: &thrown
+    )
+    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+
+    let keyComparatorRaw = elements[2]
+    let compareFnPtr = kk_itable_lookup(keyComparatorRaw, 0, 0)
+    guard compareFnPtr != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator object")
+        return 0
+    }
+    let compareFn = unsafeBitCast(compareFnPtr, to: RuntimeCollectionLambda2.self)
+    let result = compareFn(keyComparatorRaw, maybeUnbox(keyA), maybeUnbox(keyB), outThrown)
+    if outThrown?.pointee != 0 { return 0 }
+    return result == 0 ? 0 : -result
 }
 
 /// Trampoline for thenDescending: reverse only the tie-breaker result.
