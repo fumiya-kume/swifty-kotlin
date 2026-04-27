@@ -3692,7 +3692,7 @@ extension CallTypeChecker {
         // These need the Comparator<T> receiver type so the lambda gets the correct
         // contextual function signature before the general resolution path runs.
         if args.count == 2,
-           ["thenBy", "thenByDescending"].contains(interner.resolve(calleeName)),
+           interner.resolve(calleeName) == "thenBy",
            let comparatorElementType = resolvedComparatorElementType(
                of: receiverType,
                sema: sema,
@@ -8507,7 +8507,7 @@ extension CallTypeChecker {
         }
 
         let calleeStr = interner.resolve(calleeName)
-        if args.count == 2, ["thenBy", "thenByDescending"].contains(calleeStr) {
+        if args.count == 2, calleeStr == "thenBy" {
             let keyComparatorType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             guard let keyType = resolvedComparatorElementType(
                 of: keyComparatorType,
@@ -8532,16 +8532,10 @@ extension CallTypeChecker {
             let comparatorMemberFQName: [InternedString] = [
                 interner.intern("kotlin"),
                 interner.intern("Comparator"),
-                calleeName,
+                interner.intern(calleeStr),
             ]
-            let externalLinkName: InternedString = switch calleeStr {
-                case "thenBy":
-                    interner.intern("kk_comparator_then_by_comparator_selector")
-                default:
-                    interner.intern("kk_comparator_then_by_descending_comparator_selector")
-            }
             guard let chosen = sema.symbols.lookupAll(fqName: comparatorMemberFQName).first(where: { candidate in
-                sema.symbols.externalLinkName(for: candidate) == externalLinkName
+                sema.symbols.externalLinkName(for: candidate) == "kk_comparator_then_by_comparator_selector"
             }) else {
                 return nil
             }
@@ -8596,7 +8590,7 @@ extension CallTypeChecker {
         let comparatorMemberFQName: [InternedString] = [
             interner.intern("kotlin"),
             interner.intern("Comparator"),
-            calleeName,
+            interner.intern(calleeStr),
         ]
         guard let chosen = sema.symbols.lookupAll(fqName: comparatorMemberFQName).first(where: { candidate in
             guard let signature = sema.symbols.functionSignature(for: candidate) else {
