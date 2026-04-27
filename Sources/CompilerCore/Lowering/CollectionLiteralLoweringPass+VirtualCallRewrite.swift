@@ -2868,6 +2868,7 @@ extension CollectionLiteralLoweringPass {
         let isULongRange = ulongRangeExprIDs.contains(receiver.rawValue)
         let isUIntRange = sema.map { module.arena.exprType(receiver) == $0.types.uintType } ?? false
         let isLongRange = sema.map { module.arena.exprType(receiver) == $0.types.longType } ?? false
+        let randomName = interner.intern("random")
         let randomOrNullName = interner.intern("randomOrNull")
 
         // step — simple property access (STDLIB-RANGE-037)
@@ -3289,6 +3290,31 @@ extension CollectionLiteralLoweringPass {
                 origThrownResult: origThrownResult, module: module,
                 loweredBody: &loweredBody
             )
+            return true
+        }
+        if callee == randomName, arguments.isEmpty || arguments.count == 1 {
+            let randomCallee: InternedString
+            if isCharRange {
+                randomCallee = arguments.isEmpty ? interner.intern("kk_range_random")
+                    : interner.intern("kk_char_range_random_random")
+            } else if isULongRange {
+                randomCallee = arguments.isEmpty ? interner.intern("kk_ulong_range_random")
+                    : interner.intern("kk_ulong_range_random_random")
+            } else if isUIntRange {
+                randomCallee = arguments.isEmpty ? interner.intern("kk_uint_range_random")
+                    : interner.intern("kk_uint_range_random_random")
+            } else if isLongRange {
+                randomCallee = arguments.isEmpty ? interner.intern("kk_long_range_random")
+                    : interner.intern("kk_long_range_random_random")
+            } else {
+                randomCallee = arguments.isEmpty ? interner.intern("kk_range_random")
+                    : interner.intern("kk_range_random_random")
+            }
+            loweredBody.append(.call(
+                symbol: nil, callee: randomCallee,
+                arguments: [receiver] + arguments, result: result,
+                canThrow: true, thrownResult: origThrownResult
+            ))
             return true
         }
         if callee == randomOrNullName, arguments.isEmpty || arguments.count == 1 {
