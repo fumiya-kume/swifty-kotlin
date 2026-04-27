@@ -1,5 +1,31 @@
 import Foundation
 
+private enum SyntheticAnnotationAPISurface {
+    static let targetEntries = [
+        "CLASS",
+        "ANNOTATION_CLASS",
+        "TYPE_PARAMETER",
+        "PROPERTY",
+        "FIELD",
+        "LOCAL_VARIABLE",
+        "VALUE_PARAMETER",
+        "CONSTRUCTOR",
+        "FUNCTION",
+        "PROPERTY_GETTER",
+        "PROPERTY_SETTER",
+        "TYPE",
+        "EXPRESSION",
+        "FILE",
+        "TYPEALIAS",
+    ]
+
+    static let retentionEntries = [
+        "SOURCE",
+        "BINARY",
+        "RUNTIME",
+    ]
+}
+
 /// STDLIB-METAPROG-116: Basic metaprogramming annotation stubs.
 ///
 /// Registers synthetic `kotlin.jvm.*` annotation classes so that
@@ -546,23 +572,7 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
 
-        for entryName in [
-            "CLASS",
-            "ANNOTATION_CLASS",
-            "TYPE_PARAMETER",
-            "PROPERTY",
-            "FIELD",
-            "LOCAL_VARIABLE",
-            "VALUE_PARAMETER",
-            "CONSTRUCTOR",
-            "FUNCTION",
-            "PROPERTY_GETTER",
-            "PROPERTY_SETTER",
-            "TYPE",
-            "EXPRESSION",
-            "FILE",
-            "TYPEALIAS",
-        ] {
+        for entryName in SyntheticAnnotationAPISurface.targetEntries {
             let entry = interner.intern(entryName)
             let entryFQName = enumFQName + [entry]
             let entrySymbol: SymbolID
@@ -678,7 +688,7 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
 
-        for entryName in ["SOURCE", "BINARY", "RUNTIME"] {
+        for entryName in SyntheticAnnotationAPISurface.retentionEntries {
             let entry = interner.intern(entryName)
             let entryFQName = enumFQName + [entry]
             let entrySymbol: SymbolID

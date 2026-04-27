@@ -49,6 +49,17 @@ final class KotlinAnnotationAPIInventoryTests: XCTestCase {
         sema.symbols.lookup(fqName: fqPath.map { interner.intern($0) })
     }
 
+    private func childNames(
+        of fqPath: [String],
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Set<String> {
+        let fqName = fqPath.map { interner.intern($0) }
+        return Set(sema.symbols.children(ofFQName: fqName).compactMap { child in
+            sema.symbols.symbol(child).map { interner.resolve($0.name) }
+        })
+    }
+
     // MARK: - 1. Package hierarchy
 
     func testKotlinAnnotationPackageIsPresent() throws {
@@ -248,24 +259,20 @@ final class KotlinAnnotationAPIInventoryTests: XCTestCase {
 
     func testAnnotationTargetEntryCountIsExact() throws {
         let (sema, interner) = try makeSema()
-        let expectedEntries = [
+        let expectedEntries: Set<String> = [
             "CLASS", "ANNOTATION_CLASS", "TYPE_PARAMETER", "PROPERTY", "FIELD",
             "LOCAL_VARIABLE", "VALUE_PARAMETER", "CONSTRUCTOR", "FUNCTION",
             "PROPERTY_GETTER", "PROPERTY_SETTER", "TYPE", "EXPRESSION", "FILE", "TYPEALIAS",
         ]
-        var missing: [String] = []
-        for entry in expectedEntries {
-            if symbol(
-                fqPath: ["kotlin", "annotation", "AnnotationTarget", entry],
-                sema: sema,
-                interner: interner
-            ) == nil {
-                missing.append(entry)
-            }
-        }
-        XCTAssertTrue(
-            missing.isEmpty,
-            "Missing AnnotationTarget entries: \(missing.joined(separator: ", "))"
+        let actualEntries = childNames(
+            of: ["kotlin", "annotation", "AnnotationTarget"],
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertEqual(
+            actualEntries,
+            expectedEntries,
+            "AnnotationTarget entries must match the Kotlin stdlib target list exactly"
         )
     }
 
@@ -339,17 +346,17 @@ final class KotlinAnnotationAPIInventoryTests: XCTestCase {
 
     func testAnnotationRetentionAllEntriesPresent() throws {
         let (sema, interner) = try makeSema()
-        let entries = ["SOURCE", "BINARY", "RUNTIME"]
-        for entry in entries {
-            XCTAssertNotNil(
-                symbol(
-                    fqPath: ["kotlin", "annotation", "AnnotationRetention", entry],
-                    sema: sema,
-                    interner: interner
-                ),
-                "AnnotationRetention.\(entry) must be registered"
-            )
-        }
+        let expectedEntries: Set<String> = ["SOURCE", "BINARY", "RUNTIME"]
+        let actualEntries = childNames(
+            of: ["kotlin", "annotation", "AnnotationRetention"],
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertEqual(
+            actualEntries,
+            expectedEntries,
+            "AnnotationRetention entries must match the Kotlin stdlib retention list exactly"
+        )
     }
 
     func testAnnotationRetentionEntriesHaveEnumType() throws {
