@@ -68,6 +68,7 @@ final class LoweringPassRegressionTests: XCTestCase {
                 }
                 let name = ctx.interner.resolve(callee)
                 guard name == "kk_range_random_random"
+                    || name == "kk_char_range_random_random"
                     || name == "kk_long_range_random_random"
                     || name == "kk_uint_range_random_random"
                     || name == "kk_ulong_range_random_random"
