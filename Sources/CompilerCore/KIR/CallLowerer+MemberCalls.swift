@@ -4624,6 +4624,8 @@ extension CallLowerer {
                 return "kk_comparator_nulls_last_trampoline"
             case "kk_comparator_then_by":
                 return "kk_comparator_then_by_trampoline"
+            case "kk_comparator_then_by_comparator_selector":
+                return "kk_comparator_then_by_comparator_selector_trampoline"
             case "kk_comparator_then_by_descending":
                 return "kk_comparator_then_by_descending_trampoline"
             case "kk_comparator_then_descending":
@@ -5683,6 +5685,27 @@ extension CallLowerer {
             interner: interner,
             instructions: &instructions
         )
+        if loweredCallee == interner.intern("kk_comparator_then_by_comparator_selector"),
+           finalArguments.count == 3,
+           sourceArgExprs.count == 2,
+           let primaryComparatorArgs = makeComparatorTrampolineArgument(
+               comparatorExprID: receiver.expr,
+               loweredComparatorID: finalArguments[0],
+               sema: sema,
+               arena: arena,
+               interner: interner,
+               instructions: &instructions
+           )
+        {
+            let (selectorFnExpr, selectorEnvExpr) = splitCallableLambdaArgument(
+                finalArguments[2],
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = primaryComparatorArgs + [finalArguments[1], selectorFnExpr, selectorEnvExpr]
+        }
         if normalized.defaultMask != 0,
            loweredCallee == interner.intern("kk_array_binarySearch_compare")
         {

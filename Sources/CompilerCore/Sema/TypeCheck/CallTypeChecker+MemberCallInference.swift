@@ -3691,6 +3691,30 @@ extension CallTypeChecker {
         // Comparator member HOFs (STDLIB-176): thenBy/thenByDescending/thenDescending/thenComparator.
         // These need the Comparator<T> receiver type so the lambda gets the correct
         // contextual function signature before the general resolution path runs.
+        if args.count == 2,
+           interner.resolve(calleeName) == "thenBy",
+           let comparatorElementType = resolvedComparatorElementType(
+               of: receiverType,
+               sema: sema,
+               interner: interner
+           )
+        {
+            let keyComparatorType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            if let keyType = resolvedComparatorElementType(of: keyComparatorType, sema: sema, interner: interner) {
+                if let lambdaExpr = ast.arena.expr(args[1].expr),
+                   lambdaExpr.isLambdaOrCallableRef
+                {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [comparatorElementType],
+                    returnType: keyType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+            }
+        }
         if args.count == 1 {
             let calleeStr = interner.resolve(calleeName)
             if let comparatorElementType = resolvedComparatorElementType(
@@ -8473,8 +8497,7 @@ extension CallTypeChecker {
         let sema = ctx.sema
         let interner = ctx.interner
 
-        guard args.count == 1,
-              let comparatorElementType = resolvedComparatorElementType(
+        guard let comparatorElementType = resolvedComparatorElementType(
                   of: receiverType,
                   sema: sema,
                   interner: interner
@@ -8484,6 +8507,59 @@ extension CallTypeChecker {
         }
 
         let calleeStr = interner.resolve(calleeName)
+        if args.count == 2, calleeStr == "thenBy" {
+            let keyComparatorType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            guard let keyType = resolvedComparatorElementType(
+                of: keyComparatorType,
+                sema: sema,
+                interner: interner
+            ) else {
+                return nil
+            }
+            let expectedLambdaType = sema.types.make(.functionType(FunctionType(
+                params: [comparatorElementType],
+                returnType: keyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            _ = driver.inferExpr(
+                args[1].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: expectedLambdaType
+            )
+
+            let comparatorMemberFQName: [InternedString] = [
+                interner.intern("kotlin"),
+                interner.intern("Comparator"),
+                calleeName,
+            ]
+            guard let chosen = sema.symbols.lookupAll(fqName: comparatorMemberFQName).first(where: { candidate in
+                sema.symbols.externalLinkName(for: candidate) == "kk_comparator_then_by_comparator_selector"
+            }) else {
+                return nil
+            }
+
+            sema.bindings.bindCall(
+                id,
+                binding: CallBinding(
+                    chosenCallee: chosen,
+                    substitutedTypeArguments: [comparatorElementType, keyType],
+                    parameterMapping: [0: 0, 1: 1]
+                )
+            )
+            sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+
+            let resultType = sema.types.makeNonNullable(receiverType)
+            let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
+        guard args.count == 1 else {
+            return nil
+        }
+
         let expectedLambdaType: TypeID
         switch calleeStr {
         case "thenBy", "thenByDescending":
