@@ -1753,7 +1753,7 @@ public func kk_sequence_flatMapIndexed(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw
     }
     var newSteps = seq.steps
     newSteps.append(.flatMapIndexedStep(fnPtr: fnPtr, closureRaw: closureRaw))
-    let newSeq = RuntimeSequenceBox(steps: newSteps)
+    let newSeq = RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState)
     return registerRuntimeObject(newSeq)
 }
 
