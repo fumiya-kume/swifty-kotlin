@@ -13,6 +13,8 @@ extension DataFlowSemaPhase {
             funDecl.annotations
         case let .propertyDecl(propertyDecl):
             propertyDecl.annotations
+        case let .typeAliasDecl(typeAliasDecl):
+            typeAliasDecl.annotations
         default:
             []
         }
