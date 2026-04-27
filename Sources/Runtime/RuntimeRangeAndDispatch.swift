@@ -3988,6 +3988,21 @@ public func kk_long_range_random_random(_ rangeRaw: Int, _ randomRaw: Int, _ out
     )
 }
 
+@_cdecl("kk_random_nextLong_rangeObject")
+public func kk_random_nextLong_rangeObject(_ randomRaw: Int, _ rangeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_random_nextLong_rangeObject")
+    }
+    return runtimeSignedRangeRandom(
+        first: range.first,
+        last: range.last,
+        step: range.step,
+        randomRaw: randomRaw,
+        outThrown: outThrown
+    )
+}
+
 @_cdecl("kk_long_range_take")
 public func kk_long_range_take(_ rangeRaw: Int, _ n: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {

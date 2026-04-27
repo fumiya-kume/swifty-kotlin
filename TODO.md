@@ -163,7 +163,7 @@
 - [x] STDLIB-RANDOM-005: `Random.Default` singleton を sema から露出する
 - [x] STDLIB-RANDOM-006: `Random.nextBytes(size: Int)` overload を追加する
 - [ ] STDLIB-RANDOM-007: `Random.nextInt(range: IntRange)` extension を追加する
-- [ ] STDLIB-RANDOM-008: `Random.nextLong(range: LongRange)` extension を追加する
+- [x] STDLIB-RANDOM-008: `Random.nextLong(range: LongRange)` extension を追加する
 - [ ] STDLIB-RANDOM-009: `Random.nextBytes(array, fromIndex, toIndex)` overload を追加する
 - [x] STDLIB-RANDOM-010: `Random.nextBits(bitCount: Int)` member surface を追加する
 - [ ] STDLIB-RANDOM-011: `Random.nextUBytes(size)` / `nextUBytes(array)` / `nextUBytes(array, fromIndex, toIndex)` を追加する

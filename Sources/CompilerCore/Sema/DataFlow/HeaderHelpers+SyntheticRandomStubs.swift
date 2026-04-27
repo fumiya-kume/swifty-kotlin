@@ -63,6 +63,12 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        let longRangeType = makeRangeType(
+            named: "LongRange",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         // Random(seed: Int) constructor (STDLIB-516)
         // In Kotlin, Random(seed) is a top-level factory function, but from
@@ -129,6 +135,18 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_random_nextLong",
             returnType: longType,
             parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextLong",
+            externalLinkName: "kk_random_nextLong_rangeObject",
+            returnType: longType,
+            parameters: [(name: "range", type: longRangeType)],
+            canThrow: true,
             symbols: symbols,
             interner: interner
         )
