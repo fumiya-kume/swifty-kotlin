@@ -979,3 +979,44 @@ public func kk_compareValuesBy3(
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }
     return kk_box_int(runtimeCompareNullableValues(keyA3, keyB3))
 }
+
+/// compareValuesBy(a: T, b: T, vararg selectors): Int.
+@_cdecl("kk_compareValuesByVararg")
+public func kk_compareValuesByVararg(
+    _ a: Int,
+    _ b: Int,
+    _ selectorsRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let selectors = runtimeArrayBox(from: selectorsRaw)?.elements,
+          selectors.count % 2 == 0,
+          selectors.count >= 2
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: malformed compareValuesBy selectors")
+    }
+
+    var thrown = 0
+    for index in stride(from: 0, to: selectors.count, by: 2) {
+        let selectorFn = selectors[index]
+        let selectorClosure = selectors[index + 1]
+        let keyA = runtimeInvokeCompareValuesSelector(
+            fnPtr: selectorFn,
+            closureRaw: selectorClosure,
+            value: a,
+            outThrown: &thrown
+        )
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        let keyB = runtimeInvokeCompareValuesSelector(
+            fnPtr: selectorFn,
+            closureRaw: selectorClosure,
+            value: b,
+            outThrown: &thrown
+        )
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        let cmp = runtimeCompareNullableValues(keyA, keyB)
+        if cmp != 0 {
+            return kk_box_int(cmp)
+        }
+    }
+    return kk_box_int(0)
+}

@@ -400,5 +400,16 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Comparator"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_compareValuesByVararg",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+                RuntimeABIParameter(name: "selectors", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Comparator"
+        ),
     ]
 }

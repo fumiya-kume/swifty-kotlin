@@ -625,7 +625,8 @@ final class CallLowerer {
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         let callNormalized: NormalizedCallResult = if callBinding != nil {
             if let chosen,
-               sema.symbols.externalLinkName(for: chosen) == "kk_comparator_from_multi_selectors_vararg"
+               (sema.symbols.externalLinkName(for: chosen) == "kk_comparator_from_multi_selectors_vararg" ||
+                sema.symbols.externalLinkName(for: chosen) == "kk_compareValuesByVararg")
             {
                 NormalizedCallResult(arguments: loweredArgIDs, defaultMask: 0)
             } else {
@@ -1751,6 +1752,94 @@ final class CallLowerer {
                 ))
             }
             return [arrayExpr]
+        }
+
+        if externalLinkName == "kk_compareValuesByVararg", loweredArguments.count >= 6 {
+            let selectorCount = loweredArguments.count - 2
+            let slotCount = selectorCount * 2
+            let countExpr = arena.appendExpr(.intLiteral(Int64(slotCount)), type: sema.types.intType)
+            instructions.append(.constValue(result: countExpr, value: .intLiteral(Int64(slotCount))))
+            let arrayExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_new"),
+                arguments: [countExpr],
+                result: arrayExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+
+            for argIndex in 2..<loweredArguments.count {
+                let selectorOffset = argIndex - 2
+                let lambdaID = loweredArguments[argIndex]
+                var loweredSelectorID = lambdaID
+                var selectorCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)
+                if selectorCallableInfo == nil,
+                   case let .symbolRef(symbol)? = arena.expr(loweredSelectorID),
+                   let function = arena.function(for: symbol)
+                {
+                    selectorCallableInfo = KIRCallableValueInfo(
+                        symbol: function.symbol,
+                        callee: function.name,
+                        captureArguments: arena.lambdaCaptureArgsBySymbol[function.symbol] ?? [],
+                        hasClosureParam: function.params.count >= 2
+                    )
+                }
+                if let callableInfo = selectorCallableInfo,
+                   !callableInfo.hasClosureParam,
+                   let adaptedInfo = makeCollectionHOFCallableAdapter(
+                        callableInfo: callableInfo,
+                        loweredArgID: loweredSelectorID,
+                        argExprID: originalArgs[argIndex].expr,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner
+                   )
+                {
+                    let adaptedExpr = arena.appendExpr(
+                        .symbolRef(adaptedInfo.symbol),
+                        type: arena.exprType(loweredSelectorID) ?? sema.types.anyType
+                    )
+                    instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
+                    loweredSelectorID = adaptedExpr
+                    selectorCallableInfo = adaptedInfo
+                }
+
+                let fnIndexExpr = arena.appendExpr(.intLiteral(Int64(selectorOffset * 2)), type: sema.types.intType)
+                instructions.append(.constValue(result: fnIndexExpr, value: .intLiteral(Int64(selectorOffset * 2))))
+                let fnSetResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_array_set"),
+                    arguments: [arrayExpr, fnIndexExpr, loweredSelectorID],
+                    result: fnSetResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+
+                let closureRaw: KIRExprID
+                if let callableInfo = selectorCallableInfo,
+                   let capturedClosureRaw = callableInfo.captureArguments.first
+                {
+                    closureRaw = capturedClosureRaw
+                } else {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    closureRaw = zeroExpr
+                }
+                let closureIndexExpr = arena.appendExpr(.intLiteral(Int64(selectorOffset * 2 + 1)), type: sema.types.intType)
+                instructions.append(.constValue(result: closureIndexExpr, value: .intLiteral(Int64(selectorOffset * 2 + 1))))
+                let closureSetResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_array_set"),
+                    arguments: [arrayExpr, closureIndexExpr, closureRaw],
+                    result: closureSetResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            }
+            return [loweredArguments[0], loweredArguments[1], arrayExpr]
         }
 
         // compareValuesBy: expand selector lambda args to (fnPtr, closureRaw) pairs.

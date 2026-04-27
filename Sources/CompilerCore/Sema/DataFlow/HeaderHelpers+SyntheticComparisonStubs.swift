@@ -444,6 +444,15 @@ extension DataFlowSemaPhase {
                 comparatorSymbol: comparatorSymbol
             )
         }
+
+        registerCompareValuesByVararg(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol,
+            comparatorSymbol: comparatorSymbol
+        )
     }
 
     private func registerCompareValues(
@@ -631,6 +640,88 @@ extension DataFlowSemaPhase {
                 valueParameterSymbols: parameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
                 valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count),
+                typeParameterSymbols: [tParamSymbol],
+                typeParameterUpperBoundsList: [[]]
+            ),
+            for: funcSymbol
+        )
+    }
+
+    private func registerCompareValuesByVararg(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparisonsPkg: [InternedString],
+        comparisonsPackageSymbol: SymbolID,
+        comparatorSymbol: SymbolID
+    ) {
+        let functionName = interner.intern("compareValuesBy")
+        let functionFQName = comparisonsPkg + [functionName]
+        let extLink = "kk_compareValuesByVararg"
+
+        guard let comparatorInfo = symbols.symbol(comparatorSymbol) else {
+            return
+        }
+        let comparatorFQName = comparatorInfo.fqName
+        let tParamName = interner.intern("T")
+        let tParamFQName = comparatorFQName + [tParamName]
+        guard let tParamSymbol = symbols.lookup(fqName: tParamFQName) else {
+            return
+        }
+        let tParamType = types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol,
+            nullability: .nonNull
+        )))
+        let selectorType = types.make(.functionType(FunctionType(
+            params: [tParamType],
+            returnType: types.anyType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let parameterTypes = [tParamType, tParamType, selectorType]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+            return sig.parameterTypes == parameterTypes &&
+                sig.returnType == types.intType &&
+                sig.valueParameterIsVararg == [false, false, true]
+        }) {
+            symbols.setExternalLinkName(extLink, for: existing)
+            return
+        }
+
+        let funcSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(comparisonsPackageSymbol, for: funcSymbol)
+        symbols.setExternalLinkName(extLink, for: funcSymbol)
+
+        let parameterSymbols: [SymbolID] = ["a", "b", "selectors"].map { name in
+            let internedName = interner.intern(name)
+            let symbol = symbols.define(
+                kind: .valueParameter,
+                name: internedName,
+                fqName: functionFQName + [interner.intern("\(name)_compareValuesByVararg")],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(funcSymbol, for: symbol)
+            return symbol
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameterTypes,
+                returnType: types.intType,
+                isSuspend: false,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
+                valueParameterIsVararg: [false, false, true],
                 typeParameterSymbols: [tParamSymbol],
                 typeParameterUpperBoundsList: [[]]
             ),

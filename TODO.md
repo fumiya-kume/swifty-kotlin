@@ -176,7 +176,7 @@
 - [x] STDLIB-COMP-005: `compareByDescending(comparator, selector)` overload を追加する
 - [x] STDLIB-COMP-006: `compareBy(vararg selectors)` の一般 vararg surface を追加する（現状は 1/2/3 selector special-case のみ）
 - [ ] STDLIB-COMP-007: `compareValuesBy(a, b, comparator, selector)` overload を追加する
-- [ ] STDLIB-COMP-008: `compareValuesBy(a, b, vararg selectors)` の一般 vararg surface を追加する（現状は 1/2/3 selector special-case のみ）
+- [x] STDLIB-COMP-008: `compareValuesBy(a, b, vararg selectors)` の一般 vararg surface を追加する（現状は 1/2/3 selector special-case のみ）
 - [ ] STDLIB-COMP-009: `Comparator<T>.thenBy(comparator, selector)` overload を追加する
 - [ ] STDLIB-COMP-010: `Comparator<T>.thenByDescending(comparator, selector)` overload を追加する
 - [ ] STDLIB-ENUMS-001: `kotlin.enums.EnumEntries<E>` を正しい package で露出する（現状の `kotlin.collections.EnumEntries` synthetic surface を見直す）

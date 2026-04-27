@@ -275,6 +275,23 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertEqual(kk_comparator_from_multi_selectors_trampoline(closureRaw, 17, 17, nil), 0)
     }
 
+    func testCompareValuesByVarargSelectors() {
+        let selectors = makeArray([
+            selectorPtr(selectModTen), 0,
+            selectorPtr(selectIdentity), 0,
+            selectorPtr(selectIdentity), 0,
+            selectorPtr(selectIdentity), 0,
+        ])
+        var thrown = 0
+        let result = kk_compareValuesByVararg(13, 25, selectors, &thrown)
+        XCTAssertEqual(kk_unbox_int(result), -1)
+        XCTAssertEqual(thrown, 0)
+
+        let tiedFirstKey = kk_compareValuesByVararg(13, 23, selectors, &thrown)
+        XCTAssertEqual(kk_unbox_int(tiedFirstKey), -1)
+        XCTAssertEqual(thrown, 0)
+    }
+
     // MARK: - thenBy
 
     func testComparatorThenBy() {
