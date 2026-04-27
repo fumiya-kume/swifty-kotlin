@@ -494,6 +494,7 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
                     "kk_comparator_from_selector",
                     "kk_comparator_from_multi_selectors",
                     "kk_comparator_from_multi_selectors3",
+                    "kk_comparator_from_multi_selectors_vararg",
                 ]
             ),
             (

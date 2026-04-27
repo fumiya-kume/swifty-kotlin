@@ -171,6 +171,45 @@ final class ComparatorOverloadResolutionTests: XCTestCase {
         }
     }
 
+    func testCompareByFourSelectorsResolvesToVarargMultiSelectorOverload() throws {
+        let source = """
+        fun sample() {
+            val cmp = compareBy<Int>({ it / 100 }, { it % 100 / 10 }, { it % 10 }, { -it })
+            listOf(231, 132, 121, 221).sortedWith(cmp)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let callExpr = try XCTUnwrap(
+                allExprIDs(in: ast) { _, expr in
+                    guard case let .call(calleeExpr, _, args, _) = expr,
+                          case let .nameRef(calleeName, _) = ast.arena.expr(calleeExpr)
+                    else { return false }
+                    return ctx.interner.resolve(calleeName) == "compareBy" && args.count == 4
+                }.first,
+                "Expected 4-selector compareBy call"
+            )
+
+            let chosenCallee = try XCTUnwrap(
+                sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                "Expected overload resolution to produce a chosen callee for compareBy(vararg selectors)"
+            )
+            let sig = try XCTUnwrap(sema.symbols.functionSignature(for: chosenCallee))
+            XCTAssertEqual(sig.parameterTypes.count, 1, "Expected single vararg parameter for 4-selector compareBy")
+            XCTAssertEqual(sig.valueParameterIsVararg, [true])
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenCallee),
+                "kk_comparator_from_multi_selectors_vararg",
+                "Expected 4-selector compareBy to link to kk_comparator_from_multi_selectors_vararg"
+            )
+        }
+    }
+
     // MARK: - thenBy { } chained
 
     func testThenByIsRegisteredAsSyntheticComparatorMember() throws {

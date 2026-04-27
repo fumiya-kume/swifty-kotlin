@@ -3,6 +3,30 @@ import Foundation
 import XCTest
 
 extension CodegenBackendIntegrationTests {
+    func testCodegenCompilesCompareByVarargSelectors() throws {
+        let source = """
+        fun main() {
+            val cmp = compareBy<Int>({ it / 100 }, { it % 100 / 10 }, { it % 10 }, { -it })
+            println(listOf(231, 132, 121, 221).sortedWith(cmp))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "CompareByVarargSelectors",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[121, 132, 221, 231]\n")
+        }
+    }
+
     func testCodegenCompilesCompareByDescendingComparatorSelector() throws {
         let source = """
         fun main() {

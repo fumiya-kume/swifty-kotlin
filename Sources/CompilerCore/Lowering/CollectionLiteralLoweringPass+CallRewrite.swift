@@ -3729,6 +3729,7 @@ extension CollectionLiteralLoweringPass {
                                     nullsFirstCallee: lookup.kkComparatorNullsFirstName,
                                     nullsLastCallee: lookup.kkComparatorNullsLastName,
                                     multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
+                                    multiSelectorVarargCallee: lookup.kkComparatorFromMultiSelectorsVarargName,
                                     reversedCallee: lookup.kkComparatorReversedName
                                 )
                                 let trampolineName: InternedString
@@ -3811,6 +3812,7 @@ extension CollectionLiteralLoweringPass {
                                         nullsFirstCallee: lookup.kkComparatorNullsFirstName,
                                         nullsLastCallee: lookup.kkComparatorNullsLastName,
                                         multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
+                                        multiSelectorVarargCallee: lookup.kkComparatorFromMultiSelectorsVarargName,
                                         reversedCallee: lookup.kkComparatorReversedName
                                     )
                                     let innerTrampolineName: InternedString
@@ -3965,6 +3967,7 @@ extension CollectionLiteralLoweringPass {
                                     nullsFirstCallee: lookup.kkComparatorNullsFirstName,
                                     nullsLastCallee: lookup.kkComparatorNullsLastName,
                                     multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
+                                    multiSelectorVarargCallee: lookup.kkComparatorFromMultiSelectorsVarargName,
                                     reversedCallee: lookup.kkComparatorReversedName
                                 )
                                 let cmpTrampolineName: InternedString
@@ -4021,6 +4024,7 @@ extension CollectionLiteralLoweringPass {
                                         nullsFirstCallee: lookup.kkComparatorNullsFirstName,
                                         nullsLastCallee: lookup.kkComparatorNullsLastName,
                                         multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
+                                    multiSelectorVarargCallee: lookup.kkComparatorFromMultiSelectorsVarargName,
                                         reversedCallee: lookup.kkComparatorReversedName
                                     )
                                     let innerTrampolineName: InternedString
@@ -4759,6 +4763,7 @@ extension CollectionLiteralLoweringPass {
                             nullsFirstCallee: lookup.kkComparatorNullsFirstName,
                             nullsLastCallee: lookup.kkComparatorNullsLastName,
                             multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
+                            multiSelectorVarargCallee: lookup.kkComparatorFromMultiSelectorsVarargName,
                             reversedCallee: lookup.kkComparatorReversedName
                         )
                         if case .unknown = source {
@@ -4830,6 +4835,7 @@ extension CollectionLiteralLoweringPass {
                                     nullsFirstCallee: lookup.kkComparatorNullsFirstName,
                                     nullsLastCallee: lookup.kkComparatorNullsLastName,
                                     multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
+                                    multiSelectorVarargCallee: lookup.kkComparatorFromMultiSelectorsVarargName,
                                     reversedCallee: lookup.kkComparatorReversedName
                                 )
                                 let innerTrampolineName: InternedString

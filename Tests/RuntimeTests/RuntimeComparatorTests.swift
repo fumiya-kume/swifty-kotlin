@@ -261,6 +261,20 @@ final class RuntimeComparatorTests: XCTestCase {
         }
     }
 
+    func testComparatorFromMultiSelectorsVararg() {
+        let selectors = makeArray([
+            selectorPtr(selectModTen), 0,
+            selectorPtr(selectIdentity), 0,
+            selectorPtr(selectIdentity), 0,
+            selectorPtr(selectIdentity), 0,
+        ])
+        let closureRaw = kk_comparator_from_multi_selectors_vararg(selectors)
+
+        XCTAssertLessThan(kk_comparator_from_multi_selectors_trampoline(closureRaw, 13, 25, nil), 0)
+        XCTAssertLessThan(kk_comparator_from_multi_selectors_trampoline(closureRaw, 13, 23, nil), 0)
+        XCTAssertEqual(kk_comparator_from_multi_selectors_trampoline(closureRaw, 17, 17, nil), 0)
+    }
+
     // MARK: - thenBy
 
     func testComparatorThenBy() {

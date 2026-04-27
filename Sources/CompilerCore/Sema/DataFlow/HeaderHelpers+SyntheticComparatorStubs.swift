@@ -502,6 +502,58 @@ extension DataFlowSemaPhase {
                 for: funcSymbol
             )
         }
+
+        let varargExtLink = "kk_comparator_from_multi_selectors_vararg"
+        if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+            guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+            return sig.parameterTypes == [selectorType] &&
+                sig.returnType == comparatorType &&
+                sig.valueParameterIsVararg == [true]
+        }) {
+            if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                return sig.parameterTypes == [selectorType] &&
+                    sig.returnType == comparatorType &&
+                    sig.valueParameterIsVararg == [true]
+            }) {
+                symbols.setExternalLinkName(varargExtLink, for: existing)
+            }
+            return
+        }
+
+        let varargFuncSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(comparisonsPackageSymbol, for: varargFuncSymbol)
+        symbols.setExternalLinkName(varargExtLink, for: varargFuncSymbol)
+
+        let selectorsParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: interner.intern("selectors"),
+            fqName: functionFQName + [interner.intern("selectors_vararg")],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(varargFuncSymbol, for: selectorsParamSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [selectorType],
+                returnType: comparatorType,
+                isSuspend: false,
+                valueParameterSymbols: [selectorsParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [true],
+                typeParameterSymbols: [tParamSymbol],
+                typeParameterUpperBoundsList: [[]]
+            ),
+            for: varargFuncSymbol
+        )
     }
 
     private func registerThenByAndReversed(

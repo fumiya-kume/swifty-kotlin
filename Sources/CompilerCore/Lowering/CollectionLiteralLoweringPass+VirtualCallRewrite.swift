@@ -1682,6 +1682,7 @@ extension CollectionLiteralLoweringPass {
         nullsFirstCallee: InternedString? = nil,
         nullsLastCallee: InternedString? = nil,
         multiSelector3Callee: InternedString? = nil,
+        multiSelectorVarargCallee: InternedString? = nil,
         reversedCallee: InternedString? = nil
     ) -> ComparatorSource {
         for inst in body {
@@ -1692,6 +1693,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == descendingCallee { return .descending }
                     if callee == multiSelectorCallee { return .multiSelector }
                     if let ms3 = multiSelector3Callee, callee == ms3 { return .multiSelector }
+                    if let msVararg = multiSelectorVarargCallee, callee == msVararg { return .multiSelector }
                     if callee == naturalOrderCallee { return .naturalOrder }
                     if callee == reverseOrderCallee { return .reverseOrder }
                     if let thenBy = thenByCallee, callee == thenBy, let innerExpr = arguments.first {
@@ -1734,6 +1736,7 @@ extension CollectionLiteralLoweringPass {
                         nullsFirstCallee: nullsFirstCallee,
                         nullsLastCallee: nullsLastCallee,
                         multiSelector3Callee: multiSelector3Callee,
+                        multiSelectorVarargCallee: multiSelectorVarargCallee,
                         reversedCallee: reversedCallee
                     )
             }
@@ -1825,6 +1828,7 @@ extension CollectionLiteralLoweringPass {
                 nullsFirstCallee: lookup.kkComparatorNullsFirstName,
                 nullsLastCallee: lookup.kkComparatorNullsLastName,
                 multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
+                multiSelectorVarargCallee: lookup.kkComparatorFromMultiSelectorsVarargName,
                 reversedCallee: lookup.kkComparatorReversedName
             )
             let trampolineName: InternedString
@@ -1884,6 +1888,7 @@ extension CollectionLiteralLoweringPass {
                     nullsFirstCallee: lookup.kkComparatorNullsFirstName,
                     nullsLastCallee: lookup.kkComparatorNullsLastName,
                     multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
+                    multiSelectorVarargCallee: lookup.kkComparatorFromMultiSelectorsVarargName,
                     reversedCallee: lookup.kkComparatorReversedName
                 )
                 let innerTrampolineName: InternedString
@@ -1979,6 +1984,7 @@ extension CollectionLiteralLoweringPass {
                 nullsFirstCallee: lookup.kkComparatorNullsFirstName,
                 nullsLastCallee: lookup.kkComparatorNullsLastName,
                 multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name,
+                multiSelectorVarargCallee: lookup.kkComparatorFromMultiSelectorsVarargName,
                 reversedCallee: lookup.kkComparatorReversedName
             ) {
             case .descending:

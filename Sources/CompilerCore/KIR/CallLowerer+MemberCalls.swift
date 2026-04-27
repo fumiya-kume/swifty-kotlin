@@ -4613,7 +4613,8 @@ extension CallLowerer {
             case "kk_comparator_from_selector_primitive":
                 return "kk_comparator_from_selector_primitive_trampoline"
             case "kk_comparator_from_multi_selectors",
-                 "kk_comparator_from_multi_selectors3":
+                 "kk_comparator_from_multi_selectors3",
+                 "kk_comparator_from_multi_selectors_vararg":
                 return "kk_comparator_from_multi_selectors_trampoline"
             case "kk_comparator_nulls_first":
                 return "kk_comparator_nulls_first_trampoline"

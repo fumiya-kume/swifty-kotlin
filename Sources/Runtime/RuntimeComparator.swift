@@ -285,6 +285,16 @@ public func kk_comparator_from_multi_selectors3(
     return raw
 }
 
+/// Vararg-selector variant. Selectors are packed as [fn1, closure1, fn2, closure2, ...].
+@_cdecl("kk_comparator_from_multi_selectors_vararg")
+public func kk_comparator_from_multi_selectors_vararg(_ selectorsRaw: Int) -> Int {
+    let elements = runtimeArrayBox(from: selectorsRaw)?.elements ?? []
+    let box = RuntimeListBox(elements: elements)
+    let raw = registerRuntimeObject(box)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_from_multi_selectors_trampoline)
+    return raw
+}
+
 /// Trampoline for multi-selector compareBy.
 @_cdecl("kk_comparator_from_multi_selectors_trampoline")
 public func kk_comparator_from_multi_selectors_trampoline(
