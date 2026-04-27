@@ -71,12 +71,11 @@ extension DataFlowSemaPhase {
         interner: StringInterner,
         filesByID: [Int32: ASTFile]
     ) {
-        guard let decl = ast.arena.decl(declID),
-              let symbolID = bindings.declSymbols[declID],
-              let ownerSymbol = symbols.symbol(symbolID)
-        else {
+        guard let decl = ast.arena.decl(declID) else {
             return
         }
+        let symbolID = bindings.declSymbols[declID]
+        let ownerSymbol = symbolID.flatMap { symbols.symbol($0) }
 
         for annotation in declarationAnnotations(for: decl) {
             guard let site = annotationUsageSite(for: annotation, on: decl, ownerSymbol: ownerSymbol) else {
@@ -88,7 +87,7 @@ extension DataFlowSemaPhase {
                 ownerRange: ownerRange(for: decl),
                 decl: decl,
                 file: file,
-                propertySymbol: ownerSymbol.kind == .property ? symbolID : nil,
+                propertySymbol: ownerSymbol?.kind == .property ? symbolID : nil,
                 symbols: symbols,
                 diagnostics: diagnostics,
                 interner: interner,
@@ -247,7 +246,7 @@ extension DataFlowSemaPhase {
     private func annotationUsageSite(
         for annotation: AnnotationNode,
         on decl: Decl,
-        ownerSymbol: SemanticSymbol
+        ownerSymbol: SemanticSymbol?
     ) -> AnnotationUsageSite? {
         let useSiteTarget = annotation.useSiteTarget?.lowercased()
         switch decl {
@@ -255,7 +254,7 @@ extension DataFlowSemaPhase {
             guard useSiteTarget == nil else {
                 return nil
             }
-            return .classLike(ownerSymbol.kind)
+            return .classLike(ownerSymbol?.kind ?? fallbackClassLikeKind(for: decl))
         case .funDecl:
             guard useSiteTarget == nil else {
                 return nil
@@ -278,8 +277,24 @@ extension DataFlowSemaPhase {
             default:
                 return nil
             }
-        case .typeAliasDecl, .enumEntryDecl:
+        case .typeAliasDecl:
+            guard useSiteTarget == nil else {
+                return nil
+            }
+            return .typeAlias
+        case .enumEntryDecl:
             return nil
+        }
+    }
+
+    private func fallbackClassLikeKind(for decl: Decl) -> SymbolKind {
+        switch decl {
+        case .interfaceDecl:
+            return .interface
+        case .objectDecl:
+            return .object
+        default:
+            return .class
         }
     }
 
@@ -494,6 +509,8 @@ extension DataFlowSemaPhase {
             return allowedTargets.contains("FILE")
         case .type:
             return allowedTargets.contains("TYPE")
+        case .typeAlias:
+            return allowedTargets.contains("TYPEALIAS")
         }
     }
 
@@ -538,6 +555,8 @@ extension DataFlowSemaPhase {
             return "the file"
         case .type:
             return "a type usage"
+        case .typeAlias:
+            return "a type alias declaration"
         }
     }
 
@@ -603,6 +622,7 @@ extension DataFlowSemaPhase {
         case delegate
         case file
         case type
+        case typeAlias
     }
 }
 

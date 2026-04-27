@@ -431,6 +431,7 @@ public struct TypeAliasDecl {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
+    public let annotations: [AnnotationNode]
     public let typeParams: [TypeParamDecl]
     public let underlyingType: TypeRefID?
 
@@ -438,12 +439,14 @@ public struct TypeAliasDecl {
         range: SourceRange,
         name: InternedString,
         modifiers: Modifiers,
+        annotations: [AnnotationNode] = [],
         typeParams: [TypeParamDecl] = [],
         underlyingType: TypeRefID? = nil
     ) {
         self.range = range
         self.name = name
         self.modifiers = modifiers
+        self.annotations = annotations
         self.typeParams = typeParams
         self.underlyingType = underlyingType
     }

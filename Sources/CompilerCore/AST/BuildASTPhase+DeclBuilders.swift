@@ -306,6 +306,7 @@ extension BuildASTPhase {
             range: node.range,
             name: declarationName(from: nodeID, in: arena, interner: interner),
             modifiers: declarationModifiers(from: nodeID, in: arena),
+            annotations: declarationAnnotations(from: nodeID, in: arena, interner: interner),
             typeParams: typeParams,
             underlyingType: declarationTypeAliasRHS(from: nodeID, in: arena, interner: interner, astArena: astArena)
         )

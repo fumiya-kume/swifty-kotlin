@@ -104,6 +104,41 @@ extension AnnotationSemanticTests {
         XCTAssertTrue(diags.allSatisfy(isError), "Annotation-target diagnostics should be errors")
     }
 
+    func testTargetTypeAliasAcceptsTypeAliasDeclaration() {
+        let source = """
+        @Target(AnnotationTarget.TYPEALIAS)
+        annotation class TypeAliasOnly
+
+        @TypeAliasOnly
+        typealias UserName = String
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diags = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertTrue(diags.isEmpty, "Expected no annotation-target diagnostics for typealias, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testTargetClassRejectsTypeAliasDeclaration() {
+        let source = """
+        @Target(AnnotationTarget.CLASS)
+        annotation class ClassOnly
+
+        @ClassOnly
+        typealias UserName = String
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diags = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diags.count, 1, "Expected one annotation-target diagnostic for typealias, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diags.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+        XCTAssertTrue(
+            diags.first?.message.contains("type alias") == true,
+            "Expected diagnostic to mention type alias usage, got: \(diags.map(\.message))"
+        )
+    }
+
     // MARK: - @Retention(RUNTIME) metadata
 
     func testRetentionRuntimeIsRecordedOnAnnotationSymbol() throws {
