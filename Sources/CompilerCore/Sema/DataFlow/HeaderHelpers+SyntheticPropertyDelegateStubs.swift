@@ -37,6 +37,11 @@ extension DataFlowSemaPhase {
         let kotlinReflectPkg = ensurePackage(
             path: ["kotlin", "reflect"], symbols: symbols, interner: interner
         )
+        registerAssociatedObjectKeyAnnotation(
+            kotlinReflectPkg: kotlinReflectPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let kPropertySymbol = ensureInterfaceSymbol(
             named: "KProperty", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
@@ -373,6 +378,34 @@ extension DataFlowSemaPhase {
                 for: funcSymbol2
             )
         }
+    }
+
+    private func registerAssociatedObjectKeyAnnotation(
+        kotlinReflectPkg: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let symbol = ensureAnnotationClassSymbol(
+            named: "AssociatedObjectKey", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+        let targetRecord = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.annotation.Target",
+            arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
+        )
+        let experimentalRecord = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.reflect.ExperimentalAssociatedObjects"
+        )
+        let retentionRecord = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.annotation.Retention",
+            arguments: ["AnnotationRetention.BINARY"]
+        )
+        var annotations = symbols.annotations(for: symbol)
+        for record in [experimentalRecord, retentionRecord, targetRecord] {
+            if !annotations.contains(record) {
+                annotations.append(record)
+            }
+        }
+        symbols.setAnnotations(annotations, for: symbol)
     }
 
     /// Updates the `parameters` property type of `KFunction` to `List<Any?>` once the
