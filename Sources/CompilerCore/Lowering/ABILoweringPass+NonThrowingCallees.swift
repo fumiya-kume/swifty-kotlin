@@ -700,7 +700,11 @@ extension ABILoweringPass {
 =======
             interner.intern("kk_instant_is_distant_past"),
             interner.intern("kk_instant_is_distant_future"),
+<<<<<<< HEAD
 >>>>>>> bc17f9d2c (Add Instant distant properties)
+=======
+            interner.intern("kk_time_source_as_clock"),
+>>>>>>> c13142303 (Add TimeSource asClock)
             interner.intern("kk_time_source_mark_now"),
             interner.intern("kk_time_source_monotonic_mark_now"),
             interner.intern("kk_time_mark_elapsed_now"),

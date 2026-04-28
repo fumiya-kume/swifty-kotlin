@@ -318,6 +318,7 @@ public extension RuntimeABISpec {
             bridgeSpec("kk_instant_now", section: "System"),
             bridgeSpec("kk_instant_plus_duration", section: "System", params: ["instantRaw", "durationRaw"]),
             bridgeSpec("kk_instant_until", section: "System", params: ["fromRaw", "toRaw"]),
+            bridgeSpec("kk_time_source_as_clock", section: "System", params: ["sourceRaw", "originRaw"]),
             // STDLIB-TIME-181: java.time.Instant accessors
             bridgeSpec("kk_java_instant_epoch_seconds", section: "System", params: ["instantRaw"]),
             bridgeSpec("kk_java_instant_nano_of_second", section: "System", params: ["instantRaw"]),
