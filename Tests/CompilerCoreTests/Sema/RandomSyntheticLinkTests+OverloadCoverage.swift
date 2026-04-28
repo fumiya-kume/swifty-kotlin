@@ -213,6 +213,46 @@ extension RandomSyntheticLinkTests {
         XCTAssertTrue(sema.symbols.functionSignature(for: ulongRange)?.canThrow ?? false)
     }
 
+    func testNextUIntOverloadsAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fq = ["kotlin", "random", "Random", "nextUInt"].map { interner.intern($0) }
+        let candidates = sema.symbols.lookupAll(fqName: fq)
+
+        let uintRangeFQ = ["kotlin", "ranges", "UIntRange"].map { interner.intern($0) }
+        let uintRangeSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: uintRangeFQ))
+        let uintRangeType = sema.types.make(.classType(ClassType(
+            classSymbol: uintRangeSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        func candidate(parameterTypes: [TypeID]) -> SymbolID? {
+            candidates.first { id in
+                sema.symbols.functionSignature(for: id)?.parameterTypes == parameterTypes
+            }
+        }
+
+        let zero = try XCTUnwrap(candidate(parameterTypes: []))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: zero), "kk_random_nextUInt")
+        XCTAssertEqual(sema.symbols.functionSignature(for: zero)?.returnType, sema.types.uintType)
+
+        let until = try XCTUnwrap(candidate(parameterTypes: [sema.types.uintType]))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: until), "kk_random_nextUInt_until")
+        XCTAssertEqual(sema.symbols.functionSignature(for: until)?.returnType, sema.types.uintType)
+        XCTAssertTrue(sema.symbols.functionSignature(for: until)?.canThrow ?? false)
+
+        let range = try XCTUnwrap(candidate(parameterTypes: [sema.types.uintType, sema.types.uintType]))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: range), "kk_random_nextUInt_range")
+        XCTAssertEqual(sema.symbols.functionSignature(for: range)?.returnType, sema.types.uintType)
+        XCTAssertTrue(sema.symbols.functionSignature(for: range)?.canThrow ?? false)
+
+        let uintRange = try XCTUnwrap(candidate(parameterTypes: [uintRangeType]))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: uintRange), "kk_random_nextUInt_uintRange")
+        XCTAssertEqual(sema.symbols.functionSignature(for: uintRange)?.returnType, sema.types.uintType)
+        XCTAssertTrue(sema.symbols.functionSignature(for: uintRange)?.canThrow ?? false)
+    }
+
     // MARK: - nextBytes overloads
 
     /// nextBytes(array: ByteArray) is registered and linked to kk_random_nextBytes.

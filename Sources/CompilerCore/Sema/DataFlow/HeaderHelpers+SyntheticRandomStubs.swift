@@ -53,6 +53,7 @@ extension DataFlowSemaPhase {
 
         let intType = types.intType
         let longType = types.longType
+        let uintType = types.uintType
         let ulongType = types.ulongType
         let floatType = types.floatType
         let doubleType = types.doubleType
@@ -65,6 +66,12 @@ extension DataFlowSemaPhase {
         )
         let ulongRangeType = makeRangeType(
             named: "ULongRange",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let uintRangeType = makeRangeType(
+            named: "UIntRange",
             symbols: symbols,
             types: types,
             interner: interner
@@ -190,6 +197,56 @@ extension DataFlowSemaPhase {
                 (name: "from", type: longType),
                 (name: "until", type: longType),
             ],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextUInt",
+            externalLinkName: "kk_random_nextUInt",
+            returnType: uintType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextUInt",
+            externalLinkName: "kk_random_nextUInt_until",
+            returnType: uintType,
+            parameters: [(name: "until", type: uintType)],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextUInt",
+            externalLinkName: "kk_random_nextUInt_range",
+            returnType: uintType,
+            parameters: [
+                (name: "from", type: uintType),
+                (name: "until", type: uintType),
+            ],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextUInt",
+            externalLinkName: "kk_random_nextUInt_uintRange",
+            returnType: uintType,
+            parameters: [(name: "range", type: uintRangeType)],
+            canThrow: true,
             symbols: symbols,
             interner: interner
         )

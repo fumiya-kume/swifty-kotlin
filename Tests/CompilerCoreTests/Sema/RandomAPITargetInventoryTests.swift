@@ -61,18 +61,17 @@ final class RandomAPITargetInventoryTests: XCTestCase {
         "fun Random.nextUBytes(Int): UByteArray": "kk_random_nextUBytes_size",
         "fun Random.nextUBytes(UByteArray): UByteArray": "kk_random_nextUBytes",
         "fun Random.nextUBytes(UByteArray, Int, Int): UByteArray": "kk_random_nextUBytes_range",
+        "fun Random.nextUInt(): UInt": "kk_random_nextUInt",
+        "fun Random.nextUInt(UInt): UInt": "kk_random_nextUInt_until",
+        "fun Random.nextUInt(UInt, UInt): UInt": "kk_random_nextUInt_range",
+        "fun Random.nextUInt(UIntRange): UInt": "kk_random_nextUInt_uintRange",
         "fun Random.nextULong(): ULong": "kk_random_nextULong",
         "fun Random.nextULong(ULong): ULong": "kk_random_nextULong_until",
         "fun Random.nextULong(ULong, ULong): ULong": "kk_random_nextULong_range",
         "fun Random.nextULong(ULongRange): ULong": "kk_random_nextULong_ulongRange",
     ]
 
-    private static let knownGaps: [String: String] = [
-        "fun Random.nextUInt(): UInt": "STDLIB-RANDOM-012",
-        "fun Random.nextUInt(UInt): UInt": "STDLIB-RANDOM-012",
-        "fun Random.nextUInt(UInt, UInt): UInt": "STDLIB-RANDOM-012",
-        "fun Random.nextUInt(UIntRange): UInt": "STDLIB-RANDOM-012",
-    ]
+    private static let knownGaps: [String: String] = [:]
 
     private static let jvmOnlyTargets: Set<String> = [
         "fun Random.asJavaRandom(): java.util.Random",
@@ -86,8 +85,8 @@ final class RandomAPITargetInventoryTests: XCTestCase {
 
     func testTargetInventoryHasExpectedShape() {
         XCTAssertEqual(Self.commonTargetSignatures.count, 31)
-        XCTAssertEqual(Self.implementedLinks.count, 27)
-        XCTAssertEqual(Self.knownGaps.count, 4)
+        XCTAssertEqual(Self.implementedLinks.count, 31)
+        XCTAssertEqual(Self.knownGaps.count, 0)
         XCTAssertEqual(Self.jvmOnlyTargets.count, 2)
     }
 
@@ -175,6 +174,7 @@ final class RandomAPITargetInventoryTests: XCTestCase {
             "nextFloat",
             "nextInt",
             "nextLong",
+            "nextUInt",
             "nextUBytes",
             "nextULong",
         ] {
