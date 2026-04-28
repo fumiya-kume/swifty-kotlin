@@ -41,6 +41,14 @@ extension DataFlowSemaPhase {
             named: "KProperty", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
 
+        registerPropertyDelegateProviderStub(
+            kotlinPropertiesPkg: kotlinPropertiesPkg,
+            kPropertySymbol: kPropertySymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
         // STDLIB-REFLECT-066: Register kotlin.reflect.KType and typeOf<T>() stubs
         registerSyntheticKTypeStubs(
             symbols: symbols, types: types, interner: interner,
@@ -238,6 +246,127 @@ extension DataFlowSemaPhase {
                 for: notNullSymbol
             )
         }
+    }
+
+    private func registerPropertyDelegateProviderStub(
+        kotlinPropertiesPkg: [InternedString],
+        kPropertySymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let providerName = interner.intern("PropertyDelegateProvider")
+        let providerFQName = kotlinPropertiesPkg + [providerName]
+        let providerSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: providerFQName) {
+            providerSymbol = existing
+            symbols.insertFlags([.synthetic, .funInterface], for: existing)
+        } else {
+            providerSymbol = symbols.define(
+                kind: .interface,
+                name: providerName,
+                fqName: providerFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .funInterface]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinPropertiesPkg), packageSymbol != .invalid {
+                symbols.setParentSymbol(packageSymbol, for: providerSymbol)
+            }
+        }
+
+        let typeParameterNames = ["T", "D"].map { interner.intern($0) }
+        let typeParameterSymbols = typeParameterNames.map { name in
+            let fqName = providerFQName + [name]
+            if let existing = symbols.lookup(fqName: fqName) {
+                return existing
+            }
+            let symbol = symbols.define(
+                kind: .typeParameter,
+                name: name,
+                fqName: fqName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(providerSymbol, for: symbol)
+            return symbol
+        }
+        guard typeParameterSymbols.count == 2 else {
+            return
+        }
+        types.setNominalTypeParameterSymbols(typeParameterSymbols, for: providerSymbol)
+        types.setNominalTypeParameterVariances([.in, .out], for: providerSymbol)
+
+        let thisRefType = types.make(.typeParam(TypeParamType(
+            symbol: typeParameterSymbols[0],
+            nullability: .nonNull
+        )))
+        let delegateType = types.make(.typeParam(TypeParamType(
+            symbol: typeParameterSymbols[1],
+            nullability: .nonNull
+        )))
+        let providerType = types.make(.classType(ClassType(
+            classSymbol: providerSymbol,
+            args: [.invariant(thisRefType), .invariant(delegateType)],
+            nullability: .nonNull
+        )))
+        let kPropertyType = types.make(.classType(ClassType(
+            classSymbol: kPropertySymbol,
+            args: [.star],
+            nullability: .nonNull
+        )))
+
+        let provideName = interner.intern("provideDelegate")
+        let provideFQName = providerFQName + [provideName]
+        if symbols.lookup(fqName: provideFQName) != nil {
+            return
+        }
+        let provideSymbol = symbols.define(
+            kind: .function,
+            name: provideName,
+            fqName: provideFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .abstractType, .operatorFunction]
+        )
+        symbols.setParentSymbol(providerSymbol, for: provideSymbol)
+
+        let thisRefName = interner.intern("thisRef")
+        let propertyName = interner.intern("property")
+        let thisRefSymbol = symbols.define(
+            kind: .valueParameter,
+            name: thisRefName,
+            fqName: provideFQName + [thisRefName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let propertySymbol = symbols.define(
+            kind: .valueParameter,
+            name: propertyName,
+            fqName: provideFQName + [propertyName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(provideSymbol, for: thisRefSymbol)
+        symbols.setParentSymbol(provideSymbol, for: propertySymbol)
+        symbols.setPropertyType(thisRefType, for: thisRefSymbol)
+        symbols.setPropertyType(kPropertyType, for: propertySymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: providerType,
+                parameterTypes: [thisRefType, kPropertyType],
+                returnType: delegateType,
+                valueParameterSymbols: [thisRefSymbol, propertySymbol],
+                valueParameterHasDefaultValues: [false, false],
+                valueParameterIsVararg: [false, false],
+                typeParameterSymbols: typeParameterSymbols,
+                classTypeParameterCount: 2
+            ),
+            for: provideSymbol
+        )
     }
 
     // STDLIB-REFLECT-066: Register KType interface stub and typeOf<T>() function stub.

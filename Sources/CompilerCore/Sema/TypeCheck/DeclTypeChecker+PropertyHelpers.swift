@@ -70,17 +70,17 @@ extension DeclTypeChecker {
                 return sym.flags.contains(.operatorFunction)
             }
         if let getValueSymbol = getValueCandidates.first,
-           let getValueSig = sema.symbols.functionSignature(
-               for: getValueSymbol
-           ), result == nil
+           let getValueSig = resolvedDelegateMemberSignature(
+               for: getValueSymbol,
+               receiverType: delegateType,
+               sema: sema
+           ),
+           result == nil
         {
             sema.symbols.setDelegateGetValueSymbol(getValueSymbol, for: symbol)
             result = getValueSig.returnType
         } else if let getValueSymbol = getValueCandidates.first {
             sema.symbols.setDelegateGetValueSymbol(getValueSymbol, for: symbol)
-        }
-        if result == nil {
-            result = sema.types.nullableAnyType
         }
 
         // Check setValue for var properties.
@@ -122,7 +122,11 @@ extension DeclTypeChecker {
 
                 // When provideDelegate is present, the actual delegate is the return type of
                 // provideDelegate. Re-resolve getValue/setValue against the actual delegate type.
-                if let sig = sema.symbols.functionSignature(for: provideDelegateSymbol) {
+                if let sig = resolvedDelegateMemberSignature(
+                    for: provideDelegateSymbol,
+                    receiverType: delegateType,
+                    sema: sema
+                ) {
                     let actualDelegateType = sig.returnType
                     let allGetValueCandidates = driver.helpers
                         .collectMemberFunctionCandidates(
@@ -148,10 +152,13 @@ extension DeclTypeChecker {
                         sema.symbols.setDelegateGetValueSymbol(actualGetValueSymbol, for: symbol)
                         // When provideDelegate is present, the property type must be inferred from
                         // the actual delegate's getValue, not the original expression's getValue.
-                        // Only override result if no explicit type annotation was provided (mirrors
-                        // the getValue resolution pattern above at lines 71-74).
+                        // Only override result if no explicit type annotation was provided.
                         if result == nil,
-                           let actualGetValueSig = sema.symbols.functionSignature(for: actualGetValueSymbol) {
+                           let actualGetValueSig = resolvedDelegateMemberSignature(
+                               for: actualGetValueSymbol,
+                               receiverType: actualDelegateType,
+                               sema: sema
+                           ) {
                             result = actualGetValueSig.returnType
                         }
                     }
@@ -183,7 +190,86 @@ extension DeclTypeChecker {
             }
         }
 
+        if result == nil {
+            result = sema.types.nullableAnyType
+        }
+
         return result
+    }
+
+    private func resolvedDelegateMemberSignature(
+        for memberSymbol: SymbolID,
+        receiverType: TypeID,
+        sema: SemaModule
+    ) -> FunctionSignature? {
+        guard let signature = sema.symbols.functionSignature(for: memberSymbol) else {
+            return nil
+        }
+        guard let ownerSymbol = sema.symbols.parentSymbol(for: memberSymbol),
+              case let .classType(receiverClass) = sema.types.kind(of: sema.types.makeNonNullable(receiverType))
+        else {
+            return signature
+        }
+
+        let ownerArgs: [TypeArg]
+        if receiverClass.classSymbol == ownerSymbol {
+            ownerArgs = receiverClass.args
+        } else if let liftedArgs = sema.types.liftedNominalSupertypeArgs(
+            from: receiverClass.classSymbol,
+            childArgs: receiverClass.args,
+            to: ownerSymbol
+        ) {
+            ownerArgs = liftedArgs
+        } else {
+            return signature
+        }
+
+        let ownerTypeParameters = sema.types.nominalTypeParameterSymbols(for: ownerSymbol)
+        guard !ownerTypeParameters.isEmpty, !ownerArgs.isEmpty else {
+            return signature
+        }
+
+        let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+        var substitution: [TypeVarID: TypeID] = [:]
+        for (index, typeParameterSymbol) in ownerTypeParameters.enumerated() {
+            guard index < ownerArgs.count,
+                  let typeVar = typeVarBySymbol[typeParameterSymbol]
+            else {
+                continue
+            }
+            switch ownerArgs[index] {
+            case let .invariant(type), let .out(type), let .in(type):
+                substitution[typeVar] = type
+            case .star:
+                substitution[typeVar] = sema.types.nullableAnyType
+            }
+        }
+        guard !substitution.isEmpty else {
+            return signature
+        }
+
+        let substitute = { (type: TypeID) in
+            sema.types.substituteTypeParameters(
+                in: type,
+                substitution: substitution,
+                typeVarBySymbol: typeVarBySymbol
+            )
+        }
+        return FunctionSignature(
+            receiverType: signature.receiverType.map(substitute),
+            parameterTypes: signature.parameterTypes.map(substitute),
+            returnType: substitute(signature.returnType),
+            isSuspend: signature.isSuspend,
+            canThrow: signature.canThrow,
+            valueParameterSymbols: signature.valueParameterSymbols,
+            valueParameterHasDefaultValues: signature.valueParameterHasDefaultValues,
+            valueParameterIsVararg: signature.valueParameterIsVararg,
+            typeParameterSymbols: signature.typeParameterSymbols,
+            reifiedTypeParameterIndices: signature.reifiedTypeParameterIndices,
+            typeParameterUpperBounds: signature.typeParameterUpperBounds,
+            typeParameterUpperBoundsList: signature.typeParameterUpperBoundsList,
+            classTypeParameterCount: signature.classTypeParameterCount
+        )
     }
 
     func typeCheckSetter(

@@ -114,7 +114,8 @@ extension CallTypeChecker {
             argExpr: samArgExpr,
             range: range,
             ctx: ctx,
-            locals: &locals
+            locals: &locals,
+            explicitTypeArgs: explicitTypeArgs
         ) {
             return samType
         }
@@ -207,22 +208,31 @@ extension CallTypeChecker {
         argExpr: ExprID,
         range: SourceRange,
         ctx: TypeInferenceContext,
-        locals: inout LocalBindings
+        locals: inout LocalBindings,
+        explicitTypeArgs: [TypeID]
     ) -> TypeID? {
         // Look up the callee name as an interface symbol.
         let interfaceCandidates = ctx.cachedScopeLookup(calleeName).filter { candidate in
             guard let symbol = ctx.cachedSymbol(candidate) else { return false }
             return symbol.kind == .interface && symbol.flags.contains(.funInterface)
         }
-        guard let interfaceSymID = interfaceCandidates.first,
-              let interfaceSym = ctx.cachedSymbol(interfaceSymID)
-        else {
+        guard let interfaceSymID = interfaceCandidates.first else {
             return nil
         }
         let sema = ctx.sema
+        let interfaceTypeParameters = sema.types.nominalTypeParameterSymbols(for: interfaceSymID)
+        let interfaceArgs: [TypeArg]
+        if explicitTypeArgs.isEmpty {
+            interfaceArgs = []
+        } else {
+            guard explicitTypeArgs.count == interfaceTypeParameters.count else {
+                return nil
+            }
+            interfaceArgs = explicitTypeArgs.map { .invariant($0) }
+        }
         let interfaceType = sema.types.make(.classType(ClassType(
             classSymbol: interfaceSymID,
-            args: [],
+            args: interfaceArgs,
             nullability: .nonNull
         )))
         guard let samFT = driver.helpers.samFunctionType(for: interfaceType, sema: sema) else {

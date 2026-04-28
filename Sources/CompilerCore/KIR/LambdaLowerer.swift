@@ -393,7 +393,7 @@ final class LambdaLowerer {
            case let .classType(interfaceType) = sema.types.kind(of: boundType),
            let samValue = lowerSamWrapperValue(
                exprID,
-               interfaceSymbol: interfaceType.classSymbol,
+               interfaceType: interfaceType,
                lambdaSymbol: lambdaSymbol,
                lambdaName: lambdaName,
                lambdaReturnType: lambdaReturnType,
@@ -639,7 +639,7 @@ final class LambdaLowerer {
 
     private func lowerSamWrapperValue(
         _ exprID: ExprID,
-        interfaceSymbol: SymbolID,
+        interfaceType: ClassType,
         lambdaSymbol: SymbolID,
         lambdaName: InternedString,
         lambdaReturnType: TypeID,
@@ -650,6 +650,7 @@ final class LambdaLowerer {
         interner: StringInterner,
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
+        let interfaceSymbol = interfaceType.classSymbol
         guard let interfaceInfo = sema.symbols.symbol(interfaceSymbol),
               interfaceInfo.kind == .interface,
               interfaceInfo.flags.contains(.funInterface),
@@ -670,6 +671,8 @@ final class LambdaLowerer {
         )
         sema.symbols.setDirectSupertypes([interfaceSymbol], for: wrapperSymbol)
         sema.types.setNominalDirectSupertypes([interfaceSymbol], for: wrapperSymbol)
+        sema.symbols.setSupertypeTypeArgs(interfaceType.args, for: wrapperSymbol, supertype: interfaceSymbol)
+        sema.types.setNominalSupertypeTypeArgs(interfaceType.args, for: wrapperSymbol, supertype: interfaceSymbol)
 
         let wrapperType = sema.types.make(.classType(ClassType(
             classSymbol: wrapperSymbol,
@@ -707,7 +710,7 @@ final class LambdaLowerer {
         )
         sema.symbols.setParentSymbol(wrapperSymbol, for: methodSymbol)
 
-        let methodParamSymbols: [SymbolID] = samMethod.signature.parameterTypes.enumerated().map { index, type in
+        let methodParamSymbols: [SymbolID] = samMethodParamTypes.enumerated().map { index, type in
             let paramName = interner.intern("$p\(index)")
             let paramSymbol = sema.symbols.define(
                 kind: .valueParameter,
@@ -723,8 +726,8 @@ final class LambdaLowerer {
         sema.symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: wrapperType,
-                parameterTypes: samMethod.signature.parameterTypes,
-                returnType: samMethod.signature.returnType,
+                parameterTypes: samMethodParamTypes,
+                returnType: lambdaReturnType,
                 isSuspend: samMethod.signature.isSuspend,
                 valueParameterSymbols: methodParamSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: methodParamSymbols.count),
@@ -760,7 +763,7 @@ final class LambdaLowerer {
         driver.ctx.setImplicitReceiver(symbol: receiverSymbol, exprID: receiverExpr)
 
         let methodParams = [KIRParameter(symbol: receiverSymbol, type: wrapperType)]
-            + zip(methodParamSymbols, samMethod.signature.parameterTypes).map { KIRParameter(symbol: $0.0, type: $0.1) }
+            + zip(methodParamSymbols, samMethodParamTypes).map { KIRParameter(symbol: $0.0, type: $0.1) }
         var methodBody: [KIRInstruction] = [.beginBlock]
         methodBody.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
 
@@ -784,7 +787,7 @@ final class LambdaLowerer {
             loadedCaptureExprs.append(loadedExpr)
         }
 
-        let loweredMethodParamExprs = zip(methodParamSymbols, samMethod.signature.parameterTypes).map { symbol, type in
+        let loweredMethodParamExprs = zip(methodParamSymbols, samMethodParamTypes).map { symbol, type in
             let expr = arena.appendExpr(.symbolRef(symbol), type: type)
             methodBody.append(.constValue(result: expr, value: .symbolRef(symbol)))
             return expr
@@ -799,7 +802,7 @@ final class LambdaLowerer {
             canThrow: false,
             thrownResult: nil
         ))
-        if samMethod.signature.returnType == sema.types.unitType {
+        if lambdaReturnType == sema.types.unitType {
             methodBody.append(.returnUnit)
         } else {
             methodBody.append(.returnValue(callResult))
@@ -810,7 +813,7 @@ final class LambdaLowerer {
             symbol: methodSymbol,
             name: methodName,
             params: methodParams,
-            returnType: samMethod.signature.returnType,
+            returnType: lambdaReturnType,
             body: methodBody,
             isSuspend: samMethod.signature.isSuspend,
             isInline: false
@@ -830,7 +833,11 @@ final class LambdaLowerer {
         instructions.append(.constValue(result: classIDExpr, value: .intLiteral(classIDValue)))
         let wrapperValue = arena.appendExpr(
             .temporary(Int32(arena.expressions.count)),
-            type: sema.types.make(.classType(ClassType(classSymbol: interfaceSymbol, args: [], nullability: .nonNull)))
+            type: sema.types.make(.classType(ClassType(
+                classSymbol: interfaceSymbol,
+                args: interfaceType.args,
+                nullability: .nonNull
+            )))
         )
         instructions.append(.call(
             symbol: nil,
@@ -1347,7 +1354,7 @@ final class LambdaLowerer {
            case let .classType(interfaceType) = sema.types.kind(of: boundType),
            let samValue = lowerSamWrapperValue(
                exprID,
-               interfaceSymbol: interfaceType.classSymbol,
+               interfaceType: interfaceType,
                lambdaSymbol: lambdaSymbol,
                lambdaName: lambdaName,
                lambdaReturnType: lambdaReturnType,
