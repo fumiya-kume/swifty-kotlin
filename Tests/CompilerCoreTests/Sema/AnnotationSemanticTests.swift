@@ -830,6 +830,43 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.isEmpty, "Expected file-level opt-in to suppress HexFormat diagnostics, got: \(ctx.diagnostics.diagnostics)")
     }
 
+    func testExperimentalAssociatedObjectsMarkerRequiresOptIn() {
+        let source = """
+        import kotlin.reflect.ExperimentalAssociatedObjects
+
+        @ExperimentalAssociatedObjects
+        fun associatedObjectsApi(): Int = 1
+
+        fun caller(): Int = associatedObjectsApi()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx)
+
+        XCTAssertTrue(diagnostics.contains(where: isError), "Expected ExperimentalAssociatedObjects opt-in error, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(
+            diagnostics.first?.message.contains("ExperimentalAssociatedObjects") == true,
+            "Expected diagnostic to mention ExperimentalAssociatedObjects, got: \(diagnostics)"
+        )
+    }
+
+    func testExperimentalAssociatedObjectsMarkerAllowsExplicitOptIn() {
+        let source = """
+        import kotlin.reflect.ExperimentalAssociatedObjects
+
+        @ExperimentalAssociatedObjects
+        fun associatedObjectsApi(): Int = 1
+
+        @OptIn(ExperimentalAssociatedObjects::class)
+        fun caller(): Int = associatedObjectsApi()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected @OptIn to suppress ExperimentalAssociatedObjects diagnostics, got: \(ctx.diagnostics.diagnostics)")
+    }
+
     func testOptInSuppressionAliasSuppressesDiagnostic() {
         let source = """
         @Suppress("OPT_IN_USAGE")

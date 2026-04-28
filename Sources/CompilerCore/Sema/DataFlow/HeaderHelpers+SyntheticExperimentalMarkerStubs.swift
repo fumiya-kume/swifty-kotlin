@@ -13,6 +13,7 @@ import Foundation
 /// | ExperimentalEncodingApi   | kotlin.io.encoding   | ERROR    |
 /// | ExperimentalMultiplatform | kotlin               | ERROR    |
 /// | ExperimentalSubclassOptIn | kotlin               | WARNING  |
+/// | ExperimentalAssociatedObjects | kotlin.reflect    | ERROR    |
 ///
 /// See: https://kotlinlang.org/api/latest/jvm/stdlib/
 extension DataFlowSemaPhase {
@@ -89,6 +90,24 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- kotlin.reflect.ExperimentalAssociatedObjects (ERROR) ---
+        let kotlinReflectPkg = ensurePackage(
+            path: ["kotlin", "reflect"],
+            symbols: symbols,
+            interner: interner
+        )
+        let kotlinReflectPkgSymbol = symbols.lookup(fqName: kotlinReflectPkg) ?? .invalid
+        registerSyntheticExperimentalMarker(
+            named: "ExperimentalAssociatedObjects",
+            packageFQName: kotlinReflectPkg,
+            packageSymbol: kotlinReflectPkgSymbol,
+            severity: "ERROR",
+            targetArguments: nil,
+            retentionArgument: nil,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     /// Registers a single experimental opt-in marker annotation class and attaches
@@ -99,6 +118,8 @@ extension DataFlowSemaPhase {
         packageFQName: [InternedString],
         packageSymbol: SymbolID,
         severity: String,
+        targetArguments: [String]? = ["AnnotationTarget.ANNOTATION_CLASS"],
+        retentionArgument: String? = "AnnotationRetention.BINARY",
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -127,22 +148,26 @@ extension DataFlowSemaPhase {
             annotationFQName: "kotlin.RequiresOptIn",
             arguments: ["level=RequiresOptIn.Level.\(severity)"]
         )
-        // Attach @Target(ANNOTATION_CLASS) so the compiler treats it as a
-        // well-formed opt-in marker.
-        let targetRecord = MetadataAnnotationRecord(
-            annotationFQName: "kotlin.annotation.Target",
-            arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
-        )
-        // Attach @Retention(BINARY) matching Kotlin stdlib declarations.
-        let retentionRecord = MetadataAnnotationRecord(
-            annotationFQName: "kotlin.annotation.Retention",
-            arguments: ["AnnotationRetention.BINARY"]
-        )
-
         var annotations = symbols.annotations(for: classSymbol)
-        for record in [requiresOptInRecord, targetRecord, retentionRecord] {
-            if !annotations.contains(record) {
-                annotations.append(record)
+        if !annotations.contains(requiresOptInRecord) {
+            annotations.append(requiresOptInRecord)
+        }
+        if let targetArguments {
+            let targetRecord = MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: targetArguments
+            )
+            if !annotations.contains(targetRecord) {
+                annotations.append(targetRecord)
+            }
+        }
+        if let retentionArgument {
+            let retentionRecord = MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Retention",
+                arguments: [retentionArgument]
+            )
+            if !annotations.contains(retentionRecord) {
+                annotations.append(retentionRecord)
             }
         }
         symbols.setAnnotations(annotations, for: classSymbol)
