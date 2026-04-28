@@ -27,6 +27,36 @@ extension CallTypeChecker {
         if case .typeParam = sema.types.kind(of: declared) {
             return true
         }
+        func typeArgumentLikeMatch(actual: TypeID?, declared: TypeID?) -> Bool {
+            switch (actual, declared) {
+            case let (actual?, declared?):
+                let actualNonNull = sema.types.makeNonNullable(actual)
+                let declaredNonNull = sema.types.makeNonNullable(declared)
+                if sema.types.isSubtype(actualNonNull, declaredNonNull) {
+                    return true
+                }
+                if case .typeParam = sema.types.kind(of: declaredNonNull) {
+                    return true
+                }
+                return false
+            case (nil, nil):
+                return true
+            default:
+                return false
+            }
+        }
+        if case let .functionType(declaredFn) = sema.types.kind(of: declared),
+           case let .functionType(actualFn) = sema.types.kind(of: actual),
+           declaredFn.isSuspend == actualFn.isSuspend,
+           declaredFn.params.count == actualFn.params.count,
+           typeArgumentLikeMatch(actual: actualFn.receiver, declared: declaredFn.receiver),
+           zip(actualFn.params, declaredFn.params).allSatisfy({ actualParam, declaredParam in
+               typeArgumentLikeMatch(actual: actualParam, declared: declaredParam)
+           }),
+           typeArgumentLikeMatch(actual: actualFn.returnType, declared: declaredFn.returnType)
+        {
+            return true
+        }
         if case let .classType(declaredCt) = sema.types.kind(of: declared),
            case let .classType(actualCt) = sema.types.kind(of: actual),
            actualCt.classSymbol == declaredCt.classSymbol,
