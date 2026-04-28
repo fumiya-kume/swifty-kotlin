@@ -40,6 +40,8 @@ extension ABIMismatchTests {
             "kk_concurrent_modification_exception_new_message",
             "kk_concurrent_modification_exception_new_message_cause",
             "kk_concurrent_modification_exception_new_cause",
+            "kk_array_index_out_of_bounds_exception_new",
+            "kk_array_index_out_of_bounds_exception_new_message",
             // Comparator (STDLIB-176)
             "kk_comparator_then_comparator",
             // Collection (binarySearch)
