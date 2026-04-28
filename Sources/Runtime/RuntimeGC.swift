@@ -62,6 +62,38 @@ let runtimeStorage = RuntimeStorageBox()
 
 let kkObjMarkFlag: UInt32 = 1 << 0
 
+private let runtimeGCDefaultTargetHeapBytes = 100 * 1024 * 1024
+
+private final class RuntimeGCTuningState: @unchecked Sendable {
+    private let lock = NSLock()
+    private var targetHeapBytes = runtimeGCDefaultTargetHeapBytes
+    private var targetHeapUtilization = 0.5
+    private var maxHeapBytes = max(
+        runtimeGCDefaultTargetHeapBytes,
+        Int(clamping: ProcessInfo.processInfo.physicalMemory)
+    )
+
+    func currentTargetHeapBytes() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return targetHeapBytes
+    }
+
+    func currentTargetHeapUtilization() -> Double {
+        lock.lock()
+        defer { lock.unlock() }
+        return targetHeapUtilization
+    }
+
+    func currentMaxHeapBytes() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return maxHeapBytes
+    }
+}
+
+private let runtimeGCTuningState = RuntimeGCTuningState()
+
 @_cdecl("kk_alloc")
 public func kk_alloc(_ size: UInt32, _ typeInfo: UnsafeRawPointer) -> UnsafeMutableRawPointer {
     let headerSize = MemoryLayout<KKObjHeader>.stride
@@ -89,6 +121,27 @@ public func kk_gc_collect() {
     runtimeStorage.withLock { state in
         performMarkAndSweepLocked(state: &state)
     }
+}
+
+@_cdecl("kk_gc_schedule")
+public func kk_gc_schedule() -> Int {
+    kk_gc_collect()
+    return 0
+}
+
+@_cdecl("kk_gc_target_heap_bytes")
+public func kk_gc_target_heap_bytes() -> Int {
+    runtimeGCTuningState.currentTargetHeapBytes()
+}
+
+@_cdecl("kk_gc_target_heap_utilization")
+public func kk_gc_target_heap_utilization() -> Double {
+    runtimeGCTuningState.currentTargetHeapUtilization()
+}
+
+@_cdecl("kk_gc_max_heap_bytes")
+public func kk_gc_max_heap_bytes() -> Int {
+    runtimeGCTuningState.currentMaxHeapBytes()
 }
 
 @_cdecl("kk_write_barrier")

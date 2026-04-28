@@ -1123,6 +1123,11 @@ extension ABILoweringPass {
             interner.intern("kk_weak_ref_clear"),
             interner.intern("kk_cleaner_create"),
             interner.intern("kk_cleaner_dispose"),
+            interner.intern("kk_gc_collect"),
+            interner.intern("kk_gc_schedule"),
+            interner.intern("kk_gc_target_heap_bytes"),
+            interner.intern("kk_gc_target_heap_utilization"),
+            interner.intern("kk_gc_max_heap_bytes"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }
