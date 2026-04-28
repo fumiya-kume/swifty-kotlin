@@ -1,0 +1,67 @@
+@testable import CompilerCore
+import Foundation
+import XCTest
+
+extension BuildKIRRegressionTests {
+    func testSystemObjectMembersLowerToRuntimeCallees() throws {
+        let source = """
+        import kotlin.system.System
+
+        fun main(): Long {
+            val millis = System.currentTimeMillis()
+            val nanos = System.nanoTime()
+            val startedAt = System.processStartNanos()
+            return millis + nanos + startedAt
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_system_currentTimeMillis"), "Expected System.currentTimeMillis runtime call")
+            XCTAssertTrue(callees.contains("kk_system_nanoTime"), "Expected System.nanoTime runtime call")
+            XCTAssertTrue(callees.contains("kk_system_process_start_nanos"), "Expected System.processStartNanos runtime call")
+        }
+    }
+
+    func testMeasureTimeCallsLowerToClockDeltaRuntimeCallees() throws {
+        let source = """
+        import kotlin.system.measureNanoTime
+        import kotlin.system.measureTimeMillis
+
+        fun main(): Long {
+            val millis = measureTimeMillis { }
+            val nanos = measureNanoTime { }
+            return millis + nanos
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertGreaterThanOrEqual(
+                callees.filter { $0 == "kk_system_currentTimeMillis" }.count,
+                2,
+                "measureTimeMillis should lower to start/end currentTimeMillis calls"
+            )
+            XCTAssertGreaterThanOrEqual(
+                callees.filter { $0 == "kk_system_nanoTime" }.count,
+                2,
+                "measureNanoTime should lower to start/end nanoTime calls"
+            )
+            XCTAssertGreaterThanOrEqual(
+                callees.filter { $0 == "kk_op_sub" }.count,
+                2,
+                "measureTimeMillis and measureNanoTime should both lower to elapsed-time subtraction"
+            )
+        }
+    }
+}
