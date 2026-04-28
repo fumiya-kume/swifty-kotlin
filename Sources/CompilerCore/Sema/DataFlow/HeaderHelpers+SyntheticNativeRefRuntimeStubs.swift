@@ -284,7 +284,7 @@ extension DataFlowSemaPhase {
         if let pkgSymbol {
             symbols.setParentSymbol(pkgSymbol, for: functionSymbol)
         }
-        symbols.setExternalLinkName("kk_create_cleaner", for: functionSymbol)
+        symbols.setExternalLinkName("kk_cleaner_create", for: functionSymbol)
 
         // Tag with @ExperimentalNativeApi.
         if let experimentalNativeApiSymbol {
