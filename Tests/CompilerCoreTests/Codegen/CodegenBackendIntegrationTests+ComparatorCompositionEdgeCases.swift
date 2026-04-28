@@ -126,6 +126,30 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenCompilesComparatorThenOfficialName() throws {
+        let source = """
+        fun main() {
+            val cmp = compareBy<Int> { it % 10 }.then(compareBy { -it })
+            println(listOf(11, 21, 12, 22).sortedWith(cmp))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ComparatorThenOfficialName",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[21, 11, 22, 12]\n")
+        }
+    }
+
     func testCodegenCompilesCompareByDescendingComparatorSelector() throws {
         let source = """
         fun main() {

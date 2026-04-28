@@ -589,6 +589,41 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
 
+        let thenName = interner.intern("then")
+        let thenFQName = comparatorFQName + [thenName]
+        if symbols.lookup(fqName: thenFQName) == nil {
+            let comparatorParamName = interner.intern("comparator")
+            let comparatorParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: comparatorParamName,
+                fqName: thenFQName + [comparatorParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            let thenSymbol = symbols.define(
+                kind: .function,
+                name: thenName,
+                fqName: thenFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(comparatorSymbol, for: thenSymbol)
+            symbols.setParentSymbol(thenSymbol, for: comparatorParamSymbol)
+            symbols.setExternalLinkName("kk_comparator_then_comparator", for: thenSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [receiverType],
+                    returnType: receiverType,
+                    typeParameterSymbols: [tParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: thenSymbol
+            )
+        }
+
         for (name, extLink, parameterType, parameterName) in [
             ("thenBy", "kk_comparator_then_by", selectorType, "selector"),
             ("thenByDescending", "kk_comparator_then_by_descending", selectorType, "selector"),

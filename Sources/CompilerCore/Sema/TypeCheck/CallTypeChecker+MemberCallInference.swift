@@ -3728,6 +3728,18 @@ extension CallTypeChecker {
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
                 }
                 switch calleeStr {
+                case "then":
+                    let comparatorExpectedType = comparatorType(
+                        elementType: comparatorElementType,
+                        sema: sema,
+                        interner: interner
+                    )
+                    _ = driver.inferExpr(
+                        args[0].expr,
+                        ctx: ctx,
+                        locals: &locals,
+                        expectedType: comparatorExpectedType
+                    )
                 case "thenBy", "thenByDescending":
                     let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                         params: [comparatorElementType],
@@ -7937,6 +7949,25 @@ extension CallTypeChecker {
         )
     }
 
+    private func comparatorType(
+        elementType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        let comparatorFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("Comparator"),
+        ]
+        guard let comparatorSymbol = sema.symbols.lookup(fqName: comparatorFQName) else {
+            return nil
+        }
+        return sema.types.make(.classType(ClassType(
+            classSymbol: comparatorSymbol,
+            args: [.invariant(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
     private func resolvedComparatorElementType(
         of type: TypeID,
         comparatorFQName: [InternedString],
@@ -8564,6 +8595,46 @@ extension CallTypeChecker {
 
         guard args.count == 1 else {
             return nil
+        }
+
+        if calleeStr == "then" {
+            let expectedComparatorType = comparatorType(
+                elementType: comparatorElementType,
+                sema: sema,
+                interner: interner
+            )
+            _ = driver.inferExpr(
+                args[0].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: expectedComparatorType
+            )
+
+            let comparatorMemberFQName: [InternedString] = [
+                interner.intern("kotlin"),
+                interner.intern("Comparator"),
+                calleeName,
+            ]
+            guard let chosen = sema.symbols.lookupAll(fqName: comparatorMemberFQName).first(where: { candidate in
+                sema.symbols.externalLinkName(for: candidate) == "kk_comparator_then_comparator"
+            }) else {
+                return nil
+            }
+
+            sema.bindings.bindCall(
+                id,
+                binding: CallBinding(
+                    chosenCallee: chosen,
+                    substitutedTypeArguments: [],
+                    parameterMapping: [0: 0]
+                )
+            )
+            sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+
+            let resultType = sema.types.makeNonNullable(receiverType)
+            let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
         }
 
         let expectedLambdaType: TypeID

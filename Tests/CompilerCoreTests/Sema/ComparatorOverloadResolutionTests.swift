@@ -210,6 +210,37 @@ final class ComparatorOverloadResolutionTests: XCTestCase {
         }
     }
 
+    func testComparatorThenChainedOnCompareByResolvesCorrectly() throws {
+        let source = """
+        fun sample() {
+            val cmp = compareBy<Int> { it % 10 }.then(compareBy { -it })
+            listOf(11, 21, 12, 22).sortedWith(cmp)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "then"
+            }, "Expected a then(comparator) member call")
+
+            let chosenCallee = try XCTUnwrap(
+                sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                "Expected then(comparator) to resolve to a callee"
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenCallee),
+                "kk_comparator_then_comparator",
+                "Expected then(comparator) to link to kk_comparator_then_comparator"
+            )
+        }
+    }
+
     // MARK: - thenBy { } chained
 
     func testThenByIsRegisteredAsSyntheticComparatorMember() throws {
