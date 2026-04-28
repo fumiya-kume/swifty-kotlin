@@ -197,47 +197,21 @@ final class LambdaLowerer {
             ))
         }
 
-        // For lambdas passed to C HOFs (filter, map, mapIndexed, forEachIndexed, fold, etc.),
+        // For lambdas passed to C HOFs (filter, map, toComponents, etc.),
         // Runtime expects (closureRaw, ...valueParams, outThrown). Add closure param as first param.
         let lambdaParameters: [KIRParameter]
-        if needsClosureParam, effectiveParamCount == 0 {
+        if needsClosureParam {
             let closureParam = KIRParameter(
                 symbol: syntheticLambdaClosureParamSymbol(lambdaExprID: exprID),
                 type: sema.types.intType
             )
-            lambdaParameters = [closureParam]
-        } else if needsClosureParam, effectiveParamCount == 1 {
-            let closureParam = KIRParameter(
-                symbol: syntheticLambdaClosureParamSymbol(lambdaExprID: exprID),
-                type: sema.types.intType
-            )
-            let elemParam = KIRParameter(
-                symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 0),
-                type: lambdaParameterTypes[0]
-            )
-            lambdaParameters = [closureParam, elemParam]
-        } else if needsClosureParam, effectiveParamCount == 2 {
-            // mapIndexed/forEachIndexed/fold/reduce: (closureRaw, param0, param1, outThrown)
-            let closureParam = KIRParameter(
-                symbol: syntheticLambdaClosureParamSymbol(lambdaExprID: exprID),
-                type: sema.types.intType
-            )
-            let param0 = KIRParameter(
-                symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 0),
-                type: lambdaParameterTypes[0]
-            )
-            let param1 = KIRParameter(
-                symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 1),
-                type: lambdaParameterTypes[1]
-            )
-            lambdaParameters = [closureParam, param0, param1]
-        } else if needsClosureParam, effectiveParamCount == 3 {
-            // foldIndexed/reduceIndexed/scanIndexed etc.: (closureRaw, param0, param1, param2, outThrown)
-            let closureParam = KIRParameter(symbol: syntheticLambdaClosureParamSymbol(lambdaExprID: exprID), type: sema.types.intType)
-            let param0 = KIRParameter(symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 0), type: lambdaParameterTypes[0])
-            let param1 = KIRParameter(symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 1), type: lambdaParameterTypes[1])
-            let param2 = KIRParameter(symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 2), type: lambdaParameterTypes[2])
-            lambdaParameters = [closureParam, param0, param1, param2]
+            let valueParams = (0 ..< effectiveParamCount).map { index in
+                KIRParameter(
+                    symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: index),
+                    type: lambdaParameterTypes[index]
+                )
+            }
+            lambdaParameters = [closureParam] + valueParams
         } else {
             lambdaParameters = (0 ..< effectiveParamCount).map { index in
                 KIRParameter(

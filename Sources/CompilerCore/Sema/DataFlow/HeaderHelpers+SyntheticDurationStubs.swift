@@ -221,6 +221,15 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TIME-STABLE-004: Duration.toComponents overloads ---
+        registerDurationToComponentsMethods(
+            ownerSymbol: durationSymbol,
+            ownerType: durationType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
         // --- STDLIB-TIME-082: Duration member methods ---
         registerDurationMemberMethod(
             named: "plus",
@@ -602,6 +611,129 @@ extension DataFlowSemaPhase {
     }
 
     // MARK: - Duration member method registration (STDLIB-TIME-082)
+
+    private func registerDurationToComponentsMethods(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let overloads: [(externalLinkName: String, actionParameterTypes: [TypeID])] = [
+            (
+                "kk_duration_toComponents_seconds",
+                [types.longType, types.intType]
+            ),
+            (
+                "kk_duration_toComponents_minutes",
+                [types.longType, types.intType, types.intType]
+            ),
+            (
+                "kk_duration_toComponents_hours",
+                [types.longType, types.intType, types.intType, types.intType]
+            ),
+            (
+                "kk_duration_toComponents_days",
+                [types.longType, types.intType, types.intType, types.intType, types.intType]
+            ),
+        ]
+
+        for overload in overloads {
+            registerDurationToComponentsMethod(
+                externalLinkName: overload.externalLinkName,
+                actionParameterTypes: overload.actionParameterTypes,
+                ownerSymbol: ownerSymbol,
+                ownerType: ownerType,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
+    }
+
+    private func registerDurationToComponentsMethod(
+        externalLinkName: String,
+        actionParameterTypes: [TypeID],
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
+        let functionName = interner.intern("toComponents")
+        let functionFQName = ownerInfo.fqName + [functionName]
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard symbols.symbol(symbolID)?.kind == .function,
+                  let signature = symbols.functionSignature(for: symbolID),
+                  signature.parameterTypes.count == 1,
+                  let actionType = signature.parameterTypes.first,
+                  case let .functionType(functionType) = types.kind(of: types.makeNonNullable(actionType))
+            else {
+                return false
+            }
+            return functionType.params == actionParameterTypes
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            symbols.insertFlags([.inlineFunction], for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        let typeParamName = interner.intern("T\(actionParameterTypes.count)")
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: functionFQName + [typeParamName],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: typeParamSymbol)
+        let resultType = types.make(.typeParam(TypeParamType(symbol: typeParamSymbol)))
+        let actionType = types.make(.functionType(FunctionType(
+            params: actionParameterTypes,
+            returnType: resultType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let actionParameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: interner.intern("action"),
+            fqName: functionFQName + [interner.intern("action\(actionParameterTypes.count)")],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: actionParameterSymbol)
+        symbols.setPropertyType(actionType, for: actionParameterSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: [actionType],
+                returnType: resultType,
+                isSuspend: false,
+                valueParameterSymbols: [actionParameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [typeParamSymbol]
+            ),
+            for: functionSymbol
+        )
+    }
 
     private func registerDurationMemberMethod(
         named name: String,

@@ -474,6 +474,17 @@ typealias RuntimeCollectionLambda1 = @convention(c) (Int, Int, UnsafeMutablePoin
 typealias RuntimeCollectionLambda2 = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 typealias RuntimeCollectionLambda3 = @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 typealias RuntimeCollectionLambda4 = @convention(c) (Int, Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
+typealias RuntimeCollectionLambda5 = @convention(c) (Int, Int, Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
+typealias ComparatorLambda = RuntimeCollectionLambda2
+
+/// Retains an object and registers it as a runtime handle.
+func runtimeRetainObjectHandle(_ object: AnyObject) -> Int {
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(object).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
 
 /// Writes a thrown payload when the caller provided an out-thrown slot.
 func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, _ value: Int) {
@@ -544,6 +555,29 @@ func runtimeInvokeCollectionLambda4(
         maybeUnbox(arg2),
         maybeUnbox(arg3),
         maybeUnbox(arg4),
+        outThrown
+    )
+}
+
+@inline(__always)
+func runtimeInvokeCollectionLambda5(
+    fnPtr: Int,
+    closureRaw: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    arg4: Int,
+    arg5: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let fn = unsafeBitCast(fnPtr, to: RuntimeCollectionLambda5.self)
+    return fn(
+        maybeUnbox(closureRaw),
+        maybeUnbox(arg1),
+        maybeUnbox(arg2),
+        maybeUnbox(arg3),
+        maybeUnbox(arg4),
+        maybeUnbox(arg5),
         outThrown
     )
 }

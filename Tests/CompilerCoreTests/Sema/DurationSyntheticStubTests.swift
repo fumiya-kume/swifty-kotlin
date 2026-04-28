@@ -133,4 +133,59 @@ final class DurationSyntheticStubTests: XCTestCase {
         })
         XCTAssertEqual(sema.symbols.externalLinkName(for: parseIsoOrNullSymbol), "kk_duration_parseIsoStringOrNull")
     }
+
+    func testDurationToComponentsOverloadsAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let durationFQName = ["kotlin", "time", "Duration"].map { interner.intern($0) }
+        let durationSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: durationFQName))
+        let durationType = sema.types.make(.classType(ClassType(
+            classSymbol: durationSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let toComponentsFQName = durationFQName + [interner.intern("toComponents")]
+        let overloads: [(link: String, params: [TypeID])] = [
+            ("kk_duration_toComponents_seconds", [sema.types.longType, sema.types.intType]),
+            ("kk_duration_toComponents_minutes", [sema.types.longType, sema.types.intType, sema.types.intType]),
+            (
+                "kk_duration_toComponents_hours",
+                [sema.types.longType, sema.types.intType, sema.types.intType, sema.types.intType]
+            ),
+            (
+                "kk_duration_toComponents_days",
+                [
+                    sema.types.longType,
+                    sema.types.intType,
+                    sema.types.intType,
+                    sema.types.intType,
+                    sema.types.intType,
+                ]
+            ),
+        ]
+
+        for overload in overloads {
+            let symbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: toComponentsFQName).first { symbolID in
+                sema.symbols.externalLinkName(for: symbolID) == overload.link
+            })
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+            XCTAssertEqual(signature.receiverType, durationType)
+            XCTAssertEqual(signature.parameterTypes.count, 1)
+            XCTAssertEqual(signature.typeParameterSymbols.count, 1)
+            XCTAssertEqual(signature.returnType, sema.types.make(.typeParam(TypeParamType(
+                symbol: signature.typeParameterSymbols[0]
+            ))))
+            XCTAssertTrue(
+                sema.symbols.symbol(symbol)?.flags.contains(.inlineFunction) == true,
+                "Duration.toComponents should be registered as inline synthetic surface"
+            )
+            guard let actionType = signature.parameterTypes.first,
+                  case let .functionType(functionType) = sema.types.kind(of: sema.types.makeNonNullable(actionType))
+            else {
+                return XCTFail("Duration.toComponents action must be a function type")
+            }
+            XCTAssertEqual(functionType.params, overload.params)
+            XCTAssertEqual(functionType.returnType, signature.returnType)
+        }
+    }
 }

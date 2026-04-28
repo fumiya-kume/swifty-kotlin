@@ -50,6 +50,32 @@ private let throwingThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> I
     return 0
 }
 
+private let durationComponentsSecondsThunk: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
+    _, seconds, nanoseconds, _ in
+    seconds * 1_000_000_000 + nanoseconds
+}
+
+private let durationComponentsMinutesThunk: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
+    _, minutes, seconds, nanoseconds, _ in
+    (minutes * 100 + seconds) * 1_000 + nanoseconds
+}
+
+private let durationComponentsHoursThunk: @convention(c) (Int, Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
+    _, hours, minutes, seconds, nanoseconds, _ in
+    (((hours * 100) + minutes) * 100 + seconds) * 1_000 + nanoseconds
+}
+
+private let durationComponentsDaysThunk: @convention(c) (Int, Int, Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
+    _, days, hours, minutes, seconds, nanoseconds, _ in
+    ((((days * 100) + hours) * 100 + minutes) * 100 + seconds) * 1_000 + nanoseconds
+}
+
+private let durationComponentsDaysTopOnlyThunk:
+    @convention(c) (Int, Int, Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
+        _, days, hours, minutes, seconds, nanoseconds, _ in
+        days + hours + minutes + seconds + nanoseconds
+    }
+
 final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
     override func resetIsolatedRuntimeTestState() {
         capturedClosureRaw = 0
@@ -268,6 +294,92 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
         let rhs = kk_duration_from_seconds(2)
         let resultBits = kk_duration_div_duration(lhs, rhs)
         XCTAssertEqual(kk_bits_to_double(resultBits), 1.5)
+    }
+
+    // MARK: - toComponents
+
+    func testToComponentsSplitsFiniteDuration() {
+        let composite = kk_duration_plus(
+            kk_duration_plus(kk_duration_from_days(1), kk_duration_from_hours(2)),
+            kk_duration_plus(
+                kk_duration_from_minutes(3),
+                kk_duration_plus(kk_duration_from_seconds(4), kk_duration_from_nanoseconds(5))
+            )
+        )
+
+        var thrown = 0
+        XCTAssertEqual(
+            kk_duration_toComponents_days(
+                composite,
+                unsafeBitCast(durationComponentsDaysThunk, to: Int.self),
+                0,
+                &thrown
+            ),
+            1_020_304_005
+        )
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_duration_toComponents_hours(
+                composite,
+                unsafeBitCast(durationComponentsHoursThunk, to: Int.self),
+                0,
+                &thrown
+            ),
+            260_304_005
+        )
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_duration_toComponents_minutes(
+                composite,
+                unsafeBitCast(durationComponentsMinutesThunk, to: Int.self),
+                0,
+                &thrown
+            ),
+            156_304_005
+        )
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_duration_toComponents_seconds(
+                composite,
+                unsafeBitCast(durationComponentsSecondsThunk, to: Int.self),
+                0,
+                &thrown
+            ),
+            93_784_000_000_005
+        )
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testToComponentsKeepsNegativeRemainders() {
+        let duration = kk_duration_from_milliseconds(-1_500)
+        var thrown = 0
+        let result = kk_duration_toComponents_seconds(
+            duration,
+            unsafeBitCast(durationComponentsSecondsThunk, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, -1_500_000_000)
+    }
+
+    func testToComponentsRepresentsInfinityAtTopUnit() {
+        let duration = kk_duration_infinite()
+        var thrown = 0
+        let result = kk_duration_toComponents_days(
+            duration,
+            unsafeBitCast(durationComponentsDaysTopOnlyThunk, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, Int(Int64.max))
     }
 
     // MARK: - inWholeDays

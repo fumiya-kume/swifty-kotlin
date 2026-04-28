@@ -435,6 +435,58 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testDurationStableToComponentsOverloads() throws {
+        let source = """
+        import kotlin.time.Duration.Companion.days
+        import kotlin.time.Duration.Companion.hours
+        import kotlin.time.Duration.Companion.milliseconds
+        import kotlin.time.Duration.Companion.minutes
+        import kotlin.time.Duration.Companion.nanoseconds
+        import kotlin.time.Duration.Companion.seconds
+
+        fun main() {
+            val composite = 1.days + 2.hours + 3.minutes + 4.seconds + 5.nanoseconds
+            composite.toComponents { days, hours, minutes, seconds, nanoseconds ->
+                println(days)
+                println(hours)
+                println(minutes)
+                println(seconds)
+                println(nanoseconds)
+            }
+            composite.toComponents { hours, minutes, seconds, nanoseconds ->
+                println(hours)
+                println(minutes)
+                println(seconds)
+                println(nanoseconds)
+            }
+            composite.toComponents { minutes, seconds, nanoseconds ->
+                println(minutes)
+                println(seconds)
+                println(nanoseconds)
+            }
+            (-1500).milliseconds.toComponents { seconds, nanoseconds ->
+                println(seconds)
+                println(nanoseconds)
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "DurationStableToComponents",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "1\n2\n3\n4\n5\n26\n3\n4\n5\n1563\n4\n5\n-1\n-500000000\n")
+        }
+    }
+
     // MARK: - Arithmetic: addition and subtraction via operator syntax
     // Covers the operator-lowering path for Duration + Duration and Duration - Duration.
 
