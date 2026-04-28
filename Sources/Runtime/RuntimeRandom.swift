@@ -257,6 +257,11 @@ public func kk_random_nextInt_range(_ receiver: Int, _ from: Int, _ until: Int, 
     return Int.random(in: from ..< until)
 }
 
+@_cdecl("kk_random_nextInt_intRange")
+public func kk_random_nextInt_intRange(_ receiver: Int, _ rangeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    kk_range_random_random(rangeRaw, receiver, outThrown)
+}
+
 @_cdecl("kk_random_nextLong")
 public func kk_random_nextLong(_ receiver: Int) -> Int {
     if let box = seededBox(from: receiver) {

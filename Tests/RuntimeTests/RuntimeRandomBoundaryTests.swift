@@ -271,6 +271,23 @@ final class RuntimeRandomBoundaryTests: XCTestCase {
         XCTAssertNotEqual(thrown, 0, "nextInt(10, 5) must throw (inverted range)")
     }
 
+    func testNextIntIntRangeObjectSingleValue() {
+        let r = makeSeeded(1)
+        var thrown: Int = 0
+        let range = kk_op_rangeTo(5, 5)
+        let result = kk_random_nextInt_intRange(r, range, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 5, "nextInt(5..5) must return 5")
+    }
+
+    func testNextIntIntRangeObjectThrowsOnEmptyRange() {
+        let r = makeSeeded(1)
+        var thrown: Int = 0
+        let range = kk_op_rangeTo(10, 5)
+        _ = kk_random_nextInt_intRange(r, range, &thrown)
+        XCTAssertNotEqual(thrown, 0, "nextInt(10..5) must throw (empty range)")
+    }
+
     // MARK: - nextDouble: boundary / special values
 
     func testNextDoubleUnitRange() {

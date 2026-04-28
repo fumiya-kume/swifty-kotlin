@@ -57,6 +57,12 @@ extension DataFlowSemaPhase {
         let floatType = types.floatType
         let doubleType = types.doubleType
         let boolType = types.make(.primitive(.boolean, .nonNull))
+        let intRangeType = makeRangeType(
+            named: "IntRange",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         let ulongRangeType = makeRangeType(
             named: "ULongRange",
             symbols: symbols,
@@ -124,6 +130,18 @@ extension DataFlowSemaPhase {
                 (name: "from", type: intType),
                 (name: "until", type: intType),
             ],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextInt",
+            externalLinkName: "kk_random_nextInt_intRange",
+            returnType: intType,
+            parameters: [(name: "range", type: intRangeType)],
+            canThrow: true,
             symbols: symbols,
             interner: interner
         )

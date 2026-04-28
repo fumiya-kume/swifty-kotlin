@@ -297,31 +297,29 @@ extension RandomSyntheticLinkTests {
 
     // MARK: - nextInt(IntRange) extension
 
-    /// nextInt(range: IntRange) extension function is a documented gap.
-    func testNextIntIntRangeExtensionGap() throws {
+    /// nextInt(range: IntRange) extension function is registered and linked correctly.
+    func testNextIntIntRangeExtensionIsRegistered() throws {
         let (sema, interner) = try makeSema()
 
-        // The extension fun Random.nextInt(range: IntRange) would be in the
-        // kotlin.random package as a top-level function or as an additional
-        // nextInt overload with an IntRange receiver parameter.
         let fq = ["kotlin", "random", "Random", "nextInt"].map { interner.intern($0) }
         let candidates = sema.symbols.lookupAll(fqName: fq)
 
-        // IntRange would appear as a class type parameter; check by looking for
-        // an arity-1 overload whose parameter type is a class (not Int primitive).
         let intRangeOverload = candidates.first { id in
             guard let sig = sema.symbols.functionSignature(for: id),
                   sig.parameterTypes.count == 1,
                   let paramType = sig.parameterTypes.first
             else { return false }
-            // Int primitive type has kind .primitive; IntRange would be .classType
             if case .primitive = sema.types.kind(of: paramType) { return false }
             return true
         }
-        // GAP: nextInt(range: IntRange) extension not yet registered.
-        XCTAssertNil(intRangeOverload,
-                     "GAP(STDLIB-RANDOM-002): nextInt(range: IntRange) extension not yet registered; " +
-                     "change to XCTAssertNotNil once added")
+        XCTAssertNotNil(intRangeOverload, "nextInt(range: IntRange) overload must be registered")
+        if let intRangeOverload,
+           let signature = sema.symbols.functionSignature(for: intRangeOverload)
+        {
+            XCTAssertEqual(sema.symbols.externalLinkName(for: intRangeOverload), "kk_random_nextInt_intRange")
+            XCTAssertEqual(signature.returnType, sema.types.intType)
+            XCTAssertTrue(signature.canThrow, "nextInt(range) must expose the empty-range throw path")
+        }
     }
 
     // MARK: - range.random(random: Random)

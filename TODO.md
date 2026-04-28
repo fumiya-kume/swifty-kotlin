@@ -155,19 +155,19 @@
 - [ ] STDLIB-REFLECT-079: `KClass.findAssociatedObject<T>()` Native reflect surface を追加する
 - [x] STDLIB-MATH-001: `kotlin.math` の対象 API 一覧を固定
 - [x] STDLIB-MATH-002: `kotlin.math` の sema / lowering を overload 単位で整える
-- [ ] STDLIB-MATH-003: `kotlin.math` の runtime / ABI と境界値を固定
+- [x] STDLIB-MATH-003: `kotlin.math` の runtime / ABI と境界値を固定
 - [x] STDLIB-MATH-004: `absoluteValue` / `sign` / `ulp` extension property surface を公式 shape に揃える
 - [x] STDLIB-MATH-005: `expm1` / `ln1p` の Double / Float overload を追加する
 - [x] STDLIB-MATH-006: `max` / `min` の Double / Float / Int / Long / UInt / ULong overload 行列を追加する
 - [x] STDLIB-MATH-007: `IEEErem` / `nextTowards` / `withSign` と残りの `pow` overload を追加する
 - [x] STDLIB-MATH-008: 公開されている非公式 rounding helper 名（`roundUp` など）を整理する
-- [ ] STDLIB-RANDOM-001: `kotlin.random` の対象 API 一覧を固定
+- [x] STDLIB-RANDOM-001: `kotlin.random` の対象 API 一覧を固定
 - [ ] STDLIB-RANDOM-002: `kotlin.random` の sema / lowering を整える
 - [ ] STDLIB-RANDOM-003: `kotlin.random` の runtime / seed / 境界値を固定
 - [x] STDLIB-RANDOM-004: `Random(seed: Long)` constructor を追加する
 - [x] STDLIB-RANDOM-005: `Random.Default` singleton を sema から露出する
 - [x] STDLIB-RANDOM-006: `Random.nextBytes(size: Int)` overload を追加する
-- [ ] STDLIB-RANDOM-007: `Random.nextInt(range: IntRange)` extension を追加する
+- [x] STDLIB-RANDOM-007: `Random.nextInt(range: IntRange)` extension を追加する
 - [x] STDLIB-RANDOM-008: `Random.nextLong(range: LongRange)` extension を追加する
 - [x] STDLIB-RANDOM-009: `Random.nextBytes(array, fromIndex, toIndex)` overload を追加する
 - [x] STDLIB-RANDOM-010: `Random.nextBits(bitCount: Int)` member surface を追加する

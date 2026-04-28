@@ -213,6 +213,46 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenCompilesRandomNextIntRange() throws {
+        let source = """
+        import kotlin.random.Random
+
+        fun main() {
+            val r = Random(7)
+            val value = r.nextInt(10..15)
+            println(value >= 10 && value <= 15)
+
+            try {
+                r.nextInt(15..10)
+                println(false)
+            } catch (e: IllegalArgumentException) {
+                println(true)
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "RandomNextIntRange",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                true
+                true
+                """ + "\n"
+            )
+        }
+    }
+
     func testCodegenCompilesRandomNextLongRange() throws {
         let source = """
         import kotlin.random.Random
