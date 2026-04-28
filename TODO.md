@@ -155,7 +155,7 @@
 - [ ] STDLIB-REFLECT-079: `KClass.findAssociatedObject<T>()` Native reflect surface を追加する
 - [x] STDLIB-MATH-001: `kotlin.math` の対象 API 一覧を固定
 - [x] STDLIB-MATH-002: `kotlin.math` の sema / lowering を overload 単位で整える
-- [ ] STDLIB-MATH-003: `kotlin.math` の runtime / ABI と境界値を固定
+- [x] STDLIB-MATH-003: `kotlin.math` の runtime / ABI と境界値を固定
 - [x] STDLIB-MATH-004: `absoluteValue` / `sign` / `ulp` extension property surface を公式 shape に揃える
 - [x] STDLIB-MATH-005: `expm1` / `ln1p` の Double / Float overload を追加する
 - [x] STDLIB-MATH-006: `max` / `min` の Double / Float / Int / Long / UInt / ULong overload 行列を追加する
