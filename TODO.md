@@ -216,7 +216,7 @@
 - [x] STDLIB-TIME-STABLE-001: `Duration.ZERO` / `Duration.INFINITE` constants を追加する
 - [x] STDLIB-TIME-STABLE-002: `Duration.toIsoString()` / `Duration.parse()` / `Duration.parseOrNull()` を追加する
 - [x] STDLIB-TIME-STABLE-003: `Duration.parseIsoString()` / `Duration.parseIsoStringOrNull()` を追加する
-- [ ] STDLIB-TIME-STABLE-004: `Duration.toComponents { ... }` overload 群を追加する
+- [x] STDLIB-TIME-STABLE-004: `Duration.toComponents { ... }` overload 群を追加する
 - [x] STDLIB-TIME-STABLE-005: `Double.seconds` など `Double` receiver の `Duration` extension properties を追加する
 - [x] STDLIB-TIME-STABLE-006: `Duration / Duration -> Double` を追加する
 - [x] STDLIB-TIME-STABLE-007: `Duration.inWholeDays` property を追加する

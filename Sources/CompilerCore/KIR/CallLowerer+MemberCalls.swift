@@ -4454,6 +4454,7 @@ extension CallLowerer {
             "ifEmpty",
             "ifBlank",
             "chunked", "windowed", "copyOf",
+            "toComponents",
             "onSuccess", "onFailure", "recover",
         ].contains(interner.resolve(calleeName))
     }

@@ -3822,6 +3822,22 @@ extension CallTypeChecker {
             }
         }
 
+        if let durationComponentsType = tryDurationToComponentsMemberCall(
+            id,
+            calleeName: calleeName,
+            receiverType: receiverType,
+            args: args,
+            explicitTypeArgs: explicitTypeArgs,
+            expectedType: expectedType,
+            safeCall: safeCall,
+            ast: ast,
+            sema: sema,
+            ctx: ctx,
+            locals: &locals
+        ) {
+            return durationComponentsType
+        }
+
         // Comparator member HOFs (STDLIB-176): thenBy/thenByDescending/thenDescending/thenComparator.
         // These need the Comparator<T> receiver type so the lambda gets the correct
         // contextual function signature before the general resolution path runs.
@@ -8029,6 +8045,131 @@ extension CallTypeChecker {
         default:
             return nil
         }
+    }
+
+    private func tryDurationToComponentsMemberCall(
+        _ id: ExprID,
+        calleeName: InternedString,
+        receiverType: TypeID,
+        args: [CallArgument],
+        explicitTypeArgs: [TypeID],
+        expectedType: TypeID?,
+        safeCall: Bool,
+        ast: ASTModule,
+        sema: SemaModule,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let interner = ctx.interner
+        guard interner.resolve(calleeName) == "toComponents",
+              args.count == 1,
+              explicitTypeArgs.count <= 1,
+              isKotlinDurationType(receiverType, sema: sema, interner: interner),
+              let lambdaExpr = ast.arena.expr(args[0].expr),
+              lambdaExpr.isLambdaOrCallableRef
+        else {
+            return nil
+        }
+
+        let lambdaArity: Int
+        if case let .lambdaLiteral(params, _, _, _) = lambdaExpr, !params.isEmpty {
+            lambdaArity = params.count
+        } else {
+            lambdaArity = 5
+        }
+
+        let actionParameterTypes: [TypeID]
+        let externalLinkName: String
+        switch lambdaArity {
+        case 2:
+            actionParameterTypes = [sema.types.longType, sema.types.intType]
+            externalLinkName = "kk_duration_toComponents_seconds"
+        case 3:
+            actionParameterTypes = [sema.types.longType, sema.types.intType, sema.types.intType]
+            externalLinkName = "kk_duration_toComponents_minutes"
+        case 4:
+            actionParameterTypes = [sema.types.longType, sema.types.intType, sema.types.intType, sema.types.intType]
+            externalLinkName = "kk_duration_toComponents_hours"
+        case 5:
+            actionParameterTypes = [
+                sema.types.longType,
+                sema.types.intType,
+                sema.types.intType,
+                sema.types.intType,
+                sema.types.intType,
+            ]
+            externalLinkName = "kk_duration_toComponents_days"
+        default:
+            return nil
+        }
+
+        let expectedReturnType = explicitTypeArgs.first ?? expectedType ?? sema.types.anyType
+        let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+            params: actionParameterTypes,
+            returnType: expectedReturnType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+        let inferredActionType = driver.inferExpr(
+            args[0].expr,
+            ctx: ctx,
+            locals: &locals,
+            expectedType: lambdaExpectedType
+        )
+
+        let resultType: TypeID = if let explicit = explicitTypeArgs.first {
+            explicit
+        } else if expectedType != nil, expectedReturnType != sema.types.anyType {
+            expectedReturnType
+        } else if case let .functionType(functionType) = sema.types.kind(
+            of: sema.types.makeNonNullable(inferredActionType)
+        ) {
+            functionType.returnType
+        } else {
+            inferredLambdaReturnType(argExpr: args[0].expr, ast: ast, sema: sema)
+        }
+
+        let durationMemberFQName = [
+            interner.intern("kotlin"),
+            interner.intern("time"),
+            interner.intern("Duration"),
+            calleeName,
+        ]
+        if let chosen = sema.symbols.lookupAll(fqName: durationMemberFQName).first(where: { candidate in
+            sema.symbols.externalLinkName(for: candidate) == externalLinkName
+        }) {
+            sema.bindings.bindCall(
+                id,
+                binding: CallBinding(
+                    chosenCallee: chosen,
+                    substitutedTypeArguments: [resultType],
+                    parameterMapping: [0: 0]
+                )
+            )
+            sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+        }
+
+        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
+    }
+
+    private func isKotlinDurationType(
+        _ type: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(type)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return symbol.fqName == [
+            interner.intern("kotlin"),
+            interner.intern("time"),
+            interner.intern("Duration"),
+        ]
     }
 
     /// Extract the inferred return type from a lambda argument.
