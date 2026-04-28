@@ -359,7 +359,6 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .openType, .overrideMember]
         )
 
-
         let monotonicFQName = ensureExperimentalTimeNestedObject(
             named: "Monotonic",
             ownerSymbol: timeSourceSymbol,
