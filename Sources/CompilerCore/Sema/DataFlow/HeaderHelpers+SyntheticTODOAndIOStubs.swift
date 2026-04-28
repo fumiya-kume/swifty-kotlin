@@ -237,6 +237,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerSyntheticTopLevelFunction(
+            named: "getTimeNanos",
+            packageFQName: kotlinSystemPkg,
+            parameters: [],
+            returnType: types.longType,
+            externalLinkName: "kk_system_getTimeNanos",
+            symbols: symbols,
+            interner: interner
+        )
+
         let blockFunctionType = types.make(.functionType(FunctionType(
             params: [],
             returnType: types.unitType

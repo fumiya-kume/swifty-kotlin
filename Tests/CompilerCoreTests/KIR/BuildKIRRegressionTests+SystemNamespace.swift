@@ -39,6 +39,24 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    func testGetTimeNanosLowersToRuntimeCallee() throws {
+        let source = """
+        import kotlin.system.getTimeNanos
+
+        fun main(): Long = getTimeNanos()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_system_getTimeNanos"), "Expected getTimeNanos runtime call")
+        }
+    }
+
     func testSystemObjectMembersLowerToRuntimeCallees() throws {
         let source = """
         import kotlin.system.System
