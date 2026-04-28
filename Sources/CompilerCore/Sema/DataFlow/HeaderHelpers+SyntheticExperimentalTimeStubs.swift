@@ -5,6 +5,7 @@
 /// - `TimeSource` with nested `WithComparableMarks`, `Monotonic`, and `markNow()`
 /// - `TimeMark` with elapsed/boolean checks and +/- Duration
 /// - `ComparableTimeMark` with TimeMark operations plus mark-to-mark diff/comparison
+<<<<<<< HEAD
 /// - `AbstractDoubleTimeSource` / `AbstractLongTimeSource` surfaces
 extension DataFlowSemaPhase {
     func registerSyntheticExperimentalTimeStubs(
@@ -358,6 +359,7 @@ extension DataFlowSemaPhase {
             interner: interner,
             flags: [.synthetic, .openType, .overrideMember]
         )
+
 
         let monotonicFQName = ensureExperimentalTimeNestedObject(
             named: "Monotonic",
