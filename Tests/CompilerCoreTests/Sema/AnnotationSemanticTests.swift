@@ -507,6 +507,100 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.isEmpty, "Expected DATA_CLASS_COPY_VISIBILITY suppression alias to suppress diagnostic, got: \(ctx.diagnostics.diagnostics)")
     }
 
+    func testSinceKotlinSurfaceHasVersionPropertyConstructorAndTargets() throws {
+        let source = """
+        class Host
+        """
+
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let sinceKotlinFQName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("SinceKotlin"),
+        ]
+        let symbolID = try XCTUnwrap(
+            sema.symbols.lookup(fqName: sinceKotlinFQName),
+            "kotlin.SinceKotlin must be registered"
+        )
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.visibility, .public)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+        XCTAssertEqual(symbol.kind, .annotationClass)
+
+        let annotations = sema.symbols.annotations(for: symbolID)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == [
+                        "AnnotationTarget.CLASS",
+                        "AnnotationTarget.PROPERTY",
+                        "AnnotationTarget.FIELD",
+                        "AnnotationTarget.CONSTRUCTOR",
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY_GETTER",
+                        "AnnotationTarget.PROPERTY_SETTER",
+                        "AnnotationTarget.TYPEALIAS",
+                    ]
+            },
+            "SinceKotlin should carry declaration target metadata, got: \(annotations)"
+        )
+
+        let versionSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: sinceKotlinFQName + [ctx.interner.intern("version")]),
+            "SinceKotlin.version property must be registered"
+        )
+        XCTAssertEqual(sema.symbols.propertyType(for: versionSymbol), sema.types.stringType)
+
+        let constructors = sema.symbols.lookupAll(fqName: sinceKotlinFQName + [ctx.interner.intern("<init>")])
+        let constructorSignature = try XCTUnwrap(
+            constructors.lazy.compactMap { sema.symbols.functionSignature(for: $0) }.first { signature in
+                signature.parameterTypes == [sema.types.stringType]
+            },
+            "SinceKotlin(version: String) constructor must be registered"
+        )
+        XCTAssertEqual(constructorSignature.valueParameterSymbols.count, 1)
+        let parameter = try XCTUnwrap(sema.symbols.symbol(constructorSignature.valueParameterSymbols[0]))
+        XCTAssertEqual(ctx.interner.resolve(parameter.name), "version")
+    }
+
+    func testSinceKotlinAcceptsDocumentedDeclarationTargets() {
+        let source = """
+        @SinceKotlin("1.0")
+        class Stable {
+            @SinceKotlin(version = "1.1")
+            val value: Int = 1
+
+            @SinceKotlin("1.2")
+            fun expose(): Int = value
+        }
+
+        @SinceKotlin("1.3")
+        typealias StableAlias = Stable
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected SinceKotlin declaration targets to be accepted, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testSinceKotlinRejectsFileTarget() {
+        let source = """
+        @file:SinceKotlin("1.0")
+
+        package sample
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected SinceKotlin to reject file target, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
     func testTargetAnnotationIsRejectedOnRegularClass() {
         let source = """
         @Target(AnnotationTarget.CLASS)

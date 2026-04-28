@@ -298,7 +298,7 @@
 - [ ] STDLIB-KOTLIN-ROOT-ANNO-004: `OptionalExpectation` annotation surface を追加する
 - [ ] STDLIB-KOTLIN-ROOT-ANNO-005: `ParameterName(name: String)` annotation surface を追加する
 - [ ] STDLIB-KOTLIN-ROOT-ANNO-006: `PublishedApi` annotation surface を追加する
-- [ ] STDLIB-KOTLIN-ROOT-ANNO-007: `SinceKotlin(version: String)` annotation surface を追加する
+- [x] STDLIB-KOTLIN-ROOT-ANNO-007: `SinceKotlin(version: String)` annotation surface を追加する
 - [ ] STDLIB-KOTLIN-ROOT-ANNO-008: `Throws(vararg exceptionClasses: KClass<out Throwable>)` annotation surface を追加する
 - [ ] STDLIB-KOTLIN-ROOT-ANNO-009: `ExperimentalContextParameters` opt-in marker を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-010: `IgnorableReturnValue` annotation surface を追加する
