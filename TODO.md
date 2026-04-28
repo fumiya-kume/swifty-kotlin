@@ -196,7 +196,7 @@
 - [ ] STDLIB-I18N-COMMON-003: `String.Companion.format(locale, format, vararg args)` を追加する
 - [ ] STDLIB-I18N-COMMON-004: `Char.uppercase(Locale)` を追加する
 - [ ] STDLIB-I18N-COMMON-005: `Char.lowercase(Locale)` を追加する
-- [ ] STDLIB-I18N-COMMON-006: `String.toIntOrNull(radix: Int)` を追加する
+- [x] STDLIB-I18N-COMMON-006: `String.toIntOrNull(radix: Int)` を追加する
 - [ ] STDLIB-I18N-COMMON-007: `Char.directionality` を `CharDirectionality` enum で露出する（現状は `Int` placeholder）
 - [ ] STDLIB-TIME-EXP-001: `@ExperimentalTime` 系 API の整理（`Clock` / `TimeMark`）
 - [~] STDLIB-CORO-001: `kotlin.coroutines.intrinsics` / cancellation — 主要部分実装済み（`suspendCoroutineUninterceptedOrReturn`, `intercepted`, `CancellationException`）。残課題は別チケットへ分割。

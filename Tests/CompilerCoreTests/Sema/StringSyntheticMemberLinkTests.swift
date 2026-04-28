@@ -116,6 +116,11 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             "kk_string_toIntOrNull",
             "String.toIntOrNull should link to kk_string_toIntOrNull"
         )
+        XCTAssertTrue(
+            externalLinks(for: "toIntOrNull", sema: sema, interner: interner)
+                .contains("kk_string_toIntOrNull_radix"),
+            "String.toIntOrNull(radix) should link to kk_string_toIntOrNull_radix"
+        )
         XCTAssertEqual(
             externalLink(for: "toDoubleOrNull", sema: sema, interner: interner),
             "kk_string_toDoubleOrNull",

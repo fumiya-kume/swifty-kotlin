@@ -10,4 +10,7 @@ fun main() {
     val locale = Locale("en", "US")
     println(locale.language)
     println(locale.country)
+
+    println("ff".toIntOrNull(16))
+    println("xz".toIntOrNull(16))
 }

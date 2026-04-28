@@ -14,6 +14,7 @@ import XCTest
 //   - String.compareTo(String, Locale)     → kk_string_compareTo_locale
 //   - String.toInt(radix)                  → kk_string_toInt_radix  (throwing)
 //   - String.toIntOrNull()                 → kk_string_toIntOrNull  (no-radix variant)
+//   - String.toIntOrNull(radix)            → kk_string_toIntOrNull_radix
 //   - String.format(format, vararg args)   → kk_string_format  (platform fmt, no locale overload)
 //   - Char.uppercase()                     → kk_char_uppercase  (returns String per Kotlin spec)
 //   - Char.lowercase()                     → kk_char_lowercase  (returns String per Kotlin spec)
@@ -23,7 +24,6 @@ import XCTest
 //   - String.format(locale, format, vararg args)  — locale-parameterised overload absent
 //   - Char.uppercase(Locale)  — locale-aware single-char conversion absent
 //   - Char.lowercase(Locale)  — locale-aware single-char conversion absent
-//   - String.toInt(radix) orNull variant   — kk_string_toIntOrNull does not accept a radix
 //   - NumberFormat (java.text) is JVM/platform only, not common multiplatform
 
 final class KotlinTextI18nLocaleInventoryTests: XCTestCase {
@@ -164,7 +164,7 @@ final class KotlinTextI18nLocaleInventoryTests: XCTestCase {
         """)
     }
 
-    // MARK: - String.toIntOrNull() — no radix (implemented), radix variant (absent — gap)
+    // MARK: - String.toIntOrNull() / String.toIntOrNull(radix)
 
     func testStringToIntOrNullValid() throws {
         try assertKotlinCompilesToKIR("""
@@ -179,6 +179,24 @@ final class KotlinTextI18nLocaleInventoryTests: XCTestCase {
         try assertKotlinCompilesToKIR("""
         fun main() {
             val n: Int? = "not_a_number".toIntOrNull()
+            println(n)
+        }
+        """)
+    }
+
+    func testStringToIntOrNullRadixValid() throws {
+        try assertKotlinCompilesToKIR("""
+        fun main() {
+            val n: Int? = "ff".toIntOrNull(16)
+            println(n)
+        }
+        """)
+    }
+
+    func testStringToIntOrNullRadixInvalid() throws {
+        try assertKotlinCompilesToKIR("""
+        fun main() {
+            val n: Int? = "xz".toIntOrNull(16)
             println(n)
         }
         """)

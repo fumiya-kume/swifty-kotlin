@@ -766,6 +766,27 @@ public func kk_string_toIntOrNull(_ strRaw: Int) -> Int {
     return Int(value)
 }
 
+@_cdecl("kk_string_toIntOrNull_radix")
+public func kk_string_toIntOrNull_radix(
+    _ strRaw: Int,
+    _ radix: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard (2 ... 36).contains(radix) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "IllegalArgumentException: radix \(radix) was not in valid range 2..36"
+        )
+        return runtimeNullSentinelInt
+    }
+    guard let value = Int32(source, radix: radix) else {
+        return runtimeNullSentinelInt
+    }
+    return Int(value)
+}
+
 @_cdecl("kk_string_toDouble")
 public func kk_string_toDouble(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
