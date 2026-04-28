@@ -369,7 +369,7 @@
 - [x] STDLIB-CORO-005: `suspend () -> T`.`startCoroutine(completion)` を追加する
 - [x] STDLIB-CORO-006: `suspend R.() -> T`.`startCoroutine(receiver, completion)` を追加する
 - [x] STDLIB-CORO-007: `CoroutineContext.Key.getPolymorphicElement(element)` を追加する
-- [ ] STDLIB-CORO-008: `CoroutineContext.Key.minusPolymorphicKey(key)` を追加する
+- [x] STDLIB-CORO-008: `CoroutineContext.Key.minusPolymorphicKey(key)` を追加する
 - [ ] STDLIB-CONTRACTS-001: `ExperimentalExtendedContracts` marker を追加する
 - [ ] STDLIB-CONTRACTS-002: `HoldsIn` effect surface を追加する
 - [ ] STDLIB-NATIVE-REF-001: `kotlin.native.ref` / `kotlin.native.runtime` の API 棚卸しを固定
