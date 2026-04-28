@@ -341,6 +341,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 - [x] STDLIB-TIME-EXP-003: `AbstractLongTimeSource` surface を追加する
+<<<<<<< HEAD
 =======
 - [ ] STDLIB-TIME-EXP-003: `AbstractLongTimeSource` surface を追加する
 >>>>>>> c7d1e8c0b (Add AbstractDoubleTimeSource surface)
@@ -348,6 +349,9 @@
 - [x] STDLIB-TIME-EXP-003: `AbstractLongTimeSource` surface を追加する
 >>>>>>> d6254483a (Add AbstractLongTimeSource surface)
 - [ ] STDLIB-TIME-EXP-004: `TestTimeSource` surface を追加する
+=======
+- [x] STDLIB-TIME-EXP-004: `TestTimeSource` surface を追加する
+>>>>>>> f38230a7f (Add TestTimeSource surface)
 - [ ] STDLIB-TIME-EXP-005: `Instant.isDistantPast` / `Instant.isDistantFuture` properties を追加する
 - [ ] STDLIB-TIME-EXP-006: `TimeSource.asClock()` を追加する
 - [~] STDLIB-CORO-001: `kotlin.coroutines.intrinsics` / cancellation — 主要部分実装済み（`suspendCoroutineUninterceptedOrReturn`, `intercepted`, `CancellationException`）。残課題は別チケットへ分割。

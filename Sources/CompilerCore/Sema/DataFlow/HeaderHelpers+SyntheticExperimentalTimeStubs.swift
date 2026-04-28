@@ -7,6 +7,7 @@
 /// - `ComparableTimeMark` with TimeMark operations plus mark-to-mark diff/comparison
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 /// - `AbstractDoubleTimeSource` / `AbstractLongTimeSource` surfaces
 =======
 /// - `AbstractDoubleTimeSource` surface
@@ -14,6 +15,9 @@
 =======
 /// - `AbstractDoubleTimeSource` / `AbstractLongTimeSource` surfaces
 >>>>>>> d6254483a (Add AbstractLongTimeSource surface)
+=======
+/// - `AbstractDoubleTimeSource` / `AbstractLongTimeSource` / `TestTimeSource` surfaces
+>>>>>>> f38230a7f (Add TestTimeSource surface)
 extension DataFlowSemaPhase {
     func registerSyntheticExperimentalTimeStubs(
         symbols: SymbolTable,
@@ -372,10 +376,58 @@ extension DataFlowSemaPhase {
         )
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> c7d1e8c0b (Add AbstractDoubleTimeSource surface)
 =======
 >>>>>>> d6254483a (Add AbstractLongTimeSource surface)
+=======
+        let testTimeSourceSymbol = ensureClassSymbol(
+            named: "TestTimeSource",
+            in: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.insertFlags([.synthetic], for: testTimeSourceSymbol)
+        symbols.setDirectSupertypes([abstractLongTimeSourceSymbol], for: testTimeSourceSymbol)
+        types.setNominalDirectSupertypes([abstractLongTimeSourceSymbol], for: testTimeSourceSymbol)
+        let testTimeSourceType = types.make(.classType(ClassType(
+            classSymbol: testTimeSourceSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        registerExperimentalTimeConstructor(
+            ownerSymbol: testTimeSourceSymbol,
+            ownerType: testTimeSourceType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+        registerExperimentalTimeMemberFunction(
+            named: "read",
+            externalLinkName: nil,
+            ownerSymbol: testTimeSourceSymbol,
+            ownerType: testTimeSourceType,
+            parameters: [],
+            returnType: types.longType,
+            symbols: symbols,
+            interner: interner,
+            visibility: .protected,
+            flags: [.synthetic, .openType, .overrideMember]
+        )
+        registerExperimentalTimeMemberFunction(
+            named: "plusAssign",
+            externalLinkName: nil,
+            ownerSymbol: testTimeSourceSymbol,
+            ownerType: testTimeSourceType,
+            parameters: [(name: "duration", type: durationType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner,
+            isOperator: true
+        )
+
+>>>>>>> f38230a7f (Add TestTimeSource surface)
         let monotonicFQName = ensureExperimentalTimeNestedObject(
             named: "Monotonic",
             ownerSymbol: timeSourceSymbol,
