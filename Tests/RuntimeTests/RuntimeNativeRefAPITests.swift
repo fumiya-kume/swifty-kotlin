@@ -53,13 +53,11 @@ import XCTest
 //   - kotlin.native.runtime.RootSetStatistics.* root count properties
 //   - kotlin.native.runtime.SweepStatistics
 //   - kotlin.native.runtime.SweepStatistics.sweptCount / keptCount
+//   - kotlin.native.runtime.NativeRuntimeApi
 //   - kotlin.native.runtime.Debugging.isThreadStateRunnable
 //   - kotlin.native.runtime.Debugging.gcSuspendCount
 //   - kotlin.native.runtime.Debugging.threadCount
 //   - kotlin.native.runtime.Debugging.globalObjectCount
-//
-// RUNTIME MISSING (tracked by STDLIB-NATIVE-REF-004 and later):
-//   - NativeRuntimeApi marker
 
 final class RuntimeNativeRefGCTests: IsolatedRuntimeXCTestCase {
 
