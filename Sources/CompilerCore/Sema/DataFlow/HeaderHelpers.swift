@@ -996,6 +996,8 @@ extension DataFlowSemaPhase {
         // STDLIB-REFLECT-063: Now that List is registered, update KFunction.parameters type to
         // List<Any?> so that `.size` resolves correctly on the parameters property.
         patchKFunctionParametersType(symbols: symbols, types: types, interner: interner)
+        // KType.arguments depends on kotlin.collections.List and KTypeProjection.
+        patchKTypeArgumentsType(symbols: symbols, types: types, interner: interner)
         registerSyntheticRangeProgressionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticRangeUntilStubs(symbols: symbols, types: types, interner: interner)
         if types.comparableInterfaceSymbol == nil {

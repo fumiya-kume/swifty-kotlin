@@ -312,11 +312,19 @@ extension DataFlowSemaPhase {
         }
 
         // Register kotlin.reflect.KTypeProjection class stub
-        _ = ensureClassSymbol(
+        let kTypeProjectionSymbol = ensureClassSymbol(
             named: "KTypeProjection", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
 
         registerSyntheticKVarianceStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinReflectPkg: kotlinReflectPkg
+        )
+        registerSyntheticKTypeProjectionSurface(
+            kTypeProjectionSymbol: kTypeProjectionSymbol,
+            kTypeSymbol: kTypeSymbol,
             symbols: symbols,
             types: types,
             interner: interner,
@@ -391,6 +399,74 @@ extension DataFlowSemaPhase {
                 for: funcSymbol2
             )
         }
+    }
+
+    // STDLIB-REFLECT-074: Register KTypeProjection data-class properties.
+    private func registerSyntheticKTypeProjectionSurface(
+        kTypeProjectionSymbol: SymbolID,
+        kTypeSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinReflectPkg: [InternedString]
+    ) {
+        guard let kTypeProjectionInfo = symbols.symbol(kTypeProjectionSymbol) else { return }
+        let nullableKType = types.makeNullable(types.make(.classType(ClassType(
+            classSymbol: kTypeSymbol,
+            args: [],
+            nullability: .nonNull
+        ))))
+        let nullableKVariance: TypeID = if let kVarianceSymbol = symbols.lookup(
+            fqName: kotlinReflectPkg + [interner.intern("KVariance")]
+        ) {
+            types.makeNullable(types.make(.classType(ClassType(
+                classSymbol: kVarianceSymbol,
+                args: [],
+                nullability: .nonNull
+            ))))
+        } else {
+            types.nullableAnyType
+        }
+
+        registerSyntheticKTypeProjectionProperty(
+            named: "variance",
+            ownerSymbol: kTypeProjectionSymbol,
+            ownerFQName: kTypeProjectionInfo.fqName,
+            propertyType: nullableKVariance,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticKTypeProjectionProperty(
+            named: "type",
+            ownerSymbol: kTypeProjectionSymbol,
+            ownerFQName: kTypeProjectionInfo.fqName,
+            propertyType: nullableKType,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticKTypeProjectionProperty(
+        named name: String,
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        propertyType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerFQName + [propertyName]
+        guard symbols.lookup(fqName: propertyFQName) == nil else { return }
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(propertyType, for: propertySymbol)
     }
 
     // STDLIB-REFLECT-073: Register KVariance enum with declaration/use-site variance entries.
@@ -573,6 +649,38 @@ extension DataFlowSemaPhase {
         let paramsPropFQ = kFunctionInfo.fqName + [interner.intern("parameters")]
         if let paramsPropSymbol = symbols.lookup(fqName: paramsPropFQ) {
             symbols.setPropertyType(listOfAnyNullable, for: paramsPropSymbol)
+        }
+    }
+
+    func patchKTypeArgumentsType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let listFQName: [InternedString] = [
+            interner.intern("kotlin"), interner.intern("collections"), interner.intern("List"),
+        ]
+        let reflectPkg = [interner.intern("kotlin"), interner.intern("reflect")]
+        guard let listSymbol = symbols.lookup(fqName: listFQName),
+              let kTypeSymbol = symbols.lookup(fqName: reflectPkg + [interner.intern("KType")]),
+              let kTypeProjectionSymbol = symbols.lookup(fqName: reflectPkg + [interner.intern("KTypeProjection")]),
+              let kTypeInfo = symbols.symbol(kTypeSymbol)
+        else {
+            return
+        }
+        let projectionType = types.make(.classType(ClassType(
+            classSymbol: kTypeProjectionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let listOfProjections = types.make(.classType(ClassType(
+            classSymbol: listSymbol,
+            args: [.out(projectionType)],
+            nullability: .nonNull
+        )))
+        let argumentsFQName = kTypeInfo.fqName + [interner.intern("arguments")]
+        if let argumentsSymbol = symbols.lookup(fqName: argumentsFQName) {
+            symbols.setPropertyType(listOfProjections, for: argumentsSymbol)
         }
     }
 }
