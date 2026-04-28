@@ -65,6 +65,40 @@ extension DataFlowSemaPhase {
         let stringType = types.stringType
         let boolType = types.make(.primitive(.boolean, .nonNull))
 
+        // --- STDLIB-TIME-STABLE-009: Numeric.toDuration(unit) extension functions ---
+        registerDurationFactoryExtensionFunction(
+            named: "toDuration",
+            externalLinkName: "kk_duration_toDuration_int",
+            receiverType: intType,
+            parameters: [(name: "unit", type: durationUnitType)],
+            returnType: durationType,
+            packageFQName: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationFactoryExtensionFunction(
+            named: "toDuration",
+            externalLinkName: "kk_duration_toDuration_long",
+            receiverType: longType,
+            parameters: [(name: "unit", type: durationUnitType)],
+            returnType: durationType,
+            packageFQName: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationFactoryExtensionFunction(
+            named: "toDuration",
+            externalLinkName: "kk_duration_toDuration_double",
+            receiverType: doubleType,
+            parameters: [(name: "unit", type: durationUnitType)],
+            returnType: durationType,
+            packageFQName: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-TIME-STABLE-001: Duration companion constants ---
         registerDurationMemberProperty(
             named: "ZERO",
@@ -1107,6 +1141,77 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(propertySymbol, for: getterSymbol)
         symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
         symbols.setExternalLinkName(externalLinkName, for: getterSymbol)
+    }
+
+    private func registerDurationFactoryExtensionFunction(
+        named name: String,
+        externalLinkName: String,
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes == parameters.map(\.type)
+                && signature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var parameterTypes: [TypeID] = []
+        var parameterSymbols: [SymbolID] = []
+        parameterTypes.reserveCapacity(parameters.count)
+        parameterSymbols.reserveCapacity(parameters.count)
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            symbols.setPropertyType(parameter.type, for: parameterSymbol)
+            parameterTypes.append(parameter.type)
+            parameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
     }
 }
 

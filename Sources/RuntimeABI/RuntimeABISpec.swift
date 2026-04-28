@@ -7833,6 +7833,33 @@ public enum RuntimeABISpec {
             section: "Duration"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_duration_toDuration_int",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "unitOrdinal", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_duration_toDuration_long",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "unitOrdinal", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_duration_toDuration_double",
+            parameters: [
+                RuntimeABIParameter(name: "valueBits", type: .intptr),
+                RuntimeABIParameter(name: "unitOrdinal", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_duration_absoluteValue",
             parameters: [
                 RuntimeABIParameter(name: "durationRaw", type: .intptr),

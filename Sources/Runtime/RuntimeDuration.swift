@@ -86,6 +86,24 @@ private let runtimeDurationNanosPerMinute: Int64 = 60 * runtimeDurationNanosPerS
 private let runtimeDurationNanosPerHour: Int64 = 60 * runtimeDurationNanosPerMinute
 private let runtimeDurationNanosPerDay: Int64 = 24 * runtimeDurationNanosPerHour
 
+/// DurationUnit ordinals mirror Kotlin's enum entry order:
+/// 0=NANOSECONDS, 1=MICROSECONDS, 2=MILLISECONDS, 3=SECONDS,
+/// 4=MINUTES, 5=HOURS, 6=DAYS.
+private func runtimeDurationUnitScale(fromOrdinal ordinal: Int) -> Int64 {
+    switch ordinal {
+    case 0: return 1
+    case 1: return runtimeDurationNanosPerMicrosecond
+    case 2: return runtimeDurationNanosPerMillisecond
+    case 3: return runtimeDurationNanosPerSecond
+    case 4: return runtimeDurationNanosPerMinute
+    case 5: return runtimeDurationNanosPerHour
+    case 6: return runtimeDurationNanosPerDay
+    default:
+        assertionFailure("KSwiftK: unknown DurationUnit ordinal \(ordinal) – compiler/runtime enum mismatch?")
+        return 1
+    }
+}
+
 private func runtimeDurationSaturatingAdd(_ lhs: Int64, _ rhs: Int64) -> Int64 {
     let (result, overflow) = lhs.addingReportingOverflow(rhs)
     if overflow {
@@ -455,6 +473,30 @@ public func kk_duration_from_hours_double(_ valueBits: Int) -> Int {
 @_cdecl("kk_duration_from_days_double")
 public func kk_duration_from_days_double(_ valueBits: Int) -> Int {
     runtimeDurationHandle(fromNanoseconds: runtimeDurationNanoseconds(fromDoubleBits: valueBits, scale: 86_400 * 1_000_000_000))
+}
+
+@_cdecl("kk_duration_toDuration_int")
+public func kk_duration_toDuration_int(_ value: Int, _ unitOrdinal: Int) -> Int {
+    runtimeDurationHandle(
+        fromNanoseconds: saturatingMultiply(Int64(value), runtimeDurationUnitScale(fromOrdinal: unitOrdinal))
+    )
+}
+
+@_cdecl("kk_duration_toDuration_long")
+public func kk_duration_toDuration_long(_ value: Int, _ unitOrdinal: Int) -> Int {
+    runtimeDurationHandle(
+        fromNanoseconds: saturatingMultiply(Int64(value), runtimeDurationUnitScale(fromOrdinal: unitOrdinal))
+    )
+}
+
+@_cdecl("kk_duration_toDuration_double")
+public func kk_duration_toDuration_double(_ valueBits: Int, _ unitOrdinal: Int) -> Int {
+    runtimeDurationHandle(
+        fromNanoseconds: runtimeDurationNanoseconds(
+            fromDoubleBits: valueBits,
+            scale: Double(runtimeDurationUnitScale(fromOrdinal: unitOrdinal))
+        )
+    )
 }
 
 // MARK: - Duration properties

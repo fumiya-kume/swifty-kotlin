@@ -287,6 +287,18 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_duration_inWholeHours(handle), 30)
     }
 
+    // MARK: - Numeric.toDuration(unit)
+
+    func testNumericToDurationUsesDurationUnitOrdinals() {
+        let seconds = kk_duration_toDuration_int(2, 3)
+        let milliseconds = kk_duration_toDuration_long(1500, 2)
+        let minutes = kk_duration_toDuration_double(kk_double_to_bits(1.5), 4)
+
+        XCTAssertEqual(kk_duration_inWholeSeconds(seconds), 2)
+        XCTAssertEqual(kk_duration_inWholeMilliseconds(milliseconds), 1500)
+        XCTAssertEqual(kk_duration_inWholeSeconds(minutes), 90)
+    }
+
     // MARK: - Duration / Duration -> Double
 
     func testDurationDivisionReturnsDoubleBits() {
