@@ -3,6 +3,24 @@ import Foundation
 import XCTest
 
 extension BuildKIRRegressionTests {
+    func testGetTimeMicrosLowersToRuntimeCallee() throws {
+        let source = """
+        import kotlin.system.getTimeMicros
+
+        fun main(): Long = getTimeMicros()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_system_getTimeMicros"), "Expected getTimeMicros runtime call")
+        }
+    }
+
     func testSystemObjectMembersLowerToRuntimeCallees() throws {
         let source = """
         import kotlin.system.System

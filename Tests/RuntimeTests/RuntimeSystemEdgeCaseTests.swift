@@ -4,8 +4,9 @@ import XCTest
 
 // MARK: - kotlin.system edge case coverage (STDLIB-SYSTEM-003)
 //
-// Covers: measureTimeMillis, measureNanoTime, getTimeMillis (currentTimeMillis),
-// getTimeNanos (nanoTime), processStartNanos, and exitProcess signature check.
+// Covers: measureTimeMillis, measureNanoTime, getTimeMicros,
+// getTimeMillis (currentTimeMillis), getTimeNanos (nanoTime),
+// processStartNanos, and exitProcess signature check.
 //
 // NOTE: exitProcess is not invoked in tests because it calls exit() which is
 // process-terminating (Nothing semantics). Compile-time visibility is verified
@@ -48,6 +49,7 @@ final class RuntimeSystemEdgeCaseTests: XCTestCase {
     func testSystemMeasurementRuntimeSignaturesAreFixed() {
         let _: () -> Int = kk_system_currentTimeMillis
         let _: () -> Int = kk_system_nanoTime
+        let _: () -> Int = kk_system_getTimeMicros
         let _: () -> Int = kk_system_process_start_nanos
         let _: (Int, Int, UnsafeMutablePointer<Int>?) -> Int = kk_system_measureTimeMillis
         let _: (Int, Int, UnsafeMutablePointer<Int>?) -> Int = kk_system_measureNanoTime
@@ -114,6 +116,25 @@ final class RuntimeSystemEdgeCaseTests: XCTestCase {
             XCTAssertGreaterThanOrEqual(current, previous, "nanoTime went backwards — not monotonic")
             previous = current
         }
+    }
+
+    // MARK: - kk_system_getTimeMicros
+
+    func testGetTimeMicrosIsPositive() {
+        XCTAssertGreaterThan(kk_system_getTimeMicros(), 0, "getTimeMicros must be positive")
+    }
+
+    func testGetTimeMicrosIsNonDecreasingAcrossConsecutiveCalls() {
+        let first = kk_system_getTimeMicros()
+        let second = kk_system_getTimeMicros()
+        XCTAssertGreaterThanOrEqual(second, first, "getTimeMicros must be monotonic at microsecond granularity")
+    }
+
+    func testGetTimeMicrosAdvancesAfterSleep() {
+        let before = kk_system_getTimeMicros()
+        Thread.sleep(forTimeInterval: 0.010)
+        let after = kk_system_getTimeMicros()
+        XCTAssertGreaterThan(after - before, 5_000, "getTimeMicros should advance by > 5ms after a 10ms sleep")
     }
 
     // MARK: - kk_system_process_start_nanos (stability)

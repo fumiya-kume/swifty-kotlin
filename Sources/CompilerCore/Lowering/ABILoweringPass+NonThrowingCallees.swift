@@ -663,6 +663,7 @@ extension ABILoweringPass {
             interner.intern("kk_system_exitProcess"),
             interner.intern("kk_system_currentTimeMillis"),
             interner.intern("kk_system_nanoTime"),
+            interner.intern("kk_system_getTimeMicros"),
             interner.intern("kk_system_process_start_nanos"),
             interner.intern("kk_platform_canAccessUnaligned"),
             interner.intern("kk_platform_isLittleEndian"),

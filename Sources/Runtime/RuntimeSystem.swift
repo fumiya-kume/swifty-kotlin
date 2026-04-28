@@ -48,6 +48,13 @@ public func kk_system_nanoTime() -> Int {
     Int(clamping: DispatchTime.now().uptimeNanoseconds)
 }
 
+/// Runtime support for kotlin.system.getTimeMicros().
+/// Returns monotonic uptime in microseconds.
+@_cdecl("kk_system_getTimeMicros")
+public func kk_system_getTimeMicros() -> Int {
+    kk_system_nanoTime() / 1_000
+}
+
 // MARK: - processStartNanos (STDLIB-TIME-085)
 
 /// Captured once at process startup: the monotonic nanosecond timestamp
