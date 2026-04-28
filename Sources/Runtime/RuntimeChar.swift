@@ -166,7 +166,7 @@ public func kk_char_category(_ value: Int) -> Int {
 @_cdecl("kk_char_directionality")
 public func kk_char_directionality(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value) else {
-        return -1 // Invalid character
+        return 0
     }
     return charDirectionalityToInt(scalar)
 }
@@ -339,17 +339,48 @@ private func charCategoryToInt(_ category: Unicode.GeneralCategory) -> Int {
 }
 
 private func charDirectionalityToInt(_ scalar: UnicodeScalar) -> Int {
-    // Swift's Unicode scalar properties do not currently expose bidi classes
-    // on all supported toolchains, so keep a conservative fallback mapping.
-    if scalar.properties.isWhitespace {
-        return 13 // WHITESPACE
-    }
     let value = scalar.value
     switch value {
-    case 0x0590 ... 0x08FF, 0xFB1D ... 0xFDFF, 0xFE70 ... 0xFEFF:
-        return 1 // RIGHT_TO_LEFT
+    case 0x0300 ... 0x036F,
+         0x1AB0 ... 0x1AFF,
+         0x1DC0 ... 0x1DFF,
+         0x20D0 ... 0x20FF,
+         0xFE20 ... 0xFE2F:
+        return 9
+    case 0x000A, 0x000D, 0x001C ... 0x001E:
+        return 11
+    case 0x0009, 0x000B, 0x001F:
+        return 12
+    case 0x0020, 0x00A0, 0x1680, 0x2000 ... 0x200A, 0x2028, 0x2029, 0x202F, 0x205F, 0x3000:
+        return 13
+    case 0x0030 ... 0x0039:
+        return 4
+    case 0x002B, 0x002D:
+        return 5
+    case 0x0023, 0x0025, 0x00A2 ... 0x00A5:
+        return 6
+    case 0x0660 ... 0x0669, 0x06F0 ... 0x06F9:
+        return 7
+    case 0x002C, 0x002E, 0x002F, 0x003A:
+        return 8
+    case 0x200B ... 0x200D, 0x2060:
+        return 10
+    case 0x202A:
+        return 15
+    case 0x202D:
+        return 16
+    case 0x202B:
+        return 17
+    case 0x202E:
+        return 18
+    case 0x202C:
+        return 19
+    case 0x0590 ... 0x05FF, 0xFB1D ... 0xFB4F:
+        return 2
+    case 0x0600 ... 0x08FF, 0xFB50 ... 0xFDFF, 0xFE70 ... 0xFEFF:
+        return 3
     default:
-        return 0 // LEFT_TO_RIGHT
+        return scalar.properties.isWhitespace ? 13 : 1
     }
 }
 
