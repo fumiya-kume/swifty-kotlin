@@ -91,9 +91,53 @@ final class ReflectKAnnotatedElementSyntheticTests: XCTestCase {
         XCTAssertTrue(sema.types.isNominalSubtypeSymbol(kCallableSymbol, of: annotatedElementSymbol))
     }
 
+    func testKDeclarationContainerMembersSurfaceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let reflectFQ = ["kotlin", "reflect"].map { interner.intern($0) }
+        let declarationContainerFQ = reflectFQ + [interner.intern("KDeclarationContainer")]
+        let declarationContainerSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: declarationContainerFQ),
+            "Expected kotlin.reflect.KDeclarationContainer to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(declarationContainerSymbol)?.kind, .interface)
+        XCTAssertTrue(sema.symbols.symbol(declarationContainerSymbol)?.flags.contains(.synthetic) == true)
+
+        let membersSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: declarationContainerFQ + [interner.intern("members")]),
+            "Expected KDeclarationContainer.members to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(membersSymbol)?.kind, .property)
+
+        let collectionSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "collections", "Collection"].map { interner.intern($0) })
+        )
+        let kCallableSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: reflectFQ + [interner.intern("KCallable")])
+        )
+        let kCallableStarType = sema.types.make(.classType(ClassType(
+            classSymbol: kCallableSymbol,
+            args: [.star],
+            nullability: .nonNull
+        )))
+        let expectedMembersType = sema.types.make(.classType(ClassType(
+            classSymbol: collectionSymbol,
+            args: [.out(kCallableStarType)],
+            nullability: .nonNull
+        )))
+        XCTAssertEqual(sema.symbols.propertyType(for: membersSymbol), expectedMembersType)
+
+        let kClassSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: reflectFQ + [interner.intern("KClass")])
+        )
+        XCTAssertTrue(sema.symbols.directSupertypes(for: kClassSymbol).contains(declarationContainerSymbol))
+        XCTAssertTrue(sema.types.isNominalSubtypeSymbol(kClassSymbol, of: declarationContainerSymbol))
+    }
+
     func testKAnnotatedElementAnnotationsResolveInSource() throws {
         let source = """
         import kotlin.reflect.KAnnotatedElement
+        import kotlin.reflect.KDeclarationContainer
         import kotlin.reflect.KClass
 
         annotation class Marker
@@ -101,9 +145,13 @@ final class ReflectKAnnotatedElementSyntheticTests: XCTestCase {
 
         fun annotationsOf(element: KAnnotatedElement): Int = element.annotations.size
 
+        fun membersOf(container: KDeclarationContainer): Int = container.members.size
+
         fun kclassAnnotations(k: KClass<*>): Int = k.annotations.size
 
         fun classReferenceAsAnnotatedElement(): KAnnotatedElement = Box::class
+
+        fun classReferenceAsDeclarationContainer(): KDeclarationContainer = Box::class
         """
 
         let ctx = runSemaCollectingDiagnostics(source)

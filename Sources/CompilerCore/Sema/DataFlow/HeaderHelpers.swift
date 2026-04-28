@@ -959,6 +959,9 @@ extension DataFlowSemaPhase {
         // STDLIB-REFLECT-068: Now that List is registered, update KAnnotatedElement.annotations
         // to List<Annotation>.
         patchKAnnotatedElementAnnotationsType(symbols: symbols, types: types, interner: interner)
+        // STDLIB-REFLECT-069: Now that Collection is registered, update
+        // KDeclarationContainer.members to Collection<KCallable<*>>.
+        patchKDeclarationContainerMembersType(symbols: symbols, types: types, interner: interner)
         // STDLIB-REFLECT-063: Now that List is registered, update KFunction.parameters type to
         // List<Any?> so that `.size` resolves correctly on the parameters property.
         patchKFunctionParametersType(symbols: symbols, types: types, interner: interner)
