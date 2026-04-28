@@ -30,6 +30,10 @@ import XCTest
 //   kotlin.native.runtime.Debugging (via kk_assertions_* entry points):
 //     - Debugging.areAssertionsEnabled    -> kk_assertions_enabled()
 //     - Debugging.setAssertionsEnabled()  -> kk_assertions_set_enabled()
+//     - Debugging.isThreadStateRunnable   -> kk_debugging_is_thread_state_runnable()
+//     - Debugging.gcSuspendCount          -> kk_debugging_gc_suspend_count()
+//     - Debugging.threadCount             -> kk_debugging_thread_count()
+//     - Debugging.globalObjectCount       -> kk_debugging_global_object_count()
 //
 // SEMA EXPOSED (compile-time stubs, covered by NativeRefRuntimeSemaTests):
 //   - kotlin.native.ref.WeakReference<T>
@@ -43,10 +47,10 @@ import XCTest
 //   - kotlin.native.runtime.GC.maxHeapBytes
 //   - kotlin.native.runtime.Debugging.isThreadStateRunnable
 //   - kotlin.native.runtime.Debugging.gcSuspendCount
+//   - kotlin.native.runtime.Debugging.threadCount
+//   - kotlin.native.runtime.Debugging.globalObjectCount
 //
 // RUNTIME MISSING (tracked by STDLIB-NATIVE-REF-004 and later):
-//   - Debugging tracking metrics:
-//       gcSuspendCount / threadCount / globalObjectCount
 //   - GCInfo / RootSetStatistics / SweepStatistics type surfaces
 //   - NativeRuntimeApi marker
 
