@@ -131,6 +131,18 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let noWhenBranchMatchedSymbol = ensureClassSymbol(
+            named: "NoWhenBranchMatchedException",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let concurrentModificationSymbol = ensureClassSymbol(
+            named: "ConcurrentModificationException",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let errorSymbol = ensureClassSymbol(
             named: "Error",
             in: kotlinPkg,
@@ -158,6 +170,8 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: noSuchElementSymbol)
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: arithmeticSymbol)
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: classCastSymbol)
+        symbols.setDirectSupertypes([runtimeExceptionSymbol], for: noWhenBranchMatchedSymbol)
+        symbols.setDirectSupertypes([runtimeExceptionSymbol], for: concurrentModificationSymbol)
 
         // Register nominal supertypes in TypeSystem for subtype checking
         types.setNominalDirectSupertypes([throwableSymbol], for: exceptionSymbol)
@@ -172,6 +186,8 @@ extension DataFlowSemaPhase {
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: noSuchElementSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: arithmeticSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: classCastSymbol)
+        types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: noWhenBranchMatchedSymbol)
+        types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: concurrentModificationSymbol)
         types.setNominalDirectSupertypes([throwableSymbol], for: errorSymbol)
         types.setNominalDirectSupertypes([errorSymbol], for: assertionErrorSymbol)
 
@@ -189,6 +205,8 @@ extension DataFlowSemaPhase {
             noSuchElementSymbol,
             arithmeticSymbol,
             classCastSymbol,
+            noWhenBranchMatchedSymbol,
+            concurrentModificationSymbol,
             errorSymbol,
             assertionErrorSymbol,
         ] {
@@ -262,6 +280,24 @@ extension DataFlowSemaPhase {
                 throwableSymbol: throwableSymbol
             )
         }
+        registerSyntheticNullableExceptionConstructors(
+            ownerSymbol: noWhenBranchMatchedSymbol,
+            ownerType: types.make(.classType(ClassType(classSymbol: noWhenBranchMatchedSymbol, args: [], nullability: .nonNull))),
+            throwableSymbol: throwableSymbol,
+            externalLinkPrefix: "kk_no_when_branch_matched_exception",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticNullableExceptionConstructors(
+            ownerSymbol: concurrentModificationSymbol,
+            ownerType: types.make(.classType(ClassType(classSymbol: concurrentModificationSymbol, args: [], nullability: .nonNull))),
+            throwableSymbol: throwableSymbol,
+            externalLinkPrefix: "kk_concurrent_modification_exception",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         // MARK: - Throwable member properties (STDLIB-127)
 
@@ -575,5 +611,41 @@ extension DataFlowSemaPhase {
             ),
             for: ctorSymbol
         )
+    }
+
+    private func registerSyntheticNullableExceptionConstructors(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        throwableSymbol: SymbolID,
+        externalLinkPrefix: String,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let nullableStringType = types.makeNullable(types.stringType)
+        let nullableThrowableType = types.make(.classType(ClassType(
+            classSymbol: throwableSymbol,
+            args: [],
+            nullability: .nullable
+        )))
+        let overloads: [(parameters: [(name: String, type: TypeID)], link: String)] = [
+            ([], "\(externalLinkPrefix)_new"),
+            ([("message", nullableStringType)], "\(externalLinkPrefix)_new_message"),
+            (
+                [("message", nullableStringType), ("cause", nullableThrowableType)],
+                "\(externalLinkPrefix)_new_message_cause"
+            ),
+            ([("cause", nullableThrowableType)], "\(externalLinkPrefix)_new_cause"),
+        ]
+        for overload in overloads {
+            registerSyntheticExceptionConstructor(
+                ownerSymbol: ownerSymbol,
+                ownerType: ownerType,
+                parameters: overload.parameters,
+                externalLinkName: overload.link,
+                symbols: symbols,
+                interner: interner
+            )
+        }
     }
 }

@@ -1117,19 +1117,17 @@ final class ControlFlowLowerer {
 
     /// Emits instructions to check whether a caught exception matches a specific catch clause type.
     ///
-    /// When the exception type token is known (non-zero), this performs a fast integer
-    /// comparison against the encoded catch type token. When the token is UNKNOWN (0) --
-    /// which happens for exceptions thrown by external/runtime calls -- this falls back
-    /// to a runtime `kk_op_is` call that inspects the actual exception object, providing
-    /// precise type matching instead of blindly matching all catch clauses.
+    /// This first performs a fast integer comparison against the encoded catch type token.
+    /// When the exact token comparison misses, it falls back to `kk_op_is`, because a
+    /// known thrown subtype token can still match a catch clause for one of its supertypes.
+    /// The runtime fallback also handles UNKNOWN (0) tokens from external/runtime calls.
     ///
     /// Generated control flow:
     /// ```
     ///   typeMatches = (exceptionTypeSlot == catchTypeToken)
     ///   if typeMatches -> matchResult = true
     ///   typeUnknown = (exceptionTypeSlot == 0)
-    ///   if !typeUnknown -> matchResult = false
-    ///   matchResult = kk_op_is(exceptionSlot, catchTypeToken)  // runtime fallback
+    ///   matchResult = kk_op_is(exceptionSlot, catchTypeToken)  // subtype/unknown fallback
     /// ```
     ///
     /// Shared boolean/int constants (`unknownTypeToken`, `trueValue`, `falseValue`) are
@@ -1157,7 +1155,6 @@ final class ControlFlowLowerer {
         let typeUnknown = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
 
         let exactMatchLabel = driver.ctx.makeLoopLabel()
-        let knownMismatchLabel = driver.ctx.makeLoopLabel()
         let doneLabel = driver.ctx.makeLoopLabel()
 
         instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
@@ -1171,18 +1168,16 @@ final class ControlFlowLowerer {
         ))
         instructions.append(.jumpIfEqual(lhs: typeMatches, rhs: trueValue, target: exactMatchLabel))
 
-        // Check if the exception type is UNKNOWN (token == 0)
+        // Keep the UNKNOWN comparison explicit for KIR diagnostics and to make
+        // external/runtime-call fallback visible in dumps.
         instructions.append(.binary(
             op: .equal,
             lhs: exceptionTypeSlot,
             rhs: unknownTypeToken,
             result: typeUnknown
         ))
-        // If not unknown (known type but different) -> definite miss
-        instructions.append(.jumpIfEqual(lhs: typeUnknown, rhs: falseValue, target: knownMismatchLabel))
 
-        // Runtime fallback: token is UNKNOWN (0), use kk_op_is for precise type check.
-        // Control falls through here when typeUnknown != false (i.e., token is 0).
+        // Runtime fallback: handles UNKNOWN tokens and known subtype/supertype matches.
         let runtimeResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
         instructions.append(.call(
             symbol: nil,
@@ -1198,11 +1193,6 @@ final class ControlFlowLowerer {
         // Exact match: set matchResult = true
         instructions.append(.label(exactMatchLabel))
         instructions.append(.copy(from: trueValue, to: matchResult))
-        instructions.append(.jump(doneLabel))
-
-        // Known mismatch: set matchResult = false
-        instructions.append(.label(knownMismatchLabel))
-        instructions.append(.copy(from: falseValue, to: matchResult))
         instructions.append(.jump(doneLabel))
 
         instructions.append(.label(doneLabel))
