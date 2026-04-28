@@ -275,7 +275,7 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testNativeRefFunctionCount() {
-        XCTAssertEqual(RuntimeABISpec.nativeRefFunctions.count, 6)
+        XCTAssertEqual(RuntimeABISpec.nativeRefFunctions.count, 10)
     }
 
     // MARK: - J16.1 Signature Verification (spec-fixed)
@@ -797,6 +797,16 @@ final class ABIMismatchTests: XCTestCase {
     func testCDeclarationForKKGcCollect() throws {
         let spec = try requireSpec("kk_gc_collect")
         XCTAssertEqual(spec.cDeclaration, "void kk_gc_collect(void);")
+    }
+
+    func testCDeclarationForKKGcSchedule() throws {
+        let spec = try requireSpec("kk_gc_schedule")
+        XCTAssertEqual(spec.cDeclaration, "intptr_t kk_gc_schedule(void);")
+    }
+
+    func testCDeclarationForKKGcTargetHeapUtilization() throws {
+        let spec = try requireSpec("kk_gc_target_heap_utilization")
+        XCTAssertEqual(spec.cDeclaration, "double kk_gc_target_heap_utilization(void);")
     }
 
     func testCDeclarationForKKPrintlnAny() throws {

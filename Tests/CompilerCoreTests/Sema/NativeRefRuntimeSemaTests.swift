@@ -221,6 +221,11 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
         let member = try XCTUnwrap(members.first)
         let sig = try XCTUnwrap(sema.symbols.functionSignature(for: member))
         XCTAssertEqual(sig.returnType, sema.types.unitType, "GC.collect() should return Unit")
+        XCTAssertEqual(
+            sema.symbols.externalLinkName(for: member),
+            "kk_gc_collect",
+            "GC.collect() should lower to kk_gc_collect"
+        )
     }
 
     func testGCHasScheduleMember() throws {
@@ -229,6 +234,32 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
         let scheduleFQName = objectFQName + [interner.intern("schedule")]
         let members = sema.symbols.lookupAll(fqName: scheduleFQName)
         XCTAssertFalse(members.isEmpty, "GC should have a schedule() member")
+        let member = try XCTUnwrap(members.first)
+        XCTAssertEqual(
+            sema.symbols.externalLinkName(for: member),
+            "kk_gc_schedule",
+            "GC.schedule() should lower to kk_gc_schedule"
+        )
+    }
+
+    func testGCHasRuntimeTuningProperties() throws {
+        let (sema, interner) = try makeSema()
+        let objectFQName = ["kotlin", "native", "runtime", "GC"].map { interner.intern($0) }
+        let expected: [(name: String, type: TypeID, link: String)] = [
+            ("targetHeapBytes", sema.types.longType, "kk_gc_target_heap_bytes"),
+            ("targetHeapUtilization", sema.types.doubleType, "kk_gc_target_heap_utilization"),
+            ("maxHeapBytes", sema.types.longType, "kk_gc_max_heap_bytes"),
+        ]
+
+        for property in expected {
+            let propertyFQName = objectFQName + [interner.intern(property.name)]
+            let symbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: propertyFQName),
+                "GC should have \(property.name)"
+            )
+            XCTAssertEqual(sema.symbols.propertyType(for: symbol), property.type)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: symbol), property.link)
+        }
     }
 
     func testGCIsTaggedExperimentalNativeApi() throws {
