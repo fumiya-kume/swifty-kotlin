@@ -20,8 +20,12 @@ import XCTest
 //     - WeakReference<T>               -> kk_weak_ref_create / kk_weak_ref_get / kk_weak_ref_clear
 //     - createCleaner(value, block)    -> kk_cleaner_create / kk_cleaner_clean / kk_cleaner_dispose
 //
-//   kotlin.native.runtime.GC (via kk_gc_collect):
-//     - GC.collect()  -> kk_gc_collect()  [no Kotlin-level GC object, raw C entry]
+//   kotlin.native.runtime.GC:
+//     - GC.collect()               -> kk_gc_collect()
+//     - GC.schedule()              -> kk_gc_schedule()
+//     - GC.targetHeapBytes         -> kk_gc_target_heap_bytes()
+//     - GC.targetHeapUtilization   -> kk_gc_target_heap_utilization()
+//     - GC.maxHeapBytes            -> kk_gc_max_heap_bytes()
 //
 //   kotlin.native.runtime.Debugging (via kk_assertions_* entry points):
 //     - Debugging.areAssertionsEnabled    -> kk_assertions_enabled()
@@ -34,12 +38,13 @@ import XCTest
 //   - kotlin.native.ref.createCleaner(value, block)
 //   - kotlin.native.runtime.GC.collect()
 //   - kotlin.native.runtime.GC.schedule()
+//   - kotlin.native.runtime.GC.targetHeapBytes
+//   - kotlin.native.runtime.GC.targetHeapUtilization
+//   - kotlin.native.runtime.GC.maxHeapBytes
 //   - kotlin.native.runtime.Debugging.isThreadStateRunnable
 //   - kotlin.native.runtime.Debugging.gcSuspendCount
 //
 // RUNTIME MISSING (tracked by STDLIB-NATIVE-REF-004 and later):
-//   - GC target heap metrics and scheduler:
-//       targetHeapBytes / targetHeapUtilization / maxHeapBytes / schedule()
 //   - Debugging tracking metrics:
 //       gcSuspendCount / threadCount / globalObjectCount
 //   - GCInfo / RootSetStatistics / SweepStatistics type surfaces
