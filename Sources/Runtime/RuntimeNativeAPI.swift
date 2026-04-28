@@ -259,6 +259,90 @@ public func kk_pinned_get(_ pinnedHandle: Int) -> Int {
     return box.objectRaw
 }
 
+// MARK: - WeakReference<T>
+
+/// Runtime backing for `kotlin.native.ref.WeakReference<T>`.
+///
+/// KSwiftK has two object domains: managed heap objects tracked by `heapObjects`
+/// and retained runtime boxes tracked by `objectPointers`. A weak reference never
+/// registers its referent as a GC root; `get()` returns null once the referent is
+/// no longer present in either domain.
+final class RuntimeWeakReferenceBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var objectRaw: Int
+
+    init(objectRaw: Int) {
+        self.objectRaw = objectRaw
+    }
+
+    func get() -> Int {
+        lock.lock()
+        let current = objectRaw
+        lock.unlock()
+
+        guard current != 0,
+              current != runtimeNullSentinelInt,
+              runtimeWeakReferentIsLive(current)
+        else {
+            clear()
+            return 0
+        }
+        return current
+    }
+
+    func clear() {
+        lock.lock()
+        objectRaw = 0
+        lock.unlock()
+    }
+}
+
+private func runtimeWeakReferentIsLive(_ objectRaw: Int) -> Bool {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: objectRaw) else {
+        return false
+    }
+    let key = UInt(bitPattern: ptr)
+    return runtimeStorage.withLock { state in
+        state.objectPointers.contains(key) || state.heapObjects[key] != nil
+    }
+}
+
+private func runtimeWeakReferenceBox(from weakRefRaw: Int) -> RuntimeWeakReferenceBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: weakRefRaw) else {
+        return nil
+    }
+    let key = UInt(bitPattern: ptr)
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(key)
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeWeakReferenceBox.self)
+}
+
+@_cdecl("kk_weak_ref_create")
+public func kk_weak_ref_create(_ objectRaw: Int) -> Int {
+    registerRuntimeObject(RuntimeWeakReferenceBox(objectRaw: objectRaw))
+}
+
+@_cdecl("kk_weak_ref_get")
+public func kk_weak_ref_get(_ weakRefRaw: Int) -> Int {
+    guard let box = runtimeWeakReferenceBox(from: weakRefRaw) else {
+        return 0
+    }
+    return box.get()
+}
+
+@_cdecl("kk_weak_ref_clear")
+public func kk_weak_ref_clear(_ weakRefRaw: Int) -> Int {
+    guard let box = runtimeWeakReferenceBox(from: weakRefRaw) else {
+        return 0
+    }
+    box.clear()
+    return 0
+}
+
 // MARK: - freeze() / isFrozen (Kotlin/Native legacy immutability)
 
 /// ABI-004: Protocol adopted by runtime boxes that store child object handles.

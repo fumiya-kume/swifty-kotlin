@@ -1114,6 +1114,10 @@ extension ABILoweringPass {
             interner.intern("kk_ivparameterspec_new"),
             interner.intern("kk_keypair_public"),
             interner.intern("kk_keypair_private"),
+            // Kotlin/Native reference helpers — no outThrown parameter
+            interner.intern("kk_weak_ref_create"),
+            interner.intern("kk_weak_ref_get"),
+            interner.intern("kk_weak_ref_clear"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }
