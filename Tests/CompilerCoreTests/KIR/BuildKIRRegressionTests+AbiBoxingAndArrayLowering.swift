@@ -82,6 +82,8 @@ extension BuildKIRRegressionTests {
         XCTAssertTrue(callees.contains(interner.intern("kk_weak_ref_create")))
         XCTAssertTrue(callees.contains(interner.intern("kk_weak_ref_get")))
         XCTAssertTrue(callees.contains(interner.intern("kk_weak_ref_clear")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_cleaner_create")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_cleaner_dispose")))
     }
 
     func testThisBasedMemberCallCompilesAndUsesImplicitReceiverInLowering() throws {
