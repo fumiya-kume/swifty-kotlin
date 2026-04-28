@@ -216,6 +216,16 @@ final class RuntimeCharEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_char_code(Int((" " as UnicodeScalar).value)), 32)
     }
 
+    // MARK: - directionality property
+
+    func testDirectionalityReturnsKotlinEnumOrdinals() {
+        XCTAssertEqual(kk_char_directionality(Int(("A" as UnicodeScalar).value)), 1)
+        XCTAssertEqual(kk_char_directionality(0x05D0), 2)
+        XCTAssertEqual(kk_char_directionality(0x0627), 3)
+        XCTAssertEqual(kk_char_directionality(Int(("5" as UnicodeScalar).value)), 4)
+        XCTAssertEqual(kk_char_directionality(Int((" " as UnicodeScalar).value)), 13)
+    }
+
     // MARK: - isWhitespace edge cases
 
     func testTabIsWhitespace() {

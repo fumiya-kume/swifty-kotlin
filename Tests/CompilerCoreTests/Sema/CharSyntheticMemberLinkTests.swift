@@ -148,6 +148,29 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
         XCTAssertEqual(categoryClassType.classSymbol, charCategorySymbol)
     }
 
+    func testCharDirectionalityReturnsEnumType() throws {
+        let (sema, interner) = try makeSema()
+
+        let enumFQName = ["kotlin", "text", "CharDirectionality"].map { interner.intern($0) }
+        let enumSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: enumFQName))
+        let enumType = sema.types.make(.classType(ClassType(
+            classSymbol: enumSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let directionalityFQName = ["kotlin", "text", "directionality"].map { interner.intern($0) }
+        let directionalitySymbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: directionalityFQName).first { symbolID in
+            sema.symbols.functionSignature(for: symbolID)?.receiverType == sema.types.charType
+        })
+        XCTAssertEqual(sema.symbols.functionSignature(for: directionalitySymbol)?.returnType, enumType)
+
+        for entry in ["UNDEFINED", "LEFT_TO_RIGHT", "RIGHT_TO_LEFT_ARABIC", "COMMON_NUMBER_SEPARATOR", "WHITESPACE"] {
+            let entrySymbol = try XCTUnwrap(sema.symbols.lookup(fqName: enumFQName + [interner.intern(entry)]))
+            XCTAssertEqual(sema.symbols.propertyType(for: entrySymbol), enumType)
+        }
+    }
+
     func testCharPredicateMembersResolveInCallExpressions() throws {
         let source = """
         fun probe(ch: Char) {
