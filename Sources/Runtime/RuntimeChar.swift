@@ -16,6 +16,7 @@ private func runtimeSingleUnicodeScalarValue(_ string: String) -> Int? {
     return Int(first.value)
 }
 
+
 @_cdecl("kk_char_isDigit")
 public func kk_char_isDigit(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value) else {

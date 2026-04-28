@@ -21,6 +21,7 @@ final class RuntimeCharTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_char_uppercaseChar(scalarValue(of: "1")), scalarValue(of: "1"))
     }
 
+
     // MARK: - STDLIB-003-ABI-001: Char.digitToInt(radix: Int)
 
     func testDigitToIntRadix_base10() {
