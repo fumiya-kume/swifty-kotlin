@@ -649,6 +649,7 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
     }
 
+<<<<<<< HEAD
     func testParameterNameSurfaceHasNamePropertyConstructorAndTypeTarget() throws {
         let ctx = makeContextFromSource("fun noop() {}")
         try runSema(ctx)
@@ -663,11 +664,33 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertEqual(declaration.kind, .annotationClass)
         XCTAssertEqual(declaration.visibility, .public)
         XCTAssertTrue(declaration.flags.contains(.synthetic))
+=======
+    func testIntroducedAtResolvesVersionPropertyAndTargetsValueParameters() throws {
+        let source = """
+        fun marker(x: IntroducedAt?): Int = 0
+        """
+
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let introducedAtFQName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("IntroducedAt"),
+        ]
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: introducedAtFQName),
+            "kotlin.IntroducedAt must be registered"
+        )
+        let symbolInfo = try XCTUnwrap(sema.symbols.symbol(symbol))
+        XCTAssertEqual(symbolInfo.kind, .annotationClass, "IntroducedAt must be an annotation class")
+>>>>>>> cb044b72c (Add IntroducedAt annotation surface)
 
         let annotations = sema.symbols.annotations(for: symbol)
         XCTAssertTrue(
             annotations.contains {
                 $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+<<<<<<< HEAD
                     && $0.arguments == ["AnnotationTarget.TYPE"]
             },
             "ParameterName should target type uses, got: \(annotations)"
@@ -712,12 +735,37 @@ final class AnnotationSemanticTests: XCTestCase {
         let source = """
         @ParameterName("Bad")
         class Bad
+=======
+                    && $0.arguments == ["AnnotationTarget.VALUE_PARAMETER"]
+            },
+            "IntroducedAt should target value parameters, got: \(annotations)"
+        )
+
+        let versionSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: introducedAtFQName + [ctx.interner.intern("version")])
+        )
+        XCTAssertEqual(
+            sema.symbols.propertyType(for: versionSymbol),
+            sema.types.stringType,
+            "IntroducedAt.version must be typed as String"
+        )
+    }
+
+    func testIntroducedAtRejectsFunctionUse() {
+        let source = """
+        @IntroducedAt("1.0")
+        fun bad() {}
+>>>>>>> cb044b72c (Add IntroducedAt annotation surface)
         """
 
         let ctx = runSemaCollectingDiagnostics(source)
         let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
 
+<<<<<<< HEAD
         XCTAssertEqual(diagnostics.count, 1, "Expected ParameterName to reject class use, got: \(ctx.diagnostics.diagnostics)")
+=======
+        XCTAssertEqual(diagnostics.count, 1, "Expected value-parameter-only annotation target diagnostic, got: \(ctx.diagnostics.diagnostics)")
+>>>>>>> cb044b72c (Add IntroducedAt annotation surface)
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
     }
 

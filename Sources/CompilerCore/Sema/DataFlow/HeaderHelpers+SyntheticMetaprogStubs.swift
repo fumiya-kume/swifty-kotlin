@@ -257,6 +257,13 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticJvmAnnotationClass(
+            named: "IntroducedAt",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticJvmAnnotationClass(
             named: "ExperimentalStdlibApi",
@@ -700,6 +707,7 @@ extension DataFlowSemaPhase {
             )
         }
 
+<<<<<<< HEAD
         if let parameterNameSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("ParameterName")]) {
             appendSyntheticAnnotation(
                 MetadataAnnotationRecord(
@@ -720,6 +728,23 @@ extension DataFlowSemaPhase {
             registerSyntheticParameterNameMembers(
                 ownerSymbol: parameterNameSymbol,
                 ownerFQName: kotlinPkg + [interner.intern("ParameterName")],
+=======
+        if let introducedAtSymbol = symbols.lookup(
+            fqName: kotlinPkg + [interner.intern("IntroducedAt")]
+        ) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: ["AnnotationTarget.VALUE_PARAMETER"]
+                ),
+                to: introducedAtSymbol,
+                symbols: symbols
+            )
+            registerSyntheticStringAnnotationPropertyAndConstructor(
+                ownerSymbol: introducedAtSymbol,
+                ownerFQName: kotlinPkg + [interner.intern("IntroducedAt")],
+                propertyName: "version",
+>>>>>>> cb044b72c (Add IntroducedAt annotation surface)
                 symbols: symbols,
                 types: types,
                 interner: interner
