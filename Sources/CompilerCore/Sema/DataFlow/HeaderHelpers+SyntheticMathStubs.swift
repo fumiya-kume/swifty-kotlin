@@ -674,51 +674,6 @@ extension DataFlowSemaPhase {
             )
         }
 
-        // STDLIB-111: IEEE 754 rounding modes — Double convenience entry points
-        for (name, linkName) in [
-            ("roundUp", "kk_math_round_up"),
-            ("roundDown", "kk_math_round_down"),
-            ("roundCeiling", "kk_math_round_ceiling"),
-            ("roundFloor", "kk_math_round_floor"),
-            ("roundHalfUp", "kk_math_round_half_up"),
-            ("roundHalfDown", "kk_math_round_half_down"),
-            ("roundHalfEven", "kk_math_round_half_even"),
-            ("roundUnnecessary", "kk_math_round_unnecessary"),
-        ] {
-            registerSyntheticMathTopLevelFunction(
-                named: name,
-                packageFQName: kotlinMathPkg,
-                parameterName: "x",
-                parameterType: types.doubleType,
-                returnType: types.doubleType,
-                externalLinkName: linkName,
-                symbols: symbols,
-                interner: interner
-            )
-        }
-
-        // STDLIB-111: IEEE 754 rounding modes — Float convenience entry points
-        for (name, linkName) in [
-            ("roundUp", "kk_math_round_up_float"),
-            ("roundDown", "kk_math_round_down_float"),
-            ("roundCeiling", "kk_math_round_ceiling_float"),
-            ("roundFloor", "kk_math_round_floor_float"),
-            ("roundHalfUp", "kk_math_round_half_up_float"),
-            ("roundHalfDown", "kk_math_round_half_down_float"),
-            ("roundHalfEven", "kk_math_round_half_even_float"),
-            ("roundUnnecessary", "kk_math_round_unnecessary_float"),
-        ] {
-            registerSyntheticMathTopLevelFunction(
-                named: name,
-                packageFQName: kotlinMathPkg,
-                parameterName: "x",
-                parameterType: floatType,
-                returnType: floatType,
-                externalLinkName: linkName,
-                symbols: symbols,
-                interner: interner
-            )
-        }
     }
 
     private func registerSyntheticMathTopLevelFunction(
