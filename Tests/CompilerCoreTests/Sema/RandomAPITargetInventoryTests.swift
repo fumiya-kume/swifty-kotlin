@@ -105,6 +105,15 @@ final class RandomAPITargetInventoryTests: XCTestCase {
         )
     }
 
+    func testRandomSemaLoweringBacklogHasNoCommonTargetGaps() {
+        XCTAssertTrue(Self.knownGaps.isEmpty, "STDLIB-RANDOM-002 should stay closed once every common target has a synthetic link")
+        XCTAssertEqual(
+            Set(Self.implementedLinks.keys),
+            Self.commonTargetSignatures,
+            "Every common kotlin.random target should be covered by sema/lowering inventory"
+        )
+    }
+
     func testImplementedInventoryEntriesResolveToSyntheticLinks() throws {
         let (sema, interner) = try makeSema()
         let currentLinks = collectRandomLinks(sema: sema, interner: interner)
