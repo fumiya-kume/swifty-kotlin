@@ -70,6 +70,10 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             kotlinReflectPkg: kotlinReflectPkg
         )
+        let kDeclarationContainerSymbol = registerSyntheticKDeclarationContainerStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinReflectPkg: kotlinReflectPkg
+        )
         let kPropertySymbol = ensureInterfaceSymbol(
             named: "KProperty", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
@@ -185,7 +189,7 @@ extension DataFlowSemaPhase {
         )
         types.kClassInterfaceSymbol = kClassSymbol
         addSyntheticDirectSupertypes(
-            [kAnnotatedElementSymbol, kClassifierSymbol], to: kClassSymbol,
+            [kDeclarationContainerSymbol, kAnnotatedElementSymbol, kClassifierSymbol], to: kClassSymbol,
             symbols: symbols, types: types
         )
 
@@ -753,6 +757,35 @@ extension DataFlowSemaPhase {
         return kAnnotatedElementSymbol
     }
 
+    // STDLIB-REFLECT-069: Register KDeclarationContainer with its members surface.
+    private func registerSyntheticKDeclarationContainerStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinReflectPkg: [InternedString]
+    ) -> SymbolID {
+        let kDeclarationContainerSymbol = ensureInterfaceSymbol(
+            named: "KDeclarationContainer", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+        types.kDeclarationContainerInterfaceSymbol = kDeclarationContainerSymbol
+
+        guard let kDeclarationContainerInfo = symbols.symbol(kDeclarationContainerSymbol) else {
+            return kDeclarationContainerSymbol
+        }
+        let membersName = interner.intern("members")
+        let membersFQ = kDeclarationContainerInfo.fqName + [membersName]
+        if symbols.lookup(fqName: membersFQ) == nil {
+            let membersSymbol = symbols.define(
+                kind: .property, name: membersName, fqName: membersFQ,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+            symbols.setParentSymbol(kDeclarationContainerSymbol, for: membersSymbol)
+            symbols.setPropertyType(types.anyType, for: membersSymbol)
+        }
+
+        return kDeclarationContainerSymbol
+    }
+
     private func addSyntheticDirectSupertypes(
         _ supertypes: [SymbolID],
         to symbol: SymbolID,
@@ -1177,6 +1210,43 @@ extension DataFlowSemaPhase {
         let annotationsPropFQ = kAnnotatedElementInfo.fqName + [interner.intern("annotations")]
         if let annotationsPropSymbol = symbols.lookup(fqName: annotationsPropFQ) {
             symbols.setPropertyType(listOfAnnotation, for: annotationsPropSymbol)
+        }
+    }
+
+    /// Updates `KDeclarationContainer.members` to `Collection<KCallable<*>>` once collection stubs exist.
+    func patchKDeclarationContainerMembersType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let collectionFQName: [InternedString] = [
+            interner.intern("kotlin"), interner.intern("collections"), interner.intern("Collection"),
+        ]
+        let kCallableFQName: [InternedString] = [
+            interner.intern("kotlin"), interner.intern("reflect"), interner.intern("KCallable"),
+        ]
+        guard let collectionSymbol = symbols.lookup(fqName: collectionFQName),
+              let kDeclarationContainerSymbol = types.kDeclarationContainerInterfaceSymbol,
+              let kCallableSymbol = symbols.lookup(fqName: kCallableFQName),
+              let kDeclarationContainerInfo = symbols.symbol(kDeclarationContainerSymbol)
+        else {
+            return
+        }
+
+        let kCallableStarType = types.make(.classType(ClassType(
+            classSymbol: kCallableSymbol,
+            args: [.star],
+            nullability: .nonNull
+        )))
+        let collectionOfKCallable = types.make(.classType(ClassType(
+            classSymbol: collectionSymbol,
+            args: [.out(kCallableStarType)],
+            nullability: .nonNull
+        )))
+
+        let membersPropFQ = kDeclarationContainerInfo.fqName + [interner.intern("members")]
+        if let membersPropSymbol = symbols.lookup(fqName: membersPropFQ) {
+            symbols.setPropertyType(collectionOfKCallable, for: membersPropSymbol)
         }
     }
 
