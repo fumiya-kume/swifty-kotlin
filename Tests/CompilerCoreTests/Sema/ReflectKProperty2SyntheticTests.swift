@@ -107,4 +107,72 @@ final class ReflectKProperty2SyntheticTests: XCTestCase {
 
         _ = try makeSema(source: source)
     }
+
+    func testKMutableProperty2SurfaceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let reflectPackage = ["kotlin", "reflect"].map { interner.intern($0) }
+
+        let kProperty2Symbol = try XCTUnwrap(sema.symbols.lookup(
+            fqName: reflectPackage + [interner.intern("KProperty2")]
+        ))
+        let kMutablePropertySymbol = try XCTUnwrap(sema.symbols.lookup(
+            fqName: reflectPackage + [interner.intern("KMutableProperty")]
+        ))
+        let kMutableProperty2Symbol = try XCTUnwrap(sema.symbols.lookup(
+            fqName: reflectPackage + [interner.intern("KMutableProperty2")]
+        ))
+
+        let kMutableProperty2Info = try XCTUnwrap(sema.symbols.symbol(kMutableProperty2Symbol))
+        XCTAssertEqual(kMutableProperty2Info.kind, .interface)
+        XCTAssertTrue(kMutableProperty2Info.flags.contains(.synthetic))
+
+        let typeParams = sema.types.nominalTypeParameterSymbols(for: kMutableProperty2Symbol)
+        XCTAssertEqual(typeParams.count, 3)
+        XCTAssertEqual(sema.types.nominalTypeParameterVariances(for: kMutableProperty2Symbol), [.invariant, .invariant, .invariant])
+
+        let dType = sema.types.make(.typeParam(TypeParamType(symbol: typeParams[0], nullability: .nonNull)))
+        let eType = sema.types.make(.typeParam(TypeParamType(symbol: typeParams[1], nullability: .nonNull)))
+        let vType = sema.types.make(.typeParam(TypeParamType(symbol: typeParams[2], nullability: .nonNull)))
+        let receiverType = sema.types.make(.classType(ClassType(
+            classSymbol: kMutableProperty2Symbol,
+            args: [.invariant(dType), .invariant(eType), .invariant(vType)],
+            nullability: .nonNull
+        )))
+
+        XCTAssertTrue(sema.symbols.directSupertypes(for: kMutableProperty2Symbol).contains(kProperty2Symbol))
+        XCTAssertTrue(sema.symbols.directSupertypes(for: kMutableProperty2Symbol).contains(kMutablePropertySymbol))
+        XCTAssertEqual(
+            sema.symbols.supertypeTypeArgs(for: kMutableProperty2Symbol, supertype: kProperty2Symbol),
+            [.invariant(dType), .invariant(eType), .invariant(vType)]
+        )
+        XCTAssertEqual(
+            sema.symbols.supertypeTypeArgs(for: kMutableProperty2Symbol, supertype: kMutablePropertySymbol),
+            [.invariant(vType)]
+        )
+
+        let setSymbol = try XCTUnwrap(sema.symbols.lookup(
+            fqName: reflectPackage + [interner.intern("KMutableProperty2"), interner.intern("set")]
+        ))
+        let setSignature = try XCTUnwrap(sema.symbols.functionSignature(for: setSymbol))
+        XCTAssertEqual(setSignature.receiverType, receiverType)
+        XCTAssertEqual(setSignature.parameterTypes, [dType, eType, vType])
+        XCTAssertEqual(setSignature.returnType, sema.types.unitType)
+        XCTAssertEqual(setSignature.typeParameterSymbols, typeParams)
+        XCTAssertEqual(setSignature.classTypeParameterCount, 3)
+    }
+
+    func testKMutableProperty2MemberCallsResolveInSource() throws {
+        let source = """
+        import kotlin.reflect.KMutableProperty2
+
+        fun <D, E, V> write(property: KMutableProperty2<D, E, V>, receiver1: D, receiver2: E, value: V): V {
+            property.set(receiver1, receiver2, value)
+            val readBack = property.get(receiver1, receiver2)
+            val invoked = property(receiver1, receiver2)
+            return readBack
+        }
+        """
+
+        _ = try makeSema(source: source)
+    }
 }
