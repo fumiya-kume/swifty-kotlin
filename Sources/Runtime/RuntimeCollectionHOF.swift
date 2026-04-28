@@ -116,6 +116,9 @@ public func kk_auto_closeable_create(_ fnPtr: Int, _ closureRaw: Int) -> Int {
 ///   (self, outThrown) -> Int
 /// Returns 0 on success, or the thrown exception handle if close() threw.
 private func runtimeCloseableClose(_ resourceRaw: Int) -> Int {
+    guard resourceRaw != 0, resourceRaw != runtimeNullSentinelInt else {
+        return 0
+    }
     var closeFnPtr = kk_itable_lookup(resourceRaw, 0, 0)
     if closeFnPtr == 0, runtimeIsHeapObject(resourceRaw) {
         closeFnPtr = kk_vtable_lookup(resourceRaw, 0)
