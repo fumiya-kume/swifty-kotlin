@@ -104,7 +104,6 @@ extension DataFlowSemaPhase {
             packageSymbol: kotlinReflectPkgSymbol,
             severity: "ERROR",
             targetArguments: nil,
-            retentionArgument: nil,
             symbols: symbols,
             interner: interner
         )

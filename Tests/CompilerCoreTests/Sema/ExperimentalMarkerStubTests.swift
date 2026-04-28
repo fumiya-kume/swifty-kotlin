@@ -205,6 +205,21 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         )
     }
 
+    func testExperimentalAssociatedObjectsHasBinaryRetention() throws {
+        let (sema, interner) = try makeSema()
+        let sym = try XCTUnwrap(
+            lookupSymbol(fqPath: ["kotlin", "reflect", "ExperimentalAssociatedObjects"], sema: sema, interner: interner)
+        )
+        let annotations = sema.symbols.annotations(for: sym)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Retention"
+                    && $0.arguments.contains("AnnotationRetention.BINARY")
+            },
+            "Expected ExperimentalAssociatedObjects to carry @Retention(BINARY), got: \(annotations)"
+        )
+    }
+
     // MARK: - ExperimentalMultiplatform (kotlin, ERROR)
 
     func testExperimentalMultiplatformIsRegistered() throws {
