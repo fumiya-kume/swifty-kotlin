@@ -812,6 +812,77 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
     }
 
+    func testDslMarkerSurfaceHasDocumentedMetadata() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+        let dslMarkerFQName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("DslMarker"),
+        ]
+        let symbolID = try XCTUnwrap(
+            sema.symbols.lookup(fqName: dslMarkerFQName),
+            "kotlin.DslMarker must be registered"
+        )
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.visibility, .public)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+        XCTAssertEqual(symbol.kind, .annotationClass)
+
+        let annotations = sema.symbols.annotations(for: symbolID)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == ["AnnotationTarget.ANNOTATION_CLASS"]
+            },
+            "DslMarker should target annotation classes, got: \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Retention"
+                    && $0.arguments == ["AnnotationRetention.BINARY"]
+            },
+            "DslMarker should carry binary retention, got: \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains { $0.annotationFQName == "kotlin.annotation.MustBeDocumented" },
+            "DslMarker should carry MustBeDocumented, got: \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                KnownCompilerAnnotation.sinceKotlin.matches($0.annotationFQName)
+                    && $0.arguments == ["1.1"]
+            },
+            "DslMarker should carry SinceKotlin(1.1), got: \(annotations)"
+        )
+    }
+
+    func testDslMarkerAcceptsAnnotationClassTarget() {
+        let source = """
+        @DslMarker
+        annotation class HtmlDsl
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected DslMarker to be accepted on annotation classes, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testDslMarkerRejectsRegularClassTarget() {
+        let source = """
+        @DslMarker
+        class BadMarker
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected annotation-class-only target diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
     func testTargetAnnotationIsRejectedOnRegularClass() {
         let source = """
         @Target(AnnotationTarget.CLASS)

@@ -157,6 +157,13 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticJvmAnnotationClass(
+            named: "DslMarker",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticJvmAnnotationClass(
             named: "ExtensionFunctionType",
@@ -597,6 +604,38 @@ extension DataFlowSemaPhase {
                 symbols: symbols,
                 types: types,
                 interner: interner
+            )
+        }
+
+        if let dslMarkerSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("DslMarker")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
+                ),
+                to: dslMarkerSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.annotation.Retention",
+                    arguments: ["AnnotationRetention.BINARY"]
+                ),
+                to: dslMarkerSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(annotationFQName: "kotlin.annotation.MustBeDocumented"),
+                to: dslMarkerSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.sinceKotlin.qualifiedName,
+                    arguments: ["1.1"]
+                ),
+                to: dslMarkerSymbol,
+                symbols: symbols
             )
         }
 
