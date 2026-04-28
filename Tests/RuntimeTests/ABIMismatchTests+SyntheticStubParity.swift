@@ -88,6 +88,10 @@ extension ABIMismatchTests {
             "kk_duration_from_days_double",
             "kk_duration_div_duration",
             "kk_synchronized",
+            // Lazy
+            "kk_lazy_of",
+            "kk_lazy_get_value",
+            "kk_lazy_is_initialized",
             // Unsigned numeric coercion (STDLIB-500)
             "kk_ubyte_coerceIn",
             "kk_ubyte_coerceAtLeast",

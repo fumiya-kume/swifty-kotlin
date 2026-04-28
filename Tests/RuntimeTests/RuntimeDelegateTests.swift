@@ -260,6 +260,13 @@ final class RuntimeDelegateTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(value, 77)
     }
 
+    func testLazyOfCreatesInitializedLazyValue() {
+        let handle = kk_lazy_of(123)
+        XCTAssertNotEqual(handle, 0)
+        XCTAssertEqual(kk_lazy_is_initialized(handle), 1)
+        XCTAssertEqual(kk_lazy_get_value(handle), 123)
+    }
+
     func testLazyGetValueWithInvalidHandleReturnsZero() {
         let value = kk_lazy_get_value(0)
         XCTAssertEqual(value, 0)

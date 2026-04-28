@@ -11,13 +11,88 @@ extension DataFlowSemaPhase {
         let anyType = types.anyType
         let knownNames = KnownCompilerNames(interner: interner)
 
-        // Register kotlin.properties.Lazy<T> interface stub.
-        let lazyInterfaceSymbol = ensureInterfaceSymbol(
+        // Register kotlin.properties.Lazy<T> interface stub used by the existing delegate lowering.
+        let legacyLazyInterfaceSymbol = ensureInterfaceSymbol(
             named: "Lazy", in: kotlinPropertiesPkg, symbols: symbols, interner: interner
         )
-        let lazyInterfaceType = types.make(.classType(ClassType(
-            classSymbol: lazyInterfaceSymbol, args: [], nullability: .nonNull
+        let legacyLazyInterfaceType = types.make(.classType(ClassType(
+            classSymbol: legacyLazyInterfaceSymbol, args: [], nullability: .nonNull
         )))
+
+        // Register the stdlib root kotlin.Lazy<out T> interface used by lazyOf(value).
+        let rootLazyInterfaceSymbol = ensureInterfaceSymbol(
+            named: "Lazy", in: kotlinPkg, symbols: symbols, interner: interner
+        )
+        let rootLazyTypeParamName = interner.intern("T")
+        let rootLazyFQName = kotlinPkg + [interner.intern("Lazy")]
+        let rootLazyTypeParamSymbol = symbols.lookup(fqName: rootLazyFQName + [rootLazyTypeParamName]) ?? {
+            let symbol = symbols.define(
+                kind: .typeParameter,
+                name: rootLazyTypeParamName,
+                fqName: rootLazyFQName + [rootLazyTypeParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(rootLazyInterfaceSymbol, for: symbol)
+            return symbol
+        }()
+        types.setNominalTypeParameterSymbols([rootLazyTypeParamSymbol], for: rootLazyInterfaceSymbol)
+        types.setNominalTypeParameterVariances([.out], for: rootLazyInterfaceSymbol)
+        let rootLazyTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: rootLazyTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let rootLazyInterfaceType = types.make(.classType(ClassType(
+            classSymbol: rootLazyInterfaceSymbol,
+            args: [.invariant(rootLazyTypeParamType)],
+            nullability: .nonNull
+        )))
+
+        let lazyValueName = interner.intern("value")
+        let lazyValueFQName = rootLazyFQName + [lazyValueName]
+        if symbols.lookup(fqName: lazyValueFQName) == nil {
+            let valueSymbol = symbols.define(
+                kind: .property,
+                name: lazyValueName,
+                fqName: lazyValueFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(rootLazyInterfaceSymbol, for: valueSymbol)
+            symbols.setPropertyType(rootLazyTypeParamType, for: valueSymbol)
+            symbols.setExternalLinkName("kk_lazy_get_value", for: valueSymbol)
+        }
+
+        let lazyIsInitializedName = interner.intern("isInitialized")
+        let lazyIsInitializedFQName = rootLazyFQName + [lazyIsInitializedName]
+        if symbols.lookup(fqName: lazyIsInitializedFQName) == nil {
+            let isInitializedSymbol = symbols.define(
+                kind: .function,
+                name: lazyIsInitializedName,
+                fqName: lazyIsInitializedFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(rootLazyInterfaceSymbol, for: isInitializedSymbol)
+            symbols.setExternalLinkName("kk_lazy_is_initialized", for: isInitializedSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: rootLazyInterfaceType,
+                    parameterTypes: [],
+                    returnType: types.booleanType,
+                    isSuspend: false,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [rootLazyTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: isInitializedSymbol
+            )
+        }
 
         // Register kotlin.properties.ReadWriteProperty<T, V> interface stub.
         let rwPropertySymbol = ensureInterfaceSymbol(
@@ -245,8 +320,71 @@ extension DataFlowSemaPhase {
                 params: [], returnType: anyType, isSuspend: false, nullability: .nonNull
             )))
             symbols.setFunctionSignature(
-                FunctionSignature(parameterTypes: [initializerType], returnType: lazyInterfaceType),
+                FunctionSignature(parameterTypes: [initializerType], returnType: legacyLazyInterfaceType),
                 for: lazySymbol
+            )
+        }
+
+        // Kotlin signature: fun <T> lazyOf(value: T): Lazy<T>
+        let lazyOfName = interner.intern("lazyOf")
+        let lazyOfFQName = kotlinPkg + [lazyOfName]
+        if symbols.lookup(fqName: lazyOfFQName) == nil {
+            let lazyOfSymbol = symbols.define(
+                kind: .function,
+                name: lazyOfName,
+                fqName: lazyOfFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinPkg) {
+                symbols.setParentSymbol(packageSymbol, for: lazyOfSymbol)
+            }
+            symbols.setExternalLinkName("kk_lazy_of", for: lazyOfSymbol)
+
+            let valueTypeParamName = interner.intern("T")
+            let valueTypeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: valueTypeParamName,
+                fqName: lazyOfFQName + [valueTypeParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(lazyOfSymbol, for: valueTypeParamSymbol)
+
+            let valueParamName = interner.intern("value")
+            let valueParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: valueParamName,
+                fqName: lazyOfFQName + [valueParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(lazyOfSymbol, for: valueParamSymbol)
+
+            let valueType = types.make(.typeParam(TypeParamType(
+                symbol: valueTypeParamSymbol,
+                nullability: .nonNull
+            )))
+            let returnType = types.make(.classType(ClassType(
+                classSymbol: rootLazyInterfaceSymbol,
+                args: [.invariant(valueType)],
+                nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [valueType],
+                    returnType: returnType,
+                    isSuspend: false,
+                    valueParameterSymbols: [valueParamSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [valueTypeParamSymbol]
+                ),
+                for: lazyOfSymbol
             )
         }
 
@@ -262,7 +400,7 @@ extension DataFlowSemaPhase {
                 params: [], returnType: anyType, isSuspend: false, nullability: .nonNull
             )))
             symbols.setFunctionSignature(
-                FunctionSignature(parameterTypes: [anyType, initializerType], returnType: lazyInterfaceType),
+                FunctionSignature(parameterTypes: [anyType, initializerType], returnType: legacyLazyInterfaceType),
                 for: lazyModeSymbol
             )
         }

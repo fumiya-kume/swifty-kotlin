@@ -761,6 +761,12 @@ final class RuntimeLazyBox {
         self.mode = mode
     }
 
+    init(initializedValue: Int) {
+        initializerFnPtr = 0
+        cachedState = .initialized(initializedValue)
+        mode = .none
+    }
+
     func getValue() -> Int {
         switch mode {
         case .synchronized:

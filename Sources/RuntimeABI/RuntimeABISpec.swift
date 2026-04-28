@@ -5633,6 +5633,14 @@ public enum RuntimeABISpec {
             section: "Delegate"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_lazy_of",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_lazy_get_value",
             parameters: [
                 RuntimeABIParameter(name: "handle", type: .intptr),

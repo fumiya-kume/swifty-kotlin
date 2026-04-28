@@ -472,6 +472,11 @@ public func kk_lazy_create(_ initFnPtr: Int, _ mode: Int) -> Int {
     return Int(bitPattern: opaque)
 }
 
+@_cdecl("kk_lazy_of")
+public func kk_lazy_of(_ value: Int) -> Int {
+    registerRuntimeObject(RuntimeLazyBox(initializedValue: value))
+}
+
 @_cdecl("kk_lazy_get_value")
 public func kk_lazy_get_value(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
