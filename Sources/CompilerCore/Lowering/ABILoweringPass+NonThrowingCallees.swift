@@ -692,10 +692,15 @@ extension ABILoweringPass {
             interner.intern("kk_instant_compare"),
             interner.intern("kk_instant_until"),
             interner.intern("kk_instant_elapsed"),
+<<<<<<< HEAD
             interner.intern("kk_uuid_lexicalOrder"),
             interner.intern("kk_uuid_parseHexOrNull"),
             interner.intern("kk_uuid_parseHexDashOrNull"),
             interner.intern("kk_uuid_parseOrNull"),
+=======
+            interner.intern("kk_instant_is_distant_past"),
+            interner.intern("kk_instant_is_distant_future"),
+>>>>>>> bc17f9d2c (Add Instant distant properties)
             interner.intern("kk_time_source_mark_now"),
             interner.intern("kk_time_source_monotonic_mark_now"),
             interner.intern("kk_time_mark_elapsed_now"),
