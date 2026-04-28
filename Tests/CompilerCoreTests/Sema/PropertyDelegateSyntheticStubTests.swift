@@ -147,6 +147,63 @@ final class PropertyDelegateSyntheticStubTests: XCTestCase {
         }
     }
 
+    func testRootLazyAndLazyOfSurfaceAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let kotlinFQName = ["kotlin"].map { interner.intern($0) }
+        let lazyFQName = kotlinFQName + [interner.intern("Lazy")]
+        let lazySymbol = try XCTUnwrap(sema.symbols.lookup(fqName: lazyFQName))
+        try assertNominalTypeParameters(
+            for: lazySymbol,
+            names: ["T"],
+            variances: [.out],
+            sema: sema,
+            interner: interner
+        )
+
+        let lazyTypeParams = sema.types.nominalTypeParameterSymbols(for: lazySymbol)
+        let lazyTypeParamType = sema.types.make(.typeParam(TypeParamType(
+            symbol: lazyTypeParams[0],
+            nullability: .nonNull
+        )))
+        let lazyType = sema.types.make(.classType(ClassType(
+            classSymbol: lazySymbol,
+            args: [.invariant(lazyTypeParamType)],
+            nullability: .nonNull
+        )))
+
+        let valueSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: lazyFQName + [interner.intern("value")]))
+        XCTAssertEqual(sema.symbols.propertyType(for: valueSymbol), lazyTypeParamType)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: valueSymbol), "kk_lazy_get_value")
+
+        let isInitializedSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: lazyFQName + [interner.intern("isInitialized")])
+        )
+        XCTAssertEqual(sema.symbols.externalLinkName(for: isInitializedSymbol), "kk_lazy_is_initialized")
+        let isInitializedSignature = try XCTUnwrap(sema.symbols.functionSignature(for: isInitializedSymbol))
+        XCTAssertEqual(isInitializedSignature.receiverType, lazyType)
+        XCTAssertEqual(isInitializedSignature.parameterTypes, [])
+        XCTAssertEqual(isInitializedSignature.returnType, sema.types.booleanType)
+        XCTAssertEqual(isInitializedSignature.typeParameterSymbols, lazyTypeParams)
+        XCTAssertEqual(isInitializedSignature.classTypeParameterCount, 1)
+
+        let lazyOfSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: kotlinFQName + [interner.intern("lazyOf")]))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: lazyOfSymbol), "kk_lazy_of")
+        let lazyOfSignature = try XCTUnwrap(sema.symbols.functionSignature(for: lazyOfSymbol))
+        XCTAssertEqual(lazyOfSignature.parameterTypes.count, 1)
+        XCTAssertEqual(lazyOfSignature.valueParameterHasDefaultValues, [false])
+        XCTAssertEqual(lazyOfSignature.valueParameterIsVararg, [false])
+        XCTAssertEqual(lazyOfSignature.typeParameterSymbols.count, 1)
+
+        guard case let .classType(returnType) = sema.types.kind(of: lazyOfSignature.returnType),
+              returnType.args.count == 1,
+              case let .invariant(returnArgument) = returnType.args[0]
+        else {
+            return XCTFail("Expected lazyOf to return Lazy<T>")
+        }
+        XCTAssertEqual(returnType.classSymbol, lazySymbol)
+        XCTAssertEqual(returnArgument, lazyOfSignature.parameterTypes[0])
+    }
+
     private func assertMember(
         named name: String,
         visibility: Visibility = .public,
