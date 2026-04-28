@@ -419,6 +419,73 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
     }
 
+    func testMustUseReturnValuesResolvesAndTargetsFileAndClass() throws {
+        let source = """
+        fun marker(x: MustUseReturnValues?): Int = 0
+        """
+
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("MustUseReturnValues"),
+            ]),
+            "kotlin.MustUseReturnValues must be registered"
+        )
+        let symbolInfo = try XCTUnwrap(sema.symbols.symbol(symbol))
+        XCTAssertEqual(symbolInfo.kind, .annotationClass, "MustUseReturnValues must be an annotation class")
+
+        let annotations = sema.symbols.annotations(for: symbol)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && Set($0.arguments) == Set(["AnnotationTarget.FILE", "AnnotationTarget.CLASS"])
+            },
+            "MustUseReturnValues should target files and classes, got: \(annotations)"
+        )
+    }
+
+    func testMustUseReturnValuesAllowsClassUse() {
+        let source = """
+        @MustUseReturnValues
+        class ApiScope
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected @MustUseReturnValues to be accepted on classes, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testMustUseReturnValuesAllowsFileUse() {
+        let source = """
+        @file:MustUseReturnValues
+
+        fun api(): Int = 1
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected @file:MustUseReturnValues to be accepted, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testMustUseReturnValuesRejectsFunctionUse() {
+        let source = """
+        @MustUseReturnValues
+        fun bad() {}
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected file-or-class annotation target diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
     func testBuilderInferenceAnnotationSurfaceIsSyntheticAndTargeted() throws {
         let ctx = makeContextFromSource("fun noop() {}")
         try runSema(ctx)
