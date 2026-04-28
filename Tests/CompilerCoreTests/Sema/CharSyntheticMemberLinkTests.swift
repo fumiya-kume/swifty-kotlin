@@ -36,6 +36,7 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
             "isWhitespace": "kk_char_isWhitespace",
             "digitToInt": "kk_char_digitToInt",
             "digitToIntOrNull": "kk_char_digitToIntOrNull",
+            "lowercaseChar": "kk_char_lowercaseChar",
             // New numeric conversion functions
             "toInt": "kk_char_toInt",
             "toDouble": "kk_char_toDouble",
@@ -159,6 +160,7 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
             ch.digitToIntOrNull()
             ch.uppercase()
             ch.lowercase()
+            ch.lowercaseChar()
             ch.titlecase()
             // New numeric conversion functions
             ch.toInt()
@@ -186,6 +188,7 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
                 "isWhitespace": "kk_char_isWhitespace",
                 "digitToInt": "kk_char_digitToInt",
                 "digitToIntOrNull": "kk_char_digitToIntOrNull",
+                "lowercaseChar": "kk_char_lowercaseChar",
                 "uppercase": "kk_char_uppercase",
                 "lowercase": "kk_char_lowercase",
                 "titlecase": "kk_char_titlecase",
