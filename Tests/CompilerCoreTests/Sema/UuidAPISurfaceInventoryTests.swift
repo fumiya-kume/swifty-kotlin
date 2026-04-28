@@ -175,6 +175,40 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         )
     }
 
+    func testUuidParseHexOrNullCompanionMethodIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let links = allExternalLinks(
+            fqPath: ["kotlin", "uuid", "Uuid", "Companion", "parseHexOrNull"],
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertTrue(
+            links.contains("kk_uuid_parseHexOrNull"),
+            "Uuid.parseHexOrNull(hexString) must link to kk_uuid_parseHexOrNull; found: \(links)"
+        )
+    }
+
+    func testUuidParseHexOrNullAcceptsStringParameterAndReturnsNullableUuid() throws {
+        let (sema, interner) = try makeSema()
+        let fq = ["kotlin", "uuid", "Uuid", "Companion", "parseHexOrNull"].map { interner.intern($0) }
+        let syms = sema.symbols.lookupAll(fqName: fq)
+        XCTAssertFalse(syms.isEmpty, "Uuid.parseHexOrNull must be registered")
+        let parseSym = try XCTUnwrap(syms.first)
+        guard let sig = sema.symbols.functionSignature(for: parseSym) else {
+            XCTFail("Uuid.parseHexOrNull has no signature"); return
+        }
+        XCTAssertEqual(sig.parameterTypes, [sema.types.stringType])
+
+        let uuidFQ = ["kotlin", "uuid", "Uuid"].map { interner.intern($0) }
+        let uuidSym = try XCTUnwrap(sema.symbols.lookup(fqName: uuidFQ))
+        guard case .classType(let classType) = sema.types.kind(of: sig.returnType) else {
+            XCTFail("Uuid.parseHexOrNull return type must be nullable Uuid")
+            return
+        }
+        XCTAssertEqual(classType.classSymbol, uuidSym)
+        XCTAssertEqual(classType.nullability, .nullable)
+    }
+
     func testUuidNameUUIDFromBytesCompanionMethodIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let links = allExternalLinks(
@@ -456,10 +490,11 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
             "kk_uuid_random",
             "kk_uuid_lexicalOrder",
             "kk_uuid_parse",
+            "kk_uuid_parseHexOrNull",
             "kk_uuid_nameUUIDFromBytes",
         ]
         var foundLinks: Set<String> = []
-        for memberName in ["random", "LEXICAL_ORDER", "parse", "nameUUIDFromBytes"] {
+        for memberName in ["random", "LEXICAL_ORDER", "parse", "parseHexOrNull", "nameUUIDFromBytes"] {
             let path = companionFQ + [memberName]
             let links = allExternalLinks(fqPath: path, sema: sema, interner: interner)
             foundLinks.formUnion(links)

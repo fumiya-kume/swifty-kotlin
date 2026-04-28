@@ -181,6 +181,16 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
                        "123e4567-e89b-12d3-a456-426614174000")
     }
 
+    func testParseHexOrNullAcceptsPlainHexInput() {
+        let uuidRaw = kk_uuid_parseHexOrNull(makeRuntimeString("123e4567e89b12d3a456426614174000"))
+
+        XCTAssertNotEqual(uuidRaw, runtimeNullSentinelInt)
+        XCTAssertEqual(
+            extractRuntimeString(kk_uuid_toHexString(uuidRaw)),
+            "123e4567e89b12d3a456426614174000"
+        )
+    }
+
     // MARK: - toLongs / fromLongs endianness round-trip
 
     /// toLongs should return (mostSignificantBits, leastSignificantBits) in that order.
@@ -329,6 +339,25 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
         let result = kk_uuid_parse(makeRuntimeString(bad), &thrown)
         XCTAssertEqual(result, 0)
         XCTAssertNotEqual(thrown, 0, "32-char string with invalid hex char must throw")
+    }
+
+    func testParseHexOrNullRejectsNonHexInputsWithNullSentinel() {
+        XCTAssertEqual(
+            kk_uuid_parseHexOrNull(makeRuntimeString("123e4567-e89b-12d3-a456-426614174000")),
+            runtimeNullSentinelInt
+        )
+        XCTAssertEqual(
+            kk_uuid_parseHexOrNull(makeRuntimeString("123e4567e89b12d3a45642661417400z")),
+            runtimeNullSentinelInt
+        )
+        XCTAssertEqual(
+            kk_uuid_parseHexOrNull(makeRuntimeString("123e4567e89b12d3a45642661417400")),
+            runtimeNullSentinelInt
+        )
+    }
+
+    func testParseHexOrNullNullRawReturnsNullSentinel() {
+        XCTAssertEqual(kk_uuid_parseHexOrNull(0), runtimeNullSentinelInt)
     }
 
     // MARK: - Uppercase input is case-insensitive
