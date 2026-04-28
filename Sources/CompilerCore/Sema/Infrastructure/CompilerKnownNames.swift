@@ -25,6 +25,7 @@ enum KnownCompilerAnnotation {
     case subclassOptInRequired
     case consistentCopyVisibility
     case exposedCopyVisibility
+    case contextFunctionTypeParams
     case experimentalTypeInference
     case overloadResolutionByLambdaReturnType
 
@@ -78,6 +79,8 @@ enum KnownCompilerAnnotation {
             "ConsistentCopyVisibility"
         case .exposedCopyVisibility:
             "ExposedCopyVisibility"
+        case .contextFunctionTypeParams:
+            "ContextFunctionTypeParams"
         case .experimentalTypeInference:
             "ExperimentalTypeInference"
         case .overloadResolutionByLambdaReturnType:
@@ -135,6 +138,8 @@ enum KnownCompilerAnnotation {
             "kotlin.ConsistentCopyVisibility"
         case .exposedCopyVisibility:
             "kotlin.ExposedCopyVisibility"
+        case .contextFunctionTypeParams:
+            "kotlin.ContextFunctionTypeParams"
         case .experimentalTypeInference:
             "kotlin.experimental.ExperimentalTypeInference"
         case .overloadResolutionByLambdaReturnType:
