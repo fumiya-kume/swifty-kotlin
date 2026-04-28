@@ -199,8 +199,100 @@ final class ExperimentalTimeSourceSyntheticSurfaceTests: XCTestCase {
         XCTAssertEqual(markSignature.returnType, comparableTimeMarkType)
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> c7d1e8c0b (Add AbstractDoubleTimeSource surface)
 =======
 >>>>>>> d6254483a (Add AbstractLongTimeSource surface)
+=======
+
+    func testTestTimeSourceSurfaceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let kotlinTime = ["kotlin", "time"].map { interner.intern($0) }
+        let abstractLongSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: kotlinTime + [
+            interner.intern("AbstractLongTimeSource"),
+        ]))
+        let testTimeSourceSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: kotlinTime + [
+            interner.intern("TestTimeSource"),
+        ]))
+        XCTAssertEqual(sema.symbols.symbol(testTimeSourceSymbol)?.kind, .class)
+        XCTAssertEqual(sema.symbols.directSupertypes(for: testTimeSourceSymbol), [abstractLongSymbol])
+
+        let durationSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: kotlinTime + [
+            interner.intern("Duration"),
+        ]))
+        let durationType = sema.types.make(.classType(ClassType(
+            classSymbol: durationSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let testTimeSourceType = sema.types.make(.classType(ClassType(
+            classSymbol: testTimeSourceSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let constructorSymbol = try XCTUnwrap(sema.symbols.lookupAll(
+            fqName: kotlinTime + [interner.intern("TestTimeSource"), interner.intern("<init>")]
+        ).first { sema.symbols.symbol($0)?.kind == .constructor })
+        let constructorSignature = try XCTUnwrap(sema.symbols.functionSignature(for: constructorSymbol))
+        XCTAssertEqual(constructorSignature.receiverType, testTimeSourceType)
+        XCTAssertEqual(constructorSignature.parameterTypes, [])
+        XCTAssertEqual(constructorSignature.returnType, testTimeSourceType)
+
+        let readSymbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: kotlinTime + [
+            interner.intern("TestTimeSource"),
+            interner.intern("read"),
+        ]).first)
+        let readSignature = try XCTUnwrap(sema.symbols.functionSignature(for: readSymbol))
+        let readInfo = try XCTUnwrap(sema.symbols.symbol(readSymbol))
+        XCTAssertEqual(readInfo.visibility, .protected)
+        XCTAssertTrue(readInfo.flags.isSuperset(of: [.openType, .overrideMember]))
+        XCTAssertEqual(readSignature.receiverType, testTimeSourceType)
+        XCTAssertEqual(readSignature.parameterTypes, [])
+        XCTAssertEqual(readSignature.returnType, sema.types.longType)
+
+        let plusAssignSymbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: kotlinTime + [
+            interner.intern("TestTimeSource"),
+            interner.intern("plusAssign"),
+        ]).first)
+        let plusAssignSignature = try XCTUnwrap(sema.symbols.functionSignature(for: plusAssignSymbol))
+        let plusAssignInfo = try XCTUnwrap(sema.symbols.symbol(plusAssignSymbol))
+        XCTAssertTrue(plusAssignInfo.flags.contains(.operatorFunction))
+        XCTAssertEqual(plusAssignSignature.receiverType, testTimeSourceType)
+        XCTAssertEqual(plusAssignSignature.parameterTypes, [durationType])
+        XCTAssertEqual(plusAssignSignature.returnType, sema.types.unitType)
+    }
+
+    func testTestTimeSourceResolvesOperatorAndInheritedMarkNowInSource() throws {
+        let source = """
+        import kotlin.time.Duration.Companion.milliseconds
+        import kotlin.time.ComparableTimeMark
+        import kotlin.time.ExperimentalTime
+        import kotlin.time.TestTimeSource
+
+        @OptIn(ExperimentalTime::class)
+        fun mark(): ComparableTimeMark {
+            val source = TestTimeSource()
+            source += 5.milliseconds
+            return source.markNow()
+        }
+        """
+
+        let (sema, interner) = try makeSema(source: source)
+        let markSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [interner.intern("mark")]))
+        let markSignature = try XCTUnwrap(sema.symbols.functionSignature(for: markSymbol))
+        let comparableTimeMarkSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("time"),
+            interner.intern("ComparableTimeMark"),
+        ]))
+        let comparableTimeMarkType = sema.types.make(.classType(ClassType(
+            classSymbol: comparableTimeMarkSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        XCTAssertEqual(markSignature.returnType, comparableTimeMarkType)
+    }
+>>>>>>> f38230a7f (Add TestTimeSource surface)
 }
