@@ -309,6 +309,8 @@ public extension RuntimeABISpec {
             bridgeSpec("kk_instant_epoch_seconds", section: "System", params: ["instantRaw"]),
             bridgeSpec("kk_instant_from_epoch_millis", section: "System", params: ["millis"]),
             bridgeSpec("kk_instant_elapsed", section: "System", params: ["instantRaw"]),
+            bridgeSpec("kk_instant_is_distant_future", section: "System", params: ["instantRaw"]),
+            bridgeSpec("kk_instant_is_distant_past", section: "System", params: ["instantRaw"]),
             bridgeSpec("kk_instant_minus_duration", section: "System", params: ["instantRaw", "durationRaw"]),
             bridgeSpec("kk_instant_nano_of_second", section: "System", params: ["instantRaw"]),
             bridgeSpec("kk_instant_now", section: "System"),
