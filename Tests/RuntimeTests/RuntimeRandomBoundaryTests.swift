@@ -128,6 +128,42 @@ final class RuntimeRandomBoundaryTests: XCTestCase {
         XCTAssertEqual(kk_random_nextInt(r1), kk_random_nextInt(r2))
     }
 
+    func testRandomRuntimeBacklogRepresentativeSurfacesStayCovered() {
+        let r = makeSeeded(20260428)
+        var thrown: Int = 0
+
+        XCTAssertGreaterThanOrEqual(kk_random_nextBits(r, 8, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+
+        let intValue = kk_random_nextInt_range(r, -10, 10, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(intValue, -10)
+        XCTAssertLessThan(intValue, 10)
+
+        let longValue = kk_random_nextLong_range(r, -100, 100, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(longValue, -100)
+        XCTAssertLessThan(longValue, 100)
+
+        let uintValue = uintPayload(kk_random_nextUInt_range(r, uintRaw(10), uintRaw(20), &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(uintValue, 10)
+        XCTAssertLessThan(uintValue, 20)
+
+        let ulongValue = ulongPayload(kk_random_nextULong_range(r, ulongRaw(10), ulongRaw(20), &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(ulongValue, 10)
+        XCTAssertLessThan(ulongValue, 20)
+
+        let byteArrayRaw = kk_random_nextBytes_size(r, 4, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(runtimeListBox(from: byteArrayRaw)?.elements.count, 4)
+
+        let ubyteArrayRaw = kk_random_nextUBytes_size(r, 4, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(runtimeArrayBox(from: ubyteArrayRaw)?.elements.count, 4)
+    }
+
     // MARK: - Different Seeds Produce Different Values
 
     func testDifferentSeedsDifferentSequences() {
