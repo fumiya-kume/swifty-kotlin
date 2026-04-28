@@ -36,7 +36,7 @@ import XCTest
 //     - Debugging.globalObjectCount       -> kk_debugging_global_object_count()
 //
 // MISSING (not implemented — no runtime entry point or compiler-side stub):
-//   - GCInfo / RootSetStatistics / SweepStatistics type surfaces
+//   - RootSetStatistics / SweepStatistics type surfaces
 //   - NativeRuntimeApi marker
 
 final class RuntimeNativeRefGCTests: IsolatedRuntimeXCTestCase {

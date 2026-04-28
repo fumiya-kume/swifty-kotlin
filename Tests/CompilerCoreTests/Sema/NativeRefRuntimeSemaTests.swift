@@ -44,6 +44,36 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
         }
     }
 
+    private func className(
+        for type: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) throws -> String {
+        guard case let .classType(classType) = sema.types.kind(of: type) else {
+            throw XCTSkip("Expected class type, got \(sema.types.kind(of: type))")
+        }
+        let symbol = try XCTUnwrap(sema.symbols.symbol(classType.classSymbol))
+        return interner.resolve(symbol.name)
+    }
+
+    private func mapValueClassName(
+        for type: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) throws -> String {
+        guard case let .classType(mapType) = sema.types.kind(of: type) else {
+            throw XCTSkip("Expected Map class type, got \(sema.types.kind(of: type))")
+        }
+        let mapSymbol = try XCTUnwrap(sema.symbols.symbol(mapType.classSymbol))
+        XCTAssertEqual(interner.resolve(mapSymbol.name), "Map")
+        guard mapType.args.count >= 2,
+              case let .out(valueType) = mapType.args[1]
+        else {
+            throw XCTSkip("Expected Map<String, V> value projection")
+        }
+        return try className(for: valueType, sema: sema, interner: interner)
+    }
+
     // MARK: - Package hierarchy
 
     func testNativeRefPackageIsRegistered() throws {
@@ -269,6 +299,156 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
         XCTAssertTrue(
             hasOptInAnnotation(on: symbol, markerContaining: "ExperimentalNativeApi", sema: sema),
             "GC should carry @ExperimentalNativeApi annotation"
+        )
+    }
+
+    // MARK: - GCInfo class
+
+    func testGCInfoClassIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "runtime", "GCInfo"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.native.runtime.GCInfo to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .class)
+    }
+
+    func testGCInfoConstructorMatchesKotlinNativeSurface() throws {
+        let (sema, interner) = try makeSema()
+        let classFQName = ["kotlin", "native", "runtime", "GCInfo"].map { interner.intern($0) }
+        let ctorFQName = classFQName + [interner.intern("<init>")]
+        let ctor = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: ctorFQName).first,
+            "GCInfo should expose its primary constructor"
+        )
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: ctor))
+        XCTAssertEqual(signature.parameterTypes.count, 15)
+        XCTAssertEqual(
+            signature.parameterTypes[0],
+            sema.types.longType,
+            "GCInfo.epoch constructor parameter should be Long"
+        )
+        XCTAssertEqual(
+            signature.parameterTypes[10],
+            try XCTUnwrap(sema.symbols.propertyType(for: try XCTUnwrap(
+                sema.symbols.lookup(fqName: classFQName + [interner.intern("rootSet")])
+            )))
+        )
+        XCTAssertEqual(
+            signature.parameterTypes[12],
+            try XCTUnwrap(sema.symbols.propertyType(for: try XCTUnwrap(
+                sema.symbols.lookup(fqName: classFQName + [interner.intern("sweepStatistics")])
+            )))
+        )
+    }
+
+    func testGCInfoHasTimingProperties() throws {
+        let (sema, interner) = try makeSema()
+        let classFQName = ["kotlin", "native", "runtime", "GCInfo"].map { interner.intern($0) }
+        let longProperties = [
+            "epoch",
+            "startTimeNs",
+            "endTimeNs",
+            "firstPauseRequestTimeNs",
+            "firstPauseStartTimeNs",
+            "firstPauseEndTimeNs",
+        ]
+        for property in longProperties {
+            let symbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: classFQName + [interner.intern(property)]),
+                "GCInfo should expose \(property)"
+            )
+            XCTAssertEqual(sema.symbols.propertyType(for: symbol), sema.types.longType)
+        }
+
+        let nullableLongProperties = [
+            "secondPauseRequestTimeNs",
+            "secondPauseStartTimeNs",
+            "secondPauseEndTimeNs",
+            "postGcCleanupTimeNs",
+        ]
+        for property in nullableLongProperties {
+            let symbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: classFQName + [interner.intern(property)]),
+                "GCInfo should expose \(property)"
+            )
+            let type = try XCTUnwrap(sema.symbols.propertyType(for: symbol))
+            XCTAssertEqual(sema.types.nullability(of: type), .nullable)
+            XCTAssertEqual(sema.types.makeNonNullable(type), sema.types.longType)
+        }
+    }
+
+    func testGCInfoHasSummaryProperties() throws {
+        let (sema, interner) = try makeSema()
+        let classFQName = ["kotlin", "native", "runtime", "GCInfo"].map { interner.intern($0) }
+
+        let rootSetSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: classFQName + [interner.intern("rootSet")])
+        )
+        let rootSetType = try XCTUnwrap(sema.symbols.propertyType(for: rootSetSymbol))
+        XCTAssertEqual(
+            try className(for: rootSetType, sema: sema, interner: interner),
+            "RootSetStatistics"
+        )
+
+        let markedCountSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: classFQName + [interner.intern("markedCount")])
+        )
+        XCTAssertEqual(sema.symbols.propertyType(for: markedCountSymbol), sema.types.longType)
+
+        let sweepStatisticsSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: classFQName + [interner.intern("sweepStatistics")])
+        )
+        XCTAssertEqual(
+            try mapValueClassName(
+                for: try XCTUnwrap(sema.symbols.propertyType(for: sweepStatisticsSymbol)),
+                sema: sema,
+                interner: interner
+            ),
+            "SweepStatistics"
+        )
+
+        for property in ["memoryUsageBefore", "memoryUsageAfter"] {
+            let symbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: classFQName + [interner.intern(property)])
+            )
+            XCTAssertEqual(
+                try mapValueClassName(
+                    for: try XCTUnwrap(sema.symbols.propertyType(for: symbol)),
+                    sema: sema,
+                    interner: interner
+                ),
+                "MemoryUsage"
+            )
+        }
+    }
+
+    func testMemoryUsageSurfaceForGCInfoIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let classFQName = ["kotlin", "native", "runtime", "MemoryUsage"].map { interner.intern($0) }
+        let classSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: classFQName))
+        XCTAssertEqual(sema.symbols.symbol(classSymbol)?.kind, .class)
+
+        let propertySymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: classFQName + [interner.intern("totalObjectsSizeBytes")])
+        )
+        XCTAssertEqual(sema.symbols.propertyType(for: propertySymbol), sema.types.longType)
+
+        let ctor = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: classFQName + [interner.intern("<init>")]).first
+        )
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: ctor))
+        XCTAssertEqual(signature.parameterTypes, [sema.types.longType])
+    }
+
+    func testGCInfoIsTaggedExperimentalNativeApi() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "runtime", "GCInfo"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        XCTAssertTrue(
+            hasOptInAnnotation(on: symbol, markerContaining: "ExperimentalNativeApi", sema: sema),
+            "GCInfo should carry @ExperimentalNativeApi until NativeRuntimeApi is modeled"
         )
     }
 
