@@ -853,9 +853,13 @@ extension ABILoweringPass {
             // KotlinVersion component surface.
             interner.intern("kk_kotlin_version_new"),
             interner.intern("kk_kotlin_version_new_patch"),
+            interner.intern("kk_kotlin_version_current"),
             interner.intern("kk_kotlin_version_major"),
             interner.intern("kk_kotlin_version_minor"),
             interner.intern("kk_kotlin_version_patch"),
+            interner.intern("kk_kotlin_version_compareTo"),
+            interner.intern("kk_kotlin_version_isAtLeast"),
+            interner.intern("kk_kotlin_version_isAtLeast_patch"),
             // StringBuilder enhancements (STDLIB-311) — buildString DSL helpers
             interner.intern("kk_string_builder_append"),
             interner.intern("kk_string_builder_append_line"),

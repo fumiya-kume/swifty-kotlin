@@ -238,9 +238,13 @@ extension ABIMismatchTests {
             // KotlinVersion
             "kk_kotlin_version_new",
             "kk_kotlin_version_new_patch",
+            "kk_kotlin_version_current",
             "kk_kotlin_version_major",
             "kk_kotlin_version_minor",
             "kk_kotlin_version_patch",
+            "kk_kotlin_version_compareTo",
+            "kk_kotlin_version_isAtLeast",
+            "kk_kotlin_version_isAtLeast_patch",
         ]
 
         for linkName in syntheticLinkNames {

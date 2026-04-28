@@ -20,6 +20,32 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+        registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
+        if let comparableSymbol = types.comparableInterfaceSymbol {
+            addKotlinVersionComparableSupertype(
+                ownerSymbol: classSymbol,
+                ownerType: classType,
+                comparableSymbol: comparableSymbol,
+                symbols: symbols,
+                types: types
+            )
+        }
+        _ = ensureKotlinVersionCompanionSymbol(
+            ownerSymbol: classSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let companionSymbol = symbols.companionObjectSymbol(for: classSymbol) {
+            registerKotlinVersionProperty(
+                named: "CURRENT",
+                externalLinkName: "kk_kotlin_version_current",
+                ownerSymbol: companionSymbol,
+                returnType: classType,
+                flags: [.synthetic, .static],
+                symbols: symbols,
+                interner: interner
+            )
+        }
 
         registerKotlinVersionConstructor(
             ownerSymbol: classSymbol,
@@ -69,6 +95,88 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerKotlinVersionMemberFunction(
+            named: "compareTo",
+            externalLinkName: "kk_kotlin_version_compareTo",
+            ownerSymbol: classSymbol,
+            ownerType: classType,
+            parameterTypes: [classType],
+            returnType: types.intType,
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerKotlinVersionMemberFunction(
+            named: "isAtLeast",
+            externalLinkName: "kk_kotlin_version_isAtLeast",
+            ownerSymbol: classSymbol,
+            ownerType: classType,
+            parameterTypes: [types.intType, types.intType],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerKotlinVersionMemberFunction(
+            named: "isAtLeast",
+            externalLinkName: "kk_kotlin_version_isAtLeast_patch",
+            ownerSymbol: classSymbol,
+            ownerType: classType,
+            parameterTypes: [types.intType, types.intType, types.intType],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func ensureKotlinVersionCompanionSymbol(
+        ownerSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> [InternedString] {
+        if let existingCompanion = symbols.companionObjectSymbol(for: ownerSymbol),
+           let companionInfo = symbols.symbol(existingCompanion)
+        {
+            return companionInfo.fqName
+        }
+
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return []
+        }
+        let companionName = interner.intern("Companion")
+        let companionFQName = ownerInfo.fqName + [companionName]
+        let companionSymbol = symbols.define(
+            kind: .object,
+            name: companionName,
+            fqName: companionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .static]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: companionSymbol)
+        symbols.setCompanionObjectSymbol(companionSymbol, for: ownerSymbol)
+        return companionFQName
+    }
+
+    private func addKotlinVersionComparableSupertype(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        comparableSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem
+    ) {
+        let currentSymbolSupertypes = symbols.directSupertypes(for: ownerSymbol)
+        if !currentSymbolSupertypes.contains(comparableSymbol) {
+            symbols.setDirectSupertypes(currentSymbolSupertypes + [comparableSymbol], for: ownerSymbol)
+        }
+
+        let currentTypeSupertypes = types.directNominalSupertypes(for: ownerSymbol)
+        if !currentTypeSupertypes.contains(comparableSymbol) {
+            types.setNominalDirectSupertypes(currentTypeSupertypes + [comparableSymbol], for: ownerSymbol)
+        }
+
+        let comparableArgs: [TypeArg] = [.in(ownerType)]
+        symbols.setSupertypeTypeArgs(comparableArgs, for: ownerSymbol, supertype: comparableSymbol)
+        types.setNominalSupertypeTypeArgs(comparableArgs, for: ownerSymbol, supertype: comparableSymbol)
     }
 
     private func registerKotlinVersionConstructor(
@@ -135,11 +243,103 @@ extension DataFlowSemaPhase {
         )
     }
 
+    private func registerKotlinVersionMemberFunction(
+        named name: String,
+        externalLinkName: String,
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        parameterTypes: [TypeID],
+        returnType: TypeID,
+        flags: SymbolFlags = [.synthetic],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let functionName = interner.intern(name)
+        let functionFQName = ownerInfo.fqName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard symbols.symbol(symbolID)?.kind == .function,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.receiverType == ownerType && signature.parameterTypes == parameterTypes
+        }) {
+            symbols.insertFlags(flags, for: existing)
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            if let signature = symbols.functionSignature(for: existing),
+               signature.returnType != returnType
+            {
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: ownerType,
+                        parameterTypes: parameterTypes,
+                        returnType: returnType,
+                        isSuspend: signature.isSuspend,
+                        canThrow: signature.canThrow,
+                        valueParameterSymbols: signature.valueParameterSymbols,
+                        valueParameterHasDefaultValues: signature.valueParameterHasDefaultValues,
+                        valueParameterIsVararg: signature.valueParameterIsVararg,
+                        typeParameterSymbols: signature.typeParameterSymbols,
+                        reifiedTypeParameterIndices: signature.reifiedTypeParameterIndices,
+                        typeParameterUpperBounds: signature.typeParameterUpperBounds,
+                        typeParameterUpperBoundsList: signature.typeParameterUpperBoundsList,
+                        classTypeParameterCount: signature.classTypeParameterCount
+                    ),
+                    for: existing
+                )
+            }
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: flags
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for (index, parameterType) in parameterTypes.enumerated() {
+            let parameterName = interner.intern("p\(index)")
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            symbols.setPropertyType(parameterType, for: parameterSymbol)
+            valueParameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
+    }
+
     private func registerKotlinVersionProperty(
         named name: String,
         externalLinkName: String,
         ownerSymbol: SymbolID,
         returnType: TypeID,
+        flags: SymbolFlags = [.synthetic],
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -153,6 +353,7 @@ extension DataFlowSemaPhase {
         }) {
             symbols.setPropertyType(returnType, for: existing)
             symbols.setExternalLinkName(externalLinkName, for: existing)
+            symbols.insertFlags(flags, for: existing)
             return
         }
 
@@ -162,7 +363,7 @@ extension DataFlowSemaPhase {
             fqName: propertyFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setPropertyType(returnType, for: propertySymbol)
