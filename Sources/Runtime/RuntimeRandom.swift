@@ -437,6 +437,13 @@ private func runtimeRandomByte(receiver: Int) -> Int {
     return Int(Int8.random(in: Int8.min ... Int8.max))
 }
 
+private func runtimeRandomUByte(receiver: Int) -> Int {
+    if let box = seededBox(from: receiver) {
+        return Int(UInt8(truncatingIfNeeded: box.nextBits()))
+    }
+    return Int(UInt8.random(in: UInt8.min ... UInt8.max))
+}
+
 @_cdecl("kk_random_nextBytes")
 public func kk_random_nextBytes(_ receiver: Int, _ arrayRaw: Int) -> Int {
     guard let list = runtimeListBox(from: arrayRaw) else {
@@ -504,6 +511,75 @@ public func kk_random_nextBytes_range(
         message: "IllegalArgumentException: Random.nextBytes expected a ByteArray receiver."
     )
     return registerRuntimeObject(RuntimeListBox(elements: []))
+}
+
+@_cdecl("kk_random_nextUBytes")
+public func kk_random_nextUBytes(_ receiver: Int, _ arrayRaw: Int) -> Int {
+    if let array = runtimeArrayBox(from: arrayRaw) {
+        for index in array.elements.indices {
+            array.elements[index] = runtimeRandomUByte(receiver: receiver)
+        }
+        return arrayRaw
+    }
+    if let list = runtimeListBox(from: arrayRaw) {
+        list.elements = list.elements.map { _ in runtimeRandomUByte(receiver: receiver) }
+        return arrayRaw
+    }
+    return registerRuntimeObject(RuntimeArrayBox(length: 0))
+}
+
+@_cdecl("kk_random_nextUBytes_size")
+public func kk_random_nextUBytes_size(_ receiver: Int, _ size: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard size >= 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: Random unsigned byte array size must be non-negative, but was \(size)."
+        )
+        return 0
+    }
+    let arrayRaw = registerRuntimeObject(RuntimeArrayBox(length: size))
+    return kk_random_nextUBytes(receiver, arrayRaw)
+}
+
+@_cdecl("kk_random_nextUBytes_range")
+public func kk_random_nextUBytes_range(
+    _ receiver: Int,
+    _ arrayRaw: Int,
+    _ fromIndex: Int,
+    _ toIndex: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    if let array = runtimeArrayBox(from: arrayRaw) {
+        guard fromIndex >= 0, toIndex >= fromIndex, toIndex <= array.elements.count else {
+            outThrown?.pointee = runtimeAllocateThrowable(
+                message: "IllegalArgumentException: Random.nextUBytes range [\(fromIndex), \(toIndex)) is out of bounds for size \(array.elements.count)."
+            )
+            return arrayRaw
+        }
+        for index in fromIndex..<toIndex {
+            array.elements[index] = runtimeRandomUByte(receiver: receiver)
+        }
+        return arrayRaw
+    }
+    if let list = runtimeListBox(from: arrayRaw) {
+        var elements = list.elements
+        guard fromIndex >= 0, toIndex >= fromIndex, toIndex <= elements.count else {
+            outThrown?.pointee = runtimeAllocateThrowable(
+                message: "IllegalArgumentException: Random.nextUBytes range [\(fromIndex), \(toIndex)) is out of bounds for size \(elements.count)."
+            )
+            return arrayRaw
+        }
+        for index in fromIndex..<toIndex {
+            elements[index] = runtimeRandomUByte(receiver: receiver)
+        }
+        list.elements = elements
+        return arrayRaw
+    }
+    outThrown?.pointee = runtimeAllocateThrowable(
+        message: "IllegalArgumentException: Random.nextUBytes expected a UByteArray receiver."
+    )
+    return registerRuntimeObject(RuntimeArrayBox(length: 0))
 }
 
 @_cdecl("kk_random_nextBoolean")

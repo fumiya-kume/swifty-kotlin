@@ -323,6 +323,12 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        let ubyteArrayType = makePrimitiveArrayType(
+            named: "UByteArray",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         registerSyntheticRandomMember(
             ownerSymbol: randomSymbol,
             ownerType: randomType,
@@ -354,6 +360,45 @@ extension DataFlowSemaPhase {
             returnType: byteArrayType,
             parameters: [
                 (name: "array", type: byteArrayType),
+                (name: "fromIndex", type: intType),
+                (name: "toIndex", type: intType),
+            ],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextUBytes",
+            externalLinkName: "kk_random_nextUBytes",
+            returnType: ubyteArrayType,
+            parameters: [(name: "array", type: ubyteArrayType)],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextUBytes",
+            externalLinkName: "kk_random_nextUBytes_size",
+            returnType: ubyteArrayType,
+            parameters: [(name: "size", type: intType)],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextUBytes",
+            externalLinkName: "kk_random_nextUBytes_range",
+            returnType: ubyteArrayType,
+            parameters: [
+                (name: "array", type: ubyteArrayType),
                 (name: "fromIndex", type: intType),
                 (name: "toIndex", type: intType),
             ],
@@ -757,6 +802,29 @@ extension DataFlowSemaPhase {
         return types.make(.classType(ClassType(
             classSymbol: listSymbol,
             args: [.out(types.intType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func makePrimitiveArrayType(
+        named name: String,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let kotlinPkg = ensureSyntheticPackage(
+            path: [interner.intern("kotlin")],
+            symbols: symbols
+        )
+        let symbol = ensureClassSymbol(
+            named: name,
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        return types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
             nullability: .nonNull
         )))
     }

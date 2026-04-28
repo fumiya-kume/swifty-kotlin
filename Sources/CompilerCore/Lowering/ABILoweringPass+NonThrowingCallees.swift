@@ -284,6 +284,7 @@ extension ABILoweringPass {
             interner.intern("kk_random_nextDouble"),
             interner.intern("kk_random_nextBoolean"),
             interner.intern("kk_random_nextBytes"),
+            interner.intern("kk_random_nextUBytes"),
             // STDLIB-RANDOM-101: SecureRandom
             interner.intern("kk_secure_random_get_instance"),
             interner.intern("kk_secure_random_set_seed"),

@@ -6112,6 +6112,8 @@ extension CallLowerer {
             interner.intern("kk_ulong_range_random"),
             interner.intern("kk_sequence_runningReduceIndexed"),
             interner.intern("kk_random_nextInt_intRange"),
+            interner.intern("kk_random_nextUBytes_size"),
+            interner.intern("kk_random_nextUBytes_range"),
             interner.intern("kk_sequence_sortedBy"),
             interner.intern("kk_sequence_sumOf"),
             interner.intern("kk_sequence_associate"),

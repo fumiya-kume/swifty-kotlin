@@ -2,7 +2,7 @@
 import XCTest
 
 /// Edge case and boundary value coverage for kotlin.random (STDLIB-RANDOM-003).
-/// Covers: seed reproducibility, nextBits boundaries, nextInt/nextDouble/nextBoolean/nextBytes edge cases.
+/// Covers: seed reproducibility, nextBits boundaries, nextInt/nextDouble/nextBoolean/nextBytes/nextUBytes edge cases.
 final class RuntimeRandomBoundaryTests: XCTestCase {
 
     // MARK: - Helpers
@@ -528,6 +528,74 @@ final class RuntimeRandomBoundaryTests: XCTestCase {
         XCTAssertEqual(resultRaw, listRaw)
         XCTAssertNotEqual(thrown, 0, "nextBytes(array, fromIndex, toIndex) must throw for out-of-bounds ranges")
         XCTAssertEqual(list.elements, [0, 0, 0])
+    }
+
+    // MARK: - nextUBytes: edge cases
+
+    func testNextUBytesSizeCreatesUByteArray() {
+        let r = makeSeeded(42)
+        var thrown = 0
+        let resultRaw = kk_random_nextUBytes_size(r, 7, &thrown)
+        XCTAssertEqual(thrown, 0)
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: resultRaw),
+              let array = tryCast(ptr, to: RuntimeArrayBox.self) else {
+            XCTFail("nextUBytes(size) should return a valid RuntimeArrayBox")
+            return
+        }
+        XCTAssertEqual(array.elements.count, 7, "nextUBytes(size) should create exactly size bytes")
+        for (index, byte) in array.elements.enumerated() {
+            XCTAssertTrue(byte >= 0 && byte <= 255,
+                          "UByte at index \(index) must be in [0, 255], got \(byte)")
+        }
+    }
+
+    func testNextUBytesSizeThrowsForNegativeSize() {
+        let r = makeSeeded(42)
+        var thrown = 0
+        let resultRaw = kk_random_nextUBytes_size(r, -1, &thrown)
+        XCTAssertEqual(resultRaw, 0)
+        XCTAssertNotEqual(thrown, 0, "nextUBytes(size) must throw for negative size")
+    }
+
+    func testNextUBytesArrayMutatesAndReturnsInput() {
+        let r = makeSeeded(42)
+        let array = RuntimeArrayBox(length: 4)
+        array.elements = [1, 2, 3, 4]
+        let arrayRaw = registerRuntimeObject(array)
+        let resultRaw = kk_random_nextUBytes(r, arrayRaw)
+        XCTAssertEqual(resultRaw, arrayRaw)
+        XCTAssertEqual(array.elements.count, 4)
+        for byte in array.elements {
+            XCTAssertTrue(byte >= 0 && byte <= 255, "Filled UByte must be in [0, 255], got \(byte)")
+        }
+    }
+
+    func testNextUBytesRangeFillsOnlyRequestedArraySlice() {
+        let r = makeSeeded(42)
+        let array = RuntimeArrayBox(length: 5)
+        array.elements = [11, 22, 33, 44, 55]
+        let arrayRaw = registerRuntimeObject(array)
+        var thrown = 0
+        let resultRaw = kk_random_nextUBytes_range(r, arrayRaw, 1, 4, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(resultRaw, arrayRaw)
+        XCTAssertEqual(array.elements[0], 11)
+        XCTAssertEqual(array.elements[4], 55)
+        for byte in array.elements[1..<4] {
+            XCTAssertTrue(byte >= 0 && byte <= 255, "Filled UByte must be in [0, 255], got \(byte)")
+        }
+    }
+
+    func testNextUBytesRangeThrowsForOutOfBoundsRange() {
+        let r = makeSeeded(42)
+        let array = RuntimeArrayBox(length: 3)
+        array.elements = [1, 2, 3]
+        let arrayRaw = registerRuntimeObject(array)
+        var thrown = 0
+        let resultRaw = kk_random_nextUBytes_range(r, arrayRaw, 2, 4, &thrown)
+        XCTAssertEqual(resultRaw, arrayRaw)
+        XCTAssertNotEqual(thrown, 0, "nextUBytes(array, fromIndex, toIndex) must throw for out-of-bounds ranges")
+        XCTAssertEqual(array.elements, [1, 2, 3])
     }
 
     // MARK: - nextLong: boundary values (reconfirm via nextLong functions)

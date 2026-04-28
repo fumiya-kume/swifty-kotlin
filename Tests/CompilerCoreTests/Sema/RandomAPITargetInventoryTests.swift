@@ -58,6 +58,9 @@ final class RandomAPITargetInventoryTests: XCTestCase {
         "fun Random.nextLong(Long): Long": "kk_random_nextLong_until",
         "fun Random.nextLong(Long, Long): Long": "kk_random_nextLong_range",
         "fun Random.nextLong(LongRange): Long": "kk_random_nextLong_rangeObject",
+        "fun Random.nextUBytes(Int): UByteArray": "kk_random_nextUBytes_size",
+        "fun Random.nextUBytes(UByteArray): UByteArray": "kk_random_nextUBytes",
+        "fun Random.nextUBytes(UByteArray, Int, Int): UByteArray": "kk_random_nextUBytes_range",
         "fun Random.nextULong(): ULong": "kk_random_nextULong",
         "fun Random.nextULong(ULong): ULong": "kk_random_nextULong_until",
         "fun Random.nextULong(ULong, ULong): ULong": "kk_random_nextULong_range",
@@ -65,9 +68,6 @@ final class RandomAPITargetInventoryTests: XCTestCase {
     ]
 
     private static let knownGaps: [String: String] = [
-        "fun Random.nextUBytes(Int): UByteArray": "STDLIB-RANDOM-011",
-        "fun Random.nextUBytes(UByteArray): UByteArray": "STDLIB-RANDOM-011",
-        "fun Random.nextUBytes(UByteArray, Int, Int): UByteArray": "STDLIB-RANDOM-011",
         "fun Random.nextUInt(): UInt": "STDLIB-RANDOM-012",
         "fun Random.nextUInt(UInt): UInt": "STDLIB-RANDOM-012",
         "fun Random.nextUInt(UInt, UInt): UInt": "STDLIB-RANDOM-012",
@@ -86,8 +86,8 @@ final class RandomAPITargetInventoryTests: XCTestCase {
 
     func testTargetInventoryHasExpectedShape() {
         XCTAssertEqual(Self.commonTargetSignatures.count, 31)
-        XCTAssertEqual(Self.implementedLinks.count, 24)
-        XCTAssertEqual(Self.knownGaps.count, 7)
+        XCTAssertEqual(Self.implementedLinks.count, 27)
+        XCTAssertEqual(Self.knownGaps.count, 4)
         XCTAssertEqual(Self.jvmOnlyTargets.count, 2)
     }
 
@@ -175,6 +175,7 @@ final class RandomAPITargetInventoryTests: XCTestCase {
             "nextFloat",
             "nextInt",
             "nextLong",
+            "nextUBytes",
             "nextULong",
         ] {
             let memberFQ = ["kotlin", "random", "Random", member].map { interner.intern($0) }

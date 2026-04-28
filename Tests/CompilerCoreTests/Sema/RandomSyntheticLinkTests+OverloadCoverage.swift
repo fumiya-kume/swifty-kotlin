@@ -295,6 +295,47 @@ extension RandomSyntheticLinkTests {
         }
     }
 
+    /// nextUBytes overloads are registered with UByteArray surface types.
+    func testNextUBytesOverloadsAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fq = ["kotlin", "random", "Random", "nextUBytes"].map { interner.intern($0) }
+        let candidates = sema.symbols.lookupAll(fqName: fq)
+        let byLink = Dictionary(uniqueKeysWithValues: candidates.compactMap { candidate in
+            sema.symbols.externalLinkName(for: candidate).map { ($0, candidate) }
+        })
+
+        func isUByteArrayType(_ type: TypeID) -> Bool {
+            guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(type)),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return false
+            }
+            return interner.resolve(symbol.name) == "UByteArray"
+        }
+
+        let arrayOverload = try XCTUnwrap(byLink["kk_random_nextUBytes"])
+        let arraySignature = try XCTUnwrap(sema.symbols.functionSignature(for: arrayOverload))
+        XCTAssertEqual(arraySignature.parameterTypes.count, 1)
+        XCTAssertTrue(isUByteArrayType(arraySignature.parameterTypes[0]))
+        XCTAssertTrue(isUByteArrayType(arraySignature.returnType))
+        XCTAssertFalse(arraySignature.canThrow)
+
+        let sizeOverload = try XCTUnwrap(byLink["kk_random_nextUBytes_size"])
+        let sizeSignature = try XCTUnwrap(sema.symbols.functionSignature(for: sizeOverload))
+        XCTAssertEqual(sizeSignature.parameterTypes, [sema.types.intType])
+        XCTAssertTrue(isUByteArrayType(sizeSignature.returnType))
+        XCTAssertTrue(sizeSignature.canThrow)
+
+        let rangeOverload = try XCTUnwrap(byLink["kk_random_nextUBytes_range"])
+        let rangeSignature = try XCTUnwrap(sema.symbols.functionSignature(for: rangeOverload))
+        XCTAssertEqual(rangeSignature.parameterTypes.count, 3)
+        XCTAssertTrue(isUByteArrayType(rangeSignature.parameterTypes[0]))
+        XCTAssertEqual(Array(rangeSignature.parameterTypes.dropFirst()), [sema.types.intType, sema.types.intType])
+        XCTAssertTrue(isUByteArrayType(rangeSignature.returnType))
+        XCTAssertTrue(rangeSignature.canThrow)
+    }
+
     // MARK: - nextInt(IntRange) extension
 
     /// nextInt(range: IntRange) extension function is registered and linked correctly.

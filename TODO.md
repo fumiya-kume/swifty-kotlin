@@ -171,7 +171,7 @@
 - [x] STDLIB-RANDOM-008: `Random.nextLong(range: LongRange)` extension を追加する
 - [x] STDLIB-RANDOM-009: `Random.nextBytes(array, fromIndex, toIndex)` overload を追加する
 - [x] STDLIB-RANDOM-010: `Random.nextBits(bitCount: Int)` member surface を追加する
-- [ ] STDLIB-RANDOM-011: `Random.nextUBytes(size)` / `nextUBytes(array)` / `nextUBytes(array, fromIndex, toIndex)` を追加する
+- [x] STDLIB-RANDOM-011: `Random.nextUBytes(size)` / `nextUBytes(array)` / `nextUBytes(array, fromIndex, toIndex)` を追加する
 - [ ] STDLIB-RANDOM-012: `Random.nextUInt()` / `nextUInt(until)` / `nextUInt(from, until)` / `nextUInt(range)` を追加する
 - [x] STDLIB-RANDOM-013: `Random.nextULong()` / `nextULong(until)` / `nextULong(from, until)` / `nextULong(range)` を追加する
 - [ ] STDLIB-COMP-001: `kotlin.comparisons` の対象 API 一覧を固定
