@@ -245,6 +245,7 @@ extension KIRLoweringDriver {
             let symbol = symbolInfo.id
             guard !existingGlobals.contains(symbol),
                   sema.symbols.backingFieldSymbol(for: symbol) == nil,
+                  sema.symbols.extensionPropertyReceiverType(for: symbol) == nil,
                   let propertyType = sema.symbols.propertyType(for: symbol),
                   let externalLinkName = sema.symbols.externalLinkName(for: symbol),
                   !externalLinkName.isEmpty
@@ -259,7 +260,7 @@ extension KIRLoweringDriver {
                 continue
             }
 
-            arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propertyType)))
+            _ = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propertyType)))
             existingGlobals.insert(symbol)
 
             let result = arena.appendExpr(

@@ -181,7 +181,10 @@ final class ABIMismatchTests: XCTestCase {
     func testMathFunctionCount() {
         // Current math ABI surface:
         // - 23 Double/int/basic entries through PI/E
-        // - 19 Float overloads
+        // - 21 Float overloads
+        // - 2 Double expm1/ln1p helpers
+        // - 12 STDLIB-MATH-006 max/min overload helpers
+        // - 11 STDLIB-MATH-007 remainder/nextTowards/withSign/pow helpers
         // - 4 roundToInt/roundToLong helpers
         // - 6 ulp/nextUp/nextDown helpers
         // - 2 integral sign property helpers
@@ -190,8 +193,8 @@ final class ABIMismatchTests: XCTestCase {
         // - 14 STDLIB-MATH-112 numeric constants (5 Double + 5 Float + 2 Int + 2 Long)
         // - 2 generic mode-dispatch (round_mode, round_mode_float)
         // - 8 STDLIB-MATH-109 hyperbolic/cbrt entries (sinh, cosh, tanh, cbrt + Float overloads)
-        // - 6 STDLIB-MATH-113 floating-point helpers (IEEE remainder + sign helpers)
-        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 103)
+        // - 6 STDLIB-MATH-113 floating-point helpers
+        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 130)
         // Random ABI includes default, seeded, bounded numeric helpers, range overloads, ULong helpers, byte array/unsigned byte helpers, SecureRandom helpers, and explicit bit extraction.
         XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 32)
     }

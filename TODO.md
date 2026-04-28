@@ -250,13 +250,13 @@
 - [x] STDLIB-REFLECT-078: `kotlin.reflect.ExperimentalAssociatedObjects` opt-in marker を追加する
 - [x] STDLIB-REFLECT-079: `KClass.findAssociatedObject<T>()` Native reflect surface を追加する
 - [x] STDLIB-MATH-001: `kotlin.math` の対象 API 一覧を固定
-- [ ] STDLIB-MATH-002: `kotlin.math` の sema / lowering を overload 単位で整える
-- [ ] STDLIB-MATH-003: `kotlin.math` の runtime / ABI と境界値を固定
+- [x] STDLIB-MATH-002: `kotlin.math` の sema / lowering を overload 単位で整える
+- [x] STDLIB-MATH-003: `kotlin.math` の runtime / ABI と境界値を固定
 - [x] STDLIB-MATH-004: `absoluteValue` / `sign` / `ulp` extension property surface を公式 shape に揃える
-- [ ] STDLIB-MATH-005: `expm1` / `ln1p` の Double / Float overload を追加する
-- [ ] STDLIB-MATH-006: `max` / `min` の Double / Float / Int / Long / UInt / ULong overload 行列を追加する
-- [ ] STDLIB-MATH-007: `IEEErem` / `nextTowards` / `withSign` と残りの `pow` overload を追加する
-- [ ] STDLIB-MATH-008: 公開されている非公式 rounding helper 名（`roundUp` など）を整理する
+- [x] STDLIB-MATH-005: `expm1` / `ln1p` の Double / Float overload を追加する
+- [x] STDLIB-MATH-006: `max` / `min` の Double / Float / Int / Long / UInt / ULong overload 行列を追加する
+- [x] STDLIB-MATH-007: `IEEErem` / `nextTowards` / `withSign` と残りの `pow` overload を追加する
+- [x] STDLIB-MATH-008: 公開されている非公式 rounding helper 名（`roundUp` など）を整理する
 - [ ] STDLIB-RANDOM-001: `kotlin.random` の対象 API 一覧を固定
 - [ ] STDLIB-RANDOM-002: `kotlin.random` の sema / lowering を整える
 - [ ] STDLIB-RANDOM-003: `kotlin.random` の runtime / seed / 境界値を固定

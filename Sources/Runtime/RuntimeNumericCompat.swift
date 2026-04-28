@@ -300,6 +300,21 @@ public func kk_math_pow(_ base: Int, _ exp: Int) -> Int {
     return kk_double_to_bits(pow(rawBase, rawExp))
 }
 
+@_cdecl("kk_math_pow_float")
+public func kk_math_pow_float(_ base: Int, _ exp: Int) -> Int {
+    kk_float_to_bits(powf(kk_bits_to_float(base), kk_bits_to_float(exp)))
+}
+
+@_cdecl("kk_math_pow_int")
+public func kk_math_pow_int(_ base: Int, _ exp: Int) -> Int {
+    kk_double_to_bits(pow(kk_bits_to_double(base), Double(exp)))
+}
+
+@_cdecl("kk_math_pow_float_int")
+public func kk_math_pow_float_int(_ base: Int, _ exp: Int) -> Int {
+    kk_float_to_bits(powf(kk_bits_to_float(base), Float(exp)))
+}
+
 @_cdecl("kk_math_ceil")
 public func kk_math_ceil(_ value: Int) -> Int {
     kk_double_to_bits(ceil(kk_bits_to_double(value)))
@@ -407,9 +422,19 @@ public func kk_math_exp(_ value: Int) -> Int {
     kk_double_to_bits(exp(kk_bits_to_double(value)))
 }
 
+@_cdecl("kk_math_expm1")
+public func kk_math_expm1(_ value: Int) -> Int {
+    kk_double_to_bits(expm1(kk_bits_to_double(value)))
+}
+
 @_cdecl("kk_math_ln")
 public func kk_math_ln(_ value: Int) -> Int {
     kk_double_to_bits(log(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_ln1p")
+public func kk_math_ln1p(_ value: Int) -> Int {
+    kk_double_to_bits(log1p(kk_bits_to_double(value)))
 }
 
 @_cdecl("kk_math_log2")
@@ -460,6 +485,108 @@ public func kk_math_hypot(_ x: Int, _ y: Int) -> Int {
     let rawX = kk_bits_to_double(x)
     let rawY = kk_bits_to_double(y)
     return kk_double_to_bits(hypot(rawX, rawY))
+}
+
+private func kotlinMathMaxDouble(_ a: Double, _ b: Double) -> Double {
+    if a.isNaN || b.isNaN { return Double.nan }
+    if a == 0.0 && b == 0.0 {
+        return a.sign == .minus && b.sign == .minus ? -Double.zero : Double.zero
+    }
+    return a >= b ? a : b
+}
+
+private func kotlinMathMinDouble(_ a: Double, _ b: Double) -> Double {
+    if a.isNaN || b.isNaN { return Double.nan }
+    if a == 0.0 && b == 0.0 {
+        return a.sign == .minus || b.sign == .minus ? -Double.zero : Double.zero
+    }
+    return a <= b ? a : b
+}
+
+private func kotlinMathMaxFloat(_ a: Float, _ b: Float) -> Float {
+    if a.isNaN || b.isNaN { return Float.nan }
+    if a == 0.0 && b == 0.0 {
+        return a.sign == .minus && b.sign == .minus ? -Float.zero : Float.zero
+    }
+    return a >= b ? a : b
+}
+
+private func kotlinMathMinFloat(_ a: Float, _ b: Float) -> Float {
+    if a.isNaN || b.isNaN { return Float.nan }
+    if a == 0.0 && b == 0.0 {
+        return a.sign == .minus || b.sign == .minus ? -Float.zero : Float.zero
+    }
+    return a <= b ? a : b
+}
+
+@inline(__always)
+private func runtimeUnsignedMax(_ a: Int, _ b: Int) -> Int {
+    UInt(bitPattern: a) >= UInt(bitPattern: b) ? a : b
+}
+
+@inline(__always)
+private func runtimeUnsignedMin(_ a: Int, _ b: Int) -> Int {
+    UInt(bitPattern: a) <= UInt(bitPattern: b) ? a : b
+}
+
+@_cdecl("kk_math_max")
+public func kk_math_max(_ a: Int, _ b: Int) -> Int {
+    kk_double_to_bits(kotlinMathMaxDouble(kk_bits_to_double(a), kk_bits_to_double(b)))
+}
+
+@_cdecl("kk_math_max_float")
+public func kk_math_max_float(_ a: Int, _ b: Int) -> Int {
+    kk_float_to_bits(kotlinMathMaxFloat(kk_bits_to_float(a), kk_bits_to_float(b)))
+}
+
+@_cdecl("kk_math_max_int")
+public func kk_math_max_int(_ a: Int, _ b: Int) -> Int {
+    Swift.max(a, b)
+}
+
+@_cdecl("kk_math_max_long")
+public func kk_math_max_long(_ a: Int, _ b: Int) -> Int {
+    Swift.max(a, b)
+}
+
+@_cdecl("kk_math_max_uint")
+public func kk_math_max_uint(_ a: Int, _ b: Int) -> Int {
+    runtimeUnsignedMax(a, b)
+}
+
+@_cdecl("kk_math_max_ulong")
+public func kk_math_max_ulong(_ a: Int, _ b: Int) -> Int {
+    runtimeUnsignedMax(a, b)
+}
+
+@_cdecl("kk_math_min")
+public func kk_math_min(_ a: Int, _ b: Int) -> Int {
+    kk_double_to_bits(kotlinMathMinDouble(kk_bits_to_double(a), kk_bits_to_double(b)))
+}
+
+@_cdecl("kk_math_min_float")
+public func kk_math_min_float(_ a: Int, _ b: Int) -> Int {
+    kk_float_to_bits(kotlinMathMinFloat(kk_bits_to_float(a), kk_bits_to_float(b)))
+}
+
+@_cdecl("kk_math_min_int")
+public func kk_math_min_int(_ a: Int, _ b: Int) -> Int {
+    Swift.min(a, b)
+}
+
+@_cdecl("kk_math_min_long")
+public func kk_math_min_long(_ a: Int, _ b: Int) -> Int {
+    Swift.min(a, b)
+}
+
+@_cdecl("kk_math_min_uint")
+public func kk_math_min_uint(_ a: Int, _ b: Int) -> Int {
+    runtimeUnsignedMin(a, b)
+}
+
+@_cdecl("kk_math_min_ulong")
+public func kk_math_min_ulong(_ a: Int, _ b: Int) -> Int {
+    runtimeUnsignedMin(a, b)
 }
 
 @_cdecl("kk_math_PI")
@@ -579,7 +706,7 @@ public func kk_math_floor_float(_ v: Int) -> Int {
     applyFloatUnaryOp(v, floorf)
 }
 
-// MARK: - STDLIB-430: additional Float overloads (abs, exp, ln, log2, log10, log, sign, hypot)
+// MARK: - STDLIB-430: additional Float overloads (abs, exp, expm1, ln, ln1p, log2, log10, log, sign, hypot)
 
 @_cdecl("kk_math_abs_float")
 public func kk_math_abs_float(_ value: Int) -> Int {
@@ -591,9 +718,19 @@ public func kk_math_exp_float(_ value: Int) -> Int {
     kk_float_to_bits(exp(kk_bits_to_float(value)))
 }
 
+@_cdecl("kk_math_expm1_float")
+public func kk_math_expm1_float(_ value: Int) -> Int {
+    kk_float_to_bits(expm1f(kk_bits_to_float(value)))
+}
+
 @_cdecl("kk_math_ln_float")
 public func kk_math_ln_float(_ value: Int) -> Int {
     kk_float_to_bits(log(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_ln1p_float")
+public func kk_math_ln1p_float(_ value: Int) -> Int {
+    kk_float_to_bits(log1pf(kk_bits_to_float(value)))
 }
 
 @_cdecl("kk_math_log2_float")
@@ -1074,11 +1211,25 @@ public func kk_math_withSign_int(_ x: Int, _ sign: Int) -> Int {
     return kk_double_to_bits(copysign(d, signDouble))
 }
 
+@_cdecl("kk_math_withSign_float_int")
+public func kk_math_withSign_float_int(_ x: Int, _ sign: Int) -> Int {
+    let f = kk_bits_to_float(x)
+    let signFloat: Float = sign < 0 ? -1.0 : 1.0
+    return kk_float_to_bits(copysignf(f, signFloat))
+}
+
 @_cdecl("kk_math_nextTowards")
 public func kk_math_nextTowards(_ from: Int, _ to: Int) -> Int {
     let rawFrom = kk_bits_to_double(from)
     let rawTo = kk_bits_to_double(to)
     return kk_double_to_bits(nextafter(rawFrom, rawTo))
+}
+
+@_cdecl("kk_math_nextTowards_float")
+public func kk_math_nextTowards_float(_ from: Int, _ to: Int) -> Int {
+    let rawFrom = kk_bits_to_float(from)
+    let rawTo = kk_bits_to_float(to)
+    return kk_float_to_bits(nextafterf(rawFrom, rawTo))
 }
 
 @_cdecl("kk_println_char")

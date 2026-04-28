@@ -20,8 +20,8 @@ final class MathAPITargetInventoryTests: XCTestCase {
             "fun abs(Float): Float",
             "fun abs(Int): Int",
             "fun abs(Long): Long",
-            "fun IEEErem(Double, Double): Double",
-            "fun IEEErem(Float, Float): Float",
+            "fun Double.IEEErem(Double): Double",
+            "fun Float.IEEErem(Float): Float",
             "fun max(Double, Double): Double",
             "fun max(Float, Float): Float",
             "fun max(Int, Int): Int",
@@ -83,17 +83,44 @@ final class MathAPITargetInventoryTests: XCTestCase {
             "fun abs(Float): Float": "kk_math_abs_float",
             "fun abs(Int): Int": "kk_math_abs_int",
             "fun abs(Long): Long": "kk_math_abs_long",
+            "fun Double.IEEErem(Double): Double": "kk_math_IEEErem",
+            "fun Float.IEEErem(Float): Float": "kk_math_IEEErem_float",
+            "fun max(Double, Double): Double": "kk_math_max",
+            "fun max(Float, Float): Float": "kk_math_max_float",
+            "fun max(Int, Int): Int": "kk_math_max_int",
+            "fun max(Long, Long): Long": "kk_math_max_long",
+            "fun max(UInt, UInt): UInt": "kk_math_max_uint",
+            "fun max(ULong, ULong): ULong": "kk_math_max_ulong",
+            "fun min(Double, Double): Double": "kk_math_min",
+            "fun min(Float, Float): Float": "kk_math_min_float",
+            "fun min(Int, Int): Int": "kk_math_min_int",
+            "fun min(Long, Long): Long": "kk_math_min_long",
+            "fun min(UInt, UInt): UInt": "kk_math_min_uint",
+            "fun min(ULong, ULong): ULong": "kk_math_min_ulong",
             "fun Double.nextDown(): Double": "kk_double_nextDown",
             "fun Float.nextDown(): Float": "kk_float_nextDown",
+            "fun Double.nextTowards(Double): Double": "kk_math_nextTowards",
+            "fun Float.nextTowards(Float): Float": "kk_math_nextTowards_float",
             "fun Double.nextUp(): Double": "kk_double_nextUp",
             "fun Float.nextUp(): Float": "kk_float_nextUp",
             "fun Double.pow(Double): Double": "kk_math_pow",
+            "fun Float.pow(Float): Float": "kk_math_pow_float",
+            "fun Double.pow(Int): Double": "kk_math_pow_int",
+            "fun Float.pow(Int): Float": "kk_math_pow_float_int",
+            "fun expm1(Double): Double": "kk_math_expm1",
+            "fun expm1(Float): Float": "kk_math_expm1_float",
+            "fun ln1p(Double): Double": "kk_math_ln1p",
+            "fun ln1p(Float): Float": "kk_math_ln1p_float",
             "fun Double.roundToInt(): Int": "kk_double_roundToInt",
             "fun Float.roundToInt(): Int": "kk_float_roundToInt",
             "fun Double.roundToLong(): Long": "kk_double_roundToLong",
             "fun Float.roundToLong(): Long": "kk_float_roundToLong",
             "fun sign(Double): Double": "kk_math_sign",
             "fun sign(Float): Float": "kk_math_sign_float",
+            "fun Double.withSign(Double): Double": "kk_math_withSign",
+            "fun Double.withSign(Int): Double": "kk_math_withSign_int",
+            "fun Float.withSign(Float): Float": "kk_math_withSign_float",
+            "fun Float.withSign(Int): Float": "kk_math_withSign_float_int",
         ]
         for (name, doubleLink, floatLink) in unaryFloatingLinks([
             ("acos", "kk_math_acos", "kk_math_acos_float"),
@@ -133,43 +160,9 @@ final class MathAPITargetInventoryTests: XCTestCase {
         return result
     }()
 
-    private static let knownGapSignaturesByTodo: [String: Set<String>] = [
-        "STDLIB-MATH-005": [
-            "fun expm1(Double): Double",
-            "fun expm1(Float): Float",
-            "fun ln1p(Double): Double",
-            "fun ln1p(Float): Float",
-        ],
-        "STDLIB-MATH-006": [
-            "fun max(Double, Double): Double",
-            "fun max(Float, Float): Float",
-            "fun max(Int, Int): Int",
-            "fun max(Long, Long): Long",
-            "fun max(UInt, UInt): UInt",
-            "fun max(ULong, ULong): ULong",
-            "fun min(Double, Double): Double",
-            "fun min(Float, Float): Float",
-            "fun min(Int, Int): Int",
-            "fun min(Long, Long): Long",
-            "fun min(UInt, UInt): UInt",
-            "fun min(ULong, ULong): ULong",
-        ],
-        "STDLIB-MATH-007": [
-            "fun IEEErem(Double, Double): Double",
-            "fun IEEErem(Float, Float): Float",
-            "fun Double.nextTowards(Double): Double",
-            "fun Float.nextTowards(Float): Float",
-            "fun Float.pow(Float): Float",
-            "fun Double.pow(Int): Double",
-            "fun Float.pow(Int): Float",
-            "fun Double.withSign(Double): Double",
-            "fun Double.withSign(Int): Double",
-            "fun Float.withSign(Float): Float",
-            "fun Float.withSign(Int): Float",
-        ],
-    ]
+    private static let knownGapSignaturesByTodo: [String: Set<String>] = [:]
 
-    private static let compilerOnlyCompatibilityNames: Set<String> = [
+    private static let unofficialRoundingHelperNames: Set<String> = [
         "roundUp", "roundDown", "roundCeiling", "roundFloor",
         "roundHalfUp", "roundHalfDown", "roundHalfEven", "roundUnnecessary",
     ]
@@ -180,7 +173,7 @@ final class MathAPITargetInventoryTests: XCTestCase {
         XCTAssertEqual(Self.targetSignatures.filter { $0.hasPrefix("val ") }.count, 12)
     }
 
-    func testCurrentSyntheticMathNamesAreEitherOfficialOrTrackedCompatibility() throws {
+    func testCurrentSyntheticMathNamesAreOfficialTargets() throws {
         let (sema, interner) = try makeSema()
         let mathPrefix = ["kotlin", "math"].map { interner.intern($0) }
         let currentNames = Set(sema.symbols.allSymbols().compactMap { symbol -> String? in
@@ -193,8 +186,19 @@ final class MathAPITargetInventoryTests: XCTestCase {
             return interner.resolve(symbol.name)
         })
 
-        let trackedNames = Self.targetNames.union(Self.compilerOnlyCompatibilityNames)
-        XCTAssertEqual(currentNames.subtracting(trackedNames).sorted(), [])
+        XCTAssertEqual(currentNames.subtracting(Self.targetNames).sorted(), [])
+    }
+
+    func testUnofficialRoundingHelpersAreNotPublished() throws {
+        let (sema, interner) = try makeSema()
+        let mathPrefix = ["kotlin", "math"].map { interner.intern($0) }
+        for name in Self.unofficialRoundingHelperNames.sorted() {
+            let fqName = mathPrefix + [interner.intern(name)]
+            XCTAssertTrue(
+                sema.symbols.lookupAll(fqName: fqName).isEmpty,
+                "\(name) should not be published as kotlin.math surface"
+            )
+        }
     }
 
     func testImplementedInventoryEntriesResolveToSyntheticLinks() throws {

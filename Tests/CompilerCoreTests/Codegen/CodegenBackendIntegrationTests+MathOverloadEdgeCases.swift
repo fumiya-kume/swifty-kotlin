@@ -112,6 +112,139 @@ extension CodegenBackendIntegrationTests {
                     "Expected \(expected) to lower with one receiver argument, got \(calls)"
                 )
             }
+
+            for extensionHelper in [
+                "kk_math_abs_int",
+                "kk_math_abs_long",
+                "kk_math_abs_float",
+                "kk_math_abs",
+                "kk_math_sign_int",
+                "kk_math_sign_long",
+                "kk_math_sign_float",
+                "kk_math_sign",
+                "kk_float_ulp",
+                "kk_double_ulp",
+            ] {
+                XCTAssertFalse(
+                    calls.contains(where: { $0 == extensionHelper && $1 == 0 }),
+                    "Extension property helper \(extensionHelper) must not be emitted as a top-level initializer"
+                )
+            }
+        }
+    }
+
+    func testCodegenMathMinMaxOverloadsLowerToRuntimeHelpers() throws {
+        let source = """
+        import kotlin.math.*
+
+        fun sample(
+            d1: Double, d2: Double,
+            f1: Float, f2: Float,
+            i1: Int, i2: Int,
+            l1: Long, l2: Long,
+            ui1: UInt, ui2: UInt,
+            ul1: ULong, ul2: ULong
+        ) {
+            val maxD = max(d1, d2)
+            val maxF = max(f1, f2)
+            val maxI = max(i1, i2)
+            val maxL = max(l1, l2)
+            val maxUI = max(ui1, ui2)
+            val maxUL = max(ul1, ul2)
+            val minD = min(d1, d2)
+            val minF = min(f1, f2)
+            val minI = min(i1, i2)
+            val minL = min(l1, l2)
+            val minUI = min(ui1, ui2)
+            val minUL = min(ul1, ul2)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "MathMinMaxOverloads", emit: .kirDump)
+            try runToLowering(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "sample", in: module, interner: ctx.interner)
+            let calls = body.compactMap { instruction -> (String, Int)? in
+                guard case let .call(_, callee, arguments, _, _, _, _, _) = instruction else {
+                    return nil
+                }
+                return (ctx.interner.resolve(callee), arguments.count)
+            }
+
+            for expected in [
+                "kk_math_max",
+                "kk_math_max_float",
+                "kk_math_max_int",
+                "kk_math_max_long",
+                "kk_math_max_uint",
+                "kk_math_max_ulong",
+                "kk_math_min",
+                "kk_math_min_float",
+                "kk_math_min_int",
+                "kk_math_min_long",
+                "kk_math_min_uint",
+                "kk_math_min_ulong",
+            ] {
+                XCTAssertTrue(
+                    calls.contains(where: { $0 == expected && $1 == 2 }),
+                    "Expected \(expected) to lower with two arguments, got \(calls)"
+                )
+            }
+        }
+    }
+
+    func testCodegenRemainingFloatingMathOverloadsLowerToRuntimeHelpers() throws {
+        let source = """
+        import kotlin.math.*
+
+        fun sample(d: Double, f: Float, i: Int) {
+            val ieeeD = d.IEEErem(d)
+            val ieeeF = f.IEEErem(f)
+            val nextD = d.nextTowards(d)
+            val nextF = f.nextTowards(f)
+            val powF = f.pow(f)
+            val powDI = d.pow(i)
+            val powFI = f.pow(i)
+            val signD = d.withSign(d)
+            val signDI = d.withSign(i)
+            val signF = f.withSign(f)
+            val signFI = f.withSign(i)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "MathRemainingFloatingOverloads", emit: .kirDump)
+            try runToLowering(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "sample", in: module, interner: ctx.interner)
+            let calls = body.compactMap { instruction -> (String, Int)? in
+                guard case let .call(_, callee, arguments, _, _, _, _, _) = instruction else {
+                    return nil
+                }
+                return (ctx.interner.resolve(callee), arguments.count)
+            }
+
+            for expected in [
+                "kk_math_IEEErem",
+                "kk_math_IEEErem_float",
+                "kk_math_nextTowards",
+                "kk_math_nextTowards_float",
+                "kk_math_pow_float",
+                "kk_math_pow_int",
+                "kk_math_pow_float_int",
+                "kk_math_withSign",
+                "kk_math_withSign_int",
+                "kk_math_withSign_float",
+                "kk_math_withSign_float_int",
+            ] {
+                XCTAssertTrue(
+                    calls.contains(where: { $0 == expected && $1 == 2 }),
+                    "Expected \(expected) to lower with two arguments, got \(calls)"
+                )
+            }
         }
     }
 }

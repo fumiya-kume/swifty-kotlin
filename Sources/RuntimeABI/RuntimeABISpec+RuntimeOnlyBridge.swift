@@ -130,17 +130,6 @@ private let sequenceOnlyBridgeFunctions: [RuntimeABIFunctionSpec] =
         ),
     ]
 
-private let mathOnlyBridgeFunctions: [RuntimeABIFunctionSpec] =
-    ["kk_math_IEEErem", "kk_math_IEEErem_float"].map {
-        bridgeSpec($0, section: "Math", params: ["x", "y"])
-    }
-    + [
-        bridgeSpec("kk_math_nextTowards", section: "Math", params: ["from", "to"]),
-        bridgeSpec("kk_math_withSign", section: "Math", params: ["x", "sign"]),
-        bridgeSpec("kk_math_withSign_float", section: "Math", params: ["x", "sign"]),
-        bridgeSpec("kk_math_withSign_int", section: "Math", params: ["x", "sign"]),
-    ]
-
 public extension RuntimeABISpec {
     static let runtimeOnlyBridgeFunctions: [RuntimeABIFunctionSpec] =
         arrayHOFBridgeFunctions
@@ -150,5 +139,4 @@ public extension RuntimeABISpec {
         + coroutineOnlyBridgeFunctions
         + kclassBridgeFunctions
         + sequenceOnlyBridgeFunctions
-        + mathOnlyBridgeFunctions
 }

@@ -25,6 +25,16 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(doubleFromBits(kk_math_pow(doubleToBits(2.0), doubleToBits(3.0))), 8.0)
     }
 
+    func testExpm1Double() {
+        XCTAssertEqual(doubleFromBits(kk_math_expm1(doubleToBits(0.0))), 0.0, accuracy: 1e-12)
+        XCTAssertEqual(doubleFromBits(kk_math_expm1(doubleToBits(1.0))), expm1(1.0), accuracy: 1e-12)
+    }
+
+    func testLn1pDouble() {
+        XCTAssertEqual(doubleFromBits(kk_math_ln1p(doubleToBits(0.0))), 0.0, accuracy: 1e-12)
+        XCTAssertEqual(doubleFromBits(kk_math_ln1p(doubleToBits(1.0))), log1p(1.0), accuracy: 1e-12)
+    }
+
     func testCeilDouble() {
         XCTAssertEqual(doubleFromBits(kk_math_ceil(doubleToBits(2.3))), 3.0)
         XCTAssertEqual(doubleFromBits(kk_math_ceil(doubleToBits(-2.3))), -2.0)
@@ -186,9 +196,19 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(floatFromBits(kk_math_exp_float(floatToBits(1.0))), Float(M_E), accuracy: 1e-5)
     }
 
+    func testExpm1Float() {
+        XCTAssertEqual(floatFromBits(kk_math_expm1_float(floatToBits(0.0))), 0.0, accuracy: 1e-6)
+        XCTAssertEqual(floatFromBits(kk_math_expm1_float(floatToBits(1.0))), expm1f(1.0), accuracy: 1e-5)
+    }
+
     func testLnFloat() {
         XCTAssertEqual(floatFromBits(kk_math_ln_float(floatToBits(1.0))), 0.0, accuracy: 1e-6)
         XCTAssertEqual(floatFromBits(kk_math_ln_float(floatToBits(Float(M_E)))), 1.0, accuracy: 1e-5)
+    }
+
+    func testLn1pFloat() {
+        XCTAssertEqual(floatFromBits(kk_math_ln1p_float(floatToBits(0.0))), 0.0, accuracy: 1e-6)
+        XCTAssertEqual(floatFromBits(kk_math_ln1p_float(floatToBits(1.0))), log1pf(1.0), accuracy: 1e-6)
     }
 
     func testLog2Float() {
@@ -221,6 +241,40 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
 
     func testHypotFloat() {
         XCTAssertEqual(floatFromBits(kk_math_hypot_float(floatToBits(3.0), floatToBits(4.0))), 5.0, accuracy: 1e-6)
+    }
+
+    func testMinMaxDouble() {
+        XCTAssertEqual(doubleFromBits(kk_math_max(doubleToBits(2.0), doubleToBits(3.0))), 3.0)
+        XCTAssertEqual(doubleFromBits(kk_math_min(doubleToBits(2.0), doubleToBits(3.0))), 2.0)
+        XCTAssertTrue(doubleFromBits(kk_math_max(doubleToBits(Double.nan), doubleToBits(1.0))).isNaN)
+        XCTAssertTrue(doubleFromBits(kk_math_min(doubleToBits(1.0), doubleToBits(Double.nan))).isNaN)
+        XCTAssertEqual(kk_math_max(doubleToBits(-0.0), doubleToBits(0.0)), doubleToBits(0.0))
+        XCTAssertEqual(kk_math_min(doubleToBits(0.0), doubleToBits(-0.0)), doubleToBits(-0.0))
+    }
+
+    func testMinMaxFloat() {
+        XCTAssertEqual(floatFromBits(kk_math_max_float(floatToBits(2.0), floatToBits(3.0))), 3.0)
+        XCTAssertEqual(floatFromBits(kk_math_min_float(floatToBits(2.0), floatToBits(3.0))), 2.0)
+        XCTAssertTrue(floatFromBits(kk_math_max_float(floatToBits(Float.nan), floatToBits(1.0))).isNaN)
+        XCTAssertTrue(floatFromBits(kk_math_min_float(floatToBits(1.0), floatToBits(Float.nan))).isNaN)
+        XCTAssertEqual(kk_math_max_float(floatToBits(-0.0), floatToBits(0.0)), floatToBits(0.0))
+        XCTAssertEqual(kk_math_min_float(floatToBits(0.0), floatToBits(-0.0)), floatToBits(-0.0))
+    }
+
+    func testMinMaxIntegral() {
+        XCTAssertEqual(kk_math_max_int(-2, 3), 3)
+        XCTAssertEqual(kk_math_min_int(-2, 3), -2)
+        XCTAssertEqual(kk_math_max_long(Int(Int64.min), Int(Int64.max)), Int(Int64.max))
+        XCTAssertEqual(kk_math_min_long(Int(Int64.min), Int(Int64.max)), Int(Int64.min))
+    }
+
+    func testMinMaxUnsigned() {
+        let low = 7
+        let high = Int(bitPattern: UInt.max)
+        XCTAssertEqual(kk_math_max_uint(low, high), high)
+        XCTAssertEqual(kk_math_min_uint(low, high), low)
+        XCTAssertEqual(kk_math_max_ulong(low, high), high)
+        XCTAssertEqual(kk_math_min_ulong(low, high), low)
     }
 
     func testPiConstant() {
