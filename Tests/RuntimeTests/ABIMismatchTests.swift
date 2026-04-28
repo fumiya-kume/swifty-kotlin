@@ -162,7 +162,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testBitwiseFunctionCount() {
         // Includes integer and long bitwise helpers plus bit-counting utilities.
-        XCTAssertEqual(RuntimeABISpec.bitwiseFunctions.count, 34)
+        XCTAssertEqual(RuntimeABISpec.bitwiseFunctions.count, 36)
     }
 
     func testFloorDivABISignatures() throws {
@@ -345,6 +345,14 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.returnType, .opaquePointer)
         XCTAssertEqual(spec.parameters.count, 1)
         XCTAssertEqual(spec.parameters[0].type, .nullableOpaquePointer)
+    }
+
+    func testKKFloorModSignatures() throws {
+        for name in ["kk_op_floor_mod", "kk_op_lfloor_mod"] {
+            let spec = try requireSpec(name)
+            XCTAssertEqual(spec.returnType, .intptr)
+            XCTAssertEqual(spec.parameters.map(\.type), [.intptr, .intptr])
+        }
     }
 
     func testKKNoWhenBranchMatchedExceptionConstructorsSignature() throws {

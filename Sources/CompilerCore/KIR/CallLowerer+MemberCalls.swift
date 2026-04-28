@@ -2076,6 +2076,61 @@ extension CallLowerer {
             }
         }
 
+        // Float.mod(other) / Double.mod(other): Kotlin mod uses floor-style
+        // modulo, while rem/% use truncating remainder.
+        if args.count == 1,
+           interner.resolve(calleeName) == "mod"
+        {
+            let floatType = sema.types.make(.primitive(.float, .nonNull))
+            let doubleType = sema.types.make(.primitive(.double, .nonNull))
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let rhsType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+            let nonNullRhsType = sema.types.makeNonNullable(rhsType)
+            let isFloatingReceiver = nonNullReceiverType == floatType || nonNullReceiverType == doubleType
+            let isFloatingRhs = nonNullRhsType == floatType || nonNullRhsType == doubleType
+            if isFloatingReceiver, isFloatingRhs {
+                let resultType = nonNullReceiverType == doubleType || nonNullRhsType == doubleType ? doubleType : floatType
+                var lhs = loweredReceiverID
+                var rhs = loweredArgIDs[0]
+                if resultType == doubleType {
+                    if nonNullReceiverType == floatType {
+                        let converted = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: doubleType)
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: interner.intern("kk_float_to_double_bits"),
+                            arguments: [lhs],
+                            result: converted,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        lhs = converted
+                    }
+                    if nonNullRhsType == floatType {
+                        let converted = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: doubleType)
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: interner.intern("kk_float_to_double_bits"),
+                            arguments: [rhs],
+                            result: converted,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        rhs = converted
+                    }
+                }
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern(resultType == doubleType ? "kk_op_dfloor_mod" : "kk_op_ffloor_mod"),
+                    arguments: [lhs, rhs],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         // Primitive arithmetic/infix member functions on numeric receivers.
         if args.count == 1,
            shouldLowerPrimitiveInv(receiverExpr: receiverExpr, sema: sema, nullableReceiverAllowed: requireNonNullableReceiverForConstFold)
@@ -2089,6 +2144,7 @@ extension CallLowerer {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             let rawRhsType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+            let nonNullRhsType = sema.types.makeNonNullable(rawRhsType)
             let isShiftReceiver = nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType
             let isUnsignedReceiver = nonNullReceiverType == uintType || nonNullReceiverType == ulongType || nonNullReceiverType == ubyteType || nonNullReceiverType == ushortType
             let primitiveCallee: InternedString? = switch interner.resolve(calleeName) {
@@ -2102,8 +2158,12 @@ extension CallLowerer {
                 isUnsignedReceiver ? interner.intern("kk_op_udiv") : interner.intern("kk_op_div")
             case "floorDiv":
                 isUnsignedReceiver ? interner.intern("kk_op_udiv") : interner.intern("kk_op_floor_div")
-            case "rem", "mod":
+            case "rem":
                 isUnsignedReceiver ? interner.intern("kk_op_urem") : interner.intern("kk_op_mod")
+            case "mod":
+                isUnsignedReceiver
+                    ? interner.intern("kk_op_urem")
+                    : interner.intern(nonNullReceiverType == longType || nonNullRhsType == longType ? "kk_op_lfloor_mod" : "kk_op_floor_mod")
             case "and":
                 rawRhsType == nonNullReceiverType ? interner.intern("kk_bitwise_and") : nil
             case "or":
