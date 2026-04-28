@@ -495,36 +495,48 @@ extension DataFlowSemaPhase {
         }
 
         // Debugging.isThreadStateRunnable: Boolean
-        let isRunnableName = interner.intern("isThreadStateRunnable")
-        let isRunnableFQName = objectFQName + [isRunnableName]
-        if symbols.lookup(fqName: isRunnableFQName) == nil {
-            let propSymbol = symbols.define(
-                kind: .property,
-                name: isRunnableName,
-                fqName: isRunnableFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-            symbols.setParentSymbol(objectSymbol, for: propSymbol)
-            symbols.setPropertyType(types.booleanType, for: propSymbol)
-        }
+        registerSimpleProperty(
+            named: "isThreadStateRunnable",
+            ownerSymbol: objectSymbol,
+            ownerFQName: objectFQName,
+            propertyType: types.booleanType,
+            externalLinkName: "kk_debugging_is_thread_state_runnable",
+            symbols: symbols,
+            interner: interner
+        )
 
         // Debugging.gcSuspendCount: Int
-        let gcSuspendName = interner.intern("gcSuspendCount")
-        let gcSuspendFQName = objectFQName + [gcSuspendName]
-        if symbols.lookup(fqName: gcSuspendFQName) == nil {
-            let propSymbol = symbols.define(
-                kind: .property,
-                name: gcSuspendName,
-                fqName: gcSuspendFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-            symbols.setParentSymbol(objectSymbol, for: propSymbol)
-            symbols.setPropertyType(types.intType, for: propSymbol)
-        }
+        registerSimpleProperty(
+            named: "gcSuspendCount",
+            ownerSymbol: objectSymbol,
+            ownerFQName: objectFQName,
+            propertyType: types.intType,
+            externalLinkName: "kk_debugging_gc_suspend_count",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Debugging.threadCount: Int
+        registerSimpleProperty(
+            named: "threadCount",
+            ownerSymbol: objectSymbol,
+            ownerFQName: objectFQName,
+            propertyType: types.intType,
+            externalLinkName: "kk_debugging_thread_count",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Debugging.globalObjectCount: Int
+        registerSimpleProperty(
+            named: "globalObjectCount",
+            ownerSymbol: objectSymbol,
+            ownerFQName: objectFQName,
+            propertyType: types.intType,
+            externalLinkName: "kk_debugging_global_object_count",
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Helpers

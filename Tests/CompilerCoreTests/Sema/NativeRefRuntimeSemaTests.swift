@@ -299,20 +299,33 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
             sema.symbols.propertyType(for: sym), sema.types.booleanType,
             "isThreadStateRunnable should be Boolean"
         )
+        XCTAssertEqual(
+            sema.symbols.externalLinkName(for: sym),
+            "kk_debugging_is_thread_state_runnable"
+        )
     }
 
-    func testDebuggingHasGcSuspendCountProperty() throws {
+    func testDebuggingHasTrackingProperties() throws {
         let (sema, interner) = try makeSema()
         let objectFQName = ["kotlin", "native", "runtime", "Debugging"].map { interner.intern($0) }
-        let propFQName = objectFQName + [interner.intern("gcSuspendCount")]
-        let sym = try XCTUnwrap(
-            sema.symbols.lookup(fqName: propFQName),
-            "Debugging should expose gcSuspendCount property"
-        )
-        XCTAssertEqual(
-            sema.symbols.propertyType(for: sym), sema.types.intType,
-            "gcSuspendCount should be Int"
-        )
+        let expected: [(name: String, link: String)] = [
+            ("gcSuspendCount", "kk_debugging_gc_suspend_count"),
+            ("threadCount", "kk_debugging_thread_count"),
+            ("globalObjectCount", "kk_debugging_global_object_count"),
+        ]
+
+        for property in expected {
+            let propFQName = objectFQName + [interner.intern(property.name)]
+            let sym = try XCTUnwrap(
+                sema.symbols.lookup(fqName: propFQName),
+                "Debugging should expose \(property.name) property"
+            )
+            XCTAssertEqual(
+                sema.symbols.propertyType(for: sym), sema.types.intType,
+                "\(property.name) should be Int"
+            )
+            XCTAssertEqual(sema.symbols.externalLinkName(for: sym), property.link)
+        }
     }
 
     func testDebuggingIsTaggedExperimentalNativeApi() throws {

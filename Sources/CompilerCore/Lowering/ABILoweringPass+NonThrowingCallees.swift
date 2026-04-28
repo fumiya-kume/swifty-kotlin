@@ -1128,6 +1128,10 @@ extension ABILoweringPass {
             interner.intern("kk_gc_target_heap_bytes"),
             interner.intern("kk_gc_target_heap_utilization"),
             interner.intern("kk_gc_max_heap_bytes"),
+            interner.intern("kk_debugging_is_thread_state_runnable"),
+            interner.intern("kk_debugging_gc_suspend_count"),
+            interner.intern("kk_debugging_thread_count"),
+            interner.intern("kk_debugging_global_object_count"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }
