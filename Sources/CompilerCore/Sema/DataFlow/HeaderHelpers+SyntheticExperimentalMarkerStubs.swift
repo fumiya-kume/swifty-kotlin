@@ -10,6 +10,7 @@ import Foundation
 /// |---------------------------|----------------------|----------|
 /// | ExperimentalUnsignedTypes | kotlin               | ERROR    |
 /// | ExperimentalVersionOverloading | kotlin          | ERROR    |
+/// | ExperimentalContextParameters | kotlin           | ERROR    |
 /// | ExperimentalUuidApi       | kotlin.uuid          | ERROR    |
 /// | ExperimentalEncodingApi   | kotlin.io.encoding   | ERROR    |
 /// | ExperimentalMultiplatform | kotlin               | ERROR    |
@@ -46,6 +47,18 @@ extension DataFlowSemaPhase {
             packageFQName: kotlinPkg,
             packageSymbol: kotlinPkgSymbol,
             severity: "ERROR",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- kotlin.ExperimentalContextParameters (ERROR) ---
+        registerSyntheticExperimentalMarker(
+            named: "ExperimentalContextParameters",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            severity: "ERROR",
+            message: "The API is related to the experimental feature \"context parameters\" (see KEEP-367) and may be changed or removed in any future release.",
+            targetArguments: nil,
             symbols: symbols,
             interner: interner
         )
@@ -128,6 +141,7 @@ extension DataFlowSemaPhase {
         packageFQName: [InternedString],
         packageSymbol: SymbolID,
         severity: String,
+        message: String? = nil,
         targetArguments: [String]? = ["AnnotationTarget.ANNOTATION_CLASS"],
         retentionArgument: String? = "AnnotationRetention.BINARY",
         symbols: SymbolTable,
@@ -154,9 +168,13 @@ extension DataFlowSemaPhase {
         }
 
         // Attach @RequiresOptIn with the declared severity level.
+        var requiresOptInArguments = ["level=RequiresOptIn.Level.\(severity)"]
+        if let message {
+            requiresOptInArguments.insert("message=\(message)", at: 0)
+        }
         let requiresOptInRecord = MetadataAnnotationRecord(
             annotationFQName: "kotlin.RequiresOptIn",
-            arguments: ["level=RequiresOptIn.Level.\(severity)"]
+            arguments: requiresOptInArguments
         )
         var annotations = symbols.annotations(for: classSymbol)
         if !annotations.contains(requiresOptInRecord) {

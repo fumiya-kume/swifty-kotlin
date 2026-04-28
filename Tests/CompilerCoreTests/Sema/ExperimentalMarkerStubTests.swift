@@ -9,6 +9,7 @@ import XCTest
 //
 //   • ExperimentalUnsignedTypes  — kotlin          — severity ERROR
 //   • ExperimentalVersionOverloading — kotlin       — severity ERROR
+//   • ExperimentalContextParameters — kotlin        — severity ERROR
 //   • ExperimentalUuidApi        — kotlin.uuid      — severity ERROR
 //   • ExperimentalEncodingApi    — kotlin.io.encoding — severity ERROR
 //   • ExperimentalMultiplatform  — kotlin           — severity ERROR
@@ -132,6 +133,42 @@ final class ExperimentalMarkerStubTests: XCTestCase {
             expectedSeverity: "ERROR",
             sema: sema,
             interner: interner
+        )
+    }
+
+    // MARK: - ExperimentalContextParameters (kotlin, ERROR)
+
+    func testExperimentalContextParametersIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let sym = lookupSymbol(fqPath: ["kotlin", "ExperimentalContextParameters"], sema: sema, interner: interner)
+        XCTAssertNotNil(sym, "kotlin.ExperimentalContextParameters must be registered in the symbol table")
+    }
+
+    func testExperimentalContextParametersIsAnnotationClass() throws {
+        let (sema, interner) = try makeSema()
+        assertIsAnnotationClass(fqPath: ["kotlin", "ExperimentalContextParameters"], sema: sema, interner: interner)
+    }
+
+    func testExperimentalContextParametersHasRequiresOptInWithErrorSeverity() throws {
+        let (sema, interner) = try makeSema()
+        assertHasRequiresOptIn(
+            fqPath: ["kotlin", "ExperimentalContextParameters"],
+            expectedSeverity: "ERROR",
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    func testExperimentalContextParametersRequiresOptInMessageMentionsContextParameters() throws {
+        let (sema, interner) = try makeSema()
+        let sym = try XCTUnwrap(
+            lookupSymbol(fqPath: ["kotlin", "ExperimentalContextParameters"], sema: sema, interner: interner)
+        )
+        let annotations = sema.symbols.annotations(for: sym)
+        let requiresOptIn = try XCTUnwrap(annotations.first { $0.annotationFQName == "kotlin.RequiresOptIn" })
+        XCTAssertTrue(
+            requiresOptIn.arguments.contains { $0.contains("context parameters") },
+            "Expected ExperimentalContextParameters @RequiresOptIn message to mention context parameters, got: \(requiresOptIn.arguments)"
         )
     }
 
@@ -310,6 +347,7 @@ final class ExperimentalMarkerStubTests: XCTestCase {
 
         XCTAssertEqual(severity(fqPath: ["kotlin", "ExperimentalUnsignedTypes"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "ExperimentalVersionOverloading"]), "ERROR")
+        XCTAssertEqual(severity(fqPath: ["kotlin", "ExperimentalContextParameters"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "uuid", "ExperimentalUuidApi"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "io", "encoding", "ExperimentalEncodingApi"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "reflect", "ExperimentalAssociatedObjects"]), "ERROR")
