@@ -22,6 +22,7 @@ extension CodegenBackendIntegrationTests {
             println('İ'.lowercaseChar())
             println('ǆ'.titlecaseChar())
             println('ß'.titlecaseChar())
+            println('A'.isDefined())
         }
         """
 
@@ -50,6 +51,7 @@ extension CodegenBackendIntegrationTests {
                 i
                 ǅ
                 ß
+                true
                 """
                 + "\n"
             )
