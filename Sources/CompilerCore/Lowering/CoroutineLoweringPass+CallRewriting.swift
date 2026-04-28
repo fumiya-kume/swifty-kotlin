@@ -774,7 +774,7 @@ extension CoroutineLoweringPass {
         using rewrite: SuspendRewriteContext
     ) -> [KIRInstruction]? {
         guard call.callee == rewrite.startCoroutineCallee,
-              call.arguments.count == 2
+              call.arguments.count == 2 || call.arguments.count == 3
         else {
             return nil
         }
@@ -802,16 +802,40 @@ extension CoroutineLoweringPass {
             type: rewrite.unitType
         )
 
+        let entryPointSymbol = entryPointSymbol(
+            for: referencedSymbol,
+            loweredTarget: loweredTarget,
+            hasLauncherArg: call.arguments.count == 3,
+            using: rewrite
+        )
+
         var rewritten: [KIRInstruction] = [
-            .constValue(result: entryPointExpr, value: .symbolRef(loweredTarget.symbol)),
+            .constValue(result: entryPointExpr, value: .symbolRef(entryPointSymbol)),
             .call(
                 symbol: nil,
                 callee: rewrite.runtimeCreateCoroutineUninterceptedCallee,
-                arguments: [entryPointExpr, call.arguments[1]],
+                arguments: [entryPointExpr, call.arguments[call.arguments.count - 1]],
                 result: continuationExpr,
                 canThrow: false,
                 thrownResult: nil
             ),
+        ]
+
+        if call.arguments.count == 3 {
+            let slotExpr = rewrite.module.arena.appendExpr(.intLiteral(0), type: rewrite.intType)
+            rewritten.append(
+                .call(
+                    symbol: nil,
+                    callee: rewrite.launcherArgSetCallee,
+                    arguments: [continuationExpr, slotExpr, call.arguments[1]],
+                    result: nil,
+                    canThrow: false,
+                    thrownResult: nil
+                )
+            )
+        }
+
+        rewritten.append(
             .call(
                 symbol: nil,
                 callee: rewrite.runtimeContinuationResumeCallee,
@@ -819,8 +843,8 @@ extension CoroutineLoweringPass {
                 result: nil,
                 canThrow: false,
                 thrownResult: nil
-            ),
-        ]
+            )
+        )
 
         if let result = call.result {
             rewritten.append(.constValue(result: result, value: .unit))
