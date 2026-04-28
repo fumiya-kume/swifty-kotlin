@@ -67,6 +67,7 @@ extension ABIMismatchTests {
             "kk_uuid_parse",
             "kk_uuid_parseOrNull",
             "kk_uuid_parseHex",
+            "kk_uuid_parseHexOrNull",
             "kk_uuid_parseHexDash",
             "kk_uuid_toString",
             "kk_uuid_toHexString",
