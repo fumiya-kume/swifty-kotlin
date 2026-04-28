@@ -66,6 +66,7 @@ extension ABIMismatchTests {
             // UUID
             "kk_uuid_parseHexOrNull",
             "kk_uuid_parseHexDashOrNull",
+            "kk_uuid_parseOrNull",
             "kk_instant_now",
             "kk_instant_from_epoch_millis",
             "kk_instant_epoch_seconds",
