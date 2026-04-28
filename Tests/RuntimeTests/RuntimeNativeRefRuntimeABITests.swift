@@ -478,7 +478,7 @@ final class RuntimeNativeRefFreezeTests: IsolatedRuntimeXCTestCase {
 // MARK: - Debugging / assertions ABI tests
 // ---------------------------------------------------------------------------
 
-final class RuntimeNativeRefDebuggingTests: XCTestCase {
+final class RuntimeNativeRefDebuggingTests: IsolatedRuntimeXCTestCase {
 
     func testAssertionsEnabledReturnsBooleanValue() {
         let result = kk_assertions_enabled()
@@ -526,6 +526,23 @@ final class RuntimeNativeRefDebuggingTests: XCTestCase {
         let second = kk_assertions_enabled()
         XCTAssertEqual(first, second,
                        "Repeated kk_assertions_reset must yield consistent state")
+    }
+
+    func testDebuggingIsThreadStateRunnableReturnsBoolean() {
+        let result = kk_debugging_is_thread_state_runnable()
+        XCTAssertTrue(result == 0 || result == 1)
+    }
+
+    func testDebuggingTrackingCountsAreNonNegative() {
+        XCTAssertGreaterThanOrEqual(kk_debugging_gc_suspend_count(), 0)
+        XCTAssertGreaterThanOrEqual(kk_debugging_thread_count(), 1)
+        XCTAssertGreaterThanOrEqual(kk_debugging_global_object_count(), 0)
+    }
+
+    func testDebuggingGlobalObjectCountTracksRuntimeObjects() {
+        let before = kk_debugging_global_object_count()
+        _ = registerRuntimeObject(RuntimeStringBox("debug"))
+        XCTAssertEqual(kk_debugging_global_object_count(), before + 1)
     }
 }
 
