@@ -181,6 +181,36 @@ final class RuntimeAssertionsTests: IsolatedRuntimeXCTestCase {
                        "Throwable should be last in hierarchy")
     }
 
+    // MARK: - RuntimeConcurrentModificationExceptionBox
+
+    func testConcurrentModificationExceptionBoxExceptionFQName() {
+        let box = RuntimeConcurrentModificationExceptionBox(message: "modified")
+        XCTAssertEqual(box.exceptionFQName, "kotlin.ConcurrentModificationException")
+    }
+
+    func testConcurrentModificationExceptionBoxRenderedMessage() {
+        let box = RuntimeConcurrentModificationExceptionBox(message: "modified")
+        XCTAssertEqual(box.renderedMessage, "ConcurrentModificationException: modified")
+    }
+
+    func testConcurrentModificationExceptionBoxHierarchyContainsExpectedTypes() {
+        let box = RuntimeConcurrentModificationExceptionBox(message: "test")
+        let hierarchy = box.exceptionHierarchyFQNames
+        XCTAssertTrue(hierarchy.contains("kotlin.ConcurrentModificationException"))
+        XCTAssertTrue(hierarchy.contains("kotlin.RuntimeException"))
+        XCTAssertTrue(hierarchy.contains("kotlin.Exception"))
+        XCTAssertTrue(hierarchy.contains("kotlin.Throwable"))
+    }
+
+    func testConcurrentModificationExceptionBoxHierarchyOrder() {
+        let box = RuntimeConcurrentModificationExceptionBox(message: "test")
+        let hierarchy = box.exceptionHierarchyFQNames
+        XCTAssertEqual(hierarchy.first, "kotlin.ConcurrentModificationException",
+                       "ConcurrentModificationException should be first in hierarchy")
+        XCTAssertEqual(hierarchy.last, "kotlin.Throwable",
+                       "Throwable should be last in hierarchy")
+    }
+
     // MARK: - Type Discrimination
 
     func testAssertionErrorBoxIsDistinctFromIllegalStateBox() {
@@ -203,6 +233,11 @@ final class RuntimeAssertionsTests: IsolatedRuntimeXCTestCase {
         XCTAssertFalse(noWhenBox is RuntimeIllegalStateExceptionBox)
     }
 
+    func testConcurrentModificationBoxIsDistinctFromNoWhenBox() {
+        let concurrentModificationBox = RuntimeConcurrentModificationExceptionBox(message: "test")
+        XCTAssertFalse(concurrentModificationBox is RuntimeNoWhenBranchMatchedExceptionBox)
+    }
+
     // MARK: - Cause Parameter
 
     func testAssertionErrorBoxWithCause() {
@@ -223,6 +258,11 @@ final class RuntimeAssertionsTests: IsolatedRuntimeXCTestCase {
     func testNoWhenBranchMatchedExceptionBoxWithCause() {
         let box = RuntimeNoWhenBranchMatchedExceptionBox(message: "caused no when", cause: 11)
         XCTAssertEqual(box.cause, 11)
+    }
+
+    func testConcurrentModificationExceptionBoxWithCause() {
+        let box = RuntimeConcurrentModificationExceptionBox(message: "caused concurrent modification", cause: 13)
+        XCTAssertEqual(box.cause, 13)
     }
 
     // MARK: - Empty Message
@@ -261,6 +301,32 @@ final class RuntimeAssertionsTests: IsolatedRuntimeXCTestCase {
 
         XCTAssertEqual(messageOnlyBox.message, "missing")
         XCTAssertEqual(withCauseBox.message, "missing")
+        XCTAssertEqual(withCauseBox.cause, noArg)
+        XCTAssertEqual(causeOnlyBox.cause, noArg)
+    }
+
+    func testConcurrentModificationExceptionRuntimeConstructors() {
+        let messageRaw = makeRuntimeString("modified")
+        let messageOnly = kk_concurrent_modification_exception_new_message(messageRaw)
+        let noArg = kk_concurrent_modification_exception_new()
+        let withCause = kk_concurrent_modification_exception_new_message_cause(messageRaw, noArg)
+        let causeOnly = kk_concurrent_modification_exception_new_cause(noArg)
+
+        guard let messageOnlyPtr = UnsafeMutableRawPointer(bitPattern: messageOnly),
+              let messageOnlyBox = tryCast(messageOnlyPtr, to: RuntimeConcurrentModificationExceptionBox.self),
+              let noArgPtr = UnsafeMutableRawPointer(bitPattern: noArg),
+              let noArgBox = tryCast(noArgPtr, to: RuntimeConcurrentModificationExceptionBox.self),
+              let withCausePtr = UnsafeMutableRawPointer(bitPattern: withCause),
+              let withCauseBox = tryCast(withCausePtr, to: RuntimeConcurrentModificationExceptionBox.self),
+              let causeOnlyPtr = UnsafeMutableRawPointer(bitPattern: causeOnly),
+              let causeOnlyBox = tryCast(causeOnlyPtr, to: RuntimeConcurrentModificationExceptionBox.self)
+        else {
+            return XCTFail("Expected typed ConcurrentModificationException runtime boxes")
+        }
+
+        XCTAssertEqual(messageOnlyBox.message, "modified")
+        XCTAssertEqual(noArgBox.message, "")
+        XCTAssertEqual(withCauseBox.message, "modified")
         XCTAssertEqual(withCauseBox.cause, noArg)
         XCTAssertEqual(causeOnlyBox.cause, noArg)
     }

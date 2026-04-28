@@ -79,12 +79,13 @@ final class ABIMismatchTests: XCTestCase {
     func testExceptionFunctionCount() {
         // kk_throwable_new, kk_throwable_is_cancellation, kk_panic, kk_abort_unreachable,
         // kk_no_when_branch_matched_exception_new* constructors,
+        // kk_concurrent_modification_exception_new* constructors,
         // kk_require, kk_check, kk_require_lazy, kk_check_lazy,
         // kk_precondition_assert, kk_precondition_assert_lazy,
         // kk_assertions_enabled, kk_assertions_set_enabled, kk_assertions_reset,
         // kk_reentrant_read_write_lock_read,
         // kk_error, kk_todo, kk_todo_noarg, kk_dispatch_error
-        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 30)
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 34)
     }
 
     func testTestFrameworkFunctionCount() {
@@ -346,6 +347,24 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(messageCause.parameters.map(\.type), [.intptr, .intptr])
 
         let cause = try requireSpec("kk_no_when_branch_matched_exception_new_cause")
+        XCTAssertEqual(cause.returnType, .intptr)
+        XCTAssertEqual(cause.parameters.map(\.type), [.intptr])
+    }
+
+    func testKKConcurrentModificationExceptionConstructorsSignature() throws {
+        let noArg = try requireSpec("kk_concurrent_modification_exception_new")
+        XCTAssertEqual(noArg.returnType, .intptr)
+        XCTAssertEqual(noArg.parameters.count, 0)
+
+        let message = try requireSpec("kk_concurrent_modification_exception_new_message")
+        XCTAssertEqual(message.returnType, .intptr)
+        XCTAssertEqual(message.parameters.map(\.type), [.intptr])
+
+        let messageCause = try requireSpec("kk_concurrent_modification_exception_new_message_cause")
+        XCTAssertEqual(messageCause.returnType, .intptr)
+        XCTAssertEqual(messageCause.parameters.map(\.type), [.intptr, .intptr])
+
+        let cause = try requireSpec("kk_concurrent_modification_exception_new_cause")
         XCTAssertEqual(cause.returnType, .intptr)
         XCTAssertEqual(cause.parameters.map(\.type), [.intptr])
     }
