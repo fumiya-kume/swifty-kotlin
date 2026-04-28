@@ -1315,3 +1315,48 @@ extension DataFlowSemaPhase {
         }
     }
 }
+
+extension DataFlowSemaPhase {
+    func registerSyntheticKPropertyIsInitializedStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let kotlinPkg = ensurePackage(path: ["kotlin"], symbols: symbols, interner: interner)
+        let kotlinReflectPkg = ensurePackage(path: ["kotlin", "reflect"], symbols: symbols, interner: interner)
+        let kProperty0Symbol = ensureInterfaceSymbol(
+            named: "KProperty0",
+            in: kotlinReflectPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let propertyName = interner.intern("isInitialized")
+        let propertyFQName = kotlinPkg + [propertyName]
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: kProperty0Symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+                && symbols.extensionPropertyReceiverType(for: symbolID) == receiverType
+        }) {
+            symbols.setPropertyType(types.booleanType, for: existing)
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: kotlinPkg) {
+            symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+        }
+        symbols.setPropertyType(types.booleanType, for: propertySymbol)
+        symbols.setExtensionPropertyReceiverType(receiverType, for: propertySymbol)
+    }
+}

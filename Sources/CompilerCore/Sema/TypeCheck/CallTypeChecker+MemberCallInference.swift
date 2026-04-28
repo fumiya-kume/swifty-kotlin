@@ -471,6 +471,16 @@ extension CallTypeChecker {
                propertyInfo.flags.contains(.lateinitProperty)
             {
                 let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+                if let isInitializedProperty = ctx.cachedScopeLookup(calleeName).first(where: { candidate in
+                    guard let symbol = ctx.cachedSymbol(candidate),
+                          symbol.kind == .property
+                    else {
+                        return false
+                    }
+                    return sema.symbols.extensionPropertyReceiverType(for: candidate) != nil
+                }) {
+                    sema.bindings.bindIdentifier(id, symbol: isInitializedProperty)
+                }
                 sema.bindings.bindExprType(id, type: boolType)
                 return boolType
             }
