@@ -18,6 +18,7 @@ import XCTest
 //     - Pinned<T> (pin / unpin / get) -> kk_pin_object / kk_unpin_object / kk_pinned_get
 //     - freeze() / isFrozen            -> kk_freeze_object / kk_is_frozen
 //     - WeakReference<T>               -> kk_weak_ref_create / kk_weak_ref_get / kk_weak_ref_clear
+//     - createCleaner(value, block)    -> kk_cleaner_create / kk_cleaner_clean / kk_cleaner_dispose
 //
 //   kotlin.native.runtime.GC (via kk_gc_collect):
 //     - GC.collect()  -> kk_gc_collect()  [no Kotlin-level GC object, raw C entry]
@@ -27,7 +28,6 @@ import XCTest
 //     - Debugging.setAssertionsEnabled()  -> kk_assertions_set_enabled()
 //
 // MISSING (not implemented — no runtime entry point or compiler-side stub):
-//   - createCleaner { } (no kk_cleaner_* entry points)
 //   - kotlin.native.runtime.GC.targetHeapBytes (property, not exposed)
 //   - kotlin.native.runtime.GC.targetHeapUtilization (property, not exposed)
 //   - kotlin.native.runtime.GC.maxHeapBytes (property, not exposed)

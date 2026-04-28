@@ -179,6 +179,11 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
             signature.parameterTypes.count, 2,
             "createCleaner should accept (value, block)"
         )
+        XCTAssertEqual(
+            sema.symbols.externalLinkName(for: sym),
+            "kk_cleaner_create",
+            "createCleaner should lower to kk_cleaner_create"
+        )
     }
 
     func testCreateCleanerIsTaggedExperimentalNativeApi() throws {
