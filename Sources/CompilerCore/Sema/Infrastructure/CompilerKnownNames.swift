@@ -22,6 +22,7 @@ enum KnownCompilerAnnotation {
     case suppress
     case dslMarker
     case wasExperimental
+    case sinceKotlin
     case optIn
     case subclassOptInRequired
     case consistentCopyVisibility
@@ -73,6 +74,8 @@ enum KnownCompilerAnnotation {
             "DslMarker"
         case .wasExperimental:
             "WasExperimental"
+        case .sinceKotlin:
+            "SinceKotlin"
         case .optIn:
             "OptIn"
         case .subclassOptInRequired:
@@ -132,6 +135,8 @@ enum KnownCompilerAnnotation {
             "kotlin.DslMarker"
         case .wasExperimental:
             "kotlin.WasExperimental"
+        case .sinceKotlin:
+            "kotlin.SinceKotlin"
         case .optIn:
             "kotlin.OptIn"
         case .subclassOptInRequired:

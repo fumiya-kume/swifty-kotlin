@@ -150,6 +150,13 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticJvmAnnotationClass(
+            named: "SinceKotlin",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticJvmAnnotationClass(
             named: "ExtensionFunctionType",
@@ -535,6 +542,34 @@ extension DataFlowSemaPhase {
                 ),
                 to: ignorableReturnValueSymbol,
                 symbols: symbols
+            )
+        }
+
+        if let sinceKotlinSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("SinceKotlin")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: [
+                        "AnnotationTarget.CLASS",
+                        "AnnotationTarget.PROPERTY",
+                        "AnnotationTarget.FIELD",
+                        "AnnotationTarget.CONSTRUCTOR",
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY_GETTER",
+                        "AnnotationTarget.PROPERTY_SETTER",
+                        "AnnotationTarget.TYPEALIAS",
+                    ]
+                ),
+                to: sinceKotlinSymbol,
+                symbols: symbols
+            )
+            registerSyntheticStringAnnotationPropertyAndConstructor(
+                ownerSymbol: sinceKotlinSymbol,
+                ownerFQName: kotlinPkg + [interner.intern("SinceKotlin")],
+                propertyName: "version",
+                symbols: symbols,
+                types: types,
+                interner: interner
             )
         }
 
@@ -1003,6 +1038,84 @@ extension DataFlowSemaPhase {
             annotationType = types.anyType
         }
         symbols.setPropertyType(types.makeKClassType(argument: annotationType), for: valueSymbol)
+    }
+
+    private func registerSyntheticStringAnnotationPropertyAndConstructor(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        propertyName: String,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let property = interner.intern(propertyName)
+        let propertyFQName = ownerFQName + [property]
+        let propertySymbol: SymbolID
+        if let existing = symbols.lookup(fqName: propertyFQName) {
+            propertySymbol = existing
+        } else {
+            propertySymbol = symbols.define(
+                kind: .property,
+                name: property,
+                fqName: propertyFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(types.stringType, for: propertySymbol)
+
+        let initName = interner.intern("<init>")
+        let constructorFQName = ownerFQName + [initName]
+        let hasMatchingConstructor = symbols.lookupAll(fqName: constructorFQName).contains { symbolID in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.kind == .constructor,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.parameterTypes == [types.stringType]
+        }
+        guard !hasMatchingConstructor else {
+            return
+        }
+
+        let constructorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: constructorFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: constructorSymbol)
+
+        let parameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: property,
+            fqName: constructorFQName + [property],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(constructorSymbol, for: parameterSymbol)
+
+        let ownerType = types.make(.classType(ClassType(
+            classSymbol: ownerSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [types.stringType],
+                returnType: ownerType,
+                valueParameterSymbols: [parameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false]
+            ),
+            for: constructorSymbol
+        )
     }
 
     private func appendSyntheticAnnotation(
