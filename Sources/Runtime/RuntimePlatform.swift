@@ -24,11 +24,11 @@ private enum RuntimePlatformCpuArchitecture: Int {
 }
 
 // MemoryModel ordinals match Kotlin stdlib MemoryModel enum:
-// EXPERIMENTAL=0, STRICT=1, RELAXED=2
+// STRICT=0, RELAXED=1, EXPERIMENTAL=2
 private enum RuntimePlatformMemoryModel: Int {
-    case experimental = 0
-    case strict = 1
-    case relaxed = 2
+    case strict = 0
+    case relaxed = 1
+    case experimental = 2
 }
 
 private let runtimePlatformCanAccessUnaligned: Bool = {
