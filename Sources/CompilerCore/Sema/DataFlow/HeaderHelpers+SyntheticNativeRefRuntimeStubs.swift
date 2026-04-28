@@ -412,6 +412,39 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+
+        // GC.targetHeapBytes: Long
+        registerSimpleProperty(
+            named: "targetHeapBytes",
+            ownerSymbol: objectSymbol,
+            ownerFQName: objectFQName,
+            propertyType: types.longType,
+            externalLinkName: "kk_gc_target_heap_bytes",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // GC.targetHeapUtilization: Double
+        registerSimpleProperty(
+            named: "targetHeapUtilization",
+            ownerSymbol: objectSymbol,
+            ownerFQName: objectFQName,
+            propertyType: types.doubleType,
+            externalLinkName: "kk_gc_target_heap_utilization",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // GC.maxHeapBytes: Long
+        registerSimpleProperty(
+            named: "maxHeapBytes",
+            ownerSymbol: objectSymbol,
+            ownerFQName: objectFQName,
+            propertyType: types.longType,
+            externalLinkName: "kk_gc_max_heap_bytes",
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Debugging object
@@ -545,6 +578,36 @@ extension DataFlowSemaPhase {
         }
         annotations.append(record)
         symbols.setAnnotations(annotations, for: symbol)
+    }
+
+    /// Registers a simple member function on `ownerSymbol`.
+    private func registerSimpleProperty(
+        named name: String,
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        propertyType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerFQName + [propertyName]
+
+        guard symbols.lookup(fqName: propertyFQName) == nil else {
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(propertyType, for: propertySymbol)
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
     }
 
     /// Registers a simple member function on `ownerSymbol`.
