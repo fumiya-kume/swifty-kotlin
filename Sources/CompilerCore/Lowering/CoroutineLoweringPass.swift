@@ -122,6 +122,7 @@ final class CoroutineLoweringPass: LoweringPass {
         let kxMiniDelayCallee = ctx.interner.intern("delay")
         let kxMiniYieldCallee = ctx.interner.intern("yield")
         let createCoroutineUninterceptedCallee = ctx.interner.intern("createCoroutineUnintercepted")
+        let startCoroutineUninterceptedOrReturnCallee = ctx.interner.intern("startCoroutineUninterceptedOrReturn")
         let runtimeRunBlockingCallee = ctx.interner.intern("kk_kxmini_run_blocking")
         let runtimeLaunchCallee = ctx.interner.intern("kk_kxmini_launch")
         let runtimeAsyncCallee = ctx.interner.intern("kk_kxmini_async")
@@ -298,8 +299,9 @@ final class CoroutineLoweringPass: LoweringPass {
             partial[entry.key] = value
         }
         let continuationFactory = ctx.interner.intern("kk_coroutine_continuation_new")
+        let runtimeCreateCoroutineUninterceptedCallee = ctx.interner.intern("kk_create_coroutine_unintercepted")
+        let runtimeStartCoroutineUninterceptedOrReturnCallee = ctx.interner.intern("kk_start_coroutine_unintercepted_or_return")
         let launcherArgSetCallee = ctx.interner.intern("kk_coroutine_launcher_arg_set")
-        let stateSetCompletionCallee = ctx.interner.intern("kk_coroutine_state_set_completion")
         let runtimeRunBlockingWithContCallee = ctx.interner.intern("kk_kxmini_run_blocking_with_cont")
         let kxMiniLauncherWithContCallees: [InternedString: InternedString] = [
             kxMiniRunBlockingCallee: ctx.interner.intern("kk_kxmini_run_blocking_with_cont"),
@@ -326,7 +328,9 @@ final class CoroutineLoweringPass: LoweringPass {
             yieldCallee: kxMiniYieldCallee,
             runtimeYieldCallee: runtimeYieldCallee,
             createCoroutineUninterceptedCallee: createCoroutineUninterceptedCallee,
-            stateSetCompletionCallee: stateSetCompletionCallee,
+            startCoroutineUninterceptedOrReturnCallee: startCoroutineUninterceptedOrReturnCallee,
+            runtimeCreateCoroutineUninterceptedCallee: runtimeCreateCoroutineUninterceptedCallee,
+            runtimeStartCoroutineUninterceptedOrReturnCallee: runtimeStartCoroutineUninterceptedOrReturnCallee,
             suspendCoroutineUninterceptedOrReturnCallee: suspendCoroutineUninterceptedOrReturnCallee,
             continuationFactory: continuationFactory,
             launcherArgSetCallee: launcherArgSetCallee,

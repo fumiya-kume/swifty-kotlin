@@ -105,4 +105,53 @@ final class CoroutineIntrinsicsSyntheticStubTests: XCTestCase {
             XCTAssertEqual(sema.bindings.exprTypes[callExpr], sema.types.intType)
         }
     }
+
+    func testStartCoroutineUninterceptedOrReturnOverloadsAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fqName = ["kotlin", "coroutines", "intrinsics", "startCoroutineUninterceptedOrReturn"].map {
+            interner.intern($0)
+        }
+        let symbols = sema.symbols.lookupAll(fqName: fqName)
+        XCTAssertEqual(symbols.count, 2)
+
+        let signatures = symbols.compactMap { sema.symbols.functionSignature(for: $0) }
+        XCTAssertEqual(signatures.count, 2)
+        XCTAssertTrue(symbols.allSatisfy { sema.symbols.externalLinkName(for: $0) == nil })
+        XCTAssertTrue(symbols.allSatisfy { sema.symbols.symbol($0)?.flags.contains(.inlineFunction) == true })
+        XCTAssertTrue(signatures.allSatisfy { $0.receiverType != nil })
+        XCTAssertTrue(signatures.allSatisfy { $0.returnType == sema.types.nullableAnyType })
+        XCTAssertTrue(signatures.contains(where: { $0.parameterTypes.count == 1 && $0.typeParameterSymbols.count == 1 }))
+        XCTAssertTrue(signatures.contains(where: { $0.parameterTypes.count == 2 && $0.typeParameterSymbols.count == 2 }))
+    }
+
+    func testStartCoroutineUninterceptedOrReturnResolvesInSource() throws {
+        let source = """
+        import kotlin.coroutines.Continuation
+        import kotlin.coroutines.intrinsics.startCoroutineUninterceptedOrReturn
+
+        fun probe(block: suspend () -> Int, completion: Continuation<Int>): Any? {
+            return block.startCoroutineUninterceptedOrReturn(completion)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "\(ctx.diagnostics.diagnostics)")
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, memberName, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(memberName) == "startCoroutineUninterceptedOrReturn"
+            })
+
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), nil)
+            XCTAssertEqual(sema.bindings.exprTypes[callExpr], sema.types.nullableAnyType)
+        }
+    }
 }

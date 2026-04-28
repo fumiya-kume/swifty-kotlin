@@ -145,7 +145,7 @@ final class ABIMismatchTests: XCTestCase {
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
         // Includes the Job lifecycle helpers plus the read-write lock runtime entry points.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 119)
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 121)
     }
 
     func testBoxingFunctionCount() {
@@ -445,6 +445,28 @@ final class ABIMismatchTests: XCTestCase {
         let spec = try requireSpec("kk_coroutine_suspended")
         XCTAssertEqual(spec.returnType, .opaquePointer)
         XCTAssertEqual(spec.parameters.count, 0)
+    }
+
+    func testKKCreateCoroutineUninterceptedSignature() throws {
+        let spec = try requireSpec("kk_create_coroutine_unintercepted")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 2)
+        XCTAssertEqual(spec.parameters[0].name, "entryPointRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "completionContinuation")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+    }
+
+    func testKKStartCoroutineUninterceptedOrReturnSignature() throws {
+        let spec = try requireSpec("kk_start_coroutine_unintercepted_or_return")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 3)
+        XCTAssertEqual(spec.parameters[0].name, "entryPointRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "continuation")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "outThrown")
+        XCTAssertEqual(spec.parameters[2].type, .nullableIntptrPointer)
     }
 
     func testKKSuspendFunctionInvokeSignature() throws {

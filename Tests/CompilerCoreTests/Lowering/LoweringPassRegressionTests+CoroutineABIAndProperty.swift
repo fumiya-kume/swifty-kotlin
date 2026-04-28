@@ -251,8 +251,9 @@ extension LoweringPassRegressionTests {
             guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
-        XCTAssertTrue(mainCallees.contains("kk_coroutine_continuation_new"))
-        XCTAssertTrue(mainCallees.contains("kk_coroutine_state_set_completion"))
+        XCTAssertTrue(mainCallees.contains("kk_create_coroutine_unintercepted"))
+        XCTAssertFalse(mainCallees.contains("kk_coroutine_continuation_new"))
+        XCTAssertFalse(mainCallees.contains("kk_coroutine_state_set_completion"))
         XCTAssertFalse(mainCallees.contains("kk_coroutine_launcher_arg_set"))
         XCTAssertFalse(mainCallees.contains("createCoroutineUnintercepted"))
         XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.severity == .error })
@@ -332,10 +333,170 @@ extension LoweringPassRegressionTests {
             guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
-        XCTAssertTrue(mainCallees.contains("kk_coroutine_continuation_new"))
+        XCTAssertTrue(mainCallees.contains("kk_create_coroutine_unintercepted"))
         XCTAssertTrue(mainCallees.contains("kk_coroutine_launcher_arg_set"))
-        XCTAssertTrue(mainCallees.contains("kk_coroutine_state_set_completion"))
+        XCTAssertFalse(mainCallees.contains("kk_coroutine_continuation_new"))
+        XCTAssertFalse(mainCallees.contains("kk_coroutine_state_set_completion"))
         XCTAssertFalse(mainCallees.contains("createCoroutineUnintercepted"))
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.severity == .error })
+    }
+
+    func testStartCoroutineUninterceptedOrReturnLoweringUsesRuntimeEntryPoint() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+
+        let mainSymbol = SymbolID(rawValue: 870)
+        let suspendSymbol = SymbolID(rawValue: 871)
+
+        let functionRefExpr = arena.appendExpr(.symbolRef(suspendSymbol))
+        let completionExpr = arena.appendExpr(.intLiteral(17))
+        let callResult = arena.appendExpr(.temporary(2))
+
+        let mainFn = KIRFunction(
+            symbol: mainSymbol,
+            name: interner.intern("main"),
+            params: [],
+            returnType: types.nullableAnyType,
+            body: [
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("startCoroutineUninterceptedOrReturn"),
+                    arguments: [functionRefExpr, completionExpr],
+                    result: callResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnValue(callResult),
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let suspendFn = KIRFunction(
+            symbol: suspendSymbol,
+            name: interner.intern("startNow"),
+            params: [],
+            returnType: types.unitType,
+            body: [.returnUnit],
+            isSuspend: true,
+            isInline: false
+        )
+
+        let mainID = arena.appendDecl(.function(mainFn))
+        _ = arena.appendDecl(.function(suspendFn))
+        let module = KIRModule(
+            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID])],
+            arena: arena
+        )
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "StartCoroutineUninterceptedTest",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: DiagnosticEngine(),
+            interner: interner
+        )
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        guard case let .function(loweredMain)? = module.arena.decl(mainID) else {
+            XCTFail("expected lowered main function")
+            return
+        }
+        let mainCallees = loweredMain.body.compactMap { instruction -> String? in
+            guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return nil }
+            return interner.resolve(callee)
+        }
+        XCTAssertTrue(mainCallees.contains("kk_create_coroutine_unintercepted"))
+        XCTAssertTrue(mainCallees.contains("kk_start_coroutine_unintercepted_or_return"))
+        XCTAssertFalse(mainCallees.contains("startCoroutineUninterceptedOrReturn"))
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.severity == .error })
+    }
+
+    func testStartCoroutineUninterceptedOrReturnWithReceiverStoresReceiverArg() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+
+        let mainSymbol = SymbolID(rawValue: 880)
+        let suspendSymbol = SymbolID(rawValue: 881)
+        let receiverParamSymbol = SymbolID(rawValue: 882)
+
+        let functionRefExpr = arena.appendExpr(.symbolRef(suspendSymbol))
+        let receiverExpr = arena.appendExpr(.intLiteral(41))
+        let completionExpr = arena.appendExpr(.intLiteral(17))
+        let callResult = arena.appendExpr(.temporary(3))
+
+        let mainFn = KIRFunction(
+            symbol: mainSymbol,
+            name: interner.intern("main"),
+            params: [],
+            returnType: types.nullableAnyType,
+            body: [
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("startCoroutineUninterceptedOrReturn"),
+                    arguments: [functionRefExpr, receiverExpr, completionExpr],
+                    result: callResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnValue(callResult),
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let suspendFn = KIRFunction(
+            symbol: suspendSymbol,
+            name: interner.intern("startWithReceiver"),
+            params: [KIRParameter(symbol: receiverParamSymbol, type: types.make(.primitive(.int, .nonNull)))],
+            returnType: types.unitType,
+            body: [.returnUnit],
+            isSuspend: true,
+            isInline: false
+        )
+
+        let mainID = arena.appendDecl(.function(mainFn))
+        _ = arena.appendDecl(.function(suspendFn))
+        let module = KIRModule(
+            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID])],
+            arena: arena
+        )
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "StartCoroutineUninterceptedReceiverTest",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: DiagnosticEngine(),
+            interner: interner
+        )
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        guard case let .function(loweredMain)? = module.arena.decl(mainID) else {
+            XCTFail("expected lowered main function")
+            return
+        }
+        let mainCallees = loweredMain.body.compactMap { instruction -> String? in
+            guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return nil }
+            return interner.resolve(callee)
+        }
+        XCTAssertTrue(mainCallees.contains("kk_create_coroutine_unintercepted"))
+        XCTAssertTrue(mainCallees.contains("kk_coroutine_launcher_arg_set"))
+        XCTAssertTrue(mainCallees.contains("kk_start_coroutine_unintercepted_or_return"))
+        XCTAssertFalse(mainCallees.contains("startCoroutineUninterceptedOrReturn"))
         XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.severity == .error })
     }
 
