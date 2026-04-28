@@ -336,7 +336,7 @@
 - [ ] STDLIB-I18N-COMMON-013: Native `Char.toChars()` / `Char.toCodePoint()` を追加する
 - [ ] STDLIB-TIME-EXP-001: `@ExperimentalTime` 系 API の整理（`Clock` / `TimeMark`）
 - [x] STDLIB-TIME-STABLE-008: `DurationUnit` enum surface を追加する
-- [ ] STDLIB-TIME-STABLE-009: `Int.toDuration(unit)` / `Long.toDuration(unit)` / `Double.toDuration(unit)` を追加する
+- [x] STDLIB-TIME-STABLE-009: `Int.toDuration(unit)` / `Long.toDuration(unit)` / `Double.toDuration(unit)` を追加する
 - [ ] STDLIB-TIME-EXP-002: `AbstractDoubleTimeSource` surface を追加する
 - [ ] STDLIB-TIME-EXP-003: `AbstractLongTimeSource` surface を追加する
 - [ ] STDLIB-TIME-EXP-004: `TestTimeSource` surface を追加する

@@ -378,6 +378,40 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    // MARK: - Numeric.toDuration(unit)
+
+    func testDurationStableNumericToDurationUnitOverloads() throws {
+        let source = """
+        import kotlin.time.DurationUnit
+        import kotlin.time.toDuration
+
+        fun main() {
+            val seconds = 2.toDuration(DurationUnit.SECONDS)
+            val milliseconds = 1500L.toDuration(DurationUnit.MILLISECONDS)
+            val minutes = 1.5.toDuration(DurationUnit.MINUTES)
+
+            println(seconds.inWholeSeconds)
+            println(milliseconds.inWholeMilliseconds)
+            println(minutes.inWholeSeconds)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "DurationStableToDurationUnit",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "2\n1500\n90\n")
+        }
+    }
+
     // MARK: - Duration / Duration -> Double
 
     func testDurationStableDurationDivisionReturnsDouble() throws {

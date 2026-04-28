@@ -188,4 +188,50 @@ final class DurationSyntheticStubTests: XCTestCase {
             XCTAssertEqual(functionType.returnType, signature.returnType)
         }
     }
+
+    func testNumericToDurationExtensionsAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let durationFQName = ["kotlin", "time", "Duration"].map { interner.intern($0) }
+        let durationSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: durationFQName))
+        let durationType = sema.types.make(.classType(ClassType(
+            classSymbol: durationSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let durationUnitFQName = ["kotlin", "time", "DurationUnit"].map { interner.intern($0) }
+        let durationUnitSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: durationUnitFQName))
+        let durationUnitType = sema.types.make(.classType(ClassType(
+            classSymbol: durationUnitSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let toDurationFQName = ["kotlin", "time", "toDuration"].map { interner.intern($0) }
+        let expected: [(receiver: TypeID, link: String)] = [
+            (sema.types.intType, "kk_duration_toDuration_int"),
+            (sema.types.longType, "kk_duration_toDuration_long"),
+            (sema.types.doubleType, "kk_duration_toDuration_double"),
+        ]
+
+        for overload in expected {
+            let symbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: toDurationFQName).first { symbolID in
+                guard let signature = sema.symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.receiverType == overload.receiver
+                    && signature.parameterTypes == [durationUnitType]
+                    && signature.returnType == durationType
+            })
+            XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .function)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: symbol), overload.link)
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+            XCTAssertEqual(signature.valueParameterSymbols.count, 1)
+            XCTAssertEqual(
+                sema.symbols.propertyType(for: signature.valueParameterSymbols[0]),
+                durationUnitType
+            )
+        }
+    }
 }
