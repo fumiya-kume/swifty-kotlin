@@ -76,6 +76,8 @@ extension ABIMismatchTests {
             "kk_instant_compare",
             "kk_instant_until",
             "kk_instant_elapsed",
+            "kk_instant_is_distant_past",
+            "kk_instant_is_distant_future",
             // Duration
             "kk_duration_zero",
             "kk_duration_infinite",

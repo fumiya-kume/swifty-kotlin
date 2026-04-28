@@ -53,6 +53,9 @@ private func saturatingAdd(_ a: Int64, _ b: Int64) -> Int64 {
     return result
 }
 
+private let runtimeDistantPastExclusiveEpochSeconds: Int64 = -3_217_862_419_200
+private let runtimeDistantFutureEpochSeconds: Int64 = 3_093_527_980_800
+
 // MARK: - Instant construction
 
 /// Returns the current wall-clock time as a kotlin.time.Instant.
@@ -120,6 +123,28 @@ public func kk_instant_nano_of_second(_ instantRaw: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_instant_nano_of_second received invalid Instant handle")
     }
     return Int(box.nanoOfSecond)
+}
+
+/// Returns whether an Instant is at or before Instant.DISTANT_PAST.
+///
+/// Kotlin: instant.isDistantPast
+@_cdecl("kk_instant_is_distant_past")
+public func kk_instant_is_distant_past(_ instantRaw: Int) -> Int {
+    guard let box = runtimeInstantBox(from: instantRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_instant_is_distant_past received invalid Instant handle")
+    }
+    return box.epochSeconds < runtimeDistantPastExclusiveEpochSeconds ? 1 : 0
+}
+
+/// Returns whether an Instant is at or after Instant.DISTANT_FUTURE.
+///
+/// Kotlin: instant.isDistantFuture
+@_cdecl("kk_instant_is_distant_future")
+public func kk_instant_is_distant_future(_ instantRaw: Int) -> Int {
+    guard let box = runtimeInstantBox(from: instantRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_instant_is_distant_future received invalid Instant handle")
+    }
+    return box.epochSeconds >= runtimeDistantFutureEpochSeconds ? 1 : 0
 }
 
 // MARK: - Instant arithmetic
