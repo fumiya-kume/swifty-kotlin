@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-04-26
+最終更新: 2026-04-28
 
 ---
 
@@ -55,6 +55,46 @@
 - [x] STDLIB-TEXT-EDGE-010: `CharSequence.removePrefix` / `removeSuffix` / `removeSurrounding` overload 群を追加する
 - [x] STDLIB-TEXT-EDGE-011: `CharSequence.zipWithNext()` / `zipWithNext(transform)` を追加する
 - [x] STDLIB-TEXT-EDGE-012: `Appendable.append(vararg CharSequence?)` と `StringBuilder.append(vararg String? / Any?)` を追加する
+- [ ] STDLIB-TEXT-SEQ-001: `CharSequence.chunkedSequence(size)` を追加する
+- [ ] STDLIB-TEXT-SEQ-002: `CharSequence.chunkedSequence(size, transform)` を追加する
+- [ ] STDLIB-TEXT-SEQ-003: `CharSequence.windowedSequence(size, step, partialWindows)` を追加する
+- [ ] STDLIB-TEXT-SEQ-004: `CharSequence.windowedSequence(size, step, partialWindows, transform)` を追加する
+- [ ] STDLIB-TEXT-SEARCH-001: `CharSequence.indexOfAny(chars, startIndex, ignoreCase)` を追加する
+- [ ] STDLIB-TEXT-SEARCH-002: `CharSequence.indexOfAny(strings, startIndex, ignoreCase)` を追加する
+- [ ] STDLIB-TEXT-SEARCH-003: `CharSequence.lastIndexOfAny(chars, startIndex, ignoreCase)` を追加する
+- [ ] STDLIB-TEXT-SEARCH-004: `CharSequence.lastIndexOfAny(strings, startIndex, ignoreCase)` を追加する
+- [ ] STDLIB-TEXT-SEARCH-005: `CharSequence.findAnyOf(strings, startIndex, ignoreCase)` を追加する
+- [ ] STDLIB-TEXT-SEARCH-006: `CharSequence.findLastAnyOf(strings, startIndex, ignoreCase)` を追加する
+- [ ] STDLIB-TEXT-REPLACE-001: `String.replaceAfter(delimiter, replacement, missingDelimiterValue)` を追加する
+- [ ] STDLIB-TEXT-REPLACE-002: `String.replaceAfterLast(delimiter, replacement, missingDelimiterValue)` を追加する
+- [ ] STDLIB-TEXT-REPLACE-003: `String.replaceBefore(delimiter, replacement, missingDelimiterValue)` を追加する
+- [ ] STDLIB-TEXT-REPLACE-004: `String.replaceBeforeLast(delimiter, replacement, missingDelimiterValue)` を追加する
+- [ ] STDLIB-TEXT-REPLACE-005: `String.replaceIndentByMargin(newIndent, marginPrefix)` を追加する
+- [ ] STDLIB-TEXT-TYPE-001: `kotlin.text.Appendable` interface surface を追加する
+- [ ] STDLIB-TEXT-TYPE-002: `kotlin.text.CharacterCodingException` class surface を追加する
+- [ ] STDLIB-TEXT-TYPE-003: `kotlin.text.Typography` object surface を追加する
+- [ ] STDLIB-TEXT-TYPE-004: `kotlin.text.CASE_INSENSITIVE_ORDER` comparator を追加する
+- [ ] STDLIB-TEXT-BUILDER-001: `StringBuilder.deleteAt(index)` を追加する
+- [ ] STDLIB-TEXT-BUILDER-002: `StringBuilder.deleteRange(startIndex, endIndex)` を追加する
+- [ ] STDLIB-TEXT-BUILDER-003: `StringBuilder.insertRange(index, value, startIndex, endIndex)` を追加する
+- [ ] STDLIB-TEXT-BUILDER-004: `StringBuilder.setRange(startIndex, endIndex, value)` を追加する
+- [ ] STDLIB-TEXT-HOF-001: `CharSequence.firstNotNullOf(transform)` を追加する
+- [ ] STDLIB-TEXT-HOF-002: `CharSequence.firstNotNullOfOrNull(transform)` を追加する
+- [ ] STDLIB-TEXT-HOF-003: `CharSequence.reduceRightIndexed(operation)` を追加する
+- [ ] STDLIB-TEXT-HOF-004: `CharSequence.reduceRightIndexedOrNull(operation)` を追加する
+- [ ] STDLIB-TEXT-HOF-005: `CharSequence.reduceRightOrNull(operation)` を追加する
+- [ ] STDLIB-TEXT-HOF-006: `CharSequence.sumBy(selector)` deprecated surface を追加する
+- [ ] STDLIB-TEXT-HOF-007: `CharSequence.sumByDouble(selector)` deprecated surface を追加する
+- [ ] STDLIB-TEXT-HEX-001: `String.hexToShort()` を追加する
+- [ ] STDLIB-TEXT-HEX-002: `String.hexToUByte()` を追加する
+- [ ] STDLIB-TEXT-HEX-003: `String.hexToUByteArray()` を追加する
+- [ ] STDLIB-TEXT-HEX-004: `String.hexToUInt()` を追加する
+- [ ] STDLIB-TEXT-HEX-005: `String.hexToULong()` を追加する
+- [ ] STDLIB-TEXT-HEX-006: `String.hexToUShort()` を追加する
+- [ ] STDLIB-TEXT-NUM-001: `String.toUByteOrNull(radix)` を追加する
+- [ ] STDLIB-TEXT-NUM-002: `String.toUIntOrNull(radix)` を追加する
+- [ ] STDLIB-TEXT-NUM-003: `String.toULongOrNull(radix)` を追加する
+- [ ] STDLIB-TEXT-NUM-004: `String.toUShortOrNull(radix)` を追加する
 
 ### Phase 2: コレクション・Sequence・Range
 - [ ] STDLIB-GAP-PH2: `kotlin.collections` / `kotlin.sequences` / `kotlin.ranges` の未対応を潰す
@@ -85,6 +125,11 @@
 - [x] STDLIB-SEQ-023: `Sequence.associateTo` / `associateByTo` / `associateWithTo` / `groupByTo` を追加する
 - [x] STDLIB-SEQ-024: `Sequence.toCollection(destination)` を追加する
 - [x] STDLIB-SEQ-025: `Sequence.toMutableList()` / `toMutableSet()` / `toHashSet()` を追加する
+- [ ] STDLIB-SEQ-026: `Sequence.firstNotNullOf(transform)` を追加する
+- [ ] STDLIB-SEQ-027: `Sequence.firstNotNullOfOrNull(transform)` を追加する
+- [ ] STDLIB-SEQ-028: `Sequence.minusElement(element)` を追加する
+- [ ] STDLIB-SEQ-029: `Sequence.sumBy(selector)` deprecated surface を追加する
+- [ ] STDLIB-SEQ-030: `Sequence.sumByDouble(selector)` deprecated surface を追加する
 - [x] STDLIB-COL-DEST-001: `filterTo` / `filterNotTo` / `filterIsInstanceTo` を追加する
 - [x] STDLIB-COL-DEST-002: `mapTo` / `mapIndexedTo` / `mapNotNullTo` を追加する
 - [x] STDLIB-COL-DEST-003: `flatMapTo` / `flatMapIndexedTo` を追加する
@@ -106,6 +151,47 @@
 - [x] STDLIB-COL-BSEARCH-003: `Array` / primitive array / unsigned array の `binarySearch(element, fromIndex, toIndex)` overload 群を追加する
 - [x] STDLIB-COL-BSEARCH-004: `Array.binarySearch(element, comparator, fromIndex, toIndex)` を追加する
 - [x] STDLIB-COL-WIN-001: `Iterable.windowed(size, step, partialWindows, transform)` overload を追加する
+- [ ] STDLIB-COL-TYPE-001: `AbstractCollection<E>` surface を追加する
+- [ ] STDLIB-COL-TYPE-002: `AbstractIterator<T>` surface を追加する
+- [ ] STDLIB-COL-TYPE-003: `AbstractMutableCollection<E>` surface を追加する
+- [ ] STDLIB-COL-TYPE-004: primitive iterator classes（`BooleanIterator`, `ByteIterator`, `ShortIterator`, `IntIterator`, `LongIterator`, `FloatIterator`, `DoubleIterator`, `CharIterator`）を追加する
+- [ ] STDLIB-COL-TYPE-005: `MutableIterable<T>` surface を追加する
+- [ ] STDLIB-COL-TYPE-006: `MutableListIterator<T>` surface を追加する
+- [ ] STDLIB-COL-ARRAY-001: array `contentToString()` overload 群を追加する
+- [ ] STDLIB-COL-ARRAY-002: array `contentDeepEquals(other)` を追加する
+- [ ] STDLIB-COL-ARRAY-003: array `contentDeepHashCode()` を追加する
+- [ ] STDLIB-COL-ARRAY-004: array `contentDeepToString()` を追加する
+- [ ] STDLIB-COL-ARRAY-005: array `copyInto(destination, destinationOffset, startIndex, endIndex)` overload 群を追加する
+- [ ] STDLIB-COL-ARRAY-006: array `reversedArray()` overload 群を追加する
+- [ ] STDLIB-COL-ARRAY-007: array `sliceArray(indices)` overload 群を追加する
+- [ ] STDLIB-COL-ARRAY-008: array `sortedArray()` overload 群を追加する
+- [ ] STDLIB-COL-ARRAY-009: array `sortedArrayDescending()` overload 群を追加する
+- [ ] STDLIB-COL-ARRAY-010: array `sortedArrayWith(comparator)` overload 群を追加する
+- [ ] STDLIB-COL-FACTORY-001: `arrayListOf(vararg elements)` を追加する
+- [ ] STDLIB-COL-FACTORY-002: `hashMapOf(vararg pairs)` を追加する
+- [ ] STDLIB-COL-FACTORY-003: `hashSetOf(vararg elements)` を追加する
+- [ ] STDLIB-COL-FACTORY-004: `linkedMapOf(vararg pairs)` を追加する
+- [ ] STDLIB-COL-FACTORY-005: `linkedSetOf(vararg elements)` を追加する
+- [ ] STDLIB-COL-FACTORY-006: `setOfNotNull(element)` / `setOfNotNull(vararg elements)` を追加する
+- [ ] STDLIB-COL-HOF-001: `Iterable.firstNotNullOf(transform)` を追加する
+- [ ] STDLIB-COL-HOF-002: `Iterable.firstNotNullOfOrNull(transform)` を追加する
+- [ ] STDLIB-COL-HOF-003: `Map.mapKeysTo(destination, transform)` を追加する
+- [ ] STDLIB-COL-HOF-004: `Map.mapValuesTo(destination, transform)` を追加する
+- [ ] STDLIB-COL-HOF-005: `Iterable.minusElement(element)` を追加する
+- [ ] STDLIB-COL-HOF-006: `Iterable.reduceRightIndexed(operation)` を追加する
+- [ ] STDLIB-COL-HOF-007: `Iterable.reduceRightIndexedOrNull(operation)` を追加する
+- [ ] STDLIB-COL-HOF-008: `Iterable.reduceRightOrNull(operation)` を追加する
+- [ ] STDLIB-COL-HOF-009: `Iterable.sumBy(selector)` deprecated surface を追加する
+- [ ] STDLIB-COL-HOF-010: `Iterable.sumByDouble(selector)` deprecated surface を追加する
+- [ ] STDLIB-COL-MUT-001: `MutableList.removeFirstOrNull()` を追加する
+- [ ] STDLIB-COL-MUT-002: `MutableList.removeLastOrNull()` を追加する
+- [ ] STDLIB-COL-MUT-003: `MutableList.sortWith(comparator)` を追加する
+- [ ] STDLIB-COL-CONV-001: `Collection<Boolean>.toBooleanArray()` を追加する
+- [ ] STDLIB-COL-CONV-002: `Collection<Short>.toShortArray()` を追加する
+- [ ] STDLIB-COL-CONV-003: `Collection<Double>.toDoubleArray()` を追加する
+- [ ] STDLIB-COL-CONV-004: `Collection<Float>.toFloatArray()` を追加する
+- [ ] STDLIB-COL-MAP-001: `Map.Entry<K, V>.toPair()` を追加する
+- [ ] STDLIB-COL-MAP-002: `Map.withDefault(defaultValue)` を追加する
 - [ ] STDLIB-022: range / progression / unsigned range の網羅性を上げる
 - [x] STDLIB-RANGE-IFACE-001: `kotlin.ranges.ClosedRange<T>` interface surface を追加する
 - [x] STDLIB-RANGE-IFACE-002: `kotlin.ranges.ClosedFloatingPointRange<T>` interface surface を追加する
@@ -135,6 +221,16 @@
 - [x] STDLIB-TIME-STABLE-006: `Duration / Duration -> Double` を追加する
 - [x] STDLIB-TIME-STABLE-007: `Duration.inWholeDays` property を追加する
 - [ ] STDLIB-033: `kotlin.concurrent` / `kotlin.concurrent.atomics` / Native concurrent の parity を上げる
+- [ ] STDLIB-ATOMIC-001: `kotlin.concurrent.atomics.AtomicNativePtr` surface を追加する
+- [ ] STDLIB-ATOMIC-002: `atomicArrayOfNulls<T>(size)` を追加する
+- [ ] STDLIB-ATOMIC-003: `AtomicInt.fetchAndDecrement()` / `AtomicLong.fetchAndDecrement()` を追加する
+- [ ] STDLIB-ATOMIC-004: `AtomicIntArray.fetchAndDecrementAt(index)` / `AtomicLongArray.fetchAndDecrementAt(index)` を追加する
+- [ ] STDLIB-ATOMIC-005: `AtomicIntArray.fetchAndIncrementAt(index)` / `AtomicLongArray.fetchAndIncrementAt(index)` を追加する
+- [ ] STDLIB-ATOMIC-006: `AtomicReference.fetchAndUpdate(function)` を追加する
+- [ ] STDLIB-ATOMIC-007: `AtomicArray.fetchAndUpdateAt(index, function)` を追加する
+- [ ] STDLIB-ATOMIC-008: `AtomicArray.updateAt(index, function)` を追加する
+- [ ] STDLIB-ATOMIC-009: `AtomicReference.updateAndFetch(function)` を追加する
+- [ ] STDLIB-ATOMIC-010: `AtomicArray.updateAndFetchAt(index, function)` を追加する
 - [ ] STDLIB-PROP-001: `kotlin.properties.ObservableProperty<V>` abstract class を追加し、`beforeChange` / `afterChange` hook を `Delegates.observable` / `vetoable` と結び付ける
 - [ ] STDLIB-PROP-002: `kotlin.properties.PropertyDelegateProvider<T, D>` fun interface を追加し、provider 型付けと `provideDelegate` ベースの delegate factory surface を揃える
 
@@ -196,6 +292,35 @@
 - [ ] STDLIB-KOTLIN-ROOT-003: `ExposedCopyVisibility` annotation を追加し、public `copy()` 維持モードの suppression semantics を実装する
 - [x] STDLIB-KOTLIN-ROOT-004: `ExperimentalVersionOverloading` marker を追加し、`@OptIn` / `-opt-in` diagnostics と結び付ける
 - [ ] STDLIB-KOTLIN-ROOT-005: `ContextFunctionTypeParams(count: Int)` type annotation を追加する
+- [ ] STDLIB-KOTLIN-ROOT-ANNO-001: `BuilderInference` annotation surface を追加する
+- [ ] STDLIB-KOTLIN-ROOT-ANNO-002: `DeprecatedSinceKotlin(warningSince, errorSince, hiddenSince)` annotation surface を追加する
+- [ ] STDLIB-KOTLIN-ROOT-ANNO-003: `DslMarker` annotation surface を追加する
+- [ ] STDLIB-KOTLIN-ROOT-ANNO-004: `OptionalExpectation` annotation surface を追加する
+- [ ] STDLIB-KOTLIN-ROOT-ANNO-005: `ParameterName(name: String)` annotation surface を追加する
+- [ ] STDLIB-KOTLIN-ROOT-ANNO-006: `PublishedApi` annotation surface を追加する
+- [ ] STDLIB-KOTLIN-ROOT-ANNO-007: `SinceKotlin(version: String)` annotation surface を追加する
+- [ ] STDLIB-KOTLIN-ROOT-ANNO-008: `Throws(vararg exceptionClasses: KClass<out Throwable>)` annotation surface を追加する
+- [ ] STDLIB-KOTLIN-ROOT-ANNO-009: `ExperimentalContextParameters` opt-in marker を追加する
+- [ ] STDLIB-KOTLIN-ROOT-ANNO-010: `IgnorableReturnValue` annotation surface を追加する
+- [ ] STDLIB-KOTLIN-ROOT-ANNO-011: `IntroducedAt(version: String)` annotation surface を追加する
+- [ ] STDLIB-KOTLIN-ROOT-ANNO-012: `MustUseReturnValues` annotation surface を追加する
+- [ ] STDLIB-KOTLIN-ROOT-VERSION-001: `KotlinVersion` constructor と `major` / `minor` / `patch` properties を追加する
+- [ ] STDLIB-KOTLIN-ROOT-VERSION-002: `KotlinVersion.CURRENT` と comparison helpers（`compareTo`, `isAtLeast`）を追加する
+- [ ] STDLIB-KOTLIN-ROOT-EXC-001: `NoWhenBranchMatchedException` class surface を追加する
+- [ ] STDLIB-KOTLIN-ROOT-EXC-002: `ConcurrentModificationException` class surface を追加する
+- [ ] STDLIB-KOTLIN-ROOT-EXC-003: Native `ArrayIndexOutOfBoundsException` class surface を追加する
+- [ ] STDLIB-KOTLIN-ROOT-CLOSE-001: `AutoCloseable(closeAction: () -> Unit)` factory を追加する
+- [ ] STDLIB-KOTLIN-ROOT-CLOSE-002: `AutoCloseable?.use { ... }` common extension を追加する
+- [ ] STDLIB-KOTLIN-ROOT-ARRAY-001: `arrayOfNulls<T>(size: Int)` root array factory を追加する
+- [ ] STDLIB-KOTLIN-ROOT-LAZY-001: `lazyOf(value)` root lazy factory を追加する
+- [ ] STDLIB-KOTLIN-ROOT-CTX-001: experimental `context(with, block)` helper を追加する
+- [ ] STDLIB-KOTLIN-ROOT-CTX-002: experimental `context(a, b, ..., block)` overload 群を追加する
+- [ ] STDLIB-KOTLIN-ROOT-CTX-003: experimental `contextOf<A>()` helper を追加する
+- [ ] STDLIB-KOTLIN-ROOT-REFLECT-001: `KProperty0<*>.isInitialized` root extension property を追加する
+- [ ] STDLIB-KOTLIN-ROOT-THROW-001: `Throwable.suppressedExceptions` property を追加する
+- [ ] STDLIB-KOTLIN-ROOT-THROW-002: `Throwable.printStackTrace()` を追加する
+- [ ] STDLIB-KOTLIN-ROOT-NUM-001: integer `floorDiv` overload 行列を追加する
+- [ ] STDLIB-KOTLIN-ROOT-NUM-002: integer/floating `mod` overload 行列を追加する
 - [ ] STDLIB-I18N-COMMON-001: `kotlin.text` / common のフォーマット・ロケール
 - [x] STDLIB-I18N-COMMON-002: `Char.category` を `CharCategory` enum で露出する（現状は `Int` placeholder）
 - [ ] STDLIB-I18N-COMMON-003: `String.Companion.format(locale, format, vararg args)` を追加する
@@ -203,10 +328,30 @@
 - [ ] STDLIB-I18N-COMMON-005: `Char.lowercase(Locale)` を追加する
 - [x] STDLIB-I18N-COMMON-006: `String.toIntOrNull(radix: Int)` を追加する
 - [ ] STDLIB-I18N-COMMON-007: `Char.directionality` を `CharDirectionality` enum で露出する（現状は `Int` placeholder）
+- [ ] STDLIB-I18N-COMMON-008: `Char.lowercaseChar()` を追加する
+- [ ] STDLIB-I18N-COMMON-009: `Char.uppercaseChar()` を追加する
+- [ ] STDLIB-I18N-COMMON-010: `Char.titlecaseChar()` を追加する
+- [ ] STDLIB-I18N-COMMON-011: `Char.isDefined()` を追加する
+- [ ] STDLIB-I18N-COMMON-012: Native `Char.isSupplementaryCodePoint()` / `Char.isSurrogatePair()` を追加する
+- [ ] STDLIB-I18N-COMMON-013: Native `Char.toChars()` / `Char.toCodePoint()` を追加する
 - [ ] STDLIB-TIME-EXP-001: `@ExperimentalTime` 系 API の整理（`Clock` / `TimeMark`）
+- [ ] STDLIB-TIME-STABLE-008: `DurationUnit` enum surface を追加する
+- [ ] STDLIB-TIME-STABLE-009: `Int.toDuration(unit)` / `Long.toDuration(unit)` / `Double.toDuration(unit)` を追加する
+- [ ] STDLIB-TIME-EXP-002: `AbstractDoubleTimeSource` surface を追加する
+- [ ] STDLIB-TIME-EXP-003: `AbstractLongTimeSource` surface を追加する
+- [ ] STDLIB-TIME-EXP-004: `TestTimeSource` surface を追加する
+- [ ] STDLIB-TIME-EXP-005: `Instant.isDistantPast` / `Instant.isDistantFuture` properties を追加する
+- [ ] STDLIB-TIME-EXP-006: `TimeSource.asClock()` を追加する
 - [~] STDLIB-CORO-001: `kotlin.coroutines.intrinsics` / cancellation — 主要部分実装済み（`suspendCoroutineUninterceptedOrReturn`, `intercepted`, `CancellationException`）。残課題は別チケットへ分割。
 - [ ] STDLIB-CORO-002: `kotlin.coroutines.intrinsics` の runtime entry point（`startCoroutineUninterceptedOrReturn`, `createCoroutineUnintercepted`）を追加する。対応 C ABI 名: `kk_start_coroutine_unintercepted_or_return`, `kk_create_coroutine_unintercepted`。
 - [ ] STDLIB-CORO-003: `kotlin.coroutines` の一部ランタイム経路をセマフォ待機から脱却する。対象: `RuntimeAsyncTask.awaitResult`, `RuntimeJobHandle.join`, `kk_with_context`, Channel send/receive, Sequence builder( `sequence`, `iterator` ) の待機部。
+- [ ] STDLIB-CORO-004: `kotlin.coroutines.RestrictsSuspension` annotation を追加する
+- [ ] STDLIB-CORO-005: `suspend () -> T`.`startCoroutine(completion)` を追加する
+- [ ] STDLIB-CORO-006: `suspend R.() -> T`.`startCoroutine(receiver, completion)` を追加する
+- [ ] STDLIB-CORO-007: `CoroutineContext.Key.getPolymorphicElement(element)` を追加する
+- [ ] STDLIB-CORO-008: `CoroutineContext.Key.minusPolymorphicKey(key)` を追加する
+- [ ] STDLIB-CONTRACTS-001: `ExperimentalExtendedContracts` marker を追加する
+- [ ] STDLIB-CONTRACTS-002: `HoldsIn` effect surface を追加する
 - [ ] STDLIB-NATIVE-REF-001: `kotlin.native.ref` / `kotlin.native.runtime` の API 棚卸しを固定
 - [ ] STDLIB-NATIVE-REF-002: `kotlin.native.ref` / `kotlin.native.runtime` の sema 露出を整える
 - [ ] STDLIB-NATIVE-REF-003: `kotlin.native.ref` / `kotlin.native.runtime` の runtime / ABI を最小必要実装へ整理
@@ -214,6 +359,10 @@
 - [ ] STDLIB-NATIVE-REF-005: `kotlin.native.ref.createCleaner` API の runtime 実装を追加する（`kk_cleaner_*` API の追加）
 - [ ] STDLIB-NATIVE-REF-006: `kotlin.native.runtime.GC` の欠損プロパティと `schedule()` を runtime レベルで追加する（`targetHeapBytes`, `targetHeapUtilization`, `maxHeapBytes`, `schedule`）
 - [ ] STDLIB-NATIVE-REF-007: `kotlin.native.runtime.Debugging` の欠損トラッキング API を追加する（`gcSuspendCount`, `threadCount`, `globalObjectCount`）
+- [ ] STDLIB-NATIVE-REF-008: `kotlin.native.runtime.GCInfo` surface を追加する
+- [ ] STDLIB-NATIVE-REF-009: `kotlin.native.runtime.RootSetStatistics` surface を追加する
+- [ ] STDLIB-NATIVE-REF-010: `kotlin.native.runtime.SweepStatistics` surface を追加する
+- [ ] STDLIB-NATIVE-REF-011: `kotlin.native.runtime.NativeRuntimeApi` marker を追加する
 - [ ] STDLIB-SYSTEM-001: `kotlin.system` の対象 API 一覧を固定
 - [ ] STDLIB-SYSTEM-002: `kotlin.system` の sema / lowering を整える
 - [ ] STDLIB-SYSTEM-003: `kotlin.system` の runtime / 計測系テストを固定
@@ -236,9 +385,38 @@
 - [ ] STDLIB-NATIVE-PLATFORM-001: `kotlin.native` の platform info 残差を詰める
 - [ ] STDLIB-NATIVE-PLATFORM-002: common から見える Native bridge を整理
 - [ ] STDLIB-NATIVE-PLATFORM-003: `kotlin.native.MemoryModel` enum stub と platform bridge を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-004: `FreezingIsDeprecated` marker を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-005: `HiddenFromObjC` annotation を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-006: `NoInline` annotation を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-007: `ObsoleteNativeApi` marker を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-008: `EagerInitialization` annotation を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-009: `BitSet` surface を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-010: `ImmutableBlob` type と `immutableBlobOf(...)` factory を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-011: `Vector128` type と `vectorOf(...)` factory を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-012: Native `Any.asCPointer()` / `Any.asUCPointer()` を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-013: Native pointer `getByteAt` / `getShortAt` / `getIntAt` / `getLongAt` accessors を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-014: Native pointer `getUByteAt` / `getUShortAt` / `getUIntAt` / `getULongAt` accessors を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-015: Native pointer `getCharAt` / `getFloatAt` / `getDoubleAt` accessors を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-016: Native pointer `setByteAt` / `setShortAt` / `setIntAt` / `setLongAt` accessors を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-017: Native pointer `setUByteAt` / `setUShortAt` / `setUIntAt` / `setULongAt` accessors を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-018: Native pointer `setCharAt` / `setFloatAt` / `setDoubleAt` accessors を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-019: Native `identityHashCode(obj)` を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-020: Native `getStackTraceAddresses()` を追加する
+- [ ] STDLIB-NATIVE-PLATFORM-021: Native unhandled-exception hook APIs（`getUnhandledExceptionHook`, `setUnhandledExceptionHook`, `processUnhandledException`, `terminateWithUnhandledException`）を追加する
 - [ ] STDLIB-NATIVE-CONCURRENT-001: `kotlin.native.concurrent` の対象 API 一覧を固定
 - [ ] STDLIB-NATIVE-CONCURRENT-002: `kotlin.native.concurrent` の sema / diagnostics を整える
 - [ ] STDLIB-NATIVE-CONCURRENT-003: `kotlin.native.concurrent` の最小 runtime / ABI を実装
+- [ ] STDLIB-NATIVE-CONCURRENT-004: `DetachedObjectGraph<T>` surface を追加する
+- [ ] STDLIB-NATIVE-CONCURRENT-005: `FreezingException` class surface を追加する
+- [ ] STDLIB-NATIVE-CONCURRENT-006: `InvalidMutabilityException` class surface を追加する
+- [ ] STDLIB-NATIVE-CONCURRENT-007: `WorkerBoundReference<T>` surface を追加する
+- [ ] STDLIB-NATIVE-CONCURRENT-008: `atomicLazy(initializer)` を追加する
+- [ ] STDLIB-NATIVE-CONCURRENT-009: `Any.ensureNeverFrozen()` を追加する
+- [ ] STDLIB-NATIVE-CONCURRENT-010: `Continuation0` / `Continuation1` / `Continuation2` type surface を追加する
+- [ ] STDLIB-NATIVE-CONCURRENT-011: `callContinuation0` / `callContinuation1` / `callContinuation2` を追加する
+- [ ] STDLIB-NATIVE-CONCURRENT-012: `waitForMultipleFutures(futures)` を追加する
+- [ ] STDLIB-NATIVE-CONCURRENT-013: `waitWorkerTermination(worker)` を追加する
+- [ ] STDLIB-NATIVE-CONCURRENT-014: `withWorker(name, block)` を追加する
 - [ ] STDLIB-EXPERIMENTAL-001: `kotlin.experimental` の marker 一覧を固定
 - [ ] STDLIB-EXPERIMENTAL-002: `kotlin.experimental` の opt-in / diagnostics を整える
 - [ ] STDLIB-EXPERIMENTAL-003: `kotlin.experimental.ExpectRefinement` annotation を追加し、expect declaration metadata へ露出する
