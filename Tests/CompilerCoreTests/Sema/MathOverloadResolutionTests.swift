@@ -37,10 +37,19 @@ final class MathOverloadResolutionTests: XCTestCase {
             for exprIndex in ast.arena.exprs.indices {
                 let exprID = ExprID(rawValue: Int32(exprIndex))
                 guard let expr = ast.arena.expr(exprID) else { continue }
-                guard case let .call(calleeExpr, _, _, _) = expr,
-                      case let .nameRef(calleeName, _) = ast.arena.expr(calleeExpr),
-                      ctx.interner.resolve(calleeName) == callName
-                else { continue }
+                let matchesCallName: Bool
+                switch expr {
+                case let .call(calleeExpr, _, _, _):
+                    guard case let .nameRef(calleeName, _) = ast.arena.expr(calleeExpr) else {
+                        continue
+                    }
+                    matchesCallName = ctx.interner.resolve(calleeName) == callName
+                case let .memberCall(_, calleeName, _, _, _):
+                    matchesCallName = ctx.interner.resolve(calleeName) == callName
+                default:
+                    continue
+                }
+                guard matchesCallName else { continue }
                 if let chosenCallee = sema.bindings.callBinding(for: exprID)?.chosenCallee {
                     result = sema.symbols.externalLinkName(for: chosenCallee)
                 }
@@ -144,19 +153,42 @@ final class MathOverloadResolutionTests: XCTestCase {
 
     func testIEEEremNextTowardsAndWithSignOverloads() throws {
         let cases: [(name: String, source: String, expectedLink: String)] = [
-            ("IEEErem", "fun f(x: Double, y: Double): Double = IEEErem(x, y)", "kk_math_IEEErem"),
-            ("IEEErem", "fun f(x: Float, y: Float): Float = IEEErem(x, y)", "kk_math_IEEErem_float"),
-            ("nextTowards", "fun f(x: Double, y: Double): Double = nextTowards(x, y)", "kk_math_nextTowards"),
-            ("nextTowards", "fun f(x: Float, y: Float): Float = nextTowards(x, y)", "kk_math_nextTowards_float"),
-            ("withSign", "fun f(x: Double, y: Double): Double = withSign(x, y)", "kk_math_withSign"),
-            ("withSign", "fun f(x: Double, sign: Int): Double = withSign(x, sign)", "kk_math_withSign_int"),
-            ("withSign", "fun f(x: Float, y: Float): Float = withSign(x, y)", "kk_math_withSign_float"),
-            ("withSign", "fun f(x: Float, sign: Int): Float = withSign(x, sign)", "kk_math_withSign_float_int"),
+            ("IEEErem", "fun f(x: Double, y: Double): Double = x.IEEErem(y)", "kk_math_IEEErem"),
+            ("IEEErem", "fun f(x: Float, y: Float): Float = x.IEEErem(y)", "kk_math_IEEErem_float"),
+            ("nextTowards", "fun f(x: Double, y: Double): Double = x.nextTowards(y)", "kk_math_nextTowards"),
+            ("nextTowards", "fun f(x: Float, y: Float): Float = x.nextTowards(y)", "kk_math_nextTowards_float"),
+            ("withSign", "fun f(x: Double, y: Double): Double = x.withSign(y)", "kk_math_withSign"),
+            ("withSign", "fun f(x: Double, sign: Int): Double = x.withSign(sign)", "kk_math_withSign_int"),
+            ("withSign", "fun f(x: Float, y: Float): Float = x.withSign(y)", "kk_math_withSign_float"),
+            ("withSign", "fun f(x: Float, sign: Int): Float = x.withSign(sign)", "kk_math_withSign_float_int"),
         ]
 
         for testCase in cases {
             let link = try resolvedLink(forCall: testCase.name, withSource: testCase.source)
             XCTAssertEqual(link, testCase.expectedLink)
+        }
+    }
+
+    func testFloatingMemberOnlyMathFunctionsRejectTopLevelCalls() throws {
+        let source = """
+        import kotlin.math.*
+
+        fun sample(d: Double, f: Float, i: Int) {
+            IEEErem(d, d)
+            IEEErem(f, f)
+            nextTowards(d, d)
+            nextTowards(f, f)
+            withSign(d, d)
+            withSign(d, i)
+            withSign(f, f)
+            withSign(f, i)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertTrue(ctx.diagnostics.hasError, "Expected member-only math helpers to reject top-level calls.")
         }
     }
 

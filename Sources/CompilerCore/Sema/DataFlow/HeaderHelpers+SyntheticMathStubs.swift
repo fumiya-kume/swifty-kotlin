@@ -74,15 +74,17 @@ extension DataFlowSemaPhase {
             ("withSign", [(name: "x", type: types.floatType), (name: "sign", type: types.intType)], types.floatType, "kk_math_withSign_float_int"),
         ]
         for overload in remainingFloatingMemberOverloads {
-            registerSyntheticMathTopLevelFunction(
-                named: overload.name,
-                packageFQName: kotlinMathPkg,
-                parameters: overload.parameters,
-                returnType: overload.returnType,
-                externalLinkName: overload.linkName,
-                symbols: symbols,
-                interner: interner
-            )
+            if overload.name == "pow" {
+                registerSyntheticMathTopLevelFunction(
+                    named: overload.name,
+                    packageFQName: kotlinMathPkg,
+                    parameters: overload.parameters,
+                    returnType: overload.returnType,
+                    externalLinkName: overload.linkName,
+                    symbols: symbols,
+                    interner: interner
+                )
+            }
             if let receiverParameter = overload.parameters.first {
                 registerSyntheticMathExtensionFunction(
                     named: overload.name,
