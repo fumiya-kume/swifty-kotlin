@@ -245,7 +245,83 @@ extension LambdaLowerer {
         {
             captures.append(receiverSymbol)
         }
+        if containsContextOfCall(in: lambdaBodyExprID, ast: ast, sema: sema) {
+            for contextValue in driver.ctx.activeContextValues
+                where !captures.contains(contextValue.symbol)
+                    && canCaptureSymbolForLambda(
+                        contextValue.symbol,
+                        lambdaExprID: lambdaExprID,
+                        lambdaParamCount: lambdaParamCount,
+                        sema: sema
+                    )
+            {
+                captures.append(contextValue.symbol)
+            }
+        }
         return captures
+    }
+
+    func containsContextOfCall(in exprID: ExprID, ast: ASTModule, sema: SemaModule) -> Bool {
+        if sema.bindings.stdlibSpecialCallKind(for: exprID) == .contextOf {
+            return true
+        }
+        guard let expr = ast.arena.expr(exprID) else {
+            return false
+        }
+        let check = { (id: ExprID) -> Bool in
+            self.containsContextOfCall(in: id, ast: ast, sema: sema)
+        }
+        switch expr {
+        case let .blockExpr(stmts, trailing, _):
+            return stmts.contains(where: check) || trailing.map(check) ?? false
+        case let .call(callee, _, args, _):
+            return check(callee) || args.contains { check($0.expr) }
+        case let .memberCall(receiver, _, _, args, _),
+             let .safeMemberCall(receiver, _, _, args, _):
+            return check(receiver) || args.contains { check($0.expr) }
+        case let .binary(_, lhs, rhs, _):
+            return check(lhs) || check(rhs)
+        case let .ifExpr(cond, thenExpr, elseExpr, _):
+            return check(cond) || check(thenExpr) || elseExpr.map(check) ?? false
+        case let .whenExpr(subject, branches, elseBody, _):
+            return checkWhenExprChildren(subject: subject, branches: branches, elseBody: elseBody, check: check)
+        case let .returnExpr(value, _, _):
+            return value.map(check) ?? false
+        case let .unaryExpr(_, operand, _),
+             let .nullAssert(operand, _),
+             let .throwExpr(operand, _):
+            return check(operand)
+        case let .isCheck(operand, _, _, _),
+             let .asCast(operand, _, _, _):
+            return check(operand)
+        case let .tryExpr(body, _, finallyBody, _):
+            return check(body) || finallyBody.map(check) ?? false
+        case let .lambdaLiteral(_, bodyExpr, _, _):
+            return check(bodyExpr)
+        case let .indexedAccess(receiver, indices, _):
+            return check(receiver) || indices.contains(where: check)
+        case let .stringTemplate(parts, _):
+            return checkStringTemplateParts(parts, check: check)
+        case let .localDecl(_, _, _, initializer, _, _):
+            return initializer.map(check) ?? false
+        case .localAssign, .compoundAssign, .memberAssign, .indexedAssign, .indexedCompoundAssign:
+            return checkAssignmentChildren(expr, check: check)
+        case let .inExpr(lhs, rhs, _),
+             let .notInExpr(lhs, rhs, _):
+            return check(lhs) || check(rhs)
+        case let .callableRef(receiver, _, _):
+            return receiver.map(check) ?? false
+        case let .localFunDecl(_, _, _, body, _, _):
+            return checkFunctionBody(body, check: check)
+        case let .forExpr(_, iterable, body, _, _):
+            return check(iterable) || check(body)
+        case let .whileExpr(condition, body, _, _):
+            return check(condition) || check(body)
+        case let .doWhileExpr(body, condition, _, _):
+            return check(body) || check(condition)
+        default:
+            return false
+        }
     }
 
     /// STDLIB-004: Check if an expression tree contains any implicit receiver

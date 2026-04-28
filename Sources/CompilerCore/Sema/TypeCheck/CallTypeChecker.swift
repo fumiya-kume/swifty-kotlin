@@ -443,7 +443,7 @@ final class CallTypeChecker {
             )))
             let lambdaType = driver.inferExpr(
                 blockArg.expr,
-                ctx: ctx,
+                ctx: ctx.withContextReceivers(contextValueTypes),
                 locals: &locals,
                 expectedType: lambdaExpectedType
             )
@@ -487,6 +487,73 @@ final class CallTypeChecker {
             sema.bindings.markScopeFunctionExpr(id, kind: .scopeContext)
             sema.bindings.bindExprType(id, type: returnType)
             return returnType
+        }
+
+        // --- Context value helper: contextOf<A>() (STDLIB-KOTLIN-ROOT-CTX-003) ---
+        // Must intercept before normal overload resolution so the result can
+        // bind to the active context receiver stack rather than a value argument.
+        let contextOfHelperName = interner.intern("contextOf")
+        if let calleeName, args.isEmpty,
+           calleeName == contextOfHelperName,
+           locals[calleeName] == nil,
+           !ctx.cachedScopeLookup(calleeName).contains(where: { candidate in
+               guard let sym = ctx.cachedSymbol(candidate) else { return false }
+               return !sym.flags.contains(.synthetic)
+           })
+        {
+            if explicitTypeArgs.count > 1 {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0002",
+                    "No viable overload found for call.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+
+            let requestedType = explicitTypeArgs.first ?? expectedType ?? sema.types.nullableAnyType
+            let hasMatchingContext = ctx.activeContextReceiverTypes.reversed().contains { activeType in
+                sema.types.isSubtype(activeType, requestedType)
+            }
+            guard hasMatchingContext else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0002",
+                    "No context value found for contextOf.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+
+            if let contextOfSymbol = ctx.cachedScopeLookup(calleeName).first(where: { candidate in
+                guard let sym = ctx.cachedSymbol(candidate),
+                      sym.flags.contains(.synthetic),
+                      sym.fqName.map({ interner.resolve($0) }) == ["kotlin", "contextOf"],
+                      let signature = sema.symbols.functionSignature(for: candidate)
+                else {
+                    return false
+                }
+                return signature.parameterTypes.isEmpty
+            }) {
+                driver.helpers.checkOptIn(
+                    for: contextOfSymbol,
+                    ctx: ctx,
+                    range: range,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: contextOfSymbol,
+                        substitutedTypeArguments: [requestedType],
+                        parameterMapping: [:]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(contextOfSymbol))
+            }
+            sema.bindings.markStdlibSpecialCallExpr(id, kind: .contextOf)
+            sema.bindings.bindExprType(id, type: requestedType)
+            return requestedType
         }
 
         // --- produce { ... } builder (CORO-075) ---

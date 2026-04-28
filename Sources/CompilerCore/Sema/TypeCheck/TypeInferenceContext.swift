@@ -9,6 +9,7 @@ struct TypeInferenceContext {
     let interner: StringInterner
     var scope: Scope
     var implicitReceiverType: TypeID?
+    var activeContextReceiverTypes: [TypeID]
     var loopDepth: Int
     var loopLabelStack: [InternedString]
     /// Stack of labels attached to enclosing lambda literals.
@@ -66,6 +67,12 @@ struct TypeInferenceContext {
         return copy
     }
 
+    func withContextReceivers(_ newTypes: [TypeID]) -> TypeInferenceContext {
+        var copy = self
+        copy.activeContextReceiverTypes += newTypes
+        return copy
+    }
+
     func withLambdaLabel(_ label: InternedString) -> TypeInferenceContext {
         var copy = self
         copy.lambdaLabelStack = lambdaLabelStack + [label]
@@ -87,6 +94,7 @@ struct TypeInferenceContext {
     func copying(
         scope: Scope? = nil,
         implicitReceiverType: TypeID?? = nil,
+        activeContextReceiverTypes: [TypeID]? = nil,
         loopDepth: Int? = nil,
         loopLabelStack: [InternedString]? = nil,
         lambdaLabelStack: [InternedString]? = nil,
@@ -107,6 +115,7 @@ struct TypeInferenceContext {
                 copy.activeDslMarkerAnnotations = []
             }
         }
+        if let activeContextReceiverTypes { copy.activeContextReceiverTypes = activeContextReceiverTypes }
         if let loopDepth { copy.loopDepth = loopDepth }
         if let loopLabelStack { copy.loopLabelStack = loopLabelStack }
         if let lambdaLabelStack { copy.lambdaLabelStack = lambdaLabelStack }

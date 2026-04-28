@@ -349,6 +349,15 @@ final class CallLowerer {
             return loweredTypeOf
         }
 
+        if let loweredContextOf = lowerContextOfCallExpr(
+            exprID,
+            sema: sema,
+            arena: arena,
+            instructions: &instructions
+        ) {
+            return loweredContextOf
+        }
+
         if let loweredComparison = lowerComparisonSpecialCallExpr(
             exprID,
             args: args,
@@ -422,20 +431,38 @@ final class CallLowerer {
            args.count <= 7
         {
             let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            var contextValues: [KIRLoweringContext.ActiveContextValue] = []
+            contextValues.reserveCapacity(args.count - 1)
             for contextArgument in args.dropLast() {
-                _ = driver.lowerExpr(
+                let loweredContextID = driver.lowerExpr(
                     contextArgument.expr,
                     ast: ast, sema: sema, arena: arena, interner: interner,
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
+                let contextType = sema.bindings.exprTypes[contextArgument.expr]
+                    ?? arena.exprType(loweredContextID)
+                    ?? sema.types.anyType
+                let contextSymbol = driver.ctx.allocateSyntheticGeneratedSymbol()
+                let contextExpr = arena.appendExpr(.symbolRef(contextSymbol), type: contextType)
+                instructions.append(.copy(from: loweredContextID, to: contextExpr))
+                driver.ctx.setLocalValue(contextExpr, for: contextSymbol)
+                driver.ctx.setLocalDeclaredType(contextType, for: contextSymbol)
+                contextValues.append(KIRLoweringContext.ActiveContextValue(
+                    type: contextType,
+                    symbol: contextSymbol,
+                    exprID: contextExpr
+                ))
             }
+            let savedContextValues = driver.ctx.activeContextValuesSnapshot()
+            driver.ctx.appendActiveContextValues(contextValues)
             let loweredLambdaID = driver.lowerExpr(
                 args[args.count - 1].expr,
                 ast: ast, sema: sema, arena: arena, interner: interner,
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
+            driver.ctx.restoreActiveContextValues(savedContextValues)
 
             let result = arena.appendExpr(
                 .temporary(Int32(arena.expressions.count)),
@@ -2567,6 +2594,26 @@ final class CallLowerer {
             canThrow: false,
             thrownResult: nil
         ))
+        return result
+    }
+
+    // MARK: - STDLIB-KOTLIN-ROOT-CTX-003: contextOf<A>() Lowering
+
+    private func lowerContextOfCallExpr(
+        _ exprID: ExprID,
+        sema: SemaModule,
+        arena: KIRArena,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard sema.bindings.stdlibSpecialCallKind(for: exprID) == .contextOf else {
+            return nil
+        }
+        let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.nullableAnyType
+        guard let activeContext = driver.ctx.activeContextValue(for: boundType, sema: sema) else {
+            return nil
+        }
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
+        instructions.append(.copy(from: activeContext.exprID, to: result))
         return result
     }
 

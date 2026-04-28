@@ -272,6 +272,13 @@ final class LambdaLowerer {
             if capture.capturedSymbol == savedReceiverSymbol {
                 driver.ctx.setImplicitReceiver(symbol: capture.param.symbol, exprID: captureExpr)
             }
+            if let contextValue = scopeSnapshot.activeContextValues.first(where: { $0.symbol == capture.capturedSymbol }) {
+                driver.ctx.appendActiveContextValue(
+                    type: contextValue.type,
+                    symbol: capture.capturedSymbol,
+                    exprID: captureExpr
+                )
+            }
         }
         for (paramIndex, lambdaParam) in lambdaParameters.enumerated() {
             let paramExpr = arena.appendExpr(.symbolRef(lambdaParam.symbol), type: lambdaParam.type)
@@ -314,6 +321,13 @@ final class LambdaLowerer {
             if closureCapture.capturedSymbol == savedReceiverSymbol {
                 driver.ctx.setImplicitReceiver(symbol: closureParam.symbol, exprID: closureExpr)
             }
+            if let contextValue = scopeSnapshot.activeContextValues.first(where: { $0.symbol == closureCapture.capturedSymbol }) {
+                driver.ctx.appendActiveContextValue(
+                    type: contextValue.type,
+                    symbol: closureCapture.capturedSymbol,
+                    exprID: closureExpr
+                )
+            }
         }
         // Multi-capture HOF lambda: closureRaw is a packed closure object.
         // Load each capture from the object via kk_array_get_inbounds.
@@ -347,6 +361,13 @@ final class LambdaLowerer {
                 }
                 if capture.capturedSymbol == savedReceiverSymbol {
                     driver.ctx.setImplicitReceiver(symbol: capture.param.symbol, exprID: loadedExpr)
+                }
+                if let contextValue = scopeSnapshot.activeContextValues.first(where: { $0.symbol == capture.capturedSymbol }) {
+                    driver.ctx.appendActiveContextValue(
+                        type: contextValue.type,
+                        symbol: capture.capturedSymbol,
+                        exprID: loadedExpr
+                    )
                 }
             }
         }
