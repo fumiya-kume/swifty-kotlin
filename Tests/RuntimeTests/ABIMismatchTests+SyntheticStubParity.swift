@@ -183,6 +183,7 @@ extension ABIMismatchTests {
             "kk_weak_ref_create",
             "kk_weak_ref_get",
             "kk_weak_ref_clear",
+            "kk_cleaner_create",
             "kk_atomic_int_array_create",
             "kk_atomic_int_array_size",
             "kk_atomic_int_array_loadAt",

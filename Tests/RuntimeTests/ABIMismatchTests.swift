@@ -275,7 +275,7 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testNativeRefFunctionCount() {
-        XCTAssertEqual(RuntimeABISpec.nativeRefFunctions.count, 3)
+        XCTAssertEqual(RuntimeABISpec.nativeRefFunctions.count, 6)
     }
 
     // MARK: - J16.1 Signature Verification (spec-fixed)
