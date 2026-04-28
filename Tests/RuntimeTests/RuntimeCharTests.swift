@@ -14,6 +14,13 @@ final class RuntimeCharTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_char_lowercaseChar(scalarValue(of: "5")), scalarValue(of: "5"))
     }
 
+    func testUppercaseCharUsesOneToOneUppercaseMapping() {
+        XCTAssertEqual(kk_char_uppercaseChar(scalarValue(of: "a")), scalarValue(of: "A"))
+        XCTAssertEqual(kk_char_uppercaseChar(scalarValue(of: "ω")), scalarValue(of: "Ω"))
+        XCTAssertEqual(kk_char_uppercaseChar(scalarValue(of: "ß")), scalarValue(of: "ß"))
+        XCTAssertEqual(kk_char_uppercaseChar(scalarValue(of: "1")), scalarValue(of: "1"))
+    }
+
     // MARK: - STDLIB-003-ABI-001: Char.digitToInt(radix: Int)
 
     func testDigitToIntRadix_base10() {
