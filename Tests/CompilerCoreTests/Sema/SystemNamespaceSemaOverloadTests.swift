@@ -87,6 +87,7 @@ final class SystemNamespaceSemaOverloadTests: XCTestCase {
 
         let implementedTopLevelFunctions: [(name: String, link: String)] = [
             ("exitProcess", "kk_system_exitProcess"),
+            ("getTimeMicros", "kk_system_getTimeMicros"),
             ("measureTimeMillis", "kk_system_measureTimeMillis"),
             ("measureNanoTime", "kk_system_measureNanoTime"),
         ]
@@ -99,7 +100,6 @@ final class SystemNamespaceSemaOverloadTests: XCTestCase {
         }
 
         let pendingNativeTopLevelFunctions = [
-            "getTimeMicros",
             "getTimeMillis",
             "getTimeNanos",
             "measureTimeMicros",
@@ -190,6 +190,12 @@ final class SystemNamespaceSemaOverloadTests: XCTestCase {
         let (sema, interner) = try makeSema()
         let link = systemPkgExternalLink(for: "getTimeNanos", sema: sema, interner: interner)
         XCTAssertEqual(link, "kk_system_getTimeNanos")
+    }
+
+    func testGetTimeMicrosIsRegisteredAsTopLevelNativeFunction() throws {
+        let (sema, interner) = try makeSema()
+        let link = systemPkgExternalLink(for: "getTimeMicros", sema: sema, interner: interner)
+        XCTAssertEqual(link, "kk_system_getTimeMicros")
     }
 
     /// exitProcess is a top-level kotlin.system function that accepts an Int parameter.
