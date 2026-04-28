@@ -127,4 +127,73 @@ final class NativePlatformAnnotationTests: XCTestCase {
             "Expected no opt-in diagnostic when @OptIn(FreezingIsDeprecated::class) is present"
         )
     }
+
+    func testHiddenFromObjCAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "HiddenFromObjC"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.native.HiddenFromObjC must be registered"
+        )
+
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .annotationClass)
+    }
+
+    func testHiddenFromObjCCarriesObjCRefinementMetadata() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "HiddenFromObjC"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertTrue(
+            annotations.contains { $0.annotationFQName == "kotlin.native.HidesFromObjC" },
+            "HiddenFromObjC must carry @HidesFromObjC metadata"
+        )
+        XCTAssertTrue(
+            annotations.contains { $0.annotationFQName == "kotlin.experimental.ExperimentalObjCRefinement" },
+            "HiddenFromObjC must carry @ExperimentalObjCRefinement metadata"
+        )
+    }
+
+    func testHiddenFromObjCCarriesClassFunctionPropertyTargets() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "HiddenFromObjC"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "HiddenFromObjC must carry @Target metadata"
+        )
+
+        XCTAssertEqual(
+            Set(target.arguments),
+            Set([
+                "AnnotationTarget.PROPERTY",
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.CLASS",
+            ])
+        )
+    }
+
+    func testHiddenFromObjCIsAcceptedOnClassFunctionAndProperty() {
+        let source = """
+        import kotlin.native.HiddenFromObjC
+
+        @HiddenFromObjC
+        class HiddenType {
+            @HiddenFromObjC
+            val hiddenProperty: Int = 1
+
+            @HiddenFromObjC
+            fun hiddenFunction(): Int = hiddenProperty
+        }
+        """
+        let ctx = runSemaCollectingDiagnostics(source)
+        let errors = ctx.diagnostics.diagnostics.filter { $0.severity == .error }
+
+        XCTAssertTrue(
+            errors.isEmpty,
+            "Expected HiddenFromObjC on class/function/property to type-check, got \(errors)"
+        )
+    }
+
 }

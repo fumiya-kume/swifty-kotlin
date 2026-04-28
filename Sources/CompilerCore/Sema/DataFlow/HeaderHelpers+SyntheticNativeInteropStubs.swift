@@ -204,6 +204,39 @@ extension DataFlowSemaPhase {
             freezingAnnotations.append(freezingRequiresOptIn)
             symbols.setAnnotations(freezingAnnotations, for: freezingIsDeprecatedSymbol)
         }
+
+        let hiddenFromObjCSymbol = ensureAnnotationClassSymbol(
+            named: "HiddenFromObjC",
+            in: nativePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let nativePkgSymbol {
+            symbols.setParentSymbol(nativePkgSymbol, for: hiddenFromObjCSymbol)
+        }
+        appendStandardAnnotationMetadata(
+            to: hiddenFromObjCSymbol,
+            targets: [
+                "AnnotationTarget.PROPERTY",
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.CLASS",
+            ],
+            retention: "AnnotationRetention.BINARY",
+            symbols: symbols
+        )
+        var hiddenFromObjCAnnotations = symbols.annotations(for: hiddenFromObjCSymbol)
+        let hiddenFromObjCMetaAnnotations = [
+            MetadataAnnotationRecord(annotationFQName: "kotlin.native.HidesFromObjC"),
+            MetadataAnnotationRecord(annotationFQName: "kotlin.experimental.ExperimentalObjCRefinement"),
+        ]
+        var didAppendHiddenFromObjCMetaAnnotation = false
+        for record in hiddenFromObjCMetaAnnotations where !hiddenFromObjCAnnotations.contains(record) {
+            hiddenFromObjCAnnotations.append(record)
+            didAppendHiddenFromObjCMetaAnnotation = true
+        }
+        if didAppendHiddenFromObjCMetaAnnotation {
+            symbols.setAnnotations(hiddenFromObjCAnnotations, for: hiddenFromObjCSymbol)
+        }
     }
 
     private func registerSyntheticCInteropStubs(
