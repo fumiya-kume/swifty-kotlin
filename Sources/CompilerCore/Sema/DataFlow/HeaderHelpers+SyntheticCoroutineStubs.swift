@@ -708,6 +708,41 @@ extension DataFlowSemaPhase {
             isSuspend: true,
             nullability: .nonNull
         )))
+        let publicStartCoroutineName = interner.intern("startCoroutine")
+        let publicStartCoroutineTypeParameterName = interner.intern("T")
+        let publicStartCoroutineTypeParameterSymbol = symbols.define(
+            kind: .typeParameter,
+            name: publicStartCoroutineTypeParameterName,
+            fqName: kotlinCoroutinesPkg + [publicStartCoroutineName, interner.intern("$synthetic"), publicStartCoroutineTypeParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let publicStartCoroutineTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: publicStartCoroutineTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let publicStartCoroutineContinuationType = types.make(.classType(ClassType(
+            classSymbol: continuationSymbol,
+            args: [.invariant(publicStartCoroutineTypeParameterType)],
+            nullability: .nonNull
+        )))
+        let publicStartCoroutineNoReceiverFunctionType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: publicStartCoroutineTypeParameterType,
+            isSuspend: true,
+            nullability: .nonNull
+        )))
+        registerSyntheticCoroutineExtensionFunction(
+            named: "startCoroutine",
+            packageFQName: kotlinCoroutinesPkg,
+            receiverType: publicStartCoroutineNoReceiverFunctionType,
+            parameters: [(name: "completion", type: publicStartCoroutineContinuationType)],
+            returnType: types.unitType,
+            typeParameterSymbols: [publicStartCoroutineTypeParameterSymbol],
+            symbols: symbols,
+            interner: interner
+        )
         registerSyntheticCoroutineExtensionFunction(
             named: "startCoroutineUninterceptedOrReturn",
             packageFQName: kotlinCoroutinesIntrinsicsPkg,
