@@ -4,8 +4,9 @@ import XCTest
 
 // MARK: - kotlin.system edge case coverage (STDLIB-SYSTEM-003)
 //
-// Covers: measureTimeMillis, measureNanoTime, top-level getTimeMicros/getTimeMillis,
-// System.currentTimeMillis, getTimeNanos (nanoTime),
+// Covers: measureTimeMillis, measureNanoTime,
+// top-level getTimeMicros/getTimeMillis/getTimeNanos,
+// System.currentTimeMillis/System.nanoTime,
 // processStartNanos, and exitProcess signature check.
 //
 // NOTE: exitProcess is not invoked in tests because it calls exit() which is
@@ -51,6 +52,7 @@ final class RuntimeSystemEdgeCaseTests: XCTestCase {
         let _: () -> Int = kk_system_nanoTime
         let _: () -> Int = kk_system_getTimeMicros
         let _: () -> Int = kk_system_getTimeMillis
+        let _: () -> Int = kk_system_getTimeNanos
         let _: () -> Int = kk_system_process_start_nanos
         let _: (Int, Int, UnsafeMutablePointer<Int>?) -> Int = kk_system_measureTimeMillis
         let _: (Int, Int, UnsafeMutablePointer<Int>?) -> Int = kk_system_measureNanoTime
@@ -161,6 +163,33 @@ final class RuntimeSystemEdgeCaseTests: XCTestCase {
         Thread.sleep(forTimeInterval: 0.030)
         let after = kk_system_getTimeMillis()
         XCTAssertGreaterThan(after, before, "getTimeMillis should advance after a short sleep")
+    }
+
+    // MARK: - kk_system_getTimeNanos
+
+    func testGetTimeNanosIsPositive() {
+        XCTAssertGreaterThan(kk_system_getTimeNanos(), 0, "getTimeNanos must be positive")
+    }
+
+    func testGetTimeNanosIsConsistentWithMonotonicClock() {
+        let before = kk_system_nanoTime()
+        let value = kk_system_getTimeNanos()
+        let after = kk_system_nanoTime()
+        XCTAssertGreaterThanOrEqual(value, before, "getTimeNanos should use the monotonic nanoTime clock")
+        XCTAssertLessThanOrEqual(value, after, "getTimeNanos should not exceed a later nanoTime read")
+    }
+
+    func testGetTimeNanosIsStrictlyMonotonicAcrossConsecutiveCalls() {
+        let first = kk_system_getTimeNanos()
+        let second = kk_system_getTimeNanos()
+        XCTAssertGreaterThan(second, first, "getTimeNanos should normally advance between consecutive calls")
+    }
+
+    func testGetTimeNanosAdvancesMeasurably() {
+        let before = kk_system_getTimeNanos()
+        Thread.sleep(forTimeInterval: 0.010)
+        let after = kk_system_getTimeNanos()
+        XCTAssertGreaterThan(after - before, 5_000_000, "getTimeNanos should advance by > 5ms after a 10ms sleep")
     }
 
     // MARK: - kk_system_process_start_nanos (stability)

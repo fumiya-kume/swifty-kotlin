@@ -9,6 +9,7 @@ import XCTest
 /// - exitProcess(Int) signature resolution and Nothing return type
 /// - getTimeMicros top-level Native API visibility
 /// - getTimeMillis top-level Native API visibility
+/// - getTimeNanos top-level Native API visibility
 /// - System.currentTimeMillis / System.nanoTime member visibility
 /// - getTimeMillis (alias currentTimeMillis) and getTimeNanos (alias nanoTime) via System object
 final class SystemNamespaceSemaOverloadTests: XCTestCase {
@@ -55,6 +56,7 @@ final class SystemNamespaceSemaOverloadTests: XCTestCase {
             ("exitProcess", "kk_system_exitProcess"),
             ("getTimeMicros", "kk_system_getTimeMicros"),
             ("getTimeMillis", "kk_system_getTimeMillis"),
+            ("getTimeNanos", "kk_system_getTimeNanos"),
             ("measureTimeMillis", "kk_system_measureTimeMillis"),
             ("measureNanoTime", "kk_system_measureNanoTime"),
         ]
@@ -67,7 +69,6 @@ final class SystemNamespaceSemaOverloadTests: XCTestCase {
         }
 
         let pendingNativeTopLevelFunctions = [
-            "getTimeNanos",
             "measureTimeMicros",
         ]
         for functionName in pendingNativeTopLevelFunctions {
@@ -135,6 +136,12 @@ final class SystemNamespaceSemaOverloadTests: XCTestCase {
         let (sema, interner) = try makeSema()
         let link = systemPkgExternalLink(for: "getTimeMillis", sema: sema, interner: interner)
         XCTAssertEqual(link, "kk_system_getTimeMillis")
+    }
+
+    func testGetTimeNanosIsRegisteredAsTopLevelNativeFunction() throws {
+        let (sema, interner) = try makeSema()
+        let link = systemPkgExternalLink(for: "getTimeNanos", sema: sema, interner: interner)
+        XCTAssertEqual(link, "kk_system_getTimeNanos")
     }
 
     /// exitProcess is a top-level kotlin.system function that accepts an Int parameter.
