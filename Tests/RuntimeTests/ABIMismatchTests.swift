@@ -172,13 +172,14 @@ final class ABIMismatchTests: XCTestCase {
         // - 19 Float overloads
         // - 4 roundToInt/roundToLong helpers
         // - 6 ulp/nextUp/nextDown helpers
+        // - 2 integral sign property helpers
         // - 3 coercion helpers
         // - 16 IEEE 754 rounding mode convenience entry points (8 Double + 8 Float)
         // - 14 STDLIB-MATH-112 numeric constants (5 Double + 5 Float + 2 Int + 2 Long)
         // - 2 generic mode-dispatch (round_mode, round_mode_float)
         // - 8 STDLIB-MATH-109 hyperbolic/cbrt entries (sinh, cosh, tanh, cbrt + Float overloads)
         // - 6 STDLIB-MATH-113 floating-point helpers (IEEE remainder + sign helpers)
-        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 101)
+        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 103)
         // Random ABI includes default, seeded, bounded numeric helpers, range overloads, ULong helpers, byte array helpers, SecureRandom helpers, and explicit bit extraction.
         XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 28)
     }

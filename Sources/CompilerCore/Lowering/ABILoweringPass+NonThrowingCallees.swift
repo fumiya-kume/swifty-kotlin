@@ -169,6 +169,8 @@ extension ABILoweringPass {
             interner.intern("kk_math_log10"),
             interner.intern("kk_math_log"),
             interner.intern("kk_math_sign"),
+            interner.intern("kk_math_sign_int"),
+            interner.intern("kk_math_sign_long"),
             interner.intern("kk_math_hypot"),
             interner.intern("kk_math_PI"),
             interner.intern("kk_math_E"),

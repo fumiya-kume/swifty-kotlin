@@ -441,6 +441,20 @@ public func kk_math_sign(_ value: Int) -> Int {
     return value
 }
 
+@_cdecl("kk_math_sign_int")
+public func kk_math_sign_int(_ value: Int) -> Int {
+    if value > 0 { return 1 }
+    if value < 0 { return -1 }
+    return 0
+}
+
+@_cdecl("kk_math_sign_long")
+public func kk_math_sign_long(_ value: Int) -> Int {
+    if value > 0 { return 1 }
+    if value < 0 { return -1 }
+    return 0
+}
+
 @_cdecl("kk_math_hypot")
 public func kk_math_hypot(_ x: Int, _ y: Int) -> Int {
     let rawX = kk_bits_to_double(x)

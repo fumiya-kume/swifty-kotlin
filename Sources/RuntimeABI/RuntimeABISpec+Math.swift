@@ -173,6 +173,22 @@ public extension RuntimeABISpec {
             section: "Math"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_math_sign_int",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_sign_long",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_math_hypot",
             parameters: [
                 RuntimeABIParameter(name: "x", type: .intptr),

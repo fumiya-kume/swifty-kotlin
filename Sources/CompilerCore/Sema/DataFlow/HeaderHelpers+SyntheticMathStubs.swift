@@ -560,6 +560,30 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-MATH-004: official kotlin.math extension property surface.
+        for property in [
+            (name: "absoluteValue", receiverType: types.doubleType, returnType: types.doubleType, linkName: "kk_math_abs"),
+            (name: "absoluteValue", receiverType: floatType, returnType: floatType, linkName: "kk_math_abs_float"),
+            (name: "absoluteValue", receiverType: types.intType, returnType: types.intType, linkName: "kk_math_abs_int"),
+            (name: "absoluteValue", receiverType: types.longType, returnType: types.longType, linkName: "kk_math_abs_long"),
+            (name: "sign", receiverType: types.doubleType, returnType: types.doubleType, linkName: "kk_math_sign"),
+            (name: "sign", receiverType: floatType, returnType: floatType, linkName: "kk_math_sign_float"),
+            (name: "sign", receiverType: types.intType, returnType: types.intType, linkName: "kk_math_sign_int"),
+            (name: "sign", receiverType: types.longType, returnType: types.intType, linkName: "kk_math_sign_long"),
+            (name: "ulp", receiverType: types.doubleType, returnType: types.doubleType, linkName: "kk_double_ulp"),
+            (name: "ulp", receiverType: floatType, returnType: floatType, linkName: "kk_float_ulp"),
+        ] {
+            registerSyntheticMathExtensionProperty(
+                named: property.name,
+                packageFQName: kotlinMathPkg,
+                receiverType: property.receiverType,
+                returnType: property.returnType,
+                externalLinkName: property.linkName,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         // STDLIB-111: IEEE 754 rounding modes — Double convenience entry points
         for (name, linkName) in [
             ("roundUp", "kk_math_round_up"),
@@ -744,5 +768,74 @@ extension DataFlowSemaPhase {
         }
         symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
         symbols.setPropertyType(returnType, for: propertySymbol)
+    }
+
+    private func registerSyntheticMathExtensionProperty(
+        named name: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = packageFQName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+                && symbols.extensionPropertyReceiverType(for: symbolID) == receiverType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            symbols.setPropertyType(returnType, for: existing)
+            if let getterSymbol = symbols.extensionPropertyGetterAccessor(for: existing) {
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [],
+                        returnType: returnType
+                    ),
+                    for: getterSymbol
+                )
+                symbols.setExternalLinkName(externalLinkName, for: getterSymbol)
+            }
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+        }
+        symbols.setPropertyType(returnType, for: propertySymbol)
+        symbols.setExtensionPropertyReceiverType(receiverType, for: propertySymbol)
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+
+        let getterName = interner.intern("get")
+        let getterSymbol = symbols.define(
+            kind: .function,
+            name: getterName,
+            fqName: propertyFQName + [interner.intern("$get")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(propertySymbol, for: getterSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType
+            ),
+            for: getterSymbol
+        )
+        symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
+        symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: getterSymbol)
     }
 }

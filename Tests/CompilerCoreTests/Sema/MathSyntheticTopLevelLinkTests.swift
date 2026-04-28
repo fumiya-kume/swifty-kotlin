@@ -19,6 +19,25 @@ final class MathSyntheticTopLevelLinkTests: XCTestCase {
         return sema.symbols.externalLinkName(for: sym)
     }
 
+    private func mathExtensionProperty(
+        named member: String,
+        receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> (property: SymbolID, getter: SymbolID)? {
+        let fq = ["kotlin", "math", member].map { interner.intern($0) }
+        for symbolID in sema.symbols.lookupAll(fqName: fq) {
+            guard sema.symbols.symbol(symbolID)?.kind == .property,
+                  sema.symbols.extensionPropertyReceiverType(for: symbolID) == receiverType,
+                  let getter = sema.symbols.extensionPropertyGetterAccessor(for: symbolID)
+            else {
+                continue
+            }
+            return (symbolID, getter)
+        }
+        return nil
+    }
+
     func testMathTopLevelSymbolsLinkToRuntimeFunctions() throws {
         let (sema, interner) = try makeSema()
 
@@ -192,6 +211,91 @@ final class MathSyntheticTopLevelLinkTests: XCTestCase {
 
             for expected in expectedLinks {
                 XCTAssertTrue(resolvedLinks.contains(expected), "Expected \(expected) to be resolved")
+            }
+        }
+    }
+
+    func testMathExtensionPropertySymbolsUseOfficialShape() throws {
+        let (sema, interner) = try makeSema()
+        let expected: [(String, TypeID, TypeID, String)] = [
+            ("absoluteValue", sema.types.doubleType, sema.types.doubleType, "kk_math_abs"),
+            ("absoluteValue", sema.types.floatType, sema.types.floatType, "kk_math_abs_float"),
+            ("absoluteValue", sema.types.intType, sema.types.intType, "kk_math_abs_int"),
+            ("absoluteValue", sema.types.longType, sema.types.longType, "kk_math_abs_long"),
+            ("sign", sema.types.doubleType, sema.types.doubleType, "kk_math_sign"),
+            ("sign", sema.types.floatType, sema.types.floatType, "kk_math_sign_float"),
+            ("sign", sema.types.intType, sema.types.intType, "kk_math_sign_int"),
+            ("sign", sema.types.longType, sema.types.intType, "kk_math_sign_long"),
+            ("ulp", sema.types.doubleType, sema.types.doubleType, "kk_double_ulp"),
+            ("ulp", sema.types.floatType, sema.types.floatType, "kk_float_ulp"),
+        ]
+
+        for (name, receiverType, returnType, expectedLink) in expected {
+            let symbols = try XCTUnwrap(
+                mathExtensionProperty(named: name, receiverType: receiverType, sema: sema, interner: interner),
+                "Expected \(name) extension property for \(sema.types.renderType(receiverType))"
+            )
+            XCTAssertEqual(sema.symbols.propertyType(for: symbols.property), returnType)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: symbols.property), expectedLink)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: symbols.getter), expectedLink)
+            let getterSignature = try XCTUnwrap(sema.symbols.functionSignature(for: symbols.getter))
+            XCTAssertEqual(getterSignature.receiverType, receiverType)
+            XCTAssertEqual(getterSignature.parameterTypes, [])
+            XCTAssertEqual(getterSignature.returnType, returnType)
+        }
+    }
+
+    func testMathExtensionPropertiesResolveViaDefaultImport() throws {
+        let source = """
+        fun sample(i: Int, l: Long, f: Float, d: Double) {
+            val ai = i.absoluteValue
+            val al = l.absoluteValue
+            val af = f.absoluteValue
+            val ad = d.absoluteValue
+            val si = i.sign
+            val sl = l.sign
+            val sf = f.sign
+            val sd = d.sign
+            val uf = f.ulp
+            val ud = d.ulp
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(ctx.diagnostics.hasError, "Expected math extension properties to resolve without diagnostics.")
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let propertyNames: Set<String> = ["absoluteValue", "sign", "ulp"]
+            var resolvedLinks: [String] = []
+            for exprIndex in ast.arena.exprs.indices {
+                let exprID = ExprID(rawValue: Int32(exprIndex))
+                guard let expr = ast.arena.expr(exprID),
+                      case let .memberCall(_, calleeName, _, _, _) = expr,
+                      propertyNames.contains(ctx.interner.resolve(calleeName)),
+                      let chosenCallee = sema.bindings.callBinding(for: exprID)?.chosenCallee,
+                      let link = sema.symbols.externalLinkName(for: chosenCallee)
+                else {
+                    continue
+                }
+                resolvedLinks.append(link)
+            }
+
+            for expectedLink in [
+                "kk_math_abs_int",
+                "kk_math_abs_long",
+                "kk_math_abs_float",
+                "kk_math_abs",
+                "kk_math_sign_int",
+                "kk_math_sign_long",
+                "kk_math_sign_float",
+                "kk_math_sign",
+                "kk_float_ulp",
+                "kk_double_ulp",
+            ] {
+                XCTAssertTrue(resolvedLinks.contains(expectedLink), "Expected \(expectedLink), got \(resolvedLinks)")
             }
         }
     }
