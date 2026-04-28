@@ -3,6 +3,7 @@ import Foundation
 /// Synthetic stdlib stubs for Kotlin scope functions (STDLIB-061, STDLIB-400, STDLIB-404).
 /// - with<T, R>(receiver: T, block: T.() -> R): R
 /// - context<T, R>(with: T, block: context(T) () -> R): R
+/// - context<A..F, R>(a: A, ..., f: F, block: context(A..F) () -> R): R
 /// - fun <T, R> T.let(block: (T) -> R): R
 /// - fun <T> T.also(block: (T) -> Unit): T
 /// - T.takeIf(predicate: (T) -> Boolean): T?
@@ -424,23 +425,60 @@ extension DataFlowSemaPhase {
         interner: StringInterner,
         kotlinPkg: [InternedString]
     ) {
+        for arity in 1...6 {
+            registerContextHelperOverload(
+                arity: arity,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                kotlinPkg: kotlinPkg
+            )
+        }
+    }
+
+    private func registerContextHelperOverload(
+        arity: Int,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinPkg: [InternedString]
+    ) {
         let contextName = interner.intern("context")
         let contextFQName = kotlinPkg + [contextName]
 
-        if symbols.lookup(fqName: contextFQName) != nil {
+        let alreadyRegistered = symbols.lookupAll(fqName: contextFQName).contains { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID),
+                  signature.parameterTypes.count == arity + 1,
+                  case let .functionType(blockType) = types.kind(of: signature.parameterTypes[arity])
+            else {
+                return false
+            }
+            return blockType.contextReceivers.count == arity
+                && blockType.params.isEmpty
+        }
+        if alreadyRegistered {
             return
         }
 
-        let tName = interner.intern("T")
+        let contextTypeParamNames = arity == 1
+            ? ["T"]
+            : Array(["A", "B", "C", "D", "E", "F"].prefix(arity))
         let rName = interner.intern("R")
-        let tSymbol = symbols.define(
-            kind: .typeParameter,
-            name: tName,
-            fqName: contextFQName + [tName],
-            declSite: nil,
-            visibility: .private,
-            flags: []
-        )
+        var contextTypeParamSymbols: [SymbolID] = []
+        var contextTypes: [TypeID] = []
+        for typeParamName in contextTypeParamNames {
+            let name = interner.intern(typeParamName)
+            let symbol = symbols.define(
+                kind: .typeParameter,
+                name: name,
+                fqName: contextFQName + [name],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            contextTypeParamSymbols.append(symbol)
+            contextTypes.append(types.make(.typeParam(TypeParamType(symbol: symbol, nullability: .nonNull))))
+        }
         let rSymbol = symbols.define(
             kind: .typeParameter,
             name: rName,
@@ -450,26 +488,32 @@ extension DataFlowSemaPhase {
             flags: []
         )
 
-        let tType = types.make(.typeParam(TypeParamType(symbol: tSymbol, nullability: .nonNull)))
         let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
         let blockType = types.make(.functionType(FunctionType(
-            contextReceivers: [tType],
+            contextReceivers: contextTypes,
             params: [],
             returnType: rType,
             isSuspend: false,
             nullability: .nonNull
         )))
 
-        let withName = interner.intern("with")
+        let contextParameterNames = arity == 1
+            ? ["with"]
+            : Array(["a", "b", "c", "d", "e", "f"].prefix(arity))
         let blockName = interner.intern("block")
-        let withSymbol = symbols.define(
-            kind: .valueParameter,
-            name: withName,
-            fqName: contextFQName + [withName],
-            declSite: nil,
-            visibility: .private,
-            flags: [.synthetic]
-        )
+        var valueParameterSymbols: [SymbolID] = []
+        for parameterName in contextParameterNames {
+            let name = interner.intern(parameterName)
+            let symbol = symbols.define(
+                kind: .valueParameter,
+                name: name,
+                fqName: contextFQName + [name],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            valueParameterSymbols.append(symbol)
+        }
         let blockSymbol = symbols.define(
             kind: .valueParameter,
             name: blockName,
@@ -478,6 +522,7 @@ extension DataFlowSemaPhase {
             visibility: .private,
             flags: [.synthetic]
         )
+        valueParameterSymbols.append(blockSymbol)
 
         let contextSymbol = symbols.define(
             kind: .function,
@@ -490,10 +535,13 @@ extension DataFlowSemaPhase {
         if let packageSymbol = symbols.lookup(fqName: kotlinPkg) {
             symbols.setParentSymbol(packageSymbol, for: contextSymbol)
         }
-        symbols.setParentSymbol(contextSymbol, for: tSymbol)
+        for typeParamSymbol in contextTypeParamSymbols {
+            symbols.setParentSymbol(contextSymbol, for: typeParamSymbol)
+        }
         symbols.setParentSymbol(contextSymbol, for: rSymbol)
-        symbols.setParentSymbol(contextSymbol, for: withSymbol)
-        symbols.setParentSymbol(contextSymbol, for: blockSymbol)
+        for valueParameterSymbol in valueParameterSymbols {
+            symbols.setParentSymbol(contextSymbol, for: valueParameterSymbol)
+        }
         symbols.setAnnotations(
             [MetadataAnnotationRecord(annotationFQName: "kotlin.ExperimentalContextParameters")],
             for: contextSymbol
@@ -501,13 +549,13 @@ extension DataFlowSemaPhase {
 
         symbols.setFunctionSignature(
             FunctionSignature(
-                parameterTypes: [tType, blockType],
+                parameterTypes: contextTypes + [blockType],
                 returnType: rType,
                 isSuspend: false,
-                valueParameterSymbols: [withSymbol, blockSymbol],
-                valueParameterHasDefaultValues: [false, false],
-                valueParameterIsVararg: [false, false],
-                typeParameterSymbols: [tSymbol, rSymbol],
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: arity + 1),
+                valueParameterIsVararg: Array(repeating: false, count: arity + 1),
+                typeParameterSymbols: contextTypeParamSymbols + [rSymbol],
                 classTypeParameterCount: 0
             ),
             for: contextSymbol

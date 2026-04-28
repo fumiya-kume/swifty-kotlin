@@ -423,7 +423,7 @@ final class CallTypeChecker {
         // The helper makes the first argument available as a context receiver
         // for the block type, but does not make it an implicit receiver.
         let contextHelperName = interner.intern("context")
-        if let calleeName, args.count == 2,
+        if let calleeName, args.count >= 2, args.count <= 7,
            calleeName == contextHelperName,
            locals[calleeName] == nil,
            !ctx.cachedScopeLookup(calleeName).contains(where: { candidate in
@@ -431,14 +431,18 @@ final class CallTypeChecker {
                return !sym.flags.contains(.synthetic)
            })
         {
-            let contextValueType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            let contextValueArgs = Array(args.dropLast())
+            let blockArg = args[args.count - 1]
+            let contextValueTypes = contextValueArgs.map {
+                driver.inferExpr($0.expr, ctx: ctx, locals: &locals)
+            }
             let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
-                contextReceivers: [contextValueType],
+                contextReceivers: contextValueTypes,
                 params: [],
                 returnType: expectedType ?? sema.types.anyType
             )))
             let lambdaType = driver.inferExpr(
-                args[1].expr,
+                blockArg.expr,
                 ctx: ctx,
                 locals: &locals,
                 expectedType: lambdaExpectedType
@@ -446,7 +450,7 @@ final class CallTypeChecker {
             let returnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
                 fnType.returnType
             } else {
-                sema.bindings.exprTypes[args[1].expr].flatMap { typeID in
+                sema.bindings.exprTypes[blockArg.expr].flatMap { typeID in
                     if case let .functionType(fnType) = sema.types.kind(of: typeID) {
                         return fnType.returnType
                     }
@@ -456,7 +460,9 @@ final class CallTypeChecker {
             if let contextSymbol = ctx.cachedScopeLookup(calleeName).first(where: { candidate in
                 guard let sym = ctx.cachedSymbol(candidate),
                       sym.flags.contains(.synthetic),
-                      sym.fqName.map({ interner.resolve($0) }) == ["kotlin", "context"]
+                      sym.fqName.map({ interner.resolve($0) }) == ["kotlin", "context"],
+                      let signature = sema.symbols.functionSignature(for: candidate),
+                      signature.parameterTypes.count == args.count
                 else {
                     return false
                 }
@@ -472,8 +478,8 @@ final class CallTypeChecker {
                     id,
                     binding: CallBinding(
                         chosenCallee: contextSymbol,
-                        substitutedTypeArguments: [contextValueType, returnType],
-                        parameterMapping: [0: 0, 1: 1]
+                        substitutedTypeArguments: contextValueTypes + [returnType],
+                        parameterMapping: Dictionary(uniqueKeysWithValues: args.indices.map { ($0, $0) })
                     )
                 )
                 sema.bindings.bindCallableTarget(id, target: .symbol(contextSymbol))

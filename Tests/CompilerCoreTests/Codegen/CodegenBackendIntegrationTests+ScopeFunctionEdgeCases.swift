@@ -93,6 +93,8 @@ extension CodegenBackendIntegrationTests {
         fun main() {
             val result = context(1) { "context-ok" }
             println(result)
+            println(context("a", "b") { "context-two" })
+            println(context(1, 2, 3, 4, 5, 6) { "context-six" })
         }
         """
 
@@ -107,7 +109,15 @@ extension CodegenBackendIntegrationTests {
             try LinkPhase().run(ctx)
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "context-ok\n")
+            XCTAssertEqual(
+                result.stdout.replacingOccurrences(of: "\r\n", with: "\n"),
+                """
+                context-ok
+                context-two
+                context-six
+                """
+                + "\n"
+            )
         }
     }
 }

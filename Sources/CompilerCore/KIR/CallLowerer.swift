@@ -418,17 +418,20 @@ final class CallLowerer {
         // --- Context helper: context(with, block) (STDLIB-KOTLIN-ROOT-CTX-001) ---
         if let scopeKind = sema.bindings.scopeFunctionKind(for: exprID),
            scopeKind == .scopeContext,
-           args.count == 2
+           args.count >= 2,
+           args.count <= 7
         {
             let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            _ = driver.lowerExpr(
-                args[0].expr,
-                ast: ast, sema: sema, arena: arena, interner: interner,
-                propertyConstantInitializers: propertyConstantInitializers,
-                instructions: &instructions
-            )
+            for contextArgument in args.dropLast() {
+                _ = driver.lowerExpr(
+                    contextArgument.expr,
+                    ast: ast, sema: sema, arena: arena, interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
             let loweredLambdaID = driver.lowerExpr(
-                args[1].expr,
+                args[args.count - 1].expr,
                 ast: ast, sema: sema, arena: arena, interner: interner,
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions

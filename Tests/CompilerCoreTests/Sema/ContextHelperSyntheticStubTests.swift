@@ -26,6 +26,22 @@ final class ContextHelperSyntheticStubTests: XCTestCase {
         XCTAssertEqual(blockType.returnType, signature.returnType)
     }
 
+    func testContextHelperRegistersOverloadsThroughAritySix() throws {
+        let (sema, interner) = try makeSema()
+        let contextSymbols = sema.symbols.lookupAll(fqName: ["kotlin", "context"].map { interner.intern($0) })
+        let arities = Set(contextSymbols.compactMap { symbolID -> Int? in
+            guard let signature = sema.symbols.functionSignature(for: symbolID),
+                  case let .functionType(blockType) = sema.types.kind(of: signature.parameterTypes.last ?? .invalid),
+                  blockType.params.isEmpty
+            else {
+                return nil
+            }
+            return blockType.contextReceivers.count
+        })
+
+        XCTAssertEqual(arities, Set(1...6))
+    }
+
     func testContextHelperRequiresExperimentalContextParametersOptIn() {
         let source = """
         fun caller(): Int = context(1) { 2 }
@@ -44,6 +60,26 @@ final class ContextHelperSyntheticStubTests: XCTestCase {
 
         @OptIn(ExperimentalContextParameters::class)
         fun caller(): String = context(1) { "ok" }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(
+            diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx).isEmpty,
+            "Expected @OptIn to suppress context helper diagnostic, got: \(ctx.diagnostics.diagnostics)"
+        )
+        let sema = try XCTUnwrap(ctx.sema)
+        let interner = ctx.interner
+        let callerSymbol = try XCTUnwrap(lookupSymbol(["caller"], sema: sema, interner: interner))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: callerSymbol))
+        XCTAssertEqual(signature.returnType, sema.types.stringType)
+    }
+
+    func testContextHelperSixValueOverloadInfersBlockReturnType() throws {
+        let source = """
+        import kotlin.ExperimentalContextParameters
+
+        @OptIn(ExperimentalContextParameters::class)
+        fun caller(): String = context(1, 2, 3, 4, 5, 6) { "ok" }
         """
 
         let ctx = runSemaCollectingDiagnostics(source)
