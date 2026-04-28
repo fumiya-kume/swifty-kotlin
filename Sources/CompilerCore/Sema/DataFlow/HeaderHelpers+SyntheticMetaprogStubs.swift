@@ -242,6 +242,13 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticJvmAnnotationClass(
+            named: "OptionalExpectation",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticJvmAnnotationClass(
             named: "IgnorableReturnValue",
@@ -707,6 +714,9 @@ extension DataFlowSemaPhase {
                     arguments: ["AnnotationTarget.TYPE"]
                 ),
                 to: parameterNameSymbol,
+        if let optionalExpectationSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("OptionalExpectation")]) {
+                    arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
+                to: optionalExpectationSymbol,
                 symbols: symbols
             )
             appendSyntheticAnnotation(
@@ -723,6 +733,9 @@ extension DataFlowSemaPhase {
                 symbols: symbols,
                 types: types,
                 interner: interner
+                to: optionalExpectationSymbol,
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(annotationFQName: "kotlin.ExperimentalMultiplatform"),
             )
         }
 

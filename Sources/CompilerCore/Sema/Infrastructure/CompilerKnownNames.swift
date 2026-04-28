@@ -22,6 +22,7 @@ enum KnownCompilerAnnotation {
     case suppress
     case dslMarker
     case parameterName
+    case optionalExpectation
     case wasExperimental
     case sinceKotlin
     case introducedAt
@@ -77,6 +78,8 @@ enum KnownCompilerAnnotation {
             "DslMarker"
         case .parameterName:
             "ParameterName"
+        case .optionalExpectation:
+            "OptionalExpectation"
         case .wasExperimental:
             "WasExperimental"
         case .sinceKotlin:
@@ -144,6 +147,8 @@ enum KnownCompilerAnnotation {
             "kotlin.DslMarker"
         case .parameterName:
             "kotlin.ParameterName"
+        case .optionalExpectation:
+            "kotlin.OptionalExpectation"
         case .wasExperimental:
             "kotlin.WasExperimental"
         case .sinceKotlin:

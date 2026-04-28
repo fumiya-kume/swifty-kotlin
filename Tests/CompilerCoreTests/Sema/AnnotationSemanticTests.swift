@@ -636,6 +636,71 @@ final class AnnotationSemanticTests: XCTestCase {
         )
     }
 
+    func testOptionalExpectationSurfaceHasTargetRetentionAndExperimentalMarker() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("OptionalExpectation"),
+            ]),
+            "kotlin.OptionalExpectation must be registered"
+        )
+        let declaration = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(declaration.kind, .annotationClass)
+        XCTAssertEqual(declaration.visibility, .public)
+        XCTAssertTrue(declaration.flags.contains(.synthetic))
+
+        let annotations = sema.symbols.annotations(for: symbol)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == ["AnnotationTarget.ANNOTATION_CLASS"]
+            },
+            "OptionalExpectation should target annotation classes, got: \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Retention"
+                    && $0.arguments == ["AnnotationRetention.BINARY"]
+            },
+            "OptionalExpectation should carry binary retention, got: \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.ExperimentalMultiplatform"
+            },
+            "OptionalExpectation should require ExperimentalMultiplatform opt-in, got: \(annotations)"
+        )
+    }
+
+    func testOptionalExpectationAcceptsAnnotationClass() {
+        let source = """
+        @OptionalExpectation
+        annotation class PlatformOnly
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected OptionalExpectation on annotation class to compile, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testOptionalExpectationRejectsFunctionUse() {
+        let source = """
+        @OptIn(ExperimentalMultiplatform::class)
+        @OptionalExpectation
+        fun bad() {}
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected OptionalExpectation to reject function use, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
     func testExposedCopyVisibilityRejectsFunctionUse() {
         let source = """
         @ExposedCopyVisibility
