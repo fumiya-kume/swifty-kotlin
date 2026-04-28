@@ -61,6 +61,29 @@ final class RuntimeNativeRefGCStabilityTests: IsolatedRuntimeXCTestCase {
         }
     }
 
+    func testGCScheduleTriggersCollection() {
+        withDummyNativeRefTypeInfo { ti in
+            _ = kk_alloc(8, ti)
+            XCTAssertEqual(kk_runtime_heap_object_count(), 1)
+            XCTAssertEqual(kk_gc_schedule(), 0)
+            XCTAssertEqual(kk_runtime_heap_object_count(), 0)
+        }
+    }
+
+    func testGCTargetHeapBytesIsPositive() {
+        XCTAssertGreaterThan(kk_gc_target_heap_bytes(), 0)
+    }
+
+    func testGCTargetHeapUtilizationIsWithinValidRange() {
+        let utilization = kk_gc_target_heap_utilization()
+        XCTAssertGreaterThan(utilization, 0)
+        XCTAssertLessThanOrEqual(utilization, 1)
+    }
+
+    func testGCMaxHeapBytesIsAtLeastTargetHeapBytes() {
+        XCTAssertGreaterThanOrEqual(kk_gc_max_heap_bytes(), kk_gc_target_heap_bytes())
+    }
+
     func testHeapObjectCountPositiveAfterAlloc() {
         withDummyNativeRefTypeInfo { ti in
             let slot = UnsafeMutablePointer<UnsafeMutableRawPointer?>.allocate(capacity: 1)

@@ -84,6 +84,11 @@ extension BuildKIRRegressionTests {
         XCTAssertTrue(callees.contains(interner.intern("kk_weak_ref_clear")))
         XCTAssertTrue(callees.contains(interner.intern("kk_cleaner_create")))
         XCTAssertTrue(callees.contains(interner.intern("kk_cleaner_dispose")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_gc_collect")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_gc_schedule")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_gc_target_heap_bytes")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_gc_target_heap_utilization")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_gc_max_heap_bytes")))
     }
 
     func testThisBasedMemberCallCompilesAndUsesImplicitReceiverInLowering() throws {
