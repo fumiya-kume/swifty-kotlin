@@ -1,4 +1,5 @@
 import java.util.Locale
+import kotlin.text.CharDirectionality
 
 fun main() {
     println("%s:%d".format("age", 7))
@@ -13,4 +14,8 @@ fun main() {
 
     println("ff".toIntOrNull(16))
     println("xz".toIntOrNull(16))
+    println('A'.directionality == CharDirectionality.LEFT_TO_RIGHT)
+    println('\u05D0'.directionality == CharDirectionality.RIGHT_TO_LEFT)
+    println('5'.directionality == CharDirectionality.EUROPEAN_NUMBER)
+    println(' '.directionality == CharDirectionality.WHITESPACE)
 }

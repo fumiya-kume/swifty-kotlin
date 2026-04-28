@@ -19,6 +19,7 @@ import XCTest
 //   - Char.uppercase()                     → kk_char_uppercase  (returns String per Kotlin spec)
 //   - Char.lowercase()                     → kk_char_lowercase  (returns String per Kotlin spec)
 //   - Char.titlecase()                     → kk_char_titlecase
+//   - Char.directionality                  → kk_char_directionality  (CharDirectionality enum)
 //
 // Gaps (absent in common scope):
 //   - String.format(locale, format, vararg args)  — locale-parameterised overload absent
@@ -270,6 +271,17 @@ final class KotlinTextI18nLocaleInventoryTests: XCTestCase {
         fun main() {
             val result = 'a'.isLowerCase()
             println(result)
+        }
+        """)
+    }
+
+    func testCharDirectionalityEnumSurface() throws {
+        try assertKotlinCompilesToKIR("""
+        import kotlin.text.CharDirectionality
+
+        fun main() {
+            val direction: CharDirectionality = 'A'.directionality
+            println(direction == CharDirectionality.LEFT_TO_RIGHT)
         }
         """)
     }

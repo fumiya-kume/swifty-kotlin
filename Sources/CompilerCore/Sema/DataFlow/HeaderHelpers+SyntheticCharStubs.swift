@@ -14,7 +14,8 @@ enum SyntheticCharMemberReturnKind {
 
     func typeID(
         in types: TypeSystem,
-        charCategoryType: TypeID?
+        charCategoryType: TypeID? = nil,
+        charDirectionalityType: TypeID? = nil
     ) -> TypeID {
         switch self {
         case .boolean:
@@ -32,8 +33,7 @@ enum SyntheticCharMemberReturnKind {
         case .charCategory:
             charCategoryType ?? types.intType
         case .charDirectionality:
-            // TODO: Define CharDirectionality enum type
-            types.intType // Temporarily use Int as placeholder
+            charDirectionalityType ?? types.intType
         }
     }
 
@@ -45,6 +45,11 @@ enum SyntheticCharMemberReturnKind {
         typeID(
             in: types,
             charCategoryType: syntheticCharCategoryTypeID(
+                symbols: symbols,
+                types: types,
+                interner: interner
+            ),
+            charDirectionalityType: syntheticCharDirectionalityTypeID(
                 symbols: symbols,
                 types: types,
                 interner: interner
@@ -236,6 +241,25 @@ func syntheticCharCategoryTypeID(
     )))
 }
 
+func syntheticCharDirectionalityTypeID(
+    symbols: SymbolTable,
+    types: TypeSystem,
+    interner: StringInterner
+) -> TypeID? {
+    guard let symbol = symbols.lookup(fqName: [
+        interner.intern("kotlin"),
+        interner.intern("text"),
+        interner.intern("CharDirectionality"),
+    ]) else {
+        return nil
+    }
+    return types.make(.classType(ClassType(
+        classSymbol: symbol,
+        args: [],
+        nullability: .nonNull
+    )))
+}
+
 extension DataFlowSemaPhase {
     func registerSyntheticCharStubs(
         symbols: SymbolTable,
@@ -258,7 +282,12 @@ extension DataFlowSemaPhase {
             enumType: charCategoryType,
             symbols: symbols
         )
-
+        let charDirectionalityType = ensureSyntheticCharDirectionalityEnum(
+            in: kotlinTextPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         for member in syntheticCharMemberSpecs {
             registerSyntheticCharExtensionFunction(
                 named: member.name,
@@ -266,7 +295,8 @@ extension DataFlowSemaPhase {
                 receiverType: types.charType,
                 returnType: member.returnKind.typeID(
                     in: types,
-                    charCategoryType: charCategoryType
+                    charCategoryType: charCategoryType,
+                    charDirectionalityType: charDirectionalityType
                 ),
                 packageFQName: kotlinTextPkg,
                 symbols: symbols,
@@ -482,5 +512,80 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+    }
+
+    private func ensureSyntheticCharDirectionalityEnum(
+        in packageFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let enumName = interner.intern("CharDirectionality")
+        let enumFQName = packageFQName + [enumName]
+        let enumSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: enumFQName) {
+            enumSymbol = existing
+        } else {
+            enumSymbol = symbols.define(
+                kind: .enumClass,
+                name: enumName,
+                fqName: enumFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: enumSymbol)
+        }
+
+        let enumType = types.make(.classType(ClassType(
+            classSymbol: enumSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let entries = [
+            "UNDEFINED",
+            "LEFT_TO_RIGHT",
+            "RIGHT_TO_LEFT",
+            "RIGHT_TO_LEFT_ARABIC",
+            "EUROPEAN_NUMBER",
+            "EUROPEAN_NUMBER_SEPARATOR",
+            "EUROPEAN_NUMBER_TERMINATOR",
+            "ARABIC_NUMBER",
+            "COMMON_NUMBER_SEPARATOR",
+            "NONSPACING_MARK",
+            "BOUNDARY_NEUTRAL",
+            "PARAGRAPH_SEPARATOR",
+            "SEGMENT_SEPARATOR",
+            "WHITESPACE",
+            "OTHER_NEUTRALS",
+            "LEFT_TO_RIGHT_EMBEDDING",
+            "LEFT_TO_RIGHT_OVERRIDE",
+            "RIGHT_TO_LEFT_EMBEDDING",
+            "RIGHT_TO_LEFT_OVERRIDE",
+            "POP_DIRECTIONAL_FORMAT",
+        ]
+        for entry in entries {
+            let entryName = interner.intern(entry)
+            let entryFQName = enumFQName + [entryName]
+            let entrySymbol: SymbolID
+            if let existing = symbols.lookup(fqName: entryFQName) {
+                entrySymbol = existing
+            } else {
+                entrySymbol = symbols.define(
+                    kind: .field,
+                    name: entryName,
+                    fqName: entryFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+            }
+            symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+            symbols.setPropertyType(enumType, for: entrySymbol)
+        }
+        return enumType
     }
 }
