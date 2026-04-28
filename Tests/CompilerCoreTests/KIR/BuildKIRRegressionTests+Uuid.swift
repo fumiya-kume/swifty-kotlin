@@ -5,6 +5,8 @@ import XCTest
 extension BuildKIRRegressionTests {
     func testUuidCompanionAndInstanceCallsLowerToRuntimeCallees() throws {
         let source = """
+        @file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+
         import kotlin.uuid.Uuid
 
         fun main() {
@@ -48,6 +50,8 @@ extension BuildKIRRegressionTests {
 
     func testUuidAdditionalFactoriesLowerToRuntimeCallees() throws {
         let source = """
+        @file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+
         import kotlin.uuid.Uuid
 
         fun main(bytes: ByteArray) {
