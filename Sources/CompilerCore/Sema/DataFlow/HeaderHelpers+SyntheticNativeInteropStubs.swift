@@ -237,6 +237,33 @@ extension DataFlowSemaPhase {
         if didAppendHiddenFromObjCMetaAnnotation {
             symbols.setAnnotations(hiddenFromObjCAnnotations, for: hiddenFromObjCSymbol)
         }
+
+        let noInlineSymbol = ensureAnnotationClassSymbol(
+            named: "NoInline",
+            in: nativePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let nativePkgSymbol {
+            symbols.setParentSymbol(nativePkgSymbol, for: noInlineSymbol)
+        }
+        appendStandardAnnotationMetadata(
+            to: noInlineSymbol,
+            targets: [
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY",
+            ],
+            retention: "AnnotationRetention.BINARY",
+            symbols: symbols
+        )
+        var noInlineAnnotations = symbols.annotations(for: noInlineSymbol)
+        let experimentalNativeApiRecord = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.experimental.ExperimentalNativeApi"
+        )
+        if !noInlineAnnotations.contains(experimentalNativeApiRecord) {
+            noInlineAnnotations.append(experimentalNativeApiRecord)
+            symbols.setAnnotations(noInlineAnnotations, for: noInlineSymbol)
+        }
     }
 
     private func registerSyntheticCInteropStubs(

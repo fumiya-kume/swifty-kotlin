@@ -196,4 +196,65 @@ final class NativePlatformAnnotationTests: XCTestCase {
         )
     }
 
+    func testNoInlineAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "NoInline"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.native.NoInline must be registered"
+        )
+
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .annotationClass)
+    }
+
+    func testNoInlineCarriesExperimentalNativeApiMetadata() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "NoInline"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertTrue(
+            annotations.contains { $0.annotationFQName == "kotlin.experimental.ExperimentalNativeApi" },
+            "NoInline must carry @ExperimentalNativeApi metadata"
+        )
+    }
+
+    func testNoInlineCarriesFunctionPropertyTargets() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "NoInline"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "NoInline must carry @Target metadata"
+        )
+
+        XCTAssertEqual(
+            Set(target.arguments),
+            Set([
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY",
+            ])
+        )
+    }
+
+    func testNoInlineIsAcceptedOnFunctionAndProperty() {
+        let source = """
+        @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)
+        import kotlin.native.NoInline
+
+        @NoInline
+        val nativeValue: Int = 1
+
+        @NoInline
+        fun nativeFunction(): Int = nativeValue
+        """
+        let ctx = runSemaCollectingDiagnostics(source)
+        let errors = ctx.diagnostics.diagnostics.filter { $0.severity == .error }
+
+        XCTAssertTrue(
+            errors.isEmpty,
+            "Expected NoInline on function/property to type-check with ExperimentalNativeApi opt-in, got \(errors)"
+        )
+    }
+
 }
